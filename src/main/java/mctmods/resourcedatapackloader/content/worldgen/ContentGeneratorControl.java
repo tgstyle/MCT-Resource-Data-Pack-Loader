@@ -9,7 +9,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -91,15 +91,15 @@ public final class ContentGeneratorControl {
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
         Map<ChunkGenerator, Map<PlacedFeature, Refused>> next = level.dimension() == Level.OVERWORLD ? new IdentityHashMap<>() : new IdentityHashMap<>(scoped);
-        if (enabled() && inScope(level.dimension().location().toString())) {
+        if (enabled() && inScope(level.dimension().identifier().toString())) {
             boolean byMod = blocking();
             Map<PlacedFeature, Refused> features = new IdentityHashMap<>();
-            for (Map.Entry<ResourceKey<PlacedFeature>, PlacedFeature> entry : level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE).entrySet()) {
-                Refused refused = refused(entry.getKey().location(), byMod);
+            for (Map.Entry<ResourceKey<PlacedFeature>, PlacedFeature> entry : level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE).entrySet()) {
+                Refused refused = refused(entry.getKey().identifier(), byMod);
                 if (refused != null) { features.put(entry.getValue(), refused); }
             }
             next.put(level.getChunkSource().getGenerator(), features);
-            ContentLog.LOGGER.debug("Generator blocking refuses {} placed feature(s) in {}", features.size(), level.dimension().location());
+            ContentLog.LOGGER.debug("Generator blocking refuses {} placed feature(s) in {}", features.size(), level.dimension().identifier());
         }
         logging = ContentControl.flag(ContentControl.GENERATORS, "logBlockedGenerators", Config.worldgen.logBlockedGenerators());
         scoped = next;
@@ -117,7 +117,7 @@ public final class ContentGeneratorControl {
         synchronized (BLOCKED) { return Map.copyOf(BLOCKED); }
     }
 
-    @Nullable private static Refused refused(ResourceLocation id, boolean byMod) {
+    @Nullable private static Refused refused(Identifier id, boolean byMod) {
         String owner = id.getNamespace().toLowerCase(Locale.ROOT);
         if (owner.equals("minecraft") || owner.equals(ResourceDataPackLoader.MOD_ID) || ContentWorldgen.entry(id) != null) { return null; }
         String path = id.getPath().toLowerCase(Locale.ROOT);

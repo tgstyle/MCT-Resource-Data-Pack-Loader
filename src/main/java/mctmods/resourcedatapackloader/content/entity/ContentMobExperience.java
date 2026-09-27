@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -16,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantedItemInUse;
 import net.minecraft.world.item.enchantment.EnchantmentEffectComponents;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.scores.Objective;
@@ -36,7 +37,7 @@ public final class ContentMobExperience {
 
     private ContentMobExperience() {}
 
-    public static int level(Entity entity) { return entity.getPersistentData().getInt(LEVEL); }
+    public static int level(Entity entity) { return entity.getPersistentData().getIntOr(LEVEL, 0); }
 
     public static void collect(Mob mob) {
         AABB touch = mob.getBoundingBox().inflate(1.0D, 0.5D, 1.0D);
@@ -56,7 +57,7 @@ public final class ContentMobExperience {
 
     private static void take(Mob mob, ExperienceOrb orb) {
         mob.take(orb, 1);
-        int value = mob.level() instanceof ServerLevel ? mended(mob, orb.value) : orb.value;
+        int value = mob.level() instanceof ServerLevel ? mended(mob, orb.getValue()) : orb.getValue();
         if (value > 0) { add(mob, value); }
         IExperienceOrb held = (IExperienceOrb) orb;
         held.rdpl$setCount(held.rdpl$getCount() - 1);
@@ -64,7 +65,7 @@ public final class ContentMobExperience {
     }
 
     private static int mended(Mob mob, int value) {
-        Optional<EnchantedItemInUse> found = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, mob, stack -> true);
+        Optional<EnchantedItemInUse> found = EnchantmentHelper.getRandomItemWith(EnchantmentEffectComponents.REPAIR_WITH_XP, mob, _ -> true);
         if (found.isEmpty() || !found.get().itemStack().isDamaged()) { return value; }
         ItemStack mended = found.get().itemStack();
         float ratio = MENDING_RATIO * mended.getXpRepairRatio();
@@ -83,9 +84,9 @@ public final class ContentMobExperience {
 
     public static void add(Mob mob, int amount) {
         CompoundTag data = mob.getPersistentData();
-        int level = data.getInt(LEVEL);
-        float progress = data.getFloat(PROGRESS);
-        int total = data.getInt(TOTAL);
+        int level = data.getIntOr(LEVEL, 0);
+        float progress = data.getFloatOr(PROGRESS, 0.0F);
+        int total = data.getIntOr(TOTAL, 0);
         int before = level;
         amount = Math.min(amount, Integer.MAX_VALUE - total);
         progress += (float) amount / cap(level);
@@ -102,14 +103,14 @@ public final class ContentMobExperience {
 
     public static void addLevels(Mob mob, int levels) {
         CompoundTag data = mob.getPersistentData();
-        int level = data.getInt(LEVEL) + levels;
+        int level = data.getIntOr(LEVEL, 0) + levels;
         if (level < 0) {
             level = 0;
             data.putFloat(PROGRESS, 0.0F);
             data.putInt(TOTAL, 0);
         }
         data.putInt(LEVEL, level);
-        scores(mob, level, data.getInt(TOTAL));
+        scores(mob, level, data.getIntOr(TOTAL, 0));
     }
 
     private static int cap(int level) {
@@ -123,8 +124,9 @@ public final class ContentMobExperience {
     }
 
     private static void scores(Mob mob, int level, int total) {
-        if (mob.getServer() == null) { return; }
-        Scoreboard board = Scores.board(mob.getServer());
+        MinecraftServer server = mob.level().getServer();
+        if (server == null) { return; }
+        Scoreboard board = Scores.board(server);
         String row = mob.getStringUUID();
         for (Objective objective : board.getObjectives()) {
             if (objective.getCriteria() == ObjectiveCriteria.EXPERIENCE) { Scores.set(board, row, objective, total); }
@@ -142,7 +144,7 @@ public final class ContentMobExperience {
     public static void onDeath(LivingDeathEvent event) {
         LivingEntity died = event.getEntity();
         if (event.isCanceled() || !(died.level() instanceof ServerLevel level) || !(died instanceof Mob) || ContentEntities.ignoresExperience(died)) { return; }
-        int dropped = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) ? 0 : Math.min(level(died) * 7, 100);
+        int dropped = level.getGameRules().get(GameRules.KEEP_INVENTORY) ? 0 : Math.min(level(died) * 7, 100);
         CompoundTag data = died.getPersistentData();
         data.remove(LEVEL);
         data.remove(PROGRESS);

@@ -5,12 +5,12 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nonnull;
 
 public record MessageHold(boolean held, String warning, boolean fog, boolean backdrop, String font) implements CustomPacketPayload {
-    public static final Type<MessageHold> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "hold"));
+    public static final Type<MessageHold> TYPE = new Type<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "hold"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MessageHold> CODEC = StreamCodec.of((buf, message) -> {
         buf.writeBoolean(message.held);
         buf.writeUtf(message.warning);

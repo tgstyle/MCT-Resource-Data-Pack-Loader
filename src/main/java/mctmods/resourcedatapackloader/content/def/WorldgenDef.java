@@ -1,13 +1,13 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
-public record WorldgenDef(ResourceLocation key, ResourceLocation block, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts,
+public record WorldgenDef(Identifier key, Identifier block, List<BlockWeightDef> blocks, AmountDef size, AmountDef attempts,
         int minHeight, int maxHeight, List<BlockMatchDef> replaces, List<BlockMatchDef> adjacent, boolean replacesGiven, boolean sparse,
         List<String> dimensions, boolean dimensionsAreBlacklist, List<String> biomes, List<String> biomeTypes, boolean biomesAreBlacklist,
         float leastTemperature, float mostTemperature, float leastRainfall, float mostRainfall, int minDistanceFromSpawn, List<String> requires,
-        boolean retrogen, String retrogenKey, List<ResourceLocation> caveRegions, String snap, int snapDepth, SpreadDef spread, ShapeDef shape,
+        boolean retrogen, String retrogenKey, List<Identifier> caveRegions, String snap, int snapDepth, SpreadDef spread, ShapeDef shape,
         List<PickDef> indicators, AmountDef indicatorCount, int indicatorSpread, List<FollowDef> then, AmountDef thenCount, int thenSpread, AmountDef thenDepth, String prospectAs) {
     public static final String FLOOR = "floor";
     public static final String CEILING = "ceiling";

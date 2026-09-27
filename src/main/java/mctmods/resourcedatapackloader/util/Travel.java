@@ -12,7 +12,7 @@ public final class Travel {
 
     public static void to(Entity entity, ServerLevel level, double x, double y, double z, float yaw, float pitch) {
         boolean crossing = entity.level() != level;
-        entity.teleportTo(level, x, y, z, Set.of(), yaw, pitch);
+        entity.teleportTo(level, x, y, z, Set.of(), yaw, pitch, crossing);
         Entity moved = entity;
         if (crossing) {
             moved = Objects.requireNonNullElse(level.getEntity(entity.getUUID()), entity);

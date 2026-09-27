@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.recipe.interfaces;
 
 public interface IRecipeFilter {
-    void rdpl$filterLate();
-
-    void rdpl$filterSkipped();
+    void rdpl$filter(boolean late);
 }

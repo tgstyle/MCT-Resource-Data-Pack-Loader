@@ -10,12 +10,13 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -31,6 +32,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public final class ContentReplacements {
@@ -60,7 +62,7 @@ public final class ContentReplacements {
     public static boolean appliesTo(Level level) {
         if (dimensions == null) { load(); }
         if (dimensions.isEmpty()) { return true; }
-        return dimensions.contains(level.dimension().location().toString()) != blacklist;
+        return dimensions.contains(level.dimension().identifier().toString()) != blacklist;
     }
 
     public static boolean replaces(Level level, BlockState state, int y) { return wanted() && appliesTo(level) && y >= minHeight && y <= maxHeight && replacementFor(state) != null; }
@@ -76,10 +78,11 @@ public final class ContentReplacements {
     }
 
     public static void onChunkLoad(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
+        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
+        LevelChunk chunk = event.getChunk();
         if (!wanted() || !appliesTo(level)) { return; }
         if (ContentChunkTokens.get(chunk).contains(token)) { return; }
-        QUEUES.computeIfAbsent(level.dimension(), key -> new ArrayDeque<>()).add(chunk.getPos());
+        QUEUES.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(chunk.getPos());
     }
 
     public static void onLevelUnload(LevelEvent.Unload event) {
@@ -93,7 +96,7 @@ public final class ContentReplacements {
         boolean worked = false;
         while (!queue.isEmpty() && ContentRetrogen.canCatchUp(level, queue.peekFirst())) {
             ChunkPos pos = queue.removeFirst();
-            LevelChunk chunk = level.getChunk(pos.x, pos.z);
+            LevelChunk chunk = level.getChunk(pos.x(), pos.z());
             Set<String> already = ContentChunkTokens.get(chunk);
             if (already.contains(token)) { continue; }
             replace(level, chunk);
@@ -135,7 +138,7 @@ public final class ContentReplacements {
         }
         if (replaced > 0) {
             chunks++;
-            ContentLog.LOGGER.debug("Replaced {} block(s) in chunk {} of {}", replaced, chunk.getPos(), level.dimension().location());
+            ContentLog.LOGGER.debug("Replaced {} block(s) in chunk {} of {}", replaced, chunk.getPos(), level.dimension().identifier());
         }
     }
 
@@ -162,7 +165,7 @@ public final class ContentReplacements {
         if (logging && REPORTED.add(key)) { ContentLog.LOGGER.info("Replacing {} in chunks that already exist", key); }
     }
 
-    private static String name(BlockState state) { return BuiltInRegistries.BLOCK.getKey(state.getBlock()) + (state.getValues().isEmpty() ? "" : state.getValues().toString()); }
+    private static String name(BlockState state) { return BuiltInRegistries.BLOCK.getKey(state.getBlock()) + (state.isSingletonState() ? "" : state.getValues().map(Property.Value::toString).collect(Collectors.joining(", ", "{", "}"))); }
 
     private static void load() {
         dimensions = new HashSet<>();
@@ -210,7 +213,7 @@ public final class ContentReplacements {
                 if (halves.length == 2) { properties.put(halves[0].trim(), halves[1].trim()); }
             }
         }
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        Identifier id = Identifier.tryParse(name);
         Block block = Registered.find(BuiltInRegistries.BLOCK, id);
         if (block == null) {
             ContentLog.LOGGER.error("blockReplacements entry '{}' names '{}', which is not a registered block, ignoring it", entry, name);

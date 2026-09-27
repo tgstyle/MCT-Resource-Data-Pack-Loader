@@ -25,7 +25,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityFarmPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityFarmPiece::new;
     private static final long CROP_SALT = 0x6A7F11L;
     private static final String LEVEL = "Level";
@@ -72,18 +72,18 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
 
     public ContentCityFarmPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.edge = tag.getString(EDGE);
-        this.soil = tag.getString(SOIL);
-        this.ground = tag.getString(GROUND);
-        this.crops = tag.getString(CROPS);
-        this.water = tag.getBoolean(WATER);
-        this.row = tag.getInt(ROW);
-        this.plot = tag.getString(PLOT);
-        this.height = tag.contains(HEIGHT) ? tag.getInt(HEIGHT) : boundingBox.maxY() - tag.getInt(LEVEL);
-        this.turn = tag.contains(TURN) ? Rotation.valueOf(tag.getString(TURN)) : Rotation.NONE;
-        this.keep = tag.getIntArray(KEEP);
-        this.roads = tag.getIntArray(ROADS);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.edge = tag.getStringOr(EDGE, "");
+        this.soil = tag.getStringOr(SOIL, "");
+        this.ground = tag.getStringOr(GROUND, "");
+        this.crops = tag.getStringOr(CROPS, "");
+        this.water = tag.getBooleanOr(WATER, false);
+        this.row = tag.getIntOr(ROW, 0);
+        this.plot = tag.getStringOr(PLOT, "");
+        this.height = tag.contains(HEIGHT) ? tag.getIntOr(HEIGHT, 0) : boundingBox.maxY() - tag.getIntOr(LEVEL, 0);
+        this.turn = tag.contains(TURN) ? Rotation.valueOf(tag.getStringOr(TURN, "")) : Rotation.NONE;
+        this.keep = tag.getIntArray(KEEP).orElse(new int[0]);
+        this.roads = tag.getIntArray(ROADS).orElse(new int[0]);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -170,13 +170,13 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         for (int z = 0; z <= lastZ; z++) {
             for (int x = 0; x <= lastX; x++) {
                 BlockPos top = world(x, height, z);
-                for (int y = top.getY(); y < world.getMaxBuildHeight(); y++) {
+                for (int y = top.getY(); y <= world.getMaxY(); y++) {
                     at.set(top.getX(), y, top.getZ());
                     if (!box.isInside(at) || world.getBlockState(at).isAir()) { break; }
                     world.setBlock(at, air, 2);
                 }
                 BlockPos foot = world(x, -1, z);
-                for (int y = foot.getY(); y > world.getMinBuildHeight(); y--) {
+                for (int y = foot.getY(); y > world.getMinY(); y--) {
                     at.set(foot.getX(), y, foot.getZ());
                     if (!box.isInside(at)) { break; }
                     BlockState below = world.getBlockState(at);

@@ -25,13 +25,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
@@ -77,7 +78,7 @@ public final class BlockDrops extends LootModifier {
 
     static { REGISTER.register("block_drops", () -> CODEC); }
 
-    public BlockDrops(LootItemCondition[] conditions) { super(conditions); }
+    public BlockDrops(LootItemCondition[] conditions, int priority) { super(conditions, priority); }
 
     @Override @Nonnull public MapCodec<? extends IGlobalLootModifier> codec() { return CODEC; }
 
@@ -94,7 +95,7 @@ public final class BlockDrops extends LootModifier {
         if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
+    private static void read(Identifier key, String contents, int[] count) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Block drops {} is empty, ignoring it", key);
@@ -129,11 +130,11 @@ public final class BlockDrops extends LootModifier {
             return;
         }
         List<BlockState> states = match.properties().isEmpty() ? null : ContentStates.matching(block, match.properties(), key);
-        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(states, GsonHelper.getAsBoolean(json, REPLACE, false), GsonHelper.getAsString(json, ADVANCEMENT, "").trim(), drops));
+        BY_BLOCK.computeIfAbsent(block, _ -> new ArrayList<>()).add(new Rule(states, GsonHelper.getAsBoolean(json, REPLACE, false), GsonHelper.getAsString(json, ADVANCEMENT, "").trim(), drops));
         count[0]++;
     }
 
-    @Nullable private static Drop drop(ResourceLocation key, JsonObject json) {
+    @Nullable private static Drop drop(Identifier key, JsonObject json) {
         boolean experience = json.has(EXPERIENCE);
         ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, GsonHelper.getAsString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }
@@ -147,7 +148,7 @@ public final class BlockDrops extends LootModifier {
         return new Drop(item, experience, count, Mth.clamp(GsonHelper.getAsFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, GsonHelper.getAsInt(json, FORTUNE, 0)), silkTouch);
     }
 
-    @Nullable private static AmountDef amount(ResourceLocation key, JsonObject json, String name) {
+    @Nullable private static AmountDef amount(Identifier key, JsonObject json, String name) {
         if (!json.has(name)) { return new AmountDef(1, 1); }
         String count = json.get(name).getAsString().trim();
         String[] parts = count.split("-", 2);
@@ -176,14 +177,14 @@ public final class BlockDrops extends LootModifier {
 
     private static ObjectArrayList<ItemStack> rolled(ObjectArrayList<ItemStack> generatedLoot, LootContext context) {
         if (Config.data.blockDropsOff()) { return generatedLoot; }
-        BlockState state = context.getParamOrNull(LootContextParams.BLOCK_STATE);
-        Vec3 origin = context.getParamOrNull(LootContextParams.ORIGIN);
+        BlockState state = context.getOptionalParameter(LootContextParams.BLOCK_STATE);
+        Vec3 origin = context.getOptionalParameter(LootContextParams.ORIGIN);
         if (state == null || origin == null) { return generatedLoot; }
         if (GENERATION.stale()) { reload(); }
         List<Rule> rules = BY_BLOCK.get(state.getBlock());
         if (rules == null) { return generatedLoot; }
-        Player player = context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
-        roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, context.getParamOrNull(LootContextParams.TOOL), context.getParamOrNull(LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
+        Player player = context.getOptionalParameter(LootContextParams.THIS_ENTITY) instanceof Player held ? held : null;
+        roll(rules, generatedLoot, state, context.getLevel(), BlockPos.containing(origin), player, context.getOptionalParameter(LootContextParams.TOOL), context.getOptionalParameter(LootContextParams.EXPLOSION_RADIUS), context.getRandom(), false);
         return generatedLoot;
     }
 
@@ -197,7 +198,7 @@ public final class BlockDrops extends LootModifier {
         return dropped;
     }
 
-    private static void roll(List<Rule> rules, ObjectArrayList<ItemStack> generatedLoot, BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool, @Nullable Float radius, RandomSource random, boolean prospecting) {
+    private static void roll(List<Rule> rules, ObjectArrayList<ItemStack> generatedLoot, BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemInstance tool, @Nullable Float radius, RandomSource random, boolean prospecting) {
         boolean silk = silk(state, level, pos, player, tool);
         boolean withheld = prospecting && !silk;
         int fortuneLevel = silk || tool == null ? 0 : level(level, tool, Enchantments.FORTUNE);
@@ -222,7 +223,7 @@ public final class BlockDrops extends LootModifier {
         }
     }
 
-    private static boolean silk(BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool) { return player != null && tool != null && level(level, tool, Enchantments.SILK_TOUCH) > 0 && silkHarvests(state, level, pos); }
+    private static boolean silk(BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemInstance tool) { return player != null && tool != null && level(level, tool, Enchantments.SILK_TOUCH) > 0 && silkHarvests(state, level, pos); }
 
     private static boolean silkHarvests(BlockState state, ServerLevel level, BlockPos pos) {
         Block block = state.getBlock();
@@ -230,7 +231,7 @@ public final class BlockDrops extends LootModifier {
         return !state.hasBlockEntity() && Block.isShapeFullBlock(block.defaultBlockState().getShape(level, pos));
     }
 
-    static int level(ServerLevel level, ItemStack tool, ResourceKey<Enchantment> enchantment) {
-        return level.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolder(enchantment).map(tool::getEnchantmentLevel).orElse(0);
+    static int level(ServerLevel level, ItemInstance tool, ResourceKey<Enchantment> enchantment) {
+        return level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(enchantment).map(tool::getEnchantmentLevel).orElse(0);
     }
 }

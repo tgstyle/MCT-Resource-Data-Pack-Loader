@@ -97,7 +97,7 @@ public final class PathShortcut {
                 PathType feet = type(mob, context, cx, y, cz, size, height);
                 float malus = mob.getPathfindingMalus(feet);
                 if (malus < 0.0F || malus >= AVOIDED) { return true; }
-                if (feet == PathType.DAMAGE_FIRE || feet == PathType.DANGER_FIRE || feet == PathType.DAMAGE_OTHER) { return true; }
+                if (feet == PathType.FIRE || feet == PathType.FIRE_IN_NEIGHBOR || feet == PathType.DAMAGING) { return true; }
             }
         }
         return false;

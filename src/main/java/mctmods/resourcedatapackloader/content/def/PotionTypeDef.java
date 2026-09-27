@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
-public record PotionTypeDef(ResourceLocation key, String baseName, List<PotionEffectDef> effects, List<String> requires) {}
+public record PotionTypeDef(Identifier key, String baseName, List<PotionEffectDef> effects, List<String> requires) {}

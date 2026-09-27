@@ -14,7 +14,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
@@ -46,18 +46,18 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
     public static final String ENTRANCE = "minecraft:building_entrance";
     private final String plot;
 
-    private ContentPlotPoolElement(Either<ResourceLocation, StructureTemplate> template, Holder<StructureProcessorList> processors, StructureTemplatePool.Projection projection, @Nullable LiquidSettings liquids, String plot) {
+    private ContentPlotPoolElement(Either<Identifier, StructureTemplate> template, Holder<StructureProcessorList> processors, StructureTemplatePool.Projection projection, @Nullable LiquidSettings liquids, String plot) {
         super(template, processors, projection, Optional.ofNullable(liquids));
         this.plot = plot;
     }
 
     public static ContentPlotPoolElement of(VillageDef def) {
         StructureProcessorList processors = new StructureProcessorList(List.of());
-        return new ContentPlotPoolElement(Either.left(ResourceLocation.tryParse(def.structure())), Holder.direct(processors), StructureTemplatePool.Projection.RIGID, null, def.key().toString());
+        return new ContentPlotPoolElement(Either.left(Identifier.tryParse(def.structure())), Holder.direct(processors), StructureTemplatePool.Projection.RIGID, null, def.key().toString());
     }
 
-    @Override @Nonnull public List<StructureTemplate.StructureBlockInfo> getShuffledJigsawBlocks(@Nonnull StructureTemplateManager manager, @Nonnull BlockPos pos, @Nonnull Rotation rotation, @Nonnull RandomSource random) {
-        List<StructureTemplate.StructureBlockInfo> found = new ArrayList<>(super.getShuffledJigsawBlocks(manager, pos, rotation, random));
+    @Override @Nonnull public List<StructureTemplate.JigsawBlockInfo> getShuffledJigsawBlocks(@Nonnull StructureTemplateManager manager, @Nonnull BlockPos pos, @Nonnull Rotation rotation, @Nonnull RandomSource random) {
+        List<StructureTemplate.JigsawBlockInfo> found = new ArrayList<>(super.getShuffledJigsawBlocks(manager, pos, rotation, random));
         Vec3i size = manager.getOrCreate(template.left().orElseThrow()).getSize();
         BlockPos at = pos.offset(StructureTemplate.calculateRelativePosition(new StructurePlaceSettings().setRotation(rotation), new BlockPos(size.getX() / 2, 0, 0)));
         CompoundTag tag = new CompoundTag();
@@ -66,7 +66,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
         tag.putString("pool", "minecraft:empty");
         tag.putString("joint", "aligned");
         tag.putString("final_state", "minecraft:air");
-        found.addFirst(new StructureTemplate.StructureBlockInfo(at, Blocks.JIGSAW.defaultBlockState().setValue(JigsawBlock.ORIENTATION, FrontAndTop.fromFrontAndTop(rotation.rotate(Direction.NORTH), Direction.UP)), tag));
+        found.addFirst(StructureTemplate.JigsawBlockInfo.of(new StructureTemplate.StructureBlockInfo(at, Blocks.JIGSAW.defaultBlockState().setValue(JigsawBlock.ORIENTATION, FrontAndTop.fromFrontAndTop(rotation.rotate(Direction.NORTH), Direction.UP)), tag)));
         return found;
     }
 
@@ -76,7 +76,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
         if (def == null) { return true; }
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation);
         BoundingBox held = getBoundingBox(manager, offset, rotation);
-        ResourceLocation table = def.lootTable().isEmpty() ? null : ResourceLocation.tryParse(def.lootTable());
+        Identifier table = def.lootTable().isEmpty() ? null : Identifier.tryParse(def.lootTable());
         if (table != null) {
             for (BlockPos spot : level.getChunk(box.minX() >> 4, box.minZ() >> 4).getBlockEntitiesPos()) {
                 if (!held.isInside(spot) || !box.isInside(spot)) { continue; }

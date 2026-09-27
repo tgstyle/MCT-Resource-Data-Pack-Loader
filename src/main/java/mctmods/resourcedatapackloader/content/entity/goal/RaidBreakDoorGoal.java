@@ -84,7 +84,7 @@ public final class RaidBreakDoorGoal extends Goal {
 
     private void grant(boolean raiding) {
         if (!(mob.getNavigation() instanceof GroundPathNavigation navigation) || raiding == granted) { return; }
-        navigation.setCanPassDoors(true);
+        navigation.getNodeEvaluator().setCanPassDoors(true);
         navigation.setCanOpenDoors(raiding);
         granted = raiding;
     }
@@ -107,7 +107,7 @@ public final class RaidBreakDoorGoal extends Goal {
     }
 
     private boolean breakable(BlockPos at) {
-        Level level = mob.level();
+        if (!(mob.level() instanceof ServerLevel level)) { return false; }
         BlockState state = level.getBlockState(at);
         return hardEnough() && EventHooks.canEntityGrief(level, mob) && state.canEntityDestroy(level, at, mob) && EventHooks.onEntityDestroyBlock(mob, at, state);
     }

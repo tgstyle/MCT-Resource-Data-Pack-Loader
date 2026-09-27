@@ -13,7 +13,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
@@ -21,7 +21,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
@@ -53,7 +53,7 @@ public final class PlayerLoot {
         if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents) {
+    private static void read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Player loot {} is empty, ignoring it", key);
@@ -64,7 +64,7 @@ public final class PlayerLoot {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
             return;
         }
-        ResourceLocation named = ContentParser.location(table);
+        Identifier named = ContentParser.location(table);
         if (named == null) {
             ContentLog.LOGGER.error("Player loot {} names the table '{}', which is not a valid id, ignoring it", key, table);
             return;
@@ -81,8 +81,8 @@ public final class PlayerLoot {
         if (Config.data.playerLootOff()) { return; }
         if (GENERATION.stale()) { reload(); }
         if (ENTRIES.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
-        ServerLevel level = player.serverLevel();
-        boolean keeping = level.getGameRules().getBoolean(GameRules.RULE_KEEPINVENTORY) || player.isSpectator();
+        ServerLevel level = player.level();
+        boolean keeping = level.getGameRules().get(GameRules.KEEP_INVENTORY) || player.isSpectator();
         List<Entry> rolling = new ArrayList<>();
         boolean replacing = false;
         for (Entry entry : ENTRIES) {

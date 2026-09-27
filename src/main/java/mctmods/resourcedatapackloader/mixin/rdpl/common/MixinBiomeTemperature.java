@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Shadow public abstract float getBaseTemperature();
 
-    @Inject(method = "getHeightAdjustedTemperature", at = @At("HEAD"), cancellable = true) private void rdpl$packCurve(BlockPos pos, CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getHeightAdjustedTemperature(Lnet/minecraft/core/BlockPos;I)F", at = @At("HEAD"), cancellable = true) private void rdpl$packCurve(BlockPos pos, int seaLevel, CallbackInfoReturnable<Float> cir) {
         float[] curve = rdpl$curve.get(() -> {
             int center = ContentControl.number(ContentControl.TERRAIN, "biomeTemperatureCenterY", Integer.MIN_VALUE);
             int top = ContentControl.number(ContentControl.TERRAIN, "biomeTemperatureScaleMaxY", Integer.MIN_VALUE);

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.Compat;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
@@ -27,7 +29,6 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.LegacyRandomSource;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
@@ -37,8 +38,6 @@ import net.minecraft.world.level.levelgen.RandomSupport;
 import net.minecraft.world.level.levelgen.WorldgenRandom;
 import net.minecraft.world.level.levelgen.blending.Blender;
 import net.minecraft.world.level.levelgen.feature.Feature;
-import net.minecraft.world.level.levelgen.feature.LakeFeature;
-import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.level.levelgen.flat.FlatLevelGeneratorSettings;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
@@ -123,7 +122,7 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
 
     @Override @Nonnull public NoiseColumn getBaseColumn(int x, int z, @Nonnull LevelHeightAccessor level, @Nonnull RandomState random) { return flat.getBaseColumn(x, z, level, random); }
 
-    @Override public void applyCarvers(@Nonnull WorldGenRegion level, long seed, @Nonnull RandomState random, @Nonnull BiomeManager biomes, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk, @Nonnull GenerationStep.Carving step) {}
+    @Override public void applyCarvers(@Nonnull WorldGenRegion level, long seed, @Nonnull RandomState random, @Nonnull BiomeManager biomes, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk) {}
 
     @Override public void applyBiomeDecoration(@Nonnull WorldGenLevel level, @Nonnull ChunkAccess chunk, @Nonnull StructureManager structures) {
         if ((waterLakes || lavaLakes) && !villaged(level, chunk, structures)) { placeLakes(level, chunk.getPos()); }
@@ -131,14 +130,14 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
     }
 
     private static boolean villaged(WorldGenLevel level, ChunkAccess chunk, StructureManager structures) {
-        Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         return !structures.startsForStructure(chunk.getPos(), structure -> registry.wrapAsHolder(structure).is(StructureTags.VILLAGE)).isEmpty();
     }
 
     private void placeLakes(WorldGenLevel level, ChunkPos at) {
         WorldgenRandom random = new WorldgenRandom(new LegacyRandomSource(RandomSupport.generateUniqueSeed()));
         random.setDecorationSeed(level.getSeed(), at.getMinBlockX(), at.getMinBlockZ());
-        int bottom = level.getMinBuildHeight();
+        int bottom = level.getMinY();
         if (waterLakes && random.nextInt(4) == 0) { lake(level, random, Blocks.WATER, Blocks.AIR, corner(at, random.nextInt(16), bottom + random.nextInt(level.getHeight()), random.nextInt(16))); }
         if (lavaLakes && random.nextInt(8) == 0) {
             BlockPos pos = corner(at, random.nextInt(16), bottom + random.nextInt(random.nextInt(level.getHeight() - 8) + 8), random.nextInt(16));
@@ -148,10 +147,10 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
 
     private static BlockPos corner(ChunkPos at, int x, int y, int z) { return at.getBlockAt(Math.min(x, LAKE_CORNER), y, Math.min(z, LAKE_CORNER)); }
 
-    @SuppressWarnings("deprecation") private void lake(WorldGenLevel level, WorldgenRandom random, Block fluid, Block barrier, BlockPos at) {
+    private void lake(WorldGenLevel level, WorldgenRandom random, Block fluid, Block barrier, BlockPos at) {
         BlockPos pos = at;
-        while (pos.getY() > level.getMinBuildHeight() + 5 && level.isEmptyBlock(pos)) { pos = pos.below(); }
-        if (Feature.LAKE.place(new LakeFeature.Configuration(BlockStateProvider.simple(fluid), BlockStateProvider.simple(barrier)), level, this, random, pos)) { grassRim(level, pos.below(4)); }
+        while (pos.getY() > level.getMinY() + 5 && level.isEmptyBlock(pos)) { pos = pos.below(); }
+        if (Feature.LAKE.place(Compat.lake(fluid, barrier), level, this, random, pos.offset(8, 0, 8))) { grassRim(level, pos.below(4)); }
     }
 
     private static void grassRim(WorldGenLevel level, BlockPos corner) {
@@ -170,7 +169,7 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
 
     private static boolean skyLit(WorldGenLevel level, BlockPos from) {
         int light = 15;
-        for (BlockPos.MutableBlockPos pos = from.mutable(); light > 0 && pos.getY() < level.getMaxBuildHeight(); pos.move(Direction.UP)) { light -= level.getBlockState(pos).getLightBlock(level, pos); }
+        for (BlockPos.MutableBlockPos pos = from.mutable(); light > 0 && pos.getY() <= level.getMaxY(); pos.move(Direction.UP)) { light -= level.getBlockState(pos).getLightDampening(); }
         return light > 0;
     }
 

@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -73,7 +73,7 @@ public final class ContentCityStructure extends Structure {
 
     record District(Map<CityPlan.Line, Street> streets, List<Well> wells, List<BoundingBox> claims) {}
 
-    record Well(@Nullable ResourceLocation template, int tall, BoundingBox box, int level, CityPlan.Junction middle) {}
+    record Well(@Nullable Identifier template, int tall, BoundingBox box, int level, CityPlan.Junction middle) {}
 
     private static void pieces(GenerationContext context, CityGround ground, CityPlan plan, StructurePiecesBuilder builder) {
         Map<CityPlan.Junction, Integer> levels = new HashMap<>();
@@ -104,7 +104,7 @@ public final class ContentCityStructure extends Structure {
         for (CityPlan.Line line : plan.alongX()) { profiles.put(line, ContentCityStructurePaving.lay(context, plan, line, levels, run, rails, wells, decks, seats, laid, bulbs, hatches, builder)); }
         for (CityPlan.Line line : plan.alongZ()) { profiles.put(line, ContentCityStructurePaving.lay(context, plan, line, levels, run, rails, wells, decks, seats, laid, bulbs, hatches, builder)); }
         ContentCityStructurePaving.overpasses(plan, laid, builder);
-        if (ContentCity.sewers()) { ContentCityStructureSewers.joins(plan, context.heightAccessor().getMinBuildHeight(), laid, wells, builder); }
+        if (ContentCity.sewers()) { ContentCityStructureSewers.joins(plan, context.heightAccessor().getMinY(), laid, wells, builder); }
         Map<CityPlan.Line, Street> streets = new HashMap<>();
         for (Map.Entry<CityPlan.Line, Laid> entry : laid.entrySet()) { streets.put(entry.getKey(), new Street(entry.getValue().start(), seats.get(entry.getKey()), entry.getValue().roofed())); }
         ContentCityStructureSite.courtStreets(ground, plan, streets, profiles);

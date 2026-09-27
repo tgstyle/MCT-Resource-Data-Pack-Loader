@@ -10,7 +10,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.BlockGetter;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.BonemealableBlock;
-import net.minecraft.world.level.block.BushBlock;
+import net.minecraft.world.level.block.VegetationBlock;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -33,7 +33,7 @@ import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
-public final class ContentSaplingBlock extends BushBlock implements BonemealableBlock {
+public final class ContentSaplingBlock extends VegetationBlock implements BonemealableBlock {
     private static final ThreadLocal<IntegerProperty> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
@@ -41,23 +41,23 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
     private final TreeGrower grower;
     private Set<Block> soil = Collections.emptySet();
 
-    public static ContentSaplingBlock create(BlockDef def, ResourceLocation id, Properties properties) {
+    public static ContentSaplingBlock create(BlockDef def, Identifier id, Properties properties) {
         SaplingDef sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", List.of(), "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
         PENDING.set(IntegerProperty.create("stage", 0, Math.max(1, sapling.stages() - 1)));
         try { return new ContentSaplingBlock(def, sapling, id, properties, PENDING.get()); }
         finally { PENDING.remove(); }
     }
 
-    private ContentSaplingBlock(BlockDef def, SaplingDef sapling, ResourceLocation id, Properties properties, IntegerProperty stage) {
+    private ContentSaplingBlock(BlockDef def, SaplingDef sapling, Identifier id, Properties properties, IntegerProperty stage) {
         super(properties);
         this.def = def;
         this.sapling = sapling;
         this.stage = stage;
-        this.grower = new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), Optional.empty());
+        this.grower = new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), Optional.empty());
         registerDefaultState(stateDefinition.any().setValue(stage, 0));
     }
 
-    @Override @Nonnull protected MapCodec<? extends BushBlock> codec() { return MapCodec.unit(this); }
+    @Override @Nonnull protected MapCodec<? extends VegetationBlock> codec() { return MapCodec.unit(this); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
@@ -92,7 +92,7 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
 
     private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {
         String grown = sapling.growsInto(random);
-        ResourceLocation named = ResourceLocation.tryParse(grown);
+        Identifier named = Identifier.tryParse(grown);
         Optional<StructureTemplate> held = named == null ? Optional.empty() : level.getStructureManager().get(named);
         if (held.isEmpty()) {
             ContentLog.LOGGER.error("Sapling {} grows into structure '{}', which could not be loaded, so it stays a sapling", def.key(), grown);

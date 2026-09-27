@@ -29,7 +29,7 @@ public final class SleepByDayGoal extends Goal {
     private boolean calm() { return mob.getTarget() == null && mob.getLastHurtByMob() == null; }
 
     @Override public boolean canUse() {
-        if (!mob.level().isDay() || !calm()) { return false; }
+        if (!mob.level().isBrightOutside() || !calm()) { return false; }
         BlockPos feet = mob.blockPosition();
         if (covered(feet)) {
             shade = feet;
@@ -53,7 +53,7 @@ public final class SleepByDayGoal extends Goal {
 
     private boolean covered(BlockPos feet) { return mob.level().getHeight(Heightmap.Types.MOTION_BLOCKING, feet.getX(), feet.getZ()) > feet.getY() + 1; }
 
-    @Override public boolean canContinueToUse() { return mob.level().isDay() && calm() && shade != null; }
+    @Override public boolean canContinueToUse() { return mob.level().isBrightOutside() && calm() && shade != null; }
 
     @Override public void start() {
         settled = false;

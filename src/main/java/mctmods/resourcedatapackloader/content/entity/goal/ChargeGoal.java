@@ -1,6 +1,10 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.Compat;
+
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -55,8 +59,9 @@ public final class ChargeGoal extends Goal {
         mob.getNavigation().moveTo(target, speed);
         if (mob.distanceToSqr(target) > 6.25D) { return; }
         float damage = (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE);
-        target.hurt(mob.damageSources().mobAttack(mob), damage);
-        target.knockback(2.0D, Mth.sin(mob.getYRot() * 0.017453292F), -Mth.cos(mob.getYRot() * 0.017453292F));
+        DamageSource source = mob.damageSources().mobAttack(mob);
+        if (target.level() instanceof ServerLevel level) { target.hurtServer(level, source, damage); }
+        Compat.knockback(target, 2.0D, Mth.sin(mob.getYRot() * 0.017453292F), -Mth.cos(mob.getYRot() * 0.017453292F), source, damage);
         running = 0;
     }
 }

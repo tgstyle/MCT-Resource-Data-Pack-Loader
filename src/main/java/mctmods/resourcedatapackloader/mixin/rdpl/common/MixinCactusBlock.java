@@ -8,5 +8,5 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(CactusBlock.class) public abstract class MixinCactusBlock {
-    @ModifyConstant(method = "randomTick", constant = @Constant(intValue = 3)) private int rdpl$growthLimit(int original) { return Config.content.cactusMaxHeight(); }
+    @ModifyConstant(method = "randomTick(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V", constant = @Constant(intValue = 3)) private int rdpl$growthLimit(int original) { return Config.content.cactusMaxHeight(); }
 }

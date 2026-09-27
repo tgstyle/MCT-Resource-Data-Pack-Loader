@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 
-public record PortalFrameDef(ResourceLocation key, String name, String axis, Map<Character, BlockMatchDef> legend, List<String> rows, int maxWidth, int maxHeight) {
+public record PortalFrameDef(Identifier key, String name, String axis, Map<Character, BlockMatchDef> legend, List<String> rows, int maxWidth, int maxHeight) {
     public static final char HOLE = '.';
     public static final char SKIP = ' ';
     public static final char REPEAT = '*';

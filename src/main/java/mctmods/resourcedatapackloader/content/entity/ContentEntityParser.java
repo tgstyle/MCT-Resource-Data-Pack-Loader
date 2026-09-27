@@ -12,7 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public final class ContentEntityParser {
 
     private ContentEntityParser() {}
 
-    @Nullable public static EntityVariantDef parse(ResourceLocation key, String contents) {
+    @Nullable public static EntityVariantDef parse(Identifier key, String contents) {
         JsonObject json;
         try { json = GSON.fromJson(contents, JsonObject.class); }
         catch (JsonParseException ex) {
@@ -38,7 +38,7 @@ public final class ContentEntityParser {
             ContentLog.LOGGER.error("Entity file {} is empty, ignoring it", key);
             return null;
         }
-        ResourceLocation base = ContentParser.location(GsonHelper.getAsString(json, "entity", ""));
+        Identifier base = ContentParser.location(GsonHelper.getAsString(json, "entity", ""));
         if (base == null) {
             ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
             return null;
@@ -128,7 +128,7 @@ public final class ContentEntityParser {
         return Mth.clamp(GsonHelper.getAsFloat(json, "baby", 0.0F), 0.0F, 1.0F);
     }
 
-    private static List<PickDef> picks(ResourceLocation key, JsonObject json) {
+    private static List<PickDef> picks(Identifier key, JsonObject json) {
         List<PickDef> picks = new ArrayList<>();
         if (!json.has("becomes")) { return picks; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "becomes")) {
@@ -146,7 +146,7 @@ public final class ContentEntityParser {
         return picks;
     }
 
-    private static Map<String, Integer> effects(ResourceLocation key, JsonObject json) {
+    private static Map<String, Integer> effects(Identifier key, JsonObject json) {
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (!json.has("effects")) { return effects; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
@@ -160,7 +160,7 @@ public final class ContentEntityParser {
         return effects;
     }
 
-    private static List<SpawnEntryDef> spawns(ResourceLocation key, JsonObject json) {
+    private static List<SpawnEntryDef> spawns(Identifier key, JsonObject json) {
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (!json.has("spawns")) { return spawns; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "spawns")) {
@@ -175,7 +175,7 @@ public final class ContentEntityParser {
         return spawns;
     }
 
-    private static Map<String, Double> doubles(ResourceLocation key, JsonObject json, String member, String what) {
+    private static Map<String, Double> doubles(Identifier key, JsonObject json, String member, String what) {
         Map<String, Double> found = new LinkedHashMap<>();
         if (!json.has(member)) { return found; }
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, member).entrySet()) {
@@ -188,13 +188,13 @@ public final class ContentEntityParser {
         return found;
     }
 
-    private static Map<String, Float> pathPriorities(ResourceLocation key, JsonObject json) {
+    private static Map<String, Float> pathPriorities(Identifier key, JsonObject json) {
         Map<String, Float> found = new LinkedHashMap<>();
         for (Map.Entry<String, Double> entry : doubles(key, json, "pathPriorities", "path priority").entrySet()) { found.put(entry.getKey(), entry.getValue().floatValue()); }
         return found;
     }
 
-    private static Map<String, String> equipment(ResourceLocation key, JsonObject json) {
+    private static Map<String, String> equipment(Identifier key, JsonObject json) {
         Map<String, String> found = new LinkedHashMap<>();
         if (!json.has("equipment")) { return found; }
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "equipment").entrySet()) {

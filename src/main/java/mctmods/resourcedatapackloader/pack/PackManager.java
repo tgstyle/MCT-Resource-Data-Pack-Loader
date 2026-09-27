@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -184,7 +184,7 @@ public final class PackManager {
             for (RDPLPack pack : packs) {
                 Map<String, Map<String, Entry>> target = (pack.isOverriding() ? mergedOverride : mergedNormal).get(type);
                 for (String namespace : pack.getNamespaces(type)) {
-                    Map<String, Entry> paths = target.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
+                    Map<String, Entry> paths = target.computeIfAbsent(namespace, _ -> new ConcurrentHashMap<>());
                     for (String path : pack.getPaths(type, namespace)) {
                         String lowered = lower(path);
                         Entry prev = paths.get(lowered);
@@ -246,7 +246,7 @@ public final class PackManager {
                 zip.close();
                 return null;
             }
-            PackPort port = pack.ported();
+            IPackPort port = pack.ported();
             if (port == null) { return pack; }
             Path written = PackVersions.write(entry, port);
             if (written == null) { return pack; }
@@ -354,7 +354,7 @@ public final class PackManager {
     @Nullable public InputStream openRaw(PackType type, String namespace, String path, boolean overriding) throws IOException {
         Entry entry = resolve(type, namespace, path, overriding);
         if (entry != null) { return entry.pack().open(type, namespace, entry.actual()); }
-        if (!drawable(type, path)) { return null; }
+        if (!drawable(type, path) || !ContentPixelMaps.exists(namespace, path, overriding)) { return null; }
         byte[] drawn = ContentPixelMaps.made(namespace, path, overriding);
         return drawn == null ? null : new ByteArrayInputStream(drawn);
     }

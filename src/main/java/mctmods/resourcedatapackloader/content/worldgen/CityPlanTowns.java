@@ -183,7 +183,7 @@ final class CityPlanTowns {
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
                 int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
                 if (center == null) { continue; }
-                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), key -> CityGrowth.grow(ground, center[0], center[1], spacing));
+                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
                 if (!city.districts().isEmpty()) { found.add(town(ground, city)); }
             }
         }
@@ -205,7 +205,7 @@ final class CityPlanTowns {
             Town town = CityLayout.mapTown(ground, map, center[0], center[1], true);
             return town == null || CityGrowth.tooSmall(ground, map, center[0], center[1], true, town) ? null : town;
         }
-        City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), key -> CityGrowth.grow(ground, center[0], center[1], spacing));
+        City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
         return city.districts().isEmpty() ? null : town(ground, city);
     }
 
@@ -267,7 +267,7 @@ final class CityPlanTowns {
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
                 int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
                 if (center == null) { continue; }
-                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), key -> CityGrowth.grow(ground, center[0], center[1], spacing));
+                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
                 if (city.has(districtX, districtZ)) { return city; }
             }
         }
@@ -287,7 +287,7 @@ final class CityPlanTowns {
 
     @Nullable static CityPlan plan(CityGround ground, int districtX, int districtZ, @Nullable int[] city) {
         List<Long> held = city == null ? List.of(CityPlan.packed(districtX, districtZ)) : List.of(CityPlan.packed(districtX, districtZ), CityPlan.packed(city[0], city[1]));
-        return PLANS.computeIfAbsent(held, key -> build(ground, districtX, districtZ, city)).orElse(null);
+        return PLANS.computeIfAbsent(held, _ -> build(ground, districtX, districtZ, city)).orElse(null);
     }
 
     private static Optional<CityPlan> build(CityGround ground, int districtX, int districtZ, @Nullable int[] city) { return Optional.of(laid(ground, districtX, districtZ, city == null ? districtTown(ground, districtX, districtZ) : protoTown(ground, city[0], city[1]))); }

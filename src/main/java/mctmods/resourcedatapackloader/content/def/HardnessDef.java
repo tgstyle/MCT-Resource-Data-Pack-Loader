@@ -2,11 +2,11 @@ package mctmods.resourcedatapackloader.content.def;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentField;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import java.util.List;
 
-public record HardnessDef(ResourceLocation key, List<BlockMatchDef> blocks, List<BlockMatchDef> except, float leastMining, float mostMining, float leastBlast, float mostBlast, int buckets, int minHeight, int maxHeight, List<String> requires, ContentField field,
+public record HardnessDef(Identifier key, List<BlockMatchDef> blocks, List<BlockMatchDef> except, float leastMining, float mostMining, float leastBlast, float mostBlast, int buckets, int minHeight, int maxHeight, List<String> requires, ContentField field,
                           boolean keeps, boolean adventure, List<String> tools, List<String> teams, List<String> players, List<String> entities, String advancement, String becomesOn, String becomes) {
     public boolean swaps() { return !becomesOn.isEmpty() && !becomes.isEmpty(); }
 

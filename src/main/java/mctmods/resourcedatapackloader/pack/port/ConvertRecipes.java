@@ -159,7 +159,7 @@ final class ConvertRecipes {
             String ore = entry.getKey();
             if (ore.startsWith("_") || !entry.getValue().isJsonArray()) { continue; }
             boolean removing = ore.startsWith("-");
-            JsonObject file = tags.computeIfAbsent(Ids.oreDictTag(removing ? ore.substring(1) : ore), tag -> tagFile());
+            JsonObject file = tags.computeIfAbsent(Ids.oreDictTag(removing ? ore.substring(1) : ore), _ -> tagFile());
             if (removing && !file.has("remove")) { file.add("remove", new JsonArray()); }
             for (JsonElement item : entry.getValue().getAsJsonArray()) {
                 if (!item.isJsonPrimitive()) { continue; }

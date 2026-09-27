@@ -55,15 +55,15 @@ public final class ContentCityStationPiece extends StructurePiece {
 
     public ContentCityStationPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.bedHalf = tag.getInt(BED_HALF);
-        boolean capped = tag.getBoolean(CAPPED);
-        this.lowBore = tag.contains(LOW_BORE) ? tag.getInt(LOW_BORE) : capped ? level : OPEN;
-        this.highBore = tag.contains(HIGH_BORE) ? tag.getInt(HIGH_BORE) : capped ? level : OPEN;
-        this.bench = tag.getInt(BENCH);
-        this.benchWay = tag.getInt(BENCH_WAY);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.bedHalf = tag.getIntOr(BED_HALF, 0);
+        boolean capped = tag.getBooleanOr(CAPPED, false);
+        this.lowBore = tag.contains(LOW_BORE) ? tag.getIntOr(LOW_BORE, 0) : capped ? level : OPEN;
+        this.highBore = tag.contains(HIGH_BORE) ? tag.getIntOr(HIGH_BORE, 0) : capped ? level : OPEN;
+        this.bench = tag.getIntOr(BENCH, 0);
+        this.benchWay = tag.getIntOr(BENCH_WAY, 0);
     }
 
     private static BoundingBox box(int from, int to, int level, int middle, boolean alongX, int bedHalf) {

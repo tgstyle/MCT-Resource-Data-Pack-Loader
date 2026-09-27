@@ -26,17 +26,15 @@ import com.google.gson.JsonParseException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FarmBlock;
-import net.minecraft.world.level.block.FireBlock;
+import net.minecraft.world.level.block.FarmlandBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 import java.nio.file.Files;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,14 +49,14 @@ import javax.annotation.Nullable;
 public final class ContentRegistry {
     public static final String MAIN = "";
     public static final String WALL = "wall";
-    private static final Map<ResourceLocation, BlockDef> BLOCK_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, MaterialDef> MATERIAL_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, TabDef> TAB_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, BlockEntry> BLOCKS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, ItemEntry> ITEMS = new LinkedHashMap<>();
+    private static final Map<Identifier, BlockDef> BLOCK_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, ItemDef> ITEM_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, FluidDef> FLUID_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, MaterialDef> MATERIAL_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, TabDef> TAB_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, ExposureDef> EXPOSURE_DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, BlockEntry> BLOCKS = new LinkedHashMap<>();
+    private static final Map<Identifier, ItemEntry> ITEMS = new LinkedHashMap<>();
     private static final Map<Block, BlockEntry> BY_BLOCK = new LinkedHashMap<>();
     private static final Set<String> WARNED = new HashSet<>();
     private static final Set<String> CLAIMED = new HashSet<>();
@@ -75,7 +73,7 @@ public final class ContentRegistry {
             if (def != null) { EXPOSURE_DEFS.put(key, def); }
         });
         if (!EXPOSURE_DEFS.isEmpty()) { Summary.info("exposures", "Loaded " + EXPOSURE_DEFS.size() + " exposure definition(s)"); }
-        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
+        for (Map.Entry<Identifier, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
                 BlockDef def = ContentParser.block(held.getKey(), held.getValue());
@@ -83,7 +81,7 @@ public final class ContentRegistry {
             }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
         }
-        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
+        for (Map.Entry<Identifier, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
                 ItemDef def = ContentParser.item(held.getKey(), held.getValue());
@@ -110,13 +108,13 @@ public final class ContentRegistry {
         if (!MATERIAL_DEFS.isEmpty()) { Summary.info("materials", "Loaded " + MATERIAL_DEFS.size() + " material definition(s)"); }
     }
 
-    public static boolean reserved(ResourceLocation key) {
+    public static boolean reserved(Identifier key) {
         if (!ResourceDataPackLoader.MOD_ID.equals(key.getNamespace())) { return false; }
         if (CLAIMED.add(key.getNamespace())) { ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace()); }
         return true;
     }
 
-    public static boolean available(List<String> requires, ResourceLocation key) {
+    public static boolean available(List<String> requires, Identifier key) {
         for (String asked : requires) {
             if (asked.startsWith(PackRequirements.CONFIG_GATE)) { PackOptions.gating(asked.substring(PackRequirements.CONFIG_GATE.length())); }
         }
@@ -150,15 +148,13 @@ public final class ContentRegistry {
 
     public static void addDef(BlockDef def) { BLOCK_DEFS.put(def.key(), def); }
 
-    public static boolean hasDef(ResourceLocation key) { return BLOCK_DEFS.containsKey(key); }
+    public static boolean hasDef(Identifier key) { return BLOCK_DEFS.containsKey(key); }
 
     public static Collection<BlockDef> blockDefs() { return Collections.unmodifiableCollection(BLOCK_DEFS.values()); }
 
     public static Collection<ItemDef> itemDefs() { return Collections.unmodifiableCollection(ITEM_DEFS.values()); }
 
     public static Collection<FluidDef> fluidDefs() { return Collections.unmodifiableCollection(FLUID_DEFS.values()); }
-
-    public static Collection<MaterialDef> materialDefs() { return Collections.unmodifiableCollection(MATERIAL_DEFS.values()); }
 
     public static Collection<TabDef> tabDefs() { return Collections.unmodifiableCollection(TAB_DEFS.values()); }
 
@@ -169,7 +165,7 @@ public final class ContentRegistry {
             ContentLog.LOGGER.error("{} names no material, the item is skipped", context);
             return null;
         }
-        ResourceLocation key = ResourceLocation.tryParse(name);
+        Identifier key = Identifier.tryParse(name);
         MaterialDef def = key == null ? null : MATERIAL_DEFS.get(key);
         if (def != null) { return available(def.requires(), def.key()) ? def : null; }
         ContentLog.LOGGER.error("Unknown material '{}' in {}, the item is skipped. Known materials are {}", name, context, MATERIAL_DEFS.keySet());
@@ -178,18 +174,18 @@ public final class ContentRegistry {
 
     @Nullable public static TabDef tab(String label) {
         if (label == null || label.isEmpty()) { return null; }
-        ResourceLocation key = ResourceLocation.tryParse(label);
+        Identifier key = Identifier.tryParse(label);
         return key == null ? null : TAB_DEFS.get(key);
     }
 
-    public static void addBlock(ResourceLocation id, Block block, BlockDef def, BlockVariant variant, String role) {
+    public static void addBlock(Identifier id, Block block, BlockDef def, BlockVariant variant, String role) {
         BlockEntry entry = new BlockEntry(id, block, def, variant, role);
         BLOCKS.put(id, entry);
         BY_BLOCK.put(block, entry);
-        if (def.flammability() > 0) { ((FireBlock) Blocks.FIRE).setFlammable(block, def.fireSpread(), def.flammability()); }
+        if (def.flammability() > 0) { ContentOverrides.flammable(block, def.fireSpread(), def.flammability()); }
     }
 
-    public static void addItem(ResourceLocation id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {
+    public static void addItem(Identifier id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {
         ItemEntry entry = new ItemEntry(id, item, def, variant, block, tabId(tab, id.getNamespace()));
         ITEMS.put(id, entry);
     }
@@ -205,7 +201,7 @@ public final class ContentRegistry {
 
     public static Collection<ItemEntry> items() { return Collections.unmodifiableCollection(ITEMS.values()); }
 
-    @Nullable public static BlockEntry block(ResourceLocation id) { return BLOCKS.get(id); }
+    @Nullable public static BlockEntry block(Identifier id) { return BLOCKS.get(id); }
 
     @Nullable public static BlockEntry entry(Block block) { return BY_BLOCK.get(block); }
 
@@ -223,10 +219,10 @@ public final class ContentRegistry {
         return entry == null || !entry.def().behavesAs().contains(behavior);
     }
 
-    public static Set<Block> resolveSoil(Iterable<String> names, ResourceLocation owner) {
+    public static Set<Block> resolveSoil(Iterable<String> names, Identifier owner) {
         Set<Block> resolved = new HashSet<>();
         for (String name : names) {
-            Block block = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name));
+            Block block = Registered.find(BuiltInRegistries.BLOCK, Identifier.tryParse(name));
             if (block != null) { resolved.add(block); }
             else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
         }
@@ -264,13 +260,13 @@ public final class ContentRegistry {
         BlockState state = level.getBlockState(ground);
         if (!soil.isEmpty()) { return soil.contains(state.getBlock()); }
         TriState decided = state.canSustainPlant(level, ground, Direction.UP, plant);
-        if (decided.isDefault()) { return state.is(BlockTags.DIRT) || state.getBlock() instanceof FarmBlock; }
+        if (decided.isDefault()) { return state.is(BlockTags.SUBSTRATE_OVERWORLD) || state.getBlock() instanceof FarmlandBlock; }
         return decided.isTrue();
     }
 
-    public record BlockEntry(ResourceLocation id, Block block, BlockDef def, BlockVariant variant, String role) {
+    public record BlockEntry(Identifier id, Block block, BlockDef def, BlockVariant variant, String role) {
         public boolean isMain() { return MAIN.equals(role); }
     }
 
-    public record ItemEntry(ResourceLocation id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {}
+    public record ItemEntry(Identifier id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {}
 }

@@ -20,10 +20,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private long rdpl$tick;
     @Unique private boolean rdpl$remembering;
 
-    @Inject(method = "prepare", at = @At("TAIL")) private void rdpl$whenAndWhere(PathNavigationRegion region, Mob mob, CallbackInfo ci) {
+    @Inject(method = "prepare", at = @At("TAIL")) private void rdpl$whenAndWhere(PathNavigationRegion level, Mob entity, CallbackInfo ci) {
         rdpl$owner = System.identityHashCode(getClass()) * 31 + entityWidth * 961 + entityHeight * 31 + entityDepth;
-        rdpl$world = mob.level().dimension().location().hashCode();
-        rdpl$tick = mob.level().getGameTime();
+        rdpl$world = entity.level().dimension().identifier().hashCode();
+        rdpl$tick = entity.level().getGameTime();
         rdpl$remembering = true;
     }
 

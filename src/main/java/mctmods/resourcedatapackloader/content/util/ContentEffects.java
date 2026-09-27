@@ -9,10 +9,10 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
-import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 public final class ContentEffects {
@@ -25,7 +25,7 @@ public final class ContentEffects {
             ContentLog.LOGGER.error("Potion '{}' for {} needs id, duration and amplifier", value, context);
             return null;
         }
-        ResourceLocation key = ResourceLocation.tryParse(parts[0].trim());
+        Identifier key = Identifier.tryParse(parts[0].trim());
         Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, key);
         if (effect == null) {
             ContentLog.LOGGER.error("Unknown potion '{}' for {}", parts[0].trim(), context);
@@ -45,10 +45,10 @@ public final class ContentEffects {
 
     public static MobEffectInstance copy(MobEffectInstance effect) { return new MobEffectInstance(effect); }
 
-    public static void tooltip(@Nullable MobEffectInstance effect, List<Component> tooltip) {
+    public static void tooltip(@Nullable MobEffectInstance effect, Consumer<Component> tooltip) {
         if (effect == null || !effect.getEffect().value().isBeneficial()) { return; }
         String level = RomanNumerals.of(effect.getAmplifier());
         MutableComponent name = Component.translatable(effect.getDescriptionId());
-        tooltip.add((level.isEmpty() ? name : name.append(" " + level)).withStyle(ChatFormatting.GREEN));
+        tooltip.accept((level.isEmpty() ? name : name.append(" " + level)).withStyle(ChatFormatting.GREEN));
     }
 }

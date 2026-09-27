@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public record EntityVariantDef(ResourceLocation key, ResourceLocation base, String name, boolean showName, String texture, String lootTable, String profession, int career, float baby,
+public record EntityVariantDef(Identifier key, Identifier base, String name, boolean showName, String texture, String lootTable, String profession, int career, float baby,
                                List<PickDef> becomes, Sounds sounds, List<String> immuneTo, List<String> ignoresEffects, Physics physics, int experience, float absorption, String creatureAttribute, Map<String, Integer> effects,
                                boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,

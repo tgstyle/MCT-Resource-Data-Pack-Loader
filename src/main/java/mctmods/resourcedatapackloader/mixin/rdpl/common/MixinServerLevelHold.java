@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class) public abstract class MixinServerLevelHold {
     @Inject(method = "tickNonPassenger", at = @At("HEAD"), cancellable = true)
-    private void rdpl$standStillWhileLandIsMade(Entity p_entity, CallbackInfo ci) {
-        if (ContentPregen.busy() || ContentEntityTicks.frozen(p_entity)) { ci.cancel(); }
+    private void rdpl$standStillWhileLandIsMade(Entity entity, CallbackInfo ci) {
+        if (ContentPregen.busy() || ContentEntityTicks.frozen(entity)) { ci.cancel(); }
     }
 
     @Redirect(method = "tickNonPassenger", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;tick()V"))

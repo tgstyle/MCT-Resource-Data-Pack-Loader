@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -17,6 +17,8 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -67,7 +69,7 @@ public final class ReturningThrow extends Entity {
     @Override public void tick() {
         super.tick();
         Vec3 motion = getDeltaMovement();
-        if (level().isClientSide) {
+        if (level().isClientSide()) {
             setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
             face();
             return;
@@ -93,7 +95,7 @@ public final class ReturningThrow extends Entity {
         if (blocked) { to = block.getLocation(); }
         LivingEntity hit = struck(from, to, thrower);
         if (hit != null) {
-            hit.hurt(damageSources().thrown(this, thrower == null ? this : thrower), damage);
+            hit.hurtServer((ServerLevel) level(), damageSources().thrown(this, thrower == null ? this : thrower), damage);
             playSound(SoundEvents.PLAYER_ATTACK_STRONG, 1.0F, 1.0F);
             motion = new Vec3(motion.x * -0.01D, motion.y * -0.1D, motion.z * -0.01D);
             returning = true;
@@ -173,20 +175,20 @@ public final class ReturningThrow extends Entity {
         setXRot((float) (Mth.atan2(motion.y, flat) * (180.0D / Math.PI)));
     }
 
-    @Override public boolean hurt(@Nonnull DamageSource source, float amount) { return false; }
+    @Override public boolean hurtServer(@Nonnull ServerLevel level, @Nonnull DamageSource source, float amount) { return false; }
 
-    @Override protected void readAdditionalSaveData(@Nonnull CompoundTag tag) {
-        if (tag.hasUUID("Owner")) { ownerId = tag.getUUID("Owner"); }
-        entityData.set(STACK, ItemStack.parseOptional(registryAccess(), tag.getCompound("Item")));
-        damage = tag.getFloat("Damage");
-        returning = tag.getBoolean("Returning");
-        stuck = tag.getInt("Stuck");
-        age = tag.getInt("Age");
+    @Override protected void readAdditionalSaveData(@Nonnull ValueInput tag) {
+        ownerId = tag.read("Owner", UUIDUtil.CODEC).orElse(null);
+        entityData.set(STACK, tag.read("Item", ItemStack.OPTIONAL_CODEC).orElse(ItemStack.EMPTY));
+        damage = tag.getFloatOr("Damage", 0.0F);
+        returning = tag.getBooleanOr("Returning", false);
+        stuck = tag.getIntOr("Stuck", 0);
+        age = tag.getIntOr("Age", 0);
     }
 
-    @Override protected void addAdditionalSaveData(@Nonnull CompoundTag tag) {
-        if (ownerId != null) { tag.putUUID("Owner", ownerId); }
-        tag.put("Item", stack().saveOptional(registryAccess()));
+    @Override protected void addAdditionalSaveData(@Nonnull ValueOutput tag) {
+        tag.storeNullable("Owner", UUIDUtil.CODEC, ownerId);
+        tag.store("Item", ItemStack.OPTIONAL_CODEC, stack());
         tag.putFloat("Damage", damage);
         tag.putBoolean("Returning", returning);
         tag.putInt("Stuck", stuck);

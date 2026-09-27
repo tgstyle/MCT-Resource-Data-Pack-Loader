@@ -36,9 +36,9 @@ public final class ContentCityCapPiece extends StructurePiece implements PieceBe
 
     public ContentCityCapPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.block = tag.getString(BLOCK);
-        this.rise = tag.getInt(RISE);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.block = tag.getStringOr(BLOCK, "");
+        this.rise = tag.getIntOr(RISE, 0);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {

@@ -19,7 +19,7 @@ public final class ContentSpread {
         RandomSource random = RandomSource.create(level.getSeed());
         long alongX = (random.nextLong() / 2L) * 2L + 1L;
         long alongZ = (random.nextLong() / 2L) * 2L + 1L;
-        return RandomSource.create(chunk.x * alongX + chunk.z * alongZ ^ level.getSeed());
+        return RandomSource.create(chunk.x() * alongX + chunk.z() * alongZ ^ level.getSeed());
     }
 
     @Nullable public static BlockPos position(WorldgenDef def, PlacementContext context, RandomSource random, RandomSource region, BlockPos origin) {
@@ -62,7 +62,7 @@ public final class ContentSpread {
         int top = context.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z);
         int span = Math.max(1, spread.offsetMax() - spread.offsetMin() + 1);
         int y = top + spread.offsetMin() + random.nextInt(span);
-        return y <= context.getMinBuildHeight() ? null : new BlockPos(x, y, z);
+        return y <= context.getMinY() ? null : new BlockPos(x, y, z);
     }
 
     @Nullable private static BlockPos cavern(WorldgenDef def, SpreadDef spread, PlacementContext context, RandomSource random, BlockPos origin) {
@@ -96,7 +96,7 @@ public final class ContentSpread {
         return null;
     }
 
-    private static int highest(WorldgenDef def, WorldGenLevel level) { return Math.min(def.maxHeight(), level.getMaxBuildHeight() - 1); }
+    private static int highest(WorldgenDef def, WorldGenLevel level) { return Math.min(def.maxHeight(), level.getMaxY()); }
 
     private static int density(RandomSource random, int distance, int percent) {
         float scaled = percent * 0.01F * (distance >> 1);

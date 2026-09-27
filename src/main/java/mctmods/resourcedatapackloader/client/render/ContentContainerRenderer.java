@@ -4,52 +4,61 @@ import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.object.chest.ChestModel;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.math.Axis;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
-public class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity> {
-    private static final ResourceLocation VANILLA = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/chest/normal.png");
-    private final ModelPart bottom;
-    private final ModelPart lid;
-    private final ModelPart lock;
+public class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity, ContentContainerRenderer.State> {
+    private static final Identifier VANILLA = Identifier.fromNamespaceAndPath("minecraft", "textures/entity/chest/normal.png");
+    private final ChestModel model;
 
-    public ContentContainerRenderer(BlockEntityRendererProvider.Context context) {
-        ModelPart root = context.bakeLayer(ModelLayers.CHEST);
-        this.bottom = root.getChild("bottom");
-        this.lid = root.getChild("lid");
-        this.lock = root.getChild("lock");
+    public ContentContainerRenderer(BlockEntityRendererProvider.Context context) { this.model = new ChestModel(context.bakeLayer(ModelLayers.CHEST)); }
+
+    public static final class State extends BlockEntityRenderState {
+        @Nullable Identifier sheet;
+        Direction facing = Direction.SOUTH;
+        float open;
     }
 
-    @Override public void render(@Nonnull ContentContainerBlockEntity held, float partial, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffers, int light, int overlay) {
+    @Override @Nonnull public State createRenderState() { return new State(); }
+
+    @Override public void extractRenderState(@Nonnull ContentContainerBlockEntity held, @Nonnull State state, float partial, @Nonnull Vec3 camera, @Nullable ModelFeatureRenderer.CrumblingOverlay breaking) {
+        BlockEntityRenderer.super.extractRenderState(held, state, partial, camera, breaking);
         ContainerDef def = held.def();
-        if (!def.chestModel()) { return; }
-        BlockState state = held.getBlockState();
-        Direction facing = state.hasProperty(HorizontalDirectionalBlock.FACING) ? state.getValue(HorizontalDirectionalBlock.FACING) : Direction.SOUTH;
+        if (!def.chestModel()) {
+            state.sheet = null;
+            return;
+        }
+        BlockState block = held.getBlockState();
+        state.facing = block.hasProperty(HorizontalDirectionalBlock.FACING) ? block.getValue(HorizontalDirectionalBlock.FACING) : Direction.SOUTH;
+        state.sheet = def.chestTexture() == null ? VANILLA : def.chestTexture();
+        float open = held.getOpenNess(partial);
+        state.open = 1.0F - (1.0F - open) * (1.0F - open) * (1.0F - open);
+    }
+
+    @Override public void submit(@Nonnull State state, @Nonnull PoseStack pose, @Nonnull SubmitNodeCollector collector, @Nonnull CameraRenderState camera) {
+        if (state.sheet == null) { return; }
         pose.pushPose();
         pose.translate(0.5F, 0.5F, 0.5F);
-        pose.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
+        pose.mulPose(Axis.YP.rotationDegrees(-state.facing.toYRot()));
         pose.translate(-0.5F, -0.5F, -0.5F);
-        float open = held.getOpenNess(partial);
-        float eased = 1.0F - (1.0F - open) * (1.0F - open) * (1.0F - open);
-        lid.xRot = -(eased * ((float) Math.PI / 2F));
-        lock.xRot = lid.xRot;
-        ResourceLocation sheet = def.chestTexture() == null ? VANILLA : def.chestTexture();
-        VertexConsumer into = buffers.getBuffer(RenderType.entityCutout(sheet));
-        lid.render(pose, into, light, overlay);
-        lock.render(pose, into, light, overlay);
-        bottom.render(pose, into, light, overlay);
+        collector.submitModel(model, state.open, pose, RenderTypes.entityCutout(state.sheet), state.lightCoords, OverlayTexture.NO_OVERLAY, 0, state.breakProgress);
         pose.popPose();
     }
 }

@@ -23,7 +23,7 @@ public final class ServerCommands {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(CommandShared.tree(NAME, ServerCommands::reload, "rdpl.command.serverunusednote", "rdpl.command.config.servernote", true)
-                .then(Commands.literal("pregen").requires(source -> source.hasPermission(OPERATOR))
+                .then(Commands.literal("pregen").requires(source -> CommandShared.allowed(source, OPERATOR))
                         .then(Commands.literal("status").executes(context -> {
                             CommandShared.ran(context.getSource(), NAME, "pregen status");
                             CommandShared.send(context.getSource(), ChatFormatting.GREEN, Component.literal(ContentPregen.state()));
@@ -44,7 +44,7 @@ public final class ServerCommands {
                             }
                             BlockPos at = BlockPos.containing(source.getPosition());
                             long total = ContentPregen.start(source, source.getServer(), source.getLevel().dimension(), at.getX() >> 4, at.getZ() >> 4, radius);
-                            CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.pregenmaking", total, at.getX() >> 4, at.getZ() >> 4, source.getLevel().dimension().location().toString()));
+                            CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.pregenmaking", total, at.getX() >> 4, at.getZ() >> 4, source.getLevel().dimension().identifier().toString()));
                             return 1;
                         })))
                 .then(Commands.literal("intro").executes(context -> {

@@ -9,7 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -38,7 +38,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class ContentCityPlotPiece extends TemplateStructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPlotPiece extends TemplateStructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.StructureTemplateType) ContentCityPlotPiece::new;
     private static final String ROTATION = "Rot";
     private static final String INTEGRITY = "Int";
@@ -56,11 +56,11 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     private final int[] roads;
     private final boolean standing;
 
-    public ContentCityPlotPiece(StructureTemplateManager manager, ResourceLocation template, Rotation rotation, int integrity, BlockPos corner, boolean standing) { this(manager, template, rotation, integrity, corner, "", false, corner.getY(), new int[0], new int[0], standing); }
+    public ContentCityPlotPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, int integrity, BlockPos corner, boolean standing) { this(manager, template, rotation, integrity, corner, "", false, corner.getY(), new int[0], new int[0], standing); }
 
-    public ContentCityPlotPiece(StructureTemplateManager manager, ResourceLocation template, Rotation rotation, int integrity, BlockPos corner, String plot, boolean ruled, int seat, int[] keep, int[] roads) { this(manager, template, rotation, integrity, corner, plot, ruled, seat, keep, roads, false); }
+    public ContentCityPlotPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, int integrity, BlockPos corner, String plot, boolean ruled, int seat, int[] keep, int[] roads) { this(manager, template, rotation, integrity, corner, plot, ruled, seat, keep, roads, false); }
 
-    private ContentCityPlotPiece(StructureTemplateManager manager, ResourceLocation template, Rotation rotation, int integrity, BlockPos corner, String plot, boolean ruled, int seat, int[] keep, int[] roads, boolean standing) {
+    private ContentCityPlotPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, int integrity, BlockPos corner, String plot, boolean ruled, int seat, int[] keep, int[] roads, boolean standing) {
         super(TYPE, 0, manager, template, template.toString(), settings(rotation, integrity, ruled), corner);
         this.plot = plot;
         this.ruled = ruled;
@@ -71,13 +71,13 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     }
 
     public ContentCityPlotPiece(StructureTemplateManager manager, CompoundTag tag) {
-        super(TYPE, tag, manager, held -> settings(Rotation.valueOf(tag.getString(ROTATION)), tag.getInt(INTEGRITY), tag.getBoolean(RULED)));
-        this.plot = tag.getString(PLOT);
-        this.ruled = tag.getBoolean(RULED);
-        this.seat = tag.contains(SEAT) ? tag.getInt(SEAT) : templatePosition.getY();
-        this.keep = tag.getIntArray(KEEP);
-        this.roads = tag.getIntArray(ROADS);
-        this.standing = tag.contains(STANDING) ? tag.getBoolean(STANDING) : plot.isEmpty();
+        super(TYPE, tag, manager, _ -> settings(Rotation.valueOf(tag.getStringOr(ROTATION, "")), tag.getIntOr(INTEGRITY, 0), tag.getBooleanOr(RULED, false)));
+        this.plot = tag.getStringOr(PLOT, "");
+        this.ruled = tag.getBooleanOr(RULED, false);
+        this.seat = tag.contains(SEAT) ? tag.getIntOr(SEAT, 0) : templatePosition.getY();
+        this.keep = tag.getIntArray(KEEP).orElse(new int[0]);
+        this.roads = tag.getIntArray(ROADS).orElse(new int[0]);
+        this.standing = tag.contains(STANDING) ? tag.getBooleanOr(STANDING, false) : plot.isEmpty();
     }
 
     private static StructurePlaceSettings settings(Rotation rotation, int integrity, boolean ruled) {
@@ -163,7 +163,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     }
 
     private void stock(WorldGenLevel level, BoundingBox box, VillageDef def) {
-        ResourceLocation table = def.lootTable().isEmpty() ? null : ResourceLocation.tryParse(def.lootTable());
+        Identifier table = def.lootTable().isEmpty() ? null : Identifier.tryParse(def.lootTable());
         if (table == null) { return; }
         BoundingBox held = getBoundingBox();
         ChunkAccess access = level.getChunk(box.minX() >> 4, box.minZ() >> 4);

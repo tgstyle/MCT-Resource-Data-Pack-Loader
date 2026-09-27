@@ -29,10 +29,10 @@ final class CrossStacks {
 
     private CrossStacks() {}
 
-    private static int current() { return SharedConstants.getCurrentVersion().getDataVersion().getVersion(); }
+    private static int current() { return SharedConstants.getCurrentVersion().dataVersion().version(); }
 
     static CompoundTag parse(String snbt) {
-        try { return TagParser.parseTag(snbt); }
+        try { return TagParser.parseCompoundFully(snbt); }
         catch (CommandSyntaxException failed) { throw new Commands.Kept("'" + snbt + "' is not valid NBT"); }
     }
 
@@ -57,15 +57,15 @@ final class CrossStacks {
         return fixed.getValue() instanceof CompoundTag held ? held : stack;
     }
 
-    static CompoundTag components(CompoundTag stack) { return stack.contains(COMPONENTS, Tag.TAG_COMPOUND) ? stack.getCompound(COMPONENTS) : new CompoundTag(); }
+    static CompoundTag components(CompoundTag stack) { return stack.getCompound(COMPONENTS).isPresent() ? stack.getCompoundOrEmpty(COMPONENTS) : new CompoundTag(); }
 
     static String upCommand(String id, @Nullable String snbt) {
         CompoundTag stack = up(id, snbt == null ? null : parse(snbt));
         CompoundTag components = components(stack);
-        String named = stack.getString(ID).isEmpty() ? id : stack.getString(ID);
+        String named = stack.getStringOr(ID, "").isEmpty() ? id : stack.getStringOr(ID, "");
         if (components.isEmpty()) { return named; }
         List<String> pairs = new ArrayList<>();
-        for (String key : new TreeSet<>(components.getAllKeys())) { pairs.add(key + "=" + components.get(key)); }
+        for (String key : new TreeSet<>(components.keySet())) { pairs.add(key + "=" + components.get(key)); }
         return named + "[" + String.join(",", pairs) + "]";
     }
 
@@ -87,7 +87,7 @@ final class CrossStacks {
     static CompoundTag down(CompoundTag components, List<String> lost) {
         CompoundTag tag = new CompoundTag();
         CompoundTag display = new CompoundTag();
-        for (String key : components.getAllKeys()) {
+        for (String key : components.keySet()) {
             Tag value = components.get(key);
             String bare = key.startsWith(CrossIds.MINECRAFT) ? key.substring(CrossIds.MINECRAFT.length()) : key;
             if (value == null) { continue; }
@@ -102,7 +102,7 @@ final class CrossStacks {
                 case "stored_enchantments" -> tag.put("StoredEnchantments", enchantments(value));
                 case "custom_model_data" -> tag.putInt("CustomModelData", number(value));
                 case "repair_cost" -> tag.putInt("RepairCost", number(value));
-                case "dyed_color" -> display.putInt("color", value instanceof CompoundTag held ? held.getInt("rgb") : number(value));
+                case "dyed_color" -> display.putInt("color", value instanceof CompoundTag held ? held.getIntOr("rgb", 0) : number(value));
                 case "potion_contents" -> potion(value, tag, lost);
                 default -> lost.add(key);
             }
@@ -111,7 +111,7 @@ final class CrossStacks {
         return tag;
     }
 
-    private static int number(Tag value) { return value instanceof NumericTag held ? held.getAsInt() : 0; }
+    private static int number(Tag value) { return value instanceof NumericTag held ? held.intValue() : 0; }
 
     private static Tag text(Tag value) { return value instanceof StringTag ? value : StringTag.valueOf(json(value).toString()); }
 
@@ -124,25 +124,25 @@ final class CrossStacks {
     private static ListTag enchantments(Tag value) {
         ListTag out = new ListTag();
         if (!(value instanceof CompoundTag held)) { return out; }
-        CompoundTag levels = held.contains("levels", Tag.TAG_COMPOUND) ? held.getCompound("levels") : held;
-        for (String enchantment : levels.getAllKeys()) {
+        CompoundTag levels = held.getCompound("levels").isPresent() ? held.getCompoundOrEmpty("levels") : held;
+        for (String enchantment : levels.keySet()) {
             if (!(levels.get(enchantment) instanceof NumericTag level)) { continue; }
             CompoundTag one = new CompoundTag();
             one.putString(ID, CrossIds.id(enchantment, Port.Line.V1_20));
-            one.put("lvl", ShortTag.valueOf((short) level.getAsInt()));
+            one.put("lvl", ShortTag.valueOf((short) level.intValue()));
             out.add(one);
         }
         return out;
     }
 
     private static void potion(Tag value, CompoundTag tag, List<String> lost) {
-        if (value instanceof StringTag potion) {
-            tag.putString("Potion", potion.getAsString());
+        if (value instanceof StringTag(String potion)) {
+            tag.putString("Potion", potion);
             return;
         }
         if (!(value instanceof CompoundTag held)) { return; }
-        if (held.contains("potion")) { tag.putString("Potion", held.getString("potion")); }
-        if (held.contains("custom_color")) { tag.putInt("CustomPotionColor", held.getInt("custom_color")); }
+        if (held.contains("potion")) { tag.putString("Potion", held.getStringOr("potion", "")); }
+        if (held.contains("custom_color")) { tag.putInt("CustomPotionColor", held.getIntOr("custom_color", 0)); }
         if (held.contains("custom_effects")) { lost.add("potion_contents.custom_effects"); }
     }
 
@@ -157,20 +157,20 @@ final class CrossStacks {
             return list;
         }
         if (!(tag instanceof CompoundTag held)) { return tag; }
-        for (String key : new ArrayList<>(held.getAllKeys())) {
+        for (String key : new ArrayList<>(held.keySet())) {
             Tag inner = held.get(key);
             if (inner != null) { held.put(key, walk(inner, to, lost)); }
         }
-        if (!held.contains(ID, Tag.TAG_STRING)) { return held; }
-        if (to == Port.Line.V1_21 && held.contains("Count", Tag.TAG_ANY_NUMERIC)) { return upStack(held); }
-        if (to == Port.Line.V1_20 && held.contains("count", Tag.TAG_ANY_NUMERIC)) {
+        if (held.getString(ID).isEmpty()) { return held; }
+        if (to == Port.Line.V1_21 && held.getInt("Count").isPresent()) { return upStack(held); }
+        if (to == Port.Line.V1_20 && held.getInt("count").isPresent()) {
             CompoundTag out = held.copy();
             out.remove("count");
-            out.put("Count", ByteTag.valueOf((byte) held.getInt("count")));
+            out.put("Count", ByteTag.valueOf((byte) held.getIntOr("count", 0)));
             out.remove(COMPONENTS);
             CompoundTag nbt = down(components(held), lost);
             if (!nbt.isEmpty()) { out.put("tag", nbt); }
-            out.putString(ID, CrossIds.id(held.getString(ID), to));
+            out.putString(ID, CrossIds.id(held.getStringOr(ID, ""), to));
             return out;
         }
         return held;
@@ -184,8 +184,8 @@ final class CrossStacks {
             return false;
         }
         if (!(tag instanceof CompoundTag held)) { return false; }
-        if (held.contains(ID, Tag.TAG_STRING) && held.contains(from == Port.Line.V1_20 ? "Count" : "count", Tag.TAG_ANY_NUMERIC)) { return true; }
-        for (String key : held.getAllKeys()) {
+        if (held.getString(ID).isPresent() && held.getInt(from == Port.Line.V1_20 ? "Count" : "count").isPresent()) { return true; }
+        for (String key : held.keySet()) {
             Tag inner = held.get(key);
             if (stacks(inner, from)) { return true; }
         }

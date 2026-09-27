@@ -79,7 +79,7 @@ public final class Ids {
 
     public record Block(String name, Map<String, String> properties) {}
 
-    private static int current() { return SharedConstants.getCurrentVersion().getDataVersion().getVersion(); }
+    private static int current() { return SharedConstants.getCurrentVersion().dataVersion().version(); }
 
     public static boolean isModded(String name) { return !name.startsWith(MINECRAFT + ":") && name.indexOf(':') >= 0; }
 
@@ -161,13 +161,13 @@ public final class Ids {
             stack.putString("id", asked);
             stack.putByte("Count", (byte) 1);
             stack.putShort("Damage", (short) meta);
-            if (nbt != null) { stack.put("tag", TagParser.parseTag(nbt)); }
+            if (nbt != null) { stack.put("tag", TagParser.parseCompoundFully(nbt)); }
             Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), LEGACY, current());
             String id = fixed.get("id").asString(asked);
             Tag components = fixed.get("components").result().map(Dynamic::getValue).orElse(null);
             if (!(components instanceof CompoundTag held) || held.isEmpty()) { return id; }
             List<String> pairs = new ArrayList<>();
-            for (String key : new TreeSet<>(held.getAllKeys())) { pairs.add(key + "=" + held.get(key)); }
+            for (String key : new TreeSet<>(held.keySet())) { pairs.add(key + "=" + held.get(key)); }
             return id + "[" + String.join(",", pairs) + "]";
         }
         catch (CommandSyntaxException | RuntimeException failed) { return null; }
@@ -175,7 +175,7 @@ public final class Ids {
 
     @Nullable public static String entityData(String id, String nbt) {
         try {
-            CompoundTag data = TagParser.parseTag(nbt);
+            CompoundTag data = TagParser.parseCompoundFully(nbt);
             data.putString("id", namespaced(id.trim()));
             Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ENTITY_TREE, new Dynamic<>(NbtOps.INSTANCE, data), LEGACY, current());
             return fixed.getValue() instanceof CompoundTag held ? withoutPlace(held) : null;
@@ -185,7 +185,7 @@ public final class Ids {
 
     @Nullable public static String blockEntityData(String block, String id, String nbt) {
         try {
-            CompoundTag data = TagParser.parseTag(nbt);
+            CompoundTag data = TagParser.parseCompoundFully(nbt);
             data.putString("id", namespaced(id.trim()));
             CompoundTag placed = new CompoundTag();
             ListTag position = new ListTag();
@@ -214,20 +214,20 @@ public final class Ids {
     }
 
     private static void spawnerEntities(CompoundTag spawner) {
-        if (spawner.contains(SPAWN_DATA, Tag.TAG_COMPOUND) && !spawner.getCompound(SPAWN_DATA).isEmpty() && !spawner.getCompound(SPAWN_DATA).contains(ENTITY)) {
+        if (spawner.getCompound(SPAWN_DATA).isPresent() && !spawner.getCompoundOrEmpty(SPAWN_DATA).isEmpty() && !spawner.getCompoundOrEmpty(SPAWN_DATA).contains(ENTITY)) {
             CompoundTag data = new CompoundTag();
-            data.put(ENTITY, spawner.getCompound(SPAWN_DATA));
+            data.put(ENTITY, spawner.getCompoundOrEmpty(SPAWN_DATA));
             spawner.put(SPAWN_DATA, data);
         }
-        if (!spawner.contains(SPAWN_POTENTIALS, Tag.TAG_LIST)) { return; }
-        ListTag potentials = spawner.getList(SPAWN_POTENTIALS, Tag.TAG_COMPOUND);
+        if (spawner.getList(SPAWN_POTENTIALS).isEmpty()) { return; }
+        ListTag potentials = spawner.getListOrEmpty(SPAWN_POTENTIALS);
         for (int i = 0; i < potentials.size(); i++) {
-            CompoundTag potential = potentials.getCompound(i);
-            if (!potential.contains("Entity", Tag.TAG_COMPOUND)) { continue; }
+            CompoundTag potential = potentials.getCompoundOrEmpty(i);
+            if (potential.getCompound("Entity").isEmpty()) { continue; }
             CompoundTag data = new CompoundTag();
-            data.put(ENTITY, potential.getCompound("Entity"));
+            data.put(ENTITY, potential.getCompoundOrEmpty("Entity"));
             CompoundTag entry = new CompoundTag();
-            entry.putInt("weight", potential.contains("Weight") ? potential.getInt("Weight") : 1);
+            entry.putInt("weight", potential.contains("Weight") ? potential.getIntOr("Weight", 0) : 1);
             entry.put("data", data);
             potentials.set(i, entry);
         }
@@ -239,7 +239,7 @@ public final class Ids {
     }
 
     @Nullable public static String nbt(String nbt) {
-        try { return TagParser.parseTag(nbt).toString(); }
+        try { return TagParser.parseCompoundFully(nbt).toString(); }
         catch (CommandSyntaxException failed) { return null; }
     }
 
@@ -339,7 +339,7 @@ public final class Ids {
             stack.putString("id", asked);
             stack.putByte("Count", (byte) 1);
             stack.putShort("Damage", (short) meta);
-            stack.put("tag", TagParser.parseTag(nbt));
+            stack.put("tag", TagParser.parseCompoundFully(nbt));
             Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), LEGACY, current());
             JsonObject out = new JsonObject();
             out.addProperty("type", "neoforge:components");

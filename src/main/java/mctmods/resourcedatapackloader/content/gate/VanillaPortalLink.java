@@ -35,7 +35,7 @@ public final class VanillaPortalLink {
         ARRIVING.remove(entity.getUUID());
         if (entity.level().dimension().equals(Level.OVERWORLD) && event.getDimension().equals(Level.NETHER)) {
             CompoundTag data = entity.getPersistentData();
-            CompoundTag portal = data.getCompound(TAG);
+            CompoundTag portal = data.getCompoundOrEmpty(TAG);
             portal.putDouble(X, entity.getX());
             portal.putDouble(Y, entity.getY());
             portal.putDouble(Z, entity.getZ());
@@ -59,7 +59,7 @@ public final class VanillaPortalLink {
         Entity entity = event.getEntity();
         if (entity instanceof ServerPlayer || !(event.getLevel() instanceof ServerLevel level) || !level.dimension().equals(Level.OVERWORLD) || !ARRIVING.remove(entity.getUUID())) { return; }
         double[] stored = stored(entity);
-        if (stored != null) { entity.moveTo(stored[0], stored[1], stored[2], entity.getYRot(), entity.getXRot()); }
+        if (stored != null) { entity.snapTo(stored[0], stored[1], stored[2], entity.getYRot(), entity.getXRot()); }
     }
 
     @Nullable private static double[] stored(Entity entity) {
@@ -69,9 +69,9 @@ public final class VanillaPortalLink {
     }
 
     @Nullable private static double[] point(CompoundTag data, String tag, String x, String y, String z) {
-        if (!data.contains(tag, CompoundTag.TAG_COMPOUND)) { return null; }
-        CompoundTag portal = data.getCompound(tag);
+        if (data.getCompound(tag).isEmpty()) { return null; }
+        CompoundTag portal = data.getCompoundOrEmpty(tag);
         if (!portal.contains(x) || !portal.contains(y) || !portal.contains(z)) { return null; }
-        return new double[] { portal.getDouble(x), portal.getDouble(y), portal.getDouble(z) };
+        return new double[] { portal.getDoubleOr(x, 0.0), portal.getDoubleOr(y, 0.0), portal.getDoubleOr(z, 0.0) };
     }
 }

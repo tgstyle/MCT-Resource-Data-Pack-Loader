@@ -16,7 +16,7 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.LevelHeightAccessor;
@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
 
 public final class CityGround {
     public static final List<String> VILLAGE_TYPES = List.of("plains", "desert", "savanna", "snowy", "taiga");
-    private static final ResourceLocation MANSIONS = ResourceLocation.fromNamespaceAndPath("minecraft", "woodland_mansions");
+    private static final Identifier MANSIONS = Identifier.fromNamespaceAndPath("minecraft", "woodland_mansions");
     private static final int HEIGHTS_HELD = 1 << 18;
     private static final Map<Column, Integer> HEIGHTS = new ConcurrentHashMap<>();
     private static final int CELLS_HELD = 256;
@@ -101,11 +101,11 @@ public final class CityGround {
         NoiseBasedChunkGenerator noise = (NoiseBasedChunkGenerator) generator;
         NoiseSettings shape = shape(noise);
         if (Math.floorDiv(shape.height(), shape.getCellHeight()) <= 0) {
-            hold(key, height.getMinBuildHeight() - 1);
-            return height.getMinBuildHeight() - 1;
+            hold(key, height.getMinY() - 1);
+            return height.getMinY() - 1;
         }
         int width = shape.getCellWidth();
-        Cell cellKey = new Cell(generator, random, height.getMinBuildHeight(), height.getHeight(), Math.floorDiv(x, width), Math.floorDiv(z, width));
+        Cell cellKey = new Cell(generator, random, height.getMinY(), height.getHeight(), Math.floorDiv(x, width), Math.floorDiv(z, width));
         CellNoise cell = CELLS.get(cellKey);
         if (cell == null) {
             CellNoise made = new CellNoise(noise, random, shape, cellKey.x() * width, cellKey.z() * width);
@@ -150,7 +150,7 @@ public final class CityGround {
     }
 
     private int held(CellNoise cell, int x, int z, Heightmap.Types type) {
-        int[] tops = cell.tops(x, z, height.getMinBuildHeight());
+        int[] tops = cell.tops(x, z, height.getMinY());
         hold(column(Heightmap.Types.WORLD_SURFACE_WG, x, z), tops[0] - 1);
         hold(column(Heightmap.Types.OCEAN_FLOOR_WG, x, z), tops[1] - 1);
         return (type == Heightmap.Types.WORLD_SURFACE_WG ? tops[0] : tops[1]) - 1;
@@ -161,7 +161,7 @@ public final class CityGround {
         HEIGHTS.put(key, found);
     }
 
-    private Column column(Heightmap.Types type, int x, int z) { return new Column(generator, random, height.getMinBuildHeight(), height.getHeight(), type, x, z); }
+    private Column column(Heightmap.Types type, int x, int z) { return new Column(generator, random, height.getMinY(), height.getHeight(), type, x, z); }
 
     private NoiseSettings shape(NoiseBasedChunkGenerator noise) { return noise.generatorSettings().value().noiseSettings().clampToHeightAccessor(height); }
 
@@ -170,7 +170,7 @@ public final class CityGround {
         CELLS.clear();
     }
 
-    public int bottom() { return height.getMinBuildHeight(); }
+    public int bottom() { return height.getMinY(); }
 
     public int surfaceDepth(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceDepth(x, z); }
 
@@ -186,7 +186,7 @@ public final class CityGround {
 
     public String villageStyle(int x, int z) {
         Holder<Biome> held = biome(x, z);
-        String pack = held.unwrapKey().map(key -> ContentBiomes.villageKind(key.location())).orElse(null);
+        String pack = held.unwrapKey().map(key -> ContentBiomes.villageKind(key.identifier())).orElse(null);
         if (pack != null) { return pack; }
         String tagged = villageTag(held);
         if (tagged != null) { return tagged; }
@@ -197,7 +197,7 @@ public final class CityGround {
 
     @Nullable private static String villageTag(Holder<Biome> held) {
         for (String type : VILLAGE_TYPES) {
-            if (held.is(TagKey.create(Registries.BIOME, ResourceLocation.fromNamespaceAndPath("minecraft", "has_structure/village_" + type)))) { return type; }
+            if (held.is(TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath("minecraft", "has_structure/village_" + type)))) { return type; }
         }
         return null;
     }
@@ -222,7 +222,7 @@ public final class CityGround {
     }
 
     private static boolean listed(Holder<Biome> held, String names) {
-        ResourceLocation id = held.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier id = held.unwrapKey().map(ResourceKey::identifier).orElse(null);
         for (String named : names.split(",")) {
             String biome = named.trim().toLowerCase(Locale.ROOT);
             if (biome.isEmpty()) { continue; }
@@ -236,7 +236,7 @@ public final class CityGround {
             }
             for (String value : found) {
                 if (value.startsWith("#")) {
-                    ResourceLocation tag = ResourceLocation.tryParse(value.substring(1));
+                    Identifier tag = Identifier.tryParse(value.substring(1));
                     if (tag != null && held.is(TagKey.create(Registries.BIOME, tag))) { return true; }
                 }
                 else if (id != null && id.toString().equals(value)) { return true; }
@@ -246,14 +246,14 @@ public final class CityGround {
     }
 
     public boolean mansionNear(int chunkX, int chunkZ) {
-        StructureSet set = registries.registryOrThrow(Registries.STRUCTURE_SET).get(MANSIONS);
+        StructureSet set = registries.lookupOrThrow(Registries.STRUCTURE_SET).getValue(MANSIONS);
         if (set == null || set.structures().isEmpty()) { return false; }
         StructurePlacement placement = set.placement();
         if (!(placement instanceof RandomSpreadStructurePlacement spread)) { return false; }
         for (int x = chunkX - 6; x <= chunkX + 2; x++) {
             for (int z = chunkZ - 6; z <= chunkZ + 2; z++) {
                 ChunkPos potential = spread.getPotentialStructureChunk(seed, x, z);
-                if (potential.x != x || potential.z != z) { continue; }
+                if (potential.x() != x || potential.z() != z) { continue; }
                 Holder<Biome> held = biome(potential.getMiddleBlockX(), potential.getMiddleBlockZ());
                 for (StructureSet.StructureSelectionEntry entry : set.structures()) {
                     if (entry.structure().value().biomes().contains(held)) { return true; }

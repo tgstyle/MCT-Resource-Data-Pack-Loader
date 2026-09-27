@@ -25,7 +25,7 @@ public final class RaidMarchGoal extends Goal {
     @Override public boolean canUse() {
         if (mob.getTarget() != null || mob.tickCount < nextLook || !mob.getPersistentData().contains(ActiveRaid.RAIDER)) { return false; }
         nextLook = mob.tickCount + LOOK_EVERY;
-        BlockPos center = ActiveRaid.position(mob.getPersistentData().getCompound(ActiveRaid.RAIDER));
+        BlockPos center = ActiveRaid.position(mob.getPersistentData().getCompoundOrEmpty(ActiveRaid.RAIDER));
         if (center.distToLowCornerSqr(mob.getX(), mob.getY(), mob.getZ()) <= ARRIVED_SQ) { return false; }
         toward = DefaultRandomPos.getPosTowards(mob, 15, 4, Vec3.atBottomCenterOf(center), Math.PI / 2.0D);
         return toward != null;

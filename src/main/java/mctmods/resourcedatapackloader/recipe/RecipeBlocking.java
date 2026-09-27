@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -41,7 +41,7 @@ public final class RecipeBlocking {
 
     public static boolean disabled() { return off || (!blockAll && blocked.isEmpty()); }
 
-    public static boolean blocks(ResourceLocation id, ItemStack result) {
+    public static boolean blocks(Identifier id, ItemStack result) {
         if (disabled()) { return false; }
         String reason = reason(owners(id, result));
         if (reason == null) { return false; }
@@ -70,7 +70,7 @@ public final class RecipeBlocking {
         return null;
     }
 
-    private static Set<String> owners(ResourceLocation id, ItemStack result) {
+    private static Set<String> owners(Identifier id, ItemStack result) {
         Set<String> owners = new LinkedHashSet<>();
         String namespace = id.getNamespace().toLowerCase(Locale.ROOT);
         String output = owner(result);

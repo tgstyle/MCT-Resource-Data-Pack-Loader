@@ -53,7 +53,7 @@ final class CommandSelectors {
             String objective = key.substring("score_".length());
             boolean least = objective.endsWith("_min") && objective.length() > "_min".length();
             if (least) { objective = objective.substring(0, objective.length() - "_min".length()); }
-            scores.computeIfAbsent(objective, k -> new String[2])[least ? 0 : 1] = String.valueOf(Commands.number(given.remove(key)));
+            scores.computeIfAbsent(objective, _ -> new String[2])[least ? 0 : 1] = String.valueOf(Commands.number(given.remove(key)));
         }
         if (!scores.isEmpty()) {
             List<String> each = new ArrayList<>();

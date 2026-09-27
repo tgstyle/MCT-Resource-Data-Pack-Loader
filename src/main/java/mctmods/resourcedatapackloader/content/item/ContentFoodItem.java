@@ -10,8 +10,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
-import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -26,10 +27,9 @@ public class ContentFoodItem extends Item {
     }
 
     @Override @Nonnull public ItemStack finishUsingItem(@Nonnull ItemStack stack, @Nonnull Level level, @Nonnull LivingEntity entity) {
-        ItemStack left = super.finishUsingItem(stack, level, entity);
-        if (def.cooldown() > 0 && entity instanceof Player player) { player.getCooldowns().addCooldown(this, def.cooldown()); }
-        return left;
+        if (def.cooldown() > 0 && entity instanceof Player player) { player.getCooldowns().addCooldown(stack, def.cooldown()); }
+        return super.finishUsingItem(stack, level, entity);
     }
 
-    @Override public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext context, @Nonnull List<Component> tooltip, @Nonnull TooltipFlag flag) { ContentEffects.tooltip(effect, tooltip); }
+    @Override public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext context, @Nonnull TooltipDisplay display, @Nonnull Consumer<Component> tooltip, @Nonnull TooltipFlag flag) { ContentEffects.tooltip(effect, tooltip); }
 }

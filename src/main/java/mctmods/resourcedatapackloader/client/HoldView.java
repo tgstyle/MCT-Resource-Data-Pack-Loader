@@ -1,16 +1,19 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import java.util.Locale;
@@ -20,7 +23,7 @@ public final class HoldView {
     private static final float VANILLA_START = 0.25F;
     private static final int SHOW = 60;
     private static final int FADE = 60;
-    private static final ResourceLocation LOGO = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "textures/gui/hold.png");
+    private static final Identifier LOGO = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "textures/gui/hold.png");
     private static final int LOGO_WIDTH = 329;
     private static final int LOGO_HEIGHT = 150;
     private static final int MARGIN = 12;
@@ -35,7 +38,7 @@ public final class HoldView {
     private static final float PULSE_LEAST = 0.11F;
     private static String warning = "";
     private static String note = "";
-    private static CardFont.Face face = new CardFont.Face(Style.DEFAULT_FONT, null);
+    private static CardFont.Face face = new CardFont.Face(FontDescription.DEFAULT.id(), null);
     private static boolean fogging;
     private static boolean shaded = true;
     private static final int NOTE_COLOR = 0x55FF55;
@@ -80,25 +83,27 @@ public final class HoldView {
         float strength = strength((float) event.getPartialTick());
         if (strength <= 0.0F) { return; }
         float eased = strength * strength * (3.0F - 2.0F * strength);
-        float reach = event.getFarPlaneDistance();
+        FogData fog = event.getFogData();
+        float reach = Math.min(fog.environmentalEnd, fog.renderDistanceEnd);
         float near = reach * VANILLA_START * (1.0F - eased);
         float far = Math.min(reach, FOG_REACH * eased + reach * (1.0F - eased));
         event.setNearPlaneDistance(near);
         event.setFarPlaneDistance(far);
-        event.setCanceled(true);
+        fog.skyEnd = Math.min(fog.skyEnd, far);
+        fog.cloudEnd = Math.min(fog.cloudEnd, far);
     }
 
     public static void onHud(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.screen != null) { return; }
-        GuiGraphics graphics = event.getGuiGraphics();
+        if (ClientCompat.screen(mc) != null) { return; }
+        GuiGraphicsExtractor graphics = event.getGuiGraphics();
         Crisp.raise(graphics);
         if (held) { warn(graphics); }
         else { welcome(graphics, strength(event.getPartialTick().getGameTimeDeltaPartialTick(false))); }
         Crisp.lower(graphics);
     }
 
-    private static void welcome(GuiGraphics graphics, float strength) {
+    private static void welcome(GuiGraphicsExtractor graphics, float strength) {
         if (strength <= 0.0F) { return; }
         double gui = Crisp.factor();
         int screenWidth = (int) Math.round(Crisp.fit(graphics.guiWidth()) * gui);
@@ -108,14 +113,10 @@ public final class HoldView {
         int margin = (int) Math.round(MARGIN * gui);
         int left = leftFor(screenWidth, width, margin);
         int top = Math.max(margin, (int) Math.round((Crisp.fit(graphics.guiHeight()) / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
-        RenderSystem.enableBlend();
-        graphics.setColor(1.0F, 1.0F, 1.0F, strength);
-        graphics.pose().pushPose();
-        graphics.pose().scale((float) (1.0D / gui), (float) (1.0D / gui), 1.0F);
-        graphics.blit(LOGO, left, top, 0.0F, 0.0F, width, height, width, height);
-        graphics.pose().popPose();
-        graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.disableBlend();
+        graphics.pose().pushMatrix();
+        graphics.pose().scale((float) (1.0D / gui), (float) (1.0D / gui));
+        graphics.blit(RenderPipelines.GUI_TEXTURED, LOGO, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(strength));
+        graphics.pose().popMatrix();
         greet(graphics, strength);
     }
 
@@ -126,7 +127,7 @@ public final class HoldView {
         return 0.0F;
     }
 
-    private static void greet(GuiGraphics graphics, float strength) {
+    private static void greet(GuiGraphicsExtractor graphics, float strength) {
         if (note.isEmpty() || strength < PULSE_LEAST) { return; }
         Minecraft mc = Minecraft.getInstance();
         float scale = Crisp.scale(NOTE_SCALE);
@@ -136,13 +137,14 @@ public final class HoldView {
         float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F + SUBTITLE_TOP);
         int pad = 4;
         if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(strength * BACKDROP_ALPHA) << 24); }
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1.0F);
-        graphics.drawString(mc.font, text.getVisualOrderText(), x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
-        graphics.pose().popPose();
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
+        graphics.pose().translate(x / scale, y / scale);
+        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
+        graphics.pose().popMatrix();
     }
 
-    private static void warn(GuiGraphics graphics) {
+    private static void warn(GuiGraphicsExtractor graphics) {
         if (warning.isEmpty()) { return; }
         float pulse = pulse();
         if (pulse < PULSE_LEAST) { return; }
@@ -154,10 +156,11 @@ public final class HoldView {
         float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F - TEXT_ABOVE_MIDDLE);
         int pad = 4;
         if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(pulse * 0x99) << 24); }
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1.0F);
-        graphics.drawString(mc.font, text.getVisualOrderText(), x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
-        graphics.pose().popPose();
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
+        graphics.pose().translate(x / scale, y / scale);
+        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
+        graphics.pose().popMatrix();
     }
 
     private static int leftFor(int screenWidth, int width, int margin) {

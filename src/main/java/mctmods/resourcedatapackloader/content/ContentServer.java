@@ -85,19 +85,14 @@ public final class ContentServer {
         put(asked, "pvp", pvp());
         put(asked, "allow-flight", flight());
         put(asked, "spawn-protection", spawnProtection());
-        put(asked, "allow-nether", nether());
-        put(asked, "enable-command-block", commandBlocks());
         put(asked, "player-idle-timeout", idleTimeout());
         if (!motd().isEmpty()) { asked.put("motd", motd()); }
         put(asked, "max-world-size", maxSize());
         put(asked, "generate-structures", structures());
-        put(asked, "spawn-monsters", spawnMonsters());
-        put(asked, "spawn-animals", spawnAnimals());
-        put(asked, "spawn-npcs", spawnNpcs());
         put(asked, "view-distance", viewDistance());
         put(asked, "simulation-distance", simulationDistance());
-        Difficulty difficulty = difficultyFor(Level.OVERWORLD.location().toString());
-        if (difficulty != null) { asked.put("difficulty", difficulty.getKey()); }
+        Difficulty difficulty = difficultyFor(Level.OVERWORLD.identifier().toString());
+        if (difficulty != null) { asked.put("difficulty", difficulty.getSerializedName()); }
         ContentTerrain.properties(asked, levelType);
         return asked;
     }
@@ -111,10 +106,6 @@ public final class ContentServer {
     }
 
     public static void applyTo(MinecraftServer server) {
-        Boolean pvp = pvp();
-        if (pvp != null) { server.setPvpAllowed(pvp); }
-        Boolean flight = flight();
-        if (flight != null) { server.setFlightAllowed(flight); }
         int idle = idleTimeout();
         if (idle >= 0) { server.setPlayerIdleTimeout(idle); }
         String motd = motd();

@@ -30,7 +30,7 @@ public final class Lang {
         TABLES.clear();
         Path home = null;
         try {
-            home = ModList.get().getModFileById(ResourceDataPackLoader.MOD_ID).getFile().findResource("assets", ResourceDataPackLoader.MOD_ID, "lang");
+            home = ModFiles.find(ModList.get().getModFileById(ResourceDataPackLoader.MOD_ID).getFile(), "assets", ResourceDataPackLoader.MOD_ID, "lang");
             try (Stream<Path> files = Files.list(home)) {
                 for (Path file : (Iterable<Path>) files::iterator) {
                     String name = file.getFileName().toString();

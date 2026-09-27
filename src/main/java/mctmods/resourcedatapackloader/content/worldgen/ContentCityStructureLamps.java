@@ -6,7 +6,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.ChunkPos;
@@ -27,9 +27,9 @@ public final class ContentCityStructureLamps {
 
     private ContentCityStructureLamps() {}
 
-    @Nullable private static ResourceLocation lampTemplate(GenerationContext context) {
+    @Nullable private static Identifier lampTemplate(GenerationContext context) {
         String named = ContentCity.lampStructure();
-        ResourceLocation template = named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier template = named.isEmpty() ? null : Identifier.tryParse(named);
         if (template != null && context.structureTemplateManager().get(template).isEmpty()) {
             ContentCity.missingLamp(named);
             return null;
@@ -40,7 +40,7 @@ public final class ContentCityStructureLamps {
     static void lamps(GenerationContext context, CityPlan plan, CityPlan.Line line, @Nullable ContentCityStructure.Laid laid, Collection<CityRails.Laid> tracks, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
         if (laid == null) { return; }
         CityCross cross = CityCross.of(line);
-        ResourceLocation template = lampTemplate(context);
+        Identifier template = lampTemplate(context);
         if (template == null && ContentCity.lampBlock().isEmpty()) { return; }
         int from = line.from();
         int to = line.to();
@@ -103,7 +103,7 @@ public final class ContentCityStructureLamps {
         return Integer.MIN_VALUE;
     }
 
-    private static boolean standLamp(GenerationContext context, CityPlan plan, @Nullable CityPlan.Line line, List<ContentCityStructure.Well> wells, Set<Long> doors, @Nullable ResourceLocation template, int x, int foot, int z, StructurePiecesBuilder builder) {
+    private static boolean standLamp(GenerationContext context, CityPlan plan, @Nullable CityPlan.Line line, List<ContentCityStructure.Well> wells, Set<Long> doors, @Nullable Identifier template, int x, int foot, int z, StructurePiecesBuilder builder) {
         int height = ContentCity.lampHeight();
         Vec3i span = template == null ? new Vec3i(3, height + 1, 3) : context.structureTemplateManager().get(template).orElseThrow().getSize(Rotation.NONE);
         int leastX = x - span.getX() / 2;
@@ -116,7 +116,7 @@ public final class ContentCityStructureLamps {
     }
 
     static void bulbLamps(GenerationContext context, CityPlan plan, ContentCityStructure.Bulb bulb, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
-        ResourceLocation template = lampTemplate(context);
+        Identifier template = lampTemplate(context);
         if (template == null && ContentCity.lampBlock().isEmpty()) { return; }
         ContentCityBulbPiece.Court court = bulb.court();
         boolean walked = CityCross.of(bulb.line()).walk() > 0;
@@ -145,7 +145,7 @@ public final class ContentCityStructureLamps {
         if (doors.isEmpty()) { return false; }
         for (int dx = -DOOR_REACH; dx <= DOOR_REACH; dx++) {
             for (int dz = -DOOR_REACH; dz <= DOOR_REACH; dz++) {
-                if (doors.contains(ChunkPos.asLong(x + dx, z + dz))) { return true; }
+                if (doors.contains(ChunkPos.pack(x + dx, z + dz))) { return true; }
             }
         }
         return false;

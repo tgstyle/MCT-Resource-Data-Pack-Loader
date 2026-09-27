@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class Crisp {
     private static final int LIFTED = 2;
@@ -22,13 +22,13 @@ public final class Crisp {
 
     public static int real(int units) { return units * lift(); }
 
-    public static void raise(GuiGraphics graphics) {
-        graphics.pose().pushPose();
+    public static void raise(GuiGraphicsExtractor graphics) {
+        graphics.pose().pushMatrix();
         float lift = lift();
-        graphics.pose().scale(lift, lift, 1.0F);
+        graphics.pose().scale(lift, lift);
     }
 
-    public static void lower(GuiGraphics graphics) { graphics.pose().popPose(); }
+    public static void lower(GuiGraphicsExtractor graphics) { graphics.pose().popMatrix(); }
 
     public static float scale(float wanted) {
         double gui = gui();

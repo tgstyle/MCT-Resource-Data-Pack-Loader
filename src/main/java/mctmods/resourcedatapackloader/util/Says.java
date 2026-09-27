@@ -17,7 +17,7 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 import net.minecraft.network.protocol.game.ClientboundSetTitlesAnimationPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -27,7 +27,7 @@ public final class Says {
     public static final int CARD_TICKS = 160;
     private static final int CARD_BACKGROUND = 0x1E2630;
     private static final int PLAIN = 0xFFFF55;
-    private static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "saysicon");
+    private static final Identifier KEY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "saysicon");
 
     private Says() {}
 
@@ -58,7 +58,7 @@ public final class Says {
     }
 
     public static void bar(ServerPlayer player, String rule, ChatFormatting color, MutableComponent said) {
-        if (CardRules.unset(rule)) { player.displayClientMessage(said.withStyle(color), true); }
+        if (CardRules.unset(rule)) { player.sendOverlayMessage(said.withStyle(color)); }
         else { CardFire.builtin(rule, player, CardLook.says(said.getString(), color, CardLook.BAR)); }
     }
 

@@ -47,13 +47,13 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
 
     public ContentCitySewerLoopPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        int[] held = tag.getIntArray(WELL);
+        this.level = tag.getIntOr(LEVEL, 0);
+        int[] held = tag.getIntArray(WELL).orElse(new int[0]);
         this.well = held.length == 4 ? held : new int[4];
-        this.crossX = tag.getInt(CROSS_X);
-        this.crossZ = tag.getInt(CROSS_Z);
-        this.keep = tag.getIntArray(KEEP);
-        this.streets = tag.getIntArray(STREETS);
+        this.crossX = tag.getIntOr(CROSS_X, 0);
+        this.crossZ = tag.getIntOr(CROSS_Z, 0);
+        this.keep = tag.getIntArray(KEEP).orElse(new int[0]);
+        this.streets = tag.getIntArray(STREETS).orElse(new int[0]);
     }
 
     private static BoundingBox box(int fromX, int fromZ, int toX, int toZ, int level) {
@@ -88,7 +88,7 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
         int depth = ContentCity.sewerDepth();
         int floor = this.level - depth;
         int height = ContentCity.sewerHeight();
-        if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
+        if (ContentCitySewerPiece.cramped(level.getMinY(), this.level)) { return; }
         BlockState air = Blocks.AIR.defaultBlockState();
         BlockState water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
         BlockState walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);

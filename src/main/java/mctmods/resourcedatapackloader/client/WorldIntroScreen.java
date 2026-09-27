@@ -1,23 +1,27 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.content.def.IntroPageDef;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -30,7 +34,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class WorldIntroScreen extends Screen {
-    private static final ResourceLocation DIRT = ResourceLocation.withDefaultNamespace("textures/block/dirt.png");
+    private static final Identifier DIRT = Identifier.withDefaultNamespace("textures/block/dirt.png");
     private static final int TEXT_WIDTH = 274;
     private static final int MARGIN = 40;
     private static final int FOOTER = 36;
@@ -58,13 +62,13 @@ public final class WorldIntroScreen extends Screen {
     public static void open(boolean landBeingMade) {
         List<IntroPageDef> pages = ContentWorldIntro.pages();
         if (pages.isEmpty()) { return; }
-        Minecraft.getInstance().setScreen(new WorldIntroScreen(pages, track(), landBeingMade));
+        ClientCompat.setScreen(Minecraft.getInstance(), new WorldIntroScreen(pages, track(), landBeingMade));
     }
 
     @Override public boolean isPauseScreen() { return !landBeingMade; }
 
     @Nullable private static SoundInstance track() {
-        ResourceLocation key = ContentWorldIntro.music();
+        Identifier key = ContentWorldIntro.music();
         if (key == null) { return null; }
         SoundEvent event = BuiltInRegistries.SOUND_EVENT.getOptional(key).orElse(null);
         if (event == null) {
@@ -78,10 +82,10 @@ public final class WorldIntroScreen extends Screen {
         width = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledWidth());
         height = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledHeight());
         clearWidgets();
-        if (page >= pages.size() - 1) { addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.continue"), button -> advance()).bounds(width / 2 - 100, height - 28, 200, 20).build()); }
+        if (page >= pages.size() - 1) { addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.continue"), _ -> advance()).bounds(width / 2 - 100, height - 28, 200, 20).build()); }
         else {
-            addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.next"), button -> advance()).bounds(width / 2 - 154, height - 28, 150, 20).build());
-            addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.skip"), button -> finish()).bounds(width / 2 + 4, height - 28, 150, 20).build());
+            addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.next"), _ -> advance()).bounds(width / 2 - 154, height - 28, 150, 20).build());
+            addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.skip"), _ -> finish()).bounds(width / 2 + 4, height - 28, 150, 20).build());
         }
         loadPage();
         if (music != null && !sounding) {
@@ -98,26 +102,30 @@ public final class WorldIntroScreen extends Screen {
         if (ticks >= duration()) { advance(); }
     }
 
-    @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractBackground(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
+
+    @Override public void extractRenderState(@Nonnull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         Crisp.raise(graphics);
         drawPageBackground(graphics, partialTick);
         graphics.enableScissor(0, 0, Crisp.real(width), Crisp.real(height - FOOTER));
         layout.draw(graphics, width, height, offset(partialTick), scale, pages.get(page).still());
         graphics.disableScissor();
-        for (Renderable widget : renderables) { widget.render(graphics, Crisp.fit(mouseX), Crisp.fit(mouseY), partialTick); }
+        for (Renderable widget : renderables) { widget.extractRenderState(graphics, Crisp.fit(mouseX), Crisp.fit(mouseY), partialTick); }
         Crisp.lower(graphics);
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) { return super.mouseClicked(Crisp.fit(mouseX), Crisp.fit(mouseY), button); }
+    @Override public boolean mouseClicked(@Nonnull MouseButtonEvent event, boolean doubleClick) { return super.mouseClicked(fit(event), doubleClick); }
 
-    @Override public boolean mouseReleased(double mouseX, double mouseY, int button) { return super.mouseReleased(Crisp.fit(mouseX), Crisp.fit(mouseY), button); }
+    @Override public boolean mouseReleased(@Nonnull MouseButtonEvent event) { return super.mouseReleased(fit(event)); }
 
-    @Override public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (keyCode == InputConstants.KEY_ESCAPE) {
+    private static MouseButtonEvent fit(MouseButtonEvent event) { return new MouseButtonEvent(Crisp.fit(event.x()), Crisp.fit(event.y()), event.buttonInfo()); }
+
+    @Override public boolean keyPressed(@Nonnull KeyEvent event) {
+        if (event.isEscape()) {
             finish();
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override public boolean shouldCloseOnEsc() { return false; }
@@ -138,7 +146,7 @@ public final class WorldIntroScreen extends Screen {
 
     private void finish() {
         RDPLNetwork.introDone();
-        Minecraft.getInstance().setScreen(null);
+        ClientCompat.setScreen(Minecraft.getInstance(), null);
     }
 
     private float duration() {
@@ -167,16 +175,14 @@ public final class WorldIntroScreen extends Screen {
         return start + (endOffset() - start) * Math.min((ticks + partialTick) / span, 1.0F);
     }
 
-    private void drawPageBackground(GuiGraphics graphics, float partialTick) {
+    private void drawPageBackground(GuiGraphicsExtractor graphics, float partialTick) {
         IntroPageDef def = pages.get(page);
         if (def.backgrounds().isEmpty()) {
-            graphics.setColor(0.25F, 0.25F, 0.25F, 1.0F);
-            graphics.blit(DIRT, 0, 0, 0, 0.0F, 0.0F, width, height, 32, 32);
-            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, DIRT, 0, 0, 0.0F, 0.0F, width, height, 32, 32, ARGB.colorFromFloat(1.0F, 0.25F, 0.25F, 0.25F));
             return;
         }
         int index = def.cycles() ? (int) ((ticks + partialTick) / (def.interval() * 20.0F)) % def.backgrounds().size() : 0;
-        graphics.blit(def.backgrounds().get(index), 0, 0, 0.0F, 0.0F, width, height, width, height);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, def.backgrounds().get(index), 0, 0, 0.0F, 0.0F, width, height, width, height);
     }
 
     private void loadPage() {

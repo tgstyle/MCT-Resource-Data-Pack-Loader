@@ -30,8 +30,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "doFill", at = @At("HEAD"), cancellable = true)
-    private void rdpl$voidFill(Blender blender, StructureManager structureManager, RandomState random, ChunkAccess chunk, int minCellY, int cellCountY, CallbackInfoReturnable<ChunkAccess> cir) {
-        if (ContentVoidWorld.voidEmpties(structureManager)) { cir.setReturnValue(chunk); }
+    private void rdpl$voidFill(Blender blender, StructureManager structureManager, RandomState randomState, ChunkAccess centerChunk, int cellMinY, int cellCountY, CallbackInfoReturnable<ChunkAccess> cir) {
+        if (ContentVoidWorld.voidEmpties(structureManager)) { cir.setReturnValue(centerChunk); }
     }
 
     @Redirect(method = "applyCarvers", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/carver/ConfiguredWorldCarver;isStartChunk(Lnet/minecraft/util/RandomSource;)Z"))
@@ -40,7 +40,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "spawnOriginalMobs", at = @At("HEAD"), cancellable = true)
-    private void rdpl$animals(WorldGenRegion region, CallbackInfo ci) {
+    private void rdpl$animals(WorldGenRegion worldGenRegion, CallbackInfo ci) {
         if (ContentPopulateControl.refusesAnimals(ChunkGenerator.class.cast(this))) { ci.cancel(); }
     }
 }

@@ -20,7 +20,8 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
@@ -38,10 +39,10 @@ import net.minecraft.world.level.block.AnvilBlock;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
-import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
+import net.neoforged.neoforge.event.entity.player.AnvilCraftEvent;
 import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
@@ -98,7 +99,7 @@ public final class ContentAnvils {
         if (!DEFS.isEmpty()) { Summary.info("anvils", "Loaded " + DEFS.size() + " piece(s) of anvil work"); }
     }
 
-    @Nullable private static AnvilDef read(ResourceLocation key, String contents) {
+    @Nullable private static AnvilDef read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Anvil work {} is empty, ignoring it", key);
@@ -145,7 +146,7 @@ public final class ContentAnvils {
         return single.isEmpty() ? List.of() : List.of(single);
     }
 
-    private static List<ItemStack> stacks(ResourceLocation key, List<String> names) {
+    private static List<ItemStack> stacks(Identifier key, List<String> names) {
         List<ItemStack> found = new ArrayList<>();
         for (String name : names) {
             ItemStack stack = ContentStacks.parse(key, name, 1);
@@ -188,7 +189,7 @@ public final class ContentAnvils {
         if (result != null) {
             output = result.copy();
             if (!left.getComponentsPatch().isEmpty()) {
-                output = new ItemStack(result.getItemHolder(), result.getCount(), left.getComponentsPatch());
+                output = new ItemStack(result.typeHolder(), result.getCount(), left.getComponentsPatch());
                 if (result.has(DataComponents.DAMAGE)) { output.set(DataComponents.DAMAGE, result.getDamageValue()); }
                 else { output.remove(DataComponents.DAMAGE); }
             }
@@ -218,7 +219,7 @@ public final class ContentAnvils {
         }
         OFFERED.put(output, def);
         event.setOutput(output);
-        event.setCost(def.levels());
+        event.setXpCost(def.levels());
         event.setMaterialCost(def.withCount());
     }
 
@@ -236,8 +237,8 @@ public final class ContentAnvils {
     }
 
     @Nullable private static Holder<Enchantment> enchantment(Level level, AnvilDef def, String name) {
-        ResourceLocation id = ContentParser.location(name);
-        Holder<Enchantment> found = id == null ? null : level.registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolder(ResourceKey.create(Registries.ENCHANTMENT, id)).orElse(null);
+        Identifier id = ContentParser.location(name);
+        Holder<Enchantment> found = id == null ? null : level.registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(ResourceKey.create(Registries.ENCHANTMENT, id)).orElse(null);
         if (found == null && UNKNOWN.add(def.key() + " " + name)) { ContentLog.LOGGER.error("Anvil work {} names the enchantment {}, which nothing registers, skipping it", def.key(), name); }
         return found;
     }
@@ -289,7 +290,7 @@ public final class ContentAnvils {
         ContentMobExperience.addLevels(mob, -def.levels());
         ItemStack kept = left.getCount() > def.itemCount() ? left.copyWithCount(left.getCount() - def.itemCount()) : ItemStack.EMPTY;
         mob.setItemSlot(EquipmentSlot.MAINHAND, output);
-        if (!kept.isEmpty()) { mob.spawnAtLocation(kept, 0.5F); }
+        if (!kept.isEmpty() && level instanceof ServerLevel serverLevel) { mob.spawnAtLocation(serverLevel, kept, 0.5F); }
         right.shrink(def.withCount());
         if (right.isEmpty()) { mob.setItemSlot(EquipmentSlot.OFFHAND, ItemStack.EMPTY); }
         if (mob.getRandom().nextFloat() < BREAK_CHANCE) {
@@ -308,7 +309,7 @@ public final class ContentAnvils {
         if (!def.grants().isEmpty()) { ContentLog.LOGGER.debug("Anvil work {} also grants {}, which only a player can earn, so {} earns nothing more", def.key(), def.grants(), mob.getName().getString()); }
     }
 
-    public static void onTaken(AnvilRepairEvent event) {
+    public static void onTaken(AnvilCraftEvent.Post event) {
         AnvilDef def = OFFERED.get(event.getOutput());
         if (def == null || def.grants().isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         if (!Advancements.grant(player, def.grants())) { ContentLog.LOGGER.error("Anvil work {} grants the advancement {}, which no pack provides, so nothing is earned", def.key(), def.grants()); }
@@ -363,11 +364,11 @@ public final class ContentAnvils {
     }
 
     private static void tell(ServerPlayer player, AnvilDef def) {
-        long now = player.serverLevel().getGameTime();
-        String name = player.getGameProfile().getName();
+        long now = player.level().getGameTime();
+        String name = player.getGameProfile().name();
         Long last = TOLD.get(name);
         if (last != null && now - last < TOLD_EVERY) { return; }
         TOLD.put(name, now);
-        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.ANVIL_WAITS, "That waits on " + Advancements.title(player.server, def.grants()), ChatFormatting.RED);
+        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.ANVIL_WAITS, "That waits on " + Advancements.title(player.level().getServer(), def.grants()), ChatFormatting.RED);
     }
 }

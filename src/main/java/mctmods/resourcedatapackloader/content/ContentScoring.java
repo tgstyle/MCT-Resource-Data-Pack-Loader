@@ -22,7 +22,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -42,6 +42,7 @@ import net.neoforged.neoforge.event.entity.player.AttackEntityEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -142,7 +143,7 @@ public final class ContentScoring {
 
     private static String kindOf(Entity entity) { return entity instanceof Player ? PLAYER : EntityType.getKey(entity.getType()).toString(); }
 
-    private static String memberOf(Entity entity) { return entity instanceof Player player ? player.getGameProfile().getName() : entity.getStringUUID(); }
+    private static String memberOf(Entity entity) { return entity instanceof Player player ? player.getGameProfile().name() : entity.getStringUUID(); }
 
     private static void credit(ServerLevel level, ScoreDef def, Entity who, int points) {
         if (closed || def.ends() && FINISHED.contains(def.name())) { return; }
@@ -226,7 +227,7 @@ public final class ContentScoring {
             waiting = Math.max(1, def.endsIntermission());
             ContentLog.LOGGER.info("The map is reset in {} second(s), so the scores can be read first", def.endsIntermission());
         }
-        ItemStack icon = def.resultsIcon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceLocation.fromNamespaceAndPath("resourcedatapackloader", "results"), def.resultsIcon(), 1);
+        ItemStack icon = def.resultsIcon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(Identifier.fromNamespaceAndPath("resourcedatapackloader", "results"), def.resultsIcon(), 1);
         if (!CardRules.unset(CardIds.SCORING_RESULTS)) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) { CardFire.builtin(CardIds.SCORING_RESULTS, player, CardLook.card(def.resultsTitle(), lines, icon, def.resultsImage(), def.resultsBackground(), def.resultsTicks())); }
             return;
@@ -334,7 +335,7 @@ public final class ContentScoring {
         Map<String, Integer> sides = new LinkedHashMap<>();
         ServerLevel overworld = server.overworld();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (OUT.containsKey(player.getGameProfile().getName()) || player.isSpectator()) { continue; }
+            if (OUT.containsKey(player.getGameProfile().name()) || player.isSpectator()) { continue; }
             String side = sideOf(overworld, player);
             if (side != null) { sides.merge(side, 1, Integer::sum); }
         }
@@ -365,16 +366,16 @@ public final class ContentScoring {
 
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || event.isCanceled() || !eliminating()) { return; }
-        String name = player.getGameProfile().getName();
-        if (sideOf(player.serverLevel(), player) == null || OUT.containsKey(name)) { return; }
+        String name = player.getGameProfile().name();
+        if (sideOf(player.level(), player) == null || OUT.containsKey(name)) { return; }
         OUT.put(name, player.gameMode.getGameModeForPlayer());
         ContentLog.LOGGER.info("{} is out of the round", name);
     }
 
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !OUT.containsKey(player.getGameProfile().getName())) { return; }
+        if (!(event.getEntity() instanceof ServerPlayer player) || !OUT.containsKey(player.getGameProfile().name())) { return; }
         if (!eliminating()) {
-            player.setGameMode(OUT.remove(player.getGameProfile().getName()));
+            player.setGameMode(OUT.remove(player.getGameProfile().name()));
             return;
         }
         player.setGameMode(GameType.SPECTATOR);
@@ -384,7 +385,7 @@ public final class ContentScoring {
 
     public static void onBack(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        String name = player.getGameProfile().getName();
+        String name = player.getGameProfile().name();
         if (!eliminating() && OUT.containsKey(name)) { player.setGameMode(OUT.remove(name)); }
         SETTLING.put(player.getUUID(), SETTLE_TICKS);
     }
@@ -456,7 +457,7 @@ public final class ContentScoring {
         if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
     }
 
-    public static void onHeldBreak(BlockEvent.BreakEvent event) {
+    public static void onHeldBreak(BreakBlockEvent event) {
         if (ContentScoringLobby.refused(event.getPlayer())) { event.setCanceled(true); }
     }
 
@@ -472,7 +473,7 @@ public final class ContentScoring {
     }
 
     public static void greet(ServerPlayer player) {
-        if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getGameProfile().getName(), player.serverLevel().getGameTime() + ContentScoringLobby.NOTE_TICKS); }
+        if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getGameProfile().name(), player.level().getGameTime() + ContentScoringLobby.NOTE_TICKS); }
     }
 
     public static String start(MinecraftServer server, @Nullable ServerPlayer who, String name, boolean operator) {
@@ -481,7 +482,7 @@ public final class ContentScoring {
         if (!operator && (who == null || ContentTeams.leadsNoSide(who))) { return "Only a side's leader starts the round"; }
         List<String> reading = new ArrayList<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (ContentIntroPlay.reading(player.getUUID())) { reading.add(player.getGameProfile().getName()); }
+            if (ContentIntroPlay.reading(player.getUUID())) { reading.add(player.getGameProfile().name()); }
         }
         if (!reading.isEmpty()) { return "Not yet: still reading the intro: " + String.join(", ", reading); }
         closed = false;

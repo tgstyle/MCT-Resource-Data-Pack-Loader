@@ -12,7 +12,7 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 public final class ContentCityClaim {
-    private static final ResourceLocation CITY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE);
+    private static final Identifier CITY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE);
     private static final int LAKE_SPAN = 15;
     private static final int LAKE_OVER = 8;
     private static final int LAKE_UNDER = 4;
@@ -58,7 +58,7 @@ public final class ContentCityClaim {
 
     public static boolean outside(CityGround ground, ChunkGenerator generator, RandomState random, RegistryAccess registries, int x, int z) {
         if (ContentCity.idle()) { return true; }
-        Structure city = registries.registryOrThrow(Registries.STRUCTURE).get(CITY);
+        Structure city = registries.lookupOrThrow(Registries.STRUCTURE).getValue(CITY);
         if (city == null) { return true; }
         CityPlan plan = CityPlan.of(ground, CityPlan.districtOf(x, true), CityPlan.districtOf(z, false));
         if (plan == null) { return true; }
@@ -69,7 +69,7 @@ public final class ContentCityClaim {
     public static boolean overrides(StructureStart start, long seed, ChunkGenerator generator, RandomState random, RegistryAccess registries) {
         if (ContentCity.idle() || !start.isValid()) { return false; }
         Structure structure = start.getStructure();
-        ResourceLocation id = registries.registryOrThrow(Registries.STRUCTURE).getKey(structure);
+        Identifier id = registries.lookupOrThrow(Registries.STRUCTURE).getKey(structure);
         if (structure.type() == StructureType.OCEAN_RUIN || structure.type() == StructureType.OCEAN_MONUMENT) { return overBore(start, CityGround.of(seed, generator, random, registries), id); }
         if (structure.type() == StructureType.RUINED_PORTAL) { return overStreets(start, CityGround.of(seed, generator, random, registries), id); }
         if (structure instanceof ContentCityStructure || structure.step() != GenerationStep.Decoration.SURFACE_STRUCTURES) { return false; }
@@ -130,8 +130,8 @@ public final class ContentCityClaim {
 
     private static boolean floodsVillageRoad(WorldGenLevel level, BlockPos origin) {
         if (!ContentCity.wanted()) { return false; }
-        List<ResourceLocation> villages = ContentStructureControl.structures("villages");
-        Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        List<Identifier> villages = ContentStructureControl.structures("villages");
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         int leastX = origin.getX();
         int mostX = origin.getX() + LAKE_SPAN;
         int leastZ = origin.getZ();
@@ -222,9 +222,9 @@ public final class ContentCityClaim {
             Structure structure = reference.getKey();
             if (!kind.test(structure)) { continue; }
             for (long packed : reference.getValue()) {
-                ChunkPos start = new ChunkPos(packed);
-                if (!level.hasChunk(start.x, start.z)) { continue; }
-                StructureStart held = level.getChunk(start.x, start.z, ChunkStatus.STRUCTURE_STARTS).getStartForStructure(structure);
+                ChunkPos start = ChunkPos.unpack(packed);
+                if (!level.hasChunk(start.x(), start.z())) { continue; }
+                StructureStart held = level.getChunk(start.x(), start.z(), ChunkStatus.STRUCTURE_STARTS).getStartForStructure(structure);
                 if (held == null || !held.isValid()) { continue; }
                 found.addAll(held.getPieces());
             }
@@ -276,15 +276,15 @@ public final class ContentCityClaim {
         return false;
     }
 
-    private static boolean overBore(StructureStart start, CityGround ground, @Nullable ResourceLocation id) {
+    private static boolean overBore(StructureStart start, CityGround ground, @Nullable Identifier id) {
         return ContentCity.subways() && refused(start, id, 0, "reach over a city subway", box -> !CityRails.subways(ground, box.minX(), box.minZ(), box.maxX(), box.maxZ()).isEmpty());
     }
 
-    private static boolean overStreets(StructureStart start, CityGround ground, @Nullable ResourceLocation id) {
+    private static boolean overStreets(StructureStart start, CityGround ground, @Nullable Identifier id) {
         return refused(start, id, PORTAL_SPREAD, "spread over a city railway or street", box -> railwayWithin(ground, box) || streetWithin(ground, box));
     }
 
-    private static boolean refused(StructureStart start, @Nullable ResourceLocation id, int reach, String what, Predicate<BoundingBox> meets) {
+    private static boolean refused(StructureStart start, @Nullable Identifier id, int reach, String what, Predicate<BoundingBox> meets) {
         BoundingBox box = start.getBoundingBox().inflatedBy(reach);
         if (!meets.test(box)) { return false; }
         ContentLog.LOGGER.debug("{} at chunk {} would {} at {}, {} to {}, {}, where the city comes first, so it is not founded", id, start.getChunkPos(), what, box.minX(), box.minZ(), box.maxX(), box.maxZ());

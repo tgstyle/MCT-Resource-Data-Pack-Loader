@@ -206,7 +206,7 @@ final class CrossCommands {
         List<String> out = switch (bare) {
             case "dust" -> join(floats(options.get("color")), List.of(number(options.get("scale"))));
             case "dust_color_transition" -> join(join(floats(options.get("from_color")), List.of(number(options.get("scale")))), floats(options.get("to_color")));
-            case "item" -> List.of(options.get("item") instanceof CompoundTag stack ? stack.getString("id") : options.getString("item"));
+            case "item" -> List.of(options.get("item") instanceof CompoundTag stack ? stack.getStringOr("id", "") : options.getStringOr("item", ""));
             case "block", "falling_dust", "block_marker" -> List.of(blockString(options.get("block_state")));
             case "sculk_charge" -> List.of(number(options.get("roll")));
             case "shriek" -> List.of(number(options.get("delay")));
@@ -217,9 +217,9 @@ final class CrossCommands {
         args.addAll(2, out);
     }
 
-    private interface Options { String of(String[] values); }
+    private interface IOptions { String of(String[] values); }
 
-    private static void options(List<String> args, String name, int count, Options made) {
+    private static void options(List<String> args, String name, int count, IOptions made) {
         if (args.size() < 2 + count) { throw new Commands.Kept("its particle has fewer options than it needs"); }
         String[] values = args.subList(2, 2 + count).toArray(new String[0]);
         args.subList(2, 2 + count).clear();
@@ -239,11 +239,11 @@ final class CrossCommands {
     }
 
     private static String blockString(Tag state) {
-        if (!(state instanceof CompoundTag held)) { return state == null ? "minecraft:air" : state.getAsString(); }
-        CompoundTag properties = held.getCompound("Properties");
+        if (!(state instanceof CompoundTag held)) { return state == null ? "minecraft:air" : state.asString().orElseGet(state::toString); }
+        CompoundTag properties = held.getCompoundOrEmpty("Properties");
         List<String> pairs = new ArrayList<>();
-        for (String key : properties.getAllKeys()) { pairs.add(key + "=" + properties.getString(key)); }
-        return held.getString("Name") + (pairs.isEmpty() ? "" : "[" + String.join(",", pairs) + "]");
+        for (String key : properties.keySet()) { pairs.add(key + "=" + properties.getStringOr(key, "")); }
+        return held.getStringOr("Name", "") + (pairs.isEmpty() ? "" : "[" + String.join(",", pairs) + "]");
     }
 
     private static List<String> floats(Tag list) {
@@ -252,7 +252,7 @@ final class CrossCommands {
         return out;
     }
 
-    private static String number(Tag value) { return value == null ? "0" : value.getAsString().replaceAll("[fFdDbBsSlL]$", ""); }
+    private static String number(Tag value) { return value == null ? "0" : value.asString().orElseGet(value::toString).replaceAll("[fFdDbBsSlL]$", ""); }
 
     private static List<String> join(List<String> first, List<String> second) {
         List<String> out = new ArrayList<>(first);

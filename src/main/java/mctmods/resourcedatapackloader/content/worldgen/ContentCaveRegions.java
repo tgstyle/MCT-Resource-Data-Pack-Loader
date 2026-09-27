@@ -32,11 +32,12 @@ import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import net.minecraft.util.random.Weighted;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
@@ -61,20 +62,20 @@ import javax.annotation.Nullable;
 public final class ContentCaveRegions {
     public static final String COVER_FEATURE = "cover";
     public static final String STRUCTURE_FEATURE = "cave_structures";
-    private static final ResourceLocation DRIPSTONE = ResourceLocation.fromNamespaceAndPath("minecraft", "dripstone_caves");
+    private static final Identifier DRIPSTONE = Identifier.fromNamespaceAndPath("minecraft", "dripstone_caves");
     private static final float UNREACHABLE = 2.0F;
     private static final int MEMO_LIMIT = 4096;
     private static final Object NONE = new Object();
     private static final ThreadLocal<Map<Long, Object>> MEMO = ThreadLocal.withInitial(HashMap::new);
     private static final Map<BiomeSource, Bound> BOUND = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Gson GSON = new Gson();
-    private static final Map<ResourceLocation, CaveRegionDef> DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, Map<String, List<MobSpawnSettings.SpawnerData>>> SPAWNERS = new LinkedHashMap<>();
+    private static final Map<Identifier, CaveRegionDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, Made> MADE = new LinkedHashMap<>();
+    private static final Map<Identifier, Map<String, List<Weighted<MobSpawnSettings.SpawnerData>>>> SPAWNERS = new LinkedHashMap<>();
     private static boolean loaded;
     private static boolean ambient;
 
-    private record Bound(long seed, List<CaveRegionDef> regions, Map<ResourceLocation, Holder<Biome>> biomes) {}
+    private record Bound(long seed, List<CaveRegionDef> regions, Map<Identifier, Holder<Biome>> biomes) {}
 
     private ContentCaveRegions() {}
 
@@ -136,25 +137,25 @@ public final class ContentCaveRegions {
         if (!MADE.isEmpty()) { Summary.info("caveregions.generated", "Generated " + MADE.size() + " cave biome(s) from cave regions, " + plain + " parts in " + total + " of each height band left plain" + (structured > 0 ? ", " + structured + " placing structures" : "")); }
     }
 
-    public static Set<ResourceLocation> made() {
-        Set<ResourceLocation> out = new LinkedHashSet<>();
+    public static Set<Identifier> made() {
+        Set<Identifier> out = new LinkedHashSet<>();
         for (Made made : MADE.values()) {
             if (made.def().biome() != null) { out.add(made.def().key()); }
         }
         return out;
     }
 
-    @Nullable public static CaveRegionDef def(ResourceLocation region) {
+    @Nullable public static CaveRegionDef def(Identifier region) {
         Made made = MADE.get(region);
         return made == null ? null : made.def();
     }
 
-    @Nullable public static ContentCover cover(ResourceLocation region) {
+    @Nullable public static ContentCover cover(Identifier region) {
         Made made = MADE.get(region);
         return made == null ? null : made.cover();
     }
 
-    public static ContentPalette palette(ResourceLocation region) {
+    public static ContentPalette palette(Identifier region) {
         Made made = MADE.get(region);
         return made == null || made.palette() == null ? new ContentPalette(List.of(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()), List.of(1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of()) : made.palette();
     }
@@ -185,9 +186,9 @@ public final class ContentCaveRegions {
     }
 
     @Nullable private static JsonObject build(CaveRegionDef def) {
-        ResourceLocation base = def.biome();
+        Identifier base = def.biome();
         if (base == null) { return null; }
-        JsonObject held = GameData.json(ResourceLocation.fromNamespaceAndPath(base.getNamespace(), "worldgen/biome/" + base.getPath() + ".json"));
+        JsonObject held = GameData.json(Identifier.fromNamespaceAndPath(base.getNamespace(), "worldgen/biome/" + base.getPath() + ".json"));
         if (held == null) {
             ContentLog.LOGGER.error("Cave region {} is built on biome {}, which is not one the game or a mod ships, so it is skipped", def.key(), base);
             return null;
@@ -217,17 +218,17 @@ public final class ContentCaveRegions {
 
     public static void onLevelLoad(LevelEvent.Load event) {
         if (MADE.isEmpty() || !(event.getLevel() instanceof ServerLevel level)) { return; }
-        String dimension = level.dimension().location().toString();
-        Registry<Biome> registry = level.registryAccess().registryOrThrow(Registries.BIOME);
+        String dimension = level.dimension().identifier().toString();
+        Registry<Biome> registry = level.registryAccess().lookupOrThrow(Registries.BIOME);
         List<CaveRegionDef> regions = new ArrayList<>();
-        Map<ResourceLocation, Holder<Biome>> biomes = new HashMap<>();
+        Map<Identifier, Holder<Biome>> biomes = new HashMap<>();
         for (Made made : MADE.values()) {
             if (!appliesTo(made.def(), dimension)) { continue; }
             if (made.def().biome() == null) {
                 regions.add(made.def());
                 continue;
             }
-            Holder<Biome> held = registry.getHolder(ResourceKey.create(Registries.BIOME, made.def().key())).orElse(null);
+            Holder<Biome> held = registry.get(ResourceKey.create(Registries.BIOME, made.def().key())).orElse(null);
             if (held == null) { continue; }
             regions.add(made.def());
             biomes.put(made.def().key(), held);
@@ -276,19 +277,19 @@ public final class ContentCaveRegions {
         CaveRegionDef def = regionAt(bound, QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()));
         if (def == null || def.biome() != null || def.spawns().isEmpty()) { return; }
         if (!def.keepDefaultSpawns()) {
-            for (MobSpawnSettings.SpawnerData held : new ArrayList<>(event.getSpawnerDataList())) { event.removeSpawnerData(held); }
+            for (Weighted<MobSpawnSettings.SpawnerData> held : new ArrayList<>(event.getSpawnerDataList())) { event.removeSpawnerData(held); }
         }
-        for (MobSpawnSettings.SpawnerData spawn : spawnersFor(def, event.getMobCategory().getName())) { event.addSpawnerData(spawn); }
+        for (Weighted<MobSpawnSettings.SpawnerData> spawn : spawnersFor(def, event.getMobCategory().getName())) { event.addSpawnerData(spawn); }
     }
 
-    private static List<MobSpawnSettings.SpawnerData> spawnersFor(CaveRegionDef def, String category) {
-        Map<String, List<MobSpawnSettings.SpawnerData>> made = SPAWNERS.get(def.key());
+    private static List<Weighted<MobSpawnSettings.SpawnerData>> spawnersFor(CaveRegionDef def, String category) {
+        Map<String, List<Weighted<MobSpawnSettings.SpawnerData>>> made = SPAWNERS.get(def.key());
         if (made == null) {
             made = new LinkedHashMap<>();
             for (BiomeSpawnDef spawn : def.spawns()) {
                 EntityType<?> type = Registered.find(BuiltInRegistries.ENTITY_TYPE, spawn.entity());
                 if (type == null) { continue; }
-                made.computeIfAbsent(spawn.category(), key -> new ArrayList<>()).add(new MobSpawnSettings.SpawnerData(type, spawn.weight(), spawn.min(), spawn.max()));
+                made.computeIfAbsent(spawn.category(), _ -> new ArrayList<>()).add(new Weighted<>(new MobSpawnSettings.SpawnerData(type, spawn.min(), spawn.max()), spawn.weight()));
             }
             SPAWNERS.put(def.key(), made);
         }
@@ -402,9 +403,9 @@ public final class ContentCaveRegions {
         return ContentStates.state(block, cover.properties(), "cave region " + def.key() + " " + key);
     }
 
-    @Nullable private static BlockMatchDef cover(ResourceLocation key, JsonObject json, String name) { return json.has(name) ? ContentParser.match(key, json.get(name)) : null; }
+    @Nullable private static BlockMatchDef cover(Identifier key, JsonObject json, String name) { return json.has(name) ? ContentParser.match(key, json.get(name)) : null; }
 
-    @Nullable private static CaveRegionDef parse(ResourceLocation key, String contents) {
+    @Nullable private static CaveRegionDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Cave region {} is empty, ignoring it", key);
@@ -442,9 +443,9 @@ public final class ContentCaveRegions {
                 json.has("waterLevel") ? GsonHelper.getAsInt(json, "waterLevel") : CaveRegionDef.NO_WATER);
     }
 
-    @Nullable private static ResourceLocation biome(ResourceLocation key, String written) {
+    @Nullable private static Identifier biome(Identifier key, String written) {
         if (written.trim().isEmpty()) { return null; }
-        ResourceLocation named = ContentParser.location(written);
+        Identifier named = ContentParser.location(written);
         if (named != null) { return named; }
         ContentLog.LOGGER.error("Cave region {} names biome '{}', which is not a biome id, so it is built on {}", key, written, DRIPSTONE);
         return DRIPSTONE;

@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -26,11 +26,11 @@ public class ContentContainerItem extends Item {
         this.container = container;
     }
 
-    @Override @Nonnull public InteractionResultHolder<ItemStack> use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
+    @Override @Nonnull public InteractionResult use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
-        if (level.isClientSide() || !(player instanceof ServerPlayer server)) { return InteractionResultHolder.success(held); }
+        if (level.isClientSide() || !(player instanceof ServerPlayer server)) { return InteractionResult.SUCCESS; }
         open(server, held, () -> server.getItemInHand(hand), -1);
-        return InteractionResultHolder.consume(held);
+        return InteractionResult.CONSUME;
     }
 
     public void open(ServerPlayer player, ItemStack held, Supplier<ItemStack> source, int worn) {

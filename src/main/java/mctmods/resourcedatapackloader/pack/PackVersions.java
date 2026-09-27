@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.pack;
 
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.FileMoves;
 
@@ -21,14 +21,14 @@ final class PackVersions {
 
     private PackVersions() {}
 
-    static String prefix() { return FOLDER + "/" + SharedConstants.getCurrentVersion().getName() + "/"; }
+    static String prefix() { return FOLDER + "/" + SharedConstants.getCurrentVersion().name() + "/"; }
 
     @Nullable static Path home(Path root) {
-        Path home = root.resolve(FOLDER).resolve(SharedConstants.getCurrentVersion().getName());
+        Path home = root.resolve(FOLDER).resolve(SharedConstants.getCurrentVersion().name());
         return Files.isDirectory(home) ? home : null;
     }
 
-    @Nullable static Path write(Path zip, PackPort ported) {
+    @Nullable static Path write(Path zip, IPackPort ported) {
         Path written = null;
         try {
             written = Files.createTempFile(zip.getParent(), zip.getFileName().toString(), ".converting");

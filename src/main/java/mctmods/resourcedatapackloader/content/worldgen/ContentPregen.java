@@ -31,7 +31,6 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -42,7 +41,7 @@ public final class ContentPregen {
     private static final long SWEEP_AFTER_MS = 60000L;
     private static final long SETTLE_MS = 30000L;
     private static final long STALL_MS = 60000L;
-    private static final TicketType<ChunkPos> TICKET = TicketType.create("rdpl_pregen", Comparator.comparingLong(ChunkPos::toLong));
+    private static final TicketType TICKET = new TicketType(TicketType.NO_TIMEOUT, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION);
     @Nullable static ContentPregen running;
     private static long stillUntil;
     private static long sweepUntil;
@@ -129,24 +128,24 @@ public final class ContentPregen {
         PregenMemory memory = PregenMemory.of(server);
         memory.setRun(ContentPregenDimensions.runRecord(dimension, middleX, middleZ, reach));
         if (ContentPregenDimensions.picksUpAgain()) {
-            String id = dimension.location().toString();
+            String id = dimension.identifier().toString();
             CompoundTag spot = memory.madeIn(id);
             long from;
             if (spot == null) { from = worker.order.skipMadeBefore(memory.madeAt(id)); }
-            else if (spot.getInt("size") == worker.order.tileSize()) { from = worker.order.skipTo(spot.getLong("tile"), spot.getLong("within")); }
+            else if (spot.getIntOr("size", 0) == worker.order.tileSize()) { from = worker.order.skipTo(spot.getLongOr("tile", 0L), spot.getLongOr("within", 0L)); }
             else {
                 from = 0L;
-                ContentLog.LOGGER.info("The land of {} was left half made in tiles of {} chunk(s), which is not the {} chunk(s) tiles are made in now, so it is made again from the middle out", dimension.location(), spot.getInt("size"), worker.order.tileSize());
+                ContentLog.LOGGER.info("The land of {} was left half made in tiles of {} chunk(s), which is not the {} chunk(s) tiles are made in now, so it is made again from the middle out", dimension.identifier(), spot.getIntOr("size", 0), worker.order.tileSize());
             }
             if (from > 0L) {
                 worker.done = from;
                 worker.resumedFrom = from;
-                ContentLog.LOGGER.info("Picking the making of land in {} up again where it left off, {} chunk(s) in, tile {} of {}", dimension.location(), from, worker.order.tile(), worker.order.tiles());
+                ContentLog.LOGGER.info("Picking the making of land in {} up again where it left off, {} chunk(s) in, tile {} of {}", dimension.identifier(), from, worker.order.tile(), worker.order.tiles());
             }
         }
         running = worker;
         if (chainBegun == 0L) { chainBegun = System.currentTimeMillis(); }
-        ContentPregenHold.heldDayTime = server.overworld().getDayTime();
+        ContentPregenHold.heldDayTime = server.overworld().getOverworldClockTime();
         ContentPregenHold.holdEveryone(server, true);
         return worker.order.total();
     }
@@ -172,7 +171,7 @@ public final class ContentPregen {
         ContentPregen worker = running;
         if (worker != null) {
             worker.work();
-            if (worker.dimension.equals(Level.OVERWORLD)) { event.getServer().overworld().setDayTime(ContentPregenHold.heldDayTime); }
+            if (worker.dimension.equals(Level.OVERWORLD) && event.getServer().overworld().getOverworldClockTime() != ContentPregenHold.heldDayTime) { event.getServer().clockManager().setTotalTicks(ContentPregenHold.overworldClock(event.getServer()), ContentPregenHold.heldDayTime); }
             if (event.getServer().getTickCount() % 20 == 0) { ContentPregenHold.freezeSky(event.getServer()); }
         }
         if (event.getServer().getTickCount() % 20 == 0 && (worker != null || System.currentTimeMillis() < sweepUntil)) { sweepEmpty(event.getServer()); }
@@ -204,7 +203,7 @@ public final class ContentPregen {
         follow(chunks);
         checkpoint(level);
         for (ServerPlayer player : level.players()) {
-            if (!level.hasChunk(player.chunkPosition().x, player.chunkPosition().z)) { return; }
+            if (!level.hasChunk(player.chunkPosition().x(), player.chunkPosition().z())) { return; }
         }
         int burst = Math.max(1, inFlight / 4);
         int issued = 0;
@@ -217,10 +216,10 @@ public final class ContentPregen {
             }
             ChunkPos next = order.next();
             issued++;
-            flying.add(next.toLong());
-            if (((IChunkMap) chunks.chunkMap).rdpl$isExistingChunkFull(next)) { existing.add(next.toLong()); }
-            chunks.addRegionTicket(TICKET, next, 0, next);
-            ticketed.add(next.toLong());
+            flying.add(next.pack());
+            if (((IChunkMap) chunks.chunkMap).rdpl$isExistingChunkFull(next)) { existing.add(next.pack()); }
+            chunks.addTicketWithRadius(TICKET, next, 0);
+            ticketed.add(next.pack());
             unfollowed.addLast(next);
         }
         speak();
@@ -230,7 +229,7 @@ public final class ContentPregen {
     private void follow(ServerChunkCache chunks) {
         for (int waiting = unfollowed.size(); waiting > 0; waiting--) {
             ChunkPos pos = unfollowed.removeFirst();
-            ChunkHolder holder = chunks.chunkMap.getVisibleChunkIfPresent(pos.toLong());
+            ChunkHolder holder = chunks.chunkMap.getVisibleChunkIfPresent(pos.pack());
             if (holder == null) {
                 unfollowed.addLast(pos);
                 continue;
@@ -253,9 +252,9 @@ public final class ContentPregen {
     private void letGoFar(ServerLevel level) {
         LongIterator held = ticketed.iterator();
         while (held.hasNext()) {
-            ChunkPos pos = new ChunkPos(held.nextLong());
-            if (order.nearTile(pos.x, pos.z, NEIGHBORS)) { continue; }
-            level.getChunkSource().removeRegionTicket(TICKET, pos, 0, pos);
+            ChunkPos pos = ChunkPos.unpack(held.nextLong());
+            if (order.nearTile(pos.x(), pos.z(), NEIGHBORS)) { continue; }
+            level.getChunkSource().removeTicketWithRadius(TICKET, pos, 0);
             held.remove();
         }
     }
@@ -266,25 +265,25 @@ public final class ContentPregen {
         existing.clear();
         if (level != null) {
             for (long key : ticketed) {
-                ChunkPos pos = new ChunkPos(key);
-                level.getChunkSource().removeRegionTicket(TICKET, pos, 0, pos);
+                ChunkPos pos = ChunkPos.unpack(key);
+                level.getChunkSource().removeTicketWithRadius(TICKET, pos, 0);
             }
         }
         ticketed.clear();
     }
 
     private void landed(ChunkPos pos, boolean success, @Nullable Throwable thrown) {
-        if (!flying.remove(pos.toLong())) { return; }
+        if (!flying.remove(pos.pack())) { return; }
         done++;
         if (flying.isEmpty()) { pin(); }
-        boolean known = existing.remove(pos.toLong());
+        boolean known = existing.remove(pos.pack());
         if (success) {
             made++;
             if (!known) { fresh++; }
         }
         else {
             failed++;
-            if (thrown != null && failed <= 3) { ContentLog.LOGGER.error("The chunk at {}, {}, asked for while making land, could not be made", pos.x, pos.z, thrown); }
+            if (thrown != null && failed <= 3) { ContentLog.LOGGER.error("The chunk at {}, {}, asked for while making land, could not be made", pos.x(), pos.z(), thrown); }
         }
         ContentPregenHold.progress = ContentPregenProgress.sofar(this);
         if ((done & 255L) == 0L) { telemetry(); }
@@ -314,7 +313,7 @@ public final class ContentPregen {
         spot.putInt("size", order.tileSize());
         spot.putLong("tile", safeTile);
         spot.putLong("within", safeWithin);
-        PregenMemory.of(server).setMadeIn(dimension.location().toString(), spot);
+        PregenMemory.of(server).setMadeIn(dimension.identifier().toString(), spot);
     }
 
     private boolean stalled() {
@@ -336,7 +335,7 @@ public final class ContentPregen {
             ChunkStatus reached = holder == null ? null : holder.getLatestStatus();
             stuck.add(ChunkPos.getX(key) + ", " + ChunkPos.getZ(key) + (holder == null ? " not taken up by the game" : reached == null ? " not begun" : " stuck at " + reached));
         }
-        ContentLog.LOGGER.error("Making land in {} has not moved past {} of {} chunk(s) for a minute, with no land generated anywhere in that time, so it is being stopped rather than left hanging. {} chunk(s) asked for never came back and {} were refused before this: {}", dimension.location(), done, order.total(), flying.size(), failed, stuck.isEmpty() ? "none is out, the run was waiting on a player's chunk" : String.join("; ", stuck));
+        ContentLog.LOGGER.error("Making land in {} has not moved past {} of {} chunk(s) for a minute, with no land generated anywhere in that time, so it is being stopped rather than left hanging. {} chunk(s) asked for never came back and {} were refused before this: {}", dimension.identifier(), done, order.total(), flying.size(), failed, stuck.isEmpty() ? "none is out, the run was waiting on a player's chunk" : String.join("; ", stuck));
         stopping = true;
         finish(level);
     }
@@ -349,8 +348,8 @@ public final class ContentPregen {
         long writing = System.nanoTime();
         try {
             PregenMemory.of(server).setDirty();
-            server.overworld().getDataStorage().save();
-            if (level != server.overworld()) { level.getDataStorage().save(); }
+            server.overworld().getDataStorage().saveAndJoin();
+            if (level != server.overworld()) { level.getDataStorage().saveAndJoin(); }
         }
         catch (RuntimeException oops) { ContentLog.LOGGER.error("The safeguard save of the world records failed, so a crash from here would lose progress made since the last one that worked", oops); }
         long spent = (System.nanoTime() - writing) / 1000000L;
@@ -376,7 +375,7 @@ public final class ContentPregen {
         ContentPregenHold.progress = "";
         stillUntil = System.currentTimeMillis() + STILL_AFTER_MS;
         sweepUntil = System.currentTimeMillis() + SWEEP_AFTER_MS;
-        String id = dimension.location().toString();
+        String id = dimension.identifier().toString();
         PregenMemory memory = PregenMemory.of(server);
         if (level != null) {
             if ((whole || (stopping && !ContentPregenDimensions.picksUpAgain())) && reach > memory.madeTo(id)) { memory.setMadeTo(id, reach); }
@@ -423,7 +422,7 @@ public final class ContentPregen {
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (players.isEmpty()) { return false; }
         for (ServerPlayer player : players) {
-            if (!player.serverLevel().hasChunk(player.chunkPosition().x, player.chunkPosition().z)) { return false; }
+            if (!player.level().hasChunk(player.chunkPosition().x(), player.chunkPosition().z())) { return false; }
         }
         return true;
     }
@@ -431,7 +430,7 @@ public final class ContentPregen {
     public static void onServerStopping(ServerStoppingEvent event) {
         ContentPregen worker = running;
         if (worker != null) {
-            ContentLog.LOGGER.info("The server is stopping while land is still being made in {}, so the run is wound down at {} chunk(s) to be picked up on the next load", worker.dimension.location(), worker.done);
+            ContentLog.LOGGER.info("The server is stopping while land is still being made in {}, so the run is wound down at {} chunk(s) to be picked up on the next load", worker.dimension.identifier(), worker.done);
             worker.stopping = true;
             ServerLevel level = event.getServer().getLevel(worker.dimension);
             if (level != null) { worker.settle(level.getChunkSource()); }

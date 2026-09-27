@@ -116,7 +116,7 @@
   "rdpl.command.oreblocked": "Bisher blockierte Erzgenerierung:",
   "rdpl.command.genblocked": "Bisher blockierte Weltgenerierung, nach Mod und Typ:",
   "rdpl.command.gennone": "Es wurde kein Weltgenerator blockiert. Die Einstellungen sind vielleicht aus oder nicht verfügbar",
-  "key.categories.resourcedatapackloader": "Resource Data Pack Loader",
+  "key.category.resourcedatapackloader.main": "Resource Data Pack Loader",
   "key.resourcedatapackloader.pouch": "Getragenen Behälter öffnen",
   "rdpl.item.bucketFilled": "Eimer mit %s"
 }

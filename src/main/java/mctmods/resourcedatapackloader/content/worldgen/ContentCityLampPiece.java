@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
@@ -17,6 +18,7 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
+import net.minecraft.world.level.storage.TagValueInput;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +38,7 @@ public final class ContentCityLampPiece extends StructurePiece {
 
     public ContentCityLampPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.foot = tag.getInt(FOOT);
+        this.foot = tag.getIntOr(FOOT, 0);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) { tag.putInt(FOOT, foot); }
@@ -48,7 +50,7 @@ public final class ContentCityLampPiece extends StructurePiece {
         if (entity == null) { return; }
         CompoundTag merged = entity.saveWithoutMetadata(level.registryAccess());
         merged.merge(spec.tag());
-        entity.loadWithComponents(merged, level.registryAccess());
+        entity.loadWithComponents(TagValueInput.create(ProblemReporter.DISCARDING, level.registryAccess(), merged));
         entity.setChanged();
     }
 

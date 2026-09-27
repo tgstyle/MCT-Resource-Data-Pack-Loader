@@ -33,13 +33,13 @@ public final class ClientCommands {
     public static void register(RegisterClientCommandsEvent event) {
         LiteralArgumentBuilder<CommandSourceStack> tree = CommandShared.tree(NAME, ClientCommands::reload, "rdpl.command.unusednote", "rdpl.command.config.note", false);
         for (String sent : FORWARDED) {
-            tree.then(Commands.literal(sent).executes(context -> forward(sent))
+            tree.then(Commands.literal(sent).executes(_ -> forward(sent))
                     .then(Commands.argument("rest", StringArgumentType.greedyString())
-                    .suggests((context, suggestions) -> suggest(sent, suggestions))
+                    .suggests((_, suggestions) -> suggest(sent, suggestions))
                     .executes(context -> forward(sent + " " + StringArgumentType.getString(context, "rest")))));
         }
         tree.then(Commands.literal("biome").then(Commands.literal("find").then(Commands.argument("rest", StringArgumentType.greedyString())
-                .suggests((context, suggestions) -> suggest("biome find", suggestions))
+                .suggests((_, suggestions) -> suggest("biome find", suggestions))
                 .executes(context -> forward("biome find " + StringArgumentType.getString(context, "rest"))))));
         event.getDispatcher().register(tree);
     }
@@ -80,7 +80,7 @@ public final class ClientCommands {
         Minecraft minecraft = Minecraft.getInstance();
         IntegratedServer server = minecraft.getSingleplayerServer();
         CompletableFuture<Void> done = minecraft.reloadResourcePacks();
-        if (server != null) { done = done.thenCompose(finished -> CommandShared.reloadServer(server)); }
+        if (server != null) { done = done.thenCompose(_ -> CommandShared.reloadServer(server)); }
         done.thenRun(() -> minecraft.execute(() -> {
             CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.reloaded", PackManager.get().getPacks().size(), CommandShared.elapsed(start)));
             if (server == null) { CommandShared.send(source, ChatFormatting.GRAY, CommandShared.tr("rdpl.command.clientonly")); }

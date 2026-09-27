@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.TagKey;
@@ -33,14 +33,14 @@ final class CardPlace {
 
     static boolean inDimension(String wanted, ServerPlayer player) { return wanted.isEmpty() || wanted.equals(dimensionName(player)); }
 
-    static String dimensionName(ServerPlayer player) { return player.level().dimension().location().toString(); }
+    static String dimensionName(ServerPlayer player) { return player.level().dimension().identifier().toString(); }
 
     static boolean biomeMatches(List<String> wanted, Holder<Biome> biome) {
         if (wanted.isEmpty()) { return true; }
-        ResourceLocation name = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier name = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         for (String one : wanted) {
             if (one.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(one.substring(1));
+                Identifier tag = Identifier.tryParse(one.substring(1));
                 if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return true; }
             }
             else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
@@ -48,19 +48,19 @@ final class CardPlace {
         return false;
     }
 
-    static String biomeName(ServerPlayer player) { return player.level().getBiome(player.blockPosition()).unwrapKey().map(key -> key.location().toString()).orElse(""); }
+    static String biomeName(ServerPlayer player) { return player.level().getBiome(player.blockPosition()).unwrapKey().map(key -> key.identifier().toString()).orElse(""); }
 
     static boolean inStructure(ServerPlayer player, List<String> wanted, int radius) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         BlockPos at = player.blockPosition();
         for (String name : wanted) {
             if (name.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(name.substring(1));
+                Identifier tag = Identifier.tryParse(name.substring(1));
                 if (tag != null && level.structureManager().getStructureWithPieceAt(at, TagKey.create(Registries.STRUCTURE, tag)).isValid()) { return true; }
                 continue;
             }
-            ResourceLocation id = ResourceLocation.tryParse(name);
-            Structure structure = id == null ? null : level.registryAccess().registryOrThrow(Registries.STRUCTURE).get(id);
+            Identifier id = Identifier.tryParse(name);
+            Structure structure = id == null ? null : level.registryAccess().lookupOrThrow(Registries.STRUCTURE).getValue(id);
             if (structure != null) {
                 if (level.structureManager().getStructureWithPieceAt(at, structure).isValid()) { return true; }
                 continue;
@@ -72,14 +72,14 @@ final class CardPlace {
     }
 
     @Nullable static Integer score(ServerPlayer player, String objective) {
-        Scoreboard board = player.getScoreboard();
+        Scoreboard board = player.level().getScoreboard();
         Objective found = Scores.objective(board, objective);
         String owner = player.getScoreboardName();
         if (found == null || !Scores.has(board, owner, found)) { return null; }
         return Scores.score(board, owner, found);
     }
 
-    static long day(Level level) { return level.getDayTime() / DAY_TICKS; }
+    static long day(Level level) { return level.getOverworldClockTime() / DAY_TICKS; }
 
-    static int timeOfDay(Level level) { return (int) (level.getDayTime() % DAY_TICKS); }
+    static int timeOfDay(Level level) { return (int) (level.getOverworldClockTime() % DAY_TICKS); }
 }

@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Mirror;
@@ -20,11 +20,11 @@ public final class ContentMapPiece extends TemplateStructurePiece {
     public static final StructurePieceType TYPE = (StructurePieceType.StructureTemplateType) ContentMapPiece::new;
     private static final String ROTATION = "Rot";
 
-    public ContentMapPiece(StructureTemplateManager manager, ResourceLocation template, Rotation rotation, BlockPos corner) {
+    public ContentMapPiece(StructureTemplateManager manager, Identifier template, Rotation rotation, BlockPos corner) {
         super(TYPE, 0, manager, template, template.toString(), settings(rotation), corner);
     }
 
-    public ContentMapPiece(StructureTemplateManager manager, CompoundTag tag) { super(TYPE, tag, manager, held -> settings(Rotation.valueOf(tag.getString(ROTATION)))); }
+    public ContentMapPiece(StructureTemplateManager manager, CompoundTag tag) { super(TYPE, tag, manager, _ -> settings(Rotation.valueOf(tag.getStringOr(ROTATION, "")))); }
 
     private static StructurePlaceSettings settings(Rotation rotation) { return new StructurePlaceSettings().setRotation(rotation).setMirror(Mirror.NONE); }
 

@@ -61,7 +61,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
         for (List<Integer> pin : pins) {
             if (pin.size() != 2) { continue; }
             ChunkPos chunk = chunkOf(pin);
-            if (Math.floorDiv(chunk.x, spacing()) == Math.floorDiv(regionX, spacing()) && Math.floorDiv(chunk.z, spacing()) == Math.floorDiv(regionZ, spacing())) { return chunk; }
+            if (Math.floorDiv(chunk.x(), spacing()) == Math.floorDiv(regionX, spacing()) && Math.floorDiv(chunk.z(), spacing()) == Math.floorDiv(regionZ, spacing())) { return chunk; }
         }
         return super.getPotentialStructureChunk(seed, regionX, regionZ);
     }
@@ -72,7 +72,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
         if (minDistanceFromSpawn <= 0) { return true; }
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         ServerLevel overworld = server == null ? null : server.getLevel(Level.OVERWORLD);
-        BlockPos from = overworld != null ? overworld.getSharedSpawnPos() : new BlockPos(spawn.size() == 2 ? spawn.get(0) : 0, 0, spawn.size() == 2 ? spawn.get(1) : 0);
+        BlockPos from = overworld != null ? overworld.getRespawnData().pos() : new BlockPos(spawn.size() == 2 ? spawn.get(0) : 0, 0, spawn.size() == 2 ? spawn.get(1) : 0);
         double offX = (x * 16 + 8) - from.getX();
         double offZ = (z * 16 + 8) - from.getZ();
         return offX * offX + offZ * offZ >= (double) minDistanceFromSpawn * minDistanceFromSpawn;
@@ -84,7 +84,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
 
     static void hold(List<List<Integer>> pins) {
         for (List<Integer> pin : pins) {
-            if (pin.size() == 2) { PINNED.add(chunkOf(pin).toLong()); }
+            if (pin.size() == 2) { PINNED.add(chunkOf(pin).pack()); }
         }
     }
 
@@ -95,7 +95,7 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
         return false;
     }
 
-    public static boolean pinned(ChunkPos chunk) { return !PINNED.isEmpty() && PINNED.contains(chunk.toLong()); }
+    public static boolean pinned(ChunkPos chunk) { return !PINNED.isEmpty() && PINNED.contains(chunk.pack()); }
 
     public static ChunkPos chunkOf(List<Integer> pin) { return new ChunkPos(pin.get(0) >> 4, pin.get(1) >> 4); }
 }

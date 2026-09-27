@@ -40,7 +40,7 @@ public final class ContentCityTrees {
 
     private ContentCityTrees() {}
 
-    public interface Felling {
+    public interface IFelling {
         @Nullable BoundingBox stood();
 
         int fellFloor();
@@ -55,11 +55,11 @@ public final class ContentCityTrees {
         @Nullable default BoundingBox crowned() { return null; }
     }
 
-    private record Stood(Felling piece, BoundingBox box) {}
+    private record Stood(IFelling piece, BoundingBox box) {}
 
     public static BoundingBox bridge(BoundingBox held, int level, int frame) { return new BoundingBox(held.minX(), level - TRESTLE, held.minZ(), held.maxX(), Math.max(held.maxY(), level + frame + 1), held.maxZ()); }
 
-    public static int fellAround(WorldGenLevel level, StructureManager manager, ChunkPos chunk, Felling piece, BoundingBox box) {
+    public static int fellAround(WorldGenLevel level, StructureManager manager, ChunkPos chunk, IFelling piece, BoundingBox box) {
         BoundingBox felled = piece.felled();
         if (felled == null) { return 0; }
         List<BoundingBox> kept = new ArrayList<>();
@@ -94,7 +94,7 @@ public final class ContentCityTrees {
     }
 
     private static void fellGrown(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
-        BoundingBox scan = new BoundingBox(chunk.getMinBlockX(), level.getMinBuildHeight(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getMaxBlockZ());
+        BoundingBox scan = new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ());
         BoundingBox area = scan.inflatedBy(AROUND);
         List<Stood> pieces = standing(manager, chunk, area);
         if (pieces.isEmpty()) { return; }
@@ -109,7 +109,7 @@ public final class ContentCityTrees {
             felled += fell(level, seeds, canopy, at -> area.isInside(at) && free(level, kept, at), kept);
         }
         finally { CityBiome.leave(); }
-        if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) that grew around the city's pieces in chunk {}, {} after they were laid", felled, chunk.x, chunk.z); }
+        if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) that grew around the city's pieces in chunk {}, {} after they were laid", felled, chunk.x(), chunk.z()); }
     }
 
     private static void sweep(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
@@ -119,16 +119,16 @@ public final class ContentCityTrees {
             int maxX = Math.min(city.maxX() + SWEEP_OUT, chunk.getMaxBlockX() + WRITTEN);
             int minZ = Math.max(city.minZ() - SWEEP_OUT, chunk.getMinBlockZ() - WRITTEN);
             int maxZ = Math.min(city.maxZ() + SWEEP_OUT, chunk.getMaxBlockZ() + WRITTEN);
-            int minY = Math.max(level.getMinBuildHeight() + 1, city.minY() - SWEEP_UNDER);
-            int maxY = Math.min(city.minY() + SWEEP_OVER, level.getMaxBuildHeight() - 1);
+            int minY = Math.max(level.getMinY() + 1, city.minY() - SWEEP_UNDER);
+            int maxY = Math.min(city.minY() + SWEEP_OVER, level.getMaxY());
             if (minX > maxX || minZ > maxZ || minY > maxY) { continue; }
-            int swept = sweep(level, new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ));
-            if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the city at {}, {} in chunk {}, {}, left behind where a felled tree crossed a chunk edge", swept, city.minX(), city.minZ(), chunk.x, chunk.z); }
+            int swept = sweep(level, new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ), chunk);
+            if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the city at {}, {} in chunk {}, {}, left behind where a felled tree crossed a chunk edge", swept, city.minX(), city.minZ(), chunk.x(), chunk.z()); }
         }
     }
 
-    private static int sweep(WorldGenLevel level, BoundingBox zone) {
-        BoundingBox read = new BoundingBox(zone.minX() - SUSTAIN, Math.max(level.getMinBuildHeight(), zone.minY() - SUSTAIN), zone.minZ() - SUSTAIN, zone.maxX() + SUSTAIN, Math.min(level.getMaxBuildHeight() - 1, zone.maxY() + SUSTAIN), zone.maxZ() + SUSTAIN);
+    private static int sweep(WorldGenLevel level, BoundingBox zone, ChunkPos chunk) {
+        BoundingBox read = new BoundingBox(zone.minX() - SUSTAIN, Math.max(level.getMinY(), zone.minY() - SUSTAIN), zone.minZ() - SUSTAIN, zone.maxX() + SUSTAIN, Math.min(level.getMaxY(), zone.maxY() + SUSTAIN), zone.maxZ() + SUSTAIN);
         int spanX = read.getXSpan();
         int spanY = read.getYSpan();
         int spanZ = read.getZSpan();
@@ -139,7 +139,13 @@ public final class ContentCityTrees {
             for (int z = 0; z < spanZ; z++) {
                 for (int y = 0; y < spanY; y++) {
                     int cell = (x * spanZ + z) * spanY + y;
-                    BlockState state = level.getBlockState(at.set(read.minX() + x, read.minY() + y, read.minZ() + z));
+                    int blockX = read.minX() + x;
+                    int blockZ = read.minZ() + z;
+                    if (blockX < chunk.getMinBlockX() - WRITTEN || blockX > chunk.getMaxBlockX() + WRITTEN || blockZ < chunk.getMinBlockZ() - WRITTEN || blockZ > chunk.getMaxBlockZ() + WRITTEN) {
+                        frontier.add(cell);
+                        continue;
+                    }
+                    BlockState state = level.getBlockState(at.set(blockX, read.minY() + y, blockZ));
                     if (BlastPlasterUtil.isTreeWood(state)) { frontier.add(cell); }
                     else if (state.getBlock() instanceof LeavesBlock) { reach[cell] = UNREACHED; }
                 }
@@ -164,8 +170,9 @@ public final class ContentCityTrees {
             frontier = next;
         }
         int swept = 0;
-        for (int x = zone.minX(); x <= zone.maxX(); x++) {
-            for (int z = zone.minZ(); z <= zone.maxZ(); z++) {
+        int probed = WRITTEN - PLANTED_REACH;
+        for (int x = Math.max(zone.minX(), chunk.getMinBlockX() - probed); x <= Math.min(zone.maxX(), chunk.getMaxBlockX() + probed); x++) {
+            for (int z = Math.max(zone.minZ(), chunk.getMinBlockZ() - probed); z <= Math.min(zone.maxZ(), chunk.getMaxBlockZ() + probed); z++) {
                 for (int y = zone.minY(); y <= zone.maxY(); y++) {
                     if (reach[((x - read.minX()) * spanZ + z - read.minZ()) * spanY + y - read.minY()] == UNREACHED) { swept += orphan(level, at.set(x, y, z)); }
                 }
@@ -179,7 +186,7 @@ public final class ContentCityTrees {
         if (!(held.getBlock() instanceof LeavesBlock) || held.hasProperty(LeavesBlock.PERSISTENT) && held.getValue(LeavesBlock.PERSISTENT)) { return 0; }
         int top = at.getY();
         int swept = clear(level, at);
-        for (int under = top - 1; under > level.getMinBuildHeight(); under--) {
+        for (int under = top - 1; under > level.getMinY(); under--) {
             at.setY(under);
             if (!level.getBlockState(at).is(Blocks.VINE)) { break; }
             swept += clear(level, at);
@@ -193,7 +200,7 @@ public final class ContentCityTrees {
         for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
             for (StructurePiece piece : start.getPieces()) {
                 if (piece == but) { continue; }
-                BoundingBox stood = piece instanceof Felling felling ? felling.stood() : piece instanceof ContentCityPlazaPiece plaza ? plaza.reached() : null;
+                BoundingBox stood = piece instanceof IFelling felling ? felling.stood() : piece instanceof ContentCityPlazaPiece plaza ? plaza.reached() : null;
                 if (stood != null && stood.intersects(near)) { found.add(stood); }
             }
         }
@@ -231,13 +238,13 @@ public final class ContentCityTrees {
         return found;
     }
 
-    private static BoundingBox stood(StructurePiece piece) { return piece instanceof Felling felling ? felling.stood() : piece.getBoundingBox(); }
+    private static BoundingBox stood(StructurePiece piece) { return piece instanceof IFelling felling ? felling.stood() : piece.getBoundingBox(); }
 
     private static List<Stood> standing(StructureManager manager, ChunkPos chunk, BoundingBox near) {
         List<Stood> found = new ArrayList<>();
         for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
             for (StructurePiece piece : start.getPieces()) {
-                if (!(piece instanceof Felling felling)) { continue; }
+                if (!(piece instanceof IFelling felling)) { continue; }
                 BoundingBox felled = felling.felled();
                 if (felled != null && felled.inflatedBy(REACH).intersects(near)) { found.add(new Stood(felling, felled)); }
             }

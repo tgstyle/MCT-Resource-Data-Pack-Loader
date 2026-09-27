@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.interfaces.IRegionAquifer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -34,6 +35,6 @@ import javax.annotation.Nullable;
         if (pinned == CaveRegionDef.NO_WATER) { return; }
         IFluidStatus deep = (IFluidStatus) (Object) globalFluidPicker.computeFluid(x, DimensionType.WAY_BELOW_MIN_Y, z);
         int floor = deep.rdpl$getFluidType().is(Blocks.LAVA) ? deep.rdpl$getFluidLevel() + 2 : pinned;
-        cir.setReturnValue(new Aquifer.FluidStatus(Math.min(rdpl$seaLevel - 1, Math.max(pinned, floor)), Blocks.WATER.defaultBlockState()));
+        cir.setReturnValue(new Aquifer.FluidStatus(Mth.clamp(pinned, floor, rdpl$seaLevel - 1),Blocks.WATER.defaultBlockState()));
     }
 }

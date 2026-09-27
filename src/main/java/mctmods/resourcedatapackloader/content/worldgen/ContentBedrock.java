@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
@@ -100,7 +100,7 @@ public final class ContentBedrock {
         List<TagKey<Biome>> tags = new ArrayList<>();
         for (String type : ContentControl.list(ContentControl.BEDROCK, "flatBedrockBiomeTypes", Config.worldgen.flatBedrockBiomeTypes())) {
             String named = type.indexOf(':') >= 0 ? type.trim() : ContentFormats.biomeTag(type);
-            ResourceLocation id = named == null ? null : ResourceLocation.tryParse(named.startsWith("#") ? named.substring(1) : named);
+            Identifier id = named == null ? null : Identifier.tryParse(named.startsWith("#") ? named.substring(1) : named);
             if (id != null) { tags.add(TagKey.create(Registries.BIOME, id)); }
             else if (ContentWorldShape.WARNED.add("flatBedrockBiomeTypes:" + type)) { ContentLog.LOGGER.error("flatBedrockBiomeTypes names '{}', which no biome tag on this line answers to", type); }
         }
@@ -126,17 +126,17 @@ public final class ContentBedrock {
 
     static boolean bedrockRetrogen() { return bedrockAsked() && ContentControl.flag(ContentControl.BEDROCK, "flatBedrockRetrogen", Config.worldgen.flatBedrockRetrogen()); }
 
-    static boolean flattens(ServerLevel level) { return bedrockApplies(level.dimension().location().toString()); }
+    static boolean flattens(ServerLevel level) { return bedrockApplies(level.dimension().identifier().toString()); }
 
     public static void flattenChunk(WorldGenLevel level, ChunkPos at) {
         ServerLevel server = level.getLevel();
         if (!flattens(server)) { return; }
         int baseX = at.getMinBlockX();
         int baseZ = at.getMinBlockZ();
-        int bottom = server.getMinBuildHeight();
+        int bottom = server.getMinY();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         if (unfloored(level, pos, baseX, baseZ, bottom)) { return; }
-        String dimension = server.dimension().location().toString();
+        String dimension = server.dimension().identifier().toString();
         String fillerName = bedrockFiller(dimension);
         Block chosen = fillerName == null ? null : ContentWorldShape.block(fillerName, "flatBedrockFiller");
         BlockState filler = chosen != null ? chosen.defaultBlockState() : server.getChunkSource().getGenerator() instanceof NoiseBasedChunkGenerator noise ? noise.generatorSettings().value().defaultBlock() : Blocks.STONE.defaultBlockState();
@@ -172,7 +172,7 @@ public final class ContentBedrock {
     }
 
     private static boolean bedrockBiome(Holder<Biome> biome, List<String> names, List<TagKey<Biome>> types) {
-        ResourceLocation id = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier id = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         if (id != null && BiomeNames.named(id, names)) { return true; }
         for (TagKey<Biome> type : types) {
             if (biome.is(type)) { return true; }

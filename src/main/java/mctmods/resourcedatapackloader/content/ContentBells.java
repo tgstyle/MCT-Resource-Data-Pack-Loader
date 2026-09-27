@@ -5,17 +5,17 @@ import mctmods.resourcedatapackloader.content.block.ContentBellBlockEntity;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBell;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.datafixers.DSL;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBells {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "bell");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "bell");
     public static final int RING_EVENT = 1;
     private static final String BODY = "_body";
     @Nullable private static BlockEntityType<ContentBellBlockEntity> type;
@@ -29,7 +29,7 @@ public final class ContentBells {
 
     @Nullable public static BlockEntityType<ContentBellBlockEntity> registeredType() { return type; }
 
-    public static ResourceLocation body(ResourceLocation id) { return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "block/" + id.getPath() + BODY); }
+    public static Identifier body(Identifier id) { return Identifier.fromNamespaceAndPath(id.getNamespace(), "block/" + id.getPath() + BODY); }
 
     public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) {
         List<Block> blocks = new ArrayList<>();
@@ -37,7 +37,7 @@ public final class ContentBells {
             if (entry.block() instanceof IContentBell) { blocks.add(entry.block()); }
         }
         if (blocks.isEmpty()) { return; }
-        type = BlockEntityType.Builder.of(ContentBellBlockEntity::new, blocks.toArray(Block[]::new)).build(DSL.remainderType());
+        type = new BlockEntityType<>(ContentBellBlockEntity::new, Set.copyOf(blocks));
         helper.register(ID, type);
         ContentLog.LOGGER.info("Registered the bell block entity type for {} pack bell block(s)", blocks.size());
     }

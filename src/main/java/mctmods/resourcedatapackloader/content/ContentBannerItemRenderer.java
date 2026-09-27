@@ -1,36 +1,38 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
-import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
-
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemDisplayContext;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.special.SpecialModelRenderer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import java.util.HashMap;
-import java.util.Map;
+import org.joml.Vector3fc;
+import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentBannerItemRenderer extends BlockEntityWithoutLevelRenderer {
-    @Nullable private static ContentBannerItemRenderer instance;
-    private final Map<Block, ContentBannerBlockEntity> entities = new HashMap<>();
+public final class ContentBannerItemRenderer implements SpecialModelRenderer<Void> {
+    private final ContentBannerRenderer renderer;
+    private final Block block;
 
-    private ContentBannerItemRenderer() { super(Minecraft.getInstance().getBlockEntityRenderDispatcher(), Minecraft.getInstance().getEntityModels()); }
-
-    public static ContentBannerItemRenderer get() {
-        if (instance == null) { instance = new ContentBannerItemRenderer(); }
-        return instance;
+    private ContentBannerItemRenderer(ContentBannerRenderer renderer, Block block) {
+        this.renderer = renderer;
+        this.block = block;
     }
 
-    @Override public void renderByItem(@Nonnull ItemStack stack, @Nonnull ItemDisplayContext context, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffer, int light, int overlay) {
-        if (!(stack.getItem() instanceof BlockItem item) || !(item.getBlock() instanceof IContentBanner)) { return; }
-        ContentBannerBlockEntity entity = entities.computeIfAbsent(item.getBlock(), block -> new ContentBannerBlockEntity(BlockPos.ZERO, block.defaultBlockState()));
-        Minecraft.getInstance().getBlockEntityRenderDispatcher().renderItem(entity, pose, buffer, light, overlay);
+    @Override public void submit(@Nullable Void argument, @Nonnull PoseStack pose, @Nonnull SubmitNodeCollector collector, int light, int overlay, boolean foil, int outline) { renderer.submitItem(block, pose, collector, light, overlay, outline); }
+
+    @Override public void getExtents(@Nonnull Consumer<Vector3fc> output) { renderer.getExtents(output); }
+
+    @Override @Nullable public Void extractArgument(@Nonnull ItemStack stack) { return null; }
+
+    public record Unbaked(Block block) implements SpecialModelRenderer.Unbaked<Void> {
+        public static final MapCodec<Unbaked> MAP_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(BuiltInRegistries.BLOCK.byNameCodec().fieldOf("block").forGetter(Unbaked::block)).apply(instance, Unbaked::new));
+
+        @Override @Nonnull public MapCodec<Unbaked> type() { return MAP_CODEC; }
+
+        @Override @Nonnull public ContentBannerItemRenderer bake(@Nonnull SpecialModelRenderer.BakingContext context) { return new ContentBannerItemRenderer(new ContentBannerRenderer(context.entityModelSet()), block); }
     }
 }

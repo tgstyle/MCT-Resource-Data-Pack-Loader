@@ -34,7 +34,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityRailPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityRailPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityRailPiece::new;
     public static final int CLEAR = CityRails.CLEAR;
     private static final int LEG = 4;
@@ -80,17 +80,17 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     public ContentCityRailPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.width = tag.getInt(WIDTH);
-        this.bridged = tag.getBoolean(BRIDGED);
-        this.bored = tag.getBoolean(BORED);
-        this.subway = tag.getBoolean(SUBWAY);
-        this.crossed = tag.getBoolean(CROSSED);
-        this.frames = tag.getIntArray(FRAMES);
-        this.trunk = tag.contains(TRUNK) ? tag.getIntArray(TRUNK) : null;
-        this.ends = tag.getIntArray(LINK_ENDS);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.width = tag.getIntOr(WIDTH, 0);
+        this.bridged = tag.getBooleanOr(BRIDGED, false);
+        this.bored = tag.getBooleanOr(BORED, false);
+        this.subway = tag.getBooleanOr(SUBWAY, false);
+        this.crossed = tag.getBooleanOr(CROSSED, false);
+        this.frames = tag.getIntArray(FRAMES).orElse(new int[0]);
+        this.trunk = tag.contains(TRUNK) ? tag.getIntArray(TRUNK).orElse(new int[0]) : null;
+        this.ends = tag.getIntArray(LINK_ENDS).orElse(new int[0]);
     }
 
     private static BoundingBox box(int from, int to, int level, int middle, boolean alongX, int width, int platform) {
@@ -135,7 +135,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     @Override public int fellFloor() { return level - 2; }
 
-    @Override @Nullable public BoundingBox felled() { return bored || crossed ? strip(fellFloor()) : ContentCityTrees.Felling.super.felled(); }
+    @Override @Nullable public BoundingBox felled() { return bored || crossed ? strip(fellFloor()) : ContentCityTrees.IFelling.super.felled(); }
 
     @Override public BoundingBox crowned() { return strip(level + 1); }
 

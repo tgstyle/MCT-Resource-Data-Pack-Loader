@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.biome.Biome;
@@ -33,8 +33,8 @@ public final class ContentBiomeControl {
     public static final String VOID = "minecraft:the_void";
     private static final String END = "minecraft:the_end";
     private static final Map<Holder<Biome>, Holder<Biome>> END_BIOMES = new ConcurrentHashMap<>();
-    private static final ResourceLocation VOID_ID = ResourceLocation.parse(VOID);
-    private static final Map<ResourceLocation, Set<String>> TAG_MEMBERS = new HashMap<>();
+    private static final Identifier VOID_ID = Identifier.parse(VOID);
+    private static final Map<Identifier, Set<String>> TAG_MEMBERS = new HashMap<>();
     private static final Map<String, Integer> BLOCKED = new LinkedHashMap<>();
     private static final Set<String> WARNED = new LinkedHashSet<>();
 
@@ -62,7 +62,7 @@ public final class ContentBiomeControl {
         if (!enabled()) { return false; }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || !template.voidOnly()) { return false; }
-        for (ResourceLocation biome : ContentBiomes.known()) {
+        for (Identifier biome : ContentBiomes.known()) {
             if (!biome.equals(VOID_ID) && allowed(biome)) { return false; }
         }
         return true;
@@ -80,17 +80,17 @@ public final class ContentBiomeControl {
     }
 
     private static Holder<Biome> endReplacement(Holder<Biome> biome) {
-        ResourceLocation id = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier id = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (id == null || server == null || allowed(id)) { return biome; }
-        ResourceLocation replaced = ResourceLocation.tryParse(replacement(id, END));
-        Holder<Biome> found = replaced == null ? null : server.registryAccess().registryOrThrow(Registries.BIOME).getHolder(ResourceKey.create(Registries.BIOME, replaced)).orElse(null);
+        Identifier replaced = Identifier.tryParse(replacement(id, END));
+        Holder<Biome> found = replaced == null ? null : server.registryAccess().lookupOrThrow(Registries.BIOME).get(ResourceKey.create(Registries.BIOME, replaced)).orElse(null);
         if (found == null) { return biome; }
         ContentLog.LOGGER.debug("Biome {} is blocked out of the end, which takes {} in its place", id, replaced);
         return found;
     }
 
-    public static String place(ResourceLocation biome, String dimension) {
+    public static String place(Identifier biome, String dimension) {
         if (allowed(biome)) { return biome.toString(); }
         String replacement = replacement(biome, dimension);
         BLOCKED.merge(biome.toString(), 1, Integer::sum);
@@ -111,7 +111,7 @@ public final class ContentBiomeControl {
         BLOCKED.clear();
     }
 
-    private static boolean allowed(ResourceLocation biome) {
+    private static boolean allowed(Identifier biome) {
         Set<String> names = Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeNames", Config.worldgen.biomeNames()));
         boolean blacklist = ContentControl.flag(ContentControl.BIOMES, "biomeNamesAreBlacklist", Config.worldgen.biomeNamesAreBlacklist());
         if (!names.isEmpty() && BiomeNames.named(biome, names) == blacklist) { return false; }
@@ -119,14 +119,14 @@ public final class ContentBiomeControl {
         return Settings.lower(ContentControl.list(ContentControl.BIOMES, "biomeWhitelist", Config.worldgen.biomeWhitelist())).contains(biome.getNamespace());
     }
 
-    private static String replacement(ResourceLocation blocked, String dimension) {
+    private static String replacement(Identifier blocked, String dimension) {
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || !templated(template, dimension)) { return VOID; }
         for (String role : ContentWorldTemplates.ROLE_ORDER) {
             String named = template.roles().get(role);
             if (named == null || named.isEmpty()) { continue; }
             String tag = ContentFormats.biomeTag(role);
-            ResourceLocation members = tag == null ? null : ResourceLocation.tryParse(tag);
+            Identifier members = tag == null ? null : Identifier.tryParse(tag);
             if (members == null || !members(members).contains(blocked.toString())) { continue; }
             String found = biome(template, named);
             if (found != null) { return found; }
@@ -145,23 +145,23 @@ public final class ContentBiomeControl {
 
     @Nullable private static String biome(WorldTemplateDef template, String name) {
         if (name.isEmpty() || WorldTemplateDef.VOID.equalsIgnoreCase(name)) { return null; }
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        Identifier id = Identifier.tryParse(name);
         if (id != null && ContentBiomes.shipped(id)) { return id.toString(); }
         if (WARNED.add(template.key() + " " + name)) { ContentLog.LOGGER.error("World template {} names biome {}, which is not registered, so that role falls through", template.key(), name); }
         return null;
     }
 
-    private static Set<String> members(ResourceLocation tag) {
+    private static Set<String> members(Identifier tag) {
         Set<String> known = TAG_MEMBERS.get(tag);
         if (known != null) { return known; }
         Set<String> found = new LinkedHashSet<>();
         TAG_MEMBERS.put(tag, found);
-        JsonObject json = GameData.json(ResourceLocation.fromNamespaceAndPath(tag.getNamespace(), ContentFormats.BIOME_TAGS + "/" + tag.getPath() + ".json"));
+        JsonObject json = GameData.json(Identifier.fromNamespaceAndPath(tag.getNamespace(), ContentFormats.BIOME_TAGS + "/" + tag.getPath() + ".json"));
         if (json == null) { return found; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "values", new com.google.gson.JsonArray())) {
             String value = element.isJsonObject() ? GsonHelper.getAsString(element.getAsJsonObject(), "id", "") : element.getAsString();
             if (value.startsWith("#")) {
-                ResourceLocation nested = ResourceLocation.tryParse(value.substring(1));
+                Identifier nested = Identifier.tryParse(value.substring(1));
                 if (nested != null) { found.addAll(members(nested)); }
             }
             else if (!value.isEmpty()) { found.add(value); }

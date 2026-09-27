@@ -17,23 +17,25 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.neoforged.neoforge.common.DeferredSpawnEggItem;
 import net.neoforged.neoforge.event.entity.EntityAttributeCreationEvent;
 import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
@@ -43,8 +45,10 @@ import java.util.List;
 import java.util.Map;
 
 public final class ContentEntityTypes {
-    private static final ResourceLocation RETURNING_THROW = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "returning_throw");
-    private static final String SPAWN_EGG_MODEL = "{\"parent\":\"minecraft:item/template_spawn_egg\"}";
+    private static final Identifier RETURNING_THROW = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "returning_throw");
+    private static final String EGG_TEMPLATE = ResourceDataPackLoader.MOD_ID + ":item/template_spawn_egg";
+    private static final int EGG_PRIMARY = 0xFFFFFF;
+    private static final int EGG_SECONDARY = 0x808080;
 
     private ContentEntityTypes() {}
 
@@ -65,7 +69,7 @@ public final class ContentEntityTypes {
                     .sized(width, height)
                     .clientTrackingRange(def.tracking().range()).updateInterval(def.tracking().frequency()).setShouldReceiveVelocityUpdates(def.tracking().velocity());
             if (def.flags().fireproof()) { builder = builder.fireImmune(); }
-            EntityType<Entity> type = builder.build(def.key().toString());
+            EntityType<Entity> type = builder.build(ResourceKey.create(Registries.ENTITY_TYPE, def.key()));
             helper.register(def.key(), type);
             ContentEntities.BY_TYPE.put(type, def);
             ContentEntities.BASES.put(type, base);
@@ -74,7 +78,7 @@ public final class ContentEntityTypes {
             ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", def.key(), def.attributes(), def.equipment());
         }
         if (throwsReturning()) {
-            ContentEntities.returningThrow = EntityType.Builder.<ReturningThrow>of(ReturningThrow::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true).build(RETURNING_THROW.toString());
+            ContentEntities.returningThrow = EntityType.Builder.<ReturningThrow>of(ReturningThrow::new, MobCategory.MISC).sized(0.5F, 0.5F).clientTrackingRange(4).updateInterval(1).setShouldReceiveVelocityUpdates(true).build(ResourceKey.create(Registries.ENTITY_TYPE, RETURNING_THROW));
             helper.register(RETURNING_THROW, ContentEntities.returningThrow);
         }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
@@ -90,17 +94,12 @@ public final class ContentEntityTypes {
     public static void registerEggs(RegisterEvent.RegisterHelper<Item> helper) {
         for (EntityVariantDef def : ContentEntities.DEFS.values()) {
             if (!def.egg().wanted()) { continue; }
-            EntityType<?> base = Registered.find(BuiltInRegistries.ENTITY_TYPE, def.base());
-            if (base == null) { continue; }
-            SpawnEggItem baseEgg = SpawnEggItem.byId(base);
-            int primary = def.egg().primary() >= 0 ? def.egg().primary() : baseEgg == null ? 0xFFFFFF : baseEgg.getColor(0);
-            int secondary = def.egg().secondary() >= 0 ? def.egg().secondary() : baseEgg == null ? 0x808080 : baseEgg.getColor(1);
-            ResourceLocation key = def.key();
-            helper.register(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), key.getPath() + "_spawn_egg"), new DeferredSpawnEggItem(() -> egged(ContentEntities.TYPES.get(key)), primary, secondary, new Item.Properties()));
+            EntityType<?> type = ContentEntities.TYPES.get(def.key());
+            if (type == null) { continue; }
+            Identifier egg = def.key().withSuffix("_spawn_egg");
+            helper.register(egg, new SpawnEggItem(new Item.Properties().setId(ResourceKey.create(Registries.ITEM, egg)).spawnEgg(type)));
         }
     }
-
-    @SuppressWarnings("unchecked") private static EntityType<? extends Mob> egged(EntityType<?> type) { return (EntityType<? extends Mob>) type; }
 
     @SuppressWarnings("unchecked") private static EntityType<? extends LivingEntity> living(EntityType<?> type) { return (EntityType<? extends LivingEntity>) type; }
 
@@ -121,18 +120,23 @@ public final class ContentEntityTypes {
             EntityVariantDef def = ContentEntities.BY_TYPE.get(type);
             for (String name : def.attributes().keySet()) {
                 Holder<Attribute> attribute = ContentAttributes.find(name, def.key());
-                if (attribute != null && !event.has(living(type), attribute)) { event.add(living(type), attribute); }
+                if (attribute != null) { grant(event, type, attribute); }
             }
+            if (def.combat().swoops()) { grant(event, type, Attributes.FLYING_SPEED); }
         }
+    }
+
+    private static void grant(EntityAttributeModificationEvent event, EntityType<?> type, Holder<Attribute> attribute) {
+        if (!event.has(living(type), attribute)) { event.add(living(type), attribute); }
     }
 
     public static void placements(RegisterSpawnPlacementsEvent event) {
         for (EntityType<?> type : ContentEntities.TYPES.values()) { place(event, type, ContentEntities.BASES.get(type), ContentEntities.BY_TYPE.get(type).flags().ignoresSpawnRules()); }
     }
 
-    private static <T extends Entity> void place(RegisterSpawnPlacementsEvent event, EntityType<T> type, EntityType<?> base, boolean free) { event.register(type, SpawnPlacements.getPlacementType(base), SpawnPlacements.getHeightmapType(base), (kind, level, reason, pos, random) -> free || rules(base, level, reason, pos, random), RegisterSpawnPlacementsEvent.Operation.REPLACE); }
+    private static <T extends Entity> void place(RegisterSpawnPlacementsEvent event, EntityType<T> type, EntityType<?> base, boolean free) { event.register(type, SpawnPlacements.getPlacementType(base), SpawnPlacements.getHeightmapType(base), (_, level, reason, pos, random) -> free || rules(base, level, reason, pos, random), RegisterSpawnPlacementsEvent.Operation.REPLACE); }
 
-    private static <T extends Entity> boolean rules(EntityType<T> base, ServerLevelAccessor level, MobSpawnType reason, BlockPos pos, RandomSource random) { return SpawnPlacements.checkSpawnRules(base, level, reason, pos, random); }
+    private static <T extends Entity> boolean rules(EntityType<T> base, ServerLevelAccessor level, EntitySpawnReason reason, BlockPos pos, RandomSource random) { return SpawnPlacements.checkSpawnRules(base, level, reason, pos, random); }
 
     private static void creatureTags(EntityVariantDef def) {
         List<String> tags = switch (def.creatureAttribute()) {
@@ -146,14 +150,14 @@ public final class ContentEntityTypes {
                 yield List.of();
             }
         };
-        for (String tag : tags) { TAGS.computeIfAbsent(tag, k -> new java.util.LinkedHashSet<>()).add(def.key().toString()); }
+        for (String tag : tags) { TAGS.computeIfAbsent(tag, _ -> new java.util.LinkedHashSet<>()).add(def.key().toString()); }
     }
 
     private static final Map<String, java.util.Set<String>> TAGS = new LinkedHashMap<>();
 
     private static void writeTags() {
         for (Map.Entry<String, java.util.Set<String>> entry : TAGS.entrySet()) {
-            ResourceLocation tag = ResourceLocation.tryParse(entry.getKey());
+            Identifier tag = Identifier.tryParse(entry.getKey());
             if (tag == null) { continue; }
             JsonObject json = new JsonObject();
             json.addProperty("replace", false);
@@ -181,9 +185,36 @@ public final class ContentEntityTypes {
     private static boolean eggModel(EntityVariantDef def) {
         if (!def.egg().wanted()) { return false; }
         String namespace = def.key().getNamespace();
-        String path = "models/item/" + def.key().getPath() + "_spawn_egg.json";
+        String name = def.key().getPath() + "_spawn_egg";
+        Identifier baseEgg = def.base().withSuffix("_spawn_egg");
+        boolean colored = def.egg().primary() >= 0 || def.egg().secondary() >= 0 || !BuiltInRegistries.ITEM.containsKey(baseEgg);
+        String definition = "items/" + name + ".json";
+        if (!PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, definition)) {
+            JsonObject model = new JsonObject();
+            model.addProperty("type", "minecraft:model");
+            model.addProperty("model", namespace + ":item/" + name);
+            if (colored) {
+                JsonArray tints = new JsonArray();
+                tints.add(constant(def.egg().primary() >= 0 ? def.egg().primary() : EGG_PRIMARY));
+                tints.add(constant(def.egg().secondary() >= 0 ? def.egg().secondary() : EGG_SECONDARY));
+                model.add("tints", tints);
+            }
+            JsonObject item = new JsonObject();
+            item.add("model", model);
+            GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, definition, item.toString());
+        }
+        String path = "models/item/" + name + ".json";
         if (PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, path)) { return false; }
-        GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, SPAWN_EGG_MODEL);
+        JsonObject model = new JsonObject();
+        model.addProperty("parent", colored ? EGG_TEMPLATE : baseEgg.withPrefix("item/").toString());
+        GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, model.toString());
         return true;
+    }
+
+    private static JsonObject constant(int color) {
+        JsonObject tint = new JsonObject();
+        tint.addProperty("type", "minecraft:constant");
+        tint.addProperty("value", ARGB.opaque(color));
+        return tint;
     }
 }

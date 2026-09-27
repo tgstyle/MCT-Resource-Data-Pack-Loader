@@ -90,7 +90,7 @@ public final class ThrowerGoal extends Goal {
         mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
         mob.getNavigation().stop();
         ItemStack thrown = held();
-        if (thrown.isEmpty() || mob.level().isClientSide) { return; }
+        if (thrown.isEmpty() || mob.level().isClientSide()) { return; }
         Vec3 at = new Vec3(target.getX() - mob.getX(), target.getEyeY() - mob.getEyeY(), target.getZ() - mob.getZ());
         double far = Math.max(1.0D, at.length());
         Vec3 push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
@@ -108,7 +108,7 @@ public final class ThrowerGoal extends Goal {
         mob.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         retreating = retreat;
         if (carried > 0) {
-            int left = mob.getPersistentData().contains(LEFT) ? mob.getPersistentData().getInt(LEFT) : carried;
+            int left = mob.getPersistentData().contains(LEFT) ? mob.getPersistentData().getIntOr(LEFT, 0) : carried;
             left--;
             mob.getPersistentData().putInt(LEFT, left);
             if (left <= 0) { return; }
@@ -116,7 +116,7 @@ public final class ThrowerGoal extends Goal {
         reloading = Math.max(1, reload);
     }
 
-    private boolean spent() { return carried > 0 && mob.getPersistentData().contains(LEFT) && mob.getPersistentData().getInt(LEFT) <= 0; }
+    private boolean spent() { return carried > 0 && mob.getPersistentData().contains(LEFT) && mob.getPersistentData().getIntOr(LEFT, 0) <= 0; }
 
     private void restock() { mob.setItemSlot(EquipmentSlot.MAINHAND, pack.copy()); }
 

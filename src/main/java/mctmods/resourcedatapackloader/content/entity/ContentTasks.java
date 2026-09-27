@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
@@ -11,11 +12,12 @@ import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.LivingEntity;
@@ -68,23 +70,22 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NonTameRandomTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
+import net.minecraft.world.entity.ai.targeting.TargetingConditions;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Cat;
-import net.minecraft.world.entity.animal.FlyingAnimal;
-import net.minecraft.world.entity.animal.IronGolem;
-import net.minecraft.world.entity.animal.ShoulderRidingEntity;
-import net.minecraft.world.entity.animal.Wolf;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
-import net.minecraft.world.entity.animal.horse.Llama;
-import net.minecraft.world.entity.animal.horse.SkeletonHorse;
-import net.minecraft.world.entity.animal.horse.SkeletonTrapGoal;
+import net.minecraft.world.entity.animal.feline.Cat;
+import net.minecraft.world.entity.animal.golem.IronGolem;
+import net.minecraft.world.entity.animal.parrot.ShoulderRidingEntity;
+import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Llama;
+import net.minecraft.world.entity.animal.equine.SkeletonHorse;
+import net.minecraft.world.entity.animal.equine.SkeletonTrapGoal;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.RangedAttackMob;
-import net.minecraft.world.entity.monster.Slime;
-import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.npc.AbstractVillager;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -118,48 +119,48 @@ public final class ContentTasks {
     private static void target(String name, Class<?> needs, String needsName, Class<? extends Goal> type, Maker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, true, type, maker)); }
 
     private static void gone(String name, String why) {
-        KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, Mob.class, ANY_NAME, false, null, (m, t, d) -> {
+        KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, Mob.class, ANY_NAME, false, null, (_, _, d) -> {
             ContentLog.LOGGER.error("Entity variant {} asks for the task {}, which this line does not have: {}", d.key(), name, why);
             return null;
         }));
     }
 
     static {
-        task("attackMelee", PathfinderMob.class, WALKER, MeleeAttackGoal.class, (m, t, d) -> new MeleeAttackGoal((PathfinderMob) m, t.speed(1.0D), t.memory()));
-        task("attackRanged", RangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", RangedAttackGoal.class, (m, t, d) -> new RangedAttackGoal((RangedAttackMob) m, t.speed(1.0D), t.cooldown(20), t.distance(15.0F)));
+        task("attackMelee", PathfinderMob.class, WALKER, MeleeAttackGoal.class, (m, t, _) -> new MeleeAttackGoal((PathfinderMob) m, t.speed(1.0D), t.memory()));
+        task("attackRanged", RangedAttackMob.class, "a base that shoots, like a skeleton, witch, snow golem or blaze", RangedAttackGoal.class, (m, t, _) -> new RangedAttackGoal((RangedAttackMob) m, t.speed(1.0D), t.cooldown(20), t.distance(15.0F)));
         task("attackRangedBow", Monster.class, "a monster that shoots, like a skeleton", RangedBowAttackGoal.class, ContentTasks::bow);
         task("avoidEntity", PathfinderMob.class, WALKER, AvoidEntityGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> avoided = entity(t, d, m.level());
             if (avoided == null) { return null; }
             Predicate<LivingEntity> only = only(t.entity());
             return only == null ? new AvoidEntityGoal<>((PathfinderMob) m, avoided, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D))
-                    : new AvoidEntityGoal<>((PathfinderMob) m, avoided, only, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D), EntitySelector.NO_CREATIVE_OR_SPECTATOR::test);
+                    : new AvoidEntityGoal<>((PathfinderMob) m, avoided, only, t.distance(6.0F), t.speed(1.0D), t.nearSpeed(1.2D), EntitySelector.NO_CREATIVE_OR_SPECTATOR);
         });
-        task("beg", Wolf.class, "a wolf", BegGoal.class, (m, t, d) -> new BegGoal((Wolf) m, t.distance(8.0F)));
-        task("breakDoor", Mob.class, ANY_NAME, BreakDoorGoal.class, (m, t, d) -> new BreakDoorGoal(m, difficulty -> difficulty == Difficulty.HARD));
-        task("creeperSwell", Creeper.class, "a creeper", SwellGoal.class, (m, t, d) -> new SwellGoal((Creeper) m));
-        target("defendVillage", IronGolem.class, "an iron golem", DefendVillageTargetGoal.class, (m, t, d) -> new DefendVillageTargetGoal((IronGolem) m));
-        task("eatGrass", Mob.class, ANY_NAME, EatBlockGoal.class, (m, t, d) -> new EatBlockGoal(m));
+        task("beg", Wolf.class, "a wolf", BegGoal.class, (m, t, _) -> new BegGoal((Wolf) m, t.distance(8.0F)));
+        task("breakDoor", Mob.class, ANY_NAME, BreakDoorGoal.class, (m, _, _) -> new BreakDoorGoal(m, difficulty -> difficulty == Difficulty.HARD));
+        task("creeperSwell", Creeper.class, "a creeper", SwellGoal.class, (m, _, _) -> new SwellGoal((Creeper) m));
+        target("defendVillage", IronGolem.class, "an iron golem", DefendVillageTargetGoal.class, (m, _, _) -> new DefendVillageTargetGoal((IronGolem) m));
+        task("eatGrass", Mob.class, ANY_NAME, EatBlockGoal.class, (m, _, _) -> new EatBlockGoal(m));
         target("findEntityNearest", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> sought = entity(t, d, m.level());
             return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, 0, true, false, fairGame(t.entity()));
         });
-        target("findEntityNearestPlayer", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> new NearestAttackableTargetGoal<>(m, Player.class, 0, true, false, ContentEntities::fairGame));
-        task("fleeSun", PathfinderMob.class, WALKER, FleeSunGoal.class, (m, t, d) -> new FleeSunGoal((PathfinderMob) m, t.speed(1.0D)));
-        task("follow", Mob.class, ANY_NAME, FollowMobGoal.class, (m, t, d) -> new FollowMobGoal(m, t.speed(1.0D), t.near(3.0F), t.distance(7.0F)));
-        task("followOwner", TamableAnimal.class, TAME, FollowOwnerGoal.class, (m, t, d) -> new FollowOwnerGoal((TamableAnimal) m, t.speed(1.0D), t.near(10.0F), t.distance(2.0F)));
-        task("followOwnerFlying", TamableAnimal.class, TAME, FollowOwnerGoal.class, (m, t, d) -> new FollowOwnerGoal((TamableAnimal) m, t.speed(1.0D), t.near(5.0F), t.distance(1.0F)));
-        task("followParent", Animal.class, "an animal", FollowParentGoal.class, (m, t, d) -> new FollowParentGoal((Animal) m, t.speed(1.1D)));
-        target("hurtByTarget", PathfinderMob.class, WALKER, HurtByTargetGoal.class, (m, t, d) -> {
+        target("findEntityNearestPlayer", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, _, _) -> new NearestAttackableTargetGoal<>(m, Player.class, 0, true, false, ContentEntities::fairGame));
+        task("fleeSun", PathfinderMob.class, WALKER, FleeSunGoal.class, (m, t, _) -> new FleeSunGoal((PathfinderMob) m, t.speed(1.0D)));
+        task("follow", Mob.class, ANY_NAME, FollowMobGoal.class, (m, t, _) -> new FollowMobGoal(m, t.speed(1.0D), t.near(3.0F), t.distance(7.0F)));
+        task("followOwner", TamableAnimal.class, TAME, FollowOwnerGoal.class, (m, t, _) -> new FollowOwnerGoal((TamableAnimal) m, t.speed(1.0D), t.near(10.0F), t.distance(2.0F)));
+        task("followOwnerFlying", TamableAnimal.class, TAME, FollowOwnerGoal.class, (m, t, _) -> new FollowOwnerGoal((TamableAnimal) m, t.speed(1.0D), t.near(5.0F), t.distance(1.0F)));
+        task("followParent", Animal.class, "an animal", FollowParentGoal.class, (m, t, _) -> new FollowParentGoal((Animal) m, t.speed(1.1D)));
+        target("hurtByTarget", PathfinderMob.class, WALKER, HurtByTargetGoal.class, (m, t, _) -> {
             HurtByTargetGoal goal = new HurtByTargetGoal((PathfinderMob) m);
             return t.help() ? goal.setAlertOthers() : goal;
         });
-        task("landOnOwnersShoulder", ShoulderRidingEntity.class, "a parrot", LandOnOwnersShoulderGoal.class, (m, t, d) -> new LandOnOwnersShoulderGoal((ShoulderRidingEntity) m));
-        task("leapAtTarget", Mob.class, ANY_NAME, LeapAtTargetGoal.class, (m, t, d) -> new LeapAtTargetGoal(m, t.leap(0.4F)));
-        task("llamaFollowCaravan", Llama.class, "a llama", LlamaFollowCaravanGoal.class, (m, t, d) -> new LlamaFollowCaravanGoal((Llama) m, t.speed(2.1D)));
-        task("lookAtTradePlayer", AbstractVillager.class, "a villager", LookAtTradingPlayerGoal.class, (m, t, d) -> new LookAtTradingPlayerGoal((AbstractVillager) m));
-        task("lookAtVillager", IronGolem.class, "an iron golem", OfferFlowerGoal.class, (m, t, d) -> new OfferFlowerGoal((IronGolem) m));
-        task("lookIdle", Mob.class, ANY_NAME, RandomLookAroundGoal.class, (m, t, d) -> new RandomLookAroundGoal(m));
+        task("landOnOwnersShoulder", ShoulderRidingEntity.class, "a parrot", LandOnOwnersShoulderGoal.class, (m, _, _) -> new LandOnOwnersShoulderGoal((ShoulderRidingEntity) m));
+        task("leapAtTarget", Mob.class, ANY_NAME, LeapAtTargetGoal.class, (m, t, _) -> new LeapAtTargetGoal(m, t.leap(0.4F)));
+        task("llamaFollowCaravan", Llama.class, "a llama", LlamaFollowCaravanGoal.class, (m, t, _) -> new LlamaFollowCaravanGoal((Llama) m, t.speed(2.1D)));
+        task("lookAtTradePlayer", AbstractVillager.class, "a villager", LookAtTradingPlayerGoal.class, (m, _, _) -> new LookAtTradingPlayerGoal((AbstractVillager) m));
+        task("lookAtVillager", IronGolem.class, "an iron golem", OfferFlowerGoal.class, (m, _, _) -> new OfferFlowerGoal((IronGolem) m));
+        task("lookIdle", Mob.class, ANY_NAME, RandomLookAroundGoal.class, (m, _, _) -> new RandomLookAroundGoal(m));
         task("mate", Animal.class, "an animal", BreedGoal.class, (m, t, d) -> {
             if (t.entity().isEmpty()) { return new BreedGoal((Animal) m, t.speed(1.0D)); }
             Class<? extends LivingEntity> partner = entity(t, d, m.level());
@@ -170,36 +171,36 @@ public final class ContentTasks {
             }
             return new BreedGoal((Animal) m, t.speed(1.0D), partner.asSubclass(Animal.class));
         });
-        task("moveThroughVillage", PathfinderMob.class, WALKER, MoveThroughVillageGoal.class, (m, t, d) -> new MoveThroughVillageGoal((PathfinderMob) m, t.speed(1.0D), t.nocturnal(), 4, () -> false));
-        task("moveTowardsRestriction", PathfinderMob.class, WALKER, MoveTowardsRestrictionGoal.class, (m, t, d) -> new MoveTowardsRestrictionGoal((PathfinderMob) m, t.speed(1.0D)));
-        task("moveTowardsTarget", PathfinderMob.class, WALKER, MoveTowardsTargetGoal.class, (m, t, d) -> new MoveTowardsTargetGoal((PathfinderMob) m, t.speed(0.9D), t.distance(32.0F)));
+        task("moveThroughVillage", PathfinderMob.class, WALKER, MoveThroughVillageGoal.class, (m, t, _) -> new MoveThroughVillageGoal((PathfinderMob) m, t.speed(1.0D), t.nocturnal(), 4, () -> false));
+        task("moveTowardsRestriction", PathfinderMob.class, WALKER, MoveTowardsRestrictionGoal.class, (m, t, _) -> new MoveTowardsRestrictionGoal((PathfinderMob) m, t.speed(1.0D)));
+        task("moveTowardsTarget", PathfinderMob.class, WALKER, MoveTowardsTargetGoal.class, (m, t, _) -> new MoveTowardsTargetGoal((PathfinderMob) m, t.speed(0.9D), t.distance(32.0F)));
         target("nearestAttackableTarget", Mob.class, ANY_NAME, NearestAttackableTargetGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> sought = entity(t, d, m.level());
             return sought == null ? null : new NearestAttackableTargetGoal<>(m, sought, 10, t.sight(), t.nearby(), fairGame(t.entity()));
         });
-        task("ocelotAttack", Mob.class, ANY_NAME, OcelotAttackGoal.class, (m, t, d) -> new OcelotAttackGoal(m));
-        task("ocelotSit", Cat.class, "a cat", CatSitOnBlockGoal.class, (m, t, d) -> new CatSitOnBlockGoal((Cat) m, t.speed(0.8D)));
-        task("openDoor", Mob.class, ANY_NAME, OpenDoorGoal.class, (m, t, d) -> new OpenDoorGoal(m, t.close()));
-        target("ownerHurtByTarget", TamableAnimal.class, TAME, OwnerHurtByTargetGoal.class, (m, t, d) -> new OwnerHurtByTargetGoal((TamableAnimal) m));
-        target("ownerHurtTarget", TamableAnimal.class, TAME, OwnerHurtTargetGoal.class, (m, t, d) -> new OwnerHurtTargetGoal((TamableAnimal) m));
-        task("panic", PathfinderMob.class, WALKER, PanicGoal.class, (m, t, d) -> new PanicGoal((PathfinderMob) m, t.speed(1.4D)));
-        task("restrictSun", PathfinderMob.class, WALKER, RestrictSunGoal.class, (m, t, d) -> new RestrictSunGoal((PathfinderMob) m));
-        task("runAroundLikeCrazy", AbstractHorse.class, "a horse, donkey, mule or llama", RunAroundLikeCrazyGoal.class, (m, t, d) -> new RunAroundLikeCrazyGoal((AbstractHorse) m, t.speed(1.2D)));
-        task("sit", TamableAnimal.class, TAME, SitWhenOrderedToGoal.class, (m, t, d) -> new SitWhenOrderedToGoal((TamableAnimal) m));
-        task("skeletonRiders", SkeletonHorse.class, "a skeleton horse", SkeletonTrapGoal.class, (m, t, d) -> new SkeletonTrapGoal((SkeletonHorse) m));
-        task("swimming", Mob.class, ANY_NAME, FloatGoal.class, (m, t, d) -> new FloatGoal(m));
+        task("ocelotAttack", Mob.class, ANY_NAME, OcelotAttackGoal.class, (m, _, _) -> new OcelotAttackGoal(m));
+        task("ocelotSit", Cat.class, "a cat", CatSitOnBlockGoal.class, (m, t, _) -> new CatSitOnBlockGoal((Cat) m, t.speed(0.8D)));
+        task("openDoor", Mob.class, ANY_NAME, OpenDoorGoal.class, (m, t, _) -> new OpenDoorGoal(m, t.close()));
+        target("ownerHurtByTarget", TamableAnimal.class, TAME, OwnerHurtByTargetGoal.class, (m, _, _) -> new OwnerHurtByTargetGoal((TamableAnimal) m));
+        target("ownerHurtTarget", TamableAnimal.class, TAME, OwnerHurtTargetGoal.class, (m, _, _) -> new OwnerHurtTargetGoal((TamableAnimal) m));
+        task("panic", PathfinderMob.class, WALKER, PanicGoal.class, (m, t, _) -> new PanicGoal((PathfinderMob) m, t.speed(1.4D)));
+        task("restrictSun", PathfinderMob.class, WALKER, RestrictSunGoal.class, (m, _, _) -> new RestrictSunGoal((PathfinderMob) m));
+        task("runAroundLikeCrazy", AbstractHorse.class, "a horse, donkey, mule or llama", RunAroundLikeCrazyGoal.class, (m, t, _) -> new RunAroundLikeCrazyGoal((AbstractHorse) m, t.speed(1.2D)));
+        task("sit", TamableAnimal.class, TAME, SitWhenOrderedToGoal.class, (m, _, _) -> new SitWhenOrderedToGoal((TamableAnimal) m));
+        task("skeletonRiders", SkeletonHorse.class, "a skeleton horse", SkeletonTrapGoal.class, (m, _, _) -> new SkeletonTrapGoal((SkeletonHorse) m));
+        task("swimming", Mob.class, ANY_NAME, FloatGoal.class, (m, _, _) -> new FloatGoal(m));
         target("targetNonTamed", TamableAnimal.class, TAME, NonTameRandomTargetGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> sought = entity(t, d, m.level());
-            return sought == null ? null : new NonTameRandomTargetGoal<>((TamableAnimal) m, sought, t.sight(), only(t.entity()));
+            return sought == null ? null : new NonTameRandomTargetGoal<>((TamableAnimal) m, sought, t.sight(), picks(t.entity()));
         });
         task("tempt", PathfinderMob.class, WALKER, TemptGoal.class, (m, t, d) -> {
             Set<Item> wanted = items(t, d);
             return wanted == null ? null : new TemptGoal((PathfinderMob) m, t.speed(1.2D), stack -> wanted.contains(stack.getItem()), t.scared());
         });
-        task("tradePlayer", AbstractVillager.class, "a villager", TradeWithPlayerGoal.class, (m, t, d) -> new TradeWithPlayerGoal((AbstractVillager) m));
-        task("wander", PathfinderMob.class, WALKER, RandomStrollGoal.class, (m, t, d) -> t.chance() == null ? new RandomStrollGoal((PathfinderMob) m, t.speed(1.0D)) : new RandomStrollGoal((PathfinderMob) m, t.speed(1.0D), Math.max(1, Math.round(t.chance()))));
-        task("wanderAvoidWater", PathfinderMob.class, WALKER, WaterAvoidingRandomStrollGoal.class, (m, t, d) -> t.chance() == null ? new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D)) : new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D), t.chance()));
-        task("wanderAvoidWaterFlying", PathfinderMob.class, WALKER, WaterAvoidingRandomFlyingGoal.class, (m, t, d) -> new WaterAvoidingRandomFlyingGoal((PathfinderMob) m, t.speed(1.0D)));
+        task("tradePlayer", AbstractVillager.class, "a villager", TradeWithPlayerGoal.class, (m, _, _) -> new TradeWithPlayerGoal((AbstractVillager) m));
+        task("wander", PathfinderMob.class, WALKER, RandomStrollGoal.class, (m, t, _) -> t.chance() == null ? new RandomStrollGoal((PathfinderMob) m, t.speed(1.0D)) : new RandomStrollGoal((PathfinderMob) m, t.speed(1.0D), Math.max(1, Math.round(t.chance()))));
+        task("wanderAvoidWater", PathfinderMob.class, WALKER, WaterAvoidingRandomStrollGoal.class, (m, t, _) -> t.chance() == null ? new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D)) : new WaterAvoidingRandomStrollGoal((PathfinderMob) m, t.speed(1.0D), t.chance()));
+        task("wanderAvoidWaterFlying", PathfinderMob.class, WALKER, WaterAvoidingRandomFlyingGoal.class, (m, t, _) -> new WaterAvoidingRandomFlyingGoal((PathfinderMob) m, t.speed(1.0D)));
         task("watchClosest", Mob.class, ANY_NAME, LookAtPlayerGoal.class, (m, t, d) -> {
             Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d, m.level());
             if (watched == null) { return null; }
@@ -209,7 +210,7 @@ public final class ContentTasks {
             Class<? extends LivingEntity> watched = t.entity().isEmpty() ? Player.class : entity(t, d, m.level());
             return watched == null ? null : watching(new InteractGoal(m, watched, t.distance(8.0F), t.chance() == null ? 0.02F : t.chance()), t);
         });
-        task("zombieAttack", Zombie.class, "a zombie", ZombieAttackGoal.class, (m, t, d) -> new ZombieAttackGoal((Zombie) m, t.speed(1.0D), t.memory()));
+        task("zombieAttack", Zombie.class, "a zombie", ZombieAttackGoal.class, (m, t, _) -> new ZombieAttackGoal((Zombie) m, t.speed(1.0D), t.memory()));
         String brains = "villagers think with brains now, not task lists";
         gone("followGolem", brains);
         gone("harvestFarmland", brains);
@@ -234,7 +235,7 @@ public final class ContentTasks {
         return String.join(", ", names);
     }
 
-    public static List<TaskDef> parse(ResourceLocation key, JsonObject json) {
+    public static List<TaskDef> parse(Identifier key, JsonObject json) {
         if (!json.has("tasks")) { return List.of(); }
         List<TaskDef> tasks = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "tasks")) {
@@ -271,7 +272,7 @@ public final class ContentTasks {
         return tasks;
     }
 
-    @Nullable private static Kind known(ResourceLocation key, String name) {
+    @Nullable private static Kind known(Identifier key, String name) {
         Kind kind = KINDS.get(name.trim().toLowerCase(Locale.ROOT));
         if (kind == null) { ContentLog.LOGGER.error("Entity variant {} names the task '{}', which is not one of {}", key, name, names()); }
         return kind;
@@ -332,10 +333,10 @@ public final class ContentTasks {
         Kind made = MADE.get(goal);
         if (made != null) { return made; }
         Class<?> type = goal.getClass();
-        if (type == FollowOwnerGoal.class) { return KINDS.get(mob instanceof FlyingAnimal ? "followownerflying" : "followowner"); }
+        if (type == FollowOwnerGoal.class) { return KINDS.get(Compat.flies(mob) ? "followownerflying" : "followowner"); }
         if (type == NearestAttackableTargetGoal.class) {
             if (mob instanceof Ghast) { return KINDS.get("findentitynearestplayer"); }
-            if (mob instanceof Slime) { return KINDS.get(((INearestAttackableTargetGoal) goal).rdpl$targetType() == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
+            if (Compat.isSlime(mob)) { return KINDS.get(((INearestAttackableTargetGoal) goal).rdpl$targetType() == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
             return KINDS.get("nearestattackabletarget");
         }
         if (type == LookAtPlayerGoal.class) { return KINDS.get("watchclosest"); }
@@ -351,10 +352,10 @@ public final class ContentTasks {
         return living(task.entity(), def.key(), level);
     }
 
-    @Nullable public static Class<? extends LivingEntity> living(String name, ResourceLocation owner, Level level) {
-        ResourceLocation location = ContentParser.location(name);
+    @Nullable public static Class<? extends LivingEntity> living(String name, Identifier owner, Level level) {
+        Identifier location = ContentParser.location(name);
         if (location != null && "minecraft".equals(location.getNamespace()) && "player".equals(location.getPath())) { return Player.class; }
-        EntityType<?> type = location == null ? null : EntityType.byString(location.toString()).orElse(null);
+        EntityType<?> type = Compat.entityType(location);
         Class<? extends LivingEntity> found = type == null ? null : held(type, level);
         if (found == null) {
             ContentLog.LOGGER.error("Entity variant {} names '{}', which is not a living entity that is registered", owner, name);
@@ -367,7 +368,7 @@ public final class ContentTasks {
         if (CLASSES.containsKey(type)) { return CLASSES.get(type); }
         Class<? extends LivingEntity> found = null;
         Entity made = null;
-        try { made = type.create(level); }
+        try { made = type.create(level, EntitySpawnReason.LOAD); }
         catch (RuntimeException refused) { ContentLog.LOGGER.debug("{} could not be made to read its class off, so nothing can be set to attack it: {}", EntityType.getKey(type), refused.toString()); }
         if (made instanceof LivingEntity) { found = made.getClass().asSubclass(LivingEntity.class); }
         if (made != null) { made.discard(); }
@@ -376,8 +377,8 @@ public final class ContentTasks {
     }
 
     @Nullable private static EntityType<?> variant(String name) {
-        ResourceLocation location = ContentParser.location(name);
-        return location == null ? null : EntityType.byString(location.toString()).filter(type -> ContentEntities.def(type) != null).orElse(null);
+        Identifier location = ContentParser.location(name);
+        return location == null ? null : Compat.lookupEntityType(location).filter(type -> ContentEntities.def(type) != null).orElse(null);
     }
 
     @Nullable private static Predicate<LivingEntity> only(String name) {
@@ -385,13 +386,18 @@ public final class ContentTasks {
         return variant == null ? null : found -> found.getType() == variant;
     }
 
-    static Predicate<LivingEntity> fairGame(String name) {
+    @Nullable private static TargetingConditions.Selector picks(String name) {
         Predicate<LivingEntity> only = only(name);
-        return only == null ? ContentEntities::fairGame : found -> only.test(found) && ContentEntities.fairGame(found);
+        return only == null ? null : (found, _) -> only.test(found);
+    }
+
+    static TargetingConditions.Selector fairGame(String name) {
+        Predicate<LivingEntity> only = only(name);
+        return only == null ? ContentEntities::fairGame : (found, level) -> only.test(found) && ContentEntities.fairGame(found, level);
     }
 
     private static Goal watching(LookAtPlayerGoal goal, TaskDef task) {
-        Predicate<LivingEntity> only = only(task.entity());
+        TargetingConditions.Selector only = picks(task.entity());
         if (only != null) { ((ILookAtPlayerGoal) goal).rdpl$lookAtContext().selector(only); }
         return goal;
     }

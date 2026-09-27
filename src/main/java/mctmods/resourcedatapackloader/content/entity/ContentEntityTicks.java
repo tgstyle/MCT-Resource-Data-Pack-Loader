@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import it.unimi.dsi.fastutil.longs.Long2BooleanOpenHashMap;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -18,7 +18,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.LlamaSpit;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
 import net.minecraft.world.level.ChunkPos;
@@ -131,7 +131,7 @@ public final class ContentEntityTicks {
             FAR.put(level, known);
             CHECKED.put(level, now);
         }
-        long key = chunk.toLong();
+        long key = chunk.pack();
         if (known.containsKey(key)) { return known.get(key); }
         boolean answer = !measure(level, chunk, slowing);
         known.put(key, answer);
@@ -139,7 +139,7 @@ public final class ContentEntityTicks {
     }
 
     private static boolean measure(Level level, ChunkPos chunk, Slowing slowing) {
-        if (level instanceof ServerLevel server && server.getForcedChunks().contains(chunk.toLong())) { return false; }
+        if (level instanceof ServerLevel server && server.getForceLoadedChunks().contains(chunk.pack())) { return false; }
         if (level.players().isEmpty()) { return true; }
         double middleX = chunk.getMiddleBlockX() + 0.5D;
         double middleZ = chunk.getMiddleBlockZ() + 0.5D;
@@ -163,7 +163,7 @@ public final class ContentEntityTicks {
         if (entity instanceof Mob mob && (mob.isPersistenceRequired() || mob.isLeashed() || mob.getTarget() != null)) { return true; }
         if (entity instanceof LivingEntity living && !living.getActiveEffects().isEmpty()) { return true; }
         if (slowing.spared().isEmpty()) { return false; }
-        ResourceLocation name = EntityType.getKey(entity.getType());
+        Identifier name = EntityType.getKey(entity.getType());
         return slowing.spared().contains(name.toString().toLowerCase(Locale.ROOT));
     }
 }

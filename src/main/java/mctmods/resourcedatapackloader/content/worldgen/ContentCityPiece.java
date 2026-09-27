@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 
-public final class ContentCityPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPiece::new;
     private static final int CLEAR = 4;
     private static final int VERGE = 1;
@@ -81,18 +81,18 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
 
     public ContentCityPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.paving = tag.getString(PAVING);
-        this.level = tag.getInt(LEVEL);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.alley = tag.getBoolean(ALLEY);
-        this.width = tag.getInt(WIDTH);
-        this.bridged = tag.getBoolean(BRIDGED);
-        this.bored = tag.getBoolean(BORED);
-        this.frames = tag.getIntArray(FRAMES);
-        this.lampAt = tag.contains(LAMP) ? tag.getInt(LAMP) : Integer.MIN_VALUE;
-        this.keys = tag.getString(KEYS);
-        this.pinned = tag.getBoolean(PINNED);
+        this.paving = tag.getStringOr(PAVING, "");
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.alley = tag.getBooleanOr(ALLEY, false);
+        this.width = tag.getIntOr(WIDTH, 0);
+        this.bridged = tag.getBooleanOr(BRIDGED, false);
+        this.bored = tag.getBooleanOr(BORED, false);
+        this.frames = tag.getIntArray(FRAMES).orElse(new int[0]);
+        this.lampAt = tag.contains(LAMP) ? tag.getIntOr(LAMP, 0) : Integer.MIN_VALUE;
+        this.keys = tag.getStringOr(KEYS, "");
+        this.pinned = tag.getBooleanOr(PINNED, false);
     }
 
     private static BoundingBox box(int fromX, int fromZ, int toX, int toZ, int level, boolean alongX) {
@@ -230,7 +230,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                     if (!pinned || onPiling(along, offset)) {
                         at.set(x, this.level - 1, z);
                         level.setBlock(at, support, 2);
-                        CityPlotGround.pier(level, box, x, this.level - 2, z, fillFloor(bores, x, z, level.getMinBuildHeight() + 1), ground.floor(x, z), support);
+                        CityPlotGround.pier(level, box, x, this.level - 2, z, fillFloor(bores, x, z, level.getMinY() + 1), ground.floor(x, z), support);
                     }
                 }
                 else if (!bridged) { CityPlotGround.fillUnder(level, box, x, z, this.level - 1, fillFloor(bores, x, z, this.level - CityPlotGround.FILL_UNDER)); }
@@ -500,7 +500,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
     }
 
     private boolean overDryDrop(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z) {
-        for (int y = this.level - 1; y >= this.level - CityPlotGround.PILING_REACH && y > level.getMinBuildHeight(); y--) {
+        for (int y = this.level - 1; y >= this.level - CityPlotGround.PILING_REACH && y > level.getMinY(); y--) {
             BlockState held = level.getBlockState(at.set(x, y, z));
             if (!held.getFluidState().isEmpty()) { return false; }
             if (CityPlotGround.solid(held)) { return this.level - y > CityPlotGround.FILL_UNDER; }

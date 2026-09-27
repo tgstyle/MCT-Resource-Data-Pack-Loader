@@ -63,7 +63,7 @@ final class CommandGates {
             CommandShared.send(source, ChatFormatting.YELLOW, CommandShared.tr("rdpl.command.nogates"));
             return;
         }
-        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gatesfor", player.getGameProfile().getName()));
+        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gatesfor", player.getGameProfile().name()));
         for (GateDef def : ContentGates.all()) {
             boolean open = ContentGates.unlocked(player, def);
             CommandShared.send(source, open ? ChatFormatting.WHITE : ChatFormatting.GRAY, Component.literal("  " + def.key())
@@ -75,7 +75,7 @@ final class CommandGates {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = EntityArgument.getPlayer(context, "player");
         String asked = StringArgumentType.getString(context, "gate").trim();
-        CommandShared.ran(source, name, "gate " + (grant ? "grant " : "revoke ") + player.getGameProfile().getName() + " " + asked);
+        CommandShared.ran(source, name, "gate " + (grant ? "grant " : "revoke ") + player.getGameProfile().name() + " " + asked);
         if (ContentGates.idle()) {
             CommandShared.send(source, ChatFormatting.YELLOW, CommandShared.tr("rdpl.command.nogates"));
             return 0;
@@ -88,7 +88,7 @@ final class CommandGates {
         String scope = def.global() ? GateDef.GLOBAL : GateDef.PLAYER;
         if (grant) { ContentGates.unlock(player, def, false); }
         else { ContentGates.lock(player, def); }
-        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr(grant ? "rdpl.command.gateopened" : "rdpl.command.gateclosed", def.key(), player.getGameProfile().getName(), scope));
+        CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr(grant ? "rdpl.command.gateopened" : "rdpl.command.gateclosed", def.key(), player.getGameProfile().name(), scope));
         return 1;
     }
 }

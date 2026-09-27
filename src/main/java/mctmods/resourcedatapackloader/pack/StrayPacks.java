@@ -36,11 +36,11 @@ public final class StrayPacks {
 
     public static void collect(Path gameDir, Path root) {
         gather(gameDir.resolve(RESOURCEPACKS), root);
-        for (Path world : worlds(gameDir)) { gather(world.resolve(LevelResource.DATAPACK_DIR.getId()), root); }
+        for (Path world : worlds(gameDir)) { gather(world.resolve(LevelResource.DATAPACK_DIR.id()), root); }
     }
 
     private static List<Path> worlds(Path gameDir) {
-        if (FMLEnvironment.dist != Dist.CLIENT) { return List.of(gameDir.resolve(levelName(gameDir))); }
+        if (FMLEnvironment.getDist() != Dist.CLIENT) { return List.of(gameDir.resolve(levelName(gameDir))); }
         List<Path> worlds = new ArrayList<>();
         Path saves = gameDir.resolve(SAVES);
         if (!Files.isDirectory(saves)) { return worlds; }

@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.EntityType;
@@ -14,9 +14,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class CardEvents {
-    private static final ResourceLocation CARD = ResourceLocation.fromNamespaceAndPath("rdpl", "card");
+    private static final Identifier CARD = Identifier.fromNamespaceAndPath("rdpl", "card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
 
     private CardEvents() {}
@@ -44,9 +45,9 @@ public final class CardEvents {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) { return; }
         List<CardRule> rules = CardRules.on(CardRule.KILL);
         if (rules.isEmpty()) { return; }
-        ResourceLocation fallen = EntityType.getKey(event.getEntity().getType());
+        Identifier fallen = EntityType.getKey(event.getEntity().getType());
         for (CardRule rule : rules) {
-            if (!fallen.equals(ResourceLocation.tryParse(rule.entity))) { continue; }
+            if (!Objects.equals(fallen, Identifier.tryParse(rule.entity))) { continue; }
             if (rule.count > 1 && CardStorage.tallyFor(player, rule.key) < rule.count) { continue; }
             if (rule.count > 1) { CardStorage.clearTallyFor(player, rule.key); }
             CardFire.fire(rule, player);

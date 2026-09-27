@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,19 +21,20 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.Optional;
 
 @Mixin(Mob.class) public abstract class MixinMob {
     @Shadow protected abstract SoundEvent getAmbientSound();
     @Unique private boolean rdpl$slower;
 
     @Inject(method = "getLootTable", at = @At("HEAD"), cancellable = true)
-    private void rdpl$variantLoot(CallbackInfoReturnable<ResourceKey<LootTable>> cir) {
+    private void rdpl$variantLoot(CallbackInfoReturnable<Optional<ResourceKey<LootTable>>> cir) {
         Mob self = Mob.class.cast(this);
         EntityVariantDef def = ContentEntities.def(self);
         if (def == null) { return; }
         if (!def.lootTable().isEmpty()) {
-            ResourceLocation table = ResourceLocation.tryParse(def.lootTable());
-            if (table != null) { cir.setReturnValue(ResourceKey.create(Registries.LOOT_TABLE, table)); }
+            Identifier table = Identifier.tryParse(def.lootTable());
+            if (table != null) { cir.setReturnValue(Optional.of(ResourceKey.create(Registries.LOOT_TABLE, table))); }
             return;
         }
         EntityType<?> base = ContentEntities.base(self.getType());

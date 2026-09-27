@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -15,18 +15,18 @@ public final class ContentRoughGround {
     private static final int TOLERANCE = 6;
     private static final int MANSION_OFFSET = 40;
     private static final int MANSION_REACH = 32;
-    private static final ResourceLocation MANSION = ResourceLocation.fromNamespaceAndPath("minecraft", "mansion");
-    private static final Map<ResourceLocation, Integer> TEMPLE_REACH = Map.of(
-            ResourceLocation.fromNamespaceAndPath("minecraft", "desert_pyramid"), 10,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "jungle_pyramid"), 7,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "swamp_hut"), 4,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "igloo"), 4);
+    private static final Identifier MANSION = Identifier.fromNamespaceAndPath("minecraft", "mansion");
+    private static final Map<Identifier, Integer> TEMPLE_REACH = Map.of(
+            Identifier.fromNamespaceAndPath("minecraft", "desert_pyramid"), 10,
+            Identifier.fromNamespaceAndPath("minecraft", "jungle_pyramid"), 7,
+            Identifier.fromNamespaceAndPath("minecraft", "swamp_hut"), 4,
+            Identifier.fromNamespaceAndPath("minecraft", "igloo"), 4);
 
     private ContentRoughGround() {}
 
     public static boolean refuses(StructureStart start, long seed, ChunkGenerator generator, RandomState random, RegistryAccess registries) {
         if (!start.isValid()) { return false; }
-        ResourceLocation id = registries.registryOrThrow(Registries.STRUCTURE).getKey(start.getStructure());
+        Identifier id = registries.lookupOrThrow(Registries.STRUCTURE).getKey(start.getStructure());
         if (id == null) { return false; }
         boolean mansion = MANSION.equals(id);
         Integer reach = TEMPLE_REACH.get(id);

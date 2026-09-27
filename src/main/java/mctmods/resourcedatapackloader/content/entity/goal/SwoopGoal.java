@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -67,7 +68,7 @@ public final class SwoopGoal extends Goal {
         mob.getMoveControl().setWantedPosition(target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ(), 1.6D);
         if (mob.distanceToSqr(target) < 6.25D) {
             float damage = (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE);
-            target.hurt(mob.damageSources().mobAttack(mob), damage);
+            if (target.level() instanceof ServerLevel level) { target.hurtServer(level, mob.damageSources().mobAttack(mob), damage); }
             circle();
             return;
         }

@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.Optional;
 
 @Mixin(ExplosionDamageCalculator.class) public abstract class MixinExplosionDamageCalculator {
-    @Inject(method = "getBlockExplosionResistance", at = @At("RETURN"), cancellable = true) private void rdpl$blastByGroup(Explosion explosion, BlockGetter reader, BlockPos pos, BlockState state, FluidState fluid, CallbackInfoReturnable<Optional<Float>> cir) {
+    @Inject(method = "getBlockExplosionResistance", at = @At("RETURN"), cancellable = true) private void rdpl$blastByGroup(Explosion explosion, BlockGetter level, BlockPos pos, BlockState block, FluidState fluid, CallbackInfoReturnable<Optional<Float>> cir) {
         if (ContentHardness.idle()) { return; }
         Optional<Float> held = cir.getReturnValue();
         if (held.isEmpty()) { return; }
-        float multiplier = ContentHardness.blastAt(state, pos.getX(), pos.getY(), pos.getZ());
+        float multiplier = ContentHardness.blastAt(block, pos.getX(), pos.getY(), pos.getZ());
         if (multiplier != 1.0F) { cir.setReturnValue(Optional.of(held.get() * multiplier)); }
     }
 }

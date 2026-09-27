@@ -13,7 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ public final class RegistryRemaps {
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
     private static final Map<String, String> LEGACY_REGISTRIES = Map.of("minecraft:blocks", "minecraft:block", "minecraft:items", "minecraft:item", "minecraft:biomes", "minecraft:worldgen/biome", "minecraft:enchantments", "minecraft:enchantment", "minecraft:potions", "minecraft:mob_effect", "minecraft:potiontypes", "minecraft:potion", "minecraft:soundevents", "minecraft:sound_event", "minecraft:entities", "minecraft:entity_type", "minecraft:villagerprofessions", "minecraft:villager_profession");
-    private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
+    private static final Map<Identifier, Map<Identifier, Identifier>> REMAPS = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private RegistryRemaps() {}
@@ -40,31 +40,31 @@ public final class RegistryRemaps {
         if (count[0] > 0) { Summary.info("remaps", "Loaded " + count[0] + " registry rename(s) across " + REMAPS.size() + " registry/registries"); }
     }
 
-    private static int read(ResourceLocation key, String contents) {
+    private static int read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Registry remap {} is empty, ignoring it", key);
             return 0;
         }
         String named = GsonHelper.getAsString(json, REGISTRY);
-        ResourceLocation registry = ResourceLocation.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
+        Identifier registry = Identifier.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
         JsonObject mapping = GsonHelper.getAsJsonObject(json, MAPPING);
-        Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
+        Map<Identifier, Identifier> target = REMAPS.computeIfAbsent(registry, _ -> new HashMap<>());
         int count = 0;
         for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {
-            target.put(ResourceLocation.parse(entry.getKey()), ResourceLocation.parse(entry.getValue().getAsString()));
+            target.put(Identifier.parse(entry.getKey()), Identifier.parse(entry.getValue().getAsString()));
             count++;
         }
         return count;
     }
 
-    @Nullable private static ResourceLocation follow(Map<ResourceLocation, ResourceLocation> target, ResourceLocation from) {
-        ResourceLocation current = target.get(from);
+    @Nullable private static Identifier follow(Map<Identifier, Identifier> target, Identifier from) {
+        Identifier current = target.get(from);
         if (current == null) { return null; }
-        Set<ResourceLocation> seen = new HashSet<>();
+        Set<Identifier> seen = new HashSet<>();
         seen.add(from);
         while (seen.add(current)) {
-            ResourceLocation next = target.get(current);
+            Identifier next = target.get(current);
             if (next == null) { return current; }
             current = next;
         }
@@ -75,18 +75,18 @@ public final class RegistryRemaps {
     public static void applyAliases() {
         if (Config.data.registryRemapsOff()) { return; }
         if (GENERATION.stale()) { reload(); }
-        for (Map.Entry<ResourceLocation, Map<ResourceLocation, ResourceLocation>> entry : REMAPS.entrySet()) {
-            Registry<?> registry = BuiltInRegistries.REGISTRY.get(entry.getKey());
+        for (Map.Entry<Identifier, Map<Identifier, Identifier>> entry : REMAPS.entrySet()) {
+            Registry<?> registry = BuiltInRegistries.REGISTRY.getValue(entry.getKey());
             if (registry == null) {
                 ContentLog.LOGGER.warn("Registry remaps name the registry {}, which does not exist, so they are ignored", entry.getKey());
                 continue;
             }
-            for (ResourceLocation from : entry.getValue().keySet()) { alias(registry, entry.getKey(), entry.getValue(), from); }
+            for (Identifier from : entry.getValue().keySet()) { alias(registry, entry.getKey(), entry.getValue(), from); }
         }
     }
 
-    private static void alias(Registry<?> registry, ResourceLocation name, Map<ResourceLocation, ResourceLocation> target, ResourceLocation from) {
-        ResourceLocation renamed = follow(target, from);
+    private static void alias(Registry<?> registry, Identifier name, Map<Identifier, Identifier> target, Identifier from) {
+        Identifier renamed = follow(target, from);
         if (renamed == null) { return; }
         if (renamed.equals(registry.resolve(from))) { return; }
         if (!registry.containsKey(renamed)) {

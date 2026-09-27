@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin;
 
-import net.neoforged.fml.loading.LoadingModList;
+import net.neoforged.fml.loading.FMLLoader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.tree.ClassNode;
@@ -25,7 +25,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (vanillaLight == null) {
             vanillaLight = true;
             for (String engine : LIGHT_ENGINES) {
-                if (LoadingModList.get().getModFileById(engine) == null) { continue; }
+                if (FMLLoader.getCurrent().getLoadingModList().getModFileById(engine) == null) { continue; }
                 vanillaLight = false;
                 LOGGER.info("The light snapshot mixins stand down, since {} replaces the light engine", engine);
                 break;

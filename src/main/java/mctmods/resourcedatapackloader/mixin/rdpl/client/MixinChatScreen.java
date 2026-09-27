@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow public abstract String normalizeChatMessage(String message);
 
     @Inject(method = "handleChatInput", at = @At("HEAD"))
-    private void rdpl$keepTyped(String input, boolean addToRecentChat, CallbackInfo ci) {
-        if (addToRecentChat) { ChatHistoryKeeper.caught(normalizeChatMessage(input)); }
+    private void rdpl$keepTyped(String msg, boolean addToRecent, CallbackInfo ci) {
+        if (addToRecent) { ChatHistoryKeeper.caught(normalizeChatMessage(msg)); }
     }
 }

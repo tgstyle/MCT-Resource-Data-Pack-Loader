@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Noise3D;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -31,7 +31,7 @@ public final class ContentOreVein implements IContentChunkShape {
     private final AmountDef attempts;
     private final int minHeight;
     private final int maxHeight;
-    private final ResourceLocation key;
+    private final Identifier key;
     private final long salt;
     private final Noise3D noise;
     private final Noise3D warp;
@@ -39,7 +39,7 @@ public final class ContentOreVein implements IContentChunkShape {
     @Nullable private final BlockState rich;
     @Nullable private final BlockState poor;
 
-    public ContentOreVein(ShapeDef shape, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, ResourceLocation key, @Nullable BlockState rich, @Nullable BlockState poor) {
+    public ContentOreVein(ShapeDef shape, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, Identifier key, @Nullable BlockState rich, @Nullable BlockState poor) {
         this.shape = shape;
         this.size = Math.max(1, size.most());
         this.attempts = attempts;
@@ -80,7 +80,7 @@ public final class ContentOreVein implements IContentChunkShape {
 
     @Override public List<BlockPos> originsIn(ContentPlacer placer, ChunkPos chunk, Predicate<BlockPos> valid) {
         List<BlockPos> origins = new ArrayList<>();
-        for (Vein vein : veinsOf(placer.level().getSeed(), placer.floorY(), placer.ceilingY(), chunk.x, chunk.z)) {
+        for (Vein vein : veinsOf(placer.level().getSeed(), placer.floorY(), placer.ceilingY(), chunk.x(), chunk.z())) {
             BlockPos pos = vein.pos();
             if (valid.test(pos)) { origins.add(pos); }
         }
@@ -94,11 +94,11 @@ public final class ContentOreVein implements IContentChunkShape {
         int highest = Math.min(ceiling - 1, maxHeight);
         if (highest < lowest) { return; }
         long seed = placer.level().getSeed() ^ salt;
-        RandomSource random = RandomSource.create(seed ^ (chunk.x * 341873128712L + chunk.z * 132897987541L));
+        RandomSource random = RandomSource.create(seed ^ (chunk.x() * 341873128712L + chunk.z() * 132897987541L));
         int placed = 0;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
-                for (Vein vein : veinsOf(placer.level().getSeed(), floor, ceiling, chunk.x + dx, chunk.z + dz)) {
+                for (Vein vein : veinsOf(placer.level().getSeed(), floor, ceiling, chunk.x() + dx, chunk.z() + dz)) {
                     if (!valid.test(vein.pos())) { continue; }
                     placed += write(placer, random, seed, vein, chunk, Math.max(lowest, vein.y() - REACH), Math.min(highest, vein.y() + REACH));
                 }

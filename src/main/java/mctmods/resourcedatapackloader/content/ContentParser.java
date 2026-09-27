@@ -29,7 +29,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -55,7 +55,7 @@ public final class ContentParser {
 
     private ContentParser() {}
 
-    @Nullable public static BlockDef block(ResourceLocation key, String contents) {
+    @Nullable public static BlockDef block(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Block definition {} is empty, ignoring it", key);
@@ -66,7 +66,7 @@ public final class ContentParser {
         boolean opaque = GsonHelper.getAsBoolean(json, "opaque", !ContentParserContainers.chested(json));
         List<BlockVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
-            ResourceLocation id = variantId(key, entry.getKey(), "Block");
+            Identifier id = variantId(key, entry.getKey(), "Block");
             if (id == null || !entry.getValue().isJsonObject()) {
                 if (id != null) { ContentLog.LOGGER.error("Block variant '{}' in {} is not an object, skipping it", entry.getKey(), key); }
                 continue;
@@ -78,7 +78,7 @@ public final class ContentParser {
             return null;
         }
         String harvestTool = GsonHelper.getAsString(json, "harvestTool", "pickaxe").trim().toLowerCase(Locale.ROOT);
-        if (!HARVEST_TOOLS.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, HARVEST_TOOLS, TAGS); }
+        if (!harvestTool.isEmpty() && !HARVEST_TOOLS.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, HARVEST_TOOLS, TAGS); }
         return new BlockDef(key, type,
                 GsonHelper.getAsString(json, "material", "rock").trim().toLowerCase(Locale.ROOT),
                 GsonHelper.getAsString(json, "mapColor", "").trim().toLowerCase(Locale.ROOT),
@@ -120,7 +120,7 @@ public final class ContentParser {
                 bell(json));
     }
 
-    private static String renderLayer(ResourceLocation key, JsonObject json) {
+    private static String renderLayer(Identifier key, JsonObject json) {
         String layer = GsonHelper.getAsString(json, "renderLayer", "").trim().toLowerCase(Locale.ROOT);
         if (!layer.isEmpty() && !RENDER_LAYERS.contains(layer)) { ContentLog.LOGGER.error("Unknown renderLayer '{}' in {}, using the type default", layer, key); }
         return layer;
@@ -134,33 +134,33 @@ public final class ContentParser {
                 GsonHelper.getAsString(held, "resonateSound", BellDef.PLAIN.resonateSound()).trim());
     }
 
-    @Nullable public static PortalDef portal(ResourceLocation key, JsonObject json, @Nullable ResourceLocation ownDimension, boolean ownedDefault, boolean walkInDefault) {
+    @Nullable public static PortalDef portal(Identifier key, JsonObject json, @Nullable Identifier ownDimension, boolean ownedDefault, boolean walkInDefault) {
         if (!json.has("portal")) { return null; }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "portal");
         String named = GsonHelper.getAsString(entry, "dimension", ownDimension == null ? "" : ownDimension.toString()).trim();
-        ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
+        Identifier dimension = named.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(named));
         if (dimension == null) {
             ContentLog.LOGGER.error("The portal of {} names dimension '{}', which is not a dimension id, so it leads nowhere", key, named);
             return null;
         }
         String backNamed = GsonHelper.getAsString(entry, "returnDimension", "minecraft:overworld").trim();
-        ResourceLocation back = ResourceLocation.tryParse(ContentFormats.dimensionId(backNamed));
+        Identifier back = Identifier.tryParse(ContentFormats.dimensionId(backNamed));
         if (back == null) {
             ContentLog.LOGGER.error("The portal of {} names return dimension '{}', which is not a dimension id, returning to the overworld", key, backNamed);
-            back = ResourceLocation.parse("minecraft:overworld");
+            back = Identifier.parse("minecraft:overworld");
         }
         return new PortalDef(dimension, back, GsonHelper.getAsString(entry, "gate", "").trim(), Math.max(0, GsonHelper.getAsInt(entry, "cooldown", 60)),
                 GsonHelper.getAsBoolean(entry, "platform", true), GsonHelper.getAsString(entry, "platformBlock", "").trim(), GsonHelper.getAsString(entry, "sound", "").trim(),
                 GsonHelper.getAsBoolean(entry, "owned", ownedDefault), GsonHelper.getAsBoolean(entry, "walkIn", walkInDefault));
     }
 
-    @Nullable private static ResourceLocation variantId(ResourceLocation key, String name, String kind) {
-        ResourceLocation id = ResourceLocation.tryBuild(key.getNamespace(), name.toLowerCase(Locale.ROOT));
+    @Nullable private static Identifier variantId(Identifier key, String name, String kind) {
+        Identifier id = Identifier.tryBuild(key.getNamespace(), name.toLowerCase(Locale.ROOT));
         if (id == null) { ContentLog.LOGGER.error("{} variant '{}' in {} is not a usable registry name (lowercase letters, digits, '_', '-', '.' and '/'), skipping it", kind, name, key); }
         return id;
     }
 
-    private static BlockVariant blockVariant(ResourceLocation key, ResourceLocation id, JsonObject json) {
+    private static BlockVariant blockVariant(Identifier key, Identifier id, JsonObject json) {
         List<DropDef> drops = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "drops", new JsonArray())) {
             if (!element.isJsonObject()) { continue; }
@@ -179,18 +179,18 @@ public final class ContentParser {
                 portal(key, json, null, true, false));
     }
 
-    private static List<String> plantTypes(ResourceLocation key, JsonObject json) {
+    private static List<String> plantTypes(Identifier key, JsonObject json) {
         List<String> types = Settings.lowered(Json.strings(json, PLANT_TYPES));
         if (!types.isEmpty()) { ContentLog.LOGGER.warn("Block {} sets '{}', which this line does not read: NeoForge 1.21.1 has no plant types. Use 'bush' under 'behavesAs' for what 'plains' did, and let any other plant name this block in its own soil list", key, PLANT_TYPES); }
         return types;
     }
 
-    @Nullable public static BlockMatchDef match(ResourceLocation key, JsonElement element) {
+    @Nullable public static BlockMatchDef match(Identifier key, JsonElement element) {
         if (!element.isJsonObject()) { return match(key, element.getAsString()); }
         JsonObject entry = element.getAsJsonObject();
         if (entry.has("meta")) { ContentLog.LOGGER.warn("A block match in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", key); }
         String name = GsonHelper.getAsString(entry, "block", "minecraft:stone");
-        ResourceLocation block = location(name);
+        Identifier block = location(name);
         if (block == null) {
             ContentLog.LOGGER.error("A block match in {} names '{}', which is not a valid block id, leaving it out", key, name);
             return null;
@@ -198,18 +198,18 @@ public final class ContentParser {
         return new BlockMatchDef(block, Json.map(entry, "properties"));
     }
 
-    @Nullable private static BlockMatchDef match(ResourceLocation key, String name) {
+    @Nullable private static BlockMatchDef match(Identifier key, String name) {
         String[] parts = name.split(":");
         if (parts.length >= 3) {
             ContentLog.LOGGER.warn("Block match '{}' in {} carries metadata, which this line does not read, so every state of {}:{} is matched", name, key, parts[0], parts[1]);
             name = parts[0] + ":" + parts[1];
         }
-        ResourceLocation block = location(name);
+        Identifier block = location(name);
         if (block == null) { ContentLog.LOGGER.error("Block match '{}' in {} is not a valid block id, leaving it out", name, key); }
         return block == null ? null : new BlockMatchDef(block, Collections.emptyMap());
     }
 
-    public static List<PotionEffectDef> effects(ResourceLocation key, JsonObject json) {
+    public static List<PotionEffectDef> effects(Identifier key, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
         List<PotionEffectDef> effects = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
@@ -232,11 +232,11 @@ public final class ContentParser {
         return Collections.unmodifiableList(effects);
     }
 
-    private static List<String> tags(ResourceLocation key, String name, JsonObject json) {
+    private static List<String> tags(Identifier key, String name, JsonObject json) {
         if (json.has(ORE_DICT)) { ContentLog.LOGGER.warn("Variant '{}' in {} uses '{}', which this line does not read. Name tags under '{}' instead, such as c:ores/ruby or forge:ores/ruby", name, key, ORE_DICT, TAGS); }
         List<String> tags = new ArrayList<>();
         for (String tag : Json.strings(json, TAGS)) {
-            if (ResourceLocation.tryParse(tag) == null) {
+            if (Identifier.tryParse(tag) == null) {
                 ContentLog.LOGGER.error("Variant '{}' in {} names tag '{}', which is not a valid tag id, skipping it", name, key, tag);
                 continue;
             }
@@ -245,7 +245,7 @@ public final class ContentParser {
         return Collections.unmodifiableList(tags);
     }
 
-    @Nullable private static DropDef drop(ResourceLocation key, String name, JsonObject json) {
+    @Nullable private static DropDef drop(Identifier key, String name, JsonObject json) {
         String block = GsonHelper.getAsString(json, "block", "").trim();
         String entity = GsonHelper.getAsString(json, "entity", "").trim();
         if (block.isEmpty() && entity.isEmpty()) {
@@ -260,8 +260,8 @@ public final class ContentParser {
             for (int i = 0; i < array.size(); i++) { chances[i] = array.get(i).getAsInt(); }
         }
         boolean guaranteed = GsonHelper.getAsBoolean(json, "guaranteed", true);
-        ResourceLocation item = entity.isEmpty() ? location(block) : null;
-        ResourceLocation spawned = entity.isEmpty() ? null : location(entity);
+        Identifier item = entity.isEmpty() ? location(block) : null;
+        Identifier spawned = entity.isEmpty() ? null : location(entity);
         if (item == null && spawned == null) {
             ContentLog.LOGGER.error("A drop for '{}' in {} names '{}', which is not a valid id, skipping it", name, key, entity.isEmpty() ? block : entity);
             return null;
@@ -269,7 +269,7 @@ public final class ContentParser {
         return new DropDef(item, spawned, amount(json, "amount", 1, 0), Mth.clamp(GsonHelper.getAsInt(json, "chance", guaranteed ? 100 : 0), 0, 100), Math.max(0, GsonHelper.getAsInt(json, "weight", 0)), chances);
     }
 
-    @Nullable public static ItemDef item(ResourceLocation key, String contents) {
+    @Nullable public static ItemDef item(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Item definition {} is empty, ignoring it", key);
@@ -277,7 +277,7 @@ public final class ContentParser {
         }
         List<ItemVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
-            ResourceLocation id = variantId(key, entry.getKey(), "Item");
+            Identifier id = variantId(key, entry.getKey(), "Item");
             if (id == null || !entry.getValue().isJsonObject()) {
                 if (id != null) { ContentLog.LOGGER.error("Item variant '{}' in {} is not an object, skipping it", entry.getKey(), key); }
                 continue;
@@ -313,24 +313,24 @@ public final class ContentParser {
                 ContentParserContainers.holds(key, json));
     }
 
-    @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
+    @Nullable public static FluidDef fluid(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Fluid definition {} is empty, ignoring it", key);
             return null;
         }
         String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
-        if (ResourceLocation.tryBuild(key.getNamespace(), name) == null) {
+        if (Identifier.tryBuild(key.getNamespace(), name) == null) {
             ContentLog.LOGGER.error("Fluid definition {} names itself '{}', which is not a usable registry name, ignoring it", key, name);
             return null;
         }
         JsonObject block = GsonHelper.getAsJsonObject(json, "block", new JsonObject());
-        ResourceLocation still = location(GsonHelper.getAsString(json, "still", DEFAULT_STILL));
-        ResourceLocation flow = location(GsonHelper.getAsString(json, "flow", DEFAULT_FLOW));
+        Identifier still = location(GsonHelper.getAsString(json, "still", DEFAULT_STILL));
+        Identifier flow = location(GsonHelper.getAsString(json, "flow", DEFAULT_FLOW));
         return new FluidDef(key, name,
                 color(GsonHelper.getAsString(json, "color", ""), key),
-                still == null ? ResourceLocation.parse(DEFAULT_STILL) : still,
-                flow == null ? ResourceLocation.parse(DEFAULT_FLOW) : flow,
+                still == null ? Identifier.parse(DEFAULT_STILL) : still,
+                flow == null ? Identifier.parse(DEFAULT_FLOW) : flow,
                 GsonHelper.getAsInt(json, "temperature", 300),
                 GsonHelper.getAsInt(json, "density", 1000),
                 GsonHelper.getAsInt(json, "viscosity", 1000),
@@ -346,7 +346,7 @@ public final class ContentParser {
                 Json.strings(block, "potions"), Json.strings(json, "requires"));
     }
 
-    @Nullable public static MaterialDef material(ResourceLocation key, String contents) {
+    @Nullable public static MaterialDef material(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Material file {} is empty, ignoring it", key);
@@ -374,7 +374,7 @@ public final class ContentParser {
                 Json.strings(json, "requires"));
     }
 
-    @Nullable public static ExposureDef exposure(ResourceLocation key, String contents) {
+    @Nullable public static ExposureDef exposure(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Exposure definition {} is empty, ignoring it", key);
@@ -409,18 +409,19 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Exposure {} has no usable levels, ignoring it", key);
             return null;
         }
-        Map<ResourceLocation, Integer> blocks = leveledNames(key, json, "blocks");
-        Map<ResourceLocation, Integer> items = leveledNames(key, json, "items");
-        if (blocks.isEmpty() && items.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks and no items, ignoring it", key);
+        Map<Identifier, Integer> blocks = leveledNames(key, json, "blocks");
+        Map<Identifier, Integer> items = leveledNames(key, json, "items");
+        Map<Identifier, Integer> dimensions = leveledNames(key, json, "dimensions");
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items or dimensions, ignoring it", key);
             return null;
         }
         return new ExposureDef(key, Math.max(1, GsonHelper.getAsInt(json, "scanInterval", 20)), Math.max(0, GsonHelper.getAsInt(json, "range", 10)), GsonHelper.getAsBoolean(json, "skipsCreative", true),
-                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, Collections.unmodifiableList(levels));
+                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels));
     }
 
-    private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {
-        Map<ResourceLocation, Integer> found = new LinkedHashMap<>();
+    private static Map<Identifier, Integer> leveledNames(Identifier key, JsonObject json, String member) {
+        Map<Identifier, Integer> found = new LinkedHashMap<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, member, new JsonArray())) {
             if (!element.isJsonPrimitive()) { continue; }
             String entry = element.getAsString();
@@ -433,7 +434,7 @@ public final class ContentParser {
                 named = named.substring(0, split).trim();
             }
             if (named.isEmpty()) { continue; }
-            ResourceLocation name = location(named);
+            Identifier name = location(named);
             if (name == null) {
                 ContentLog.LOGGER.error("The {} entry '{}' in {} is not a name, ignoring it", member, entry, key);
                 continue;
@@ -443,7 +444,7 @@ public final class ContentParser {
         return found;
     }
 
-    @Nullable public static TabDef tab(ResourceLocation key, String contents) {
+    @Nullable public static TabDef tab(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
@@ -495,7 +496,7 @@ public final class ContentParser {
         return new AmountDef(least, Math.max(least, GsonHelper.getAsInt(range, "max", least)));
     }
 
-    @Nullable private static double[] bounds(ResourceLocation key, JsonObject json) {
+    @Nullable private static double[] bounds(Identifier key, JsonObject json) {
         if (!json.has("bounds")) { return null; }
         JsonArray array = GsonHelper.getAsJsonArray(json, "bounds");
         if (array.size() != 6) {
@@ -525,12 +526,12 @@ public final class ContentParser {
         }
     }
 
-    @Nullable public static ResourceLocation location(String value) {
+    @Nullable public static Identifier location(String value) {
         String named = value == null ? "" : value.trim();
-        return named.isEmpty() ? null : ResourceLocation.tryParse(named.toLowerCase(Locale.ROOT));
+        return named.isEmpty() ? null : Identifier.tryParse(named.toLowerCase(Locale.ROOT));
     }
 
-    private static List<String> behaviors(ResourceLocation key, JsonObject json) {
+    private static List<String> behaviors(Identifier key, JsonObject json) {
         List<String> found = new ArrayList<>();
         for (String raw : Json.strings(json, "behavesAs")) {
             String name = raw.trim().toLowerCase(Locale.ROOT);

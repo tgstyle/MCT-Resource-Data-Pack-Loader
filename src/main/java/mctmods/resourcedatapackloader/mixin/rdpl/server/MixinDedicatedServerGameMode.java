@@ -27,8 +27,8 @@ import java.util.Properties;
         if (asked == null) { return; }
         DedicatedServer server = (DedicatedServer) (Object) this;
         DedicatedServerProperties held = settings.getProperties();
-        if (held.gamemode == asked && held.hardcore == hardcore) { return; }
-        ContentLog.LOGGER.info("server.properties plays {} and a pack asks for {}, so the pack's mode is written to server.properties and every world plays it", held.hardcore ? "hardcore" : held.gamemode.getName(), hardcore ? "hardcore" : asked.getName());
+        if (held.gameMode.get() == asked && held.hardcore == hardcore) { return; }
+        ContentLog.LOGGER.info("server.properties plays {} and a pack asks for {}, so the pack's mode is written to server.properties and every world plays it", held.hardcore ? "hardcore" : held.gameMode.get().getName(), hardcore ? "hardcore" : asked.getName());
         settings.update(current -> {
             Properties written = ((ISettings) current).rdpl$cloneProperties();
             written.setProperty("gamemode", asked.getName());

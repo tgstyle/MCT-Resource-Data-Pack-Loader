@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.LightShardSource;
+import mctmods.resourcedatapackloader.util.ILightShardSource;
 import mctmods.resourcedatapackloader.util.LightShards;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(DataLayerStorageMap.class) public abstract class MixinDataLayerStorageMap implements LightShardSource {
+@Mixin(DataLayerStorageMap.class) public abstract class MixinDataLayerStorageMap implements ILightShardSource {
     @Shadow @Final protected Long2ObjectOpenHashMap<DataLayer> map;
     @Unique private final LongSet rdpl$touched = new LongOpenHashSet();
     @Unique private LightShards rdpl$issued = new LightShards();
@@ -29,11 +29,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "copyDataLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD"))
-    private void rdpl$touchedByCopy(long index, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(index); }
+    private void rdpl$touchedByCopy(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
 
     @Inject(method = "removeLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD"))
-    private void rdpl$touchedByRemove(long sectionPos, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionPos); }
+    private void rdpl$touchedByRemove(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
 
     @Inject(method = "setLayer(JLnet/minecraft/world/level/chunk/DataLayer;)V", at = @At("HEAD"))
-    private void rdpl$touchedBySet(long sectionPos, DataLayer array, CallbackInfo ci) { rdpl$touched.add(sectionPos); }
+    private void rdpl$touchedBySet(long sectionNode, DataLayer layer, CallbackInfo ci) { rdpl$touched.add(sectionNode); }
 }

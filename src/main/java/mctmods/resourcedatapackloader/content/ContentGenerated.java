@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.PotionDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
+import mctmods.resourcedatapackloader.content.item.ContentBucketItem;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTreeTrunk;
@@ -22,6 +23,7 @@ import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,7 +32,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -62,20 +64,21 @@ public final class ContentGenerated {
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for block {}", entry.id(), ex); }
         }
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            if (entry.block() != null) { continue; }
+            if (entry.block() != null || entry.item() instanceof ContentBucketItem) { continue; }
             try { item(entry, itemTags); }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for item {}", entry.id(), ex); }
         }
         for (ContentFluids.Made made : ContentFluids.made()) {
             try {
                 fluidBlock(made);
-                fluidBucket(made);
+                if (made.bucket != null) { ContentGeneratedItems.bucket(made); }
             }
             catch (RuntimeException ex) { ContentLog.LOGGER.error("Could not generate the files for fluid {}", made.def.id(), ex); }
         }
         blockTags(blockTags);
         tags(itemTags, Map.of(), ContentFormats.ITEM_TAGS);
         worn();
+        ContentGeneratedItems.equipment();
         potionIcons();
         if (GeneratedResources.count() > 0) { Summary.info("generated", "Generated " + GeneratedResources.count() + " blockstate, model, loot table, tag and feature file(s) that the packs did not ship themselves"); }
     }
@@ -96,6 +99,7 @@ public final class ContentGenerated {
         boolean hasItem = ContentRegistry.items().stream().anyMatch(item -> item.block() == entry);
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { ContentGeneratedModels.models(entry, namespace, name, type); }
         if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { ContentGeneratedModels.itemModel(def, namespace, name, type); }
+        if (hasItem) { ContentGeneratedItems.blockItem(entry); }
         if (!provided(PackType.SERVER_DATA, namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json")) { data(namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json", loot(entry, type)); }
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
@@ -104,14 +108,6 @@ public final class ContentGenerated {
                 data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
             }
         }
-    }
-
-    private static void fluidBucket(ContentFluids.Made made) {
-        if (made.bucket == null) { return; }
-        String namespace = made.bucketId().getNamespace();
-        String path = "models/item/" + made.bucketId().getPath() + ".json";
-        if (provided(PackType.CLIENT_RESOURCES, namespace, path)) { return; }
-        asset(namespace, path, obj("parent", "neoforge:item/bucket", "loader", "neoforge:fluid_container", "fluid", made.def.id().toString()));
     }
 
     private static void fluidBlock(ContentFluids.Made made) {
@@ -153,6 +149,7 @@ public final class ContentGenerated {
             String parent = def != null && "tool".equals(def.type()) ? ITEM_HANDHELD : ITEM_GENERATED;
             asset(namespace, "models/item/" + name + ".json", obj("parent", parent, "textures", obj("layer0", namespace + ":item/" + name)));
         }
+        ContentGeneratedItems.item(entry);
         if (entry.variant() != null) {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
         }
@@ -182,7 +179,7 @@ public final class ContentGenerated {
                 JsonObject shears = ContentFormats.shears();
                 pools.add(pool(arr(item(self)), arr(silk)));
                 pools.add(pool(arr(item(self)), arr(shears, inverted(silk))));
-                ResourceLocation sapling = ContentParser.location(def.leafSapling());
+                Identifier sapling = ContentParser.location(def.leafSapling());
                 if (sapling != null && def.leafSaplingChance() > 0) {
                     double chance = def.leafSaplingChance() / 100.0;
                     JsonObject bonus = obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", arr(chance, Math.min(1.0, chance + 0.02), Math.min(1.0, chance + 0.04), Math.min(1.0, chance + 0.06)));
@@ -261,7 +258,7 @@ public final class ContentGenerated {
 
     private static void tagBlock(ContentRegistry.BlockEntry entry, Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags, boolean hasItem) {
         BlockDef def = entry.def();
-        ResourceLocation id = entry.id();
+        Identifier id = entry.id();
         for (String tag : entry.variant().tags()) {
             tag(blockTags, tag, id);
             if (hasItem) { tag(itemTags, tag, id); }
@@ -299,15 +296,15 @@ public final class ContentGenerated {
         }
     }
 
-    private static void both(Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags, boolean hasItem, String tag, ResourceLocation id) {
+    private static void both(Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags, boolean hasItem, String tag, Identifier id) {
         tag(blockTags, tag, id);
         if (hasItem) { tag(itemTags, tag, id); }
     }
 
-    public static void jobSites(Set<ResourceLocation> sites) {
+    public static void jobSites(Set<Identifier> sites) {
         if (sites.isEmpty()) { return; }
         Map<String, Set<String>> poiTags = new LinkedHashMap<>();
-        for (ResourceLocation site : sites) {
+        for (Identifier site : sites) {
             tag(poiTags, "minecraft:acquirable_job_site", site);
             tag(poiTags, "minecraft:job_site", site);
         }
@@ -330,7 +327,7 @@ public final class ContentGenerated {
         tags(blockTags, removed, ContentFormats.BLOCK_TAGS);
     }
 
-    public static void harvestTags(Map<String, Set<String>> tags, ResourceLocation id, String tool, int level) {
+    public static void harvestTags(Map<String, Set<String>> tags, Identifier id, String tool, int level) {
         switch (tool) {
             case "pickaxe", "axe", "shovel", "hoe" -> tag(tags, "minecraft:mineable/" + tool, id);
             case "sword" -> tag(tags, ContentFormats.MINEABLE_SWORD, id);
@@ -342,7 +339,7 @@ public final class ContentGenerated {
         else if (level >= 4) { tag(tags, ContentFormats.NEEDS_NETHERITE_TOOL, id); }
     }
 
-    private static void materialTags(Map<String, Set<String>> tags, ResourceLocation id, BlockDef def) {
+    private static void materialTags(Map<String, Set<String>> tags, Identifier id, BlockDef def) {
         if (ContentBlockTypes.STAIRS.equals(def.type()) || ContentBlockTypes.WALL.equals(def.type())) { return; }
         switch (ContentTypes.materialName(def)) {
             case "rock", "iron", "anvil" -> tag(tags, "minecraft:mineable/pickaxe", id);
@@ -356,13 +353,13 @@ public final class ContentGenerated {
         }
     }
 
-    public static void tag(Map<String, Set<String>> tags, String tag, ResourceLocation id) { tags.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(id.toString()); }
+    public static void tag(Map<String, Set<String>> tags, String tag, Identifier id) { tags.computeIfAbsent(tag, _ -> new LinkedHashSet<>()).add(id.toString()); }
 
     private static void tags(Map<String, Set<String>> tags, Map<String, Set<String>> removed, String folder) {
         Set<String> names = new LinkedHashSet<>(tags.keySet());
         names.addAll(removed.keySet());
         for (String name : names) {
-            ResourceLocation tag = ResourceLocation.tryParse(name);
+            Identifier tag = Identifier.tryParse(name);
             if (tag == null) { continue; }
             JsonArray values = new JsonArray();
             for (String value : tags.getOrDefault(name, Set.of())) { values.add(value); }
@@ -381,24 +378,21 @@ public final class ContentGenerated {
         JsonArray decoratorList = arr();
         if (sapling.vines()) { decoratorList.add(obj("type", "minecraft:leave_vine", "probability", 0.25)); }
         JsonObject config = obj(
-                "trunk_provider", state(sapling.log()),
+                "trunk_provider", WorldgenJson.simpleState(sapling.log()),
                 "trunk_placer", obj("type", LootFunctions.NAMESPACE + ":" + ContentTreeTrunk.NAME, "base_height", Math.max(1, sapling.height()), "height_rand_a", 2, "height_rand_b", 0),
-                "foliage_provider", state(sapling.leaves()),
+                "foliage_provider", WorldgenJson.simpleState(sapling.leaves()),
                 "foliage_placer", obj("type", "minecraft:blob_foliage_placer", "radius", 2, "offset", 0, "height", 3),
-                "dirt_provider", state("minecraft:dirt"),
                 "minimum_size", obj("type", "minecraft:two_layers_feature_size", "limit", 1, "lower_size", 0, "upper_size", 1),
                 "ignore_vines", true,
-                "force_dirt", false,
-                "decorators", decoratorList);
+                "decorators", decoratorList,
+                "below_trunk_provider", WorldgenJson.belowTrunk());
         return obj("type", "minecraft:tree", "config", config);
     }
-
-    private static JsonObject state(String block) { return obj("type", "minecraft:simple_state_provider", "state", obj("Name", block)); }
 
     private static void potionIcons() {
         JsonArray aliases = new JsonArray();
         for (PotionDef def : ContentPotions.defs()) {
-            ResourceLocation key = def.key();
+            Identifier key = def.key();
             String path = "textures/mob_effect/" + key.getPath() + ".png";
             if (provided(PackType.CLIENT_RESOURCES, key.getNamespace(), path)) { continue; }
             String vanilla = def.iconTexture().isEmpty() ? sheetIcon(def) : null;
@@ -409,7 +403,7 @@ public final class ContentGenerated {
             byte[] icon = potionIcon(def);
             if (icon != null) { GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), path, icon); }
         }
-        if (!aliases.isEmpty()) { asset(ResourceLocation.DEFAULT_NAMESPACE, "atlases/mob_effects.json", obj("sources", aliases)); }
+        if (!aliases.isEmpty()) { asset(Identifier.DEFAULT_NAMESPACE, "atlases/gui.json", obj("sources", aliases)); }
     }
 
     @Nullable private static String sheetIcon(PotionDef def) {
@@ -420,7 +414,7 @@ public final class ContentGenerated {
     }
 
     @Nullable private static byte[] potionIcon(PotionDef def) {
-        ResourceLocation texture = def.iconTexture().isEmpty() || FallbackIcon.TEXTURE.equals(def.iconTexture()) ? null : ResourceLocation.tryParse(def.iconTexture());
+        Identifier texture = def.iconTexture().isEmpty() || FallbackIcon.TEXTURE.equals(def.iconTexture()) ? null : Identifier.tryParse(def.iconTexture());
         byte[] icon = texture == null ? null : PackManager.get().bytes(PackType.CLIENT_RESOURCES, texture.getNamespace(), texture.getPath());
         if (texture != null && icon == null) { ContentLog.LOGGER.error("Potion {} names iconTexture {}, which no pack provides, using the RDPL icon", def.key(), def.iconTexture()); }
         return icon == null ? FallbackIcon.bytes() : icon;

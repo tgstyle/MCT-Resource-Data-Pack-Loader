@@ -15,5 +15,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(CreativeModeInventoryScreen.ItemPickerMenu.class) public abstract class MixinItemPickerMenu {
     @Shadow @Final public NonNullList<ItemStack> items;
 
-    @Inject(method = "scrollTo", at = @At("HEAD")) private void rdpl$hideDisabled(float pos, CallbackInfo ci) { items.removeIf(ContentDisabled::disabled); }
+    @Inject(method = "scrollTo", at = @At("HEAD")) private void rdpl$hideDisabled(float scrollOffs, CallbackInfo ci) { items.removeIf(ContentDisabled::disabled); }
 }

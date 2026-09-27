@@ -18,7 +18,7 @@ public final class ContentWeather {
     public static boolean above(@Nullable LevelReader world, int y) {
         Level level = world instanceof Level own ? own : world instanceof WorldGenLevel region ? region.getLevel() : null;
         if (level == null) { return false; }
-        Integer ceiling = ceilingFor(level.dimension().location().toString());
+        Integer ceiling = ceilingFor(level.dimension().identifier().toString());
         return ceiling != null && y > ceiling;
     }
 

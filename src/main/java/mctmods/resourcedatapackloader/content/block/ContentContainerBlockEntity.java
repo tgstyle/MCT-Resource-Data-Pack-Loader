@@ -7,20 +7,20 @@ import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.entity.ContainerUser;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -31,6 +31,8 @@ import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -74,14 +76,14 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
         return new ContentContainerMenu(id, inventory, this, shape());
     }
 
-    @Override public void startOpen(@Nonnull Player player) {
-        if (player.isSpectator()) { return; }
+    @Override public void startOpen(@Nonnull ContainerUser user) {
+        if (user.getLivingEntity().isSpectator()) { return; }
         openers++;
         onOpenerCountChanged();
     }
 
-    @Override public void stopOpen(@Nonnull Player player) {
-        if (player.isSpectator()) { return; }
+    @Override public void stopOpen(@Nonnull ContainerUser user) {
+        if (user.getLivingEntity().isSpectator()) { return; }
         openers = Math.max(0, openers - 1);
         onOpenerCountChanged();
     }
@@ -112,22 +114,22 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
         return true;
     }
 
-    @Override protected void loadAdditional(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    @Override protected void loadAdditional(@Nonnull ValueInput input) {
+        super.loadAdditional(input);
         ContainerDef def = def();
-        this.rows = tag.contains(ROWS) ? Math.max(1, tag.getInt(ROWS)) : def.rows();
-        this.columns = tag.contains(COLUMNS) ? Math.max(1, tag.getInt(COLUMNS)) : def.columns();
+        this.rows = input.getInt(ROWS).map(held -> Math.max(1, held)).orElse(def.rows());
+        this.columns = input.getInt(COLUMNS).map(held -> Math.max(1, held)).orElse(def.columns());
         this.items = NonNullList.withSize(rows * columns, ItemStack.EMPTY);
-        this.stocked = tag.getBoolean(STOCKED);
-        if (!tryLoadLootTable(tag)) { ContainerHelper.loadAllItems(tag, this.items, registries); }
+        this.stocked = input.getBooleanOr(STOCKED, false);
+        if (!tryLoadLootTable(input)) { ContainerHelper.loadAllItems(input, this.items); }
     }
 
-    @Override protected void saveAdditional(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        tag.putBoolean(STOCKED, stocked);
-        tag.putInt(ROWS, rows);
-        tag.putInt(COLUMNS, columns);
-        if (!trySaveLootTable(tag)) { ContainerHelper.saveAllItems(tag, this.items, registries); }
+    @Override protected void saveAdditional(@Nonnull ValueOutput output) {
+        super.saveAdditional(output);
+        output.putBoolean(STOCKED, stocked);
+        output.putInt(ROWS, rows);
+        output.putInt(COLUMNS, columns);
+        if (!trySaveLootTable(output)) { ContainerHelper.saveAllItems(output, this.items); }
     }
 
     public void placed() {
@@ -142,9 +144,9 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
         return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D) <= 64.0D;
     }
 
-    @Override protected void applyImplicitComponents(@Nonnull DataComponentInput input) {
-        super.applyImplicitComponents(new DataComponentInput() {
-            @Override @Nullable public <T> T get(@Nonnull DataComponentType<T> type) {
+    @Override protected void applyImplicitComponents(@Nonnull DataComponentGetter input) {
+        super.applyImplicitComponents(new DataComponentGetter() {
+            @Override @Nullable public <T> T get(@Nonnull DataComponentType<? extends T> type) {
                 T value = input.get(type);
                 return type == DataComponents.CUSTOM_NAME ? null : value;
             }
@@ -163,7 +165,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
         setChanged();
         String named = def().lootTable();
         if (named.isEmpty() || this.lootTable != null) { return; }
-        ResourceLocation table = ResourceLocation.tryParse(named);
+        Identifier table = Identifier.tryParse(named);
         if (table == null) {
             ContentLog.LOGGER.error("The container at {} names the loot table '{}', which is not a valid id, so it starts empty", getBlockPos(), named);
             return;

@@ -1,5 +1,5 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
-public record BiomeSpawnDef(ResourceLocation entity, String category, int weight, int min, int max) {}
+public record BiomeSpawnDef(Identifier entity, String category, int weight, int min, int max) {}

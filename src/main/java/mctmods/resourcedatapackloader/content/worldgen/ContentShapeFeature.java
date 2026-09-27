@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.feature.Feature;
@@ -22,7 +22,7 @@ public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup
     @Override public boolean place(FeaturePlaceContext<Setup> context) {
         ContentWorldgen.Entry entry = ContentWorldgen.entry(context.config().entry());
         if (entry == null) { return false; }
-        ChunkPos center = new ChunkPos(context.origin());
+        ChunkPos center = ChunkPos.containing(context.origin());
         return run(entry, new ContentPlacer(context.level(), entry.palette(), center), context.random(), center, context.origin());
     }
 
@@ -41,8 +41,8 @@ public final class ContentShapeFeature extends Feature<ContentShapeFeature.Setup
         return placed;
     }
 
-    public record Setup(ResourceLocation entry) implements FeatureConfiguration {
+    public record Setup(Identifier entry) implements FeatureConfiguration {
         public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ResourceLocation.CODEC.fieldOf("entry").forGetter(Setup::entry)).apply(instance, Setup::new));
+                Identifier.CODEC.fieldOf("entry").forGetter(Setup::entry)).apply(instance, Setup::new));
     }
 }

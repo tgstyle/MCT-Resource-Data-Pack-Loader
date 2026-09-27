@@ -12,10 +12,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.crafting.Ingredient;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -59,7 +60,7 @@ public final class FurnaceRecipes {
         for (Removal removal : REMOVALS) { removal.matched = 0; }
     }
 
-    private static void read(ResourceLocation key, String contents) {
+    private static void read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Furnace file {} is empty, ignoring it", key);
@@ -74,7 +75,7 @@ public final class FurnaceRecipes {
         }
     }
 
-    private static void removal(ResourceLocation key, JsonElement element) {
+    private static void removal(Identifier key, JsonElement element) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : null;
         String result = json == null ? element.getAsString() : GsonHelper.getAsString(json, RESULT, "");
         String input = json == null ? "" : GsonHelper.getAsString(json, INPUT, "");
@@ -87,7 +88,7 @@ public final class FurnaceRecipes {
         REMOVALS.add(new Removal(key, result.isEmpty() ? input : result, inputItem, resultItem, order++));
     }
 
-    private static void addition(ResourceLocation key, JsonElement element, int index) {
+    private static void addition(Identifier key, JsonElement element, int index) {
         if (!element.isJsonObject()) {
             ContentLog.LOGGER.error("An addition in {} is not an object, skipping it", key);
             return;
@@ -100,9 +101,9 @@ public final class FurnaceRecipes {
             return;
         }
         Item input = ContentStacks.find(key, inputName);
-        ItemStack output = ContentStacks.parse(key, outputName, GsonHelper.getAsInt(json, COUNT, 1));
-        if (input == null || output.isEmpty()) { return; }
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(key.getNamespace(), PackManager.FURNACE + "/" + key.getPath() + "/" + index);
+        ItemStackTemplate output = ContentStacks.template(key, outputName, GsonHelper.getAsInt(json, COUNT, 1));
+        if (input == null || output == null) { return; }
+        Identifier id = Identifier.fromNamespaceAndPath(key.getNamespace(), PackManager.FURNACE + "/" + key.getPath() + "/" + index);
         ADDITIONS.add(new Addition(id, input, output, GsonHelper.getAsFloat(json, EXPERIENCE, 0.0F), order++));
     }
 
@@ -116,7 +117,7 @@ public final class FurnaceRecipes {
 
     public static boolean removes(List<Ingredient> ingredients, ItemStack result) { return removedAt(ingredients, result) != KEPT; }
 
-    public static boolean removesLate(ResourceLocation id, List<Ingredient> ingredients, ItemStack result, boolean spared) {
+    public static boolean removesLate(Identifier id, List<Ingredient> ingredients, ItemStack result, boolean spared) {
         if (added(id)) { return false; }
         int at = spared ? KEPT : removedAt(ingredients, result);
         if (!ingredients.isEmpty()) { SMELTED.add(new Smelted(id, ingredients.getFirst(), at)); }
@@ -142,7 +143,7 @@ public final class FurnaceRecipes {
         return false;
     }
 
-    private static boolean added(ResourceLocation id) {
+    private static boolean added(Identifier id) {
         for (Addition addition : ADDITIONS) {
             if (addition.id().equals(id)) { return true; }
         }
@@ -152,12 +153,12 @@ public final class FurnaceRecipes {
     public static List<Addition> settle() {
         List<Addition> placed = new ArrayList<>();
         for (Addition addition : ADDITIONS) {
-            ResourceLocation inTheWay = inTheWay(addition, placed);
+            Identifier inTheWay = inTheWay(addition, placed);
             if (inTheWay != null) {
                 ContentLog.LOGGER.info("Ignored the furnace addition {}: its input already smelts by the recipe {}, and 1.12.2 ignores a conflicting input the same way. Remove that recipe under remove, in the same file or an earlier one, to replace it", addition.id(), inTheWay);
                 continue;
             }
-            if (FurnaceBlocking.blocks(addition.output())) { continue; }
+            if (FurnaceBlocking.blocks(addition.output().create())) { continue; }
             placed.add(addition);
         }
         List<Addition> kept = new ArrayList<>();
@@ -175,7 +176,7 @@ public final class FurnaceRecipes {
         return kept;
     }
 
-    @Nullable private static ResourceLocation inTheWay(Addition addition, List<Addition> placed) {
+    @Nullable private static Identifier inTheWay(Addition addition, List<Addition> placed) {
         ItemStack probe = new ItemStack(addition.input());
         for (Smelted smelted : SMELTED) {
             if (smelted.removedAt() > addition.order() && smelted.ingredient().test(probe)) { return smelted.id(); }
@@ -191,7 +192,7 @@ public final class FurnaceRecipes {
     @Nullable private static Removal removalOf(Addition addition) {
         for (Removal removal : REMOVALS) {
             if (removal.order < addition.order()) { continue; }
-            if (removal.result != null && removal.result != addition.output().getItem()) { continue; }
+            if (removal.result != null && removal.result != addition.output().item().value()) { continue; }
             if (removal.input != null && removal.input != addition.input()) { continue; }
             return removal;
         }
@@ -202,9 +203,9 @@ public final class FurnaceRecipes {
         Map<String, int[]> perPack = new LinkedHashMap<>();
         for (Removal removal : REMOVALS) {
             if (removal.matched == 0) { ContentLog.LOGGER.debug("No furnace recipe matched the removal {} in {}", removal.asked, removal.key); }
-            perPack.computeIfAbsent(removal.key.getNamespace(), k -> new int[2])[0] += removal.matched;
+            perPack.computeIfAbsent(removal.key.getNamespace(), _ -> new int[2])[0] += removal.matched;
         }
-        for (Addition addition : ADDITIONS) { perPack.computeIfAbsent(addition.id().getNamespace(), k -> new int[2])[1]++; }
+        for (Addition addition : ADDITIONS) { perPack.computeIfAbsent(addition.id().getNamespace(), _ -> new int[2])[1]++; }
         if (removed == 0 && added == 0) { return; }
         Summary.info("furnace", "Removed " + removed + " and added " + added + " furnace recipe(s)");
         if (perPack.size() < 2) { return; }
@@ -213,19 +214,19 @@ public final class FurnaceRecipes {
         }
     }
 
-    public record Addition(ResourceLocation id, Item input, ItemStack output, float experience, int order) {}
+    public record Addition(Identifier id, Item input, ItemStackTemplate output, float experience, int order) {}
 
-    private record Smelted(ResourceLocation id, Ingredient ingredient, int removedAt) {}
+    private record Smelted(Identifier id, Ingredient ingredient, int removedAt) {}
 
     private static final class Removal {
-        final ResourceLocation key;
+        final Identifier key;
         final String asked;
         @Nullable final Item input;
         @Nullable final Item result;
         final int order;
         int matched;
 
-        Removal(ResourceLocation key, String asked, @Nullable Item input, @Nullable Item result, int order) {
+        Removal(Identifier key, String asked, @Nullable Item input, @Nullable Item result, int order) {
             this.key = key;
             this.asked = asked;
             this.input = input;

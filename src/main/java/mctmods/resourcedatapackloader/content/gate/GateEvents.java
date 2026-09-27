@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
@@ -7,7 +8,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -26,6 +27,8 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
@@ -39,7 +42,7 @@ public final class GateEvents {
 
     public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        for (GateDef def : ContentGates.forDimension(event.getDimension().location())) {
+        for (GateDef def : ContentGates.forDimension(event.getDimension().identifier())) {
             if (ContentGates.unlocked(player, def)) { continue; }
             event.setCanceled(true);
             ContentLog.LOGGER.debug("Gate {} turned {} back from {}", def.key(), player.getName().getString(), def.dimension());
@@ -52,17 +55,17 @@ public final class GateEvents {
 
     public static void onKill(LivingDeathEvent event) {
         if (!(event.getSource().getEntity() instanceof ServerPlayer player)) { return; }
-        ResourceLocation fallen = EntityType.getKey(event.getEntity().getType());
+        Identifier fallen = EntityType.getKey(event.getEntity().getType());
         for (GateDef def : ContentGates.all()) {
             if (def.killed().isEmpty() || ContentGates.unlocked(player, def)) { continue; }
-            if (!fallen.equals(ResourceLocation.tryParse(def.killed()))) { continue; }
-            int slain = def.global() ? GateStorage.tallyGlobally(player.server, def.id()) : GateStorage.tallyFor(player, def.id());
+            if (!Objects.equals(fallen, Identifier.tryParse(def.killed()))) { continue; }
+            int slain = def.global() ? GateStorage.tallyGlobally(player.level().getServer(), def.id()) : GateStorage.tallyFor(player, def.id());
             if (slain < def.killedCount()) { continue; }
             if (def.killedDrops().isEmpty()) {
                 ContentGates.unlock(player, def, true);
                 continue;
             }
-            if (def.global()) { GateStorage.clearTallyGlobally(player.server, def.id()); }
+            if (def.global()) { GateStorage.clearTallyGlobally(player.level().getServer(), def.id()); }
             else { GateStorage.clearTallyFor(player, def.id()); }
             reward(player, def);
         }
@@ -114,19 +117,20 @@ public final class GateEvents {
     }
 
     private static void retreat(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         BlockPos bed = safeBed(player, level);
-        BlockPos feet = ContentDimensions.landing(level, bed == null ? level.getSharedSpawnPos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
-        player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        BlockPos feet = ContentDimensions.landing(level, bed == null ? level.getRespawnData().pos() : bed, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        player.teleportTo(level, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
     }
 
     @Nullable private static BlockPos safeBed(ServerPlayer player, ServerLevel level) {
-        BlockPos bed = player.getRespawnPosition();
-        if (bed == null || !player.getRespawnDimension().equals(level.dimension())) { return null; }
+        ServerPlayer.RespawnConfig respawn = player.getRespawnConfig();
+        if (respawn == null || !respawn.respawnData().dimension().equals(level.dimension())) { return null; }
+        BlockPos bed = respawn.respawnData().pos();
         BlockState state = level.getBlockState(bed);
-        if (state.getBlock() instanceof BedBlock) { return BedBlock.findStandUpPosition(EntityType.PLAYER, level, bed, state.getValue(BedBlock.FACING), player.getRespawnAngle()).map(BlockPos::containing).orElse(null); }
-        if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0) { return RespawnAnchorBlock.findStandUpPosition(EntityType.PLAYER, level, bed).map(BlockPos::containing).orElse(null); }
-        if (!player.isRespawnForced()) { return null; }
+        if (state.getBlock() instanceof BedBlock) { return BedBlock.findStandUpPosition(Compat.player(), level, bed, state.getValue(BedBlock.FACING), respawn.respawnData().yaw()).map(BlockPos::containing).orElse(null); }
+        if (state.getBlock() instanceof RespawnAnchorBlock && state.getValue(RespawnAnchorBlock.CHARGE) > 0) { return RespawnAnchorBlock.findStandUpPosition(Compat.player(), level, bed).map(BlockPos::containing).orElse(null); }
+        if (!respawn.forced()) { return null; }
         BlockState above = level.getBlockState(bed.above());
         return state.getBlock().isPossibleToRespawnInThis(state) && above.getBlock().isPossibleToRespawnInThis(above) ? bed : null;
     }

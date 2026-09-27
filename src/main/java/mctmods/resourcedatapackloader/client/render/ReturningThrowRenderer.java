@@ -4,37 +4,47 @@ import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.item.ItemModelResolver;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nonnull;
 
-public final class ReturningThrowRenderer extends EntityRenderer<ReturningThrow> {
-    private final ItemRenderer items;
+public final class ReturningThrowRenderer extends EntityRenderer<ReturningThrow, ReturningThrowRenderer.State> {
+    private final ItemModelResolver items;
 
     public ReturningThrowRenderer(EntityRendererProvider.Context context) {
         super(context);
-        items = context.getItemRenderer();
+        items = context.getItemModelResolver();
     }
 
-    @Override public void render(@Nonnull ReturningThrow entity, float entityYaw, float partialTicks, @Nonnull PoseStack pose, @Nonnull MultiBufferSource buffers, int light) {
-        ItemStack stack = entity.stack();
-        if (stack.isEmpty()) { return; }
+    public static final class State extends EntityRenderState {
+        final ItemStackRenderState item = new ItemStackRenderState();
+        float yaw;
+    }
+
+    @Override @Nonnull public State createRenderState() { return new State(); }
+
+    @Override public void extractRenderState(@Nonnull ReturningThrow entity, @Nonnull State state, float partialTicks) {
+        super.extractRenderState(entity, state, partialTicks);
+        state.yaw = Mth.lerp(partialTicks, entity.yRotO, entity.getYRot());
+        items.updateForNonLiving(state.item, entity.stack(), ItemDisplayContext.GROUND, entity);
+    }
+
+    @Override public void submit(@Nonnull State state, @Nonnull PoseStack pose, @Nonnull SubmitNodeCollector collector, @Nonnull CameraRenderState camera) {
+        if (state.item.isEmpty()) { return; }
         pose.pushPose();
         pose.translate(0.0F, 0.25F, 0.0F);
-        pose.mulPose(Axis.YP.rotationDegrees(Mth.lerp(partialTicks, entity.yRotO, entity.getYRot()) - 90.0F));
-        pose.mulPose(Axis.ZP.rotationDegrees((entity.tickCount + partialTicks) * -45.0F));
-        items.renderStatic(stack, ItemDisplayContext.GROUND, light, OverlayTexture.NO_OVERLAY, pose, buffers, entity.level(), entity.getId());
+        pose.mulPose(Axis.YP.rotationDegrees(state.yaw - 90.0F));
+        pose.mulPose(Axis.ZP.rotationDegrees(state.ageInTicks * -45.0F));
+        state.item.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, state.outlineColor);
         pose.popPose();
-        super.render(entity, entityYaw, partialTicks, pose, buffers, light);
+        super.submit(state, pose, collector, camera);
     }
-
-    @Override @Nonnull public ResourceLocation getTextureLocation(@Nonnull ReturningThrow entity) { return InventoryMenu.BLOCK_ATLAS; }
 }

@@ -19,7 +19,6 @@ import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
-import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveStructureFeature;
@@ -69,7 +68,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -81,6 +80,7 @@ import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -90,59 +90,58 @@ public final class ContentEvents {
     public static void onRegister(RegisterEvent event) {
         if (event.getRegistryKey().equals(Registries.FEATURE)) {
             event.register(Registries.FEATURE, helper -> {
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
             });
         }
         else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC);
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentOreControl.ID), ContentOreControl.CODEC);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
             });
         }
-        else if (event.getRegistryKey().equals(Registries.CHUNK_GENERATOR)) { event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentFlatSource.ID), ContentFlatSource.CODEC)); }
+        else if (event.getRegistryKey().equals(Registries.CHUNK_GENERATOR)) { event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentFlatSource.ID), ContentFlatSource.CODEC)); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_TYPE)) { event.register(Registries.STRUCTURE_TYPE, helper -> {
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE), ContentCityStructure.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE), ContentCityStructure.TYPE);
         }); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_POOL_ELEMENT)) { event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE)); }
+        else if (event.getRegistryKey().equals(Registries.STRUCTURE_POOL_ELEMENT)) { event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE)); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_PIECE)) { event.register(Registries.STRUCTURE_PIECE, helper -> {
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_deck"), ContentCityDeckPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_lamp"), ContentCityLampPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_rail"), ContentCityRailPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_farm"), ContentCityFarmPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_bulb"), ContentCityBulbPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_cap"), ContentCityCapPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_pier"), ContentCityPierPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_intersect"), ContentCityIntersectPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_decor"), ContentCityDecorPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer"), ContentCitySewerPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_loop"), ContentCitySewerLoopPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_hatch"), ContentCitySewerHatchPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plaza"), ContentCityPlazaPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_well"), ContentCityWellPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_station"), ContentCityStationPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
-            helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_deck"), ContentCityDeckPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_lamp"), ContentCityLampPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_rail"), ContentCityRailPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_farm"), ContentCityFarmPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_bulb"), ContentCityBulbPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_cap"), ContentCityCapPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_pier"), ContentCityPierPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_intersect"), ContentCityIntersectPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_decor"), ContentCityDecorPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer"), ContentCitySewerPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_loop"), ContentCitySewerLoopPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_sewer_hatch"), ContentCitySewerHatchPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_plaza"), ContentCityPlazaPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_well"), ContentCityWellPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_station"), ContentCityStationPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
+            helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
         }); }
         else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) {
             event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
-                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RINGS_PLACEMENT), ContentStructureRings.TYPE);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
+                helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RINGS_PLACEMENT), ContentStructureRings.TYPE);
             });
         }
-        else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
+        else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
+        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
         if (Config.contentOff()) {
-            if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, helper -> generateData()); }
+            if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, _ -> generateData()); }
             return;
         }
         ContentFluids.prepare();
-        if (event.getRegistryKey().equals(Registries.ARMOR_MATERIAL)) { event.register(Registries.ARMOR_MATERIAL, helper -> ContentMaterials.registerArmor(helper::register)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.FLUID_TYPES)) { event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register)); }
+        if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.FLUID_TYPES)) { event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register)); }
         else if (event.getRegistryKey().equals(Registries.FLUID)) { event.register(Registries.FLUID, helper -> ContentFluids.registerFluids(helper::register)); }
         else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
         else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
@@ -278,26 +277,26 @@ public final class ContentEvents {
             helper.register(ResourceKey.create(Registries.CREATIVE_MODE_TAB, def.id()), tab(def.id(), def.key(), def.icon()));
             count++;
         }
-        Set<ResourceLocation> undeclared = new LinkedHashSet<>();
+        Set<Identifier> undeclared = new LinkedHashSet<>();
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            ResourceLocation named = entry.tab().isEmpty() ? null : ResourceLocation.tryParse(entry.tab());
+            Identifier named = entry.tab().isEmpty() ? null : Identifier.tryParse(entry.tab());
             if (named == null || "minecraft".equals(named.getNamespace()) || ContentRegistry.tab(entry.tab()) != null || BuiltInRegistries.CREATIVE_MODE_TAB.containsKey(named)) { continue; }
             undeclared.add(named);
         }
-        for (ResourceLocation named : undeclared) {
+        for (Identifier named : undeclared) {
             helper.register(ResourceKey.create(Registries.CREATIVE_MODE_TAB, named), tab(named, named, ""));
             count++;
         }
         if (count > 0) { Summary.info("content.tabs", "Registered " + count + " creative tab(s) from packs"); }
     }
 
-    private static CreativeModeTab tab(ResourceLocation id, ResourceLocation source, String declared) {
+    private static CreativeModeTab tab(Identifier id, Identifier source, String declared) {
         return CreativeModeTab.builder()
                 .title(Component.translatable("itemGroup." + id.getNamespace() + "." + id.getPath().replace('/', '.')))
                 .icon(() -> icon(id, source, declared))
-                .displayItems((parameters, out) -> {
+                .displayItems((_, out) -> {
                     for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-                        if (id.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
+                        if (Objects.equals(id, Identifier.tryParse(entry.tab()))) { show(entry.item(), out::accept); }
                     }
                 })
                 .build();
@@ -311,20 +310,20 @@ public final class ContentEvents {
         for (ItemStack stack : bottle.stacks()) { out.accept(stack.copy()); }
     }
 
-    private static ItemStack icon(ResourceLocation id, ResourceLocation source, String named) {
+    private static ItemStack icon(Identifier id, Identifier source, String named) {
         ItemStack declared = ContentStacks.parse(source, named, 1);
         if (!declared.isEmpty()) { return declared; }
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            if (id.equals(ResourceLocation.tryParse(entry.tab()))) { return new ItemStack(entry.item()); }
+            if (Objects.equals(id, Identifier.tryParse(entry.tab()))) { return new ItemStack(entry.item()); }
         }
         return new ItemStack(Blocks.STONE);
     }
 
     public static void onBuildTab(BuildCreativeModeTabContentsEvent event) {
-        ResourceLocation tab = event.getTabKey().location();
+        Identifier tab = event.getTabKey().identifier();
         if (ContentRegistry.tab(tab.toString()) != null) { return; }
         for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
-            if (tab.equals(ResourceLocation.tryParse(entry.tab()))) { show(entry.item(), event::accept); }
+            if (Objects.equals(tab, Identifier.tryParse(entry.tab()))) { show(entry.item(), event::accept); }
         }
     }
 }

@@ -19,7 +19,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityStairsPiece extends StructurePiece implements ContentCityTrees.Felling {
+public final class ContentCityStairsPiece extends StructurePiece implements ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStairsPiece::new;
     public static final int RUN = 7;
     public static final int WIDE = 5;
@@ -48,15 +48,15 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
 
     public ContentCityStairsPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.top = tag.getInt(TOP);
-        this.row = tag.getInt(ROW);
-        this.near = tag.getInt(NEAR);
-        this.way = tag.getInt(WAY);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.bedHalf = tag.getInt(BED_HALF);
-        this.edge = tag.contains(EDGE) ? tag.getInt(EDGE) : wall(near, way);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.top = tag.getIntOr(TOP, 0);
+        this.row = tag.getIntOr(ROW, 0);
+        this.near = tag.getIntOr(NEAR, 0);
+        this.way = tag.getIntOr(WAY, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.bedHalf = tag.getIntOr(BED_HALF, 0);
+        this.edge = tag.contains(EDGE) ? tag.getIntOr(EDGE, 0) : wall(near, way);
     }
 
     static BoundingBox box(int level, int top, int row, int near, int way, int middle, boolean alongX) {

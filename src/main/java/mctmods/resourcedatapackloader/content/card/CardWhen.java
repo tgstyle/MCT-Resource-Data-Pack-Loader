@@ -34,7 +34,7 @@ final class CardWhen {
     private boolean within(int time) { return timeFrom <= timeTo ? time >= timeFrom && time <= timeTo : time >= timeFrom || time <= timeTo; }
 
     static String teamOf(ServerPlayer player) {
-        PlayerTeam team = Scores.teamOf(player.getScoreboard(), player.getScoreboardName());
+        PlayerTeam team = Scores.teamOf(player.level().getScoreboard(), player.getScoreboardName());
         return team == null ? "" : team.getName();
     }
 }

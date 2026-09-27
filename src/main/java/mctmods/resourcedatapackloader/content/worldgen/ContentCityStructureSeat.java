@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.util.Hashes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
@@ -55,7 +55,7 @@ public final class ContentCityStructureSeat {
             return new ContentCityStructure.Seated(List.of(new ContentCityFarmPiece(placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ(), level, placed.def().height(),
                     placed.def().edge(), placed.def().soil(), placed.def().ground(), String.join(",", placed.def().crops()), placed.def().water(), Math.max(1, placed.def().rowWidth()), placed.def().key().toString(), turn, keep, roads)), footprint, Set.of(), placed, level);
         }
-        ResourceLocation template = ResourceLocation.tryParse(placed.def().structure());
+        Identifier template = Identifier.tryParse(placed.def().structure());
         StructureMapDef map = template == null ? null : ContentStructureMaps.def(template);
         if (map != null) {
             StructurePiecesBuilder cells = new StructurePiecesBuilder();
@@ -305,7 +305,7 @@ public final class ContentCityStructureSeat {
         Set<Long> found = new HashSet<>();
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(turn);
         for (Block kind : kinds) {
-            for (StructureTemplate.StructureBlockInfo info : built.filterBlocks(corner, settings, kind)) { found.add(ChunkPos.asLong(info.pos().getX(), info.pos().getZ())); }
+            for (StructureTemplate.StructureBlockInfo info : built.filterBlocks(corner, settings, kind)) { found.add(ChunkPos.pack(info.pos().getX(), info.pos().getZ())); }
         }
         return found;
     }

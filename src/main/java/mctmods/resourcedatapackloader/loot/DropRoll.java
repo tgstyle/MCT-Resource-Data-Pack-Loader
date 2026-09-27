@@ -6,11 +6,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.minecraft.world.item.ItemInstance;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import java.util.Arrays;
@@ -32,10 +32,10 @@ public final class DropRoll extends LootItemConditionalFunction {
         this.bonusChance = new IntArrayList(bonusChance).toIntArray();
     }
 
-    @Override @Nonnull public LootItemFunctionType<DropRoll> getType() { return LootFunctions.DROP_ROLL.get(); }
+    @Override @Nonnull public MapCodec<DropRoll> codec() { return CODEC; }
 
     @Override @Nonnull protected ItemStack run(@Nonnull ItemStack stack, @Nonnull LootContext context) {
-        ItemStack tool = context.getParamOrNull(LootContextParams.TOOL);
+        ItemInstance tool = context.getOptionalParameter(LootContextParams.TOOL);
         int fortune = tool == null ? 0 : BlockDrops.level(context.getLevel(), tool, Enchantments.FORTUNE);
         stack.setCount(stack.getCount() * DropDef.copies(context.getRandom(), chance, bonusChance, fortune));
         return stack;

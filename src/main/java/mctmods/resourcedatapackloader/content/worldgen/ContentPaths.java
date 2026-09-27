@@ -7,13 +7,11 @@ import mctmods.resourcedatapackloader.util.Registered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -61,9 +59,9 @@ public final class ContentPaths {
         if (result == null) { return; }
         if (!player.mayUseItemAt(pos, face, held)) { return; }
         level.playSound(player, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
-        if (!level.isClientSide) {
+        if (!level.isClientSide()) {
             level.setBlock(pos, Block.updateFromNeighbourShapes(result.defaultBlockState(), level, pos), Block.UPDATE_ALL_IMMEDIATE);
-            held.hurtAndBreak(1, (ServerLevel) level, player, broken -> player.onEquippedItemBroken(broken, LivingEntity.getSlotForHand(event.getHand())));
+            held.hurtAndBreak(1, player, event.getHand());
         }
         event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);
@@ -71,7 +69,7 @@ public final class ContentPaths {
 
     @Nullable private static Block named(String name, Block fallback) {
         if (name.isEmpty()) { return fallback; }
-        ResourceLocation key = ResourceLocation.tryParse(name);
+        Identifier key = Identifier.tryParse(name);
         Block block = Registered.find(BuiltInRegistries.BLOCK, key);
         return block == null ? fallback : block;
     }

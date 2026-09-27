@@ -204,13 +204,13 @@ public final class ContentTypes {
         if (variant.hardness() < 0.0F) { properties = properties.strength(-1.0F, UNBREAKABLE); }
         else { properties = properties.strength(variant.hardness(), resistance); }
         int light = variant.light();
-        if (light > 0) { properties = properties.lightLevel(state -> light); }
+        if (light > 0) { properties = properties.lightLevel(_ -> light); }
         if (preset.tool()) { properties = properties.requiresCorrectToolForDrops(); }
         if (!def.opaque() || !def.fullCube() || def.container() != null && def.container().chestModel()) { properties = properties.noOcclusion(); }
         if (preset.burns()) { properties = properties.ignitedByLava(); }
         if (preset.replaceable()) { properties = properties.replaceable(); }
         properties = preset.blocks() ? properties.forceSolidOn() : properties.forceSolidOff();
-        if (ContentBlockTypes.plant(type)) { properties = properties.noCollission().randomTicks(); }
+        if (ContentBlockTypes.plant(type)) { properties = properties.noCollision().randomTicks(); }
         return properties;
     }
 

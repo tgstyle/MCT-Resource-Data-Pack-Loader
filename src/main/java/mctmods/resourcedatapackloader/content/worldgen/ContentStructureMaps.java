@@ -16,7 +16,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
@@ -36,7 +36,7 @@ public final class ContentStructureMaps {
     public static final String MAP_STRUCTURE = "map";
     public static final String MAP_PIECE = "map_piece";
     private static final Gson GSON = new Gson();
-    private static final Map<ResourceLocation, StructureMapDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new LinkedHashSet<>();
     private static final Set<String> OVERSIZE = new LinkedHashSet<>();
     private static final List<String> SETS = new ArrayList<>();
@@ -104,7 +104,7 @@ public final class ContentStructureMaps {
 
     public static List<String> sets() { return List.copyOf(SETS); }
 
-    @Nullable public static StructureMapDef def(ResourceLocation key) { return DEFS.get(key); }
+    @Nullable public static StructureMapDef def(Identifier key) { return DEFS.get(key); }
 
     public static void missing(StructureMapDef def, String named) {
         if (MISSING.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key(), named); }
@@ -118,14 +118,14 @@ public final class ContentStructureMaps {
         if (!(structure instanceof ContentMapStructure held) || !(level instanceof ServerLevel server)) { return false; }
         StructureMapDef def = DEFS.get(held.map());
         if (def == null || def.dimensions().isEmpty()) { return false; }
-        String here = server.dimension().location().toString();
+        String here = server.dimension().identifier().toString();
         for (String named : def.dimensions()) {
             if (ContentFormats.dimensionId(named).equals(here)) { return false; }
         }
         return true;
     }
 
-    @Nullable private static StructureMapDef parse(ResourceLocation key, String contents) {
+    @Nullable private static StructureMapDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null || !json.has("layers")) {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);

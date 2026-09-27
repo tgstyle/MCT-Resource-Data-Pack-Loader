@@ -10,7 +10,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -79,22 +79,22 @@ public final class PackOptionsWorld {
         List<String> missing = new ArrayList<>();
         JsonElement held = was == null ? null : was.get(CONTENT);
         if (held == null || !held.isJsonObject()) { return missing; }
-        Map<ResourceLocation, Set<ResourceLocation>> now = registered(server);
+        Map<Identifier, Set<Identifier>> now = registered(server);
         for (Map.Entry<String, JsonElement> registry : held.getAsJsonObject().entrySet()) {
             if (!registry.getValue().isJsonArray()) { continue; }
-            ResourceLocation key = ResourceLocation.tryParse(registry.getKey());
-            Set<ResourceLocation> present = key == null ? Set.of() : now.getOrDefault(key, Set.of());
+            Identifier key = Identifier.tryParse(registry.getKey());
+            Set<Identifier> present = key == null ? Set.of() : now.getOrDefault(key, Set.of());
             for (JsonElement id : registry.getValue().getAsJsonArray()) {
-                ResourceLocation named = id.isJsonPrimitive() ? ResourceLocation.tryParse(id.getAsString()) : null;
+                Identifier named = id.isJsonPrimitive() ? Identifier.tryParse(id.getAsString()) : null;
                 if (named != null && !present.contains(named)) { missing.add(registry.getKey() + " " + named); }
             }
         }
         return missing;
     }
 
-    private static Map<ResourceLocation, Set<ResourceLocation>> registered(MinecraftServer server) {
-        Map<ResourceLocation, Set<ResourceLocation>> out = new LinkedHashMap<>();
-        server.registryAccess().registries().forEach(entry -> out.put(entry.key().location(), entry.value().keySet()));
+    private static Map<Identifier, Set<Identifier>> registered(MinecraftServer server) {
+        Map<Identifier, Set<Identifier>> out = new LinkedHashMap<>();
+        server.registryAccess().registries().forEach(entry -> out.put(entry.key().identifier(), entry.value().keySet()));
         return out;
     }
 
@@ -104,7 +104,7 @@ public final class PackOptionsWorld {
             for (PackType type : PackType.values()) { out.addAll(pack.getNamespaces(type)); }
         }
         out.add(ResourceDataPackLoader.MOD_ID);
-        out.remove(ResourceLocation.DEFAULT_NAMESPACE);
+        out.remove(Identifier.DEFAULT_NAMESPACE);
         return out;
     }
 
@@ -135,9 +135,9 @@ public final class PackOptionsWorld {
             for (Map.Entry<String, Boolean> option : now.entrySet()) { out.addProperty(option.getKey(), option.getValue()); }
             Set<String> namespaces = packNamespaces();
             JsonObject content = new JsonObject();
-            for (Map.Entry<ResourceLocation, Set<ResourceLocation>> registry : registered(level.getServer()).entrySet()) {
+            for (Map.Entry<Identifier, Set<Identifier>> registry : registered(level.getServer()).entrySet()) {
                 JsonArray ids = new JsonArray();
-                for (ResourceLocation id : registry.getValue()) {
+                for (Identifier id : registry.getValue()) {
                     if (namespaces.contains(id.getNamespace())) { ids.add(id.toString()); }
                 }
                 if (!ids.isEmpty()) { content.add(registry.getKey().toString(), ids); }
@@ -149,7 +149,7 @@ public final class PackOptionsWorld {
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (PackOptions.worldChanged().isEmpty() || !(event.getEntity() instanceof ServerPlayer player) || player.serverLevel().dimension() != Level.OVERWORLD) { return; }
+        if (PackOptions.worldChanged().isEmpty() || !(event.getEntity() instanceof ServerPlayer player) || player.level().dimension() != Level.OVERWORLD) { return; }
         player.sendSystemMessage(Component.literal(Lang.tr(player, backedUp ? "rdpl.world.packOptions" : "rdpl.world.packOptionsChanged", String.join(", ", PackOptions.worldChanged()))));
         PackOptions.worldTold();
     }

@@ -9,7 +9,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -24,12 +24,12 @@ import java.util.Optional;
 
 public final class ContentMapStructure extends Structure {
     public static final MapCodec<ContentMapStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(settingsCodec(instance),
-            ResourceLocation.CODEC.fieldOf("map").forGetter(held -> held.map)).apply(instance, ContentMapStructure::new));
+            Identifier.CODEC.fieldOf("map").forGetter(held -> held.map)).apply(instance, ContentMapStructure::new));
     public static final StructureType<ContentMapStructure> TYPE = () -> CODEC;
     private static final Rotation[] TURNS = Rotation.values();
-    private final ResourceLocation map;
+    private final Identifier map;
 
-    public ContentMapStructure(StructureSettings settings, ResourceLocation map) {
+    public ContentMapStructure(StructureSettings settings, Identifier map) {
         super(settings);
         this.map = map;
     }
@@ -125,7 +125,7 @@ public final class ContentMapStructure extends Structure {
                     if (windowed && (cornerX < windowX || cornerX >= windowX + window || cornerZ < windowZ || cornerZ >= windowZ + window)) { continue; }
                     long cellSeed = Hashes.mix(spot.seed(), column, layer, row);
                     String named = PickDef.pick(held.palette().get(mark), RandomSource.create(cellSeed));
-                    ResourceLocation template = named == null ? null : ResourceLocation.tryParse(named);
+                    Identifier template = named == null ? null : Identifier.tryParse(named);
                     if (template == null) { continue; }
                     Optional<StructureTemplate> piece = context.structureTemplateManager().get(template);
                     if (piece.isEmpty()) {
@@ -147,7 +147,7 @@ public final class ContentMapStructure extends Structure {
 
     @Override @Nonnull public StructureType<?> type() { return TYPE; }
 
-    public ResourceLocation map() { return map; }
+    public Identifier map() { return map; }
 
     private record Spot(long seed, int x, int z, Rotation turn, int base) {}
 }

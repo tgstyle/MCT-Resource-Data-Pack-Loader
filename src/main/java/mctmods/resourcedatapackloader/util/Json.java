@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,9 +46,9 @@ public final class Json {
         return Collections.unmodifiableMap(values);
     }
 
-    public static void eachFile(String folder, String kind, BiConsumer<ResourceLocation, String> reader) {
+    public static void eachFile(String folder, String kind, BiConsumer<Identifier, String> reader) {
         PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = ResourceLocation.fromNamespaceAndPath(namespace, path);
+            Identifier key = Identifier.fromNamespaceAndPath(namespace, path);
             try { reader.accept(key, contents); }
             catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in " + kind + " {}, ignoring it", key, ex); }
         });

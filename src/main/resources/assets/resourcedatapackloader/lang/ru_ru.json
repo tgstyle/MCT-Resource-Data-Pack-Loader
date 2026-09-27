@@ -116,7 +116,7 @@
   "rdpl.command.oreblocked": "Генерация руды, заблокированная к этому моменту:",
   "rdpl.command.genblocked": "Генерация мира, заблокированная к этому моменту, по модам и типам:",
   "rdpl.command.gennone": "Ни один генератор мира не был заблокирован. Настройки могут быть выключены или недоступны",
-  "key.categories.resourcedatapackloader": "Resource Data Pack Loader",
+  "key.category.resourcedatapackloader.main": "Resource Data Pack Loader",
   "key.resourcedatapackloader.pouch": "Открыть носимое хранилище",
   "rdpl.item.bucketFilled": "Ведро: %s"
 }

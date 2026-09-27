@@ -10,7 +10,6 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import org.joml.Vector3f;
 import javax.annotation.Nonnull;
 
 public class ContentTorchBlock extends TorchBlock {
@@ -26,7 +25,7 @@ public class ContentTorchBlock extends TorchBlock {
     static ParticleOptions flame(BlockDef def) {
         if (!BlockDef.PARTICLE_COLORED.equals(def.torchParticle())) { return ParticleTypes.FLAME; }
         int color = def.torchColor();
-        return new DustParticleOptions(new Vector3f((color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F), 1.0F);
+        return new DustParticleOptions(color, 1.0F);
     }
 
     static boolean particles(BlockDef def) { return !BlockDef.PARTICLE_NONE.equals(def.torchParticle()); }

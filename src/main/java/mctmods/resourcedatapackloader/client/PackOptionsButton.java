@@ -1,10 +1,11 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
@@ -25,7 +26,7 @@ public final class PackOptionsButton {
     private static final int WARNING_ROOM = 16;
     private static final int FLASH_ABOVE_LIST_FOOTER = 62;
     private static final long FLASH_MILLIS = 500L;
-    private static final int WARNING = 0xFF5555;
+    private static final int WARNING = 0xFFFF5555;
     private static final String PLAY_KEY = "selectWorld.select";
     private static final String CREATE_KEY = "selectWorld.create";
     @Nullable private static Screen owner;
@@ -40,7 +41,7 @@ public final class PackOptionsButton {
         owner = null;
         opener = null;
         if (PackOptions.files().isEmpty()) { return; }
-        Button.Builder builder = Button.builder(Component.translatable("rdpl.gui.packOptions"), button -> Minecraft.getInstance().setScreen(new PackOptionsScreen(screen)));
+        Button.Builder builder = Button.builder(Component.translatable("rdpl.gui.packOptions"), _ -> ClientCompat.setScreen(Minecraft.getInstance(), new PackOptionsScreen(screen)));
         Button made = selecting ? builder.bounds(screen.width - CORNER_WIDTH - CORNER_INSET, CORNER_INSET - 2, CORNER_WIDTH, BUTTON_HEIGHT).build() : builder.bounds(0, 0, CREATE_WIDTH, BUTTON_HEIGHT).build();
         if (selecting) { made.visible = false; }
         else { seat(made, screen); }
@@ -92,9 +93,9 @@ public final class PackOptionsButton {
         return null;
     }
 
-    private static void flash(GuiGraphics graphics, Screen screen, int y) {
+    private static void flash(GuiGraphicsExtractor graphics, Screen screen, int y) {
         if (Util.getMillis() / FLASH_MILLIS % 2L != 0L) { return; }
-        graphics.drawCenteredString(Minecraft.getInstance().font, Component.translatable("rdpl.gui.packOptions.restartRequired"), screen.width / 2, y, WARNING);
+        graphics.centeredText(Minecraft.getInstance().font, Component.translatable("rdpl.gui.packOptions.restartRequired"), screen.width / 2, y, WARNING);
     }
 
     @Nullable private static String keyOf(Component message) { return message.getContents() instanceof TranslatableContents contents ? contents.getKey() : null; }

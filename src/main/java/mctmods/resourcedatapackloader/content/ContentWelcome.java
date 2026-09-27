@@ -11,7 +11,7 @@ import mctmods.resourcedatapackloader.util.Says;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -79,10 +79,10 @@ public final class ContentWelcome {
 
     @Nullable private static ResourceKey<Level> dimensionNamed(ServerPlayer player, String name) {
         String named = ContentFormats.dimensionId(name);
-        ResourceLocation id = ResourceLocation.tryParse(named);
+        Identifier id = Identifier.tryParse(named);
         if (id == null) { return null; }
         ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, id);
-        return named.contains(":") || NUMERIC.matcher(name.trim()).matches() || player.serverLevel().getServer().getLevel(key) != null ? key : null;
+        return named.contains(":") || NUMERIC.matcher(name.trim()).matches() || player.level().getServer().getLevel(key) != null ? key : null;
     }
 
     public static void show(ServerPlayer player, String said, ChatFormatting color) {

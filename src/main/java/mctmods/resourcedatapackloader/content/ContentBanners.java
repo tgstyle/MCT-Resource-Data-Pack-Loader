@@ -5,17 +5,17 @@ import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.datafixers.DSL;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBanners {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "banner");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "banner");
     @Nullable private static BlockEntityType<ContentBannerBlockEntity> type;
 
     private ContentBanners() {}
@@ -33,7 +33,7 @@ public final class ContentBanners {
             if (entry.block() instanceof IContentBanner) { blocks.add(entry.block()); }
         }
         if (blocks.isEmpty()) { return; }
-        type = BlockEntityType.Builder.of(ContentBannerBlockEntity::new, blocks.toArray(Block[]::new)).build(DSL.remainderType());
+        type = new BlockEntityType<>(ContentBannerBlockEntity::new, Set.copyOf(blocks));
         helper.register(ID, type);
         ContentLog.LOGGER.info("Registered the banner block entity type for {} pack banner block(s)", blocks.size());
     }

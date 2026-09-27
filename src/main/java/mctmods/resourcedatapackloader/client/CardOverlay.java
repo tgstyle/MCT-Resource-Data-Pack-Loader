@@ -1,14 +1,16 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -22,7 +24,6 @@ public final class CardOverlay {
     private static final int MOST = 5;
     private static final int SLIDE = 8;
     private static final int FADE = 20;
-    private static final float ABOVE_ITEMS = 300.0F;
     private static final int MARGIN = 6;
     private static final int GAP = 4;
     private static final int PAD = 5;
@@ -39,7 +40,7 @@ public final class CardOverlay {
         final String title;
         final List<String> lines;
         final ItemStack icon;
-        @Nullable final ResourceLocation image;
+        @Nullable final Identifier image;
         final int background;
         final boolean panel;
         final CardFont.Face face;
@@ -97,9 +98,9 @@ public final class CardOverlay {
         }
     }
 
-    public static void onLayer(GuiGraphics graphics, DeltaTracker ignoredDelta) {
+    public static void onLayer(GuiGraphicsExtractor graphics, DeltaTracker ignoredDelta) {
         Minecraft mc = Minecraft.getInstance();
-        if (CARDS.isEmpty() || mc.screen != null) { return; }
+        if (CARDS.isEmpty() || ClientCompat.screen(mc) != null) { return; }
         draw(graphics);
     }
 
@@ -108,14 +109,12 @@ public final class CardOverlay {
         draw(event.getGuiGraphics());
     }
 
-    private static void draw(GuiGraphics graphics) {
+    private static void draw(GuiGraphicsExtractor graphics) {
         Minecraft mc = Minecraft.getInstance();
         Font font = mc.font;
         int screenWidth = Crisp.fit(mc.getWindow().getGuiScaledWidth());
         int bottom = Crisp.fit(mc.getWindow().getGuiScaledHeight()) - MARGIN;
         Crisp.raise(graphics);
-        graphics.pose().translate(0.0F, 0.0F, ABOVE_ITEMS);
-        RenderSystem.enableBlend();
         for (int i = CARDS.size() - 1; i >= 0; i--) {
             Card card = CARDS.get(i);
             int width = card.width(font);
@@ -129,28 +128,25 @@ public final class CardOverlay {
                 graphics.fill(left, top, left + width, top + height, withAlpha(card.background, 0.85F * alpha));
             }
             if (card.image != null) {
-                graphics.setColor(1.0F, 1.0F, 1.0F, alpha);
-                graphics.blit(card.image, left, top, 0.0F, 0.0F, width, height, width, height);
-                graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                graphics.blit(RenderPipelines.GUI_TEXTURED, card.image, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(alpha));
             }
             if (card.panel) { graphics.fill(left, top, left + STRIPE, top + height, withAlpha(card.text, alpha)); }
             int x = left + STRIPE + PAD;
             int y = top + PAD;
             if (!card.icon.isEmpty()) {
-                graphics.renderItem(card.icon, x, top + (height - ICON) / 2);
+                graphics.item(card.icon, x, top + (height - ICON) / 2);
                 x += ICON + PAD;
             }
             if (!card.title.isEmpty()) {
-                graphics.drawString(font, MarkText.text(card.face, card.title), x, y, withAlpha(card.text, alpha), true);
+                graphics.text(font, MarkText.text(card.face, card.title), x, y, withAlpha(card.text, alpha), true);
                 y += LINE;
             }
             for (String line : card.lines) {
-                graphics.drawString(font, MarkText.text(card.face, line), x, y, withAlpha(TEXT, alpha), true);
+                graphics.text(font, MarkText.text(card.face, line), x, y, withAlpha(TEXT, alpha), true);
                 y += LINE;
             }
             bottom = top - GAP;
         }
-        RenderSystem.disableBlend();
         Crisp.lower(graphics);
     }
 

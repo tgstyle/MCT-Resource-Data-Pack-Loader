@@ -5,12 +5,14 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
+import java.util.Map;
 import javax.annotation.Nullable;
 
-final class ContentGeneratedModels {
+public final class ContentGeneratedModels {
     private static final String BLOCK = "minecraft:block/";
     private static final String[] FACINGS = {"east", "south", "west", "north"};
     private static final String[] BELL_PARTS = {"floor", "ceiling", "wall", "between_walls"};
@@ -317,8 +319,8 @@ final class ContentGeneratedModels {
     }
 
     private static String parent(BlockDef def) {
-        ResourceLocation model = ContentParser.location(def.modelBlock());
-        if (model == null) { model = ResourceLocation.parse("minecraft:stone"); }
+        Identifier model = ContentParser.location(def.modelBlock());
+        if (model == null) { model = Identifier.parse("minecraft:stone"); }
         return model.getNamespace() + ":block/" + model.getPath();
     }
 
@@ -360,8 +362,14 @@ final class ContentGeneratedModels {
     static void blockstate(String namespace, String name, JsonObject json) { ContentGenerated.asset(namespace, "blockstates/" + name + ".json", json); }
 
     private static void model(BlockDef def, String namespace, String name, JsonObject json) {
-        String layer = ContentBlockTypes.renderType(def);
-        if (layer != null && !json.has("render_type")) { json.addProperty("render_type", layer); }
+        if (ContentBlockTypes.translucent(def) && json.has("textures")) { forceTranslucent(json.getAsJsonObject("textures")); }
         ContentGenerated.asset(namespace, "models/block/" + name + ".json", json);
+    }
+
+    public static void forceTranslucent(JsonObject textures) {
+        for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
+            JsonElement value = entry.getValue();
+            if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { entry.setValue(ContentGenerated.obj("sprite", value.getAsString(), "force_translucent", true)); }
+        }
     }
 }

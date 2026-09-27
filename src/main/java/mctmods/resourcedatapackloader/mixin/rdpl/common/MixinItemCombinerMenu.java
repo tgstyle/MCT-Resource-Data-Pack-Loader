@@ -11,9 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ItemCombinerMenu.class) public abstract class MixinItemCombinerMenu {
     @Inject(method = "quickMoveStack", at = @At("HEAD"), cancellable = true)
-    private void rdpl$onlyWorkPaidFor(Player player, int index, CallbackInfoReturnable<ItemStack> cir) {
+    private void rdpl$onlyWorkPaidFor(Player player, int slotIndex, CallbackInfoReturnable<ItemStack> cir) {
         ItemCombinerMenu self = (ItemCombinerMenu) (Object) this;
-        if (!(self instanceof AnvilMenu menu) || index != menu.getResultSlot()) { return; }
-        if (!menu.getSlot(index).mayPickup(player)) { cir.setReturnValue(ItemStack.EMPTY); }
+        if (!(self instanceof AnvilMenu menu) || slotIndex != menu.getResultSlot()) { return; }
+        if (!menu.getSlot(slotIndex).mayPickup(player)) { cir.setReturnValue(ItemStack.EMPTY); }
     }
 }

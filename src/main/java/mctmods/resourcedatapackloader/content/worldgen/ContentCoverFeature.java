@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.FeaturePlaceContext;
@@ -19,13 +19,13 @@ public final class ContentCoverFeature extends Feature<ContentCoverFeature.Setup
         ContentCover cover = ContentCaveRegions.cover(context.config().region());
         CaveRegionDef region = ContentCaveRegions.def(context.config().region());
         if (cover == null || region == null) { return false; }
-        ChunkPos center = new ChunkPos(context.origin());
+        ChunkPos center = ChunkPos.containing(context.origin());
         cover.generateChunk(new ContentPlacer(context.level(), ContentCaveRegions.palette(context.config().region()), center, ContentPlacer.CHUNK_ONLY), center, pos -> ContentCaveRegions.holds(context.level(), region, pos));
         return true;
     }
 
-    public record Setup(ResourceLocation region) implements FeatureConfiguration {
+    public record Setup(Identifier region) implements FeatureConfiguration {
         public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ResourceLocation.CODEC.fieldOf("region").forGetter(Setup::region)).apply(instance, Setup::new));
+                Identifier.CODEC.fieldOf("region").forGetter(Setup::region)).apply(instance, Setup::new));
     }
 }

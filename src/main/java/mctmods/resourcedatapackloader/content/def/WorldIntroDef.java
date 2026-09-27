@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public record WorldIntroDef(ResourceLocation key, boolean once, @Nullable ResourceLocation music, List<IntroPageDef> pages, List<String> requires) {}
+public record WorldIntroDef(Identifier key, boolean once, @Nullable Identifier music, List<IntroPageDef> pages, List<String> requires) {}

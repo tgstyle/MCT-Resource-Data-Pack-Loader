@@ -12,10 +12,11 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -73,12 +74,12 @@ public final class ContentCaneBlock extends Block {
     }
 
     @Override protected void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) {
-        if (!level.isClientSide && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); }
+        if (!level.isClientSide() && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); }
     }
 
-    @Override @Nonnull protected BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction direction, @Nonnull BlockState neighbor, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos neighborPos) {
-        if (!state.canSurvive(level, pos)) { level.scheduleTick(pos, this, 1); }
-        return super.updateShape(state, direction, neighbor, level, pos, neighborPos);
+    @Override @Nonnull protected BlockState updateShape(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull ScheduledTickAccess ticks, @Nonnull BlockPos pos, @Nonnull Direction direction, @Nonnull BlockPos neighborPos, @Nonnull BlockState neighbor, @Nonnull RandomSource random) {
+        if (!state.canSurvive(level, pos)) { ticks.scheduleTick(pos, this, 1); }
+        return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighbor, random);
     }
 
     @Override protected void tick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
@@ -119,7 +120,7 @@ public final class ContentCaneBlock extends Block {
         return held.getBlock() instanceof ContentLiquidBlock liquid && material.test(liquid.getDef());
     }
 
-    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) {
-        if (growth.damage()) { entity.hurt(level.damageSources().cactus(), growth.damageAmount()); }
+    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) {
+        if (growth.damage() && level instanceof ServerLevel server) { entity.hurtServer(server, level.damageSources().cactus(), growth.damageAmount()); }
     }
 }

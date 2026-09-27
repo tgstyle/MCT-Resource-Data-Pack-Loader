@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
@@ -20,7 +20,7 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 public final class CityBiome {
-    private static final Map<ResourceLocation, String> SECTIONS = new HashMap<>();
+    private static final Map<Identifier, String> SECTIONS = new HashMap<>();
     private static final ThreadLocal<BlockPos.MutableBlockPos> LOOKUP = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
     @Nullable private static Object sectionsFrom;
 
@@ -55,7 +55,7 @@ public final class CityBiome {
     }
 
     @Nullable private static synchronized String sectionFor(Holder<Biome> biome) {
-        ResourceLocation named = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier named = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         if (named == null) { return null; }
         Object mark = ContentControl.biomeSettingsMark();
         if (mark != sectionsFrom) {
@@ -71,17 +71,17 @@ public final class CityBiome {
         return found;
     }
 
-    @Nullable private static String matched(Holder<Biome> biome, ResourceLocation named) {
+    @Nullable private static String matched(Holder<Biome> biome, Identifier named) {
         if (ContentControl.hasBiomeSection(named.toString())) { return named.toString(); }
         if (ContentControl.hasBiomeSection(named.getPath())) { return named.getPath(); }
         for (String section : ContentControl.biomeSectionNames()) {
             if (section.contains(":")) {
-                ResourceLocation tag = ResourceLocation.tryParse(section.startsWith("#") ? section.substring(1) : section);
+                Identifier tag = Identifier.tryParse(section.startsWith("#") ? section.substring(1) : section);
                 if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return section; }
                 continue;
             }
             String mapped = ContentFormats.biomeTag(section.toLowerCase(Locale.ROOT));
-            ResourceLocation tag = mapped == null ? null : ResourceLocation.tryParse(mapped);
+            Identifier tag = mapped == null ? null : Identifier.tryParse(mapped);
             if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return section; }
         }
         return null;

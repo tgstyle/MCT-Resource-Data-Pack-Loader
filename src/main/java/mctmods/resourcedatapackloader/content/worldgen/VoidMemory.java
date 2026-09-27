@@ -1,18 +1,19 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import net.minecraft.core.HolderLookup;
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import javax.annotation.Nonnull;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.ArrayList;
 import java.util.List;
 
 public final class VoidMemory extends SavedData {
-    private static final String NAME = "rdpl_void_world";
+    public static final String NAME = "rdpl_void_world";
     private static final String ENABLED = "enabled";
     private static final String DIMENSIONS = "dimensions";
     private static final String ARE_BLACKLIST = "areBlacklist";
@@ -21,24 +22,25 @@ public final class VoidMemory extends SavedData {
     private List<String> dimensions = List.of();
     private boolean areBlacklist;
 
-    private static final Factory<VoidMemory> FACTORY = new Factory<>(VoidMemory::new, (tag, lookup) -> read(tag));
+    private static final SavedDataType<VoidMemory> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), VoidMemory::new, CompoundTag.CODEC.xmap(VoidMemory::read, VoidMemory::write));
 
-    public static VoidMemory of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME); }
+    public static VoidMemory of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
 
     private static VoidMemory read(CompoundTag tag) {
         VoidMemory held = new VoidMemory();
         if (!tag.contains(ENABLED)) { return held; }
         held.recorded = true;
-        held.enabled = tag.getBoolean(ENABLED);
+        held.enabled = tag.getBooleanOr(ENABLED, false);
         List<String> named = new ArrayList<>();
-        ListTag list = tag.getList(DIMENSIONS, Tag.TAG_STRING);
-        for (int index = 0; index < list.size(); index++) { named.add(list.getString(index)); }
+        ListTag list = tag.getListOrEmpty(DIMENSIONS);
+        for (int index = 0; index < list.size(); index++) { named.add(list.getStringOr(index, "")); }
         held.dimensions = List.copyOf(named);
-        held.areBlacklist = tag.getBoolean(ARE_BLACKLIST);
+        held.areBlacklist = tag.getBooleanOr(ARE_BLACKLIST, false);
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         if (!recorded) { return tag; }
         tag.putBoolean(ENABLED, enabled);
         ListTag list = new ListTag();

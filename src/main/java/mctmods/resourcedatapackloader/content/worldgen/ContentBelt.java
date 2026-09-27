@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -19,7 +19,7 @@ public final class ContentBelt implements IContentChunkShape {
     private final int maxHeight;
     private final long seedXor;
 
-    public ContentBelt(ShapeDef shape, int minHeight, int maxHeight, ResourceLocation key) {
+    public ContentBelt(ShapeDef shape, int minHeight, int maxHeight, Identifier key) {
         this.radius = Math.max(1, shape.radius().most());
         this.rarity = shape.rarity() > 0 ? shape.rarity() : ShapeDef.BELT_RARITY;
         this.perChunk = shape.perChunk();
@@ -36,8 +36,8 @@ public final class ContentBelt implements IContentChunkShape {
         RandomSource worldRandom = RandomSource.create(worldSeed);
         long xSeed = worldRandom.nextLong() >> 3;
         long zSeed = worldRandom.nextLong() >> 3;
-        for (int x = chunk.x - reach; x <= chunk.x + reach; x++) {
-            for (int z = chunk.z - reach; z <= chunk.z + reach; z++) {
+        for (int x = chunk.x() - reach; x <= chunk.x() + reach; x++) {
+            for (int z = chunk.z() - reach; z <= chunk.z() + reach; z++) {
                 RandomSource chunkRandom = RandomSource.create(xSeed * x + zSeed * z ^ worldSeed);
                 int count = perChunk ? rarity : 1;
                 if (!perChunk && chunkRandom.nextInt(rarity) != 0) { continue; }

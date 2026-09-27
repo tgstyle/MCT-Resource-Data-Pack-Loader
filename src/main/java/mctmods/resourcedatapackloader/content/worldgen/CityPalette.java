@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.util.Settings;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.Property;
 
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public final class CityPalette {
     @Nullable public static CityPalette mixed(String named) {
         List<BlockState> found = drawn(named);
         if (found.isEmpty()) { return null; }
-        return MIXES.computeIfAbsent(named.trim(), text -> new CityPalette(found.toArray(new BlockState[0])));
+        return MIXES.computeIfAbsent(named.trim(), _ -> new CityPalette(found.toArray(new BlockState[0])));
     }
 
     public static boolean holds(String named, BlockState held) {
@@ -62,9 +61,14 @@ public final class CityPalette {
         return state;
     }
 
+    private static <T extends Comparable<T>> BlockState turned(BlockState state, Property<T> property, Direction facing) {
+        T wanted = property.getValueClass().cast(facing);
+        return property.getPossibleValues().contains(wanted) ? state.setValue(property, wanted) : state;
+    }
+
     public static BlockState faced(BlockState state, Direction facing) {
         for (Property<?> property : state.getProperties()) {
-            if ("facing".equals(property.getName()) && property instanceof DirectionProperty turned && turned.getPossibleValues().contains(facing)) { return state.setValue(turned, facing); }
+            if ("facing".equals(property.getName()) && property.getValueClass() == Direction.class) { return turned(state, property, facing); }
         }
         return state;
     }

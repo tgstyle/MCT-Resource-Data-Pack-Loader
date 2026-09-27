@@ -63,7 +63,7 @@ public final class ContentRoundReset {
 
     public static String vote(MinecraftServer server, ServerPlayer who, boolean yes) {
         if (voting == null) { return "No reset vote is running"; }
-        String name = who.getGameProfile().getName();
+        String name = who.getGameProfile().name();
         if (!voters(server).contains(name)) { return "Only players on a side vote"; }
         BALLOTS.put(name, yes);
         decide(server);
@@ -92,7 +92,7 @@ public final class ContentRoundReset {
     }
 
     @Nullable private static String sideOf(ServerPlayer who) {
-        PlayerTeam team = Scores.teamOf(Scores.board(who.server), who.getGameProfile().getName());
+        PlayerTeam team = Scores.teamOf(Scores.board(who.level().getServer()), who.getGameProfile().name());
         return team == null || ContentTeams.named(team.getName()) == null ? null : team.getName();
     }
 
@@ -100,7 +100,7 @@ public final class ContentRoundReset {
         List<String> found = new ArrayList<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (ContentTeams.any() && sideOf(player) == null) { continue; }
-            found.add(player.getGameProfile().getName());
+            found.add(player.getGameProfile().name());
         }
         return found;
     }

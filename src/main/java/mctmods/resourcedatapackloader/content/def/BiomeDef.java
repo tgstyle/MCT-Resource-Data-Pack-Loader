@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 
-public record BiomeDef(ResourceLocation key, String name, float temperature, float rainfall, boolean rain, boolean snow, int waterColor, int grassColor, int foliageColor,
-        ResourceLocation baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean playerSpawn,
+public record BiomeDef(Identifier key, String name, float temperature, float rainfall, boolean rain, boolean snow, int waterColor, int grassColor, int foliageColor,
+        Identifier baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean playerSpawn,
         boolean villages, String villageType, boolean strongholds, Map<String, Integer> decoration, float spawnChance, float surfaceDayRate, float surfaceNightRate,
         float undergroundDayRate, float undergroundNightRate, boolean keepDefaultSpawns, List<BiomeSpawnDef> spawns, boolean banded, int minHeight, int maxHeight,
         List<String> replaces, List<String> requires) {

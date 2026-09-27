@@ -68,7 +68,7 @@ public final class PackFinder implements RepositorySource {
         PackLocationInfo location = new PackLocationInfo(id, Component.literal(id), tierSource(), Optional.empty());
         PackSelectionConfig selection = new PackSelectionConfig(true, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true);
         Pack.ResourcesSupplier supplier = RDPLResourcePack.supplier(type, overriding);
-        Pack.Metadata meta = Pack.readPackMetadata(location, supplier, SharedConstants.getCurrentVersion().getPackVersion(type));
+        Pack.Metadata meta = Pack.readPackMetadata(location, supplier, SharedConstants.getCurrentVersion().packVersion(type), type);
         if (meta == null) {
             ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", id, type.getDirectory());
             return;

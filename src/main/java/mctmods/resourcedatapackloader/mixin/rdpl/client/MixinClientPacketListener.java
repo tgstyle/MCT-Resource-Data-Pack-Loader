@@ -3,15 +3,15 @@ package mctmods.resourcedatapackloader.mixin.rdpl.client;
 import mctmods.resourcedatapackloader.util.Config;
 
 import net.minecraft.client.gui.components.toasts.Toast;
-import net.minecraft.client.gui.components.toasts.ToastComponent;
+import net.minecraft.client.gui.components.toasts.ToastManager;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ClientPacketListener.class) public abstract class MixinClientPacketListener {
-    @Redirect(method = "handleLogin", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/toasts/ToastComponent;addToast(Lnet/minecraft/client/gui/components/toasts/Toast;)V"))
-    private void rdpl$noUnsecureServerToast(ToastComponent toasts, Toast toast) {
+    @Redirect(method = "handleLogin", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;addToast(Lnet/minecraft/client/gui/components/toasts/Toast;)V"))
+    private void rdpl$noUnsecureServerToast(ToastManager toasts, Toast toast) {
         if (!Config.tweaks.privacy()) { toasts.addToast(toast); }
     }
 }

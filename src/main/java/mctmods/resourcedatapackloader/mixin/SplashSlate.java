@@ -25,7 +25,7 @@ public final class SplashSlate {
     private SplashSlate() {}
 
     public static void paint() {
-        if (painted || FMLEnvironment.dist != Dist.CLIENT || !wanted()) { return; }
+        if (painted || FMLEnvironment.getDist() != Dist.CLIENT || !wanted()) { return; }
         painted = true;
         for (String named : SCHEMES) {
             Class<?> scheme;

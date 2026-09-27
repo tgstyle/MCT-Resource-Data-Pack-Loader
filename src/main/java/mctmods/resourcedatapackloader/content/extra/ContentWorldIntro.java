@@ -13,7 +13,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,7 +25,7 @@ import javax.annotation.Nullable;
 
 public final class ContentWorldIntro {
     private static final Gson GSON = new Gson();
-    private static final Map<ResourceLocation, WorldIntroDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, WorldIntroDef> DEFS = new LinkedHashMap<>();
     private static boolean loaded;
 
     private ContentWorldIntro() {}
@@ -42,7 +42,7 @@ public final class ContentWorldIntro {
         if (pages > 0) { Summary.info("worldintro", "Showing an intro of " + pages + " page(s) when a player enters the world"); }
     }
 
-    @Nullable private static WorldIntroDef parse(ResourceLocation key, String contents) {
+    @Nullable private static WorldIntroDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) { return null; }
         List<IntroPageDef> pages = new ArrayList<>();
@@ -56,13 +56,13 @@ public final class ContentWorldIntro {
             return null;
         }
         String music = GsonHelper.getAsString(json, "music", "").trim();
-        ResourceLocation track = music.isEmpty() ? null : ContentParser.location(music);
+        Identifier track = music.isEmpty() ? null : ContentParser.location(music);
         if (!music.isEmpty() && track == null) { ContentLog.LOGGER.error("World intro {} names music '{}', which is not a sound id, so it plays silently", key, music); }
         return new WorldIntroDef(key, GsonHelper.getAsBoolean(json, "once", false), track, List.copyOf(pages), Json.strings(json, "requires"));
     }
 
-    @Nullable private static IntroPageDef page(ResourceLocation key, JsonObject json) {
-        List<ResourceLocation> backgrounds = new ArrayList<>();
+    @Nullable private static IntroPageDef page(Identifier key, JsonObject json) {
+        List<Identifier> backgrounds = new ArrayList<>();
         String single = GsonHelper.getAsString(json, "background", "").trim();
         if (!single.isEmpty()) { location(key, single, backgrounds); }
         for (String name : Json.strings(json, "backgrounds")) { location(key, name, backgrounds); }
@@ -77,14 +77,14 @@ public final class ContentWorldIntro {
             direction = IntroPageDef.UP;
         }
         String text = GsonHelper.getAsString(json, "text", "").trim();
-        ResourceLocation textAt = text.isEmpty() ? null : ContentParser.location(text);
+        Identifier textAt = text.isEmpty() ? null : ContentParser.location(text);
         if (!text.isEmpty() && textAt == null) { ContentLog.LOGGER.error("World intro {} names text '{}', which is not a resource id, so the page shows none", key, text); }
         return new IntroPageDef(List.copyOf(backgrounds), GsonHelper.getAsFloat(json, "interval", 5.0F), textAt, mode, GsonHelper.getAsFloat(json, "time", IntroPageDef.DERIVE), direction,
                 GsonHelper.getAsFloat(json, "textScale", 1.0F), GsonHelper.getAsBoolean(json, "settle", false));
     }
 
-    private static void location(ResourceLocation key, String name, List<ResourceLocation> out) {
-        ResourceLocation found = ContentParser.location(name);
+    private static void location(Identifier key, String name, List<Identifier> out) {
+        Identifier found = ContentParser.location(name);
         if (found == null) { ContentLog.LOGGER.error("World intro {} names background '{}', which is not a resource id, leaving it out", key, name); }
         else { out.add(found); }
     }
@@ -110,7 +110,7 @@ public final class ContentWorldIntro {
         return false;
     }
 
-    @Nullable public static ResourceLocation music() {
+    @Nullable public static Identifier music() {
         for (WorldIntroDef def : usable()) {
             if (def.music() != null) { return def.music(); }
         }

@@ -12,5 +12,5 @@ import java.util.List;
 
 @Mixin(PackRepository.class) public abstract class MixinPackRepository {
     @WrapMethod(method = "rebuildSelected")
-    private List<Pack> rdpl$seatPacks(Collection<String> ids, Operation<List<Pack>> original) { return PackFinder.seat(original.call(ids)); }
+    private List<Pack> rdpl$seatPacks(Collection<String> selectedNames, Operation<List<Pack>> original) { return PackFinder.seat(original.call(selectedNames)); }
 }

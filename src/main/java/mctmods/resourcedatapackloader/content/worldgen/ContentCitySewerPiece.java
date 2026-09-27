@@ -52,11 +52,11 @@ public final class ContentCitySewerPiece extends StructurePiece {
 
     public ContentCitySewerPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.crossings = tag.getIntArray(CROSSINGS);
-        this.wells = tag.getIntArray(WELLS);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.crossings = tag.getIntArray(CROSSINGS).orElse(new int[0]);
+        this.wells = tag.getIntArray(WELLS).orElse(new int[0]);
     }
 
     private static BoundingBox box(int fromX, int fromZ, int toX, int toZ, int level, int middle, boolean alongX) {
@@ -110,7 +110,7 @@ public final class ContentCitySewerPiece extends StructurePiece {
         if (lining == null) { return; }
         int floor = this.level - ContentCity.sewerDepth();
         int height = ContentCity.sewerHeight();
-        if (cramped(level.getMinBuildHeight(), this.level)) { return; }
+        if (cramped(level.getMinY(), this.level)) { return; }
         BlockState air = Blocks.AIR.defaultBlockState();
         BlockState water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
         BlockState walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);

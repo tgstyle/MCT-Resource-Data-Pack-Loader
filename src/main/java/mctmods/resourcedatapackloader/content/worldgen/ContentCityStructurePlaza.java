@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -44,7 +44,7 @@ public final class ContentCityStructurePlaza {
             levels.put(middle, level);
             long placed = found.isEmpty() && plan.plazas().size() == 1 ? plan.originX() * 341873128712L + plan.originZ() * 132897987541L : x * 341873128712L + z * 132897987541L;
             String named = ContentCity.wellStructure(RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ placed));
-            ResourceLocation template = named == null ? null : ResourceLocation.tryParse(named);
+            Identifier template = named == null ? null : Identifier.tryParse(named);
             if (named != null && (template == null || context.structureTemplateManager().get(template).isEmpty())) {
                 ContentCity.missingWell(named);
                 template = null;
@@ -137,8 +137,8 @@ public final class ContentCityStructurePlaza {
         builder.addPiece(new ContentCityPlazaPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), CityPlan.plazaPaved(), CityPlan.walkWidth(), CityCross.of(CityPlan.streetFullWidth(), false).core(), design == null ? "" : design.key().toString(), middleX, middleZ, arms, footprints));
         ContentLog.LOGGER.debug("The well {} stands at {}, {} to {}, {} on the plaza of the district at {}, {}, at level {}", well.template() == null ? "of the game's own build" : well.template(), box.minX(), box.minZ(), box.maxX(), box.maxZ(), plan.originX(), plan.originZ(), well.level());
         if (!ContentCity.sewers() || !ContentCity.sewerWellEntrance()) { return; }
-        if (ContentCitySewerPiece.cramped(context.heightAccessor().getMinBuildHeight(), well.level())) {
-            ContentLog.LOGGER.debug("The sewer loop around the well at {}, {} is not dug: it would not fit between y {}, the world floor plus its lining, and the plaza at y {}", box.minX(), box.minZ(), context.heightAccessor().getMinBuildHeight() + ContentCitySewerPiece.FLOOR_LEAST, well.level());
+        if (ContentCitySewerPiece.cramped(context.heightAccessor().getMinY(), well.level())) {
+            ContentLog.LOGGER.debug("The sewer loop around the well at {}, {} is not dug: it would not fit between y {}, the world floor plus its lining, and the plaza at y {}", box.minX(), box.minZ(), context.heightAccessor().getMinY() + ContentCitySewerPiece.FLOOR_LEAST, well.level());
             return;
         }
         builder.addPiece(new ContentCitySewerLoopPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), middleX, middleZ, stations, streets));

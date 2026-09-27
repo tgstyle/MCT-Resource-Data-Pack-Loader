@@ -7,14 +7,14 @@ import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientAdvancements;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class ClientEarned {
     private ClientEarned() {}
 
     public static boolean has(String name) {
         ClientPacketListener connection = Minecraft.getInstance().getConnection();
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        Identifier id = Identifier.tryParse(name);
         if (connection == null || id == null) { return false; }
         ClientAdvancements manager = connection.getAdvancements();
         AdvancementHolder advancement = manager.get(id);

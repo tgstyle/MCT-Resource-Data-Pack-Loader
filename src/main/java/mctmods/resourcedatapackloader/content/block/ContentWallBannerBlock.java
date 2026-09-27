@@ -4,11 +4,13 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.Util;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -19,7 +21,7 @@ import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.EnumMap;
@@ -28,9 +30,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentWallBannerBlock extends Block implements EntityBlock, IContentBanner {
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final EnumProperty<Direction> FACING = HorizontalDirectionalBlock.FACING;
     private static final Map<Direction, VoxelShape> SHAPES = new EnumMap<>(Direction.class);
-    private final ResourceLocation texture;
+    private final Identifier texture;
     private final boolean modeled;
 
     static {
@@ -40,18 +42,16 @@ public final class ContentWallBannerBlock extends Block implements EntityBlock, 
         SHAPES.put(Direction.EAST, Block.box(0.0D, 0.0D, 0.0D, 2.0D, 12.5D, 16.0D));
     }
 
-    public ContentWallBannerBlock(ResourceLocation id, Properties properties) {
-        super(properties);
+    public ContentWallBannerBlock(Identifier id, Properties properties) {
+        super(properties.overrideDescription(Util.makeDescriptionId("block", id)));
         this.texture = IContentBanner.textureOf(id);
         this.modeled = IContentBanner.shipsBlockstate(id.getNamespace(), id.getPath() + "_wall");
         registerDefaultState(stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
-    @Override public ResourceLocation texture() { return texture; }
+    @Override public Identifier texture() { return texture; }
 
     @Override public boolean modeled() { return modeled; }
-
-    @Override @Nonnull public String getDescriptionId() { return asItem().getDescriptionId(); }
 
     @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return modeled ? RenderShape.MODEL : RenderShape.INVISIBLE; }
 
@@ -65,8 +65,8 @@ public final class ContentWallBannerBlock extends Block implements EntityBlock, 
         return level.getBlockState(behind).isFaceSturdy(level, behind, facing);
     }
 
-    @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction facing, @Nonnull BlockState facingState, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos facingPos) {
-        return facing == state.getValue(FACING).getOpposite() && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, facing, facingState, level, pos, facingPos);
+    @Override @Nonnull protected BlockState updateShape(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull ScheduledTickAccess ticks, @Nonnull BlockPos pos, @Nonnull Direction facing, @Nonnull BlockPos facingPos, @Nonnull BlockState facingState, @Nonnull RandomSource random) {
+        return facing == state.getValue(FACING).getOpposite() && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, level, ticks, pos, facing, facingPos, facingState, random);
     }
 
     @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return SHAPES.get(state.getValue(FACING)); }

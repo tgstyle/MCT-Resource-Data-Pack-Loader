@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.util.Registered;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.TagParser;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
@@ -64,7 +64,7 @@ public final class ContentStates {
         CompoundTag tag = null;
         int brace = text.indexOf('{');
         if (brace >= 0) {
-            try { tag = TagParser.parseTag(text.substring(brace)); }
+            try { tag = TagParser.parseCompoundFully(text.substring(brace)); }
             catch (CommandSyntaxException wrong) { ContentLog.LOGGER.error("Block '{}' in {} carries data that is not valid NBT, so it is placed without it", text, context); }
             text = text.substring(0, brace).trim();
         }
@@ -80,7 +80,7 @@ public final class ContentStates {
             }
         }
         if (name.isEmpty()) { return null; }
-        Block block = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT)));
+        Block block = Registered.find(BuiltInRegistries.BLOCK, Identifier.tryParse(name.toLowerCase(Locale.ROOT)));
         if (block == null) { return null; }
         return new Spec(state(block, properties, context), tag, !properties.isEmpty());
     }

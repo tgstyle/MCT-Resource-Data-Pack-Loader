@@ -1,11 +1,11 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import javax.annotation.Nullable;
 
-public record ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable ResourceLocation chestTexture,
-                           @Nullable ResourceLocation guiTexture, int guiWidth, int guiHeight, String curioSlot) {
+public record ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable Identifier chestTexture,
+                           @Nullable Identifier guiTexture, int guiWidth, int guiHeight, String curioSlot) {
     public static final int MOST_ROWS = 9;
     public static final int MOST_COLUMNS = 12;
     public static final String ANY_SLOT = "curio";

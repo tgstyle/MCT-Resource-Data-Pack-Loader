@@ -42,10 +42,10 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
 
     public ContentCityDecorPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.spots = tag.getIntArray(SPOTS);
-        this.levels = tag.getIntArray(LEVELS);
-        this.across = tag.getIntArray(ACROSS);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.spots = tag.getIntArray(SPOTS).orElse(new int[0]);
+        this.levels = tag.getIntArray(LEVELS).orElse(new int[0]);
+        this.across = tag.getIntArray(ACROSS).orElse(new int[0]);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {

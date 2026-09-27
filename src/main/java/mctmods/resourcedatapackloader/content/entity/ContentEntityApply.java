@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
@@ -14,7 +15,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.AgeableMob;
@@ -22,12 +23,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Rabbit;
+import net.minecraft.world.entity.animal.rabbit.Rabbit;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.FlyingMoveControl;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
@@ -35,9 +34,9 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Ghast;
-import net.minecraft.world.entity.monster.Zombie;
-import net.minecraft.world.entity.npc.Villager;
-import net.minecraft.world.entity.npc.VillagerProfession;
+import net.minecraft.world.entity.monster.zombie.Zombie;
+import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.villager.VillagerProfession;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -55,7 +54,7 @@ final class ContentEntityApply {
 
     static void dress(Entity entity, EntityVariantDef def) {
         CompoundTag data = entity.getPersistentData();
-        boolean first = !data.getBoolean(DRESSED);
+        boolean first = !data.getBooleanOr(DRESSED, false);
         data.putBoolean(DRESSED, true);
         if (first && !def.name().isEmpty() && !entity.hasCustomName()) {
             entity.setCustomName(Component.literal(def.name()));
@@ -118,7 +117,7 @@ final class ContentEntityApply {
 
     private static void effects(LivingEntity mob, EntityVariantDef def) {
         for (Map.Entry<String, Integer> entry : def.effects().entrySet()) {
-            ResourceLocation name = ResourceLocation.tryParse(entry.getKey());
+            Identifier name = Identifier.tryParse(entry.getKey());
             Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, name);
             if (effect == null) {
                 ContentLog.LOGGER.error("Entity variant {} wants effect {}, which nothing registers", def.key(), entry.getKey());
@@ -135,7 +134,7 @@ final class ContentEntityApply {
                 ContentLog.LOGGER.error("Entity variant {} names equipment slot '{}', which is not one of mainhand, offhand, head, chest, legs or feet", def.key(), entry.getKey());
                 continue;
             }
-            Item item = ContentStacks.item(ResourceLocation.tryParse(entry.getValue()));
+            Item item = ContentStacks.item(Identifier.tryParse(entry.getValue()));
             if (item == null) {
                 ContentLog.LOGGER.error("Entity variant {} gives {}, which nothing registers", def.key(), entry.getValue());
                 continue;
@@ -158,7 +157,7 @@ final class ContentEntityApply {
             held.putBoolean(ROLLED, true);
             held.putBoolean(YOUNG, mob.getRandom().nextFloat() < def.baby());
         }
-        return held.getBoolean(YOUNG);
+        return held.getBooleanOr(YOUNG, false);
     }
 
     private static void child(Mob mob) {
@@ -167,13 +166,13 @@ final class ContentEntityApply {
     }
 
     private static void profession(Villager villager, EntityVariantDef def) {
-        ResourceLocation key = ResourceLocation.tryParse(def.profession());
+        Identifier key = Identifier.tryParse(def.profession());
         VillagerProfession found = Registered.find(BuiltInRegistries.VILLAGER_PROFESSION, key);
         if (found == null) {
             ContentLog.LOGGER.error("Entity variant {} names profession {}, which nothing registers", def.key(), def.profession());
             return;
         }
-        villager.setVillagerData(villager.getVillagerData().setProfession(found));
+        villager.setVillagerData(villager.getVillagerData().withProfession(BuiltInRegistries.VILLAGER_PROFESSION.wrapAsHolder(found)));
         ContentVillagers.keepsJob(villager);
         if (def.career() > 0) { ContentLog.LOGGER.debug("Entity variant {} names career {}, which this line has no use for", def.key(), def.career()); }
     }
@@ -212,7 +211,7 @@ final class ContentEntityApply {
             ContentLog.LOGGER.error("Entity variant {} asks to walk, but {} is not a rabbit, and only a rabbit moves in hops", def.key(), def.base());
             return;
         }
-        ((IMob) mob).rdpl$setMoveControl(new MoveControl(mob));
+        ((IMob) mob).rdpl$setMoveControl(Compat.moveControl(mob));
     }
 
     private static void navigation(Mob mob, EntityVariantDef def) {
@@ -224,7 +223,7 @@ final class ContentEntityApply {
         else if (def.physics().amphibious() && mob.getNavigation() instanceof GroundPathNavigation ground) { ground.setCanFloat(true); }
         if (def.combat().swoops()) {
             inner.rdpl$setNavigation(new FlyingPathNavigation(mob, mob.level()));
-            inner.rdpl$setMoveControl(new FlyingMoveControl(mob, 20, true));
+            inner.rdpl$setMoveControl(Compat.swoopMoveControl(mob));
         }
         if (def.physics().walks()) { walker(mob, def); }
         if (def.physics().breathesUnderwater() || def.physics().swims()) { ContentTasks.drop(mob.goalSelector, FloatGoal.class); }
@@ -245,6 +244,6 @@ final class ContentEntityApply {
         GroundPathNavigation ground = new GroundPathNavigation(mob, mob.level());
         ground.setCanFloat(true);
         ((IMob) mob).rdpl$setNavigation(ground);
-        ((IMob) mob).rdpl$setMoveControl(new MoveControl(mob));
+        ((IMob) mob).rdpl$setMoveControl(Compat.moveControl(mob));
     }
 }

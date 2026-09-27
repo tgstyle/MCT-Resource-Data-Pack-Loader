@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityRenderer.class) public abstract class MixinEntityRenderer {
     @Inject(method = "getBlockLightLevel", at = @At("RETURN"), cancellable = true)
-    private void rdpl$litRight(Entity entity, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+    private void rdpl$litRight(Entity entity, BlockPos blockPos, CallbackInfoReturnable<Integer> cir) {
         if (ContentEntities.bright(entity)) { cir.setReturnValue(15); }
     }
 }

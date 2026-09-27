@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.pack;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Crossed;
-import mctmods.resourcedatapackloader.pack.port.PackPort;
+import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -42,7 +42,7 @@ public final class RDPLPack {
     private final Map<PackType, Map<String, Set<String>>> index = new EnumMap<>(PackType.class);
     private final Set<String> fromOwn = new HashSet<>();
     @Nullable private final Port.Line crossRoot;
-    @Nullable private final PackPort ported;
+    @Nullable private final IPackPort ported;
     private int fileCount;
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
@@ -70,7 +70,7 @@ public final class RDPLPack {
 
     public boolean isFromMod() { return ownedNamespaces != null; }
 
-    @Nullable public PackPort ported() { return ported; }
+    @Nullable public IPackPort ported() { return ported; }
 
     public String getName() { return name; }
 
@@ -100,7 +100,7 @@ public final class RDPLPack {
         if (ported == null) { return; }
         for (Map.Entry<PackType, Map<String, Set<String>>> type : ported.exposed().entrySet()) {
             for (Map.Entry<String, Set<String>> namespace : type.getValue().entrySet()) {
-                Set<String> paths = index.computeIfAbsent(type.getKey(), k -> new HashMap<>()).computeIfAbsent(namespace.getKey(), k -> new LinkedHashSet<>());
+                Set<String> paths = index.computeIfAbsent(type.getKey(), _ -> new HashMap<>()).computeIfAbsent(namespace.getKey(), _ -> new LinkedHashSet<>());
                 for (String path : namespace.getValue()) {
                     if (paths.add(path)) { fileCount++; }
                 }
@@ -143,11 +143,11 @@ public final class RDPLPack {
         }
         if (nested > 0) { ContentLog.LOGGER.warn("Pack '{}': {} file(s) under '{}/{}/{}/' are ignored. Nothing reads a '{}' folder inside a namespace; content folders sit directly under the namespace", name, nested, type.getDirectory(), namespace, PackManager.ROOT_DIRECTORY, PackManager.ROOT_DIRECTORY); }
         if (paths.isEmpty()) { return; }
-        if (ported != null && type == ported.reads()) {
-            ported.index(namespace, new ArrayList<>(paths));
+        if (ported != null && ported.reads(type)) {
+            ported.index(type, namespace, new ArrayList<>(paths));
             return;
         }
-        Set<String> held = index.computeIfAbsent(type, k -> new HashMap<>()).computeIfAbsent(namespace, k -> new LinkedHashSet<>());
+        Set<String> held = index.computeIfAbsent(type, _ -> new HashMap<>()).computeIfAbsent(namespace, _ -> new LinkedHashSet<>());
         for (String path : paths) {
             if (!held.add(path)) { continue; }
             fileCount++;

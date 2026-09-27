@@ -48,7 +48,7 @@ public final class ContentRetrogen {
     public static void caughtUp(ServerLevel level, ChunkPos pos) { spent(level).add(pos); }
 
     private static Set<ChunkPos> spent(ServerLevel level) {
-        Spent spent = SPENT.computeIfAbsent(level.dimension(), dimension -> new Spent());
+        Spent spent = SPENT.computeIfAbsent(level.dimension(), _ -> new Spent());
         if (spent.tick != level.getGameTime()) {
             spent.tick = level.getGameTime();
             spent.chunks.clear();
@@ -80,7 +80,8 @@ public final class ContentRetrogen {
 
     public static void onChunkLoad(ChunkEvent.Load event) {
         boolean bedrock = ContentBedrock.bedrockAsked();
-        if ((STAMP.isEmpty() && !bedrock) || !(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
+        if ((STAMP.isEmpty() && !bedrock) || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        LevelChunk chunk = event.getChunk();
         Set<String> already = ContentChunkTokens.get(chunk);
         if (event.isNewChunk()) {
             stamp(chunk, already, bedrock);
@@ -97,7 +98,7 @@ public final class ContentRetrogen {
         }
         boolean flatten = ContentBedrock.bedrockRetrogen() && !already.contains(ContentBedrock.bedrockToken()) && ContentBedrock.flattens(level);
         if (pending.isEmpty() && !flatten) { return; }
-        QUEUES.computeIfAbsent(level.dimension(), key -> new ArrayDeque<>()).add(new Pending(chunk.getPos(), pending, flatten));
+        QUEUES.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(new Pending(chunk.getPos(), pending, flatten));
         queued++;
         ContentLog.LOGGER.debug("Queued chunk {} for retrogen, {} entries behind{}", chunk.getPos(), pending.size(), flatten ? ", bedrock to flatten" : "");
     }
@@ -127,8 +128,8 @@ public final class ContentRetrogen {
     }
 
     private static void run(ServerLevel level, Pending pending) {
-        LevelChunk chunk = level.getChunk(pending.pos().x, pending.pos().z);
-        BlockPos origin = new BlockPos(pending.pos().getMinBlockX(), level.getMinBuildHeight(), pending.pos().getMinBlockZ());
+        LevelChunk chunk = level.getChunk(pending.pos().x(), pending.pos().z());
+        BlockPos origin = new BlockPos(pending.pos().getMinBlockX(), level.getMinY(), pending.pos().getMinBlockZ());
         PlacementContext context = new PlacementContext(level, level.getChunkSource().getGenerator(), Optional.empty());
         Set<String> already = new LinkedHashSet<>(ContentChunkTokens.get(chunk));
         try {

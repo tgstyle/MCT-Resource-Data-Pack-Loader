@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
 @Mixin(FontManager.class) public abstract class MixinFontManager {
-    @Inject(method = "prepare", at = @At("HEAD")) private void rdpl$pickGameFont(ResourceManager resourceManager, Executor executor, CallbackInfoReturnable<CompletableFuture<?>> cir) { GameFont.pick(resourceManager); }
+    @Inject(method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At("HEAD")) private void rdpl$pickGameFont(ResourceManager manager, Executor executor, CallbackInfoReturnable<CompletableFuture<?>> cir) { GameFont.pick(manager); }
 
-    @ModifyVariable(method = "loadResourceStack", at = @At("STORE"), ordinal = 2) private static List<GlyphProviderDefinition.Conditional> rdpl$yieldToPackFont(List<GlyphProviderDefinition.Conditional> list1) { return GameFont.providers(list1); }
+    @ModifyVariable(method = "loadResourceStack(Ljava/util/List;Lnet/minecraft/resources/Identifier;)Ljava/util/List;", at = @At("STORE"), ordinal = 2) private static List<GlyphProviderDefinition.Conditional> rdpl$yieldToPackFont(List<GlyphProviderDefinition.Conditional> providers) { return GameFont.providers(providers); }
 }

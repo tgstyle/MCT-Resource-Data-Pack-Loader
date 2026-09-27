@@ -18,7 +18,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
@@ -27,6 +27,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -74,9 +75,10 @@ public final class ContentExposures {
             if (immune != null && player.hasEffect(immune)) { return 0; }
         }
         int most = def.levels().size();
-        int reached = scanItems(def, player, most);
+        ServerLevel level = player.level();
+        int reached = Math.max(def.dimensions().getOrDefault(level.dimension().identifier(), 0), scanItems(def, player, most));
         if (reached >= most) { return most; }
-        return Math.max(reached, scanWorld(def, player, most));
+        return Math.max(reached, scanWorld(def, player, level, most));
     }
 
     @Nullable private static Holder<MobEffect> immunity(ExposureDef def) {
@@ -89,11 +91,11 @@ public final class ContentExposures {
     private static int scanItems(ExposureDef def, ServerPlayer player, int most) {
         Map<Item, Integer> levels = itemLevels(def);
         if (levels.isEmpty()) { return 0; }
-        int reached = scanList(levels, player.getInventory().items, 0, most);
+        int reached = scanList(levels, player.getInventory().getNonEquipmentItems(), 0, most);
         if (reached >= most) { return reached; }
-        reached = scanList(levels, player.getInventory().offhand, reached, most);
+        reached = scanList(levels, List.of(player.getOffhandItem()), reached, most);
         if (reached >= most) { return reached; }
-        return scanList(levels, player.getInventory().armor, reached, most);
+        return scanList(levels, List.of(player.getItemBySlot(EquipmentSlot.FEET), player.getItemBySlot(EquipmentSlot.LEGS), player.getItemBySlot(EquipmentSlot.CHEST), player.getItemBySlot(EquipmentSlot.HEAD)), reached, most);
     }
 
     private static int scanList(Map<Item, Integer> levels, List<ItemStack> list, int reached, int most) {
@@ -106,17 +108,16 @@ public final class ContentExposures {
         return reached;
     }
 
-    private static int scanWorld(ExposureDef def, ServerPlayer player, int most) {
+    private static int scanWorld(ExposureDef def, ServerPlayer player, ServerLevel level, int most) {
         Map<Block, Integer> levels = blockLevels(def);
         int radius = def.range();
         if (levels.isEmpty() || radius <= 0) { return 0; }
-        ServerLevel level = player.serverLevel();
         int radiusSq = radius * radius;
         int centerX = Mth.floor(player.getX());
         int centerY = Mth.floor(player.getY());
         int centerZ = Mth.floor(player.getZ());
-        int lowest = Math.max(level.getMinBuildHeight(), centerY - radius);
-        int highest = Math.min(level.getMaxBuildHeight() - 1, centerY + radius);
+        int lowest = Math.max(level.getMinY(), centerY - radius);
+        int highest = Math.min(level.getMaxY(), centerY + radius);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int reached = 0;
         int sources = 0;
@@ -179,10 +180,11 @@ public final class ContentExposures {
         CompoundTag data = player.getPersistentData();
         String tag = TIMER + def.name();
         if (active != null && active.damage() > 0.0F && active.damageInterval() > 0) {
-            int timer = data.getInt(tag) + 1;
+            int timer = data.getIntOr(tag, 0) + 1;
             if (timer >= active.damageInterval()) {
                 timer = 0;
-                player.hurt(source(def, player), active.damage());
+                ServerLevel level = player.level();
+                player.hurtServer(level, source(def, player, level), active.damage());
             }
             data.putInt(tag, timer);
         }
@@ -205,21 +207,21 @@ public final class ContentExposures {
     }
 
     @Nullable private static Holder<MobEffect> effect(String name, ExposureDef def, String what) {
-        Holder<MobEffect> found = Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT)));
+        Holder<MobEffect> found = Registered.holder(BuiltInRegistries.MOB_EFFECT, Identifier.tryParse(name.toLowerCase(Locale.ROOT)));
         if (found == null) { ContentLog.LOGGER.error("Exposure {} names effect {} as its {}, which nothing registers, so that part does nothing", def.key(), name, what); }
         return found;
     }
 
-    private static DamageSource source(ExposureDef def, ServerPlayer player) {
+    private static DamageSource source(ExposureDef def, ServerPlayer player, ServerLevel level) {
         ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
-        Holder<DamageType> type = player.level().registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolder(key).orElse(null);
+        Holder<DamageType> type = level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).get(key).orElse(null);
         return type == null ? player.damageSources().magic() : new ExposureDamage(type);
     }
 
     private static Map<Block, Integer> blockLevels(ExposureDef def) {
         return BLOCK_LEVELS.computeIfAbsent(def, held -> {
             Map<Block, Integer> levels = new IdentityHashMap<>();
-            for (Map.Entry<ResourceLocation, Integer> entry : held.blocks().entrySet()) {
+            for (Map.Entry<Identifier, Integer> entry : held.blocks().entrySet()) {
                 Block block = Registered.find(BuiltInRegistries.BLOCK, entry.getKey());
                 if (block == null) { ContentLog.LOGGER.error("Exposure {} names block {}, which is not registered, so it is ignored", held.key(), entry.getKey()); }
                 else { levels.put(block, entry.getValue()); }
@@ -231,7 +233,7 @@ public final class ContentExposures {
     private static Map<Item, Integer> itemLevels(ExposureDef def) {
         return ITEM_LEVELS.computeIfAbsent(def, held -> {
             Map<Item, Integer> levels = new IdentityHashMap<>();
-            for (Map.Entry<ResourceLocation, Integer> entry : held.items().entrySet()) {
+            for (Map.Entry<Identifier, Integer> entry : held.items().entrySet()) {
                 Item item = Registered.find(BuiltInRegistries.ITEM, entry.getKey());
                 if (item == null) { ContentLog.LOGGER.error("Exposure {} names item {}, which is not registered, so it is ignored", held.key(), entry.getKey()); }
                 else { levels.put(item, entry.getValue()); }

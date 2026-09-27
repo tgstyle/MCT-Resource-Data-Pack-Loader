@@ -12,7 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.EnumSet;
 import javax.annotation.Nullable;
@@ -78,7 +78,7 @@ public final class DigGoal extends Goal {
         mob.level().destroyBlockProgress(mob.getId(), pos, (int) (9.0F * (total - left) / total));
         if (left > 0) { return; }
         ContentHardness.dig(mob, pos);
-        if (mob.level() instanceof ServerLevel level) { mob.getMainHandItem().hurtAndBreak(1, level, mob, held -> { }); }
+        if (mob.level() instanceof ServerLevel level) { mob.getMainHandItem().hurtAndBreak(1, level, mob, _ -> { }); }
         digging = null;
         begin(pick());
     }
@@ -108,7 +108,7 @@ public final class DigGoal extends Goal {
 
     private boolean unwanted(@Nullable LivingEntity aim) {
         if (aim == null || !aim.isAlive() || mob.getMainHandItem().isEmpty()) { return true; }
-        if (!mob.level().getGameRules().getBoolean(GameRules.RULE_MOBGRIEFING)) { return true; }
+        if (!(mob.level() instanceof ServerLevel level) || !level.getGameRules().get(GameRules.MOB_GRIEFING)) { return true; }
         double vanilla = mob.getBbWidth() * 2.0F * mob.getBbWidth() * 2.0F + aim.getBbWidth();
         return mob.distanceToSqr(aim) <= ContentEntities.attackReachSqr(mob, aim, vanilla);
     }

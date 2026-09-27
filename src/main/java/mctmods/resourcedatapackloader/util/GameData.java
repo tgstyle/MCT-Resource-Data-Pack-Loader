@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.util;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.VanillaPackResources;
 import net.minecraft.server.packs.repository.ServerPacksSource;
@@ -26,17 +26,17 @@ public final class GameData {
 
     private GameData() {}
 
-    @Nullable public static JsonObject json(ResourceLocation at) {
+    @Nullable public static JsonObject json(Identifier at) {
         JsonObject found = MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at);
         if (found == null) { ContentLog.LOGGER.error("The game's or a mod's data file {} could not be read, so what a pack builds on it is left out", at); }
         return found;
     }
 
-    public static boolean has(ResourceLocation at) { return (MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at)) != null; }
+    public static boolean has(Identifier at) { return (MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at)) != null; }
 
     public static void release() { vanilla = null; }
 
-    @Nullable private static JsonObject fromVanilla(ResourceLocation at) {
+    @Nullable private static JsonObject fromVanilla(Identifier at) {
         if (vanilla == null) { vanilla = ServerPacksSource.createVanillaPackSource(); }
         IoSupplier<InputStream> supplier = vanilla.getResource(PackType.SERVER_DATA, at);
         if (supplier == null) { return null; }
@@ -44,10 +44,10 @@ public final class GameData {
         catch (IOException | JsonParseException failed) { return null; }
     }
 
-    @Nullable private static JsonObject fromMod(ResourceLocation at) {
+    @Nullable private static JsonObject fromMod(Identifier at) {
         IModFileInfo info = ModList.get().getModFileById(at.getNamespace());
         if (info == null) { return null; }
-        Path path = info.getFile().findResource("data", at.getNamespace(), at.getPath());
+        Path path = ModFiles.find(info.getFile(), "data", at.getNamespace(), at.getPath());
         if (!Files.isRegularFile(path)) { return null; }
         try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) { return GSON.fromJson(reader, JsonObject.class); }
         catch (IOException | JsonParseException failed) { return null; }

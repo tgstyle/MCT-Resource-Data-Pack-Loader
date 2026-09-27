@@ -20,7 +20,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
@@ -56,7 +56,7 @@ final class ContentEntityBehavior {
 
     private static ItemStack carrying(EntityVariantDef def) {
         String named = def.equipment().get("mainhand");
-        Item item = named == null ? null : ContentStacks.item(ResourceLocation.tryParse(named));
+        Item item = named == null ? null : ContentStacks.item(Identifier.tryParse(named));
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
     }
 
@@ -155,7 +155,7 @@ final class ContentEntityBehavior {
                 kept.putInt(HOME_Y, creature.getBlockY());
                 kept.putInt(HOME_Z, creature.getBlockZ());
             }
-            creature.restrictTo(new BlockPos(kept.getInt(HOME_X), kept.getInt(HOME_Y), kept.getInt(HOME_Z)), combat.home());
+            creature.setHomeTo(new BlockPos(kept.getIntOr(HOME_X, 0), kept.getIntOr(HOME_Y, 0), kept.getIntOr(HOME_Z, 0)), combat.home());
             mob.goalSelector.addGoal(4, new MoveTowardsRestrictionGoal(creature, 1.0D));
         }
         if (combat.sleepsByDay()) { mob.goalSelector.addGoal(1, new SleepByDayGoal(creature)); }

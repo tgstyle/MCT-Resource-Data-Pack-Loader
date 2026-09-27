@@ -1,41 +1,42 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.core.HolderLookup;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
-import javax.annotation.Nonnull;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 public final class GateStorage extends SavedData {
-    private static final String NAME = "rdpl_gates";
+    public static final String NAME = "rdpl_gates";
     private static final String OPEN = "Open";
     private static final String KILLS = "Kills";
     private static final String PERSISTED = "rdplGates";
     private static final String PERSISTED_KILLS = "rdplGateKills";
     private CompoundTag open = new CompoundTag();
     private CompoundTag kills = new CompoundTag();
+    private static final SavedDataType<GateStorage> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), GateStorage::new, CompoundTag.CODEC.xmap(GateStorage::read, GateStorage::write));
 
-    private static final Factory<GateStorage> FACTORY = new Factory<>(GateStorage::new, (tag, lookup) -> read(tag));
-
-    private static GateStorage of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME); }
+    private static GateStorage of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
 
     private static GateStorage read(CompoundTag tag) {
         GateStorage held = new GateStorage();
-        held.open = tag.getCompound(OPEN).copy();
-        held.kills = tag.getCompound(KILLS).copy();
+        held.open = tag.getCompoundOrEmpty(OPEN).copy();
+        held.kills = tag.getCompoundOrEmpty(KILLS).copy();
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         tag.put(OPEN, open.copy());
         tag.put(KILLS, kills.copy());
         return tag;
     }
 
-    public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBoolean(key); }
+    public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBooleanOr(key, false); }
 
     public static void unlockFor(Player player, String key) { PlayerPersisted.section(player, PERSISTED).putBoolean(key, true); }
 
@@ -47,17 +48,17 @@ public final class GateStorage extends SavedData {
 
     public static int tallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);
-        int now = data.kills.getInt(key) + 1;
+        int now = data.kills.getIntOr(key, 0) + 1;
         data.kills.putInt(key, now);
         data.setDirty();
         return now;
     }
 
-    public static int countGlobally(MinecraftServer server, String key) { return of(server).kills.getInt(key); }
+    public static int countGlobally(MinecraftServer server, String key) { return of(server).kills.getIntOr(key, 0); }
 
     public static void noteFor(Player player, String key, int value) { PlayerPersisted.section(player, PERSISTED_KILLS).putInt(key, value); }
 
-    public static int notedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED_KILLS).getInt(key); }
+    public static int notedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED_KILLS).getIntOr(key, 0); }
 
     public static void clearTallyGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);
@@ -65,7 +66,7 @@ public final class GateStorage extends SavedData {
         data.setDirty();
     }
 
-    public static boolean unlockedGlobally(MinecraftServer server, String key) { return of(server).open.getBoolean(key); }
+    public static boolean unlockedGlobally(MinecraftServer server, String key) { return of(server).open.getBooleanOr(key, false); }
 
     public static void unlockGlobally(MinecraftServer server, String key) {
         GateStorage data = of(server);

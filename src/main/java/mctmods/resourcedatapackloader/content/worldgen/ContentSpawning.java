@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Enemy;
 import net.minecraft.world.level.LightLayer;
@@ -54,10 +54,10 @@ public final class ContentSpawning {
             event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
             return;
         }
-        boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
+        boolean spawner = event.getSpawnType() == EntitySpawnReason.SPAWNER;
         if (!spawner && placed(event.getSpawnType())) { return; }
         Mob mob = event.getEntity();
-        if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
+        if (event.getSpawnType() == EntitySpawnReason.CHUNK_GENERATION) {
             if (ContentThreat.deniedAtGeneration(mob)) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
             return;
         }
@@ -84,10 +84,10 @@ public final class ContentSpawning {
             return;
         }
         if (rate < 1.0F) {
-            if (level.random.nextFloat() >= rate) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
+            if (level.getRandom().nextFloat() >= rate) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
             return;
         }
-        if (level.random.nextFloat() < rate - 1.0F) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
+        if (level.getRandom().nextFloat() < rate - 1.0F) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
     }
 
     public static void onPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
@@ -95,7 +95,7 @@ public final class ContentSpawning {
         if (animalGround(event.getLevel(), event.getPos())) { event.setResult(MobSpawnEvent.SpawnPlacementCheck.Result.SUCCEED); }
     }
 
-    private static boolean placed(MobSpawnType type) { return type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION; }
+    private static boolean placed(EntitySpawnReason type) { return type != EntitySpawnReason.NATURAL && type != EntitySpawnReason.CHUNK_GENERATION; }
 
     private static boolean animalGround(ServerLevelAccessor level, BlockPos pos) {
         if (ContentRegistry.lacks(ANIMALS, level.getBlockState(pos.below()).getBlock())) { return false; }
@@ -104,8 +104,8 @@ public final class ContentSpawning {
 
     private static float rateFor(ServerLevel level, BlockPos pos) {
         boolean sky = level.canSeeSky(pos);
-        boolean day = level.isDay();
-        BiomeDef biome = level.getBiome(pos).unwrapKey().map(key -> ContentBiomes.def(key.location())).orElse(null);
+        boolean day = level.isBrightOutside();
+        BiomeDef biome = level.getBiome(pos).unwrapKey().map(key -> ContentBiomes.def(key.identifier())).orElse(null);
         if (biome != null) {
             float wanted = biome.rate(sky, day);
             if (wanted >= 0.0F) { return wanted; }

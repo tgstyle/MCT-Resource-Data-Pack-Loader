@@ -14,11 +14,12 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -35,14 +36,21 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentDimensions {
-    private static final ResourceLocation OVERWORLD = ResourceLocation.fromNamespaceAndPath("minecraft", "overworld");
-    private static final Map<ResourceLocation, DimensionDef> DEFS = new LinkedHashMap<>();
-    private static final Map<UUID, ResourceLocation> DIED_IN = new HashMap<>();
+    private static final Identifier OVERWORLD = Identifier.fromNamespaceAndPath("minecraft", "overworld");
+    private static final Map<Identifier, DimensionDef> DEFS = new LinkedHashMap<>();
+    private static final Map<UUID, Identifier> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
+    private static final String VISUAL = "minecraft:visual/";
+    private static final String GAMEPLAY = "minecraft:gameplay/";
+    private static final String MUSIC = "minecraft:audio/background_music";
+    private static final String HIDDEN = ResourceDataPackLoader.MOD_ID + ":hidden";
+    private static final float FOG_START = 10.0F;
+    private static final float FOG_END = 96.0F;
     private static boolean loaded;
 
     private ContentDimensions() {}
@@ -61,9 +69,14 @@ public final class ContentDimensions {
 
     public static Collection<DimensionDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
 
-    @Nullable public static DimensionDef def(ResourceLocation dimension) { return DEFS.get(dimension); }
+    @Nullable public static DimensionDef def(Identifier dimension) { return DEFS.get(dimension); }
 
-    @Nullable public static DimensionDef def(Level level) { return DEFS.get(level.dimension().location()); }
+    @Nullable public static DimensionDef def(Level level) { return DEFS.get(level.dimension().identifier()); }
+
+    public static boolean bedsWork(Level level) {
+        DimensionDef def = def(level);
+        return def != null && def.beds();
+    }
 
     public static boolean spawns(Level level) {
         DimensionDef def = def(level);
@@ -72,27 +85,27 @@ public final class ContentDimensions {
 
     public static void generate() {
         List<String> made = new ArrayList<>();
+        List<String> natural = new ArrayList<>();
+        ContentDimensionTime.reset();
         for (DimensionDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "dimension_type/" + def.base() + ".json"));
+            JsonObject type = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/" + def.base() + ".json"));
             if (type == null) { continue; }
             String namespace = def.key().getNamespace();
             String path = def.key().getPath();
             type.addProperty("has_skylight", def.hasSkyLight());
-            type.addProperty("natural", def.surfaceWorld());
-            type.addProperty("ultrawarm", def.nether() || def.waterVaporizes());
             type.addProperty("coordinate_scale", def.movementFactor());
-            type.addProperty("bed_works", def.beds());
-            type.addProperty("respawn_anchor_works", !def.beds());
             type.addProperty("ambient_light", def.ambientLight());
-            if (def.fixedTime() >= 0) { type.addProperty("fixed_time", def.fixedTime()); }
-            else { type.remove("fixed_time"); }
+            type.addProperty("has_ender_dragon_fight", false);
             if (def.shapesHeight()) {
                 type.addProperty("min_y", def.minHeight());
                 type.addProperty("height", def.maxHeight() - def.minHeight());
                 type.addProperty("logical_height", def.maxHeight() - def.minHeight());
             }
-            type.addProperty("effects", def.hasEffects() ? def.key().toString() : "minecraft:overworld");
+            rules(def, type);
+            effects(def, type);
+            ContentDimensionTime.time(def, type);
+            if (def.surfaceWorld()) { natural.add(def.key().toString()); }
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension_type/" + path + ".json", type.toString());
             JsonObject dimension = new JsonObject();
             dimension.addProperty("type", def.key().toString());
@@ -100,7 +113,80 @@ public final class ContentDimensions {
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension/" + path + ".json", dimension.toString());
             made.add(def.key().toString());
         }
+        ContentDimensionTime.clockItem(natural);
         if (!made.isEmpty()) { Summary.info("dimensions.generated", "Generated " + made.size() + " dimension(s) with their types: " + String.join(", ", made)); }
+    }
+
+    private static JsonObject attributes(JsonObject type) {
+        JsonObject attributes = type.has("attributes") ? type.getAsJsonObject("attributes") : new JsonObject();
+        type.add("attributes", attributes);
+        return attributes;
+    }
+
+    private static void rules(DimensionDef def, JsonObject type) {
+        JsonObject attributes = attributes(type);
+        boolean warm = def.nether() || def.waterVaporizes();
+        attributes.addProperty(GAMEPLAY + "water_evaporates", warm);
+        attributes.addProperty(GAMEPLAY + "fast_lava", warm);
+        if (warm) {
+            JsonObject drip = new JsonObject();
+            drip.addProperty("type", "minecraft:dripping_dripstone_lava");
+            attributes.add(VISUAL + "default_dripstone_particle", drip);
+        }
+        else { attributes.remove(VISUAL + "default_dripstone_particle"); }
+        attributes.addProperty(GAMEPLAY + "nether_portal_spawns_piglin", def.surfaceWorld());
+        attributes.addProperty(GAMEPLAY + "respawn_anchor_works", !def.beds());
+        attributes.add(GAMEPLAY + "bed_rule", bedRule(def.beds(), def.surfaceWorld(), def.fixedTime() >= 0));
+        attributes.remove(GAMEPLAY + "snow_golem_melts");
+    }
+
+    public static JsonObject bedRule(boolean beds, boolean surface, boolean fixed) {
+        boolean sleeps = beds && surface;
+        JsonObject bed = new JsonObject();
+        bed.addProperty("can_sleep", !sleeps ? "never" : fixed ? "always" : "when_dark");
+        bed.addProperty("can_set_spawn", sleeps ? "always" : "never");
+        if (!beds) { bed.addProperty("explodes", true); }
+        if (sleeps) {
+            JsonObject message = new JsonObject();
+            message.addProperty("translate", "block.minecraft.bed.no_sleep");
+            bed.add("error_message", message);
+        }
+        return bed;
+    }
+
+    private static void overworldVisualsAndMusic(JsonObject type, JsonObject attributes) {
+        type.remove("skybox");
+        type.remove("cardinal_light");
+        List<String> own = new ArrayList<>();
+        for (String name : attributes.keySet()) {
+            if ((name.startsWith(VISUAL) && !name.equals(VISUAL + "default_dripstone_particle")) || name.equals(MUSIC)) { own.add(name); }
+        }
+        own.forEach(attributes::remove);
+        JsonObject overworld = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/overworld.json"));
+        if (overworld == null || !overworld.has("attributes")) { return; }
+        for (Map.Entry<String, JsonElement> entry : overworld.getAsJsonObject("attributes").entrySet()) {
+            if (entry.getKey().startsWith(VISUAL) || entry.getKey().equals(MUSIC)) { attributes.add(entry.getKey(), entry.getValue()); }
+        }
+    }
+
+    private static void effects(DimensionDef def, JsonObject type) {
+        JsonObject attributes = attributes(type);
+        overworldVisualsAndMusic(type, attributes);
+        if (def.fogColor() >= 0) { attributes.addProperty(VISUAL + "fog_color", String.format("#%06x", def.fogColor() & 0xFFFFFF)); }
+        if (!def.surfaceWorld()) {
+            type.addProperty("skybox", "none");
+            attributes.remove(VISUAL + "cloud_color");
+            attributes.remove(VISUAL + "cloud_height");
+        }
+        else if (def.cloudHeight() >= 0) { attributes.addProperty(VISUAL + "cloud_height", (float) def.cloudHeight()); }
+        if (!def.sunriseColors()) { attributes.addProperty(VISUAL + "sunrise_sunset_color", "#00000000"); }
+        if (def.showFog()) {
+            attributes.addProperty(VISUAL + "fog_start_distance", FOG_START);
+            attributes.addProperty(VISUAL + "fog_end_distance", FOG_END);
+        }
+        if (!def.renderSky()) { attributes.addProperty("neoforge:custom_skybox", HIDDEN); }
+        if (!def.renderClouds()) { attributes.addProperty("neoforge:custom_clouds", HIDDEN); }
+        if (!def.renderWeather()) { attributes.addProperty("neoforge:custom_weather_effects", HIDDEN); }
     }
 
     private static JsonObject generator(DimensionDef def) {
@@ -143,7 +229,7 @@ public final class ContentDimensions {
         boolean veinless = "overworld".equals(vanillaSettings) && ContentOreControl.veinsBlocked(dimension);
         boolean grounded = "overworld".equals(vanillaSettings) && ContentBiomes.any();
         if (def.shapesNoise() || seamed || flatBedrock || veinless || grounded) {
-            JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
+            JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
             if (settings != null) {
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
@@ -164,7 +250,7 @@ public final class ContentDimensions {
                     lava.add("Properties", properties);
                     settings.add("default_fluid", lava);
                 }
-                ResourceLocation id = ResourceLocation.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
+                Identifier id = Identifier.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
                 if ("overworld".equals(vanillaSettings)) { ContentWorldShape.overworldNoise(id); }
                 settingsId = id.toString();
@@ -220,33 +306,35 @@ public final class ContentDimensions {
 
     public static void onClone(PlayerEvent.Clone event) {
         if (!event.isWasDeath()) { return; }
-        DIED_IN.put(event.getEntity().getUUID(), event.getOriginal().level().dimension().location());
+        DIED_IN.put(event.getEntity().getUUID(), event.getOriginal().level().dimension().identifier());
     }
 
     public static void onRespawn(PlayerEvent.PlayerRespawnEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        ResourceLocation diedIn = DIED_IN.remove(player.getUUID());
+        Identifier diedIn = DIED_IN.remove(player.getUUID());
         if (diedIn == null || event.isEndConquered()) { return; }
         DimensionDef def = DEFS.get(diedIn);
         if (def == null) { return; }
-        ResourceLocation sentTo = def.respawnDimension() != null ? def.respawnDimension() : def.respawn() ? null : OVERWORLD;
-        if (sentTo == null || sentTo.equals(player.level().dimension().location())) { return; }
-        if (player.getRespawnPosition() != null && (def.respawn() || !player.getRespawnDimension().location().equals(diedIn))) { return; }
-        MinecraftServer server = player.getServer();
-        ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, sentTo));
+        Identifier sentTo = def.respawnDimension() != null ? def.respawnDimension() : def.respawn() ? null : OVERWORLD;
+        if (sentTo == null || sentTo.equals(player.level().dimension().identifier())) { return; }
+        ServerPlayer.RespawnConfig respawn = player.getRespawnConfig();
+        if (respawn != null && (def.respawn() || !respawn.respawnData().dimension().identifier().equals(diedIn))) { return; }
+        MinecraftServer server = player.level().getServer();
+        ServerLevel target = server.getLevel(ResourceKey.create(Registries.DIMENSION, sentTo));
         if (target == null) {
             ContentLog.LOGGER.error("Dimension {} sends respawns to {}, which is not a loaded dimension, so the player respawns where the game put them", diedIn, sentTo);
             return;
         }
-        BlockPos feet = landing(target, target.getSharedSpawnPos(), net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
-        player.teleportTo(target, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, target.getSharedSpawnAngle(), 0.0F);
+        BlockPos feet = landing(target, target.getRespawnData().pos(), net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        player.stopRiding();
+        player.teleportTo(target, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), target.getRespawnData().yaw(), 0.0F, true);
         ContentLog.LOGGER.debug("Player {} died in {}, which {}, and respawns in {} at {}", player.getName().getString(), diedIn, def.respawn() ? "sends respawns on" : "allows no respawn", sentTo, feet);
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DIED_IN.remove(event.getEntity().getUUID()); }
 
     public static boolean structuresOff(ServerLevel level) {
-        DimensionDef def = DEFS.get(level.dimension().location());
+        DimensionDef def = DEFS.get(level.dimension().identifier());
         return def != null && !def.structures();
     }
 
@@ -257,10 +345,10 @@ public final class ContentDimensions {
 
     public static BlockPos landing(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
         BlockPos top = top(level, column, type);
-        if (top.getY() > level.getMinBuildHeight() + 1) { return top; }
-        DimensionDef def = DEFS.get(level.dimension().location());
+        if (top.getY() > level.getMinY() + 1) { return top; }
+        DimensionDef def = DEFS.get(level.dimension().identifier());
         if (def == null) { return top; }
-        return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), column.getZ());
+        return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinY() + 1, level.getMaxY() - 1), column.getZ());
     }
 
     public static BlockPos top(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {

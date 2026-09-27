@@ -9,7 +9,6 @@ import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
@@ -21,8 +20,8 @@ public final class ContentSpawnChunks {
     private static final int FARTHEST_TICKET = 33;
     private static final int BLOCK_TICKING = 1;
     private static final int ENTITY_TICKING = 2;
-    private static final TicketType<Unit> BOOT = TicketType.create("rdpl_spawn_boot", (a, b) -> 0);
-    private static final TicketType<Unit> HELD = TicketType.create("rdpl_spawn", (a, b) -> 0);
+    private static final TicketType BOOT = new TicketType(TicketType.NO_TIMEOUT, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION);
+    private static final TicketType HELD = new TicketType(TicketType.NO_TIMEOUT, TicketType.FLAG_LOADING | TicketType.FLAG_SIMULATION);
     @Nullable private static ChunkPos bootAt;
     private static int bootRadius;
     @Nullable private static ChunkPos heldAt;
@@ -62,14 +61,14 @@ public final class ContentSpawnChunks {
         if (blocks() <= 0) { return; }
         bootAt = spawn;
         bootRadius = bootChunks();
-        tiles(bootAt, bootRadius, BLOCK_TICKING, (pos, distance) -> chunks.addRegionTicket(BOOT, pos, distance, Unit.INSTANCE));
+        tiles(bootAt, bootRadius, BLOCK_TICKING, (pos, distance) -> chunks.addTicketWithRadius(BOOT, pos, distance));
     }
 
     public static void booted(ServerLevel level) {
         ServerChunkCache chunks = level.getChunkSource();
-        int prepared = chunks.getTickingGenerated();
-        hold(level, new ChunkPos(level.getSharedSpawnPos()));
-        if (bootAt != null) { tiles(bootAt, bootRadius, BLOCK_TICKING, (pos, distance) -> chunks.removeRegionTicket(BOOT, pos, distance, Unit.INSTANCE)); }
+        int prepared = chunks.getLoadedChunksCount();
+        hold(level, ChunkPos.containing(level.getRespawnData().pos()));
+        if (bootAt != null) { tiles(bootAt, bootRadius, BLOCK_TICKING, (pos, distance) -> chunks.removeTicketWithRadius(BOOT, pos, distance)); }
         if (blocks() <= 0) { ContentLog.LOGGER.info("Preparing and holding no chunks around the spawn point, as spawnChunkRadius 0 asks"); }
         else { ContentLog.LOGGER.info("Prepared {} chunk(s) around the spawn point as the world started, {} each way, and holding {} chunk(s), {} each way", prepared, bootRadius, square(heldRadius), heldRadius); }
         bootAt = null;
@@ -77,12 +76,12 @@ public final class ContentSpawnChunks {
 
     public static void hold(ServerLevel level, ChunkPos spawn) {
         ServerChunkCache chunks = level.getChunkSource();
-        if (heldAt != null) { tiles(heldAt, heldRadius, ENTITY_TICKING, (pos, distance) -> chunks.removeRegionTicket(HELD, pos, distance, Unit.INSTANCE)); }
+        if (heldAt != null) { tiles(heldAt, heldRadius, ENTITY_TICKING, (pos, distance) -> chunks.removeTicketWithRadius(HELD, pos, distance)); }
         heldAt = null;
         if (blocks() <= 0) { return; }
         heldAt = spawn;
         heldRadius = heldChunks();
-        tiles(heldAt, heldRadius, ENTITY_TICKING, (pos, distance) -> chunks.addRegionTicket(HELD, pos, distance, Unit.INSTANCE));
+        tiles(heldAt, heldRadius, ENTITY_TICKING, (pos, distance) -> chunks.addTicketWithRadius(HELD, pos, distance));
     }
 
     private static void tiles(ChunkPos middle, int radius, int ticking, BiConsumer<ChunkPos, Integer> ticket) {
@@ -94,7 +93,7 @@ public final class ContentSpawnChunks {
         int reach = radius - tile;
         int steps = Mth.positiveCeilDiv(2 * reach, 2 * tile + 1);
         for (int i = 0; i <= steps; i++) {
-            for (int j = 0; j <= steps; j++) { ticket.accept(new ChunkPos(middle.x - reach + 2 * reach * i / steps, middle.z - reach + 2 * reach * j / steps), FARTHEST_TICKET); }
+            for (int j = 0; j <= steps; j++) { ticket.accept(new ChunkPos(middle.x() - reach + 2 * reach * i / steps, middle.z() - reach + 2 * reach * j / steps), FARTHEST_TICKET); }
         }
     }
 }

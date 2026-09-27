@@ -21,36 +21,36 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 @Mixin(LivingEntity.class) public abstract class MixinLivingEntity {
-    @Shadow protected abstract SoundEvent getHurtSound(DamageSource damageSource);
+    @Shadow protected abstract SoundEvent getHurtSound(DamageSource source);
     @Shadow protected abstract SoundEvent getDeathSound();
 
     @Unique private EntityVariantDef rdpl$def() { return ContentEntities.def(LivingEntity.class.cast(this)); }
 
-    @Redirect(method = "playHurtSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;"))
-    private SoundEvent rdpl$hurtSound(LivingEntity self, DamageSource damageSource) {
+    @Redirect(method = "playHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;"))
+    private SoundEvent rdpl$hurtSound(LivingEntity self, DamageSource source) {
         SoundEvent sound = ContentEntities.sound(self, ContentEntities.HURT);
-        return sound != null ? sound : getHurtSound(damageSource);
+        return sound != null ? sound : getHurtSound(source);
     }
 
-    @Redirect(method = { "hurt", "handleEntityEvent" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeathSound()Lnet/minecraft/sounds/SoundEvent;"))
+    @Redirect(method = { "hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", "handleEntityEvent(B)V" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeathSound()Lnet/minecraft/sounds/SoundEvent;"))
     private SoundEvent rdpl$deathSound(LivingEntity self) {
         SoundEvent sound = ContentEntities.sound(self, ContentEntities.DEATH);
         return sound != null ? sound : getDeathSound();
     }
 
-    @Inject(method = "getSoundVolume", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getSoundVolume()F", at = @At("RETURN"), cancellable = true)
     private void rdpl$soundVolume(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null && def.sounds().volume() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().volume()); }
     }
 
-    @Inject(method = "getVoicePitch", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getVoicePitch()F", at = @At("RETURN"), cancellable = true)
     private void rdpl$voicePitch(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null && def.sounds().pitch() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().pitch()); }
     }
 
-    @Inject(method = "jumpFromGround", at = @At("RETURN"))
+    @Inject(method = "jumpFromGround()V", at = @At("RETURN"))
     private void rdpl$jumpHigher(CallbackInfo ci) {
         EntityVariantDef def = rdpl$def();
         if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
@@ -59,34 +59,34 @@ import net.minecraft.world.phys.Vec3;
         self.setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
     }
 
-    @Inject(method = "getWaterSlowDown", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "getWaterSlowDown()F", at = @At("RETURN"), cancellable = true)
     private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null) { cir.setReturnValue(def.physics().waterSlowdown()); }
     }
 
-    @Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
-    private void rdpl$riddenInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
+    @Inject(method = "getRiddenInput(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;", at = @At("RETURN"), cancellable = true)
+    private void rdpl$riddenInput(Player controller, Vec3 selfInput, CallbackInfoReturnable<Vec3> cir) {
         if (!ContentEntities.steerable(LivingEntity.class.cast(this))) { return; }
-        float forward = player.zza;
+        float forward = controller.zza;
         if (forward <= 0.0F) { forward *= 0.25F; }
-        cir.setReturnValue(new Vec3(player.xxa * 0.5F, 0.0D, forward));
+        cir.setReturnValue(new Vec3(controller.xxa * 0.5F, 0.0D, forward));
     }
 
-    @Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
-    private void rdpl$riddenSpeed(Player player, CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getRiddenSpeed(Lnet/minecraft/world/entity/player/Player;)F", at = @At("RETURN"), cancellable = true)
+    private void rdpl$riddenSpeed(Player controller, CallbackInfoReturnable<Float> cir) {
         LivingEntity self = LivingEntity.class.cast(this);
         if (ContentEntities.steerable(self)) { cir.setReturnValue((float) self.getAttributeValue(Attributes.MOVEMENT_SPEED)); }
     }
 
-    @Inject(method = "onClimbable", at = @At("RETURN"), cancellable = true)
+    @Inject(method = "onClimbable()Z", at = @At("RETURN"), cancellable = true)
     private void rdpl$climbs(CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = LivingEntity.class.cast(this);
         Boolean wanted = ContentEntities.climbs(self);
         if (wanted != null) { cir.setReturnValue(wanted && (cir.getReturnValueZ() || self.horizontalCollision)); }
     }
 
-    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;jumpInFluid(Lnet/neoforged/neoforge/fluids/FluidType;)V", remap = false))
+    @Redirect(method = "aiStep()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;jumpInFluid(Lnet/neoforged/neoforge/fluids/FluidType;)V", remap = false))
     private void rdpl$sink(LivingEntity self, FluidType type) {
         if (type == NeoForgeMod.WATER_TYPE.value() && ContentEntities.sinks(self)) { return; }
         self.jumpInFluid(type);

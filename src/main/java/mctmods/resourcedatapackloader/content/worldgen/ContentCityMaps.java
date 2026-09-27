@@ -12,7 +12,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public final class ContentCityMaps {
 
     @Nullable public static CityMapDef byName(String named) { return named == null || named.isEmpty() ? null : DEFS.get(named.trim().toLowerCase(Locale.ROOT)); }
 
-    @Nullable private static CityMapDef parse(ResourceLocation key, String contents) {
+    @Nullable private static CityMapDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) { return null; }
         List<String> rows = Json.strings(json, "map");
@@ -99,7 +99,7 @@ public final class ContentCityMaps {
         return CityMapDef.of(key, cell, palette, rows, settings);
     }
 
-    private static CityMapDef.Cell cell(ResourceLocation key, String symbol, JsonElement value) {
+    private static CityMapDef.Cell cell(Identifier key, String symbol, JsonElement value) {
         List<String> names = new ArrayList<>();
         int height = CityMapDef.LIFT;
         JsonObject roadKeys = null;

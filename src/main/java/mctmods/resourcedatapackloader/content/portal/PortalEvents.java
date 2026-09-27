@@ -6,20 +6,19 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 
 public final class PortalEvents {
     private PortalEvents() {}
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentPortalBlock.forget(event.getEntity().getUUID()); }
 
-    public static void onBroken(BlockEvent.BreakEvent event) {
+    public static void onBroken(BreakBlockEvent event) {
         if (event.getLevel() instanceof Level level) { ContentPortals.shaken(level, event.getPos(), event.getState()); }
     }
 
@@ -36,8 +35,8 @@ public final class PortalEvents {
         }
         if (!ContentPortals.light(level, clicked, event.getFace(), held)) { return; }
         Player player = event.getEntity();
-        level.playSound(null, clicked, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
-        if (held.isDamageableItem()) { held.hurtAndBreak(1, player, LivingEntity.getSlotForHand(event.getHand())); }
+        level.playSound(null, clicked, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.getRandom().nextFloat() * 0.4F + 0.8F);
+        if (held.isDamageableItem()) { held.hurtAndBreak(1, player, event.getHand()); }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }

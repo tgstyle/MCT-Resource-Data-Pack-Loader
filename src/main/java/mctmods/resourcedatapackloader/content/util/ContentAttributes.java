@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import java.util.HashMap;
@@ -40,7 +40,7 @@ public final class ContentAttributes {
     @Nullable public static Holder<Attribute> find(String name, Object context) {
         Holder<Attribute> attribute = ATTRIBUTES.get(key(name));
         if (attribute != null) { return attribute; }
-        ResourceLocation id = ResourceLocation.tryParse(name);
+        Identifier id = Identifier.tryParse(name);
         attribute = Registered.holder(BuiltInRegistries.ATTRIBUTE, id);
         if (attribute != null) { return attribute; }
         ContentLog.LOGGER.error("Unknown attribute '{}' in {}, skipping that modifier. Known names are {} or a registry id such as minecraft:generic.attack_damage", name, context, ATTRIBUTES.keySet());

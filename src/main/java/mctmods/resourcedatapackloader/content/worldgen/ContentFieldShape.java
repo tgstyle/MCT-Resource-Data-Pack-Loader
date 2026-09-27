@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import java.util.function.Predicate;
@@ -17,7 +17,7 @@ public final class ContentFieldShape implements IContentChunkShape {
     private final int fade;
     private final int salt;
 
-    public ContentFieldShape(ContentField field, ShapeDef shape, int minHeight, int maxHeight, ResourceLocation key) {
+    public ContentFieldShape(ContentField field, ShapeDef shape, int minHeight, int maxHeight, Identifier key) {
         this.field = field;
         this.threshold = shape.threshold();
         this.minHeight = minHeight;
@@ -33,7 +33,7 @@ public final class ContentFieldShape implements IContentChunkShape {
         int highest = Math.min(placer.ceilingY() - 1, maxHeight);
         if (highest < lowest) { return; }
         long seed = placer.level().getSeed() ^ salt;
-        RandomSource random = RandomSource.create(seed ^ (chunk.x * 341873128712L + chunk.z * 132897987541L));
+        RandomSource random = RandomSource.create(seed ^ (chunk.x() * 341873128712L + chunk.z() * 132897987541L));
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = chunk.getMinBlockX(); x <= chunk.getMaxBlockX(); x++) {
             for (int z = chunk.getMinBlockZ(); z <= chunk.getMaxBlockZ(); z++) {

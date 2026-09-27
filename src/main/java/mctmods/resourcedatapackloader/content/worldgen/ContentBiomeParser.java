@@ -9,7 +9,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -20,7 +20,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBiomeParser {
-    public static final ResourceLocation PLAINS = ResourceLocation.fromNamespaceAndPath("minecraft", "plains");
+    public static final Identifier PLAINS = Identifier.fromNamespaceAndPath("minecraft", "plains");
     private static final Gson GSON = new Gson();
     private static final List<String> RATE_KEYS = List.of("surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight");
     private static final Set<String> RUBIC_KEYS = Set.of("id", "baseHeight", "heightVariation", "skyStone", "skyIslands", "skyThickness");
@@ -28,7 +28,7 @@ public final class ContentBiomeParser {
 
     private ContentBiomeParser() {}
 
-    @Nullable public static BiomeDef parse(ResourceLocation key, String contents) {
+    @Nullable public static BiomeDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Biome file {} is empty, ignoring it", key);
@@ -43,7 +43,7 @@ public final class ContentBiomeParser {
         for (String rate : rates.keySet()) {
             if (!RATE_KEYS.contains(rate)) { ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, rate, RATE_KEYS); }
         }
-        ResourceLocation base = ContentParser.location(GsonHelper.getAsString(json, "baseBiome", ""));
+        Identifier base = ContentParser.location(GsonHelper.getAsString(json, "baseBiome", ""));
         Map<String, Integer> decoration = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "decoration", new JsonObject()).entrySet()) {
             if (entry.getValue().isJsonPrimitive()) { decoration.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue().getAsInt()); }
@@ -76,7 +76,7 @@ public final class ContentBiomeParser {
                 Json.strings(json, "replaces"), Json.strings(json, "requires"));
     }
 
-    public static List<BiomeSpawnDef> spawns(ResourceLocation key, JsonObject json, int weight, int max) {
+    public static List<BiomeSpawnDef> spawns(Identifier key, JsonObject json, int weight, int max) {
         if (!json.has("spawns")) { return List.of(); }
         List<BiomeSpawnDef> spawns = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "spawns")) {
@@ -85,7 +85,7 @@ public final class ContentBiomeParser {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            ResourceLocation entity = ContentParser.location(GsonHelper.getAsString(entry, "entity", ""));
+            Identifier entity = ContentParser.location(GsonHelper.getAsString(entry, "entity", ""));
             if (entity == null) {
                 ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
                 continue;
@@ -110,7 +110,7 @@ public final class ContentBiomeParser {
         return null;
     }
 
-    private static float spawnChance(ResourceLocation key, float wanted) {
+    private static float spawnChance(Identifier key, float wanted) {
         if (wanted < 0.99F) { return Math.max(0.0F, wanted); }
         ContentLog.LOGGER.error("Biome {} asks for a spawnChance of {}. The game keeps starting another herd for as long as that roll succeeds, so at 1 it never stops and the world fills until it runs out of room. Using 0.99 instead", key, wanted);
         return 0.99F;
@@ -118,7 +118,7 @@ public final class ContentBiomeParser {
 
     private static float rate(JsonObject rates, String name) { return rates.has(name) ? Math.max(0.0F, GsonHelper.getAsFloat(rates, name)) : BiomeDef.NO_RATE; }
 
-    private static int color(JsonObject json, String name, ResourceLocation key) {
+    private static int color(JsonObject json, String name, Identifier key) {
         if (!json.has(name)) { return BiomeDef.NO_COLOR; }
         return ContentParser.color(GsonHelper.getAsString(json, name, ""), key);
     }

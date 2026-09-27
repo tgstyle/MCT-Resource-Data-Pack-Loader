@@ -2,15 +2,15 @@ package mctmods.resourcedatapackloader.content.def;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 
-public record FluidDef(ResourceLocation key, String name, int color, ResourceLocation still, ResourceLocation flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket,
+public record FluidDef(Identifier key, String name, int color, Identifier still, Identifier flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket,
                        boolean createBlock, String material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires) {
     private static final int OPAQUE = 0xFF000000;
     private static final int LEGACY_WATER = 0x4260FF;
 
-    public ResourceLocation id() { return ResourceLocation.fromNamespaceAndPath(key.getNamespace(), name); }
+    public Identifier id() { return Identifier.fromNamespaceAndPath(key.getNamespace(), name); }
 
     public boolean waterMaterial() { return "water".equals(material); }
 

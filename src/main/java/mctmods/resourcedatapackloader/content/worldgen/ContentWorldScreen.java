@@ -7,7 +7,7 @@ import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.client.event.ScreenEvent;
@@ -31,7 +31,7 @@ public final class ContentWorldScreen {
         String seed = ContentTerrain.worldSeed();
         String mode = ContentServer.worldGameMode();
         WorldCreationUiState.WorldTypeEntry preset = presetEntry(state);
-        Difficulty difficulty = ContentServer.difficultyFor(Level.OVERWORLD.location().toString());
+        Difficulty difficulty = ContentServer.difficultyFor(Level.OVERWORLD.identifier().toString());
         if (named.isEmpty() && seed.isEmpty() && mode.isEmpty() && preset == null && difficulty == null) { return; }
         String fresh = I18n.get("selectWorld.newWorld");
         ContentLog.LOGGER.debug("The screen for making a world opened. A pack asks for the name '{}', the seed '{}' and the game mode '{}'. The box says '{}' and the game calls a new world '{}', so the name {} be filled in",
@@ -52,17 +52,17 @@ public final class ContentWorldScreen {
     }
 
     @Nullable private static WorldCreationUiState.WorldTypeEntry presetEntry(WorldCreationUiState state) {
-        ResourceLocation wanted = ContentWorldShape.presetId();
+        Identifier wanted = ContentWorldShape.presetId();
         if (wanted == null) { return null; }
         for (WorldCreationUiState.WorldTypeEntry entry : state.getNormalPresetList()) {
-            if (entry.preset() != null && entry.preset().unwrapKey().map(key -> key.location().equals(wanted)).orElse(false)) { return entry; }
+            if (entry.preset() != null && entry.preset().unwrapKey().map(key -> key.identifier().equals(wanted)).orElse(false)) { return entry; }
         }
         if (WARNED.add(wanted.toString())) { ContentLog.LOGGER.error("The generated world preset {} is not in the world screen's list, so the world type is left as chosen", wanted); }
         return null;
     }
 
     private static boolean kept(WorldCreationUiState.WorldTypeEntry current) {
-        ResourceLocation chosen = current.preset() == null ? null : current.preset().unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier chosen = current.preset() == null ? null : current.preset().unwrapKey().map(ResourceKey::identifier).orElse(null);
         if (chosen == null) { return true; }
         for (String exception : ContentTerrain.worldTypeExceptions()) {
             String named = exception.trim();

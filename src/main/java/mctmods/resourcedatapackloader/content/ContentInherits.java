@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -19,35 +19,35 @@ public final class ContentInherits {
 
     private ContentInherits() {}
 
-    public static Map<ResourceLocation, String> collect(String folder) {
-        Map<ResourceLocation, String> raw = new LinkedHashMap<>();
-        PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> raw.put(ResourceLocation.fromNamespaceAndPath(namespace, path), contents));
-        Map<ResourceLocation, JsonObject> parsed = new LinkedHashMap<>();
-        Map<ResourceLocation, ResourceLocation> owners = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, String> entry : raw.entrySet()) {
+    public static Map<Identifier, String> collect(String folder) {
+        Map<Identifier, String> raw = new LinkedHashMap<>();
+        PackManager.get().forEach(folder, PackManager.JSON, (namespace, path, contents) -> raw.put(Identifier.fromNamespaceAndPath(namespace, path), contents));
+        Map<Identifier, JsonObject> parsed = new LinkedHashMap<>();
+        Map<Identifier, Identifier> owners = new LinkedHashMap<>();
+        for (Map.Entry<Identifier, String> entry : raw.entrySet()) {
             try {
                 JsonObject held = JsonParser.parseString(entry.getValue()).getAsJsonObject();
                 parsed.put(entry.getKey(), held);
                 if (held.has(ContentParser.VARIANTS) && held.get(ContentParser.VARIANTS).isJsonObject()) {
                     for (Map.Entry<String, JsonElement> variant : held.getAsJsonObject(ContentParser.VARIANTS).entrySet()) {
-                        ResourceLocation id = ResourceLocation.tryBuild(entry.getKey().getNamespace(), variant.getKey().toLowerCase(Locale.ROOT));
+                        Identifier id = Identifier.tryBuild(entry.getKey().getNamespace(), variant.getKey().toLowerCase(Locale.ROOT));
                         if (id != null) { owners.put(id, entry.getKey()); }
                     }
                 }
             }
             catch (RuntimeException unreadable) { ContentLog.LOGGER.error("Parsing error in {} {}, it inherits and lends nothing", folder, entry.getKey(), unreadable); }
         }
-        Map<ResourceLocation, JsonObject> resolved = new LinkedHashMap<>();
-        for (ResourceLocation key : parsed.keySet()) { resolve(key, parsed, owners, resolved, new HashSet<>()); }
-        Map<ResourceLocation, String> out = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, String> entry : raw.entrySet()) {
+        Map<Identifier, JsonObject> resolved = new LinkedHashMap<>();
+        for (Identifier key : parsed.keySet()) { resolve(key, parsed, owners, resolved, new HashSet<>()); }
+        Map<Identifier, String> out = new LinkedHashMap<>();
+        for (Map.Entry<Identifier, String> entry : raw.entrySet()) {
             JsonObject held = resolved.get(entry.getKey());
             out.put(entry.getKey(), held != null ? held.toString() : entry.getValue());
         }
         return out;
     }
 
-    @Nullable private static JsonObject resolve(ResourceLocation key, Map<ResourceLocation, JsonObject> parsed, Map<ResourceLocation, ResourceLocation> owners, Map<ResourceLocation, JsonObject> resolved, Set<ResourceLocation> walking) {
+    @Nullable private static JsonObject resolve(Identifier key, Map<Identifier, JsonObject> parsed, Map<Identifier, Identifier> owners, Map<Identifier, JsonObject> resolved, Set<Identifier> walking) {
         JsonObject known = resolved.get(key);
         if (known != null) { return known; }
         JsonObject held = parsed.get(key);
@@ -63,13 +63,13 @@ public final class ContentInherits {
         }
         String asked = held.get(INHERITS).getAsString();
         String lowered = asked.toLowerCase(Locale.ROOT);
-        ResourceLocation parentName = lowered.contains(":") ? ResourceLocation.tryParse(lowered) : ResourceLocation.tryBuild(key.getNamespace(), lowered);
+        Identifier parentName = lowered.contains(":") ? Identifier.tryParse(lowered) : Identifier.tryBuild(key.getNamespace(), lowered);
         if (parentName == null) {
             ContentLog.LOGGER.error("Definition {} inherits '{}', which is not a valid name, ignoring its inherits", key, asked);
             resolved.put(key, held);
             return held;
         }
-        ResourceLocation parentFile = owners.get(parentName);
+        Identifier parentFile = owners.get(parentName);
         String parentVariantName = parentName.getPath();
         if (parentFile == null && parsed.containsKey(parentName)) {
             parentFile = parentName;
@@ -105,7 +105,7 @@ public final class ContentInherits {
         return made;
     }
 
-    @Nullable private static String baseVariant(JsonObject file, ResourceLocation name) {
+    @Nullable private static String baseVariant(JsonObject file, Identifier name) {
         if (!file.has(ContentParser.VARIANTS) || !file.get(ContentParser.VARIANTS).isJsonObject()) { return null; }
         JsonObject variants = file.getAsJsonObject(ContentParser.VARIANTS);
         String tail = tail(name);
@@ -114,7 +114,7 @@ public final class ContentInherits {
         return null;
     }
 
-    private static String tail(ResourceLocation name) {
+    private static String tail(Identifier name) {
         String path = name.getPath();
         return path.substring(path.lastIndexOf('/') + 1);
     }

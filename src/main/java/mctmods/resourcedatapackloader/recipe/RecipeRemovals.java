@@ -12,7 +12,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -41,7 +41,7 @@ public final class RecipeRemovals {
         Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
     }
 
-    private static void read(ResourceLocation key, String contents) {
+    private static void read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Recipe removal file {} is empty, ignoring it", key);
@@ -67,7 +67,7 @@ public final class RecipeRemovals {
         catch (RuntimeException notBoolean) { return false; }
     }
 
-    public static boolean removesName(ResourceLocation id) {
+    public static boolean removesName(Identifier id) {
         String name = id.toString();
         if (NAMED.contains(name)) { return true; }
         for (String prefix : PREFIXES) {

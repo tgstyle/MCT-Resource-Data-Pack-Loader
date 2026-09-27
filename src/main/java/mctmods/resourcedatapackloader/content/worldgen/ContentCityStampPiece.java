@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -9,8 +10,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
-import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
@@ -36,7 +36,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityStampPiece extends StructurePiece implements ContentCityTrees.Felling {
+public final class ContentCityStampPiece extends StructurePiece implements ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStampPiece::new;
     private static final int PASSAGE_MOST = 32;
     private static final int DOOR = 7;
@@ -85,18 +85,18 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
 
     public ContentCityStampPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.top = tag.getInt(TOP);
-        this.row = tag.getInt(ROW);
-        this.near = tag.getInt(NEAR);
-        this.way = tag.getInt(WAY);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.bedHalf = tag.getInt(BED_HALF);
-        this.spanX = tag.getInt(SPAN_X);
-        this.spanZ = tag.getInt(SPAN_Z);
-        this.edge = tag.contains(EDGE) ? tag.getInt(EDGE) : ContentCityStairsPiece.wall(near, way);
-        this.deck = tag.getInt(DECK);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.top = tag.getIntOr(TOP, 0);
+        this.row = tag.getIntOr(ROW, 0);
+        this.near = tag.getIntOr(NEAR, 0);
+        this.way = tag.getIntOr(WAY, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.bedHalf = tag.getIntOr(BED_HALF, 0);
+        this.spanX = tag.getIntOr(SPAN_X, 0);
+        this.spanZ = tag.getIntOr(SPAN_Z, 0);
+        this.edge = tag.contains(EDGE) ? tag.getIntOr(EDGE, 0) : ContentCityStairsPiece.wall(near, way);
+        this.deck = tag.getIntOr(DECK, 0);
     }
 
     private static BoundingBox box(int level, int top, int row, int near, int way, int middle, boolean alongX, int spanX, int spanZ) {
@@ -209,7 +209,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         CityPalette linings = CityPalette.of(ContentCity.railTunnelBlock(true), Blocks.AIR.defaultBlockState());
         BlockState lining = linings.first();
         String named = ContentCity.stationStructure();
-        ResourceLocation key = named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier key = named.isEmpty() ? null : Identifier.tryParse(named);
         StructureTemplate held = key == null ? null : level.getLevel().getServer().getStructureManager().get(key).orElse(null);
         BoundingBox stood = getBoundingBox();
         if (held == null) {
@@ -399,7 +399,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
                 if (!box.isInside(at.set(spot.getX(), top + 1, spot.getZ()))) { continue; }
                 if (CityPlotGround.solid(level.getBlockState(at))) { continue; }
                 level.setBlock(at, rails.pick(seed, spot.getX(), top + 1, spot.getZ()), 2);
-                level.getChunk(at).markPosForPostprocessing(at);
+                Compat.markPostProcessing(level.getChunk(at), at);
                 laid++;
             }
         }
@@ -410,17 +410,17 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         Vec3i size = held.getSize();
         boolean[][] open = new boolean[size.getX()][size.getZ()];
         CompoundTag saved = held.save(new CompoundTag());
-        ListTag palette = saved.getList("palette", Tag.TAG_COMPOUND);
-        ListTag blocks = saved.getList("blocks", Tag.TAG_COMPOUND);
+        ListTag palette = saved.getListOrEmpty("palette");
+        ListTag blocks = saved.getListOrEmpty("blocks");
         HolderGetter<Block> lookup = level.holderLookup(Registries.BLOCK);
         for (int i = 0; i < blocks.size(); i++) {
-            CompoundTag block = blocks.getCompound(i);
-            ListTag pos = block.getList("pos", Tag.TAG_INT);
-            if (pos.getInt(1) != size.getY() - 1) { continue; }
-            int x = pos.getInt(0);
-            int z = pos.getInt(2);
+            CompoundTag block = blocks.getCompoundOrEmpty(i);
+            ListTag pos = block.getListOrEmpty("pos");
+            if (pos.getIntOr(1, 0) != size.getY() - 1) { continue; }
+            int x = pos.getIntOr(0, 0);
+            int z = pos.getIntOr(2, 0);
             if (x < 0 || z < 0 || x >= size.getX() || z >= size.getZ()) { continue; }
-            open[x][z] = !CityPlotGround.solid(NbtUtils.readBlockState(lookup, palette.getCompound(block.getInt("state"))));
+            open[x][z] = !CityPlotGround.solid(NbtUtils.readBlockState(lookup, palette.getCompoundOrEmpty(block.getIntOr("state", 0))));
         }
         return open;
     }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
@@ -31,7 +32,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.util.RandomSource;
@@ -503,10 +504,10 @@ public final class ContentCity {
 
     public static void residents(WorldGenLevel level, VillageDef def, BoundingBox box, IntFunction<BlockPos> spot) {
         if (def.villagers() <= 0) { return; }
-        EntityType<?> kind = EntityType.VILLAGER;
+        EntityType<?> kind = Compat.villager();
         boolean vanilla = def.villagerEntity().isEmpty();
         if (!vanilla) {
-            kind = EntityType.byString(def.villagerEntity()).orElse(null);
+            kind = Compat.entityType(def.villagerEntity());
             if (kind == null) {
                 if (MISSING.add(def.key() + "|" + def.villagerEntity())) { ContentLog.LOGGER.error("Village plot {} wants {} to live in it, which nothing registers", def.key(), def.villagerEntity()); }
                 return;
@@ -518,10 +519,10 @@ public final class ContentCity {
         for (int index = 0; index < def.villagers(); index++) {
             BlockPos at = spot.apply(index);
             if (!box.isInside(at)) { continue; }
-            Entity made = (infested ? EntityType.ZOMBIE_VILLAGER : kind).create(level.getLevel());
+            Entity made = (infested ? Compat.zombieVillager() : kind).create(level.getLevel(), EntitySpawnReason.STRUCTURE);
             if (made == null) { return; }
-            made.moveTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
-            if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), MobSpawnType.STRUCTURE, null); }
+            made.snapTo(at.getX() + 0.5D, at.getY(), at.getZ() + 0.5D, 0.0F, 0.0F);
+            if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), EntitySpawnReason.STRUCTURE, null); }
             if (vanilla) { ContentVillagers.professed(made, level.getRandom()); }
             if (infested && made instanceof Mob mob) { mob.setPersistenceRequired(); }
             level.addFreshEntity(made);

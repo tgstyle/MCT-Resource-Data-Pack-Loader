@@ -27,12 +27,13 @@ public final class EntityClassMaker {
 
     private EntityClassMaker() {}
 
-    @SuppressWarnings("unchecked") public static <T extends Entity> Entity make(EntityType.EntityFactory<T> factory, EntityType<?> type, Level level, EntityVariantDef def) {
+    @Nullable @SuppressWarnings("unchecked") public static <T extends Entity> Entity make(EntityType.EntityFactory<T> factory, EntityType<?> type, Level level, EntityVariantDef def) {
         EntityType<T> own = (EntityType<T>) type;
         if (!def.hostile()) { return factory.create(own, level); }
         Optional<MethodHandle> enemy = ENEMIES.get(type);
         if (enemy == null) {
             T probe = factory.create(own, level);
+            if (probe == null) { return null; }
             enemy = probe instanceof Enemy ? Optional.empty() : Optional.ofNullable(enemy(probe.getClass(), def));
             ENEMIES.put(type, enemy);
             if (enemy.isEmpty()) { return probe; }

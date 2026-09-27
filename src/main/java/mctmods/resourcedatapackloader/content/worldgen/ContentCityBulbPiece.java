@@ -21,7 +21,7 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityBulbPiece::new;
     private static final int CLEAR = 4;
     static final int VERGE = 6;
@@ -79,11 +79,11 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
 
     public ContentCityBulbPiece(CompoundTag tag) {
         super(TYPE, tag);
-        int reach = tag.getInt(REACH);
+        int reach = tag.getIntOr(REACH, 0);
         boolean placed = tag.contains(CENTER_X);
-        this.court = new Court(placed ? tag.getInt(CENTER_X) : (boundingBox.minX() + boundingBox.maxX()) / 2, placed ? tag.getInt(CENTER_Z) : (boundingBox.minZ() + boundingBox.maxZ()) / 2, tag.getInt(LEVEL), reach,
-                tag.getBoolean(ALONG_X), tag.getBoolean(LOW), tag.getInt(MIDDLE), placed ? tag.getInt(HALF) : -1, tag.getInt(STEM));
-        this.dress = new Dress(tag.getInt(LANE), tag.getInt(LINES), placed ? tag.getInt(WALK_WIDE) : 1, tag.getString(PAVING), tag.getString(EDGE), tag.getString(WALK));
+        this.court = new Court(placed ? tag.getIntOr(CENTER_X, 0) : (boundingBox.minX() + boundingBox.maxX()) / 2, placed ? tag.getIntOr(CENTER_Z, 0) : (boundingBox.minZ() + boundingBox.maxZ()) / 2, tag.getIntOr(LEVEL, 0), reach,
+                tag.getBooleanOr(ALONG_X, false), tag.getBooleanOr(LOW, false), tag.getIntOr(MIDDLE, 0), placed ? tag.getIntOr(HALF, 0) : -1, tag.getIntOr(STEM, 0));
+        this.dress = new Dress(tag.getIntOr(LANE, 0), tag.getIntOr(LINES, 0), placed ? tag.getIntOr(WALK_WIDE, 0) : 1, tag.getStringOr(PAVING, ""), tag.getStringOr(EDGE, ""), tag.getStringOr(WALK, ""));
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {

@@ -12,7 +12,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.LinkedHashMap;
@@ -30,7 +30,7 @@ public final class ContentDimensionParser {
 
     private ContentDimensionParser() {}
 
-    @Nullable public static DimensionDef parse(ResourceLocation key, String contents) {
+    @Nullable public static DimensionDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Dimension {} is empty, ignoring it", key);
@@ -72,7 +72,7 @@ public final class ContentDimensionParser {
         String skyColor = GsonHelper.getAsString(sky, "skyColor", "").trim();
         String cloudColor = GsonHelper.getAsString(sky, "cloudColor", "").trim();
         String respawn = GsonHelper.getAsString(sky, "respawnDimension", "").trim();
-        ResourceLocation respawnDimension = respawn.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(respawn));
+        Identifier respawnDimension = respawn.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
         return new DimensionDef(key, type, flatOptions(terrain), GsonHelper.getAsBoolean(terrain, "structures", true), source,
                 GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), minHeight, maxHeight,
@@ -88,7 +88,7 @@ public final class ContentDimensionParser {
                 GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options);
     }
 
-    @Nullable private static DimensionPortalDef portal(ResourceLocation key, JsonObject json) {
+    @Nullable private static DimensionPortalDef portal(Identifier key, JsonObject json) {
         if (!json.has("portal")) { return null; }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "portal");
         List<String> frames = Json.strings(entry, "frames");
@@ -114,7 +114,7 @@ public final class ContentDimensionParser {
         return List.of(options.getAsString().trim());
     }
 
-    private static JsonObject customized(ResourceLocation key, JsonObject terrain) {
+    private static JsonObject customized(Identifier key, JsonObject terrain) {
         JsonElement options = terrain.get("generatorOptions");
         if (options == null) { return new JsonObject(); }
         if (options.isJsonObject()) { return options.getAsJsonObject(); }
@@ -126,7 +126,7 @@ public final class ContentDimensionParser {
         }
     }
 
-    public static Map<String, String> gameRules(ResourceLocation key, JsonObject json) {
+    public static Map<String, String> gameRules(Identifier key, JsonObject json) {
         Map<String, String> found = new LinkedHashMap<>();
         if (!json.has("gameRules")) { return Map.of(); }
         for (Map.Entry<String, JsonElement> rule : GsonHelper.getAsJsonObject(json, "gameRules").entrySet()) {

@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,13 +17,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(BlockBehaviour.BlockStateBase.class) public abstract class MixinBlockStateBase {
     @Shadow public abstract Block getBlock();
 
-    @Inject(method = "getLightBlock(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)I", at = @At("HEAD"), cancellable = true) private void rdpl$lightBlock(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "getLightDampening()I", at = @At("HEAD"), cancellable = true) private void rdpl$lightBlock(CallbackInfoReturnable<Integer> cir) {
         Integer held = ContentOverrides.lightBlock(getBlock());
         if (held == null) { held = ContentRegistry.lightBlock(getBlock()); }
         if (held != null) { cir.setReturnValue(held); }
     }
 
-    @Inject(method = "propagatesSkylightDown(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$skylight(BlockGetter level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "propagatesSkylightDown()Z", at = @At("HEAD"), cancellable = true) private void rdpl$skylight(CallbackInfoReturnable<Boolean> cir) {
         Integer held = ContentRegistry.lightBlock(getBlock());
         if (held != null) { cir.setReturnValue(held == 0); }
     }

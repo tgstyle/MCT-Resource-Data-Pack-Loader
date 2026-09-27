@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -30,16 +30,16 @@ public final class CardRules {
         BY_TRIGGER.clear();
         SCANNED.clear();
         if (Config.definitionsOff()) { return; }
-        Map<ResourceLocation, CardRule> read = new LinkedHashMap<>();
+        Map<Identifier, CardRule> read = new LinkedHashMap<>();
         Json.eachFile(PackManager.CARDS, "card rule", (key, contents) -> {
             CardRule rule = CardParser.parse(key, contents);
             if (rule != null) { read.put(key, rule); }
         });
-        for (Map.Entry<ResourceLocation, CardRule> entry : read.entrySet()) {
+        for (Map.Entry<Identifier, CardRule> entry : read.entrySet()) {
             CardRule rule = entry.getValue();
             if (!ContentRegistry.available(rule.requires, entry.getKey())) { continue; }
             BY_KEY.put(rule.key, rule);
-            BY_TRIGGER.computeIfAbsent(rule.trigger, k -> new ArrayList<>()).add(rule);
+            BY_TRIGGER.computeIfAbsent(rule.trigger, _ -> new ArrayList<>()).add(rule);
             if (CardRule.SCANNED.contains(rule.trigger)) { SCANNED.add(rule); }
         }
         if (!BY_KEY.isEmpty()) { Summary.info("cards", "Loaded " + BY_KEY.size() + " card rule(s)"); }

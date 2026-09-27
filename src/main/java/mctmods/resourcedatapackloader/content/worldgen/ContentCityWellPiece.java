@@ -44,10 +44,10 @@ public final class ContentCityWellPiece extends StructurePiece {
 
     public ContentCityWellPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.tall = tag.getInt(TALL);
-        this.kind = tag.getString(KIND);
-        this.first = tag.getBoolean(FIRST);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.tall = tag.getIntOr(TALL, 0);
+        this.kind = tag.getStringOr(KIND, "");
+        this.first = tag.getBooleanOr(FIRST, false);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -108,7 +108,7 @@ public final class ContentCityWellPiece extends StructurePiece {
             for (int z = 0; z < SIZE; z++) {
                 if (x != 0 && x != SIZE - 1 && z != 0 && z != SIZE - 1) { continue; }
                 set(world, box, x, RIM, z, wall);
-                for (int y = level + 1; y < world.getMaxBuildHeight(); y++) {
+                for (int y = level + 1; y <= world.getMaxY(); y++) {
                     at.set(boundingBox.minX() + x, y, boundingBox.minZ() + z);
                     if (!box.isInside(at) || world.getBlockState(at).isAir()) { break; }
                     world.setBlock(at, air, 2);

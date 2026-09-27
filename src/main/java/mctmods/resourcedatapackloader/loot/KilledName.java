@@ -11,12 +11,11 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.RandomizableContainer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.FishingHook;
-import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.minecraft.world.phys.Vec3;
@@ -40,7 +39,7 @@ public final class KilledName extends LootItemConditionalFunction {
         this.tag = tag;
     }
 
-    @Override @Nonnull public LootItemFunctionType<KilledName> getType() { return LootFunctions.KILLED_NAME.get(); }
+    @Override @Nonnull public MapCodec<KilledName> codec() { return CODEC; }
 
     @Override @Nonnull protected ItemStack run(@Nonnull ItemStack stack, @Nonnull LootContext context) {
         Entity looted = looted(context);
@@ -58,12 +57,12 @@ public final class KilledName extends LootItemConditionalFunction {
     }
 
     @Nullable private static Entity looted(LootContext context) {
-        if (context.getParamOrNull(LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
-        Vec3 origin = context.getParamOrNull(LootContextParams.ORIGIN);
-        if (origin == null || context.hasParam(LootContextParams.DAMAGE_SOURCE) || context.hasParam(LootContextParams.BLOCK_STATE) || context.hasParam(LootContextParams.TOOL)) { return context.getParamOrNull(LootContextParams.THIS_ENTITY); }
-        if (context.getParamOrNull(LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
+        if (context.getOptionalParameter(LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
+        Vec3 origin = context.getOptionalParameter(LootContextParams.ORIGIN);
+        if (origin == null || context.hasParameter(LootContextParams.DAMAGE_SOURCE) || context.hasParameter(LootContextParams.BLOCK_STATE) || context.hasParameter(LootContextParams.TOOL)) { return context.getOptionalParameter(LootContextParams.THIS_ENTITY); }
+        if (context.getOptionalParameter(LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
         BlockPos pos = BlockPos.containing(origin);
         if (origin.equals(Vec3.atCenterOf(pos)) && context.getLevel().getBlockEntity(pos) instanceof RandomizableContainer) { return null; }
-        return context.getParamOrNull(LootContextParams.THIS_ENTITY);
+        return context.getOptionalParameter(LootContextParams.THIS_ENTITY);
     }
 }

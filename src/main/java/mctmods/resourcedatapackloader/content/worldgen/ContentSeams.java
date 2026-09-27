@@ -15,7 +15,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,7 +24,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import java.util.ArrayList;
@@ -49,15 +49,15 @@ public final class ContentSeams {
     private static final String BEDROCK_FLOOR = "bedrock_floor";
     private static final String BEDROCK_ROOF = "bedrock_roof";
     private static final Map<Level, Map<UUID, BlockPos>> STOOD = new WeakHashMap<>();
-    private static final Set<ResourceLocation> MISSING = new LinkedHashSet<>();
+    private static final Set<Identifier> MISSING = new LinkedHashSet<>();
     private static final Target BELOW = new Target("worldBelow");
     private static final Target ABOVE = new Target("worldAbove");
 
     private ContentSeams() {}
 
-    @Nullable public static ResourceLocation below(String dimension) { return BELOW.targetFor(dimension); }
+    @Nullable public static Identifier below(String dimension) { return BELOW.targetFor(dimension); }
 
-    @Nullable public static ResourceLocation above(String dimension) { return ABOVE.targetFor(dimension); }
+    @Nullable public static Identifier above(String dimension) { return ABOVE.targetFor(dimension); }
 
     public static boolean opensFloor(String dimension) { return BELOW.targetFor(dimension) != null && opensBedrock(); }
 
@@ -92,11 +92,11 @@ public final class ContentSeams {
     }
 
     public static void tick(ServerLevel level) {
-        String dimension = level.dimension().location().toString();
-        ResourceLocation below = BELOW.targetFor(dimension);
-        ResourceLocation above = ABOVE.targetFor(dimension);
+        String dimension = level.dimension().identifier().toString();
+        Identifier below = BELOW.targetFor(dimension);
+        Identifier above = ABOVE.targetFor(dimension);
         if (below == null && above == null) { return; }
-        int floor = level.getMinBuildHeight();
+        int floor = level.getMinY();
         int ceiling = ceiling(level);
         boolean carryEntities = ContentControl.flag(ContentControl.TERRAIN, "worldSeamEntities", Config.worldgen.worldSeamEntities());
         List<Entity> falling = null;
@@ -107,7 +107,7 @@ public final class ContentSeams {
             boolean player = entity instanceof ServerPlayer;
             if (!player && !carryEntities) { continue; }
             if (player && entity.onGround() && entity.getY() >= floor && entity.getY() <= ceiling) {
-                STOOD.computeIfAbsent(level, key -> new HashMap<>()).put(entity.getUUID(), entity.blockPosition());
+                STOOD.computeIfAbsent(level, _ -> new HashMap<>()).put(entity.getUUID(), entity.blockPosition());
             }
             if (below != null && entity.getY() < floor + 1) {
                 if (falling == null) { falling = new ArrayList<>(); }
@@ -126,16 +126,16 @@ public final class ContentSeams {
         }
     }
 
-    private static void carry(ServerLevel level, Entity entity, ResourceLocation target, boolean down, int sourceFloor, int sourceCeiling) {
-        if (target.equals(level.dimension().location())) { return; }
+    private static void carry(ServerLevel level, Entity entity, Identifier target, boolean down, int sourceFloor, int sourceCeiling) {
+        if (target.equals(level.dimension().identifier())) { return; }
         MinecraftServer server = level.getServer();
         ServerLevel destination = server.getLevel(ResourceKey.create(Registries.DIMENSION, target));
         if (destination == null) {
-            if (MISSING.add(target)) { ContentLog.LOGGER.error("The seam of {} leads to {}, which is not a loaded dimension, so nothing crosses it", level.dimension().location(), target); }
+            if (MISSING.add(target)) { ContentLog.LOGGER.error("The seam of {} leads to {}, which is not a loaded dimension, so nothing crosses it", level.dimension().identifier(), target); }
             if (entity instanceof ServerPlayer player) { bounce(player, down, sourceFloor, sourceCeiling); }
             return;
         }
-        int floor = destination.getMinBuildHeight();
+        int floor = destination.getMinY();
         int ceiling = ceiling(destination);
         double arriveY = down ? ceiling - INSET_DOWN : floor + INSET_UP;
         boolean walking = entity instanceof ServerPlayer;
@@ -154,12 +154,12 @@ public final class ContentSeams {
         Vec3 motion = entity.getDeltaMovement();
         Seam seam = new Seam(anchorX, arriveY, anchorZ, motion, down, floor, ceiling, remembered);
         Landing landing = seam.land(destination);
-        Entity moved = entity.changeDimension(new DimensionTransition(destination, landing.pos(), landing.speed(), entity.getYRot(), entity.getXRot(), arrived -> seam.arrive(destination, arrived, landing.spot())));
+        Entity moved = entity.teleport(new TeleportTransition(destination, landing.pos(), landing.speed(), entity.getYRot(), entity.getXRot(), arrived -> seam.arrive(destination, arrived, landing.spot())));
         if (moved == null && entity instanceof ServerPlayer player) { bounce(player, down, sourceFloor, sourceCeiling); }
-        else if (moved != null) { ContentLog.LOGGER.debug("The seam of {} carried {} {} into {} at {}, {}, {}", level.dimension().location(), moved.getType(), down ? "down" : "up", target, moved.getBlockX(), moved.getBlockY(), moved.getBlockZ()); }
+        else if (moved != null) { ContentLog.LOGGER.debug("The seam of {} carried {} {} into {} at {}, {}, {}", level.dimension().identifier(), moved.getType(), down ? "down" : "up", target, moved.getBlockX(), moved.getBlockY(), moved.getBlockZ()); }
     }
 
-    public static int ceiling(Level level) { return Math.min(level.getMaxBuildHeight(), level.getMinBuildHeight() + level.dimensionType().logicalHeight()); }
+    public static int ceiling(Level level) { return Math.min(level.getMaxY() + 1, level.getMinY() + level.dimensionType().logicalHeight()); }
 
     private static void bounce(ServerPlayer player, boolean down, int floor, int ceiling) {
         boolean beyond = down ? player.getY() < floor + 1 : player.getY() > ceiling - 2;
@@ -167,7 +167,7 @@ public final class ContentSeams {
         if (down) {
             BlockPos feet = stood(player);
             if (feet == null) { feet = footing(player, floor, Math.min(ceiling - 1, floor + RESCUE_BAND)); }
-            if (feet == null) { feet = ContentDimensions.landing((ServerLevel) player.level(), player.level().getSharedSpawnPos(), Heightmap.Types.MOTION_BLOCKING); }
+            if (feet == null) { feet = ContentDimensions.landing(player.level(), player.level().getRespawnData().pos(), Heightmap.Types.MOTION_BLOCKING); }
             player.teleportTo(feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D);
         }
         else { player.teleportTo(player.getX(), ceiling - INSET_DOWN, player.getZ()); }
@@ -316,7 +316,7 @@ public final class ContentSeams {
 
     private static final class Target {
         private final String key;
-        private final DimensionValues<ResourceLocation> values;
+        private final DimensionValues<Identifier> values;
         private final TemplateMemo<List<String>> asked = new TemplateMemo<>();
 
         Target(String key) {
@@ -329,8 +329,8 @@ public final class ContentSeams {
             return asked.get(() -> ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow() : Config.worldgen.worldAbove()));
         }
 
-        @Nullable ResourceLocation targetFor(String dimension) { return values.at(dimension, asked()); }
+        @Nullable Identifier targetFor(String dimension) { return values.at(dimension, asked()); }
 
-        @Nullable private static ResourceLocation dimension(String value) { return ResourceLocation.tryParse(ContentFormats.dimensionId(value)); }
+        @Nullable private static Identifier dimension(String value) { return Identifier.tryParse(ContentFormats.dimensionId(value)); }
     }
 }

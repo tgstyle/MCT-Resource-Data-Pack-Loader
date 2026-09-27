@@ -41,11 +41,11 @@ public final class ContentCityDeckPiece extends StructurePiece implements PieceB
 
     public ContentCityDeckPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.seat = tag.getInt(SEAT);
-        this.keep = tag.getIntArray(KEEP);
-        this.strip = tag.getIntArray(STRIP);
-        this.deck = tag.getIntArray(DECK);
-        this.decked = tag.getByteArray(DECKED);
+        this.seat = tag.getIntOr(SEAT, 0);
+        this.keep = tag.getIntArray(KEEP).orElse(new int[0]);
+        this.strip = tag.getIntArray(STRIP).orElse(new int[0]);
+        this.deck = tag.getIntArray(DECK).orElse(new int[0]);
+        this.decked = tag.getByteArray(DECKED).orElse(new byte[0]);
     }
 
     private static BoundingBox reach(int seat, int[] strip, int[] deck, int head) {

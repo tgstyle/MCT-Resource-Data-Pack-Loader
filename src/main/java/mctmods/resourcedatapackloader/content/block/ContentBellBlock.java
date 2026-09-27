@@ -10,7 +10,7 @@ import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -26,6 +26,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 
 import javax.annotation.Nonnull;
@@ -49,11 +50,12 @@ public final class ContentBellBlock extends BellBlock implements IContentBell {
     @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBellBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
-        return createTickerHelper(type, ContentBells.registeredType(), ContentBellBlockEntity::tick);
+        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.registeredType();
+        return bells == null ? null : createTickerHelper(type, bells, ContentBellBlockEntity::tick);
     }
 
     @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
-        return hit(level, state, hit, player) ? InteractionResult.sidedSuccess(level.isClientSide()) : InteractionResult.PASS;
+        return hit(level, state, hit, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
     }
 
     @Override protected void onProjectileHit(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockHitResult hit, @Nonnull Projectile projectile) {
@@ -61,7 +63,7 @@ public final class ContentBellBlock extends BellBlock implements IContentBell {
         hit(level, state, hit, owner instanceof Player player ? player : null);
     }
 
-    @Override protected void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block from, @Nonnull BlockPos fromPos, boolean moving) {
+    @Override protected void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block from, @Nullable Orientation orientation, boolean moving) {
         boolean powered = level.hasNeighborSignal(pos);
         if (powered == state.getValue(POWERED)) { return; }
         if (powered) { ring(level, pos, null); }
@@ -99,7 +101,7 @@ public final class ContentBellBlock extends BellBlock implements IContentBell {
 
     private static void play(Level level, BlockPos pos, String name, float volume) {
         if (name.isEmpty()) { return; }
-        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, ResourceLocation.tryParse(name));
+        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, Identifier.tryParse(name));
         if (sound != null) { level.playSound(null, pos, sound, SoundSource.BLOCKS, volume, 1.0F); }
     }
 }

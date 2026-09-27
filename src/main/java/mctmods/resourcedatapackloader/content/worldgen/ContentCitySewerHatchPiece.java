@@ -35,9 +35,9 @@ public final class ContentCitySewerHatchPiece extends StructurePiece {
 
     public ContentCitySewerHatchPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.shaftX = tag.getInt(SHAFT_X);
-        this.shaftZ = tag.getInt(SHAFT_Z);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.shaftX = tag.getIntOr(SHAFT_X, 0);
+        this.shaftZ = tag.getIntOr(SHAFT_Z, 0);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -53,7 +53,7 @@ public final class ContentCitySewerHatchPiece extends StructurePiece {
             if (lining == null) { return; }
             int floor = this.level - ContentCity.sewerDepth();
             int height = ContentCity.sewerHeight();
-            if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
+            if (ContentCitySewerPiece.cramped(level.getMinY(), this.level)) { return; }
             if (ContentCitySewerPiece.shaft(level, box, CityRails.subways(CityGround.of(level), shaftX - 1, shaftZ - 1, shaftX + 1, shaftZ + 1), shaftX, shaftZ, floor, floor + 2 + height, this.level, lining, new BlockPos.MutableBlockPos())) { ContentLog.LOGGER.debug("A manhole is cut at {}, {} from the street at y {} down to the sewer walk", shaftX, shaftZ, this.level); }
         }
         finally { CityBiome.leave(); }

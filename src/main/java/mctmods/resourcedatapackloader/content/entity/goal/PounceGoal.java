@@ -1,6 +1,10 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.Compat;
+
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -63,8 +67,9 @@ public final class PounceGoal extends Goal {
         }
         if (mob.distanceToSqr(target) < 4.0D) {
             float damage = (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE);
-            target.hurt(mob.damageSources().mobAttack(mob), damage);
-            target.knockback(1.0D, Mth.sin(mob.getYRot() * 0.017453292F), -Mth.cos(mob.getYRot() * 0.017453292F));
+            DamageSource source = mob.damageSources().mobAttack(mob);
+            if (target.level() instanceof ServerLevel level) { target.hurtServer(level, source, damage); }
+            Compat.knockback(target, 1.0D, Mth.sin(mob.getYRot() * 0.017453292F), -Mth.cos(mob.getYRot() * 0.017453292F), source, damage);
             airborne = false;
             return;
         }

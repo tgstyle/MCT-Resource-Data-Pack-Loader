@@ -8,10 +8,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.FastColor;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -130,7 +130,7 @@ public class ContentBellBlockEntity extends BlockEntity {
             double z = worldPosition.getZ() + 0.5D + dz / distance;
             for (int i = 0; i < per; i++) {
                 color += PARTICLE_STEP;
-                level.sendParticles(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, FastColor.ARGB32.opaque(color)), x, worldPosition.getY() + 0.5D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+                level.sendParticles(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, ARGB.opaque(color)), x, worldPosition.getY() + 0.5D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
             }
         }
     }

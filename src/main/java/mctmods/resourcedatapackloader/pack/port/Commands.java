@@ -1,23 +1,23 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.content.worldgen.GameRuleNames;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.Strictness;
 import com.google.gson.stream.JsonReader;
-import net.minecraft.world.level.GameRules;
 import java.io.Serial;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class Commands {
@@ -124,7 +124,7 @@ public final class Commands {
             case "execute" -> execute(args, pack);
             case "tellraw" -> "tellraw " + CommandSelectors.target(at(args, 1), pack) + " " + text(from(args, 2), pack);
             case "title" -> title(args, pack);
-            case "gamerule" -> gamerule(args, line);
+            case "gamerule" -> gamerule(args);
             case "weather" -> "weather " + at(args, 1).toLowerCase(Locale.ROOT) + (args.length > 2 ? " " + number(args[2]) + "s" : "");
             case "function" -> functionCall(args, pack);
             case "advancement" -> advancement(args, pack);
@@ -407,7 +407,7 @@ public final class Commands {
         JsonElement parsed;
         try {
             JsonReader reader = new JsonReader(new StringReader(json));
-            reader.setLenient(true);
+            reader.setStrictness(Strictness.LENIENT);
             parsed = JsonParser.parseReader(reader);
         }
         catch (JsonParseException failed) { throw new Kept("its text " + json + " is not JSON"); }
@@ -441,15 +441,21 @@ public final class Commands {
         }
     }
 
-    private static String gamerule(String[] args, String line) {
+    private static String gamerule(String[] args) {
         need(args, 2);
-        Set<String> rules = new LinkedHashSet<>();
-        GameRules.visitGameRuleTypes(new GameRules.GameRuleTypeVisitor() {
-            @Override public <T extends GameRules.Value<T>> void visit(@Nonnull GameRules.Key<T> key, @Nonnull GameRules.Type<T> type) { rules.add(key.getId()); }
-        });
         if (Convert.GAME_LOOP.equals(args[1])) { throw new Kept("the gameLoopFunction rule is gone and the #minecraft:tick function tag runs a function every tick"); }
-        if (!rules.contains(args[1])) { throw new Kept("this version has no game rule named " + args[1]); }
-        return line;
+        Map.Entry<String, String> rule = modernRule(args[1], args.length > 2 ? args[2] : null);
+        if (rule == null) { throw new Kept("this version has no game rule named " + args[1]); }
+        return "gamerule " + rule.getKey() + (args.length > 2 ? " " + rule.getValue() : "");
+    }
+
+    @Nullable static Map.Entry<String, String> modernRule(String name, @Nullable String value) {
+        for (String probe : value != null ? List.of(value) : List.of("true", "0")) {
+            for (Map.Entry<String, String> rule : GameRuleNames.modernize(Map.of(name, probe)).entrySet()) {
+                if (GameRuleNames.rule(rule.getKey()) != null) { return rule; }
+            }
+        }
+        return null;
     }
 
     private static String functionCall(String[] args, Ported pack) {

@@ -24,7 +24,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import net.minecraft.server.dedicated.DedicatedServerSettings;
@@ -32,7 +32,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -41,6 +41,7 @@ import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.storage.LevelData;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import java.util.HashMap;
@@ -71,23 +72,23 @@ public final class ContentWorldShape {
             "customized", new String[] { "normal", "overworld" }, "default_1_1", new String[] { "normal", "overworld" });
     private static final Set<String> OPTION_KEYS = Set.of("seaLevel", "useLavaOceans", "fixedBiome");
     static final Set<String> WARNED = new HashSet<>();
-    private static final Set<ResourceLocation> MADE = new LinkedHashSet<>();
+    private static final Set<Identifier> MADE = new LinkedHashSet<>();
     private static final Set<ResourceKey<NoiseGeneratorSettings>> OVERWORLD_NOISE = Set.of(NoiseGeneratorSettings.OVERWORLD, NoiseGeneratorSettings.LARGE_BIOMES, NoiseGeneratorSettings.AMPLIFIED);
-    private static final Set<ResourceLocation> SHAPED_OVERWORLD_NOISE = new HashSet<>();
-    private static final Map<ResourceLocation, ResourceKey<NoiseGeneratorSettings>> VOIDED_OVERWORLD = new HashMap<>();
-    private static final Map<ResourceLocation, Unvoided> UNVOIDED = new ConcurrentHashMap<>();
+    private static final Set<Identifier> SHAPED_OVERWORLD_NOISE = new HashSet<>();
+    private static final Map<Identifier, ResourceKey<NoiseGeneratorSettings>> VOIDED_OVERWORLD = new HashMap<>();
+    private static final Map<Identifier, Unvoided> UNVOIDED = new ConcurrentHashMap<>();
     private static final int UNREAD_SURFACE = 62;
-    @Nullable private static ResourceLocation presetId;
+    @Nullable private static Identifier presetId;
     @Nullable private static String presetName;
-    @Nullable private static ResourceLocation overrode;
+    @Nullable private static Identifier overrode;
     @Nullable private static JsonObject flatSettings;
     static boolean blockedToVoid;
 
     private ContentWorldShape() {}
 
-    @Nullable public static ResourceLocation presetId() { return presetId; }
+    @Nullable public static Identifier presetId() { return presetId; }
 
-    @Nullable public static ResourceLocation serverPreset(String levelType) {
+    @Nullable public static Identifier serverPreset(String levelType) {
         if (presetId == null) { return null; }
         String named = levelType.trim();
         if (named.equals(presetId.toString()) || kept(named)) { return null; }
@@ -116,7 +117,7 @@ public final class ContentWorldShape {
 
     private record Unvoided(long seed, NoiseBasedChunkGenerator generator, RandomState random) {}
 
-    private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves, @Nullable String fixedBiome) {
+    private record Shape(Identifier id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves, @Nullable String fixedBiome) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
         boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || fixedBiome != null; }
@@ -169,7 +170,7 @@ public final class ContentWorldShape {
 
     private static Shape shape() {
         WorldTemplateDef template = ContentWorldTemplates.active();
-        ResourceLocation id = template == null ? ResourceLocation.fromNamespaceAndPath("rdpl", "settings") : template.key();
+        Identifier id = template == null ? Identifier.fromNamespaceAndPath("rdpl", "settings") : template.key();
         String name = template == null ? "RDPL settings" : template.name();
         String type = ContentTerrain.worldType().trim().toLowerCase(Locale.ROOT);
         String[] base = BASES.get(type);
@@ -212,7 +213,7 @@ public final class ContentWorldShape {
         boolean overworld = OVERWORLD.equals(dimension);
         String typeId = dimension;
         if (overworld && shape.tall()) {
-            JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "dimension_type/overworld.json"));
+            JsonObject type = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/overworld.json"));
             if (type != null) {
                 type.addProperty("min_y", shape.minY());
                 type.addProperty("height", shape.maxY() - shape.minY());
@@ -241,7 +242,7 @@ public final class ContentWorldShape {
         generator.add("biome_source", source);
         String vanillaSettings = vanillaSettings(shape, dimension);
         if (isVoid) {
-            ResourceLocation id = ownId(shape, path + "_void");
+            Identifier id = ownId(shape, path + "_void");
             voided(id, overworld, vanillaSettings);
             out.add("generator", voidGenerator(source, vanillaSettings, id));
             return out;
@@ -255,7 +256,7 @@ public final class ContentWorldShape {
     private static void keepSaved(Shape shape) {
         for (String dimension : DIMENSIONS) {
             String path = dimension.substring(dimension.indexOf(':') + 1);
-            ResourceLocation voidId = ownId(shape, path + "_void");
+            Identifier voidId = ownId(shape, path + "_void");
             if (!MADE.contains(voidId)) {
                 String vanillaSettings = vanillaSettings(shape, dimension);
                 voided(voidId, OVERWORLD.equals(dimension), vanillaSettings);
@@ -267,16 +268,16 @@ public final class ContentWorldShape {
 
     private static String vanillaSettings(Shape shape, String dimension) { return OVERWORLD.equals(dimension) ? shape.base()[1] : NETHER.equals(dimension) ? "nether" : "end"; }
 
-    private static void voided(ResourceLocation id, boolean overworld, String vanillaSettings) {
+    private static void voided(Identifier id, boolean overworld, String vanillaSettings) {
         MADE.add(id);
-        if (overworld) { VOIDED_OVERWORLD.put(id, ResourceKey.create(Registries.NOISE_SETTINGS, ResourceLocation.fromNamespaceAndPath("minecraft", vanillaSettings))); }
+        if (overworld) { VOIDED_OVERWORLD.put(id, ResourceKey.create(Registries.NOISE_SETTINGS, Identifier.fromNamespaceAndPath("minecraft", vanillaSettings))); }
     }
 
     @Nullable private static String noiseSettings(Shape shape, String dimension, boolean flatBedrock, boolean always) {
         boolean overworld = OVERWORLD.equals(dimension);
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
         if (!always && !((overworld && (shape.shapesOverworld() || ContentBiomes.any() || ContentOreControl.veinsBlocked(dimension))) || flatBedrock || seamed)) { return null; }
-        JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings(shape, dimension) + ".json"));
+        JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings(shape, dimension) + ".json"));
         if (settings == null) { return null; }
         if (overworld) { shapeNoise(settings, shape); }
         if (overworld && ContentOreControl.veinsBlocked(dimension)) {
@@ -290,13 +291,13 @@ public final class ContentWorldShape {
         if (seamed) { ContentSeams.openBedrock(settings, dimension); }
         if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
         String settingsId = made(shape, dimension.substring(dimension.indexOf(':') + 1) + "_noise", "worldgen/noise_settings", settings);
-        if (overworld) { overworldNoise(ResourceLocation.parse(settingsId)); }
+        if (overworld) { overworldNoise(Identifier.parse(settingsId)); }
         return settingsId;
     }
 
-    static JsonObject voidGenerator(JsonObject source, String vanillaSettings, ResourceLocation id) {
+    static JsonObject voidGenerator(JsonObject source, String vanillaSettings, Identifier id) {
         JsonObject generator = new JsonObject();
-        JsonObject settings = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
+        JsonObject settings = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/noise_settings/" + vanillaSettings + ".json"));
         if (settings == null) {
             generator.addProperty("type", "minecraft:flat");
             JsonObject flat = new JsonObject();
@@ -364,19 +365,19 @@ public final class ContentWorldShape {
     }
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
-        ResourceLocation id = ownId(shape, suffix);
+        Identifier id = ownId(shape, suffix);
         GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), folder + "/" + id.getPath() + ".json", json.toString());
         MADE.add(id);
         return id.toString();
     }
 
-    private static ResourceLocation ownId(Shape shape, String suffix) { return ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_" + suffix); }
+    private static Identifier ownId(Shape shape, String suffix) { return Identifier.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_" + suffix); }
 
     private static void shapeNoise(JsonObject settings, Shape shape) {
         JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
-        if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ResourceLocation.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_overworld"), shape.minY()); }
+        if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, Identifier.fromNamespaceAndPath(shape.id().getNamespace(), shape.id().getPath() + "_overworld"), shape.minY()); }
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }
         if (shape.lavaOceans()) {
             JsonObject lava = new JsonObject();
@@ -411,7 +412,7 @@ public final class ContentWorldShape {
     }
 
     @Nullable static Block block(String name, String key) {
-        Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.trim()));
+        Block found = Registered.find(BuiltInRegistries.BLOCK, Identifier.tryParse(name.trim()));
         if (found == null && WARNED.add(key + ":" + name)) { ContentLog.LOGGER.error("{} names block '{}', which is not registered, so it does nothing", key, name); }
         return found;
     }
@@ -421,15 +422,15 @@ public final class ContentWorldShape {
         if (ContentVoidWorld.voidApplies(level)) {
             BlockPos center = ContentVoidWorld.platformCenter(level);
             ContentVoidWorld.platform(level, center);
-            event.getSettings().setSpawn(center.above(), 0.0F);
-            level.getGameRules().getRule(GameRules.RULE_SPAWN_RADIUS).set(0, level.getServer());
+            event.getSettings().setSpawn(LevelData.RespawnData.of(level.dimension(), center.above(), 0.0F, 0.0F));
+            level.getGameRules().set(GameRules.RESPAWN_RADIUS, 0, level.getServer());
             event.setCanceled(true);
             Summary.info("void", "Made a void world with a platform at " + center.getX() + ", " + center.getY() + ", " + center.getZ());
         }
         if (level.dimension() != Level.OVERWORLD) { return; }
         BlockPos spawn = spawnAsked(level);
         if (spawn == null) { return; }
-        event.getSettings().setSpawn(spawn, 0.0F);
+        event.getSettings().setSpawn(LevelData.RespawnData.of(level.dimension(), spawn, 0.0F, 0.0F));
         event.setCanceled(true);
         Summary.info("spawn", "Spawned the world at " + spawn.getX() + ", " + spawn.getY() + ", " + spawn.getZ() + " as asked");
     }
@@ -463,7 +464,7 @@ public final class ContentWorldShape {
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level) || level.dimension() != Level.OVERWORLD) { return; }
         ContentVoidWorld.remember(level);
-        VanillaWindow.keep(level.getMinBuildHeight() < VANILLA_MIN && madeHere(level) ? level.getChunkSource().getGenerator() : null);
+        VanillaWindow.keep(level.getMinY() < VANILLA_MIN && madeHere(level) ? level.getChunkSource().getGenerator() : null);
     }
 
     public static void onServerStarted(ServerStartedEvent event) {
@@ -477,7 +478,7 @@ public final class ContentWorldShape {
     }
 
     private static void writeBack(MinecraftServer server) {
-        ResourceLocation wanted = overrode;
+        Identifier wanted = overrode;
         if (wanted == null || !(server instanceof DedicatedServer dedicated)) { return; }
         overrode = null;
         DedicatedServerSettings settings = ((IDedicatedServer) dedicated).rdpl$settings();
@@ -498,7 +499,7 @@ public final class ContentWorldShape {
 
     private static void tell(ServerPlayer player) {
         if (!Config.worldgen.tellWorldType() || presetName == null) { return; }
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         if (level.dimension() != Level.OVERWORLD || !madeHere(level)) { return; }
         player.sendSystemMessage(Component.literal(Lang.tr(player, "rdpl.world.type", presetName)));
     }
@@ -515,13 +516,13 @@ public final class ContentWorldShape {
     @Nullable private static Unvoided unvoided(Structure.GenerationContext context) {
         if (!(context.chunkGenerator() instanceof NoiseBasedChunkGenerator noise)) { return null; }
         ResourceKey<NoiseGeneratorSettings> settings = noise.generatorSettings().unwrapKey().orElse(null);
-        ResourceKey<NoiseGeneratorSettings> original = settings == null ? null : VOIDED_OVERWORLD.get(settings.location());
+        ResourceKey<NoiseGeneratorSettings> original = settings == null ? null : VOIDED_OVERWORLD.get(settings.identifier());
         if (original == null) { return null; }
-        Unvoided held = UNVOIDED.get(settings.location());
+        Unvoided held = UNVOIDED.get(settings.identifier());
         if (held != null && held.seed() == context.seed()) { return held; }
-        Holder<NoiseGeneratorSettings> shape = context.registryAccess().registryOrThrow(Registries.NOISE_SETTINGS).getHolderOrThrow(original);
+        Holder<NoiseGeneratorSettings> shape = context.registryAccess().lookupOrThrow(Registries.NOISE_SETTINGS).getOrThrow(original);
         Unvoided made = new Unvoided(context.seed(), new NoiseBasedChunkGenerator(noise.getBiomeSource(), shape), RandomState.create(shape.value(), context.registryAccess().lookupOrThrow(Registries.NOISE), context.seed()));
-        UNVOIDED.put(settings.location(), made);
+        UNVOIDED.put(settings.identifier(), made);
         return made;
     }
 
@@ -529,18 +530,18 @@ public final class ContentWorldShape {
         if (ContentFlatSource.flat(generator)) { return true; }
         if (!(generator instanceof NoiseBasedChunkGenerator noise)) { return false; }
         ResourceKey<NoiseGeneratorSettings> settings = noise.generatorSettings().unwrapKey().orElse(null);
-        return settings != null && (OVERWORLD_NOISE.contains(settings) || SHAPED_OVERWORLD_NOISE.contains(settings.location()));
+        return settings != null && (OVERWORLD_NOISE.contains(settings) || SHAPED_OVERWORLD_NOISE.contains(settings.identifier()));
     }
 
-    public static void overworldNoise(ResourceLocation settings) { SHAPED_OVERWORLD_NOISE.add(settings); }
+    public static void overworldNoise(Identifier settings) { SHAPED_OVERWORLD_NOISE.add(settings); }
 
     private static boolean madeHere(ServerLevel level) {
         ResourceKey<?> type = level.dimensionTypeRegistration().unwrapKey().orElse(null);
-        if (type != null && MADE.contains(type.location())) { return true; }
+        if (type != null && MADE.contains(type.identifier())) { return true; }
         ChunkGenerator generator = level.getChunkSource().getGenerator();
         if (generator instanceof NoiseBasedChunkGenerator noise && !ContentFlatSource.flat(generator)) {
             ResourceKey<?> settings = noise.generatorSettings().unwrapKey().orElse(null);
-            return settings != null && MADE.contains(settings.location());
+            return settings != null && MADE.contains(settings.identifier());
         }
         return ContentFlatSource.flat(generator) && ContentVoidWorld.voidApplies(level);
     }

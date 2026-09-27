@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Entity.class) public abstract class MixinEntityFire {
     @Inject(method = "igniteForTicks", at = @At("HEAD"), cancellable = true)
-    private void rdpl$noFireFromBlows(int ticks, CallbackInfo ci) {
+    private void rdpl$noFireFromBlows(int numberOfTicks, CallbackInfo ci) {
         if (ContentEntities.struckFireless((Entity) (Object) this)) { ci.cancel(); }
     }
 }

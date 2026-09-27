@@ -60,7 +60,7 @@ public final class ContentPristine {
             return;
         }
         long begun = System.currentTimeMillis();
-        int files = give(server, along -> {});
+        int files = give(server, _ -> {});
         if (files > 0) { ContentLog.LOGGER.info("Restored {} from the pristine copy, {} file(s) in {} ms, so it is not generated again", save.getFileName(), files, System.currentTimeMillis() - begun); }
     }
 

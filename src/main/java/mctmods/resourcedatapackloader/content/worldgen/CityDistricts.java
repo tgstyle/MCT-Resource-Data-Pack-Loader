@@ -89,7 +89,7 @@ final class CityDistricts {
         int[] pinned = pinnedIn(ContentCity.STRUCTURE, regionX, regionZ, spacing);
         if (pinned != null) { return pinned; }
         if (villagesPinned()) { return pinnedIn(VILLAGES, regionX, regionZ, spacing); }
-        return SITES.computeIfAbsent(CityPlan.packed(regionX, regionZ), key -> Optional.ofNullable(founded(ground, regionX, regionZ, spacing))).orElse(null);
+        return SITES.computeIfAbsent(CityPlan.packed(regionX, regionZ), _ -> Optional.ofNullable(founded(ground, regionX, regionZ, spacing))).orElse(null);
     }
 
     private static boolean villagesPinned() {

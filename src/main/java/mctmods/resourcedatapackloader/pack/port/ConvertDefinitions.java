@@ -68,6 +68,23 @@ final class ConvertDefinitions {
         return out;
     }
 
+    static JsonArray exposureDimensions(JsonArray names, Ported pack) {
+        JsonArray out = new JsonArray();
+        for (JsonElement element : names) {
+            if (!element.isJsonPrimitive()) {
+                out.add(element);
+                continue;
+            }
+            String text = element.getAsString();
+            int split = text.indexOf('=');
+            String name = (split < 0 ? text : text.substring(0, split)).trim();
+            String mapped = pack.dimension(name);
+            if (!mapped.equals(name) || element.getAsJsonPrimitive().isNumber()) { pack.rewrote(); }
+            out.add(mapped + (split < 0 ? "" : text.substring(split)));
+        }
+        return out;
+    }
+
     static JsonArray furnaceRemovals(JsonArray removals, Ported pack) {
         JsonArray out = new JsonArray();
         for (JsonElement element : removals) {

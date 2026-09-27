@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -15,7 +16,7 @@ import mctmods.resourcedatapackloader.util.Travel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,10 +24,10 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.Unbreakable;
+import net.minecraft.util.Unit;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
@@ -92,7 +93,7 @@ public final class ContentTeams {
             }
             if (team == null) { team = Scores.addTeam(board, def.name()); }
             team.setDisplayName(Component.literal(def.displayName()));
-            team.setColor(def.color());
+            Compat.setTeamColor(team, def.color());
             team.setPlayerPrefix(Component.literal(def.prefix()).withStyle(def.color()));
             team.setPlayerSuffix(Component.literal(def.suffix()));
             team.setAllowFriendlyFire(def.friendlyFire());
@@ -134,24 +135,24 @@ public final class ContentTeams {
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (BY_NAME.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
-        String named = player.getGameProfile().getName();
+        String named = player.getGameProfile().name();
         if (!ContentTeamsPicks.pickedAlready(named)) {
             for (TeamDef def : BY_NAME.values()) {
                 if (def.players().contains(named)) {
-                    join(player.serverLevel(), named, def);
+                    join(player.level(), named, def);
                     break;
                 }
             }
         }
         for (TeamDef def : BY_NAME.values()) {
-            if (def.picksFrom().contains(TeamDef.PLAYERS)) { ContentTeamsPicks.fill(player.server, def, player); }
+            if (def.picksFrom().contains(TeamDef.PLAYERS)) { ContentTeamsPicks.fill(player.level().getServer(), def, player); }
         }
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         if (BY_NAME.isEmpty() || !(event.getEntity() instanceof ServerPlayer leaving)) { return; }
-        String name = leaving.getGameProfile().getName();
-        MinecraftServer server = leaving.server;
+        String name = leaving.getGameProfile().name();
+        MinecraftServer server = leaving.level().getServer();
         for (TeamDef def : BY_NAME.values()) {
             if (!TeamDef.FIRST.equals(def.lead()) || !name.equals(firstHere(server, def, null))) { continue; }
             String next = firstHere(server, def, name);
@@ -212,7 +213,7 @@ public final class ContentTeams {
 
     static void seated(String member, TeamDef def) {
         if (!TeamDef.FIRST.equals(def.lead())) { return; }
-        List<String> arrivals = ARRIVALS.computeIfAbsent(def.name(), team -> new ArrayList<>());
+        List<String> arrivals = ARRIVALS.computeIfAbsent(def.name(), _ -> new ArrayList<>());
         if (!arrivals.contains(member)) { arrivals.add(member); }
     }
 
@@ -224,15 +225,15 @@ public final class ContentTeams {
 
     private static void leadTold(ServerPlayer player, TeamDef def, String how) {
         if (!def.leadSays().isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_LEAD, def.leadSays().replace("{side}", def.displayName()) + how, def.color()); }
-        ContentLog.LOGGER.info("{} leads {}{}", player.getGameProfile().getName(), def.displayName(), how);
+        ContentLog.LOGGER.info("{} leads {}{}", player.getGameProfile().name(), def.displayName(), how);
     }
 
     public static void greet(ServerPlayer player) {
-        PlayerTeam held = Scores.teamOf(Scores.board(player.server), player.getGameProfile().getName());
+        PlayerTeam held = Scores.teamOf(Scores.board(player.level().getServer()), player.getGameProfile().name());
         TeamDef def = held == null ? null : BY_NAME.get(held.getName());
         if (def == null) { return; }
         Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_JOINED, "You are on " + def.displayName(), def.color());
-        if (player.getGameProfile().getName().equals(leadOf(player.serverLevel(), def))) { leadTold(player, def, ""); }
+        if (player.getGameProfile().name().equals(leadOf(player.level(), def))) { leadTold(player, def, ""); }
     }
 
     @Nullable private static String firstHere(MinecraftServer server, TeamDef def, @Nullable String except) {
@@ -247,7 +248,7 @@ public final class ContentTeams {
 
     public static boolean leadsNoSide(ServerPlayer player) {
         for (TeamDef def : BY_NAME.values()) {
-            if (player.getGameProfile().getName().equals(leadOf(player.serverLevel(), def))) { return false; }
+            if (player.getGameProfile().name().equals(leadOf(player.level(), def))) { return false; }
         }
         return true;
     }
@@ -263,7 +264,7 @@ public final class ContentTeams {
 
     public static void placeAtSpawns(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().getName());
+            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().name());
             TeamDef def = held == null ? null : BY_NAME.get(held.getName());
             if (def == null || def.spawnAt() == null) { continue; }
             Travel.to(player, server.overworld(), def.spawnAt()[0] + 0.5D, def.spawnAt()[1], def.spawnAt()[2] + 0.5D, player.getYRot(), player.getXRot());
@@ -273,9 +274,9 @@ public final class ContentTeams {
     public static void give(ServerPlayer player, TeamDef def) {
         if (def.gives().isEmpty()) { return; }
         for (ItemGiveDef one : def.gives()) {
-            ItemStack stack = ContentStacks.parse(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "teams/" + def.name()), one.item(), one.count());
+            ItemStack stack = ContentStacks.parse(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "teams/" + def.name()), one.item(), one.count());
             if (stack.isEmpty()) { continue; }
-            if (one.unbreakable()) { stack.set(DataComponents.UNBREAKABLE, new Unbreakable(true)); }
+            if (one.unbreakable()) { stack.set(DataComponents.UNBREAKABLE, Unit.INSTANCE); }
             if (!player.getInventory().add(stack)) { player.drop(stack, false); }
         }
         player.inventoryMenu.broadcastChanges();
@@ -283,7 +284,7 @@ public final class ContentTeams {
 
     public static void giveAll(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().getName());
+            PlayerTeam held = Scores.teamOf(Scores.board(server), player.getGameProfile().name());
             TeamDef def = held == null ? null : BY_NAME.get(held.getName());
             if (def != null) { give(player, def); }
         }
@@ -291,7 +292,7 @@ public final class ContentTeams {
 
     public static boolean standsFor(ServerLevel level, String voter, String choice, TeamDef def) {
         if (!TeamDef.VOTE.equals(def.lead()) || !onTeam(level.getServer(), voter, def) || !onTeam(level.getServer(), choice, def)) { return false; }
-        BALLOTS.computeIfAbsent(def.name(), team -> new LinkedHashMap<>()).put(voter, choice);
+        BALLOTS.computeIfAbsent(def.name(), _ -> new LinkedHashMap<>()).put(voter, choice);
         return true;
     }
 
@@ -368,13 +369,13 @@ public final class ContentTeams {
     }
 
     @Nullable public static String standingOf(ServerPlayer player) {
-        PlayerTeam held = Scores.teamOf(Scores.board(player.server), player.getGameProfile().getName());
+        PlayerTeam held = Scores.teamOf(Scores.board(player.level().getServer()), player.getGameProfile().name());
         return held == null ? null : held.getName();
     }
 
-    public static void take(ServerPlayer player, TeamDef def) { join(player.serverLevel(), player.getGameProfile().getName(), def); }
+    public static void take(ServerPlayer player, TeamDef def) { join(player.level(), player.getGameProfile().name(), def); }
 
-    public static void waitFor(ServerPlayer player, TeamDef def) { WAITING.put(player.getGameProfile().getName(), def.name()); }
+    public static void waitFor(ServerPlayer player, TeamDef def) { WAITING.put(player.getGameProfile().name(), def.name()); }
 
     public static void seatWaiting(MinecraftServer server) {
         if (WAITING.isEmpty()) { return; }
@@ -382,7 +383,7 @@ public final class ContentTeams {
             TeamDef def = BY_NAME.get(one.getValue());
             ServerPlayer player = server.getPlayerList().getPlayerByName(one.getKey());
             if (def == null || player == null) { continue; }
-            join(player.serverLevel(), player.getGameProfile().getName(), def);
+            join(player.level(), player.getGameProfile().name(), def);
             Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_ROUND_ENDED, "The round ended, so you are on " + def.displayName(), def.color());
         }
         WAITING.clear();
@@ -410,11 +411,11 @@ public final class ContentTeams {
     }
 
     public static boolean stand(ServerPlayer player) {
-        String name = player.getGameProfile().getName();
-        PlayerTeam held = Scores.teamOf(Scores.board(player.server), name);
-        if (held == null || !Scores.leave(Scores.board(player.server), name)) { return false; }
+        String name = player.getGameProfile().name();
+        PlayerTeam held = Scores.teamOf(Scores.board(player.level().getServer()), name);
+        if (held == null || !Scores.leave(Scores.board(player.level().getServer()), name)) { return false; }
         TeamDef def = BY_NAME.get(held.getName());
-        if (def != null) { ContentTeamsPicks.stoodDown(player.server, def, name); }
+        if (def != null) { ContentTeamsPicks.stoodDown(player.level().getServer(), def, name); }
         return true;
     }
 
@@ -444,13 +445,13 @@ public final class ContentTeams {
     private static void standIn(MinecraftServer server, ServerLevel level, TeamDef def, boolean now) {
         boolean manned = false;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (onTeam(server, player.getGameProfile().getName(), def)) {
+            if (onTeam(server, player.getGameProfile().name(), def)) {
                 manned = true;
                 break;
             }
         }
-        ResourceLocation id = ResourceLocation.tryParse(def.standIn());
-        EntityType<?> kind = id == null ? null : EntityType.byString(id.toString()).orElse(null);
+        Identifier id = Identifier.tryParse(def.standIn());
+        EntityType<?> kind = Compat.entityType(id);
         List<Entity> standing = new ArrayList<>();
         for (Entity one : level.getAllEntities()) {
             if (one instanceof Player || !one.isAlive() || one.getType() != kind) { continue; }
@@ -464,13 +465,13 @@ public final class ContentTeams {
         if (!standing.isEmpty() || ContentScoring.standInWaits() && !now) { return; }
         int[] at = def.standInAt();
         if (at == null || !level.isLoaded(new BlockPos(at[0], at[1], at[2]))) { return; }
-        Entity made = kind == null ? null : kind.create(level);
+        Entity made = kind == null ? null : kind.create(level, EntitySpawnReason.EVENT);
         if (made == null) {
             if (UNMADE.add(def.name())) { ContentLog.LOGGER.error("Team {} names {} as its stand-in, which nothing registers, so the side has none; this is said once", def.name(), def.standIn()); }
             return;
         }
-        made.moveTo(at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F);
-        if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(made.blockPosition()), MobSpawnType.EVENT, null); }
+        made.snapTo(at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F);
+        if (made instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(made.blockPosition()), EntitySpawnReason.EVENT, null); }
         level.addFreshEntity(made);
         join(level, made.getStringUUID(), def);
         ContentLog.LOGGER.info("No player stands on {}, so a {} stands in at {}, {}, {}", def.displayName(), def.standIn(), at[0], at[1], at[2]);

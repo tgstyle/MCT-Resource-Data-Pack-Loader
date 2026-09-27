@@ -58,15 +58,15 @@ public final class ContentCityIntersectPiece extends StructurePiece implements P
 
     public ContentCityIntersectPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.design = tag.getString(DESIGN);
-        this.rowLow = tag.getInt(ROW_LOW);
-        this.rowHigh = tag.getInt(ROW_HIGH);
-        this.columnLow = tag.getInt(COLUMN_LOW);
-        this.columnHigh = tag.getInt(COLUMN_HIGH);
-        this.arms = tag.contains(ARMS) ? tag.getInt(ARMS) : ALL_ARMS;
-        this.coreX = tag.contains(CORE_X) ? tag.getInt(CORE_X) : (columnHigh - columnLow) / 2;
-        this.coreZ = tag.contains(CORE_Z) ? tag.getInt(CORE_Z) : (rowHigh - rowLow) / 2;
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.design = tag.getStringOr(DESIGN, "");
+        this.rowLow = tag.getIntOr(ROW_LOW, 0);
+        this.rowHigh = tag.getIntOr(ROW_HIGH, 0);
+        this.columnLow = tag.getIntOr(COLUMN_LOW, 0);
+        this.columnHigh = tag.getIntOr(COLUMN_HIGH, 0);
+        this.arms = tag.contains(ARMS) ? tag.getIntOr(ARMS, 0) : ALL_ARMS;
+        this.coreX = tag.contains(CORE_X) ? tag.getIntOr(CORE_X, 0) : (columnHigh - columnLow) / 2;
+        this.coreZ = tag.contains(CORE_Z) ? tag.getIntOr(CORE_Z, 0) : (rowHigh - rowLow) / 2;
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {

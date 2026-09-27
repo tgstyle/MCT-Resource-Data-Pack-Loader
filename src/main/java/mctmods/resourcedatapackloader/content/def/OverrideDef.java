@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public record OverrideDef(ResourceLocation target, ResourceLocation source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType,
+public record OverrideDef(Identifier target, Identifier source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType,
                           @Nullable String harvestTool, int harvestToolLevel, @Nullable Integer flammability, int fireSpread, @Nullable Integer maxStackSize, @Nullable Integer maxDamage, @Nullable String containerItem,
                           @Nullable List<PotionEffectDef> effects, @Nullable FoodDef food, List<String> requires) {
     public boolean touchesBlock() {

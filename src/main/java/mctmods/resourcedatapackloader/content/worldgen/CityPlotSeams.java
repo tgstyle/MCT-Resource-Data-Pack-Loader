@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.PieceLaid;
+import mctmods.resourcedatapackloader.util.IPieceLaid;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -95,7 +95,7 @@ public final class CityPlotSeams {
         return filled;
     }
 
-    static boolean laid(WorldGenLevel level, int x, int y, int z) { return level instanceof PieceLaid pieces && pieces.rdpl$laid(x, y, z); }
+    static boolean laid(WorldGenLevel level, int x, int y, int z) { return level instanceof IPieceLaid pieces && pieces.rdpl$laid(x, y, z); }
 
     private static int standingTop(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {
         for (int y = from; y >= floor; y--) {

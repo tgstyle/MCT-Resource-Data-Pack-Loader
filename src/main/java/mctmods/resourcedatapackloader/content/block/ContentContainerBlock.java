@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentContainers;
-import mctmods.resourcedatapackloader.content.ContentDrops;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
@@ -11,6 +10,7 @@ import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionResult;
@@ -36,7 +36,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -76,7 +76,7 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
         return state.setValue(HorizontalDirectionalBlock.FACING, mirror.mirror(state.getValue(HorizontalDirectionalBlock.FACING)));
     }
 
-    @Override @Nonnull protected RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.ENTITYBLOCK_ANIMATED : RenderShape.MODEL; }
+    @Override @Nonnull protected RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.INVISIBLE : RenderShape.MODEL; }
 
     @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
@@ -99,14 +99,9 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
         if (placer != null && level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) { held.placed(); }
     }
 
-    @Override protected void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
-        if (state.is(replaced.getBlock())) { return; }
-        if (level.getBlockEntity(pos) instanceof ContentContainerBlockEntity held) {
-            Containers.dropContents(level, pos, held);
-            level.updateNeighbourForOutputSignal(pos, this);
-        }
-        ContentDrops.removed(level, pos, state, replaced);
-        super.onRemove(state, level, pos, replaced, moving);
+    @Override protected void affectNeighborsAfterRemoval(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, boolean movedByPiston) {
+        Containers.updateNeighboursAfterDestroy(state, level, pos);
+        super.affectNeighborsAfterRemoval(state, level, pos, movedByPiston);
     }
 
     @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity breaker, @Nonnull ItemStack tool) { return ContentBlock.experience(def, expDrop, level, breaker); }
@@ -115,7 +110,7 @@ public final class ContentContainerBlock extends BaseEntityBlock implements ICon
 
     @Override protected boolean hasAnalogOutputSignal(@Nonnull BlockState state) { return true; }
 
-    @Override protected int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos) {
+    @Override protected int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Direction direction) {
         return ContentContainerBlockEntity.comparatorOutput(level.getBlockEntity(pos));
     }
 

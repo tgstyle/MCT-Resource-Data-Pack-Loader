@@ -11,7 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -36,15 +36,15 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         CaveRegionDef region = ContentCaveRegions.def(context.config().region());
         if (region == null || !region.hasStructures()) { return false; }
         WorldGenLevel level = context.level();
-        ChunkPos center = new ChunkPos(context.origin());
+        ChunkPos center = ChunkPos.containing(context.origin());
         int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
         int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
         int spanXZ = cellsXZ >> 2;
         int spanY = cellsY >> 2;
         int blockX0 = center.getMinBlockX();
         int blockZ0 = center.getMinBlockZ();
-        int floor = level.getMinBuildHeight();
-        int ceiling = level.getMaxBuildHeight();
+        int floor = level.getMinY();
+        int ceiling = level.getMaxY() + 1;
         int cellY0 = Math.floorDiv(Math.floorDiv(floor, 4), spanY);
         int cellY1 = Math.floorDiv(Math.floorDiv(ceiling - 1, 4), spanY);
         int qx0 = blockX0 >> 2;
@@ -96,7 +96,7 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
     private static boolean place(ContentPlacer placer, CaveRegionDef region, long cellHash, int x, int y, int z) {
         RandomSource random = RandomSource.create(cellHash);
         String named = PickDef.pick(region.structures(), random);
-        ResourceLocation template = named == null || named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return false; }
         WorldGenLevel level = placer.level();
         Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
@@ -114,7 +114,7 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
         BlockPos fitted = new BlockPos(cornerX + ContentImprint.backX(rotation, span), y, cornerZ + ContentImprint.backZ(rotation, span));
         if (!loaded.placeInWorld(level, fitted, fitted, settings, random, FLAGS)) { return false; }
         if (!region.structureLoot().isEmpty()) {
-            ResourceLocation table = ResourceLocation.tryParse(region.structureLoot());
+            Identifier table = Identifier.tryParse(region.structureLoot());
             if (table == null) { ContentLog.LOGGER.error("Cave region {} names structureLoot '{}', which is not a valid id, so the containers are left as the template holds them", region.key(), region.structureLoot()); }
             else { ContentImprint.stock(placer, random, table, cornerX, y, cornerZ, span); }
         }
@@ -123,8 +123,8 @@ public final class ContentCaveStructureFeature extends Feature<ContentCaveStruct
     }
 
 
-    public record Setup(ResourceLocation region) implements FeatureConfiguration {
+    public record Setup(Identifier region) implements FeatureConfiguration {
         public static final Codec<Setup> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                ResourceLocation.CODEC.fieldOf("region").forGetter(Setup::region)).apply(instance, Setup::new));
+                Identifier.CODEC.fieldOf("region").forGetter(Setup::region)).apply(instance, Setup::new));
     }
 }

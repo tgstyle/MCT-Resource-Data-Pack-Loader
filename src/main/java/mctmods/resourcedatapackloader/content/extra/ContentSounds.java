@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -18,7 +18,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentSounds {
-    private static final Set<ResourceLocation> NAMES = new LinkedHashSet<>();
+    private static final Set<Identifier> NAMES = new LinkedHashSet<>();
     private static final Map<String, String> RENAMED = Map.ofEntries(
             Map.entry("entity.enderdragon_fireball.explode", "entity.dragon_fireball.explode"), Map.entry("entity.small_slime.death", "entity.slime.death_small"), Map.entry("entity.small_slime.hurt", "entity.slime.hurt_small"),
             Map.entry("entity.small_slime.jump", "entity.slime.jump_small"), Map.entry("entity.small_slime.squish", "entity.slime.squish_small"), Map.entry("entity.small_magmacube.death", "entity.magma_cube.death_small"),
@@ -45,13 +45,13 @@ public final class ContentSounds {
         if (loaded) { return; }
         loaded = true;
         if (Config.contentOff() || !Config.content.sounds()) { return; }
-        PackManager.get().forEach(PackManager.SOUNDS, PackManager.JSON, (namespace, path, contents) -> NAMES.add(ResourceLocation.fromNamespaceAndPath(namespace, path)));
+        PackManager.get().forEach(PackManager.SOUNDS, PackManager.JSON, (namespace, path, _) -> NAMES.add(Identifier.fromNamespaceAndPath(namespace, path)));
     }
 
     public static void register(RegisterEvent.RegisterHelper<SoundEvent> helper) {
         load();
         int count = 0;
-        for (ResourceLocation name : NAMES) {
+        for (Identifier name : NAMES) {
             if (BuiltInRegistries.SOUND_EVENT.containsKey(name)) {
                 ContentLog.LOGGER.warn("A sound named {} is already registered, skipping the pack entry", name);
                 continue;

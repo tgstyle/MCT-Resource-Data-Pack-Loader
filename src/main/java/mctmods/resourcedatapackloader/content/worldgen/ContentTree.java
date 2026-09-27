@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
@@ -8,7 +9,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
@@ -36,7 +37,7 @@ public final class ContentTree implements IContentShape {
     private final boolean templated;
     private final ContentImprint imprint;
 
-    public ContentTree(AmountDef count, ShapeDef shape, @Nullable BlockState log, @Nullable BlockState leaves, ResourceLocation key, ContentImprint imprint) {
+    public ContentTree(AmountDef count, ShapeDef shape, @Nullable BlockState log, @Nullable BlockState leaves, Identifier key, ContentImprint imprint) {
         this.count = count;
         this.height = shape.height();
         this.scatterX = shape.scatterX();
@@ -105,7 +106,7 @@ public final class ContentTree implements IContentShape {
 
     private static boolean replaceable(WorldGenLevel level, BlockPos pos) {
         BlockState state = level.getBlockState(pos);
-        return state.isAir() || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS) || state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.PODZOL) || state.is(BlockTags.SAPLINGS) || state.is(Blocks.VINE);
+        return state.isAir() || state.is(BlockTags.LEAVES) || state.is(BlockTags.LOGS) || state.is(Blocks.GRASS_BLOCK) || state.is(Blocks.DIRT) || state.is(Blocks.COARSE_DIRT) || state.is(Blocks.PODZOL) || state.is(Compat.saplings()) || state.is(Blocks.VINE);
     }
 
     private Set<BlockPos> canopy(ContentPlacer placer, RandomSource random, BlockPos position, int tall) {

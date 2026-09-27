@@ -12,5 +12,5 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(NetherFortressPieces.MonsterThrone.class) public abstract class MixinMonsterThrone {
     @Redirect(method = "postProcess", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/SpawnerBlockEntity;setEntityId(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/util/RandomSource;)V"))
-    private void rdpl$spawner(SpawnerBlockEntity spawner, EntityType<?> vanilla, RandomSource random) { spawner.setEntityId(ContentStructureSpawners.pick(ContentStructureSpawners.FORTRESSES, vanilla, random), random); }
+    private void rdpl$spawner(SpawnerBlockEntity spawner, EntityType<?> type, RandomSource random) { spawner.setEntityId(ContentStructureSpawners.pick(ContentStructureSpawners.FORTRESSES, type, random), random); }
 }

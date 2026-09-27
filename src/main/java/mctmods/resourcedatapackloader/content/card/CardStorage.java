@@ -1,39 +1,40 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.saveddata.SavedData;
-import javax.annotation.Nonnull;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 public final class CardStorage extends SavedData {
-    private static final String NAME = "rdpl_cards";
+    public static final String NAME = "rdpl_cards";
     private static final String FIRED = "Fired";
     private static final String PERSISTED = "rdplCards";
     private static final String PERSISTED_KILLS = "rdplCardKills";
     private CompoundTag fired = new CompoundTag();
+    private static final SavedDataType<CardStorage> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), CardStorage::new, CompoundTag.CODEC.xmap(CardStorage::read, CardStorage::write));
 
-    private static final Factory<CardStorage> FACTORY = new Factory<>(CardStorage::new, (tag, lookup) -> read(tag));
-
-    private static CardStorage of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME); }
+    private static CardStorage of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
 
     private static CardStorage read(CompoundTag tag) {
         CardStorage held = new CardStorage();
-        held.fired = tag.getCompound(FIRED).copy();
+        held.fired = tag.getCompoundOrEmpty(FIRED).copy();
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         tag.put(FIRED, fired.copy());
         return tag;
     }
 
     static boolean firedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).contains(key); }
 
-    static long lastFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getLong(key); }
+    static long lastFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getLongOr(key, 0L); }
 
     static void stampFor(Player player, String key, long now) { PlayerPersisted.section(player, PERSISTED).putLong(key, now); }
 

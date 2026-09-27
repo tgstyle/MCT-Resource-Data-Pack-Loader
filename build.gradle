@@ -2,248 +2,229 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
 
 plugins {
-    id 'java-library'
-    id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.140'
+    id 'net.neoforged.moddev' version '2.0.147' apply false
     id 'idea'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
-    id 'eclipse'
 }
 
 tasks.named('wrapper', Wrapper).configure {
     distributionType = Wrapper.DistributionType.BIN
 }
 
-def versionProps = new Properties()
-file('version.properties').withInputStream { versionProps.load(it) }
+subprojects {
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
+    apply plugin: 'net.neoforged.moddev'
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
 
-def gradleProps = new Properties()
-file('gradle.properties').withInputStream { gradleProps.load(it) }
+    def versionProps = new Properties()
+    file('gradle.properties').withInputStream { versionProps.load(it) }
 
-def currentBuild = versionProps.getProperty('build_number')?.toInteger() ?: 0
-def nextBuild = currentBuild + 1
-def stage = versionProps.getProperty('stage') ?: ''
-def baseVersion = versionProps.getProperty('version')
-def newVersion = "${baseVersion}-b${nextBuild}-${stage}"
+    def gradleProps = new Properties()
+    rootProject.file('gradle.properties').withInputStream { gradleProps.load(it) }
 
-version = newVersion
-ext.version_buildnumber = nextBuild
-ext.stage = stage
+    def currentBuild = versionProps.getProperty('build_number')?.toInteger() ?: 0
+    def nextBuild = currentBuild + 1
+    def stage = versionProps.getProperty('stage') ?: ''
+    def baseVersion = versionProps.getProperty('version')
+    def newVersion = "${baseVersion}-b${nextBuild}-${stage}"
 
-println "-> build.gradle applying version: $version (build ${nextBuild})"
+    version = newVersion
+    ext.version_buildnumber = nextBuild
+    ext.stage = stage
 
-tasks.withType(Jar).configureEach {
-    archiveVersion.set(newVersion)
-}
+    println "-> build.gradle applying version: $version (build ${nextBuild})"
 
-group = 'mctmods.resourcedatapackloader'
-
-java.toolchain.languageVersion = JavaLanguageVersion.of(25)
-
-tasks.withType(Jar).configureEach {
-    zip64 = true
-}
-
-ext {
-    mod_id = gradleProps['mod_id']
-    version_minecraft = versionProps['version_mc']
-    version_minecraft_range = versionProps['version_mc_range']
-    version_minecraft_label = versionProps['version_mc_label']
-    version_neoforge = versionProps['version_neoforge']
-    version_neoforge_min = versionProps['version_neoforge_min']
-    version_bp = versionProps.getProperty('version_bp', '[0,)')
-    version_curios = versionProps['version_curios']
-    version_jei = versionProps['version_jei']
-    mod_license = gradleProps['mod_license']
-    mod_name = gradleProps['mod_name']
-    mod_authors = gradleProps['mod_authors']
-    mod_description = gradleProps['mod_description']
-    mod_url = gradleProps['mod_url']
-}
-
-def version_replaces = [
-        'version'             : project.version,
-        'build_number'        : version_buildnumber,
-        'version_mc'          : version_minecraft,
-        'version_mc_range'    : version_minecraft_range,
-        'version_neoforge'    : version_neoforge,
-        'version_neoforge_min': version_neoforge_min,
-        'version_bp'          : version_bp,
-        'mod_license'         : mod_license,
-        'mod_name'            : mod_name,
-        'mod_authors'         : mod_authors,
-        'mod_description'     : mod_description,
-        'mod_url'             : mod_url,
-        'stage'               : stage,
-]
-
-sourceSets {
-    main {
-        java { srcDirs = ["$rootDir/src/main/java"] }
-        resources { srcDirs = ["$rootDir/src/main/resources"] }
+    tasks.withType(Jar).configureEach {
+        archiveVersion.set(newVersion)
     }
-}
 
-processResources {
-    duplicatesStrategy = DuplicatesStrategy.FAIL
-    inputs.properties(version_replaces)
-    filesMatching("META-INF/*.mods.toml") {
-        expand version_replaces
+    group = 'mctmods.resourcedatapackloader'
+
+    base { archivesName = rootProject.name }
+
+    java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+    tasks.withType(Jar).configureEach {
+        zip64 = true
     }
-    exclude ".cache"
-    doLast {
-        destinationDir.eachFileRecurse { File file ->
-            if (file.file && (file.name.endsWith('.json') || file.name.endsWith('.mcmeta'))) {
-                file.setText(JsonOutput.toJson(new JsonSlurper().parse(file, 'UTF-8')))
+
+    ext {
+        mod_id = gradleProps['mod_id']
+        version_minecraft = versionProps['version_mc']
+        version_minecraft_range = versionProps['version_mc_range']
+        version_minecraft_label = versionProps['version_mc_label']
+        version_neoforge = versionProps['version_neoforge']
+        version_neoforge_min = versionProps['version_neoforge_min']
+        version_bp = versionProps.getProperty('version_bp', '[0,)')
+        version_curios = versionProps['version_curios']
+        version_jei = versionProps['version_jei']
+        version_betterf3 = versionProps['version_betterf3']
+        version_cloth = versionProps['version_cloth']
+        mod_license = gradleProps['mod_license']
+        mod_name = gradleProps['mod_name']
+        mod_authors = gradleProps['mod_authors']
+        mod_description = gradleProps['mod_description']
+        mod_url = gradleProps['mod_url']
+    }
+
+    def version_replaces = [
+            'version'             : project.version,
+            'build_number'        : version_buildnumber,
+            'version_mc'          : version_minecraft,
+            'version_mc_range'    : version_minecraft_range,
+            'version_neoforge'    : version_neoforge,
+            'version_neoforge_min': version_neoforge_min,
+            'version_bp'          : version_bp,
+            'mod_license'         : mod_license,
+            'mod_name'            : mod_name,
+            'mod_authors'         : mod_authors,
+            'mod_description'     : mod_description,
+            'mod_url'             : mod_url,
+            'stage'               : stage,
+    ]
+
+    sourceSets.main.java.srcDirs = ["$rootDir/src/main/java", "$projectDir/src/main/java"]
+    sourceSets.main.resources.srcDirs = ["$rootDir/src/main/resources", "$projectDir/src/main/resources"]
+
+    processResources {
+        duplicatesStrategy = DuplicatesStrategy.FAIL
+        inputs.properties(version_replaces)
+        filesMatching("META-INF/*.mods.toml") {
+            expand version_replaces
+        }
+        exclude ".cache"
+        doLast {
+            destinationDir.eachFileRecurse { File file ->
+                if (file.file && (file.name.endsWith('.json') || file.name.endsWith('.mcmeta'))) {
+                    file.setText(JsonOutput.toJson(new JsonSlurper().parse(file, 'UTF-8')))
+                }
             }
         }
     }
-}
 
-tasks.register('copyModsTomlForIntelliJ', Copy) {
-    from processResources.destinationDir
-    into "$projectDir/out/production/resources"
-    include "META-INF/neoforge.mods.toml"
-    dependsOn processResources
-}
-
-neoForge {
-    version = project.version_neoforge
-
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
+    tasks.register('copyModsTomlForIntelliJ', Copy) {
+        from processResources.destinationDir
+        into "$projectDir/out/production/resources"
+        include "META-INF/neoforge.mods.toml"
+        dependsOn processResources
     }
 
-    runs {
-        client {
-            client()
-            programArguments.addAll '--username', 'tgstyle', '--width', '1920', '--height', '1080'
-            jvmArgument("-Djava.library.path=/usr/lib64")
-            jvmArgument('-Xmx4G')
-            jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
-            environment 'LD_LIBRARY_PATH', '/usr/lib64'
-        }
+    neoForge {
+        version = project.version_neoforge
 
-        server {
-            server()
-            programArguments.addAll '--nogui'
-            jvmArgument('-Xmx4G')
-            jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
-        }
+        mods.register(mod_id as String) { sourceSet(sourceSets.main) }
 
-        configureEach {
-            gameDirectory = project.file('run')
-        }
-    }
-}
-
-def bpJar = null
-def bpDir = new File(projectDir, '../MCT-Blast-Plaster-26/build/libs')
-def bpSource = (bpDir.listFiles() ?: new File[0]).findAll { it.name.endsWith('.jar') && !it.name.endsWith('-sources.jar') }.max { it.lastModified() }
-
-if (bpSource != null) {
-    bpJar = new File(projectDir, 'build/blastplaster/blastplaster-dev.jar')
-    if (!bpJar.exists() || bpJar.length() != bpSource.length() || bpJar.lastModified() != bpSource.lastModified()) {
-        bpJar.parentFile.mkdirs()
-        def staged = File.createTempFile('blastplaster-dev', '.jar', bpJar.parentFile)
-        java.nio.file.Files.copy(bpSource.toPath(), staged.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.COPY_ATTRIBUTES)
-        java.nio.file.Files.move(staged.toPath(), bpJar.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE)
-    }
-    logger.lifecycle("Found Blast Plaster JAR: ${bpSource.name}")
-} else {
-    logger.warn('No Blast Plaster JAR found in ../MCT-Blast-Plaster-26/build/libs, build one there first')
-}
-
-repositories {
-    mavenCentral()
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
-    maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
-    maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
-}
-
-configurations {
-    runtimeClasspath.extendsFrom localRuntime
-}
-
-dependencies {
-    runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
-    runtimeOnly 'maven.modrinth:betterf3:GKmHNRiK'
-    runtimeOnly 'maven.modrinth:cloth-config:zErG1kOw'
-    compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
-    compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
-    if (bpJar != null) {
-        implementation files(bpJar)
-    }
-}
-
-def customGradle = rootProject.file('custom.gradle')
-if (customGradle.exists()) apply from: customGradle
-
-tasks.register('bumpVersion') {
-    def versionPropsFile = layout.projectDirectory.file('version.properties')
-    inputs.file(versionPropsFile)
-    outputs.upToDateWhen { false }
-
-    doLast {
-        def props = new Properties()
-        versionPropsFile.asFile.withInputStream { props.load(it) }
-        props['build_number'] = nextBuild.toString()
-        versionPropsFile.asFile.withOutputStream { props.store(it, null) }
-    }
-}
-
-tasks.register('sourcesJar', Jar) {
-    dependsOn classes
-    archiveClassifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
-}
-
-tasks.register('optimizePng') {
-    def pngPatterns = ["**/*.png"]
-    def resourceDirs = sourceSets.main.resources.srcDirs
-    def pngFiles = resourceDirs.collectMany { dir -> fileTree(dir: dir, includes: pngPatterns).files as List }
-    def execOps = project.services.get(ExecOperations)
-    doLast {
-        pngFiles.each { File file ->
-            long size = file.length()
-            execOps.exec {
-                executable 'optipng'
-                args '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath
+        runs {
+            client {
+                client()
+                programArguments.addAll '--username', 'tgstyle', '--width', '1920', '--height', '1080'
+                jvmArgument("-Djava.library.path=/usr/lib64")
+                jvmArgument('-Xmx4G')
+                jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
+                environment 'LD_LIBRARY_PATH', '/usr/lib64'
             }
-            long newSize = file.length()
-            if (newSize < size) {
-                System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
-                        file, size, newSize, ((double) (size - newSize)) / ((double) size) * 100.0)
+
+            server {
+                server()
+                programArguments.addAll '--nogui'
+                jvmArgument('-Xmx4G')
+                jvmArgument('-XX:StartFlightRecording=maxsize=512M,dumponexit=true,filename=logs/profile.jfr,settings=profile')
+            }
+
+            configureEach {
+                gameDirectory = layout.projectDirectory.dir('run')
             }
         }
     }
+
+    def devSyncScript = null
+    for (def dir = rootDir; dir != null && devSyncScript == null; dir = dir.parentFile) {
+        def candidate = new File(dir, '#scripts/mods-devsync.gradle')
+        if (candidate.isFile()) { devSyncScript = candidate }
+    }
+    if (devSyncScript != null) { apply from: devSyncScript }
+
+    def bpSource = devSyncScript == null ? null : devSyncPin('MCT-Blast-Plaster-26', versionProps['devsync_bp'])
+    def bpJar = bpSource == null ? null : devSyncStaged(bpSource, 'build/blastplaster/blastplaster-dev.jar')
+    if (bpSource == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in versions/' + project.name + '/gradle.properties to a snapshot in the devsync cache') }
+
+    repositories {
+        mavenCentral()
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        maven { name = 'Curios' ; url = 'https://maven.theillusivec4.top/' ; content { includeGroup 'top.theillusivec4.curios' } }
+        maven { name = 'Modrinth' ; url = 'https://api.modrinth.com/maven' ; content { includeGroup 'maven.modrinth' } }
+        maven { name = 'JEI' ; url = 'https://maven.blamejared.com' ; content { includeGroup 'mezz.jei' } }
+    }
+
+    configurations {
+        runtimeClasspath.extendsFrom localRuntime
+    }
+
+    dependencies {
+        runtimeOnly "top.theillusivec4.curios:curios-neoforge:${version_curios}"
+        runtimeOnly "maven.modrinth:betterf3:${version_betterf3}"
+        runtimeOnly "maven.modrinth:cloth-config:${version_cloth}"
+        compileOnly "mezz.jei:jei-${version_minecraft}-common-api:${version_jei}"
+        compileOnly "mezz.jei:jei-${version_minecraft}-neoforge-api:${version_jei}"
+        if (bpJar != null) {
+            implementation files(bpJar)
+        }
+    }
+
+    def customGradle = rootProject.file('custom.gradle')
+    if (customGradle.exists()) apply from: customGradle
+
+    tasks.register('bumpVersion') {
+        def versionPropsFile = layout.projectDirectory.file('gradle.properties')
+        inputs.file(versionPropsFile)
+        outputs.upToDateWhen { false }
+
+        doLast {
+            def props = new Properties()
+            versionPropsFile.asFile.withInputStream { props.load(it) }
+            props['build_number'] = nextBuild.toString()
+            versionPropsFile.asFile.withOutputStream { props.store(it, null) }
+        }
+    }
+
+    tasks.register('optimizePng') {
+        def pngPatterns = ["**/*.png"]
+        def resourceDirs = sourceSets.main.resources.srcDirs
+        def pngFiles = resourceDirs.collectMany { dir -> fileTree(dir: dir, includes: pngPatterns).files as List }
+        def execOps = project.services.get(ExecOperations)
+        doLast {
+            pngFiles.each { File file ->
+                long size = file.length()
+                execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
+                long newSize = file.length()
+                if (newSize < size) {
+                    System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
+                            file, size, newSize, ((double) (size - newSize)) / ((double) size) * 100.0)
+                }
+            }
+        }
+    }
+
+    processResources.dependsOn bumpVersion
+    jar.dependsOn bumpVersion
+
+    tasks.register('genIntellijRunsDummy') {}
+
+    jar {
+        archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft_label}")
+        archiveClassifier.set('')
+    }
+
+    tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+
+    idea { module { downloadSources = true; downloadJavadoc = true } }
+
+    publishing {
+        publications.register('mavenJava', MavenPublication) { from(components.java as SoftwareComponent) }
+        repositories { maven { url = "file://${project.projectDir}/repo" } }
+    }
+
+    build.dependsOn bumpVersion
 }
-
-processResources.dependsOn bumpVersion
-jar.dependsOn bumpVersion
-sourcesJar.dependsOn bumpVersion
-
-tasks.register('genIntellijRunsDummy') {}
-
-jar {
-    archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft_label}")
-    archiveClassifier.set('')
-}
-
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
-
-idea { module { downloadSources = true; downloadJavadoc = true } }
-
-publishing {
-    publications { register('mavenJava', MavenPublication) { from(components.java as SoftwareComponent) }}
-    repositories { maven { url = "file://${project.projectDir}/repo" } }
-}
-
-build.dependsOn bumpVersion

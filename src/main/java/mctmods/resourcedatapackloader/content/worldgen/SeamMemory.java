@@ -1,41 +1,44 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class SeamMemory extends SavedData {
-    private static final String NAME = "rdpl_world_seams";
+    public static final String NAME = "rdpl_world_seams";
     private static final String ENTRIES = "Entries";
     private static final String LANDINGS = "Landings";
     private final Set<Long> entries = new HashSet<>();
     private final Map<Long, BlockPos> landings = new HashMap<>();
 
-    private static final Factory<SeamMemory> FACTORY = new Factory<>(SeamMemory::new, (tag, lookup) -> read(tag));
+    private static final SavedDataType<SeamMemory> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), SeamMemory::new, CompoundTag.CODEC.xmap(SeamMemory::read, SeamMemory::write));
 
-    public static SeamMemory of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(FACTORY, NAME); }
+    public static SeamMemory of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
 
     private static SeamMemory read(CompoundTag tag) {
         SeamMemory held = new SeamMemory();
-        for (long column : tag.getLongArray(ENTRIES)) { held.entries.add(column); }
-        for (Tag entry : tag.getList(LANDINGS, Tag.TAG_COMPOUND)) {
+        for (long column : tag.getLongArray(ENTRIES).orElse(new long[0])) { held.entries.add(column); }
+        for (Tag entry : tag.getListOrEmpty(LANDINGS)) {
             CompoundTag stored = (CompoundTag) entry;
-            held.landings.put(stored.getLong("Column"), BlockPos.of(stored.getLong("Spot")));
+            held.landings.put(stored.getLongOr("Column", 0L), BlockPos.of(stored.getLongOr("Spot", 0L)));
         }
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         tag.putLongArray(ENTRIES, entries.stream().mapToLong(Long::longValue).toArray());
         ListTag spots = new ListTag();
         for (Map.Entry<Long, BlockPos> landing : landings.entrySet()) {

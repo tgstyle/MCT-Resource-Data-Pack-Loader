@@ -33,7 +33,7 @@ public final class ContentTeamsPicks {
     static void stoodDown(MinecraftServer server, TeamDef def, String member) {
         Map<String, String> held = PICKED.get(def.name());
         if (held == null || held.remove(member) == null) { return; }
-        LEFT.computeIfAbsent(def.name(), team -> new HashSet<>()).add(member);
+        LEFT.computeIfAbsent(def.name(), _ -> new HashSet<>()).add(member);
         fill(server, def, null);
     }
 
@@ -56,7 +56,7 @@ public final class ContentTeamsPicks {
     private static void draw(MinecraftServer server, TeamDef def, boolean afresh, @Nullable Entity joining) {
         ServerLevel overworld = server.overworld();
         Scoreboard board = Scores.board(server);
-        Map<String, String> held = PICKED.computeIfAbsent(def.name(), team -> new LinkedHashMap<>());
+        Map<String, String> held = PICKED.computeIfAbsent(def.name(), _ -> new LinkedHashMap<>());
         Set<String> drawnBefore = new HashSet<>(held.keySet());
         if (afresh) {
             release(board, def, held);
@@ -76,7 +76,7 @@ public final class ContentTeamsPicks {
         List<String> newlySeated = new ArrayList<>();
         for (Entity one : pool) {
             if (have >= def.picks()) { break; }
-            String member = one instanceof Player player ? player.getGameProfile().getName() : one.getStringUUID();
+            String member = one instanceof Player player ? player.getGameProfile().name() : one.getStringUUID();
             if (held.containsKey(member) || pickedAlready(member) || left(def, member)) { continue; }
             PlayerTeam before = Scores.teamOf(board, member);
             if (before != null && one instanceof Player) { continue; }

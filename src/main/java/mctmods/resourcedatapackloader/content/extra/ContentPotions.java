@@ -23,7 +23,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -45,8 +45,8 @@ import javax.annotation.Nullable;
 public final class ContentPotions {
     private static final String ICON = "icon";
     private static final Gson GSON = new GsonBuilder().create();
-    private static final Map<ResourceLocation, PotionDef> POTIONS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, PotionTypeDef> TYPES = new LinkedHashMap<>();
+    private static final Map<Identifier, PotionDef> POTIONS = new LinkedHashMap<>();
+    private static final Map<Identifier, PotionTypeDef> TYPES = new LinkedHashMap<>();
     private static final List<BrewingDef> BREWING = new ArrayList<>();
     private static boolean loaded;
 
@@ -76,7 +76,7 @@ public final class ContentPotions {
 
     public static Collection<PotionDef> defs() { return POTIONS.values(); }
 
-    private static void readPotion(ResourceLocation key, String contents) {
+    private static void readPotion(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Potion file {} is empty, ignoring it", key);
@@ -115,7 +115,7 @@ public final class ContentPotions {
                 Json.strings(json, "requires")));
     }
 
-    private static void readType(ResourceLocation key, String contents) {
+    private static void readType(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Potion type file {} is empty, ignoring it", key);
@@ -132,7 +132,7 @@ public final class ContentPotions {
                 Json.strings(json, "requires")));
     }
 
-    private static void readBrewing(ResourceLocation key, String contents) {
+    private static void readBrewing(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Brewing file {} is empty, ignoring it", key);
@@ -188,7 +188,7 @@ public final class ContentPotions {
             }
             List<MobEffectInstance> effects = new ArrayList<>();
             for (PotionEffectDef entry : def.effects()) {
-                ResourceLocation name = ResourceLocation.tryParse(entry.potion());
+                Identifier name = Identifier.tryParse(entry.potion());
                 Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, name);
                 if (effect == null) {
                     ContentLog.LOGGER.error("Potion type {} names potion '{}', which is not registered, skipping that effect", def.key(), entry.potion());
@@ -224,7 +224,7 @@ public final class ContentPotions {
             ItemStack input = ContentStacks.parse(def.key(), def.input(), 1);
             ItemStack output = ContentStacks.parse(def.key(), def.output(), 1);
             if (input.isEmpty() || output.isEmpty()) { continue; }
-            builder.addRecipe(Ingredient.of(input), Ingredient.of(ingredient), output);
+            builder.addRecipe(Ingredient.of(input.getItem()), Ingredient.of(ingredient.getItem()), output);
             count++;
         }
         containers(builder::addContainer);
@@ -241,8 +241,8 @@ public final class ContentPotions {
         if (count > 0) { Summary.info("content_potion_containers", "Registered " + count + " potion container item(s) from packs"); }
     }
 
-    @Nullable private static Holder<Potion> type(ResourceLocation key, String name) {
-        ResourceLocation id = ResourceLocation.tryParse(name);
+    @Nullable private static Holder<Potion> type(Identifier key, String name) {
+        Identifier id = Identifier.tryParse(name);
         Holder<Potion> potion = Registered.holder(BuiltInRegistries.POTION, id);
         if (potion == null) { ContentLog.LOGGER.error("Brewing recipe in {} names potion type '{}', which is not registered, skipping it", key, name); }
         return potion;

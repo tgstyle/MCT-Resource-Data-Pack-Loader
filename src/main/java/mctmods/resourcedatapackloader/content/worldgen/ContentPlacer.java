@@ -26,8 +26,8 @@ public final class ContentPlacer {
     public ContentPlacer(WorldGenLevel level, ContentPalette palette, ChunkPos center, int reach) {
         this.level = level;
         this.palette = palette;
-        this.centerX = center.x;
-        this.centerZ = center.z;
+        this.centerX = center.x();
+        this.centerZ = center.z();
         this.reach = reach;
     }
 
@@ -50,9 +50,9 @@ public final class ContentPlacer {
 
     public ContentPalette palette() { return palette; }
 
-    public int floorY() { return level.getMinBuildHeight() + 1; }
+    public int floorY() { return level.getMinY() + 1; }
 
-    public int ceilingY() { return level.getMaxBuildHeight(); }
+    public int ceilingY() { return level.getMaxY() + 1; }
 
     public boolean unwritable(int x, int z) {
         return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) > reach || Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) > reach;
@@ -66,7 +66,7 @@ public final class ContentPlacer {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int above = level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) - 1; above >= y; above--) {
             BlockState state = level.getBlockState(at.set(x, above, z));
-            if (state.getLightBlock(level, at) > 0 || !state.getFluidState().isEmpty()) { return true; }
+            if (state.getLightDampening() > 0 || !state.getFluidState().isEmpty()) { return true; }
         }
         return false;
     }

@@ -6,12 +6,12 @@ import mctmods.resourcedatapackloader.util.MarkLines;
 import mctmods.resourcedatapackloader.util.Marks;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,7 +42,7 @@ final class MarkPage {
         final int color;
         final float height;
         int span;
-        @Nullable ResourceLocation image;
+        @Nullable Identifier image;
         int imageWidth;
         int imageHeight;
         boolean rule;
@@ -110,7 +110,7 @@ final class MarkPage {
     }
 
     private boolean image(MarkLines.Line line) {
-        ResourceLocation where = ContentParser.location(line.lead);
+        Identifier where = ContentParser.location(line.lead);
         if (where == null) { return false; }
         int width;
         int tall;
@@ -133,7 +133,7 @@ final class MarkPage {
         return true;
     }
 
-    void draw(GuiGraphics graphics, int screenWidth, int screenHeight, float top, float scale, boolean centered) {
+    void draw(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float top, float scale, boolean centered) {
         float y = top;
         float block = (screenWidth - widest * scale) / 2.0F;
         for (Row row : rows) {
@@ -148,33 +148,32 @@ final class MarkPage {
         }
     }
 
-    private void text(GuiGraphics graphics, Row row, float left, float y, float scale) {
+    private void text(GuiGraphicsExtractor graphics, Row row, float left, float y, float scale) {
         float size = scale * row.size;
-        graphics.pose().pushPose();
-        graphics.pose().scale(size, size, 1.0F);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(size, size);
         float x = Crisp.snap(left + row.indent * scale) / size;
         float at = Crisp.snap(y) / size;
-        graphics.drawString(font, row.lead, x, at, 0xFF000000 | row.color, true);
-        graphics.drawString(font, row.line, x + row.shift, at, 0xFF000000 | row.color, true);
-        graphics.pose().popPose();
+        graphics.pose().translate(x, at);
+        graphics.text(font, row.lead, 0, 0, 0xFF000000 | row.color, true);
+        graphics.text(font, row.line, row.shift, 0, 0xFF000000 | row.color, true);
+        graphics.pose().popMatrix();
     }
 
-    private void rule(GuiGraphics graphics, Row row, float left, float y, float scale) {
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1.0F);
+    private void rule(GuiGraphicsExtractor graphics, Row row, float left, float y, float scale) {
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
         int x = Math.round(left / scale);
         int middle = Math.round(y / scale) + LINE / 2;
         graphics.fill(x, middle - 1, x + row.span, middle, RULE);
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
-    private void picture(GuiGraphics graphics, Row row, float left, float y, float scale) {
+    private void picture(GuiGraphicsExtractor graphics, Row row, float left, float y, float scale) {
         if (row.image == null) { return; }
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1.0F);
-        RenderSystem.enableBlend();
-        graphics.blit(row.image, Math.round(left / scale), Math.round(y / scale), 0.0F, 0.0F, row.imageWidth, row.imageHeight, row.imageWidth, row.imageHeight);
-        RenderSystem.disableBlend();
-        graphics.pose().popPose();
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, row.image, Math.round(left / scale), Math.round(y / scale), 0.0F, 0.0F, row.imageWidth, row.imageHeight, row.imageWidth, row.imageHeight);
+        graphics.pose().popMatrix();
     }
 }

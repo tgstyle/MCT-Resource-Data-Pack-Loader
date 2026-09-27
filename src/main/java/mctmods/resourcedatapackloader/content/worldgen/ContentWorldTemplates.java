@@ -13,7 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,7 +29,7 @@ public final class ContentWorldTemplates {
     public static final List<String> ROLE_ORDER = List.of("ocean", "river", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "water");
     private static final List<String> ROLES = List.of("ocean", "river", "water", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "nether", "end");
     private static final Gson GSON = new Gson();
-    private static final Map<ResourceLocation, WorldTemplateDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, WorldTemplateDef> DEFS = new LinkedHashMap<>();
     @Nullable private static WorldTemplateDef active;
 
     private ContentWorldTemplates() {}
@@ -50,7 +50,7 @@ public final class ContentWorldTemplates {
 
     @Nullable public static WorldTemplateDef active() { return active; }
 
-    @Nullable private static WorldTemplateDef parse(ResourceLocation key, String contents) {
+    @Nullable private static WorldTemplateDef parse(Identifier key, String contents) {
         JsonObject json;
         try { json = GSON.fromJson(contents, JsonObject.class); }
         catch (JsonParseException ex) {
@@ -65,7 +65,7 @@ public final class ContentWorldTemplates {
         return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", GsonHelper.getAsString(json, "default", WorldTemplateDef.VOID)).trim(), roles(key, json), switches(json), Json.strings(json, "dimensions"));
     }
 
-    private static Map<String, String> roles(ResourceLocation key, JsonObject json) {
+    private static Map<String, String> roles(Identifier key, JsonObject json) {
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> role : GsonHelper.getAsJsonObject(json, "roles", new JsonObject()).entrySet()) {
             String name = role.getKey().trim().toLowerCase(Locale.ROOT);
@@ -95,7 +95,7 @@ public final class ContentWorldTemplates {
         String wanted = Config.worldgen.worldTemplate().trim();
         if (wanted.isEmpty()) { return null; }
         List<WorldTemplateDef> usable = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, WorldTemplateDef> entry : DEFS.entrySet()) {
+        for (Map.Entry<Identifier, WorldTemplateDef> entry : DEFS.entrySet()) {
             if (ContentRegistry.available(entry.getValue().requires(), entry.getKey())) { usable.add(entry.getValue()); }
         }
         for (WorldTemplateDef def : usable) {
@@ -103,7 +103,7 @@ public final class ContentWorldTemplates {
         }
         if (AUTO.equalsIgnoreCase(wanted)) {
             WorldTemplateDef chosen = null;
-            List<ResourceLocation> fromPacks = new ArrayList<>();
+            List<Identifier> fromPacks = new ArrayList<>();
             for (WorldTemplateDef def : usable) {
                 if (BUILT_IN.equals(def.key().getNamespace())) { continue; }
                 fromPacks.add(def.key());
@@ -132,5 +132,5 @@ public final class ContentWorldTemplates {
                 built("plains", "Plains world", "minecraft:plains", Map.of()), built("desert", "Desert world", "minecraft:desert", Map.of()));
     }
 
-    private static WorldTemplateDef built(String path, String name, String fallback, Map<String, String> roles) { return new WorldTemplateDef(ResourceLocation.fromNamespaceAndPath(BUILT_IN, path), name, null, List.of(), fallback, Collections.unmodifiableMap(roles), Map.of(), List.of()); }
+    private static WorldTemplateDef built(String path, String name, String fallback, Map<String, String> roles) { return new WorldTemplateDef(Identifier.fromNamespaceAndPath(BUILT_IN, path), name, null, List.of(), fallback, Collections.unmodifiableMap(roles), Map.of(), List.of()); }
 }

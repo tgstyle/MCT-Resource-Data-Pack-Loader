@@ -15,7 +15,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -48,7 +48,7 @@ public final class ContentPortalFrames {
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.info("Loaded {} portal frame(s): {}", DEFS.size(), DEFS.keySet()); }
     }
 
-    @Nullable private static PortalFrameDef parse(ResourceLocation key, String contents) {
+    @Nullable private static PortalFrameDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) { return null; }
         Map<Character, BlockMatchDef> legend = new LinkedHashMap<>();
@@ -96,7 +96,7 @@ public final class ContentPortalFrames {
     @Nullable public static PortalFrameDef byName(String name) {
         PortalFrameDef held = DEFS.get(name);
         if (held != null) { return held; }
-        ResourceLocation id = name.indexOf(':') >= 0 ? null : ResourceLocation.tryParse(name);
+        Identifier id = name.indexOf(':') >= 0 ? null : Identifier.tryParse(name);
         return id == null ? null : DEFS.get(id.toString());
     }
 

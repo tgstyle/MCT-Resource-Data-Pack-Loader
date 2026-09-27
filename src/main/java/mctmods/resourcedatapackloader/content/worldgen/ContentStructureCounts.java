@@ -1,51 +1,53 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import net.minecraft.core.HolderLookup;
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.Collection;
-import javax.annotation.Nonnull;
 
 public final class ContentStructureCounts extends SavedData {
-    private static final String NAME = "rdpl_structure_most";
+    public static final String NAME = "rdpl_structure_most";
     private static final String FOUNDED = "Founded";
-    private static final Factory<ContentStructureCounts> FACTORY = new Factory<>(ContentStructureCounts::new, (tag, lookup) -> read(tag));
+    private static final SavedDataType<ContentStructureCounts> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), ContentStructureCounts::new, CompoundTag.CODEC.xmap(ContentStructureCounts::read, ContentStructureCounts::write));
     private CompoundTag founded = new CompoundTag();
 
     private static ContentStructureCounts of(ServerLevel level) {
-        synchronized (ContentStructureCounts.class) { return level.getDataStorage().computeIfAbsent(FACTORY, NAME); }
+        synchronized (ContentStructureCounts.class) { return level.getDataStorage().computeIfAbsent(TYPE); }
     }
 
     private static ContentStructureCounts read(CompoundTag tag) {
         ContentStructureCounts held = new ContentStructureCounts();
-        held.founded = tag.getCompound(FOUNDED).copy();
+        held.founded = tag.getCompoundOrEmpty(FOUNDED).copy();
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         synchronized (this) { tag.put(FOUNDED, founded.copy()); }
         return tag;
     }
 
-    public static int count(ServerLevel level, ResourceLocation structure) {
+    public static int count(ServerLevel level, Identifier structure) {
         ContentStructureCounts held = of(level);
-        synchronized (held) { return held.founded.getInt(structure.toString()); }
+        synchronized (held) { return held.founded.getIntOr(structure.toString(), 0); }
     }
 
-    public static int total(ServerLevel level, Collection<ResourceLocation> structures) {
+    public static int total(ServerLevel level, Collection<Identifier> structures) {
         ContentStructureCounts held = of(level);
         synchronized (held) {
             int sum = 0;
-            for (ResourceLocation structure : structures) { sum += held.founded.getInt(structure.toString()); }
+            for (Identifier structure : structures) { sum += held.founded.getIntOr(structure.toString(), 0); }
             return sum;
         }
     }
 
-    public static void add(ServerLevel level, ResourceLocation structure) {
+    public static void add(ServerLevel level, Identifier structure) {
         ContentStructureCounts held = of(level);
-        synchronized (held) { held.founded.putInt(structure.toString(), held.founded.getInt(structure.toString()) + 1); }
+        synchronized (held) { held.founded.putInt(structure.toString(), held.founded.getIntOr(structure.toString(), 0) + 1); }
         held.setDirty();
     }
 }

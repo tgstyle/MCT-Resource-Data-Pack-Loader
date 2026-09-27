@@ -9,6 +9,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -29,12 +30,12 @@ final class CommandPlaces {
         if (space >= 0) { return SharedSuggestionProvider.suggest(List.of(NEXT, BACK), suggestions.createOffset(suggestions.getStart() + space + 1)); }
         List<String> known = new ArrayList<>(ContentLocate.names(source.getLevel()));
         known.addAll(ContentStructureSearch.aliases());
-        known.removeIf(place -> !source.hasPermission(ContentStructureSearch.levelFor(place, "gotoLevel", Config.commands.gotoLevel())));
+        known.removeIf(place -> !CommandShared.allowed(source, ContentStructureSearch.levelFor(place, "gotoLevel", Config.commands.gotoLevel())));
         return SharedSuggestionProvider.suggest(known, suggestions);
     }
 
     private static boolean denied(CommandSourceStack source, String place, String key, int fallback) {
-        if (source.hasPermission(ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
+        if (CommandShared.allowed(source, ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
         source.sendFailure(CommandShared.tr("rdpl.command.gotodenied", place));
         return true;
     }
@@ -98,7 +99,7 @@ final class CommandPlaces {
             return 0;
         }
         ContentStructureSearch.remember(player, place, found);
-        player.teleportTo(level, landing.getX() + 0.5D, ContentStructureSearch.stand(level, landing), landing.getZ() + 0.5D, player.getYRot(), player.getXRot());
+        player.teleportTo(level, landing.getX() + 0.5D, ContentStructureSearch.stand(level, landing), landing.getZ() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
         CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.gotodone", asked, landing.getX(), landing.getY(), landing.getZ()));
         return 1;
     }

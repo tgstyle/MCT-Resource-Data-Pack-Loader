@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
@@ -16,7 +16,7 @@ public final class ContentPixelImages {
     private ContentPixelImages() {}
 
     private static Optional<Resource> find(String namespace, String path) {
-        ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
+        Identifier location = Identifier.tryBuild(namespace, path);
         return location == null ? Optional.empty() : Minecraft.getInstance().getResourceManager().getResource(location);
     }
 

@@ -14,13 +14,14 @@ import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -83,23 +85,23 @@ public final class ContentPortalBlock extends ContentBlock {
         if (level instanceof ServerLevel server) { PortalStorage.add(server, pos, placer instanceof Player ? placer.getUUID() : null); }
     }
 
-    @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
-        if (level instanceof ServerLevel server && !replaced.is(this)) { PortalStorage.remove(server, pos); }
-        super.onRemove(state, level, pos, replaced, moving);
+    @Override protected void removed(ServerLevel level, BlockPos pos, BlockState state, BlockState replaced) {
+        if (!replaced.is(this)) { PortalStorage.remove(level, pos); }
+        super.removed(level, pos, state, replaced);
     }
 
-    @Override public boolean onDestroyedByPlayer(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, boolean willHarvest, @Nonnull FluidState fluid) {
+    @Override public boolean onDestroyedByPlayer(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull ItemStack tool, boolean willHarvest, @Nonnull FluidState fluid) {
         if (level instanceof ServerLevel server && !mayBreak(server, pos, player)) {
-            player.displayClientMessage(Component.translatable("rdpl.portal.owned"), true);
+            player.sendOverlayMessage(Component.translatable("rdpl.portal.owned"));
             return false;
         }
-        return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
+        return super.onDestroyedByPlayer(state, level, pos, player, tool, willHarvest, fluid);
     }
 
     @Override public boolean canDropFromExplosion(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) { return !portal.owned(); }
 
-    @Override public void onBlockExploded(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) {
-        if (level instanceof ServerLevel server && owned(server, pos)) { return; }
+    @Override public void onBlockExploded(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) {
+        if (owned(level, pos)) { return; }
         super.onBlockExploded(state, level, pos, explosion);
     }
 
@@ -116,7 +118,7 @@ public final class ContentPortalBlock extends ContentBlock {
         return owner == null || owner.equals(player.getUUID());
     }
 
-    @Override public void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) {
+    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) {
         if (!portal.walkIn() || !(entity instanceof ServerPlayer player)) { return; }
         travel(player, state, pos);
     }
@@ -126,8 +128,8 @@ public final class ContentPortalBlock extends ContentBlock {
         return InteractionResult.SUCCESS;
     }
 
-    @Override public void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos from, boolean moving) {
-        super.neighborChanged(state, level, pos, block, from, moving);
+    @Override protected void neighborChanged(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Block block, @Nullable Orientation orientation, boolean moving) {
+        super.neighborChanged(state, level, pos, block, orientation, moving);
         if (level.isClientSide()) { return; }
         ContentPortals.Binding binding = ContentPortals.forBlock(this);
         if (binding == null || ContentPortals.standing(level, pos, binding)) { return; }
@@ -142,8 +144,8 @@ public final class ContentPortalBlock extends ContentBlock {
             ContentGates.refuse(player, gate);
             return;
         }
-        ResourceLocation here = player.level().dimension().location();
-        ResourceLocation target = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
+        Identifier here = player.level().dimension().identifier();
+        Identifier target = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
         if (target.equals(here)) { return; }
         sound(player);
         RECENT.put(player.getUUID(), player.level().getGameTime());

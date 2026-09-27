@@ -9,7 +9,7 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
@@ -29,7 +29,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentCityPierPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.Felling {
+public final class ContentCityPierPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPierPiece::new;
     public static final String RAILED = "railed";
     public static final String PILINGS = "pilings";
@@ -63,12 +63,12 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
 
     public ContentCityPierPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        this.middle = tag.getInt(MIDDLE);
-        this.alongX = tag.getBoolean(ALONG_X);
-        this.width = tag.getInt(WIDTH);
-        this.style = tag.getString(STYLE);
-        this.head = tag.getInt(HEAD);
+        this.level = tag.getIntOr(LEVEL, 0);
+        this.middle = tag.getIntOr(MIDDLE, 0);
+        this.alongX = tag.getBooleanOr(ALONG_X, false);
+        this.width = tag.getIntOr(WIDTH, 0);
+        this.style = tag.getStringOr(STYLE, "");
+        this.head = tag.getIntOr(HEAD, 0);
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -119,7 +119,7 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
                 if (rail != null && (!PILINGS.equals(style) || posted)) { raise(level, box, rail, alongX ? along : across, alongX ? across : along, rise, at); }
                 if (!posted) { continue; }
                 int roof = CityRails.boreRoof(bores, alongX ? along : across, alongX ? across : along);
-                int floor = Math.max(this.level - 1 - PILING_REACH, roof == Integer.MIN_VALUE ? level.getMinBuildHeight() + 1 : roof + 1);
+                int floor = Math.max(this.level - 1 - PILING_REACH, roof == Integer.MIN_VALUE ? level.getMinY() + 1 : roof + 1);
                 for (int down = this.level - 1; down >= floor; down--) {
                     at.set(alongX ? along : across, down, alongX ? across : along);
                     if (!box.isInside(at)) { break; }
@@ -175,7 +175,7 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
     private static void fill(WorldGenLevel level, BlockPos at, RandomSource roll) {
         String named = ContentCity.pierLoot();
         if (named.isEmpty()) { return; }
-        ResourceLocation table = ResourceLocation.tryParse(named);
+        Identifier table = Identifier.tryParse(named);
         if (table == null) { return; }
         BlockEntity found = level.getBlockEntity(at);
         if (!(found instanceof RandomizableContainerBlockEntity container)) { return; }

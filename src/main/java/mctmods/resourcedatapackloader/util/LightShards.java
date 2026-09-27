@@ -21,7 +21,7 @@ public final class LightShards extends Long2ObjectOpenHashMap<DataLayer> {
         this.table = table;
     }
 
-    private static long shard(long section) { return ChunkPos.asLong(SectionPos.x(section) >> SHIFT, SectionPos.z(section) >> SHIFT); }
+    private static long shard(long section) { return ChunkPos.pack(SectionPos.x(section) >> SHIFT, SectionPos.z(section) >> SHIFT); }
 
     @Override public DataLayer get(long section) {
         Long2ObjectOpenHashMap<DataLayer> held = table.get(shard(section));

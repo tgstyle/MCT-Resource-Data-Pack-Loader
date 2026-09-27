@@ -14,7 +14,7 @@ import mctmods.resourcedatapackloader.util.Scores;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -25,6 +25,7 @@ import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentReset {
@@ -58,14 +59,15 @@ public final class ContentReset {
     }
 
     public static void arrived(ServerPlayer player) {
-        MinecraftServer server = player.server;
+        MinecraftServer server = player.level().getServer();
         int count = GateStorage.countGlobally(server, RESETS);
         if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
         GateStorage.noteFor(player, RESETS, count);
         Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
         if (landing == null) { return; }
-        player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
-        ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getGameProfile().getName());
+        player.stopRiding();
+        player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
+        ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getGameProfile().name());
     }
 
     public static int sweep(MinecraftServer server) {
@@ -109,21 +111,22 @@ public final class ContentReset {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Landing landing = landingFor(server, asked, player);
             if (landing == null) { continue; }
-            player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
+            player.stopRiding();
+            player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, Set.of(), player.getYRot(), player.getXRot(), true);
         }
     }
 
     @Nullable private static Landing landingFor(MinecraftServer server, String asked, ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         if (asked.isEmpty() || "spawn".equalsIgnoreCase(asked)) {
-            BlockPos spawn = level.getSharedSpawnPos();
+            BlockPos spawn = level.getRespawnData().pos();
             return new Landing(level, spawn.getX(), spawn.getY(), spawn.getZ());
         }
         String where = asked;
         int comma = asked.indexOf(',');
         int colon = comma < 0 ? -1 : asked.lastIndexOf(':', comma);
         if (colon > 0) {
-            ResourceLocation id = ResourceLocation.tryParse(ContentFormats.dimensionId(asked.substring(0, colon)));
+            Identifier id = Identifier.tryParse(ContentFormats.dimensionId(asked.substring(0, colon)));
             ServerLevel named = id == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
             if (named == null) {
                 ContentLog.LOGGER.error("resetSendsTo names the dimension '{}', which is not loaded, so players stay where they are", asked.substring(0, colon));

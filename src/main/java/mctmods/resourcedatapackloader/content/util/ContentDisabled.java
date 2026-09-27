@@ -17,7 +17,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -27,7 +27,6 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -39,7 +38,7 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentDisabled {
-    public static final ResourceLocation TAG = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "disabled");
+    public static final Identifier TAG = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "disabled");
     public static final TagKey<Item> ITEMS = TagKey.create(Registries.ITEM, TAG);
     public static final TagKey<Block> BLOCKS = TagKey.create(Registries.BLOCK, TAG);
     private static final String ITEM_TAGS = Registries.tagsDirPath(Registries.ITEM);
@@ -47,10 +46,10 @@ public final class ContentDisabled {
     private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> NAMES = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
-    private static final Set<ResourceLocation> TAGS = new LinkedHashSet<>();
+    private static final Set<Identifier> TAGS = new LinkedHashSet<>();
     private static final PackGeneration GENERATION = new PackGeneration();
     private static final String EMPTY_TAG = "Empty Tag: ";
-    private static final Set<ResourceLocation> EMPTIED = ConcurrentHashMap.newKeySet();
+    private static final Set<Identifier> EMPTIED = ConcurrentHashMap.newKeySet();
     private static volatile boolean active;
 
     private ContentDisabled() {}
@@ -65,11 +64,11 @@ public final class ContentDisabled {
         if (!stack.is(Items.BARRIER)) { return false; }
         String name = stack.getHoverName().getString();
         if (!name.startsWith(EMPTY_TAG)) { return false; }
-        ResourceLocation tag = ResourceLocation.tryParse(name.substring(EMPTY_TAG.length()));
+        Identifier tag = Identifier.tryParse(name.substring(EMPTY_TAG.length()));
         return tag != null && EMPTIED.contains(tag);
     }
 
-    public static <T> void strip(String directory, Map<ResourceLocation, Collection<T>> built, Function<ResourceLocation, Optional<? extends T>> lookup) {
+    public static <T> void strip(String directory, Map<Identifier, List<T>> built, Function<Identifier, Optional<? extends T>> lookup) {
         boolean items = ITEM_TAGS.equals(directory);
         if (!items && !BLOCK_TAGS.equals(directory)) { return; }
         if (items) {
@@ -78,29 +77,29 @@ public final class ContentDisabled {
         }
         reload();
         if (NAMES.isEmpty() && PREFIXES.isEmpty() && TAGS.isEmpty()) { return; }
-        Set<ResourceLocation> ids = items ? items() : blocks();
-        for (ResourceLocation tag : TAGS) {
-            Collection<T> held = built.get(tag);
+        Set<Identifier> ids = items ? items() : blocks();
+        for (Identifier tag : TAGS) {
+            List<T> held = built.get(tag);
             if (held == null) {
                 ContentLog.LOGGER.debug("Disabled tag {} is no {} tag", tag, items ? "item" : "block");
                 continue;
             }
             for (T value : held) {
-                ResourceLocation id = id(value);
+                Identifier id = id(value);
                 if (id != null) { ids.add(id); }
             }
         }
         if (items) { unknown(); }
         List<T> values = new ArrayList<>();
-        for (ResourceLocation id : ids) { lookup.apply(id).ifPresent(values::add); }
+        for (Identifier id : ids) { lookup.apply(id).ifPresent(values::add); }
         rebuild(built, ids, items);
-        built.put(TAG, ImmutableSet.copyOf(values));
+        built.put(TAG, ImmutableSet.copyOf(values).asList());
         if (items) { active = true; }
         Summary.info(items ? "disabled.items" : "disabled.blocks", "Disabled " + values.size() + (items ? " item(s)" : " block(s)"));
     }
 
-    private static <T> void rebuild(Map<ResourceLocation, Collection<T>> built, Set<ResourceLocation> ids, boolean items) {
-        for (Map.Entry<ResourceLocation, Collection<T>> entry : built.entrySet()) {
+    private static <T> void rebuild(Map<Identifier, List<T>> built, Set<Identifier> ids, boolean items) {
+        for (Map.Entry<Identifier, List<T>> entry : built.entrySet()) {
             ImmutableSet.Builder<T> kept = ImmutableSet.builder();
             if (!TAGS.contains(entry.getKey())) {
                 for (T value : entry.getValue()) {
@@ -109,13 +108,13 @@ public final class ContentDisabled {
             }
             ImmutableSet<T> left = kept.build();
             if (items && left.isEmpty() && !entry.getValue().isEmpty()) { EMPTIED.add(entry.getKey()); }
-            entry.setValue(left);
+            entry.setValue(left.asList());
         }
     }
 
     private static void unknown() {
         for (String name : NAMES) {
-            ResourceLocation id = ResourceLocation.tryParse(name);
+            Identifier id = Identifier.tryParse(name);
             if (id == null || !BuiltInRegistries.ITEM.containsKey(id) && !BuiltInRegistries.BLOCK.containsKey(id)) { ContentLog.LOGGER.error("Disabled name {} is no registered block or item, so it disables nothing", name); }
         }
     }
@@ -129,7 +128,7 @@ public final class ContentDisabled {
         Json.eachFile(PackManager.DISABLED, "disabled file", ContentDisabled::read);
     }
 
-    private static void read(ResourceLocation key, String contents) {
+    private static void read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Disabled file {} is empty, ignoring it", key);
@@ -144,34 +143,34 @@ public final class ContentDisabled {
         }
         for (String namespace : Json.strings(json, "namespaces")) { PREFIXES.add(namespace.trim().toLowerCase(Locale.ROOT) + ":"); }
         for (String tag : Json.strings(json, "tags")) {
-            ResourceLocation location = ResourceLocation.tryParse(tag.startsWith("#") ? tag.substring(1) : tag);
+            Identifier location = Identifier.tryParse(tag.startsWith("#") ? tag.substring(1) : tag);
             if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
             else { TAGS.add(location); }
         }
     }
 
-    private static Set<ResourceLocation> items() {
-        Set<ResourceLocation> ids = new LinkedHashSet<>();
+    private static Set<Identifier> items() {
+        Set<Identifier> ids = new LinkedHashSet<>();
         for (Item item : BuiltInRegistries.ITEM) {
             if (item == Items.AIR) { continue; }
-            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
             if (named(id) || item instanceof BlockItem block && named(BuiltInRegistries.BLOCK.getKey(block.getBlock()))) { ids.add(id); }
         }
         return ids;
     }
 
-    private static Set<ResourceLocation> blocks() {
-        Set<ResourceLocation> ids = new LinkedHashSet<>();
+    private static Set<Identifier> blocks() {
+        Set<Identifier> ids = new LinkedHashSet<>();
         for (Block block : BuiltInRegistries.BLOCK) {
             if (block == Blocks.AIR) { continue; }
-            ResourceLocation id = BuiltInRegistries.BLOCK.getKey(block);
+            Identifier id = BuiltInRegistries.BLOCK.getKey(block);
             Item item = block.asItem();
             if (named(id) || item != Items.AIR && named(BuiltInRegistries.ITEM.getKey(item))) { ids.add(id); }
         }
         return ids;
     }
 
-    private static boolean named(ResourceLocation id) {
+    private static boolean named(Identifier id) {
         String name = id.toString();
         if (NAMES.contains(name)) { return true; }
         for (String prefix : PREFIXES) {
@@ -180,5 +179,5 @@ public final class ContentDisabled {
         return false;
     }
 
-    @Nullable private static ResourceLocation id(Object value) { return value instanceof Holder<?> holder ? holder.unwrapKey().map(ResourceKey::location).orElse(null) : null; }
+    @Nullable private static Identifier id(Object value) { return value instanceof Holder<?> holder ? holder.unwrapKey().map(ResourceKey::identifier).orElse(null) : null; }
 }

@@ -6,7 +6,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import java.util.HashSet;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.Locale;
@@ -27,7 +27,7 @@ public final class ContentParserContainers {
         return json.has("container") && json.get("container").isJsonPrimitive() ? GsonHelper.getAsString(json, "container", "").trim() : "";
     }
 
-    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) {
+    @Nullable static ContainerDef holds(Identifier key, JsonObject json) {
         return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null;
     }
 
@@ -37,7 +37,7 @@ public final class ContentParserContainers {
         return asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
     }
 
-    @Nullable static ContainerDef container(ResourceLocation key, JsonObject json) {
+    @Nullable static ContainerDef container(Identifier key, JsonObject json) {
         if (!json.has("container")) { return null; }
         JsonObject held = GsonHelper.getAsJsonObject(json, "container");
         int askedRows = GsonHelper.getAsInt(held, "rows", 3);
@@ -48,7 +48,7 @@ public final class ContentParserContainers {
             ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
         }
         String named = GsonHelper.getAsString(held, "guiTexture", "").trim().toLowerCase(Locale.ROOT);
-        ResourceLocation texture = named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier texture = named.isEmpty() ? null : Identifier.tryParse(named);
         int wide = GsonHelper.getAsInt(held, "guiWidth", 0);
         int tall = GsonHelper.getAsInt(held, "guiHeight", 0);
         if (texture != null && (wide <= 0 || tall <= 0)) {
@@ -57,12 +57,12 @@ public final class ContentParserContainers {
         }
         JsonElement asked = held.get("chestModel");
         boolean chest = asked != null && asked.isJsonPrimitive() && (asked.getAsJsonPrimitive().isString() || asked.getAsBoolean());
-        ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim().toLowerCase(Locale.ROOT), key) : null;
+        Identifier sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim().toLowerCase(Locale.ROOT), key) : null;
         return new ContainerDef(rows, columns, GsonHelper.getAsString(held, "lootTable", "").trim().toLowerCase(Locale.ROOT),
                 chest, sheet, texture, wide, tall, curioSlot(key, held));
     }
 
-    private static String curioSlot(ResourceLocation key, JsonObject held) {
+    private static String curioSlot(Identifier key, JsonObject held) {
         String asked = GsonHelper.getAsString(held, "curioSlot", "").trim().toLowerCase(Locale.ROOT);
         if (!asked.isEmpty()) { return asked; }
         String old = GsonHelper.getAsString(held, "bauble", "").trim().toLowerCase(Locale.ROOT);
@@ -81,16 +81,16 @@ public final class ContentParserContainers {
         return mapped;
     }
 
-    @Nullable private static ResourceLocation sheetOf(String named, ResourceLocation key) {
+    @Nullable private static Identifier sheetOf(String named, Identifier key) {
         if (named.isEmpty()) {
             ContentLog.LOGGER.error("The container on {} names an empty chestModel texture, so the vanilla chest is drawn instead", key);
             return null;
         }
-        ResourceLocation asked = ResourceLocation.tryParse(named);
+        Identifier asked = Identifier.tryParse(named);
         if (asked == null) {
             ContentLog.LOGGER.error("The container on {} names the chestModel texture '{}', which is not a valid id, so the vanilla chest is drawn instead", key, named);
             return null;
         }
-        return ResourceLocation.fromNamespaceAndPath(asked.getNamespace(), "textures/" + asked.getPath() + ".png");
+        return Identifier.fromNamespaceAndPath(asked.getNamespace(), "textures/" + asked.getPath() + ".png");
     }
 }

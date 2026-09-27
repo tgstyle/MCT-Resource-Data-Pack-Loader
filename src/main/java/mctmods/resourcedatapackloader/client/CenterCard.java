@@ -1,15 +1,17 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import java.util.ArrayDeque;
@@ -24,11 +26,10 @@ public final class CenterCard {
     private static final int TITLE_SCALE = 2;
     private static final int ABOVE_MIDDLE = 24;
     private static final int TEXT = 0xE8E8E8;
-    private static final float ABOVE_ITEMS = 300.0F;
     private static final Deque<MessageCard> WAITING = new ArrayDeque<>();
     @Nullable private static MessageCard shown;
-    @Nullable private static ResourceLocation image;
-    private static CardFont.Face face = new CardFont.Face(Style.DEFAULT_FONT, null);
+    @Nullable private static Identifier image;
+    private static CardFont.Face face = new CardFont.Face(FontDescription.DEFAULT.id(), null);
     private static int life;
     private static int age;
     private static int widest;
@@ -66,10 +67,10 @@ public final class CenterCard {
         if (next != null) { start(next); }
     }
 
-    public static void onLayer(GuiGraphics graphics, DeltaTracker delta) {
+    public static void onLayer(GuiGraphicsExtractor graphics, DeltaTracker delta) {
         MessageCard card = shown;
         Minecraft mc = Minecraft.getInstance();
-        if (card == null || mc.screen != null) { return; }
+        if (card == null || ClientCompat.screen(mc) != null) { return; }
         Font font = mc.font;
         int screenWidth = Crisp.fit(mc.getWindow().getGuiScaledWidth());
         if (widest < 0) {
@@ -83,31 +84,26 @@ public final class CenterCard {
         int top = Math.max(PAD, Crisp.fit(mc.getWindow().getGuiScaledHeight()) / 2 - ABOVE_MIDDLE - height);
         float alpha = alpha(delta.getGameTimeDeltaPartialTick(false));
         Crisp.raise(graphics);
-        graphics.pose().translate(0.0F, 0.0F, ABOVE_ITEMS);
-        RenderSystem.enableBlend();
         if (card.panel()) {
             graphics.fill(left - 1, top - 1, left + width + 1, top + height + 1, CardOverlay.withAlpha(CardOverlay.darker(card.background()), alpha));
             graphics.fill(left, top, left + width, top + height, CardOverlay.withAlpha(card.background(), 0.85F * alpha));
         }
         if (image != null) {
-            graphics.setColor(1.0F, 1.0F, 1.0F, alpha);
-            graphics.blit(image, left, top, 0.0F, 0.0F, width, height, width, height);
-            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, image, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(alpha));
         }
         int y = top + PAD;
         if (!card.title().isEmpty()) {
-            graphics.pose().pushPose();
-            graphics.pose().scale(TITLE_SCALE, TITLE_SCALE, 1.0F);
+            graphics.pose().pushMatrix();
+            graphics.pose().scale(TITLE_SCALE, TITLE_SCALE);
             int titleLeft = (screenWidth - font.width(MarkText.text(face, card.title())) * TITLE_SCALE) / 2;
-            graphics.drawString(font, MarkText.text(face, card.title()), titleLeft / TITLE_SCALE, y / TITLE_SCALE, CardOverlay.withAlpha(card.text(), alpha), true);
-            graphics.pose().popPose();
+            graphics.text(font, MarkText.text(face, card.title()), titleLeft / TITLE_SCALE, y / TITLE_SCALE, CardOverlay.withAlpha(card.text(), alpha), true);
+            graphics.pose().popMatrix();
             y += titleHeight;
         }
         for (String line : card.lines()) {
-            graphics.drawString(font, MarkText.text(face, line), (screenWidth - font.width(MarkText.text(face, line))) / 2, y, CardOverlay.withAlpha(TEXT, alpha), true);
+            graphics.text(font, MarkText.text(face, line), (screenWidth - font.width(MarkText.text(face, line))) / 2, y, CardOverlay.withAlpha(TEXT, alpha), true);
             y += LINE;
         }
-        RenderSystem.disableBlend();
         Crisp.lower(graphics);
     }
 

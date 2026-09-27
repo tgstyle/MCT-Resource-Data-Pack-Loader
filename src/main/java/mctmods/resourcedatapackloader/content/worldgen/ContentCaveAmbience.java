@@ -10,7 +10,7 @@ import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -37,11 +37,12 @@ public final class ContentCaveAmbience {
     private ContentCaveAmbience() {}
 
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level) || player.tickCount % EVERY != 0 || player.isSpectator()) { return; }
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % EVERY != 0 || player.isSpectator()) { return; }
+        ServerLevel level = player.level();
         BlockPos eyes = BlockPos.containing(player.getX(), player.getEyeY(), player.getZ());
         CaveRegionDef region = ContentCaveRegions.regionAt(level, eyes);
         String now = region == null ? "" : region.key().toString();
-        if (ContentLog.LOGGER.debugEnabled() && !now.equals(WHERE.put(player.getGameProfile().getName(), now))) { ContentLog.LOGGER.debug("{} at {}, {}, {} is {}", player.getGameProfile().getName(), eyes.getX(), eyes.getY(), eyes.getZ(), region == null ? "in no cave region" : "in cave region " + now + (region.hasAmbience() ? " with ambience" : " without ambience")); }
+        if (ContentLog.LOGGER.debugEnabled() && !now.equals(WHERE.put(player.getGameProfile().name(), now))) { ContentLog.LOGGER.debug("{} at {}, {}, {} is {}", player.getGameProfile().name(), eyes.getX(), eyes.getY(), eyes.getZ(), region == null ? "in no cave region" : "in cave region " + now + (region.hasAmbience() ? " with ambience" : " without ambience")); }
         if (region == null || !region.hasAmbience()) { return; }
         RandomSource random = level.getRandom();
         if (!region.ambientSound().isEmpty() && random.nextFloat() < 1.0F - (float) Math.pow(1.0F - region.soundChance(), EVERY)) { sound(player, region, random); }
@@ -49,7 +50,7 @@ public final class ContentCaveAmbience {
     }
 
     private static void sound(ServerPlayer player, CaveRegionDef region, RandomSource random) {
-        Holder<SoundEvent> sound = SOUNDS.computeIfAbsent(region.ambientSound(), name -> Optional.ofNullable(Registered.holder(BuiltInRegistries.SOUND_EVENT, ResourceLocation.tryParse(name)))).orElse(null);
+        Holder<SoundEvent> sound = SOUNDS.computeIfAbsent(region.ambientSound(), name -> Optional.ofNullable(Registered.holder(BuiltInRegistries.SOUND_EVENT, Identifier.tryParse(name)))).orElse(null);
         if (sound == null) {
             if (TOLD.add(region.key() + " sound")) { ContentLog.LOGGER.error("Cave region {} names the ambient sound {}, which nothing registers, so the region stays quiet", region.key(), region.ambientSound()); }
             return;
@@ -68,12 +69,12 @@ public final class ContentCaveAmbience {
         for (int i = 0; i < tries; i++) {
             at.set(player.getX() + random.nextInt(REACH) - random.nextInt(REACH), player.getY() + random.nextInt(REACH) - random.nextInt(REACH), player.getZ() + random.nextInt(REACH) - random.nextInt(REACH));
             if (!level.isLoaded(at) || !level.isEmptyBlock(at) || ContentCaveRegions.regionAt(level, at) != region) { continue; }
-            level.sendParticles(player, type, false, at.getX() + random.nextDouble(), at.getY() + random.nextDouble(), at.getZ() + random.nextDouble(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
+            level.sendParticles(player, type, false, false, at.getX() + random.nextDouble(), at.getY() + random.nextDouble(), at.getZ() + random.nextDouble(), 1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
 
     private static Optional<SimpleParticleType> particle(String name) {
-        ParticleType<?> found = Registered.find(BuiltInRegistries.PARTICLE_TYPE, ResourceLocation.tryParse(name));
+        ParticleType<?> found = Registered.find(BuiltInRegistries.PARTICLE_TYPE, Identifier.tryParse(name));
         return found instanceof SimpleParticleType simple ? Optional.of(simple) : Optional.empty();
     }
 }

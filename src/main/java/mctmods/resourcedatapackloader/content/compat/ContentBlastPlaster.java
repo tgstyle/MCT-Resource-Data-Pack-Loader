@@ -34,7 +34,7 @@ public final class ContentBlastPlaster {
 
     private static mctmods.blastplaster.Config.View viewFor(Level level) {
         load();
-        return RESOLVED.computeIfAbsent(level.dimension().location().toString(), ContentBlastPlaster::resolve);
+        return RESOLVED.computeIfAbsent(level.dimension().identifier().toString(), ContentBlastPlaster::resolve);
     }
 
     private static mctmods.blastplaster.Config.View resolve(String dimension) {
@@ -63,7 +63,7 @@ public final class ContentBlastPlaster {
                         continue;
                     }
                     for (Map.Entry<String, JsonElement> given : entry.getValue().getAsJsonObject().entrySet()) {
-                        Map<String, JsonElement> section = PER_DIMENSION.computeIfAbsent(given.getKey().trim(), unused -> new LinkedHashMap<>());
+                        Map<String, JsonElement> section = PER_DIMENSION.computeIfAbsent(given.getKey().trim(), _ -> new LinkedHashMap<>());
                         for (Map.Entry<String, JsonElement> inner : given.getValue().getAsJsonObject().entrySet()) { section.put(inner.getKey(), inner.getValue()); }
                     }
                 }

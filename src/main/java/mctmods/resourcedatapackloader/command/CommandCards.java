@@ -11,8 +11,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
-import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.commands.arguments.IdentifierArgument;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.Collection;
 import java.util.List;
@@ -23,15 +23,15 @@ final class CommandCards {
     private CommandCards() {}
 
     static LiteralArgumentBuilder<CommandSourceStack> card(String name) {
-        return Commands.literal("card").requires(source -> source.hasPermission(LEVEL))
-                .then(Commands.argument("rule", ResourceLocationArgument.id()).suggests((context, suggestions) -> SharedSuggestionProvider.suggest(CardRules.keys(), suggestions))
+        return Commands.literal("card").requires(source -> CommandShared.allowed(source, LEVEL))
+                .then(Commands.argument("rule", IdentifierArgument.id()).suggests((_, suggestions) -> SharedSuggestionProvider.suggest(CardRules.keys(), suggestions))
                         .executes(context -> show(context, name, List.of(context.getSource().getPlayerOrException())))
                         .then(Commands.argument("targets", EntityArgument.players()).executes(context -> show(context, name, EntityArgument.getPlayers(context, "targets")))));
     }
 
     private static int show(CommandContext<CommandSourceStack> context, String name, Collection<ServerPlayer> players) {
         CommandSourceStack source = context.getSource();
-        ResourceLocation asked = ResourceLocationArgument.getId(context, "rule");
+        Identifier asked = IdentifierArgument.getId(context, "rule");
         CommandShared.ran(source, name, "card " + asked);
         CardRule rule = CardRules.find(asked.toString());
         if (rule == null) { rule = CardRules.find(asked.getPath()); }

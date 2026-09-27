@@ -13,7 +13,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
@@ -42,7 +42,7 @@ public final class ContentFuels {
         return !ENTRIES.isEmpty();
     }
 
-    private static void read(ResourceLocation key, String contents) {
+    private static void read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Fuel file {} is empty, ignoring it", key);
@@ -62,7 +62,7 @@ public final class ContentFuels {
             if (entry.has(ORE_DICT)) { ContentLog.LOGGER.warn("A fuel in {} uses '{}', which this line does not read. Name an item tag under '{}' instead, such as c:ingots/copper or forge:ingots/copper", key, ORE_DICT, TAG); }
             String tag = GsonHelper.getAsString(entry, TAG, "").trim();
             if (!tag.isEmpty()) {
-                ResourceLocation name = ResourceLocation.tryParse(tag);
+                Identifier name = Identifier.tryParse(tag);
                 if (name == null) {
                     ContentLog.LOGGER.error("A fuel in {} names tag '{}', which is not a valid tag id, skipping it", key, tag);
                     continue;
@@ -89,6 +89,6 @@ public final class ContentFuels {
     }
 
     private record Entry(@Nullable Item item, @Nullable TagKey<Item> tag, int burnTime) {
-        private boolean matches(ItemStack fuel) { return tag != null ? fuel.is(tag) : fuel.is(item); }
+        private boolean matches(ItemStack fuel) { return tag != null ? fuel.is(tag) : item != null && fuel.is(item); }
     }
 }

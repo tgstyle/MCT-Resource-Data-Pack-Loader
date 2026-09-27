@@ -4,7 +4,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
 import java.util.ArrayList;
@@ -56,7 +56,7 @@ public final class ContentStructureSpawners {
             for (Map.Entry<String, List<String>> entry : RAW.entrySet()) {
                 List<EntityType<?>> types = new ArrayList<>();
                 for (String name : entry.getValue()) {
-                    ResourceLocation id = ResourceLocation.tryParse(name);
+                    Identifier id = Identifier.tryParse(name);
                     EntityType<?> type = Registered.find(BuiltInRegistries.ENTITY_TYPE, id);
                     if (type == null) { ContentLog.LOGGER.error("{} entry for {} names {}, which nothing registers, ignoring that name", KEY, entry.getKey(), name); }
                     else { types.add(type); }

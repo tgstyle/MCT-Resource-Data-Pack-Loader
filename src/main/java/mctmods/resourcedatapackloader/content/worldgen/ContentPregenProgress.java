@@ -25,7 +25,7 @@ public final class ContentPregenProgress {
         String wording = defaulted("pregenRunningSays", Config.chunks.pregenRunningSays(), Config.PREGEN_RUNNING, "rdpl.pregen.running", null);
         if (wording.isEmpty()) { return ""; }
         long stepped = Math.min(100L, worker.done * 100L / Math.max(1L, worker.order.total()));
-        try { return String.format(wording, worker.order.hasNext() || !worker.flying.isEmpty() ? stepped : 100L, worker.dimension.location().getPath()) + eta(worker); }
+        try { return String.format(wording, worker.order.hasNext() || !worker.flying.isEmpty() ? stepped : 100L, worker.dimension.identifier().getPath()) + eta(worker); }
         catch (IllegalFormatException wrong) {
             ContentLog.LOGGER.error("A pack words the message about land being made as '{}', which is not something a number can be put into, so it is said as it stands", wording, wrong);
             return wording + eta(worker);
@@ -60,6 +60,6 @@ public final class ContentPregenProgress {
     static String report(ContentPregen worker) {
         long seconds = Math.max(1L, (System.currentTimeMillis() - worker.started) / 1000L);
         long rate = (worker.done - worker.resumedFrom) / seconds;
-        return String.format("Made %d of %d chunk(s) in %s, %d of them new or loaded, %d refused, at %d a second with %d asked for at once", worker.done, worker.order.total(), worker.dimension.location(), worker.made, worker.failed, rate, worker.inFlight);
+        return String.format("Made %d of %d chunk(s) in %s, %d of them new or loaded, %d refused, at %d a second with %d asked for at once", worker.done, worker.order.total(), worker.dimension.identifier(), worker.made, worker.failed, rate, worker.inFlight);
     }
 }

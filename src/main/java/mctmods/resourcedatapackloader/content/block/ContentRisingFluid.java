@@ -8,14 +8,20 @@ import it.unimi.dsi.fastutil.shorts.Short2ObjectMap;
 import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.DoorBlock;
+import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import java.util.Map;
@@ -27,9 +33,8 @@ import javax.annotation.Nonnull;
 
     protected ContentRisingFluid(Properties properties) { super(properties); }
 
-    @Override protected void spread(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull FluidState state) {
+    @Override protected void spread(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState here, @Nonnull FluidState state) {
         if (state.isEmpty()) { return; }
-        BlockState here = level.getBlockState(pos);
         BlockPos up = pos.above();
         BlockState upState = level.getBlockState(up);
         FluidState rising = getNewLiquid(level, up, upState);
@@ -40,7 +45,7 @@ import javax.annotation.Nonnull;
         else if (state.isSource() || !hole(level, pos, here, up, upState, rising.getType())) { spreadToSides(level, pos, state, here); }
     }
 
-    private void spreadToSides(Level level, BlockPos pos, FluidState state, BlockState here) {
+    private void spreadToSides(ServerLevel level, BlockPos pos, FluidState state, BlockState here) {
         int amount = state.getValue(FALLING) ? 7 : state.getAmount() - getDropOff(level);
         if (amount <= 0) { return; }
         for (Map.Entry<Direction, FluidState> entry : getSpread(level, pos, here).entrySet()) {
@@ -50,7 +55,7 @@ import javax.annotation.Nonnull;
         }
     }
 
-    @Override @Nonnull protected FluidState getNewLiquid(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
+    @Override @Nonnull protected FluidState getNewLiquid(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
         int most = 0;
         int sources = 0;
         for (Direction direction : Direction.Plane.HORIZONTAL) {
@@ -74,7 +79,7 @@ import javax.annotation.Nonnull;
         return amount <= 0 ? Fluids.EMPTY.defaultFluidState() : getFlowing(amount, false);
     }
 
-    @Override @Nonnull protected Map<Direction, FluidState> getSpread(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
+    @Override @Nonnull protected Map<Direction, FluidState> getSpread(@Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull BlockState state) {
         int best = FAR;
         Map<Direction, FluidState> spread = Maps.newEnumMap(Direction.class);
         Short2ObjectMap<Pair<BlockState, FluidState>> states = new Short2ObjectOpenHashMap<>();
@@ -85,7 +90,7 @@ import javax.annotation.Nonnull;
             Pair<BlockState, FluidState> held = states.computeIfAbsent(key, ignored -> read(level, side));
             FluidState next = getNewLiquid(level, side, held.getFirst());
             if (blocked(level, next.getType(), pos, state, direction, side, held)) { continue; }
-            int distance = holes.computeIfAbsent(key, ignored -> holeAbove(level, side, held.getFirst())) ? 0 : getSlopeDistance(level, side, 1, direction.getOpposite(), held.getFirst(), pos, states, holes);
+            int distance = holes.computeIfAbsent(key, ignored -> holeAbove(level, side, held.getFirst())) ? 0 : slopeDistance(level, side, 1, direction.getOpposite(), held.getFirst(), pos, states, holes);
             if (distance < best) { spread.clear(); }
             if (distance <= best) {
                 spread.put(direction, next);
@@ -95,7 +100,7 @@ import javax.annotation.Nonnull;
         return spread;
     }
 
-    @Override protected int getSlopeDistance(@Nonnull LevelReader level, @Nonnull BlockPos pos, int distance, @Nonnull Direction from, @Nonnull BlockState state, @Nonnull BlockPos origin, @Nonnull Short2ObjectMap<Pair<BlockState, FluidState>> states, @Nonnull Short2BooleanMap holes) {
+    private int slopeDistance(LevelReader level, BlockPos pos, int distance, Direction from, BlockState state, BlockPos origin, Short2ObjectMap<Pair<BlockState, FluidState>> states, Short2BooleanMap holes) {
         int best = FAR;
         for (Direction direction : Direction.Plane.HORIZONTAL) {
             if (direction == from) { continue; }
@@ -104,7 +109,7 @@ import javax.annotation.Nonnull;
             Pair<BlockState, FluidState> held = states.computeIfAbsent(key, ignored -> read(level, side));
             if (blocked(level, getFlowing(), pos, state, direction, side, held)) { continue; }
             if (holes.computeIfAbsent(key, ignored -> holeAbove(level, side, held.getFirst()))) { return distance; }
-            if (distance < getSlopeFindDistance(level)) { best = Math.min(best, getSlopeDistance(level, side, distance + 1, direction.getOpposite(), held.getFirst(), origin, states, holes)); }
+            if (distance < getSlopeFindDistance(level)) { best = Math.min(best, slopeDistance(level, side, distance + 1, direction.getOpposite(), held.getFirst(), origin, states, holes)); }
         }
         return best;
     }
@@ -116,6 +121,16 @@ import javax.annotation.Nonnull;
     private boolean blocked(BlockGetter level, Fluid fluid, BlockPos pos, BlockState state, Direction direction, BlockPos side, Pair<BlockState, FluidState> held) { return sourceOfThis(held.getSecond()) || !through(level, pos, state, direction, side, held.getFirst(), fluid); }
 
     private boolean through(BlockGetter level, BlockPos pos, BlockState state, Direction direction, BlockPos side, BlockState sideState, Fluid fluid) { return canSpreadTo(level, pos, state, direction, side, sideState, Fluids.EMPTY.defaultFluidState(), fluid); }
+
+    private static boolean canSpreadTo(BlockGetter level, BlockPos from, BlockState fromState, Direction direction, BlockPos to, BlockState toState, FluidState toFluid, Fluid fluid) { return toFluid.canBeReplacedWith(level, to, fluid, direction) && !Shapes.mergedFaceOccludes(fromState.getCollisionShape(level, from), toState.getCollisionShape(level, to), direction) && holds(level, to, toState, fluid); }
+
+    private static boolean holds(BlockGetter level, BlockPos pos, BlockState state, Fluid fluid) {
+        Block block = state.getBlock();
+        if (block instanceof LiquidBlockContainer container) { return container.canPlaceLiquid(null, level, pos, state, fluid); }
+        if (block instanceof DoorBlock || state.is(BlockTags.SIGNS) || state.is(Blocks.LADDER) || state.is(Blocks.SUGAR_CANE) || state.is(Blocks.BUBBLE_COLUMN)) { return false; }
+        if (state.is(Blocks.NETHER_PORTAL) || state.is(Blocks.END_PORTAL) || state.is(Blocks.END_GATEWAY) || state.is(Blocks.STRUCTURE_VOID)) { return false; }
+        return !state.blocksMotion();
+    }
 
     private boolean sourceOfThis(FluidState state) { return state.getType().isSame(this) && state.isSource(); }
 

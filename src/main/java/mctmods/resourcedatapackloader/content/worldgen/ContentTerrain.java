@@ -2,9 +2,11 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import com.google.gson.JsonObject;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.clock.WorldClock;
+import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.levelgen.WorldOptions;
 
@@ -49,7 +51,8 @@ public final class ContentTerrain {
             return settings;
         }
         Summary.info("terrain.gamemode", "Starting every new world in " + (hardcore ? HARDCORE : asked.getName()) + ", which is what a pack asks for");
-        return new LevelSettings(settings.levelName(), asked, settings.hardcore() || hardcore, settings.difficulty(), settings.allowCommands() || asked == GameType.CREATIVE, settings.gameRules(), settings.getDataConfiguration());
+        LevelSettings.DifficultySettings difficulty = settings.difficultySettings();
+        return new LevelSettings(settings.levelName(), asked, new LevelSettings.DifficultySettings(difficulty.difficulty(), difficulty.hardcore() || hardcore, difficulty.locked()), settings.allowCommands() || asked == GameType.CREATIVE, settings.dataConfiguration());
     }
 
     public static WorldOptions newWorld(WorldOptions options) {
@@ -149,7 +152,7 @@ public final class ContentTerrain {
 
     @Nullable public static String shippedBiome(String written) {
         String found = legacyBiome(written);
-        ResourceLocation id = found == null ? null : ResourceLocation.tryParse(found);
+        Identifier id = found == null ? null : Identifier.tryParse(found);
         if (id != null && ContentBiomes.shipped(id)) { return id.toString(); }
         if (found != null && WARNED.add("biome." + found)) { ContentLog.LOGGER.error("generatorOptions names biome '{}', which is not a biome the game, a mod or a pack ships, so it is left to the game", written); }
         return null;
@@ -189,7 +192,7 @@ public final class ContentTerrain {
 
     public static int worldTime() { return number("worldTime", Config.worldgen.worldTime(), -1); }
 
-    public static long lockedTime(Level level) { return level.dimension() == Level.OVERWORLD ? worldTime() : -1L; }
+    public static long lockedTime(Holder<WorldClock> clock) { return clock.is(WorldClocks.OVERWORLD) ? worldTime() : ContentDimensionTime.fixedTime(clock); }
 
     private static int number(String key, int fallback, int off) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return off; }

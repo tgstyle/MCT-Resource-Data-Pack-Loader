@@ -15,7 +15,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -73,29 +73,29 @@ public record ContentEntitySpawns() implements BiomeModifier {
 
     @Override public void modify(@Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) {
         if (phase != Phase.ADD) { return; }
-        ResourceLocation id = biome.unwrapKey().map(ResourceKey::location).orElse(null);
+        Identifier id = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
         for (EntityType<?> type : ContentEntities.types().values()) {
             EntityVariantDef def = ContentEntities.def(type);
             if (def == null || def.spawns().isEmpty() || !matches(biome, id, def)) { continue; }
             for (SpawnEntryDef entry : def.spawns()) {
                 MobCategory category = category(entry.creatureType());
-                if (category != null) { builder.getMobSpawnSettings().addSpawn(category, new MobSpawnSettings.SpawnerData(type, entry.weight(), entry.min(), Math.max(entry.min(), entry.max()))); }
+                if (category != null) { builder.getMobSpawnSettings().addSpawn(category, entry.weight(), new MobSpawnSettings.SpawnerData(type, entry.min(), Math.max(entry.min(), entry.max()))); }
             }
         }
     }
 
     public static void onServerStarted(ServerStartedEvent event) {
-        Registry<Biome> registry = event.getServer().registryAccess().registryOrThrow(Registries.BIOME);
+        Registry<Biome> registry = event.getServer().registryAccess().lookupOrThrow(Registries.BIOME);
         for (EntityType<?> type : ContentEntities.types().values()) {
             EntityVariantDef def = ContentEntities.def(type);
             if (def == null || def.spawns().isEmpty()) { continue; }
-            if (registry.holders().noneMatch(holder -> matches(holder, holder.key().location(), def))) { ContentLog.LOGGER.error("Entity variant {} names biomes nothing matches, so it will not spawn on its own", def.key()); }
+            if (registry.listElements().noneMatch(holder -> matches(holder, holder.key().identifier(), def))) { ContentLog.LOGGER.error("Entity variant {} names biomes nothing matches, so it will not spawn on its own", def.key()); }
         }
     }
 
     @Override @Nonnull public MapCodec<? extends BiomeModifier> codec() { return CODEC; }
 
-    private static boolean matches(Holder<Biome> biome, @Nullable ResourceLocation id, EntityVariantDef def) {
+    private static boolean matches(Holder<Biome> biome, @Nullable Identifier id, EntityVariantDef def) {
         if (def.biomes().isEmpty() && def.biomeTypes().isEmpty()) { return true; }
         String named = id == null ? "" : id.toString();
         for (String wanted : def.biomes()) {
@@ -117,7 +117,7 @@ public record ContentEntitySpawns() implements BiomeModifier {
 
     @Nullable private static TagKey<Biome> tag(String type) {
         String named = ContentFormats.biomeTag(type);
-        ResourceLocation id = named == null ? null : ResourceLocation.tryParse(named.startsWith("#") ? named.substring(1) : named);
+        Identifier id = named == null ? null : Identifier.tryParse(named.startsWith("#") ? named.substring(1) : named);
         return id == null ? null : TagKey.create(Registries.BIOME, id);
     }
 

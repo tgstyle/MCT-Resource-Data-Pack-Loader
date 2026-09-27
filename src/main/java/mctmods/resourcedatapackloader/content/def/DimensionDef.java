@@ -1,15 +1,15 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public record DimensionDef(ResourceLocation key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
+public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
-                           @Nullable ResourceLocation respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options) {
+                           @Nullable Identifier respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options) {
     public static final String OVERWORLD = "overworld";
     public static final String FLAT = "flat";
     public static final String VOID = "void";

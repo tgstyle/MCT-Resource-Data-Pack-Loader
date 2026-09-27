@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(PlacedFeature.class) public abstract class MixinPlacedFeature {
     @Inject(method = "placeWithBiomeCheck", at = @At("HEAD"), cancellable = true)
-    private void rdpl$populate(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+    private void rdpl$populate(WorldGenLevel level, ChunkGenerator generator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) {
         if (ContentFlatSource.undecorated(generator) || ContentVoidWorld.voidRefuses(level, PlacedFeature.class.cast(this)) || ContentPopulateControl.refuses(generator, PlacedFeature.class.cast(this)) || ContentOreControl.refuses(generator, PlacedFeature.class.cast(this)) || ContentGeneratorControl.refuses(generator, PlacedFeature.class.cast(this))) { cir.setReturnValue(false); }
     }
 }

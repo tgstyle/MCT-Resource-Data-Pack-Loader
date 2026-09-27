@@ -46,7 +46,7 @@ public final class ContentOreSigns {
             }
             if (!ContentPlacer.loaded(level, at.set(x, 0, z))) { continue; }
             int y = level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
-            if (y <= level.getMinBuildHeight() + 1 || y >= level.getMaxBuildHeight() || !level.getBlockState(at.set(x, y, z)).isAir()) { continue; }
+            if (y <= level.getMinY() + 1 || y > level.getMaxY() || !level.getBlockState(at.set(x, y, z)).isAir()) { continue; }
             BlockState under = level.getBlockState(at.set(x, y - 1, z));
             if (!under.isFaceSturdy(level, at, Direction.UP) || !under.getFluidState().isEmpty()) { continue; }
             if (taken(level, at.set(x, y - 1, z))) { continue; }
@@ -56,7 +56,7 @@ public final class ContentOreSigns {
     }
 
     private static boolean taken(WorldGenLevel level, BlockPos ground) {
-        Registry<Structure> structures = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> structures = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         for (StructurePiece piece : ContentCityClaim.pieces(level, ground, structure -> structure instanceof ContentCityStructure || structures.wrapAsHolder(structure).is(StructureTags.VILLAGE))) {
             BoundingBox footprint = underfoot(piece);
             if (footprint != null && footprint.intersects(ground.getX(), ground.getZ(), ground.getX(), ground.getZ())) { return true; }

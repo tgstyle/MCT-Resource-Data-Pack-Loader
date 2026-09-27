@@ -13,11 +13,12 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -29,7 +30,9 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
-import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.item.ItemUtil;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -43,7 +46,7 @@ import javax.annotation.Nullable;
 public final class ContentThreat {
     private static final int SAMPLE = 100;
     private static final double REACH = 128.0D * 128.0D;
-    private static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "threatitems");
+    private static final Identifier KEY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "threatitems");
     private static final Map<UUID, Integer> BANDS = new HashMap<>();
     private static final Map<Level, List<Carrier>> CARRIERS = new HashMap<>();
     private static final Map<Level, Integer> OTHERS = new HashMap<>();
@@ -183,7 +186,7 @@ public final class ContentThreat {
         }
         CARRIERS.put(level, carriers.isEmpty() ? Collections.emptyList() : carriers);
         Integer before = OTHERS.put(level, others);
-        if (before == null ? others > 0 : before != others) { ContentLog.LOGGER.debug("Dimension {} holds {} threat carrier(s) beyond the players, the highest in band {} of {}", level.dimension().location(), others, highest, levels.length); }
+        if (before == null ? others > 0 : before != others) { ContentLog.LOGGER.debug("Dimension {} holds {} threat carrier(s) beyond the players, the highest in band {} of {}", level.dimension().identifier(), others, highest, levels.length); }
         return List.copyOf(placed);
     }
 
@@ -201,17 +204,22 @@ public final class ContentThreat {
         Arrays.fill(held, 0);
         if (entity instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) { return 0; }
-            tally(held, player.getInventory().items);
-            tally(held, player.getInventory().armor);
-            tally(held, player.getInventory().offhand);
+            tally(held, player.getInventory().getNonEquipmentItems());
+            for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+                if (slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR || slot == EquipmentSlot.OFFHAND) { tally(held, player.getItemBySlot(slot)); }
+            }
         }
         else if (entity instanceof ItemEntity item) { tally(held, item.getItem()); }
         else {
-            IItemHandler handler = entity.getCapability(Capabilities.ItemHandler.ENTITY);
+            ResourceHandler<ItemResource> handler = entity.getCapability(Capabilities.Item.ENTITY);
             if (handler != null) {
-                for (int slot = 0; slot < handler.getSlots(); slot++) { tally(held, handler.getStackInSlot(slot)); }
+                for (int slot = 0; slot < handler.size(); slot++) { tally(held, ItemUtil.getStack(handler, slot)); }
             }
-            else if (entity instanceof LivingEntity living) { tally(held, living.getAllSlots()); }
+            else if (entity instanceof LivingEntity living) {
+                for (EquipmentSlot slot : EquipmentSlot.VALUES) {
+                    if (slot.getType() == EquipmentSlot.Type.HAND || slot.getType() == EquipmentSlot.Type.HUMANOID_ARMOR) { tally(held, living.getItemBySlot(slot)); }
+                }
+            }
             else { return 0; }
         }
         int score = 0;

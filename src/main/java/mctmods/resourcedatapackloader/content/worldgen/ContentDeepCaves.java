@@ -8,7 +8,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.Blocks;
@@ -51,10 +51,10 @@ public final class ContentDeepCaves {
         return true;
     }
 
-    public static void deepen(JsonObject settings, ResourceLocation owner, int floor) {
+    public static void deepen(JsonObject settings, Identifier owner, int floor) {
         JsonObject router = GsonHelper.getAsJsonObject(settings, "noise_router", null);
-        JsonObject noodle = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/noodle.json"));
-        JsonObject spaghetti = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/spaghetti_2d.json"));
+        JsonObject noodle = GameData.json(Identifier.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/noodle.json"));
+        JsonObject spaghetti = GameData.json(Identifier.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/spaghetti_2d.json"));
         if (router == null || !router.has("final_density") || noodle == null || spaghetti == null) {
             ContentLog.LOGGER.error("The game's overworld noise could not be read for {}, so the world under {} stays solid", owner, ContentWorldShape.VANILLA_MIN);
             return;
@@ -74,11 +74,11 @@ public final class ContentDeepCaves {
         Aquifer.FluidStatus lava = new Aquifer.FluidStatus(lavaLevel, Blocks.LAVA.defaultBlockState());
         Aquifer.FluidStatus sea = new Aquifer.FluidStatus(settings.seaLevel(), settings.defaultFluid());
         int lavaBelow = Math.min(lavaLevel, settings.seaLevel());
-        return (x, y, z) -> y < lavaBelow ? lava : sea;
+        return (_, y, _) -> y < lavaBelow ? lava : sea;
     }
 
-    private static String put(ResourceLocation owner, String suffix, JsonObject json) {
-        ResourceLocation id = ResourceLocation.fromNamespaceAndPath(owner.getNamespace(), owner.getPath() + "_" + suffix);
+    private static String put(Identifier owner, String suffix, JsonObject json) {
+        Identifier id = Identifier.fromNamespaceAndPath(owner.getNamespace(), owner.getPath() + "_" + suffix);
         GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), FOLDER + "/" + id.getPath() + ".json", json.toString());
         return id.toString();
     }

@@ -3,10 +3,11 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.util.Marks;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 final class MarkText {
     private static final int CODE = 0x55FFFF;
@@ -25,11 +26,11 @@ final class MarkText {
         return all;
     }
 
-    static Component literal(CardFont.Face face, String said) { return Component.literal(said).withStyle(style -> style.withFont(face.plain())); }
+    static Component literal(CardFont.Face face, String said) { return Component.literal(said).withStyle(style -> style.withFont(new FontDescription.Resource(face.plain()))); }
 
     private static Style styled(Style style, CardFont.Face face, int marks) {
         CardFont.Face used = (marks & Marks.RUNIC) != 0 ? CardFont.runic() : face;
-        ResourceLocation font = used.plain();
+        Identifier font = used.plain();
         Style styled = style;
         boolean bold = (marks & Marks.BOLD) != 0;
         boolean italic = (marks & Marks.ITALIC) != 0;
@@ -41,6 +42,6 @@ final class MarkText {
         if ((marks & Marks.STRIKE) != 0) { styled = styled.withStrikethrough(true); }
         if ((marks & Marks.LINK) != 0) { styled = styled.withUnderlined(true); }
         if ((marks & Marks.CODE) != 0) { styled = styled.withColor(TextColor.fromRgb(CODE)); }
-        return styled.withFont(font);
+        return styled.withFont(new FontDescription.Resource(font));
     }
 }

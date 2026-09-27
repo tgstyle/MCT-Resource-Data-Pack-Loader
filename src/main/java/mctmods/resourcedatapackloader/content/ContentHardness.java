@@ -43,10 +43,10 @@ import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
@@ -71,7 +71,7 @@ import javax.annotation.Nullable;
 
 public final class ContentHardness {
     private static final Gson GSON = new GsonBuilder().create();
-    private static final Map<ResourceLocation, HardnessDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, HardnessDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, List<HardnessDef>> WHOLE = new IdentityHashMap<>();
     private static final Map<BlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
     private static final Map<Block, HardnessDef> DENIED = new IdentityHashMap<>();
@@ -157,11 +157,11 @@ public final class ContentHardness {
         Block block = named(def, name, "blocks");
         if (block == null) { return 0; }
         if (name.properties().isEmpty()) {
-            WHOLE.computeIfAbsent(block, held -> new ArrayList<>()).add(def);
+            WHOLE.computeIfAbsent(block, _ -> new ArrayList<>()).add(def);
             return 1;
         }
         List<BlockState> states = ContentStates.matching(block, name.properties(), def.key() + " blocks");
-        for (BlockState state : states) { EXACT.computeIfAbsent(state, held -> new ArrayList<>()).add(def); }
+        for (BlockState state : states) { EXACT.computeIfAbsent(state, _ -> new ArrayList<>()).add(def); }
         return states.isEmpty() ? 0 : 1;
     }
 
@@ -224,13 +224,14 @@ public final class ContentHardness {
         if (def.teams().isEmpty() && def.players().isEmpty() && def.entities().isEmpty()) { return true; }
         Team side = who.getTeam();
         if (side != null && def.teams().contains(side.getName())) { return true; }
-        if (who instanceof Player player) { return def.players().contains(player.getGameProfile().getName()); }
+        if (who instanceof Player player) { return def.players().contains(player.getGameProfile().name()); }
         return def.entities().contains(EntityType.getKey(who.getType()).toString());
     }
 
     public static boolean digBarred(LivingEntity mob, @Nullable BlockState state, ItemStack held) {
         HardnessDef def = groupFor(state, mob);
-        if (def == null || !def.adventure() || mob.getServer() == null || mob.getServer().getDefaultGameType() != GameType.ADVENTURE) { return false; }
+        MinecraftServer server = mob.level().getServer();
+        if (def == null || !def.adventure() || server == null || server.getDefaultGameType() != GameType.ADVENTURE) { return false; }
         return !mayBreak(mob, state, held);
     }
 
@@ -351,8 +352,8 @@ public final class ContentHardness {
         int swapped = 0;
         int chunks = 0;
         for (ServerLevel level : server.getAllLevels()) {
-            for (ChunkHolder holder : ((IChunkMap) level.getChunkSource().chunkMap).rdpl$getChunks()) {
-                LevelChunk chunk = level.getChunkSource().getChunkNow(holder.getPos().x, holder.getPos().z);
+            for (ChunkHolder holder : ((IChunkMap) level.getChunkSource().chunkMap).rdpl$visibleChunkMap().values()) {
+                LevelChunk chunk = level.getChunkSource().getChunkNow(holder.getPos().x(), holder.getPos().z());
                 if (chunk == null) { continue; }
                 swapped += swap(level, chunk, def);
                 Set<String> tokens = new HashSet<>(ContentChunkTokens.get(chunk));
@@ -368,15 +369,16 @@ public final class ContentHardness {
         if (BECOMES.isEmpty() || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         String earned = event.getAdvancement().id().toString();
         for (HardnessDef def : BECOMES.keySet()) {
-            if (!def.becomesOn().equals(earned) || unlocked(player.server, def)) { continue; }
-            GateStorage.unlockGlobally(player.server, swapKey(def));
-            swapLoaded(player.server, def);
+            if (!def.becomesOn().equals(earned) || unlocked(player.level().getServer(), def)) { continue; }
+            GateStorage.unlockGlobally(player.level().getServer(), swapKey(def));
+            swapLoaded(player.level().getServer(), def);
         }
     }
 
     public static void onChunkLoad(ChunkEvent.Load event) {
-        if (BECOMES.isEmpty() || !(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
-        if (!missing(level.getServer(), chunk).isEmpty()) { SWAPS.computeIfAbsent(level.dimension(), key -> new ArrayDeque<>()).add(chunk.getPos()); }
+        if (BECOMES.isEmpty() || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        LevelChunk chunk = event.getChunk();
+        if (!missing(level.getServer(), chunk).isEmpty()) { SWAPS.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(chunk.getPos()); }
     }
 
     public static void onLevelUnload(LevelEvent.Unload event) {
@@ -388,7 +390,7 @@ public final class ContentHardness {
         Deque<ChunkPos> queue = SWAPS.get(level.dimension());
         while (queue != null && !queue.isEmpty() && ContentRetrogen.canCatchUp(level, queue.peekFirst())) {
             ChunkPos pos = queue.removeFirst();
-            LevelChunk chunk = level.getChunk(pos.x, pos.z);
+            LevelChunk chunk = level.getChunk(pos.x(), pos.z());
             List<HardnessDef> defs = missing(level.getServer(), chunk);
             if (defs.isEmpty()) { continue; }
             swapped(level, chunk, defs);
@@ -396,7 +398,7 @@ public final class ContentHardness {
         }
     }
 
-    public static void onBreak(BlockEvent.BreakEvent event) {
+    public static void onBreak(BreakBlockEvent event) {
         if (idle() || !(event.getLevel() instanceof ServerLevel level) || !(event.getPlayer() instanceof ServerPlayer player)) { return; }
         BlockState state = event.getState();
         ItemStack held = player.getMainHandItem();
@@ -427,7 +429,7 @@ public final class ContentHardness {
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof Level level)) { return; }
         salt = derive(((IBiomeManager) level.getBiomeManager()).rdpl$getBiomeZoomSeed());
-        ContentLog.LOGGER.debug("Hardness salt {} from {} {}", salt, level.isClientSide() ? "client" : "server", level.dimension().location());
+        ContentLog.LOGGER.debug("Hardness salt {} from {} {}", salt, level.isClientSide() ? "client" : "server", level.dimension().identifier());
     }
 
     public static long derive(long seed) {
@@ -438,7 +440,7 @@ public final class ContentHardness {
         return value;
     }
 
-    @Nullable private static HardnessDef read(ResourceLocation key, String contents) {
+    @Nullable private static HardnessDef read(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Hardness group {} is empty, ignoring it", key);
@@ -507,7 +509,7 @@ public final class ContentHardness {
         return new float[] { value, value };
     }
 
-    private static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String name) {
+    private static List<BlockMatchDef> matches(Identifier key, JsonObject json, String name) {
         List<BlockMatchDef> values = new ArrayList<>();
         if (!json.has(name)) { return values; }
         JsonElement element = json.get(name);

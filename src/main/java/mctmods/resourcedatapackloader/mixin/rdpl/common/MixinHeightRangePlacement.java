@@ -19,10 +19,10 @@ import java.util.stream.Stream;
     @Shadow @Final private HeightProvider height;
 
     @Inject(method = "getPositions", at = @At("HEAD"), cancellable = true)
-    private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos pos, CallbackInfoReturnable<Stream<BlockPos>> cir) {
+    private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos origin, CallbackInfoReturnable<Stream<BlockPos>> cir) {
         VanillaWindow window = VanillaWindow.of(context);
         if (window == null) { return; }
         int y = height.sample(random, window);
-        cir.setReturnValue(window.under(y) ? Stream.empty() : Stream.of(pos.atY(y)));
+        cir.setReturnValue(window.under(y) ? Stream.empty() : Stream.of(origin.atY(y)));
     }
 }

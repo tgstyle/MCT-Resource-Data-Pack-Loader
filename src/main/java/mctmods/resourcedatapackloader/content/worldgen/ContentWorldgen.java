@@ -25,7 +25,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
@@ -52,8 +52,8 @@ public final class ContentWorldgen {
     private static final String UNDERGROUND = "underground_ores";
     private static final String VEGETAL = "vegetal_decoration";
     private static final String SURFACE = "surface_structures";
-    private static final Map<ResourceLocation, WorldgenDef> DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, Entry> ENTRIES = new LinkedHashMap<>();
+    private static final Map<Identifier, WorldgenDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, Entry> ENTRIES = new LinkedHashMap<>();
     private static boolean loaded;
     private static final Set<String> CHAIN_WARNED = new LinkedHashSet<>();
     private static final int EDGE_REACH = 16;
@@ -85,13 +85,13 @@ public final class ContentWorldgen {
         ContentRetrogen.setup(ENTRIES.values());
     }
 
-    @Nullable public static Entry entry(ResourceLocation key) { return ENTRIES.get(key); }
+    @Nullable public static Entry entry(Identifier key) { return ENTRIES.get(key); }
 
     @Nullable public static Entry byName(String name) {
-        ResourceLocation key = ResourceLocation.tryParse(name);
+        Identifier key = Identifier.tryParse(name);
         if (key != null && ENTRIES.containsKey(key)) { return ENTRIES.get(key); }
         if (name.indexOf(':') >= 0) { return null; }
-        for (Map.Entry<ResourceLocation, Entry> held : ENTRIES.entrySet()) {
+        for (Map.Entry<Identifier, Entry> held : ENTRIES.entrySet()) {
             if (held.getKey().getPath().equals(name)) { return held.getValue(); }
         }
         return null;
@@ -99,7 +99,7 @@ public final class ContentWorldgen {
 
     public static List<String> veinNames() {
         List<String> names = new ArrayList<>();
-        for (Map.Entry<ResourceLocation, Entry> held : ENTRIES.entrySet()) {
+        for (Map.Entry<Identifier, Entry> held : ENTRIES.entrySet()) {
             if (held.getValue().shape() instanceof ContentOreVein) { names.add(held.getKey().toString()); }
         }
         Collections.sort(names);
@@ -162,7 +162,7 @@ public final class ContentWorldgen {
 
     public static boolean dimensionAllows(Entry entry, WorldGenLevel level) {
         if (entry.dimensions().isEmpty()) { return true; }
-        return entry.dimensions().contains(level.getLevel().dimension().location()) != entry.def().dimensionsAreBlacklist();
+        return entry.dimensions().contains(level.getLevel().dimension().identifier()) != entry.def().dimensionsAreBlacklist();
     }
 
     public static boolean allows(Entry entry, WorldGenLevel level, BlockPos pos) {
@@ -176,7 +176,7 @@ public final class ContentWorldgen {
     public static boolean inRegion(Entry entry, WorldGenLevel level, BlockPos pos) {
         if (entry.def().caveRegions().isEmpty()) { return true; }
         if (!ContentPlacer.loaded(level, pos)) { return false; }
-        for (ResourceLocation region : entry.def().caveRegions()) {
+        for (Identifier region : entry.def().caveRegions()) {
             CaveRegionDef def = ContentCaveRegions.def(region);
             if (def != null && ContentCaveRegions.holds(level, def, pos)) { return true; }
         }
@@ -184,7 +184,7 @@ public final class ContentWorldgen {
     }
 
     private static boolean matches(Entry entry, Holder<Biome> biome) {
-        for (ResourceLocation named : entry.biomes()) {
+        for (Identifier named : entry.biomes()) {
             if (biome.is(named)) { return true; }
         }
         for (TagKey<Biome> tag : entry.biomeTags()) {
@@ -194,7 +194,7 @@ public final class ContentWorldgen {
     }
 
     @Nullable private static Entry resolve(WorldgenDef def) {
-        ResourceLocation key = def.key();
+        Identifier key = def.key();
         if (!ContentRegistry.available(def.requires(), key)) { return null; }
         Set<Block> targets = new LinkedHashSet<>();
         Set<BlockState> exact = new LinkedHashSet<>();
@@ -214,7 +214,7 @@ public final class ContentWorldgen {
         if (ShapeDef.DECORATION.equals(def.shape().type()) || ShapeDef.TREE.equals(def.shape().type())) {
             List<String> unknown = new ArrayList<>();
             for (String name : def.shape().surface()) {
-                Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.trim()));
+                Block found = Registered.find(BuiltInRegistries.BLOCK, Identifier.tryParse(name.trim()));
                 if (found == null) { unknown.add(name); }
                 else { surface.add(found); }
             }
@@ -284,7 +284,7 @@ public final class ContentWorldgen {
         }
     }
 
-    @Nullable private static BlockState extra(String named, ResourceLocation key) {
+    @Nullable private static BlockState extra(String named, Identifier key) {
         BlockState state = state(named, key);
         if (state == null && !named.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, named); }
         return state;
@@ -316,7 +316,7 @@ public final class ContentWorldgen {
         }
     }
 
-    @Nullable private static BlockState state(ResourceLocation name, Map<String, String> properties, ResourceLocation key) {
+    @Nullable private static BlockState state(Identifier name, Map<String, String> properties, Identifier key) {
         Block block = Registered.find(BuiltInRegistries.BLOCK, name);
         if (block == null) { return null; }
         if (properties.isEmpty()) { return block.defaultBlockState(); }
@@ -324,14 +324,14 @@ public final class ContentWorldgen {
         return found.isEmpty() ? block.defaultBlockState() : found.getFirst();
     }
 
-    @Nullable private static BlockState state(String name, ResourceLocation key) {
-        return name.isEmpty() ? null : state(ResourceLocation.tryParse(name), Map.of(), key);
+    @Nullable private static BlockState state(String name, Identifier key) {
+        return name.isEmpty() ? null : state(Identifier.tryParse(name), Map.of(), key);
     }
 
-    private static Set<ResourceLocation> biomeNames(WorldgenDef def) {
-        Set<ResourceLocation> named = new LinkedHashSet<>();
+    private static Set<Identifier> biomeNames(WorldgenDef def) {
+        Set<Identifier> named = new LinkedHashSet<>();
         for (String name : def.biomes()) {
-            ResourceLocation biome = ResourceLocation.tryParse(name.trim());
+            Identifier biome = Identifier.tryParse(name.trim());
             if (biome == null) { ContentLog.LOGGER.error("Worldgen {} names biome '{}', which is not a valid id, leaving it out", def.key(), name); }
             else { named.add(biome); }
         }
@@ -346,16 +346,16 @@ public final class ContentWorldgen {
                 ContentLog.LOGGER.error("Worldgen {} names biome type '{}', which no biome tag on this line answers to", def.key(), type);
                 continue;
             }
-            ResourceLocation named = ResourceLocation.tryParse(tag);
+            Identifier named = Identifier.tryParse(tag);
             if (named != null) { tags.add(TagKey.create(Registries.BIOME, named)); }
         }
         return List.copyOf(tags);
     }
 
-    private static Set<ResourceLocation> dimensions(WorldgenDef def) {
-        Set<ResourceLocation> named = new LinkedHashSet<>();
+    private static Set<Identifier> dimensions(WorldgenDef def) {
+        Set<Identifier> named = new LinkedHashSet<>();
         for (String entry : def.dimensions()) {
-            ResourceLocation dimension = ResourceLocation.tryParse(ContentFormats.dimensionId(entry));
+            Identifier dimension = Identifier.tryParse(ContentFormats.dimensionId(entry));
             if (dimension == null) { ContentLog.LOGGER.error("Worldgen {} names dimension '{}', which is not a valid id, leaving it out", def.key(), entry); }
             else { named.add(dimension); }
         }
@@ -363,7 +363,7 @@ public final class ContentWorldgen {
     }
 
     private static void write(Entry entry) {
-        ResourceLocation key = entry.def().key();
+        Identifier key = entry.def().key();
         String namespace = key.getNamespace();
         JsonObject config = new JsonObject();
         config.addProperty("entry", key.toString());
@@ -397,5 +397,5 @@ public final class ContentWorldgen {
         };
     }
 
-    public record Entry(WorldgenDef def, ContentPalette palette, IContentShape shape, Set<ResourceLocation> biomes, List<TagKey<Biome>> biomeTags, Set<ResourceLocation> dimensions) {}
+    public record Entry(WorldgenDef def, ContentPalette palette, IContentShape shape, Set<Identifier> biomes, List<TagKey<Biome>> biomeTags, Set<Identifier> dimensions) {}
 }

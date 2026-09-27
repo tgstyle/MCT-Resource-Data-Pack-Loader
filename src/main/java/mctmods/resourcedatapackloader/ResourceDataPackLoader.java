@@ -95,12 +95,13 @@ import mctmods.resourcedatapackloader.registry.RegistryRemaps;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.SavedDataMigration;
 import mctmods.resourcedatapackloader.util.Toasts;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Unit;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.event.AddClientReloadListenersEvent;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
@@ -116,8 +117,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.AddPackFindersEvent;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
-import net.neoforged.neoforge.event.AddReloadListenerEvent;
-import net.neoforged.neoforge.event.TagsUpdatedEvent;
+import net.neoforged.neoforge.event.AddServerReloadListenersEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
@@ -156,8 +156,8 @@ import java.util.Set;
         modBus.addListener(EventPriority.LOWEST, ContentEvents::onRegister);
         modBus.addListener(ContentEvents::onBuildTab);
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(event.getBuilder()));
+        NeoForge.EVENT_BUS.addListener(ContentOverrides::componentsBound);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentFuels::onFuelBurnTime);
-        NeoForge.EVENT_BUS.addListener(ContentVillagers::applyTrades);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLevelLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, ContentTeams::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentTeams::onLogin);
@@ -188,7 +188,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentRaids::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderHit);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderTarget);
-        if (FMLEnvironment.dist == Dist.CLIENT) { NeoForge.EVENT_BUS.addListener(PouchKey::tick); NeoForge.EVENT_BUS.addListener(PouchKey::screen); }
+        if (FMLEnvironment.getDist() == Dist.CLIENT) { NeoForge.EVENT_BUS.addListener(PouchKey::tick); NeoForge.EVENT_BUS.addListener(PouchKey::screen); }
         if (ContentPaths.enabled()) { NeoForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
         NeoForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onAnvil);
@@ -326,18 +326,18 @@ import java.util.Set;
         BlockDrops.REGISTER.register(modBus);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LootInjections::onLootTableLoad);
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, PlayerLoot::onDrops);
-        NeoForge.EVENT_BUS.addListener(this::onTagsUpdated);
         NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onAddReloadListeners);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::beforeServerStart);
+        NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, SavedDataMigration::onAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
-        if (FMLEnvironment.dist == Dist.CLIENT) {
-            modBus.addListener((RegisterClientReloadListenersEvent held) -> held.registerReloadListener(FaceCacheReset.INSTANCE));
+        if (FMLEnvironment.getDist() == Dist.CLIENT) {
+            modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "face_cache_reset"), FaceCacheReset.INSTANCE));
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
-            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(ResourceLocation.fromNamespaceAndPath(MOD_ID, "cards"), CardOverlay::onLayer));
-            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(ResourceLocation.fromNamespaceAndPath(MOD_ID, "center_cards"), CenterCard::onLayer));
+            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(Identifier.fromNamespaceAndPath(MOD_ID, "cards"), CardOverlay::onLayer));
+            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(Identifier.fromNamespaceAndPath(MOD_ID, "center_cards"), CenterCard::onLayer));
             NeoForge.EVENT_BUS.addListener(CenterCard::onClientTick);
             NeoForge.EVENT_BUS.addListener(CenterCard::onLevelUnload);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onScreen);
@@ -349,8 +349,8 @@ import java.util.Set;
             NeoForge.EVENT_BUS.addListener(HoldView::onFog);
             NeoForge.EVENT_BUS.addListener(HoldView::onHud);
             NeoForge.EVENT_BUS.addListener(ProspectTooltip::onTooltip);
-            NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> HoldView.tick());
-            NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
+            NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, _ -> HoldView.tick());
+            NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, _ -> {
                 HoldView.reset();
                 CenterCard.reset();
                 Toasts.show(0);
@@ -389,6 +389,7 @@ import java.util.Set;
             RegistryRemaps.applyAliases();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
+                ContentVillagers.generateTrades();
                 ContentHardness.setup();
                 ContentAnvils.load();
                 ContentOverrides.reload();
@@ -400,14 +401,10 @@ import java.util.Set;
         throw new IllegalStateException(message);
     }
 
-    private void onAddReloadListeners(AddReloadListenerEvent event) {
-        event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
+    private void onAddReloadListeners(AddServerReloadListenersEvent event) {
+        event.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
             if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); }
         }, executor2));
-    }
-
-    private void onTagsUpdated(TagsUpdatedEvent event) {
-        if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); }
     }
 
     private void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
@@ -437,7 +434,7 @@ import java.util.Set;
 
     private void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
-        if (FMLEnvironment.dist == Dist.CLIENT) { return; }
+        if (FMLEnvironment.getDist() == Dist.CLIENT) { return; }
         PackManager.get().close();
     }
 }

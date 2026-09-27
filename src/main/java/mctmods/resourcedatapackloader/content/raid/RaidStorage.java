@@ -1,38 +1,39 @@
 package mctmods.resourcedatapackloader.content.raid;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import java.util.ArrayList;
 import java.util.List;
-import javax.annotation.Nonnull;
 
 public final class RaidStorage extends SavedData {
-    private static final String NAME = "rdpl_raids";
+    public static final String NAME = "rdpl_raids";
     private static final String RAIDS = "Raids";
-    private static final Factory<RaidStorage> FACTORY = new Factory<>(RaidStorage::new, (tag, lookup) -> read(tag));
+    private static final SavedDataType<RaidStorage> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), RaidStorage::new, CompoundTag.CODEC.xmap(RaidStorage::read, RaidStorage::write));
     private final List<ActiveRaid> raids = new ArrayList<>();
 
-    public static RaidStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(FACTORY, NAME); }
+    public static RaidStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
 
     private static RaidStorage read(CompoundTag tag) {
         RaidStorage held = new RaidStorage();
-        for (Tag element : tag.getList(RAIDS, Tag.TAG_COMPOUND)) {
+        for (Tag element : tag.getListOrEmpty(RAIDS)) {
             CompoundTag one = (CompoundTag) element;
-            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(ResourceLocation.tryParse(one.getString("Raid"))));
+            ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(Identifier.tryParse(one.getStringOr("Raid", ""))));
             if (raid != null) { held.raids.add(raid); }
         }
         return held;
     }
 
-    @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
+    private CompoundTag write() {
+        CompoundTag tag = new CompoundTag();
         ListTag list = new ListTag();
         for (ActiveRaid raid : raids) {
             if (!raid.stopped()) { list.add(raid.write()); }

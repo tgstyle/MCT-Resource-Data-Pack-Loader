@@ -92,7 +92,7 @@
   "rdpl.command.intronone": "No pack here has an intro",
   "rdpl.command.introplayer": "Only a player can replay the intro",
   "rdpl.command.serveronly": "That only works in a world, run it on the server",
-  "key.categories.resourcedatapackloader": "Resource Data Pack Loader",
+  "key.category.resourcedatapackloader.main": "Resource Data Pack Loader",
   "key.resourcedatapackloader.pouch": "Open worn container",
   "rdpl.command.here": "'%s' %s id %s",
   "rdpl.command.biomes": "%s biome(s) listed%s",

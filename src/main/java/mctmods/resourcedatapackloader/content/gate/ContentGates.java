@@ -17,10 +17,11 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,10 +35,10 @@ import javax.annotation.Nullable;
 
 public final class ContentGates {
     private static final Gson GSON = new Gson();
-    private static final Map<ResourceLocation, GateDef> DEFS = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
+    private static final Map<Identifier, GateDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
-    private static final ResourceLocation GATE = ResourceLocation.fromNamespaceAndPath("rdpl", "gate");
+    private static final Identifier GATE = Identifier.fromNamespaceAndPath("rdpl", "gate");
     private static boolean loaded;
 
     private ContentGates() {}
@@ -53,7 +54,7 @@ public final class ContentGates {
         });
         for (GateDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            BY_DIMENSION.computeIfAbsent(def.dimension(), id -> new ArrayList<>()).add(def);
+            BY_DIMENSION.computeIfAbsent(def.dimension(), _ -> new ArrayList<>()).add(def);
         }
         if (!BY_DIMENSION.isEmpty()) { Summary.info("gates", "Guarding " + BY_DIMENSION.size() + " dimension(s) behind " + count() + " gate(s)"); }
     }
@@ -64,7 +65,7 @@ public final class ContentGates {
         return total;
     }
 
-    @Nullable private static GateDef parse(ResourceLocation key, String contents) {
+    @Nullable private static GateDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) { return null; }
         String scope = GsonHelper.getAsString(json, "scope", GateDef.PLAYER).trim().toLowerCase(Locale.ROOT);
@@ -73,7 +74,7 @@ public final class ContentGates {
             scope = GateDef.PLAYER;
         }
         String named = GsonHelper.getAsString(json, "dimension", "").trim();
-        ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
+        Identifier dimension = named.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(named));
         if (dimension == null) {
             ContentLog.LOGGER.error("Gate {} names dimension '{}', which is not a dimension id, so it guards nothing", key, named);
             return null;
@@ -89,7 +90,7 @@ public final class ContentGates {
 
     public static boolean idle() { return BY_DIMENSION.isEmpty(); }
 
-    public static List<GateDef> forDimension(ResourceLocation dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
+    public static List<GateDef> forDimension(Identifier dimension) { return BY_DIMENSION.getOrDefault(dimension, Collections.emptyList()); }
 
     public static Collection<GateDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
 
@@ -104,24 +105,24 @@ public final class ContentGates {
         if (def.open()) { return true; }
         if (!def.hold().isEmpty() && carrying(player, def.hold())) { return true; }
         if (!def.advancement().isEmpty() && earned(player, def.advancement())) { return true; }
-        if (def.global()) { return GateStorage.unlockedGlobally(player.server, def.id()); }
+        if (def.global()) { return GateStorage.unlockedGlobally(player.level().getServer(), def.id()); }
         return GateStorage.unlockedFor(player, def.id());
     }
 
     public static void unlock(ServerPlayer player, GateDef def, boolean announce) {
-        if (def.global()) { GateStorage.unlockGlobally(player.server, def.id()); }
+        if (def.global()) { GateStorage.unlockGlobally(player.level().getServer(), def.id()); }
         else { GateStorage.unlockFor(player, def.id()); }
         ContentLog.LOGGER.debug("Gate {} opened for {}{}", def.key(), player.getName().getString(), def.global() ? " and everyone" : "");
         if (!announce || def.unlockedMessage().isEmpty()) { return; }
         String message = def.unlockedMessage().replace("%dim%", def.name()).replace("%player%", player.getName().getString());
         if (def.global()) {
-            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.line(online, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
+            for (ServerPlayer online : player.level().getServer().getPlayerList().getPlayers()) { Says.line(online, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
         }
         else { Says.line(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {
-        if (def.global()) { GateStorage.lockGlobally(player.server, def.id()); }
+        if (def.global()) { GateStorage.lockGlobally(player.level().getServer(), def.id()); }
         else { GateStorage.lockFor(player, def.id()); }
     }
 
@@ -138,16 +139,16 @@ public final class ContentGates {
     public static boolean carrying(ServerPlayer player, String item) {
         ItemStack wanted = stack(item);
         if (wanted.isEmpty()) { return false; }
-        for (ItemStack held : player.getInventory().items) {
+        for (ItemStack held : player.getInventory().getNonEquipmentItems()) {
             if (ContentStacks.matches(held, wanted)) { return true; }
         }
-        return ContentStacks.matches(player.getInventory().offhand.getFirst(), wanted);
+        return ContentStacks.matches(player.getItemBySlot(EquipmentSlot.OFFHAND), wanted);
     }
 
     private static boolean earned(ServerPlayer player, String name) {
-        MinecraftServer server = player.getServer();
-        ResourceLocation id = ResourceLocation.tryParse(name);
-        if (server == null || id == null) { return false; }
+        MinecraftServer server = player.level().getServer();
+        Identifier id = Identifier.tryParse(name);
+        if (id == null) { return false; }
         AdvancementHolder advancement = server.getAdvancements().get(id);
         return advancement != null && player.getAdvancements().getOrStartProgress(advancement).isDone();
     }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.GsonHelper;
 import java.util.List;
@@ -92,6 +93,35 @@ public final class WorldgenJson {
         settings.add("surface_rule", sequence(List.of()));
         settings.getAsJsonObject("surface_rule").add("sequence", steps);
         return steps;
+    }
+
+    public static JsonObject simpleState(String block) {
+        JsonObject state = new JsonObject();
+        state.addProperty("Name", block);
+        JsonObject out = new JsonObject();
+        out.addProperty("type", "minecraft:simple_state_provider");
+        out.add("state", state);
+        return out;
+    }
+
+    public static JsonObject belowTrunk() { return belowTrunk(simpleState("minecraft:dirt")); }
+
+    public static JsonObject belowTrunk(JsonElement place) {
+        JsonObject tagged = new JsonObject();
+        tagged.addProperty("type", "minecraft:matching_block_tag");
+        tagged.addProperty("tag", "minecraft:cannot_replace_below_tree_trunk");
+        JsonObject free = new JsonObject();
+        free.addProperty("type", "minecraft:not");
+        free.add("predicate", tagged);
+        JsonObject rule = new JsonObject();
+        rule.add("if_true", free);
+        rule.add("then", place);
+        JsonArray rules = new JsonArray();
+        rules.add(rule);
+        JsonObject out = new JsonObject();
+        out.addProperty("type", "minecraft:rule_based_state_provider");
+        out.add("rules", rules);
+        return out;
     }
 
     public static JsonArray range(float least, float most) {

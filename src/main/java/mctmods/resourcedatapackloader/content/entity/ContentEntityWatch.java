@@ -26,8 +26,8 @@ final class ContentEntityWatch {
         if (server == null) { return; }
         for (ServerLevel level : server.getAllLevels()) {
             StringBuilder where = new StringBuilder();
-            for (net.minecraft.server.level.ServerPlayer player : level.players()) { where.append(' ').append(player.getGameProfile().getName()).append('@').append(player.chunkPosition()); }
-            ContentLog.LOGGER.debug("{} holds {} chunk(s) at entity-ticking status, spawn chunk {}, players:{}", level.dimension().location(), level.getChunkSource().getTickingGenerated(), new ChunkPos(level.getSharedSpawnPos()), where.isEmpty() ? " none" : where);
+            for (net.minecraft.server.level.ServerPlayer player : level.players()) { where.append(' ').append(player.getGameProfile().name()).append('@').append(player.chunkPosition()); }
+            ContentLog.LOGGER.debug("{} holds {} loaded chunk(s), spawn chunk {}, players:{}", level.dimension().identifier(), level.getChunkSource().getLoadedChunksCount(), ChunkPos.containing(level.getRespawnData().pos()), where.isEmpty() ? " none" : where);
         }
         int mobs = 0;
         int aimed = 0;
@@ -60,8 +60,8 @@ final class ContentEntityWatch {
                 if (was != WAS_AT.defaultReturnValue() && was == mob.blockPosition().asLong() && faced != FACED.defaultReturnValue() && Math.abs(net.minecraft.util.Mth.wrapDegrees(mob.getYRot() - faced)) >= 90.0F) { spun++; }
                 long ticked = TICKED.put(mob.getId(), mob.tickCount);
                 if (ticked != TICKED.defaultReturnValue() && ticked != mob.tickCount) { ticking++; }
-                if (level.getChunkSource().chunkMap.getDistanceManager().inEntityTickingRange(mob.chunkPosition().toLong())) { inRange++; }
-                LevelChunk stood = level.getChunkSource().getChunkNow(mob.chunkPosition().x, mob.chunkPosition().z);
+                if (level.getChunkSource().chunkMap.getDistanceManager().inEntityTickingRange(mob.chunkPosition().pack())) { inRange++; }
+                LevelChunk stood = level.getChunkSource().getChunkNow(mob.chunkPosition().x(), mob.chunkPosition().z());
                 if (stood != null && stood.getFullStatus().isOrAfter(FullChunkStatus.ENTITY_TICKING)) { inTickingChunk++; }
                 LivingEntity aim = mob.getTarget();
                 if (aim == null) { continue; }

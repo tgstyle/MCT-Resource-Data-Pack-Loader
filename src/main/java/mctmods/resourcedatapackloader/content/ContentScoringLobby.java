@@ -42,7 +42,7 @@ public final class ContentScoringLobby {
     static void waitsInLobby(MinecraftServer server, ServerPlayer player) {
         ScoreDef lobby = ContentScoring.lobbyDef();
         if (lobby == null || lobby.opensLobby() == null || !lobby.opensLobbyJoins()) { return; }
-        String name = player.getGameProfile().getName();
+        String name = player.getGameProfile().name();
         if (ContentScoring.holding() || ContentScoring.OUT.containsKey(name) || Scores.teamOf(Scores.board(server), name) != null) { return; }
         ServerLevel level = lobbyLevel(server, lobby);
         if (level == null) { return; }
@@ -56,7 +56,7 @@ public final class ContentScoringLobby {
 
     @Nullable private static ServerLevel lobbyLevel(MinecraftServer server, ScoreDef lobby) {
         ServerLevel level = lobby.opensLobby() == null ? null : server.getLevel(lobby.opensLobby().dimension());
-        if (level == null && lobby.opensLobby() != null) { ContentLog.LOGGER.error("The lobby of {} stands in {}, which is not loaded, so nobody is gathered", lobby.name(), lobby.opensLobby().dimension().location()); }
+        if (level == null && lobby.opensLobby() != null) { ContentLog.LOGGER.error("The lobby of {} stands in {}, which is not loaded, so nobody is gathered", lobby.name(), lobby.opensLobby().dimension().identifier()); }
         return level;
     }
 
@@ -67,7 +67,7 @@ public final class ContentScoringLobby {
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (player.isSpectator()) { continue; }
-            String name = player.getGameProfile().getName();
+            String name = player.getGameProfile().name();
             Spot at = STILL.get(name);
             if (at == null || !at.dimension().equals(player.level().dimension())) {
                 STILL.put(name, new Spot(player.level().dimension(), player.getX(), player.getY(), player.getZ(), player.getYRot()));
@@ -80,9 +80,9 @@ public final class ContentScoringLobby {
     static boolean refused(Player player) {
         if (!(player instanceof ServerPlayer held) || !ContentScoring.holding()) { return false; }
         ScoreDef lobby = ContentScoring.lobbyDef();
-        long now = held.serverLevel().getGameTime();
-        Long last = TOLD.get(held.getGameProfile().getName());
-        if (lobby != null && (last == null || now - last >= NOTE_TICKS)) { note(held.server, held, lobby); }
+        long now = held.level().getGameTime();
+        Long last = TOLD.get(held.getGameProfile().name());
+        if (lobby != null && (last == null || now - last >= NOTE_TICKS)) { note(held.level().getServer(), held, lobby); }
         return true;
     }
 
@@ -124,9 +124,9 @@ public final class ContentScoringLobby {
             float yaw = (float) (Math.toDegrees(Math.atan2(cz - z, cx - x)) - 90.0D);
             if (!(one instanceof ServerPlayer)) { ORIGINS.putIfAbsent(one.getUUID(), new Spot(one.level().dimension(), one.getX(), one.getY(), one.getZ(), one.getYRot())); }
             Travel.to(one, level, x, y, z, yaw, 0.0F);
-            if (one instanceof ServerPlayer player) { STILL.put(player.getGameProfile().getName(), new Spot(level.dimension(), x, y, z, yaw)); }
+            if (one instanceof ServerPlayer player) { STILL.put(player.getGameProfile().name(), new Spot(level.dimension(), x, y, z, yaw)); }
         }
-        ContentLog.LOGGER.info("{} stand around the lobby at {}, {}, {} in {}, {} block(s) out", waiting.size(), place.x(), place.y(), place.z(), place.dimension().location(), Math.round(radius * 10.0D) / 10.0D);
+        ContentLog.LOGGER.info("{} stand around the lobby at {}, {}, {} in {}, {} block(s) out", waiting.size(), place.x(), place.y(), place.z(), place.dimension().identifier(), Math.round(radius * 10.0D) / 10.0D);
     }
 
     private static double standing(Level level, double x, int y, double z) {
@@ -164,7 +164,7 @@ public final class ContentScoringLobby {
         long now = server.overworld().getGameTime();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (!ContentWelcome.arrived(player)) { continue; }
-            String name = player.getGameProfile().getName();
+            String name = player.getGameProfile().name();
             Long due = DUE.get(name);
             String shown = SHOWN.get(name);
             boolean changed = shown != null && !shown.equals(noteFor(server, player, lobby));
@@ -176,7 +176,7 @@ public final class ContentScoringLobby {
 
     private static void note(MinecraftServer server, ServerPlayer player, ScoreDef lobby) {
         String said = noteFor(server, player, lobby);
-        String name = player.getGameProfile().getName();
+        String name = player.getGameProfile().name();
         DUE.remove(name);
         SHOWN.put(name, said);
         TOLD.put(name, server.overworld().getGameTime());
@@ -191,7 +191,7 @@ public final class ContentScoringLobby {
 
     static void waitingSaid(MinecraftServer server) {
         long now = server.overworld().getGameTime();
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { DUE.put(player.getGameProfile().getName(), now); }
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) { DUE.put(player.getGameProfile().name(), now); }
     }
 
     private record Spot(ResourceKey<Level> dimension, double x, double y, double z, float yaw) {}

@@ -1,13 +1,13 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.util.FaceCache;
-import mctmods.resourcedatapackloader.util.FaceHiding;
+import mctmods.resourcedatapackloader.util.IFaceHiding;
 
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
-@Mixin(BlockState.class) public abstract class MixinBlockState implements FaceHiding {
+@Mixin(BlockState.class) public abstract class MixinBlockState implements IFaceHiding {
     @Unique private int rdpl$faceEpoch;
     @Unique private boolean rdpl$faceHidden;
 

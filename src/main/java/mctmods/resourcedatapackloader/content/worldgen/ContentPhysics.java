@@ -69,7 +69,7 @@ public final class ContentPhysics {
 
         double factor(Level level) {
             if (ContentControl.off(ContentControl.TERRAIN)) { return 1.0D; }
-            Double found = values.at(level.dimension().location().toString(), asked());
+            Double found = values.at(level.dimension().identifier().toString(), asked());
             return found == null ? 1.0D : found;
         }
 

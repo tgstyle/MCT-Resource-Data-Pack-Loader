@@ -6,7 +6,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -25,14 +25,14 @@ import javax.annotation.Nullable;
 
 public final class ContentSpreadPlacement extends PlacementModifier {
     public static final MapCodec<ContentSpreadPlacement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            ResourceLocation.CODEC.fieldOf("entry").forGetter(ContentSpreadPlacement::entry)).apply(instance, ContentSpreadPlacement::new));
+            Identifier.CODEC.fieldOf("entry").forGetter(ContentSpreadPlacement::entry)).apply(instance, ContentSpreadPlacement::new));
     public static final PlacementModifierType<ContentSpreadPlacement> TYPE = () -> CODEC;
     private static final int SNAP_STEPS = 24;
-    private final ResourceLocation entry;
+    private final Identifier entry;
 
-    public ContentSpreadPlacement(ResourceLocation entry) { this.entry = entry; }
+    public ContentSpreadPlacement(Identifier entry) { this.entry = entry; }
 
-    public ResourceLocation entry() { return entry; }
+    public Identifier entry() { return entry; }
 
     @Override @Nonnull public PlacementModifierType<?> type() { return TYPE; }
 
@@ -54,7 +54,7 @@ public final class ContentSpreadPlacement extends PlacementModifier {
             if (def.shape().perChunk()) { tries = def.shape().rarity(); }
             else if (random.nextInt(def.shape().rarity()) != 0) { return Stream.empty(); }
         }
-        RandomSource region = def.spread().isSprawl() ? ContentSpread.regionRandom(level, new ChunkPos(origin)) : random;
+        RandomSource region = def.spread().isSprawl() ? ContentSpread.regionRandom(level, ChunkPos.containing(origin)) : random;
         List<BlockPos> found = new ArrayList<>();
         for (int attempt = 0; attempt < tries; attempt++) {
             BlockPos pos = ContentSpread.position(def, context, random, region, origin);
@@ -70,20 +70,20 @@ public final class ContentSpreadPlacement extends PlacementModifier {
     }
 
     private static Stream<BlockPos> pinnedPosition(ContentWorldgen.Entry held, PlacementContext context, BlockPos origin, int[] pinned) {
-        ChunkPos chunk = new ChunkPos(origin);
+        ChunkPos chunk = ChunkPos.containing(origin);
         WorldGenLevel level = context.getLevel();
         ContentImprint.Pin pin = held.shape() instanceof ContentImprint imprint ? imprint.pin(level, false) : null;
         if (pin != null && pin.split()) {
             if (!pin.covers(chunk)) { return Stream.empty(); }
             return Stream.of(new BlockPos(Mth.clamp(pinned[0], chunk.getMinBlockX(), chunk.getMaxBlockX()), context.generator().getBaseHeight(pinned[0], pinned[1], Heightmap.Types.OCEAN_FLOOR_WG, level, level.getLevel().getChunkSource().randomState()), Mth.clamp(pinned[1], chunk.getMinBlockZ(), chunk.getMaxBlockZ())));
         }
-        if (pinned[0] >> 4 != chunk.x || pinned[1] >> 4 != chunk.z) { return Stream.empty(); }
+        if (pinned[0] >> 4 != chunk.x() || pinned[1] >> 4 != chunk.z()) { return Stream.empty(); }
         return Stream.of(ground(level, pinned[0], context.getHeight(Heightmap.Types.MOTION_BLOCKING, pinned[0], pinned[1]), pinned[1]));
     }
 
     @SuppressWarnings("deprecation") private static BlockPos ground(WorldGenLevel level, int x, int top, int z) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(x, top, z);
-        while (at.getY() > level.getMinBuildHeight()) {
+        while (at.getY() > level.getMinY()) {
             BlockState below = level.getBlockState(at.below());
             if (below.blocksMotion() && !below.is(BlockTags.LEAVES)) { break; }
             at.move(Direction.DOWN);
@@ -93,7 +93,7 @@ public final class ContentSpreadPlacement extends PlacementModifier {
 
     private static boolean farEnoughFromSpawn(WorldgenDef def, WorldGenLevel level, BlockPos origin) {
         if (def.minDistanceFromSpawn() <= 0) { return true; }
-        BlockPos spawn = level.getLevel().getSharedSpawnPos();
+        BlockPos spawn = level.getLevel().getRespawnData().pos();
         double offX = (origin.getX() + 8) - spawn.getX();
         double offZ = (origin.getZ() + 8) - spawn.getZ();
         return offX * offX + offZ * offZ >= (double) def.minDistanceFromSpawn() * def.minDistanceFromSpawn();
@@ -117,7 +117,7 @@ public final class ContentSpreadPlacement extends PlacementModifier {
 
     @Nullable private static BlockPos deeper(WorldGenLevel level, BlockPos at, boolean ceiling, int depth) {
         BlockPos moved = ceiling ? at.above(depth) : at.below(depth);
-        if (moved.getY() < level.getMinBuildHeight() || moved.getY() >= level.getMaxBuildHeight() || !ContentPlacer.loaded(level, moved)) { return null; }
+        if (moved.getY() < level.getMinY() || moved.getY() > level.getMaxY() || !ContentPlacer.loaded(level, moved)) { return null; }
         return moved;
     }
 }

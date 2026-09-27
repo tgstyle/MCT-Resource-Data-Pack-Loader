@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
@@ -68,7 +69,7 @@ public final class CityCrown {
         return false;
     }
 
-    static BoundingBox clip(WorldGenLevel level, ChunkPos chunk) { return new BoundingBox(chunk.getMinBlockX(), level.getMinBuildHeight(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getMaxBlockZ()); }
+    static BoundingBox clip(WorldGenLevel level, ChunkPos chunk) { return new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ()); }
 
     public static void born(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
         BORN.remove();
@@ -109,7 +110,7 @@ public final class CityCrown {
     }
 
     private static int bornTop(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z) {
-        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinBuildHeight(); y--) {
+        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinY(); y--) {
             BlockState held = level.getBlockState(at.set(x, y, z));
             if (!CityPlotGround.solid(held) || !CityPlotGround.terrain(held)) { continue; }
             return held.isCollisionShapeFullBlock(level, at) ? y : Integer.MIN_VALUE;
@@ -277,7 +278,7 @@ public final class CityCrown {
         boolean sand = false;
         boolean laying = false;
         int first = Integer.MIN_VALUE;
-        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinBuildHeight() && (bryce || stone < MESA_CAP); y--) {
+        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinY() && (bryce || stone < MESA_CAP); y--) {
             if (y < low && (!laying || left <= 0)) { break; }
             BlockState held = level.getBlockState(at.set(x, y, z));
             if (!CityPlotGround.solid(held) && !CityPlotGround.liquid(held)) {
@@ -297,7 +298,7 @@ public final class CityCrown {
             }
             else if (left > 0) {
                 left--;
-                if (laying && bare(level, at, keep, x, y, z)) { level.setBlock(at, sand ? Blocks.ORANGE_TERRACOTTA.defaultBlockState() : ground.band(x, y, z), 2); }
+                if (laying && bare(level, at, keep, x, y, z)) { level.setBlock(at, sand ? Compat.orangeTerracotta().defaultBlockState() : ground.band(x, y, z), 2); }
             }
             stone++;
         }
@@ -305,10 +306,10 @@ public final class CityCrown {
     }
 
     private static BlockState mesaTop(CityGround ground, int x, int y, int z, int sea, int depth, boolean wooded, boolean plain, boolean sand) {
-        if (y < sea - 1) { return depth > 0 ? Blocks.ORANGE_TERRACOTTA.defaultBlockState() : null; }
+        if (y < sea - 1) { return depth > 0 ? Compat.orangeTerracotta().defaultBlockState() : null; }
         if (wooded && y > 86 + depth * 2) { return plain ? Blocks.COARSE_DIRT.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState(); }
         if (sand) { return Blocks.RED_SAND.defaultBlockState(); }
-        if (y < 64 || y > 127) { return Blocks.ORANGE_TERRACOTTA.defaultBlockState(); }
+        if (y < 64 || y > 127) { return Compat.orangeTerracotta().defaultBlockState(); }
         return plain ? Blocks.TERRACOTTA.defaultBlockState() : ground.band(x, y, z);
     }
 
@@ -321,7 +322,7 @@ public final class CityCrown {
         int left = -1;
         boolean laying = false;
         int first = Integer.MIN_VALUE;
-        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinBuildHeight(); y--) {
+        for (int y = level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1; y > level.getMinY(); y--) {
             if (y < low && (!laying || left <= 0)) { break; }
             BlockState held = level.getBlockState(at.set(x, y, z));
             if (!CityPlotGround.solid(held) && !CityPlotGround.liquid(held)) {
@@ -338,7 +339,7 @@ public final class CityCrown {
                     lid = null;
                     filler = earth;
                 }
-                if (y < sea && lid != null && lid.isAir()) { lid = biome.value().coldEnoughToSnow(at) ? Blocks.ICE.defaultBlockState() : Blocks.WATER.defaultBlockState(); }
+                if (y < sea && lid != null && lid.isAir()) { lid = biome.value().coldEnoughToSnow(at, CityBergs.TEMPERATURE_SEA) ? Blocks.ICE.defaultBlockState() : Blocks.WATER.defaultBlockState(); }
                 left = depth;
                 BlockState top;
                 if (y >= sea - 1) { top = lid == null ? CityPlotGround.exposed(level, at, earth) : lid; }

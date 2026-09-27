@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.Minecraft;
@@ -35,7 +36,7 @@ public final class ChatHistoryKeeper {
             loaded = true;
             TYPED.addAll(load(mc));
         }
-        ChatComponent chat = mc.gui.getChat();
+        ChatComponent chat = ClientCompat.chat(mc);
         if (!chat.getRecentChat().isEmpty() || TYPED.isEmpty()) { return; }
         for (String line : TYPED) { chat.addRecentChat(line); }
         ContentLog.LOGGER.debug("The chat history keeper seeded {} kept line(s) as the chat screen opened", TYPED.size());

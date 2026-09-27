@@ -7,22 +7,22 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.mojang.datafixers.DSL;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentContainers {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "container");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "container");
     public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
     @Nullable private static BlockEntityType<ContentContainerBlockEntity> type;
     @Nullable private static MenuType<ContentContainerMenu> menu;
@@ -49,13 +49,13 @@ public final class ContentContainers {
             if (entry.block() instanceof IContentContainer) { blocks.add(entry.block()); }
         }
         if (blocks.isEmpty()) { return; }
-        type = BlockEntityType.Builder.of(ContentContainerBlockEntity::new, blocks.toArray(Block[]::new)).build(DSL.remainderType());
+        type = new BlockEntityType<>(ContentContainerBlockEntity::new, Set.copyOf(blocks));
         helper.register(ID, type);
         ContentLog.LOGGER.info("Registered the container block entity type for {} pack container block(s)", blocks.size());
     }
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        if (type != null) { event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, type, (held, side) -> new InvWrapper(held)); }
+        if (type != null) { event.registerBlockEntity(Capabilities.Item.BLOCK, type, (held, _) -> VanillaContainerWrapper.of(held)); }
     }
 
     public static void registerMenu(RegisterEvent.RegisterHelper<MenuType<?>> helper) {

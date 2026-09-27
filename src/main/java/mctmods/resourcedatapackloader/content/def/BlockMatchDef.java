@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.Map;
 
-public record BlockMatchDef(ResourceLocation block, Map<String, String> properties) {}
+public record BlockMatchDef(Identifier block, Map<String, String> properties) {}

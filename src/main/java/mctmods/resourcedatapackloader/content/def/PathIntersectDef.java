@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 
-public record PathIntersectDef(ResourceLocation key, String name, int weight, Map<Character, String> legend, List<String> mouth, List<String> corner) {
+public record PathIntersectDef(Identifier key, String name, int weight, Map<Character, String> legend, List<String> mouth, List<String> corner) {
     public static final char ROAD = 'r';
     public static final char LINE = 'l';
     public static final char WALK = 's';

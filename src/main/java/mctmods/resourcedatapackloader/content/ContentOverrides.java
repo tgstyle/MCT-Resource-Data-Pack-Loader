@@ -23,19 +23,23 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStackTemplate;
 import net.minecraft.world.item.alchemy.Potion;
+import net.minecraft.world.item.component.Consumable;
+import net.minecraft.world.item.component.Consumables;
+import net.minecraft.world.item.consume_effects.ApplyStatusEffectsConsumeEffect;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.FireBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.event.DefaultDataComponentsBoundEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -51,8 +55,7 @@ public final class ContentOverrides {
     private static final List<String> TOOLS = List.of("pickaxe", "axe", "shovel", "hoe", "sword");
     private static final List<String> TIERS = List.of("minecraft:needs_stone_tool", "minecraft:needs_iron_tool", "minecraft:needs_diamond_tool", ContentFormats.NEEDS_NETHERITE_TOOL);
     private static final int DEFAULT_FIRE_SPREAD = 5;
-    private static final float DEFAULT_EAT_SECONDS = 1.6F;
-    private static final Map<ResourceLocation, OverrideDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, OverrideDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, BlockSnapshot> BLOCKS = new IdentityHashMap<>();
     private static final Map<Block, FireSnapshot> FIRE = new IdentityHashMap<>();
     private static final Map<Item, ItemSnapshot> ITEMS = new IdentityHashMap<>();
@@ -69,7 +72,16 @@ public final class ContentOverrides {
     }
 
     public static void reload() {
-        if (!APPLIED.stale()) { return; }
+        if (APPLIED.stale()) { reapply(); }
+    }
+
+    public static void componentsBound(DefaultDataComponentsBoundEvent event) {
+        if (!event.shouldUpdateStaticData()) { return; }
+        ITEMS.replaceAll((item, held) -> new ItemSnapshot(item.components(), held.remaining()));
+        reapply();
+    }
+
+    private static void reapply() {
         load();
         restoreAll();
         Map<Block, Integer> lights = new IdentityHashMap<>();
@@ -105,14 +117,14 @@ public final class ContentOverrides {
         DEFS.clear();
         if (!Config.content.overrides()) { return; }
         Json.eachFile(PackManager.OVERRIDES, "override file", (key, contents) -> {
-            ResourceLocation source = ResourceLocation.fromNamespaceAndPath(key.getNamespace(), PackManager.OVERRIDES + "/" + key.getPath());
+            Identifier source = Identifier.fromNamespaceAndPath(key.getNamespace(), PackManager.OVERRIDES + "/" + key.getPath());
             String path = key.getPath();
             int split = path.indexOf('/');
             if (split <= 0 || split == path.length() - 1) {
                 ContentLog.LOGGER.error("Override file {} does not name a target. The path must be overrides/<namespace>/<name>.json, such as overrides/minecraft/stone.json", source);
                 return;
             }
-            ResourceLocation target = ContentParser.location(path.substring(0, split) + ":" + path.substring(split + 1));
+            Identifier target = ContentParser.location(path.substring(0, split) + ":" + path.substring(split + 1));
             if (target == null) {
                 ContentLog.LOGGER.error("Override file {} names target '{}', which is not a valid id", source, path);
                 return;
@@ -124,7 +136,7 @@ public final class ContentOverrides {
         });
     }
 
-    @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
+    @Nullable private static OverrideDef read(Identifier target, Identifier source, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Override file {} is empty, ignoring it", source);
@@ -158,7 +170,7 @@ public final class ContentOverrides {
         return def;
     }
 
-    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) {
+    private static OverrideDef.FoodDef food(Identifier source, JsonObject json) {
         return new OverrideDef.FoodDef(Math.max(0, GsonHelper.getAsInt(json, "heal", 1)), Math.max(0.0F, GsonHelper.getAsFloat(json, "saturation", 0.6F)), GsonHelper.getAsBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json));
     }
 
@@ -190,7 +202,7 @@ public final class ContentOverrides {
         if (def.lightOpacity() != null) { lights.put(block, Mth.clamp(def.lightOpacity(), 0, 15)); }
         if (def.flammability() != null) {
             FIRE.computeIfAbsent(block, FireSnapshot::of);
-            fire().setFlammable(block, def.fireSpread(), Math.max(0, def.flammability()));
+            flammable(block, def.fireSpread(), Math.max(0, def.flammability()));
         }
         return true;
     }
@@ -198,6 +210,7 @@ public final class ContentOverrides {
     private static boolean applyItem(OverrideDef def) {
         Item item = Registered.find(BuiltInRegistries.ITEM, def.target());
         if (item == null) { return false; }
+        if (!holder(item).areComponentsBound()) { return true; }
         ITEMS.computeIfAbsent(item, ItemSnapshot::of);
         IItem inside = (IItem) item;
         DataComponentMap.Builder builder = DataComponentMap.builder().addAll(item.components());
@@ -208,12 +221,16 @@ public final class ContentOverrides {
         }
         if (def.containerItem() != null) {
             Item container = ContentStacks.find(def.source(), def.containerItem());
-            if (container != null) { inside.rdpl$setCraftingRemainingItem(container); }
+            if (container != null) { inside.rdpl$setCraftingRemainingItem(new ItemStackTemplate(container)); }
             else { ContentLog.LOGGER.error("Override {} names container item {}, which does not exist", def.source(), def.containerItem()); }
         }
         OverrideDef.FoodDef food = def.food();
-        if (food != null) { builder.set(DataComponents.FOOD, food(def, food, item.components().get(DataComponents.FOOD))); }
-        inside.rdpl$setComponents(builder.build());
+        if (food != null) {
+            builder.set(DataComponents.FOOD, food(food));
+            if (!item.components().has(DataComponents.FOOD)) { builder.set(DataComponents.CONSUMABLE, consumable(def, food)); }
+            else if (!food.effects().isEmpty()) { ContentLog.LOGGER.error("Override {} puts effects on {}, which is already food. Effects on existing food are not supported, only heal, saturation and alwaysEdible were applied", def.source(), def.target()); }
+        }
+        holder(item).bindComponents(builder.build());
         return true;
     }
 
@@ -223,19 +240,17 @@ public final class ContentOverrides {
         return DataComponentMap.builder().addAll(components).set(DataComponents.MAX_STACK_SIZE, null).build();
     }
 
-    private static FoodProperties food(OverrideDef def, OverrideDef.FoodDef food, @Nullable FoodProperties was) {
+    private static FoodProperties food(OverrideDef.FoodDef food) {
         FoodProperties.Builder builder = new FoodProperties.Builder().nutrition(food.heal()).saturationModifier(food.saturation());
         if (food.alwaysEdible()) { builder.alwaysEdible(); }
-        if (was != null && was.eatSeconds() < DEFAULT_EAT_SECONDS) { builder.fast(); }
-        if (was != null) { was.usingConvertsTo().ifPresent(stack -> builder.usingConvertsTo(stack.getItem())); }
-        if (was != null) {
-            if (!food.effects().isEmpty()) { ContentLog.LOGGER.error("Override {} puts effects on {}, which is already food. Effects on existing food are not supported, only heal, saturation and alwaysEdible were applied", def.source(), def.target()); }
-            for (FoodProperties.PossibleEffect effect : was.effects()) { builder.effect(effect.effectSupplier(), effect.probability()); }
-            return builder.build();
-        }
+        return builder.build();
+    }
+
+    private static Consumable consumable(OverrideDef def, OverrideDef.FoodDef food) {
+        Consumable.Builder builder = Consumables.defaultFood();
         for (PotionEffectDef entry : food.effects()) {
             MobEffectInstance made = effect(def, entry);
-            if (made != null) { builder.effect(() -> new MobEffectInstance(made), 1.0F); }
+            if (made != null) { builder.onConsume(new ApplyStatusEffectsConsumeEffect(made, 1.0F)); }
         }
         return builder.build();
     }
@@ -255,13 +270,15 @@ public final class ContentOverrides {
     }
 
     @Nullable private static MobEffectInstance effect(OverrideDef def, PotionEffectDef entry) {
-        Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(entry.potion()));
+        Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, Identifier.tryParse(entry.potion()));
         if (effect == null) {
             ContentLog.LOGGER.error("Override {} names effect {}, which does not exist, skipping that effect", def.source(), entry.potion());
             return null;
         }
         return new MobEffectInstance(effect, entry.duration(), entry.amplifier(), entry.ambient(), entry.showParticles());
     }
+
+    private static Holder.Reference<Item> holder(Item item) { return BuiltInRegistries.ITEM.getOrThrow(BuiltInRegistries.ITEM.getResourceKey(item).orElseThrow()); }
 
     private static void restoreAll() {
         BLOCKS.forEach((block, held) -> held.restore(block));
@@ -275,7 +292,13 @@ public final class ContentOverrides {
         lightBlocks = Collections.emptyMap();
     }
 
-    private static FireBlock fire() { return (FireBlock) Blocks.FIRE; }
+    private static IFireBlock fire() { return (IFireBlock) Blocks.FIRE; }
+
+    public static void flammable(Block block, int ignite, int burn) {
+        IFireBlock fire = fire();
+        fire.rdpl$getIgniteOdds().put(block, ignite);
+        fire.rdpl$getBurnOdds().put(block, burn);
+    }
 
     @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsFloat(json, key) : null; }
 
@@ -313,28 +336,27 @@ public final class ContentOverrides {
 
     private record FireSnapshot(@Nullable Integer ignite, @Nullable Integer burn) {
         static FireSnapshot of(Block block) {
-            IFireBlock fire = (IFireBlock) fire();
+            IFireBlock fire = fire();
             return new FireSnapshot(fire.rdpl$getIgniteOdds().containsKey(block) ? fire.rdpl$getIgniteOdds().getInt(block) : null, fire.rdpl$getBurnOdds().containsKey(block) ? fire.rdpl$getBurnOdds().getInt(block) : null);
         }
 
         void restore(Block block) {
-            IFireBlock fire = (IFireBlock) fire();
+            IFireBlock fire = fire();
             if (ignite == null || burn == null) {
                 fire.rdpl$getIgniteOdds().removeInt(block);
                 fire.rdpl$getBurnOdds().removeInt(block);
                 return;
             }
-            fire().setFlammable(block, ignite, burn);
+            flammable(block, ignite, burn);
         }
     }
 
-    private record ItemSnapshot(DataComponentMap components, @Nullable Item remaining) {
+    private record ItemSnapshot(DataComponentMap components, @Nullable ItemStackTemplate remaining) {
         static ItemSnapshot of(Item item) { return new ItemSnapshot(item.components(), ((IItem) item).rdpl$getCraftingRemainingItem()); }
 
         void restore(Item item) {
-            IItem inside = (IItem) item;
-            inside.rdpl$setComponents(components);
-            inside.rdpl$setCraftingRemainingItem(remaining);
+            holder(item).bindComponents(components);
+            ((IItem) item).rdpl$setCraftingRemainingItem(remaining);
         }
     }
 }

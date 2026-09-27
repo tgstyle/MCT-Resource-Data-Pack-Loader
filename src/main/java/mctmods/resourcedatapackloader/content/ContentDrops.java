@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.DropDef;
 
@@ -7,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -78,9 +79,9 @@ public final class ContentDrops {
 
     private static void spawn(ServerLevel level, BlockPos pos, DropDef drop) {
         if (drop.entity() == null || 1 + level.getRandom().nextInt(100) > drop.chance()) { return; }
-        EntityType<?> type = EntityType.byString(drop.entity().toString()).orElse(null);
+        EntityType<?> type = Compat.entityType(drop.entity());
         if (type == null) { return; }
         int amount = drop.amount().pick(level.getRandom());
-        for (int i = 0; i < amount; i++) { type.spawn(level, pos, MobSpawnType.MOB_SUMMONED); }
+        for (int i = 0; i < amount; i++) { type.spawn(level, pos, EntitySpawnReason.MOB_SUMMONED); }
     }
 }

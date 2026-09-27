@@ -70,17 +70,17 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
 
     public ContentCityPlazaPiece(CompoundTag tag) {
         super(TYPE, tag);
-        this.level = tag.getInt(LEVEL);
-        int[] held = tag.getIntArray(WELL);
+        this.level = tag.getIntOr(LEVEL, 0);
+        int[] held = tag.getIntArray(WELL).orElse(new int[0]);
         this.well = held.length == 4 ? held : new int[4];
-        this.paved = tag.getInt(PAVED);
-        this.walk = tag.getInt(WALK);
-        this.core = tag.getInt(CORE);
-        this.design = tag.getString(DESIGN);
-        this.middleX = tag.getInt(MIDDLE_X);
-        this.middleZ = tag.getInt(MIDDLE_Z);
-        this.keep = tag.getIntArray(KEEP);
-        this.arms = tag.contains(ARMS) ? tag.getInt(ARMS) : ALL_ARMS;
+        this.paved = tag.getIntOr(PAVED, 0);
+        this.walk = tag.getIntOr(WALK, 0);
+        this.core = tag.getIntOr(CORE, 0);
+        this.design = tag.getStringOr(DESIGN, "");
+        this.middleX = tag.getIntOr(MIDDLE_X, 0);
+        this.middleZ = tag.getIntOr(MIDDLE_Z, 0);
+        this.keep = tag.getIntArray(KEEP).orElse(new int[0]);
+        this.arms = tag.contains(ARMS) ? tag.getIntOr(ARMS, 0) : ALL_ARMS;
     }
 
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) {
@@ -154,7 +154,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         List<String> rows = mouth == null ? List.of() : mouth.mouth();
         int ring = paved + walk;
         BoundingBox held = getBoundingBox();
-        List<BoundingBox> others = ContentCityTrees.foreign(manager, chunk, this, held, piece -> piece instanceof ContentCityTrees.Felling && !(piece instanceof ContentCityPiece) || piece instanceof ContentCityWellPiece);
+        List<BoundingBox> others = ContentCityTrees.foreign(manager, chunk, this, held, piece -> piece instanceof ContentCityTrees.IFelling && !(piece instanceof ContentCityPiece) || piece instanceof ContentCityWellPiece);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         List<BlockPos> open = new ArrayList<>();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {

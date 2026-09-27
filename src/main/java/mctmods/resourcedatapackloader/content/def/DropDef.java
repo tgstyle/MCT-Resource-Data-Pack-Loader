@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import javax.annotation.Nullable;
 
-public record DropDef(@Nullable ResourceLocation item, @Nullable ResourceLocation entity, AmountDef amount, int chance, int weight, int[] bonusChance) {
+public record DropDef(@Nullable Identifier item, @Nullable Identifier entity, AmountDef amount, int chance, int weight, int[] bonusChance) {
     public boolean isEntity() { return entity != null; }
 
     public boolean weighted() { return weight > 0; }

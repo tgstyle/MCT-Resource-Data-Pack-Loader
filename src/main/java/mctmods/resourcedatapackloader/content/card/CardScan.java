@@ -41,7 +41,7 @@ public final class CardScan {
     }
 
     private static void scan(ServerPlayer player, List<CardRule> rules) {
-        Map<String, Boolean> inside = INSIDE.computeIfAbsent(player.getUUID(), k -> new HashMap<>());
+        Map<String, Boolean> inside = INSIDE.computeIfAbsent(player.getUUID(), _ -> new HashMap<>());
         boolean reading = ContentIntroPlay.reading(player.getUUID());
         for (CardRule rule : rules) {
             if (reading && CardRule.PLAY_TIME.equals(rule.trigger)) { continue; }
@@ -56,7 +56,7 @@ public final class CardScan {
             case CardRule.BIOME_ENTER -> CardPlace.biomeMatches(rule.biomes, player.level().getBiome(player.blockPosition()));
             case CardRule.STRUCTURE_ENTER -> CardPlace.inStructure(player, rule.structures, rule.radius);
             case CardRule.Y_LEVEL -> rule.below != null && player.getY() < rule.below || rule.above != null && player.getY() > rule.above;
-            case CardRule.PLAY_TIME -> (played(player) - PlayerPersisted.of(player, PLAY_FROM).getInt(PLAY_FROM)) / MINUTE_TICKS >= rule.minutes;
+            case CardRule.PLAY_TIME -> (played(player) - PlayerPersisted.of(player, PLAY_FROM).getIntOr(PLAY_FROM, 0)) / MINUTE_TICKS >= rule.minutes;
             default -> {
                 Integer score = CardPlace.score(player, rule.objective);
                 yield score != null && score >= rule.score;
@@ -71,7 +71,7 @@ public final class CardScan {
                 CLOCKS.remove(level.dimension());
                 continue;
             }
-            long now = level.getDayTime();
+            long now = level.getOverworldClockTime();
             Long before = CLOCKS.put(level.dimension(), now);
             if (before == null || now <= before) { continue; }
             if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, before, now); }

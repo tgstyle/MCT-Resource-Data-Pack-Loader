@@ -18,6 +18,6 @@ public final class StrikeGoal extends MeleeAttackGoal {
         resetAttackCooldown();
         mob.swing(InteractionHand.MAIN_HAND);
         DamageSource source = mob.damageSources().mobAttack(mob);
-        if (target.hurt(source, (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE)) && mob.level() instanceof ServerLevel level) { EnchantmentHelper.doPostAttackEffects(level, target, source); }
+        if (mob.level() instanceof ServerLevel level && target.hurtServer(level, source, (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE))) { EnchantmentHelper.doPostAttackEffects(level, target, source); }
     }
 }

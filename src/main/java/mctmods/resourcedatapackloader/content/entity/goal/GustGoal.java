@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.compat.Compat;
+
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -59,9 +62,10 @@ public final class GustGoal extends Goal {
         if (mob.level() instanceof ServerLevel server) { server.sendParticles(ParticleTypes.POOF, target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ(), 12, 0.6D, 0.4D, 0.6D, 0.0D); }
         mob.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.GHAST_SHOOT, mob.getSoundSource(), 0.8F, 1.6F);
         List<LivingEntity> struck = mob.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(SPREAD), other -> other != mob && other.isAlive());
+        DamageSource source = mob.damageSources().mobAttack(mob);
         for (LivingEntity other : struck) {
-            other.hurt(mob.damageSources().mobAttack(mob), 1.0F);
-            other.knockback(power, mob.getX() - other.getX(), mob.getZ() - other.getZ());
+            if (other.level() instanceof ServerLevel level) { other.hurtServer(level, source, 1.0F); }
+            Compat.knockback(other, power, mob.getX() - other.getX(), mob.getZ() - other.getZ(), source, 1.0F);
             Vec3 motion = other.getDeltaMovement();
             other.setDeltaMovement(motion.x, motion.y + 0.25D * power, motion.z);
             other.hurtMarked = true;

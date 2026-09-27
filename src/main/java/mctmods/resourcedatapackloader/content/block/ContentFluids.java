@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
@@ -18,7 +20,7 @@ import net.minecraft.world.level.material.PushReaction;
 import net.neoforged.neoforge.fluids.BaseFlowingFluid;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.fluids.capability.wrappers.FluidBucketWrapper;
+import net.neoforged.neoforge.transfer.fluid.BucketResourceHandler;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -27,7 +29,7 @@ import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
 public final class ContentFluids {
-    private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
+    private static final Map<Identifier, Made> MADE = new LinkedHashMap<>();
     private static final int LEGACY_QUANTA = 8;
     private static final int MOST_QUANTA = 16;
     private static final int SOURCE_AMOUNT = 8;
@@ -62,18 +64,18 @@ public final class ContentFluids {
 
     private static int reach(int drop) { return (SOURCE_AMOUNT - 1) / drop; }
 
-    public static void registerTypes(BiConsumer<ResourceLocation, ContentFluidType> out) {
+    public static void registerTypes(BiConsumer<Identifier, ContentFluidType> out) {
         for (Made made : MADE.values()) { out.accept(made.def.id(), made.type); }
     }
 
-    public static void registerFluids(BiConsumer<ResourceLocation, BaseFlowingFluid> out) {
+    public static void registerFluids(BiConsumer<Identifier, BaseFlowingFluid> out) {
         for (Made made : MADE.values()) {
             out.accept(made.def.id(), made.still);
             out.accept(made.flowingId(), made.flowing);
         }
     }
 
-    public static void registerBlocks(BiConsumer<ResourceLocation, ContentLiquidBlock> out) {
+    public static void registerBlocks(BiConsumer<Identifier, ContentLiquidBlock> out) {
         for (Made made : MADE.values()) {
             if (made.block != null) { out.accept(made.def.key(), made.block); }
         }
@@ -81,11 +83,11 @@ public final class ContentFluids {
 
     public static void registerCapabilities(RegisterCapabilitiesEvent event) {
         for (Made made : MADE.values()) {
-            if (made.bucket != null) { event.registerItem(Capabilities.FluidHandler.ITEM, (stack, context) -> new FluidBucketWrapper(stack), made.bucket); }
+            if (made.bucket != null) { event.registerItem(Capabilities.Fluid.ITEM, (ignored, access) -> new BucketResourceHandler(access), made.bucket); }
         }
     }
 
-    public static void registerItems(BiConsumer<ResourceLocation, Item> out) {
+    public static void registerItems(BiConsumer<Identifier, Item> out) {
         for (Made made : MADE.values()) {
             if (made.bucket != null) { out.accept(made.bucketId(), made.bucket); }
         }
@@ -108,7 +110,7 @@ public final class ContentFluids {
             this.still = def.density() < 0 ? new ContentRisingFluid.Source(properties) : new BaseFlowingFluid.Source(properties);
             this.flowing = def.density() < 0 ? new ContentRisingFluid.Flowing(properties) : new BaseFlowingFluid.Flowing(properties);
             this.block = def.createBlock() ? new ContentLiquidBlock(def, still, blockProperties(def)) : null;
-            this.bucket = def.bucket() ? new ContentBucketItem(still, type, new Item.Properties().craftRemainder(Items.BUCKET).stacksTo(1)) : null;
+            this.bucket = def.bucket() ? new ContentBucketItem(still, type, new Item.Properties().setId(ResourceKey.create(Registries.ITEM, bucketId())).craftRemainder(Items.BUCKET).stacksTo(1)) : null;
         }
 
         public BaseFlowingFluid getStill() { return still; }
@@ -119,15 +121,15 @@ public final class ContentFluids {
 
         @Nullable public BucketItem getBucket() { return bucket; }
 
-        public ResourceLocation flowingId() { return ResourceLocation.fromNamespaceAndPath(def.id().getNamespace(), "flowing_" + def.name()); }
+        public Identifier flowingId() { return Identifier.fromNamespaceAndPath(def.id().getNamespace(), "flowing_" + def.name()); }
 
-        public ResourceLocation bucketId() { return ResourceLocation.fromNamespaceAndPath(def.id().getNamespace(), def.name() + "_bucket"); }
+        public Identifier bucketId() { return Identifier.fromNamespaceAndPath(def.id().getNamespace(), def.name() + "_bucket"); }
 
         private static BlockBehaviour.Properties blockProperties(FluidDef def) {
             ContentTypes.Preset preset = ContentTypes.material(def.material(), def.key());
             MapColor color = def.lavaMaterial() ? MapColor.FIRE : preset.color() == MapColor.NONE ? MapColor.WATER : preset.color();
-            BlockBehaviour.Properties properties = BlockBehaviour.Properties.of().mapColor(color).replaceable().noCollission().strength(100.0F).pushReaction(PushReaction.DESTROY).noLootTable().liquid().sound(SoundType.EMPTY);
-            if (def.luminosity() > 0) { properties = properties.lightLevel(state -> def.luminosity()); }
+            BlockBehaviour.Properties properties = BlockBehaviour.Properties.of().setId(ResourceKey.create(Registries.BLOCK, def.key())).mapColor(color).replaceable().noCollision().strength(100.0F).pushReaction(PushReaction.DESTROY).noLootTable().liquid().sound(SoundType.EMPTY);
+            if (def.luminosity() > 0) { properties = properties.lightLevel(_ -> def.luminosity()); }
             return properties;
         }
     }

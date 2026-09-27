@@ -28,7 +28,7 @@ public final class PatrolGoal extends Goal {
 
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
-    private boolean leads() { return mob.getPersistentData().getBoolean(LEADER); }
+    private boolean leads() { return mob.getPersistentData().getBooleanOr(LEADER, false); }
 
     private void lead() { mob.getPersistentData().putBoolean(LEADER, true); }
 
@@ -39,7 +39,7 @@ public final class PatrolGoal extends Goal {
 
     @Nullable private PathfinderMob leaderNear() {
         AABB around = mob.getBoundingBox().inflate(MUSTER, 8.0D, MUSTER);
-        List<? extends PathfinderMob> others = mob.level().getEntitiesOfClass(mob.getClass(), around, other -> other != mob && other.isAlive() && other.getType() == mob.getType() && other.getPersistentData().getBoolean(LEADER));
+        List<? extends PathfinderMob> others = mob.level().getEntitiesOfClass(mob.getClass(), around, other -> other != mob && other.isAlive() && other.getType() == mob.getType() && other.getPersistentData().getBooleanOr(LEADER, false));
         PathfinderMob best = null;
         double nearest = Double.MAX_VALUE;
         for (PathfinderMob other : others) {

@@ -1,53 +1,56 @@
 package mctmods.resourcedatapackloader.content.extra;
 
-import mctmods.resourcedatapackloader.content.def.AmountDef;
+import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.TradeDef;
 import mctmods.resourcedatapackloader.content.def.TradeStackDef;
 
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.VillagerTrades;
-import net.minecraft.world.item.trading.ItemCost;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.trading.MerchantOffer;
-import java.util.Optional;
-import javax.annotation.Nonnull;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import net.minecraft.world.item.Item;
 import javax.annotation.Nullable;
 
-public final class ContentTrade implements VillagerTrades.ItemListing {
-    private final TradeDef def;
-    private final ItemStack buy;
-    private final ItemStack buySecondary;
-    private final ItemStack sell;
-    private final AmountDef buyCount;
-    private final AmountDef buySecondaryCount;
-    private final AmountDef sellCount;
+public final class ContentTrade {
+    private static final float REPUTATION_DISCOUNT = 0.05F;
 
-    public ContentTrade(TradeDef def, ItemStack buy, ItemStack buySecondary, ItemStack sell) {
-        this.def = def;
-        this.buy = buy;
-        this.buySecondary = buySecondary;
-        this.sell = sell;
-        this.buyCount = amount(def.buy());
-        this.buySecondaryCount = amount(def.buySecondary());
-        this.sellCount = amount(def.sell());
+    private ContentTrade() {}
+
+    public static JsonObject json(TradeDef def, Item buy, @Nullable Item buySecondary, Item sell) {
+        JsonObject json = new JsonObject();
+        json.add("wants", cost(buy, def.buy()));
+        if (buySecondary != null) { json.add("additional_wants", cost(buySecondary, def.buySecondary())); }
+        JsonObject gives = new JsonObject();
+        gives.addProperty("id", ContentStacks.id(sell));
+        gives.addProperty("count", def.sell().min());
+        json.add("gives", gives);
+        if (def.sell().max() > def.sell().min()) {
+            JsonObject setCount = new JsonObject();
+            setCount.addProperty("function", "minecraft:set_count");
+            setCount.add("count", count(def.sell()));
+            JsonArray modifiers = new JsonArray();
+            modifiers.add(setCount);
+            json.add("given_item_modifiers", modifiers);
+        }
+        json.addProperty("max_uses", def.maxUses());
+        json.addProperty("xp", def.xp());
+        json.addProperty("reputation_discount", REPUTATION_DISCOUNT);
+        return json;
     }
 
-    private static AmountDef amount(TradeStackDef def) { return def.max() <= def.min() ? AmountDef.of(def.min()) : new AmountDef(def.min(), def.max()); }
-
-    @Nullable @Override public MerchantOffer getOffer(@Nullable Entity trader, @Nonnull RandomSource random) {
-        ItemStack first = sized(buy, buyCount, random);
-        if (first.isEmpty()) { return null; }
-        ItemStack second = sized(buySecondary, buySecondaryCount, random);
-        return new MerchantOffer(new ItemCost(first.getItem(), first.getCount()),
-                second.isEmpty() ? Optional.empty() : Optional.of(new ItemCost(second.getItem(), second.getCount())),
-                sized(sell, sellCount, random), def.maxUses(), def.xp(), 0.05F);
+    private static JsonObject cost(Item item, TradeStackDef stack) {
+        JsonObject json = new JsonObject();
+        json.addProperty("id", ContentStacks.id(item));
+        json.add("count", count(stack));
+        return json;
     }
 
-    private static ItemStack sized(ItemStack stack, AmountDef count, RandomSource random) {
-        if (stack.isEmpty()) { return ItemStack.EMPTY; }
-        ItemStack copy = stack.copy();
-        copy.setCount(count.pick(random));
-        return copy;
+    private static JsonElement count(TradeStackDef stack) {
+        if (stack.max() <= stack.min()) { return new JsonPrimitive(stack.min()); }
+        JsonObject uniform = new JsonObject();
+        uniform.addProperty("type", "minecraft:uniform");
+        uniform.addProperty("min", stack.min());
+        uniform.addProperty("max", stack.max());
+        return uniform;
     }
 }

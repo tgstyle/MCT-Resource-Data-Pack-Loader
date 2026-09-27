@@ -9,7 +9,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -24,7 +24,7 @@ final class CardParser {
 
     private CardParser() {}
 
-    @Nullable static CardRule parse(ResourceLocation id, String contents) {
+    @Nullable static CardRule parse(Identifier id, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) { return null; }
         String key = id.toString();

@@ -18,7 +18,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -35,13 +35,13 @@ public final class ContentWorldgenParser {
 
     private ContentWorldgenParser() {}
 
-    @Nullable public static WorldgenDef parse(ResourceLocation key, String contents) {
+    @Nullable public static WorldgenDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Worldgen definition {} is empty, ignoring it", key);
             return null;
         }
-        ResourceLocation block = ContentParser.location(GsonHelper.getAsString(json, "block", ""));
+        Identifier block = ContentParser.location(GsonHelper.getAsString(json, "block", ""));
         if (block == null) {
             ContentLog.LOGGER.error("Worldgen definition {} names no block, ignoring it", key);
             return null;
@@ -55,9 +55,9 @@ public final class ContentWorldgenParser {
             minHeight = maxHeight;
             maxHeight = swap;
         }
-        List<ResourceLocation> regions = new ArrayList<>();
+        List<Identifier> regions = new ArrayList<>();
         for (String name : Json.strings(json, "caveRegions")) {
-            ResourceLocation region = name.indexOf(':') >= 0 ? ResourceLocation.tryParse(name) : ResourceLocation.tryBuild(key.getNamespace(), name);
+            Identifier region = name.indexOf(':') >= 0 ? Identifier.tryParse(name) : Identifier.tryBuild(key.getNamespace(), name);
             if (region != null) { regions.add(region); }
         }
         String snap = GsonHelper.getAsString(json, "snap", "").trim().toLowerCase(Locale.ROOT);
@@ -98,7 +98,7 @@ public final class ContentWorldgenParser {
                 GsonHelper.getAsString(json, "prospectAs", "").trim());
     }
 
-    private static List<PickDef> indicators(ResourceLocation key, JsonObject json) {
+    private static List<PickDef> indicators(Identifier key, JsonObject json) {
         List<PickDef> picked = new ArrayList<>();
         for (String entry : Json.strings(json, "indicators")) {
             int at = entry.indexOf('=', Math.max(0, entry.indexOf(']')));
@@ -125,7 +125,7 @@ public final class ContentWorldgenParser {
         return List.copyOf(picked);
     }
 
-    private static List<FollowDef> followers(ResourceLocation key, JsonObject json) {
+    private static List<FollowDef> followers(Identifier key, JsonObject json) {
         if (!json.has("then") || !json.get("then").isJsonArray()) { return List.of(); }
         List<FollowDef> followers = new ArrayList<>();
         for (JsonElement element : json.getAsJsonArray("then")) {
@@ -160,7 +160,7 @@ public final class ContentWorldgenParser {
         return List.copyOf(followers);
     }
 
-    private static List<BlockWeightDef> weights(ResourceLocation key, JsonObject json) {
+    private static List<BlockWeightDef> weights(Identifier key, JsonObject json) {
         if (!json.has("blocks")) { return List.of(); }
         List<BlockWeightDef> values = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "blocks")) {
@@ -170,7 +170,7 @@ public final class ContentWorldgenParser {
             }
             JsonObject entry = element.getAsJsonObject();
             if (entry.has("meta")) { ContentLog.LOGGER.warn("A blocks entry in {} sets 'meta', which this line does not read. Name the state under 'properties' instead", key); }
-            ResourceLocation block = ContentParser.location(GsonHelper.getAsString(entry, "block", ""));
+            Identifier block = ContentParser.location(GsonHelper.getAsString(entry, "block", ""));
             if (block == null) {
                 ContentLog.LOGGER.error("A blocks entry in {} names no block, skipping it", key);
                 continue;
@@ -180,7 +180,7 @@ public final class ContentWorldgenParser {
         return List.copyOf(values);
     }
 
-    private static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String member) {
+    private static List<BlockMatchDef> matches(Identifier key, JsonObject json, String member) {
         boolean replacing = "replace".equals(member);
         if (!json.has(member)) { return replacing ? stone(key) : List.of(); }
         JsonElement element = json.get(member);
@@ -199,12 +199,12 @@ public final class ContentWorldgenParser {
         return List.copyOf(values);
     }
 
-    private static List<BlockMatchDef> stone(ResourceLocation key) {
+    private static List<BlockMatchDef> stone(Identifier key) {
         BlockMatchDef match = ContentParser.match(key, new JsonPrimitive("minecraft:stone"));
         return match == null ? List.of() : List.of(match);
     }
 
-    private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
+    private static SpreadDef spread(Identifier key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "spread");
         String type = GsonHelper.getAsString(entry, "type", SpreadDef.EVEN).trim().toLowerCase(Locale.ROOT);
@@ -225,7 +225,7 @@ public final class ContentWorldgenParser {
                 GsonHelper.getAsBoolean(entry, "ceiling", false));
     }
 
-    private static ShapeDef shape(ResourceLocation key, JsonObject json) {
+    private static ShapeDef shape(Identifier key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "shape");
         String type = GsonHelper.getAsString(entry, "type", ShapeDef.CLUSTER).trim().toLowerCase(Locale.ROOT);
@@ -283,14 +283,14 @@ public final class ContentWorldgenParser {
                 Mth.clamp(GsonHelper.getAsFloat(entry, "crack", 0.0F), 0.0F, 1.0F));
     }
 
-    private static String pattern(ResourceLocation key, JsonObject entry) {
+    private static String pattern(Identifier key, JsonObject entry) {
         String named = GsonHelper.getAsString(entry, "pattern", ShapeDef.DEFAULT).trim().toLowerCase(Locale.ROOT);
         if (ShapeDef.DEFAULT.equals(named) || ShapeDef.BANDED.equals(named) || ShapeDef.TUBE.equals(named)) { return named; }
         ContentLog.LOGGER.error("Worldgen {} asks for vein pattern '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.DEFAULT, ShapeDef.BANDED, ShapeDef.TUBE, ShapeDef.DEFAULT);
         return ShapeDef.DEFAULT;
     }
 
-    @Nullable private static int[] pinned(ResourceLocation key, JsonObject entry, String type) {
+    @Nullable private static int[] pinned(Identifier key, JsonObject entry, String type) {
         if (!entry.has("at")) { return null; }
         JsonArray at = GsonHelper.getAsJsonArray(entry, "at");
         if (at.size() == 2) { return ShapeDef.IMPRINT.equals(type) ? new int[] { at.get(0).getAsInt(), at.get(1).getAsInt() } : null; }
@@ -318,7 +318,7 @@ public final class ContentWorldgenParser {
         return List.copyOf(picked);
     }
 
-    private static String taper(ResourceLocation key, JsonObject entry) {
+    private static String taper(Identifier key, JsonObject entry) {
         String named = GsonHelper.getAsString(entry, "taper", ShapeDef.STRAIGHT).trim().toLowerCase(Locale.ROOT);
         if (ShapeDef.STRAIGHT.equals(named) || ShapeDef.BELL.equals(named) || ShapeDef.NEEDLE.equals(named)) { return named; }
         ContentLog.LOGGER.error("Worldgen {} asks for taper '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE, ShapeDef.STRAIGHT);

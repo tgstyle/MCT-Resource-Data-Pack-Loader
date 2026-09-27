@@ -9,7 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -92,7 +92,7 @@ public final class ContentPopulateControl {
         if (level.dimension() == Level.OVERWORLD) { ContentStructureControl.checkBiomes(level); }
         Off held = off;
         Map<ChunkGenerator, Bound> next = level.dimension() == Level.OVERWORLD ? new IdentityHashMap<>() : new IdentityHashMap<>(bound);
-        boolean templated = held.any() && (held.dimensions().isEmpty() || held.dimensions().contains(level.dimension().location().toString()));
+        boolean templated = held.any() && (held.dimensions().isEmpty() || held.dimensions().contains(level.dimension().identifier().toString()));
         Set<String> options = optionsOff(level);
         if (templated || !options.isEmpty()) { next.put(level.getChunkSource().getGenerator(), resolve(level, templated ? held : Off.NONE, options)); }
         bound = next;
@@ -107,7 +107,7 @@ public final class ContentPopulateControl {
             JsonElement value = options.get(option.getKey());
             if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean() && !value.getAsBoolean()) { out.add(option.getValue()); }
         }
-        if (!out.isEmpty()) { ContentLog.LOGGER.debug("The generatorOptions of {} turn off {}", level.dimension().location(), out); }
+        if (!out.isEmpty()) { ContentLog.LOGGER.debug("The generatorOptions of {} turn off {}", level.dimension().identifier(), out); }
         return out;
     }
 
@@ -121,15 +121,15 @@ public final class ContentPopulateControl {
             if (STRUCTURE_SWITCHES.contains(key)) { structureNames.add(key); }
         }
         Set<PlacedFeature> features = Collections.newSetFromMap(new IdentityHashMap<>());
-        Registry<PlacedFeature> placed = level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE);
-        for (String path : featureNames) { placed.getOptional(ResourceLocation.fromNamespaceAndPath("minecraft", path)).ifPresent(features::add); }
+        Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);
+        for (String path : featureNames) { placed.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(features::add); }
         Set<ConfiguredWorldCarver<?>> carvers = Collections.newSetFromMap(new IdentityHashMap<>());
-        Registry<ConfiguredWorldCarver<?>> configured = level.registryAccess().registryOrThrow(Registries.CONFIGURED_CARVER);
-        for (String path : carverNames) { configured.getOptional(ResourceLocation.fromNamespaceAndPath("minecraft", path)).ifPresent(carvers::add); }
+        Registry<ConfiguredWorldCarver<?>> configured = level.registryAccess().lookupOrThrow(Registries.CONFIGURED_CARVER);
+        for (String path : carverNames) { configured.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(carvers::add); }
         Set<Structure> structures = Collections.newSetFromMap(new IdentityHashMap<>());
-        Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         for (String key : structureNames) {
-            for (ResourceLocation id : ContentStructureControl.structures(key)) { registry.getOptional(id).ifPresent(structures::add); }
+            for (Identifier id : ContentStructureControl.structures(key)) { registry.getOptional(id).ifPresent(structures::add); }
         }
         return new Bound(features, carvers, held.animals(), structures);
     }

@@ -14,7 +14,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -35,10 +35,10 @@ public final class ContentPortals {
 
     private ContentPortals() {}
 
-    public static ResourceLocation blockName(ResourceLocation dimension) { return ResourceLocation.fromNamespaceAndPath(dimension.getNamespace(), PREFIX + dimension.getPath()); }
+    public static Identifier blockName(Identifier dimension) { return Identifier.fromNamespaceAndPath(dimension.getNamespace(), PREFIX + dimension.getPath()); }
 
-    public static Map<ResourceLocation, DimensionDef> opening() {
-        Map<ResourceLocation, DimensionDef> out = new LinkedHashMap<>();
+    public static Map<Identifier, DimensionDef> opening() {
+        Map<Identifier, DimensionDef> out = new LinkedHashMap<>();
         for (DimensionDef def : ContentDimensions.all()) {
             if (def.portal() != null) { out.put(def.key(), def); }
         }
@@ -47,11 +47,11 @@ public final class ContentPortals {
 
     public static void prepare() {
         int made = 0;
-        for (Map.Entry<ResourceLocation, DimensionDef> entry : opening().entrySet()) {
+        for (Map.Entry<Identifier, DimensionDef> entry : opening().entrySet()) {
             DimensionDef dimension = entry.getValue();
             DimensionPortalDef portal = dimension.portal();
             if (portal == null) { continue; }
-            ResourceLocation name = blockName(entry.getKey());
+            Identifier name = blockName(entry.getKey());
             if (ContentRegistry.hasDef(name)) { continue; }
             BlockDef def = ContentParser.block(name, blockJson(entry.getKey(), portal));
             if (def == null) { continue; }
@@ -61,7 +61,7 @@ public final class ContentPortals {
         if (made > 0) { ContentLog.LOGGER.info("{} dimension(s) bring a portal block of their own", made); }
     }
 
-    private static String blockJson(ResourceLocation dimension, DimensionPortalDef portal) {
+    private static String blockJson(Identifier dimension, DimensionPortalDef portal) {
         return "{\"type\":\"portal\",\"material\":\"portal\",\"renderLayer\":\"translucent\",\"opaque\":false,\"fullCube\":false"
                 + ",\"tint\":\"#" + String.format("%06X", portal.color() & 0xFFFFFF) + "\""
                 + ",\"variants\":{\"" + PREFIX + dimension.getPath() + "\":{\"hardness\":-1,\"light\":11}}"
@@ -80,11 +80,11 @@ public final class ContentPortals {
         if (bound) { return; }
         bound = true;
         Set<String> claimed = new LinkedHashSet<>();
-        for (Map.Entry<ResourceLocation, DimensionDef> entry : opening().entrySet()) {
+        for (Map.Entry<Identifier, DimensionDef> entry : opening().entrySet()) {
             DimensionDef dimension = entry.getValue();
             DimensionPortalDef portal = dimension.portal();
             if (portal == null) { continue; }
-            Item igniter = ContentStacks.item(ResourceLocation.tryParse(portal.ignitedBy()));
+            Item igniter = ContentStacks.item(Identifier.tryParse(portal.ignitedBy()));
             if (igniter == null) {
                 ContentLog.LOGGER.error("Dimension {} is lit by {}, which no mod registers, so nothing can open it", entry.getKey(), portal.ignitedBy());
                 continue;
@@ -130,7 +130,7 @@ public final class ContentPortals {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
             if (held.getItem() != binding.igniter()) { continue; }
-            if (level.dimension().location().equals(binding.name()) && !binding.portal().lightsBack()) { continue; }
+            if (level.dimension().identifier().equals(binding.name()) && !binding.portal().lightsBack()) { continue; }
             for (PortalFrameDef frame : binding.frames()) {
                 for (BlockPos candidate : candidates(level, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(level, candidate, frame);
@@ -208,5 +208,5 @@ public final class ContentPortals {
 
     public record Lighting(Binding binding, PortalFit fit, BlockPos at) {}
 
-    public record Binding(ResourceLocation name, DimensionDef dimension, DimensionPortalDef portal, Item igniter, List<PortalFrameDef> frames, ContentPortalBlock block) {}
+    public record Binding(Identifier name, DimensionDef dimension, DimensionPortalDef portal, Item igniter, List<PortalFrameDef> frames, ContentPortalBlock block) {}
 }

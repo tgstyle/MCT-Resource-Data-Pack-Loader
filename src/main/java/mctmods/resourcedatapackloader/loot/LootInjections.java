@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.RegistryOps;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
@@ -29,7 +29,7 @@ public final class LootInjections {
     public static final String TARGET = "target";
     public static final String POOLS = "pools";
     private static final Gson GSON = new GsonBuilder().create();
-    private static final Map<ResourceLocation, List<JsonElement>> BY_TABLE = new LinkedHashMap<>();
+    private static final Map<Identifier, List<JsonElement>> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private LootInjections() {}
@@ -43,7 +43,7 @@ public final class LootInjections {
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
+    private static void read(Identifier key, String contents, int[] count) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Loot injection {} is empty, ignoring it", key);
@@ -54,7 +54,7 @@ public final class LootInjections {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
             return;
         }
-        ResourceLocation table = ContentParser.location(target);
+        Identifier table = ContentParser.location(target);
         if (table == null) {
             ContentLog.LOGGER.error("Loot injection {} names the table '{}', which is not a valid id, ignoring it", key, target);
             return;
@@ -63,7 +63,7 @@ public final class LootInjections {
             ContentLog.LOGGER.error("Loot injection {} has no pools, ignoring it", key);
             return;
         }
-        List<JsonElement> pools = BY_TABLE.computeIfAbsent(table, k -> new ArrayList<>());
+        List<JsonElement> pools = BY_TABLE.computeIfAbsent(table, _ -> new ArrayList<>());
         for (JsonElement element : GsonHelper.getAsJsonArray(json, POOLS)) {
             pools.add(element);
             count[0]++;

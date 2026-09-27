@@ -29,6 +29,7 @@ public final class CityBergs {
     private static final int REACH = 32;
     private static final int TOUCH = 1;
     private static final int MELT_Y = 63;
+    static final int TEMPERATURE_SEA = 63;
     private final WorldGenLevel level;
     private final NormalNoise surface;
     private final NormalNoise pillar;
@@ -51,7 +52,7 @@ public final class CityBergs {
         BiomeSource born = source.getGenerator().getBiomeSource();
         Climate.Sampler sampler = random.sampler();
         Map<Long, Holder<Biome>> seen = new HashMap<>();
-        this.biomes = level.getBiomeManager().withDifferentSource((x, y, z) -> seen.computeIfAbsent(BlockPos.asLong(x, y, z), key -> born.getNoiseBiome(x, y, z, sampler)));
+        this.biomes = level.getBiomeManager().withDifferentSource((x, y, z) -> seen.computeIfAbsent(BlockPos.asLong(x, y, z), _ -> born.getNoiseBiome(x, y, z, sampler)));
         this.sea = source.getGenerator().getSeaLevel();
         this.minX = window.minX();
         this.minZ = window.minZ();
@@ -60,14 +61,14 @@ public final class CityBergs {
     }
 
     public static void cleared(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
-        BoundingBox scan = new BoundingBox(chunk.getMinBlockX(), level.getMinBuildHeight(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxBuildHeight() - 1, chunk.getMaxBlockZ());
+        BoundingBox scan = new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ());
         BoundingBox window = scan.inflatedBy(REACH + TOUCH);
         List<BoundingBox> pieces = ContentCityTrees.footprints(manager, chunk, null, window);
         if (pieces.isEmpty()) { return; }
         CityBergs bergs = new CityBergs(level, window);
         if (!bergs.any(scan)) { return; }
         int cleared = bergs.clear(scan, bergs.reach(pieces));
-        if (cleared > 0) { ContentLog.LOGGER.debug("Cleared {} block(s) of berg ice a city reaches in chunk {}, {}", cleared, chunk.x, chunk.z); }
+        if (cleared > 0) { ContentLog.LOGGER.debug("Cleared {} block(s) of berg ice a city reaches in chunk {}, {}", cleared, chunk.x(), chunk.z()); }
     }
 
     private int index(int x, int z) { return (x - minX) * side + (z - minZ); }
@@ -95,7 +96,7 @@ public final class CityBergs {
         Holder<Biome> biome = biomes.getBiome(probe.set(x, sea, z));
         if (!biome.is(Biomes.FROZEN_OCEAN) && !biome.is(Biomes.DEEP_FROZEN_OCEAN)) { return false; }
         double top = Math.min(rise * rise * 1.2, Math.ceil(Math.abs(roof.getValue(x * 1.17, 0.0, z * 1.17) * 1.5) * 40.0) + 14.0);
-        if (biome.value().shouldMeltFrozenOceanIcebergSlightly(probe.set(x, MELT_Y, z))) { top -= 2.0; }
+        if (biome.value().shouldMeltFrozenOceanIcebergSlightly(probe.set(x, MELT_Y, z), TEMPERATURE_SEA)) { top -= 2.0; }
         return top > 2.0;
     }
 

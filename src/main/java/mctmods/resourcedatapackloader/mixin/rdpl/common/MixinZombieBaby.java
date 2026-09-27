@@ -4,13 +4,13 @@ import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.zombie.Zombie;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Zombie.class) public abstract class MixinZombieBaby {
-    @Redirect(method = "finalizeSpawn", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Zombie;getSpawnAsBabyOdds(Lnet/minecraft/util/RandomSource;)Z"))
+    @Redirect(method = "finalizeSpawn(Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/SpawnGroupData;)Lnet/minecraft/world/entity/SpawnGroupData;", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/zombie/Zombie;getSpawnAsBabyOdds(Lnet/minecraft/util/RandomSource;)Z"))
     private boolean rdpl$ownYoung(RandomSource random) {
         return ContentEntities.baseBabyChance((Entity) (Object) this, 1.0F) > 0.0F && Zombie.getSpawnAsBabyOdds(random);
     }

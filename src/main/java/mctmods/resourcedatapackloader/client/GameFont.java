@@ -5,8 +5,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.gui.font.providers.GlyphProviderDefinition;
 import net.minecraft.client.gui.font.providers.ProviderReferenceDefinition;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import java.util.ArrayList;
@@ -17,25 +18,25 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class GameFont {
-    private static final ResourceLocation ASCII = ResourceLocation.withDefaultNamespace("textures/font/ascii.png");
-    private static final ResourceLocation RDPL = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl");
-    private static final ResourceLocation ITALIC = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_italic");
-    private static final ResourceLocation BOLD = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_bold");
+    private static final Identifier ASCII = Identifier.withDefaultNamespace("textures/font/ascii.png");
+    private static final Identifier RDPL = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl");
+    private static final Identifier ITALIC = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_italic");
+    private static final Identifier BOLD = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_bold");
     private static final String VANILLA = "vanilla";
-    private static final Map<ResourceLocation, ResourceLocation> SLANTS = new ConcurrentHashMap<>();
+    private static final Map<Identifier, Identifier> SLANTS = new ConcurrentHashMap<>();
     private static volatile boolean yields;
 
     private GameFont() {}
 
-    @Nullable public static ResourceLocation styled(Style style) {
-        ResourceLocation font = style.getFont();
-        if (!Style.DEFAULT_FONT.equals(font)) { return style.isItalic() && !style.isBold() ? SLANTS.get(font) : null; }
+    @Nullable public static Identifier styled(Style style) {
+        FontDescription font = style.getFont();
+        if (!FontDescription.DEFAULT.equals(font)) { return font instanceof FontDescription.Resource(Identifier id) && style.isItalic() && !style.isBold() ? SLANTS.get(id) : null; }
         if (yields) { return null; }
         if (style.isBold()) { return BOLD; }
         return style.isItalic() ? ITALIC : null;
     }
 
-    public static void slants(ResourceLocation plain, ResourceLocation italic) { SLANTS.put(plain, italic); }
+    public static void slants(Identifier plain, Identifier italic) { SLANTS.put(plain, italic); }
 
     public static void pick(ResourceManager resources) {
         SLANTS.clear();
@@ -50,7 +51,7 @@ public final class GameFont {
         if (!yields) { return providers; }
         List<GlyphProviderDefinition.Conditional> kept = new ArrayList<>(providers.size());
         for (GlyphProviderDefinition.Conditional provider : providers) {
-            if (!(provider.definition() instanceof ProviderReferenceDefinition(ResourceLocation id) && RDPL.equals(id))) { kept.add(provider); }
+            if (!(provider.definition() instanceof ProviderReferenceDefinition(Identifier id) && RDPL.equals(id))) { kept.add(provider); }
         }
         return kept;
     }

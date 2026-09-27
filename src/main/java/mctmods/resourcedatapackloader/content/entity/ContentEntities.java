@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IAbstractArrow;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -15,7 +17,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.minecraft.server.TickTask;
@@ -27,13 +29,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.event.entity.living.MobEffectEvent;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
@@ -57,12 +59,12 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentEntities {
-    static final Map<ResourceLocation, EntityVariantDef> DEFS = new LinkedHashMap<>();
+    static final Map<Identifier, EntityVariantDef> DEFS = new LinkedHashMap<>();
     static final Map<EntityType<?>, EntityVariantDef> BY_TYPE = new IdentityHashMap<>();
     static final Map<EntityType<?>, EntityType<?>> BASES = new IdentityHashMap<>();
-    static final Map<ResourceLocation, EntityType<?>> TYPES = new LinkedHashMap<>();
+    static final Map<Identifier, EntityType<?>> TYPES = new LinkedHashMap<>();
     @Nullable static EntityType<ReturningThrow> returningThrow;
-    private static final Map<String, ResourceLocation> TEXTURES = new LinkedHashMap<>();
+    private static final Map<String, Identifier> TEXTURES = new LinkedHashMap<>();
     private static final String BORN = "rdplBorn";
     private static final String CALM = "rdplCalmAt";
     private static final String CRIED = "rdplCried";
@@ -88,9 +90,9 @@ public final class ContentEntities {
         if (!DEFS.isEmpty()) { Summary.info("entities", "Loaded " + DEFS.size() + " entity variant(s) from packs"); }
     }
 
-    public static boolean undefined(ResourceLocation id) { return !DEFS.containsKey(id); }
+    public static boolean undefined(Identifier id) { return !DEFS.containsKey(id); }
 
-    public static Map<ResourceLocation, EntityType<?>> types() { return Collections.unmodifiableMap(TYPES); }
+    public static Map<Identifier, EntityType<?>> types() { return Collections.unmodifiableMap(TYPES); }
 
     @Nullable public static EntityVariantDef def(Entity entity) { return BY_TYPE.get(entity.getType()); }
 
@@ -100,10 +102,10 @@ public final class ContentEntities {
 
     @Nullable public static EntityType<ReturningThrow> returningThrow() { return returningThrow; }
 
-    @Nullable public static ResourceLocation texture(Entity entity) {
+    @Nullable public static Identifier texture(Entity entity) {
         EntityVariantDef def = BY_TYPE.get(entity.getType());
         if (def == null || def.texture().isEmpty()) { return null; }
-        return TEXTURES.computeIfAbsent(def.texture(), ResourceLocation::tryParse);
+        return TEXTURES.computeIfAbsent(def.texture(), Identifier::tryParse);
     }
 
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
@@ -119,7 +121,7 @@ public final class ContentEntities {
 
     public static void onLeave(EntityLeaveLevelEvent event) {
         if (!(event.getLevel() instanceof ServerLevel level) || !(event.getEntity() instanceof Mob mob) || mob.getRemovalReason() == null || !mob.getRemovalReason().shouldDestroy()) { return; }
-        level.getServer().tell(new TickTask(level.getServer().getTickCount(), () -> {
+        level.getServer().schedule(new TickTask(level.getServer().getTickCount(), () -> {
             release(mob.goalSelector);
             release(mob.targetSelector);
         }));
@@ -134,7 +136,7 @@ public final class ContentEntities {
         for (WrappedGoal wrapped : selector.getAvailableGoals()) {
             if (wrapped.isRunning()) { wrapped.stop(); }
         }
-        selector.removeAllGoals(goal -> true);
+        selector.removeAllGoals(_ -> true);
     }
 
     public static void onShot(EntityJoinLevelEvent event) {
@@ -143,7 +145,7 @@ public final class ContentEntities {
         if (def == null || !ContentEntityBehavior.declaresAttackDamage(def)) { return; }
         AttributeInstance damage = shooter.getAttribute(Attributes.ATTACK_DAMAGE);
         if (damage == null) { return; }
-        arrow.setBaseDamage(arrow.getBaseDamage() - 2.0D + damage.getValue());
+        arrow.setBaseDamage(((IAbstractArrow) arrow).rdpl$baseDamage() - 2.0D + damage.getValue());
     }
 
     public static void onJoin(EntityJoinLevelEvent event) {
@@ -157,21 +159,21 @@ public final class ContentEntities {
     }
 
     private static boolean swapped(ServerLevel level, Entity was, EntityVariantDef def) {
-        if (def.becomes().isEmpty() || SWAPPING.get() == Boolean.TRUE || was.getPersistentData().getBoolean(ContentEntityApply.DRESSED)) { return false; }
+        if (def.becomes().isEmpty() || SWAPPING.get() == Boolean.TRUE || was.getPersistentData().getBooleanOr(ContentEntityApply.DRESSED, false)) { return false; }
         List<PickDef> choices = SPAWNER.get() == Boolean.TRUE ? kin(def) : def.becomes();
         String chosen = PickDef.pick(choices, level.getRandom());
         if (chosen == null || chosen.equals(def.key().toString())) { return false; }
-        EntityType<?> wanted = EntityType.byString(chosen).orElse(null);
+        EntityType<?> wanted = Compat.entityType(chosen);
         if (wanted == null) {
             ContentLog.LOGGER.error("Entity variant {} can become {}, which nothing registers, so it stays as it is", def.key(), chosen);
             return false;
         }
         SWAPPING.set(Boolean.TRUE);
         try {
-            Entity becomes = wanted.create(level);
+            Entity becomes = wanted.create(level, EntitySpawnReason.EVENT);
             if (becomes == null) { return false; }
-            becomes.moveTo(was.getX(), was.getY(), was.getZ(), was.getYRot(), was.getXRot());
-            if (becomes instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(becomes.blockPosition()), MobSpawnType.EVENT, null); }
+            becomes.snapTo(was.getX(), was.getY(), was.getZ(), was.getYRot(), was.getXRot());
+            if (becomes instanceof Mob mob) { EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(becomes.blockPosition()), EntitySpawnReason.EVENT, null); }
             level.addFreshEntity(becomes);
         }
         finally { SWAPPING.set(Boolean.FALSE); }
@@ -179,7 +181,7 @@ public final class ContentEntities {
     }
 
     public static void tick(LivingEntity living) {
-        if (!(living instanceof Mob mob) || living.level().isClientSide) { return; }
+        if (!(living instanceof Mob mob) || living.level().isClientSide()) { return; }
         EntityVariantDef def = BY_TYPE.get(mob.getType());
         if (def == null) { return; }
         if (def.flags().collectsExperience() && mob.isAlive()) {
@@ -191,10 +193,10 @@ public final class ContentEntities {
             return;
         }
         if (def.physics().amphibious()) { ContentEntityApply.amphibious(mob); }
-        if (def.baby() > 0.0F && mob.getPersistentData().getBoolean(ContentEntityApply.YOUNG) && mob instanceof AgeableMob ageable && ageable.getAge() >= 0) { ageable.setAge(-24000); }
+        if (def.baby() > 0.0F && mob.getPersistentData().getBooleanOr(ContentEntityApply.YOUNG, false) && mob instanceof AgeableMob ageable && ageable.getAge() >= 0) { ageable.setAge(-24000); }
         boolean angry = stillRoused(mob);
         CompoundTag heard = mob.getPersistentData();
-        if (angry != heard.getBoolean(CRIED)) {
+        if (angry != heard.getBooleanOr(CRIED, false)) {
             if (angry) { cry(mob); }
             heard.putBoolean(CRIED, angry);
         }
@@ -211,10 +213,10 @@ public final class ContentEntities {
         long now = mob.level().getGameTime();
         CompoundTag held = mob.getPersistentData();
         if (mob.getTarget() != null) {
-            if (held.getLong(CALM) + CALM_STEP < now + ROUSED) { held.putLong(CALM, now + ROUSED); }
+            if (held.getLongOr(CALM, 0L) + CALM_STEP < now + ROUSED) { held.putLong(CALM, now + ROUSED); }
             return true;
         }
-        return held.getLong(CALM) > now;
+        return held.getLongOr(CALM, 0L) > now;
     }
 
     private static boolean timeIsUp(Mob mob, EntityVariantDef def) {
@@ -224,7 +226,7 @@ public final class ContentEntities {
             held.putLong(BORN, now);
             return false;
         }
-        return now - held.getLong(BORN) >= def.despawnTicks();
+        return now - held.getLongOr(BORN, 0L) >= def.despawnTicks();
     }
 
     public static final int AMBIENT = 0;
@@ -278,7 +280,7 @@ public final class ContentEntities {
     }
 
     public static boolean packExplodeSound(SoundEvent event) {
-        String name = event.getLocation().toString();
+        String name = event.location().toString();
         for (EntityVariantDef def : BY_TYPE.values()) {
             if (def.sounds().explode().equals(name)) { return true; }
         }
@@ -338,7 +340,7 @@ public final class ContentEntities {
         List<PickDef> kept = new ArrayList<>();
         List<TeamDef> sides = ContentTeams.claiming(def.key().toString());
         for (PickDef choice : def.becomes()) {
-            ResourceLocation id = ResourceLocation.tryParse(choice.name());
+            Identifier id = Identifier.tryParse(choice.name());
             EntityVariantDef other = id == null ? null : DEFS.get(id);
             if (other == null || !other.base().equals(def.base())) { continue; }
             List<TeamDef> theirs = ContentTeams.claiming(other.key().toString());
@@ -405,7 +407,7 @@ public final class ContentEntities {
         }
         EntityVariantDef def = BY_TYPE.get(event.getEntity().getType());
         if (def == null || def.ignoresEffects().isEmpty()) { return; }
-        ResourceLocation named = event.getEffectInstance().getEffect().unwrapKey().map(net.minecraft.resources.ResourceKey::location).orElse(null);
+        Identifier named = event.getEffectInstance().getEffect().unwrapKey().map(net.minecraft.resources.ResourceKey::identifier).orElse(null);
         String id = named == null ? "" : named.toString();
         if (def.effects().containsKey(id)) { return; }
         for (String ignored : def.ignoresEffects()) {
@@ -416,8 +418,8 @@ public final class ContentEntities {
         }
     }
 
-    public static boolean fairGame(LivingEntity target) {
-        return !target.isInvulnerableTo(target.level().damageSources().generic());
+    public static boolean fairGame(LivingEntity target, ServerLevel level) {
+        return !target.isInvulnerableTo(level, level.damageSources().generic());
     }
 
     public static double attackReachSqr(LivingEntity attacker, LivingEntity target, double vanilla) {
@@ -426,7 +428,7 @@ public final class ContentEntities {
         return (double) def.combat().attackReach() * def.combat().attackReach() + target.getBbWidth();
     }
 
-    private static final Set<ResourceLocation> PACED = new LinkedHashSet<>();
+    private static final Set<Identifier> PACED = new LinkedHashSet<>();
 
     public static int attackInterval(LivingEntity attacker) {
         AttributeInstance speed = attacker.getAttribute(Attributes.ATTACK_SPEED);
@@ -447,7 +449,7 @@ public final class ContentEntities {
         Player player = event.getEntity();
         if (!event.getItemStack().isEmpty() || player.isSecondaryUseActive() || mob.isVehicle() || player.isPassenger()) { return; }
         if (!event.getLevel().isClientSide()) { player.startRiding(mob); }
-        event.setCancellationResult(InteractionResult.sidedSuccess(event.getLevel().isClientSide()));
+        event.setCancellationResult(InteractionResult.SUCCESS);
         event.setCanceled(true);
     }
 
@@ -463,7 +465,9 @@ public final class ContentEntities {
 
     public static void onFall(LivingFallEvent event) {
         EntityVariantDef def = BY_TYPE.get(event.getEntity().getType());
-        if (def != null && def.physics().fallDamage() != 1.0F) { event.setDamageMultiplier(event.getDamageMultiplier() * def.physics().fallDamage()); }
+        if (def == null) { return; }
+        float factor = def.combat().swoops() ? 0.0F : def.physics().fallDamage();
+        if (factor != 1.0F) { event.setDamageMultiplier(event.getDamageMultiplier() * factor); }
     }
 
     public static void onExperience(LivingExperienceDropEvent event) {
@@ -479,7 +483,7 @@ public final class ContentEntities {
     public static void onHurt(LivingIncomingDamageEvent event) {
         EntityVariantDef def = BY_TYPE.get(event.getEntity().getType());
         if (def == null || def.immuneTo().isEmpty()) { return; }
-        String type = event.getSource().typeHolder().unwrapKey().map(key -> key.location().toString()).orElse("");
+        String type = event.getSource().typeHolder().unwrapKey().map(key -> key.identifier().toString()).orElse("");
         for (String wanted : def.immuneTo()) {
             List<String> ids = IMMUNITIES.getOrDefault(wanted.replace("_", ""), List.of(wanted.contains(":") ? wanted : "minecraft:" + wanted));
             if (ids.contains(type)) {

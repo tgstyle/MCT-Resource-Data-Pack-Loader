@@ -11,17 +11,16 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.client.resources.model.WeightedBakedModel;
+import net.minecraft.client.renderer.block.dispatch.BlockStateModel;
+import net.minecraft.client.renderer.block.dispatch.WeightedVariants;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.util.random.WeightedEntry;
+import net.minecraft.util.random.Weighted;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.client.model.data.ModelData;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -65,16 +64,16 @@ public final class ContentHardnessCheck {
 
     private static void measure(BlockState state, HardnessDef def, Set<BlockState> seen) {
         if (def.buckets() <= 1 || !seen.add(state)) { return; }
-        BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
+        BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(state);
         shipped(state);
-        if (!(model instanceof WeightedBakedModel weighted)) {
+        if (!(model instanceof WeightedVariants weighted)) {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model is a {}, which holds one model, so every step will look the same. List {} variants of equal weight, hardest first, and check no other mod is replacing the model after it is baked", def.key(), def.buckets(), state, model.getClass().getName(), def.buckets());
             return;
         }
-        List<WeightedEntry.Wrapper<BakedModel>> models = ((IWeightedBakedModel) weighted).rdpl$getList();
-        for (WeightedEntry.Wrapper<BakedModel> entry : models) { ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", texture(entry.data())); }
+        List<Weighted<BlockStateModel>> models = ((IWeightedBakedModel) weighted).rdpl$getList().unwrap();
+        for (Weighted<BlockStateModel> entry : models) { ContentLog.LOGGER.debug("  a variant that survived baking uses the texture {}", texture(entry.value())); }
         int held = models.size();
-        int weight = ((IWeightedBakedModel) weighted).rdpl$getTotalWeight();
+        int weight = models.stream().mapToInt(Weighted::weight).sum();
         if (held != def.buckets()) {
             ContentLog.LOGGER.error("Hardness group {} rolls {} steps for {}, but the baked model holds {} variant(s), so the texture will not match how hard the block is. Make the two counts the same, and check no other mod is replacing the model after it is baked", def.key(), def.buckets(), state, held);
             return;
@@ -86,22 +85,22 @@ public final class ContentHardnessCheck {
         ContentLog.LOGGER.debug("Hardness group {} lines up with {}: {} step(s), {} variant(s) of equal weight", def.key(), state, def.buckets(), held);
     }
 
-    @SuppressWarnings("resource") private static ResourceLocation texture(BakedModel model) { return model.getParticleIcon(ModelData.EMPTY).contents().name(); }
+    @SuppressWarnings({"resource", "deprecation"}) private static Identifier texture(BlockStateModel model) { return model.particleMaterial().sprite().contents().name(); }
 
     private static void others(BlockState state, HardnessDef def) {
         for (BlockState one : state.getBlock().getStateDefinition().getPossibleStates()) {
             if (one == state) { continue; }
-            BakedModel model = Minecraft.getInstance().getBlockRenderer().getBlockModel(one);
-            int held = model instanceof WeightedBakedModel weighted ? ((IWeightedBakedModel) weighted).rdpl$getList().size() : 1;
+            BlockStateModel model = Minecraft.getInstance().getModelManager().getBlockStateModelSet().get(one);
+            int held = model instanceof WeightedVariants weighted ? ((IWeightedBakedModel) weighted).rdpl$getList().unwrap().size() : 1;
             if (held <= 1) { continue; }
             ContentLog.LOGGER.warn("Hardness group {} does not name {}, but that state now draws from {} variant(s) too, so overriding the blockstate has changed a block the group was not meant to touch", def.key(), one, held);
         }
     }
 
     private static void shipped(BlockState state) {
-        ResourceLocation name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+        Identifier name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
         String path = "blockstates/" + name.getPath() + ".json";
-        chain(ResourceLocation.fromNamespaceAndPath(name.getNamespace(), path));
+        chain(Identifier.fromNamespaceAndPath(name.getNamespace(), path));
         boolean overriding = PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, name.getNamespace(), path, true);
         boolean normal = PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, name.getNamespace(), path, false);
         ContentLog.LOGGER.debug("A pack ships {}:{} at the overriding tier={} and the normal tier={}", name.getNamespace(), path, overriding, normal);
@@ -109,7 +108,7 @@ public final class ContentHardnessCheck {
         if (normal) { count(name.getNamespace(), path, false); }
     }
 
-    private static void chain(ResourceLocation location) {
+    private static void chain(Identifier location) {
         List<Resource> found;
         try { found = Minecraft.getInstance().getResourceManager().getResourceStack(location); }
         catch (Exception ex) {
@@ -147,7 +146,7 @@ public final class ContentHardnessCheck {
                 if (!held.isJsonArray()) { continue; }
                 for (JsonElement one : held.getAsJsonArray()) {
                     if (!one.isJsonObject() || !one.getAsJsonObject().has("model")) { continue; }
-                    ResourceLocation named = ResourceLocation.tryParse(one.getAsJsonObject().get("model").getAsString());
+                    Identifier named = Identifier.tryParse(one.getAsJsonObject().get("model").getAsString());
                     if (named == null) { continue; }
                     String model = "models/" + named.getPath() + ".json";
                     ContentLog.LOGGER.debug("    it points at {}:{}, which the pack ships at the overriding tier={} and the normal tier={}", named.getNamespace(), model,

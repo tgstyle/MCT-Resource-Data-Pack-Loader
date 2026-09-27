@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import java.util.List;
 import javax.annotation.Nullable;
 
-public record IntroPageDef(List<ResourceLocation> backgrounds, float interval, @Nullable ResourceLocation text, String mode, float time, String direction, float textScale, boolean settle) {
+public record IntroPageDef(List<Identifier> backgrounds, float interval, @Nullable Identifier text, String mode, float time, String direction, float textScale, boolean settle) {
     public static final String SCROLL = "scroll";
     public static final String STATIC = "static";
     public static final String UP = "up";

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
@@ -20,7 +21,7 @@ import net.minecraft.world.BossEvent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
@@ -41,7 +42,7 @@ public final class ContentParserGames {
         return found;
     }
 
-    @Nullable public static ScoreDef scoreFile(ResourceLocation key, String contents) {
+    @Nullable public static ScoreDef scoreFile(Identifier key, String contents) {
         JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Score file {} is empty, ignoring it", key);
@@ -104,7 +105,7 @@ public final class ContentParserGames {
                 roundReset(key, GsonHelper.getAsJsonObject(json, "reset", new JsonObject())));
     }
 
-    private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
+    private static RoundResetDef roundReset(Identifier key, JsonObject reset) {
         String lead = GsonHelper.getAsString(reset, "lead", RoundResetDef.NONE).trim();
         if (!RoundResetDef.NONE.equals(lead) && !RoundResetDef.NOW.equals(lead) && !RoundResetDef.VOTE.equals(lead)) {
             ContentLog.LOGGER.error("Score file {} lets the lead reset the round by '{}', which is not none, now or vote, so the lead cannot", key, lead);
@@ -126,21 +127,21 @@ public final class ContentParserGames {
                 GsonHelper.getAsString(reset, "failSays", "The vote failed, so the round goes on"));
     }
 
-    private static String opensBy(JsonObject opens, ResourceLocation key) {
+    private static String opensBy(JsonObject opens, Identifier key) {
         String asked = GsonHelper.getAsString(opens, "by", ScoreDef.AUTO).trim();
         if (ScoreDef.AUTO.equals(asked) || ScoreDef.LEADER.equals(asked)) { return asked; }
         ContentLog.LOGGER.error("Score file {} opens its round by '{}', which is not auto or leader, so it opens on its own", key, asked);
         return ScoreDef.AUTO;
     }
 
-    @Nullable private static ScoreDef.Place lobbyAt(ResourceLocation key, JsonObject opens) {
+    @Nullable private static ScoreDef.Place lobbyAt(Identifier key, JsonObject opens) {
         String asked = GsonHelper.getAsString(opens, "lobby", "").trim();
         ResourceKey<Level> dimension = Level.OVERWORLD;
         int comma = asked.indexOf(',');
         int colon = comma < 0 ? -1 : asked.lastIndexOf(':', comma);
         if (colon > 0) {
             String named = asked.substring(0, colon).trim();
-            ResourceLocation id = "-1".equals(named) ? Level.NETHER.location() : "1".equals(named) ? Level.END.location() : "0".equals(named) ? Level.OVERWORLD.location() : ResourceLocation.tryParse(named);
+            Identifier id = "-1".equals(named) ? Level.NETHER.identifier() : "1".equals(named) ? Level.END.identifier() : "0".equals(named) ? Level.OVERWORLD.identifier() : Identifier.tryParse(named);
             if (id == null) {
                 ContentLog.LOGGER.error("Score file {} gives opens.lobby '{}', whose dimension is not a dimension id, so the lobby has no area of its own", key, asked);
                 return null;
@@ -157,7 +158,7 @@ public final class ContentParserGames {
         return asked.isEmpty() ? 0x1E2630 : ContentParser.color(asked, name + " results background") & 0xFFFFFF;
     }
 
-    @Nullable public static RaidDef raidFile(ResourceLocation key, String contents) {
+    @Nullable public static RaidDef raidFile(Identifier key, String contents) {
         JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Raid file {} is empty, ignoring it", key);
@@ -205,7 +206,7 @@ public final class ContentParserGames {
                 Json.strings(json, "bell"));
     }
 
-    @Nullable public static TeamDef teamFile(ResourceLocation key, String contents) {
+    @Nullable public static TeamDef teamFile(Identifier key, String contents) {
         JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Team file {} is empty, ignoring it", key);
@@ -216,8 +217,8 @@ public final class ContentParserGames {
             ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
             return null;
         }
-        ChatFormatting color = ChatFormatting.getByName(GsonHelper.getAsString(json, "color", "white").trim().toLowerCase(Locale.ROOT));
-        if (color == null || !color.isColor()) {
+        ChatFormatting color = Compat.teamColor(GsonHelper.getAsString(json, "color", "white"));
+        if (color == null) {
             ContentLog.LOGGER.error("Team {} asks for the color '{}', which is not one of the sixteen text colors, so it is white", name, GsonHelper.getAsString(json, "color", ""));
             color = ChatFormatting.WHITE;
         }
@@ -236,7 +237,7 @@ public final class ContentParserGames {
                 standIn(json), standInAt(key, json), point(key, GsonHelper.getAsString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"));
     }
 
-    @Nullable static int[] point(ResourceLocation key, String asked, String refused) {
+    @Nullable static int[] point(Identifier key, String asked, String refused) {
         String at = asked.trim();
         if (at.isEmpty()) { return null; }
         String[] parts = at.split(",");
@@ -253,7 +254,7 @@ public final class ContentParserGames {
         return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "entity", "").trim();
     }
 
-    @Nullable private static int[] standInAt(ResourceLocation key, JsonObject json) {
+    @Nullable private static int[] standInAt(Identifier key, JsonObject json) {
         if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return null; }
         String at = GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "at", "");
         int[] found = point(key, at, "Team file {} gives standIn an 'at' of '{}', which is not three whole numbers x,y,z, so no stand-in is kept");
@@ -261,7 +262,7 @@ public final class ContentParserGames {
         return found;
     }
 
-    private static List<ItemGiveDef> gives(ResourceLocation key, JsonObject json) {
+    private static List<ItemGiveDef> gives(Identifier key, JsonObject json) {
         List<ItemGiveDef> values = new ArrayList<>();
         if (!json.has("gives")) { return values; }
         for (JsonElement held : GsonHelper.getAsJsonArray(json, "gives")) {
@@ -279,7 +280,7 @@ public final class ContentParserGames {
         return TeamDef.NONE;
     }
 
-    private static Team.Visibility visible(JsonObject json, String field, ResourceLocation key) {
+    private static Team.Visibility visible(JsonObject json, String field, Identifier key) {
         String asked = GsonHelper.getAsString(json, field, "always").trim();
         for (Team.Visibility held : Team.Visibility.values()) {
             if (held.name.equalsIgnoreCase(asked)) { return held; }
@@ -288,7 +289,7 @@ public final class ContentParserGames {
         return Team.Visibility.ALWAYS;
     }
 
-    private static Team.CollisionRule collision(JsonObject json, ResourceLocation key) {
+    private static Team.CollisionRule collision(JsonObject json, Identifier key) {
         String asked = GsonHelper.getAsString(json, "collision", "always").trim();
         for (Team.CollisionRule held : Team.CollisionRule.values()) {
             if (held.name.equalsIgnoreCase(asked)) { return held; }
@@ -297,7 +298,7 @@ public final class ContentParserGames {
         return Team.CollisionRule.ALWAYS;
     }
 
-    @Nullable private static int[] box(JsonObject json, ResourceLocation key) {
+    @Nullable private static int[] box(JsonObject json, Identifier key) {
         if (!json.has("spawnBox")) { return null; }
         if (!json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) {
             ContentLog.LOGGER.error("Team file {} has a spawnBox that is not six whole numbers, x y z to x y z, so nothing joins by where it spawns", key);

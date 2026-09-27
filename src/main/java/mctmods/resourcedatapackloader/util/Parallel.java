@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;

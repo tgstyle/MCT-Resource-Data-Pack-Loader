@@ -74,7 +74,7 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         extra.writeVarInt(def.columns());
         extra.writeBoolean(def.guiTexture() != null);
         if (def.guiTexture() != null) {
-            extra.writeResourceLocation(def.guiTexture());
+            extra.writeIdentifier(def.guiTexture());
             extra.writeVarInt(def.guiWidth());
             extra.writeVarInt(def.guiHeight());
         }
@@ -85,7 +85,7 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
         int rows = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_ROWS);
         int columns = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_COLUMNS);
         if (!extra.readBoolean()) { return new ContainerDef(rows, columns, "", false, null, null, 0, 0, ""); }
-        return new ContainerDef(rows, columns, "", false, null, extra.readResourceLocation(), extra.readVarInt(), extra.readVarInt(), "");
+        return new ContainerDef(rows, columns, "", false, null, extra.readIdentifier(), extra.readVarInt(), extra.readVarInt(), "");
     }
 
     public static boolean storable(ItemStack stack) {

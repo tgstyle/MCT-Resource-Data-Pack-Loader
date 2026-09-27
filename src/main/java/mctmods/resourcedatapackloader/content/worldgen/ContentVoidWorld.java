@@ -44,7 +44,7 @@ public final class ContentVoidWorld {
     }
 
     public static boolean voidApplies(ServerLevel level) {
-        String dimension = level.dimension().location().toString();
+        String dimension = level.dimension().identifier().toString();
         VoidMemory memory = remembered;
         if (memory != null && memory.recorded()) { return voidApplies(dimension, memory.enabled(), memory.dimensions(), memory.areBlacklist()); }
         return voidApplies(dimension);
@@ -65,7 +65,7 @@ public final class ContentVoidWorld {
     }
 
     static void standOn(ServerPlayer player) {
-        ServerLevel level = player.serverLevel();
+        ServerLevel level = player.level();
         if (!voidApplies(level)) { return; }
         BlockPos center = platformCenter(level);
         if (level.isEmptyBlock(center)) { platform(level, center); }
@@ -77,7 +77,7 @@ public final class ContentVoidWorld {
 
     static BlockPos platformCenter(ServerLevel level) {
         int asked = ContentControl.number(ContentControl.VOID, "voidPlatformHeight", Config.worldgen.voidPlatformHeight());
-        return new BlockPos(0, Mth.clamp(asked, level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), 0);
+        return new BlockPos(0, Mth.clamp(asked, level.getMinY() + 1, level.getMaxY() - 1), 0);
     }
 
     static void platform(ServerLevel level, BlockPos center) {

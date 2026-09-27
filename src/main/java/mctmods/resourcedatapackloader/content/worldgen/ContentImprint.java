@@ -10,7 +10,7 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
@@ -30,10 +30,10 @@ public final class ContentImprint implements IContentShape {
     private static final int FLAGS = 2;
     private static final Rotation[] TURNS = Rotation.values();
     private final ShapeDef shape;
-    private final ResourceLocation key;
+    private final Identifier key;
     private final boolean filtered;
 
-    public ContentImprint(ShapeDef shape, ResourceLocation key, boolean filtered) {
+    public ContentImprint(ShapeDef shape, Identifier key, boolean filtered) {
         this.shape = shape;
         this.key = key;
         this.filtered = filtered;
@@ -48,9 +48,9 @@ public final class ContentImprint implements IContentShape {
     @Nullable public Pin pin(WorldGenLevel level, boolean report) {
         int[] at = shape.pinnedAt();
         if (at == null) { return null; }
-        RandomSource random = RandomSource.create(level.getSeed() ^ ChunkPos.asLong(at[0], at[1]) ^ key.hashCode());
+        RandomSource random = RandomSource.create(level.getSeed() ^ ChunkPos.pack(at[0], at[1]) ^ key.hashCode());
         String named = shape.structures().isEmpty() ? shape.structure() : PickDef.pick(shape.structures(), random);
-        ResourceLocation template = named == null || named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return null; }
         Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
         if (held.isEmpty()) {
@@ -80,7 +80,7 @@ public final class ContentImprint implements IContentShape {
         BlockPos fitted = pin.fitted().atY(origin.getY());
         RandomSource random = RandomSource.create(fitted.asLong());
         if (pin.split()) {
-            settings.setBoundingBox(new BoundingBox(center.getMinBlockX(), level.getMinBuildHeight(), center.getMinBlockZ(), center.getMaxBlockX(), level.getMaxBuildHeight() - 1, center.getMaxBlockZ()));
+            settings.setBoundingBox(new BoundingBox(center.getMinBlockX(), level.getMinY(), center.getMinBlockZ(), center.getMaxBlockX(), level.getMaxY(), center.getMaxBlockZ()));
             if (!pin.loaded().placeInWorld(level, fitted, fitted, settings, random, FLAGS)) { return false; }
             int lowX = Math.max(pin.box().minX(), center.getMinBlockX());
             int lowZ = Math.max(pin.box().minZ(), center.getMinBlockZ());
@@ -97,11 +97,11 @@ public final class ContentImprint implements IContentShape {
         return true;
     }
 
-    private static boolean beyond(int x, int z, ChunkPos home) { return Math.abs(SectionPos.blockToSectionCoord(x) - home.x) > 1 || Math.abs(SectionPos.blockToSectionCoord(z) - home.z) > 1; }
+    private static boolean beyond(int x, int z, ChunkPos home) { return Math.abs(SectionPos.blockToSectionCoord(x) - home.x()) > 1 || Math.abs(SectionPos.blockToSectionCoord(z) - home.z()) > 1; }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
         String named = shape.structures().isEmpty() ? shape.structure() : PickDef.pick(shape.structures(), random);
-        ResourceLocation template = named == null || named.isEmpty() ? null : ResourceLocation.tryParse(named);
+        Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
         if (template == null) { return false; }
         WorldGenLevel level = placer.level();
         Optional<StructureTemplate> held = level.getLevel().getStructureManager().get(template);
@@ -127,7 +127,7 @@ public final class ContentImprint implements IContentShape {
 
     private void stock(ContentPlacer placer, RandomSource random, int cornerX, int baseY, int cornerZ, Vec3i span) {
         if (shape.lootTable().isEmpty()) { return; }
-        ResourceLocation table = ResourceLocation.tryParse(shape.lootTable());
+        Identifier table = Identifier.tryParse(shape.lootTable());
         if (table == null) {
             ContentLog.LOGGER.error("Worldgen {} names loot table '{}', which is not a valid id, so the containers are left as the template holds them", key, shape.lootTable());
             return;
@@ -135,7 +135,7 @@ public final class ContentImprint implements IContentShape {
         stock(placer, random, table, cornerX, baseY, cornerZ, span);
     }
 
-    public static void stock(ContentPlacer placer, RandomSource random, ResourceLocation table, int cornerX, int baseY, int cornerZ, Vec3i span) {
+    public static void stock(ContentPlacer placer, RandomSource random, Identifier table, int cornerX, int baseY, int cornerZ, Vec3i span) {
         WorldGenLevel level = placer.level();
         BoundingBox box = new BoundingBox(cornerX, baseY, cornerZ, cornerX + span.getX() - 1, baseY + span.getY() - 1, cornerZ + span.getZ() - 1);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();

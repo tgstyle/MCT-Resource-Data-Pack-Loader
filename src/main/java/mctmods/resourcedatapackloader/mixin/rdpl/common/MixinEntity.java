@@ -7,14 +7,15 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.animal.Squid;
+import net.minecraft.world.entity.animal.squid.Squid;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
-import net.minecraft.world.entity.projectile.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
 import net.minecraft.world.entity.projectile.ThrowableProjectile;
-import net.minecraft.world.entity.projectile.ThrownExperienceBottle;
-import net.minecraft.world.entity.projectile.ThrownPotion;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle;
+import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,17 +35,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Unique private static boolean rdpl$scaled(Entity self) {
-        if (self instanceof Squid || self instanceof ThrownPotion || self instanceof ThrownExperienceBottle) { return false; }
+        if (self instanceof Squid || self instanceof AbstractThrownPotion || self instanceof ThrownExperienceBottle) { return false; }
         if (self instanceof LivingEntity living) { return ContentPhysics.openAir(living); }
         return self instanceof ItemEntity || self instanceof ExperienceOrb || self instanceof PrimedTnt || self instanceof FallingBlockEntity || self instanceof AbstractArrow || self instanceof ThrowableProjectile;
     }
 
     @Inject(method = "load", at = @At("TAIL"))
-    private void rdpl$legacyForgeData(CompoundTag tag, CallbackInfo ci) {
-        CompoundTag forge = tag.getCompound("ForgeData");
+    private void rdpl$legacyForgeData(ValueInput input, CallbackInfo ci) {
+        CompoundTag forge = input.read("ForgeData", CompoundTag.CODEC).orElseGet(CompoundTag::new);
         if (forge.isEmpty()) { return; }
         CompoundTag data = ((Entity) (Object) this).getPersistentData();
-        for (String key : forge.getAllKeys()) {
+        for (String key : forge.keySet()) {
             Tag held = forge.get(key);
             if (held != null && !data.contains(key)) { data.put(key, held.copy()); }
         }

@@ -44,7 +44,7 @@ public final class CityPlotGround {
     private CityPlotGround() {}
 
     public static boolean terrain(BlockState state) {
-        return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY)
+        return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.SUBSTRATE_OVERWORLD) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY)
                 || state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.ICE) || state.is(Tags.Blocks.ORES) || ContentBiomes.packGround(state);
     }
 
@@ -158,13 +158,13 @@ public final class CityPlotGround {
         return asked == null ? exposed(level, at, groundFor(level, x, z)) : asked.pick(level.getSeed(), x, y, z);
     }
 
-    public static void fillDown(WorldGenLevel level, BoundingBox box, int x, int from, int z, BlockState ground) { fillDown(level, box, x, from, z, level.getMinBuildHeight() + 1, ground); }
+    public static void fillDown(WorldGenLevel level, BoundingBox box, int x, int from, int z, BlockState ground) { fillDown(level, box, x, from, z, level.getMinY() + 1, ground); }
 
     static void fillUnder(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { fillDown(level, box, x, from, z, floor, groundFor(level, x, z)); }
 
     static int piling(WorldGenLevel level, int x, int z, int from, BlockState support, int roof, BlockPos.MutableBlockPos at) {
         int laid = 0;
-        for (int y = from; y >= from - PILING_REACH && y > level.getMinBuildHeight() && y > roof; y--) {
+        for (int y = from; y >= from - PILING_REACH && y > level.getMinY() && y > roof; y--) {
             at.set(x, y, z);
             if (solid(level.getBlockState(at))) { break; }
             level.setBlock(at, support, 2);
@@ -191,7 +191,7 @@ public final class CityPlotGround {
     private static int fillBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor, boolean field) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int footing = Integer.MIN_VALUE;
-        for (int y = from; y >= Math.max(level.getMinBuildHeight() + 1, floor - FOOTING_REACH); y--) {
+        for (int y = from; y >= Math.max(level.getMinY() + 1, floor - FOOTING_REACH); y--) {
             at.set(x, y, z);
             BlockState held = level.getBlockState(at);
             if (liquid(held)) { return 0; }
@@ -332,7 +332,7 @@ public final class CityPlotGround {
     }
 
     public static int footing(WorldGenLevel level, BoundingBox held, BoundingBox box, int seat, BlockState ground, List<CityRails.Laid> bores) {
-        int least = level.getMinBuildHeight() + 1;
+        int least = level.getMinY() + 1;
         int minX = Math.max(held.minX(), box.minX());
         int maxX = Math.min(held.maxX(), box.maxX());
         int minZ = Math.max(held.minZ(), box.minZ());

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.loot.BlockDrops;
@@ -11,19 +12,18 @@ import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
-import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.level.block.BreakBlockEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,7 +34,7 @@ import javax.annotation.Nullable;
 
 public final class ContentProspect {
     private static final String KEY = "prospectItems";
-    private static final ResourceLocation ITEMS = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "prospectitems");
+    private static final Identifier ITEMS = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "prospectitems");
     private static final int RADIUS = 8;
     private static final int LEVEL = 6;
     private static final int WEAR = 2;
@@ -47,7 +47,7 @@ public final class ContentProspect {
     private record Entry(ItemStack stack, Set<String> names, int radius) {
         boolean matches(ItemStack held) { return ContentStacks.matches(held, stack); }
 
-        boolean reads(ResourceLocation key, boolean blacklist) {
+        boolean reads(Identifier key, boolean blacklist) {
             if (names.isEmpty()) { return !blacklist; }
             boolean listed = names.contains(key.toString()) || names.contains(key.getPath());
             return listed != blacklist;
@@ -121,7 +121,7 @@ public final class ContentProspect {
         if (slow > 1) { event.setNewSpeed(event.getOriginalSpeed() / slow); }
     }
 
-    public static void onBreak(BlockEvent.BreakEvent event) {
+    public static void onBreak(BreakBlockEvent event) {
         if (!(event.getPlayer() instanceof ServerPlayer player) || !(event.getLevel() instanceof ServerLevel level) || !player.isShiftKeyDown() || idle()) { return; }
         ItemStack held = player.getMainHandItem();
         Entry entry = holding(held);
@@ -137,13 +137,13 @@ public final class ContentProspect {
         event.setDroppedExperience(0);
         ServerLevel level = event.getLevel();
         List<ItemStack> stacks = BlockDrops.prospected(event.getState(), level, event.getPos(), player, event.getTool());
-        if (!level.getGameRules().getBoolean(GameRules.RULE_DOBLOCKDROPS)) { return; }
+        if (!level.getGameRules().get(GameRules.BLOCK_DROPS)) { return; }
         for (ItemStack stack : stacks) { event.getDrops().add(dropped(level, event.getPos(), stack)); }
     }
 
     private static ItemEntity dropped(ServerLevel level, BlockPos pos, ItemStack stack) {
-        double half = EntityType.ITEM.getHeight() / 2.0D;
-        ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D), pos.getY() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D) - half, pos.getZ() + 0.5D + Mth.nextDouble(level.random, -0.25D, 0.25D), stack);
+        double half = Compat.item().getHeight() / 2.0D;
+        ItemEntity entity = new ItemEntity(level, pos.getX() + 0.5D + Mth.nextDouble(level.getRandom(), -0.25D, 0.25D), pos.getY() + 0.5D + Mth.nextDouble(level.getRandom(), -0.25D, 0.25D) - half, pos.getZ() + 0.5D + Mth.nextDouble(level.getRandom(), -0.25D, 0.25D), stack);
         entity.setDefaultPickUpDelay();
         return entity;
     }
@@ -160,7 +160,7 @@ public final class ContentProspect {
             double best = Double.MAX_VALUE;
             for (int cx = chunkX - entry.radius(); cx <= chunkX + entry.radius(); cx++) {
                 for (int cz = chunkZ - entry.radius(); cz <= chunkZ + entry.radius(); cz++) {
-                    for (ContentOreVein.Vein vein : shape.veinsOf(level.getSeed(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight(), cx, cz)) {
+                    for (ContentOreVein.Vein vein : shape.veinsOf(level.getSeed(), level.getMinY() + 1, level.getMaxY() + 1, cx, cz)) {
                         BlockPos where = vein.pos();
                         double away = at.distSqr(where);
                         if (away >= best || !ContentWorldgen.allows(found, level, where)) { continue; }

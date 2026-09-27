@@ -33,10 +33,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.level.ChunkEvent;
-import net.neoforged.neoforge.common.util.TriState;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.SlotItemHandler;
+import net.minecraft.util.TriState;
+import net.neoforged.neoforge.transfer.ResourceHandler;
+import net.neoforged.neoforge.transfer.item.ItemResource;
+import net.neoforged.neoforge.transfer.transaction.Transaction;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -87,8 +87,8 @@ public final class ContentDisabledEvents {
         for (Slot slot : menu.slots) {
             ItemStack stack = slot.getItem();
             if (!ContentDisabled.disabled(stack)) { continue; }
-            if (slot instanceof SlotItemHandler handled && !(handled.getItemHandler() instanceof IItemHandlerModifiable)) { slot.remove(stack.getCount()); }
-            else { slot.set(ItemStack.EMPTY); }
+            try { slot.set(ItemStack.EMPTY); }
+            catch (ClassCastException unsettable) { slot.remove(stack.getCount()); }
             changed = true;
         }
         if (changed) { menu.broadcastChanges(); }
@@ -100,12 +100,13 @@ public final class ContentDisabledEvents {
     }
 
     public static void onChunk(ChunkEvent.Load event) {
-        if (!ContentDisabled.any() || !(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
+        if (!ContentDisabled.any() || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        LevelChunk chunk = event.getChunk();
         int[] placed = placed(chunk);
         if (placed.length == 0 && chunk.getBlockEntities().isEmpty()) { return; }
         List<BlockEntity> entities = List.copyOf(chunk.getBlockEntities().values());
         MinecraftServer server = level.getServer();
-        server.tell(new TickTask(server.getTickCount(), () -> {
+        server.schedule(new TickTask(server.getTickCount(), () -> {
             removePlaced(level, chunk, placed);
             sweepLoaded(entities);
         }));
@@ -118,7 +119,7 @@ public final class ContentDisabledEvents {
 
     private static void removePlaced(ServerLevel level, LevelChunk chunk, int[] placed) {
         ChunkPos at = chunk.getPos();
-        if (placed.length == 0 || level.getChunkSource().getChunkNow(at.x, at.z) != chunk) { return; }
+        if (placed.length == 0 || level.getChunkSource().getChunkNow(at.x(), at.z()) != chunk) { return; }
         int removed = 0;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int index : placed) {
@@ -137,7 +138,7 @@ public final class ContentDisabledEvents {
                 }
             }
         }
-        if (removed > 0) { ContentLog.LOGGER.debug("Removed {} disabled block(s) from chunk {} of {}", removed, at, level.dimension().location()); }
+        if (removed > 0) { ContentLog.LOGGER.debug("Removed {} disabled block(s) from chunk {} of {}", removed, at, level.dimension().identifier()); }
     }
 
     private static void sweepLoaded(List<BlockEntity> entities) {
@@ -167,16 +168,18 @@ public final class ContentDisabledEvents {
             sweep(container);
             return;
         }
-        IItemHandler handler = entity.getLevel() == null ? null : entity.getLevel().getCapability(Capabilities.ItemHandler.BLOCK, entity.getBlockPos(), entity.getBlockState(), entity, null);
+        ResourceHandler<ItemResource> handler = entity.getLevel() == null ? null : entity.getLevel().getCapability(Capabilities.Item.BLOCK, entity.getBlockPos(), entity.getBlockState(), entity, null);
         if (handler != null) { sweep(handler); }
     }
 
-    private static void sweep(IItemHandler handler) {
-        for (int slot = 0; slot < handler.getSlots(); slot++) {
-            ItemStack stack = handler.getStackInSlot(slot);
-            if (!ContentDisabled.disabled(stack)) { continue; }
-            if (handler instanceof IItemHandlerModifiable modifiable) { modifiable.setStackInSlot(slot, ItemStack.EMPTY); }
-            else { handler.extractItem(slot, stack.getCount(), false); }
+    private static void sweep(ResourceHandler<ItemResource> handler) {
+        for (int slot = 0; slot < handler.size(); slot++) {
+            ItemResource resource = handler.getResource(slot);
+            if (resource.isEmpty() || !ContentDisabled.disabled(resource.toStack())) { continue; }
+            try (Transaction transaction = Transaction.openRoot()) {
+                handler.extract(slot, resource, handler.getAmountAsInt(slot), transaction);
+                transaction.commit();
+            }
         }
     }
 }

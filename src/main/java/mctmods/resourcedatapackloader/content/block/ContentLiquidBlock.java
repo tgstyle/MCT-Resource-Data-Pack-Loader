@@ -7,6 +7,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.InsideBlockEffectApplier;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -32,8 +33,8 @@ public class ContentLiquidBlock extends LiquidBlock {
 
     public FluidDef getDef() { return def; }
 
-    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity) {
-        if (level.isClientSide) { return; }
+    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) {
+        if (level.isClientSide()) { return; }
         if (def.lavaMaterial()) { entity.lavaHurt(); }
         if (effects.isEmpty() || !(entity instanceof LivingEntity living)) { return; }
         for (MobEffectInstance effect : effects) { living.addEffect(ContentEffects.copy(effect)); }

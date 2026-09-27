@@ -63,10 +63,10 @@ final class CommandTeams {
             CommandShared.send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not choose its lead by a vote"));
             return 0;
         }
-        boolean stood = ContentTeams.standsFor(player.serverLevel(), player.getGameProfile().getName(), choice, mine);
+        boolean stood = ContentTeams.standsFor(player.level(), player.getGameProfile().name(), choice, mine);
         CommandShared.send(source, stood ? mine.color() : ChatFormatting.RED, Component.literal(stood ? "You voted for " + choice : choice + " is not on your team"));
         if (stood) {
-            String lead = ContentTeams.leadOf(player.serverLevel(), mine);
+            String lead = ContentTeams.leadOf(player.level(), mine);
             CommandShared.send(source, ChatFormatting.GRAY, Component.literal(lead == null ? "The vote is tied, so nobody leads" : lead + " leads " + mine.displayName()));
         }
         return stood ? 1 : 0;
@@ -85,7 +85,7 @@ final class CommandTeams {
             CommandShared.send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not let its lead be claimed"));
             return 0;
         }
-        boolean took = ContentTeams.claim(player.serverLevel(), player.getGameProfile().getName(), mine);
+        boolean took = ContentTeams.claim(player.level(), player.getGameProfile().name(), mine);
         CommandShared.send(source, took ? mine.color() : ChatFormatting.RED, Component.literal(took ? mine.leadSays().replace("{side}", mine.displayName()) : ContentTeams.holding(mine) + " already leads " + mine.displayName()));
         return took ? 1 : 0;
     }
@@ -98,7 +98,7 @@ final class CommandTeams {
             CommandShared.send(source, ChatFormatting.RED, Component.literal("Only a player starts a round"));
             return 0;
         }
-        String said = ContentScoring.start(source.getServer(), player, player.getGameProfile().getName(), source.hasPermission(CommandShared.OPERATOR));
+        String said = ContentScoring.start(source.getServer(), player, player.getGameProfile().name(), CommandShared.allowed(source, CommandShared.OPERATOR));
         CommandShared.send(source, "The round starts".equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
         return 1;
     }
@@ -106,7 +106,7 @@ final class CommandTeams {
     static int roundReset(CommandContext<CommandSourceStack> context, String name) {
         CommandSourceStack source = context.getSource();
         CommandShared.ran(source, name, "round reset");
-        String said = ContentRoundReset.call(source.getServer(), source.getTextName(), source.getPlayer(), source.hasPermission(CommandShared.OPERATOR));
+        String said = ContentRoundReset.call(source.getServer(), source.getTextName(), source.getPlayer(), CommandShared.allowed(source, CommandShared.OPERATOR));
         CommandShared.send(source, ContentRoundReset.DONE.equals(said) || ContentRoundReset.CALLED.equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
         return 1;
     }
@@ -140,7 +140,7 @@ final class CommandTeams {
         CommandSourceStack source = context.getSource();
         ServerPlayer player = teamPlayer(source, name, "join " + (asked == null ? "" : asked));
         if (player == null) { return 0; }
-        TeamDef wanted = asked != null ? ContentTeams.named(asked) : ContentTeams.smallest(player.serverLevel());
+        TeamDef wanted = asked != null ? ContentTeams.named(asked) : ContentTeams.smallest(player.level());
         if (asked == null && wanted == null) {
             CommandShared.send(source, ChatFormatting.RED, Component.literal("No team takes players by balance, so name the one you want"));
             return 0;

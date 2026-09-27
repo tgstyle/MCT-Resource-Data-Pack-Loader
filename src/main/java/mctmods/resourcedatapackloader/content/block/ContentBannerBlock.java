@@ -4,11 +4,12 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
-import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -29,17 +30,17 @@ import javax.annotation.Nullable;
 public final class ContentBannerBlock extends Block implements EntityBlock, IContentBanner {
     public static final IntegerProperty ROTATION = BlockStateProperties.ROTATION_16;
     private static final VoxelShape SHAPE = Block.box(4.0D, 0.0D, 4.0D, 12.0D, 16.0D, 12.0D);
-    private final ResourceLocation texture;
+    private final Identifier texture;
     private final boolean modeled;
 
-    public ContentBannerBlock(ResourceLocation id, Properties properties) {
+    public ContentBannerBlock(Identifier id, Properties properties) {
         super(properties);
         this.texture = IContentBanner.textureOf(id);
         this.modeled = IContentBanner.shipsBlockstate(id.getNamespace(), id.getPath());
         registerDefaultState(stateDefinition.any().setValue(ROTATION, 0));
     }
 
-    @Override public ResourceLocation texture() { return texture; }
+    @Override public Identifier texture() { return texture; }
 
     @Override public boolean modeled() { return modeled; }
 
@@ -55,8 +56,8 @@ public final class ContentBannerBlock extends Block implements EntityBlock, ICon
 
     @Override public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) { return defaultBlockState().setValue(ROTATION, RotationSegment.convertToSegment(context.getRotation() + 180.0F)); }
 
-    @Override @Nonnull public BlockState updateShape(@Nonnull BlockState state, @Nonnull Direction facing, @Nonnull BlockState facingState, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nonnull BlockPos facingPos) {
-        return facing == Direction.DOWN && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, facing, facingState, level, pos, facingPos);
+    @Override @Nonnull protected BlockState updateShape(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull ScheduledTickAccess ticks, @Nonnull BlockPos pos, @Nonnull Direction facing, @Nonnull BlockPos facingPos, @Nonnull BlockState facingState, @Nonnull RandomSource random) {
+        return facing == Direction.DOWN && !state.canSurvive(level, pos) ? Blocks.AIR.defaultBlockState() : super.updateShape(state, level, ticks, pos, facing, facingPos, facingState, random);
     }
 
     @Override @Nonnull public BlockState rotate(@Nonnull BlockState state, @Nonnull Rotation rotation) { return state.setValue(ROTATION, rotation.rotate(state.getValue(ROTATION), 16)); }

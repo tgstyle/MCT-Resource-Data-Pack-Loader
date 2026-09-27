@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.ModFiles;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -57,7 +58,7 @@ public final class ModPacks {
     private static void collect(IModFileInfo info, List<Found> found) {
         String fileName = info.getFile().getFileName();
         try {
-            Path home = info.getFile().findResource(IN_JAR);
+            Path home = ModFiles.find(info.getFile(), IN_JAR);
             if (!Files.isDirectory(home)) { return; }
             Set<String> declared = new LinkedHashSet<>();
             for (IModInfo mod : info.getMods()) { declared.add(mod.getModId()); }

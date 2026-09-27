@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
+import mctmods.resourcedatapackloader.pack.PackMeta;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.Gson;
@@ -9,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import net.minecraft.SharedConstants;
 import net.minecraft.server.packs.PackType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -30,7 +30,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-public final class Ported implements PackPort {
+public final class Ported implements IPackPort {
     public static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<String> PRIMARY_TEXTURES = List.of("all", "cross", "texture", "side", "pane", "torch", "crop", "particle", "layer0", "wall", "top", "end");
     private static final String WALL = "_wall";
@@ -72,7 +72,7 @@ public final class Ported implements PackPort {
 
     @Override public String origin() { return "1.12.2"; }
 
-    @Override public PackType reads() { return PackType.CLIENT_RESOURCES; }
+    @Override public boolean reads(PackType type) { return type == PackType.CLIENT_RESOURCES; }
 
     public String mainNamespace() { return namespaces.isEmpty() ? "minecraft" : namespaces.iterator().next(); }
 
@@ -127,7 +127,7 @@ public final class Ported implements PackPort {
 
     public Map<String, String> renamedIn(String namespace, String folder, String file) { return renamed.getOrDefault(namespace + ":" + folder + "/" + file, Map.of()); }
 
-    @Override public void index(String namespace, List<String> realPaths) {
+    @Override public void index(PackType type, String namespace, List<String> realPaths) {
         namespaces.add(namespace);
         Path home = root.resolve("assets").resolve(namespace);
         for (String path : realPaths) {
@@ -252,6 +252,7 @@ public final class Ported implements PackPort {
     }
 
     private void serve(String namespace, String path, Path real, JsonObject json) {
+        if (Modern.active()) { ModernAssets.model(json); }
         cache.put(key(PackType.CLIENT_RESOURCES, namespace, path), GSON.toJson(json).getBytes(StandardCharsets.UTF_8));
         expose(PackType.CLIENT_RESOURCES, namespace, path, new Source(real, Port.Kind.BLOCKSTATE, null));
     }
@@ -325,7 +326,7 @@ public final class Ported implements PackPort {
                 String plain = file.substring(file.lastIndexOf('/') + 1);
                 named = plain + "_" + named;
                 taken.add(namespace + ":" + named);
-                renamed.computeIfAbsent(namespace + ":" + folder + "/" + file, k -> new LinkedHashMap<>()).put(variant.getKey(), named);
+                renamed.computeIfAbsent(namespace + ":" + folder + "/" + file, _ -> new LinkedHashMap<>()).put(variant.getKey(), named);
                 note("'" + path + "' names the variant '" + variant.getKey() + "', which another file already claims, so it is registered as '" + named + "'");
             }
             byMeta.putIfAbsent(meta, named);
@@ -340,7 +341,7 @@ public final class Ported implements PackPort {
     }
 
     private void expose(PackType type, String namespace, String path, Source source) {
-        exposed.computeIfAbsent(type, k -> new LinkedHashMap<>()).computeIfAbsent(namespace, k -> new LinkedHashMap<>()).putIfAbsent(path, source);
+        exposed.computeIfAbsent(type, _ -> new LinkedHashMap<>()).computeIfAbsent(namespace, _ -> new LinkedHashMap<>()).putIfAbsent(path, source);
     }
 
     private void gameLoop(Path real, String path) {
@@ -510,6 +511,7 @@ public final class Ported implements PackPort {
                 case ADVANCEMENT -> ConvertAdvancements.advancement(JsonParser.parseString(contents).getAsJsonObject(), this);
                 default -> contents;
             };
+            if (Modern.active()) { out = Modern.ported(source.kind(), out, path, this::note); }
             return out.getBytes(StandardCharsets.UTF_8);
         }
         catch (RuntimeException failed) {
@@ -556,7 +558,7 @@ public final class Ported implements PackPort {
         Path metaFile = root.resolve("pack.mcmeta");
         JsonObject old = Files.isRegularFile(metaFile) ? readJson(metaFile) : null;
         JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
-        pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(PackType.SERVER_DATA));
+        PackMeta.formats(pack, PackType.SERVER_DATA);
         if (!pack.has("description")) { pack.addProperty("description", name); }
         meta.add("pack", pack);
         out.putNextEntry(new ZipEntry(prefix + "pack.mcmeta"));

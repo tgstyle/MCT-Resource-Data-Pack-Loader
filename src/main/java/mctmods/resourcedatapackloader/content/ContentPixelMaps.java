@@ -304,7 +304,7 @@ public final class ContentPixelMaps {
     }
 
     @Nullable private static int[][] image(String namespace, String path) {
-        if (FMLEnvironment.dist != Dist.CLIENT) { return null; }
+        if (FMLEnvironment.getDist() != Dist.CLIENT) { return null; }
         if (!ContentPixelImages.exists(namespace, path)) { return null; }
         return ContentPixelImages.read(namespace, path);
     }

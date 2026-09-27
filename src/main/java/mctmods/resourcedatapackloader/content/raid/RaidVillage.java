@@ -4,7 +4,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.PoiTypeTags;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.phys.AABB;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -15,7 +15,7 @@ public record RaidVillage(BlockPos center, int radius) {
     private static final int VILLAGER_RISE = 4;
 
     @Nullable public static RaidVillage nearest(ServerLevel level, BlockPos at, int reach) {
-        List<BlockPos> points = level.getPoiManager().findAll(type -> type.is(PoiTypeTags.VILLAGE), pos -> true, at, GATHER + reach, PoiManager.Occupancy.ANY).toList();
+        List<BlockPos> points = level.getPoiManager().findAll(type -> type.is(PoiTypeTags.VILLAGE), _ -> true, at, GATHER + reach, PoiManager.Occupancy.ANY).toList();
         if (points.isEmpty()) { return null; }
         long x = 0;
         long y = 0;

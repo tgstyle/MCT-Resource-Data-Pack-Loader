@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.network.MessageCard;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Says;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
@@ -35,7 +35,7 @@ final class CardSend {
             }
             look.lines = lines;
         }
-        if (rule.icon != null) { look.icon = rule.icon.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceLocation.tryParse(rule.key), rule.icon, 1); }
+        if (rule.icon != null) { look.icon = rule.icon.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(Identifier.tryParse(rule.key), rule.icon, 1); }
         if (rule.color != null && !rule.color.isEmpty()) { look.background = ContentParser.color(rule.color, "card rule " + rule.key) & 0xFFFFFF; }
         if (rule.image != null) { look.image = rule.image; }
         if (rule.background != null) { look.panel = rule.background; }
@@ -57,7 +57,7 @@ final class CardSend {
         if (CardRule.PLAYER.equals(rule.audience)) { return List.of(subject); }
         List<ServerPlayer> shown = new ArrayList<>();
         String team = CardWhen.teamOf(subject);
-        for (ServerPlayer player : subject.server.getPlayerList().getPlayers()) {
+        for (ServerPlayer player : subject.level().getServer().getPlayerList().getPlayers()) {
             if (CardRule.DIMENSION.equals(rule.audience) && player.level() != subject.level()) { continue; }
             if (CardRule.TEAM.equals(rule.audience) && (team.isEmpty() ? player != subject : !team.equals(CardWhen.teamOf(player)))) { continue; }
             shown.add(player);
@@ -67,12 +67,12 @@ final class CardSend {
 
     static void send(CardLook look, ServerPlayer player) {
         if (ContentIntroPlay.reading(player.getUUID())) {
-            HELD.computeIfAbsent(player.getUUID(), k -> new ArrayList<>()).add(look);
+            HELD.computeIfAbsent(player.getUUID(), _ -> new ArrayList<>()).add(look);
             return;
         }
         switch (look.style) {
             case CardLook.CHAT -> chat(look, player);
-            case CardLook.BAR -> player.displayClientMessage(Says.marked(String.join(" ", all(look)), look.chat), true);
+            case CardLook.BAR -> player.sendOverlayMessage(Says.marked(String.join(" ", all(look)), look.chat));
             case CardLook.CENTER -> {
                 if (RDPLNetwork.reaches(player)) { RDPLNetwork.sendCard(player, message(look, true)); }
                 else { titles(look, player); }

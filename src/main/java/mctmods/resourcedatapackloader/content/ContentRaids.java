@@ -16,7 +16,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -29,9 +29,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.animal.golem.IronGolem;
 import net.minecraft.world.entity.raid.Raider;
-import net.minecraft.world.entity.npc.Villager;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -58,7 +58,7 @@ public final class ContentRaids {
     private static final int BELL_REACH = 48;
     private static final int GLOW_TICKS = 60;
     private static final Set<Block> BELLS = new HashSet<>();
-    private static final Map<ResourceLocation, RaidDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, RaidDef> DEFS = new LinkedHashMap<>();
     private static final Map<String, Optional<Holder<MobEffect>>> OMENS = new HashMap<>();
 
     private ContentRaids() {}
@@ -74,7 +74,7 @@ public final class ContentRaids {
         if (DEFS.isEmpty()) { return; }
         for (RaidDef def : DEFS.values()) {
             for (String name : def.bells()) {
-                Block bell = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.trim()));
+                Block bell = Registered.find(BuiltInRegistries.BLOCK, Identifier.tryParse(name.trim()));
                 if (bell == null || bell == Blocks.AIR) { ContentLog.LOGGER.error("Raid {} names the bell {}, which nothing registers, so no block rings for it", def.key(), name); }
                 else if (!(bell instanceof ContentBellBlock)) { BELLS.add(bell); }
             }
@@ -82,7 +82,7 @@ public final class ContentRaids {
         Summary.info("raids", "Loaded " + DEFS.size() + " raid(s): " + DEFS.keySet());
     }
 
-    @Nullable public static RaidDef def(@Nullable ResourceLocation key) { return key == null ? null : DEFS.get(key); }
+    @Nullable public static RaidDef def(@Nullable Identifier key) { return key == null ? null : DEFS.get(key); }
 
     public static boolean isBell(BlockState state) { return state.getBlock() instanceof ContentBellBlock || BELLS.contains(state.getBlock()); }
 
@@ -130,9 +130,10 @@ public final class ContentRaids {
     }
 
     public static void onPlayerTick(PlayerTickEvent.Post event) {
-        if (!(event.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level) || player.tickCount % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
+        if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
+        ServerLevel level = player.level();
         for (RaidDef def : DEFS.values()) {
-            Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(name)))).orElse(null);
+            Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(Registered.holder(BuiltInRegistries.MOB_EFFECT, Identifier.tryParse(name)))).orElse(null);
             if (omen == null || !player.hasEffect(omen)) { continue; }
             RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
             if (village == null) { return; }
@@ -140,7 +141,7 @@ public final class ContentRaids {
             if (storage.raided(village.center(), VILLAGE_SEARCH + village.radius())) { return; }
             player.removeEffect(omen);
             storage.add(new ActiveRaid(def, village.center()));
-            ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().getName(), def.omen(), village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
+            ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().name(), def.omen(), village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
             return;
         }
     }

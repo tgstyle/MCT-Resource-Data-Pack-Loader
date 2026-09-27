@@ -11,7 +11,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.StructureTags;
@@ -23,7 +23,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkType;
-import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+import net.minecraft.world.level.chunk.storage.SerializableChunkData;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureCheckResult;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
@@ -120,12 +120,12 @@ public final class ContentStructureSearch {
         ChunkGeneratorStructureState state = level.getChunkSource().getGeneratorState();
         Map<StructurePlacement, Set<Holder<Structure>>> placements = new LinkedHashMap<>();
         for (Holder<Structure> holder : wanted) {
-            for (StructurePlacement placement : state.getPlacementsForStructure(holder)) { placements.computeIfAbsent(placement, unused -> new LinkedHashSet<>()).add(holder); }
+            for (StructurePlacement placement : state.getPlacementsForStructure(holder)) { placements.computeIfAbsent(placement, _ -> new LinkedHashSet<>()).add(holder); }
         }
         int middleX = SectionPos.blockToSectionCoord(from.getX());
         int middleZ = SectionPos.blockToSectionCoord(from.getZ());
         List<BlockPos> visited = next ? been(player, named) : List.of();
-        Predicate<BlockPos> skipped = site -> next ? here(site, middleX, middleZ) || beenNear(visited, site) : explored(level, new ChunkPos(site));
+        Predicate<BlockPos> skipped = site -> next ? here(site, middleX, middleZ) || beenNear(visited, site) : explored(level, ChunkPos.containing(site));
         Predicate<BlockPos> pinSkipped = next ? site -> beenNear(visited, site) || beenNear(List.of(from), site) : skipped;
         for (StructurePlacement placement : placements.keySet()) {
             if (placement instanceof ContentStructureSpread spread && !spread.pins().isEmpty()) { return onPins(placements, from, pinSkipped); }
@@ -205,7 +205,7 @@ public final class ContentStructureSearch {
             BlockPos site = null;
             if (checked == StructureCheckResult.START_PRESENT) { site = placement.getLocatePos(spot); }
             else {
-                ChunkAccess chunk = level.getChunk(spot.x, spot.z, ChunkStatus.STRUCTURE_STARTS);
+                ChunkAccess chunk = level.getChunk(spot.x(), spot.z(), ChunkStatus.STRUCTURE_STARTS);
                 StructureStart start = manager.getStartForStructure(SectionPos.bottomOf(chunk), holder.value(), chunk);
                 if (start != null && start.isValid()) { site = placement.getLocatePos(start.getChunkPos()); }
             }
@@ -215,28 +215,28 @@ public final class ContentStructureSearch {
     }
 
     private static boolean explored(ServerLevel level, ChunkPos spot) {
-        if (level.getChunkSource().getChunkNow(spot.x, spot.z) != null) { return true; }
-        return level.getChunkSource().chunkMap.read(spot).join().map(tag -> ChunkSerializer.getChunkTypeFromTag(tag) == ChunkType.LEVELCHUNK).orElse(false);
+        if (level.getChunkSource().getChunkNow(spot.x(), spot.z()) != null) { return true; }
+        return level.getChunkSource().chunkMap.read(spot).join().map(tag -> SerializableChunkData.getChunkStatusFromTag(tag).getChunkType() == ChunkType.LEVELCHUNK).orElse(false);
     }
 
     @Nullable private static HolderSet<Structure> wanted(ServerLevel level, String named) {
-        Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         if (named.startsWith("#")) {
-            ResourceLocation id = ResourceLocation.tryParse(named.substring(1));
+            Identifier id = Identifier.tryParse(named.substring(1));
             if (id == null) { return null; }
-            return registry.getTag(TagKey.create(Registries.STRUCTURE, id)).orElse(null);
+            return registry.get(TagKey.create(Registries.STRUCTURE, id)).orElse(null);
         }
         List<Holder<Structure>> held = new ArrayList<>();
         for (String one : named.split(",")) {
-            ResourceLocation id = ResourceLocation.tryParse(one.trim());
+            Identifier id = Identifier.tryParse(one.trim());
             if (id == null) { continue; }
-            registry.getHolder(ResourceKey.create(Registries.STRUCTURE, id)).ifPresent(held::add);
+            registry.get(ResourceKey.create(Registries.STRUCTURE, id)).ifPresent(held::add);
         }
         return held.isEmpty() ? null : HolderSet.direct(held);
     }
 
     public static void remember(ServerPlayer player, String name, BlockPos site) {
-        Deque<BlockPos> held = VISITED.computeIfAbsent(player.getUUID() + ":" + name, unused -> new ArrayDeque<>());
+        Deque<BlockPos> held = VISITED.computeIfAbsent(player.getUUID() + ":" + name, _ -> new ArrayDeque<>());
         BlockPos last = held.peekLast();
         if (last == null || last.distSqr(site) > BEEN_NEAR) { held.addLast(site.immutable()); }
     }
@@ -285,7 +285,7 @@ public final class ContentStructureSearch {
 
     @Nullable private static BlockPos footing(ServerLevel level, int x, int z) {
         BlockPos.MutableBlockPos ground = new BlockPos.MutableBlockPos();
-        for (int y = level.dimensionType().hasSkyLight() ? level.getMaxBuildHeight() - 1 : ROOFED_TOP; y > level.getMinBuildHeight(); y--) {
+        for (int y = level.dimensionType().hasSkyLight() ? level.getMaxY() : ROOFED_TOP; y > level.getMinY(); y--) {
             if (open(level, ground.set(x, y, z))) { continue; }
             boolean room = true;
             for (int head = 1; head <= HEAD_ROOM; head++) { room &= open(level, ground.set(x, y + head, z)); }

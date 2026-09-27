@@ -5,14 +5,14 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
 
 public record MessageCard(String title, List<String> lines, ItemStack icon, String image, int background, int text, int ticks, boolean center, boolean panel, String font) implements CustomPacketPayload {
-    public static final Type<MessageCard> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "card"));
+    public static final Type<MessageCard> TYPE = new Type<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "card"));
     public static final StreamCodec<RegistryFriendlyByteBuf, MessageCard> CODEC = StreamCodec.of(MessageCard::write, MessageCard::read);
     private static final int MOST_LINES = 16;
 

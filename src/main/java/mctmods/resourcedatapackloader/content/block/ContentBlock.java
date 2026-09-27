@@ -17,7 +17,6 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -26,11 +25,11 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
 import java.util.function.BiConsumer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FlowerBlock;
@@ -42,7 +41,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.neoforge.common.util.TriState;
+import net.minecraft.util.TriState;
 import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -89,17 +88,19 @@ public class ContentBlock extends Block {
     public static void onDrops(BlockDropsEvent event) {
         BlockDef def = defOf(event.getState());
         if (def == null || def.silkHarvest() || event.getDroppedExperience() > 0 || event.getTool().isEmpty()) { return; }
-        Holder<Enchantment> silk = event.getLevel().registryAccess().registryOrThrow(Registries.ENCHANTMENT).getHolderOrThrow(Enchantments.SILK_TOUCH);
+        Holder<Enchantment> silk = event.getLevel().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).getOrThrow(Enchantments.SILK_TOUCH);
         if (event.getTool().getEnchantmentLevel(silk) <= 0) { return; }
         event.setDroppedExperience(event.getState().getExpDrop(event.getLevel(), event.getPos(), event.getBlockEntity(), event.getBreaker(), event.getTool()));
     }
 
-    @Override protected void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
-        ContentDrops.removed(level, pos, state, replaced);
-        super.onRemove(state, level, pos, replaced, moving);
+    public static void changed(ServerLevel level, BlockPos pos, BlockState state, BlockState replaced) {
+        if (state.getBlock() instanceof ContentBlock block) { block.removed(level, pos, state, replaced); }
+        else if (state.getBlock() instanceof ContentContainerBlock) { ContentDrops.removed(level, pos, state, replaced); }
     }
 
-    @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.behavesAs().contains(BUSH); }
+    protected void removed(ServerLevel level, BlockPos pos, BlockState state, BlockState replaced) { ContentDrops.removed(level, pos, state, replaced); }
+
+    @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull WorldGenLevel level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.behavesAs().contains(BUSH); }
 
     @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
 
@@ -116,24 +117,24 @@ public class ContentBlock extends Block {
         return dirtPlant ? TriState.TRUE : TriState.DEFAULT;
     }
 
-    @Override @Nonnull protected ItemInteractionResult useItemOn(@Nonnull ItemStack held, @Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
+    @Override @Nonnull protected InteractionResult useItemOn(@Nonnull ItemStack held, @Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
         if (def.opensWith() == null) { return super.useItemOn(held, state, level, pos, player, hand, hit); }
         Item key = ContentStacks.item(def.opensWith());
-        if (key == null || !held.is(key)) { return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION; }
+        if (key == null || !held.is(key)) { return InteractionResult.TRY_WITH_EMPTY_HAND; }
         if (level instanceof ServerLevel server) { open(server, pos, state, player, held); }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.SUCCESS;
     }
 
     @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
         if (def.opensWith() == null) { return super.useWithoutItem(state, level, pos, player, hit); }
-        if (!level.isClientSide) { player.displayClientMessage(Component.translatable(getDescriptionId() + ".locked"), true); }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        if (!level.isClientSide()) { player.sendOverlayMessage(Component.translatable(getDescriptionId() + ".locked")); }
+        return InteractionResult.SUCCESS;
     }
 
     private void open(ServerLevel level, BlockPos pos, BlockState state, Player player, ItemStack held) {
         SoundEvent opening = ContentSounds.find(def.openSound());
         if (opening == null) { opening = getSoundType(state, level, pos, player).getBreakSound(); }
-        level.playSound(null, pos, opening, SoundSource.BLOCKS, 1.0F, 0.9F + level.random.nextFloat() * 0.2F);
+        level.playSound(null, pos, opening, SoundSource.BLOCKS, 1.0F, 0.9F + level.getRandom().nextFloat() * 0.2F);
         ContentRegistry.BlockEntry entry = ContentRegistry.entry(this);
         if (entry != null) {
             for (ItemStack stack : ContentDrops.roll(entry.variant(), level.getRandom(), 0)) { popResource(level, pos, stack); }

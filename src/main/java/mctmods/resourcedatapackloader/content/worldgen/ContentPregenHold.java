@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundClearTitlesPacket;
@@ -19,7 +21,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.clock.ClockNetworkState;
+import net.minecraft.world.clock.WorldClock;
+import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -89,8 +93,12 @@ public final class ContentPregenHold {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.connection.send(packet); }
     }
 
+    static Holder<WorldClock> overworldClock(MinecraftServer server) { return server.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).getOrThrow(WorldClocks.OVERWORLD); }
+
+    private static ClientboundSetTimePacket stillSky(MinecraftServer server) { return new ClientboundSetTimePacket(server.overworld().getGameTime(), Map.of(overworldClock(server), new ClockNetworkState(heldDayTime, 0.0F, 0.0F))); }
+
     static void freezeSky(MinecraftServer server) {
-        ClientboundSetTimePacket still = new ClientboundSetTimePacket(server.overworld().getGameTime(), heldDayTime, false);
+        ClientboundSetTimePacket still = stillSky(server);
         for (Held held : HELD.values()) { held.player.connection.send(still); }
     }
 
@@ -106,14 +114,14 @@ public final class ContentPregenHold {
     private static void hold(ServerPlayer player, boolean fog) {
         if (HELD.containsKey(player.getUUID())) { return; }
         CompoundTag data = player.getPersistentData();
-        GameType before = data.contains(HELD_MODE) ? GameType.byId(data.getInt(HELD_MODE)) : player.gameMode.getGameModeForPlayer();
+        GameType before = data.contains(HELD_MODE) ? GameType.byId(data.getIntOr(HELD_MODE, 0)) : player.gameMode.getGameModeForPlayer();
         data.putInt(HELD_MODE, before.getId());
         Held held = new Held(player, before);
         HELD.put(player.getUUID(), held);
         player.setGameMode(GameType.SPECTATOR);
         RDPLNetwork.sendHold(player, true, held.warning, fog);
         if (!RDPLNetwork.reaches(player)) { flash(player, held); }
-        player.connection.send(new ClientboundSetTimePacket(player.serverLevel().getGameTime(), heldDayTime, false));
+        player.connection.send(stillSky(player.level().getServer()));
         startFlashing();
     }
 
@@ -146,7 +154,7 @@ public final class ContentPregenHold {
         if (changed) { lastSaid = said; }
         for (Held held : HELD.values()) {
             if (titles && !RDPLNetwork.reaches(held.player)) { flash(held.player, held); }
-            if (changed || (keepAlive && !said.isEmpty())) { held.player.displayClientMessage(Component.literal(said).withStyle(ChatFormatting.YELLOW), true); }
+            if (changed || (keepAlive && !said.isEmpty())) { held.player.sendOverlayMessage(Component.literal(said).withStyle(ChatFormatting.YELLOW)); }
         }
     }
 
@@ -207,8 +215,7 @@ public final class ContentPregenHold {
         player.setGameMode(asked == null ? held.before : asked);
         player.getPersistentData().remove(HELD_MODE);
         player.setPortalCooldown(100);
-        ServerLevel level = player.serverLevel();
-        player.connection.send(new ClientboundSetTimePacket(level.getGameTime(), level.getDayTime(), level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)));
+        player.connection.send(player.level().getServer().clockManager().createFullSyncPacket());
         RDPLNetwork.sendHold(player, false, "", false);
         player.connection.send(new ClientboundClearTitlesPacket(true));
     }
@@ -220,10 +227,10 @@ public final class ContentPregenHold {
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
-        ContentPregenDimensions.startWhenEntered(player.server, player.level().dimension());
+        ContentPregenDimensions.startWhenEntered(player.level().getServer(), player.level().dimension());
         if (ContentPregen.pendingStart != null) {
-            if (ContentPregen.startTick < 0) { ContentPregen.startTick = player.server.getTickCount() + 60; }
-            heldDayTime = player.server.overworld().getDayTime();
+            if (ContentPregen.startTick < 0) { ContentPregen.startTick = player.level().getServer().getTickCount() + 60; }
+            heldDayTime = player.level().getServer().overworld().getOverworldClockTime();
             hold(player, true);
             return;
         }
@@ -246,13 +253,13 @@ public final class ContentPregenHold {
     }
 
     public static void onTeleport(EntityTeleportEvent event) {
-        if (ContentPregen.busy() && (event instanceof EntityTeleportEvent.EnderPearl || event instanceof EntityTeleportEvent.EnderEntity || event instanceof EntityTeleportEvent.ChorusFruit)) { event.setCanceled(true); }
+        if (ContentPregen.busy() && (event instanceof EntityTeleportEvent.EnderPearl || event instanceof EntityTeleportEvent.EnderEntity || event instanceof EntityTeleportEvent.ItemConsumption)) { event.setCanceled(true); }
     }
 
     public static boolean welcomesLater(ServerPlayer player) { return ContentPregen.busy() || HELD.containsKey(player.getUUID()); }
 
     public static void fallInstantly(ServerLevel level, BlockPos pos, BlockState state) {
-        int floor = level.getMinBuildHeight();
+        int floor = level.getMinY();
         if (!FallingBlock.isFree(level.getBlockState(pos.below())) || pos.getY() < floor) { return; }
         level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
         BlockPos below = pos.below();

@@ -43,14 +43,14 @@ public final class CardFire {
     private static boolean blocked(CardRule rule, ServerPlayer subject) {
         if (!CardPlace.inDimension(rule.dimension, subject)) { return true; }
         if (rule.when != null && !rule.when.passes(subject)) { return true; }
-        long now = subject.server.overworld().getGameTime();
+        long now = subject.level().getServer().overworld().getGameTime();
         String key = rule.key;
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }
-        if (CardRule.ONCE_PER_WORLD.equals(rule.repeat) && CardStorage.firedInWorld(subject.server, key)) { return true; }
+        if (CardRule.ONCE_PER_WORLD.equals(rule.repeat) && CardStorage.firedInWorld(subject.level().getServer(), key)) { return true; }
         if (CardRule.ONCE_PER_SESSION.equals(rule.repeat) && SESSION.getOrDefault(subject.getUUID(), Set.of()).contains(key)) { return true; }
         if (rule.cooldown > 0 && CardStorage.firedFor(subject, key) && now - CardStorage.lastFor(subject, key) < (long) rule.cooldown * TICKS_PER_SECOND) { return true; }
-        if (CardRule.ONCE_PER_WORLD.equals(rule.repeat)) { CardStorage.stampWorld(subject.server, key, now); }
-        if (CardRule.ONCE_PER_SESSION.equals(rule.repeat)) { SESSION.computeIfAbsent(subject.getUUID(), k -> new HashSet<>()).add(key); }
+        if (CardRule.ONCE_PER_WORLD.equals(rule.repeat)) { CardStorage.stampWorld(subject.level().getServer(), key, now); }
+        if (CardRule.ONCE_PER_SESSION.equals(rule.repeat)) { SESSION.computeIfAbsent(subject.getUUID(), _ -> new HashSet<>()).add(key); }
         if (rule.cooldown > 0 || CardRule.ONCE_PER_PLAYER.equals(rule.repeat)) { CardStorage.stampFor(subject, key, now); }
         return false;
     }

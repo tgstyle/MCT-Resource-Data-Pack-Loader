@@ -11,7 +11,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public final class ContentPathIntersects {
         return picks.getFirst();
     }
 
-    @Nullable private static PathIntersectDef parse(ResourceLocation key, String contents) {
+    @Nullable private static PathIntersectDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Path intersect design {} is empty, so it is dropped", key);
@@ -97,7 +97,7 @@ public final class ContentPathIntersects {
         return new PathIntersectDef(key, GsonHelper.getAsString(json, "name", key.getPath()), Math.max(1, GsonHelper.getAsInt(json, "weight", 1)), Map.copyOf(legend), mouth, corner);
     }
 
-    private static void roles(ResourceLocation key, Map<Character, String> legend, List<String> rows, String part) {
+    private static void roles(Identifier key, Map<Character, String> legend, List<String> rows, String part) {
         for (String row : rows) {
             for (char held : row.toCharArray()) {
                 if (!PathIntersectDef.role(held) && !legend.containsKey(held)) { ContentLog.LOGGER.error("Path intersect {} {} uses '{}', which is neither a role letter nor in the legend", key, part, held); }

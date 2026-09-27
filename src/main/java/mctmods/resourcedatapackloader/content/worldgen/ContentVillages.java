@@ -21,7 +21,7 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -42,10 +42,10 @@ public final class ContentVillages {
     private static final Gson GSON = new Gson();
     private static final int LARGEST_LEAST = 13;
     private static final int[][] VANILLA_LIMITS = {{2, 1, 4, 2}, {0, 1, 1, 1}, {0, 1, 2, 1}, {2, 1, 5, 3}, {0, 1, 2, 1}, {1, 1, 4, 1}, {2, 1, 4, 2}, {0, 0, 1, 1}, {0, 1, 3, 2}};
-    private static final Map<ResourceLocation, VillageDef> DEFS = new LinkedHashMap<>();
+    private static final Map<Identifier, VillageDef> DEFS = new LinkedHashMap<>();
     private static final String FIELD = "_farm_";
-    private static final Map<ResourceLocation, VillageDef> VANILLA = new LinkedHashMap<>();
-    private static final Map<ResourceLocation, Rotation> TURNS = new LinkedHashMap<>();
+    private static final Map<Identifier, VillageDef> VANILLA = new LinkedHashMap<>();
+    private static final Map<Identifier, Rotation> TURNS = new LinkedHashMap<>();
     private static final Set<String> GROWN = new LinkedHashSet<>();
     private static boolean loaded;
 
@@ -70,15 +70,15 @@ public final class ContentVillages {
 
     public static void joinVillages(RegistryAccess registries) {
         if (DEFS.isEmpty()) { return; }
-        Registry<StructureTemplatePool> pools = registries.registryOrThrow(Registries.TEMPLATE_POOL);
+        Registry<StructureTemplatePool> pools = registries.lookupOrThrow(Registries.TEMPLATE_POOL);
         int joined = 0;
         for (String type : CityGround.VILLAGE_TYPES) {
-            StructureTemplatePool pool = pools.get(ResourceLocation.fromNamespaceAndPath("minecraft", "village/" + type + "/houses"));
+            StructureTemplatePool pool = pools.getValue(Identifier.fromNamespaceAndPath("minecraft", "village/" + type + "/houses"));
             if (pool == null) { continue; }
             ObjectArrayList<StructurePoolElement> held = ((IStructureTemplatePool) pool).rdpl$templates();
             if (held.stream().anyMatch(ContentPlotPoolElement.class::isInstance)) { continue; }
             for (VillageDef def : allowed()) {
-                if (!def.template() || vanillaHouse(def) || ContentStructureMaps.def(ResourceLocation.tryParse(def.structure())) != null) { continue; }
+                if (!def.template() || vanillaHouse(def) || ContentStructureMaps.def(Identifier.tryParse(def.structure())) != null) { continue; }
                 ContentPlotPoolElement element = ContentPlotPoolElement.of(def);
                 for (int copy = 0; copy < Math.max(1, def.weight()); copy++) { held.add(element); }
                 joined++;
@@ -88,7 +88,7 @@ public final class ContentVillages {
     }
 
     public static void measure(@Nullable StructureTemplateManager manager) {
-        for (Map.Entry<ResourceLocation, VillageDef> entry : DEFS.entrySet()) {
+        for (Map.Entry<Identifier, VillageDef> entry : DEFS.entrySet()) {
             VillageDef grown = grown(entry.getValue(), manager);
             if (grown != entry.getValue()) { entry.setValue(grown); }
         }
@@ -96,10 +96,10 @@ public final class ContentVillages {
 
     public record House(Vec3i size, Rotation turn) {}
 
-    public static void vanilla(Map<ResourceLocation, House> houses) {
+    public static void vanilla(Map<Identifier, House> houses) {
         VANILLA.clear();
         TURNS.clear();
-        for (Map.Entry<ResourceLocation, House> house : houses.entrySet()) {
+        for (Map.Entry<Identifier, House> house : houses.entrySet()) {
             Vec3i size = house.getValue().size();
             TURNS.put(house.getKey(), house.getValue().turn());
             VANILLA.put(house.getKey(), new VillageDef(house.getKey(), VillageDef.TEMPLATE, 3, 1, 4, Math.max(3, size.getX()), Math.max(1, size.getY()), Math.max(3, size.getZ()), 2,
@@ -115,7 +115,7 @@ public final class ContentVillages {
 
     private static VillageDef grown(VillageDef def, @Nullable StructureTemplateManager manager) {
         if (!def.template()) { return def; }
-        ResourceLocation named = ResourceLocation.tryParse(def.structure());
+        Identifier named = Identifier.tryParse(def.structure());
         StructureMapDef map = named == null ? null : ContentStructureMaps.def(named);
         if (map != null) { return sized(def, map.cellsWide() * map.cell(), (map.layers().size() - map.ground()) * map.cell(), map.cellsDeep() * map.cell()); }
         if (manager == null || named == null) { return def; }
@@ -134,7 +134,7 @@ public final class ContentVillages {
     }
 
     @Nullable public static VillageDef byKey(String named) {
-        ResourceLocation key = ResourceLocation.tryParse(named);
+        Identifier key = Identifier.tryParse(named);
         if (key == null) { return null; }
         VillageDef def = DEFS.get(key);
         return def != null ? def : VANILLA.get(key);
@@ -144,17 +144,17 @@ public final class ContentVillages {
 
     private static boolean blacklist() { return ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist()); }
 
-    private static boolean named(Set<String> names, ResourceLocation key) { return names.contains(key.toString().toLowerCase(Locale.ROOT)) || names.contains(key.getPath().toLowerCase(Locale.ROOT)); }
+    private static boolean named(Set<String> names, Identifier key) { return names.contains(key.toString().toLowerCase(Locale.ROOT)) || names.contains(key.getPath().toLowerCase(Locale.ROOT)); }
 
     private static boolean listed(Set<String> names, VillageDef def) {
         if (def.template() && !def.structure().isEmpty()) {
-            ResourceLocation template = ResourceLocation.tryParse(def.structure());
+            Identifier template = Identifier.tryParse(def.structure());
             if (template != null && named(names, template)) { return true; }
         }
         return named(names, def.key());
     }
 
-    public static boolean emptied(ResourceLocation template) {
+    public static boolean emptied(Identifier template) {
         if (ContentControl.off(ContentControl.STRUCTURES) || !blacklist()) { return false; }
         Set<String> names = names();
         return !names.isEmpty() && named(names, template);
@@ -166,7 +166,7 @@ public final class ContentVillages {
         Set<String> names = every ? Set.of() : names();
         boolean blacklist = blacklist();
         List<VillageDef> found = new ArrayList<>();
-        for (Map<ResourceLocation, VillageDef> held : List.of(VANILLA, DEFS)) {
+        for (Map<Identifier, VillageDef> held : List.of(VANILLA, DEFS)) {
             for (VillageDef def : held.values()) {
                 if (names.isEmpty() || listed(names, def) != blacklist) { found.add(def); }
             }
@@ -227,7 +227,7 @@ public final class ContentVillages {
         return null;
     }
 
-    @Nullable private static VillageDef parse(ResourceLocation key, String contents) {
+    @Nullable private static VillageDef parse(Identifier key, String contents) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
         if (json == null) {
             ContentLog.LOGGER.error("Village plot {} is empty, so it is dropped", key);

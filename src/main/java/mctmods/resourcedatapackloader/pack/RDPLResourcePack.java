@@ -4,13 +4,11 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonObject;
-import net.minecraft.SharedConstants;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.AbstractPackResources;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackLocationInfo;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
+import net.minecraft.server.packs.metadata.MetadataSectionType;
 import net.minecraft.server.packs.repository.Pack;
 import net.minecraft.server.packs.resources.IoSupplier;
 import java.io.ByteArrayInputStream;
@@ -64,7 +62,7 @@ public final class RDPLResourcePack implements PackResources {
         return icon == null ? null : () -> new ByteArrayInputStream(icon);
     }
 
-    @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull ResourceLocation location) {
+    @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull Identifier location) {
         trace(location);
         if (withheld(asked, location.getPath()) || !PackManager.get().existsRaw(asked, location.getNamespace(), location.getPath(), overriding)) { return null; }
         return supplier(asked, location.getNamespace(), location.getPath());
@@ -80,7 +78,7 @@ public final class RDPLResourcePack implements PackResources {
         };
     }
 
-    private static void trace(ResourceLocation location) {
+    private static void trace(Identifier location) {
         if (!Config.packs.traceUnresolvedVariables()) { return; }
         String path = location.getPath();
         if (path.indexOf('#') < 0) { return; }
@@ -90,25 +88,21 @@ public final class RDPLResourcePack implements PackResources {
 
     @Override public void listResources(@Nonnull PackType asked, @Nonnull String namespace, @Nonnull String prefix, @Nonnull ResourceOutput out) {
         PackManager.get().list(asked, namespace, overriding, prefix, path -> {
-            ResourceLocation location = ResourceLocation.tryBuild(namespace, path);
+            Identifier location = Identifier.tryBuild(namespace, path);
             if (location != null && !withheld(asked, path)) { out.accept(location, supplier(asked, namespace, path)); }
         });
     }
 
     @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) { return PackManager.get().getNamespaces(asked, overriding); }
 
-    @Override @Nullable public <T> T getMetadataSection(@Nonnull MetadataSectionSerializer<T> serializer) throws IOException {
-        return metadata(serializer, meta());
-    }
-
-    @Nullable static <T> T metadata(MetadataSectionSerializer<T> serializer, String meta) throws IOException {
-        try (InputStream stream = new ByteArrayInputStream(meta.getBytes(StandardCharsets.UTF_8))) { return AbstractPackResources.getMetadataFromStream(serializer, stream); }
+    @Override @Nullable public <T> T getMetadataSection(@Nonnull MetadataSectionType<T> serializer) throws IOException {
+        return PackMeta.section(serializer, meta());
     }
 
     private String meta() {
         String description = PackManager.get().description();
         JsonObject pack = new JsonObject();
-        pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(type));
+        PackMeta.formats(pack, type);
         pack.addProperty("description", description == null ? DEFAULT_DESCRIPTION : description);
         JsonObject json = new JsonObject();
         json.add("pack", pack);

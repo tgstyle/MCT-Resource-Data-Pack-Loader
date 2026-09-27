@@ -13,7 +13,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -24,7 +24,7 @@ import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.phys.Vec3;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,21 +48,21 @@ public final class ContentTeleporter {
     }
 
     public static void travel(ServerPlayer player, PortalDef portal, BlockState state, BlockPos pos, @Nullable PortalFit fit) {
-        ResourceLocation here = player.level().dimension().location();
-        ResourceLocation targetId = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
+        Identifier here = player.level().dimension().identifier();
+        Identifier targetId = here.equals(portal.dimension()) ? portal.returnDimension() : portal.dimension();
         if (targetId.equals(here)) { return; }
-        ServerLevel target = player.server.getLevel(ResourceKey.create(Registries.DIMENSION, targetId));
+        ServerLevel target = player.level().getServer().getLevel(ResourceKey.create(Registries.DIMENSION, targetId));
         if (target == null) {
             ContentLog.LOGGER.error("A portal at {} leads to {}, which is not a loaded dimension, so nobody goes anywhere", pos, targetId);
             return;
         }
         remember(player, here, pos);
         BlockPos step = new ContentTeleporter(portal, state, fit).arrive(target, player);
-        player.changeDimension(new DimensionTransition(target, new Vec3(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D), Vec3.ZERO, player.getYRot(), player.getXRot(), DimensionTransition.DO_NOTHING));
+        player.teleport(new TeleportTransition(target, new Vec3(step.getX() + 0.5D, step.getY(), step.getZ() + 0.5D), Vec3.ZERO, player.getYRot(), player.getXRot(), TeleportTransition.DO_NOTHING));
     }
 
     private BlockPos arrive(ServerLevel level, Entity entity) {
-        ResourceLocation dimension = level.dimension().location();
+        Identifier dimension = level.dimension().identifier();
         BlockPos mapped = scale(entity, level);
         BlockPos linked = remembered(entity, dimension);
         if (linked != null && !(level.getBlockState(linked).getBlock() instanceof ContentPortalBlock)) {
@@ -102,14 +102,14 @@ public final class ContentTeleporter {
         return portalPos;
     }
 
-    public static void remember(Entity entity, ResourceLocation dimension, BlockPos pos) { PlayerPersisted.section(entity, PORTALS).putLong(dimension.toString(), pos.asLong()); }
+    public static void remember(Entity entity, Identifier dimension, BlockPos pos) { PlayerPersisted.section(entity, PORTALS).putLong(dimension.toString(), pos.asLong()); }
 
-    private static void forget(Entity entity, ResourceLocation dimension) { PlayerPersisted.section(entity, PORTALS).remove(dimension.toString()); }
+    private static void forget(Entity entity, Identifier dimension) { PlayerPersisted.section(entity, PORTALS).remove(dimension.toString()); }
 
-    @Nullable private static BlockPos remembered(Entity entity, ResourceLocation dimension) {
+    @Nullable private static BlockPos remembered(Entity entity, Identifier dimension) {
         CompoundTag portals = PlayerPersisted.read(entity, PORTALS);
         String key = dimension.toString();
-        return portals.contains(key) ? BlockPos.of(portals.getLong(key)) : null;
+        return portals.contains(key) ? BlockPos.of(portals.getLongOr(key, 0L)) : null;
     }
 
     private static BlockPos scale(Entity entity, ServerLevel destination) {
@@ -119,8 +119,8 @@ public final class ContentTeleporter {
 
     private static BlockPos landing(ServerLevel level, BlockPos from) {
         BlockPos ground = ContentDimensions.top(level, new BlockPos(from.getX(), 0, from.getZ()), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
-        if (ground.getY() > level.getMinBuildHeight()) { return ground; }
-        return new BlockPos(from.getX(), Mth.clamp(from.getY(), level.getMinBuildHeight() + SEARCH_LOW, level.getMaxBuildHeight() - 4), from.getZ());
+        if (ground.getY() > level.getMinY()) { return ground; }
+        return new BlockPos(from.getX(), Mth.clamp(from.getY(), level.getMinY() + SEARCH_LOW, level.getMaxY() - 3), from.getZ());
     }
 
     private static void hold(ServerLevel level, BlockPos at) { level.getChunkAt(at); }
@@ -199,7 +199,7 @@ public final class ContentTeleporter {
 
     private static Block block(String name) {
         if (name.isEmpty()) { return Blocks.STONE; }
-        ResourceLocation key = ResourceLocation.tryParse(name);
+        Identifier key = Identifier.tryParse(name);
         Block found = key == null ? null : BuiltInRegistries.BLOCK.getOptional(key).orElse(null);
         if (found != null) { return found; }
         ContentLog.LOGGER.error("Portal platform block {} is not registered, using stone", name);

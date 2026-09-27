@@ -23,7 +23,7 @@ public final class ContentIntroPlay {
 
     public static boolean skips(ServerPlayer player) {
         if (disabled() || !RDPLNetwork.reaches(player)) { return true; }
-        return ContentWorldIntro.once() && PlayerPersisted.of(player, SEEN).getBoolean(SEEN);
+        return ContentWorldIntro.once() && PlayerPersisted.of(player, SEEN).getBooleanOr(SEEN, false);
     }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {

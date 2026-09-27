@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.raid;
 
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -9,12 +10,13 @@ import mctmods.resourcedatapackloader.util.Registered;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Direction;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,7 +30,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.EventHooks;
 import java.util.ArrayList;
@@ -68,7 +70,7 @@ public final class ActiveRaid {
         this.def = def;
         this.center = center;
         this.cooldown = def.waveDelay();
-        this.bar = new ServerBossEvent(Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
+        this.bar = new ServerBossEvent(UUID.randomUUID(), Component.literal(def.name()), def.color(), BossEvent.BossBarOverlay.NOTCHED_10);
     }
 
     BlockPos center() { return center; }
@@ -161,16 +163,16 @@ public final class ActiveRaid {
         RandomSource random = level.getRandom();
         for (RaidDef.Group group : def.waves().get(wave)) {
             int count = group.count().pick(random);
-            EntityType<?> type = EntityType.byString(group.entity()).orElse(null);
+            EntityType<?> type = Compat.entityType(group.entity());
             for (int i = 0; i < count; i++) {
-                Entity entity = type == null ? null : type.create(level);
+                Entity entity = type == null ? null : type.create(level, EntitySpawnReason.EVENT);
                 if (entity == null) {
                     ContentLog.LOGGER.error("Raid {} sends {} in wave {}, which nothing registers, so it does not come", def.key(), group.entity(), wave + 1);
                     break;
                 }
-                entity.moveTo(at.getX() + 0.5D + random.nextInt(3) - 1, at.getY(), at.getZ() + 0.5D + random.nextInt(3) - 1, random.nextFloat() * 360.0F, 0.0F);
+                entity.snapTo(at.getX() + 0.5D + random.nextInt(3) - 1, at.getY(), at.getZ() + 0.5D + random.nextInt(3) - 1, random.nextFloat() * 360.0F, 0.0F);
                 if (entity instanceof Mob mob) {
-                    EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), MobSpawnType.EVENT, null);
+                    EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), EntitySpawnReason.EVENT, null);
                     mob.setPersistenceRequired();
                 }
                 entity.getPersistentData().put(RAIDER, position(center));
@@ -195,7 +197,7 @@ public final class ActiveRaid {
         return tag;
     }
 
-    public static BlockPos position(CompoundTag tag) { return new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z")); }
+    public static BlockPos position(CompoundTag tag) { return new BlockPos(tag.getIntOr("X", 0), tag.getIntOr("Y", 0), tag.getIntOr("Z", 0)); }
 
     private List<BlockPos> bells(ServerLevel level, RaidVillage around) {
         if (bells != null) { return bells; }
@@ -235,7 +237,7 @@ public final class ActiveRaid {
 
     private void horn(ServerLevel level, BlockPos at) {
         if (def.sound().isEmpty()) { return; }
-        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, ResourceLocation.tryParse(def.sound()));
+        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, Identifier.tryParse(def.sound()));
         if (sound == null) {
             ContentLog.LOGGER.error("Raid {} names the sound {}, which nothing registers, so the waves come quietly", def.key(), def.sound());
             return;
@@ -303,27 +305,27 @@ public final class ActiveRaid {
         tag.putFloat("WaveHealth", waveHealth);
         tag.putString("Status", status.name());
         ListTag ids = new ListTag();
-        for (UUID id : raiders) { ids.add(NbtUtils.createUUID(id)); }
+        for (UUID id : raiders) { ids.add(new IntArrayTag(UUIDUtil.uuidToIntArray(id))); }
         tag.put("Raiders", ids);
         return tag;
     }
 
     @Nullable static ActiveRaid read(CompoundTag tag, @Nullable RaidDef def) {
         if (def == null) {
-            ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
+            ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getStringOr("Raid", ""));
             return null;
         }
-        ActiveRaid raid = new ActiveRaid(def, position(tag.getCompound("Center")));
-        raid.wave = tag.getInt("Wave");
-        raid.cooldown = tag.getInt("Cooldown");
-        raid.ticksActive = tag.getLong("Ticks");
-        raid.quiet = tag.getInt("Quiet");
-        raid.celebration = tag.getInt("Celebration");
-        raid.waveHealth = tag.getFloat("WaveHealth");
-        try { raid.status = Status.valueOf(tag.getString("Status")); }
+        ActiveRaid raid = new ActiveRaid(def, position(tag.getCompoundOrEmpty("Center")));
+        raid.wave = tag.getIntOr("Wave", 0);
+        raid.cooldown = tag.getIntOr("Cooldown", 0);
+        raid.ticksActive = tag.getLongOr("Ticks", 0L);
+        raid.quiet = tag.getIntOr("Quiet", 0);
+        raid.celebration = tag.getIntOr("Celebration", 0);
+        raid.waveHealth = tag.getFloatOr("WaveHealth", 0.0F);
+        try { raid.status = Status.valueOf(tag.getStringOr("Status", "")); }
         catch (IllegalArgumentException unknown) { raid.status = Status.STOPPED; }
-        ListTag ids = tag.getList("Raiders", Tag.TAG_INT_ARRAY);
-        for (Tag id : ids) { raid.raiders.add(NbtUtils.loadUUID(id)); }
+        ListTag ids = tag.getListOrEmpty("Raiders");
+        for (Tag id : ids) { raid.raiders.add(UUIDUtil.uuidFromIntArray(((IntArrayTag) id).getAsIntArray())); }
         return raid;
     }
 }
