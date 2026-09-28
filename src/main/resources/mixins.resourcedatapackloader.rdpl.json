@@ -155,6 +155,8 @@
         "client.MixinClientPacketListener",
         "client.MixinToastComponent",
         "client.MixinLogoTexture",
+        "client.MixinLoadingOverlay",
+        "client.MixinLoadingLogo",
         "client.MixinShareToLanScreen",
         "client.MixinIntegratedServer",
         "client.MixinFont",

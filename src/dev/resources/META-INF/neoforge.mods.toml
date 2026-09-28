@@ -1,0 +1,13 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="All rights reserved"
+
+[[mods]]
+modId="rdpldev"
+version="1.0.0"
+displayName="RDPL Dev Patches"
+description='''Dev-run-only patches for third-party dev dependencies. Never packaged.'''
+
+[[mixins]]
+config="mixins.rdpldev.json"
+requiredMods=["betterf3"]

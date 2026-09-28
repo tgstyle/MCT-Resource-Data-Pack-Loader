@@ -176,6 +176,16 @@ subprojects {
         }
     }
 
+    if (version_betterf3 != null) {
+        sourceSets.create('dev') {
+            java.srcDirs = ["$rootDir/src/dev/java"]
+            resources.srcDirs = ["$rootDir/src/dev/resources"]
+        }
+        neoForge.addModdingDependenciesTo(sourceSets.dev)
+        neoForge.mods.register('rdpldev') { sourceSet(sourceSets.dev) }
+        dependencies { localRuntime sourceSets.dev.output }
+    }
+
     def customGradle = rootProject.file('custom.gradle')
     if (customGradle.exists()) apply from: customGradle
 
