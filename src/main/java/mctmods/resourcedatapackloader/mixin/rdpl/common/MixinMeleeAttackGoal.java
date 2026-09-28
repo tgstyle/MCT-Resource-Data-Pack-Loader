@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
     @Shadow @org.spongepowered.asm.mixin.Final protected PathfinderMob mob;
 
     @ModifyConstant(method = "canUse()Z", constant = @Constant(longValue = 20L))
-    private long rdpl$askEveryTick(long was) { return ContentEntities.def(mob) == null ? was : 0L; }
+    private long rdpl$askEveryFewTicks(long was) { return ContentEntities.def(mob) == null ? was : 3L; }
 
     @ModifyConstant(method = "resetAttackCooldown()V", constant = @Constant(intValue = 20))
     private int rdpl$paceTheBlows(int was) { return ContentEntities.attackInterval(mob); }

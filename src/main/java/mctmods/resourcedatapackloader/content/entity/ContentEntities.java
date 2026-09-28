@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentTnt;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IAbstractArrow;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ILivingEntity;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -250,8 +251,10 @@ public final class ContentEntities {
             Map.entry("flyintowall", List.of("minecraft:fly_into_wall")), Map.entry("fireworks", List.of("minecraft:fireworks")), Map.entry("mob", List.of("minecraft:mob_attack", "minecraft:mob_attack_no_aggro", "minecraft:mob_projectile", "minecraft:wither_skull", "minecraft:spit")),
             Map.entry("player", List.of("minecraft:player_attack")), Map.entry("generic", List.of("minecraft:generic")));
 
-    @Nullable public static SoundEvent sound(Entity entity, int which) {
-        EntityVariantDef def = BY_TYPE.get(entity.getType());
+    @Nullable public static SoundEvent sound(Entity entity, int which) { return sound(entity.getType(), which); }
+
+    @Nullable private static SoundEvent sound(@Nullable EntityType<?> type, int which) {
+        EntityVariantDef def = BY_TYPE.get(type);
         if (def == null) { return null; }
         String name = switch (which) {
             case HURT -> def.sounds().hurt();
@@ -287,9 +290,12 @@ public final class ContentEntities {
         return false;
     }
 
-    @Nullable public static SoundEvent explodeSound(@Nullable Entity exploder) {
+    @Nullable public static SoundEvent explodeSound(@Nullable Entity exploder) { return sound(lighter(exploder), EXPLODE); }
+
+    @Nullable public static EntityType<?> lighter(@Nullable Entity exploder) {
+        if (exploder instanceof IContentTnt tnt && tnt.rdpl$lighter() != null) { return tnt.rdpl$lighter(); }
         if (exploder instanceof PrimedTnt tnt) { exploder = tnt.getOwner(); }
-        return exploder == null ? null : sound(exploder, EXPLODE);
+        return exploder == null ? null : exploder.getType();
     }
 
     public static int tint(Entity entity, String part) {

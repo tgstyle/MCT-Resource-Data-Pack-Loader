@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 
+import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
 
 @Mixin(LivingEntity.class) public abstract class MixinLivingEntity {
     @Shadow protected abstract SoundEvent getHurtSound(DamageSource source);
@@ -37,6 +39,9 @@ import net.minecraft.world.phys.Vec3;
         SoundEvent sound = ContentEntities.sound(self, ContentEntities.DEATH);
         return sound != null ? sound : getDeathSound();
     }
+
+    @WrapWithCondition(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
+    private boolean rdpl$namedDeathLog(Logger logger, String format, Object entity, Object message) { return rdpl$def() == null; }
 
     @Inject(method = "getSoundVolume()F", at = @At("RETURN"), cancellable = true)
     private void rdpl$soundVolume(CallbackInfoReturnable<Float> cir) {

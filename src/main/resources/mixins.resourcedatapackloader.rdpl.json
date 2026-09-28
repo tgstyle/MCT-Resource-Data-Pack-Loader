@@ -48,6 +48,8 @@
         "common.MixinItemEntity",
         "common.MixinEntity",
         "common.MixinExplosion",
+        "common.MixinPrimedTnt",
+        "common.MixinTntBlock",
         "common.MixinLevel",
         "common.MixinServerLevelHold",
         "common.MixinFallingBlock",
