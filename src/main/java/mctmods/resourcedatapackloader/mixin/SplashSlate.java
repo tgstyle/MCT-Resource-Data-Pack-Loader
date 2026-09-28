@@ -32,16 +32,15 @@ public final class SplashSlate {
             try { scheme = Class.forName(named, true, SplashSlate.class.getClassLoader()); }
             catch (ClassNotFoundException absent) { continue; }
             try {
-                Object black = null;
-                for (Object constant : scheme.getEnumConstants()) { if ("BLACK".equals(((Enum<?>) constant).name())) { black = constant; } }
-                if (black == null) { return; }
                 Class<?> colour = Class.forName(named + "$Colour", true, scheme.getClassLoader());
                 Constructor<?> made = colour.getConstructor(int.class, int.class, int.class);
-                set(scheme, black, "background", made.newInstance(SLATE >> 16 & 0xFF, SLATE >> 8 & 0xFF, SLATE & 0xFF));
-                set(scheme, black, "foreground", made.newInstance(SLATE_TEXT >> 16 & 0xFF, SLATE_TEXT >> 8 & 0xFF, SLATE_TEXT & 0xFF));
-                LOGGER.info("The loading screen's dark palette is slate now, the pack loader's own");
+                for (Object constant : scheme.getEnumConstants()) {
+                    set(scheme, constant, "background", made.newInstance(SLATE >> 16 & 0xFF, SLATE >> 8 & 0xFF, SLATE & 0xFF));
+                    set(scheme, constant, "foreground", made.newInstance(SLATE_TEXT >> 16 & 0xFF, SLATE_TEXT >> 8 & 0xFF, SLATE_TEXT & 0xFF));
+                }
+                LOGGER.info("The loading screen's palettes are slate now, the pack loader's own");
             }
-            catch (ReflectiveOperationException | RuntimeException unreachable) { LOGGER.warn("The loading screen's dark palette could not be repainted, so it stays the loader's black", unreachable); }
+            catch (ReflectiveOperationException | RuntimeException unreachable) { LOGGER.warn("The loading screen's palettes could not be repainted, so they stay the loader's own", unreachable); }
             return;
         }
     }
