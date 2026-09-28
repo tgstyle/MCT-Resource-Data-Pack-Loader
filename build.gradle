@@ -1,10 +1,25 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import java.security.MessageDigest
 
 plugins {
     id 'net.neoforged.moddev' version '2.0.147' apply false
     id 'idea'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
+}
+
+class JarStamp {
+    static String hash(Set<File> files, File versionProps, File root) {
+        def digest = MessageDigest.getInstance('SHA-256')
+        files.sort { it.path }.each { File file ->
+            digest.update(root.toPath().relativize(file.toPath()).toString().getBytes('UTF-8'))
+            digest.update(file.bytes)
+        }
+        versionProps.readLines().findAll { !it.startsWith('#') && !it.startsWith('build_number=') }.sort().each { digest.update(it.getBytes('UTF-8')) }
+        digest.digest().encodeHex().toString()
+    }
+
+    static boolean changed(Set<File> files, File versionProps, File root, File stamp) { !stamp.isFile() || stamp.text != hash(files, versionProps, root) }
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -151,6 +166,11 @@ subprojects {
     def bpJar = bpSource == null ? null : devSyncStaged(bpSource, 'build/blastplaster/blastplaster-dev.jar')
     if (bpSource == null) { logger.warn('No Blast Plaster devSync pin: set devsync_bp in versions/' + project.name + '/gradle.properties to a snapshot in the devsync cache') }
 
+    def stampInputs = files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, rootProject.file('gradle.properties'), rootProject.file('build.gradle'), rootProject.file('custom.gradle'), bpJar == null ? [] : bpJar).asFileTree
+    def stampProps = file('gradle.properties')
+    def stampRoot = rootDir
+    def stampFile = layout.buildDirectory.file('jar-inputs.sha256')
+
     repositories {
         mavenCentral()
         maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
@@ -193,6 +213,7 @@ subprojects {
         def versionPropsFile = layout.projectDirectory.file('gradle.properties')
         inputs.file(versionPropsFile)
         outputs.upToDateWhen { false }
+        onlyIf { JarStamp.changed(stampInputs.files, stampProps, stampRoot, stampFile.get().asFile) }
 
         doLast {
             def props = new Properties()
@@ -228,6 +249,8 @@ subprojects {
     jar {
         archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft_label}")
         archiveClassifier.set('')
+        onlyIf { JarStamp.changed(stampInputs.files, stampProps, stampRoot, stampFile.get().asFile) }
+        doLast { stampFile.get().asFile.text = JarStamp.hash(stampInputs.files, stampProps, stampRoot) }
     }
 
     tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
