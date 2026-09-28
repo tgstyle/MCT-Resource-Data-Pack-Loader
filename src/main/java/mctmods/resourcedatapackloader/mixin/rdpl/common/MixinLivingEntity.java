@@ -24,6 +24,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
 
 @Mixin(LivingEntity.class) public abstract class MixinLivingEntity {
     @Shadow protected abstract SoundEvent getHurtSound(DamageSource damageSource);
@@ -41,6 +42,11 @@ import net.minecraft.world.phys.Vec3;
     private SoundEvent rdpl$deathSound(LivingEntity self) {
         SoundEvent sound = ContentEntities.sound(self, ContentEntities.DEATH);
         return sound != null ? sound : getDeathSound();
+    }
+
+    @Redirect(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
+    private void rdpl$namedDeathLog(Logger logger, String format, Object entity, Object message) {
+        if (rdpl$def() == null) { logger.info(format, entity, message); }
     }
 
     @Inject(method = "getSoundVolume", at = @At("RETURN"), cancellable = true)

@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @ModifyConstant(method = "canUse", constant = @Constant(longValue = 20L))
-    private long rdpl$askEveryTick(long was) { return ContentEntities.def(mob) == null ? was : 0L; }
+    private long rdpl$askEveryFewTicks(long was) { return ContentEntities.def(mob) == null ? was : 3L; }
 
     @ModifyConstant(method = "resetAttackCooldown", constant = @Constant(intValue = 20))
     private int rdpl$paceTheBlows(int was) { return ContentEntities.attackInterval(mob); }

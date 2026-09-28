@@ -19,14 +19,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathNavigation.class) public abstract class MixinPathNavigation {
     @Unique private static final float RDPL_STILL_SPEED = 0.06F;
+    @Unique private static final long RDPL_SHORTCUT_HOLD = 2L;
 
     @Shadow @Final protected Mob mob;
     @Shadow @Final protected Level level;
     @Shadow protected Path path;
+    @Unique private Path rdpl$shortcutPath;
+    @Unique private int rdpl$shortcutNode;
+    @Unique private long rdpl$shortcutCell;
+    @Unique private long rdpl$shortcutTick;
 
     @Inject(method = "followThePath", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;doStuckDetection(Lnet/minecraft/world/phys/Vec3;)V"))
     private void rdpl$straightAhead(CallbackInfo ci) {
-        if (path != null && mob.getNavigation() instanceof GroundPathNavigation) { PathShortcut.ahead(mob, level, path); }
+        if (path == null || !(mob.getNavigation() instanceof GroundPathNavigation)) { return; }
+        long cell = mob.blockPosition().asLong();
+        long tick = level.getGameTime();
+        if (path == rdpl$shortcutPath && path.getNextNodeIndex() == rdpl$shortcutNode && cell == rdpl$shortcutCell && tick - rdpl$shortcutTick <= RDPL_SHORTCUT_HOLD) { return; }
+        PathShortcut.ahead(mob, level, path);
+        rdpl$shortcutPath = path;
+        rdpl$shortcutNode = path.getNextNodeIndex();
+        rdpl$shortcutCell = cell;
+        rdpl$shortcutTick = tick;
     }
 
     @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 0))

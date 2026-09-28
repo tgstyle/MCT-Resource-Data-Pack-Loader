@@ -21,7 +21,7 @@ public final class PathNodeMemo {
 
     public static PathNodeMemo held() { return HELD.get(); }
 
-    private static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (long) (z & 0x3FFFFFF); }
+    static long packed(int x, int y, int z) { return ((long) (x & 0x3FFFFFF) << 38) | ((long) (y & 0xFFF) << 26) | (long) (z & 0x3FFFFFF); }
 
     private static int slot(long key, int world, int owner) { return (int) (((key ^ (world * SPREAD) ^ (owner * SPREAD)) * SPREAD) >>> (64 - BITS)) & MASK; }
 
