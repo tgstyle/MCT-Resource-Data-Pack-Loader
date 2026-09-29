@@ -253,6 +253,7 @@ processResources {
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from('LICENSE', 'LICENSE_ASSETS.txt', 'LICENSE_THIRD_PARTY.txt')
     manifest {
         attributes(
                 'FMLCorePlugin': 'mctmods.resourcedatapackloader.core.MCTMixin',
