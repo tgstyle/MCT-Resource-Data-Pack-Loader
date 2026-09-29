@@ -214,6 +214,7 @@ tasks.register('genIntellijRunsDummy') {}
 jar {
     archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")
     archiveClassifier.set('')
+    from('LICENSE', 'LICENSE_ASSETS.txt', 'LICENSE_THIRD_PARTY.txt')
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
