@@ -7,7 +7,7 @@
     "mcversion": "${mcversion}",
     "url": "${mod_url}",
     "authorList": ["${mod_authors}"],
-    "credits": "Rubic is an implementation of Cubic Chunks, used under the terms of the MIT license. Credit to Niko_sk2x for an awesome mod.",
+    "credits": "Rubic is an implementation of Cubic Chunks, used under the terms of the MIT license. Credit to cuchaz for an awesome mod.",
     "logoFile": "MCTlogo.png",
     "dependencies": ["mixinbooter", "blastplaster@[1.0.5,)"],
     "requiredMods": ["blastplaster@[1.0.5,)"]
