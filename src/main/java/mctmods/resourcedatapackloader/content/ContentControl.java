@@ -101,7 +101,7 @@ public final class ContentControl {
             "voidWorld", "voidWorldDimensions", "voidWorldDimensionsAreBlacklist", "waterCreatureCap", "weatherCeiling", "cloudHeight",
             "structureAt", "structureMost", "pregenChunksInFlight", "pregenLogo", "pregenBackup", "pregenBackupSays", "resetSays", "resetSendsTo", "resetRuns", "resetClearsEntities", "resetClearsScores", "resetClearsInventory", "resetClearsExperience", "biomes", "worldBorder", "worldBelow",
             "worldAbove", "worldSeamEntities", "worldSeamBedrock", "worldDifficulty", "worldFallDamage",
-            "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether",
+            "privacy", "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether",
             "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals",
             "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
