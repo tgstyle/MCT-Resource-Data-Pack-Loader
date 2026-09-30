@@ -144,20 +144,35 @@ public final class CityRailsFit {
         int to = rows[1];
         int half = CityRails.halfOf(rail);
         int center = rail.middle();
+        int fromLimit = Integer.MIN_VALUE;
+        int toLimit = Integer.MAX_VALUE;
         for (int along = CityPlan.districtOf(from, alongX); along <= CityPlan.districtOf(to, alongX); along++) {
             for (int across = CityPlan.districtOf(center - half, !alongX); across <= CityPlan.districtOf(center + half, !alongX); across++) {
                 CityPlan other = CityPlanTowns.raw(ground, alongX ? along : across, alongX ? across : along);
                 if (other == null || other.town() == null || other.town().key() == town.key()) { continue; }
                 int metLeast = CityPlan.windowOf(along, alongX);
                 int metMost = metLeast + size - 1;
-                if (metLeast > wellAt) { to = Math.min(to, metLeast - 1 - CityRails.MARGIN); }
-                else if (metMost < wellAt) { from = Math.max(from, metMost + 1 + CityRails.MARGIN); }
+                if (metLeast > wellAt) {
+                    toLimit = Math.min(toLimit, metLeast - 1 - CityRails.MARGIN);
+                    to = Math.min(to, toLimit);
+                }
+                else if (metMost < wellAt) {
+                    fromLimit = Math.max(fromLimit, metMost + 1 + CityRails.MARGIN);
+                    from = Math.max(from, fromLimit);
+                }
                 else {
                     ContentLog.LOGGER.debug("Railway line at {} of the city at {}, {} has no room left beside the cities around it, so it is not laid", center, town.wellX(), town.wellZ());
                     return null;
                 }
                 ContentLog.LOGGER.debug("Railway line at {} of the city at {}, {} stops short of the city district at {}, {}", center, town.wellX(), town.wellZ(), alongX ? along : across, alongX ? across : along);
             }
+        }
+        List<int[]> streets = crossStreets(ground, town, alongX, center, from, to);
+        for (int pass = 0; pass <= streets.size(); pass++) {
+            int[] over = streetOver(streets, to);
+            if (over != null) { to = over[1] + 1 <= toLimit ? over[1] + 1 : over[0] - 1; }
+            over = streetOver(streets, from);
+            if (over != null) { from = over[0] - 1 >= fromLimit ? over[0] - 1 : over[1] + 1; }
         }
         if (from > to) {
             ContentLog.LOGGER.debug("Railway line at {} of the city at {}, {} has no room left beside the cities around it, so it is not laid", center, town.wellX(), town.wellZ());
@@ -172,6 +187,27 @@ public final class CityRailsFit {
         return new CityPlan.Rail(rail.at(), rail.width(), alongX, sub, from, to, town.key());
     }
 
+    private static List<int[]> crossStreets(CityGround ground, CityPlan.Town town, boolean alongX, int center, int from, int to) {
+        List<int[]> boxes = new ArrayList<>();
+        if (!town.drawn().isEmpty()) {
+            for (CityPlan.Line line : town.drawn()) {
+                if (line.alongX() != alongX && center >= line.from() && center <= line.to()) { boxes.add(new int[] {line.at(), line.at() + line.width() - 1}); }
+            }
+            return boxes;
+        }
+        int half = (CityPlan.streetFullWidth() - 1) / 2;
+        int reach = (to - from) / 2 + CityPlan.district();
+        for (int street : streetCenters(town, CityRails.placed(ground.seed(), town), !alongX, (from + to) / 2, reach)) { boxes.add(new int[] {street - half, street + half}); }
+        return boxes;
+    }
+
+    @Nullable private static int[] streetOver(List<int[]> streets, int row) {
+        for (int[] box : streets) {
+            if (row >= box[0] && row <= box[1]) { return box; }
+        }
+        return null;
+    }
+
     private static int shallowRow(CityGround ground, CityPlan.Rail rail, int from, int to) {
         int least = ground.bottom() + ContentCitySewerPiece.FLOOR_LEAST + ContentCity.subwayDepth();
         for (int row = from; row <= to; row++) {
@@ -184,6 +220,7 @@ public final class CityRailsFit {
     static int[] rows(CityPlan.Town town, CityPlan.Rail rail) {
         boolean alongX = rail.alongX();
         int tail = CityPlan.railTail(rail.subway());
+        if (!town.drawn().isEmpty()) { return new int[] {town.least(alongX) - tail, town.most(alongX) + tail}; }
         int reach = CityGrowth.march() + tail + STRETCH;
         int wellAt = town.wellAlong(alongX);
         return new int[] {Math.max(wellAt - reach, town.least(alongX) - tail), Math.min(wellAt + reach, town.most(alongX) + tail)};
