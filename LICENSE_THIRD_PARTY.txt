@@ -8,4 +8,4 @@ each licensed under the MIT License (MIT). That code, and the third-party
 notice that goes with it, apply to the 1.12.2 versions of this mod only; none
 of it is included in this version.
 
-See LICENSE for the GPLv3 license that applies to this mod's own source code, and LICENSE_ASSETS.txt for asset terms.
+See LICENSE for the All Rights Reserved terms that apply to this mod's own source code, and LICENSE_ASSETS.txt for asset terms.
