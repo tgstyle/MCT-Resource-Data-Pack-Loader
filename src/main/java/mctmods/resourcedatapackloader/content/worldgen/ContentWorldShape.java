@@ -430,6 +430,7 @@ public final class ContentWorldShape {
         BlockPos spawn = spawnAsked(level);
         if (spawn == null) { return; }
         event.getSettings().setSpawn(spawn, 0.0F);
+        level.getGameRules().getRule(GameRules.RULE_SPAWN_RADIUS).set(0, level.getServer());
         event.setCanceled(true);
         Summary.info("spawn", "Spawned the world at " + spawn.getX() + ", " + spawn.getY() + ", " + spawn.getZ() + " as asked");
     }

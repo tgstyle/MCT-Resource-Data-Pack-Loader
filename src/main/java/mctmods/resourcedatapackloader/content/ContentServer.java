@@ -40,6 +40,8 @@ public final class ContentServer {
         return null;
     }
 
+    public static boolean privacy() { return ContentControl.flag(ContentControl.SERVER, "privacy", Config.tweaks.privacy()); }
+
     public static String worldGameMode() { return text("worldGameMode", Config.worldgen.worldGameMode()); }
 
     public static boolean lanCommands() { return ContentControl.off(ContentControl.SERVER) || ContentControl.flag(ContentControl.SERVER, "worldLanCommands", Config.worldgen.worldLanCommands()); }
