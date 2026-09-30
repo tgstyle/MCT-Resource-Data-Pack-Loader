@@ -1,5 +1,6 @@
 import groovy.json.JsonOutput
 import groovy.json.JsonSlurper
+import java.security.MessageDigest
 
 plugins {
     id 'java-library'
@@ -8,6 +9,20 @@ plugins {
     id 'idea'
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
     id 'eclipse'
+}
+
+class JarStamp {
+    static String hash(Set<File> files, File versionProps, File root) {
+        def digest = MessageDigest.getInstance('SHA-256')
+        files.sort { it.path }.each { File file ->
+            digest.update(root.toPath().relativize(file.toPath()).toString().getBytes('UTF-8'))
+            digest.update(file.bytes)
+        }
+        versionProps.readLines().findAll { !it.startsWith('#') && !it.startsWith('build_number=') }.sort().each { digest.update(it.getBytes('UTF-8')) }
+        digest.digest().encodeHex().toString()
+    }
+
+    static boolean changed(Set<File> files, File versionProps, File root, File stamp) { !stamp.isFile() || stamp.text != hash(files, versionProps, root) }
 }
 
 tasks.named('wrapper', Wrapper).configure {
@@ -196,10 +211,18 @@ dependencies {
 def customGradle = rootProject.file('custom.gradle')
 if (customGradle.exists()) apply from: customGradle
 
+def stampInputs = files(sourceSets.main.java.srcDirs, sourceSets.main.resources.srcDirs, file('gradle.properties'), file('build.gradle'), file('custom.gradle'), files('LICENSE', 'LICENSE_ASSETS.txt', 'LICENSE_THIRD_PARTY.txt'), bpJar == null ? [] : bpJar).asFileTree
+def stampProps = file('version.properties')
+def stampRoot = rootDir
+def stampFile = layout.buildDirectory.file('jar-inputs.sha256')
+def builtJar = layout.buildDirectory.file("libs/MCT-ResourceDataPackLoader-${version_minecraft}-${baseVersion}-b${currentBuild}-${stage}.jar")
+def needsJar = { !builtJar.get().asFile.isFile() || JarStamp.changed(stampInputs.files, stampProps, stampRoot, stampFile.get().asFile) }
+
 tasks.register('bumpVersion') {
     def versionPropsFile = layout.projectDirectory.file('version.properties')
     inputs.file(versionPropsFile)
     outputs.upToDateWhen { false }
+    onlyIf { needsJar() }
 
     doLast {
         def props = new Properties()
@@ -239,6 +262,12 @@ jar {
     manifest.attributes([
             "MixinConfigs": "mixins.resourcedatapackloader.rdpl.json"
     ])
+    onlyIf { needsJar() }
+}
+
+tasks.named('reobfJar') {
+    onlyIf { needsJar() }
+    doLast { stampFile.get().asFile.text = JarStamp.hash(stampInputs.files, stampProps, stampRoot) }
 }
 
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
