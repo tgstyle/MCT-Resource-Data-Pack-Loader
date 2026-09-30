@@ -296,6 +296,7 @@ Feel free to translate the mod and put it in a pull request.
 
 # License
 
-Resource Data Pack Loader is licensed under the GNU GENERAL PUBLIC LICENSE
-Version 3. You may use it in modpacks, reviews or any other form as long as you
-abide by the terms.
+Resource Data Pack Loader is © tgstyle, All Rights Reserved. You may include the
+unmodified mod in modpacks and show it in videos, streams and reviews. Any other
+use, copying, modification or redistribution needs written permission. See
+`LICENSE`, `LICENSE_ASSETS.txt` and `LICENSE_THIRD_PARTY.txt`.
