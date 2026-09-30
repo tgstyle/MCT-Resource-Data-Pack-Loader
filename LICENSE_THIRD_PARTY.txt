@@ -1,8 +1,281 @@
 LICENSE_THIRD_PARTY.txt
 
-This mod contains code derived from the following third-party projects, each licensed under the MIT License (MIT). The full license text, including the copyright notices required by that license, is reproduced below for each project.
+This mod contains code derived from the following third-party projects, each
+licensed under the MIT License (MIT): Cubic Chunks, Tall Worlds (Cubic
+Chunks), Cubic World Generation and RegionLib. The classes listed below are
+derived from that code, in whole or in part, and remain under the MIT License.
+The full license text, including the copyright notices required by that
+license, is reproduced after the list for each project.
 
-See LICENSE for the GPLv3 license that applies to this mod's own source code, and LICENSE_ASSETS.txt for asset terms.
+Everything else in this mod is (c) tgstyle, All Rights Reserved: see LICENSE
+for those terms, and LICENSE_ASSETS.txt for asset terms.
+
+---------------------------------------------------------------------
+
+Classes derived from Cubic Chunks and Tall Worlds (Cubic Chunks)
+
+  mctmods.resourcedatapackloader.client.CubeProviderClient
+  mctmods.resourcedatapackloader.client.RenderCubeCache
+  mctmods.resourcedatapackloader.client.render.CubeChunkBorder
+  mctmods.resourcedatapackloader.client.RubicClientEvents
+  mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker
+  mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager
+  mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager
+  mctmods.resourcedatapackloader.content.rubic.Rubic
+  mctmods.resourcedatapackloader.content.rubic.RubicEvents
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.AsyncBatchingCubeIO
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.PendingColumn
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.PendingCube
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.PendingLoad
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.IONbtReader
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.IONbtWriter
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.RegionCubeStorage
+  mctmods.resourcedatapackloader.content.rubic.server.chunkio.region.ShadowPagingRegion
+  mctmods.resourcedatapackloader.content.rubic.server.ColumnWatcher
+  mctmods.resourcedatapackloader.content.rubic.server.CubeGC
+  mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer
+  mctmods.resourcedatapackloader.content.rubic.server.CubeWatcher
+  mctmods.resourcedatapackloader.content.rubic.server.EmptyColumn
+  mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap
+  mctmods.resourcedatapackloader.content.rubic.server.PlayerWrapper
+  mctmods.resourcedatapackloader.content.rubic.server.RubicAnvilChunkLoader
+  mctmods.resourcedatapackloader.content.rubic.server.SpawnCubes
+  mctmods.resourcedatapackloader.content.rubic.server.TickableChunkContainer
+  mctmods.resourcedatapackloader.content.rubic.visibility.CubeSelector
+  mctmods.resourcedatapackloader.content.rubic.visibility.CuboidalCubeSelector
+  mctmods.resourcedatapackloader.content.rubic.world.BeaconUpdater
+  mctmods.resourcedatapackloader.content.rubic.world.BlankEntityContainer
+  mctmods.resourcedatapackloader.content.rubic.world.chunkloader.RubicChunkManager
+  mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap
+  mctmods.resourcedatapackloader.content.rubic.world.column.ColumnTileEntityMap
+  mctmods.resourcedatapackloader.content.rubic.world.column.CubeMap
+  mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube
+  mctmods.resourcedatapackloader.content.rubic.world.cube.Cube
+  mctmods.resourcedatapackloader.content.rubic.world.CubeWatchEvent
+  mctmods.resourcedatapackloader.content.rubic.world.CubeWorldEntitySpawner
+  mctmods.resourcedatapackloader.content.rubic.world.EntityContainer
+  mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer
+  mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCompatibilityGenerator
+  mctmods.resourcedatapackloader.content.rubic.worldgen.generator.WorldGenUtils
+  mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator
+  mctmods.resourcedatapackloader.content.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase
+  mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvider
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeWatcher
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicStorage
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicTicket
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicTicketInternal
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings
+  mctmods.resourcedatapackloader.content.rubic.world.interfaces.IWorldEntitySpawner
+  mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap
+  mctmods.resourcedatapackloader.content.rubic.world.SpawnPlaceFinder
+  mctmods.resourcedatapackloader.content.rubic.world.StagingHeightMap
+  mctmods.resourcedatapackloader.content.rubic.world.storage.StorageFormatProviderBase
+  mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData
+  mctmods.resourcedatapackloader.core.MixinUtils
+  mctmods.resourcedatapackloader.core.optifine.ChunkPos3
+  mctmods.resourcedatapackloader.core.optifine.interfaces.IOptifineExtendedBlockStorage
+  mctmods.resourcedatapackloader.core.optifine.interfaces.IOptifineRenderChunk
+  mctmods.resourcedatapackloader.core.transformer.RubicWorldEditTransformer
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IChunkProviderClient
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IContainerLocalRenderInformation
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiOptionsRowList
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiScreen
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiVideoSettings
+  mctmods.resourcedatapackloader.mixin.rdpl.client.INetHandlerPlayClient
+  mctmods.resourcedatapackloader.mixin.rdpl.client.IViewFrustum
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinChunk
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinChunkCache
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinChunkVisibility
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinDebugRenderChunkBorder
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinEmptyChunk
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinEntity
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinEntityPlayerSP
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinEntityRenderer
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinExtendedBlockStorage
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinGuiOverlayDebug
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderChunk
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderChunkOptifine
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderChunkUtils
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderGlobal
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderGlobalNoOptifine
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderGlobalOptifineE
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderGlobalVertViewDistance
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderList
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinRenderWorker
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinViewFrustum
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinViewFrustumOptifine
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinViewFrustumVertViewDistance
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinWorldClient
+  mctmods.resourcedatapackloader.mixin.rdpl.client.MixinWorldProvider
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IASMEventHandler
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockAccessMinMaxHeight
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStateContainer
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IEventBus
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IGameRegistry
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IPlayerChunkMapEntry
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinAnvilSaveHandler
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBiomeDecorator
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBiomeTemperatureConfig
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockBeaconAsyncUpdate
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockChorusFlower
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockFallingHeightLimits
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockGrass
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockLilyPadHeightLimits
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockMushroom
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockPistonBaseHeightFix
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockPortalSizeHeightLimits
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockSkullWitherSpawnLimits
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinBlockStaticLiquid
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinChunk
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinChunkEntities
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinCommandBase
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinCommandFill
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinCommandsHeightLimits
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinCommandTeleport
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinCommandTP
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinDerivedWorldInfo
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntity
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityBat
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityBoat
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityFallingBlock
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityLivingBase
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityMinecartKillFix
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityTracker
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinEntityTrackerEntry
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinForgeChunkManager
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinForgeEventFactory
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinItemChorusFruit
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinMinecraftServer
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinNetHandlerPlayServer
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinPacketBufferBlockPosWrite
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinPathNavigateGround
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinPlayerList
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinRandomPositionGenerator
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinRegionFileCacheRubic
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinRubicEndWorkaround
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinStructureStart
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTeleporter
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTerrainGen
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTicket
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTileEntityBeacon
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTileEntityBeaconBetterFps
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinTileEntityEndGateway
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWalkNodeProcessor
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorld
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldEntitySpawner
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenBigMushroom
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenBlockBlob
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenCanopyTree
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenDeadBush
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenDesertWells
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenDoublePlants
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenDungeons
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenFlowers
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenHugeTrees
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenIcePath
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenIceSpike
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenLakes
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenShrub
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenSwamp
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenTaiga1
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenTaiga2
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenTallGrass
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenTreeBirchSavanna
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldGenTrees
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldInfo
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldProvider
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldServer
+  mctmods.resourcedatapackloader.mixin.rdpl.common.MixinWorldSettings
+  mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin
+  mctmods.resourcedatapackloader.mixin.rdpl.server.MixinDedicatedPlayerList
+  mctmods.resourcedatapackloader.mixin.rdpl.server.MixinDedicatedServerHeightLimits
+  mctmods.resourcedatapackloader.mixin.rubiclight.common.MixinChunkLightRubic
+  mctmods.resourcedatapackloader.mixin.rubiclight.common.MixinWorldLightRubic
+  mctmods.resourcedatapackloader.network.AbstractClientMessageHandler
+  mctmods.resourcedatapackloader.network.AbstractMessageHandler
+  mctmods.resourcedatapackloader.network.MessageColumn
+  mctmods.resourcedatapackloader.network.MessageCubeBlockChange
+  mctmods.resourcedatapackloader.network.MessageCubes
+  mctmods.resourcedatapackloader.network.MessageCubeSkyLightUpdates
+  mctmods.resourcedatapackloader.network.MessageHeightMapUpdate
+  mctmods.resourcedatapackloader.network.MessageRubicWorldData
+  mctmods.resourcedatapackloader.network.MessageUnloadColumn
+  mctmods.resourcedatapackloader.network.MessageUnloadCube
+  mctmods.resourcedatapackloader.network.RDPLNetwork
+  mctmods.resourcedatapackloader.network.WorldEncoder
+  mctmods.resourcedatapackloader.util.AddressTools
+  mctmods.resourcedatapackloader.util.Bits
+  mctmods.resourcedatapackloader.util.Box
+  mctmods.resourcedatapackloader.util.compat.CompatHandler
+  mctmods.resourcedatapackloader.util.Coords
+  mctmods.resourcedatapackloader.util.CubePos
+  mctmods.resourcedatapackloader.util.interfaces.ITicket
+  mctmods.resourcedatapackloader.util.IntRange
+  mctmods.resourcedatapackloader.util.MathUtil
+  mctmods.resourcedatapackloader.util.NotRubicWorldException
+  mctmods.resourcedatapackloader.util.PacketUtils
+  mctmods.resourcedatapackloader.util.ReflectionUtil
+  mctmods.resourcedatapackloader.util.SideUtils
+  mctmods.resourcedatapackloader.util.ticket.TicketList
+  mctmods.resourcedatapackloader.util.WatchersSortingList
+  mctmods.resourcedatapackloader.util.WatchersSortingList2D
+  mctmods.resourcedatapackloader.util.WatchersSortingList3D
+  mctmods.resourcedatapackloader.util.world.CubeSplitIterator
+  mctmods.resourcedatapackloader.util.world.CubeSplitTickList
+  mctmods.resourcedatapackloader.util.world.CubeSplitTickSet
+  mctmods.resourcedatapackloader.util.XYZMap
+  mctmods.resourcedatapackloader.util.XZMap
+
+Classes derived from Cubic World Generation
+
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeForest
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomePlains
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeSnow
+  mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeTaiga
+
+Classes derived from RegionLib
+
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IHeaderDataEntry
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IHeaderDataEntryProvider
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKey
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKeyProvider
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IRegion
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IRegionProvider
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.RegionKey
+  mctmods.resourcedatapackloader.content.rubic.regionlib.api.storage.SaveSection
+  mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation2D
+  mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation3D
+  mctmods.resourcedatapackloader.content.rubic.regionlib.impl.SaveCubeColumns
+  mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection2D
+  mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection3D
+  mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedConsumer
+  mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedFunction
+  mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.IKeyIdToSectorMap
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.ExtRegion
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.header.EntryLocationHeaderEntryProvider
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.header.IntHeaderEntry
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.header.IntPackedSectorMap
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.provider.SimpleRegionProvider
+  mctmods.resourcedatapackloader.content.rubic.regionlib.lib.RegionEntryLocation
+  mctmods.resourcedatapackloader.content.rubic.regionlib.MultiUnsupportedDataException
+  mctmods.resourcedatapackloader.content.rubic.regionlib.UnsupportedDataException
+  mctmods.resourcedatapackloader.content.rubic.regionlib.util.ICorruptedDataException
+  mctmods.resourcedatapackloader.content.rubic.regionlib.util.SaveSectionException
+  mctmods.resourcedatapackloader.content.rubic.regionlib.util.Utils
 
 ---------------------------------------------------------------------
 
