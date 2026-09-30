@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
+import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -151,8 +152,11 @@ public final class BeardRailsFit {
             if (least > most) { continue; }
             StructureBoundingBox box = rail.getBoundingBox();
             StructureBoundingBox plan = sub ? BeardRails.dressed(rail) : box;
-            int from = linkedLow ? rail.rowLeast() : Math.max(rail.rowLeast(), least - tail);
-            int to = linkedHigh ? rail.rowMost() : Math.min(rail.rowMost(), most + tail);
+            boolean drawn = CityLayout.drawn();
+            int from = linkedLow ? rail.rowLeast() : drawn ? least - tail : Math.max(rail.rowLeast(), least - tail);
+            int to = linkedHigh ? rail.rowMost() : drawn ? most + tail : Math.min(rail.rowMost(), most + tail);
+            int fromLimit = drawn ? Integer.MIN_VALUE : rail.rowLeast();
+            int toLimit = drawn ? Integer.MAX_VALUE : rail.rowMost();
             int wellAt = alongX ? (wellBox.minX + wellBox.maxX) / 2 : (wellBox.minZ + wellBox.maxZ) / 2;
             for (StructureComponent other : everyone) {
                 if (components.contains(other)) { continue; }
@@ -164,10 +168,23 @@ public final class BeardRailsFit {
                     ContentLog.LOGGER.warn("Railway line {} of the village at {}, {} is linked past {} of another village at {}, {}, which should have kept clear of the link", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, other.getClass().getSimpleName(), met.minX, met.minZ);
                     continue;
                 }
-                if (metLeast > wellAt) { to = Math.min(to, metLeast - 1 - BeardRails.MARGIN); }
-                else if (metMost < wellAt) { from = Math.max(from, metMost + 1 + BeardRails.MARGIN); }
+                if (metLeast > wellAt) {
+                    toLimit = Math.min(toLimit, metLeast - 1 - BeardRails.MARGIN);
+                    to = Math.min(to, toLimit);
+                }
+                else if (metMost < wellAt) {
+                    fromLimit = Math.max(fromLimit, metMost + 1 + BeardRails.MARGIN);
+                    from = Math.max(from, fromLimit);
+                }
                 else { to = from - 1; }
                 ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} stops short of {} of another village at {}, {}", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, other.getClass().getSimpleName(), met.minX, met.minZ);
+            }
+            List<int[]> streets = crossStreets(components, alongX, alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2);
+            for (int pass = 0; pass <= streets.size(); pass++) {
+                int[] over = linkedHigh ? null : streetOver(streets, to);
+                if (over != null) { to = over[1] + 1 <= toLimit ? over[1] + 1 : over[0] - 1; }
+                over = linkedLow ? null : streetOver(streets, from);
+                if (over != null) { from = over[0] - 1 >= fromLimit ? over[0] - 1 : over[1] + 1; }
             }
             if (from > to) {
                 components.remove(piece);
@@ -217,6 +234,26 @@ public final class BeardRailsFit {
                 finally { ContentBeard.laying(held); }
             }
         }
+    }
+
+    private static List<int[]> crossStreets(List<StructureComponent> components, boolean alongX, int center) {
+        List<int[]> boxes = new ArrayList<>();
+        for (StructureComponent other : components) {
+            if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+            StructureBoundingBox road = other.getBoundingBox();
+            boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            if (roadAlongX == alongX || BeardRoads.roadNarrow(road, roadAlongX)) { continue; }
+            if (center < (alongX ? road.minZ : road.minX) || center > (alongX ? road.maxZ : road.maxX)) { continue; }
+            boxes.add(alongX ? new int[] {road.minX, road.maxX} : new int[] {road.minZ, road.maxZ});
+        }
+        return boxes;
+    }
+
+    private static int[] streetOver(List<int[]> streets, int row) {
+        for (int[] box : streets) {
+            if (row >= box[0] && row <= box[1]) { return box; }
+        }
+        return null;
     }
 
     public static void standOff(World world, StructureStart start) {
