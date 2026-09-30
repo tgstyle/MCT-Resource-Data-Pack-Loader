@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.recipe.RecipeAdvancements;
 import mctmods.resourcedatapackloader.recipe.RecipeFiles;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
@@ -27,9 +29,12 @@ import java.util.function.Supplier;
     @Shadow @Final private List<Registry.PendingTags<?>> pendingTags;
 
     @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-    private CompletableFuture<Map<Identifier, Resource>> rdpl$recipes(Supplier<Map<Identifier, Resource>> listing, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
-        if (!Registries.RECIPE.equals(((IRegistryLoadTask) this).rdpl$registryKey())) { return original.call(listing, executor); }
-        Supplier<Map<Identifier, Resource>> filtered = () -> RecipeFiles.filter(listing.get(), resourceManager, context, pendingTags);
+    private CompletableFuture<Map<Identifier, Resource>> rdpl$recipes(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
+        if (!Registries.RECIPE.equals(((IRegistryLoadTask) this).rdpl$registryKey())) { return original.call(supplier, executor); }
+        Supplier<Map<Identifier, Resource>> filtered = () -> {
+            try { return RecipeFiles.filter(supplier.get(), resourceManager, context, pendingTags); }
+            finally { RecipeAdvancements.publish(context, Set.of()); }
+        };
         return original.call(filtered, executor);
     }
 }

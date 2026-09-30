@@ -23,10 +23,12 @@ import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class RecipeFiles {
@@ -44,6 +46,9 @@ public final class RecipeFiles {
         }
         Map<Identifier, JsonElement> kept = new HashMap<>(read);
         RecipeLoading.begin(kept, manager, json -> ICondition.conditionsMatched(ops, json), json -> CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
+        Set<Identifier> removed = new HashSet<>(read.keySet());
+        removed.removeAll(kept.keySet());
+        RecipeAdvancements.publish(context, removed);
         Map<Identifier, Resource> result = new LinkedHashMap<>();
         for (Map.Entry<Identifier, Resource> entry : listed.entrySet()) {
             Identifier id = FILES.fileToId(entry.getKey());

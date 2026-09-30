@@ -42,3 +42,6 @@ side="BOTH"
 
 [[mixins]]
 config="mixins.resourcedatapackloader.rdpl.json"
+
+[[mixins]]
+config="mixins.resourcedatapackloader.line.json"

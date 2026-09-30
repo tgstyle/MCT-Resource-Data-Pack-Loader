@@ -36,7 +36,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
 
-    @Override public List<String> getMixins() { return LineMixins.NAMES; }
+    @Override public List<String> getMixins() { return null; }
 
     @Override public void preApply(String targetClassName, ClassNode targetClass, String mixinClassName, IMixinInfo mixinInfo) {}
 

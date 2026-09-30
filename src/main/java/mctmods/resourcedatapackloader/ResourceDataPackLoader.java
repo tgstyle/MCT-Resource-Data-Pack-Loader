@@ -107,7 +107,6 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.config.ModConfig;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
@@ -131,7 +130,7 @@ import java.util.Set;
 
     public ResourceDataPackLoader(IEventBus modBus, ModContainer container) {
         Lang.load();
-        container.registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        LineCompat.registerConfig(container, Config.SPEC);
         ContentLog.LOGGER.setDebug(Config.worldgen.worldgenDebug());
         PackFinder.ensureScanned();
         ContentRegistry.load();

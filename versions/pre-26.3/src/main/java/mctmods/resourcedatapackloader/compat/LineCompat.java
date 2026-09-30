@@ -95,6 +95,9 @@ import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunct
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.IConfigSpec;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.ItemAbilities;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
@@ -127,6 +130,8 @@ public final class LineCompat {
     public static final String GRADIENT_TO = "to_y";
 
     private LineCompat() {}
+
+    public static void registerConfig(ModContainer container, IConfigSpec spec) { container.registerConfig(ModConfig.Type.COMMON, spec); }
 
     public static void listen(@SuppressWarnings("unused") IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(new ContentPotions.Brewing() {

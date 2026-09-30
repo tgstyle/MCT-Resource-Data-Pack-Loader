@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeNoise;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
+import mctmods.resourcedatapackloader.util.ConfigCore;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.WorldgenUp;
 
@@ -110,6 +111,9 @@ import net.minecraft.world.level.storage.loot.providers.number.floats.ContextFlo
 import net.minecraft.world.level.storage.loot.providers.number.floats.ResolvableFloat;
 import net.minecraft.world.level.storage.loot.providers.number.ints.ResolvableInt;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.config.IConfigSpec;
+import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.extensions.IBlockExtension;
 import net.neoforged.neoforge.common.loot.IGlobalLootModifier;
 import net.neoforged.neoforge.common.loot.LootModifier;
@@ -143,6 +147,8 @@ public final class LineCompat {
     private static final String CARVERS = "worldgen/carver/";
 
     private LineCompat() {}
+
+    public static void registerConfig(ModContainer container, IConfigSpec spec) { container.registerConfig(ModConfig.Type.LOCAL, spec, ConfigCore.FILE); }
 
     public static void listen(IEventBus modBus) { modBus.addListener(ModifyDefaultComponentsEvent.class, event -> event.modifyMatching((_, _) -> true, LineCompat::fuel)); }
 

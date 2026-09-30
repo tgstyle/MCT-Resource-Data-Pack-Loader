@@ -1,0 +1,20 @@
+{
+    "required": true,
+    "minVersion": "0.8.5",
+    "package": "mctmods.resourcedatapackloader.mixin.rdpl",
+    "compatibilityLevel": "JAVA_25",
+    "mixinextras": {
+        "minVersion": "0.5.3"
+    },
+    "mixins": [
+        "common.IRegistryLoadTask",
+        "common.MixinRecipeLoadTask",
+        "common.MixinAdvancementLoadTask",
+        "common.MixinReloadableServerResources",
+        "common.MixinNoiseChunk",
+        "common.MixinFeaturePlacer"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
