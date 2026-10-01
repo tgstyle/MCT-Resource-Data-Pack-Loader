@@ -1407,6 +1407,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
   "potionTypes": ["mypack:ruby_tonic"],
+  "rocket": "mypack:supply_rocket",
   "requires": ["mypack"],
   "variants": {
     "ruby_apple": {
@@ -1427,18 +1428,21 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
 
 *items*
 
-| Type            | What you get                                              |
-| --------------- | --------------------------------------------------------- |
-| `basic`         | A plain item. Used when `type` is missing                 |
-| `food`          | Eaten, with hunger and saturation                         |
-| `drink`         | Drunk rather than eaten, returning an empty container     |
-| `tool`          | Pickaxe, axe, shovel or sword from a material             |
-| `armor`         | Helmet, chestplate, leggings or boots from a material     |
-| `seed`          | Plants one of your crops                                  |
-| `potion`        | Applies your potion effects when used                     |
-| `potion_bottle` | Holds your potion types, and shows them in a creative tab |
+| Type            | What you get                                                    |
+| --------------- | --------------------------------------------------------------- |
+| `basic`         | A plain item. Used when `type` is missing                       |
+| `food`          | Eaten, with hunger and saturation                               |
+| `drink`         | Drunk rather than eaten, returning an empty container           |
+| `tool`          | Pickaxe, axe, shovel or sword from a material                   |
+| `armor`         | Helmet, chestplate, leggings or boots from a material           |
+| `seed`          | Plants one of your crops                                        |
+| `potion`        | Applies your potion effects when used                           |
+| `potion_bottle` | Holds your potion types, and shows them in a creative tab       |
+| `rocket`        | Places one of your Galacticraft rocket variants on a launch pad |
 
 A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion type names such as `["mypack:ruby_tonic"]`. One with an empty list registers nothing, and the log says so.
+
+A `rocket` names the entity variant it places with `rocket`. It needs Galacticraft, and without it or without `rocket` it registers nothing, and the log says so. See Galacticraft rockets under Entity variants.
 
 ### Item file keys
 
@@ -1460,6 +1464,7 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 | `container`    | drink       | item name                           | none                   | What is left behind, such as a bottle                                                                                                                       |
 | `crop`         | seed        | block name                          | none                   | The crop it plants                                                                                                                                          |
 | `soil`         | seed        | block name                          | `minecraft:farmland`   | What it can be planted on                                                                                                                                   |
+| `rocket`       | rocket      | `namespace:name`                    | none                   | The entity variant it places                                                                                                                                |
 | `requires`     | no          | list of mod ids or pack namespaces  | none                   | The file is skipped unless all are present                                                                                                                  |
 
 ### Item variant keys
@@ -2376,6 +2381,20 @@ Every key, shown at once. A real file writes only the ones it needs.
   "trackingRange": 80,
   "trackVelocity": true,
   "trackingFrequency": 3,
+  "storage": {
+    "items": { "rows": 3, "columns": 9, "filter": [{ "item": "minecraft:coal", "max": 128 }] },
+    "fluid": { "capacity": 16000, "buckets": true, "filter": [{ "fluid": "water" }] },
+    "energy": { "capacity": 100000, "transfer": 1000 },
+    "dropsOnDeath": true
+  },
+  "galacticraft": {
+    "tier": 2,
+    "fuelTank": 2000,
+    "cargoSlots": 36,
+    "cargo": [{ "oreDict": "ingotIron", "max": 128 }],
+    "requiredPayload": [{ "item": "minecraft:iron_ingot", "count": 64 }],
+    "payload": [{ "item": "minecraft:iron_ingot", "count": 64 }]
+  },
   "requires": ["mypack"]
 }
 ```
@@ -2710,6 +2729,129 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 | `trackingRange`     | no       | int     | `80`    | How far away the client is told about it                                             |
 | `trackVelocity`     | no       | boolean | `true`  | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no       | int     | `3`     | How often, in ticks                                                                  |
+
+### Storage
+
+*entity variants*
+
+```json
+{
+  "entity": "minecraft:pig",
+  "name": "Pack Pig",
+  "storage": {
+    "items": {
+      "rows": 2,
+      "columns": 9,
+      "filter": [
+        { "item": "minecraft:coal", "max": 128 },
+        { "oreDict": "ingotIron" }
+      ]
+    },
+    "fluid": {
+      "capacity": 16000,
+      "buckets": true,
+      "filter": [
+        { "fluid": "water", "max": 8000 }
+      ]
+    },
+    "energy": { "capacity": 100000, "transfer": 1000 },
+    "dropsOnDeath": true
+  }
+}
+```
+
+`storage` gives a variant of any entity item slots, a fluid tank and an energy buffer, each one only when its object is written. Each is offered as the entity's Forge item, fluid or energy capability, so anything that moves items, fluid or energy into an entity reaches it. Where the base entity answers that capability itself, as a mob does for its hands and armor and a horse or a chest minecart does for its inventory, the pack storage answers in its place, on every side. A player opens the screen by sneaking and right-clicking the entity. The contents are saved with the entity.
+
+| Key            | Required | Value   | Default | What it does                                                                                                          |
+| -------------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `items`        | no       | object  | none    | Item slots                                                                                                            |
+| `fluid`        | no       | object  | none    | One fluid tank                                                                                                        |
+| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                               |
+| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way |
+
+`items`:
+
+| Key       | Required | Value                  | Default | What it does                                                                                 |
+| --------- | -------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `rows`    | no       | int                    | `3`     | Rows of slots, from 1 to 9. A tank and an energy buffer each take one row of the screen away |
+| `columns` | no       | int                    | `9`     | Slots in a row, from 1 to 12                                                                 |
+| `filter`  | no       | list of filter entries | none    | What the slots accept. Without it they accept anything                                       |
+
+`fluid`:
+
+| Key        | Required | Value                  | Default | What it does                                                                                                                                                              |
+| ---------- | -------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capacity` | yes      | int, mB                | none    | How much the tank holds                                                                                                                                                   |
+| `filter`   | no       | list of filter entries | none    | Which fluids the tank accepts. Without it it accepts anything                                                                                                             |
+| `buckets`  | no       | boolean                | `false` | A right-click with a bucket or other fluid container, not sneaking, empties it into the tank or fills it from the tank. A click that moves no fluid is left to the entity |
+
+`energy`:
+
+| Key        | Required | Value   | Default  | What it does                                     |
+| ---------- | -------- | ------- | -------- | ------------------------------------------------ |
+| `capacity` | yes      | int, FE | none     | How much energy it holds                         |
+| `transfer` | no       | int, FE | no limit | The most energy moved in or out in one operation |
+
+A filter entry. The first entry that matches decides, and anything no entry matches is refused:
+
+| Key       | Required         | Value      | Default | What it does                                                                               |
+| --------- | ---------------- | ---------- | ------- | ------------------------------------------------------------------------------------------ |
+| `item`    | one of the three | item name  | none    | An item, as `namespace:name` or `namespace:name:meta`                                      |
+| `oreDict` | one of the three | ore name   | none    | Every item under that ore dictionary name                                                  |
+| `fluid`   | one of the three | fluid name | none    | A fluid by its registered name, such as `water`. Read by a fluid filter only               |
+| `max`     | no               | int        | `0`     | The most of it held at once, counted over all slots, or in mB for a fluid. `0` is no limit |
+
+### Galacticraft rockets
+
+*entity variants*
+
+```json
+{
+  "entity": "galacticraftcore:rocket_t1",
+  "name": "Supply Rocket",
+  "egg": false,
+  "trackingRange": 150,
+  "trackingFrequency": 1,
+  "galacticraft": {
+    "tier": 2,
+    "fuelTank": 2000,
+    "cargoSlots": 36,
+    "cargo": [
+      { "item": "minecraft:iron_ingot", "max": 128 },
+      { "oreDict": "ingotCopper" }
+    ],
+    "requiredPayload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ],
+    "payload": [
+      { "item": "minecraft:iron_ingot", "count": 64 }
+    ]
+  }
+}
+```
+
+The item that places it, at `<namespace>/items/supply_rocket.json`:
+
+```json
+{
+  "type": "rocket",
+  "rocket": "mypack:supply_rocket",
+  "variants": {
+    "supply_rocket": { "meta": 0 }
+  }
+}
+```
+
+A variant of a Galacticraft rocket (`galacticraftcore:rocket_t1`, `galacticraftplanets:rocket_t2`, `galacticraftplanets:rocket_t3`) reads a `galacticraft` object. On any other entity the object is ignored, and the log says so. The rocket is placed on a launch pad with an item of type `rocket`. Breaking the rocket, or landing with it on another body, gives that item back with the cargo and the fuel inside it.
+
+| Key               | Required | Value                  | Default           | What it does                                                                                                                                      |
+| ----------------- | -------- | ---------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tier`            | no       | int                    | the base rocket's | The rocket tier, which decides the bodies it reaches                                                                                              |
+| `fuelTank`        | no       | int                    | the base rocket's | Fuel tank size. A tier 1 rocket has `1000`                                                                                                        |
+| `cargoSlots`      | no       | `0`, `27`, `36`, `54`  | `0`               | Galacticraft's cargo sizes. `27` gives 18 slots, as it does on Galacticraft's own rockets                                                         |
+| `cargo`           | no       | list of filter entries | none              | What the cargo slots and a Cargo Loader may put in. Without it they accept anything. The entries are those of `storage`, with `item` or `oreDict` |
+| `requiredPayload` | no       | list                   | none              | What must be in the cargo before the rocket launches. Each entry is `item` or `oreDict` and a `count`, default `1`                                |
+| `payload`         | no       | list                   | none              | What a newly made rocket item carries, loaded into the cargo when it is first placed. Each entry is `item` and a `count`, default `1`             |
 
 ## Exposures
 
@@ -3210,9 +3352,9 @@ Other dimensions share the overworld's rain. A `cycle` gives this one weather of
 
 `<namespace>/celestial/*.json` and the `galacticraft` block of `<namespace>/dimensions/*.json`
 
-With Galacticraft installed, a pack can put its own star systems, planets and moons on the Galacticraft star map, and make a pack dimension a place a rocket flies to. Without Galacticraft all of it is skipped: the `celestial/` files are ignored and a dimension with a `galacticraft` block is not registered, and the log says so.
+With Galacticraft installed, a pack can put its own star systems, planets, moons, asteroid belts and space stations on the Galacticraft star map, and make a pack dimension a place a rocket flies to. Without Galacticraft all of it is skipped: the `celestial/` files are ignored and a dimension with a `galacticraft` block is not registered, and the log says so.
 
-A body's name on the map comes from the pack's lang file, under the key Galacticraft uses: `solarsystem.<name>`, `star.<name>`, `planet.<name>` or `moon.<name>`.
+A body's name on the map comes from the pack's lang file, under the key Galacticraft uses: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` or, for a station, `satellite.<name>`. An asteroid belt takes `planet.<name>` around a star and `moon.<name>` around a planet.
 
 ### Star systems and map-only bodies
 
@@ -3265,18 +3407,18 @@ A planet or moon here takes the [map keys](#map-keys) with a `tier` default of `
 
 Every body, whether a `celestial/` file, a system's `star` or a dimension's `galacticraft` block, places itself on the map with these keys.
 
-| Key              | Required   | Value          | Default                               | What it does                                                                                                                                                                                                                                     |
-| ---------------- | ---------- | -------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`           | no         | string         | the file name                         | The body's name, which its lang key and every `parent` use                                                                                                                                                                                       |
-| `parent`         | for a moon | name           | `sol` for a planet                    | The system a planet circles, or the planet a moon circles                                                                                                                                                                                        |
-| `icon`           | no         | texture path   | Galacticraft's Mars, Moon or Sun icon | The picture on the map                                                                                                                                                                                                                           |
-| `relativeSize`   | no         | float          | `1.0`, a moon `0.2667`                | Its size on the map                                                                                                                                                                                                                              |
-| `distance`       | no         | float          | `1.0`, a moon `13`                    | How far out it circles                                                                                                                                                                                                                           |
-| `scaledDistance` | no         | float          | `distance`                            | The distance used on the zoomed map                                                                                                                                                                                                              |
-| `orbitTime`      | no         | float, years   | `1.0`, a moon `100`                   | How long one orbit takes on the map. Negative runs backward                                                                                                                                                                                      |
-| `phaseShift`     | no         | float, radians | `0`                                   | Where along its orbit it starts                                                                                                                                                                                                                  |
-| `ringColor`      | no         | hex color      | `19E599`                              | The orbit line, where the map draws one                                                                                                                                                                                                          |
-| `tier`           | no         | int            | `1` for a dimension, `0` otherwise    | The rocket tier the map shows it needs. With GalaxySpace, AsmodeusCore's map works the tier out from distance instead, and a body around another star needs the top tier, unless `enableNewTierSystem` is off in `config/AsmodeusCore/core.conf` |
+| Key              | Required              | Value          | Default                                                        | What it does                                                                                                                                                                                                                                     |
+| ---------------- | --------------------- | -------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`           | no                    | string         | the file name                                                  | The body's name, which its lang key and every `parent` use                                                                                                                                                                                       |
+| `parent`         | for a moon or station | name           | `sol` for a planet or belt                                     | The system a planet circles, the planet a moon circles, the planet or moon a station circles, or a system or planet for an asteroid belt                                                                                                         |
+| `icon`           | no                    | texture path   | Galacticraft's Mars, Moon, Sun, asteroid or station icon       | The picture on the map                                                                                                                                                                                                                           |
+| `relativeSize`   | no                    | float          | `1.0`, a moon or station `0.2667`                              | Its size on the map                                                                                                                                                                                                                              |
+| `distance`       | no                    | float          | `1.0`, a moon `13`, a station `9`                              | How far out it circles                                                                                                                                                                                                                           |
+| `scaledDistance` | no                    | float          | `distance`                                                     | The distance used on the zoomed map                                                                                                                                                                                                              |
+| `orbitTime`      | no                    | float, years   | `1.0`, a moon `100`, a station `20`                            | How long one orbit takes on the map. Negative runs backward                                                                                                                                                                                      |
+| `phaseShift`     | no                    | float, radians | `0`, a station spaced apart                                    | Where along its orbit it starts. A station without one starts 2.4 radians past the last station around the same planet, its moons' stations included, so no two share a spot                                                                     |
+| `ringColor`      | no                    | hex color      | `19E599`                                                       | The orbit line, where the map draws one                                                                                                                                                                                                          |
+| `tier`           | no                    | int            | `1` for a dimension, its parent's for a station, `0` otherwise | The rocket tier the map shows it needs. With GalaxySpace, AsmodeusCore's map works the tier out from distance instead, and a body around another star needs the top tier, unless `enableNewTierSystem` is off in `config/AsmodeusCore/core.conf` |
 
 ### The `galacticraft` block
 
@@ -3284,7 +3426,7 @@ Every body, whether a `celestial/` file, a system's `star` or a dimension's `gal
 
 `<namespace>/dimensions/*.json`
 
-A `galacticraft` block in a dimension file makes that dimension a planet or moon of its own. Everything outside the block, the sky, physics, time and weather, stays the dimension's and works the same with or without Galacticraft; the block holds only what Galacticraft reads.
+A `galacticraft` block in a dimension file makes that dimension a planet or moon of its own, or an [asteroid belt](#asteroid-belts) or a [space station](#space-stations). Everything outside the block, the sky, physics, time and weather, stays the dimension's and works the same with or without Galacticraft; the block holds only what Galacticraft reads.
 
 ```json
 {
@@ -3326,22 +3468,22 @@ A `galacticraft` block in a dimension file makes that dimension a planet or moon
 
 The block takes the [map keys](#map-keys), plus:
 
-| Key               | Required | Value                             | Default                      | What it does                                                                                                                                 |
-| ----------------- | -------- | --------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `kind`            | no       | `planet`, `moon`                  | `planet`                     | What the dimension is                                                                                                                        |
-| `reachable`       | no       | boolean                           | `true`                       | Off, it is on the map but no rocket goes there                                                                                               |
-| `minTier`         | no       | int                               | `tier`                       | The lowest rocket tier that may land                                                                                                         |
-| `landing`         | no       | `lander`, `parachute`, `balloons` | `lander`                     | How a player comes down. `balloons` needs Galacticraft Planets and is a lander without it. Galacticraft's `disableLander` forces `parachute` |
-| `landingHeight`   | no       | float                             | `900`, a parachute `250`     | The height a player arrives at                                                                                                               |
-| `arrival`         | no       | `departure`, `spawn`              | `departure`                  | Land above where the rocket took off, or above this dimension's spawn                                                                        |
-| `exitHeight`      | no       | float                             | `1200`                       | The height at which a rocket leaving this dimension leaves it                                                                                |
-| `rocketGui`       | no       | texture path                      | Galacticraft's overworld one | The flight screen                                                                                                                            |
-| `checklist`       | no       | list of strings                   | none                         | Galacticraft checklist keys shown before launch                                                                                              |
-| `meteorFrequency` | no       | float                             | from `density`               | How rarely meteors fall, near each player about once in this many times 750 ticks. `0` stops them                                            |
-| `fuelMultiplier`  | no       | float                             | `1.0`                        | Fuel a rocket burns leaving from here                                                                                                        |
-| `soundReduction`  | no       | float                             | from `density`               | How much quieter sound is in this air                                                                                                        |
-| `solarEnergy`     | no       | float                             | `1.0`                        | Solar panel output here                                                                                                                      |
-| `netherPortals`   | no       | boolean                           | `false`                      | Whether nether portals light here                                                                                                            |
+| Key               | Required | Value                                    | Default                      | What it does                                                                                                                                 |
+| ----------------- | -------- | ---------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`            | no       | `planet`, `moon`, `asteroids`, `station` | `planet`                     | What the dimension is                                                                                                                        |
+| `reachable`       | no       | boolean                                  | `true`                       | Off, it is on the map but no rocket goes there                                                                                               |
+| `minTier`         | no       | int                                      | `tier`                       | The lowest rocket tier that may land                                                                                                         |
+| `landing`         | no       | `lander`, `parachute`, `balloons`        | `lander`                     | How a player comes down. `balloons` needs Galacticraft Planets and is a lander without it. Galacticraft's `disableLander` forces `parachute` |
+| `landingHeight`   | no       | float                                    | `900`, a parachute `250`     | The height a player arrives at                                                                                                               |
+| `arrival`         | no       | `departure`, `spawn`                     | `departure`                  | Land above where the rocket took off, or above this dimension's spawn                                                                        |
+| `exitHeight`      | no       | float                                    | `1200`                       | The height at which a rocket leaving this dimension leaves it                                                                                |
+| `rocketGui`       | no       | texture path                             | Galacticraft's overworld one | The flight screen                                                                                                                            |
+| `checklist`       | no       | list of strings                          | none                         | Galacticraft checklist keys shown before launch                                                                                              |
+| `meteorFrequency` | no       | float                                    | from `density`               | How rarely meteors fall, near each player about once in this many times 750 ticks. `0` stops them                                            |
+| `fuelMultiplier`  | no       | float                                    | `1.0`                        | Fuel a rocket burns leaving from here                                                                                                        |
+| `soundReduction`  | no       | float                                    | from `density`               | How much quieter sound is in this air                                                                                                        |
+| `solarEnergy`     | no       | float                                    | `1.0`                        | Solar panel output here                                                                                                                      |
+| `netherPortals`   | no       | boolean                                  | `false`                      | Whether nether portals light here                                                                                                            |
 
 | `atmosphere` key | Required | Value                                                                                  | Default                       | What it does                                                                               |
 | ---------------- | -------- | -------------------------------------------------------------------------------------- | ----------------------------- | ------------------------------------------------------------------------------------------ |
@@ -3369,6 +3511,101 @@ Galacticraft only builds its dungeons in its own terrain, so `dungeon` matters o
 Without a `rain` block rain looks and sounds as vanilla's.
 
 **Who registers the dimension.** A reachable body's dimension is registered by Galacticraft, so rockets and multiplayer clients see it; one with `reachable: false` is registered by RDPL. If the body cannot be placed, because its parent is unknown or its name is taken, the dimension is not registered, and the log says why.
+
+### Asteroid belts
+
+*galacticraft bodies*
+
+`<namespace>/dimensions/*.json`
+
+A dimension whose `galacticraft` block has `kind: "asteroids"` is an asteroid belt: Galacticraft's own asteroid field, generated in an empty void. It needs Galacticraft Planets and a `terrain` of type `void`; without either the dimension is not registered, and the log says why.
+
+```json
+{
+  "id": 73,
+  "terrain": { "type": "void" },
+  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "physics": { "gravity": 0.1 },
+  "galacticraft": {
+    "kind": "asteroids",
+    "name": "slag",
+    "parent": "ember",
+    "distance": 1.75,
+    "tier": 3
+  }
+}
+```
+
+A belt's `parent` is a star system or a planet. Around a system it sits on the map as a planet does, and around a planet as a moon does. It takes every key of [the `galacticraft` block](#the-galacticraft-block) except these, which a belt ignores:
+
+| Key             | In a belt                                                                               |
+| --------------- | --------------------------------------------------------------------------------------- |
+| `landing`       | A player arrives in an entry pod on the nearest asteroid, as in Galacticraft's own belt |
+| `landingHeight` | The entry pod sets its own height                                                       |
+| `arrival`       | The entry pod picks the asteroid                                                        |
+| `dungeon`       | A pack belt has no abandoned bases                                                      |
+
+The sky, gravity, time and weather are the dimension's own keys, as on any pack planet. Three of them default differently in a belt, to match Galacticraft's own:
+
+| Key                 | Without it                             |
+| ------------------- | -------------------------------------- |
+| `sky.fogColor`      | `000000`, so fog and horizon are black |
+| `sky.renderClouds`  | `false`                                |
+| `sky.sunriseColors` | `false`, a belt has no sunset          |
+
+### Space stations
+
+*galacticraft bodies*
+
+`<namespace>/dimensions/*.json`
+
+A dimension file whose `galacticraft` block has `kind: "station"` lets players build a space station in orbit around a pack planet or moon, through Galacticraft's own map button and its own orbit dimension. The file is the kind of station, not one station: each station a player builds is a dimension of its own, which Galacticraft creates and keeps.
+
+```json
+{
+  "id": 80,
+  "sky": { "skyColor": "000000", "starBrightness": 1.0 },
+  "time": { "dayLength": 12000 },
+  "galacticraft": {
+    "kind": "station",
+    "name": "cinder_station",
+    "parent": "cinder",
+    "tier": 2,
+    "showName": true,
+    "recipe": {
+      "ingotTin": 32,
+      "ingotIron": 24,
+      "minecraft:wool:14": 8
+    }
+  }
+}
+```
+
+| Key         | Required | Value                          | Default                           | What it does                                                                                                                                                                   |
+| ----------- | -------- | ------------------------------ | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `kind`      | yes      | `station`                      |                                   | Makes the file a station                                                                                                                                                       |
+| `parent`    | yes      | name                           |                                   | The planet or moon it orbits: a reachable one a pack dimension makes. A moon's station sits on the map beside the moon, around the moon's planet                               |
+| `tier`      | no       | int                            | the parent's                      | The rocket tier that reaches the station                                                                                                                                       |
+| `showName`  | no       | boolean                        | `false`                           | On, the map lists each station under this file's `name` where Galacticraft writes `Station: <owner>`; the owner line stays. A station its owner renamed keeps the owner's name |
+| `recipe`    | no       | object of ingredient and count | Galacticraft's own station recipe | What building one costs. An ingredient is an ore dictionary name, `modid:item` or `modid:item:meta`                                                                            |
+| `checklist` | no       | list of strings                | none                              | Galacticraft checklist keys shown before launch                                                                                                                                |
+
+The other [map keys](#map-keys) place the station on the map. Nothing else in the `galacticraft` block applies: a station has Galacticraft's own station air, gravity and arrival.
+
+Outside the block a station reads these dimension keys and no others:
+
+| Key                                                      | Without it                                              |
+| -------------------------------------------------------- | ------------------------------------------------------- |
+| `id`                                                     | Required. The station takes this id and the next one up |
+| `sky.skyColor`, `sky.fogColor`                           | Galacticraft's orbit colors                             |
+| `sky.starBrightness`                                     | Galacticraft's orbit stars                              |
+| `sky.sun`, `sky.bodies`, `sky.stars`                     | Galacticraft's orbit sky, with its parent below         |
+| `sky.renderSky`, `sky.renderClouds`, `sky.renderWeather` | `true`                                                  |
+| `time.dayLength`                                         | `24000`                                                 |
+
+**Ids.** `id` and `id + 1` are dimension type ids, not the station's dimension; both must be free. Each built station gets the next free dimension id at the moment it is built, and Galacticraft keeps that id, the owner and the station's name in the world save, so the station comes back at the same id after a restart. Its save folder is Galacticraft's, `DIM_SPACESTATION<id>`.
+
+**One station kind per body.** A planet or moon that already has a station, from another pack or another mod, keeps it: the second one is not registered, and the log says so.
 
 ### GalaxySpace and ExtraPlanets
 
@@ -3674,6 +3911,34 @@ All keys sit in the `terrain` group, in a world template's `settings` block like
 **Space outside the window.** The generator's own range keeps its usual shape, and the room a rubic world adds around it is filled with the block that range ends in: stone under the overworld, air over it. A dimension whose top is sealed with bedrock, the nether above all, counts as closed, so the room above it is left empty rather than packed with the netherrack under its roof. The roof itself is untouched. `deepStone` names the block for the room below the window, `skyStone` the block for the room above it.
 
 **CubicChunks.** Running both is not supported. With CubicChunks installed and a pack asking for `rubicWorld`, loading stops with a message: remove CubicChunks, or take `rubicWorld` out of the pack and let CubicChunks make the worlds.
+
+### Moving a world to CubicChunks and back
+
+*rubic worlds*
+
+**File names.** A rubic world keeps its columns in `region2d/<x>.<z>.2rdr` and its cubes in `region3d/<x>.<y>.<z>.3rdr`. An entry too large for its region file goes into a folder beside it, named after the file with `.ext` added. Worlds made before these names existed used `.2dr` and `.3dr`: the mod renames those files and folders itself when a dimension loads, with one log line per dimension, so an older world needs nothing done by hand.
+
+**Opening a CubicChunks world.** When a pack asks for `rubicWorld` and the world being opened is marked as a CubicChunks world, the mod asks before it does anything, the same way Forge asks about missing registry entries: a confirm screen in single player, and on a dedicated server a console message answered with `/fml confirm` or `/fml cancel`, or ahead of time with `-Dfml.queryResult=confirm`. On yes, Forge's world backup is written as a zip in the saves folder and the world is converted to a rubic world in place, then loading carries on. On no, loading stops and nothing in the world is changed.
+
+**The converter.** The same conversion, and the way back, can be run outside the game. The repository ships [`scripts/convert_rubic_world.py`](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/tree/1.12.2-1.0-Release/scripts), which turns a rubic world into a CubicChunks world, or a CubicChunks world into a rubic one. It needs Python 3 and nothing else. Close the game and back the world up first, then look at the dry run before running it for real.
+
+```
+python3 scripts/convert_rubic_world.py to-cubic "saves/My World" --dry-run
+python3 scripts/convert_rubic_world.py to-cubic "saves/My World"
+```
+
+| Argument         | What it does                                    |
+| ---------------- | ----------------------------------------------- |
+| `to-cubic`       | A rubic world becomes a CubicChunks world       |
+| `to-rubic`       | A CubicChunks world becomes a rubic world       |
+| `<world folder>` | The save folder, the one that holds `level.dat` |
+| `--dry-run`      | Prints every change and makes none              |
+
+**What it changes.** In every dimension, the region files and their `.ext` folders take the other side's names (`.2rdr` and `.3rdr` for rubic, `.2dr` and `.3dr` for CubicChunks), and `data/rdplRubicData.dat` becomes `data/cubicChunksData.dat` or the reverse, with the heights kept and the storage format and compatibility generator named the way the other mod names them. Last of all, the marker in `level.dat` and `level.dat_old` is swapped between `isRubicWorld` and `isCubicWorld`. The cubes and columns themselves are not rewritten.
+
+**What it refuses.** A world whose `level.dat` marker does not match the direction asked for, a storage format or compatibility generator the other mod does not have, and a rename whose target already exists. A refusal changes nothing, and a run that was interrupted can be repeated.
+
+**What does not carry over.** A converted world holds only what both mods understand. Blocks and dimensions a pack defined do not exist under plain CubicChunks, and each mod works the light out again for cubes the other one saved.
 
 ### Cube streaming
 

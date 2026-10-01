@@ -6,12 +6,21 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinBlockVec3",
+    "MixinChunkProviderAsteroids",
+    "MixinContainerRocketInventory",
+    "MixinEntityAutoRocket",
+    "MixinEntityTieredRocket",
+    "MixinTeleportTypeAsteroids",
     "MixinThreadFindSeal",
     "MixinTransformerHooksGravity",
-    "MixinWorldProviderExitHeight"
+    "MixinWorldProviderExitHeight",
+    "MixinWorldUtilStationHome"
   ],
   "client": [
     "MixinEntitySpaceshipBase",
+    "MixinGuiCelestialSelectionStationHome",
+    "MixinPacketSimpleStationHome",
+    "MixinPacketSimpleStationLabel",
     "MixinTransformerHooks"
   ],
   "server": []

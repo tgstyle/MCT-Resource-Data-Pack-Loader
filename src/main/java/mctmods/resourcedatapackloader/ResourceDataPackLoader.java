@@ -179,6 +179,7 @@ public class ResourceDataPackLoader {
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentMobExperience.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.EntityStorage.class);
         }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
@@ -241,6 +242,11 @@ public class ResourceDataPackLoader {
     }
 
     @Mod.EventHandler public void interModComms(FMLInterModComms.IMCEvent event) { ContentCelestial.register(); }
+
+    @Mod.EventHandler public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
+        mctmods.resourcedatapackloader.content.entity.ContentEntityTypes.registerLate();
+        ContentBiomes.resolveSpawns();
+    }
 
     @Mod.EventHandler public void loadComplete(FMLLoadCompleteEvent event) {
         RecipeDisabled.apply();

@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.JsonUtils;
@@ -14,12 +15,15 @@ import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentParserCelestial {
     private static final List<String> GASES = Collections.unmodifiableList(Arrays.asList("NITROGEN", "OXYGEN", "CO2", "WATER", "METHANE", "HYDROGEN", "HELIUM", "ARGON"));
+    private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS, CelestialDef.STATION));
     private static final String RING = "#19E599";
     private static final String ICONS = "galacticraftcore:textures/gui/celestialbodies/";
     private static final String RAIN_PARTICLE = "droplet";
@@ -43,11 +47,11 @@ public final class ContentParserCelestial {
         if (!dimension.has("galacticraft")) { return null; }
         JsonObject json = JsonUtils.getJsonObject(dimension, "galacticraft");
         String kind = JsonUtils.getString(json, "kind", CelestialDef.PLANET).trim().toLowerCase(Locale.ROOT);
-        if (!CelestialDef.PLANET.equals(kind) && !CelestialDef.MOON.equals(kind)) {
-            ContentLog.LOGGER.error("Dimension {} asks to be a Galacticraft '{}', which is not {} or {}, making it a {}", key, kind, CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.PLANET);
+        if (!KINDS.contains(kind)) {
+            ContentLog.LOGGER.error("Dimension {} asks to be a Galacticraft '{}', which is not one of {}, making it a {}", key, kind, KINDS, CelestialDef.PLANET);
             kind = CelestialDef.PLANET;
         }
-        CelestialDef body = body(key, json, kind, key.getPath(), 1, Collections.emptyList());
+        CelestialDef body = body(key, json, kind, key.getPath(), CelestialDef.STATION.equals(kind) ? -1 : 1, Collections.emptyList());
         if (body == null) { return null; }
         String landing = choice(key, json, "landing", GalacticraftDef.LANDER, GalacticraftDef.PARACHUTE, GalacticraftDef.BALLOONS);
         String arrival = choice(key, json, "arrival", GalacticraftDef.DEPARTURE, GalacticraftDef.SPAWN);
@@ -80,7 +84,23 @@ public final class ContentParserCelestial {
                 Math.max(0, JsonUtils.getInt(dungeon, "spacing", 0)),
                 chest.isEmpty() ? null : new ResourceLocation(chest),
                 json.has("rain") ? rain(key, JsonUtils.getJsonObject(json, "rain")) : null,
-                ContentParserModPlanets.extraPlanets(key, json));
+                ContentParserModPlanets.extraPlanets(key, json),
+                recipe(key, json),
+                JsonUtils.getBoolean(json, "showName", false));
+    }
+
+    private static Map<String, Integer> recipe(ResourceLocation key, JsonObject json) {
+        Map<String, Integer> found = new LinkedHashMap<>();
+        if (!json.has("recipe")) { return found; }
+        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "recipe").entrySet()) {
+            JsonElement count = entry.getValue();
+            if (!count.isJsonPrimitive() || !count.getAsJsonPrimitive().isNumber() || count.getAsInt() < 1) {
+                ContentLog.LOGGER.error("Dimension {} asks for {} of '{}' in its station recipe, which is not a count of 1 or more, ignoring it", key, count, entry.getKey());
+                continue;
+            }
+            found.put(entry.getKey().trim(), count.getAsInt());
+        }
+        return Collections.unmodifiableMap(found);
     }
 
     private static GalacticraftDef.Rain rain(ResourceLocation key, JsonObject json) {
@@ -122,19 +142,20 @@ public final class ContentParserCelestial {
             return null;
         }
         boolean moon = CelestialDef.MOON.equals(kind);
-        String parent = JsonUtils.getString(json, "parent", moon ? "" : "sol").trim();
+        boolean station = CelestialDef.STATION.equals(kind);
+        String parent = JsonUtils.getString(json, "parent", moon || station ? "" : "sol").trim();
         if (parent.isEmpty() && !CelestialDef.STAR.equals(kind)) {
             ContentLog.LOGGER.error("Celestial body {} is a {} with no parent, so it has nothing to circle", key, kind);
             return null;
         }
-        float distance = JsonUtils.getFloat(json, "distance", moon ? 13.0F : 1.0F);
+        float distance = JsonUtils.getFloat(json, "distance", station ? 9.0F : moon ? 13.0F : 1.0F);
         return new CelestialDef(key, kind, name, parent,
                 new ResourceLocation(JsonUtils.getString(json, "icon", ICONS + icon(kind) + ".png").trim()),
-                JsonUtils.getFloat(json, "relativeSize", moon ? 0.2667F : 1.0F),
+                JsonUtils.getFloat(json, "relativeSize", moon || station ? 0.2667F : 1.0F),
                 distance,
                 JsonUtils.getFloat(json, "scaledDistance", distance),
-                JsonUtils.getFloat(json, "orbitTime", moon ? 100.0F : 1.0F),
-                JsonUtils.getFloat(json, "phaseShift", 0.0F),
+                JsonUtils.getFloat(json, "orbitTime", station ? 20.0F : moon ? 100.0F : 1.0F),
+                JsonUtils.getFloat(json, "phaseShift", station ? Float.NaN : 0.0F),
                 ContentTypes.color(JsonUtils.getString(json, "ringColor", RING), key + " ringColor"),
                 CelestialDef.STAR.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
                 "", 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
@@ -144,6 +165,8 @@ public final class ContentParserCelestial {
         switch (kind) {
             case CelestialDef.STAR: return "sun";
             case CelestialDef.MOON: return "moon";
+            case CelestialDef.ASTEROIDS: return "asteroid";
+            case CelestialDef.STATION: return "space_station";
             default: return "mars";
         }
     }

@@ -246,11 +246,14 @@ public final class ContentBiomes {
         }
     }
 
+    public static void resolveSpawns() {
+        for (ContentBiome biome : REGISTERED) { biome.resolveSpawns(); }
+    }
+
     public static void applyPlacement() {
         int placed = 0;
         for (ContentBiome biome : REGISTERED) {
             BiomeDef def = biome.getDef();
-            biome.resolveSpawns();
             types(biome, def);
             if (def.spawnBiome) { BiomeManager.addSpawnBiome(biome); }
             if (def.villageBiome) { BiomeManager.addVillageBiome(biome, def.villageSpawn); }

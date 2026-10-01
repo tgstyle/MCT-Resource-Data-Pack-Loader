@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.item.ContentItemArmor;
 import mctmods.resourcedatapackloader.content.item.ContentItemDrink;
 import mctmods.resourcedatapackloader.content.item.ContentItemFood;
 import mctmods.resourcedatapackloader.content.item.ContentItemPotion;
+import mctmods.resourcedatapackloader.content.item.ContentItemRocket;
 import mctmods.resourcedatapackloader.content.item.ContentItemSeed;
 import mctmods.resourcedatapackloader.content.item.ContentItemTool;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
@@ -15,6 +16,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.inventory.EntityEquipmentSlot;
+import net.minecraftforge.fml.common.Loader;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -51,6 +53,13 @@ public final class ContentItemTypes {
             return Collections.singletonList(new ContentItemSeed(def, crop, soil));
         });
         register("potion_bottle", def -> Collections.singletonList(new ContentItemPotion(def)));
+        register("rocket", def -> {
+            if (!Loader.isModLoaded("galacticraftcore") || def.rocket.isEmpty()) {
+                ContentLog.LOGGER.error("Rocket item {} needs Galacticraft and a rocket variant to place, leaving it out", def.registryName);
+                return Collections.emptyList();
+            }
+            return Collections.singletonList(new ContentItemRocket(def));
+        });
         register("armor", def -> {
             MaterialDef material = ContentMaterials.find(def.material, def.registryName);
             EntityEquipmentSlot slot = ContentToolTypes.slot(def.slot, def.registryName);

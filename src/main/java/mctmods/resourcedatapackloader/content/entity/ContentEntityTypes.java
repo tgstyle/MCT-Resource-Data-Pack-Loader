@@ -20,39 +20,55 @@ import net.minecraftforge.fml.common.registry.EntityRegistry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentEntityTypes {
+    private static final Map<ResourceLocation, EntityVariantDef> LATE = new LinkedHashMap<>();
+    private static int made;
+    private static int network;
+
     private ContentEntityTypes() {}
 
     public static void register(IForgeRegistry<EntityEntry> registry) {
         if (!ContentEntities.load()) { return; }
-        int made = 0;
-        int network = 0;
         for (Map.Entry<ResourceLocation, EntityVariantDef> entry : ContentEntities.DEFS.entrySet()) {
-            EntityVariantDef def = entry.getValue();
-            EntityEntry base = Registries.find(ForgeRegistries.ENTITIES, def.base);
-            if (base == null) {
-                ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", entry.getKey(), def.base);
-                continue;
-            }
-            Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), entry.getKey().getNamespace() + "_" + entry.getKey().getPath(), def.ignoresSpawnRules, def.hostile);
-            if (made$class == null) { continue; }
-            EntityEntryBuilder<Entity> builder = EntityEntryBuilder.create();
-            builder.entity(made$class).id(entry.getKey(), network++)
-                    .name(entry.getKey().getNamespace() + "." + entry.getKey().getPath())
-                    .tracker(def.trackingRange, def.trackingFrequency, def.trackVelocity);
-            if (def.egg) { builder.egg(eggColor(def, true), eggColor(def, false)); }
-            registry.register(builder.build());
-            ContentEntities.BY_CLASS.put(made$class, def);
-            addSpawns(made$class, def);
-            made++;
-            ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", entry.getKey(), def.attributes, def.equipment);
+            EntityEntry base = Registries.find(ForgeRegistries.ENTITIES, entry.getValue().base);
+            if (base == null) { LATE.put(entry.getKey(), entry.getValue()); }
+            else { register(registry, entry.getKey(), entry.getValue(), base); }
         }
-        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(EntityReturningThrow.class).id(new ResourceLocation(ResourceDataPackLoader.MOD_ID, "returning_throw"), network).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
+        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(EntityReturningThrow.class).id(new ResourceLocation(ResourceDataPackLoader.MOD_ID, "returning_throw"), network++).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
+    }
+
+    public static void registerLate() {
+        if (LATE.isEmpty()) { return; }
+        for (Map.Entry<ResourceLocation, EntityVariantDef> entry : LATE.entrySet()) {
+            EntityEntry base = Registries.find(ForgeRegistries.ENTITIES, entry.getValue().base);
+            if (base == null) { ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", entry.getKey(), entry.getValue().base); }
+            else { register(ForgeRegistries.ENTITIES, entry.getKey(), entry.getValue(), base); }
+        }
+        LATE.clear();
+        if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
+    }
+
+    private static void register(IForgeRegistry<EntityEntry> registry, ResourceLocation key, EntityVariantDef def, EntityEntry base) {
+        boolean rocket = def.rocket != null && EntityClassMaker.rocket(base.getEntityClass());
+        if (def.rocket != null && !rocket) { ContentLog.LOGGER.error("Entity variant {} has a galacticraft block but {} is not a Galacticraft rocket that carries a rider, so the block is ignored", key, def.base); }
+        Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), key.getNamespace() + "_" + key.getPath(), def.ignoresSpawnRules, def.hostile, rocket, def.storage != null);
+        if (made$class == null) { return; }
+        EntityEntryBuilder<Entity> builder = EntityEntryBuilder.create();
+        builder.entity(made$class).id(key, network++)
+                .name(key.getNamespace() + "." + key.getPath())
+                .tracker(def.trackingRange, def.trackingFrequency, def.trackVelocity);
+        if (def.egg) { builder.egg(eggColor(def, true), eggColor(def, false)); }
+        registry.register(builder.build());
+        ContentEntities.BY_CLASS.put(made$class, def);
+        addSpawns(made$class, def);
+        made++;
+        ContentLog.LOGGER.debug("Entity variant {} read from the pack with attributes {} and equipment {}", key, def.attributes, def.equipment);
     }
 
     private static boolean throwsReturning() {

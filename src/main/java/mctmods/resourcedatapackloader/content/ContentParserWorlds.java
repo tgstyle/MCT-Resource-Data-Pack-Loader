@@ -430,7 +430,9 @@ public final class ContentParserWorlds {
             ContentLog.LOGGER.error("Dimension {} asks for terrain '{}', which is not one of {}, using {}", key, type, KNOWN_TERRAIN, DimensionDef.OVERWORLD);
             type = DimensionDef.OVERWORLD;
         }
-        String fog = JsonUtils.getString(sky, "fogColor", "");
+        GalacticraftDef galacticraft = ContentParserCelestial.galacticraft(key, json);
+        boolean belt = galacticraft != null && CelestialDef.ASTEROIDS.equals(galacticraft.body.kind);
+        String fog = JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
         return new DimensionDef(key,
                 JsonUtils.getInt(json, "id"),
                 JsonUtils.getString(json, "suffix", "DIM_" + key.getPath()),
@@ -450,7 +452,7 @@ public final class ContentParserWorlds {
                 fog.isEmpty() ? -1 : ContentTypes.color(fog, key.toString()),
                 skyColor.isEmpty() ? -1 : ContentTypes.color(skyColor, key.toString()),
                 JsonUtils.getInt(sky, "fixedTime", -1),
-                JsonUtils.getBoolean(sky, "sunriseColors", true),
+                JsonUtils.getBoolean(sky, "sunriseColors", !belt),
                 JsonUtils.getBoolean(sky, "nether", false),
                 JsonUtils.getBoolean(sky, "beds", true),
                 JsonUtils.getBoolean(sky, "waterVaporizes", false),
@@ -460,12 +462,12 @@ public final class ContentParserWorlds {
                 cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString()),
                 JsonUtils.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
                 JsonUtils.getBoolean(sky, "renderSky", true),
-                JsonUtils.getBoolean(sky, "renderClouds", true),
+                JsonUtils.getBoolean(sky, "renderClouds", !belt),
                 JsonUtils.getBoolean(sky, "renderWeather", true),
                 gameRules(key, json),
                 strings(json, "requires"),
                 dimensionPortal(key, json),
-                ContentParserCelestial.galacticraft(key, json),
+                galacticraft,
                 ContentParserDimensionTraits.traits(key, json));
     }
 

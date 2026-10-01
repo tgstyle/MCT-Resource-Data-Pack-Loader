@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
+import mctmods.resourcedatapackloader.content.def.CelestialDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
@@ -14,6 +15,8 @@ import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 import net.minecraft.block.Block;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
+import net.minecraft.world.WorldProvider;
+import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.Loader;
 import java.util.Collections;
@@ -26,8 +29,22 @@ public class GcWorldProvider extends ContentWorldProvider implements IGalacticra
     private static final double VANILLA_ARROW = 0.05D;
 
     private static final boolean EXTRA_PLANETS = Loader.isModLoaded("extraplanets");
+    @Nullable private WorldProvider asteroids;
 
     @Nullable private GalacticraftDef gc() { return def == null ? null : def.galacticraft; }
+
+    private boolean belt() {
+        GalacticraftDef gc = gc();
+        return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind);
+    }
+
+    public WorldProvider asteroids() {
+        if (!belt()) { return this; }
+        if (asteroids == null) { asteroids = GcAsteroids.store(world); }
+        return asteroids;
+    }
+
+    @Override @Nonnull public IChunkGenerator createChunkGenerator() { return belt() ? GcAsteroids.generator(world) : super.createChunkGenerator(); }
 
     @Nullable public GalaxySpaceDef galaxySpace() {
         GalacticraftDef gc = gc();

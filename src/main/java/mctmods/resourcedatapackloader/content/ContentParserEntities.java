@@ -196,7 +196,60 @@ public final class ContentParserEntities {
                 JsonUtils.getBoolean(json, "collectsExperience", false),
                 JsonUtils.getBoolean(json, "walks", false),
                 JsonUtils.getBoolean(json, "throwReturns", false),
-                JsonUtils.getString(sounds, "throw", ""));
+                JsonUtils.getString(sounds, "throw", ""),
+                rocket(key, json), storage(key, json));
+    }
+
+    @Nullable private static RocketDef rocket(ResourceLocation key, JsonObject json) {
+        if (!json.has("galacticraft")) { return null; }
+        JsonObject rocket = JsonUtils.getJsonObject(json, "galacticraft");
+        int slots = JsonUtils.getInt(rocket, "cargoSlots", 0);
+        if (slots != 0 && slots != 27 && slots != 36 && slots != 54) {
+            ContentLog.LOGGER.error("Entity variant {} sets cargoSlots to {}, which is not one of 0, 27, 36 or 54, using 0", key, slots);
+            slots = 0;
+        }
+        return new RocketDef(Math.max(-1, JsonUtils.getInt(rocket, "tier", -1)), Math.max(-1, JsonUtils.getInt(rocket, "fuelTank", -1)), slots,
+                new FilterDef(entries(key, rocket, "cargo", "max", 0)), entries(key, rocket, "requiredPayload", "count", 1), entries(key, rocket, "payload", "count", 1));
+    }
+
+    @Nullable private static StorageDef storage(ResourceLocation key, JsonObject json) {
+        if (!json.has("storage")) { return null; }
+        JsonObject storage = JsonUtils.getJsonObject(json, "storage");
+        JsonObject items = JsonUtils.getJsonObject(storage, "items", new JsonObject());
+        JsonObject fluid = JsonUtils.getJsonObject(storage, "fluid", new JsonObject());
+        int fluidCapacity = Math.max(0, JsonUtils.getInt(fluid, "capacity", 0));
+        JsonObject energy = JsonUtils.getJsonObject(storage, "energy", new JsonObject());
+        int energyCapacity = Math.max(0, JsonUtils.getInt(energy, "capacity", 0));
+        int energyTransfer = MathHelper.clamp(JsonUtils.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
+        int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
+        int askedRows = storage.has("items") ? JsonUtils.getInt(items, "rows", 3) : 0;
+        int askedColumns = JsonUtils.getInt(items, "columns", 9);
+        int rows = MathHelper.clamp(askedRows, storage.has("items") ? 1 : 0, ContainerDef.MOST_ROWS - gauges);
+        int columns = MathHelper.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
+        if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The storage on entity variant {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
+        if (rows == 0 && gauges == 0) {
+            ContentLog.LOGGER.error("The storage on entity variant {} holds no items, fluid or energy, ignoring it", key);
+            return null;
+        }
+        return new StorageDef(rows, columns, new FilterDef(entries(key, items, "filter", "max", 0)), fluidCapacity, new FilterDef(entries(key, fluid, "filter", "max", 0)), energyCapacity, energyTransfer,
+                JsonUtils.getBoolean(fluid, "buckets", false), JsonUtils.getBoolean(storage, "dropsOnDeath", true));
+    }
+
+    private static List<FilterDef.Entry> entries(ResourceLocation key, JsonObject json, String list, String amount, int least) {
+        List<FilterDef.Entry> entries = new ArrayList<>();
+        if (!json.has(list)) { return entries; }
+        for (JsonElement element : JsonUtils.getJsonArray(json, list)) {
+            JsonObject entry = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            String item = JsonUtils.getString(entry, "item", "");
+            String oreDict = JsonUtils.getString(entry, "oreDict", "");
+            String fluid = JsonUtils.getString(entry, "fluid", "");
+            if (item.isEmpty() && oreDict.isEmpty() && fluid.isEmpty()) {
+                ContentLog.LOGGER.error("A {} entry in {} names no item, oreDict or fluid, skipping it", list, key);
+                continue;
+            }
+            entries.add(new FilterDef.Entry(key, item, oreDict, fluid, Math.max(least, JsonUtils.getInt(entry, amount, least))));
+        }
+        return entries;
     }
 
     private static float baby(JsonObject json) {

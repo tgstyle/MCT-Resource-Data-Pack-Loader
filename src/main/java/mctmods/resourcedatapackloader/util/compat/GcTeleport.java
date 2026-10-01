@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
+import mctmods.resourcedatapackloader.content.def.CelestialDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -49,10 +50,16 @@ public final class GcTeleport implements ITeleportType {
         return gc != null && GalacticraftDef.BALLOONS.equals(gc.landing) && Loader.isModLoaded(PLANETS);
     }
 
-    @Override public boolean useParachute() { return parachutes(landingDimension); }
+    private static boolean belt(int dimension) {
+        GalacticraftDef gc = gc(dimension);
+        return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind);
+    }
+
+    @Override public boolean useParachute() { return !belt(landingDimension) && parachutes(landingDimension); }
 
     @Override @Nullable public Vector3 getPlayerSpawnLocation(WorldServer world, EntityPlayerMP player) {
         landingDimension = world.provider.getDimension();
+        if (belt(landingDimension)) { return GcAsteroids.landing().getPlayerSpawnLocation(world, player); }
         if (player == null) { return null; }
         double height = height(landingDimension);
         GalacticraftDef gc = gc(landingDimension);
@@ -91,13 +98,17 @@ public final class GcTeleport implements ITeleportType {
     }
 
     @Override @Nullable public Vector3 getParaChestSpawnLocation(WorldServer world, EntityPlayerMP player, Random rand) {
-        if (!parachutes(world.provider.getDimension())) { return null; }
+        if (belt(world.provider.getDimension()) || !parachutes(world.provider.getDimension())) { return null; }
         double x = (rand.nextDouble() * 2.0D - 1.0D) * 4.0D;
         double z = (rand.nextDouble() * 2.0D - 1.0D) * 4.0D;
         return new Vector3(player.posX + x, CHEST_HEIGHT, player.posZ + z);
     }
 
     @Override public void onSpaceDimensionChanged(World newWorld, EntityPlayerMP player, boolean ridingAutoRocket) {
+        if (belt(newWorld.provider.getDimension())) {
+            GcAsteroids.landing().onSpaceDimensionChanged(newWorld, player, ridingAutoRocket);
+            return;
+        }
         if (ridingAutoRocket || parachutes(newWorld.provider.getDimension())) { return; }
         GCPlayerStats stats = GCPlayerStats.get(player);
         if (stats.getTeleportCooldown() > 0) { return; }

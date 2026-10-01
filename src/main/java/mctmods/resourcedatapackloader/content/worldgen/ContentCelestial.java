@@ -42,7 +42,9 @@ public final class ContentCelestial {
     }
 
     public static void loadComplete() {
-        if (!BODIED.isEmpty() && Loader.isModLoaded(GALACTICRAFT)) { GcCelestial.extraPlanetsRadiation(); }
+        if (BODIED.isEmpty() || !Loader.isModLoaded(GALACTICRAFT)) { return; }
+        GcCelestial.extraPlanetsRadiation();
+        GcCelestial.stationRecipes();
     }
 
     public static void serverStarted() {
