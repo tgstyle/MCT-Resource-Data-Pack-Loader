@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation2D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation3D;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.SaveCubeColumns;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection2D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection3D;
@@ -36,7 +37,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class RegionCubeStorage implements IRubicStorage {
-    private static SaveCubeColumns saveForPath(Path path) throws IOException {
+    private static SaveCubeColumns saveForPath(Path world, Path path) throws IOException {
         Utils.createDirectories(path);
 
         Path part2d = path.resolve("region2d");
@@ -44,6 +45,8 @@ public class RegionCubeStorage implements IRubicStorage {
 
         Path part3d = path.resolve("region3d");
         Utils.createDirectories(part3d);
+
+        OldRegionNames.rename(world, path, part2d, part3d);
 
         SaveSection2D section2d = new SaveSection2D(Arrays.asList(
                 new CachedRegionProvider<>(
@@ -60,7 +63,7 @@ public class RegionCubeStorage implements IRubicStorage {
                 new CachedRegionProvider<>(
                         new SimpleRegionProvider<>(new EntryLocation2D.Provider(), part2d,
                                 (keyProvider, regionKey) -> new ExtRegion<>(part2d, Collections.emptyList(), keyProvider, regionKey),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + ".ext"))
+                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + RegionNames.SPILL))
                         )
                 )));
         SaveSection3D section3d = new SaveSection3D(Arrays.asList(
@@ -78,7 +81,7 @@ public class RegionCubeStorage implements IRubicStorage {
                 new CachedRegionProvider<>(
                         new SimpleRegionProvider<>(new EntryLocation3D.Provider(), part3d,
                                 (keyProvider, regionKey) -> new ExtRegion<>(part3d, Collections.emptyList(), keyProvider, regionKey),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + ".ext"))
+                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + RegionNames.SPILL))
                         )
                 )));
 
@@ -87,7 +90,7 @@ public class RegionCubeStorage implements IRubicStorage {
 
     private SaveCubeColumns save;
 
-    public RegionCubeStorage(Path path) throws IOException { this.save = saveForPath(Objects.requireNonNull(path, "path")); }
+    public RegionCubeStorage(Path world, Path path) throws IOException { this.save = saveForPath(Objects.requireNonNull(world, "world"), Objects.requireNonNull(path, "path")); }
 
     @Override public boolean columnExists(@Nonnull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
 

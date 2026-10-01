@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.betterf3;
 
+import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Coords;
 
@@ -19,7 +20,7 @@ import java.util.Locale;
         int cubeX = Coords.blockToCube(MathHelper.floor(mc.player.posX));
         int cubeY = Coords.blockToCube(MathHelper.floor(mc.player.posY));
         int cubeZ = Coords.blockToCube(MathHelper.floor(mc.player.posZ));
-        if (pattern.endsWith(".mca")) { return String.format(locale, "%d.%d.%d.3dr", cubeX >> 4, cubeY >> 4, cubeZ >> 4); }
+        if (pattern.endsWith(".mca")) { return String.format(locale, "%d.%d.%d" + RegionNames.CUBES, cubeX >> 4, cubeY >> 4, cubeZ >> 4); }
         return String.format(locale, "Cube [%d, %d, %d] in Region", cubeX & 15, cubeY & 15, cubeZ & 15);
     }
 }

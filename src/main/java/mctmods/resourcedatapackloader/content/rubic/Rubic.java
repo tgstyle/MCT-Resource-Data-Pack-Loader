@@ -61,7 +61,7 @@ import javax.annotation.Nonnull;
 
     @SubscribeEvent public static void registerAnvil3dStorageFormatProvider(RegistryEvent.Register<StorageFormatProviderBase> event) {
         event.getRegistry().register(new StorageFormatProviderBase() {
-            @Override public IRubicStorage provideStorage(World world, Path path) throws IOException { return new RegionCubeStorage(path); }
+            @Override public IRubicStorage provideStorage(World world, Path path) throws IOException { return new RegionCubeStorage(world.getSaveHandler().getWorldDirectory().toPath(), path); }
         }.setRegistryName(StorageFormatProviderBase.DEFAULT));
     }
 

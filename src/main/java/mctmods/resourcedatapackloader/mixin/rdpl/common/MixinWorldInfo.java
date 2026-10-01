@@ -163,7 +163,7 @@ import java.util.Map;
     private void onConstructWithSettings(NBTTagCompound nbt, CallbackInfo cbi) { this.rdpl$isRubic = nbt.getBoolean("isRubicWorld"); }
 
     @Inject(method = "updateTagCompound", at = @At("RETURN")) private void onConstructWithSettings(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo cbi) {
-        nbt.setBoolean("isRubicWorld", rdpl$isRubic);
+        if (rdpl$isRubic) { nbt.setBoolean("isRubicWorld", true); }
     }
 
     @Override public boolean rdpl$isRubic() { return rdpl$isRubic; }

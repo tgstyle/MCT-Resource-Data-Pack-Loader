@@ -68,29 +68,37 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         this.offsetCubes = RubicWorldControl.terrainOffsetCubes();
     }
 
+    private static IBlockState probed(Chunk probe, @Nullable ChunkPrimer probed, int x, int y, int z) {
+        if (probed != null) { return probed.getBlockState(x, y, z); }
+        ExtendedBlockStorage storage = probe.getBlockStorageArray()[Coords.blockToCube(y)];
+        return storage == null ? Objects.requireNonNull(Blocks.AIR).getDefaultState() : storage.get(x, Coords.blockToLocal(y), z);
+    }
+
     private void tryInit(IChunkGenerator vanilla, World world) {
         if (isInit) { return; }
         isInit = true;
-        lastChunk = vanilla.generateChunk(0, 0);
+        Chunk probe;
+        ChunkPrimer probed;
+        try (IRubicWorldInternal.ICompatGenerationScope ignored = ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration()) {
+            probe = vanilla.generateChunk(0, 0);
+            probed = ((IColumnInternal) probe).getCompatGenerationPrimer();
+            if (probed != null) { ((IColumnInternal) probe).syncCompatGenerationWrites(); }
+        }
         IBlockState airState = Objects.requireNonNull(Blocks.AIR).getDefaultState();
         IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
         int worldHeightBlocks = ((IRubicWorld) world).rdpl$getMaxGenerationHeight();
         worldHeightCubes = worldHeightBlocks / Cube.SIZE;
         Map<IBlockState, Integer> blockHistogramBottom = new HashMap<>();
         Map<IBlockState, Integer> blockHistogramTop = new HashMap<>();
-        ExtendedBlockStorage bottomEBS = lastChunk.getBlockStorageArray()[0];
         for (int x = 0; x < Cube.SIZE; x++) {
             for (int z = 0; z < Cube.SIZE; z++) {
                 for (int y = 0; y < 3; y++) {
-                    IBlockState blockState = bottomEBS == null ?
-                            airState : bottomEBS.get(x, y, z);
+                    IBlockState blockState = probed(probe, probed, x, y, z);
                     int count = blockHistogramBottom.getOrDefault(blockState, 0);
                     blockHistogramBottom.put(blockState, count + 1);
                 }
                 for (int y = worldHeightBlocks - 1; y > worldHeightBlocks - 4; y--) {
-                    int localY = Coords.blockToLocal(y);
-                    ExtendedBlockStorage ebs = lastChunk.getBlockStorageArray()[Coords.blockToCube(y)];
-                    IBlockState blockState = ebs == null ? airState : ebs.get(x, localY, z);
+                    IBlockState blockState = probed(probe, probed, x, y, z);
                     int count = blockHistogramTop.getOrDefault(blockState, 0);
                     blockHistogramTop.put(blockState, count + 1);
                 }
@@ -171,7 +179,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                 }
             }
             else {
-                if (lastChunk.x != cubeX || lastChunk.z != cubeZ) {
+                if (lastChunk == null || lastChunk.x != cubeX || lastChunk.z != cubeZ) {
                     try (IRubicWorldInternal.ICompatGenerationScope ignored =
                                  ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration()) {
                         lastChunk = vanilla.generateChunk(cubeX, cubeZ);

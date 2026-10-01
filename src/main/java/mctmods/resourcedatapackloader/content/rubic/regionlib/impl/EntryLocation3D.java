@@ -39,7 +39,7 @@ public class EntryLocation3D implements IKey {
 		int regX = entryX >> LOC_BITS;
 		int regY = entryY >> LOC_BITS;
 		int regZ = entryZ >> LOC_BITS;
-		return new RegionKey(regX + "." + regY + "." + regZ + ".3dr");
+		return new RegionKey(regX + "." + regY + "." + regZ + RegionNames.CUBES);
 	}
 
 	@Override public int getId() { return ((entryX & LOC_BITMASK) << LOC_BITS*2) | ((entryY & LOC_BITMASK) << LOC_BITS) | (entryZ & LOC_BITMASK); }

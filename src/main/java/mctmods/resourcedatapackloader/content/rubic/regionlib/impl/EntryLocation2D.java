@@ -34,7 +34,7 @@ public class EntryLocation2D implements IKey {
 	@Override public RegionKey getRegionKey() {
 		int regX = entryX >> LOC_BITS;
 		int regZ = entryZ >> LOC_BITS;
-		return new RegionKey(regX + "." + regZ + ".2dr");
+		return new RegionKey(regX + "." + regZ + RegionNames.COLUMNS);
 	}
 
 	@Override public int getId() { return ((entryX & LOC_BITMASK) << LOC_BITS) | (entryZ & LOC_BITMASK); }

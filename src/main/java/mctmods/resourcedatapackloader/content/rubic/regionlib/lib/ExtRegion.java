@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfa
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKey;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKeyProvider;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key.RegionKey;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.util.Utils;
 
 import java.io.IOException;
@@ -33,7 +34,7 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
 
     public ExtRegion(Path saveDirectory, List<IHeaderDataEntryProvider<?, K>> headerData, IKeyProvider keyProvider, RegionKey regionKey)
             throws IOException {
-        this.directory = saveDirectory.resolve(regionKey.getName() + ".ext");
+        this.directory = saveDirectory.resolve(regionKey.getName() + RegionNames.SPILL);
         this.headerData = headerData;
         int headerSize = 0;
         for (IHeaderDataEntryProvider<?, ?> p : headerData) { headerSize += p.getEntryByteCount(); }

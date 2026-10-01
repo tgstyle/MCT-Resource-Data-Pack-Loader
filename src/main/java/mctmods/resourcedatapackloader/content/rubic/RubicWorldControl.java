@@ -25,9 +25,8 @@ public final class RubicWorldControl {
         if (!ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false)) { return false; }
         if (Config.content.vanillaClients) {
             if (!VANILLA_CLIENTS_WARNED.getAndSet(true)) {
-                ContentLog.LOGGER.error(vanillaClientsMessage("a pack asks for a rubic world")
-                        + " This world is being made plain instead. Turn content.vanillaClients off if the rubic world is what you want,"
-                        + " or take the rubicWorld setting out of the pack if serving clients without the mod is.");
+                ContentLog.LOGGER.error("This pack asks for a rubic world, which vanilla clients cannot join. The world is made plain."
+                        + " Turn content.vanillaClients off, or remove rubicWorld from the pack.");
             }
             return false;
         }
@@ -38,24 +37,12 @@ public final class RubicWorldControl {
 
     private static final AtomicBoolean VANILLA_CLIENTS_WARNED = new AtomicBoolean();
 
-    /**
-     * A rubic world is made of cubes, which a client without this mod has no way to be told about, so the two settings
-     * cannot both hold.
-     */
-    private static String vanillaClientsMessage(String because) {
-        return "content.vanillaClients is on, but " + because + "."
-                + " A rubic world is made of cubes, and a client without this mod cannot be sent them: it would be turned away at login, or see nothing at all.";
+    public static void standDownForVanillaClients() {
+        stop("This is a rubic world,\nwhich vanilla clients cannot join.\n\nIt was not loaded and nothing was changed.\n\nTurn content.vanillaClients off,\nor use a different world.");
     }
 
-    /**
-     * Only for a world already made as a rubic world, where carrying on would load its cubes as a plain world and ruin
-     * the save. Making a new world simply does not turn rubic on, which needs no such stop.
-     */
-    public static void standDownForVanillaClients(String because) {
-        String message = vanillaClientsMessage(because)
-                + " Its cubes are on disk, so loading it as a plain world would ruin it: it is left untouched and nothing has been written."
-                + " Turn content.vanillaClients off to load this world as the rubic world it is, or leave it alone and serve clients without the mod from a different world.";
-        ContentLog.LOGGER.error(message);
+    private static void stop(String message) {
+        ContentLog.LOGGER.error(message.replace("\n\n", " ").replace('\n', ' '));
         StartupQuery.notify(message);
         StartupQuery.abort();
     }
@@ -74,12 +61,7 @@ public final class RubicWorldControl {
     }
 
     private static void standDown() {
-        String message = "A pack asks for a rubic world, but CubicChunks is installed and this mod's cubic worlds have stood down for it."
-                + " Running the two together is not supported: take CubicChunks out to use this mod's own cubic worlds, or take the rubicWorld setting"
-                + " out of the pack to carry on with CubicChunks making them. Please do not report anything about this mod while CubicChunks is installed.";
-        ContentLog.LOGGER.error(message);
-        StartupQuery.notify(message);
-        StartupQuery.abort();
+        stop("This pack needs a rubic world,\nwhich cannot run with CubicChunks installed.\n\nRemove CubicChunks,\nor remove rubicWorld from the pack.");
     }
 
     private static final int DEFAULT_MIN_HEIGHT = -64;

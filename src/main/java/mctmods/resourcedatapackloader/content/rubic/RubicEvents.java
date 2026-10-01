@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic;
 
+import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
@@ -43,13 +44,14 @@ public class RubicEvents {
                 (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
         boolean savedRubic = savedData != null && savedData.isRubicWorld;
         if (savedRubic && mctmods.resourcedatapackloader.util.Config.content.vanillaClients) {
-            mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.standDownForVanillaClients("this world was made as a rubic world");
+            mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.standDownForVanillaClients();
         }
         boolean claimed = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.claims(world.provider.getDimension());
         boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && claimed && (savedData == null || savedData.isRubicWorld);
         boolean isRubic = savedRubic || rubicWorldInfo;
         if (claimed && mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.wanted()) { isRubic = true; }
 
+        boolean recorded = savedData != null || isRubic || ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() || ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false);
         if (savedData == null) {
             int minY = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.minHeight();
             int maxY = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.maxHeight();
@@ -63,7 +65,7 @@ public class RubicEvents {
             }
             savedData = new WorldSavedRubicData("rdplRubicData", isRubic, minY, maxY);
         }
-        savedData.markDirty();
+        if (recorded) { savedData.markDirty(); }
         evt.getObject().getPerWorldStorage().setData("rdplRubicData", savedData);
         evt.getObject().getPerWorldStorage().saveAllData();
 
