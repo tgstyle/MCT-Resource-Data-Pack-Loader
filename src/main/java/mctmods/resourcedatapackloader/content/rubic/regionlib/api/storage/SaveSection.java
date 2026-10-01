@@ -13,10 +13,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Predicate;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public abstract class SaveSection<K extends IKey> implements Flushable, Closeable {
@@ -28,6 +30,7 @@ public abstract class SaveSection<K extends IKey> implements Flushable, Closeabl
     public void save(K key, ByteBuffer value) throws IOException {
         ByteBuffer toWrite = value;
         List<UnsupportedDataException> exceptions = new ArrayList<>();
+        List<IRegionProvider<K>> refusedBy = new ArrayList<>();
         for (IRegionProvider<K> prov : regionProviders) {
             ByteBuffer toWriteFinal = toWrite;
             prov.forRegion(key, r -> {
@@ -36,40 +39,46 @@ public abstract class SaveSection<K extends IKey> implements Flushable, Closeabl
                     exceptions.clear();
                 } catch (UnsupportedDataException ex) {
                     exceptions.add(ex);
-                    r.writeValue(key, null);
+                    refusedBy.add(prov);
                 }
             });
             if (exceptions.isEmpty()) { toWrite = null; }
         }
-        if (!exceptions.isEmpty())
-            throw new SaveSectionException("No region provider supporting key " + key + " with data size " + value.capacity(), exceptions);
+        if (!exceptions.isEmpty()) { throw new SaveSectionException("No region provider supporting key " + key + " with data size " + value.capacity(), exceptions); }
+        for (IRegionProvider<K> prov : refusedBy) { prov.forRegion(key, r -> r.writeValue(key, null)); }
     }
 
     public void save(Map<K, ByteBuffer> entries) throws IOException {
-        Map<K, ByteBuffer> pendingEntries = new HashMap<>(entries);
         Map<K, List<UnsupportedDataException>> exceptions = new HashMap<>();
-        Map<RegionKey, List<K>> positionsByRegion = pendingEntries.keySet().stream().collect(Collectors.groupingBy(IKey::getRegionKey, Collectors.toList()));
+        Map<RegionKey, List<K>> positionsByRegion = entries.keySet().stream().collect(Collectors.groupingBy(IKey::getRegionKey, Collectors.toList()));
         for (List<K> positionsIn : positionsByRegion.values()) {
+            Set<K> unplaced = new HashSet<>(positionsIn);
+            Map<IRegionProvider<K>, Set<K>> refusedBy = new LinkedHashMap<>();
             for (IRegionProvider<K> prov : regionProviders) {
+                Map<K, ByteBuffer> regionEntries = new HashMap<>(positionsIn.size());
+                positionsIn.forEach(k -> regionEntries.put(k, unplaced.contains(k) ? entries.get(k) : null));
+                Set<K> refused = new HashSet<>();
                 prov.forRegion(positionsIn.get(0), r -> {
-                    List<K> positions = positionsIn;
                     try {
-                        Map<K, ByteBuffer> regionEntries = new HashMap<>(positions.size());
-                        positions.forEach(k -> regionEntries.put(k, pendingEntries.get(k)));
                         r.writeValues(regionEntries);
                     } catch (MultiUnsupportedDataException ex) {
                         Map<K, UnsupportedDataException> children = ex.getChildren();
-                        positions = positions.stream().filter(((Predicate<K>) children::containsKey).negate()).collect(Collectors.toList());
                         children.forEach((k, e) -> exceptions.computeIfAbsent(k, unused -> new ArrayList<>()).add(e));
-                        Map<K, ByteBuffer> toNulls = new HashMap<>(positions.size());
-                        children.forEach((k, v) -> toNulls.put(k, null));
-                        r.writeValues(toNulls);
+                        refused.addAll(children.keySet());
                     }
-                    positions.forEach(k -> {
-                        exceptions.remove(k);
-                        pendingEntries.put(k, null);
-                    });
                 });
+                unplaced.retainAll(refused);
+                positionsIn.forEach(k -> {
+                    if (!refused.contains(k)) { exceptions.remove(k); }
+                });
+                if (!refused.isEmpty()) { refusedBy.put(prov, refused); }
+            }
+            for (Map.Entry<IRegionProvider<K>, Set<K>> held : refusedBy.entrySet()) {
+                Map<K, ByteBuffer> toNulls = new HashMap<>(held.getValue().size());
+                held.getValue().forEach(k -> {
+                    if (!unplaced.contains(k)) { toNulls.put(k, null); }
+                });
+                if (!toNulls.isEmpty()) { held.getKey().forRegion(positionsIn.get(0), r -> r.writeValues(toNulls)); }
             }
         }
         if (!exceptions.isEmpty()) {

@@ -32,8 +32,14 @@ public class IONbtReader {
         NBTTagCompound level = nbt.getCompoundTag("Level");
         Chunk column = readBaseColumn(world, x, z, level);
         if (column == null) { return null; }
-        readBiomes(level, column);
-        readOpacityIndex(level, column);
+        try {
+            readBiomes(level, column);
+            readOpacityIndex(level, column);
+        }
+        catch (IndexOutOfBoundsException corrupt) {
+            Rubic.LOGGER.error("Column is corrupted! The biomes or the height map of ({},{}) are missing or cut short ({}). Column will be regenerated.", x, z, corrupt.toString());
+            return null;
+        }
         readPregenDone(level, column);
 
         column.setModified(false);

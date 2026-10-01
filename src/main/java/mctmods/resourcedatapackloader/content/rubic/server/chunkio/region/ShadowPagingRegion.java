@@ -198,7 +198,7 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
 			long position = (long) sectorOffset * sectorSize;
 			readFully(file, buf, position);
 			int dataLength = buf.getInt(0);
-			if (dataLength > sectorCount * sectorSize) {
+			if (dataLength < 0 || dataLength > sectorCount * sectorSize) {
 				throw new ICorruptedDataException(
 						"Expected data size max " + sectorCount * sectorSize + " but found " + dataLength);
 			}
@@ -285,7 +285,12 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
 	public static <L extends IKey> ShadowPagingRegion.Builder<L> builder() { return new ShadowPagingRegion.Builder<>(); }
 
 	public static void readFully(FileChannel src, ByteBuffer data, long position) throws IOException {
-		while (data.hasRemaining()) { src.read(data, position); }
+		long at = position;
+		while (data.hasRemaining()) {
+			int read = src.read(data, at);
+			if (read < 0) { throw new ICorruptedDataException("Expected " + data.remaining() + " more byte(s) at " + at + " but the file ends there"); }
+			at += read;
+		}
 	}
 
 	public static class Builder<K extends IKey> {

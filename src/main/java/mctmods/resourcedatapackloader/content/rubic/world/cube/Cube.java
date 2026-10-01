@@ -277,31 +277,51 @@ public class Cube implements ICube {
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
         boolean raised = false;
-        if (!isSurfaceTracked) {
+        ExtendedBlockStorage blocks = storage == NULL_STORAGE || storage.isEmpty() ? null : storage;
+        boolean stale = isSurfaceTracked && !world.isRemote && surfaceIsStale(blocks);
+        if (!isSurfaceTracked || stale) {
             IColumnInternal held = getColumn();
             int[] before = new int[256];
             for (int i = 0; i < 256; i++) { before[i] = held.getTopYWithStaging(i & 15, i >> 4); }
-            held.addToStagingHeightmap(this);
+            if (stale) {
+                Rubic.LOGGER.warn("Cube {} and the height map of its column disagree, so the height map is rebuilt from the cube", this.getCoords());
+                pushOpacity(blocks);
+            }
+            else { held.addToStagingHeightmap(this); }
             for (int i = 0; i < 256 && !raised; i++) { raised = held.getTopYWithStaging(i & 15, i >> 4) > before[i]; }
         }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onCubeLoad(this, raised);
         CompatHandler.onCubeLoad(new ChunkEvent.Load(getColumn()));
     }
 
-    @SuppressWarnings("deprecation") public void trackSurface() {
-        if (storage != NULL_STORAGE && !storage.isEmpty()) {
-            IHeightMap opindex = ((IColumn) column).getOpacityIndex();
-            int miny = getCoords().getMinBlockY();
-            column.setModified(true);
-            for (int x = 0; x < Cube.SIZE; x++) {
-                for (int z = 0; z < Cube.SIZE; z++) {
-                    for (int y = Cube.SIZE - 1; y >= 0; y--) {
-                        IBlockState newstate = storage.get(x, y, z);
-                        opindex.onOpacityChange(x, miny + y, z, newstate.getLightOpacity());
-                    }
+    @SuppressWarnings("deprecation") private boolean surfaceIsStale(@Nullable ExtendedBlockStorage blocks) {
+        IHeightMap opindex = ((IColumn) column).getOpacityIndex();
+        int miny = getCoords().getMinBlockY();
+        for (int x = 0; x < Cube.SIZE; x++) {
+            for (int z = 0; z < Cube.SIZE; z++) {
+                int own = miny - 1;
+                for (int y = Cube.SIZE - 1; blocks != null && y >= 0 && own < miny; y--) {
+                    if (blocks.get(x, y, z).getLightOpacity() != 0) { own = miny + y; }
                 }
+                if (Math.max(opindex.getTopBlockYBelow(x, z, miny + Cube.SIZE), miny - 1) != own) { return true; }
             }
         }
+        return false;
+    }
+
+    @SuppressWarnings("deprecation") private void pushOpacity(@Nullable ExtendedBlockStorage blocks) {
+        IHeightMap opindex = ((IColumn) column).getOpacityIndex();
+        int miny = getCoords().getMinBlockY();
+        column.setModified(true);
+        for (int x = 0; x < Cube.SIZE; x++) {
+            for (int z = 0; z < Cube.SIZE; z++) {
+                for (int y = Cube.SIZE - 1; y >= 0; y--) { opindex.onOpacityChange(x, miny + y, z, blocks == null ? 0 : blocks.get(x, y, z).getLightOpacity()); }
+            }
+        }
+    }
+
+    public void trackSurface() {
+        if (storage != NULL_STORAGE && !storage.isEmpty()) { pushOpacity(storage); }
         isSurfaceTracked = true;
         ((IColumnInternal) getColumn()).removeFromStagingHeightmap(this);
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onTrackCubeSurface(this);

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation2D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation3D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
@@ -8,6 +9,7 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSect
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.save.SaveSection3D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.lib.ExtRegion;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.lib.provider.SimpleRegionProvider;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.util.ICorruptedDataException;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.util.Utils;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.region.CachedRegionProvider;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.region.ShadowPagingRegion;
@@ -22,6 +24,7 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -32,7 +35,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,18 +97,31 @@ public class RegionCubeStorage implements IRubicStorage {
     @Override public boolean columnExists(@Nonnull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
 
     @Override public NBTTagCompound readColumn(@Nonnull ChunkPos pos) throws IOException {
-        Optional<ByteBuffer> data = this.save.load(new EntryLocation2D(pos.x, pos.z), true);
-        return data.isPresent()
-                ? CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.get().array()))
-                : null;
+        try { return parsed(this.save.load(new EntryLocation2D(pos.x, pos.z), true).orElse(null), "Column", pos); }
+        catch (ICorruptedDataException corrupt) {
+            regenerating("Column", pos, corrupt);
+            return null;
+        }
     }
 
     @Override public NBTTagCompound readCube(@Nonnull CubePos pos) throws IOException {
-        Optional<ByteBuffer> data = this.save.load(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()), true);
-        return data.isPresent()
-                ? CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.get().array()))
-                : null;
+        try { return parsed(this.save.load(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()), true).orElse(null), "Cube", pos); }
+        catch (ICorruptedDataException corrupt) {
+            regenerating("Cube", pos, corrupt);
+            return null;
+        }
     }
+
+    @Nullable private static NBTTagCompound parsed(@Nullable ByteBuffer data, String what, Object pos) {
+        if (data == null) { return null; }
+        try { return CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.array())); }
+        catch (IOException | RuntimeException corrupt) {
+            regenerating(what, pos, corrupt);
+            return null;
+        }
+    }
+
+    private static void regenerating(String what, Object pos, Exception corrupt) { Rubic.LOGGER.error("{} is corrupted! The saved data of {} could not be read ({}). {} will be regenerated.", what, pos, corrupt.toString(), what); }
 
     @Override public void writeColumn(@Nonnull ChunkPos pos, @Nonnull NBTTagCompound nbt) throws IOException {
         ByteBuf compressedBuf = UnpooledByteBufAllocator.DEFAULT.ioBuffer();
@@ -134,11 +149,11 @@ public class RegionCubeStorage implements IRubicStorage {
         try {
             compressedColumns = this.compressNBTForBatchWrite(batch.columns, pos -> new EntryLocation2D(pos.x, pos.z));
             compressedCubes = this.compressNBTForBatchWrite(batch.cubes, pos -> new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()));
-            if (!compressedColumns.isEmpty()) {
-                this.save.save2d(compressedColumns.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().nioBuffer())));
-            }
             if (!compressedCubes.isEmpty()) {
                 this.save.save3d(compressedCubes.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().nioBuffer())));
+            }
+            if (!compressedColumns.isEmpty()) {
+                this.save.save2d(compressedColumns.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().nioBuffer())));
             }
             ContentLog.LOGGER.debug("Saved batch: {} columns and {} cubes", batch.columns.size(), batch.cubes.size());
         } finally {
