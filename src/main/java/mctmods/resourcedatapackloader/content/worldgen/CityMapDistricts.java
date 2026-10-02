@@ -279,7 +279,7 @@ final class CityMapDistricts {
                     }
                     CityPlan.Line tried = new CityPlan.Line(street.at(), street.width(), false, alongX, from, to, CityPlan.End.MET, CityPlan.End.MET);
                     BoundingBox strip = box(tried);
-                    if (meetsAny(pieces, strip) || meetsRoad(roads, strip) || strays(standing, strip, cellX, cellZ)) {
+                    if (standsOn(standing.rails(), pieces, strip) || meetsRoad(roads, strip) || strays(standing, strip, cellX, cellZ)) {
                         refused[1]++;
                         continue;
                     }
@@ -304,6 +304,20 @@ final class CityMapDistricts {
         return best;
     }
 
+    private static boolean standsOn(List<CityPlan.Rail> rails, List<BoundingBox> pieces, BoundingBox tie) {
+        for (BoundingBox piece : pieces) {
+            if (piece.intersects(tie) && !crossedClean(rails, piece, tie)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean crossedClean(List<CityPlan.Rail> rails, BoundingBox piece, BoundingBox tie) {
+        for (CityPlan.Rail rail : rails) {
+            if (!rail.subway() && piece.equals(CityRails.railBox(rail)) && CityRails.crosses(rail, tie)) { return true; }
+        }
+        return false;
+    }
+
     private static boolean strays(Standing standing, BoundingBox strip, int cellX, int cellZ) {
         for (int x = CityPlan.districtOf(strip.minX(), true); x <= CityPlan.districtOf(strip.maxX(), true); x++) {
             for (int z = CityPlan.districtOf(strip.minZ(), false); z <= CityPlan.districtOf(strip.maxZ(), false); z++) {
@@ -326,7 +340,7 @@ final class CityMapDistricts {
 
     private static boolean boreUnder(List<CityPlan.Rail> rails, BoundingBox well) {
         for (CityPlan.Rail rail : rails) {
-            if (rail.subway() && (rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to())).intersects(well)) { return true; }
+            if (rail.subway() && CityRails.railBox(rail).intersects(well)) { return true; }
         }
         return false;
     }

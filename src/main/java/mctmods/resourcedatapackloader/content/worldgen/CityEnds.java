@@ -184,6 +184,11 @@ final class CityEnds {
             closing.say("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would meet a tunnel through a hill", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ());
             return false;
         }
+        Rail line = railUnder(closing, merge);
+        if (line != null) {
+            closing.say("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would stand on the railway line at {} {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), line.alongX() ? "z" : "x", line.middle());
+            return false;
+        }
         if (held(closing, dead.line(), met, merge)) {
             closing.say("The dead end at {}, {} cannot merge into the street at {}, {}: the ground between them is held", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ());
             return false;
@@ -235,6 +240,11 @@ final class CityEnds {
         BoundingBox avenue = alongX ? new BoundingBox(conLo, 0, unionLo, conHi, 0, unionHi) : new BoundingBox(unionLo, 0, conLo, unionHi, 0, conHi);
         if (hill(closing, closing.everyone(), avenue)) {
             closing.say("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would meet a tunnel through a hill", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ());
+            return;
+        }
+        Rail line = railUnder(closing, avenue);
+        if (line != null) {
+            closing.say("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would stand on the railway line at {} {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), line.alongX() ? "z" : "x", line.middle());
             return;
         }
         if (held(closing, dead.line(), met, avenue)) {
@@ -291,9 +301,16 @@ final class CityEnds {
         }
         BoundingBox whole = whole(line, box);
         for (Rail rail : closing.rails()) {
-            if (bed(rail).intersects(box) && !railCrosses(rail, whole)) { return true; }
+            if (CityRails.railBox(rail).intersects(box) && !CityRails.crosses(rail, whole)) { return true; }
         }
         return false;
+    }
+
+    @Nullable private static Rail railUnder(Closing closing, BoundingBox box) {
+        for (Rail rail : closing.rails()) {
+            if (!rail.subway() && CityRails.railBox(rail).intersects(box)) { return rail; }
+        }
+        return null;
     }
 
     static boolean stubHeld(CityGround ground, Town town, Town neighbor, Line street, BoundingBox strip) {
@@ -323,7 +340,7 @@ final class CityEnds {
         List<Rail> own = CityRails.placed(closing.ground().seed(), town);
         BoundingBox whole = whole(street, strip);
         for (Rail rail : closing.rails()) {
-            if (bed(rail).intersects(strip) && !(own.contains(rail) && railCrosses(rail, whole))) { return true; }
+            if (CityRails.railBox(rail).intersects(strip) && !(own.contains(rail) && CityRails.crosses(rail, whole))) { return true; }
         }
         return false;
     }
@@ -331,16 +348,6 @@ final class CityEnds {
     private static BoundingBox whole(Line line, BoundingBox box) {
         BoundingBox road = CityMapDistricts.box(line);
         return new BoundingBox(Math.min(road.minX(), box.minX()), 0, Math.min(road.minZ(), box.minZ()), Math.max(road.maxX(), box.maxX()), 0, Math.max(road.maxZ(), box.maxZ()));
-    }
-
-    private static BoundingBox bed(Rail rail) { return rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to()); }
-
-    private static boolean railCrosses(Rail rail, BoundingBox box) {
-        boolean boxAlongX = box.maxX() - box.minX() >= box.maxZ() - box.minZ();
-        if (rail.alongX() == boxAlongX) { return false; }
-        int least = rail.alongX() ? box.minZ() : box.minX();
-        int most = rail.alongX() ? box.maxZ() : box.maxX();
-        return least <= rail.at() - CityRails.MARGIN && most >= rail.last() + CityRails.MARGIN;
     }
 
     @Nullable private static Line beside(Closing closing, BoundingBox strip, boolean alongX) {

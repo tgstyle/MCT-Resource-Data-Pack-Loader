@@ -252,7 +252,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         if (bridged && width > NARROW) { barriers(level, box, cross); }
         if (bridged) { frames(level, manager, chunk, box, cross, bores); }
         if (bridged && width > NARROW) { legs(level, manager, chunk, box, cross, bores); }
-        if (bored) { bore(level, box, cross); }
+        if (bored) { bore(level, box, cross, bores); }
     }
 
     private boolean overWater(WorldGenLevel level, CityGround ground, BlockPos.MutableBlockPos at, int x, int z) {
@@ -290,7 +290,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         }
     }
 
-    private void bore(WorldGenLevel level, BoundingBox box, CityCross cross) {
+    private void bore(WorldGenLevel level, BoundingBox box, CityCross cross, List<CityRails.Laid> bores) {
         CityPalette linings = CityPalette.mixed(ContentCity.tunnelBlock());
         if (linings == null) { return; }
         long seed = level.getSeed();
@@ -311,6 +311,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                     at.set(wallX, this.level + up, wallZ);
                     if (box.isInside(at)) { level.setBlock(at, linings.pick(seed, wallX, this.level + up, wallZ), 2); }
                 }
+                CityPlotGround.wallFoot(level, box, bores, wallX, wallZ, this.level - 1, linings.pick(seed, wallX, this.level - 1, wallZ));
             }
             for (int across = middle - wall; across <= middle + wall; across++) {
                 int roofX = alongX ? along : across;

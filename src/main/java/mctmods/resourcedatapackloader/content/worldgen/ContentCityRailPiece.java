@@ -202,7 +202,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 int junction = CityLinks.junction(trunk, row, across);
                 if (junction == CityLinks.OPEN) { continue; }
                 if (junction == CityLinks.WALL) {
-                    if (bored) { lined += boreWall(level, under, x, z, dress.linings(), seed, at); }
+                    if (bored) { lined += boreWall(level, box, under, bores, x, z, dress.linings(), seed, at); }
                     continue;
                 }
                 boolean verge = across < acrossLeast || across > acrossMost;
@@ -218,7 +218,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 if (verge && platform > 0 && (across < acrossLeast - 1 || across > acrossMost + 1)) { continue; }
                 if (verge) {
                     if (bridged) { continue; }
-                    if (bored) { lined += boreWall(level, under, x, z, dress.linings(), seed, at); }
+                    if (bored) { lined += boreWall(level, box, under, bores, x, z, dress.linings(), seed, at); }
                     else {
                         lined += cutWall(level, row, across, across < acrossLeast ? -1 : 1, dress.linings(), seed, at);
                         CityPlotGround.vergeFill(level, box, others, x, z, this.level, at);
@@ -329,9 +329,10 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         return null;
     }
 
-    private int boreWall(WorldGenLevel level, List<BoundingBox> under, int x, int z, CityPalette linings, long seed, BlockPos.MutableBlockPos at) {
+    private int boreWall(WorldGenLevel level, BoundingBox box, List<BoundingBox> under, List<CityRails.Laid> bores, int x, int z, CityPalette linings, long seed, BlockPos.MutableBlockPos at) {
         if (CityPlotGround.covered(under, x, z)) { return 0; }
         for (int y = this.level; y <= this.level + CLEAR + 1; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), 2); }
+        if (!subway) { CityPlotGround.wallFoot(level, box, bores, x, z, this.level - 1, linings.pick(seed, x, this.level - 1, z)); }
         return CLEAR + 2;
     }
 

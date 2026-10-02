@@ -145,7 +145,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         return northSouth ? acrossX : acrossZ;
     }
 
-    @SuppressWarnings("deprecation") private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
+    private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
         BlockState road = CityPalette.stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
         BlockState edge = CityPalette.stateOr(ContentCity.lineBlock(), road);
         BlockState sidewalk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
@@ -218,12 +218,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
                 if (!chosen) { laid = natural(level.getBlockState(at.set(x, this.level, z))); }
                 at.set(x, this.level, z);
                 level.setBlock(at, laid, 2);
-                BlockState ground = CityPlotGround.groundFor(level, x, z);
-                for (int down = 1; down <= FILL && this.level - down > roof; down++) {
-                    at.set(x, this.level - down, z);
-                    if (level.getBlockState(at).isSolid()) { break; }
-                    level.setBlock(at, ground, 2);
-                }
+                CityPlotGround.fillUnder(level, box, x, z, this.level - 1, Math.max(this.level - FILL, roof + 1));
                 if (outside) {
                     for (int up = 1; up <= Math.max(CLEAR, top - this.level + 2); up++) {
                         at.set(x, this.level + up, z);

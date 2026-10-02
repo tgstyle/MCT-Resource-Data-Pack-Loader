@@ -44,6 +44,9 @@ public final class ContentCityClaim {
     private static final int LAKE_SPAN = 15;
     private static final int LAKE_OVER = 8;
     private static final int LAKE_UNDER = 4;
+    private static final int BOULDER_LOW = 3;
+    private static final int BOULDER_UNDER = 28;
+    private static final int BOULDER_OVER = 14;
     private static final int ROAD_TALL = 2;
     private static final int MARGIN = 12;
     private static final String STREETS = "/streets/";
@@ -87,37 +90,24 @@ public final class ContentCityClaim {
         return false;
     }
 
+    private record Road(String what, int x, int z) {}
+
     public static boolean floods(WorldGenLevel level, BlockPos origin) {
-        if (floodsVillageRoad(level, origin)) { return true; }
-        if (ContentCity.idle()) { return false; }
-        CityGround ground = CityGround.of(level);
         int leastX = origin.getX();
         int mostX = origin.getX() + LAKE_SPAN;
         int leastZ = origin.getZ();
         int mostZ = origin.getZ() + LAKE_SPAN;
+        Road road = roadIn(level, leastX, origin.getY() - LAKE_UNDER - MARGIN, leastZ, mostX, origin.getY() + LAKE_OVER + MARGIN, mostZ);
+        if (road != null) {
+            ContentLog.LOGGER.debug("A lake at {}, {}, {} would flood the {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), road.what(), road.x(), road.z());
+            return true;
+        }
+        if (ContentCity.idle()) { return false; }
+        CityGround ground = CityGround.of(level);
         for (int districtX = CityPlan.districtOf(leastX, true); districtX <= CityPlan.districtOf(mostX, true); districtX++) {
             for (int districtZ = CityPlan.districtOf(leastZ, false); districtZ <= CityPlan.districtOf(mostZ, false); districtZ++) {
                 CityPlan plan = CityPlan.of(ground, districtX, districtZ);
                 if (plan == null) { continue; }
-                for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-                    for (CityPlan.Line line : lines) {
-                        int fromX = line.alongX() ? line.from() : line.at();
-                        int toX = line.alongX() ? line.to() : line.last();
-                        int fromZ = line.alongX() ? line.at() : line.from();
-                        int toZ = line.alongX() ? line.last() : line.to();
-                        if (floodsBox(level, origin, leastX, leastZ, mostX, mostZ, fromX, fromZ, toX, toZ, 0, ROAD_TALL)) { return true; }
-                    }
-                }
-                for (CityPlan.Rail rail : plan.rails()) {
-                    int from = rail.from();
-                    int to = rail.to();
-                    int fromX = rail.alongX() ? from : rail.at();
-                    int toX = rail.alongX() ? to : rail.last();
-                    int fromZ = rail.alongX() ? rail.at() : from;
-                    int toZ = rail.alongX() ? rail.last() : to;
-                    int under = rail.subway() ? ContentCity.subwayDepth() : 0;
-                    if (floodsBox(level, origin, leastX, leastZ, mostX, mostZ, fromX, fromZ, toX, toZ, under, ContentCityRailPiece.CLEAR + 1)) { return true; }
-                }
                 for (CityPlan.Plot plot : plan.plots()) {
                     if (plot.toX() < leastX || plot.fromX() > mostX || plot.toZ() < leastZ || plot.fromZ() > mostZ) { continue; }
                     ContentLog.LOGGER.debug("A lake at {}, {}, {} would reach into the city plot {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), plot.def().key(), plot.fromX(), plot.fromZ());
@@ -128,28 +118,54 @@ public final class ContentCityClaim {
         return false;
     }
 
-    private static boolean floodsVillageRoad(WorldGenLevel level, BlockPos origin) {
-        if (!ContentCity.wanted()) { return false; }
-        List<Identifier> villages = ContentStructureControl.structures("villages");
-        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
-        int leastX = origin.getX();
-        int mostX = origin.getX() + LAKE_SPAN;
-        int leastZ = origin.getZ();
-        int mostZ = origin.getZ() + LAKE_SPAN;
-        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int chunkX = SectionPos.blockToSectionCoord(leastX); chunkX <= SectionPos.blockToSectionCoord(mostX); chunkX++) {
-            for (int chunkZ = SectionPos.blockToSectionCoord(leastZ); chunkZ <= SectionPos.blockToSectionCoord(mostZ); chunkZ++) {
-                at.set(SectionPos.sectionToBlockCoord(chunkX), origin.getY(), SectionPos.sectionToBlockCoord(chunkZ));
-                for (StructurePiece piece : pieces(level, at, structure -> villages.contains(registry.getKey(structure)))) {
-                    if (!(piece instanceof PoolElementStructurePiece pool) || !pool.getElement().toString().contains(STREETS)) { continue; }
-                    BoundingBox box = piece.getBoundingBox();
-                    if (origin.getY() + LAKE_OVER < box.minY() - MARGIN || origin.getY() - LAKE_UNDER > box.maxY() + MARGIN || !box.intersects(leastX, leastZ, mostX, mostZ)) { continue; }
-                    ContentLog.LOGGER.debug("A lake at {}, {}, {} would flood the village road at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), box.minX(), box.minZ());
-                    return true;
+    public static boolean boulderOnRoad(WorldGenLevel level, BlockPos origin) {
+        Road road = roadIn(level, origin.getX() - BOULDER_LOW, origin.getY() - BOULDER_UNDER, origin.getZ() - BOULDER_LOW, origin.getX() + 1, origin.getY() + BOULDER_OVER, origin.getZ() + 1);
+        if (road == null) { return false; }
+        ContentLog.LOGGER.debug("A boulder at {}, {}, {} would stand on the {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), road.what(), road.x(), road.z());
+        return true;
+    }
+
+    @Nullable private static Road roadIn(WorldGenLevel level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        Road village = villageRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ);
+        if (village != null || ContentCity.idle()) { return village; }
+        CityGround ground = CityGround.of(level);
+        for (int districtX = CityPlan.districtOf(minX, true); districtX <= CityPlan.districtOf(maxX, true); districtX++) {
+            for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
+                CityPlan plan = CityPlan.of(ground, districtX, districtZ);
+                if (plan == null) { continue; }
+                for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
+                    for (CityPlan.Line line : lines) {
+                        Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, CityRails.lineBox(line), 0, ROAD_TALL);
+                        if (met != null) { return met; }
+                    }
+                }
+                for (CityPlan.Rail rail : plan.rails()) {
+                    BoundingBox bed = rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to());
+                    Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, bed, rail.subway() ? ContentCity.subwayDepth() : 0, ContentCityRailPiece.CLEAR + 1);
+                    if (met != null) { return met; }
                 }
             }
         }
-        return false;
+        return null;
+    }
+
+    @Nullable private static Road villageRoadIn(WorldGenLevel level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        if (!ContentCity.wanted()) { return null; }
+        List<Identifier> villages = ContentStructureControl.structures("villages");
+        Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int chunkX = SectionPos.blockToSectionCoord(minX); chunkX <= SectionPos.blockToSectionCoord(maxX); chunkX++) {
+            for (int chunkZ = SectionPos.blockToSectionCoord(minZ); chunkZ <= SectionPos.blockToSectionCoord(maxZ); chunkZ++) {
+                at.set(SectionPos.sectionToBlockCoord(chunkX), minY, SectionPos.sectionToBlockCoord(chunkZ));
+                for (StructurePiece piece : pieces(level, at, structure -> villages.contains(registry.getKey(structure)))) {
+                    if (!(piece instanceof PoolElementStructurePiece pool) || !pool.getElement().toString().contains(STREETS)) { continue; }
+                    BoundingBox box = piece.getBoundingBox();
+                    if (maxY < box.minY() || minY > box.maxY() || !box.intersects(minX, minZ, maxX, maxZ)) { continue; }
+                    return new Road("village road", box.minX(), box.minZ());
+                }
+            }
+        }
+        return null;
     }
 
     public static boolean bergInCity(WorldGenLevel level, ChunkGenerator generator, BlockPos origin) {
@@ -317,14 +333,12 @@ public final class ContentCityClaim {
         return false;
     }
 
-    private static boolean floodsBox(WorldGenLevel level, BlockPos origin, int leastX, int leastZ, int mostX, int mostZ, int fromX, int fromZ, int toX, int toZ, int under, int tall) {
-        if (toX < leastX || fromX > mostX || toZ < leastZ || fromZ > mostZ) { return false; }
-        int x = Mth.clamp(origin.getX(), fromX, toX);
-        int z = Mth.clamp(origin.getZ(), fromZ, toZ);
+    @Nullable private static Road cityRoadIn(WorldGenLevel level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BoundingBox road, int under, int tall) {
+        if (!road.intersects(minX, minZ, maxX, maxZ)) { return null; }
+        int x = Mth.clamp(minX, road.minX(), road.maxX());
+        int z = Mth.clamp(minZ, road.minZ(), road.maxZ());
         int bed = level.getHeight(Heightmap.Types.OCEAN_FLOOR_WG, x, z) - 1 - under;
-        if (origin.getY() + LAKE_OVER < bed - MARGIN || origin.getY() - LAKE_UNDER > bed + tall + MARGIN) { return false; }
-        ContentLog.LOGGER.debug("A lake at {}, {}, {} would flood the city's road or railway at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), x, z);
-        return true;
+        return maxY < bed || minY > bed + tall ? null : new Road("city's road or railway", x, z);
     }
 
     private static final class Vein {
