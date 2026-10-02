@@ -31,6 +31,7 @@ import javax.annotation.Nullable;
 
 public class ContentWorldProvider extends WorldProviderSurface {
     private static final String FLAT_DEFAULT = "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1";
+    private static final float STILL_SUN = 0.25F;
     private final ContentWeatherCycle weatherCycle = new ContentWeatherCycle();
     @Nullable protected DimensionDef def;
 
@@ -117,6 +118,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override public float calculateCelestialAngle(long worldTime, float partialTicks) {
         if (def == null || def.traits.dayLength == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
+        if (def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
         float angle = ((float) (worldTime % def.traits.dayLength) + partialTicks) / def.traits.dayLength - 0.25F;
         if (angle < 0.0F) { angle++; }
         if (angle > 1.0F) { angle--; }
@@ -140,6 +142,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public boolean canBlockFreeze(@Nonnull BlockPos pos, boolean byWater) { return (def == null || def.traits.freeze) && super.canBlockFreeze(pos, byWater); }
 
     @Override public boolean isDaytime() {
+        if (def != null && def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return true; }
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
         long time = def.fixedTime % 24000L;
         return time < 12300L || time > 23850L;

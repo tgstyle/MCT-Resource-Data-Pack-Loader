@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 public final class DimensionTraitsDef {
     public static final long VANILLA_DAY = 24000L;
+    public static final long NO_DAY = 0L;
     public static final float VANILLA_SUN = 30.0F;
     public final double gravity;
     public final double fallDamage;

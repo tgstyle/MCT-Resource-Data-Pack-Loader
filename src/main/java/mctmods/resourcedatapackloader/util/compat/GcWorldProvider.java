@@ -38,6 +38,11 @@ public class GcWorldProvider extends ContentWorldProvider implements IGalacticra
         return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind);
     }
 
+    @Override protected void init() {
+        super.init();
+        if (world.isRemote && belt()) { GcBeltSky.apply(this); }
+    }
+
     public WorldProvider asteroids() {
         if (!belt()) { return this; }
         if (asteroids == null) { asteroids = GcAsteroids.store(world); }

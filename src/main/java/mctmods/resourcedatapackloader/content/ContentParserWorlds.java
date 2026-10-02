@@ -468,7 +468,7 @@ public final class ContentParserWorlds {
                 strings(json, "requires"),
                 dimensionPortal(key, json),
                 galacticraft,
-                ContentParserDimensionTraits.traits(key, json));
+                ContentParserDimensionTraits.traits(key, json, belt));
     }
 
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {

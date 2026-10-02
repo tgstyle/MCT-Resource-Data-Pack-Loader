@@ -21,12 +21,14 @@ public final class ContentParserDimensionTraits {
 
     private ContentParserDimensionTraits() {}
 
-    public static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {
+    public static DimensionTraitsDef traits(ResourceLocation key, JsonObject json, boolean belt) {
         JsonObject physics = JsonUtils.getJsonObject(json, "physics", new JsonObject());
         JsonObject time = JsonUtils.getJsonObject(json, "time", new JsonObject());
         JsonObject weather = JsonUtils.getJsonObject(json, "weather", new JsonObject());
-        long day = JsonUtils.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
-        if (day <= 0L) {
+        JsonObject sky = JsonUtils.getJsonObject(json, "sky", new JsonObject());
+        boolean still = belt && !time.has("dayLength") && !sky.has("fixedTime");
+        long day = still ? DimensionTraitsDef.NO_DAY : JsonUtils.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
+        if (!still && day <= 0L) {
             ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
             day = DimensionTraitsDef.VANILLA_DAY;
         }
@@ -41,7 +43,7 @@ public final class ContentParserDimensionTraits {
                 JsonUtils.getBoolean(weather, "snow", true),
                 JsonUtils.getBoolean(weather, "freeze", true),
                 weather.has("cycle") ? cycle(key, JsonUtils.getJsonObject(weather, "cycle")) : null,
-                sky(key, JsonUtils.getJsonObject(json, "sky", new JsonObject())));
+                sky(key, sky));
     }
 
     private static double factor(ResourceLocation key, JsonObject physics, String member) {
