@@ -116,7 +116,8 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
 
     private static boolean poured(PlayerInteractEvent.EntityInteract event) {
         EntityStorage storage = of(event.getTarget());
-        if (storage == null || storage.tank == null || !storage.buckets || event.getWorld().isRemote) { return false; }
+        if (storage == null || storage.tank == null || !storage.buckets) { return false; }
+        if (event.getWorld().isRemote) { return FluidUtil.getFluidHandler(event.getItemStack()) != null; }
         return FluidUtil.interactWithFluidHandler(event.getEntityPlayer(), event.getHand(), storage.tank);
     }
 
