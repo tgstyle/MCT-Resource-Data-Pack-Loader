@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCompatibilityGenerator;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorFlatFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorEnd;
@@ -11,6 +12,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorStructure
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructureSpawn;
+import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
@@ -346,7 +348,9 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             ICubeGenerator cubes = ((CubeProviderServer) world.getChunkProvider()).getCubeGenerator();
             if (cubes instanceof VanillaCompatibilityGenerator) { return ((VanillaCompatibilityGenerator) cubes).vanilla(); }
         }
-        return ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        IChunkGenerator cubic = CubicChunksWorlds.maker(world);
+        if (cubic != null) { return cubic; }
+        return((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
     }
 
     public static boolean anyOtherOver(World world, @Nullable List<StructureComponent> own, StructureBoundingBox box) {
@@ -365,6 +369,19 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
             if (village != held && test.test(village)) { return true; }
         }
         return false;
+    }
+
+    @Nullable public static StructureBoundingBox villageRoadIn(World world, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        for (StructureStart start : villageStarts(world)) {
+            if (!start.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { continue; }
+            for (StructureComponent piece : start.getComponents()) {
+                if (!(piece instanceof StructureVillagePieces.Path) && !(piece instanceof RailPiece)) { continue; }
+                StructureBoundingBox box = piece.getBoundingBox();
+                if (maxY < box.minY || minY > box.maxY) { continue; }
+                if (box.intersectsWith(minX, minZ, maxX, maxZ)) { return box; }
+            }
+        }
+        return null;
     }
 
     public static Collection<StructureStart> villageStarts(World world) {
