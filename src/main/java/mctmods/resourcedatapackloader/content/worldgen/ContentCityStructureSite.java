@@ -23,6 +23,7 @@ public final class ContentCityStructureSite {
     private static final int REACH_STEP = 7;
     private static final int TUNNEL_REACH = 98;
     private static final Map<CityPlan, int[]> KEPT = Collections.synchronizedMap(new WeakHashMap<>());
+    private static final Map<CityPlan, Map<CityPlan.Line, int[]>> JOINTS = Collections.synchronizedMap(new WeakHashMap<>());
 
     private ContentCityStructureSite() {}
 
@@ -35,13 +36,38 @@ public final class ContentCityStructureSite {
         return raced == null ? made : raced;
     }
 
+    static Map<CityPlan.Line, int[]> joints(GenerationContext context, CityGround ground, CityPlan plan) {
+        Map<CityPlan.Line, int[]> held = JOINTS.get(plan);
+        if (held != null) { return held; }
+        Map<CityPlan.Line, int[]> made = ContentLog.LOGGER.quietly(() -> jointsOf(context, ground, plan));
+        Map<CityPlan.Line, int[]> raced = JOINTS.putIfAbsent(plan, made);
+        return raced == null ? made : raced;
+    }
+
+    private static Map<CityPlan.Line, int[]> jointsOf(GenerationContext context, CityGround ground, CityPlan plan) {
+        Grading grading = grading(context, ground, plan);
+        Map<CityPlan.Line, int[]> found = new HashMap<>();
+        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
+            for (CityPlan.Line line : lines) {
+                ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
+                int[] profile = graded.profile();
+                boolean[] held = graded.held();
+                CityGrade.rampSteps(profile, held, graded.pinned());
+                int low = Mth.clamp(line.from() - graded.start(), 0, profile.length - 1);
+                int high = Mth.clamp(line.to() - graded.start(), 0, profile.length - 1);
+                found.put(line, new int[] {profile[low], held[low] ? 1 : 0, profile[high], held[high] ? 1 : 0});
+            }
+        }
+        return found;
+    }
+
     private static ContentCityStructure.District survey(GenerationContext context, CityGround ground, CityPlan plan) {
         Grading grading = grading(context, ground, plan);
         Map<CityPlan.Line, ContentCityStructure.Street> streets = new HashMap<>();
         Map<CityPlan.Line, int[]> finals = new HashMap<>();
         for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
             for (CityPlan.Line line : lines) {
-                ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
+                ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells());
                 int[] profile = graded.profile();
                 CityGrade.rampSteps(profile, graded.held(), graded.pinned());
                 int[] grade = profile.clone();

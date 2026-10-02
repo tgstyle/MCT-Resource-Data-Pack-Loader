@@ -17,7 +17,7 @@ public final class ContentCityStructurePaving {
     private ContentCityStructurePaving() {}
 
     static int[] lay(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, Map<Integer, Integer> decks, Map<CityPlan.Line, int[]> seats, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Bulb> bulbs, List<StructurePiece> hatches, StructurePiecesBuilder builder) {
-        ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, levels, run, rails, wells, false);
+        ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, levels, run, rails, wells);
         int start = graded.start();
         int[] profile = graded.profile();
         boolean[] held = graded.held();

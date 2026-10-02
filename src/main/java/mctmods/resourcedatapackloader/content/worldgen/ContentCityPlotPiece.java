@@ -121,7 +121,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         ContentCityBlocks.bored(bores);
         try { super.postProcess(level, manager, generator, random, box, chunk, pos); }
         finally { ContentCityBlocks.unbored(); }
-        if (!plot.isEmpty()) { CityPlotGround.raisedFooting(level, held, box, seat, keep, roads, bores); }
+        if (!plot.isEmpty()) { CityPlotSeams.unheld(level, () -> CityPlotGround.raisedFooting(level, held, box, seat, keep, roads, bores)); }
         if (def == null) { return; }
         stock(level, box, def);
         BlockState ground = ContentStates.known(def.ground(), "village plot " + def.key());
