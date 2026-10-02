@@ -153,6 +153,7 @@ public final class BeardRoadsTunnels {
             if (buried) { laid += boreCell(world, at, x, z, y, lining); }
             else { laid += roofCell(world, at, x, z, y, lining); }
         }
+        if (!buried) { laid += BeardBlocks.fillPier(world, at, x, z, level - 1, BeardRails.boreFloor(world, x, z), linings.pick(world, x, level - 1, z)); }
         return laid;
     }
 

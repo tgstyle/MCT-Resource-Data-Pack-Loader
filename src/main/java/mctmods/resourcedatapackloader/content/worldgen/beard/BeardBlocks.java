@@ -236,15 +236,24 @@ public final class BeardBlocks {
     }
 
     public static int fillUnder(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {
+        int base = from;
+        while (base >= floor && !world.getBlockState(at.setPos(x, base, z)).getMaterial().isSolid()) { base--; }
+        IBlockState loose = fillGround(world, x, z);
+        IBlockState firm = firmGround(loose);
         int filled = 0;
-        for (int y = from; y >= floor; y--) {
-            at.setPos(x, y, z);
-            if (world.getBlockState(at).getMaterial().isSolid()) { break; }
+        for (int y = base + 1; y <= from; y++) {
             if (BeardKeep.holds(x, y, z)) { continue; }
-            world.setBlockState(at, fillGround(world, x, z), 2);
+            boolean hangs = firm != loose && !world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid();
+            world.setBlockState(at.setPos(x, y, z), hangs ? firm : loose, 2);
             filled++;
         }
         return filled;
+    }
+
+    private static IBlockState firmGround(IBlockState loose) {
+        if (loose.getBlock() == Blocks.SAND) { return Blocks.SANDSTONE.getDefaultState(); }
+        if (loose.getBlock() == Blocks.GRAVEL) { return Blocks.STONE.getDefaultState(); }
+        return loose;
     }
 
     public static int belowLoose(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {

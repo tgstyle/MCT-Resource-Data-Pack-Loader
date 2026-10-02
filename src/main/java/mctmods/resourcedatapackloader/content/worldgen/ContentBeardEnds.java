@@ -268,6 +268,11 @@ public final class ContentBeardEnds {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would meet a tunnel through a hill", endX, endZ, met.minX, met.minZ);
             return false;
         }
+        StructureBoundingBox line = railUnder(everyone, merge);
+        if (line != null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would stand on the railway line at {}, {}", endX, endZ, met.minX, met.minZ, line.minX, line.minZ);
+            return false;
+        }
         List<StructureComponent> making = standing(everyone, pieces, piece, other, merge.minX, merge.minZ, merge.maxX, merge.maxZ);
         if (making == null) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot merge into the street at {}, {}: the ground between them is held", endX, endZ, met.minX, met.minZ);
@@ -311,6 +316,11 @@ public final class ContentBeardEnds {
                 : new StructureBoundingBox(unionLo, box.minY, conLo, unionHi, box.maxY, conHi);
         if (BeardRoadsTunnels.crossesHill(pieces, avenue)) {
             ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would meet a tunnel through a hill", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ);
+            return;
+        }
+        StructureBoundingBox line = railUnder(everyone, avenue);
+        if (line != null) {
+            ContentLog.LOGGER.debug("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would stand on the railway line at {}, {}", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, line.minX, line.minZ);
             return;
         }
         List<StructureComponent> making = standing(everyone, pieces, piece, other, avenue.minX, avenue.minZ, avenue.maxX, avenue.maxZ);
@@ -368,6 +378,14 @@ public final class ContentBeardEnds {
             return true;
         }
         return false;
+    }
+
+    @Nullable private static StructureBoundingBox railUnder(List<StructureComponent> everyone, StructureBoundingBox box) {
+        for (StructureComponent held : everyone) {
+            if (!BeardRails.isRail(held) || BeardRails.buriedUnder(held, box)) { continue; }
+            if (held.getBoundingBox().intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ)) { return held.getBoundingBox(); }
+        }
+        return null;
     }
 
     @Nullable private static List<StructureComponent> standing(List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, StructureComponent other, int minX, int minZ, int maxX, int maxZ) {

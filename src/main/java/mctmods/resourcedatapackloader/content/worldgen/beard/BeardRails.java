@@ -118,6 +118,29 @@ public final class BeardRails {
         return least > most ? null : new int[] { least, most };
     }
 
+    private static int clearOfCrossings(RailPiece rail, int row, int toward, int reach) {
+        List<StructureComponent> pieces = ContentBeard.components();
+        if (pieces == null) { return row; }
+        int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
+        List<int[]> streets = BeardRailsFit.crossStreets(pieces, rail.alongX(), center, true);
+        for (StructureComponent piece : pieces) {
+            if (!(piece instanceof RailPiece) || buried(piece) || ((RailPiece) piece).alongX() == rail.alongX()) { continue; }
+            RailPiece line = (RailPiece) piece;
+            if (center >= line.rowLeast() && center <= line.rowMost()) { streets.add(new int[] { line.acrossLeast(), line.acrossMost() }); }
+        }
+        int clear = row;
+        for (int pass = 0; pass < streets.size(); pass++) {
+            for (int[] street : streets) {
+                if (toward > 0) {
+                    if (street[0] - 1 <= clear + reach && street[1] + 1 >= clear) { clear = street[1] + 2; }
+                }
+                else if (street[1] + 1 >= clear - reach && street[0] - 1 <= clear) { clear = street[0] - 2; }
+            }
+        }
+        if (clear != row) { ContentLog.LOGGER.debug("Subway line {} moves its climb-out at the {} end from row {} to row {}, so no street or railway line crosses the {} row(s) of its ramp", rail.line(), toward > 0 ? "high" : "low", row, clear, reach); }
+        return clear;
+    }
+
     @Nullable public static int[] surfacing(World world, RailPiece rail) {
         if (!rail.subway() || rail.trunk() != null) { return null; }
         if (rail.ends().length > 0) {
@@ -144,8 +167,8 @@ public final class BeardRails {
         }
         boolean anyStation = !rail.stations().isEmpty();
         int[] street = streetOver(rail);
-        int lowRow = street == null ? least + run : Math.min(least + run, street[0] - 1);
-        int highRow = street == null ? most - run : Math.max(most - run, street[1] + 1);
+        int lowRow = clearOfCrossings(rail, street == null ? least + run : Math.min(least + run, street[0] - 1), -1, shortest);
+        int highRow = clearOfCrossings(rail, street == null ? most - run : Math.max(most - run, street[1] + 1), 1, shortest);
         boolean canLow = lowRow - least >= shortest && (!anyStation || stationLeast > lowRow + ramp);
         boolean canHigh = most - highRow >= shortest && (!anyStation || stationMost < highRow - ramp);
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} weighs a climb-out: rows {} to {}, ramp {} and run {} (shortest {}), streets over it {}, stations {} to {}, low end at row {} {}, high end at row {} {}", rail.line(), least, most, ramp, run, shortest, street == null ? "none" : street[0] + " to " + street[1], anyStation ? stationLeast : "none", anyStation ? stationMost : "none", lowRow, canLow ? "can" : "cannot", highRow, canHigh ? "can" : "cannot"); }

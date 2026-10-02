@@ -262,7 +262,10 @@ public final class BeardRoadsGrade {
 
     @Nullable public static BeardRoads.Grade chainGrade(World world, StructureComponent road, boolean alongX) {
         BeardRoads.Grade laid = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
-        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The grade of the road at {}, {} comes from {}", road.getBoundingBox().minX, road.getBoundingBox().minZ, laid != null ? "its built layout" : chaining ? "a plain profile" : "a profile with its own junctions"); }
+        if (ContentLog.LOGGER.debugEnabled()) {
+            String source = laid != null ? "its built layout" : chaining ? "a plain profile" : "a profile with its own junctions";
+            if (BeardRoadsHolds.untold("grade " + road.getBoundingBox().minX + "," + road.getBoundingBox().minZ + " " + source)) { ContentLog.LOGGER.debug("The grade of the road at {}, {} comes from {}", road.getBoundingBox().minX, road.getBoundingBox().minZ, source); }
+        }
         if (laid != null) { return laid; }
         StructureBoundingBox box = road.getBoundingBox();
         int rowLeast = alongX ? box.minX : box.minZ;

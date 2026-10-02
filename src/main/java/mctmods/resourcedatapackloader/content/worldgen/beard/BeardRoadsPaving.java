@@ -226,11 +226,13 @@ public final class BeardRoadsPaving {
             for (int side = 0; side < 2; side++) { side(i, side == 0 ? acrossLeast - 1 : acrossMost + 1); }
         }
 
+        private boolean bored(int i, int x, int z) { return !bores.isEmpty() && BeardRails.insideBore(world, bores, x, profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i], z); }
+
         private void side(int i, int across) {
             int x = alongX ? start + i : across;
             int z = alongX ? across : start + i;
             at.setPos(x, profile[i], z);
-            if (!clip.isVecInside(at)) { return; }
+            if (!clip.isVecInside(at) || bored(i, x, z)) { return; }
             if (bridged[i]) {
                 if (wetBed(world, at, x, z, profile[i]) == Integer.MIN_VALUE) { filled += vergeFill(world, piece, x, z, profile[i], at); }
                 return;
@@ -250,8 +252,7 @@ public final class BeardRoadsPaving {
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} left {}, {} unpaved because it lies outside the patch of land it was asked for, {}, {} to {}, {}", box.minX, box.minZ, x, z, clip.minX, clip.minZ, clip.maxX, clip.maxZ); }
                 return;
             }
-            if (BeardRoads.insidePlaza(x, z)) { return; }
-            if (!bores.isEmpty() && BeardRails.insideBore(world, bores, x, profile[i] == Integer.MIN_VALUE ? graded.deck[i] : profile[i], z)) { return; }
+            if (BeardRoads.insidePlaza(x, z) || bored(i, x, z)) { return; }
             BlockPos top = GroundLevel.inWindow(world, spot).down();
             if (top.getY() < world.getSeaLevel()) { top = new BlockPos(x, world.getSeaLevel() - 1, z); }
             if (profile[i] == Integer.MIN_VALUE && ungraded(i, across, x, z, top)) { return; }

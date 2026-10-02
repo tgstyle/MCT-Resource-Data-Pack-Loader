@@ -254,12 +254,10 @@ public final class CityDistricts {
     }
 
     private static boolean standsOn(List<StructureComponent> components, StructureBoundingBox tie) {
-        boolean alongX = tie.maxX - tie.minX >= tie.maxZ - tie.minZ;
         for (StructureComponent held : ContentBeard.everyone(components)) {
             if (BeardRails.buriedUnder(held, tie)) { continue; }
             StructureBoundingBox met = held.getBoundingBox();
-            if (held instanceof RailPiece && ((RailPiece) held).alongX() != alongX
-                    && (alongX ? met.minX > tie.minX && met.maxX < tie.maxX : met.minZ > tie.minZ && met.maxZ < tie.maxZ)) { continue; }
+            if (held instanceof RailPiece && BeardRails.crosses(met, tie)) { continue; }
             if (met.intersectsWith(tie.minX, tie.minZ, tie.maxX, tie.maxZ)) { return true; }
         }
         return false;

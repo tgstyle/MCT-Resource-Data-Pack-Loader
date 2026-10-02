@@ -217,6 +217,7 @@
     "common.MixinWorldEntitySpawner",
     "common.MixinWorldGenBigMushroom",
     "common.MixinWorldGenBlockBlob",
+    "common.MixinWorldGenBlockBlobRubic",
     "common.MixinWorldGenBonusChest",
     "common.MixinWorldGenCanopyTree",
     "common.MixinWorldGenDeadBush",

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.PackGeneration;
 
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -11,10 +12,15 @@ import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class BeardRoadsHolds {
+    private static final Set<String> TOLD = new HashSet<>();
+    private static final PackGeneration TOLD_GENERATION = new PackGeneration();
+
     private BeardRoadsHolds() {}
 
     private static boolean wetSquare(World world, StructureBoundingBox ew, StructureBoundingBox ns, StructureBoundingBox mine, List<StructureBoundingBox> roads) {
@@ -197,7 +203,7 @@ public final class BeardRoadsHolds {
             int otherLeast = flat[0];
             int otherMost = flat[1];
             int grade = flat[5] == 1 || flat[6] == 1 || flat[7] == 1 ? flat[2] : reachable(profile, held, start, rowMost, otherLeast, otherMost, flat[2]);
-            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} flattens its junction with the road at {}, {} to one level, y {}{}, over rows {} to {}", own.minX, own.minZ, flat[3], flat[4], grade, grade == flat[2] ? "" : " (brought from y " + flat[2] + " within reach of the rows already held)", Math.max(start, otherLeast), Math.min(rowMost, otherMost)); }
+            if (ContentLog.LOGGER.debugEnabled() && untold("flat " + own.minX + "," + own.minZ + " " + flat[3] + "," + flat[4])) { ContentLog.LOGGER.debug("The road at {}, {} flattens its junction with the road at {}, {} to one level, y {}{}, over rows {} to {}", own.minX, own.minZ, flat[3], flat[4], grade, grade == flat[2] ? "" : " (brought from y " + flat[2] + " within reach of the rows already held)", Math.max(start, otherLeast), Math.min(rowMost, otherMost)); }
             for (int row = otherLeast; row <= otherMost; row++) {
                 if (row < start || row > rowMost) { continue; }
                 profile[row - start] = grade;
@@ -209,6 +215,11 @@ public final class BeardRoadsHolds {
                 footed[row - start] = !decks[row - start];
             }
         }
+    }
+
+    static boolean untold(String told) {
+        if (TOLD_GENERATION.stale()) { TOLD.clear(); }
+        return TOLD.add(told);
     }
 
     private static void mergeFlats(StructureBoundingBox own, List<int[]> flats) {

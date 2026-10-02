@@ -179,7 +179,7 @@ public final class BeardRailsFit {
                 else { to = from - 1; }
                 ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} stops short of {} of another village at {}, {}", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, other.getClass().getSimpleName(), met.minX, met.minZ);
             }
-            List<int[]> streets = crossStreets(components, alongX, alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2);
+            List<int[]> streets = crossStreets(components, alongX, alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2, false);
             for (int pass = 0; pass <= streets.size(); pass++) {
                 int[] over = linkedHigh ? null : streetOver(streets, to);
                 if (over != null) { to = over[1] + 1 <= toLimit ? over[1] + 1 : over[0] - 1; }
@@ -236,13 +236,13 @@ public final class BeardRailsFit {
         }
     }
 
-    private static List<int[]> crossStreets(List<StructureComponent> components, boolean alongX, int center) {
+    static List<int[]> crossStreets(List<StructureComponent> components, boolean alongX, int center, boolean narrow) {
         List<int[]> boxes = new ArrayList<>();
         for (StructureComponent other : components) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
             boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
-            if (roadAlongX == alongX || BeardRoads.roadNarrow(road, roadAlongX)) { continue; }
+            if (roadAlongX == alongX || (!narrow && BeardRoads.roadNarrow(road, roadAlongX))) { continue; }
             if (center < (alongX ? road.minZ : road.minX) || center > (alongX ? road.maxZ : road.maxX)) { continue; }
             boxes.add(alongX ? new int[] {road.minX, road.maxX} : new int[] {road.minZ, road.maxZ});
         }

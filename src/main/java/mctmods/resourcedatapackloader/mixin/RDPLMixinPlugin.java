@@ -47,7 +47,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "common.MixinSaveHandler", "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
             "common.MixinTicket", "common.MixinTileEntityBeacon", "common.MixinTileEntityBeaconBetterFps", "common.MixinTileEntityEndGateway",
             "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
-            "common.MixinWorldGenBlockBlob", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
+            "common.MixinWorldGenBlockBlobRubic", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
             "common.MixinWorldGenDesertWells", "common.MixinWorldGenDoublePlants", "common.MixinWorldGenDungeonsRubic", "common.MixinWorldGenFlowers",
             "common.MixinWorldGenHugeTrees", "common.MixinWorldGenIcePath", "common.MixinWorldGenIceSpike", "common.MixinWorldGenLakesRubic",
             "common.MixinWorldGenShrub", "common.MixinWorldGenSpikes", "common.MixinWorldGenSwamp", "common.MixinWorldGenTaiga1",
