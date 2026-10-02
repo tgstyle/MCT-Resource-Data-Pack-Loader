@@ -48,6 +48,7 @@
         "common.MixinPrimedTnt",
         "common.MixinFallingBlockEntity",
         "common.MixinLevel",
+        "common.MixinDimensionType",
         "common.MixinServerLevelHold",
         "common.MixinFallingBlock",
         "common.MixinMultiNoiseBiomeSource",

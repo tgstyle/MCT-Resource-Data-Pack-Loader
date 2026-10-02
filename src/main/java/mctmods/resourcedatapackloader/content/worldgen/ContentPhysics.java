@@ -37,7 +37,7 @@ public final class ContentPhysics {
     private static void keepGravity(LivingEntity living) {
         AttributeInstance gravity = living.getAttribute(ForgeMod.ENTITY_GRAVITY.get());
         if (gravity == null) { return; }
-        double wanted = GRAVITY.factor(living.level()) - 1.0D;
+        double wanted = gravity(living.level()) - 1.0D;
         AttributeModifier held = gravity.getModifier(GRAVITY_ID);
         if ((held == null ? 0.0D : held.getAmount()) == wanted) { return; }
         gravity.removeModifier(GRAVITY_ID);
@@ -53,7 +53,12 @@ public final class ContentPhysics {
         return held == null ? value : value / (1.0D + held.getAmount());
     }
 
-    public static double gravity(Level level) { return GRAVITY.factor(level); }
+    public static double gravity(Level level) { return GRAVITY.factor(level, ContentWeather.traits(level).gravity()); }
+
+    public static double arrowGravity(Level level) {
+        double own = ContentWeather.traits(level).arrowGravity();
+        return own > 0.0D ? own : gravity(level);
+    }
 
     public static double scaledFall(Entity entity, double vanilla) {
         double factor = gravity(entity.level());
@@ -66,12 +71,13 @@ public final class ContentPhysics {
     }
 
     public static void onFall(LivingFallEvent event) {
-        double factor = FALL_DAMAGE.factor(event.getEntity().level());
+        Level level = event.getEntity().level();
+        double factor = FALL_DAMAGE.factor(level, ContentWeather.traits(level).fallDamage());
         if (factor != 1.0D) { event.setDamageMultiplier((float) (event.getDamageMultiplier() * factor)); }
     }
 
     public static void onJump(LivingEvent.LivingJumpEvent event) {
-        double factor = JUMP.factor(event.getEntity().level());
+        double factor = JUMP.factor(event.getEntity().level(), -1.0D);
         if (factor == 1.0D) { return; }
         Vec3 motion = event.getEntity().getDeltaMovement();
         event.getEntity().setDeltaMovement(motion.x, motion.y * factor, motion.z);
@@ -79,7 +85,7 @@ public final class ContentPhysics {
 
     public static void tick(LivingEntity falling) {
         if (!falling.level().isClientSide()) { keepGravity(falling); }
-        double factor = TERMINAL.factor(falling.level());
+        double factor = TERMINAL.factor(falling.level(), -1.0D);
         if (factor == 1.0D || falling.isFallFlying()) { return; }
         double cap = -VANILLA_TERMINAL * factor;
         Vec3 motion = falling.getDeltaMovement();
@@ -107,9 +113,9 @@ public final class ContentPhysics {
             };
         }
 
-        double factor(Level level) {
-            if (ContentControl.off(ContentControl.TERRAIN)) { return 1.0D; }
-            Double found = values.at(level.dimension().location().toString(), asked());
+        double factor(Level level, double own) {
+            Double fallback = own > 0.0D ? own : null;
+            Double found = ContentControl.off(ContentControl.TERRAIN) ? fallback : values.at(level.dimension().location().toString(), asked(), fallback);
             return found == null ? 1.0D : found;
         }
 

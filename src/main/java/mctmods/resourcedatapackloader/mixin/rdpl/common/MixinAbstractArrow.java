@@ -9,6 +9,6 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(AbstractArrow.class) public abstract class MixinAbstractArrow {
-    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = 0.05000000074505806D))
-    private double rdpl$worldGravity(double vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
+    @ModifyConstant(method = "tick()V", constant = @Constant(doubleValue = 0.05000000074505806D))
+    private double rdpl$worldGravity(double vanilla) { return vanilla * ContentPhysics.arrowGravity(((Entity) (Object) this).level()); }
 }

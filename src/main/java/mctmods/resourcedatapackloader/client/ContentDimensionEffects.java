@@ -17,11 +17,13 @@ import javax.annotation.Nullable;
 public final class ContentDimensionEffects extends DimensionSpecialEffects {
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
+    @Nullable private final ContentSkyRenderer sky;
 
     private ContentDimensionEffects(@Nullable DimensionDef def, DimensionSpecialEffects base, float cloudHeight, SkyType skyType) {
         super(cloudHeight, base.hasGround(), skyType, base.forceBrightLightmap(), base.constantAmbientLight());
         this.def = def;
         this.base = base;
+        this.sky = def == null || def.traits().sky() == null ? null : new ContentSkyRenderer(def.traits().sky());
     }
 
     public static void register(RegisterDimensionSpecialEffectsEvent event) {
@@ -45,7 +47,10 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     @Override public boolean renderSky(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull PoseStack poseStack, @Nonnull Camera camera, @Nonnull Matrix4f projectionMatrix, boolean isFoggy, @Nonnull Runnable setupFog) {
-        return def != null && !def.renderSky();
+        if (def != null && !def.renderSky()) { return true; }
+        if (sky == null) { return false; }
+        sky.render(level, partialTick, poseStack, camera, projectionMatrix, isFoggy, setupFog);
+        return true;
     }
 
     @Override public boolean renderClouds(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull PoseStack poseStack, double camX, double camY, double camZ, @Nonnull Matrix4f projectionMatrix) {

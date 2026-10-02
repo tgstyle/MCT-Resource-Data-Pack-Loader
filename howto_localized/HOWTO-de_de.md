@@ -2889,8 +2889,16 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "starBrightness": 0.8,
     "renderSky": true,
     "renderClouds": true,
-    "renderWeather": true
+    "renderWeather": true,
+    "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+    ],
+    "stars": { "count": 6000, "size": 0.12 }
   },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
+  "time": { "dayLength": 36000 },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -2932,32 +2940,89 @@ Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp u
 
 *dimensionen*
 
-| Schlüssel          | Pflicht | Wert           | Standard | Was er macht                                                                                                                       |
-| ------------------ | ------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | nein    | boolean        | `true`   | Ob Tageslicht sie erreicht                                                                                                         |
-| `surfaceWorld`     | nein    | boolean        | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                          |
-| `respawn`          | nein    | boolean        | `true`   | Ob Spieler hier respawnen                                                                                                          |
-| `respawnDimension` | nein    | Dimensions-Id  | keine    | Wo sie stattdessen respawnen                                                                                                       |
-| `spawning`         | nein    | boolean        | `true`   | Ob Mobs spawnen. Aus verhindert jeden Spawn, Spawner eingeschlossen, gleich was die Gruppe `spawning` sagt                         |
-| `nether`           | nein    | boolean        | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                               |
-| `beds`             | nein    | boolean        | `true`   | Aus explodieren Betten                                                                                                             |
-| `waterVaporizes`   | nein    | boolean        | `false`  | Wasser verdampft                                                                                                                   |
-| `cloudHeight`      | nein    | int            | `128`    | Wo die Wolken hängen. Eine Einstellung `cloudHeight`, die diese Dimension nennt, oder eine ohne Dimension hat Vorrang              |
-| `cloudColor`       | nein    | Hex-Farbe      | keine    | Wolkenfärbung                                                                                                                      |
-| `groundLevel`      | nein    | int            | `63`     | Meereshöhe, genutzt für den Horizont, die Spawnsuche und dafür, wo eine Ankunft durch ein Tor oder ein Sturz über der Leere landet |
-| `movementFactor`   | nein    | float          | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                             |
-| `fogColor`         | nein    | Hex-Farbe      | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel                                                              |
-| `showFog`          | nein    | boolean        | `false`  | Dichter Nebel, wie im Nether                                                                                                       |
-| `skyColor`         | nein    | Hex-Farbe      | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                          |
-| `fixedTime`        | nein    | int, Ticks     | keine    | Hält die Tageszeit fest                                                                                                            |
-| `sunriseColors`    | nein    | boolean        | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                     |
-| `ambientLight`     | nein    | float, 0 bis 1 | `0.0`    | Mindestlicht überall                                                                                                               |
-| `starBrightness`   | nein    | float, 0 bis 1 | keine    | Wie hell die Sterne sind                                                                                                           |
-| `renderSky`        | nein    | boolean        | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne, es bleibt die Nebelfarbe                                                   |
-| `renderClouds`     | nein    | boolean        | `true`   | Aus werden keine Wolken gezeichnet                                                                                                 |
-| `renderWeather`    | nein    | boolean        | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                      |
+| Schlüssel          | Pflicht | Wert               | Standard | Was er macht                                                                                                                       |
+| ------------------ | ------- | ------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | nein    | boolean            | `true`   | Ob Tageslicht sie erreicht                                                                                                         |
+| `surfaceWorld`     | nein    | boolean            | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                          |
+| `respawn`          | nein    | boolean            | `true`   | Ob Spieler hier respawnen                                                                                                          |
+| `respawnDimension` | nein    | Dimensions-Id      | keine    | Wo sie stattdessen respawnen                                                                                                       |
+| `spawning`         | nein    | boolean            | `true`   | Ob Mobs spawnen. Aus verhindert jeden Spawn, Spawner eingeschlossen, gleich was die Gruppe `spawning` sagt                         |
+| `nether`           | nein    | boolean            | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                               |
+| `beds`             | nein    | boolean            | `true`   | Aus explodieren Betten                                                                                                             |
+| `waterVaporizes`   | nein    | boolean            | `false`  | Wasser verdampft                                                                                                                   |
+| `cloudHeight`      | nein    | int                | `128`    | Wo die Wolken hängen. Eine Einstellung `cloudHeight`, die diese Dimension nennt, oder eine ohne Dimension hat Vorrang              |
+| `cloudColor`       | nein    | Hex-Farbe          | keine    | Wolkenfärbung                                                                                                                      |
+| `groundLevel`      | nein    | int                | `63`     | Meereshöhe, genutzt für den Horizont, die Spawnsuche und dafür, wo eine Ankunft durch ein Tor oder ein Sturz über der Leere landet |
+| `movementFactor`   | nein    | float              | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                             |
+| `fogColor`         | nein    | Hex-Farbe          | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel                                                              |
+| `showFog`          | nein    | boolean            | `false`  | Dichter Nebel, wie im Nether                                                                                                       |
+| `skyColor`         | nein    | Hex-Farbe          | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                          |
+| `fixedTime`        | nein    | int, Ticks         | keine    | Hält die Tageszeit fest                                                                                                            |
+| `sunriseColors`    | nein    | boolean            | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                     |
+| `ambientLight`     | nein    | float, 0 bis 1     | `0.0`    | Mindestlicht überall                                                                                                               |
+| `starBrightness`   | nein    | float, 0 bis 1     | keine    | Wie hell die Sterne sind                                                                                                           |
+| `renderSky`        | nein    | boolean            | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne, es bleibt die Nebelfarbe                                                   |
+| `renderClouds`     | nein    | boolean            | `true`   | Aus werden keine Wolken gezeichnet                                                                                                 |
+| `renderWeather`    | nein    | boolean            | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                      |
+| `sun`              | nein    | Objekt             | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                               |
+| `bodies`           | nein    | Liste von Objekten | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                    |
+| `stars`            | nein    | Objekt             | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                         |
 
-Farben und die drei Render-Schalter sind alles, was geboten wird. Etwas Eigenes dort oben zu zeichnen, eine bemalte Kuppel, eine eigene Sonne und einen eigenen Mond, braucht weiterhin Java.
+### Der Himmelsrenderer
+
+*dimensionen*
+
+Sobald `sun`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanilla-Himmel durch einen eigenen. Der zeichnet Kuppel, Morgenrot und Leere wie Vanilla, nimmt Sonne, übrige Himmelskörper und Sterne aber aus dem Pack. Er läuft nur auf dem Client; ein dedizierter Server lädt ihn nie. `renderSky: false` hat weiterhin Vorrang und zeichnet nichts, und einen Himmel ohne Wolken macht `renderClouds: false`.
+
+Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
+
+| Schlüssel              | Pflicht | Wert        | Standard          | Was er macht                                                                                                                                                                                       |
+| ---------------------- | ------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | nein    | Texturpfad  | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
+| `sun.size`             | nein    | float       | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
+| `bodies[].texture`     | ja      | Texturpfad  |                   | Das Bild des Körpers                                                                                                                                                                               |
+| `bodies[].size`        | nein    | float       | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
+| `bodies[].angle`       | nein    | float, Grad | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
+| `bodies[].tilt`        | nein    | float, Grad | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht                                                                                                                                       |
+| `bodies[].followsTime` | nein    | boolean     | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
+| `stars.count`          | nein    | int         | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
+| `stars.size`           | nein    | float       | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
+
+### Der Block `physics`
+
+*dimensionen*
+
+| Schlüssel      | Pflicht | Wert          | Standard        | Was er macht                                                                   |
+| -------------- | ------- | ------------- | --------------- | ------------------------------------------------------------------------------ |
+| `gravity`      | nein    | float, über 0 | `1.0`           | Fallbeschleunigung hier, als Multiplikator von Vanilla. `0.17` ist mondähnlich |
+| `fallDamage`   | nein    | float, über 0 | `1.0`           | Fallschaden hier, als Multiplikator                                            |
+| `arrowGravity` | nein    | float, über 0 | folgt `gravity` | Wie schnell Pfeile hier sinken, als Multiplikator                              |
+
+Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity` und `worldFallDamage`, nur an der Dimension gesetzt. Eine Zeile `dimension=wert` einer Weltvorlage für diese Dimension gewinnt weiterhin; ein bloßer Wert der Weltvorlage gilt nur für Dimensionen, die selbst nichts setzen.
+
+### Der Block `time`
+
+*dimensionen*
+
+| Schlüssel   | Pflicht | Wert       | Standard | Was er macht                                                                               |
+| ----------- | ------- | ---------- | -------- | ------------------------------------------------------------------------------------------ |
+| `dayLength` | nein    | int, Ticks | `24000`  | Wie lange hier ein Tag mit Nacht dauert. Die Mondphase wechselt weiterhin alle 24000 Ticks |
+
+### Der Block `weather`
+
+*dimensionen*
+
+| Schlüssel           | Pflicht | Wert                  | Standard       | Was er macht                                                                                                 |
+| ------------------- | ------- | --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `precipitation`     | nein    | boolean               | `true`         | Aus regnet, schneit und stürmt es hier nie                                                                   |
+| `lightning`         | nein    | boolean               | `true`         | Aus kommt Regen ohne Blitze                                                                                  |
+| `snow`              | nein    | boolean               | `true`         | Aus bleibt nie Schnee liegen                                                                                 |
+| `freeze`            | nein    | boolean               | `true`         | Aus friert Wasser nie zu                                                                                     |
+| `cycle.rainTicks`   | nein    | int oder `[min, max]` | `[1000, 4600]` | Wie lange ein Schauer dauert                                                                                 |
+| `cycle.clearTicks`  | nein    | int oder `[min, max]` | `[1000, 3000]` | Wie lange es zwischen zwei Schauern trocken bleibt                                                           |
+| `cycle.maxStrength` | nein    | float, über 0 bis 1   | `0.6`          | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert |
+
+Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, ohne Gewitter, egal was die Oberwelt gerade tut. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
 
 ## Portale und Tore
 
@@ -5811,7 +5876,7 @@ Eine eingleisige Stammstrecke hat kein zweites Gleis für die andere Stichstreck
 | Einstellung               | Typ                  | Standard | Was sie tut                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------------- | -------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldGameMode`           | Text                 | leer     | Wie jede neue Welt gestartet wird, eines von survival, hardcore, creative, adventure oder spectator. Hardcore ist Überleben, bei dem der Tod die Welt beendet, spielstandweit, dasselbe wie die Wahl auf dem Weltbildschirm. Leer lässt es, wie es der Ersteller der Welt gewählt hat. Der Weltbildschirm bietet nur survival, hardcore und creative an, adventure und spectator werden daher gesetzt, während die Welt gemacht wird. Ein dedizierter Server setzt jede Welt bei jedem Start auf den Modus aus server.properties, dort wird der Modus des Packs daher vor dem Laden der Welt in server.properties geschrieben (gamemode und hardcore) |
-| `privacy`                 | boolean              | `true`   | Ob Telemetrie und Chat-Meldung des Spiels abgeschaltet sind: kein Telemetrie-Ereignis wird gesendet, der Client signiert keine Chatnachricht, der Server führt keine Chat-Sitzung und verlangt keine, keine Nachricht lässt sich also melden. Lässt ein Pack den Wert weg, gilt die Config-Option `privacy` der Kategorie `tweaks`. Greift beim nächsten Beitritt zu einer Welt oder einem Server |
+| `privacy`                 | boolean              | `true`   | Ob Telemetrie und Chat-Meldung des Spiels abgeschaltet sind: kein Telemetrie-Ereignis wird gesendet, der Client signiert keine Chatnachricht, der Server führt keine Chat-Sitzung und verlangt keine, keine Nachricht lässt sich also melden. Lässt ein Pack den Wert weg, gilt die Config-Option `privacy` der Kategorie `tweaks`. Greift beim nächsten Beitritt zu einer Welt oder einem Server                                                                                                                                                                                                                                                     |
 | `worldLanCommands`        | boolean              | `true`   | Ob ein Spieler, der eine Einzelspielerwelt im LAN öffnet, Befehle für alle freischalten darf, die beitreten. `false` graut die Cheats-Schaltfläche im Bildschirm „Im LAN öffnen“ aus und hält sie auf Aus; die Welt wird dann ohne Befehle geöffnet, egal auf welchem Weg, `/publish` eingeschlossen                                                                                                                                                                                                                                                                                                                                                  |
 | `worldDifficulty`         | Liste                | leer     | Den Schwierigkeitsgrad festhalten, einer von peaceful, easy, normal oder hard. Ein bloßer Schwierigkeitsgrad gilt für jede Dimension, und ein als dimension=schwierigkeit geschriebener Eintrag, etwa minecraft:the_nether=hard, gilt nur für diese Dimension und geht dem bloßen vor. Die eigene Einstellung der Welt bleibt, wie sie war, und kommt zurück, wenn der Eintrag entfernt wird. Ein dedizierter Server schreibt den Schwierigkeitsgrad der Oberwelt als `difficulty` in die `server.properties`. Leer lässt es, wie gewählt                                                                                                             |
 | `worldForceGameMode`      | boolean              | leer     | Ob ein beitretender Spieler jedes Mal in den Spielmodus des Servers zurückgesetzt wird, die Zeile `force-gamemode`. Eine im LAN geöffnete Welt tut das ohnehin, und `false` stellt es auch dort ab                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
@@ -5957,14 +6022,14 @@ Beute, Funktionen und Registry-Namen. Nur Config.
 
 Kleine Änderungen daran, wie Vanilla sich verhält. Nur Config, außer `privacy`, das auch ein Pack setzen kann; siehe [Bonus: Vanilla-Tweaks](#bonus-vanilla-tweaks).
 
-| Einstellung           | Typ     | Standard | Was sie tut                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| --------------------- | ------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `promptLeafDecay`     | boolean | `true`   | Blätter, die ihren Baum verlieren, verwelken binnen einer Sekunde, statt auf Random-Ticks zu warten                                                                                                                                                                                                                                                                                                                                                              |
-| `lenientPaths`        | boolean | `true`   | Pfade lassen sich unter einem Block anlegen und bleiben liegen, wenn einer darübergesetzt wird                                                                                                                                                                                                                                                                                                                                                                   |
-| `unbreakableSpawners` | boolean | `false`  | Mobspawner lassen sich weder abbauen noch sprengen. Der Kreativmodus entfernt sie weiterhin. Braucht einen Neustart                                                                                                                                                                                                                                                                                                                                              |
-| `experimentalWarning` | boolean | `false`  | Die Warnung des Spiels vor experimentellen Einstellungen zeigen, wenn eine Welt erstellt oder geöffnet wird. Aus beantwortet sie, als hättest du auf Fortfahren geklickt                                                                                                                                                                                                                                                                                         |
+| Einstellung           | Typ     | Standard | Was sie tut                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptLeafDecay`     | boolean | `true`   | Blätter, die ihren Baum verlieren, verwelken binnen einer Sekunde, statt auf Random-Ticks zu warten                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `lenientPaths`        | boolean | `true`   | Pfade lassen sich unter einem Block anlegen und bleiben liegen, wenn einer darübergesetzt wird                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `unbreakableSpawners` | boolean | `false`  | Mobspawner lassen sich weder abbauen noch sprengen. Der Kreativmodus entfernt sie weiterhin. Braucht einen Neustart                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `experimentalWarning` | boolean | `false`  | Die Warnung des Spiels vor experimentellen Einstellungen zeigen, wenn eine Welt erstellt oder geöffnet wird. Aus beantwortet sie, als hättest du auf Fortfahren geklickt                                                                                                                                                                                                                                                                                                                                                                     |
 | `privacy`             | boolean | `true`   | Telemetrie und Chat-Meldung des Spiels abschalten: kein Telemetrie-Ereignis wird gesendet oder protokolliert, der Client signiert keine Chatnachricht, der Server führt keine Chat-Sitzung und verlangt keine, keine Nachricht, die jemand sendet, lässt sich also melden, und der Client zeigt keinen Warnhinweis, dass ein Server keinen sicheren Chat erzwingt. Ein Pack kann es als `privacy` in den `settings` einer Weltvorlage setzen, in der Gruppe [Server](#server). Greift beim nächsten Beitritt zu einer Welt oder einem Server |
-| `darkSplash`          | boolean | `true`   | Zeichnet den Ladebildschirm dunkel mit dem Logo des Pack-Loaders statt dem des Spiels: das Logo wird beim Aufbau des Bildschirms getauscht, und die spieleigene Option Monochromes Logo wird eingeschaltet, wenn sie noch aus ist, was beim nächsten Start wirkt. Aus lässt die Option, wie sie ist                                                                                                                                                              |
+| `darkSplash`          | boolean | `true`   | Zeichnet den Ladebildschirm dunkel mit dem Logo des Pack-Loaders statt dem des Spiels: das Logo wird beim Aufbau des Bildschirms getauscht, und die spieleigene Option Monochromes Logo wird eingeschaltet, wenn sie noch aus ist, was beim nächsten Start wirkt. Aus lässt die Option, wie sie ist                                                                                                                                                                                                                                          |
 
 ---
 
