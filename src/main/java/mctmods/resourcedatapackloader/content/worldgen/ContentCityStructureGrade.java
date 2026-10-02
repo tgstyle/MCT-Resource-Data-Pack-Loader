@@ -99,7 +99,52 @@ public final class ContentCityStructureGrade {
         if (lifted > 0) { ContentLog.LOGGER.debug("Raised {} row(s) of the street at {} onto the deck its city map draws there", lifted, line.at()); }
     }
 
-    static ContentCityStructure.Graded graded(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree) {
+    static ContentCityStructure.Graded graded(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree) { return grade(context, plan, line, levels, run, rails, wells, squaresFree, false); }
+
+    static ContentCityStructure.Graded joined(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) { return grade(context, plan, line, levels, run, rails, wells, false, true); }
+
+    private static void seams(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] held) {
+        int reach = CityPlan.mouthReach(line);
+        for (boolean high : new boolean[] {false, true}) {
+            int level = seamLevel(context, ground, plan, line, high);
+            if (level == Integer.MIN_VALUE) { continue; }
+            int from = Math.max(start, high ? line.to() - reach + 1 : line.from());
+            int to = Math.min(start + profile.length - 1, high ? line.to() : line.from() + reach - 1);
+            int seamed = 0;
+            for (int row = Math.max(from, line.from()); row <= Math.min(to, line.to()); row++) {
+                if (held[row - start]) { continue; }
+                profile[row - start] = level;
+                held[row - start] = true;
+                seamed++;
+            }
+            if (seamed > 0) { ContentLog.LOGGER.debug("The street along {} at {} to {} continues the street of the district beside it at row {}, so {} of its seam rows {} to {} hold that street's level, y {}", line.alongX() ? "x" : "z", line.at(), line.last(), high ? line.to() + 1 : line.from() - 1, seamed, from, to, level); }
+        }
+    }
+
+    private static int seamLevel(GenerationContext context, CityGround ground, CityPlan plan, CityPlan.Line line, boolean high) {
+        int beyond = high ? line.to() + 1 : line.from() - 1;
+        int x = line.alongX() ? beyond : line.middle();
+        int z = line.alongX() ? line.middle() : beyond;
+        for (CityPlan near : ContentCityStructureSite.plansOver(ground, plan, x, x, z, z)) {
+            CityPlan other = near == plan ? plan : ContentCityStructureSite.settled(context, ground, near);
+            if (other == plan) { continue; }
+            for (CityPlan.Line met : line.alongX() ? other.alongX() : other.alongZ()) {
+                if (met.at() != line.at() || met.width() != line.width() || (high ? met.from() : met.to()) != beyond) { continue; }
+                int[] own = ContentCityStructureSite.joints(context, ground, plan).get(line);
+                int[] theirs = ContentCityStructureSite.joints(context, ground, other).get(met);
+                if (own == null || theirs == null) { return Integer.MIN_VALUE; }
+                int ownLevel = own[high ? 2 : 0];
+                int metLevel = theirs[high ? 0 : 2];
+                boolean ownHeld = own[high ? 3 : 1] == 1;
+                boolean metHeld = theirs[high ? 1 : 3] == 1;
+                if (ownHeld && metHeld && ownLevel != metLevel && high) { ContentLog.LOGGER.debug("The street along {} at {} to {} and the street of the district beside it are both held where they meet at row {}, at y {} and y {}, so each keeps its level", line.alongX() ? "x" : "z", line.at(), line.last(), beyond, ownLevel, metLevel); }
+                return !ownHeld && (metHeld || metLevel > ownLevel) && metLevel != ownLevel ? metLevel : Integer.MIN_VALUE;
+            }
+        }
+        return Integer.MIN_VALUE;
+    }
+
+    private static ContentCityStructure.Graded grade(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree, boolean joined) {
         int start = plan.spanStart(line);
         int span = plan.spanLength(line);
         int[] profile = new int[span];
@@ -163,6 +208,7 @@ public final class ContentCityStructureGrade {
             if (!squaresFree && aproned > 0) { ContentLog.LOGGER.debug("The street along {} at {} to {} ends on the street crossing it at {}, so its mouth rows {} to {} hold the junction's level, y {}{}", line.alongX() ? "x" : "z", line.at(), line.last(), other.middle(), from, to, flat, decked ? ", decked over the water with the square it meets" : ""); }
         }
         for (int at = 0; at < span; at++) { wet[at] |= crossed[at] && !dry[at]; }
+        if (joined) { seams(context, surveyed, plan, line, start, profile, held); }
         for (ContentCityStructure.Well well : wells) { CityPlan.clampToWell(line, start, profile, held, well.box(), well.level()); }
         for (Map.Entry<CityPlan.Rail, CityRails.Laid> entry : rails.entrySet()) {
             CityPlan.Rail rail = entry.getKey();

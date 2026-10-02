@@ -410,7 +410,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
                 stilled += still(level, at, near);
             }
-            else if (!(over.getBlock() instanceof LeavesBlock)) { return stilled; }
+            else if (!(over.getBlock() instanceof LeavesBlock) && !mctmods.blastplaster.util.BlastPlasterUtil.isHugeMushroom(over)) { return stilled; }
         }
         return stilled;
     }
