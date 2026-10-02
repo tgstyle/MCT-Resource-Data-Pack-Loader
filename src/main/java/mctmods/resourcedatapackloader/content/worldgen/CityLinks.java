@@ -32,7 +32,6 @@ public final class CityLinks {
     public static final int OPEN = 1;
     public static final int SPUR = 2;
     public static final int CURVE = 3;
-    public static final int BROKEN = 4;
     public static final int BED = 5;
     public static final int WALL = 6;
     static final int APPROACH = 4;
@@ -60,6 +59,8 @@ public final class CityLinks {
         public boolean straight() { return lowRow == highRow; }
 
         public int side(boolean low) { return low ? lowSide : highSide; }
+
+        public int body(boolean low) { return row(low) < row(!low) ? 1 : -1; }
 
         public int[] tracks() { return trackRows(buried, across); }
 
@@ -403,25 +404,41 @@ public final class CityLinks {
     public static int junction(@Nullable int[] packed, int row, int across) {
         if (packed == null) { return NONE; }
         Trunk trunk = Trunk.of(packed);
-        int half = trunk.half();
         if (trunk.straight()) { return crossing(trunk, row, across); }
+        int half = trunk.half();
+        int[] tracks = trunk.tracks();
+        int last = tracks.length - 1;
         for (boolean low : new boolean[] {true, false}) {
             int join = trunk.row(low);
             int side = trunk.side(low);
-            if (Math.abs(row - join) > trunk.spurHalf()) { continue; }
+            int body = trunk.body(low);
+            int back = (join - row) * body;
             int out = (across - trunk.across()) * side;
-            int[] tracks = trunk.tracks();
-            int near = side < 0 ? tracks[0] : tracks[tracks.length - 1];
-            int nearOut = (near - trunk.across()) * side;
-            if (out > half + 1 || out < nearOut) { continue; }
+            if (back > trunk.reach() || back < -trunk.spurHalf() || out > half + 1 || out < -half) { continue; }
+            int k = index(tracks, across, side < 0);
+            if (back > trunk.spurHalf()) {
+                if (k >= 0) { return BED; }
+                continue;
+            }
             if (out == half + 1) { return OPEN; }
             int[] spur = trackRows(trunk.sub(), join);
-            if (out > nearOut) { return contains(spur, row) ? SPUR : BED; }
-            if (spur.length == 1) { return row == join ? CURVE : NONE; }
-            if (row == spur[0] || row == spur[spur.length - 1]) { return CURVE; }
-            if (row > spur[0] && row < spur[spur.length - 1]) { return BROKEN; }
+            int outer = spur.length - 1;
+            int i = index(spur, row, body < 0);
+            int end = i == outer ? last : Math.min(i, last);
+            int start = k == last ? outer : Math.min(k, outer);
+            if (i >= 0 && k >= 0) { return k == Math.min(i, last) || i == Math.min(k, outer) ? CURVE : k < end ? SPUR : i < start ? NONE : BED; }
+            if (k >= 0) { return back < (join - spur[body > 0 ? outer - start : start]) * body ? NONE : BED; }
+            if (i >= 0) { return out > (tracks[side > 0 ? last - end : end] - trunk.across()) * side ? SPUR : NONE; }
+            return out > (tracks[side > 0 ? last : 0] - trunk.across()) * side ? BED : NONE;
         }
         return NONE;
+    }
+
+    private static int index(int[] rows, int row, boolean ascending) {
+        for (int at = 0; at < rows.length; at++) {
+            if (rows[at] == row) { return ascending ? at : rows.length - 1 - at; }
+        }
+        return -1;
     }
 
     private static int crossing(Trunk trunk, int row, int across) {
@@ -436,18 +453,15 @@ public final class CityLinks {
         if (packed == null || (code != SPUR && code != CURVE)) { return track; }
         Trunk trunk = Trunk.of(packed);
         if (code == SPUR) { return ContentCityRailPiece.shaped(track, trunk.alongX() ? RailShape.NORTH_SOUTH : RailShape.EAST_WEST, !trunk.alongX()); }
-        boolean low = Math.abs(row - trunk.lowRow()) <= trunk.spurHalf();
-        int side = trunk.side(low);
-        Direction.Axis rowAxis = trunk.alongX() ? Direction.Axis.X : Direction.Axis.Z;
-        Direction.Axis acrossAxis = trunk.alongX() ? Direction.Axis.Z : Direction.Axis.X;
-        int[] spur = trackRows(trunk.sub(), trunk.row(low));
-        int way = spur.length == 1 ? Direction.get(side > 0 ? Direction.AxisDirection.NEGATIVE : Direction.AxisDirection.POSITIVE, acrossAxis).getCounterClockWise().getAxisDirection().getStep() : row == spur[0] ? -1 : 1;
-        Direction toSpur = Direction.get(side > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, acrossAxis);
-        Direction along = Direction.get(way > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, rowAxis);
+        return ContentCityRailPiece.shaped(track, turn(trunk, Math.abs(row - trunk.lowRow()) <= trunk.spurHalf()), trunk.alongX());
+    }
+
+    private static RailShape turn(Trunk trunk, boolean low) {
+        Direction toSpur =Direction.get(trunk.side(low) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, trunk.alongX() ? Direction.Axis.Z : Direction.Axis.X);
+        Direction along = Direction.get(trunk.body(low) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, trunk.alongX() ? Direction.Axis.X : Direction.Axis.Z);
         boolean north = toSpur == Direction.NORTH || along == Direction.NORTH;
         boolean east = toSpur == Direction.EAST || along == Direction.EAST;
-        RailShape shape = north ? (east ? RailShape.NORTH_EAST : RailShape.NORTH_WEST) : (east ? RailShape.SOUTH_EAST : RailShape.SOUTH_WEST);
-        return ContentCityRailPiece.shaped(track, shape, trunk.alongX());
+        return north ? (east ? RailShape.NORTH_EAST : RailShape.NORTH_WEST) : (east ? RailShape.SOUTH_EAST : RailShape.SOUTH_WEST);
     }
 
     public static int force(WorldGenLevel level, BoundingBox clip, @Nullable int[] packed, int first, int last, int y, BlockState track, BlockPos.MutableBlockPos at) {
@@ -483,12 +497,7 @@ public final class CityLinks {
         return rows;
     }
 
-    private static boolean contains(int[] rows, int row) {
-        for (int held : rows) {
-            if (held == row) { return true; }
-        }
-        return false;
-    }
+    private static boolean contains(int[] rows, int row) { return index(rows, row, true) >= 0; }
 
     public static int linkCenter(CityGround ground, CityPlan.Town town, CityPlan.Rail rail) {
         if (!on() || rail.subway() != carriedUnderground()) { return Integer.MIN_VALUE; }
