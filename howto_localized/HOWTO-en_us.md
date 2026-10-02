@@ -2889,8 +2889,16 @@ Every key, shown at once. A real file writes only the ones it needs.
     "starBrightness": 0.8,
     "renderSky": true,
     "renderClouds": true,
-    "renderWeather": true
+    "renderWeather": true,
+    "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+    ],
+    "stars": { "count": 6000, "size": 0.12 }
   },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
+  "time": { "dayLength": 36000 },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -2932,32 +2940,89 @@ A dimension is a data pack entry on this version: the dimension type and the noi
 
 *dimensions*
 
-| Key                | Required | Value         | Default | What it does                                                                                                   |
-| ------------------ | -------- | ------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | no       | boolean       | `true`  | Whether daylight reaches it                                                                                    |
-| `surfaceWorld`     | no       | boolean       | `true`  | Whether maps and compasses behave as in the overworld                                                          |
-| `respawn`          | no       | boolean       | `true`  | Whether players respawn here                                                                                   |
-| `respawnDimension` | no       | dimension id  | none    | Where they respawn instead                                                                                     |
-| `spawning`         | no       | boolean       | `true`  | Whether mobs spawn. Off stops every spawn, spawners included, whatever the `spawning` group says               |
-| `nether`           | no       | boolean       | `false` | Treated as the nether for portals and ceilings                                                                 |
-| `beds`             | no       | boolean       | `true`  | Off, beds explode                                                                                              |
-| `waterVaporizes`   | no       | boolean       | `false` | Water evaporates                                                                                               |
-| `cloudHeight`      | no       | int           | `128`   | Where clouds sit. A `cloudHeight` setting naming this dimension, or a bare one, wins over it                   |
-| `cloudColor`       | no       | hex color     | none    | Cloud tint                                                                                                     |
-| `groundLevel`      | no       | int           | `63`    | Sea level, used for the horizon, for spawn searches and for where a gate arrival or a fall over the void lands |
-| `movementFactor`   | no       | float         | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                             |
-| `fogColor`         | no       | hex color     | none    | Fog tint at noon. It darkens at night as vanilla fog does                                                      |
-| `showFog`          | no       | boolean       | `false` | Thick fog, as in the nether                                                                                    |
-| `skyColor`         | no       | hex color     | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                    |
-| `fixedTime`        | no       | int, ticks    | none    | Locks the time of day                                                                                          |
-| `sunriseColors`    | no       | boolean       | `true`  | Whether sunrise and sunset are tinted                                                                          |
-| `ambientLight`     | no       | float, 0 to 1 | `0.0`   | Minimum light everywhere                                                                                       |
-| `starBrightness`   | no       | float, 0 to 1 | none    | How bright the stars are                                                                                       |
-| `renderSky`        | no       | boolean       | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                          |
-| `renderClouds`     | no       | boolean       | `true`  | Off, no clouds are drawn                                                                                       |
-| `renderWeather`    | no       | boolean       | `true`  | Off, no rain or snow is drawn                                                                                  |
+| Key                | Required | Value           | Default | What it does                                                                                                   |
+| ------------------ | -------- | --------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | no       | boolean         | `true`  | Whether daylight reaches it                                                                                    |
+| `surfaceWorld`     | no       | boolean         | `true`  | Whether maps and compasses behave as in the overworld                                                          |
+| `respawn`          | no       | boolean         | `true`  | Whether players respawn here                                                                                   |
+| `respawnDimension` | no       | dimension id    | none    | Where they respawn instead                                                                                     |
+| `spawning`         | no       | boolean         | `true`  | Whether mobs spawn. Off stops every spawn, spawners included, whatever the `spawning` group says               |
+| `nether`           | no       | boolean         | `false` | Treated as the nether for portals and ceilings                                                                 |
+| `beds`             | no       | boolean         | `true`  | Off, beds explode                                                                                              |
+| `waterVaporizes`   | no       | boolean         | `false` | Water evaporates                                                                                               |
+| `cloudHeight`      | no       | int             | `128`   | Where clouds sit. A `cloudHeight` setting naming this dimension, or a bare one, wins over it                   |
+| `cloudColor`       | no       | hex color       | none    | Cloud tint                                                                                                     |
+| `groundLevel`      | no       | int             | `63`    | Sea level, used for the horizon, for spawn searches and for where a gate arrival or a fall over the void lands |
+| `movementFactor`   | no       | float           | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                             |
+| `fogColor`         | no       | hex color       | none    | Fog tint at noon. It darkens at night as vanilla fog does                                                      |
+| `showFog`          | no       | boolean         | `false` | Thick fog, as in the nether                                                                                    |
+| `skyColor`         | no       | hex color       | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                    |
+| `fixedTime`        | no       | int, ticks      | none    | Locks the time of day                                                                                          |
+| `sunriseColors`    | no       | boolean         | `true`  | Whether sunrise and sunset are tinted                                                                          |
+| `ambientLight`     | no       | float, 0 to 1   | `0.0`   | Minimum light everywhere                                                                                       |
+| `starBrightness`   | no       | float, 0 to 1   | none    | How bright the stars are                                                                                       |
+| `renderSky`        | no       | boolean         | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                          |
+| `renderClouds`     | no       | boolean         | `true`  | Off, no clouds are drawn                                                                                       |
+| `renderWeather`    | no       | boolean         | `true`  | Off, no rain or snow is drawn                                                                                  |
+| `sun`              | no       | object          | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                                        |
+| `bodies`           | no       | list of objects | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                                   |
+| `stars`            | no       | object          | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                                                 |
 
-Colors and the three render switches are all that is offered. Drawing something of your own up there, a painted dome, your own sun and moon, still needs Java.
+### The sky renderer
+
+*dimensions*
+
+Setting any of `sun`, `bodies` or `stars` swaps the vanilla sky for RDPL's own, which draws the same dome, sunrise glow and void as vanilla but takes the sun, the other bodies and the stars from the pack. It is drawn on the client only, and a dedicated server never loads it. `renderSky: false` still wins and draws nothing, and `renderClouds: false` is how a sky without clouds is made.
+
+Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list is everything besides the sun, so an empty list is a sky with no moon.
+
+| Key                    | Required | Value          | Default         | What it does                                                                                                                                                                                     |
+| ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sun.texture`          | no       | texture path   | the vanilla sun | The sun's picture                                                                                                                                                                                |
+| `sun.size`             | no       | float          | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
+| `bodies[].texture`     | yes      | texture path   |                 | The body's picture                                                                                                                                                                               |
+| `bodies[].size`        | no       | float          | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
+| `bodies[].angle`       | no       | float, degrees | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
+| `bodies[].tilt`        | no       | float, degrees | `0`             | How far it sits off the sun's path, north or south                                                                                                                                               |
+| `bodies[].followsTime` | no       | boolean        | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
+| `stars.count`          | no       | int            | `1500`          | How many stars                                                                                                                                                                                   |
+| `stars.size`           | no       | float          | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
+
+### The `physics` block
+
+*dimensions*
+
+| Key            | Required | Value          | Default           | What it does                                                            |
+| -------------- | -------- | -------------- | ----------------- | ----------------------------------------------------------------------- |
+| `gravity`      | no       | float, above 0 | `1.0`             | Fall acceleration here, as a multiplier of vanilla. `0.17` is moon-like |
+| `fallDamage`   | no       | float, above 0 | `1.0`             | Fall damage here, as a multiplier                                       |
+| `arrowGravity` | no       | float, above 0 | follows `gravity` | How fast arrows drop here, as a multiplier                              |
+
+These are the same multipliers as the world template keys `worldGravity` and `worldFallDamage`, set on the dimension. A world template's `dimension=value` line for this dimension still wins; a bare world template value covers only dimensions that set nothing of their own.
+
+### The `time` block
+
+*dimensions*
+
+| Key         | Required | Value      | Default | What it does                                                                             |
+| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
+| `dayLength` | no       | int, ticks | `24000` | How long one day and night lasts here. The moon phase still turns once every 24000 ticks |
+
+### The `weather` block
+
+*dimensions*
+
+| Key                 | Required | Value                  | Default        | What it does                                                                           |
+| ------------------- | -------- | ---------------------- | -------------- | -------------------------------------------------------------------------------------- |
+| `precipitation`     | no       | boolean                | `true`         | Off, it never rains, snows or storms here                                              |
+| `lightning`         | no       | boolean                | `true`         | Off, rain comes without lightning                                                      |
+| `snow`              | no       | boolean                | `true`         | Off, snow never settles                                                                |
+| `freeze`            | no       | boolean                | `true`         | Off, water never freezes over                                                          |
+| `cycle.rainTicks`   | no       | int or `[min, max]`    | `[1000, 4600]` | How long a shower lasts                                                                |
+| `cycle.clearTicks`  | no       | int or `[min, max]`    | `[1000, 3000]` | How long the dry spell between showers lasts                                           |
+| `cycle.maxStrength` | no       | float, above 0 up to 1 | `0.6`          | The heaviest a shower gets. Each shower drifts between a quarter of this and all of it |
+
+Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, with no thunder, whatever the overworld is doing. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
 
 ## Portals and gates
 

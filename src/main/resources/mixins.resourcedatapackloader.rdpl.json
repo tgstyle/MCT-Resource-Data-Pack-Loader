@@ -49,6 +49,7 @@
         "common.MixinEntity",
         "common.MixinExplosion",
         "common.MixinLevel",
+        "common.MixinDimensionType",
         "common.MixinServerLevelHold",
         "common.MixinFallingBlock",
         "common.MixinServerLevelSpawn",

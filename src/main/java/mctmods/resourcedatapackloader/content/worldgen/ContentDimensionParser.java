@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionPortalDef;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -15,6 +16,7 @@ import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -25,6 +27,10 @@ import javax.annotation.Nullable;
 public final class ContentDimensionParser {
     private static final Gson GSON = new Gson();
     private static final int CLOUD_HEIGHT = 128;
+    private static final int CYCLE_LOW = 1000;
+    private static final String SUN = "minecraft:textures/environment/sun.png";
+    private static final int STARS = 1500;
+    private static final float STAR_SIZE = 0.15F;
     private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END);
     private static final List<String> FLAT_DEFAULT = List.of("minecraft:bedrock", "59*minecraft:stone", "3*minecraft:dirt", "minecraft:grass_block");
 
@@ -85,7 +91,88 @@ public final class ContentDimensionParser {
                 GsonHelper.getAsBoolean(sky, "waterVaporizes", false), GsonHelper.getAsBoolean(sky, "showFog", false), Mth.clamp(GsonHelper.getAsFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
                 GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
-                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options);
+                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json));
+    }
+
+    private static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {
+        JsonObject physics = GsonHelper.getAsJsonObject(json, "physics", new JsonObject());
+        JsonObject time = GsonHelper.getAsJsonObject(json, "time", new JsonObject());
+        JsonObject weather = GsonHelper.getAsJsonObject(json, "weather", new JsonObject());
+        long day = GsonHelper.getAsInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
+        if (day <= 0L) {
+            ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
+            day = DimensionTraitsDef.VANILLA_DAY;
+        }
+        return new DimensionTraitsDef(factor(key, physics, "gravity"), factor(key, physics, "fallDamage"), factor(key, physics, "arrowGravity"), day,
+                GsonHelper.getAsBoolean(weather, "precipitation", true), GsonHelper.getAsBoolean(weather, "lightning", true), GsonHelper.getAsBoolean(weather, "snow", true),
+                GsonHelper.getAsBoolean(weather, "freeze", true), weather.has("cycle") ? cycle(key, GsonHelper.getAsJsonObject(weather, "cycle")) : null,
+                sky(key, GsonHelper.getAsJsonObject(json, "sky", new JsonObject())));
+    }
+
+    @Nullable private static DimensionTraitsDef.Sky sky(ResourceLocation key, JsonObject sky) {
+        if (!sky.has("sun") && !sky.has("bodies") && !sky.has("stars")) { return null; }
+        JsonObject sun = GsonHelper.getAsJsonObject(sky, "sun", new JsonObject());
+        JsonObject stars = GsonHelper.getAsJsonObject(sky, "stars", new JsonObject());
+        List<DimensionTraitsDef.Body> bodies = null;
+        if (sky.has("bodies")) {
+            List<DimensionTraitsDef.Body> found = new ArrayList<>();
+            for (JsonElement element : GsonHelper.getAsJsonArray(sky, "bodies")) {
+                if (!element.isJsonObject() || !element.getAsJsonObject().has("texture")) {
+                    ContentLog.LOGGER.error("Dimension {} lists a sky body {} with no texture, ignoring it", key, element);
+                    continue;
+                }
+                JsonObject body = element.getAsJsonObject();
+                found.add(new DimensionTraitsDef.Body(ResourceLocation.parse(GsonHelper.getAsString(body, "texture").trim()), Math.max(0.0F, GsonHelper.getAsFloat(body, "size", 20.0F)),
+                        GsonHelper.getAsFloat(body, "angle", 180.0F), GsonHelper.getAsFloat(body, "tilt", 0.0F), GsonHelper.getAsBoolean(body, "followsTime", true)));
+            }
+            bodies = List.copyOf(found);
+        }
+        return new DimensionTraitsDef.Sky(ResourceLocation.parse(GsonHelper.getAsString(sun, "texture", SUN).trim()), Math.max(0.0F, GsonHelper.getAsFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
+                Math.max(0, GsonHelper.getAsInt(stars, "count", STARS)), Math.max(0.0F, GsonHelper.getAsFloat(stars, "size", STAR_SIZE)));
+    }
+
+    private static double factor(ResourceLocation key, JsonObject physics, String member) {
+        if (!physics.has(member)) { return -1.0D; }
+        double value = GsonHelper.getAsFloat(physics, member);
+        if (value > 0.0D) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives physics {} of {}, which is not above zero, ignoring it", key, member, value);
+        return -1.0D;
+    }
+
+    private static DimensionTraitsDef.Cycle cycle(ResourceLocation key, JsonObject json) {
+        int[] rain = span(key, json, "rainTicks", 4600);
+        int[] clear = span(key, json, "clearTicks", 3000);
+        float strength = GsonHelper.getAsFloat(json, "maxStrength", 0.6F);
+        if (strength <= 0.0F || strength > 1.0F) {
+            ContentLog.LOGGER.error("Dimension {} gives a weather cycle maxStrength of {}, which is not above 0 and at most 1, using 0.6", key, strength);
+            strength = 0.6F;
+        }
+        return new DimensionTraitsDef.Cycle(rain[0], rain[1], clear[0], clear[1], strength);
+    }
+
+    private static int[] span(ResourceLocation key, JsonObject json, String member, int high) {
+        int low = CYCLE_LOW;
+        if (!json.has(member)) { return new int[] {low, high}; }
+        JsonElement value = json.get(member);
+        int min;
+        int max;
+        if (value.isJsonArray() && value.getAsJsonArray().size() == 2) {
+            min = value.getAsJsonArray().get(0).getAsInt();
+            max = value.getAsJsonArray().get(1).getAsInt();
+        }
+        else if (value.isJsonPrimitive()) {
+            min = value.getAsInt();
+            max = min;
+        }
+        else {
+            ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is neither a number nor [min, max], using [{}, {}]", key, member, value, low, high);
+            return new int[] {low, high};
+        }
+        if (min <= 0 || max < min) {
+            ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which needs 0 < min <= max, using [{}, {}]", key, member, value, low, high);
+            return new int[] {low, high};
+        }
+        return new int[] {min, max};
     }
 
     @Nullable private static DimensionPortalDef portal(ResourceLocation key, JsonObject json) {

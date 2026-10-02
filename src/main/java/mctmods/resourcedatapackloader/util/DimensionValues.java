@@ -22,8 +22,10 @@ public final class DimensionValues<T> {
         this.wrong = wrong;
     }
 
-    @Nullable public T at(String dimension, List<String> asked) {
-        if (asked.isEmpty()) { return null; }
+    @Nullable public T at(String dimension, List<String> asked) { return at(dimension, asked, null); }
+
+    @Nullable public T at(String dimension, List<String> asked, @Nullable T own) {
+        if (asked.isEmpty()) { return own; }
         if (!asked.equals(raw)) {
             T bare = null;
             Map<String, T> scoped = new HashMap<>();
@@ -43,6 +45,6 @@ public final class DimensionValues<T> {
             raw = List.copyOf(asked);
         }
         T scoped = byDimension.get(dimension);
-        return scoped != null ? scoped : everywhere;
+        return scoped != null ? scoped : own != null ? own : everywhere;
     }
 }

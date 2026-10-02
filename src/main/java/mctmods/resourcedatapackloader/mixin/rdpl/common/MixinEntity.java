@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         double base = cir.getReturnValueD();
         Entity self = (Entity) (Object) this;
         if (base != 0.0D && rdpl$scaled(self)) {
-            double factor = ContentPhysics.gravity(self.level());
+            double factor = self instanceof AbstractArrow ? ContentPhysics.arrowGravity(self.level()) : ContentPhysics.gravity(self.level());
             if (factor != 1.0D) { cir.setReturnValue(base * factor); }
         }
     }
@@ -40,8 +40,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "load", at = @At("TAIL"))
-    private void rdpl$legacyForgeData(CompoundTag tag, CallbackInfo ci) {
-        CompoundTag forge = tag.getCompound("ForgeData");
+    private void rdpl$legacyForgeData(CompoundTag compound, CallbackInfo ci) {
+        CompoundTag forge = compound.getCompound("ForgeData");
         if (forge.isEmpty()) { return; }
         CompoundTag data = ((Entity) (Object) this).getPersistentData();
         for (String key : forge.getAllKeys()) {

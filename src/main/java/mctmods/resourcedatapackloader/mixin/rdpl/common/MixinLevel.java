@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
+import mctmods.resourcedatapackloader.util.IDayLength;
 
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
@@ -16,6 +18,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nonnull;
 
@@ -32,6 +35,12 @@ import javax.annotation.Nonnull;
     private void rdpl$lockedTime(CallbackInfoReturnable<Long> cir) {
         long locked = ContentTerrain.lockedTime(Level.class.cast(this));
         if (locked >= 0) { cir.setReturnValue(locked); }
+    }
+
+    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;Ljava/util/function/Supplier;ZZJI)V", at = @At("RETURN"))
+    private void rdpl$dayLength(CallbackInfo ci) {
+        Level self = Level.class.cast(this);
+        ((IDayLength) (Object) self.dimensionType()).rdpl$dayLength(ContentWeather.traits(self).dayLength());
     }
 
     @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true)

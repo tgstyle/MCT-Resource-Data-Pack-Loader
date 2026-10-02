@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 public record DimensionDef(ResourceLocation key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
-                           @Nullable ResourceLocation respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options) {
+                           @Nullable ResourceLocation respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options, DimensionTraitsDef traits) {
     public static final String OVERWORLD = "overworld";
     public static final String FLAT = "flat";
     public static final String VOID = "void";
@@ -23,7 +23,7 @@ public record DimensionDef(ResourceLocation key, String terrain, List<String> fl
 
     public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans; }
 
-    public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld; }
+    public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null; }
 
     public String base() {
         return switch (terrain) {

@@ -2889,8 +2889,16 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "starBrightness": 0.8,
     "renderSky": true,
     "renderClouds": true,
-    "renderWeather": true
+    "renderWeather": true,
+    "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+    ],
+    "stars": { "count": 6000, "size": 0.12 }
   },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
+  "time": { "dayLength": 36000 },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -2932,32 +2940,89 @@ Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp u
 
 *dimensionen*
 
-| Schlüssel          | Pflicht | Wert           | Standard | Was er macht                                                                                                                       |
-| ------------------ | ------- | -------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | nein    | boolean        | `true`   | Ob Tageslicht sie erreicht                                                                                                         |
-| `surfaceWorld`     | nein    | boolean        | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                          |
-| `respawn`          | nein    | boolean        | `true`   | Ob Spieler hier respawnen                                                                                                          |
-| `respawnDimension` | nein    | Dimensions-Id  | keine    | Wo sie stattdessen respawnen                                                                                                       |
-| `spawning`         | nein    | boolean        | `true`   | Ob Mobs spawnen. Aus verhindert jeden Spawn, Spawner eingeschlossen, gleich was die Gruppe `spawning` sagt                         |
-| `nether`           | nein    | boolean        | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                               |
-| `beds`             | nein    | boolean        | `true`   | Aus explodieren Betten                                                                                                             |
-| `waterVaporizes`   | nein    | boolean        | `false`  | Wasser verdampft                                                                                                                   |
-| `cloudHeight`      | nein    | int            | `128`    | Wo die Wolken hängen. Eine Einstellung `cloudHeight`, die diese Dimension nennt, oder eine ohne Dimension hat Vorrang              |
-| `cloudColor`       | nein    | Hex-Farbe      | keine    | Wolkenfärbung                                                                                                                      |
-| `groundLevel`      | nein    | int            | `63`     | Meereshöhe, genutzt für den Horizont, die Spawnsuche und dafür, wo eine Ankunft durch ein Tor oder ein Sturz über der Leere landet |
-| `movementFactor`   | nein    | float          | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                             |
-| `fogColor`         | nein    | Hex-Farbe      | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel                                                              |
-| `showFog`          | nein    | boolean        | `false`  | Dichter Nebel, wie im Nether                                                                                                       |
-| `skyColor`         | nein    | Hex-Farbe      | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                          |
-| `fixedTime`        | nein    | int, Ticks     | keine    | Hält die Tageszeit fest                                                                                                            |
-| `sunriseColors`    | nein    | boolean        | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                     |
-| `ambientLight`     | nein    | float, 0 bis 1 | `0.0`    | Mindestlicht überall                                                                                                               |
-| `starBrightness`   | nein    | float, 0 bis 1 | keine    | Wie hell die Sterne sind                                                                                                           |
-| `renderSky`        | nein    | boolean        | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne, es bleibt die Nebelfarbe                                                   |
-| `renderClouds`     | nein    | boolean        | `true`   | Aus werden keine Wolken gezeichnet                                                                                                 |
-| `renderWeather`    | nein    | boolean        | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                      |
+| Schlüssel          | Pflicht | Wert               | Standard | Was er macht                                                                                                                       |
+| ------------------ | ------- | ------------------ | -------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | nein    | boolean            | `true`   | Ob Tageslicht sie erreicht                                                                                                         |
+| `surfaceWorld`     | nein    | boolean            | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                          |
+| `respawn`          | nein    | boolean            | `true`   | Ob Spieler hier respawnen                                                                                                          |
+| `respawnDimension` | nein    | Dimensions-Id      | keine    | Wo sie stattdessen respawnen                                                                                                       |
+| `spawning`         | nein    | boolean            | `true`   | Ob Mobs spawnen. Aus verhindert jeden Spawn, Spawner eingeschlossen, gleich was die Gruppe `spawning` sagt                         |
+| `nether`           | nein    | boolean            | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                               |
+| `beds`             | nein    | boolean            | `true`   | Aus explodieren Betten                                                                                                             |
+| `waterVaporizes`   | nein    | boolean            | `false`  | Wasser verdampft                                                                                                                   |
+| `cloudHeight`      | nein    | int                | `128`    | Wo die Wolken hängen. Eine Einstellung `cloudHeight`, die diese Dimension nennt, oder eine ohne Dimension hat Vorrang              |
+| `cloudColor`       | nein    | Hex-Farbe          | keine    | Wolkenfärbung                                                                                                                      |
+| `groundLevel`      | nein    | int                | `63`     | Meereshöhe, genutzt für den Horizont, die Spawnsuche und dafür, wo eine Ankunft durch ein Tor oder ein Sturz über der Leere landet |
+| `movementFactor`   | nein    | float              | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                             |
+| `fogColor`         | nein    | Hex-Farbe          | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel                                                              |
+| `showFog`          | nein    | boolean            | `false`  | Dichter Nebel, wie im Nether                                                                                                       |
+| `skyColor`         | nein    | Hex-Farbe          | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                          |
+| `fixedTime`        | nein    | int, Ticks         | keine    | Hält die Tageszeit fest                                                                                                            |
+| `sunriseColors`    | nein    | boolean            | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                     |
+| `ambientLight`     | nein    | float, 0 bis 1     | `0.0`    | Mindestlicht überall                                                                                                               |
+| `starBrightness`   | nein    | float, 0 bis 1     | keine    | Wie hell die Sterne sind                                                                                                           |
+| `renderSky`        | nein    | boolean            | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne, es bleibt die Nebelfarbe                                                   |
+| `renderClouds`     | nein    | boolean            | `true`   | Aus werden keine Wolken gezeichnet                                                                                                 |
+| `renderWeather`    | nein    | boolean            | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                      |
+| `sun`              | nein    | Objekt             | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                               |
+| `bodies`           | nein    | Liste von Objekten | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                    |
+| `stars`            | nein    | Objekt             | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                         |
 
-Farben und die drei Render-Schalter sind alles, was geboten wird. Etwas Eigenes dort oben zu zeichnen, eine bemalte Kuppel, eine eigene Sonne und einen eigenen Mond, braucht weiterhin Java.
+### Der Himmelsrenderer
+
+*dimensionen*
+
+Sobald `sun`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanilla-Himmel durch einen eigenen. Der zeichnet Kuppel, Morgenrot und Leere wie Vanilla, nimmt Sonne, übrige Himmelskörper und Sterne aber aus dem Pack. Er läuft nur auf dem Client; ein dedizierter Server lädt ihn nie. `renderSky: false` hat weiterhin Vorrang und zeichnet nichts, und einen Himmel ohne Wolken macht `renderClouds: false`.
+
+Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
+
+| Schlüssel              | Pflicht | Wert        | Standard          | Was er macht                                                                                                                                                                                       |
+| ---------------------- | ------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | nein    | Texturpfad  | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
+| `sun.size`             | nein    | float       | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
+| `bodies[].texture`     | ja      | Texturpfad  |                   | Das Bild des Körpers                                                                                                                                                                               |
+| `bodies[].size`        | nein    | float       | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
+| `bodies[].angle`       | nein    | float, Grad | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
+| `bodies[].tilt`        | nein    | float, Grad | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht                                                                                                                                       |
+| `bodies[].followsTime` | nein    | boolean     | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
+| `stars.count`          | nein    | int         | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
+| `stars.size`           | nein    | float       | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
+
+### Der Block `physics`
+
+*dimensionen*
+
+| Schlüssel      | Pflicht | Wert          | Standard        | Was er macht                                                                   |
+| -------------- | ------- | ------------- | --------------- | ------------------------------------------------------------------------------ |
+| `gravity`      | nein    | float, über 0 | `1.0`           | Fallbeschleunigung hier, als Multiplikator von Vanilla. `0.17` ist mondähnlich |
+| `fallDamage`   | nein    | float, über 0 | `1.0`           | Fallschaden hier, als Multiplikator                                            |
+| `arrowGravity` | nein    | float, über 0 | folgt `gravity` | Wie schnell Pfeile hier sinken, als Multiplikator                              |
+
+Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity` und `worldFallDamage`, nur an der Dimension gesetzt. Eine Zeile `dimension=wert` einer Weltvorlage für diese Dimension gewinnt weiterhin; ein bloßer Wert der Weltvorlage gilt nur für Dimensionen, die selbst nichts setzen.
+
+### Der Block `time`
+
+*dimensionen*
+
+| Schlüssel   | Pflicht | Wert       | Standard | Was er macht                                                                               |
+| ----------- | ------- | ---------- | -------- | ------------------------------------------------------------------------------------------ |
+| `dayLength` | nein    | int, Ticks | `24000`  | Wie lange hier ein Tag mit Nacht dauert. Die Mondphase wechselt weiterhin alle 24000 Ticks |
+
+### Der Block `weather`
+
+*dimensionen*
+
+| Schlüssel           | Pflicht | Wert                  | Standard       | Was er macht                                                                                                 |
+| ------------------- | ------- | --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
+| `precipitation`     | nein    | boolean               | `true`         | Aus regnet, schneit und stürmt es hier nie                                                                   |
+| `lightning`         | nein    | boolean               | `true`         | Aus kommt Regen ohne Blitze                                                                                  |
+| `snow`              | nein    | boolean               | `true`         | Aus bleibt nie Schnee liegen                                                                                 |
+| `freeze`            | nein    | boolean               | `true`         | Aus friert Wasser nie zu                                                                                     |
+| `cycle.rainTicks`   | nein    | int oder `[min, max]` | `[1000, 4600]` | Wie lange ein Schauer dauert                                                                                 |
+| `cycle.clearTicks`  | nein    | int oder `[min, max]` | `[1000, 3000]` | Wie lange es zwischen zwei Schauern trocken bleibt                                                           |
+| `cycle.maxStrength` | nein    | float, über 0 bis 1   | `0.6`          | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert |
+
+Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, ohne Gewitter, egal was die Oberwelt gerade tut. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
 
 ## Portale und Tore
 
