@@ -39,7 +39,6 @@ public final class BeardLinks {
     static final int OPEN = 1;
     static final int SPUR = 2;
     static final int CURVE = 3;
-    static final int BROKEN = 4;
     static final int BED = 5;
     static final int WALL = 6;
     static final int APPROACH = 4;
@@ -120,6 +119,8 @@ public final class BeardLinks {
         int mid() { return Math.floorDiv(rows[0] + rows[1], 2); }
 
         boolean straight() { return rows[0] == rows[1]; }
+
+        int body(int join) { return rows[join] < rows[1 - join] ? 1 : -1; }
 
         int[] tracks() { return BeardRails.trackRows(buried, across); }
 
@@ -393,25 +394,39 @@ public final class BeardLinks {
         int[] packed = rail.trunk();
         if (packed == null) { return NONE; }
         Trunk trunk = Trunk.of(packed);
-        int half = trunk.half();
         if (trunk.straight()) { return crossing(trunk, row, across); }
+        int half = trunk.half();
+        int[] tracks = trunk.tracks();
+        int last = tracks.length - 1;
         for (int j = 0; j < 2; j++) {
             int join = trunk.rows[j];
             int side = trunk.sides[j];
-            if (Math.abs(row - join) > trunk.spurHalf()) { continue; }
+            int body = trunk.body(j);
+            int back = (join - row) * body;
             int out = (across - trunk.across) * side;
-            int[] tracks = trunk.tracks();
-            int near = side < 0 ? tracks[0] : tracks[tracks.length - 1];
-            int nearOut = (near - trunk.across) * side;
-            if (out > half + 1 || out < nearOut) { continue; }
+            if (back > trunk.reach() || back < -trunk.spurHalf() || out > half + 1 || out < -half) { continue; }
+            int k = index(tracks, across, side < 0);
+            if (back > trunk.spurHalf()) {
+                if (k >= 0) { return BED; }
+                continue;
+            }
             if (out == half + 1) { return OPEN; }
             int[] spur = BeardRails.trackRows(trunk.sub, join);
-            if (out > nearOut) { return contains(spur, row) ? SPUR : BED; }
-            if (spur.length == 1) { return row == join ? CURVE : NONE; }
-            if (row == spur[0] || row == spur[spur.length - 1]) { return CURVE; }
-            if (row > spur[0] && row < spur[spur.length - 1]) { return BROKEN; }
+            int outer = spur.length - 1;
+            int i = index(spur, row, body < 0);
+            int end = i == outer ? last : Math.min(i, last);
+            int start = k == last ? outer : Math.min(k, outer);
+            if (i >= 0 && k >= 0) { return k == Math.min(i, last) || i == Math.min(k, outer) ? CURVE : k < end ? SPUR : i < start ? NONE : BED; }
+            if (k >= 0) { return back < (join - spur[body > 0 ? outer - start : start]) * body ? NONE : BED; }
+            if (i >= 0) { return out > (tracks[side > 0 ? last - end : end] - trunk.across) * side ? SPUR : NONE; }
+            return out > (tracks[side > 0 ? last : 0] - trunk.across) * side ? BED : NONE;
         }
         return NONE;
+    }
+
+    private static int index(int[] rows, int row, boolean ascending) {
+        for (int at = 0; at < rows.length; at++) { if (rows[at] == row) { return ascending ? at : rows.length - 1 - at; } }
+        return -1;
     }
 
     private static int crossing(Trunk trunk, int row, int across) {
@@ -421,10 +436,7 @@ public final class BeardLinks {
         return contains(BeardRails.trackRows(trunk.sub, trunk.rows[0]), row) ? SPUR : BED;
     }
 
-    private static boolean contains(int[] rows, int row) {
-        for (int held : rows) { if (held == row) { return true; } }
-        return false;
-    }
+    private static boolean contains(int[] rows, int row) { return index(rows, row, true) >= 0; }
 
     static IBlockState junctionTrack(RailPiece rail, int row, int across, IBlockState track) {
         int code = junction(rail, row, across);
@@ -433,15 +445,8 @@ public final class BeardLinks {
         Trunk trunk = Trunk.of(packed);
         if (code == SPUR) { return BeardRails.shaped(track, trunk.alongX ? BlockRailBase.EnumRailDirection.NORTH_SOUTH : BlockRailBase.EnumRailDirection.EAST_WEST, !trunk.alongX); }
         int j = Math.abs(row - trunk.rows[0]) <= trunk.spurHalf() ? 0 : 1;
-        int side = trunk.sides[j];
-        EnumFacing.Axis rowAxis = trunk.alongX ? EnumFacing.Axis.X : EnumFacing.Axis.Z;
-        EnumFacing.Axis acrossAxis = trunk.alongX ? EnumFacing.Axis.Z : EnumFacing.Axis.X;
-        int[] spur = BeardRails.trackRows(trunk.sub, trunk.rows[j]);
-        int way;
-        if (spur.length == 1) { way = EnumFacing.getFacingFromAxis(side > 0 ? EnumFacing.AxisDirection.NEGATIVE : EnumFacing.AxisDirection.POSITIVE, acrossAxis).rotateYCCW().getAxisDirection().getOffset(); }
-        else { way = row == spur[0] ? -1 : 1; }
-        EnumFacing toSpur = EnumFacing.getFacingFromAxis(side > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, acrossAxis);
-        EnumFacing along = EnumFacing.getFacingFromAxis(way > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, rowAxis);
+        EnumFacing toSpur = EnumFacing.getFacingFromAxis(trunk.sides[j] > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, trunk.alongX ? EnumFacing.Axis.Z : EnumFacing.Axis.X);
+        EnumFacing along = EnumFacing.getFacingFromAxis(trunk.body(j) > 0 ? EnumFacing.AxisDirection.POSITIVE : EnumFacing.AxisDirection.NEGATIVE, trunk.alongX ? EnumFacing.Axis.X : EnumFacing.Axis.Z);
         boolean north = toSpur == EnumFacing.NORTH || along == EnumFacing.NORTH;
         boolean east = toSpur == EnumFacing.EAST || along == EnumFacing.EAST;
         BlockRailBase.EnumRailDirection shape = north ? (east ? BlockRailBase.EnumRailDirection.NORTH_EAST : BlockRailBase.EnumRailDirection.NORTH_WEST) : (east ? BlockRailBase.EnumRailDirection.SOUTH_EAST : BlockRailBase.EnumRailDirection.SOUTH_WEST);
