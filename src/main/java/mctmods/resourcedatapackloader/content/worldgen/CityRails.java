@@ -249,7 +249,29 @@ public final class CityRails {
         return least > most ? null : new int[] {least, most};
     }
 
-    @Nullable static int[] surfacing(CityGround ground, CityPlan.Rail rail, List<CityPlan.Line> lines) {
+    private static int clearOfCrossings(CityPlan.Rail rail, List<CityPlan.Line> lines, List<CityPlan.Rail> mates, int row, int toward, int reach) {
+        int center = rail.middle();
+        List<int[]> streets = new ArrayList<>();
+        for (CityPlan.Line line : lines) {
+            if (line.alongX() != rail.alongX() && center >= line.from() && center <= line.to()) { streets.add(new int[] {line.at(), line.last()}); }
+        }
+        for (CityPlan.Rail mate : mates) {
+            if (!mate.subway() && mate.alongX() != rail.alongX() && center >= mate.from() && center <= mate.to()) { streets.add(new int[] {mate.at(), mate.last()}); }
+        }
+        int clear = row;
+        for (int pass = 0; pass < streets.size(); pass++) {
+            for (int[] street : streets) {
+                if (toward > 0) {
+                    if (street[0] - 1 <= clear + reach && street[1] + 1 >= clear) { clear = street[1] + 2; }
+                }
+                else if (street[1] + 1 >= clear - reach && street[0] - 1 <= clear) { clear = street[0] - 2; }
+            }
+        }
+        if (clear != row) { ContentLog.LOGGER.debug("Subway line at {} moves its climb-out at the {} end from row {} to row {}, so no street or railway line crosses the {} row(s) of its ramp", center, toward > 0 ? "high" : "low", row, clear, reach); }
+        return clear;
+    }
+
+    @Nullable static int[] surfacing(CityGround ground, CityPlan.Rail rail, List<CityPlan.Line> lines, List<CityPlan.Rail> mates) {
         int[] ends = CityLinks.ends(rail);
         if (ends.length > 0) {
             int[] linked = CityLinks.climbOut(ends);
@@ -270,8 +292,8 @@ public final class CityRails {
         if (most - least < shortest) { return null; }
         int run = ramp + Math.max(LEAST_OPEN, CityPlan.railTail(true));
         int[] street = streetOver(lines, rail);
-        int lowRow = street == null ? least + run : Math.min(least + run, street[0] - 1);
-        int highRow = street == null ? most - run : Math.max(most - run, street[1] + 1);
+        int lowRow = clearOfCrossings(rail, lines, mates, street == null ? least + run : Math.min(least + run, street[0] - 1), -1, shortest);
+        int highRow = clearOfCrossings(rail, lines, mates, street == null ? most - run : Math.max(most - run, street[1] + 1), 1, shortest);
         boolean canLow = lowRow - least >= shortest;
         boolean canHigh = most - highRow >= shortest;
         ContentLog.LOGGER.debug("Subway line at {} weighs a climb-out: rows {} to {}, ramp {} and run {} (shortest {}), streets over it {}, low end at row {} {}, high end at row {} {}", rail.middle(), least, most, ramp, run, shortest, street == null ? "none" : street[0] + " to " + street[1], lowRow, canLow ? "can" : "cannot", highRow, canHigh ? "can" : "cannot");
@@ -389,6 +411,16 @@ public final class CityRails {
     }
 
     public static BoundingBox lineBox(CityPlan.Line line) { return line.alongX() ? new BoundingBox(line.from(), 0, line.at(), line.to(), 0, line.last()) : new BoundingBox(line.at(), 0, line.from(), line.last(), 0, line.to()); }
+
+    static BoundingBox railBox(CityPlan.Rail rail) { return rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to()); }
+
+    static boolean crosses(CityPlan.Rail rail, BoundingBox box) {
+        boolean boxAlongX = box.maxX() - box.minX() >= box.maxZ() - box.minZ();
+        if (rail.alongX() == boxAlongX) { return false; }
+        int least = rail.alongX() ? box.minZ() : box.minX();
+        int most = rail.alongX() ? box.maxZ() : box.maxX();
+        return least <= rail.at() - MARGIN && most >= rail.last() + MARGIN;
+    }
 
     static boolean roadOver(List<CityPlan.Line> lines, boolean alongX, int row, int center) {
         for (CityPlan.Line line : lines) {

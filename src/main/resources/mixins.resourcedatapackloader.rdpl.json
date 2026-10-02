@@ -66,6 +66,7 @@
         "common.MixinSkyLightStorageMap",
         "common.MixinIcebergFeature",
         "common.MixinLakeFeature",
+        "common.MixinBlockBlobFeature",
         "common.MixinFlowingFluid",
         "common.MixinLavaFluid",
         "common.MixinMonsterRoomFeature",

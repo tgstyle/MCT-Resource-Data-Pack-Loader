@@ -265,7 +265,7 @@ final class CityGrowth {
         for (Plot plot : found) { standing.add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
         standing.addAll(CityLayout.mapWells(town));
         for (Rail rail : rails) {
-            if (!rail.subway()) { standing.add(rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to())); }
+            if (!rail.subway()) { standing.add(CityRails.railBox(rail)); }
         }
         for (Court court : courts) {
             if (court.room() <= 0) { continue; }

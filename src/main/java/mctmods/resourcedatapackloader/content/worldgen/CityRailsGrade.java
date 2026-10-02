@@ -24,9 +24,10 @@ public final class CityRailsGrade {
         List<BoundingBox> wells = new ArrayList<>();
         CityRails.gather(ground, CityLinks.ends(rail).length > 0 ? null : town, alongX, rail.from() - CityRails.NEAR, rail.to() + CityRails.NEAR, center - half - CityRails.NEAR, center + half + CityRails.NEAR, lines, wells);
         int sea = ground.sea();
-        int[] floor = bedFloor(ground, rail, CityRails.fitted(ground, town));
+        List<CityPlan.Rail> mates = CityRails.fitted(ground, town);
+        int[] floor = bedFloor(ground, rail, mates);
         int climb = ContentCity.railClimb(sub);
-        int[] rising = sub ? CityRails.surfacing(ground, rail, lines) : null;
+        int[] rising = sub ? CityRails.surfacing(ground, rail, lines, mates) : null;
         if (rising != null) { ContentLog.LOGGER.debug("Subway line at {} climbs out over the {} row(s) {} of row {}, {} of ramp to rise {} block(s) and the rest of it open track", center, rising[1] > 0 ? rail.to() - rising[0] : rising[0] - rail.from(), rising[1] > 0 ? "beyond" : "short", rising[0], ContentCity.subwayDepth() * climb, ContentCity.subwayDepth()); }
         List<CityRails.Station> stations = sub && ContentCity.stations() ? CityRails.claim(rail, town, lines, wells, rising) : List.of();
         boolean[] lowered = new boolean[rows];

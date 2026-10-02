@@ -173,7 +173,22 @@ public final class CityPlotGround {
         return laid;
     }
 
-    private static void fillDown(WorldGenLevel level, BoundingBox box, int x, int from, int z, int floor, BlockState ground) { pier(level, box, x, from, z, floor, Integer.MAX_VALUE, ground); }
+    private static void fillDown(WorldGenLevel level, BoundingBox box, int x, int from, int z, int floor, BlockState ground) {
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        int base = from;
+        while (base >= floor && box.isInside(at.set(x, base, z)) && !solid(level.getBlockState(at))) { base--; }
+        BlockState firm = firmGround(ground);
+        for (int y = base + 1; y <= from; y++) {
+            boolean hangs = firm != ground && !solid(level.getBlockState(at.set(x, y - 1, z)));
+            level.setBlock(at.set(x, y, z), hangs ? firm : ground, 2);
+        }
+    }
+
+    private static BlockState firmGround(BlockState loose) {
+        if (loose.is(Blocks.SAND)) { return Blocks.SANDSTONE.defaultBlockState(); }
+        if (loose.is(Blocks.GRAVEL)) { return Blocks.STONE.defaultBlockState(); }
+        return loose;
+    }
 
     static void pier(WorldGenLevel level, BoundingBox box, int x, int from, int z, int floor, int bed, BlockState ground) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -185,6 +200,8 @@ public final class CityPlotGround {
             level.setBlock(at, ground, 2);
         }
     }
+
+    static void wallFoot(WorldGenLevel level, BoundingBox box, List<CityRails.Laid> bores, int x, int z, int from, BlockState lining) { pier(level, box, x, from, z, CityRails.boreRoof(bores, x, z) + 1, Integer.MAX_VALUE, lining); }
 
     static int fillBank(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { return fillBank(level, box, x, z, from, floor, false); }
 
