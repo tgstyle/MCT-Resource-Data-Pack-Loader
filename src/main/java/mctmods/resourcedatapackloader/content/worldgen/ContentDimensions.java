@@ -175,7 +175,7 @@ public final class ContentDimensions {
         overworldVisualsAndMusic(type, attributes);
         if (def.fogColor() >= 0) { attributes.addProperty(VISUAL + "fog_color", String.format("#%06x", def.fogColor() & 0xFFFFFF)); }
         if (!def.surfaceWorld()) {
-            type.addProperty("skybox", "none");
+            if (def.traits().sky() == null) { type.addProperty("skybox", "none"); }
             attributes.remove(VISUAL + "cloud_color");
             attributes.remove(VISUAL + "cloud_height");
         }

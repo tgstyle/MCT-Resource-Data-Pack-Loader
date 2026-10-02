@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.GameData;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
@@ -20,6 +22,9 @@ final class ContentDimensionTime {
     private static final String OVERWORLD_CLOCK = "minecraft:overworld";
     private static final String IN_OVERWORLD = "#minecraft:in_overworld";
     private static final String TRACKS = "tracks";
+    private static final String PERIOD = "period_ticks";
+    private static final String KEYFRAMES = "keyframes";
+    private static final String TICKS = "ticks";
     private static final String SKY_LIGHT_LEVEL = "minecraft:gameplay/sky_light_level";
     private static final Set<String> DAYLIGHT_CHECKS = Set.of("minecraft:gameplay/monsters_burn", "minecraft:gameplay/bees_stay_in_hive", "minecraft:gameplay/creaking_active", "minecraft:gameplay/eyeblossom_open", "minecraft:audio/firefly_bush_sounds");
     private static final Map<Identifier, Long> FIXED = new ConcurrentHashMap<>();
@@ -40,12 +45,14 @@ final class ContentDimensionTime {
         type.addProperty("default_clock", fixed ? key.toString() : OVERWORLD_CLOCK);
         if (type.has("attributes")) { type.getAsJsonObject("attributes").remove(SKY_LIGHT_LEVEL); }
         type.addProperty("timelines", IN_OVERWORLD);
-        if (!fixed && def.fogColor() < 0 && def.skyColor() < 0 && def.sunriseColors()) { return; }
+        long length = def.traits().dayLength();
+        if (!fixed && def.fogColor() < 0 && def.skyColor() < 0 && def.sunriseColors() && length == DimensionTraitsDef.VANILLA_DAY) { return; }
         String clock = fixed ? key.toString() : OVERWORLD_CLOCK;
         JsonObject day = timeline("day", clock);
         JsonObject moon = fixed ? timeline("moon", clock) : null;
         if (day == null || (fixed && moon == null)) { return; }
         JsonObject tracks = day.getAsJsonObject(TRACKS);
+        if (length != DimensionTraitsDef.VANILLA_DAY) { scale(day, tracks, length); }
         if (fixed) { DAYLIGHT_CHECKS.forEach(tracks::remove); }
         if (!def.sunriseColors()) { tracks.add("minecraft:visual/sunrise_sunset_color", constant("#00000000")); }
         String namespace = key.getNamespace();
@@ -72,6 +79,27 @@ final class ContentDimensionTime {
         GeneratedResources.put(PackType.SERVER_DATA, namespace, "tags/timeline/" + path + ".json", tag.toString());
         type.addProperty("timelines", "#" + key);
     }
+
+    private static void scale(JsonObject day, JsonObject tracks, long length) {
+        if (!day.has(PERIOD)) { return; }
+        long period = day.get(PERIOD).getAsLong();
+        day.addProperty(PERIOD, length);
+        for (Map.Entry<String, JsonElement> track : tracks.entrySet()) {
+            if (!track.getValue().isJsonObject() || !track.getValue().getAsJsonObject().has(KEYFRAMES)) { continue; }
+            JsonArray scaled = new JsonArray();
+            for (JsonElement element : track.getValue().getAsJsonObject().getAsJsonArray(KEYFRAMES)) {
+                JsonObject keyframe = element.getAsJsonObject();
+                long ticks = keyframe.get(TICKS).getAsLong() * length / period;
+                keyframe.addProperty(TICKS, ticks);
+                int held = scaled.size();
+                if (held >= 2 && ticks(scaled, held - 1) == ticks && ticks(scaled, held - 2) == ticks) { scaled.set(held - 1, keyframe); }
+                else { scaled.add(keyframe); }
+            }
+            track.getValue().getAsJsonObject().add(KEYFRAMES, scaled);
+        }
+    }
+
+    private static long ticks(JsonArray keyframes, int index) { return keyframes.get(index).getAsJsonObject().get(TICKS).getAsLong(); }
 
     static void clockItem(List<String> natural) {
         if (natural.isEmpty()) { return; }

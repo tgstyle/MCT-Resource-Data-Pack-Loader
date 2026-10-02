@@ -142,6 +142,7 @@
         "client.MixinClientLevel",
         "client.MixinLevelRenderer",
         "client.MixinLevelRendererWeather",
+        "client.MixinSkyRenderer",
         "client.MixinChatComponent",
         "client.MixinChatScreen",
         "client.MixinCommandsKept",

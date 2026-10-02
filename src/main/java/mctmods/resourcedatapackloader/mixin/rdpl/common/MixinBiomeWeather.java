@@ -11,8 +11,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Biome.class) public abstract class MixinBiomeWeather {
-    @Inject(method = "shouldSnow", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "shouldSnow(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true)
     private void rdpl$snowBelowCeiling(LevelReader level, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentWeather.above(level, pos.getY())) { cir.setReturnValue(false); }
+        if (ContentWeather.above(level, pos.getY()) || !ContentWeather.traits(level).snow()) { cir.setReturnValue(false); }
+    }
+
+    @Inject(method = "shouldFreeze(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;Z)Z", at = @At("HEAD"), cancellable = true)
+    private void rdpl$freezeWhereAllowed(LevelReader level, BlockPos pos, boolean checkNeighbors, CallbackInfoReturnable<Boolean> cir) {
+        if (!ContentWeather.traits(level).freeze()) { cir.setReturnValue(false); }
     }
 }

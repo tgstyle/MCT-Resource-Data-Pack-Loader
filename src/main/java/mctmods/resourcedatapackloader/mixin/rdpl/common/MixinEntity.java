@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         double base = cir.getReturnValueD();
         Entity self = (Entity) (Object) this;
         if (base != 0.0D && rdpl$scaled(self)) {
-            double factor = ContentPhysics.gravity(self.level());
+            double factor = self instanceof AbstractArrow ? ContentPhysics.arrowGravity(self.level()) : ContentPhysics.gravity(self.level());
             if (factor != 1.0D) { cir.setReturnValue(base * factor); }
         }
     }
