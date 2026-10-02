@@ -14,6 +14,9 @@ Cubic Chunks; a rubic world that still has the older .2dr and .3dr names is
 accepted as it is), turns data/rdplRubicData.dat into data/cubicChunksData.dat
 or back, storage format and compatibility generator names included, and last
 swaps the isRubicWorld and isCubicWorld marker in level.dat and level.dat_old.
+to-cubic also takes this mod's two rubic registries out of the registry list
+Forge keeps in level.dat, so the world opens without Resource Data Pack Loader
+and without Forge's missing registries prompt.
 
 It refuses a world whose level.dat marker does not match the direction, a
 storage format or compatibility generator the other side does not have, and a
@@ -39,6 +42,7 @@ RUBIC = {
     "flag": b"isRubicWorld",
     "storageFormat": b"resourcedatapackloader:rubic3d",
     "compatibilityGeneratorType": b"resourcedatapackloader:default",
+    "registries": (b"resourcedatapackloader:storage_format_provider_registry", b"resourcedatapackloader:vanilla_compatibility_generators_registry"),
 }
 CUBIC = {
     "label": "Cubic Chunks",
@@ -49,6 +53,7 @@ CUBIC = {
     "flag": b"isCubicChunks",
     "storageFormat": b"cubicchunks:anvil3d",
     "compatibilityGeneratorType": b"cubicchunks:default",
+    "registries": (),
 }
 DIRECTIONS = {"to-cubic": (RUBIC, CUBIC), "to-rubic": (CUBIC, RUBIC)}
 LEVEL_FILES = ("level.dat", "level.dat_old")
@@ -228,8 +233,16 @@ def plan_levels(world, source, target, problems):
                 raise Refused("level.dat marks this world as %s, not as a %s world" % (kind if kind == "neither" else "a %s world" % kind, source["label"]))
             continue
         rename_key(data, source["marker"], target["marker"], (1, b"\x01"))
-        levels.append((path, name, root))
+        levels.append((path, name, root, drop_registries(root, source["registries"])))
     return levels
+
+
+def drop_registries(root, names):
+    forge = root.get(b"FML")
+    saved = forge[1].get(b"Registries") if forge is not None and forge[0] == 10 else None
+    if saved is None or saved[0] != 10:
+        return []
+    return [name.decode() for name in names if saved[1].pop(name, None) is not None]
 
 
 def convert(direction, world, dry_run):
@@ -252,15 +265,17 @@ def convert(direction, world, dry_run):
             print("rename %s -> %s" % (os.path.relpath(old, world), os.path.basename(new)))
         for old, new, _, _, notes in conversions:
             print("convert %s -> %s (%s)" % (os.path.relpath(old, world), os.path.basename(new), ", ".join(notes) or "no key changes"))
-        for path, _, _ in levels:
+        for path, _, _, dropped in levels:
             print("mark %s: %s removed, %s set" % (os.path.relpath(path, world), source["marker"].decode(), target["marker"].decode()))
+            for registry in dropped:
+                print("drop %s: registry %s" % (os.path.relpath(path, world), registry))
     else:
         for old, new in renames:
             os.rename(old, new)
         for old, new, name, root, _ in conversions:
             write_nbt(new, name, root)
             os.remove(old)
-        for path, name, root in reversed(levels):
+        for path, name, root, _ in reversed(levels):
             write_nbt(path, name, root)
     print("%s%d region file(s) and folder(s) renamed, %d data file(s) converted, %d level file(s) marked as a %s world"
           % ("dry run: " if dry_run else "", len(renames), len(conversions), len(levels), target["label"]))

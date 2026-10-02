@@ -5,4 +5,4 @@ import net.minecraft.client.network.NetHandlerPlayClient;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(NetHandlerPlayClient.class) public interface INetHandlerPlayClient { @Accessor WorldClient getWorld(); }
+@Mixin(NetHandlerPlayClient.class) public interface INetHandlerPlayClient { @Accessor("world") WorldClient rdpl$world(); }

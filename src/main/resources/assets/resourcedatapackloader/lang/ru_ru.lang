@@ -5,6 +5,7 @@ rdpl.command.biomemissing='%s' нет в пределах %d блоков. Он 
 rdpl.command.biomes=Биомов в списке: %d%s
 rdpl.command.biomesmore=, и ещё %d из Minecraft. Добавьте 'all', чтобы увидеть остальные
 rdpl.command.busy=Задача уже выполняется
+rdpl.command.cubicchunks=CubicChunks создаёт этот мир куб за кубом, поэтому земля здесь заранее не создаётся
 rdpl.command.clickhint=Щёлкните, чтобы найти файл в этом пространстве имён
 rdpl.command.clientonly=Перезагружены только ваши собственные ресурсы
 rdpl.command.closed= закрыты

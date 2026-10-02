@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.util.compat;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IASMEventHandler;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEventBus;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -95,7 +95,7 @@ public class CompatHandler {
     }
 
     private static boolean postEventPerModFakeHeight(World world, Event event) {
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return MinecraftForge.EVENT_BUS.post(event); }
+        if (!GenHeights.rubic(world)) { return MinecraftForge.EVENT_BUS.post(event); }
         return postEvent((IRubicWorldInternal.IServer) world, event, w -> w.rdpl$fakeWorldHeight(VANILLA_HEIGHT), w -> w.rdpl$fakeWorldHeight(0));
     }
 

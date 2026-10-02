@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.Block;
 import net.minecraft.util.EnumFacing;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 
 @Mixin(WorldGenVines.class) public class MixinWorldGenVines {
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 128), require = 1) private int rdpl$maxVineY(int orig, World worldIn, Random rand, BlockPos position) { return ((IRubicWorld) worldIn).rdpl$getMaxHeight(); }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 128), require = 1) private int rdpl$maxVineY(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.ceiling(worldIn, 256); }
 
     @Redirect(method = "generate", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/block/Block;canPlaceBlockOnSide(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z"), require = 1)

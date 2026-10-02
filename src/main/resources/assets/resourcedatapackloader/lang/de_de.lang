@@ -5,6 +5,7 @@ rdpl.command.biomemissing=Kein '%s' innerhalb von %d Blöcken. Es ist vielleicht
 rdpl.command.biomes=%d Biom(e) aufgelistet%s
 rdpl.command.biomesmore=, dazu %d aus Minecraft. Häng 'all' an, um mehr zu sehen
 rdpl.command.busy=Es läuft bereits eine Aufgabe
+rdpl.command.cubicchunks=CubicChunks erzeugt diese Welt Würfel für Würfel, daher wird hier kein Land im Voraus erzeugt
 rdpl.command.clickhint=Klicken, um eine Datei in diesem Namespace nachzuschlagen
 rdpl.command.clientonly=Es wurden nur deine eigenen Ressourcen neu geladen
 rdpl.command.closed= geschlossen

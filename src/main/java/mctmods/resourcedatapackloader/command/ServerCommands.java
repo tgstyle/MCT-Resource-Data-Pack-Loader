@@ -33,6 +33,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
@@ -364,6 +365,7 @@ public class ServerCommands extends CommandBase {
         boolean lightOnly = args.length == 3 && "relight".equals(args[2]);
         if (args.length != 2 && !lightOnly) { throw new WrongUsageException(Lang.tr(sender, "rdpl.command.pregenusage")); }
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.busy")); }
+        if (CubicChunksWorlds.cubic(sender.getEntityWorld())) { throw new CommandException(Lang.tr(sender, "rdpl.command.cubicchunks")); }
         int radius = parseInt(args[1], 0, 8192);
         BlockPos at = sender.getPosition();
         int dimension = sender.getEntityWorld().provider.getDimension();

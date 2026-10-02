@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IWorldProviderEnd;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
@@ -152,6 +153,10 @@ public final class ContentPregenDimensions {
             WorldServer world = DimensionManager.getWorld(dimension);
             if (world == null) {
                 ContentLog.LOGGER.error("Dimension {} would not open, so no land is made in it", dimension);
+                continue;
+            }
+            if (CubicChunksWorlds.cubic(world)) {
+                ContentLog.LOGGER.info("CubicChunks makes dimension {} cube by cube, so no land is made in it ahead of time", dimension);
                 continue;
             }
             int centreX;

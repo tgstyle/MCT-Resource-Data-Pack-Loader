@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.util.compat;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -21,8 +22,8 @@ public final class GcRubicSunlight {
             unlooked = false;
             brightAir = Block.getBlockFromName("galacticraftcore:bright_air");
         }
+        if (brightAir == null || state.getBlock() != brightAir || !GenHeights.rubic(world)) { return state.getLightValue(world, pos); }
         IRubicWorld rubic = (IRubicWorld) world;
-        if (brightAir == null || state.getBlock() != brightAir || !rubic.rdpl$isRubicWorld()) { return state.getLightValue(world, pos); }
         int run = 0;
         while (run < 5) {
             int x = pos.getX() - 1 - run;

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.IntRange;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -25,7 +26,7 @@ public class MessageRubicWorldData implements IMessage {
     public MessageRubicWorldData(WorldServer world) {
         this.minHeight = 0;
         this.maxHeight = 256;
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) {
+        if (GenHeights.rubic(world)) {
             this.isRubicWorld = true;
             this.minHeight = ((IRubicWorld) world).rdpl$getMinHeight();
             this.maxHeight = ((IRubicWorld) world).rdpl$getMaxHeight();
@@ -62,7 +63,7 @@ public class MessageRubicWorldData implements IMessage {
 
     public static class Handler extends AbstractClientMessageHandler<MessageRubicWorldData> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageRubicWorldData message, MessageContext ctx) {
-            if (message.rdpl$isRubicWorld() && !((IRubicWorld) world).rdpl$isRubicWorld()) {
+            if (message.rdpl$isRubicWorld() && !GenHeights.rubic(world)) {
                 ((IRubicWorldInternal.IClient) world).rdpl$initRubicWorldClient(
                         new IntRange(message.rdpl$getMinHeight(), message.rdpl$getMaxHeight()),
                         new IntRange(message.getMinGenerationHeight(), message.rdpl$getMaxGenerationHeight())

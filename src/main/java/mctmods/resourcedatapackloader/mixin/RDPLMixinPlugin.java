@@ -24,6 +24,36 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final Object2BooleanMap<String> RUBIC_CONDITIONS = new Object2BooleanLinkedOpenHashMap<>();
     private static final String CUBIC_CHUNKS_MARKER = "io/github/opencubicchunks/cubicchunks/core/CubicChunks.class";
     private static final String RUBIC_PACKAGE = "mctmods.resourcedatapackloader.mixin.rdpl.";
+    private static final Set<String> RUBIC = new HashSet<>(Arrays.asList(
+            "client.IChunkProviderClient", "client.IContainerLocalRenderInformation", "client.IGuiOptionsRowList", "client.IGuiScreen",
+            "client.IGuiVideoSettings", "client.IViewFrustum", "client.MixinChunk", "client.MixinChunkCache",
+            "client.MixinChunkVisibility", "client.MixinDebugRenderChunkBorder", "client.MixinEmptyChunk", "client.MixinEntityPlayerSP",
+            "client.MixinEntityRendererRubic", "client.MixinEntityRubic", "client.MixinExtendedBlockStorage", "client.MixinGuiOverlayDebug",
+            "client.MixinRenderChunk", "client.MixinRenderChunkOptifine", "client.MixinRenderChunkUtils", "client.MixinRenderGlobal",
+            "client.MixinRenderGlobalNoOptifine", "client.MixinRenderGlobalOptifineE", "client.MixinRenderGlobalVertViewDistance", "client.MixinRenderList",
+            "client.MixinRenderWorker", "client.MixinViewFrustum", "client.MixinViewFrustumOptifine", "client.MixinViewFrustumVertViewDistance",
+            "client.MixinWorldClient", "client.MixinWorldProvider", "common.IASMEventHandler", "common.IBlockAccessMinMaxHeight",
+            "common.IEventBus", "common.IGameRegistry", "common.IPlayerChunkMapEntry", "common.MixinAnvilSaveHandler",
+            "common.MixinBiomeDecorator", "common.MixinBiomeTemperatureConfig", "common.MixinBlockBeaconAsyncUpdate", "common.MixinBlockChorusFlower",
+            "common.MixinBlockFallingHeightLimits", "common.MixinBlockGrass", "common.MixinBlockLilyPadHeightLimits", "common.MixinBlockMushroom",
+            "common.MixinBlockPistonBaseHeightFix", "common.MixinBlockPortalSizeHeightLimits", "common.MixinBlockSkullWitherSpawnLimits", "common.MixinBlockStaticLiquid",
+            "common.MixinChunk", "common.MixinChunkCache", "common.MixinChunkEntities", "common.MixinCommandBase",
+            "common.MixinCommandFill", "common.MixinCommandTP", "common.MixinCommandTeleport", "common.MixinCommandsHeightLimits",
+            "common.MixinEntityBat", "common.MixinEntityBoat", "common.MixinEntityFallingBlock", "common.MixinEntityLivingBaseRubic",
+            "common.MixinEntityMinecartKillFix", "common.MixinEntityRubic", "common.MixinEntityTracker", "common.MixinEntityTrackerEntry",
+            "common.MixinForgeChunkManager", "common.MixinForgeEventFactory", "common.MixinItemChorusFruit", "common.MixinMinecraftServer",
+            "common.MixinNetHandlerPlayServer", "common.MixinNetHandlerPlayServerBuild", "common.MixinPacketBufferBlockPosWrite", "common.MixinPathNavigateGround",
+            "common.MixinPlayerList", "common.MixinRandomPositionGenerator", "common.MixinRegionFileCacheRubic", "common.MixinRubicEndWorkaround",
+            "common.MixinSaveHandler", "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
+            "common.MixinTicket", "common.MixinTileEntityBeacon", "common.MixinTileEntityBeaconBetterFps", "common.MixinTileEntityEndGateway",
+            "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
+            "common.MixinWorldGenBlockBlob", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
+            "common.MixinWorldGenDesertWells", "common.MixinWorldGenDoublePlants", "common.MixinWorldGenDungeonsRubic", "common.MixinWorldGenFlowers",
+            "common.MixinWorldGenHugeTrees", "common.MixinWorldGenIcePath", "common.MixinWorldGenIceSpike", "common.MixinWorldGenLakesRubic",
+            "common.MixinWorldGenShrub", "common.MixinWorldGenSpikes", "common.MixinWorldGenSwamp", "common.MixinWorldGenTaiga1",
+            "common.MixinWorldGenTaiga2", "common.MixinWorldGenTallGrass", "common.MixinWorldGenTreeBirchSavanna", "common.MixinWorldGenTrees",
+            "common.MixinWorldProvider", "common.MixinWorldServer", "common.MixinWorldSettings",
+            "server.MixinDedicatedPlayerList", "server.MixinDedicatedServerHeightLimits"));
     private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
@@ -45,7 +75,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (cubicChunks == null) {
             cubicChunks = Launch.classLoader.getResource(CUBIC_CHUNKS_MARKER) != null || inModJars();
             if (cubicChunks) {
-                LogManager.getLogger("RDPL").warn("CubicChunks is installed, so it makes the cubic worlds and this mod's own stand down. That pairing is not supported: use one or the other, and please do not report anything about this mod while CubicChunks is installed");
+                LogManager.getLogger("RDPL").warn("CubicChunks is installed, so it makes the cubic worlds and this mod's rubic worlds stand down. The rest of this mod still runs");
             }
         }
         return cubicChunks;
@@ -112,7 +142,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     @Override public String getRefMapperConfig() { return null; }
 
     @Override public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if ((mixinClassName.startsWith(RUBIC_PACKAGE) || mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) && cubicChunksPresent()) { return false; }
+        if (rubic(mixinClassName) && cubicChunksPresent()) { return false; }
         if (RUBIC_CONDITIONS.containsKey(mixinClassName)) { return RUBIC_CONDITIONS.getBoolean(mixinClassName); }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
         if (simple.equals("MixinChunkWriteBox")) { return mctmods.resourcedatapackloader.util.WriteBoxWatch.watching(); }
@@ -147,10 +177,15 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             lightingReplaced = Launch.classLoader.getResource("dev/redstudio/alfheim/mixin/WorldMixin.class") != null
                     || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
                     || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null
-                    || spongePresent();
+                    || spongePresent() || cubicChunksPresent();
             if (lightingReplaced) { LogManager.getLogger("RDPL").info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;
+    }
+
+    private static boolean rubic(String mixinClassName) {
+        if (mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) { return true; }
+        return mixinClassName.startsWith(RUBIC_PACKAGE) && RUBIC.contains(mixinClassName.substring(RUBIC_PACKAGE.length()));
     }
 
     private static boolean spongePresent() {

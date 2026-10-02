@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
@@ -100,8 +100,8 @@ public final class ContentExposures {
         int centerX = MathHelper.floor(player.posX);
         int centerY = MathHelper.floor(player.posY);
         int centerZ = MathHelper.floor(player.posZ);
-        int lowest = Math.max(((IMinMaxHeight) world).rdpl$getMinHeight(), centerY - radius);
-        int highest = Math.min(((IMinMaxHeight) world).rdpl$getMaxHeight() - 1, centerY + radius);
+        int lowest = Math.max(GenHeights.floor(world, 0), centerY - radius);
+        int highest = Math.min(GenHeights.ceiling(world, 256) - 1, centerY + radius);
         int level = 0;
         int sources = 0;
         for (int chunkX = centerX - radius >> 4; chunkX <= centerX + radius >> 4; chunkX++) {

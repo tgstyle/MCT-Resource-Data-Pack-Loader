@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -14,7 +14,7 @@ public final class ContentDressLight {
 
     private ContentDressLight() {}
 
-    public static boolean quenches(World world) { return !world.isRemote && !((IRubicWorld) world).rdpl$isRubicWorld() && ContentLightArea.outside(world); }
+    public static boolean quenches(World world) { return !world.isRemote && !GenHeights.rubic(world) && ContentLightArea.outside(world); }
 
     public static void darken(Chunk chunk) {
         if (chunk.isLightPopulated()) { DARKENED.add(chunk); }

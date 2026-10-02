@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import com.google.common.base.Predicate;
 import net.minecraft.block.Block;
@@ -84,9 +84,9 @@ public final class ContentPlacer {
         return false;
     }
 
-    public static int floorY(World world) { return ((IMinMaxHeight) world).rdpl$getMinHeight() + 1; }
+    public static int floorY(World world) { return GenHeights.floor(world, 1); }
 
-    public static int ceilingY(World world) { return ((IMinMaxHeight) world).rdpl$getMaxHeight(); }
+    public static int ceilingY(World world) { return GenHeights.ceiling(world, 256); }
 
     public IBlockState choose(Random random) {
         if (states.size() < 2) { return states.get(0); }

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import drzhark.customspawner.CustomSpawner;
@@ -32,7 +32,7 @@ public final class CmsRubicSpawns {
             int y = event.getPos().getY();
             if (y >= 0 && y < 256) { return; }
             World world = event.getWorld();
-            if (world.isRemote || !((IRubicWorld) world).rdpl$isRubicWorld() || !event.getList().isEmpty()) { return; }
+            if (world.isRemote || !GenHeights.rubic(world) || !event.getList().isEmpty()) { return; }
             event.getList().addAll(rememberedFor(world.getBiome(event.getPos()), event.getType()));
         }
 

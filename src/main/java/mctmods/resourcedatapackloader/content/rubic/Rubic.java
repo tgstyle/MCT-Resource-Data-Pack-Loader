@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.storage.StorageFormatP
 import mctmods.resourcedatapackloader.content.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.WorldgenHangWatchdog;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCompatibilityGenerator;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.SideUtils;
 
 import net.minecraft.world.World;
@@ -42,6 +43,10 @@ import javax.annotation.Nonnull;
     }
 
     public static void init() {
+        if (RDPLMixinPlugin.cubicChunksPresent()) {
+            MinecraftForge.EVENT_BUS.register(new RubicStandDown());
+            return;
+        }
         MinecraftForge.EVENT_BUS.register(new RubicEvents());
         SideUtils.runForClient(() -> () -> MinecraftForge.EVENT_BUS.register(new RubicClientEvents()));
     }

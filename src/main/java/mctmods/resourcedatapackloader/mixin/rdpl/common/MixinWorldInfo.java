@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -152,8 +153,9 @@ import java.util.Map;
 
     @Unique private boolean rdpl$isRubic;
 
-    @Inject(method = "populateFromWorldSettings", at = @At("RETURN")) private void onConstructWithSettings(WorldSettings settings, CallbackInfo cbi) {
-        this.rdpl$isRubic = ((IRubicWorldSettings) (Object) settings).rdpl$isRubic();
+    @SuppressWarnings("ConstantValue") @Inject(method = "populateFromWorldSettings", at = @At("RETURN")) private void onConstructWithSettings(WorldSettings settings, CallbackInfo cbi) {
+        Object asked = settings;
+        this.rdpl$isRubic = asked instanceof IRubicWorldSettings && ((IRubicWorldSettings) asked).rdpl$isRubic();
     }
 
     @Inject(method = "<init>(Lnet/minecraft/world/storage/WorldInfo;)V", at = @At("RETURN"))
@@ -166,7 +168,7 @@ import java.util.Map;
         if (rdpl$isRubic) { nbt.setBoolean("isRubicWorld", true); }
     }
 
-    @Override public boolean rdpl$isRubic() { return rdpl$isRubic; }
+    @Override public boolean rdpl$isRubic() { return rdpl$isRubic && !RDPLMixinPlugin.cubicChunksPresent(); }
 
     @Override public void rdpl$setRubic(boolean rubic) { this.rdpl$isRubic = rubic; }
 }

@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -31,7 +32,7 @@ public final class RubicWorldControl {
             return false;
         }
         if (!RDPLMixinPlugin.cubicChunksPresent()) { return true; }
-        standDown();
+        standDown("This pack needs a rubic world");
         return false;
     }
 
@@ -60,8 +61,10 @@ public final class RubicWorldControl {
         return found != ContentControl.flag(ContentControl.TERRAIN, "rubicWorldDimensionsAreBlacklist", Config.worldgen.rubicWorldDimensionsAreBlacklist);
     }
 
-    private static void standDown() {
-        stop("This pack needs a rubic world,\nwhich cannot run with CubicChunks installed.\n\nRemove CubicChunks,\nor remove rubicWorld from the pack.");
+    public static void standDownForSavedWorld() { standDown("This world is a rubic world"); }
+
+    private static void standDown(String what) {
+        stop(what + ",\nwhich cannot run with CubicChunks installed.\n\nRemove CubicChunks,\nor remove rubicWorld from the pack.");
     }
 
     private static final int DEFAULT_MIN_HEIGHT = -64;
@@ -104,7 +107,7 @@ public final class RubicWorldControl {
 
     public static int generatedCeiling(World world) {
         int actual = world.provider.getActualHeight();
-        if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return actual; }
+        if (!GenHeights.rubic(world)) { return actual; }
         if (ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone).trim().isEmpty()) { return actual; }
         int top = ((IMinMaxHeight) world).rdpl$getMaxHeight();
         int[] band = ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights);
@@ -113,7 +116,7 @@ public final class RubicWorldControl {
     }
 
     public static boolean rubicWorld(ChunkProviderServer provider) {
-        return provider instanceof CubeProviderServer && ((IRubicWorld) provider.world).rdpl$isRubicWorld();
+        return provider instanceof CubeProviderServer && GenHeights.rubic(provider.world);
     }
 
     public static boolean makeColumnCubes(ChunkProviderServer provider, Chunk column) {

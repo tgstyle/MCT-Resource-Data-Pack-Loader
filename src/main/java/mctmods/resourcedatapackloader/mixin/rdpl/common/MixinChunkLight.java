@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.ILightAreaHolder;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDressLight;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFirstLight;
@@ -40,7 +40,7 @@ import net.minecraft.util.math.ChunkPos;
         boolean timing = ContentChunkWatch.watching();
         long start = timing ? System.nanoTime() : 0L;
         ContentLightArea.enter(world, chunk.x, chunk.z);
-        if (world.isRemote || ((IRubicWorld) world).rdpl$isRubicWorld()) {
+        if (world.isRemote || GenHeights.rubic(world)) {
             if (timing) { rdpl$litStart.get()[0] = start; }
             return;
         }

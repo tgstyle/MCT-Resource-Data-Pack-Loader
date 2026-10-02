@@ -1,8 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.betterf3;
 
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +16,7 @@ import java.util.Locale;
     @Redirect(method = "getLines", at = @At(value = "INVOKE", target = "Ljava/lang/String;format(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;"), remap = false)
     private String rdpl$cubeRegion(Locale locale, String pattern, Object[] parts) {
         Minecraft mc = Minecraft.getMinecraft();
-        if (mc.player == null || mc.world == null || !((IRubicWorld) mc.world).rdpl$isRubicWorld()) { return String.format(locale, pattern, parts); }
+        if (mc.player == null || !GenHeights.rubic(mc.world)) { return String.format(locale, pattern, parts); }
         int cubeX = Coords.blockToCube(MathHelper.floor(mc.player.posX));
         int cubeY = Coords.blockToCube(MathHelper.floor(mc.player.posY));
         int cubeZ = Coords.blockToCube(MathHelper.floor(mc.player.posZ));

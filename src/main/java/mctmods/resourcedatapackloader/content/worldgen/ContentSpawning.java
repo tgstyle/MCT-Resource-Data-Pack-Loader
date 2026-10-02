@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -132,7 +132,7 @@ public final class ContentSpawning {
 
     private static boolean deniedAboveWindow(World world, float y) {
         if (SKY_ANIMALS.get(() -> ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals))) { return false; }
-        return ((IRubicWorld) world).rdpl$isRubicWorld() && y > world.provider.getActualHeight();
+        return GenHeights.rubic(world) && y > world.provider.getActualHeight();
     }
 
     private static float rateFor(World world, BlockPos pos) {

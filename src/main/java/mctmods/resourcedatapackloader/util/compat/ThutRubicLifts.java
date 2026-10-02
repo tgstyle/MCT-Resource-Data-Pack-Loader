@@ -3,9 +3,9 @@ package mctmods.resourcedatapackloader.util.compat;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
 
@@ -51,7 +51,7 @@ public final class ThutRubicLifts {
         @SubscribeEvent public void onJoin(EntityJoinWorldEvent event) {
             World world = event.getWorld();
             if (world.isRemote || !(world instanceof WorldServer)) { return; }
-            if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
+            if (!GenHeights.rubic(world)) { return; }
             Entity entity = event.getEntity();
             if (!LIFT.equals(EntityList.getKey(entity))) { return; }
             LiftPositions saved = LiftPositions.of((WorldServer) world);
@@ -61,7 +61,7 @@ public final class ThutRubicLifts {
 
         @SubscribeEvent public void onWorldTick(TickEvent.WorldTickEvent event) {
             if (event.phase != TickEvent.Phase.END || !(event.world instanceof WorldServer)) { return; }
-            if (!((IRubicWorld) event.world).rdpl$isRubicWorld()) { return; }
+            if (!GenHeights.rubic(event.world)) { return; }
             WorldServer world = (WorldServer) event.world;
             long time = world.getTotalWorldTime();
             if (time % DISCOVER_EVERY == 0) { discover(world); }

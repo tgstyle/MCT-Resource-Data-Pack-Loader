@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import farseek.util.ImplicitConversions$;
@@ -36,7 +36,7 @@ public final class StreamsRubicValleys {
     }
 
     public static void carveAhead(World world, int xChunk, int zChunk) {
-        if (handler == null || world.isRemote || !((IRubicWorld) world).rdpl$isRubicWorld() || world.provider.getDimension() != 0) { return; }
+        if (handler == null || world.isRemote || !GenHeights.rubic(world) || world.provider.getDimension() != 0) { return; }
         handler.carve((WorldServer) world, xChunk, zChunk);
     }
 

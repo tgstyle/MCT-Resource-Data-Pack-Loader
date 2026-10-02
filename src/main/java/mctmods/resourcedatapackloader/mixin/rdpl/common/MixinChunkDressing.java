@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCascade;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.compat.CubicChunksWorlds;
 
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -69,7 +70,7 @@ public abstract class MixinChunkDressing {
         if (!(provider instanceof ChunkProviderServer)) { return; }
         ChunkProviderServer server = (ChunkProviderServer) provider;
         Chunk self = (Chunk) (Object) this;
-        if (RubicWorldControl.rubicWorld(server) || server.getLoadedChunk(x, z) != self) { return; }
+        if (RubicWorldControl.rubicWorld(server) || CubicChunksWorlds.cubic(world) || server.getLoadedChunk(x, z) != self) { return; }
         self.populate(server, server.chunkGenerator);
         if (isTerrainPopulated) { ContentLog.LOGGER.debug("Chunk {}, {} sat undressed in a player's view and is dressed on its tick", x, z); }
     }

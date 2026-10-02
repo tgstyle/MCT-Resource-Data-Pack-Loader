@@ -59,7 +59,7 @@ public abstract class AbstractMessageHandler<T extends IMessage> implements IMes
 
         @Nullable static World getWorld() {
             return Minecraft.getMinecraft().getConnection() == null ? null :
-                    ((INetHandlerPlayClient) Minecraft.getMinecraft().getConnection()).getWorld();
+                    ((INetHandlerPlayClient) Minecraft.getMinecraft().getConnection()).rdpl$world();
         }
     }
 }

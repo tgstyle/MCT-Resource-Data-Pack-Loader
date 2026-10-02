@@ -3545,13 +3545,17 @@ Das `parent` eines Gürtels ist ein Sternsystem oder ein Planet. Um ein System s
 | `arrival`       | Die Landekapsel sucht den Asteroiden aus                                                              |
 | `dungeon`       | Ein Pack-Gürtel hat keine verlassenen Basen                                                           |
 
-Himmel, Schwerkraft, Zeit und Wetter kommen aus den eigenen Schlüsseln der Dimension, wie bei jedem Pack-Planeten. Drei davon haben in einem Gürtel einen anderen Standard, passend zu Galacticrafts eigenem:
+Himmel, Schwerkraft, Zeit und Wetter kommen aus den eigenen Schlüsseln der Dimension, wie bei jedem Pack-Planeten. Fünf davon haben in einem Gürtel einen anderen Standard, passend zu Galacticrafts eigenem:
 
-| Schlüssel           | Ohne Angabe                                    |
-| ------------------- | ---------------------------------------------- |
-| `sky.fogColor`      | `000000`, Nebel und Horizont sind also schwarz |
-| `sky.renderClouds`  | `false`                                        |
-| `sky.sunriseColors` | `false`, ein Gürtel hat keinen Sonnenuntergang |
+| Schlüssel                            | Ohne Angabe                                                                                                     |
+| ------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `sky.fogColor`                       | `000000`, Nebel und Horizont sind also schwarz                                                                  |
+| `sky.renderClouds`                   | `false`                                                                                                         |
+| `sky.sunriseColors`                  | `false`, ein Gürtel hat keinen Sonnenuntergang                                                                  |
+| `sky.sun`, `sky.bodies`, `sky.stars` | Galacticrafts eigener Asteroidenhimmel wird gezeichnet: eine kleine weiße Sonne, kein Mond, dichtes Sternenfeld |
+| `time.dayLength`                     | Kein Tag: die Sonne steht still am Horizont, und es ist immer Tag                                               |
+
+Ist `sun`, `bodies` oder `stars` gesetzt, wird stattdessen der Himmel des Packs gezeichnet, und mit `sky.renderSky` aus wird weiterhin keiner gezeichnet. Ist `time.dayLength` gesetzt, auch auf `24000`, oder `sky.fixedTime`, bekommt der Gürtel einen eigenen Tag.
 
 ### Raumstationen
 

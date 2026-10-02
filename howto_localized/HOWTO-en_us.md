@@ -3545,13 +3545,17 @@ A belt's `parent` is a star system or a planet. Around a system it sits on the m
 | `arrival`       | The entry pod picks the asteroid                                                        |
 | `dungeon`       | A pack belt has no abandoned bases                                                      |
 
-The sky, gravity, time and weather are the dimension's own keys, as on any pack planet. Three of them default differently in a belt, to match Galacticraft's own:
+The sky, gravity, time and weather are the dimension's own keys, as on any pack planet. Five of them default differently in a belt, to match Galacticraft's own:
 
-| Key                 | Without it                             |
-| ------------------- | -------------------------------------- |
-| `sky.fogColor`      | `000000`, so fog and horizon are black |
-| `sky.renderClouds`  | `false`                                |
-| `sky.sunriseColors` | `false`, a belt has no sunset          |
+| Key                                  | Without it                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `sky.fogColor`                       | `000000`, so fog and horizon are black                                                      |
+| `sky.renderClouds`                   | `false`                                                                                     |
+| `sky.sunriseColors`                  | `false`, a belt has no sunset                                                               |
+| `sky.sun`, `sky.bodies`, `sky.stars` | Galacticraft's own asteroid sky is drawn: a small white sun, no moon and a dense star field |
+| `time.dayLength`                     | No day: the sun stands still on the horizon and it is always day                            |
+
+Setting any of `sun`, `bodies` or `stars` draws the pack's sky instead, and `sky.renderSky` off still draws none. Setting `time.dayLength`, even to `24000`, or `sky.fixedTime` gives the belt a day of its own.
 
 ### Space stations
 

@@ -4,13 +4,13 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -108,7 +108,7 @@ public class DeepGeneration {
     boolean carvedAt(int x, int genY, int z) { return density(x, genY, z, 0.0D) <= CAVE_THRESHOLD; }
 
     public static boolean reworksBand(World world) {
-        if (!(world instanceof IRubicWorld) || !((IRubicWorld) world).rdpl$isRubicWorld()) { return false; }
+        if (!GenHeights.rubic(world)) { return false; }
         List<String> found = Settings.forDimension(ContentControl.lines(ContentControl.TERRAIN, "noiseCaves", new String[] {Config.worldgen.noiseCaves}),
                 world.provider.getDimension(), world.provider.getDimensionType() != DimensionType.THE_END, "noiseCaves");
         return !found.isEmpty() && "world".equalsIgnoreCase(found.get(found.size() - 1));

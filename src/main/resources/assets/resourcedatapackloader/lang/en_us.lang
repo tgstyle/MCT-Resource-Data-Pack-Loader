@@ -5,6 +5,7 @@ rdpl.command.biomemissing=No '%s' within %d blocks. It may be rare, or not gener
 rdpl.command.biomes=%d biome(s) listed%s
 rdpl.command.biomesmore=, plus %d from Minecraft. Add 'all' to see more
 rdpl.command.busy=Task already running
+rdpl.command.cubicchunks=CubicChunks makes this world cube by cube, so no land is made ahead of time here
 rdpl.command.clickhint=Click to look up a file in this namespace
 rdpl.command.clientonly=Only your own resources were reloaded
 rdpl.command.closed= closed

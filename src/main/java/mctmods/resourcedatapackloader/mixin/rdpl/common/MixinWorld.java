@@ -1,7 +1,5 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
-import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -11,9 +9,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProvid
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
-import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
-import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
-import mctmods.resourcedatapackloader.content.worldgen.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.PredictedChunk;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
@@ -36,14 +31,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.WorldProvider;
@@ -73,37 +66,6 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Unique private int rdpl$lastX = Integer.MIN_VALUE;
     @Unique @Nullable private Chunk rdpl$lastChunk;
     @Unique private int rdpl$lastZ = Integer.MIN_VALUE;
-    @Unique private static final int rdpl$NOTIFY_NEIGHBORS = 1;
-    @Unique private static final int rdpl$SUPPRESS_OBSERVERS = 16;
-
-    @Inject(method = "getDifficulty", at = @At("HEAD"), cancellable = true) private void rdpl$difficultyAsAsked(CallbackInfoReturnable<EnumDifficulty> cir) {
-        World self = (World) (Object) this;
-        if (self.provider == null) { return; }
-        EnumDifficulty asked = ContentServer.difficultyFor(self.provider.getDimension());
-        if (asked != null) { cir.setReturnValue(asked); }
-    }
-
-    @Inject(method = "updateEntities", at = @At("HEAD"), cancellable = true) private void rdpl$standStillWhileLandIsMade(CallbackInfo ci) {
-        if (((World) (Object) this).isRemote || !ContentPregen.busy()) { return; }
-        rdpl$letGoOfUnloadedEntities();
-        ci.cancel();
-    }
-
-    @Unique private void rdpl$letGoOfUnloadedEntities() {
-        if (unloadedEntityList.isEmpty()) { return; }
-        loadedEntityList.removeAll(unloadedEntityList);
-        for (Entity leaving : unloadedEntityList) {
-            if (leaving.addedToChunk && isChunkLoaded(leaving.chunkCoordX, leaving.chunkCoordZ, true)) { ((World) (Object) this).getChunk(leaving.chunkCoordX, leaving.chunkCoordZ).removeEntity(leaving); }
-        }
-        for (Entity leaving : unloadedEntityList) { onEntityRemoved(leaving); }
-        unloadedEntityList.clear();
-    }
-
-    @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;onUpdate()V"))
-    private void rdpl$slowDistant(Entity entity) {
-        if (ContentEntityTicks.slowedNow(entity)) { ContentEntityTicks.age(entity); }
-        else { entity.onUpdate(); }
-    }
 
     @Unique private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
         if (isRemote) { return self.getChunk(pos); }
@@ -138,28 +100,6 @@ import net.minecraft.util.math.AxisAlignedBB;
         return PredictedChunk.of(self);
     }
 
-    @Inject(method = "isSpawnChunk", at = @At("HEAD"), cancellable = true) private void rdpl$spawnChunkRadius(int x, int z, CallbackInfoReturnable<Boolean> cir) {
-        World world = (World) (Object) this;
-        int dimension = world.provider.getDimension();
-        if (ContentSpawnChunks.radius(dimension) <= 0) {
-            cir.setReturnValue(false);
-            return;
-        }
-        int reach = ContentSpawnChunks.chunks(dimension);
-        BlockPos spawn = world.getSpawnPoint();
-        cir.setReturnValue(Math.abs(x - (spawn.getX() >> 4)) <= reach && Math.abs(z - (spawn.getZ() >> 4)) <= reach);
-    }
-
-    @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {
-        GameRules rules = ContentGameRules.forWorld((World) (Object) this);
-        if (rules != null) { cir.setReturnValue(rules); }
-    }
-
-    @ModifyVariable(method = "markAndNotifyBlock", at = @At("HEAD"), argsOnly = true, index = 5, remap = false) private int rdpl$suppressObserverScan(int flags) {
-        if (isRemote || IChunk.rdpl$getPopulating() == null) { return flags; }
-        return (flags | rdpl$SUPPRESS_OBSERVERS) & ~rdpl$NOTIFY_NEIGHBORS;
-    }
-
     @Shadow protected IChunkProvider chunkProvider;
     @Shadow protected boolean scheduledUpdatesAreImmediate;
     @Shadow @Final @Mutable public WorldProvider provider;
@@ -186,9 +126,6 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Shadow public abstract boolean canSnowAt(BlockPos pos, boolean checkLight);
 
     @Shadow protected abstract boolean isChunkLoaded(int i, int i1, boolean allowEmpty);
-    @Shadow @Final public List<Entity> loadedEntityList;
-    @Shadow @Final protected List<Entity> unloadedEntityList;
-    @Shadow public abstract void onEntityRemoved(Entity entityIn);
 
     @Unique @Nullable protected LightingManager rdpl$lightingManager;
     @Unique protected boolean rdpl$isRubicWorld;

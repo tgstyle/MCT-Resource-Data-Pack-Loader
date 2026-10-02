@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPhysics;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
@@ -18,7 +17,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 @Mixin(EntityLivingBase.class) public abstract class MixinEntityLivingBase extends Entity {
@@ -90,21 +88,4 @@ import net.minecraft.world.World;
     }
 
     public MixinEntityLivingBase(World worldIn) { super(worldIn); }
-
-    @ModifyArg(
-            method = "travel",
-            index = 1,
-            at = @At(
-                    target = "Lnet/minecraft/util/math/BlockPos$PooledMutableBlockPos;setPos(DDD)"
-                            + "Lnet/minecraft/util/math/BlockPos$PooledMutableBlockPos;",
-                    value = "INVOKE", ordinal = 1)
-    )
-    private double moveEntityWithHeading_getReplacedY(double y) { return this.posY; }
-
-    @ModifyConstant(method = "attemptTeleport", constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO)) private int rdpl$getMinHeight(int orig) {
-        return ((IRubicWorld) world).rdpl$getMinHeight();
-    }
-
-    @Redirect(method = "attemptTeleport", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I"))
-    private int isBlockLoadedTeleportCheck(BlockPos blockPos) { return world.isBlockLoaded(blockPos.down()) ? blockPos.getY() : (Integer.MIN_VALUE + 1); }
 }

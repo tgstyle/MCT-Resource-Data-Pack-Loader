@@ -1,31 +1,24 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.IRubicFeatureStart;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
-import org.spongepowered.asm.mixin.Implements;
-import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Random;
 import net.minecraft.nbt.NBTTagCompound;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(StructureStart.class) @Implements(@Interface(iface = IRubicFeatureStart.class, prefix = "start$")) public abstract class MixinStructureStart {
+@Mixin(StructureStart.class) public abstract class MixinStructureStart {
     @Redirect(method = "generateStructure(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;getBoundingBox()Lnet/minecraft/world/gen/structure/StructureBoundingBox;"))
     private StructureBoundingBox rdpl$dressedBox(StructureComponent piece) { return BeardRails.dressed(piece); }
 
@@ -66,28 +59,4 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         }
         finally { ContentBeard.building(null); }
     }
-
-    @Shadow public abstract int getChunkPosX();
-
-    @Shadow public abstract int getChunkPosZ();
-
-    @Unique private int rdpl$cubeY;
-
-    @Unique private int rdpl$getChunkPosY() { return this.rdpl$cubeY; }
-
-    @Inject(method = "writeStructureComponentsToNBT",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/nbt/NBTTagCompound;setInteger(Ljava/lang/String;I)V", ordinal = 0)
-    )
-    private void writeYToNbt(int chunkX, int chunkZ, CallbackInfoReturnable<NBTTagCompound> cir, @Local(name = "nbttagcompound") NBTTagCompound nbttagcompound) { nbttagcompound.setInteger("ChunkY", this.rdpl$cubeY); }
-
-    @Inject(method = "readStructureComponentsFromNBT", at = @At("HEAD")) private void readYFromNBT(World worldIn, NBTTagCompound tagCompound, CallbackInfo cbi) {
-        if (tagCompound.hasKey("ChunkY")) { this.rdpl$cubeY = tagCompound.getInteger("ChunkY"); }
-    }
-
-    public int start$getX() { return getChunkPosX(); }
-
-    public int start$getY() { return rdpl$getChunkPosY(); }
-
-    public int start$getZ() { return getChunkPosZ(); }
-
 }
