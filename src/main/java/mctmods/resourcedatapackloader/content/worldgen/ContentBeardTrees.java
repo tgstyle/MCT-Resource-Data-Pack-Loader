@@ -48,6 +48,7 @@ public final class ContentBeardTrees {
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() == Blocks.AIR || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { if (!ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(at.toImmutable()); } }
+                    else if (BeardBlocks.mushroomStem(held)) { seeds.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.VINE) { felled += BeardBlocks.clearAt(world, at); }
                 }
@@ -71,6 +72,10 @@ public final class ContentBeardTrees {
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos seed : seeds) {
             if (felledLogs.contains(seed)) { continue; }
+            if (mctmods.blastplaster.util.BlastPlasterUtil.isHugeMushroom(world.getBlockState(seed))) {
+                felled += fellMushroom(world, seed, within, felledLogs, at);
+                continue;
+            }
             TreeCollector.Tree tree = TreeCollector.collect(world, seed, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
@@ -96,6 +101,20 @@ public final class ContentBeardTrees {
                     }
                 }
             }
+        }
+        return felled;
+    }
+
+    private static int fellMushroom(World world, BlockPos seed, Predicate<BlockPos> within, Set<BlockPos> felledLogs, BlockPos.MutableBlockPos at) {
+        Set<BlockPos> whole = TreeCollector.mushroom(world, seed, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
+        felledLogs.addAll(whole);
+        for (BlockPos part : whole) {
+            if (BeardBlocks.mushroomStem(world.getBlockState(part)) && !whole.contains(part.down()) && ContentVillageDecor.plantedAt(world, part.getX(), part.getZ())) { return 0; }
+        }
+        int felled = 0;
+        for (BlockPos part : whole) {
+            at.setPos(part.getX(), part.getY(), part.getZ());
+            felled += BeardBlocks.clearAt(world, at);
         }
         return felled;
     }

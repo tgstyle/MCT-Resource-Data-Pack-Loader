@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.blastplaster.util.TreeCollector;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardTrees;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.BlockDoor;
@@ -50,6 +51,7 @@ public final class BeardClearing {
         int hangingOver = 0;
         int planted = 0;
         List<BlockPos> overhangs = new ArrayList<>();
+        List<BlockPos> mushrooms = new ArrayList<>();
         boolean roadway = piece instanceof StructureVillagePieces.Road;
         int courses = ContentBeard.groundCourse(piece);
         int yardTop = courses > 0 ? box.minY + courses - 1 : Integer.MIN_VALUE;
@@ -81,6 +83,7 @@ public final class BeardClearing {
                         else { opened += BeardBlocks.clearAt(world, at); }
                     }
                     else if (BeardBlocks.overhang(held)) { overhangs.add(at.toImmutable()); }
+                    else if (mctmods.blastplaster.util.BlastPlasterUtil.isHugeMushroom(held)) { mushrooms.add(at.toImmutable()); }
                     else if (material != Material.AIR) { notGround++; }
                 }
                 at.setPos(x, ceiling + 1, z);
@@ -119,6 +122,7 @@ public final class BeardClearing {
             }
         }
         Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, true, box.maxY);
+        opened += ContentBeardTrees.fellTrees(world, mushrooms, within, at);
         Set<BlockPos> felledLogs = new HashSet<>();
         for (BlockPos leaf : overhangs) {
             if (!BeardBlocks.overhang(world.getBlockState(leaf))) { continue; }

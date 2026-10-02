@@ -317,7 +317,7 @@ public final class BeardRailsLay {
                     IBlockState above = world.getBlockState(at);
                     if (above.getBlock() == Blocks.AIR || BeardKeep.holds(x, y, z)) { continue; }
                     if (beside) {
-                        if (BlastPlasterUtil.isTreeWood(above) && !ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(new BlockPos(x, y, z)); }
+                        if (BeardBlocks.mushroomStem(above) || BlastPlasterUtil.isTreeWood(above) && !ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(new BlockPos(x, y, z)); }
                         continue;
                     }
                     if (y > level) { tree(world, at, x, y, z, above, within, seeds); }
@@ -445,6 +445,10 @@ public final class BeardRailsLay {
     private static boolean tree(World world, BlockPos.MutableBlockPos at, int x, int y, int z, IBlockState held, Predicate<BlockPos> within, List<BlockPos> seeds) {
         if (BlastPlasterUtil.isTreeWood(held)) {
             if (!ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(new BlockPos(x, y, z)); }
+            return true;
+        }
+        if (BlastPlasterUtil.isHugeMushroom(held)) {
+            seeds.add(new BlockPos(x, y, z));
             return true;
         }
         if (held.getMaterial() != Material.LEAVES) { return false; }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
+import mctmods.blastplaster.util.BlastPlasterUtil;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiome;
 import mctmods.resourcedatapackloader.util.Config;
@@ -7,6 +8,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
+import net.minecraft.block.BlockHugeMushroom;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockOre;
 import net.minecraft.block.BlockRedstoneOre;
@@ -58,6 +60,12 @@ public final class BeardBlocks {
     public static boolean overhang(IBlockState held) {
         if (held.getMaterial() != Material.LEAVES) { return false; }
         return !held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) || held.getValue(BlockLeaves.DECAYABLE);
+    }
+
+    public static boolean mushroomStem(IBlockState held) {
+        if (!BlastPlasterUtil.isHugeMushroom(held) || !held.getPropertyKeys().contains(BlockHugeMushroom.VARIANT)) { return false; }
+        BlockHugeMushroom.EnumType part = held.getValue(BlockHugeMushroom.VARIANT);
+        return part == BlockHugeMushroom.EnumType.STEM || part == BlockHugeMushroom.EnumType.ALL_STEM;
     }
     private static final BlockPos.MutableBlockPos AT = new BlockPos.MutableBlockPos();
 
