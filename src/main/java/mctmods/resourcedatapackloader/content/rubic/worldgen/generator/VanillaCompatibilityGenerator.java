@@ -79,10 +79,13 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         isInit = true;
         Chunk probe;
         ChunkPrimer probed;
-        try (IRubicWorldInternal.ICompatGenerationScope ignored = ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration()) {
+        IRubicWorldInternal.ICompatGenerationScope scope = ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration();
+        try {
             probe = vanilla.generateChunk(0, 0);
             probed = ((IColumnInternal) probe).getCompatGenerationPrimer();
             if (probed != null) { ((IColumnInternal) probe).syncCompatGenerationWrites(); }
+        } finally {
+            scope.close();
         }
         IBlockState airState = Objects.requireNonNull(Blocks.AIR).getDefaultState();
         IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
@@ -180,8 +183,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
             }
             else {
                 if (lastChunk == null || lastChunk.x != cubeX || lastChunk.z != cubeZ) {
-                    try (IRubicWorldInternal.ICompatGenerationScope ignored =
-                                 ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration()) {
+                    IRubicWorldInternal.ICompatGenerationScope scope = ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration();
+                    try {
                         lastChunk = vanilla.generateChunk(cubeX, cubeZ);
                         ChunkPrimer chunkPrimer = ((IColumnInternal) lastChunk).getCompatGenerationPrimer();
                         if (chunkPrimer == null) { Rubic.LOGGER.error("Optimized compatibility generation failed for chunk at {}, {}", cubeX, cubeZ); }
@@ -190,6 +193,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                             replaceBedrock(chunkPrimer, rand);
                             deep.dressBandPrimer(chunkPrimer, cubeX, cubeZ);
                         }
+                    } finally {
+                        scope.close();
                     }
                 }
                 if (!optimizationHack) {

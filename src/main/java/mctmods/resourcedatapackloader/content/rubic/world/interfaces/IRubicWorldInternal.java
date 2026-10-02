@@ -96,5 +96,5 @@ public interface IRubicWorldInternal extends IRubicWorld {
         CubeProviderClient rdpl$getCubeCache();
     }
 
-    interface ICompatGenerationScope extends AutoCloseable { void close(); }
+    interface ICompatGenerationScope { void close(); }
 }

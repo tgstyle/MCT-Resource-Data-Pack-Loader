@@ -37,9 +37,8 @@ final class ContentWeatherCycle {
         }
         float strength = world.rainingStrength;
         world.prevRainingStrength = strength;
-        if (raining && strength < target) { strength += STEP; }
-        else if (!raining || strength > target) { strength -= STEP; }
-        world.rainingStrength = MathHelper.clamp(strength, 0.0F, cycle.strength);
+        float aim = raining ? target : 0.0F;
+        world.rainingStrength = MathHelper.clamp(strength + MathHelper.clamp(aim - strength, -STEP, STEP), 0.0F, cycle.strength);
         world.prevThunderingStrength = world.thunderingStrength;
         world.thunderingStrength = 0.0F;
     }

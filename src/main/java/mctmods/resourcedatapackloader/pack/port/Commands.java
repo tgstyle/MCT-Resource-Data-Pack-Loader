@@ -43,6 +43,8 @@ final class Commands {
     private Commands() {}
 
     static final class Kept extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
         Kept(String why) { super(why, null, false, false); }
     }
 
