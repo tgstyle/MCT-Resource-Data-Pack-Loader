@@ -249,8 +249,10 @@ public final class CityPlan {
         return null;
     }
 
+    static int mouthReach(Line line) { return MOUTH + extraWidthOf(line); }
+
     @Nullable static int[] mouth(Line line, Line other, int start, int span) {
-        int reach = MOUTH + extraWidthOf(line);
+        int reach = mouthReach(line);
         boolean high = line.from() < other.at() && line.to() - other.last() <= reach;
         if (high == (line.to() > other.last() && other.at() - line.from() <= reach)) { return null; }
         return new int[] {Math.max(start, high ? other.at() - reach - 1 : other.last() + 1), Math.min(start + span - 1, high ? other.at() - 1 : other.last() + reach + 1)};

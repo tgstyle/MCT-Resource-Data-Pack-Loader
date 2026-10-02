@@ -28,6 +28,7 @@ public final class ContentCityTrees {
     private static final int SUSTAIN = 6;
     private static final int CROWN = 4;
     private static final int LOOSE = 5;
+    private static final int CAP = 3;
 
     private static final int PLANTED_REACH = 2;
     private static final int TRESTLE = 64;
@@ -267,7 +268,12 @@ public final class ContentCityTrees {
     }
 
     private static void crown(WorldGenLevel level, BlockPos at, List<BoundingBox> kept, List<BlockPos> seeds) {
-        if (!(level.getBlockState(at).getBlock() instanceof LeavesBlock)) { return; }
+        BlockState over = level.getBlockState(at);
+        if (BlastPlasterUtil.isHugeMushroom(over)) {
+            seeds.add(at.immutable());
+            return;
+        }
+        if (!(over.getBlock() instanceof LeavesBlock)) { return; }
         BlockPos.MutableBlockPos near = new BlockPos.MutableBlockPos();
         for (int dx = -CROWN; dx <= CROWN; dx++) {
             for (int dy = -CROWN; dy <= CROWN; dy++) {
@@ -288,6 +294,7 @@ public final class ContentCityTrees {
         if (state.getBlock() instanceof LeavesBlock) { canopy.add(at.immutable()); }
         else if (held) { return 0; }
         else if (BlastPlasterUtil.isTreeWood(state)) { if (!planted(level, at)) { seeds.add(at.immutable()); } }
+        else if (mushroomStem(state)) { seeds.add(at.immutable()); }
         else if (vines && state.is(Blocks.VINE)) { return clear(level, at); }
         return 0;
     }
@@ -296,6 +303,8 @@ public final class ContentCityTrees {
         BoundingBox owned = piece.piece().owned();
         if (owned != null) { kept.add(owned); }
     }
+
+    private static boolean mushroomStem(BlockState state) { return BlastPlasterUtil.isHugeMushroom(state) && state.is(Blocks.MUSHROOM_STEM); }
 
     private static boolean free(WorldGenLevel level, List<BoundingBox> kept, BlockPos at) { return !inside(kept, at) || !BlastPlasterUtil.isTreeWood(level.getBlockState(at)); }
 
@@ -327,6 +336,10 @@ public final class ContentCityTrees {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (BlockPos seed : seeds) {
             if (done.contains(seed)) { continue; }
+            if (BlastPlasterUtil.isHugeMushroom(level.getBlockState(seed))) {
+                felled += fellMushroom(level, seed, most, within, kept, done, at);
+                continue;
+            }
             TreeCollector.Tree tree = TreeCollector.collect(level, seed, most, within);
             for (BlockPos log : tree.logs) {
                 done.add(log);
@@ -340,6 +353,31 @@ public final class ContentCityTrees {
             for (BlockPos log : tree.logs) { felled += loose(level, log, within, kept, at); }
         }
         return felled;
+    }
+
+    private static int fellMushroom(WorldGenLevel level, BlockPos seed, int most, Predicate<BlockPos> within, List<BoundingBox> kept, Set<BlockPos> done, BlockPos.MutableBlockPos at) {
+        Set<BlockPos> whole = TreeCollector.mushroom(level, seed, most, within);
+        done.addAll(whole);
+        List<BlockPos> stems = new ArrayList<>();
+        for (BlockPos part : whole) {
+            if (!mushroomStem(level.getBlockState(part))) { continue; }
+            if (!whole.contains(part.below()) && planted(level, part)) { return 0; }
+            if (!inside(kept, part)) { stems.add(part); }
+        }
+        int felled = 0;
+        for (BlockPos part : whole) {
+            if (inside(kept, part) && !capped(stems, part)) { continue; }
+            at.set(part.getX(), part.getY(), part.getZ());
+            felled += clear(level, at);
+        }
+        return felled;
+    }
+
+    private static boolean capped(List<BlockPos> stems, BlockPos part) {
+        for (BlockPos stem : stems) {
+            if (Math.abs(stem.getX() - part.getX()) <= CAP && Math.abs(stem.getZ() - part.getZ()) <= CAP) { return true; }
+        }
+        return false;
     }
 
     private static int loose(WorldGenLevel level, BlockPos log, Predicate<BlockPos> within, List<BoundingBox> kept, BlockPos.MutableBlockPos at) {

@@ -97,6 +97,16 @@ public final class CityPlotSeams {
 
     static boolean laid(WorldGenLevel level, int x, int y, int z) { return level instanceof IPieceLaid pieces && pieces.rdpl$laid(x, y, z); }
 
+    static void unheld(WorldGenLevel level, Runnable ground) {
+        if (!(level instanceof IPieceLaid pieces)) {
+            ground.run();
+            return;
+        }
+        pieces.rdpl$laying(false);
+        try { ground.run(); }
+        finally { pieces.rdpl$laying(true); }
+    }
+
     private static int standingTop(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int from, int floor) {
         for (int y = from; y >= floor; y--) {
             BlockState state = level.getBlockState(at.set(x, y, z));
