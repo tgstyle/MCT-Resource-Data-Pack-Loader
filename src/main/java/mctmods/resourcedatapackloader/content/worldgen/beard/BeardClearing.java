@@ -64,6 +64,7 @@ public final class BeardClearing {
                 if (!roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ) { continue; }
                 if (roadway ? BeardPlots.underRoad(start, piece, x, z) : BeardPlots.besideRoad(start, piece, x, z)) { continue; }
                 int bed = BeardGround.roadTop(world, start, at, x, z, floor, lid);
+                if (bed == Integer.MIN_VALUE && roadway) { bed = BeardRoads.pavedLevel(piece, x, z); }
                 for (int y = bed == Integer.MIN_VALUE ? box.minY + 1 + sunk : bed + 1; y <= lid; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { continue; }
@@ -80,7 +81,7 @@ public final class BeardClearing {
                     else if (roadway && material == Material.VINE) { opened += BeardBlocks.clearAt(world, at); }
                     else if (roadway && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ && BeardBlocks.overhang(held)) {
                         if (decorated(world, at)) { planted++; }
-                        else { opened += BeardBlocks.clearAt(world, at); }
+                        else { opened += BeardBlocks.fellAt(world, at); }
                     }
                     else if (BeardBlocks.overhang(held)) { overhangs.add(at.toImmutable()); }
                     else if (mctmods.blastplaster.util.BlastPlasterUtil.isHugeMushroom(held)) { mushrooms.add(at.toImmutable()); }
@@ -129,7 +130,7 @@ public final class BeardClearing {
             BlockPos trunk = sustainer(world, leaf, within);
             if (trunk == null) {
                 at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
-                opened += BeardBlocks.clearAt(world, at);
+                opened += BeardBlocks.fellAt(world, at);
                 continue;
             }
             if (felledLogs.contains(trunk)) { continue; }
@@ -141,11 +142,11 @@ public final class BeardClearing {
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
                 at.setPos(log.getX(), log.getY(), log.getZ());
-                opened += BeardBlocks.clearAt(world, at);
+                opened += BeardBlocks.fellAt(world, at);
             }
             for (BlockPos held : tree.leaves) {
                 at.setPos(held.getX(), held.getY(), held.getZ());
-                opened += BeardBlocks.clearAt(world, at);
+                opened += BeardBlocks.fellAt(world, at);
             }
         }
         if (planted > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Left {} leaf block(s) of verge plantings over or beside the road at {}, {} alone", planted, box.minX, box.minZ); }
@@ -168,7 +169,7 @@ public final class BeardClearing {
                     if (held.getMaterial() != Material.LEAVES) { continue; }
                     if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
                     if (sustainer(world, at.toImmutable(), unused -> true) != null) { continue; }
-                    swept += BeardBlocks.clearAt(world, at);
+                    swept += BeardBlocks.fellAt(world, at);
                     for (int under = y - 1; under >= 1; under--) {
                         at.setPos(x, under, z);
                         if (world.getBlockState(at).getMaterial() != Material.VINE) { break; }

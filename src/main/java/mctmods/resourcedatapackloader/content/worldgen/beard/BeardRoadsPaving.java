@@ -49,7 +49,7 @@ public final class BeardRoadsPaving {
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs along {} from {} to {}, is asked for the patch of land from {}, {} to {}, {}, and so will lay rows {} to {}", box.minX, box.minZ, alongX ? "x" : "z", alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, clip.minX, clip.minZ, clip.maxX, clip.maxZ, least, most); }
         int acrossLeast = alongX ? box.minZ : box.minX;
         int acrossMost = alongX ? box.maxZ : box.maxX;
-        BeardRoads.Grade graded = storedGrade(piece, box, alongX);
+        BeardRoads.Grade graded = storedGrade(piece, box);
         boolean stored = graded != null;
         if (graded == null) { graded = BeardRoadsGrade.roadProfile(world, piece, alongX, alongX ? box.minX : box.minZ, alongX ? box.maxX : box.maxZ, acrossLeast, acrossMost, true); }
         boolean computed = graded != null;
@@ -69,12 +69,9 @@ public final class BeardRoadsPaving {
         if ((paving.cut + paving.filled + paving.paved + paving.lined > 0) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Graded the road at {}, {} within its chunk: paved {} column(s), cut {} block(s) off bumps, filled {} into dips, lined {} of tunnel", box.minX, box.minZ, paving.paved, paving.cut, paving.filled, paving.lined); }
     }
 
-    @Nullable private static BeardRoads.Grade storedGrade(StructureComponent piece, StructureBoundingBox box, boolean alongX) {
-        BeardRoads.Grade graded = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
-        if (graded != null && (graded.start != (alongX ? box.minX : box.minZ) || graded.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1)) {
-            if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
-            return null;
-        }
+    @Nullable private static BeardRoads.Grade storedGrade(StructureComponent piece, StructureBoundingBox box) {
+        BeardRoads.Grade graded = BeardRoads.fittedLayout(piece);
+        if (graded == null && piece instanceof IRoadLayout && ((IRoadLayout) piece).rdpl$layout() != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
         return graded;
     }
 
@@ -434,12 +431,11 @@ public final class BeardRoadsPaving {
         if (!(world.getChunkProvider() instanceof ChunkProviderServer)) { return repaved; }
         ChunkProviderServer provider = (ChunkProviderServer) world.getChunkProvider();
         for (StructureComponent piece : start.getComponents()) {
-            if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout)) { continue; }
-            BeardRoads.Grade grade = ((IRoadLayout) piece).rdpl$layout();
+            if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
+            BeardRoads.Grade grade = BeardRoads.fittedLayout(piece);
             if (grade == null) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
             boolean alongX = BeardPlots.roadAlongX(piece);
-            if (grade.start != (alongX ? box.minX : box.minZ) || grade.rows() != (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1) { continue; }
             int acrossLeast = (alongX ? box.minZ : box.minX) - 1;
             int acrossMost = (alongX ? box.maxZ : box.maxX) + 1;
             for (int i = 0; i < grade.covered.length; i++) {

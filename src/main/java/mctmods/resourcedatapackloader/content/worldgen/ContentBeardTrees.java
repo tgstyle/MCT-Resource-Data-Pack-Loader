@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardClearing;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.material.Material;
@@ -32,7 +33,8 @@ public final class ContentBeardTrees {
         List<BlockPos> canopy = new ArrayList<>();
         int felled = 0;
         int top = piece instanceof StructureVillagePieces.Well ? box.maxY + 1 : box.maxY;
-        boolean bulb = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece);
+        boolean road = piece instanceof StructureVillagePieces.Path;
+        boolean bulb = road && CityGrowth.bulbWide(piece);
         int reach = bulb ? 6 : 2;
         int floor = bulb ? box.minY - 8 : box.minY + 1;
         int leastX = Math.max(box.minX - reach, clip.minX);
@@ -41,7 +43,11 @@ public final class ContentBeardTrees {
         int mostZ = Math.min(box.maxZ + reach, clip.maxZ);
         for (int x = leastX; x <= mostX; x++) {
             for (int z = leastZ; z <= mostZ; z++) {
-                int from = !bare && !bulb && x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ ? Math.max(floor, top + 1) : floor;
+                boolean inside = x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ;
+                int paved = road && !bulb ? BeardRoads.pavedLevel(piece, x, z) : Integer.MIN_VALUE;
+                int from;
+                if (paved != Integer.MIN_VALUE) { from = inside ? paved + 1 : Math.min(floor, paved + 1); }
+                else { from = !bare && !bulb && inside ? Math.max(floor, top + 1) : floor; }
                 for (int y = from; y <= box.maxY + 16; y++) {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at)) { continue; }
@@ -54,7 +60,7 @@ public final class ContentBeardTrees {
                 }
             }
         }
-        Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare && !bulb, top);
+        Predicate<BlockPos> within = BeardPlots.outside(world, start, piece, box, !bare && !road, top);
         felled += fellTrees(world, seeds, within, at);
         for (BlockPos leaf : canopy) {
             IBlockState held = world.getBlockState(leaf);
@@ -62,7 +68,7 @@ public final class ContentBeardTrees {
             if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
             if (sustained(world, leaf, within)) { continue; }
             at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
-            felled += BeardBlocks.clearAt(world, at);
+            felled += BeardBlocks.fellAt(world, at);
         }
         return felled;
     }
@@ -80,11 +86,11 @@ public final class ContentBeardTrees {
             for (BlockPos log : tree.logs) {
                 felledLogs.add(log);
                 at.setPos(log.getX(), log.getY(), log.getZ());
-                felled += BeardBlocks.clearAt(world, at);
+                felled += BeardBlocks.fellAt(world, at);
             }
             for (BlockPos leaf : tree.leaves) {
                 at.setPos(leaf.getX(), leaf.getY(), leaf.getZ());
-                felled += BeardBlocks.clearAt(world, at);
+                felled += BeardBlocks.fellAt(world, at);
             }
             for (BlockPos log : tree.logs) {
                 for (int x = log.getX() - 5; x <= log.getX() + 5; x++) {
@@ -96,7 +102,7 @@ public final class ContentBeardTrees {
                             if (held.getMaterial() != Material.LEAVES) { continue; }
                             if (held.getPropertyKeys().contains(BlockLeaves.DECAYABLE) && !held.getValue(BlockLeaves.DECAYABLE)) { continue; }
                             if (sustained(world, at.toImmutable(), within)) { continue; }
-                            felled += BeardBlocks.clearAt(world, at);
+                            felled += BeardBlocks.fellAt(world, at);
                         }
                     }
                 }

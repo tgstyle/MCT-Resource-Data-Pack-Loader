@@ -8,11 +8,13 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
+import net.minecraft.block.BlockHorizontal;
 import net.minecraft.block.BlockHugeMushroom;
 import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.BlockOre;
 import net.minecraft.block.BlockRedstoneOre;
 import net.minecraft.block.BlockStone;
+import net.minecraft.block.BlockVine;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -132,6 +134,29 @@ public final class BeardBlocks {
         at.move(EnumFacing.UP);
         return cleared;
     }
+
+    public static int fellAt(World world, BlockPos.MutableBlockPos at) {
+        int x = at.getX();
+        int y = at.getY();
+        int z = at.getZ();
+        boolean wood = BlastPlasterUtil.isTreeWood(world.getBlockState(at));
+        int felled = clearAt(world, at);
+        if (felled == 0) { return 0; }
+        for (EnumFacing side : EnumFacing.HORIZONTALS) {
+            at.setPos(x + side.getXOffset(), y, z + side.getZOffset());
+            IBlockState hung = world.getBlockState(at);
+            if (hung.getBlock() == Blocks.VINE && hung.getValue(BlockVine.getPropertyFor(side.getOpposite()))) {
+                while (world.getBlockState(at).getMaterial() == Material.VINE) {
+                    felled += clearAt(world, at);
+                    at.move(EnumFacing.DOWN);
+                }
+            }
+            else if (wood && hung.getBlock() == Blocks.COCOA && hung.getValue(BlockHorizontal.FACING) == side.getOpposite()) { felled += clearAt(world, at); }
+        }
+        at.setPos(x, y, z);
+        return felled;
+    }
+
     public static void clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) { clearAbove(world, at, x, z, from, roof, "Clearing above"); }
 
     private static int clearAbove(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof, String pass) {

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.PackGeneration;
@@ -35,6 +36,22 @@ import javax.annotation.Nullable;
 
 public final class BeardRoads {
     private BeardRoads() {}
+
+    @Nullable public static Grade fittedLayout(StructureComponent piece) {
+        Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
+        if (grade == null) { return null; }
+        StructureBoundingBox box = piece.getBoundingBox();
+        boolean alongX = BeardPlots.roadAlongX(piece);
+        return grade.start == (alongX ? box.minX : box.minZ) && grade.rows() == (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1 ? grade : null;
+    }
+
+    public static int pavedLevel(StructureComponent piece, int x, int z) {
+        Grade grade = fittedLayout(piece);
+        if (grade == null) { return Integer.MIN_VALUE; }
+        int row = BeardPlots.roadAlongX(piece) ? x : z;
+        int level = grade.at(row);
+        return level != Integer.MIN_VALUE ? level : grade.deckAt(row);
+    }
 
     public static final class Grade {
         final int[] profile;
