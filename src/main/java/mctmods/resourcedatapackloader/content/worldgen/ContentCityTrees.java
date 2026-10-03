@@ -12,11 +12,14 @@ import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LeavesBlock;
+import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -186,7 +189,7 @@ public final class ContentCityTrees {
         BlockState held = level.getBlockState(at);
         if (!(held.getBlock() instanceof LeavesBlock) || held.hasProperty(LeavesBlock.PERSISTENT) && held.getValue(LeavesBlock.PERSISTENT)) { return 0; }
         int top = at.getY();
-        int swept = clear(level, at);
+        int swept = fellAt(level, at);
         for (int under = top - 1; under > level.getMinBuildHeight(); under--) {
             at.setY(under);
             if (!level.getBlockState(at).is(Blocks.VINE)) { break; }
@@ -324,7 +327,7 @@ public final class ContentCityTrees {
             if (state.hasProperty(LeavesBlock.PERSISTENT) && state.getValue(LeavesBlock.PERSISTENT)) { continue; }
             if (sustained(level, leaf, kept)) { continue; }
             at.set(leaf.getX(), leaf.getY(), leaf.getZ());
-            felled += clear(level, at);
+            felled += fellAt(level, at);
         }
         return felled;
     }
@@ -344,11 +347,11 @@ public final class ContentCityTrees {
             for (BlockPos log : tree.logs) {
                 done.add(log);
                 at.set(log.getX(), log.getY(), log.getZ());
-                felled += clear(level, at);
+                felled += fellAt(level, at);
             }
             for (BlockPos leaf : tree.leaves) {
                 at.set(leaf.getX(), leaf.getY(), leaf.getZ());
-                felled += clear(level, at);
+                felled += fellAt(level, at);
             }
             for (BlockPos log : tree.logs) { felled += loose(level, log, within, kept, at); }
         }
@@ -388,7 +391,7 @@ public final class ContentCityTrees {
                     at.set(log.getX() + dx, log.getY() + dy, log.getZ() + dz);
                     BlockState state = level.getBlockState(at);
                     if (!(state.getBlock() instanceof LeavesBlock) || state.hasProperty(LeavesBlock.PERSISTENT) && state.getValue(LeavesBlock.PERSISTENT) || !within.test(at) || sustained(level, at, kept)) { continue; }
-                    cleared += clear(level, at);
+                    cleared += fellAt(level, at);
                 }
             }
         }
@@ -423,6 +426,25 @@ public final class ContentCityTrees {
             }
         }
         return true;
+    }
+
+    private static int fellAt(WorldGenLevel level, BlockPos.MutableBlockPos at) {
+        boolean wood = BlastPlasterUtil.isTreeWood(level.getBlockState(at));
+        int felled = clear(level, at);
+        if (felled == 0) { return 0; }
+        BlockPos.MutableBlockPos hung = new BlockPos.MutableBlockPos();
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            hung.setWithOffset(at, side);
+            BlockState state = level.getBlockState(hung);
+            if (state.is(Blocks.VINE) && state.getValue(VineBlock.getPropertyForFace(side.getOpposite()))) {
+                while (level.getBlockState(hung).is(Blocks.VINE)) {
+                    felled += clear(level, hung);
+                    hung.move(Direction.DOWN);
+                }
+            }
+            else if (wood && state.is(Blocks.COCOA) && state.getValue(HorizontalDirectionalBlock.FACING) == side.getOpposite()) { felled += clear(level, hung); }
+        }
+        return felled;
     }
 
     private static int clear(WorldGenLevel level, BlockPos.MutableBlockPos at) {
