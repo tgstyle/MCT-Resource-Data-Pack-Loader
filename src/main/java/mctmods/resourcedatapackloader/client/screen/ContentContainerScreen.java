@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 
 public class ContentContainerScreen extends AbstractContainerScreen<ContentContainerMenu> {
     private static final Identifier SHEET = Identifier.fromNamespaceAndPath("minecraft", "textures/gui/container/generic_54.png");
-    private static final int EDGE = 7;
+    static final int EDGE = 7;
     private static final int HEADER = 17;
     private static final int CELL = ContentContainerMenu.SLOT;
     private static final int FOOT = 96;
@@ -48,9 +48,11 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
         frame(graphics, leftPos, topPos, imageWidth, def.rows(), def.columns());
     }
 
-    public static void frame(GuiGraphicsExtractor graphics, int left, int top, int wide, int rows, int columns) {
+    public static void frame(GuiGraphicsExtractor graphics, int left, int top, int wide, int rows, int columns) { frame(graphics, left, top, wide, rows, columns, rows); }
+
+    public static void frame(GuiGraphicsExtractor graphics, int left, int top, int wide, int rows, int columns, int cellRows) {
         head(graphics, left, top, wide);
-        for (int row = 0; row < rows; row++) { band(graphics, left, top + HEADER + row * CELL, wide, columns); }
+        for (int row = 0; row < rows; row++) { band(graphics, left, top + HEADER + row * CELL, wide, row < cellRows ? columns : 0); }
         foot(graphics, left, top + HEADER + rows * CELL, wide);
     }
 

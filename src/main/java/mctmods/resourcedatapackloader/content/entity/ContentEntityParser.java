@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
-import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
@@ -136,16 +135,12 @@ public final class ContentEntityParser {
         int energyCapacity = Math.max(0, GsonHelper.getAsInt(energy, "capacity", 0));
         int energyTransfer = Mth.clamp(GsonHelper.getAsInt(energy, "transfer", energyCapacity), 0, energyCapacity);
         int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
-        int askedRows = storage.has("items") ? GsonHelper.getAsInt(items, "rows", 3) : 0;
-        int askedColumns = GsonHelper.getAsInt(items, "columns", 9);
-        int rows = Mth.clamp(askedRows, storage.has("items") ? 1 : 0, ContainerDef.MOST_ROWS - gauges);
-        int columns = Mth.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
-        if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The storage on entity variant {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
-        if (rows == 0 && gauges == 0) {
+        boolean hasItems = storage.has("items");
+        if (!hasItems && gauges == 0) {
             ContentLog.LOGGER.error("The storage on entity variant {} holds no items, fluid or energy, ignoring it", key);
             return null;
         }
-        return new StorageDef(rows, columns, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
+        return new StorageDef(hasItems, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
                 GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true));
     }
 
