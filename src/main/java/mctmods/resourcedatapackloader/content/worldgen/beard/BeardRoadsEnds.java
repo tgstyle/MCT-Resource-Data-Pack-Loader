@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CitySeams;
 import mctmods.resourcedatapackloader.content.village.MergePiece;
+import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.Config;
@@ -192,12 +193,13 @@ public final class BeardRoadsEnds {
         int verge = CityGrowth.verge();
         int shoulder = bulb.r + verge;
         int filled = 0;
+        List<RailPiece> bores = BeardRails.subways(world, clip);
         for (int z = Math.max(box.minZ - verge, clip.minZ); z <= Math.min(box.maxZ + verge, clip.maxZ); z++) {
             for (int x = Math.max(box.minX - verge, clip.minX); x <= Math.min(box.maxX + verge, clip.maxX); x++) {
                 if (bulb.pavedAt(x, z)) { continue; }
                 boolean inside = x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ;
                 if (!inside && bulb.away(x, z) > shoulder * shoulder + shoulder) { continue; }
-                filled += BeardRoadsPaving.vergeFill(world, piece, x, z, bulb.level, at);
+                filled += BeardRoadsPaving.vergeFill(world, piece, bores, x, z, bulb.level, at);
             }
         }
         return filled;

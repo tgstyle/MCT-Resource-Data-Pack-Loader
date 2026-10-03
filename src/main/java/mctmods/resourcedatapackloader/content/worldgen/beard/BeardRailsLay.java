@@ -98,6 +98,7 @@ public final class BeardRailsLay {
         final BlockPos.MutableBlockPos at;
         final BeardRoads.Grade grade;
         final List<StructureComponent> roads;
+        final List<RailPiece> bores;
         final Predicate<BlockPos> within;
         final List<BlockPos> seeds;
         final boolean alongX;
@@ -120,6 +121,7 @@ public final class BeardRailsLay {
             this.at = at;
             this.grade = grade;
             this.roads = roads;
+            this.bores = rail.subway() ? new ArrayList<>() : BeardRails.subways(world, clip);
             this.within = within;
             this.seeds = seeds;
             this.alongX = rail.alongX();
@@ -257,7 +259,7 @@ public final class BeardRailsLay {
             }
             else {
                 line.lined += cutWall(world, at, alongX, row, across, level, across < acrossLeast ? -1 : 1, dress.linings);
-                BeardRoadsPaving.vergeFill(world, rail, x, z, level, at);
+                BeardRoadsPaving.vergeFill(world, rail, line.bores, x, z, level, at);
             }
             return;
         }

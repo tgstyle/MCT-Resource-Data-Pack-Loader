@@ -234,14 +234,14 @@ public final class BeardRoadsPaving {
             at.setPos(x, profile[i], z);
             if (!clip.isVecInside(at) || bored(i, x, z)) { return; }
             if (bridged[i]) {
-                if (wetBed(world, at, x, z, profile[i]) == Integer.MIN_VALUE) { filled += vergeFill(world, piece, x, z, profile[i], at); }
+                if (wetBed(world, at, x, z, profile[i]) == Integer.MIN_VALUE) { filled += vergeFill(world, piece, bores, x, z, profile[i], at); }
                 return;
             }
             if (tunnels[i]) {
                 lined += BeardRoadsTunnels.tunnelWall(world, piece, at, x, z, profile[i], linings);
                 return;
             }
-            filled += vergeFill(world, piece, x, z, profile[i], at);
+            filled += vergeFill(world, piece, bores, x, z, profile[i], at);
         }
 
         private void cell(int i, int across) {
@@ -410,7 +410,7 @@ public final class BeardRoadsPaving {
         private void mergeCell(int i, int across, int x, int z, int target, IBlockState natural) {
             int merged = ((MergePiece) piece).centerAt(start + i);
             if (Math.abs(across - merged) > (BeardRoads.pathFullWidth() - 1) / 2) {
-                filled += vergeFill(world, piece, x, z, target, at);
+                filled += vergeFill(world, piece, bores, x, z, target, at);
                 at.setPos(x, target, z);
                 if (world.getBlockState(at).getMaterial().isReplaceable() && !BeardKeep.holds(x, target, z)) {
                     at.setPos(x, target - 1, z);
@@ -482,7 +482,7 @@ public final class BeardRoadsPaving {
         return true;
     }
 
-    static int vergeFill(World world, StructureComponent piece, int x, int z, int level, BlockPos.MutableBlockPos at) {
+    static int vergeFill(World world, StructureComponent piece, List<RailPiece> bores, int x, int z, int level, BlockPos.MutableBlockPos at) {
         if (BeardRoads.insidePlaza(x, z)) { return 0; }
         StructureStart holder = ContentBeard.current();
         if (holder != null && BeardPlots.underAnother(holder, piece, x, z)) { return 0; }
@@ -492,11 +492,13 @@ public final class BeardRoadsPaving {
         if (verge.getMaterial().isSolid()) {
             at.setPos(x, level - 1, z);
             if (world.getBlockState(at).getMaterial().isSolid() || world.getBlockState(at).getMaterial().isLiquid()) { return 0; }
-            return BeardBlocks.fillBank(world, at, x, z, level - 1, level - 6, false);
+            return BeardBlocks.fillBank(world, at, bores, x, z, level - 1, level - 6, false);
         }
         int bed = wetBed(world, at, x, z, level);
-        if (bed != Integer.MIN_VALUE) { return BeardBlocks.fillUnder(world, at, x, z, level, bed + 1); }
-        return BeardBlocks.fillBank(world, at, x, z, level, level - 5, false);
+        int roof = BeardRails.boreRoof(world, bores, x, z);
+        if (bed != Integer.MIN_VALUE) { return BeardBlocks.fillUnder(world, at, x, z, level, Math.max(bed + 1, roof + 1)); }
+        if (roof != Integer.MIN_VALUE && level > roof) { return BeardBlocks.fillUnder(world, at, x, z, level, Math.max(roof + 1, level - 5)); }
+        return BeardBlocks.fillBank(world, at, bores, x, z, level, level - 5, false);
     }
 
     private static int wetBed(World world, BlockPos.MutableBlockPos at, int x, int z, int level) {
