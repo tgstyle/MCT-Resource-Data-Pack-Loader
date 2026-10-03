@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
 import mctmods.resourcedatapackloader.content.entity.ContentEntitySpawns;
+import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -135,7 +136,12 @@ public final class ContentEvents {
             });
         }
         else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type())); }
+        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) {
+            event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> {
+                helper.register(ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type());
+                helper.register(EntityStorage.KEY, EntityStorage.TYPE);
+            });
+        }
         if (Config.contentOff()) {
             if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, helper -> generateData()); }
             return;

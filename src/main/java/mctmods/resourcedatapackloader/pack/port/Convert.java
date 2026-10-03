@@ -102,14 +102,9 @@ public final class Convert {
         JsonArray exposureBlocks = "exposures".equals(folder) && json.has("blocks") && json.get("blocks").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
         JsonArray exposureItems = "exposures".equals(folder) && json.has("items") && json.get("items").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
         JsonArray exposureDimensions = "exposures".equals(folder) && json.has("dimensions") && json.get("dimensions").isJsonArray() ? ConvertDefinitions.exposureDimensions(json.remove("dimensions").getAsJsonArray(), pack) : null;
-        if ("fuels".equals(folder) && json.has("fuels") && json.get("fuels").isJsonArray()) {
-            for (JsonElement element : json.getAsJsonArray("fuels")) {
-                if (!element.isJsonObject()) { continue; }
-                JsonObject fuel = element.getAsJsonObject();
-                if (!fuel.has("oreDict") || fuel.has("tag")) { continue; }
-                fuel.addProperty("tag", Ids.oreDictTag(fuel.remove("oreDict").getAsString()));
-                pack.rewrote();
-            }
+        if ("fuels".equals(folder)) { ConvertDefinitions.oreDictTags(json, "fuels", pack); }
+        if ("entities".equals(folder) && json.has("storage") && json.get("storage").isJsonObject() && json.getAsJsonObject("storage").has("items") && json.getAsJsonObject("storage").get("items").isJsonObject()) {
+            ConvertDefinitions.oreDictTags(json.getAsJsonObject("storage").getAsJsonObject("items"), "filter", pack);
         }
         if ("worldgen".equals(folder) && json.has("block") && json.has("meta")) {
             json.addProperty("block", json.get("block").getAsString() + ":" + json.get("meta").getAsInt());

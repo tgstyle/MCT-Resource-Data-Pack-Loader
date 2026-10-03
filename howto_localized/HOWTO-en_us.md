@@ -2530,6 +2530,77 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 | `trackVelocity`     | no       | boolean | `true`  | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no       | int     | `3`     | How often, in ticks                                                                  |
 
+### Storage
+
+*entity variants*
+
+```json
+{
+  "entity": "minecraft:pig",
+  "name": "Pack Pig",
+  "storage": {
+    "items": {
+      "rows": 2,
+      "columns": 9,
+      "filter": [
+        { "item": "minecraft:coal", "max": 128 },
+        { "tag": "c:ingots/iron" }
+      ]
+    },
+    "fluid": {
+      "capacity": 16000,
+      "buckets": true,
+      "filter": [
+        { "fluid": "minecraft:water", "max": 8000 }
+      ]
+    },
+    "energy": { "capacity": 100000, "transfer": 1000 },
+    "dropsOnDeath": true
+  }
+}
+```
+
+`storage` gives a variant of any entity item slots, a fluid tank and an energy buffer, each one only when its object is written. Each is offered as the entity's item, fluid or energy capability, so anything that moves items, fluid or energy into an entity reaches it. Where the base entity answers that capability itself, as a mob does for its hands and armor and a horse or a chest minecart does for its inventory, the pack storage answers in its place, on every side. A player opens the screen by sneaking and right-clicking the entity. The contents are saved with the entity.
+
+| Key            | Required | Value   | Default | What it does                                                                                                          |
+| -------------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `items`        | no       | object  | none    | Item slots                                                                                                            |
+| `fluid`        | no       | object  | none    | One fluid tank                                                                                                        |
+| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                               |
+| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way |
+
+`items`:
+
+| Key       | Required | Value                  | Default | What it does                                                                                 |
+| --------- | -------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `rows`    | no       | int                    | `3`     | Rows of slots, from 1 to 9. A tank and an energy buffer each take one row of the screen away |
+| `columns` | no       | int                    | `9`     | Slots in a row, from 1 to 12                                                                 |
+| `filter`  | no       | list of filter entries | none    | What the slots accept. Without it they accept anything                                       |
+
+`fluid`:
+
+| Key        | Required | Value                  | Default | What it does                                                                                                                                                              |
+| ---------- | -------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capacity` | yes      | int, mB                | none    | How much the tank holds                                                                                                                                                   |
+| `filter`   | no       | list of filter entries | none    | Which fluids the tank accepts. Without it it accepts anything                                                                                                             |
+| `buckets`  | no       | boolean                | `false` | A right-click with a bucket or other fluid container, not sneaking, empties it into the tank or fills it from the tank. A click that moves no fluid is left to the entity |
+
+`energy`:
+
+| Key        | Required | Value   | Default  | What it does                                     |
+| ---------- | -------- | ------- | -------- | ------------------------------------------------ |
+| `capacity` | yes      | int, FE | none     | How much energy it holds                         |
+| `transfer` | no       | int, FE | no limit | The most energy moved in or out in one operation |
+
+A filter entry. The first entry that matches decides, and anything no entry matches is refused:
+
+| Key     | Required         | Value       | Default | What it does                                                                               |
+| ------- | ---------------- | ----------- | ------- | ------------------------------------------------------------------------------------------ |
+| `item`  | one of the three | item id     | none    | An item, as `namespace:name`                                                               |
+| `tag`   | one of the three | item tag id | none    | Every item under that tag, such as `c:ingots/iron`                                         |
+| `fluid` | one of the three | fluid id    | none    | A fluid by its id, such as `minecraft:water`. Read by a fluid filter only                  |
+| `max`   | no               | int         | `0`     | The most of it held at once, counted over all slots, or in mB for a fluid. `0` is no limit |
+
 ## Exposures
 
 *creatures and hazards*
@@ -5876,7 +5947,7 @@ A single-track trunk has no second track to give the other spur, so a link whose
 | Setting                   | Type                | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | ------------------------- | ------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldGameMode`           | text                | empty   | Which way every new world is started, one of survival, hardcore, creative, adventure or spectator. Hardcore is survival where death ends the world, save wide, the same as the choice on the world screen. Empty leaves it as whoever made the world chose. The world screen offers only survival, hardcore and creative, so adventure and spectator are set as the world is made. A dedicated server sets every world to its server.properties mode at each start, so there the pack's mode is written into server.properties (gamemode and hardcore) before the world loads |
-| `privacy`                 | boolean             | `true`  | Whether the game's telemetry and chat reporting are off: no telemetry event is sent, the client signs no chat message, the server keeps no chat session and does not require one, so no message can be reported. A pack that leaves it out gets the `privacy` config option of the `tweaks` category. Takes effect on the next world or server joined |
+| `privacy`                 | boolean             | `true`  | Whether the game's telemetry and chat reporting are off: no telemetry event is sent, the client signs no chat message, the server keeps no chat session and does not require one, so no message can be reported. A pack that leaves it out gets the `privacy` config option of the `tweaks` category. Takes effect on the next world or server joined                                                                                                                                                                                                                         |
 | `worldLanCommands`        | boolean             | `true`  | Whether a player opening a single player world to LAN may turn commands on for everyone who joins. `false` grays out the Open to LAN screen's Allow Commands button and holds it at off, and the world is opened without commands however it is asked for, `/publish` included                                                                                                                                                                                                                                                                                                |
 | `worldDifficulty`         | list                | empty   | Lock the difficulty, one of peaceful, easy, normal or hard. A bare difficulty covers every dimension, and an entry written as dimension=difficulty, such as minecraft:the_nether=hard, covers that dimension alone and wins over the bare one. The world's own setting is left as it was and comes back when the entry is removed. A dedicated server writes the overworld's difficulty into `server.properties` as `difficulty`. Empty leaves it as chosen                                                                                                                   |
 | `worldForceGameMode`      | boolean             | empty   | Whether a player who joins is put back in the server's game mode every time, the `force-gamemode` line. A world opened to LAN already does that, and `false` stops it there too                                                                                                                                                                                                                                                                                                                                                                                               |
@@ -6022,14 +6093,14 @@ Loot, functions and registry names. Config only.
 
 Small changes to how vanilla behaves. Config only, except `privacy`, which a pack can also set; see [Bonus: vanilla tweaks](#bonus-vanilla-tweaks).
 
-| Setting               | Type    | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                |
-| --------------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `promptLeafDecay`     | boolean | `true`  | Leaves that lose their tree decay within a second instead of waiting on random ticks                                                                                                                                                                                                                                                                                                        |
-| `lenientPaths`        | boolean | `true`  | Paths can be made under a block and stay there when one is placed above                                                                                                                                                                                                                                                                                                                     |
-| `unbreakableSpawners` | boolean | `false` | Mob spawners cannot be mined or blown up. Creative mode still removes them. Requires a restart                                                                                                                                                                                                                                                                                              |
-| `experimentalWarning` | boolean | `false` | Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed                                                                                                                                                                                                                                                                  |
+| Setting               | Type    | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| --------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptLeafDecay`     | boolean | `true`  | Leaves that lose their tree decay within a second instead of waiting on random ticks                                                                                                                                                                                                                                                                                                                                                                                    |
+| `lenientPaths`        | boolean | `true`  | Paths can be made under a block and stay there when one is placed above                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `unbreakableSpawners` | boolean | `false` | Mob spawners cannot be mined or blown up. Creative mode still removes them. Requires a restart                                                                                                                                                                                                                                                                                                                                                                          |
+| `experimentalWarning` | boolean | `false` | Show the game's experimental settings warning when a world is made or opened. Off answers it as if you had clicked proceed                                                                                                                                                                                                                                                                                                                                              |
 | `privacy`             | boolean | `true`  | Turn off the game's telemetry and chat reporting: no telemetry event is sent or logged, the client signs no chat message, the server keeps no chat session and does not require one, so no message anybody sends can be reported, and the client shows no warning toast that a server does not enforce secure chat. A pack can set it as `privacy` in a world template's `settings`, under the [Server](#server) group. Takes effect on the next world or server joined |
-| `darkSplash`          | boolean | `true`  | Draw the loading screen dark with the pack loader's logo in place of the game's: the logo is swapped as the screen is made, and the game's own Monochrome Logo option is turned on when it is still off, which takes effect at the next start. Off leaves the option as it is                                                                                                               |
+| `darkSplash`          | boolean | `true`  | Draw the loading screen dark with the pack loader's logo in place of the game's: the logo is swapped as the screen is made, and the game's own Monochrome Logo option is turned on when it is still off, which takes effect at the next start. Off leaves the option as it is                                                                                                                                                                                           |
 
 ---
 
@@ -6383,7 +6454,8 @@ What a 1.12.2 pack can write that this version does not read, and why. A pack th
 | Key                                                                                                                                                                             | Where                                                                                              | Why                                                                                                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `meta`                                                                                                                                                                          | blocks, items, worldgen, block drops                                                               | Ids carry no metadata since the flattening. The port runs every `name:meta` through the game's data fixers and drops the key                                                                                                                    |
-| `oreDict`                                                                                                                                                                       | blocks, items, furnace, fuels                                                                      | The ore dictionary is gone. The port turns it into `tags` on the convention tags, and a fuel's into `tag`                                                                                                                                       |
+| `oreDict`                                                                                                                                                                       | blocks, items, furnace, fuels, entity storage filters                                              | The ore dictionary is gone. The port turns it into `tags` on the convention tags, and a fuel's or a storage filter entry's into `tag`                                                                                                           |
+| `galacticraft`                                                                                                                                                                  | entity variants                                                                                    | There is no Galacticraft for this version, so a variant has no rocket tier, fuel tank, cargo or payload to set                                                                                                                                  |
 | `oreDictionary`                                                                                                                                                                 | settings                                                                                           | The ore dictionary is gone, so there are no ore dictionary files left to switch off. Tags do its job, and the port writes them from a pack's `oreDict`                                                                                          |
 | `modelMeta`                                                                                                                                                                     | blocks                                                                                             | Models are generated per variant, so there is no metadata to map them by                                                                                                                                                                        |
 | `disableOverrides`, `tolerateMissingInAdvancements`                                                                                                                             | settings                                                                                           | A data pack replaces a vanilla recipe or advancement by shipping one under the same name                                                                                                                                                        |
