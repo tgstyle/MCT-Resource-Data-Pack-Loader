@@ -48,44 +48,48 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
             graphics.blit(own, leftPos, topPos, 0, 0, imageWidth, imageHeight);
             return;
         }
-        head(graphics, topPos);
-        for (int row = 0; row < def.rows(); row++) { band(graphics, topPos + HEADER + row * CELL); }
-        foot(graphics, topPos + HEADER + def.rows() * CELL);
+        frame(graphics, leftPos, topPos, imageWidth, def.rows(), def.columns());
     }
 
-    private void head(GuiGraphics graphics, int y) {
-        graphics.blit(SHEET, leftPos, y, 0, 0, EDGE, HEADER);
-        for (int across = EDGE; across < imageWidth - EDGE; across += CELL) {
-            graphics.blit(SHEET, leftPos + across, y, EDGE, 0, Math.min(CELL, imageWidth - EDGE - across), HEADER);
+    public static void frame(GuiGraphics graphics, int left, int top, int wide, int rows, int columns) {
+        head(graphics, left, top, wide);
+        for (int row = 0; row < rows; row++) { band(graphics, left, top + HEADER + row * CELL, wide, columns); }
+        foot(graphics, left, top + HEADER + rows * CELL, wide);
+    }
+
+    private static void head(GuiGraphics graphics, int left, int y, int wide) {
+        graphics.blit(SHEET, left, y, 0, 0, EDGE, HEADER);
+        for (int across = EDGE; across < wide - EDGE; across += CELL) {
+            graphics.blit(SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER);
         }
-        graphics.blit(SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
+        graphics.blit(SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
     }
 
-    private void band(GuiGraphics graphics, int y) {
-        int cells = def.columns() * CELL;
-        int start = (imageWidth - cells) / 2;
-        graphics.blit(SHEET, leftPos, y, 0, HEADER, EDGE, CELL);
-        plain(graphics, leftPos + EDGE, y, start - EDGE, CELL);
-        for (int column = 0; column < def.columns(); column++) { graphics.blit(SHEET, leftPos + start + column * CELL, y, EDGE, HEADER, CELL, CELL); }
-        plain(graphics, leftPos + start + cells, y, imageWidth - EDGE - start - cells, CELL);
-        graphics.blit(SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL);
+    private static void band(GuiGraphics graphics, int left, int y, int wide, int columns) {
+        int cells = columns * CELL;
+        int start = (wide - cells) / 2;
+        graphics.blit(SHEET, left, y, 0, HEADER, EDGE, CELL);
+        plain(graphics, left + EDGE, y, start - EDGE, CELL);
+        for (int column = 0; column < columns; column++) { graphics.blit(SHEET, left + start + column * CELL, y, EDGE, HEADER, CELL, CELL); }
+        plain(graphics, left + start + cells, y, wide - EDGE - start - cells, CELL);
+        graphics.blit(SHEET, left + wide - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL);
     }
 
-    private void foot(GuiGraphics graphics, int y) {
-        plain(graphics, leftPos + EDGE, y, imageWidth - EDGE - EDGE, FOOT);
-        sill(graphics, y + FOOT - SILL);
-        graphics.blit(SHEET, leftPos, y, 0, FOOT_SOURCE, EDGE, FOOT);
-        graphics.blit(SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT);
-        graphics.blit(SHEET, leftPos + (imageWidth - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
+    private static void foot(GuiGraphics graphics, int left, int y, int wide) {
+        plain(graphics, left + EDGE, y, wide - EDGE - EDGE, FOOT);
+        sill(graphics, left, y + FOOT - SILL, wide);
+        graphics.blit(SHEET, left, y, 0, FOOT_SOURCE, EDGE, FOOT);
+        graphics.blit(SHEET, left + wide - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT);
+        graphics.blit(SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
     }
 
-    private void sill(GuiGraphics graphics, int y) {
-        for (int across = EDGE; across < imageWidth - EDGE; across += CELL) {
-            graphics.blit(SHEET, leftPos + across, y, EDGE, SILL_SOURCE, Math.min(CELL, imageWidth - EDGE - across), SILL);
+    private static void sill(GuiGraphics graphics, int left, int y, int wide) {
+        for (int across = EDGE; across < wide - EDGE; across += CELL) {
+            graphics.blit(SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL);
         }
     }
 
-    private void plain(GuiGraphics graphics, int x, int y, int wide, int tall) {
+    private static void plain(GuiGraphics graphics, int x, int y, int wide, int tall) {
         for (int down = 0; down < tall; down += PLAIN_TALL) {
             int high = Math.min(PLAIN_TALL, tall - down);
             for (int across = 0; across < wide; across += PLAIN_WIDE) {

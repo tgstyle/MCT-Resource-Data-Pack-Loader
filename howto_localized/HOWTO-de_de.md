@@ -2530,6 +2530,77 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
 | `trackVelocity`     | nein    | boolean | `true`   | Schickt neben der Position auch die Geschwindigkeit. Aus spart Traffic bei Dingen, die sich kaum bewegen |
 | `trackingFrequency` | nein    | int     | `3`      | Wie oft, in Ticks                                                                                        |
 
+### Lager
+
+*entity-varianten*
+
+```json
+{
+  "entity": "minecraft:pig",
+  "name": "Pack Pig",
+  "storage": {
+    "items": {
+      "rows": 2,
+      "columns": 9,
+      "filter": [
+        { "item": "minecraft:coal", "max": 128 },
+        { "tag": "forge:ingots/iron" }
+      ]
+    },
+    "fluid": {
+      "capacity": 16000,
+      "buckets": true,
+      "filter": [
+        { "fluid": "minecraft:water", "max": 8000 }
+      ]
+    },
+    "energy": { "capacity": 100000, "transfer": 1000 },
+    "dropsOnDeath": true
+  }
+}
+```
+
+`storage` gibt der Variante einer beliebigen Entity Item-Slots, einen Flüssigkeitstank und einen Energiespeicher, jeden nur dann, wenn sein Objekt dasteht. Jeder wird als Capability der Entity für Items, Flüssigkeit oder Energie angeboten, sodass alles, was Items, Flüssigkeit oder Energie in eine Entity bewegt, ihn erreicht. Wo die Basis-Entity diese Capability selbst beantwortet, wie ein Mob für Hände und Rüstung und ein Pferd oder eine Güterlore für ihr Inventar, antwortet an ihrer Stelle das Lager des Packs, auf jeder Seite. Ein Spieler öffnet den Bildschirm mit Schleichen und Rechtsklick auf die Entity. Der Inhalt wird mit der Entity gespeichert.
+
+| Schlüssel      | Pflicht | Wert    | Standard | Was er macht                                                                                                                                                      |
+| -------------- | ------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`        | nein    | Objekt  | keins    | Item-Slots                                                                                                                                                        |
+| `fluid`        | nein    | Objekt  | keins    | Ein Flüssigkeitstank                                                                                                                                              |
+| `energy`       | nein    | Objekt  | keins    | Ein Speicher für Forge Energy                                                                                                                                     |
+| `dropsOnDeath` | nein    | boolean | `true`   | Die gelagerten Items fallen als lose Items dorthin, wo die Entity stirbt. Mit `false` gehen sie verloren. Flüssigkeit und Energie gehen in beiden Fällen verloren |
+
+`items`:
+
+| Schlüssel | Pflicht | Wert                      | Standard | Was er macht                                                                                        |
+| --------- | ------- | ------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| `rows`    | nein    | int                       | `3`      | Reihen von Slots, von 1 bis 9. Ein Tank und ein Energiespeicher nehmen dem Bildschirm je eine Reihe |
+| `columns` | nein    | int                       | `9`      | Slots pro Reihe, von 1 bis 12                                                                       |
+| `filter`  | nein    | Liste von Filtereinträgen | keine    | Was die Slots annehmen. Ohne ihn nehmen sie alles an                                                |
+
+`fluid`:
+
+| Schlüssel  | Pflicht | Wert                      | Standard | Was er macht                                                                                                                                                                                                    |
+| ---------- | ------- | ------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capacity` | ja      | int, mB                   | keiner   | Wie viel der Tank fasst                                                                                                                                                                                         |
+| `filter`   | nein    | Liste von Filtereinträgen | keine    | Welche Flüssigkeiten der Tank annimmt. Ohne ihn nimmt er alles an                                                                                                                                               |
+| `buckets`  | nein    | boolean                   | `false`  | Ein Rechtsklick mit einem Eimer oder anderen Flüssigkeitsbehälter, ohne zu schleichen, leert ihn in den Tank oder füllt ihn aus dem Tank. Ein Klick, der keine Flüssigkeit bewegt, bleibt der Entity überlassen |
+
+`energy`:
+
+| Schlüssel  | Pflicht | Wert    | Standard     | Was er macht                                                        |
+| ---------- | ------- | ------- | ------------ | ------------------------------------------------------------------- |
+| `capacity` | ja      | int, FE | keiner       | Wie viel Energie er fasst                                           |
+| `transfer` | nein    | int, FE | keine Grenze | Wie viel Energie höchstens in einem Vorgang hinein- oder herausgeht |
+
+Ein Filtereintrag. Der erste passende Eintrag entscheidet, und was zu keinem Eintrag passt, wird abgewiesen:
+
+| Schlüssel | Pflicht        | Wert            | Standard | Was er macht                                                                                                                  |
+| --------- | -------------- | --------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `item`    | eines der drei | Item-ID         | keiner   | Ein Item, als `namespace:name`                                                                                                |
+| `tag`     | eines der drei | Item-Tag-ID     | keiner   | Jedes Item unter diesem Tag, etwa `forge:ingots/iron`                                                                         |
+| `fluid`   | eines der drei | Flüssigkeits-ID | keiner   | Eine Flüssigkeit mit ihrer ID, etwa `minecraft:water`. Nur ein Flüssigkeitsfilter liest ihn                                   |
+| `max`     | nein           | int             | `0`      | Wie viel davon höchstens zugleich gelagert wird, über alle Slots gezählt, bei einer Flüssigkeit in mB. `0` heißt keine Grenze |
+
 ## Expositionen
 
 *kreaturen und gefahren*
@@ -6383,7 +6454,8 @@ Was ein Pack für 1.12.2 schreiben kann, diese Version aber nicht liest, und war
 | Schlüssel                                                                                                                                                                                         | Wo                                                                                                  | Warum                                                                                                                                                                                                                                                                                      |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `meta`                                                                                                                                                                                            | Blöcke, Items, Worldgen, Block-Drops                                                                | Seit dem Flattening tragen IDs keine Metadaten. Die Portierung schickt jedes `name:meta` durch die Datenfixer des Spiels und verwirft den Schlüssel                                                                                                                                        |
-| `oreDict`                                                                                                                                                                                         | Blöcke, Items, Ofen, Brennstoffe                                                                    | Das Ore Dictionary gibt es nicht mehr. Die Portierung macht daraus `tags` auf den Konventions-Tags, bei einem Brennstoff `tag`                                                                                                                                                             |
+| `oreDict`                                                                                                                                                                                         | Blöcke, Items, Ofen, Brennstoffe, Filter eines Entity-Lagers                                        | Das Ore Dictionary gibt es nicht mehr. Die Portierung macht daraus `tags` auf den Konventions-Tags, bei einem Brennstoff oder einem Filtereintrag eines Lagers `tag`                                                                                                                       |
+| `galacticraft`                                                                                                                                                                                    | Entity-Varianten                                                                                    | Für diese Version gibt es kein Galacticraft, also hat eine Variante keine Raketenstufe, keinen Treibstofftank, keine Fracht und keine Nutzlast einzustellen                                                                                                                                |
 | `oreDictionary`                                                                                                                                                                                   | Einstellungen                                                                                       | Das Ore Dictionary gibt es nicht mehr, also auch keine Ore-Dictionary-Dateien, die sich abschalten ließen. Tags übernehmen seine Aufgabe, und die Portierung schreibt sie aus dem `oreDict` eines Packs                                                                                    |
 | `modelMeta`                                                                                                                                                                                       | Blöcke                                                                                              | Modelle werden pro Variante erzeugt, es gibt also keine Metadaten, nach denen sie sich zuordnen ließen                                                                                                                                                                                     |
 | `disableOverrides`, `tolerateMissingInAdvancements`                                                                                                                                               | Einstellungen                                                                                       | Ein Datenpaket ersetzt ein Vanilla-Rezept oder -Advancement, indem es eines unter demselben Namen mitliefert                                                                                                                                                                               |

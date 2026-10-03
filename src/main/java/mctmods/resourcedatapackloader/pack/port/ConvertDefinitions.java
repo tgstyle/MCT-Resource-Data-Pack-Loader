@@ -227,4 +227,15 @@ final class ConvertDefinitions {
             pack.rewrote();
         }
     }
+
+    static void oreDictTags(JsonObject json, String list, Ported pack) {
+        if (!json.has(list) || !json.get(list).isJsonArray()) { return; }
+        for (JsonElement element : json.getAsJsonArray(list)) {
+            if (!element.isJsonObject()) { continue; }
+            JsonObject entry = element.getAsJsonObject();
+            if (!entry.has("oreDict") || entry.has("tag")) { continue; }
+            entry.addProperty("tag", Ids.oreDictTag(entry.remove("oreDict").getAsString()));
+            pack.rewrote();
+        }
+    }
 }

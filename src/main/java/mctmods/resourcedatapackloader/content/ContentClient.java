@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.client.render.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.render.ReturningThrowRenderer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
+import mctmods.resourcedatapackloader.client.screen.EntityStorageScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentBellBlockEntity;
@@ -92,6 +94,8 @@ public final class ContentClient {
             SplashDark.apply();
             MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
             if (menu != null) { MenuScreens.register(menu, ContentContainerScreen::new); }
+            MenuType<EntityStorageMenu> storage = ContentContainers.registeredStorageMenu();
+            if (storage != null) { MenuScreens.register(storage, EntityStorageScreen::new); }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

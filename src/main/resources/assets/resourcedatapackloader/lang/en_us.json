@@ -118,5 +118,8 @@
   "rdpl.command.nocard": "No card rule is named %s",
   "rdpl.command.cardshown": "Showed the card %s to %s player(s)",
   "rdpl.command.closed": " closed",
-  "rdpl.item.bucketFilled": "%s Bucket"
+  "rdpl.item.bucketFilled": "%s Bucket",
+  "rdpl.storage.fluid": "%s: %s / %s mB",
+  "rdpl.storage.energy": "%s / %s FE",
+  "rdpl.storage.empty": "Empty"
 }

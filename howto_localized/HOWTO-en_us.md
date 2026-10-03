@@ -2530,6 +2530,77 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 | `trackVelocity`     | no       | boolean | `true`  | Send its speed as well as its position. Off saves traffic on things that barely move |
 | `trackingFrequency` | no       | int     | `3`     | How often, in ticks                                                                  |
 
+### Storage
+
+*entity variants*
+
+```json
+{
+  "entity": "minecraft:pig",
+  "name": "Pack Pig",
+  "storage": {
+    "items": {
+      "rows": 2,
+      "columns": 9,
+      "filter": [
+        { "item": "minecraft:coal", "max": 128 },
+        { "tag": "forge:ingots/iron" }
+      ]
+    },
+    "fluid": {
+      "capacity": 16000,
+      "buckets": true,
+      "filter": [
+        { "fluid": "minecraft:water", "max": 8000 }
+      ]
+    },
+    "energy": { "capacity": 100000, "transfer": 1000 },
+    "dropsOnDeath": true
+  }
+}
+```
+
+`storage` gives a variant of any entity item slots, a fluid tank and an energy buffer, each one only when its object is written. Each is offered as the entity's item, fluid or energy capability, so anything that moves items, fluid or energy into an entity reaches it. Where the base entity answers that capability itself, as a mob does for its hands and armor and a horse or a chest minecart does for its inventory, the pack storage answers in its place, on every side. A player opens the screen by sneaking and right-clicking the entity. The contents are saved with the entity.
+
+| Key            | Required | Value   | Default | What it does                                                                                                          |
+| -------------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
+| `items`        | no       | object  | none    | Item slots                                                                                                            |
+| `fluid`        | no       | object  | none    | One fluid tank                                                                                                        |
+| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                               |
+| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way |
+
+`items`:
+
+| Key       | Required | Value                  | Default | What it does                                                                                 |
+| --------- | -------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------- |
+| `rows`    | no       | int                    | `3`     | Rows of slots, from 1 to 9. A tank and an energy buffer each take one row of the screen away |
+| `columns` | no       | int                    | `9`     | Slots in a row, from 1 to 12                                                                 |
+| `filter`  | no       | list of filter entries | none    | What the slots accept. Without it they accept anything                                       |
+
+`fluid`:
+
+| Key        | Required | Value                  | Default | What it does                                                                                                                                                              |
+| ---------- | -------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capacity` | yes      | int, mB                | none    | How much the tank holds                                                                                                                                                   |
+| `filter`   | no       | list of filter entries | none    | Which fluids the tank accepts. Without it it accepts anything                                                                                                             |
+| `buckets`  | no       | boolean                | `false` | A right-click with a bucket or other fluid container, not sneaking, empties it into the tank or fills it from the tank. A click that moves no fluid is left to the entity |
+
+`energy`:
+
+| Key        | Required | Value   | Default  | What it does                                     |
+| ---------- | -------- | ------- | -------- | ------------------------------------------------ |
+| `capacity` | yes      | int, FE | none     | How much energy it holds                         |
+| `transfer` | no       | int, FE | no limit | The most energy moved in or out in one operation |
+
+A filter entry. The first entry that matches decides, and anything no entry matches is refused:
+
+| Key     | Required         | Value       | Default | What it does                                                                               |
+| ------- | ---------------- | ----------- | ------- | ------------------------------------------------------------------------------------------ |
+| `item`  | one of the three | item id     | none    | An item, as `namespace:name`                                                               |
+| `tag`   | one of the three | item tag id | none    | Every item under that tag, such as `forge:ingots/iron`                                     |
+| `fluid` | one of the three | fluid id    | none    | A fluid by its id, such as `minecraft:water`. Read by a fluid filter only                  |
+| `max`   | no               | int         | `0`     | The most of it held at once, counted over all slots, or in mB for a fluid. `0` is no limit |
+
 ## Exposures
 
 *creatures and hazards*
@@ -6383,7 +6454,8 @@ What a 1.12.2 pack can write that this version does not read, and why. A pack th
 | Key                                                                                                                                                                             | Where                                                                                              | Why                                                                                                                                                                                                                                             |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `meta`                                                                                                                                                                          | blocks, items, worldgen, block drops                                                               | Ids carry no metadata since the flattening. The port runs every `name:meta` through the game's data fixers and drops the key                                                                                                                    |
-| `oreDict`                                                                                                                                                                       | blocks, items, furnace, fuels                                                                      | The ore dictionary is gone. The port turns it into `tags` on the convention tags, and a fuel's into `tag`                                                                                                                                       |
+| `oreDict`                                                                                                                                                                       | blocks, items, furnace, fuels, entity storage filters                                              | The ore dictionary is gone. The port turns it into `tags` on the convention tags, and a fuel's or a storage filter entry's into `tag`                                                                                                           |
+| `galacticraft`                                                                                                                                                                  | entity variants                                                                                    | There is no Galacticraft for this version, so a variant has no rocket tier, fuel tank, cargo or payload to set                                                                                                                                  |
 | `oreDictionary`                                                                                                                                                                 | settings                                                                                           | The ore dictionary is gone, so there are no ore dictionary files left to switch off. Tags do its job, and the port writes them from a pack's `oreDict`                                                                                          |
 | `modelMeta`                                                                                                                                                                     | blocks                                                                                             | Models are generated per variant, so there is no metadata to map them by                                                                                                                                                                        |
 | `disableOverrides`, `tolerateMissingInAdvancements`                                                                                                                             | settings                                                                                           | A data pack replaces a vanilla recipe or advancement by shipping one under the same name                                                                                                                                                        |
