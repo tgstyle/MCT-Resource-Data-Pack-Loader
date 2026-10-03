@@ -118,5 +118,8 @@
   "rdpl.command.gennone": "Ни один генератор мира не был заблокирован. Настройки могут быть выключены или недоступны",
   "key.category.resourcedatapackloader.main": "Resource Data Pack Loader",
   "key.resourcedatapackloader.pouch": "Открыть носимое хранилище",
-  "rdpl.item.bucketFilled": "Ведро: %s"
+  "rdpl.item.bucketFilled": "Ведро: %s",
+  "rdpl.storage.fluid": "%s: %s / %s мВ",
+  "rdpl.storage.energy": "%s / %s FE",
+  "rdpl.storage.empty": "Пусто"
 }

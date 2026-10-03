@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.resources.Identifier;
@@ -23,9 +24,11 @@ import javax.annotation.Nullable;
 
 public final class ContentContainers {
     public static final Identifier ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "container");
+    private static final Identifier STORAGE_ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "entity_storage");
     public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
     @Nullable private static BlockEntityType<ContentContainerBlockEntity> type;
     @Nullable private static MenuType<ContentContainerMenu> menu;
+    @Nullable private static MenuType<EntityStorageMenu> storageMenu;
 
     private ContentContainers() {}
 
@@ -61,5 +64,14 @@ public final class ContentContainers {
     public static void registerMenu(RegisterEvent.RegisterHelper<MenuType<?>> helper) {
         menu = IMenuTypeExtension.create(ContentContainerMenu::new);
         helper.register(ID, menu);
+        storageMenu = IMenuTypeExtension.create(EntityStorageMenu::new);
+        helper.register(STORAGE_ID, storageMenu);
     }
+
+    public static MenuType<EntityStorageMenu> storageMenu() {
+        if (storageMenu == null) { throw new IllegalStateException("No entity storage menu type is registered"); }
+        return storageMenu;
+    }
+
+    @Nullable public static MenuType<EntityStorageMenu> registeredStorageMenu() { return storageMenu; }
 }

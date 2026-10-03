@@ -10,7 +10,7 @@ public record EntityVariantDef(Identifier key, Identifier base, String name, boo
                                boolean despawns, int despawnTicks, Flags flags, float dropChance, float scale, float angryScale, float width, float height, Map<String, Float> pathPriorities,
                                Egg egg, Tracking tracking, Map<String, Double> attributes, boolean hostile, boolean passive, List<String> targets, int tint, List<String> tintParts,
                                Combat combat, int threatLeast, int threatHostile, Map<String, String> equipment, List<SpawnEntryDef> spawns, List<String> biomes, List<String> biomeTypes,
-                               List<String> requires, List<TaskDef> tasks) {
+                               List<String> requires, List<TaskDef> tasks, @Nullable StorageDef storage) {
     public static final String BODY = "body";
     public static final String ARMOR = "armor";
     public static final String HELD = "held";

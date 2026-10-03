@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
+import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -12,7 +15,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -118,7 +123,48 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json));
+                ContentTasks.parse(key, json), storage(key, json));
+    }
+
+    @Nullable private static StorageDef storage(Identifier key, JsonObject json) {
+        if (!json.has("storage")) { return null; }
+        JsonObject storage = GsonHelper.getAsJsonObject(json, "storage");
+        JsonObject items = GsonHelper.getAsJsonObject(storage, "items", new JsonObject());
+        JsonObject fluid = GsonHelper.getAsJsonObject(storage, "fluid", new JsonObject());
+        int fluidCapacity = Math.max(0, GsonHelper.getAsInt(fluid, "capacity", 0));
+        JsonObject energy = GsonHelper.getAsJsonObject(storage, "energy", new JsonObject());
+        int energyCapacity = Math.max(0, GsonHelper.getAsInt(energy, "capacity", 0));
+        int energyTransfer = Mth.clamp(GsonHelper.getAsInt(energy, "transfer", energyCapacity), 0, energyCapacity);
+        int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
+        int askedRows = storage.has("items") ? GsonHelper.getAsInt(items, "rows", 3) : 0;
+        int askedColumns = GsonHelper.getAsInt(items, "columns", 9);
+        int rows = Mth.clamp(askedRows, storage.has("items") ? 1 : 0, ContainerDef.MOST_ROWS - gauges);
+        int columns = Mth.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
+        if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The storage on entity variant {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
+        if (rows == 0 && gauges == 0) {
+            ContentLog.LOGGER.error("The storage on entity variant {} holds no items, fluid or energy, ignoring it", key);
+            return null;
+        }
+        return new StorageDef(rows, columns, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
+                GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true));
+    }
+
+    private static List<FilterDef.Entry> entries(Identifier key, JsonObject json) {
+        List<FilterDef.Entry> entries = new ArrayList<>();
+        if (!json.has("filter")) { return entries; }
+        for (JsonElement element : GsonHelper.getAsJsonArray(json, "filter")) {
+            JsonObject entry = element.isJsonObject() ? element.getAsJsonObject() : new JsonObject();
+            if (entry.has("oreDict")) { ContentLog.LOGGER.warn("A filter entry in {} uses 'oreDict', which this line does not read. Name a tag under 'tag' instead, such as c:ingots/iron or forge:ingots/iron", key); }
+            String item = GsonHelper.getAsString(entry, "item", "").trim();
+            Identifier tag = ContentParser.location(GsonHelper.getAsString(entry, "tag", "").trim());
+            Identifier held = ContentParser.location(GsonHelper.getAsString(entry, "fluid", "").trim());
+            if (item.isEmpty() && tag == null && held == null) {
+                ContentLog.LOGGER.error("A filter entry in {} names no item, tag or fluid, skipping it", key);
+                continue;
+            }
+            entries.add(new FilterDef.Entry(key, item, tag == null ? null : TagKey.create(Registries.ITEM, tag), held, Math.max(0, GsonHelper.getAsInt(entry, "max", 0))));
+        }
+        return entries;
     }
 
     private static float baby(JsonObject json) {

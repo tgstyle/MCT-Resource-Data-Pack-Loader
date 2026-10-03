@@ -45,44 +45,48 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
             graphics.blit(RenderPipelines.GUI_TEXTURED, own, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
             return;
         }
-        head(graphics, topPos);
-        for (int row = 0; row < def.rows(); row++) { band(graphics, topPos + HEADER + row * CELL); }
-        foot(graphics, topPos + HEADER + def.rows() * CELL);
+        frame(graphics, leftPos, topPos, imageWidth, def.rows(), def.columns());
     }
 
-    private void head(GuiGraphicsExtractor graphics, int y) {
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos, y, 0, 0, EDGE, HEADER, 256, 256);
-        for (int across = EDGE; across < imageWidth - EDGE; across += CELL) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + across, y, EDGE, 0, Math.min(CELL, imageWidth - EDGE - across), HEADER, 256, 256);
+    public static void frame(GuiGraphicsExtractor graphics, int left, int top, int wide, int rows, int columns) {
+        head(graphics, left, top, wide);
+        for (int row = 0; row < rows; row++) { band(graphics, left, top + HEADER + row * CELL, wide, columns); }
+        foot(graphics, left, top + HEADER + rows * CELL, wide);
+    }
+
+    private static void head(GuiGraphicsExtractor graphics, int left, int y, int wide) {
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, 0, EDGE, HEADER, 256, 256);
+        for (int across = EDGE; across < wide - EDGE; across += CELL) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER, 256, 256);
         }
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER, 256, 256);
     }
 
-    private void band(GuiGraphicsExtractor graphics, int y) {
-        int cells = def.columns() * CELL;
-        int start = (imageWidth - cells) / 2;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos, y, 0, HEADER, EDGE, CELL, 256, 256);
-        plain(graphics, leftPos + EDGE, y, start - EDGE, CELL);
-        for (int column = 0; column < def.columns(); column++) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + start + column * CELL, y, EDGE, HEADER, CELL, CELL, 256, 256); }
-        plain(graphics, leftPos + start + cells, y, imageWidth - EDGE - start - cells, CELL);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL, 256, 256);
+    private static void band(GuiGraphicsExtractor graphics, int left, int y, int wide, int columns) {
+        int cells = columns * CELL;
+        int start = (wide - cells) / 2;
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, HEADER, EDGE, CELL, 256, 256);
+        plain(graphics, left + EDGE, y, start - EDGE, CELL);
+        for (int column = 0; column < columns; column++) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + start + column * CELL, y, EDGE, HEADER, CELL, CELL, 256, 256); }
+        plain(graphics, left + start + cells, y, wide - EDGE - start - cells, CELL);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL, 256, 256);
     }
 
-    private void foot(GuiGraphicsExtractor graphics, int y) {
-        plain(graphics, leftPos + EDGE, y, imageWidth - EDGE - EDGE, FOOT);
-        sill(graphics, y + FOOT - SILL);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos, y, 0, FOOT_SOURCE, EDGE, FOOT, 256, 256);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + imageWidth - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT, 256, 256);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + (imageWidth - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT, 256, 256);
+    private static void foot(GuiGraphicsExtractor graphics, int left, int y, int wide) {
+        plain(graphics, left + EDGE, y, wide - EDGE - EDGE, FOOT);
+        sill(graphics, left, y + FOOT - SILL, wide);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, FOOT_SOURCE, EDGE, FOOT, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT, 256, 256);
     }
 
-    private void sill(GuiGraphicsExtractor graphics, int y) {
-        for (int across = EDGE; across < imageWidth - EDGE; across += CELL) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, leftPos + across, y, EDGE, SILL_SOURCE, Math.min(CELL, imageWidth - EDGE - across), SILL, 256, 256);
+    private static void sill(GuiGraphicsExtractor graphics, int left, int y, int wide) {
+        for (int across = EDGE; across < wide - EDGE; across += CELL) {
+            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL, 256, 256);
         }
     }
 
-    private void plain(GuiGraphicsExtractor graphics, int x, int y, int wide, int tall) {
+    private static void plain(GuiGraphicsExtractor graphics, int x, int y, int wide, int tall) {
         for (int down = 0; down < tall; down += PLAIN_TALL) {
             int high = Math.min(PLAIN_TALL, tall - down);
             for (int across = 0; across < wide; across += PLAIN_WIDE) {

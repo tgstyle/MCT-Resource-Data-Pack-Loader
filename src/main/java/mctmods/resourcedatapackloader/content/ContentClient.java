@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.client.render.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.render.ReturningThrowRenderer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
+import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
+import mctmods.resourcedatapackloader.client.screen.EntityStorageScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.client.EntityLook;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
@@ -93,6 +95,8 @@ public final class ContentClient {
     private static void screens(RegisterMenuScreensEvent event) {
         MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
         if (menu != null) { event.register(menu, ContentContainerScreen::new); }
+        MenuType<EntityStorageMenu> storage = ContentContainers.registeredStorageMenu();
+        if (storage != null) { event.register(storage, EntityStorageScreen::new); }
     }
 
     private static void setup(FMLClientSetupEvent event) { event.enqueueWork(SplashDark::apply); }

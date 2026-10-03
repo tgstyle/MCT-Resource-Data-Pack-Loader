@@ -118,5 +118,8 @@
   "rdpl.command.gennone": "Es wurde kein Weltgenerator blockiert. Die Einstellungen sind vielleicht aus oder nicht verfügbar",
   "key.category.resourcedatapackloader.main": "Resource Data Pack Loader",
   "key.resourcedatapackloader.pouch": "Getragenen Behälter öffnen",
-  "rdpl.item.bucketFilled": "Eimer mit %s"
+  "rdpl.item.bucketFilled": "Eimer mit %s",
+  "rdpl.storage.fluid": "%s: %s / %s mB",
+  "rdpl.storage.energy": "%s / %s FE",
+  "rdpl.storage.empty": "Leer"
 }
