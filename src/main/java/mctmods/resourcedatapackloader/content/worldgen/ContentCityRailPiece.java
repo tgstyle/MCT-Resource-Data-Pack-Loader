@@ -51,6 +51,9 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     private static final String FRAMES = "Frames";
     private static final String TRUNK = "RdplTrunk";
     private static final String LINK_ENDS = "RdplLinkEnds";
+    private static final String RISE = "Rise";
+    static final int RISE_LOW = 1;
+    static final int RISE_HIGH = 2;
     private final int level;
     private final int middle;
     private final boolean alongX;
@@ -62,8 +65,9 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     private final int[] frames;
     @Nullable private final int[] trunk;
     private final int[] ends;
+    private final int rise;
 
-    public ContentCityRailPiece(int from, int to, int level, int middle, boolean alongX, int width, boolean bridged, boolean bored, boolean subway, boolean crossed, int[] frames, @Nullable int[] trunk, int[] ends) {
+    public ContentCityRailPiece(int from, int to, int level, int middle, boolean alongX, int width, boolean bridged, boolean bored, boolean subway, boolean crossed, int rise, int[] frames, @Nullable int[] trunk, int[] ends) {
         super(TYPE, 0, box(from, to, level, middle, alongX, width, CityLinks.platformOver(trunk, ends, from, to)));
         this.level = level;
         this.middle = middle;
@@ -76,6 +80,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         this.frames = frames;
         this.trunk = trunk;
         this.ends = ends;
+        this.rise = rise;
     }
 
     public ContentCityRailPiece(CompoundTag tag) {
@@ -91,6 +96,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         this.frames = tag.getIntArray(FRAMES);
         this.trunk = tag.contains(TRUNK) ? tag.getIntArray(TRUNK) : null;
         this.ends = tag.getIntArray(LINK_ENDS);
+        this.rise = tag.getInt(RISE);
     }
 
     private static BoundingBox box(int from, int to, int level, int middle, boolean alongX, int width, int platform) {
@@ -110,6 +116,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         tag.putIntArray(FRAMES, frames);
         if (trunk != null) { tag.putIntArray(TRUNK, trunk); }
         if (ends.length > 0) { tag.putIntArray(LINK_ENDS, ends); }
+        if (rise != 0) { tag.putInt(RISE, rise); }
     }
 
     private record Dress(BlockState bed, BlockState tie, BlockState track, BlockState powered, BlockState base, BlockState shoulder, @Nullable BlockState light, CityPalette support, CityPalette deck, @Nullable CityPalette barrier, CityPalette linings) {
@@ -208,7 +215,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 boolean verge = across < acrossLeast || across > acrossMost;
                 boolean onRail = junction == CityLinks.SPUR || junction == CityLinks.CURVE || (junction == CityLinks.NONE && onTrack(across, tracks, gap));
                 boolean edge = junction == CityLinks.NONE && (across == acrossLeast || across == acrossMost) && (platform <= 0 || !CityLinks.platformSide(ends, alongX, row, across < middle ? -1 : 1));
-                BlockState laying = junction == CityLinks.NONE ? dress.track() : CityLinks.junctionTrack(trunk, row, across, dress.track());
+                BlockState laying = junction == CityLinks.NONE ? sloped(dress.track(), row) : CityLinks.junctionTrack(trunk, row, across, dress.track());
                 boolean onShoulder = shoulder > 0 && (across < acrossLeast + shoulder || across > acrossMost - shoulder);
                 if (verge && platform > 0 && CityLinks.platformSide(ends, alongX, row, across < acrossLeast ? -1 : 1)) {
                     int out = across < acrossLeast ? acrossLeast - across : across - acrossMost;
@@ -221,7 +228,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                     if (bored) { lined += boreWall(level, box, under, bores, x, z, dress.linings(), seed, at); }
                     else {
                         lined += cutWall(level, row, across, across < acrossLeast ? -1 : 1, dress.linings(), seed, at);
-                        CityPlotGround.vergeFill(level, box, others, x, z, this.level, at);
+                        CityPlotGround.vergeFill(level, box, others, bores, x, z, this.level, at);
                     }
                     continue;
                 }
@@ -239,7 +246,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 CityPlotGround.fillUnder(level, box, x, z, CityPlotGround.belowLoose(level, x, z, this.level - 1, floor, at), floor);
                 BlockState base = onRail && inBed ? laying : powerRow && onRail ? dress.base() : onShoulder ? dress.shoulder() : tieRow ? dress.tie() : dress.bed();
                 level.setBlock(at.set(x, this.level, z), base, 2);
-                if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), powerRow ? dress.powered() : laying, 2); }
+                if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), powerRow ? sloped(dress.powered(), row) : laying, 2); }
                 if (bored) {
                     level.setBlock(at.set(x, this.level + CLEAR + 1, z), litRow && across == middle ? dress.light() : dress.linings().pick(seed, x, this.level + CLEAR + 1, z), 2);
                     lined++;
@@ -258,7 +265,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         int crossing = 0;
         int walled = 0;
         int platformed = 0;
-        List<CityRails.Laid> bores = bridged && !subway ? CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ()) : List.of();
+        List<CityRails.Laid> bores = subway ? List.of() : CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ());
         CityPalette platforms = CityLinks.platformBlocks();
         CityPalette railing = CityPalette.mixed(ContentCity.railingBlock());
         for (int row = first; row <= last; row++) {
@@ -267,7 +274,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 if (!onTrack(across, tracks, gap)) { continue; }
                 at.set(alongX ? row : across, inBed ? this.level : this.level + 1, alongX ? across : row);
                 if (!box.isInside(at)) { continue; }
-                level.setBlock(at, dress.track(), 2);
+                level.setBlock(at, sloped(dress.track(), row), 2);
                 crossing++;
             }
             int platform = Math.max(0, CityLinks.platformAt(trunk, ends, row));
@@ -285,7 +292,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 }
                 if (across < acrossLeast - 1 || across > acrossMost + 1) { continue; }
                 walled += cutWall(level, row, across, side, dress.linings(), seed, at);
-                CityPlotGround.vergeFill(level, box, others, x, z, this.level, at);
+                CityPlotGround.vergeFill(level, box, others, bores, x, z, this.level, at);
             }
         }
         if (crossing > 0) { ContentLog.LOGGER.debug("The {} at {}, {} laid {} track block(s) across the street it crosses at y {}", subway ? "subway" : "railway", held.minX(), held.minZ(), crossing, this.level); }
@@ -444,6 +451,13 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         if (laid.hasProperty(BlockStateProperties.RAIL_SHAPE) && BlockStateProperties.RAIL_SHAPE.getPossibleValues().contains(wanted)) { return laid.setValue(BlockStateProperties.RAIL_SHAPE, wanted); }
         if (laid.hasProperty(BlockStateProperties.RAIL_SHAPE_STRAIGHT) && BlockStateProperties.RAIL_SHAPE_STRAIGHT.getPossibleValues().contains(wanted)) { return laid.setValue(BlockStateProperties.RAIL_SHAPE_STRAIGHT, wanted); }
         return oriented(laid, alongX);
+    }
+
+    private BlockState sloped(BlockState laid, int row) {
+        BoundingBox held = getBoundingBox();
+        if ((rise & RISE_LOW) != 0 && row == (alongX ? held.minX() : held.minZ())) { return shaped(laid, alongX ? RailShape.ASCENDING_WEST : RailShape.ASCENDING_NORTH, alongX); }
+        if ((rise & RISE_HIGH) != 0 && row == (alongX ? held.maxX() : held.maxZ())) { return shaped(laid, alongX ? RailShape.ASCENDING_EAST : RailShape.ASCENDING_SOUTH, alongX); }
+        return laid;
     }
 
     private static BlockState energized(BlockState laid) { return laid.hasProperty(BlockStateProperties.POWERED) ? laid.setValue(BlockStateProperties.POWERED, true) : laid; }

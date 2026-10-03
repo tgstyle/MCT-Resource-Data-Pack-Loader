@@ -417,6 +417,7 @@ public final class CityLinks {
             if (back > trunk.reach() || back < -trunk.spurHalf() || out > half + 1 || out < -half) { continue; }
             int k = index(tracks, across, side < 0);
             if (back > trunk.spurHalf()) {
+                if (trunk.buried()) { return WALL; }
                 if (k >= 0) { return BED; }
                 continue;
             }
@@ -424,11 +425,14 @@ public final class CityLinks {
             int[] spur = trackRows(trunk.sub(), join);
             int outer = spur.length - 1;
             int i = index(spur, row, body < 0);
-            int end = i == outer ? last : Math.min(i, last);
-            int start = k == last ? outer : Math.min(k, outer);
-            if (i >= 0 && k >= 0) { return k == Math.min(i, last) || i == Math.min(k, outer) ? CURVE : k < end ? SPUR : i < start ? NONE : BED; }
-            if (k >= 0) { return back < (join - spur[body > 0 ? outer - start : start]) * body ? NONE : BED; }
-            if (i >= 0) { return out > (tracks[side > 0 ? last - end : end] - trunk.across()) * side ? SPUR : NONE; }
+            int paired = Math.min(last, outer);
+            int shift = side > 0 ? last - paired : 0;
+            if (k >= 0 && k < shift) { return i >= 0 ? SPUR : BED; }
+            int pair = k < 0 ? -1 : k - shift;
+            if (i > paired || pair > paired) { return BED; }
+            if (i >= 0 && pair >= 0) { return pair == i ? CURVE : pair < i ? SPUR : NONE; }
+            if (pair >= 0) { return back < (join - spur[body > 0 ? outer - pair : pair]) * body ? NONE : BED; }
+            if (i >= 0) { return out > (tracks[side > 0 ? paired - i : i] - trunk.across()) * side ? SPUR : NONE; }
             return out > (tracks[side > 0 ? last : 0] - trunk.across()) * side ? BED : NONE;
         }
         return NONE;
