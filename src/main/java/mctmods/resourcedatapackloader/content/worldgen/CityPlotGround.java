@@ -158,8 +158,6 @@ public final class CityPlotGround {
         return asked == null ? exposed(level, at, groundFor(level, x, z)) : asked.pick(level.getSeed(), x, y, z);
     }
 
-    public static void fillDown(WorldGenLevel level, BoundingBox box, int x, int from, int z, BlockState ground) { fillDown(level, box, x, from, z, level.getMinBuildHeight() + 1, ground); }
-
     static void fillUnder(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { fillDown(level, box, x, from, z, floor, groundFor(level, x, z)); }
 
     static int piling(WorldGenLevel level, int x, int z, int from, BlockState support, int roof, BlockPos.MutableBlockPos at) {
@@ -295,16 +293,18 @@ public final class CityPlotGround {
 
     private static boolean overhang(BlockState state) { return state.is(BlockTags.LEAVES) && (!state.hasProperty(LeavesBlock.PERSISTENT) || !state.getValue(LeavesBlock.PERSISTENT)); }
 
-    static void vergeFill(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, int x, int z, int grade, BlockPos.MutableBlockPos at) {
+    static void vergeFill(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, List<CityRails.Laid> bores, int x, int z, int grade, BlockPos.MutableBlockPos at) {
         if (!box.isInside(at.set(x, grade, z)) || covered(others, x, z)) { return; }
         if (solid(level.getBlockState(at))) {
             BlockState below = level.getBlockState(at.set(x, grade - 1, z));
-            if (!solid(below) && !liquid(below)) { fillBank(level, box, x, z, grade - 1, grade - 6); }
+            if (!solid(below) && !liquid(below)) { fillBank(level, box, bores, x, z, grade - 1, grade - 6, false); }
             return;
         }
         int bed = wetBed(level, at, x, z, grade);
-        if (bed != Integer.MIN_VALUE) { fillDown(level, box, x, grade, z, groundFor(level, x, z)); }
-        else { fillBank(level, box, x, z, grade, grade - 5); }
+        int roof = CityRails.boreRoof(bores, x, z);
+        if (bed != Integer.MIN_VALUE) { fillUnder(level, box, x, z, grade, Math.max(level.getMinBuildHeight() + 1, roof + 1)); }
+        else if (roof != Integer.MIN_VALUE && grade > roof) { fillUnder(level, box, x, z, grade, Math.max(roof + 1, grade - 5)); }
+        else { fillBank(level, box, bores, x, z, grade, grade - 5, false); }
     }
 
     static int wetBed(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int grade) {

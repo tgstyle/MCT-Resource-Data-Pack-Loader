@@ -117,11 +117,12 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
         ContentCityTrees.fellAround(level, manager, chunk, this, box);
         int pad = court.level();
         List<BoundingBox> others = ContentCityTrees.footprints(manager, chunk, this, box);
+        List<CityRails.Laid> bores = CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ());
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
             for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
                 if (court.unpavedAt(x, z)) {
-                    if (court.shoulderAt(x, z, VERGE)) { CityPlotGround.vergeFill(level, box, others, x, z, pad, at); }
+                    if (court.shoulderAt(x, z, VERGE)) { CityPlotGround.vergeFill(level, box, others, bores, x, z, pad, at); }
                     continue;
                 }
                 int top = Math.max(pad + CLEAR, level.getHeight(Heightmap.Types.OCEAN_FLOOR, x, z) + 1);

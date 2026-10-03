@@ -53,7 +53,9 @@ public final class ContentCityStructureStations {
             if (track.crossed()[held] == crossings) {
                 IntList frames = new IntArrayList();
                 for (int mark = from; mark < row; mark++) { if (track.frames()[mark - start]) { frames.add(mark); } }
-                builder.addPiece(new ContentCityRailPiece(from, row - 1, track.profile()[held], rail.middle(), rail.alongX(), rail.width(), track.bridged()[held], track.tunnel()[held], rail.subway(), crossings, frames.toIntArray(), trunk, linkEnds));
+                int above = track.profile()[held] + 1;
+                int rise = (held > 0 && track.profile()[held - 1] == above ? ContentCityRailPiece.RISE_LOW : 0) | (at < track.profile().length && track.profile()[at] == above ? ContentCityRailPiece.RISE_HIGH : 0);
+                builder.addPiece(new ContentCityRailPiece(from, row - 1, track.profile()[held], rail.middle(), rail.alongX(), rail.width(), track.bridged()[held], track.tunnel()[held], rail.subway(), crossings, rise, frames.toIntArray(), trunk, linkEnds));
             }
             from = row;
         }
