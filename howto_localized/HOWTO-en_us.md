@@ -2382,7 +2382,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "trackVelocity": true,
   "trackingFrequency": 3,
   "storage": {
-    "items": { "rows": 3, "columns": 9, "filter": [{ "item": "minecraft:coal", "max": 128 }] },
+    "items": { "filter": [{ "item": "minecraft:coal", "max": 128 }] },
     "fluid": { "capacity": 16000, "buckets": true, "filter": [{ "fluid": "water" }] },
     "energy": { "capacity": 100000, "transfer": 1000 },
     "dropsOnDeath": true
@@ -2740,8 +2740,6 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
   "name": "Pack Pig",
   "storage": {
     "items": {
-      "rows": 2,
-      "columns": 9,
       "filter": [
         { "item": "minecraft:coal", "max": 128 },
         { "oreDict": "ingotIron" }
@@ -2762,20 +2760,18 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 
 `storage` gives a variant of any entity item slots, a fluid tank and an energy buffer, each one only when its object is written. Each is offered as the entity's Forge item, fluid or energy capability, so anything that moves items, fluid or energy into an entity reaches it. Where the base entity answers that capability itself, as a mob does for its hands and armor and a horse or a chest minecart does for its inventory, the pack storage answers in its place, on every side. A player opens the screen by sneaking and right-clicking the entity. The contents are saved with the entity.
 
-| Key            | Required | Value   | Default | What it does                                                                                                          |
-| -------------- | -------- | ------- | ------- | --------------------------------------------------------------------------------------------------------------------- |
-| `items`        | no       | object  | none    | Item slots                                                                                                            |
-| `fluid`        | no       | object  | none    | One fluid tank                                                                                                        |
-| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                               |
-| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way |
+| Key            | Required | Value   | Default | What it does                                                                                                                                                                                                             |
+| -------------- | -------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `items`        | no       | object  | none    | Gives the entity item slots. The area is three rows of 9: each fluid or energy bar takes one row and the slots take the rest, so 1x9 with both bars, 2x9 with one and 3x9 with none. Without `items`, only the bars show |
+| `fluid`        | no       | object  | none    | One fluid tank                                                                                                                                                                                                           |
+| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                                                                                                                                  |
+| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way                                                                                                    |
 
 `items`:
 
-| Key       | Required | Value                  | Default | What it does                                                                                 |
-| --------- | -------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------- |
-| `rows`    | no       | int                    | `3`     | Rows of slots, from 1 to 9. A tank and an energy buffer each take one row of the screen away |
-| `columns` | no       | int                    | `9`     | Slots in a row, from 1 to 12                                                                 |
-| `filter`  | no       | list of filter entries | none    | What the slots accept. Without it they accept anything                                       |
+| Key      | Required | Value                  | Default | What it does                                           |
+| -------- | -------- | ---------------------- | ------- | ------------------------------------------------------ |
+| `filter` | no       | list of filter entries | none    | What the slots accept. Without it they accept anything |
 
 `fluid`:
 

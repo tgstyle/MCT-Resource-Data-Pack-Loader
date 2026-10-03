@@ -222,16 +222,12 @@ public final class ContentParserEntities {
         int energyCapacity = Math.max(0, JsonUtils.getInt(energy, "capacity", 0));
         int energyTransfer = MathHelper.clamp(JsonUtils.getInt(energy, "transfer", energyCapacity), 0, energyCapacity);
         int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
-        int askedRows = storage.has("items") ? JsonUtils.getInt(items, "rows", 3) : 0;
-        int askedColumns = JsonUtils.getInt(items, "columns", 9);
-        int rows = MathHelper.clamp(askedRows, storage.has("items") ? 1 : 0, ContainerDef.MOST_ROWS - gauges);
-        int columns = MathHelper.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
-        if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The storage on entity variant {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
-        if (rows == 0 && gauges == 0) {
+        boolean hasItems = storage.has("items");
+        if (!hasItems && gauges == 0) {
             ContentLog.LOGGER.error("The storage on entity variant {} holds no items, fluid or energy, ignoring it", key);
             return null;
         }
-        return new StorageDef(rows, columns, new FilterDef(entries(key, items, "filter", "max", 0)), fluidCapacity, new FilterDef(entries(key, fluid, "filter", "max", 0)), energyCapacity, energyTransfer,
+        return new StorageDef(hasItems, new FilterDef(entries(key, items, "filter", "max", 0)), fluidCapacity, new FilterDef(entries(key, fluid, "filter", "max", 0)), energyCapacity, energyTransfer,
                 JsonUtils.getBoolean(fluid, "buckets", false), JsonUtils.getBoolean(storage, "dropsOnDeath", true));
     }
 

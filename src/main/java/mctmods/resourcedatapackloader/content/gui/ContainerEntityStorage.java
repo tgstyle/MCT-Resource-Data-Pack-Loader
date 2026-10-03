@@ -27,6 +27,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ContainerEntityStorage extends Container {
+    private static final int PER_ROW = StorageDef.PER_ROW;
     private static final int FLUID = 0;
     private static final int FLUID_LOW = 1;
     private static final int FLUID_HIGH = 2;
@@ -48,11 +49,12 @@ public class ContainerEntityStorage extends Container {
         this.def = def;
         this.storage = EntityStorage.of(entity);
         this.items = storage == null ? null : storage.items();
-        int wide = ContainerPack.width(def.columns);
+        int wide = ContainerPack.width(PER_ROW);
         int tall = ContainerPack.height(bands());
-        int left = (wide - def.columns * ContainerPack.SLOT) / 2 + 1;
         for (int slot = 0; items != null && slot < def.slots(); slot++) {
-            addSlotToContainer(new SlotItemHandler(items, slot, left + slot % def.columns * ContainerPack.SLOT, ContainerPack.HEADER + 1 + slot / def.columns * ContainerPack.SLOT));
+            int row = slot / PER_ROW;
+            int left = (wide - Math.min(PER_ROW, def.slots() - row * PER_ROW) * ContainerPack.SLOT) / 2 + 1;
+            addSlotToContainer(new SlotItemHandler(items, slot, left + slot % PER_ROW * ContainerPack.SLOT, ContainerPack.HEADER + 1 + row * ContainerPack.SLOT));
         }
         int playerLeft = (wide - 9 * ContainerPack.SLOT) / 2 + 1;
         for (int row = 0; row < 3; row++) {
@@ -65,7 +67,9 @@ public class ContainerEntityStorage extends Container {
         }
     }
 
-    public int bands() { return def.rows + def.gauges(); }
+    public int slotRows() { return (def.slots() + PER_ROW - 1) / PER_ROW; }
+
+    public int bands() { return slotRows() + def.gauges(); }
 
     @Nullable public String fluid() { return shown[FLUID] <= 0 || shown[FLUID] > fluids.size() ? null : fluids.get(shown[FLUID] - 1); }
 

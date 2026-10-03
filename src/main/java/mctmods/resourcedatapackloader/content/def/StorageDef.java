@@ -1,8 +1,9 @@
 package mctmods.resourcedatapackloader.content.def;
 
 public final class StorageDef {
-    public final int rows;
-    public final int columns;
+    public static final int PER_ROW = 9;
+    public static final int BANDS = 3;
+    public final boolean hasItems;
     public final FilterDef items;
     public final int fluidCapacity;
     public final FilterDef fluids;
@@ -11,19 +12,18 @@ public final class StorageDef {
     public final boolean buckets;
     public final boolean dropsOnDeath;
 
-    public StorageDef(int rows, int columns, FilterDef items, int fluidCapacity, FilterDef fluids, int energyCapacity, int energyTransfer, boolean buckets, boolean dropsOnDeath) {
+    public StorageDef(boolean hasItems, FilterDef items, int fluidCapacity, FilterDef fluids, int energyCapacity, int energyTransfer, boolean buckets, boolean dropsOnDeath) {
         this.energyTransfer = energyTransfer;
         this.buckets = buckets;
         this.dropsOnDeath = dropsOnDeath;
-        this.rows = rows;
-        this.columns = columns;
+        this.hasItems = hasItems;
         this.items = items;
         this.fluidCapacity = fluidCapacity;
         this.fluids = fluids;
         this.energyCapacity = energyCapacity;
     }
 
-    public int slots() { return rows * columns; }
+    public int slots() { return hasItems ? PER_ROW * (BANDS - gauges()) : 0; }
 
     public int gauges() { return (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0); }
 }

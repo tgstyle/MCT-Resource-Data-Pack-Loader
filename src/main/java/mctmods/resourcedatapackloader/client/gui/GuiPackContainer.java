@@ -13,7 +13,7 @@ import javax.annotation.Nullable;
 
 public class GuiPackContainer extends GuiContainer {
     private static final ResourceLocation VANILLA = new ResourceLocation("textures/gui/container/generic_54.png");
-    private static final int EDGE = 7;
+    protected static final int EDGE = 7;
     private static final int HEADER = 17;
     private static final int SLOT = 18;
     private static final int FOOT = 96;
@@ -29,6 +29,7 @@ public class GuiPackContainer extends GuiContainer {
     private final IInventory held;
     private final int rows;
     private final int columns;
+    private int slots = -1;
     @Nullable private final ResourceLocation texture;
 
     public GuiPackContainer(InventoryPlayer player, TileEntityPackContainer tile, @Nullable ContainerDef def) {
@@ -73,7 +74,7 @@ public class GuiPackContainer extends GuiContainer {
         }
         mc.getTextureManager().bindTexture(VANILLA);
         head(x, y);
-        for (int row = 0; row < rows; row++) { band(x, y + HEADER + row * SLOT); }
+        for (int row = 0; row < rows; row++) { band(x, y + HEADER + row * SLOT, cellsIn(row)); }
         foot(x, y + HEADER + rows * SLOT);
     }
 
@@ -85,12 +86,16 @@ public class GuiPackContainer extends GuiContainer {
         drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
     }
 
-    private void band(int x, int y) {
-        int cells = columns * SLOT;
+    protected final void limitSlots(int count) { this.slots = count; }
+
+    private int cellsIn(int row) { return slots < 0 ? columns : Math.max(0, Math.min(columns, slots - row * columns)); }
+
+    private void band(int x, int y, int count) {
+        int cells = count * SLOT;
         int start = (xSize - cells) / 2;
         drawTexturedModalRect(x, y, 0, HEADER, EDGE, SLOT);
         plain(x + EDGE, y, start - EDGE, SLOT);
-        for (int column = 0; column < columns; column++) { drawTexturedModalRect(x + start + column * SLOT, y, EDGE, HEADER, SLOT, SLOT); }
+        for (int column = 0; column < count; column++) { drawTexturedModalRect(x + start + column * SLOT, y, EDGE, HEADER, SLOT, SLOT); }
         plain(x + start + cells, y, xSize - EDGE - start - cells, SLOT);
         drawTexturedModalRect(x + xSize - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, SLOT);
     }

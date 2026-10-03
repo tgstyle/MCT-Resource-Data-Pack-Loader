@@ -312,6 +312,7 @@ public final class BeardRoadsPaving {
                 return Footing.DONE;
             }
             if (wet && !pier) {
+                if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} took the wet footing at {}, {}, {}, tunnel={}", box.minX, box.minZ, x, profile[i], z, tunnels[i]); }
                 filled += BeardBlocks.fillPier(world, at, x, z, profile[i] - 1, pierFloor(x, z), gravel);
                 at.setPos(x, profile[i], z);
                 if (!BeardKeep.holds(x, profile[i], z)) {
