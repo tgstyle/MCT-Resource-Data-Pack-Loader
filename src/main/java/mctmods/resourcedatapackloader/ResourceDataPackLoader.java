@@ -106,7 +106,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
-@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.6,);after:baubles;before:jei;")
+@Mod(modid = ResourceDataPackLoader.MOD_ID, name = "Resource Data Pack Loader", acceptedMinecraftVersions = "[1.12.2]", acceptableRemoteVersions = "*", dependencies = "required-after:blastplaster@[1.0.14,);after:baubles;before:jei;")
 public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     public static final String ICON = "textures/gui/icon.png";
