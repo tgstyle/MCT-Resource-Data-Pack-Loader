@@ -2540,8 +2540,6 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
   "name": "Pack Pig",
   "storage": {
     "items": {
-      "rows": 2,
-      "columns": 9,
       "filter": [
         { "item": "minecraft:coal", "max": 128 },
         { "tag": "c:ingots/iron" }
@@ -2562,20 +2560,18 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
 
 `storage` gibt der Variante einer beliebigen Entity Item-Slots, einen Flüssigkeitstank und einen Energiespeicher, jeden nur dann, wenn sein Objekt dasteht. Jeder wird als Capability der Entity für Items, Flüssigkeit oder Energie angeboten, sodass alles, was Items, Flüssigkeit oder Energie in eine Entity bewegt, ihn erreicht. Wo die Basis-Entity diese Capability selbst beantwortet, wie ein Mob für Hände und Rüstung und ein Pferd oder eine Güterlore für ihr Inventar, antwortet an ihrer Stelle das Lager des Packs, auf jeder Seite. Ein Spieler öffnet den Bildschirm mit Schleichen und Rechtsklick auf die Entity. Der Inhalt wird mit der Entity gespeichert.
 
-| Schlüssel      | Pflicht | Wert    | Standard | Was er macht                                                                                                                                                      |
-| -------------- | ------- | ------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`        | nein    | Objekt  | keins    | Item-Slots                                                                                                                                                        |
-| `fluid`        | nein    | Objekt  | keins    | Ein Flüssigkeitstank                                                                                                                                              |
-| `energy`       | nein    | Objekt  | keins    | Ein Speicher für Forge Energy                                                                                                                                     |
-| `dropsOnDeath` | nein    | boolean | `true`   | Die gelagerten Items fallen als lose Items dorthin, wo die Entity stirbt. Mit `false` gehen sie verloren. Flüssigkeit und Energie gehen in beiden Fällen verloren |
+| Schlüssel      | Pflicht | Wert    | Standard | Was er macht                                                                                                                                                                                                                                                   |
+| -------------- | ------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`        | nein    | Objekt  | keins    | Gibt der Entität Item-Slots. Der Bereich besteht aus drei Reihen zu je 9: Jeder Fluid- oder Energiebalken nimmt eine Reihe, die Slots füllen den Rest, also 1x9 mit beiden Balken, 2x9 mit einem und 3x9 mit keinem. Ohne `items` sind nur die Balken zu sehen |
+| `fluid`        | nein    | Objekt  | keins    | Ein Flüssigkeitstank                                                                                                                                                                                                                                           |
+| `energy`       | nein    | Objekt  | keins    | Ein Speicher für Forge Energy                                                                                                                                                                                                                                  |
+| `dropsOnDeath` | nein    | boolean | `true`   | Die gelagerten Items fallen als lose Items dorthin, wo die Entity stirbt. Mit `false` gehen sie verloren. Flüssigkeit und Energie gehen in beiden Fällen verloren                                                                                              |
 
 `items`:
 
-| Schlüssel | Pflicht | Wert                      | Standard | Was er macht                                                                                        |
-| --------- | ------- | ------------------------- | -------- | --------------------------------------------------------------------------------------------------- |
-| `rows`    | nein    | int                       | `3`      | Reihen von Slots, von 1 bis 9. Ein Tank und ein Energiespeicher nehmen dem Bildschirm je eine Reihe |
-| `columns` | nein    | int                       | `9`      | Slots pro Reihe, von 1 bis 12                                                                       |
-| `filter`  | nein    | Liste von Filtereinträgen | keine    | Was die Slots annehmen. Ohne ihn nehmen sie alles an                                                |
+| Schlüssel | Pflicht | Wert                      | Standard | Was er macht                                         |
+| --------- | ------- | ------------------------- | -------- | ---------------------------------------------------- |
+| `filter`  | nein    | Liste von Filtereinträgen | keine    | Was die Slots annehmen. Ohne ihn nehmen sie alles an |
 
 `fluid`:
 

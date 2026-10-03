@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -61,9 +60,9 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
         ContainerDef shape = shape(def);
         int wide = ContentContainerMenu.width(shape);
         int tall = ContentContainerMenu.height(shape);
-        int left = (wide - def.columns() * ContentContainerMenu.SLOT) / 2 + 1;
+        int left = (wide - StorageDef.PER_ROW * ContentContainerMenu.SLOT) / 2 + 1;
         for (int slot = 0; slot < def.slots(); slot++) {
-            addSlot(new SlotItemHandler(items, slot, left + slot % def.columns() * ContentContainerMenu.SLOT, TOP + slot / def.columns() * ContentContainerMenu.SLOT));
+            addSlot(new SlotItemHandler(items, slot, left + slot % StorageDef.PER_ROW * ContentContainerMenu.SLOT, TOP + slot / StorageDef.PER_ROW * ContentContainerMenu.SLOT));
         }
         int playerLeft = (wide - 9 * ContentContainerMenu.SLOT) / 2 + 1;
         for (int row = 0; row < 3; row++) {
@@ -78,19 +77,17 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
 
     public static void write(RegistryFriendlyByteBuf extra, Entity entity, StorageDef def) {
         extra.writeVarInt(entity.getId());
-        extra.writeVarInt(def.rows());
-        extra.writeVarInt(def.columns());
+        extra.writeBoolean(def.hasItems());
         extra.writeVarInt(def.fluidCapacity());
         extra.writeVarInt(def.energyCapacity());
     }
 
     private static StorageDef read(RegistryFriendlyByteBuf extra) {
-        int rows = Mth.clamp(extra.readVarInt(), 0, ContainerDef.MOST_ROWS);
-        int columns = Mth.clamp(extra.readVarInt(), 1, ContainerDef.MOST_COLUMNS);
-        return new StorageDef(rows, columns, FilterDef.NONE, Math.max(0, extra.readVarInt()), FilterDef.NONE, Math.max(0, extra.readVarInt()), 0, false, false);
+        boolean hasItems = extra.readBoolean();
+        return new StorageDef(hasItems, FilterDef.NONE, Math.max(0, extra.readVarInt()), FilterDef.NONE, Math.max(0, extra.readVarInt()), 0, false, false);
     }
 
-    public static ContainerDef shape(StorageDef def) { return ContentContainers.FALLBACK.sized(def.bands(), def.columns()); }
+    public static ContainerDef shape(StorageDef def) { return ContentContainers.FALLBACK.sized(def.bands(), StorageDef.PER_ROW); }
 
     public StorageDef def() { return def; }
 
