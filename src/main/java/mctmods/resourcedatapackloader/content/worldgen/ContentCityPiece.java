@@ -285,7 +285,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 int z = alongX ? across : along;
                 if (CityRails.insideBore(bores, x, this.level, z)) { continue; }
                 if (bridged && CityPlotGround.wetBed(level, at, x, z, this.level) != Integer.MIN_VALUE) { continue; }
-                CityPlotGround.vergeFill(level, box, others, x, z, this.level, at);
+                CityPlotGround.vergeFill(level, box, others, bores, x, z, this.level, at);
             }
         }
     }

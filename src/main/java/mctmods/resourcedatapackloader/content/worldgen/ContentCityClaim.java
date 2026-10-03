@@ -42,6 +42,7 @@ import java.util.function.Predicate;
 public final class ContentCityClaim {
     private static final Identifier CITY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE);
     private static final int LAKE_SPAN = 15;
+    private static final int LAKE_BACK = 8;
     private static final int LAKE_OVER = 8;
     private static final int LAKE_UNDER = 4;
     private static final int BOULDER_LOW = 3;
@@ -93,10 +94,10 @@ public final class ContentCityClaim {
     private record Road(String what, int x, int z) {}
 
     public static boolean floods(WorldGenLevel level, BlockPos origin) {
-        int leastX = origin.getX();
-        int mostX = origin.getX() + LAKE_SPAN;
-        int leastZ = origin.getZ();
-        int mostZ = origin.getZ() + LAKE_SPAN;
+        int leastX = origin.getX() - LAKE_BACK;
+        int mostX = leastX + LAKE_SPAN;
+        int leastZ = origin.getZ() - LAKE_BACK;
+        int mostZ = leastZ + LAKE_SPAN;
         Road road = roadIn(level, leastX, origin.getY() - LAKE_UNDER - MARGIN, leastZ, mostX, origin.getY() + LAKE_OVER + MARGIN, mostZ);
         if (road != null) {
             ContentLog.LOGGER.debug("A lake at {}, {}, {} would flood the {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), road.what(), road.x(), road.z());
