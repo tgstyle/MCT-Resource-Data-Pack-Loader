@@ -384,6 +384,8 @@ public class ServerCommands extends CommandBase {
         ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
         mctmods.resourcedatapackloader.content.ContentDice.load();
+        mctmods.resourcedatapackloader.content.ContentBoards.load();
+        mctmods.resourcedatapackloader.content.ContentBoards.rebuild(server);
         mctmods.resourcedatapackloader.content.card.CardRules.load();
         for (net.minecraft.world.WorldServer world : server.worlds) {
             ContentTeams.field(world);

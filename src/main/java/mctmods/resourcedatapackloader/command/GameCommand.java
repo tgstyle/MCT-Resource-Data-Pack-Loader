@@ -24,7 +24,7 @@ final class GameCommand {
     private static final String NAME = "rdplserver";
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = Arrays.asList("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass");
+    private static final List<String> ROLLS = Arrays.asList("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
     private static final List<String> DECK_ACTIONS = Arrays.asList("draw", "shuffle", "left");
     private static final List<String> PICKS = Arrays.asList("player", "team");
     private static final List<String> OPTIONS = Arrays.asList("store", "audience");
@@ -36,6 +36,11 @@ final class GameCommand {
         for (String action : DECK_ACTIONS) { LEVELS.put("deck " + action, 0); }
         LEVELS.put("deck shuffle", 2);
         LEVELS.put("tiebreak", 2);
+        LEVELS.remove("board");
+        for (String action : BoardCommand.ACTIONS) { LEVELS.put("board " + action, 0); }
+        LEVELS.put("board start", 2);
+        LEVELS.put("board end", 2);
+        LEVELS.put("board ai", 2);
     }
 
     private GameCommand() {}
@@ -48,7 +53,7 @@ final class GameCommand {
         return lowest;
     }
 
-    private static String sub(String[] args) { return args.length > 2 && "deck".equals(args[1]) ? "deck " + args[2] : args[1]; }
+    private static String sub(String[] args) { return args.length > 2 && ("deck".equals(args[1]) || "board".equals(args[1])) ? args[1] + " " + args[2] : args[1]; }
 
     @Nullable private static EntityPlayer viewer(ICommandSender sender) { return sender instanceof EntityPlayer ? (EntityPlayer) sender : null; }
 
@@ -60,6 +65,10 @@ final class GameCommand {
         if ("pass".equals(args[1])) {
             String refusal = ContentTurns.pass(server, sender);
             if (refusal != null) { throw refused(sender, refusal); }
+            return;
+        }
+        if ("board".equals(args[1])) {
+            BoardCommand.run(server, sender, args);
             return;
         }
         List<String> plain = new ArrayList<>();
@@ -141,6 +150,7 @@ final class GameCommand {
             }
             return CommandBase.getListOfStringsMatchingLastWord(args, open);
         }
+        if ("board".equals(args[1])) { return BoardCommand.complete(server, args); }
         String before = args[args.length - 2];
         if ("store".equals(before)) {
             List<String> names = new ArrayList<>();
@@ -167,9 +177,9 @@ final class GameCommand {
     }
 
     private static int lowestOf(String roll) {
-        if (!"deck".equals(roll)) { return level(roll); }
+        if (!"deck".equals(roll) && !"board".equals(roll)) { return level(roll); }
         int lowest = ServerCommands.OPERATOR;
-        for (String action : DECK_ACTIONS) { lowest = Math.min(lowest, level("deck " + action)); }
+        for (String action : "deck".equals(roll) ? DECK_ACTIONS : BoardCommand.ACTIONS) { lowest = Math.min(lowest, level(roll + " " + action)); }
         return lowest;
     }
 }

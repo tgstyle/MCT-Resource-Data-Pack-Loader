@@ -177,6 +177,7 @@ public class ResourceDataPackLoader {
         mctmods.resourcedatapackloader.content.ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
         mctmods.resourcedatapackloader.content.ContentDice.load();
+        mctmods.resourcedatapackloader.content.ContentBoards.load();
         mctmods.resourcedatapackloader.content.ContentRaids.load();
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
@@ -281,7 +282,10 @@ public class ResourceDataPackLoader {
 
     @Mod.EventHandler public void onServerStarting(FMLServerStartingEvent event) { event.registerServerCommand(new ServerCommands()); }
 
-    @Mod.EventHandler public void onServerStarted(FMLServerStartedEvent event) { ContentCelestial.serverStarted(); }
+    @Mod.EventHandler public void onServerStarted(FMLServerStartedEvent event) {
+        ContentCelestial.serverStarted();
+        mctmods.resourcedatapackloader.content.ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
+    }
 
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }
 

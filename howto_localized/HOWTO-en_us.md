@@ -180,6 +180,7 @@ Every path in this guide is written from `assets/` onward, so `<namespace>/block
 | `<namespace>/anvils/*.json`                                                                     | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work) |
 | `<namespace>/cards/*.json`                                                                      | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                            |
 | `<namespace>/dice/*.json`                                                                       | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks) |
+| `<namespace>/games/*.json`                                                                      | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games) |
 | `<namespace>/player_loot/*.json`                                                                | A loot table rolled when a player dies. [Player loot](#player-loot)                                                   |
 | `<namespace>/advancements/*.json`                                                               | Advancements. [What you can override](#what-you-can-override)                                                         |
 | `<namespace>/functions/*.mcfunction`                                                            | Function files. [What you can override](#what-you-can-override)                                                       |
@@ -5904,6 +5905,7 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 | `rdpl:threat`           | A player's threat band changes                                  | `threatSays`                                                                                                                     |
 | `rdpl:prospect`         | Each line a prospecting find reports                            | the find                                                                                                                         |
 | `rdpl:prospect_none`    | Prospecting found nothing                                       | the language file                                                                                                                |
+| `rdpl:board_result`     | A board game ends                                               | the language file                                                                                                                |
 | `rdpl:pregen_ended`     | Pregeneration finishes or stops                                 | `pregenFinishedSays`, `pregenStoppedSays` in [Pregeneration](#pregeneration)                                                     |
 | `rdpl:pregen_running`   | The progress line a player sees on joining during pregeneration | `pregenRunningSays`                                                                                                              |
 
@@ -5968,6 +5970,98 @@ Every roll uses the world's own random and is written to the log with who ran it
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` in turn   |
 
 The mod's own wording is in its language files as `rdpl.game.<key>`, so a resource pack can also change it one language at a time.
+
+## Board games
+
+*game modes*
+
+`<namespace>/games/*.json`
+
+A file is one board game, named by its file name. It sets the board, the two sides, the pieces and how they move, the starting position, and what a result pays. `game board start <game> <board>` sets a board up where the sender stands, or at the position given: the squares are laid one block down, files running east and ranks running south, and every piece is a mob of the pack's choosing, held still, silent and unhurt, and named for its side. A taken piece stands beside the board.
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snowman", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:villager_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evocation_illager", "minecraft:vindication_illager"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| Key      | Type   | Default          | What it does                                                                                                                       |
+| -------- | ------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `name`   | text   | the file name    | The name shown in chat and on the result                                                                                           |
+| `board`  | object | 8 by 8           | `files` and `ranks`, 2 to 16 each, and the `light` and `dark` block states laid under the squares. Left out, the ground stays as it is |
+| `sides`  | list   | `White`, `Black` | Two objects of `name` and `color`, a chat color. The first side moves first and sets up from the upper-case letters                |
+| `pieces` | object | none             | Piece name to an object of the piece keys below                                                                                    |
+| `setup`  | list   | none             | One text per rank, rank 1 first. A piece's letter places it, upper case for the first side and lower case for the second, and `.` leaves the square empty |
+| `rules`  | object | none             | `mustCapture`, `chainCaptures`, `quietDraw` and `repeatDraw`, below                                                                |
+| `clock`  | object | none             | `minutes` for each side and `addSeconds` added after each move. A side whose time runs out loses                                   |
+| `ai`     | number | `2`              | The computer's level, 1 to 4, for a side no one holds                                                                              |
+| `result` | object | none             | The `objective` paid when the game ends, with `win`, `draw` and `loss` points, 1, 0 and 0 when left out                            |
+
+| Piece key   | Type          | What it does                                                                                                                 |
+| ----------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `letter`    | text          | The letter used in `setup` and in `game board show`                                                                          |
+| `value`     | number        | Its worth to the computer                                                                                                    |
+| `mobs`      | list          | The mob for each side, first side first. `mob` gives one for both                                                            |
+| `moves`     | list          | Steps as objects: `steps`, a list of `[file, rank]` offsets seen from the side's own end; `slides`, to go on until blocked; `captures`, `both` (the default), `never`, `only` or `hop`, which jumps a piece of the other side to the empty square behind it and takes it; and `firstRange`, how many steps it may go on its first move |
+| `royal`     | true or false | The side loses when this piece is checkmated, and no move may leave it attacked. With no royal piece, a side left without a move loses |
+| `enPassant` | true or false | May take a piece that has just gone two squares past it                                                                      |
+| `castles`   | text          | A partner piece: this piece moves two squares toward an unmoved partner, which jumps over it                                 |
+| `promotes`  | list          | What it may become on the far rank. The first is used unless the move names another                                          |
+
+| Rule            | What it does                                                                                                     |
+| --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `mustCapture`   | A side that can take must take                                                                                   |
+| `chainCaptures` | After a taking hop, the same piece goes on taking while it can                                                   |
+| `quietDraw`     | How many moves in a row, both sides counted, may go by without a take or a move by a piece that can promote before the game is drawn. 0 never draws |
+| `repeatDraw`    | The game is drawn when the same position, with the same side to move, comes up this many times; 3 is chess's threefold repetition. Only positions since the last take or move by a piece that can promote count. 0 never draws |
+
+A side belongs to the first player to right-click one of its pieces, or to that player's scoreboard team when they are on one, so any member can then play it. A side no one holds is played by the computer once the other side is taken, or at once when `game board ai` sets a level for it; the computer thinks away from the server thread, and its move is made on it. Right-click a piece to see where it can go, then right-click a square or a piece of the other side to move there. `game board move` does the same by square names, such as `e2 e4`, with a piece name at the end for a promotion. When a move promotes and `promotes` lists more than one piece, the player picks one from clickable choices in chat; the first is played when no choice comes within 10 seconds or the player clicks on the board instead. The computer picks the one it judges best.
+
+`game board resign` gives the game up. `game board draw` offers a draw, which the other side accepts with the same command; the computer turns it down when it stands better. `game board takeback` asks to undo the asker's last move, and the other side agrees with the same command; against the computer it is undone at once.
+
+A board is kept in the world's saved data as its list of moves. When the world loads or the pack reloads, the position is played back from that list, the pieces are put back to match it, and any older piece of the board is removed.
+
+At the end, `result` pays each side's holder in its objective, as a player or a team row. The result goes to the players near the board and those who hold a side, as the `rdpl:board_result` card when a card file sets that id and as a chat line otherwise. The wording is in the mod's language files as `rdpl.game.board.<key>`.
 
 ---
 
@@ -7747,6 +7841,15 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver game deck shuffle <name>`                     | 2     | Put every card back                                                                                                                |
 | `/rdplserver game teamroll [roll]`                         | 0     | Everyone on the sender's side rolls and the highest wins, a tie drawn. With no teams the sender rolls alone                        |
 | `/rdplserver game tiebreak [objective]`                    | 2     | Draw one of the sides level at the top of an objective: the one named, else the first scoring objective with `tiebreak`, else the first |
+| `/rdplserver game board list`                              | 0     | Every board in the world, with its game, position and state                                                                        |
+| `/rdplserver game board start <game> <board> [x y z]`      | 2     | Set a board up where the sender stands, or at the position given, and place its pieces                                             |
+| `/rdplserver game board end <board>`                       | 2     | Remove a board and its pieces                                                                                                      |
+| `/rdplserver game board show <board>`                      | 0     | The position as letters, rank by rank, with who holds each side, its time and whose move it is                                         |
+| `/rdplserver game board move <board> <from> <to> [piece]`  | 0     | Move a piece by square names, such as `e2 e4`, with the piece a promotion becomes                                                  |
+| `/rdplserver game board resign <board>`                    | 0     | Give the game up                                                                                                                   |
+| `/rdplserver game board draw <board>`                      | 0     | Offer a draw, or accept the other side's offer                                                                                     |
+| `/rdplserver game board takeback <board>`                  | 0     | Ask to undo the last move, or agree to the other side's request                                                                    |
+| `/rdplserver game board ai <board> <side> <level>`         | 2     | Have the computer play a side at a level from 1 to 4, or 0 to hand it back                                                         |
 | `/rdplserver game last [count]`                            | 0     | The latest rolls, newest first: 10, or the count given up to 50                                                                    |
 | `/rdplserver game pass` | 0 | End the sender's side's turn early where a score file takes turns. From a command block or the console it ends whoever's turn it is |
 
@@ -7794,7 +7897,7 @@ These sit in the `commands` group, so `control.commands` in the config decides w
 
 *commands*
 
-Each part of `game` carries a level of its own: 0 for every roll, and 2 for `deck shuffle` and `tiebreak`. `gameLevels` changes any of them, as `part=level` entries where the part is what follows `game`.
+Each part of `game` carries a level of its own: 0 for every roll, and 2 for `deck shuffle`, `tiebreak`, `board start`, `board end` and `board ai`. `gameLevels` changes any of them, as `part=level` entries where the part is what follows `game`.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7808,7 +7911,7 @@ Each part of `game` carries a level of its own: 0 for every roll, and 2 for `dec
 
 | Setting      | What it governs                                                                                                                                  |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `gameLevels` | One part of `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` or `pass` |
+| `gameLevels` | One part of `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` or `board` and its action, such as `board move` |
 
 The scale is the one `goto` uses, and `4` closes a part to everyone. Tab completion offers only the parts a sender may run. `gameLevels` sits in the `commands` group with the `goto` settings.
 

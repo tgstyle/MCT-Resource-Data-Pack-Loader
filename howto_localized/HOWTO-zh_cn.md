@@ -180,6 +180,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/anvils/*.json` | 铁砧为指定物品附加的附魔、由此获得的进度，以及在此之前的锁定。[铁砧操作](#铁砧操作) |
 | `<namespace>/cards/*.json` | 由触发器显示的屏幕卡片，以及本模组自己发出的消息。[卡片](#卡片) |
 | `<namespace>/dice/*.json` | 资源包的带权重骰子、卡牌牌堆、谁能听到掷骰，以及结果的文字。[骰子与牌堆](#骰子与牌堆) |
+| `<namespace>/games/*.json` | 以生物为棋子的棋盘游戏：棋盘、棋子及其走法，以及结果的奖励。[棋盘游戏](#棋盘游戏) |
 | `<namespace>/player_loot/*.json` | 玩家死亡时抽取的战利品表。[玩家战利品](#玩家战利品) |
 | `<namespace>/advancements/*.json` | 进度。[可以覆盖的内容](#可以覆盖的内容) |
 | `<namespace>/functions/*.mcfunction` | 函数文件。[可以覆盖的内容](#可以覆盖的内容) |
@@ -5904,6 +5905,7 @@ RDPL 附带下列字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `rdpl:threat` | 玩家的威胁等级发生变化 | `threatSays` |
 | `rdpl:prospect` | 勘探发现所报告的每一行 | 发现的内容 |
 | `rdpl:prospect_none` | 勘探一无所获 | 语言文件 |
+| `rdpl:board_result` | 一局棋盘游戏结束 | 语言文件 |
 | `rdpl:pregen_ended` | 预生成完成或停止 | [预生成](#预生成) 中的 `pregenFinishedSays`、`pregenStoppedSays` |
 | `rdpl:pregen_running` | 玩家在预生成期间加入时看到的进度行 | `pregenRunningSays` |
 
@@ -5968,6 +5970,98 @@ RDPL 附带下列字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `badsides`、`badroll`、`badaudience`、`nodie`、`noteam` | 依次为 `{sides}`、`{roll}`、`{audience}`、`{name}`、`{team}` |
 
 本模组自带的文字位于其语言文件中，键为 `rdpl.game.<key>`，所以资源包也可以按语言逐一更改它。
+
+## 棋盘游戏
+
+*游戏模式*
+
+`<namespace>/games/*.json`
+
+一个文件就是一种棋盘游戏，以文件名命名。它设定棋盘、双方、棋子及其走法、开局局面，以及结果的奖励。`game board start <game> <board>` 在发送者所站的位置或给定的位置摆出一副棋盘：格子铺在下方一格，列向东延伸，行向南延伸，每个棋子都是资源包选定的生物，静止、无声、无敌，并以所属一方命名。被吃掉的棋子站在棋盘旁边。
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snowman", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:villager_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evocation_illager", "minecraft:vindication_illager"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| 键 | 类型 | 默认值 | 作用 |
+| --- | --- | --- | --- |
+| `name` | 文本 | 文件名 | 在聊天和结果中显示的名称 |
+| `board` | 对象 | 8 × 8 | `files` 和 `ranks`，各 2 到 16，以及铺在格子下面的方块状态 `light` 和 `dark`。不写时地面保持原样 |
+| `sides` | 列表 | `White`、`Black` | 两个由 `name` 和 `color`（聊天颜色）组成的对象。第一方先走，用大写字母摆子 |
+| `pieces` | 对象 | 无 | 棋子名称对应一个由下方棋子键组成的对象 |
+| `setup` | 列表 | 无 | 每行一段文本，第 1 行在前。棋子的字母放置该棋子，第一方用大写，第二方用小写，`.` 留空该格 |
+| `rules` | 对象 | 无 | `mustCapture`、`chainCaptures`、`quietDraw` 和 `repeatDraw`，见下 |
+| `clock` | 对象 | 无 | 每方的 `minutes`，以及每步后加上的 `addSeconds`。用完时间的一方判负 |
+| `ai` | 数字 | `2` | 电脑的等级，1 到 4，用于无人执掌的一方 |
+| `result` | 对象 | 无 | 对局结束时发放的 `objective`，以及 `win`、`draw`、`loss` 分数，不写时为 1、0、0 |
+
+| 棋子键 | 类型 | 作用 |
+| --- | --- | --- |
+| `letter` | 文本 | 在 `setup` 和 `game board show` 中使用的字母 |
+| `value` | 数字 | 它对电脑而言的价值 |
+| `mobs` | 列表 | 每一方的生物，第一方在前。`mob` 为双方给出同一个 |
+| `moves` | 列表 | 以对象表示的步法：`steps`，从本方一端看的 `[file, rank]` 偏移列表；`slides`，一直走到被挡住为止；`captures`，`both`（默认）、`never`、`only` 或 `hop`，后者跳过对方的一枚棋子落到其后的空格并吃掉它；以及 `firstRange`，首步可以走几步 |
+| `royal` | 真或假 | 这枚棋子被将死时该方判负，且任何一步都不能让它处于被攻击状态。没有王棋时，无棋可走的一方判负 |
+| `enPassant` | 真或假 | 可以吃掉刚从它旁边走过两格的棋子 |
+| `castles` | 文本 | 一个搭档棋子：这枚棋子朝未动过的搭档走两格，搭档跳过它 |
+| `promotes` | 列表 | 到达底线时可以变成什么。除非着法指定其他，否则用第一个 |
+
+| 规则 | 作用 |
+| --- | --- |
+| `mustCapture` | 能吃子的一方必须吃子 |
+| `chainCaptures` | 吃子的跳跃之后，同一枚棋子只要还能吃就继续吃 |
+| `quietDraw` | 双方合计连续多少步没有吃子、也没有可升变棋子走动之后，对局判和。0 表示永不判和 |
+| `repeatDraw` | 同一局面在同一方走棋时出现这么多次后，对局判和；3 即国际象棋的三次重复局面。只计算上次吃子或可升变棋子走动之后的局面。0 表示永不判和 |
+
+一方属于第一个右键点击其棋子的玩家；该玩家若在计分板队伍中，则属于该队伍，之后任何成员都可以走这一方。无人执掌的一方在另一方被占后由电脑来走，或在 `game board ai` 为其设定等级时立即由电脑来走；电脑在服务器线程之外思考，着法在服务器线程上执行。右键点击一枚棋子会显示它能去哪里，再右键点击一个格子或对方的一枚棋子即可走过去。`game board move` 用格子名称做同样的事，例如 `e2 e4`，升变时在末尾加上棋子名称。当一步棋造成升变且 `promotes` 列出不止一种棋子时，玩家在聊天栏中点击选项来选择；10 秒内未选择，或玩家改为点击棋盘，则采用第一项。电脑会选择它认为最好的一项。
+
+`game board resign` 认输。`game board draw` 提出和棋，对方用同一命令接受；电脑在局面占优时拒绝。`game board takeback` 请求撤回请求者的上一步，对方用同一命令同意；对电脑时立即撤回。
+
+棋盘以着法列表的形式保存在世界的存档数据中。世界加载或资源包重新加载时，局面会按这个列表重放，棋子会按它重新摆好，棋盘上任何旧的棋子都会被移除。
+
+结束时，`result` 向每一方的执掌者在其目标中发放分数，作为玩家行或队伍行。结果会发给棋盘附近的玩家和执掌一方的玩家：若卡片文件设置了 `rdpl:board_result` 这个 id，则以该卡片显示，否则以一行聊天显示。文字位于本模组的语言文件中，键为 `rdpl.game.board.<key>`。
 
 ---
 
@@ -7747,8 +7841,17 @@ Blast Plaster（本模组的依赖）负责爆炸后的行为：逐方块修复�
 | `/rdplserver game deck shuffle <name>` | 2 | 把所有牌放回 |
 | `/rdplserver game teamroll [roll]` | 0 | 发送者一方的每个人各掷一次，最高者胜，平局抽签决定。没有队伍时只有发送者自己掷 |
 | `/rdplserver game tiebreak [objective]` | 2 | 从某个目标并列第一的各方中抽出一方：指定的目标，否则是第一个带 `tiebreak` 的计分目标，再否则是第一个 |
-| `/rdplserver game pass` | 0 | 当计分文件设置了轮流行动时，提前结束发送者所在阵营的行动。从命令方块或控制台执行时，结束当前正在行动的阵营 |
+| `/rdplserver game board list` | 0 | 世界中的每副棋盘，及其游戏、位置和状态 |
+| `/rdplserver game board start <game> <board> [x y z]` | 2 | 在发送者所站的位置或给定的位置摆出一副棋盘，并摆好棋子 |
+| `/rdplserver game board end <board>` | 2 | 移除一副棋盘及其棋子 |
+| `/rdplserver game board show <board>` | 0 | 以字母逐行显示局面，以及每一方的执掌者、其用时和轮到谁走 |
+| `/rdplserver game board move <board> <from> <to> [piece]` | 0 | 按格子名称走子，例如 `e2 e4`，并给出升变成的棋子 |
+| `/rdplserver game board resign <board>` | 0 | 认输 |
+| `/rdplserver game board draw <board>` | 0 | 提出和棋，或接受对方的提议 |
+| `/rdplserver game board takeback <board>` | 0 | 请求撤回上一步，或同意对方的请求 |
+| `/rdplserver game board ai <board> <side> <level>` | 2 | 让电脑以 1 到 4 级执掌一方，或用 0 交还 |
 | `/rdplserver game last [count]` | 0 | 最近的掷骰，最新的在前：10 次，或给定的次数，最多 50 |
+| `/rdplserver game pass` | 0 | 当计分文件设置了轮流行动时，提前结束发送者所在阵营的行动。从命令方块或控制台执行时，结束当前正在行动的阵营 |
 
 任何掷骰都可以以 `store <objective>` 结尾，把结果数字写入发送者自己在该目标中的分数；也可以以 `audience <谁>` 结尾，取代资源包的默认值：`self`、`team`（发送者一方，没有队伍时只有发送者）、`all`、`radius <格数>`（同一世界中该距离内的玩家）或 `silent`，后者只写日志。`/rdpl game` 会转交给它。
 
@@ -7794,7 +7897,7 @@ Tab 补全遵循相同的规则，因此在 `goto` 之后，发送者只会看�
 
 *命令*
 
-`game` 的每个部分都有自己的等级：每种掷骰为 0，`deck shuffle` 和 `tiebreak` 为 2。`gameLevels` 以 `部分=等级` 条目更改其中任意一个，部分即 `game` 之后的内容。
+`game` 的每个部分都有自己的等级：每种掷骰为 0，`deck shuffle`、`tiebreak`、`board start`、`board end` 和 `board ai` 为 2。`gameLevels` 以 `部分=等级` 条目更改其中任意一个，部分即 `game` 之后的内容。
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7808,7 +7911,7 @@ Tab 补全遵循相同的规则，因此在 `goto` 之后，发送者只会看�
 
 | 设置 | 管辖什么 |
 | --- | --- |
-| `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak`、`last` 或 `pass` |
+| `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak`、`last`、`pass`，或 `board` 加其动作，例如 `board move` |
 
 等级刻度与 `goto` 相同，`4` 会对所有人关闭某个部分。Tab 补全只提供发送者可以使用的部分。`gameLevels` 与 `goto` 的设置一起位于 `commands` 组中。
 

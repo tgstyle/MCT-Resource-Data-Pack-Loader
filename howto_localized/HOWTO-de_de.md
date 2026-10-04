@@ -180,6 +180,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/anvils/*.json`                                                                     | Verzauberungen, die ein Amboss auf einen genannten Gegenstand legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)   |
 | `<namespace>/cards/*.json`                                                                      | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die diese Mod selbst ausgibt. [Karten](#karten)                                          |
 | `<namespace>/dice/*.json`                                                                       | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks) |
+| `<namespace>/games/*.json`                                                                      | Brettspiele mit Mobs als Figuren: das Brett, die Figuren und wie sie ziehen, und was ein Ergebnis auszahlt. [Brettspiele](#brettspiele) |
 | `<namespace>/player_loot/*.json`                                                                | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                |
 | `<namespace>/advancements/*.json`                                                               | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                      |
 | `<namespace>/functions/*.mcfunction`                                                            | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                  |
@@ -5904,6 +5905,7 @@ Titel und Zeilen von Karten, Says-Meldungen sowie die Willkommens- und Warte-Hin
 | `rdpl:threat`           | Die Bedrohungsstufe eines Spielers ändert sich                                        | `threatSays`                                                                                                                           |
 | `rdpl:prospect`         | Jede Zeile, die ein Schürffund meldet                                                 | der Fund                                                                                                                               |
 | `rdpl:prospect_none`    | Das Schürfen hat nichts gefunden                                                      | die Sprachdatei                                                                                                                        |
+| `rdpl:board_result`     | Ein Brettspiel endet                                                                  | die Sprachdatei                                                                                                                        |
 | `rdpl:pregen_ended`     | Die Vorgenerierung endet oder wird angehalten                                         | `pregenFinishedSays`, `pregenStoppedSays` in [Vorgenerierung](#vorgenerierung)                                                         |
 | `rdpl:pregen_running`   | Die Fortschrittszeile, die ein Spieler beim Beitritt während der Vorgenerierung sieht | `pregenRunningSays`                                                                                                                    |
 
@@ -5968,6 +5970,98 @@ Jeder Wurf nutzt den Zufall der Welt selbst und wird mit Absender, Befehl und Er
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | der Reihe nach `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` |
 
 Der eigene Wortlaut der Mod steht in ihren Sprachdateien als `rdpl.game.<key>`, also kann ihn ein Ressourcenpaket auch Sprache für Sprache ändern.
+
+## Brettspiele
+
+*spielmodi*
+
+`<namespace>/games/*.json`
+
+Eine Datei ist ein Brettspiel, benannt nach ihrem Dateinamen. Sie legt das Brett fest, die beiden Seiten, die Figuren und wie sie ziehen, die Ausgangsstellung und was ein Ergebnis auszahlt. `game board start <game> <board>` baut ein Brett dort auf, wo der Absender steht, oder an der angegebenen Position: Die Felder liegen einen Block tiefer, die Linien laufen nach Osten und die Reihen nach Süden, und jede Figur ist ein Mob nach Wahl des Pakets, festgehalten, stumm und unverwundbar und nach ihrer Seite benannt. Eine geschlagene Figur steht neben dem Brett.
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snowman", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:villager_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evocation_illager", "minecraft:vindication_illager"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| Schlüssel | Typ | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `name` | Text | der Dateiname | Der Name im Chat und im Ergebnis |
+| `board` | Objekt | 8 mal 8 | `files` und `ranks`, je 2 bis 16, und die Blockzustände `light` und `dark` unter den Feldern. Fehlen sie, bleibt der Boden, wie er ist |
+| `sides` | Liste | `White`, `Black` | Zwei Objekte aus `name` und `color`, einer Chatfarbe. Die erste Seite zieht zuerst und stellt sich mit den Großbuchstaben auf |
+| `pieces` | Objekt | keiner | Figurenname zu einem Objekt aus den Figurenschlüsseln unten |
+| `setup` | Liste | keiner | Ein Text je Reihe, Reihe 1 zuerst. Der Buchstabe einer Figur stellt sie auf, groß für die erste Seite und klein für die zweite, und `.` lässt das Feld leer |
+| `rules` | Objekt | keiner | `mustCapture`, `chainCaptures`, `quietDraw` und `repeatDraw`, unten |
+| `clock` | Objekt | keiner | `minutes` für jede Seite und `addSeconds`, die nach jedem Zug dazukommen. Eine Seite, deren Zeit abläuft, verliert |
+| `ai` | Zahl | `2` | Die Stufe des Computers, 1 bis 4, für eine Seite, die niemand hält |
+| `result` | Objekt | keiner | Das `objective`, das bei Spielende ausgezahlt wird, mit den Punkten `win`, `draw` und `loss`, ohne Angabe 1, 0 und 0 |
+
+| Figurenschlüssel | Typ | Was er tut |
+| --- | --- | --- |
+| `letter` | Text | Der Buchstabe in `setup` und in `game board show` |
+| `value` | Zahl | Ihr Wert für den Computer |
+| `mobs` | Liste | Der Mob für jede Seite, die erste Seite zuerst. `mob` gibt einen für beide |
+| `moves` | Liste | Schritte als Objekte: `steps`, eine Liste von Versätzen `[file, rank]` vom eigenen Ende der Seite aus gesehen; `slides`, um weiterzuziehen, bis etwas im Weg ist; `captures`, `both` (der Standard), `never`, `only` oder `hop`, das eine Figur der anderen Seite auf das leere Feld dahinter überspringt und sie schlägt; und `firstRange`, wie viele Schritte sie beim ersten Zug gehen darf |
+| `royal` | wahr oder falsch | Die Seite verliert, wenn diese Figur mattgesetzt ist, und kein Zug darf sie angegriffen lassen. Ohne königliche Figur verliert eine Seite, die keinen Zug mehr hat |
+| `enPassant` | wahr oder falsch | Darf eine Figur schlagen, die gerade zwei Felder an ihr vorbeigezogen ist |
+| `castles` | Text | Eine Partnerfigur: Diese Figur zieht zwei Felder auf einen unbewegten Partner zu, der über sie springt |
+| `promotes` | Liste | Was sie auf der letzten Reihe werden darf. Die erste wird genommen, wenn der Zug keine andere nennt |
+
+| Regel | Was sie tut |
+| --- | --- |
+| `mustCapture` | Eine Seite, die schlagen kann, muss schlagen |
+| `chainCaptures` | Nach einem schlagenden Sprung schlägt dieselbe Figur weiter, solange sie kann |
+| `quietDraw` | Wie viele Züge in Folge, beide Seiten gezählt, ohne Schlag und ohne Zug einer Figur, die sich umwandeln kann, vergehen dürfen, bevor das Spiel remis ist. 0 macht nie remis |
+| `repeatDraw` | Das Spiel ist remis, wenn dieselbe Stellung mit derselben Seite am Zug so oft vorkommt; 3 ist die dreifache Stellungswiederholung im Schach. Es zählen nur Stellungen seit dem letzten Schlag oder Zug einer Figur, die sich umwandeln kann. 0 macht nie remis |
+
+Eine Seite gehört dem ersten Spieler, der eine ihrer Figuren rechtsklickt, oder seinem Scoreboard-Team, wenn er in einem ist, sodass dann jedes Mitglied sie spielen kann. Eine Seite, die niemand hält, spielt der Computer, sobald die andere Seite vergeben ist, oder sofort, wenn `game board ai` eine Stufe für sie setzt; der Computer rechnet abseits des Server-Threads, und sein Zug wird auf ihm ausgeführt. Ein Rechtsklick auf eine Figur zeigt, wohin sie ziehen kann, dann ein Rechtsklick auf ein Feld oder eine Figur der anderen Seite zieht dorthin. `game board move` tut dasselbe mit Feldnamen wie `e2 e4`, mit einem Figurennamen am Ende für eine Umwandlung. Wenn ein Zug umwandelt und `promotes` mehr als eine Figur nennt, wählt der Spieler sie aus anklickbaren Optionen im Chat; ohne Wahl innerhalb von 10 Sekunden oder wenn der Spieler stattdessen aufs Brett klickt, gilt die erste. Der Computer wählt die, die er für die beste hält.
+
+`game board resign` gibt die Partie auf. `game board draw` bietet ein Remis an, das die andere Seite mit demselben Befehl annimmt; der Computer lehnt ab, wenn er besser steht. `game board takeback` bittet darum, den letzten Zug des Fragenden zurückzunehmen, und die andere Seite stimmt mit demselben Befehl zu; gegen den Computer wird er sofort zurückgenommen.
+
+Ein Brett wird in den gespeicherten Daten der Welt als Liste seiner Züge gehalten. Wenn die Welt lädt oder das Paket neu lädt, wird die Stellung aus dieser Liste nachgespielt, die Figuren werden passend dazu wieder aufgestellt, und jede ältere Figur des Bretts wird entfernt.
+
+Am Ende zahlt `result` dem Halter jeder Seite in sein Ziel aus, als Spieler- oder Teamzeile. Das Ergebnis geht an die Spieler in der Nähe des Bretts und an die, die eine Seite halten, als Karte `rdpl:board_result`, wenn eine Kartendatei diese Id setzt, und sonst als Chatzeile. Der Wortlaut steht in den Sprachdateien der Mod als `rdpl.game.board.<key>`.
 
 ---
 
@@ -7747,8 +7841,17 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver game deck shuffle <name>`                     | 2     | Alle Karten zurücklegen                                                                                                            |
 | `/rdplserver game teamroll [roll]`                         | 0     | Jeder auf der Seite des Absenders würfelt, der höchste gewinnt, ein Gleichstand wird ausgelost. Ohne Teams würfelt der Absender allein |
 | `/rdplserver game tiebreak [objective]`                    | 2     | Eine der an der Spitze gleichauf liegenden Seiten eines Ziels auslosen: des genannten, sonst des ersten Wertungsziels mit `tiebreak`, sonst des ersten |
-| `/rdplserver game pass` | 0 | Den Zug der eigenen Seite früher beenden, wo eine Wertungsdatei ziehen lässt. Von einem Befehlsblock oder der Konsole endet der Zug der Seite, die gerade dran ist |
+| `/rdplserver game board list`                              | 0     | Jedes Brett der Welt, mit seinem Spiel, seiner Position und seinem Stand |
+| `/rdplserver game board start <game> <board> [x y z]`      | 2     | Ein Brett dort aufbauen, wo der Absender steht, oder an der angegebenen Position, und seine Figuren aufstellen |
+| `/rdplserver game board end <board>`                       | 2     | Ein Brett und seine Figuren entfernen |
+| `/rdplserver game board show <board>`                      | 0     | Die Stellung als Buchstaben, Reihe für Reihe, mit dem Halter jeder Seite, ihrer Zeit und wer am Zug ist |
+| `/rdplserver game board move <board> <from> <to> [piece]`  | 0     | Eine Figur nach Feldnamen ziehen, etwa `e2 e4`, mit der Figur, zu der eine Umwandlung wird |
+| `/rdplserver game board resign <board>`                    | 0     | Die Partie aufgeben |
+| `/rdplserver game board draw <board>`                      | 0     | Ein Remis anbieten oder das Angebot der anderen Seite annehmen |
+| `/rdplserver game board takeback <board>`                  | 0     | Bitten, den letzten Zug zurückzunehmen, oder der Bitte der anderen Seite zustimmen |
+| `/rdplserver game board ai <board> <side> <level>`         | 2     | Den Computer eine Seite auf einer Stufe von 1 bis 4 spielen lassen, oder mit 0 zurückgeben |
 | `/rdplserver game last [count]`                            | 0     | Die letzten Würfe, neueste zuerst: 10, oder die angegebene Zahl bis 50                                                             |
+| `/rdplserver game pass` | 0 | Den Zug der eigenen Seite früher beenden, wo eine Wertungsdatei ziehen lässt. Von einem Befehlsblock oder der Konsole endet der Zug der Seite, die gerade dran ist |
 
 Jeder Wurf kann mit `store <objective>` enden, das seine Zahl in den eigenen Punktestand des Absenders in diesem Ziel schreibt, und mit `audience <wer>`, das den Standard des Packs übergeht: `self`, `team` (die Seite des Absenders, ohne Teams nur der Absender), `all`, `radius <Blöcke>` (Spieler in derselben Welt in dieser Entfernung) oder `silent`, das nur speichert. `/rdpl game` wird dorthin weitergereicht.
 
@@ -7794,7 +7897,7 @@ Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der 
 
 *befehle*
 
-Jeder Teil von `game` hat ein eigenes Level: 0 für jeden Wurf, 2 für `deck shuffle` und `tiebreak`. `gameLevels` ändert jedes davon, als Einträge `teil=level`, wobei der Teil das ist, was nach `game` folgt.
+Jeder Teil von `game` hat ein eigenes Level: 0 für jeden Wurf, 2 für `deck shuffle`, `tiebreak`, `board start`, `board end` und `board ai`. `gameLevels` ändert jedes davon, als Einträge `teil=level`, wobei der Teil das ist, was nach `game` folgt.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7808,7 +7911,7 @@ Jeder Teil von `game` hat ein eigenes Level: 0 für jeden Wurf, 2 für `deck shu
 
 | Einstellung  | Was sie regelt                                                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `gameLevels` | Ein Teil von `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` oder `pass` |
+| `gameLevels` | Ein Teil von `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` oder `board` mit seiner Aktion, etwa `board move` |
 
 Die Skala ist die von `goto`, und `4` sperrt einen Teil für alle. Die Tab-Vervollständigung bietet nur die Teile an, die ein Absender ausführen darf. `gameLevels` liegt in der Gruppe `commands` bei den `goto`-Einstellungen.
 

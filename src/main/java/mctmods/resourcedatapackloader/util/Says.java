@@ -20,8 +20,10 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.text.event.ClickEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import java.util.Collections;
+import java.util.Map;
 
 public final class Says {
     public static final int CARD_TICKS = 160;
@@ -53,6 +55,14 @@ public final class Says {
     public static void chat(EntityPlayer player, TextFormatting color, String said) {
         if (said.isEmpty()) { return; }
         player.sendMessage(marked(said, color));
+    }
+
+    public static void options(EntityPlayer player, TextFormatting color, String said, Map<String, String> commands) {
+        ITextComponent line = marked(said, color);
+        for (Map.Entry<String, String> option : commands.entrySet()) {
+            line.appendSibling(new TextComponentString(" [" + option.getKey() + "]").setStyle(new Style().setColor(TextFormatting.AQUA).setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, option.getValue()))));
+        }
+        player.sendMessage(line);
     }
 
     public static void line(EntityPlayer player, String rule, TextFormatting color, String said) {

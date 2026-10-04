@@ -25,7 +25,7 @@ public final class StrayPacks {
     private static final String RESOURCEPACKS = "resourcepacks";
     private static final String ZIP = ".zip";
     private static final String MOVING = ".moving";
-    private static final Set<String> DEFINITIONS = new HashSet<>(Arrays.asList("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "dice", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections"));
+    private static final Set<String> DEFINITIONS = new HashSet<>(Arrays.asList("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "dice", "games", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections"));
 
     private StrayPacks() {}
 

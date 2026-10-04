@@ -278,6 +278,19 @@ public final class ContentScoring {
         else { watch(whole, held.getScorePoints()); }
     }
 
+    public static void award(MinecraftServer server, String objective, String row, int points) {
+        Scoreboard board = server.getWorld(0).getScoreboard();
+        ScoreObjective held = board.getObjective(objective);
+        if (held == null) {
+            ContentLog.LOGGER.error("A board game pays {} points to {}, which is not an objective this world keeps, so nothing is paid", points, objective);
+            return;
+        }
+        bump(board, held, row, points);
+        ContentLog.LOGGER.info("{} is paid {} in {} for a board game", row, points, objective);
+        ScoreDef def = BY_NAME.get(objective);
+        if (def != null) { watch(def, board.getOrCreateScore(row, held).getScorePoints()); }
+    }
+
     public static void starting(MinecraftServer server) {
         ScoreDef lobby = lobbyDef();
         if (lobby != null) {

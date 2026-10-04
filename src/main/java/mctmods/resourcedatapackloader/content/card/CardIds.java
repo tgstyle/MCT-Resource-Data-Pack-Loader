@@ -25,8 +25,10 @@ public final class CardIds {
     public static final String PROSPECT_NONE = "rdpl:prospect_none";
     public static final String PREGEN_ENDED = "rdpl:pregen_ended";
     public static final String PREGEN_RUNNING = "rdpl:pregen_running";
+    public static final String BOARD_RESULT = "rdpl:board_result";
     public static final List<String> ALL = Collections.unmodifiableList(Arrays.asList(GATE_UNLOCKED, GATE_BLOCKED, TEAM_JOINED, TEAM_LEAD, TEAM_PICKED, TEAM_ROUND_ENDED,
-            LOBBY_JOINS, LOBBY_NOTE, SCORING_RESULTS, SCORING_OUT, RESET_LEAD, RESET_VOTE, RESET_PASS, RESET_FAIL, ANVIL_WAITS, THREAT, PROSPECT, PROSPECT_NONE, PREGEN_ENDED, PREGEN_RUNNING));
+            LOBBY_JOINS, LOBBY_NOTE, SCORING_RESULTS, SCORING_OUT, RESET_LEAD, RESET_VOTE, RESET_PASS, RESET_FAIL, ANVIL_WAITS, THREAT, PROSPECT, PROSPECT_NONE, PREGEN_ENDED, PREGEN_RUNNING,
+            BOARD_RESULT));
 
     private CardIds() {}
 }
