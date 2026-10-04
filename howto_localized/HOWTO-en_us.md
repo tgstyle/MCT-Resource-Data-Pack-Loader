@@ -3006,6 +3006,14 @@ Every key, shown at once. A real file writes only the ones it needs.
   },
   "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
   "time": { "dayLength": 36000 },
+  "weather": {
+    "precipitation": true,
+    "lightning": true,
+    "snow": false,
+    "freeze": false,
+    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+  },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3119,17 +3127,30 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 
 *dimensions*
 
-| Key                 | Required | Value                  | Default        | What it does                                                                           |
-| ------------------- | -------- | ---------------------- | -------------- | -------------------------------------------------------------------------------------- |
-| `precipitation`     | no       | boolean                | `true`         | Off, it never rains, snows or storms here                                              |
-| `lightning`         | no       | boolean                | `true`         | Off, rain comes without lightning                                                      |
-| `snow`              | no       | boolean                | `true`         | Off, snow never settles                                                                |
-| `freeze`            | no       | boolean                | `true`         | Off, water never freezes over                                                          |
-| `cycle.rainTicks`   | no       | int or `[min, max]`    | `[1000, 4600]` | How long a shower lasts                                                                |
-| `cycle.clearTicks`  | no       | int or `[min, max]`    | `[1000, 3000]` | How long the dry spell between showers lasts                                           |
-| `cycle.maxStrength` | no       | float, above 0 up to 1 | `0.6`          | The heaviest a shower gets. Each shower drifts between a quarter of this and all of it |
+| Key                     | Required | Value                  | Default                  | What it does                                                                                                     |
+| ----------------------- | -------- | ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `precipitation`         | no       | boolean                | `true`                   | Off, it never rains, snows or storms here                                                                        |
+| `lightning`             | no       | boolean                | `true`                   | Off, rain and storms come without lightning                                                                      |
+| `snow`                  | no       | boolean                | `true`                   | Off, snow never settles                                                                                          |
+| `freeze`                | no       | boolean                | `true`                   | Off, water never freezes over                                                                                    |
+| `cycle.rainTicks`       | no       | int or `[min, max]`    | `[1000, 4600]`           | How long a shower lasts                                                                                          |
+| `cycle.clearTicks`      | no       | int or `[min, max]`    | `[1000, 3000]`           | How long the dry spell between showers lasts                                                                     |
+| `cycle.maxStrength`     | no       | float, above 0 up to 1 | `0.6`                    | The heaviest a shower gets. Each shower drifts between a quarter of this and all of it                           |
+| `cycle.thunderTicks`    | no       | int or `[min, max]`    | none                     | How long a thunderstorm lasts. Without it the cycle never storms                                                 |
+| `cycle.calmTicks`       | no       | int or `[min, max]`    | `[12000, 180000]`        | How long the calm between storms lasts                                                                           |
+| `cycle.thunderStrength` | no       | float, above 0 up to 1 | `1`                      | How dark a storm gets. Lightning strikes only above `0.9`                                                        |
+| `rain.particle`         | no       | particle id            | `minecraft:rain`         | What splashes where rain lands                                                                                   |
+| `rain.sound`            | no       | sound name             | `minecraft:weather.rain` | The sound of the rain                                                                                            |
+| `rain.volume`           | no       | float                  | `0.2`                    | Its loudness, halved when the rain falls above you                                                               |
+| `rain.interval`         | no       | int                    | `3`                      | How rarely the sound plays; higher is sparser, `0` plays it every chance                                         |
+| `rain.color`            | no       | hex color              | `#FFFFFF`                | Tint of the falling rain                                                                                         |
+| `rain.snowColor`        | no       | hex color              | `#FFFFFF`                | Tint of the falling snow                                                                                         |
+| `rain.angle`            | no       | float, 0 to 180        | `0`                      | Degrees from straight down: `90` blows sideways, `180` rises straight up. It is drawn leaning at most 75 degrees |
+| `rain.heading`          | no       | float, degrees         | `0`                      | Which way it blows: `0` south, `90` west, `180` north, `270` east                                                |
 
-Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, with no thunder, whatever the overworld is doing. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
+Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, whatever the overworld is doing. With `thunderTicks` it storms as well, on timings of its own; a storm that meets a shower brings the shower to full strength, darkens the sky and, with `lightning` on, brings lightning. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
+
+A `rain` block changes how rain and snow look and sound here, with or without a `cycle`; without one they look and sound as vanilla's.
 
 ## Portals and gates
 

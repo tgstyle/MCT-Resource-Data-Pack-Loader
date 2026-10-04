@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.util.RainSplash;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
@@ -18,12 +20,16 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
     @Nullable private final ContentSkyRenderer sky;
+    @Nullable private final RainDef rain;
+    @Nullable private final ContentWeatherRenderer weather;
 
     private ContentDimensionEffects(@Nullable DimensionDef def, DimensionSpecialEffects base, float cloudHeight, SkyType skyType) {
         super(cloudHeight, base.hasGround(), skyType, base.forceBrightLightmap(), base.constantAmbientLight());
         this.def = def;
         this.base = base;
         this.sky = def == null || def.traits().sky() == null ? null : new ContentSkyRenderer(def.traits().sky());
+        this.rain = def == null ? null : def.traits().rain();
+        this.weather = rain == null ? null : new ContentWeatherRenderer(rain);
     }
 
     public static void register(RegisterDimensionSpecialEffectsEvent event) {
@@ -58,6 +64,16 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     @Override public boolean renderSnowAndRain(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull LightTexture lightTexture, double camX, double camY, double camZ) {
-        return def != null && !def.renderWeather();
+        if (def == null) { return false; }
+        if (!def.renderWeather()) { return true; }
+        if (weather == null) { return false; }
+        weather.render(level, ticks, partialTick, lightTexture, camX, camY, camZ);
+        return true;
+    }
+
+    @Override public boolean tickRain(@Nonnull ClientLevel level, int ticks, @Nonnull Camera camera) {
+        if (rain == null) { return false; }
+        RainSplash.tick(level, rain, ticks, camera);
+        return true;
     }
 }
