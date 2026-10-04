@@ -68,7 +68,7 @@ public final class ContentControl {
             "slowDistantEntities", "slowRate", "slowRecheck", "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes",
             "structureBiomesAreBlacklist", "structureMinDistanceFromSpawn", "structureSeparation",
             "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation", "gotoLevel",
-            "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "structureSpawns", "surfaceDayMonsterRate",
+            "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "gameLevels", "structureSpawns", "surfaceDayMonsterRate",
             "monsterSpawnLight", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice",
             "threatSays", "deepStone", "noiseCaves", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate", "villageBlocks",

@@ -312,7 +312,8 @@ public final class ContentParser {
                 Json.strings(json, "potionTypes"),
                 GsonHelper.getAsFloat(json, "attackSpeed", Float.NaN),
                 Math.max(0, GsonHelper.getAsInt(json, "cooldown", 0)),
-                ContentParserContainers.holds(key, json));
+                ContentParserContainers.holds(key, json),
+                GsonHelper.getAsString(json, "rolls", "").trim());
     }
 
     @Nullable public static FluidDef fluid(Identifier key, String contents) {

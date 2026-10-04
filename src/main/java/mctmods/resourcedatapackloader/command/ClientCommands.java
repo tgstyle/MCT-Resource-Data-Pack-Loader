@@ -26,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 public final class ClientCommands {
     private static final String NAME = "rdpl";
     private static final String SERVER = "rdplserver";
-    private static final List<String> FORWARDED = List.of("oregen", "generators", "gate", "dimensions", "pregen", "intro", "locate", "goto", "vein", "team", "round");
+    private static final List<String> FORWARDED = List.of("oregen", "generators", "gate", "dimensions", "pregen", "intro", "locate", "goto", "vein", "team", "round", "game");
 
     private ClientCommands() {}
 

@@ -78,6 +78,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Wertung](#wertung)
 - [Raids](#raids)
 - [Karten](#karten)
+- [Würfel und Decks](#würfel-und-decks)
 
 **Steuerung**
 - [Die Steuerungsebene](#die-steuerungsebene)
@@ -140,6 +141,7 @@ Unter `data/`:
 | `<namespace>/hardness/*.json`                | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen)                                                                |
 | `<namespace>/anvils/*.json`                  | Verzauberungen, die ein Amboss auf einen genannten Gegenstand legt, ein Fortschritt, den das einbringt, und eine Sperre bis dahin. [Ambosswerk](#ambosswerk)   |
 | `<namespace>/cards/*.json`                   | Karten auf dem Bildschirm, die ein Auslöser zeigt, und die Meldungen, die diese Mod selbst ausgibt. [Karten](#karten)                                          |
+| `<namespace>/dice/*.json` | Pack-Würfel mit gewichteten Seiten, Kartendecks, wer einen Wurf hört, und der Wortlaut der Ergebnisse. [Würfel und Decks](#würfel-und-decks) |
 | `<namespace>/exposures/*.json`               | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen ausgesetzt sind. [Expositionen](#expositionen) |
 | `<namespace>/overrides/<target>/<name>.json` | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                           |
 | `<namespace>/villages/*.json`                | Grundstücke, die eine Stadt oder ein Dorf bauen kann. [Dorfgrundstücke](#dorfgrundstücke)                                                                      |
@@ -1254,6 +1256,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht. 
   "useDuration": 32,
   "attackSpeed": -2.4,
   "cooldown": 40,
+  "rolls": "d6",
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1307,10 +1310,11 @@ Ein `potion_bottle` listet mit `potionTypes` auf, was es fassen kann, als Array 
 | `alwaysEdible` | food        | boolean                                | `false`                    | Lässt sich auch bei voller Hungerleiste essen                                                                                                                                                                                                                                                |
 | `useDuration`  | nein        | int, Ticks                             | `32`                       | Wie lange das Benutzen dauert                                                                                                                                                                                                                                                                |
 | `attackSpeed`  | nein        | float                                  | passend zur Werkzeugklasse | Für `tool` das Angriffstempo-Attribut, ein Schwert liegt bei `-2.4`                                                                                                                                                                                                                          |
-| `cooldown`     | nein        | int, Ticks                             | `0`                        | Für `food`, `drink` und `potion`: wie lange das Item nach dem Verzehr die erneute Benutzung verweigert                                                                                                                                                                                       |
+| `cooldown`     | nein        | int, Ticks                             | `0`                        | Für `food`, `drink` und `potion`: wie lange das Item nach dem Verzehr die erneute Benutzung verweigert; bei einem Item mit `rolls` die Zeit zwischen zwei Würfen                                                                                                                                                                                       |
 | `container`    | drink       | Itemname                               | keiner                     | Was übrig bleibt, etwa eine Flasche. An einem `container`-Item sind dieser Schlüssel stattdessen die Einstellungen des Beutels selbst, siehe [Behälter](#behälter)                                                                                                                           |
 | `crop`         | seed        | Blockname                              | keiner                     | Die Feldfrucht, die es pflanzt                                                                                                                                                                                                                                                               |
 | `soil`         | seed        | Blockname                              | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                                                                                                                                              |
+| `rolls` | nein | `coin`, `d6`, `2d6+1`, ein Würfel oder Deck | keine | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks) |
 | `requires`     | nein        | Liste von Mod-IDs oder Pack-Namespaces | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                                                                                                                                         |
 
 ### Item-Variantenschlüssel
@@ -4767,6 +4771,7 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
   "criterion": "dummy",
   "display": "sidebar",
   "teamTotals": true,
+  "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
@@ -4799,6 +4804,7 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | `individuals` | Wahrheitswert | `false`            | Punkte landen zusätzlich auf einer Zeile für das Mitglied selbst                                                                                                  |
 | `carries`     | Wahrheitswert | `false`            | Das Ziel überlebt einen Kartenreset, statt mit ihm gelöscht zu werden. Eine Partiewertung der Rundensiege ist eines                                               |
 | `awardsTo`    | Text          | leer               | Ein anderes Ziel, dem dieses beim Ende einen Punkt gibt, an die führende Seite. Bei Gleichstand gibt es nichts                                                    |
+| `tiebreak` | Boolean | `false` | Endet eine Runde an der Spitze unentschieden, lost der Zufall der Welt eine der gleichauf liegenden Seiten aus, schreibt die Auslosung ins Log und wertet sie wie gewohnt |
 
 ### Punkte
 
@@ -5143,6 +5149,62 @@ Titel und Zeilen von Karten, Says-Meldungen sowie die Willkommens- und Warte-Hin
 | `rdpl:pregen_running`   | Die Fortschrittszeile, die ein Spieler beim Beitritt während der Vorgenerierung sieht | `pregenRunningSays`                                                                                                                    |
 
 `welcomeSays` ist keine Regel und behält sein Logo; eine `first_join`- oder `dimension_enter`-Regel kommt dazu. Die Countdowns und Zwischenstände einer Runde in der Aktionsleiste bleiben so, wie ihre Einstellungen sie machen.
+
+## Würfel und Decks
+
+*spielmodi*
+
+`<namespace>/dice/*.json`
+
+Den Dateinamen wählst du selbst, und mehrere Dateien addieren sich. Eine Datei benennt Würfel, deren Seiten Gewichte tragen, Kartendecks, aus denen ohne Zurücklegen gezogen wird, wer einen Wurf standardmäßig hört, und den Wortlaut der Ergebnisse. Gewürfelt wird mit [`/rdplserver game`](#spiele) und mit jedem Item, das [`rolls`](#item-dateischlüssel) hat.
+
+```json
+{
+  "audience": "all",
+  "dice": {
+    "fate": { "plus": 1, "blank": 2, "minus": 1 }
+  },
+  "decks": {
+    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+  },
+  "says": {
+    "coin": "{player} tosses the old coin: {result}"
+  }
+}
+```
+
+| Schlüssel | Typ | Standard | Was er tut |
+| --- | --- | --- | --- |
+| `audience` | Text | `all` | Wer einen Wurf hört, der kein eigenes Publikum nennt: `self`, `team`, `all`, `radius <Blöcke>` oder `silent`. Das erste Pack, das es setzt, gilt; ein späteres wird geloggt |
+| `dice` | Objekt | leer | Würfelname zu einem Objekt aus Seite und Gewicht. Eine Seite mit Gewicht 2 fällt doppelt so oft wie eine mit Gewicht 1. Gewichte sind ganze Zahlen ab 1 |
+| `decks` | Objekt | leer | Deckname zu seiner Kartenliste oder zu einem Objekt `{ "cards": [...], "reshuffle": false }`. `reshuffle` ist `true`, wenn nichts anderes steht: Ein Zug aus einem leeren Deck mischt alle Karten neu und zieht. Mit `false` bleibt das Deck leer, bis `game deck shuffle` läuft |
+| `says` | Objekt | leer | Wortlaut-Schlüssel zu Text, der in jeder Sprache den eigenen Wortlaut der Mod ersetzt. Die Schlüssel und ihre Platzhalter stehen unten |
+
+Ein Würfel- oder Deckname gehört dem ersten Pack, das ihn lädt. Ein anderes Pack mit demselben Namen oder dem Namen `coin` bleibt mit einem Fehler im Log außen vor. Ein Pack-Würfel wird mit `game die <name>` geworfen und zeigt seine Seite; als Punktestand gespeichert zählt er als Platz der Seite in der Datei, ab 1.
+
+Ein Deck ist ein Stapel, der kleiner wird. `game deck draw <name>` zieht eine zufällige Karte aus dem Rest, und nichts kommt zurück, bis das leere Deck sich beim nächsten Zug selbst neu mischt oder `game deck shuffle <name>` alle Karten zurücklegt. Der Stapel wird mit der Welt gespeichert, ein Neustart mischt ihn also nicht neu.
+
+Jeder Wurf nutzt den Zufall der Welt selbst und wird mit Absender, Befehl und Ergebnis ins Log geschrieben. `game last` zeigt die letzten. Ergebnisse gehen als gewöhnliche, auf dem Server gebaute Chatzeilen hinaus, also liest sie auch ein Spieler ohne die Mod. Die Würfelschreibweise besteht aus Anzahl, `d`, Seitenzahl und einem optionalen Modifikator: `3d8-2` sind drei achtseitige Würfel, addiert, minus 2, und `d20` ist ein zwanzigseitiger Würfel. Chat und Log schreiben den Wurf aus, etwa „Boss würfelt 3 achtseitige Würfel, minus 2: [2, 6, 7] = 13“, und `{dice}` enthält diesen Wortlaut.
+
+| Wortlaut-Schlüssel | Platzhalter |
+| --- | --- |
+| `coin`, `pickplayer`, `pickteam` | `{player}`, `{result}` |
+| `heads`, `tails`, `lastnone`, `nobody`, `notallowed`, `usage` | keine |
+| `die` | `{player}`, `{dice}`, `{sides}`, `{result}` |
+| `packdie` | `{player}`, `{die}`, `{result}` |
+| `dice` | `{player}`, `{dice}`, `{rolls}`, `{result}` |
+| `advantage`, `disadvantage` | `{player}`, `{dice}`, `{first}`, `{second}`, `{result}` |
+| `pickmember` | `{player}`, `{team}`, `{result}` |
+| `draw`, `reshuffled` | `{player}`, `{deck}`, `{result}`, `{left}` |
+| `shuffle` | `{player}`, `{deck}`, `{left}` |
+| `left`, `empty`, `nodeck` | `{deck}`, bei `left` auch `{left}` |
+| `teamroll` | `{member}`, `{dice}`, `{result}` |
+| `teamrollwin` | `{result}`, `{score}` |
+| `tiebreak` | `{objective}`, `{sides}`, `{result}` |
+| `notie`, `noobjective` | `{objective}` |
+| `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | der Reihe nach `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` |
+
+Der eigene Wortlaut der Mod steht in ihren Sprachdateien als `rdpl.game.<key>`, also kann ihn ein Ressourcenpaket auch Sprache für Sprache ändern.
 
 ---
 
@@ -6487,9 +6549,9 @@ Jeder Ordner, mit vollem Pfad und einem Link zum Abschnitt, der ihn beschreibt, 
 | `/rdpl biome`, `biome list [all]`                                                                  | keine           | Jedes Biom, das generieren kann, mit seiner Id; `all` nimmt die dazu, die nichts generieren kann               |
 | `/rdpl biome here`                                                                                 | keine           | Das Biom, in dem du stehst: Name, Id und Nummer                                                                |
 | `/rdpl biome find <name>`                                                                          | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten         |
-| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten         |
+| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | die des Servers | Verknüpft. Wird wortwörtlich an `/rdplserver` weitergereicht, der entscheidet, siehe die Tabelle unten         |
 
-**Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions` und `oregen` können immer nur die des Servers meinen, denn nur der Server kennt die Welt, ihre Spieler und ihre Runden, `/rdpl` gibt sie also weiter. Im Einzelspieler bietet die Tab-Vervollständigung dahinter an, was `/rdplserver` anbieten würde; auf einem Server bietet `goto` die Namen der Vanilla-Strukturen an. Die übrigen, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client. Die eigene Berechtigungsprüfung des Servers entscheidet über einen verknüpften Befehl, ein Client kann sie also weder umgehen noch eine erfundene Antwort bekommen.
+**Welche Server-Unterbefehle verknüpft sind und warum die übrigen nicht.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` und `game` können immer nur die des Servers meinen, denn nur der Server kennt die Welt, ihre Spieler und ihre Runden, `/rdpl` gibt sie also weiter. Im Einzelspieler bietet die Tab-Vervollständigung dahinter an, was `/rdplserver` anbieten würde; auf einem Server bietet `goto` die Namen der Vanilla-Strukturen an. Die übrigen, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` und `biome`, behalten ihre eigene Bedeutung von deinen Packs und deinem Client. Die eigene Berechtigungsprüfung des Servers entscheidet über einen verknüpften Befehl, ein Client kann sie also weder umgehen noch eine erfundene Antwort bekommen.
 
 **Beim täglichen Arbeiten:** F3+T lädt Texturen, Modelle und Sprachdateien neu, und `/reload` die Daten des Servers. Nimm `/rdpl reload`, wenn du eine Datei *hinzufügst* oder *löschst*, weil sich damit ändert, was der Ordner enthält.
 
@@ -6572,11 +6634,33 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver goto <struktur> next` | `gotoNextLevel`, `3` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht. Eine im Umkreis von acht Chunks um dich wird übergangen; bei einem Ort eines Packs ist es der nächste, der mehr als 128 Blöcke entfernt ist                                                             |
 | `/rdplserver goto <struktur> back` | `gotoBackLevel`, `3` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat                                                                                                                                                                                                                             |
 
+#### Spiele
+
+*serverbefehle*
+
+| Befehl | Level | Was er tut |
+| --- | --- | --- |
+| `/rdplserver game coin` | 0 | Eine Münze werfen. Kopf zählt als 1, Zahl als 0 |
+| `/rdplserver game die <sides>` | 0 | Einen Würfel mit 2 bis 1000 Seiten werfen |
+| `/rdplserver game die <name>` | 0 | Einen [Pack-Würfel](#würfel-und-decks) nach seinen Gewichten werfen |
+| `/rdplserver game dice <roll>` | 0 | Bis zu 100 Würfel werfen und zusammenzählen, etwa `2d6`, `d20` oder `3d8-2`. Jeder Würfel wird gezeigt |
+| `/rdplserver game advantage [roll]`, `disadvantage [roll]` | 0 | Zweimal würfeln und die höhere bzw. niedrigere Summe behalten. Ohne Angabe ist der Wurf `1d20` |
+| `/rdplserver game pick player` | 0 | Einen Spieler, der online ist, zufällig auslosen |
+| `/rdplserver game pick team [team]` | 0 | Ein Scoreboard-Team zufällig auslosen, oder ein Mitglied des genannten Teams, das online ist |
+| `/rdplserver game deck draw <name>` | 0 | Eine Karte aus dem Rest eines Pack-Decks ziehen |
+| `/rdplserver game deck left <name>` | 0 | Wie viele Karten das Deck noch hat |
+| `/rdplserver game deck shuffle <name>` | 2 | Alle Karten zurücklegen |
+| `/rdplserver game teamroll [roll]` | 0 | Jeder auf der Seite des Absenders würfelt, der höchste gewinnt, ein Gleichstand wird ausgelost. Ohne Teams würfelt der Absender allein |
+| `/rdplserver game tiebreak [objective]` | 2 | Eine der an der Spitze gleichauf liegenden Seiten eines Ziels auslosen: des genannten, sonst des ersten Wertungsziels mit `tiebreak`, sonst des ersten |
+| `/rdplserver game last [count]` | 0 | Die letzten Würfe, neueste zuerst: 10, oder die angegebene Zahl bis 50 |
+
+Jeder Wurf kann mit `store <objective>` enden, das seine Zahl in den eigenen Punktestand des Absenders in diesem Ziel schreibt, und mit `audience <wer>`, das den Standard des Packs übergeht: `self`, `team` (die Seite des Absenders, ohne Teams nur der Absender), `all`, `radius <Blöcke>` (Spieler in derselben Welt in dieser Entfernung) oder `silent`, das nur speichert. `/rdpl game` wird dorthin weitergereicht.
+
 ### Wer goto benutzen darf
 
 *befehle*
 
-**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, außer `intro`, `team` und `round`, die jeder Spieler ausführen darf, wie in 1.12.2. Die drei `goto`-Formen sind das eine, worüber ein Pack entscheidet: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf, getrennt von den beiden anderen und vom Rest des Befehls. Ein Pack, das `reset` für Spieler erreichbar machen will, legt ihn auf einen Befehlsblock oder in eine Funktion, die auf Stufe 3 läuft.
+**`goto` öffnen.** Jeder Teil von `/rdplserver` braucht einen Operator, Stufe 3, außer `intro`, `team` und `round`, die jeder Spieler ausführen darf, wie in 1.12.2, und `game`, dessen Teile [eigene Stufen](#wer-game-benutzen-darf) tragen. Die drei `goto`-Formen sind das eine, worüber ein Pack entscheidet: Jede trägt eine eigene Berechtigungsstufe, die ein Pack oder die Config senken darf, getrennt von den beiden anderen und vom Rest des Befehls. Ein Pack, das `reset` für Spieler erreichbar machen will, legt ihn auf einen Befehlsblock oder in eine Funktion, die auf Stufe 3 läuft.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -6605,6 +6689,28 @@ Der Wert ist die Berechtigungsstufe, die der Absender braucht. `3` (Operator) is
 Ein Eintrag setzt eine Stufe für alle drei Formen dieses Ortes. Ein nicht gelisteter Ort fällt auf die drei Einstellungen oben zurück, und ein nirgends angemeldeter Name passt nie. Die Tab-Vervollständigung hält sich an dieselben Regeln: Nach `goto` werden nur die Orte angeboten, zu denen der Absender auch wirklich gebracht werden kann.
 
 Sie liegen in der Gruppe `commands`, also entscheidet `control.commands` in der Config, ob ein Pack sie überhaupt setzen darf, und `off` dort hält alles bei Operator, ganz gleich was ein Pack verlangt.
+
+### Wer game benutzen darf
+
+*befehle*
+
+Jeder Teil von `game` hat ein eigenes Level: 0 für jeden Wurf, 2 für `deck shuffle` und `tiebreak`. `gameLevels` ändert jedes davon, als Einträge `teil=level`, wobei der Teil das ist, was nach `game` folgt.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gameLevels": ["coin=0", "deck draw=0", "deck shuffle=3", "tiebreak=4"]
+  }
+}
+```
+
+| Einstellung | Was sie regelt |
+| --- | --- |
+| `gameLevels` | Ein Teil von `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` oder `last` |
+
+Die Skala ist die von `goto`, und `4` sperrt einen Teil für alle. Die Tab-Vervollständigung bietet nur die Teile an, die ein Absender ausführen darf. `gameLevels` liegt in der Gruppe `commands` bei den `goto`-Einstellungen.
 
 ## Gut zu wissen
 

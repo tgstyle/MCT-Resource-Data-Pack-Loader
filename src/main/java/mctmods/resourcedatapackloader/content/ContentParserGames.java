@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.content.def.DiceDef;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
@@ -25,9 +26,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.Level;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentParserGames {
@@ -102,7 +105,8 @@ public final class ContentParserGames {
                 GsonHelper.getAsString(opens, "joinsSays", "Round is in progress, you can join after it ends"),
                 GsonHelper.getAsBoolean(ends, "lastStanding", false),
                 GsonHelper.getAsString(ends, "outSays", "You are out until the round ends"),
-                roundReset(key, GsonHelper.getAsJsonObject(json, "reset", new JsonObject())));
+                roundReset(key, GsonHelper.getAsJsonObject(json, "reset", new JsonObject())),
+                GsonHelper.getAsBoolean(json, "tiebreak", false));
     }
 
     private static RoundResetDef roundReset(Identifier key, JsonObject reset) {
@@ -318,4 +322,42 @@ public final class ContentParserGames {
     }
 
     private static boolean displaySlotKnown(String slot) { return DisplaySlot.CODEC.byName(slot) != null; }
+
+    @Nullable public static DiceDef diceFile(Identifier key, String contents) {
+        JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
+        if (json == null) { return null; }
+        Map<String, String> says = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "says", new JsonObject()).entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) { says.put(entry.getKey().trim(), entry.getValue().getAsString()); }
+            else { ContentLog.LOGGER.error("Dice file {} gives the wording '{}' something that is not text, so it is left out", key, entry.getKey()); }
+        }
+        Map<String, Map<String, Integer>> dice = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> die : GsonHelper.getAsJsonObject(json, "dice", new JsonObject()).entrySet()) {
+            if (!die.getValue().isJsonObject()) {
+                ContentLog.LOGGER.error("Dice file {} gives the die '{}' something that is not a set of faces and weights, so it is left out", key, die.getKey());
+                continue;
+            }
+            Map<String, Integer> faces = new LinkedHashMap<>();
+            for (Map.Entry<String, JsonElement> face : die.getValue().getAsJsonObject().entrySet()) {
+                int weight = face.getValue().isJsonPrimitive() && face.getValue().getAsJsonPrimitive().isNumber() ? face.getValue().getAsInt() : 0;
+                if (weight < 1) { ContentLog.LOGGER.error("Dice file {} weighs the face '{}' of '{}' at something that is not a whole number of 1 or more, so the face is left out", key, face.getKey(), die.getKey()); }
+                else { faces.put(face.getKey(), weight); }
+            }
+            if (faces.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the die '{}' no faces, so it is left out", key, die.getKey()); }
+            else { dice.put(die.getKey().trim(), faces); }
+        }
+        Map<String, List<String>> decks = new LinkedHashMap<>();
+        JsonObject held = GsonHelper.getAsJsonObject(json, "decks", new JsonObject());
+        Set<String> fixed = new HashSet<>();
+        for (Map.Entry<String, JsonElement> deck : held.entrySet()) {
+            boolean object = deck.getValue().isJsonObject();
+            List<String> cards = object ? names(deck.getValue().getAsJsonObject(), "cards") : names(held, deck.getKey());
+            if (cards.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the deck '{}' no cards, so it is left out", key, deck.getKey()); }
+            else {
+                decks.put(deck.getKey().trim(), cards);
+                if (object && !GsonHelper.getAsBoolean(deck.getValue().getAsJsonObject(), "reshuffle", true)) { fixed.add(deck.getKey().trim()); }
+            }
+        }
+        return new DiceDef(GsonHelper.getAsString(json, "audience", "").trim(), says, dice, decks, fixed);
+    }
 }

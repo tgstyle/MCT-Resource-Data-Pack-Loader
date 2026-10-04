@@ -26,7 +26,7 @@ public final class Port {
     private static final int LAST_1_21_RESOURCE_FORMAT = 34;
     private static final int LAST_26_2_DATA_FORMAT = 107;
     private static final int LAST_26_2_RESOURCE_FORMAT = 88;
-    public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
+    public static final Set<String> DEFINITION_FOLDERS = Set.of("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "exposures", "overrides", "teams", "scoring", "raids", "dice", "worldintro", "cards", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections");
 
     private Port() {}
 

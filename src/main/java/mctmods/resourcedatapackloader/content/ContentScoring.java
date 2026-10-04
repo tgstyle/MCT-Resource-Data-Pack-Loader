@@ -259,16 +259,8 @@ public final class ContentScoring {
         }
         String best = winner;
         if (best == null) {
-            Scores.Row top = null;
-            boolean tied = false;
-            for (Scores.Row one : Scores.rows(board, round)) {
-                if (top == null || one.value() > top.value()) {
-                    top = one;
-                    tied = false;
-                }
-                else if (one.value() == top.value()) { tied = true; }
-            }
-            best = top == null || tied ? null : top.owner();
+            Scores.Row top = ContentScoringTie.best(server, def, Scores.rows(board, round));
+            best = top == null ? null : top.owner();
         }
         if (best == null) {
             ContentLog.LOGGER.info("The round ended level, so no round win is recorded");

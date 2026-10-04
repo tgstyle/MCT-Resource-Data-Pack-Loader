@@ -78,6 +78,7 @@
 - [计分](#计分)
 - [袭击](#袭击)
 - [卡片](#卡片)
+- [骰子与牌堆](#骰子与牌堆)
 
 **控制**
 - [控制层](#控制层)
@@ -140,6 +141,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/hardness/*.json`                | 一组方块的挖掘时间与爆破倍率。[硬度分组](#硬度分组)                                                                   |
 | `<namespace>/anvils/*.json`                  | 铁砧附加在指定物品上的附魔、由此获得的进度，以及在此之前的锁定。[铁砧操作](#铁砧操作)                                 |
 | `<namespace>/cards/*.json`                   | 由触发器显示的屏幕卡片，以及本模组自己发出的消息。[卡片](#卡片)                                                       |
+| `<namespace>/dice/*.json` | 资源包的带权重骰子、卡牌牌堆、谁能听到掷骰，以及结果的文字。[骰子与牌堆](#骰子与牌堆) |
 | `<namespace>/exposures/*.json`               | 使靠近指定方块、携带指定物品或身处指定维度的玩家受到影响的危险。[暴露设置](#暴露设置)                                 |
 | `<namespace>/overrides/<target>/<name>.json` | 就地修改已有方块、物品和药水类型的属性。[属性覆盖](#属性覆盖)                                                         |
 | `<namespace>/villages/*.json`                | 城市或村庄可以建造的地块。[村庄地块](#村庄地块)                                                                       |
@@ -1254,6 +1256,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
   "useDuration": 32,
   "attackSpeed": -2.4,
   "cooldown": 40,
+  "rolls": "d6",
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1307,10 +1310,11 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `alwaysEdible` | food | boolean | `false` | 饥饿值已满时也可食用 |
 | `useDuration` | 否 | int，刻 | `32` | 使用它需要多长时间 |
 | `attackSpeed` | 否 | float | 视工具类别而定 | 用于 `tool`，即攻击速度属性，例如剑为 `-2.4` |
-| `cooldown` | 否 | int，刻 | `0` | 用于 `food`、`drink` 和 `potion`，物品被消耗后多长时间内拒绝再次使用 |
+| `cooldown` | 否 | int，刻 | `0` | 用于 `food`、`drink` 和 `potion`，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔 |
 | `container` | drink | 物品名称 | 无 | 留下的东西，例如瓶子。在 `container` 物品上，这个键改为小袋自己的设置，见 [容器](#容器) |
 | `crop` | seed | 方块名称 | 无 | 它种下的作物 |
 | `soil` | seed | 方块名称 | `minecraft:farmland` | 它可以种在什么方块上 |
+| `rolls` | 否 | `coin`、`d6`、`2d6+1`、一个骰子或一个牌堆 | 无 | 在普通物品上，右键会像 `/rdplserver game` 那样掷骰，并告知资源包的默认听众。参见[骰子与牌堆](#骰子与牌堆) |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
 
 ### 物品变种键
@@ -4767,6 +4771,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "criterion": "dummy",
   "display": "sidebar",
   "teamTotals": true,
+  "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
@@ -4799,6 +4804,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `individuals` | 布尔值 | `false` | 积分同时也记到成员自己的一行上 |
 | `carries` | 布尔值 | `false` | 目标在地图重置时保留，而不是随之清空。回合胜场的比赛累计就是一例 |
 | `awardsTo` | 文本 | 空 | 该目标结束时向其授予一分的另一个目标，授予领先的阵营。等级排名不授予任何东西 |
+| `tiebreak` | 布尔值 | `false` | 以并列第一结束的回合会用世界的随机数从并列各方中抽出一方，把抽签写入日志，并照常给它记分 |
 
 ### 积分
 
@@ -5143,6 +5149,62 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `rdpl:pregen_running` | 预生成期间加入的玩家看到的进度行 | `pregenRunningSays` |
 
 `welcomeSays` 不是规则，保留其徽标；`first_join` 或 `dimension_enter` 规则是在它的基础上追加。回合中动作栏上的倒计时和统计，仍由其设置决定。
+
+## 骰子与牌堆
+
+*游戏模式*
+
+`<namespace>/dice/*.json`
+
+文件名由你决定，多个文件会合并。一个文件可以定义各面带权重的骰子、抽出后不放回的卡牌牌堆、默认谁能听到掷骰，以及结果的文字。掷骰用 [`/rdplserver game`](#游戏)，也可以用任何带 [`rolls`](#物品文件键) 的物品。
+
+```json
+{
+  "audience": "all",
+  "dice": {
+    "fate": { "plus": 1, "blank": 2, "minus": 1 }
+  },
+  "decks": {
+    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+  },
+  "says": {
+    "coin": "{player} tosses the old coin: {result}"
+  }
+}
+```
+
+| 键 | 类型 | 默认值 | 作用 |
+| --- | --- | --- | --- |
+| `audience` | 文本 | `all` | 没有指定听众的掷骰由谁听到：`self`、`team`、`all`、`radius <格数>` 或 `silent`。以第一个设置它的资源包为准；之后的会写入日志 |
+| `dice` | 对象 | 空 | 骰子名对应一个由面和权重组成的对象。权重为 2 的面出现的次数是权重为 1 的两倍。权重是从 1 起的整数 |
+| `decks` | 对象 | 空 | 牌堆名对应它的卡牌列表，或对应对象 `{ "cards": [...], "reshuffle": false }`。`reshuffle` 不写时为 `true`：从空牌堆抽牌会把所有牌重新洗好再抽。设为 `false` 时，牌堆保持为空，直到执行 `game deck shuffle` |
+| `says` | 对象 | 空 | 文字键对应在所有语言中替换本模组自带文字的文本。键及其占位符见下 |
+
+骰子或牌堆的名字属于第一个加载它的资源包。另一个同名的资源包，或名为 `coin` 的，会被跳过并在日志中记一条错误。资源包骰子用 `game die <name>` 掷出并显示其面；存为分数时，按该面在文件中的位置计数，从 1 开始。
+
+牌堆是一叠越抽越少的牌。`game deck draw <name>` 从剩余的牌中随机抽一张，在空牌堆于下一次抽牌时自动重新洗牌、或 `game deck shuffle <name>` 把所有牌放回之前，抽出的牌不会回来。牌堆随世界一起保存，所以重启不会洗牌。
+
+每次掷骰都使用世界自身的随机数，并连同掷骰者、掷了什么和结果一起写入日志。`game last` 显示最近的几次。结果以服务器拼好的普通聊天行发出，所以没有装本模组的玩家也能看到。骰子记法由个数、`d`、面数和可选的修正值组成：`3d8-2` 表示三个八面骰子相加再减 2，`d20` 表示一个二十面骰子。聊天和日志会把掷骰写成文字，例如“Boss 掷了 3 个八面骰子，减 2：[2, 6, 7] = 13”，`{dice}` 就是这段文字。
+
+| 文字键 | 占位符 |
+| --- | --- |
+| `coin`、`pickplayer`、`pickteam` | `{player}`、`{result}` |
+| `heads`、`tails`、`lastnone`、`nobody`、`notallowed`、`usage` | 无 |
+| `die` | `{player}`、`{dice}`、`{sides}`、`{result}` |
+| `packdie` | `{player}`、`{die}`、`{result}` |
+| `dice` | `{player}`、`{dice}`、`{rolls}`、`{result}` |
+| `advantage`、`disadvantage` | `{player}`、`{dice}`、`{first}`、`{second}`、`{result}` |
+| `pickmember` | `{player}`、`{team}`、`{result}` |
+| `draw`, `reshuffled` | `{player}`、`{deck}`、`{result}`、`{left}` |
+| `shuffle` | `{player}`、`{deck}`、`{left}` |
+| `left`、`empty`、`nodeck` | `{deck}`，`left` 另有 `{left}` |
+| `teamroll` | `{member}`、`{dice}`、`{result}` |
+| `teamrollwin` | `{result}`、`{score}` |
+| `tiebreak` | `{objective}`、`{sides}`、`{result}` |
+| `notie`、`noobjective` | `{objective}` |
+| `badsides`、`badroll`、`badaudience`、`nodie`、`noteam` | 依次为 `{sides}`、`{roll}`、`{audience}`、`{name}`、`{team}` |
+
+本模组自带的文字位于其语言文件中，键为 `rdpl.game.<key>`，所以资源包也可以按语言逐一更改它。
 
 ---
 
@@ -6487,9 +6549,9 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdpl biome`, `biome list [all]` | 无 | 每个可以生成的生物群系及其 id；`all` 包括那些无法生成的 |
 | `/rdpl biome here` | 无 | 你所在的生物群系：其名称、id 和编号 |
 | `/rdpl biome find <name>` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
-| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
+| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
 
-**哪些服务器子命令已关联，其余为何没有。** `locate`、`goto`、`vein`、`gate`、`pregen`、`intro`、`team`、`round`、`dimensions` 和 `oregen` 只可能指服务器的，因为只有服务器了解世界、其中的玩家和回合，所以 `/rdpl` 把它们移交出去。在单人游戏中，这些命令之后的 Tab 补全提供的是 `/rdplserver` 会提供的内容；在服务器上，`goto` 提供原版结构名称。其余的 `reload`、`list`、`which`、`unused`、`config`、`pixelmap` 和 `biome` 保持各自的含义，即针对你的资源包和你的客户端。已关联的命令由服务器自己的权限检查来裁决，因此客户端既无法作弊，也不会被告知伪造的答案。
+**哪些服务器子命令已关联，其余为何没有。** `locate`、`goto`、`vein`、`gate`、`pregen`、`intro`、`team`、`round`、`dimensions`、`oregen` 和 `game` 只可能指服务器的，因为只有服务器了解世界、其中的玩家和回合，所以 `/rdpl` 把它们移交出去。在单人游戏中，这些命令之后的 Tab 补全提供的是 `/rdplserver` 会提供的内容；在服务器上，`goto` 提供原版结构名称。其余的 `reload`、`list`、`which`、`unused`、`config`、`pixelmap` 和 `biome` 保持各自的含义，即针对你的资源包和你的客户端。已关联的命令由服务器自己的权限检查来裁决，因此客户端既无法作弊，也不会被告知伪造的答案。
 
 **日常编辑：** F3+T 重载纹理、模型和语言文件，`/reload` 重载服务器的数据。当你*添加*或*删除*文件时请使用 `/rdpl reload`，因为这会改变文件夹所包含的内容。
 
@@ -6572,11 +6634,33 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | 带你继续前往本次会话中尚未带你去过的最近一处，无论以前是否有人去过。离你八个区块以内的会被跳过；对于资源包的地点，则是 128 格以外最近的一处 |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | 带你前往上一处，沿着本次会话把你送去过的地点向后退 |
 
+#### 游戏
+
+*服务器命令*
+
+| 命令 | 等级 | 作用 |
+| --- | --- | --- |
+| `/rdplserver game coin` | 0 | 抛一枚硬币。正面计为 1，反面计为 0 |
+| `/rdplserver game die <sides>` | 0 | 掷一个 2 到 1000 面的骰子 |
+| `/rdplserver game die <name>` | 0 | 按权重掷一个[资源包骰子](#骰子与牌堆) |
+| `/rdplserver game dice <roll>` | 0 | 掷最多 100 个骰子并求和，如 `2d6`、`d20` 或 `3d8-2`。每个骰子都会显示 |
+| `/rdplserver game advantage [roll]`、`disadvantage [roll]` | 0 | 掷两次，取较大的总数或较小的总数。未指定时为 `1d20` |
+| `/rdplserver game pick player` | 0 | 随机选一名在线玩家 |
+| `/rdplserver game pick team [team]` | 0 | 随机选一支计分板队伍，或所指定队伍的一名在线成员 |
+| `/rdplserver game deck draw <name>` | 0 | 从资源包牌堆的剩余牌中抽一张 |
+| `/rdplserver game deck left <name>` | 0 | 牌堆还剩多少张牌 |
+| `/rdplserver game deck shuffle <name>` | 2 | 把所有牌放回 |
+| `/rdplserver game teamroll [roll]` | 0 | 发送者一方的每个人各掷一次，最高者胜，平局抽签决定。没有队伍时只有发送者自己掷 |
+| `/rdplserver game tiebreak [objective]` | 2 | 从某个目标并列第一的各方中抽出一方：指定的目标，否则是第一个带 `tiebreak` 的计分目标，再否则是第一个 |
+| `/rdplserver game last [count]` | 0 | 最近的掷骰，最新的在前：10 次，或给定的次数，最多 50 |
+
+任何掷骰都可以以 `store <objective>` 结尾，把结果数字写入发送者自己在该目标中的分数；也可以以 `audience <谁>` 结尾，取代资源包的默认值：`self`、`team`（发送者一方，没有队伍时只有发送者）、`all`、`radius <格数>`（同一世界中该距离内的玩家）或 `silent`，后者只写日志。`/rdpl game` 会转交给它。
+
 ### 谁可以使用 goto
 
 *命令*
 
-**开放 `goto`。** `/rdplserver` 的每个部分都需要管理员，即等级 3，唯独 `intro`、`team` 和 `round` 例外，任何玩家都可以运行它们，与 1.12.2 一致。三种 `goto` 形式是资源包可以决定的唯一一项：每一种都带有自己的权限等级，资源包或配置可以将其调低，与另外两种以及命令的其余部分互不影响。想让玩家使用 `reset` 的资源包，可以把它放在命令方块或函数里，那样它以等级 3 运行。
+**开放 `goto`。** `/rdplserver` 的每个部分都需要管理员，即等级 3，唯独 `intro`、`team` 和 `round` 例外，任何玩家都可以运行它们，与 1.12.2 一致；`game` 的各部分则有[各自的等级](#谁可以使用-game)。三种 `goto` 形式是资源包可以决定的唯一一项：每一种都带有自己的权限等级，资源包或配置可以将其调低，与另外两种以及命令的其余部分互不影响。想让玩家使用 `reset` 的资源包，可以把它放在命令方块或函数里，那样它以等级 3 运行。
 
 `<namespace>/worldtemplates/*.json`
 
@@ -6605,6 +6689,28 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 一个条目为该地点的全部三种形式设定同一个等级。未列出的地点回退到上面的三项设置，而未注册的名称永远不会匹配。Tab 补全遵循同样的规则，因此在 `goto` 之后，发送者只会看到自己实际可以被带去的地点。
 
 这些设置位于 `commands` 分组中，因此配置中的 `control.commands` 决定资源包是否可以设置它们，那里设为 `off` 则无论资源包如何请求，一切都保持为管理员级别。
+
+### 谁可以使用 game
+
+*命令*
+
+`game` 的每个部分都有自己的等级：每种掷骰为 0，`deck shuffle` 和 `tiebreak` 为 2。`gameLevels` 以 `部分=等级` 条目更改其中任意一个，部分即 `game` 之后的内容。
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gameLevels": ["coin=0", "deck draw=0", "deck shuffle=3", "tiebreak=4"]
+  }
+}
+```
+
+| 设置 | 管辖什么 |
+| --- | --- |
+| `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak` 或 `last` |
+
+等级刻度与 `goto` 相同，`4` 会对所有人关闭某个部分。Tab 补全只提供发送者可以使用的部分。`gameLevels` 与 `goto` 的设置一起位于 `commands` 组中。
 
 ## 须知
 

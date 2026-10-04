@@ -78,6 +78,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Scoring](#scoring)
 - [Raids](#raids)
 - [Cards](#cards)
+- [Dice and decks](#dice-and-decks)
 
 **Control**
 - [The control layer](#the-control-layer)
@@ -140,6 +141,7 @@ Under `data/`:
 | `<namespace>/hardness/*.json`                | Mining time and blast multipliers for groups of blocks. [Hardness groups](#hardness-groups)                           |
 | `<namespace>/anvils/*.json`                  | Enchantments an anvil puts on a named item, an advancement it earns, and a lock until then. [Anvil work](#anvil-work) |
 | `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                            |
+| `<namespace>/dice/*.json` | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks) |
 | `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions. [Exposures](#exposures)   |
 | `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)    |
 | `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                    |
@@ -1254,6 +1256,7 @@ Every key, shown at once. A real file writes only the ones it needs. A key marke
   "useDuration": 32,
   "attackSpeed": -2.4,
   "cooldown": 40,
+  "rolls": "d6",
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1307,10 +1310,11 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 | `alwaysEdible` | food        | boolean                             | `false`                | Can be eaten on a full hunger bar                                                                                                                                                                                                     |
 | `useDuration`  | no          | int, ticks                          | `32`                   | How long using it takes                                                                                                                                                                                                               |
 | `attackSpeed`  | no          | float                               | to suit the tool class | For `tool`, the attack speed attribute, the way a sword is `-2.4`                                                                                                                                                                     |
-| `cooldown`     | no          | int, ticks                          | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed                                                                                                                                               |
+| `cooldown`     | no          | int, ticks                          | `0`                    | For `food`, `drink` and `potion`, how long the item refuses re-use after being consumed; for an item that `rolls`, how long between rolls                                                                                                                                               |
 | `container`    | drink       | item name                           | none                   | What is left behind, such as a bottle. On a `container` item this key is the pouch's own settings instead, see [Containers](#containers)                                                                                              |
 | `crop`         | seed        | block name                          | none                   | The crop it plants                                                                                                                                                                                                                    |
 | `soil`         | seed        | block name                          | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                             |
+| `rolls` | no | `coin`, `d6`, `2d6+1`, a die or deck | none | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks) |
 | `requires`     | no          | list of mod ids or pack namespaces  | none                   | The file is skipped unless all are present                                                                                                                                                                                            |
 
 ### Item variant keys
@@ -4767,6 +4771,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
   "criterion": "dummy",
   "display": "sidebar",
   "teamTotals": true,
+  "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
@@ -4799,6 +4804,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `individuals` | boolean | `false`             | Points also land on a row for the member itself                                                                                                     |
 | `carries`     | boolean | `false`             | The objective survives a map reset instead of being wiped with it. A match tally of round wins is one                                               |
 | `awardsTo`    | text    | empty               | Another objective this one hands a point to when it ends, to the side that led. Level standings hand out nothing                                    |
+| `tiebreak` | boolean | `false` | A round that ends level at the top draws one of the tied sides with the world's random, logs the draw, and awards it as usual |
 
 ### Points
 
@@ -5143,6 +5149,62 @@ Card titles and lines, Says messages and the welcome and hold notes take the inl
 | `rdpl:pregen_running`   | The progress line a player sees on joining during pregeneration | `pregenRunningSays`                                                                                                              |
 
 `welcomeSays` is not a rule and keeps its logo; a `first_join` or `dimension_enter` rule adds to it. The action-bar countdowns and tallies of a round stay as their settings make them.
+
+## Dice and decks
+
+*game modes*
+
+`<namespace>/dice/*.json`
+
+The file name is yours to choose, and several files stack. A file names dice whose faces carry weights, decks of cards that are drawn without putting them back, who hears a roll by default, and the wording of the results. The rolls themselves are made with [`/rdplserver game`](#games) and by any item with [`rolls`](#item-file-keys).
+
+```json
+{
+  "audience": "all",
+  "dice": {
+    "fate": { "plus": 1, "blank": 2, "minus": 1 }
+  },
+  "decks": {
+    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+  },
+  "says": {
+    "coin": "{player} tosses the old coin: {result}"
+  }
+}
+```
+
+| Key | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `audience` | text | `all` | Who hears a roll that does not name its own: `self`, `team`, `all`, `radius <blocks>` or `silent`. The first pack that sets it wins; a later one is logged |
+| `dice` | object | empty | Die name to an object of face to weight. A face of weight 2 comes up twice as often as one of weight 1. Weights are whole numbers of 1 or more |
+| `decks` | object | empty | Deck name to its list of cards, or to an object `{ "cards": [...], "reshuffle": false }`. `reshuffle` is `true` unless set: a draw from an empty deck reshuffles every card and draws. With `false` the deck stays empty until `game deck shuffle` |
+| `says` | object | empty | Wording key to text, used in place of the mod's own wording in every language. The keys and their placeholders are below |
+
+A die or deck name belongs to the first pack that loads it. Another pack using the same name, or the name `coin`, is left out with an error in the log. A pack die rolls with `game die <name>` and shows its face; stored as a score, it counts as the face's place in the file, starting at 1.
+
+A deck is a pile that runs down. `game deck draw <name>` takes one card at random from what is left, and nothing comes back until the empty deck reshuffles itself on the next draw, or `game deck shuffle <name>` returns every card. The pile is saved with the world, so a restart does not reshuffle it.
+
+Every roll uses the world's own random and is written to the log with who ran it, what they ran and what came out. `game last` shows the most recent ones. Results go out as ordinary chat lines built on the server, so a player without the mod reads them too. Dice notation reads as the count, `d`, the sides and an optional modifier: `3d8-2` is three eight-sided dice added together, minus 2, and `d20` is one twenty-sided die. Chat and the log spell the roll out, as in "Boss rolls 3 eight-sided dice, minus 2: [2, 6, 7] = 13", and `{dice}` holds that wording.
+
+| Wording key | Placeholders |
+| --- | --- |
+| `coin`, `pickplayer`, `pickteam` | `{player}`, `{result}` |
+| `heads`, `tails`, `lastnone`, `nobody`, `notallowed`, `usage` | none |
+| `die` | `{player}`, `{dice}`, `{sides}`, `{result}` |
+| `packdie` | `{player}`, `{die}`, `{result}` |
+| `dice` | `{player}`, `{dice}`, `{rolls}`, `{result}` |
+| `advantage`, `disadvantage` | `{player}`, `{dice}`, `{first}`, `{second}`, `{result}` |
+| `pickmember` | `{player}`, `{team}`, `{result}` |
+| `draw`, `reshuffled` | `{player}`, `{deck}`, `{result}`, `{left}` |
+| `shuffle` | `{player}`, `{deck}`, `{left}` |
+| `left`, `empty`, `nodeck` | `{deck}`, and `{left}` for `left` |
+| `teamroll` | `{member}`, `{dice}`, `{result}` |
+| `teamrollwin` | `{result}`, `{score}` |
+| `tiebreak` | `{objective}`, `{sides}`, `{result}` |
+| `notie`, `noobjective` | `{objective}` |
+| `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` in turn |
+
+The mod's own wording is in its language files as `rdpl.game.<key>`, so a resource pack can also change it one language at a time.
 
 ---
 
@@ -6487,9 +6549,9 @@ Every folder, with its full path and a link to the section that describes it, is
 | `/rdpl biome`, `biome list [all]`                                                                  | none         | Every biome that can generate, and its id; `all` includes the ones nothing can generate     |
 | `/rdpl biome here`                                                                                 | none         | The biome you are standing in: its name, id and number                                      |
 | `/rdpl biome find <name>`                                                                          | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below        |
-| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below        |
+| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | the server's | Linked. Passed word for word to `/rdplserver`, which decides, so see the table below        |
 
-**Which server subcommands are linked, and why the rest are not.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions` and `oregen` can only ever mean the server's, since only the server knows the world, its players and its rounds, so `/rdpl` hands them over. In single player, tab completion after one of them offers what `/rdplserver` would; on a server, `goto` offers the vanilla structure names. The rest, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` and `biome`, keep their own meaning of your packs and your client. The server's own permission check decides a linked command, so a client can neither cheat it nor be told a fabricated answer.
+**Which server subcommands are linked, and why the rest are not.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` and `game` can only ever mean the server's, since only the server knows the world, its players and its rounds, so `/rdpl` hands them over. In single player, tab completion after one of them offers what `/rdplserver` would; on a server, `goto` offers the vanilla structure names. The rest, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` and `biome`, keep their own meaning of your packs and your client. The server's own permission check decides a linked command, so a client can neither cheat it nor be told a fabricated answer.
 
 **Day-to-day editing:** F3+T reloads textures, models and language files, and `/reload` the server's data. Use `/rdpl reload` when you *add* or *delete* a file, since that changes what the folder contains.
 
@@ -6572,11 +6634,33 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before. One within eight chunks of you is passed over; for a pack's place it is the nearest more than 128 blocks away                                                                                |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Take you to the one before it, stepping back through where this session has sent you                                                                                                                                                                                                                                |
 
+#### Games
+
+*server commands*
+
+| Command | Level | What it does |
+| --- | --- | --- |
+| `/rdplserver game coin` | 0 | Flip a coin. Heads counts as 1, tails as 0 |
+| `/rdplserver game die <sides>` | 0 | Roll one die of 2 to 1000 sides |
+| `/rdplserver game die <name>` | 0 | Roll a [pack die](#dice-and-decks) by its weights |
+| `/rdplserver game dice <roll>` | 0 | Roll up to 100 dice and add them up, such as `2d6`, `d20` or `3d8-2`. Each die is shown |
+| `/rdplserver game advantage [roll]`, `disadvantage [roll]` | 0 | Roll twice and keep the higher, or the lower, total. The roll is `1d20` when left off |
+| `/rdplserver game pick player` | 0 | Pick one online player at random |
+| `/rdplserver game pick team [team]` | 0 | Pick one scoreboard team at random, or one online member of the team named |
+| `/rdplserver game deck draw <name>` | 0 | Draw a card from what is left of a pack deck |
+| `/rdplserver game deck left <name>` | 0 | How many cards the deck has left |
+| `/rdplserver game deck shuffle <name>` | 2 | Put every card back |
+| `/rdplserver game teamroll [roll]` | 0 | Everyone on the sender's side rolls and the highest wins, a tie drawn. With no teams the sender rolls alone |
+| `/rdplserver game tiebreak [objective]` | 2 | Draw one of the sides level at the top of an objective: the one named, else the first scoring objective with `tiebreak`, else the first |
+| `/rdplserver game last [count]` | 0 | The latest rolls, newest first: 10, or the count given up to 50 |
+
+Any roll can end with `store <objective>`, which writes its number to the sender's own score on that objective, and `audience <who>`, which overrides the pack's default: `self`, `team` (the sender's side, or the sender alone with no teams), `all`, `radius <blocks>` (players in the same world within that distance) or `silent`, which only stores. `/rdpl game` is passed through to it.
+
 ### Who may use goto
 
 *commands*
 
-**Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, except `intro`, `team` and `round`, which any player may run, as 1.12.2 has them. The three `goto` forms are the one thing a pack decides: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command. A pack that wants `reset` reachable by players puts it on a command block or in a function, which runs at level 3.
+**Opening `goto` up.** Every part of `/rdplserver` needs an operator, level 3, except `intro`, `team` and `round`, which any player may run, as 1.12.2 has them, and `game`, whose parts carry [levels of their own](#who-may-use-game). The three `goto` forms are the one thing a pack decides: each carries a permission level of its own that a pack or the config may lower, separately from the other two and from the rest of the command. A pack that wants `reset` reachable by players puts it on a command block or in a function, which runs at level 3.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -6605,6 +6689,28 @@ The value is the permission level a sender needs. `3` (operator) is the default.
 An entry sets one level for all three forms of that place. An unlisted place falls back to the three settings above, and an unregistered name never matches. Tab completion follows the same rules, so after `goto` a sender is offered only the places they may actually be carried to.
 
 These sit in the `commands` group, so `control.commands` in the config decides whether a pack may set them at all, and `off` there keeps everything at operator whatever a pack asks for.
+
+### Who may use game
+
+*commands*
+
+Each part of `game` carries a level of its own: 0 for every roll, and 2 for `deck shuffle` and `tiebreak`. `gameLevels` changes any of them, as `part=level` entries where the part is what follows `game`.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gameLevels": ["coin=0", "deck draw=0", "deck shuffle=3", "tiebreak=4"]
+  }
+}
+```
+
+| Setting | What it governs |
+| --- | --- |
+| `gameLevels` | One part of `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` or `last` |
+
+The scale is the one `goto` uses, and `4` closes a part to everyone. Tab completion offers only the parts a sender may run. `gameLevels` sits in the `commands` group with the `goto` settings.
 
 ## Good to know
 
