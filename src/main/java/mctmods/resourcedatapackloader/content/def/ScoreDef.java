@@ -41,6 +41,7 @@ public final class ScoreDef {
     public final String endsOutSays;
     public final RoundResetDef reset;
     public final boolean tiebreak;
+    @Nullable public final TurnsDef turns;
 
     public ScoreDef(String name, String displayName, IScoreCriteria criterion, String slot,
                     @Nullable IScoreCriteria.EnumRenderType render, boolean teamTotals, boolean individuals,
@@ -48,7 +49,7 @@ public final class ScoreDef {
                     boolean resultsCard, String resultsTitle, String resultsIcon, String resultsImage,
                     int resultsBackground, int resultsTicks,
                     boolean carries, boolean endsResets, int endsIntermission, String awardsTo, boolean endsLocksTeams,
-                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, String opensLeaderSays, @Nullable int[] opensLobby, boolean opensLobbyJoins, String opensJoinsSays, boolean endsLastStanding, String endsOutSays, RoundResetDef reset, boolean tiebreak) {
+                    int ownKillPoints, String intermissionSays, String startsSays, String opensBy, String opensSays, String opensLeaderSays, @Nullable int[] opensLobby, boolean opensLobbyJoins, String opensJoinsSays, boolean endsLastStanding, String endsOutSays, RoundResetDef reset, boolean tiebreak, @Nullable TurnsDef turns) {
         this.name = name;
         this.displayName = displayName;
         this.criterion = criterion;
@@ -85,9 +86,10 @@ public final class ScoreDef {
         this.endsOutSays = endsOutSays;
         this.reset = reset;
         this.tiebreak = tiebreak;
+        this.turns = turns;
     }
 
-    public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding; }
+    public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding || turns != null && turns.ends(); }
 
     public boolean fed() { return !killPoints.isEmpty() || deathPoints != 0; }
 

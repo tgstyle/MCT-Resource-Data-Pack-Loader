@@ -51,12 +51,17 @@ public final class ContentScoringLobby {
     }
 
     static void keepStill(@Nullable MinecraftServer server) {
-        if (server == null || !ContentScoring.holding()) {
+        boolean all = ContentScoring.holding();
+        if (server == null || !all && ContentTurns.holdsNobody()) {
             STILL.clear();
             return;
         }
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             if (player.isSpectator()) { continue; }
+            if (!all && ContentTurns.free(player)) {
+                STILL.remove(player.getName());
+                continue;
+            }
             double[] at = STILL.get(player.getName());
             if (at == null || at[0] != player.dimension) {
                 STILL.put(player.getName(), new double[] { player.dimension, player.posX, player.posY, player.posZ });
@@ -70,7 +75,8 @@ public final class ContentScoringLobby {
     }
 
     static boolean refused(EntityPlayer player) {
-        if (player.world.isRemote || !ContentScoring.holding()) { return false; }
+        if (player.world.isRemote) { return false; }
+        if (!ContentScoring.holding()) { return ContentTurns.refused(player); }
         ScoreDef lobby = ContentScoring.lobbyDef();
         MinecraftServer server = player.getServer();
         long now = player.world.getTotalWorldTime();

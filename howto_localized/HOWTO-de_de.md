@@ -1469,6 +1469,7 @@ Ein `rocket` nennt mit `rocket` die Entity-Variante, die es aufstellt. Es brauch
 | `soil`         | seed        | Blockname                              | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                             |
 | `rocket`       | rocket      | `namespace:name`                       | keine                      | Die Entity-Variante, die es aufstellt                                                                                                                                       |
 | `rolls`        | nein        | `coin`, `d6`, `2d6+1`, ein Würfel oder Deck | keine                 | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks)   |
+| `passesTurn` | nein | Wahrheitswert | `false` | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge) |
 | `requires`     | nein        | Liste von Mod-IDs oder Pack-Namespaces | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                        |
 
 ### Item-Variantenschlüssel
@@ -5629,6 +5630,43 @@ Jeder Spieler auf einer Seite, der online ist, stimmt ab, gleich auf welcher Sei
 | `results.background` | Text          | ein dunkles Schiefer   | Die Hintergrundfarbe der Karte                                   |
 | `results.seconds`    | Zahl          | `8`                    | Wie lange die Karte steht, mindestens eine Sekunde               |
 
+### Züge
+
+*wertung*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Einstellung | Typ | Standard | Was sie tut |
+| --- | --- | --- | --- |
+| `turns.order` | Text | `fixed` | Wer wann zieht, festgelegt zu Beginn jedes Durchgangs. `fixed` behält die Reihenfolge, in der die Seiten zuerst gesehen wurden, `random` mischt jeden Durchgang neu, `lowestFirst` beginnt mit dem niedrigsten Stand in diesem Ziel, und `lastWinner` beginnt mit der Seite, die die letzte Runde gewonnen hat, der Rest in fester Reihenfolge |
+| `turns.seconds` | Zahl | `60` | Wie lange ein Zug dauert, mindestens eine Sekunde |
+| `turns.gapSeconds` | Zahl | `3` | Eine Pause zwischen den Zügen, in der jede Seite wartet. 0 geht sofort weiter |
+| `turns.held` | Text | `frozen` | Wie ein Spieler auf seinen Zug wartet: `frozen` hält ihn still und lässt ihn nicht schlagen, abbauen, bauen, benutzen oder fallen lassen, wie die Lobby; `spectator` oder `adventure` setzt ihn bis zu seinem Zug in diesen Spielmodus und gibt ihm danach seinen eigenen zurück |
+| `turns.endsAtScore` | Zahl | `0` | Die Züge enden, und mit ihnen die Runde, sobald eine Seite diesen Stand im Ziel erreicht. 0 endet nie nach Punkten |
+| `turns.cycles` | Zahl | `0` | Die Züge enden, und mit ihnen die Runde, nach so vielen Durchgängen, wobei ein Durchgang ein Zug für jede Seite im Spiel ist. 0 läuft, bis etwas anderes die Runde beendet |
+| `turns.mobTags` | Liste | leer | Scoreboard-Tags, die einen Mob ohne Team in die Züge holen, eine Gruppe je Tag |
+| `turns.mobTypes` | Liste | leer | Entity-IDs, die einen Mob ohne Team in die Züge holen, eine Gruppe je ID |
+
+`turns` lässt die Seiten abwechselnd ziehen, solange eine Runde läuft. Jedes Team ist eine Seite; ohne Teams ist jeder Spieler eine eigene Seite, und ein Mob in einem Team zieht mit ihm. Während eine Seite am Zug ist, wartet jede andere: ihre Spieler so, wie `held` es sagt, ihre Mobs eingefroren, so wie die Lobby sie festhält. Eine Seite ohne jemanden im Spiel oder mit lauter ausgeschiedenen Spielern wird übersprungen.
+
+Jeder Zug wird im Chat angesagt, und seine Uhr läuft auf der Aktionsleiste herunter. Die Seite am Zug wird bei 10 verbleibenden Sekunden und noch einmal bei 3 im Chat mit einem Klang gewarnt. `/rdplserver game pass` oder ein Rechtsklick mit einem Item mit `passesTurn` beendet einen Zug früher: Ein Spieler gibt nur den Zug seiner eigenen Seite ab, ein Befehlsblock oder die Konsole den Zug der Seite, die gerade dran ist.
+
+Enden die Züge durch `endsAtScore` oder `cycles`, endet die Runde wie bei jedem anderen Ende: Der Stand wird gezeigt, `awardsTo` und `tiebreak` greifen, und `ends.resets` setzt die Karte zurück. Nur die erste Wertungsdatei mit `turns` lässt ziehen. Die Wortwahl sind die Schlüssel `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` und `noturns`, die `says` einer Würfeldatei ändern kann.
+
 ## Raids
 
 *spielmodi*
@@ -5923,6 +5961,10 @@ Jeder Wurf nutzt den Zufall der Welt selbst und wird mit Absender, Befehl und Er
 | `teamrollwin`                                          | `{result}`, `{score}`                                            |
 | `tiebreak`                                             | `{objective}`, `{sides}`, `{result}`                             |
 | `notie`, `noobjective`                                 | `{objective}`                                                    |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | keine |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | der Reihe nach `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` |
 
 Der eigene Wortlaut der Mod steht in ihren Sprachdateien als `rdpl.game.<key>`, also kann ihn ein Ressourcenpaket auch Sprache für Sprache ändern.
@@ -7705,6 +7747,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver game deck shuffle <name>`                     | 2     | Alle Karten zurücklegen                                                                                                            |
 | `/rdplserver game teamroll [roll]`                         | 0     | Jeder auf der Seite des Absenders würfelt, der höchste gewinnt, ein Gleichstand wird ausgelost. Ohne Teams würfelt der Absender allein |
 | `/rdplserver game tiebreak [objective]`                    | 2     | Eine der an der Spitze gleichauf liegenden Seiten eines Ziels auslosen: des genannten, sonst des ersten Wertungsziels mit `tiebreak`, sonst des ersten |
+| `/rdplserver game pass` | 0 | Den Zug der eigenen Seite früher beenden, wo eine Wertungsdatei ziehen lässt. Von einem Befehlsblock oder der Konsole endet der Zug der Seite, die gerade dran ist |
 | `/rdplserver game last [count]`                            | 0     | Die letzten Würfe, neueste zuerst: 10, oder die angegebene Zahl bis 50                                                             |
 
 Jeder Wurf kann mit `store <objective>` enden, das seine Zahl in den eigenen Punktestand des Absenders in diesem Ziel schreibt, und mit `audience <wer>`, das den Standard des Packs übergeht: `self`, `team` (die Seite des Absenders, ohne Teams nur der Absender), `all`, `radius <Blöcke>` (Spieler in derselben Welt in dieser Entfernung) oder `silent`, das nur speichert. `/rdpl game` wird dorthin weitergereicht.
@@ -7765,7 +7808,7 @@ Jeder Teil von `game` hat ein eigenes Level: 0 für jeden Wurf, 2 für `deck shu
 
 | Einstellung  | Was sie regelt                                                                                                                                   |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `gameLevels` | Ein Teil von `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` oder `last` |
+| `gameLevels` | Ein Teil von `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` oder `pass` |
 
 Die Skala ist die von `goto`, und `4` sperrt einen Teil für alle. Die Tab-Vervollständigung bietet nur die Teile an, die ein Absender ausführen darf. `gameLevels` liegt in der Gruppe `commands` bei den `goto`-Einstellungen.
 

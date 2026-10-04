@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.util.Config;
 
 import net.minecraft.command.CommandBase;
@@ -23,7 +24,7 @@ final class GameCommand {
     private static final String NAME = "rdplserver";
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = Arrays.asList("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last");
+    private static final List<String> ROLLS = Arrays.asList("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass");
     private static final List<String> DECK_ACTIONS = Arrays.asList("draw", "shuffle", "left");
     private static final List<String> PICKS = Arrays.asList("player", "team");
     private static final List<String> OPTIONS = Arrays.asList("store", "audience");
@@ -56,6 +57,11 @@ final class GameCommand {
     static void run(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
         if (args.length < 2 || !ROLLS.contains(args[1])) { throw refused(sender, "usage"); }
         if (!sender.canUseCommand(level(sub(args)), NAME)) { throw refused(sender, "notallowed"); }
+        if ("pass".equals(args[1])) {
+            String refusal = ContentTurns.pass(server, sender);
+            if (refusal != null) { throw refused(sender, refusal); }
+            return;
+        }
         List<String> plain = new ArrayList<>();
         String store = null;
         ContentDice.Audience audience = ContentDice.fallback();

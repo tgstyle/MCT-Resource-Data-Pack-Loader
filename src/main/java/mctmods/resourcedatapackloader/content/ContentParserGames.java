@@ -88,7 +88,25 @@ public final class ContentParserGames {
                 JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "outSays", "You are out until the round ends"),
                 roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())),
-                JsonUtils.getBoolean(json, "tiebreak", false));
+                JsonUtils.getBoolean(json, "tiebreak", false),
+                turns(key, json));
+    }
+
+    @Nullable private static TurnsDef turns(ResourceLocation key, JsonObject json) {
+        if (!json.has("turns")) { return null; }
+        JsonObject turns = JsonUtils.getJsonObject(json, "turns");
+        String order = JsonUtils.getString(turns, "order", TurnsDef.FIXED).trim();
+        if (!TurnsDef.ORDERS.contains(order)) {
+            ContentLog.LOGGER.error("Score file {} takes turns in '{}' order, which is not fixed, random, lowestFirst or lastWinner, so they go in fixed order", key, order);
+            order = TurnsDef.FIXED;
+        }
+        String held = JsonUtils.getString(turns, "held", TurnsDef.FROZEN).trim();
+        if (!TurnsDef.HOLDS.contains(held)) {
+            ContentLog.LOGGER.error("Score file {} holds the sides waiting their turn as '{}', which is not frozen, spectator or adventure, so they are frozen", key, held);
+            held = TurnsDef.FROZEN;
+        }
+        return new TurnsDef(order, Math.max(1, JsonUtils.getInt(turns, "seconds", 60)), Math.max(0, JsonUtils.getInt(turns, "gapSeconds", 3)), held,
+                Math.max(0, JsonUtils.getInt(turns, "endsAtScore", 0)), Math.max(0, JsonUtils.getInt(turns, "cycles", 0)), names(turns, "mobTags"), names(turns, "mobTypes"));
     }
 
     private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {

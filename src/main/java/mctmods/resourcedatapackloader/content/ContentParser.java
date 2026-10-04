@@ -291,7 +291,8 @@ public final class ContentParser {
                 Math.max(0, JsonUtils.getInt(json, "cooldown", 0)),
                 ContentParserContainers.holds(key, json),
                 JsonUtils.getString(json, "rocket", ""),
-                JsonUtils.getString(json, "rolls", "").trim());
+                JsonUtils.getString(json, "rolls", "").trim(),
+                JsonUtils.getBoolean(json, "passesTurn", false));
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

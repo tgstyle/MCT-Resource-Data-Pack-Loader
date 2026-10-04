@@ -1469,6 +1469,7 @@ Un `rocket` nombra con `rocket` la variante de entidad que coloca. Necesita Gala
 | `soil` | seed | nombre de bloque | `minecraft:farmland` | Sobre qué se puede plantar |
 | `rocket` | rocket | `namespace:name` | ninguno | La variante de entidad que coloca |
 | `rolls` | no | `coin`, `d6`, `2d6+1`, un dado o un mazo | ninguno | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos) |
+| `passesTurn` | no | booleano | `false` | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos) |
 | `requires` | no | lista de ids de mods o espacios de nombres de packs | ninguno | El archivo se omite a menos que estén presentes todos |
 
 ### Claves de variantes de ítems
@@ -5629,6 +5630,43 @@ Todos los jugadores conectados de un bando votan, sea cual sea su bando, con `/r
 | `results.background` | texto | un gris pizarra oscuro | El color de fondo de la tarjeta |
 | `results.seconds` | int | `8` | Cuánto permanece la tarjeta, al menos un segundo |
 
+### Turnos
+
+*puntuación*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Ajuste | Tipo | Por defecto | Qué hace |
+| --- | --- | --- | --- |
+| `turns.order` | texto | `fixed` | Quién juega cuándo, fijado al empezar cada vuelta. `fixed` mantiene el orden en que se vieron los bandos por primera vez, `random` baraja cada vuelta, `lowestFirst` empieza por la puntuación más baja en este objetivo y `lastWinner` empieza por el bando que ganó la última ronda, el resto en orden fijo |
+| `turns.seconds` | int | `60` | Cuánto dura un turno, al menos un segundo |
+| `turns.gapSeconds` | int | `3` | Una pausa entre turnos mientras todos los bandos esperan. 0 sigue sin pausa |
+| `turns.held` | texto | `frozen` | Cómo espera un jugador su turno: `frozen` lo deja quieto y le impide golpear, picar, construir, usar o soltar, como hace el vestíbulo; `spectator` o `adventure` lo pone en ese modo de juego hasta su turno y luego le devuelve el suyo |
+| `turns.endsAtScore` | int | `0` | Los turnos terminan, y la ronda con ellos, en cuanto un bando alcanza esta puntuación en el objetivo. 0 nunca termina por puntuación |
+| `turns.cycles` | int | `0` | Los turnos terminan, y la ronda con ellos, tras este número de vueltas; una vuelta es un turno para cada bando en juego. 0 sigue hasta que otra cosa termine la ronda |
+| `turns.mobTags` | lista | vacío | Etiquetas de marcador que meten en los turnos a un mob sin equipo, un grupo por etiqueta |
+| `turns.mobTypes` | lista | vacío | IDs de entidad que meten en los turnos a un mob sin equipo, un grupo por ID |
+
+`turns` hace que los bandos jueguen por turnos mientras dura una ronda. Cada equipo es un bando; sin equipos, cada jugador es un bando propio, y un mob de un equipo va con él. Mientras un bando tiene su turno, todos los demás esperan: sus jugadores como indique `held`, sus mobs congelados igual que los retiene el vestíbulo. Se salta un bando sin nadie en juego o con todos sus jugadores eliminados.
+
+Cada turno se anuncia en el chat y su reloj cuenta atrás en la barra de acción. Al bando que tiene el turno se le avisa en el chat con un sonido cuando quedan 10 segundos y otra vez a los 3. `/rdplserver game pass`, o un clic derecho con un ítem que tenga `passesTurn`, termina un turno antes de tiempo: un jugador solo pasa el turno de su propio bando, y un bloque de comandos o la consola pasan el de quien esté jugando.
+
+Terminar por `endsAtScore` o `cycles` termina la ronda como cualquier otro final: se muestra la clasificación, se aplican `awardsTo` y `tiebreak`, y `ends.resets` reinicia el mapa. Solo el primer archivo de puntuación con `turns` juega por turnos. Los textos son las claves `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` y `noturns`, que el `says` de un archivo de dados puede cambiar.
+
 ## Asaltos
 
 *modos de juego*
@@ -5923,6 +5961,10 @@ Cada tirada usa el azar propio del mundo y se escribe en el registro con quién 
 | `teamrollwin` | `{result}`, `{score}` |
 | `tiebreak` | `{objective}`, `{sides}`, `{result}` |
 | `notie`, `noobjective` | `{objective}` |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | ninguno |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` por orden |
 
 La redacción propia del mod está en sus archivos de idioma como `rdpl.game.<key>`, así que un paquete de recursos también puede cambiarla idioma por idioma.
@@ -7705,6 +7747,7 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia de la carpeta 
 | `/rdplserver game deck shuffle <name>` | 2 | Devolver todas las cartas |
 | `/rdplserver game teamroll [roll]` | 0 | Todos en el bando del remitente tiran y gana el mayor, con el empate sorteado. Sin equipos, el remitente tira solo |
 | `/rdplserver game tiebreak [objective]` | 2 | Sortear uno de los bandos empatados en cabeza de un objetivo: el nombrado, si no el primer objetivo de puntuación con `tiebreak`, si no el primero |
+| `/rdplserver game pass` | 0 | Termina antes de tiempo el turno del bando de quien lo envía cuando un archivo de puntuación juega por turnos. Desde un bloque de comandos o la consola termina el turno de quien esté jugando |
 | `/rdplserver game last [count]` | 0 | Las últimas tiradas, la más reciente primero: 10, o la cantidad indicada hasta 50 |
 
 Cualquier tirada puede terminar con `store <objective>`, que escribe su número en la puntuación propia del remitente en ese objetivo, y con `audience <quién>`, que sustituye el valor por defecto del pack: `self`, `team` (el bando del remitente, o solo el remitente sin equipos), `all`, `radius <bloques>` (jugadores del mismo mundo a esa distancia) o `silent`, que solo guarda. `/rdpl game` se pasa a este comando.
@@ -7765,7 +7808,7 @@ Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck s
 
 | Ajuste | Qué rige |
 | --- | --- |
-| `gameLevels` | Una parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` o `last` |
+| `gameLevels` | Una parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` o `pass` |
 
 La escala es la de `goto`, y `4` cierra una parte a todos. El autocompletado con tabulador ofrece solo las partes que un remitente puede usar. `gameLevels` está en el grupo `commands` junto a los ajustes de `goto`.
 

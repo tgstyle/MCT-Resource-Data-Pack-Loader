@@ -28,9 +28,10 @@ public final class ItemDef {
     public final int cooldown;
     public final String rocket;
     public final String rolls;
+    public final boolean passesTurn;
     private ItemStack resolvedContainer = ItemStack.EMPTY;
 
-    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls) {
+    public ItemDef(ResourceLocation registryName, String type, String creativeTab, boolean alwaysEdible, Map<Integer, ItemVariant> byMeta, List<ItemVariant> visible, List<String> requires, int useDuration, boolean eat, String container, String material, String toolClass, String slot, String crop, String soil, List<String> potionTypes, float attackSpeed, int cooldown, @Nullable ContainerDef holds, String rocket, String rolls, boolean passesTurn) {
         this.registryName = registryName;
         this.type = type;
         this.creativeTab = creativeTab;
@@ -52,6 +53,7 @@ public final class ItemDef {
         this.cooldown = cooldown;
         this.rocket = rocket;
         this.rolls = rolls;
+        this.passesTurn = passesTurn;
     }
 
     public void resolveContainer(ItemStack stack) { this.resolvedContainer = stack; }

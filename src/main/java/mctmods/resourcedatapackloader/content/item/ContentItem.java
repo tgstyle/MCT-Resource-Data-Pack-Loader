@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.item;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentItem;
@@ -58,8 +59,11 @@ import javax.annotation.Nullable;
     @Override public int getMetadata(int damage) { return damage; }
 
     @Override @Nonnull public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
-        if (def.rolls.isEmpty()) { return super.onItemRightClick(world, player, hand); }
-        if (!world.isRemote && player instanceof EntityPlayerMP) { ContentDice.byItem((EntityPlayerMP) player, def.rolls); }
+        if (def.rolls.isEmpty() && !def.passesTurn) { return super.onItemRightClick(world, player, hand); }
+        if (!world.isRemote && player instanceof EntityPlayerMP) {
+            if (def.passesTurn) { ContentTurns.byItem((EntityPlayerMP) player); }
+            else { ContentDice.byItem((EntityPlayerMP) player, def.rolls); }
+        }
         if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
         return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
     }

@@ -195,6 +195,7 @@ public final class ContentScoring {
                         resetting.intermissionSays.replace("{seconds}", Integer.toString(waiting)));
             }
         }
+        ContentTurns.second(FMLCommonHandler.instance().getMinecraftServerInstance(), !closed && waiting == 0);
         if (closed) { return; }
         for (ScoreDef def : BY_NAME.values()) {
             if (def.endsAfterMinutes <= 0 || FINISHED.contains(def.name)) { continue; }
@@ -208,10 +209,11 @@ public final class ContentScoring {
         finish(def, "score", null);
     }
 
-    private static void finish(ScoreDef def, String why, @Nullable String winner) {
+    static void finish(ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name)) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
+        ContentTurns.over(server, def, winner);
         List<String> lines = standings(server, def);
         if (def.endsLastStanding) { backIn(server); }
         if (winner != null) {
@@ -422,7 +424,7 @@ public final class ContentScoring {
     public static boolean standInWaits() { return lobbied ? !holding() : eliminating(); }
 
     @SubscribeEvent public static void onStill(LivingEvent.LivingUpdateEvent event) {
-        if (event.getEntityLiving() instanceof EntityPlayer || event.getEntityLiving().world.isRemote || !holding()) { return; }
+        if (event.getEntityLiving() instanceof EntityPlayer || event.getEntityLiving().world.isRemote || !holding() && ContentTurns.free(event.getEntityLiving())) { return; }
         event.setCanceled(true);
     }
 
@@ -517,6 +519,7 @@ public final class ContentScoring {
             ContentLog.LOGGER.info("The {} match is over, so its standing is cleared for the next one", def.displayName);
         }
         ticks = 0;
+        ContentTurns.reset(server);
         IN_PLAY.clear();
         KILLS.clear();
         DEATHS.clear();
