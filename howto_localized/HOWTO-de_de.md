@@ -2548,11 +2548,13 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
     "fluid": {
       "capacity": 16000,
       "buckets": true,
+      "use": 5,
       "filter": [
         { "fluid": "minecraft:water", "max": 8000 }
       ]
     },
-    "energy": { "capacity": 100000, "transfer": 1000 },
+    "energy": { "capacity": 100000, "transfer": 1000, "use": 20 },
+    "runsDry": "stops",
     "dropsOnDeath": true
   }
 }
@@ -2560,12 +2562,15 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
 
 `storage` gibt der Variante einer beliebigen Entity Item-Slots, einen Flüssigkeitstank und einen Energiespeicher, jeden nur dann, wenn sein Objekt dasteht. Jeder wird als Capability der Entity für Items, Flüssigkeit oder Energie angeboten, sodass alles, was Items, Flüssigkeit oder Energie in eine Entity bewegt, ihn erreicht. Wo die Basis-Entity diese Capability selbst beantwortet, wie ein Mob für Hände und Rüstung und ein Pferd oder eine Güterlore für ihr Inventar, antwortet an ihrer Stelle das Lager des Packs, auf jeder Seite. Ein Spieler öffnet den Bildschirm mit Schleichen und Rechtsklick auf die Entity. Der Inhalt wird mit der Entity gespeichert.
 
-| Schlüssel      | Pflicht | Wert    | Standard | Was er macht                                                                                                                                                                                                                                                   |
-| -------------- | ------- | ------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `items`        | nein    | Objekt  | keins    | Gibt der Entität Item-Slots. Der Bereich besteht aus drei Reihen zu je 9: Jeder Fluid- oder Energiebalken nimmt eine Reihe, die Slots füllen den Rest, also 1x9 mit beiden Balken, 2x9 mit einem und 3x9 mit keinem. Ohne `items` sind nur die Balken zu sehen |
-| `fluid`        | nein    | Objekt  | keins    | Ein Flüssigkeitstank                                                                                                                                                                                                                                           |
-| `energy`       | nein    | Objekt  | keins    | Ein Speicher für Forge Energy                                                                                                                                                                                                                                  |
-| `dropsOnDeath` | nein    | boolean | `true`   | Die gelagerten Items fallen als lose Items dorthin, wo die Entity stirbt. Mit `false` gehen sie verloren. Flüssigkeit und Energie gehen in beiden Fällen verloren                                                                                              |
+| Schlüssel      | Pflicht | Wert                          | Standard | Was er macht                                                                                                                                                                                                                                                                                                                                                                                                    |
+| -------------- | ------- | ----------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`        | nein    | Objekt                        | keins    | Gibt der Entität Item-Slots. Der Bereich besteht aus drei Reihen zu je 9: Jeder Fluid- oder Energiebalken nimmt eine Reihe, die Slots füllen den Rest, also 1x9 mit beiden Balken, 2x9 mit einem und 3x9 mit keinem. Ohne `items` sind nur die Balken zu sehen                                                                                                                                                  |
+| `fluid`        | nein    | Objekt                        | keins    | Ein Flüssigkeitstank                                                                                                                                                                                                                                                                                                                                                                                            |
+| `energy`       | nein    | Objekt                        | keins    | Ein Speicher für Forge Energy                                                                                                                                                                                                                                                                                                                                                                                   |
+| `dropsOnDeath` | nein    | boolean                       | `true`   | Die gelagerten Items fallen als lose Items dorthin, wo die Entity stirbt. Mit `false` gehen sie verloren. Flüssigkeit und Energie gehen in beiden Fällen verloren                                                                                                                                                                                                                                               |
+| `runsDry`      | nein    | `stops`, `slows` oder `hurts` | `stops`  | Was geschieht, solange sie keine volle Sekunde `use` mehr bezahlen kann. `stops`: Sie denkt nicht mehr und bleibt stehen, Aufgaben, Ziele und Verhalten ruhen, bis sie wieder aufgefüllt ist; fallen und weggestoßen werden kann sie weiterhin. `slows`: Sie bewegt sich mit halber Geschwindigkeit. `hurts`: Sie nimmt jede Sekunde 1 Schaden wie durch Verhungern, `immuneTo` mit `starve` verschont sie also |
+
+**Betrieb mit dem, was sie mitführt.** Ein `use` am Tank oder am Speicher sind laufende Kosten: Einmal pro Sekunde entnimmt die Entity so viel daraus, an `transfer`, `buckets` und den Filtern vorbei. Hält einer von beiden weniger als eine volle Sekunde `use`, ist sie leergelaufen: Es wird nichts mehr entnommen, `runsDry` entscheidet, was geschieht, und sobald sie wieder aufgefüllt ist, läuft alles wie zuvor. Nur Lebewesen verbrauchen; auf einer Basis, die nicht lebt, etwa einer Lore, bewirkt `use` nichts.
 
 `items`:
 
@@ -2580,13 +2585,15 @@ Die Uhr läuft nach der Weltzeit, sie pausiert also, wenn niemand spielt, und z�
 | `capacity` | ja      | int, mB                   | keiner   | Wie viel der Tank fasst                                                                                                                                                                                         |
 | `filter`   | nein    | Liste von Filtereinträgen | keine    | Welche Flüssigkeiten der Tank annimmt. Ohne ihn nimmt er alles an                                                                                                                                               |
 | `buckets`  | nein    | boolean                   | `false`  | Ein Rechtsklick mit einem Eimer oder anderen Flüssigkeitsbehälter, ohne zu schleichen, leert ihn in den Tank oder füllt ihn aus dem Tank. Ein Klick, der keine Flüssigkeit bewegt, bleibt der Entity überlassen |
+| `use`      | nein    | int, mB pro Sekunde       | `0`      | Wie viel die Entity jede Sekunde, die sie lebt, aus dem Tank verbraucht. `0` kostet nichts                                                                                                                      |
 
 `energy`:
 
-| Schlüssel  | Pflicht | Wert    | Standard     | Was er macht                                                        |
-| ---------- | ------- | ------- | ------------ | ------------------------------------------------------------------- |
-| `capacity` | ja      | int, FE | keiner       | Wie viel Energie er fasst                                           |
-| `transfer` | nein    | int, FE | keine Grenze | Wie viel Energie höchstens in einem Vorgang hinein- oder herausgeht |
+| Schlüssel  | Pflicht | Wert                | Standard     | Was er macht                                                                   |
+| ---------- | ------- | ------------------- | ------------ | ------------------------------------------------------------------------------ |
+| `capacity` | ja      | int, FE             | keiner       | Wie viel Energie er fasst                                                      |
+| `transfer` | nein    | int, FE             | keine Grenze | Wie viel Energie höchstens in einem Vorgang hinein- oder herausgeht            |
+| `use`      | nein    | int, FE pro Sekunde | `0`          | Wie viel Energie sie jede Sekunde, die sie lebt, verbraucht. `0` kostet nichts |
 
 Ein Filtereintrag. Der erste passende Eintrag entscheidet, und was zu keinem Eintrag passt, wird abgewiesen:
 

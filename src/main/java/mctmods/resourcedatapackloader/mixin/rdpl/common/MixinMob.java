@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
+import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -20,6 +21,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class) public abstract class MixinMob {
@@ -56,6 +58,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private void rdpl$leashable(CallbackInfoReturnable<Boolean> cir) {
         EntityVariantDef def = ContentEntities.def(Mob.class.cast(this));
         if (def != null && def.flags().leashable()) { cir.setReturnValue(true); }
+    }
+
+    @Inject(method = "serverAiStep", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", args = "ldc=sensing"), cancellable = true)
+    private void rdpl$stalled(CallbackInfo ci) {
+        if (EntityStorage.stalled(Mob.class.cast(this))) { ci.cancel(); }
     }
 
     @Redirect(method = "serverAiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;tick()V"))

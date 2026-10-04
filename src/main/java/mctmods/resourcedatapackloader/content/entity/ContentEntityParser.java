@@ -141,7 +141,17 @@ public final class ContentEntityParser {
             return null;
         }
         return new StorageDef(hasItems, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
-                GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true));
+                GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true), Math.max(0, GsonHelper.getAsInt(fluid, "use", 0)),
+                Math.max(0, GsonHelper.getAsInt(energy, "use", 0)), runsDry(key, storage));
+    }
+
+    private static StorageDef.Dry runsDry(ResourceLocation key, JsonObject storage) {
+        String named = GsonHelper.getAsString(storage, "runsDry", "stops");
+        for (StorageDef.Dry dry : StorageDef.Dry.values()) {
+            if (dry.name().equalsIgnoreCase(named)) { return dry; }
+        }
+        ContentLog.LOGGER.error("The storage on entity variant {} sets runsDry to '{}', which is not stops, slows or hurts, so it stops", key, named);
+        return StorageDef.Dry.STOPS;
     }
 
     private static List<FilterDef.Entry> entries(ResourceLocation key, JsonObject json) {
