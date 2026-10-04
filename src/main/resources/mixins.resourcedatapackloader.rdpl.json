@@ -142,6 +142,8 @@
         "client.MixinLevelRenderer",
         "client.MixinLevelRendererWeather",
         "client.MixinLevelRendererLook",
+        "client.MixinFogRendererFluid",
+        "client.MixinLightningBoltRenderer",
         "client.IPostChain",
         "client.MixinChatComponent",
         "client.MixinChatScreen",

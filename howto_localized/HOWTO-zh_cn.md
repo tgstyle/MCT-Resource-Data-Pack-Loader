@@ -2809,6 +2809,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2882,6 +2883,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `waterColor` | 否 | 十六进制颜色 | `FFFFFF` | 水的色调 |
 | `grassColor` | 否 | 十六进制颜色 | 取自气候 | 草的色调，取代温度和降水量所给出的颜色 |
 | `foliageColor` | 否 | 十六进制颜色 | 取自气候 | 树叶的色调，方式相同 |
+| `snowColor` | 否 | 十六进制颜色 | 取自维度 | 地面积雪的色调，优先于维度的 `snowColor` |
 
 ### 装饰与生成
 
@@ -3164,6 +3166,44 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `heat.dayOnly` | 否 | 布尔值 | `true` | 开启时，闪烁随日光淡去，夜间消失 |
 | `heat.mode` | 否 | 字符串 | `screen` | 闪烁落在哪里，`screen` 或 `world` |
 | `heat.startDistance` | 否 | 浮点数 | `32` | 在 `world` 模式下，闪烁从多少格外开始 |
+
+### 雪、流体、星星与闪电
+
+*维度*
+
+这些键同样位于 `sky` 块中，同样只在客户端绘制。
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` 为地面上的雪层和雪块着色。生物群系自己的 `snowColor` 优先于维度的设置，颜色也会像草一样在生物群系交界处过渡混合。
+
+`waterFogColor` 和 `lavaFogColor` 替换镜头在水下或岩浆中看到的雾色。夜晚、深度和夜视仍会像对原版颜色那样让它变暗或变亮。
+
+在此版本中，`waterFogColor` 会在整个维度内取代每个生物群系在其 `effects` 中设置的 `water_fog_color`。未设置该键时，原版生物群系 JSON 的 `water_fog_color` 照常生效。
+
+`starColor` 为星星着色，对原版天空和你自己的[天空渲染器](#天空渲染器)均有效。`starTwinkle` 让星星闪烁：星星分为八组，每组按自己的节奏变暗又变亮，该值决定它们暗下去的程度；为 `1` 时，一组星星在最暗时会完全消失。
+
+`lightningColor` 为闪电着色。
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- | --- |
+| `snowColor` | 否 | 十六进制颜色 | 白色 | 雪层和雪块的色调 |
+| `waterFogColor` | 否 | 十六进制颜色 | 生物群系的颜色 | 水下的雾色 |
+| `lavaFogColor` | 否 | 十六进制颜色 | `991A00` | 岩浆中的雾色 |
+| `starColor` | 否 | 十六进制颜色 | 白色 | 星星的色调 |
+| `starTwinkle` | 否 | 浮点数，0 到 1 | `0.0` | 星星闪烁时变暗的程度。`0` 表示不闪烁 |
+| `lightningColor` | 否 | 十六进制颜色 | `737380` | 闪电的色调 |
 
 ### `physics` 块
 

@@ -40,6 +40,21 @@ public final class ContentFogSampler {
 
     public static Vec3 color(Vec3 fallback) { return current == null ? fallback : current; }
 
+    public static int waterFog(int biome) {
+        SkyLookDef look = look(Minecraft.getInstance().level);
+        return look == null || look.waterFogColor() == SkyLookDef.UNSET ? biome : look.waterFogColor();
+    }
+
+    public static int lavaFog() {
+        SkyLookDef look = look(Minecraft.getInstance().level);
+        return look == null ? SkyLookDef.UNSET : look.lavaFogColor();
+    }
+
+    public static int lightning() {
+        SkyLookDef look = look(Minecraft.getInstance().level);
+        return look == null ? SkyLookDef.UNSET : look.lightningColor();
+    }
+
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;

@@ -2809,6 +2809,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2882,6 +2883,7 @@ Un bioma es una entrada de data pack en esta versión, escrita por ti bajo `worl
 | `waterColor`   | no          | color hexadecimal | `FFFFFF`         | Tinte del agua |
 | `grassColor`   | no          | color hexadecimal | según el clima   | Tinte de la hierba, en lugar del color que darían la temperatura y la lluvia |
 | `foliageColor` | no          | color hexadecimal | según el clima   | Tinte de las hojas, del mismo modo |
+| `snowColor`    | no          | color hexadecimal | el de la dimensión | Tinte de la nieve del suelo, por encima del `snowColor` de la dimensión |
 
 ### Decoración y apariciones
 
@@ -3164,6 +3166,44 @@ Sin `cloudLayers`, `cloudSpeed` cambia la velocidad de la única capa de vanilla
 | `heat.dayOnly`         | no          | boolean       | `true`        | Activado, el espejismo se desvanece con la luz del día y desaparece de noche |
 | `heat.mode`            | no          | string        | `screen`      | Dónde se aplica el espejismo, `screen` o `world` |
 | `heat.startDistance`   | no          | float         | `32`          | En el modo `world`, a cuántos bloques de distancia empieza el espejismo |
+
+### Nieve, fluidos, estrellas y rayos
+
+*dimensiones*
+
+Estas claves también van en el bloque `sky` y también se dibujan solo en el cliente.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` tiñe las capas de nieve y los bloques de nieve del suelo. El `snowColor` propio de un bioma tiene prioridad sobre el de la dimensión, y los colores se funden en los bordes entre biomas como lo hace la hierba.
+
+`waterFogColor` y `lavaFogColor` sustituyen el color de la niebla que ve la cámara bajo el agua o dentro de la lava. La noche, la profundidad y la visión nocturna lo siguen oscureciendo o aclarando como hacen con el color de vanilla.
+
+En esta versión, `waterFogColor` sustituye en toda la dimensión el `water_fog_color` que cada bioma lleva en sus `effects`. Si la clave no está puesta, el `water_fog_color` de un JSON de bioma de vanilla funciona como siempre.
+
+`starColor` tiñe las estrellas, tanto en el cielo de vanilla como en el tuyo de [El renderizador del cielo](#el-renderizador-del-cielo). `starTwinkle` las hace titilar: las estrellas se reparten en ocho grupos que se apagan y se avivan cada uno a su ritmo, y el valor indica cuánto se apagan; con `1` un grupo desaparece del todo en su punto más bajo.
+
+`lightningColor` tiñe los rayos.
+
+| Clave            | Obligatorio | Valor             | Por defecto  | Qué hace |
+| ---------------- | ----------- | ----------------- | ------------ | -------- |
+| `snowColor`      | no          | color hexadecimal | blanco       | Tinte de las capas y los bloques de nieve |
+| `waterFogColor`  | no          | color hexadecimal | el del bioma | Color de la niebla bajo el agua |
+| `lavaFogColor`   | no          | color hexadecimal | `991A00`     | Color de la niebla en la lava |
+| `starColor`      | no          | color hexadecimal | blanco       | Tinte de las estrellas |
+| `starTwinkle`    | no          | float, 0 a 1      | `0.0`        | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
+| `lightningColor` | no          | color hexadecimal | `737380`     | Tinte de los rayos |
 
 ### El bloque `physics`
 

@@ -2809,6 +2809,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2882,6 +2883,7 @@ Ein Biom ist in dieser Version ein Datenpaket-Eintrag, der für dich unter `worl
 | `waterColor`   | nein    | Hex-Farbe | `FFFFFF`      | Wasserfärbung                                                            |
 | `grassColor`   | nein    | Hex-Farbe | aus dem Klima | Grasfärbung, anstelle der Farbe, die Temperatur und Niederschlag ergäben |
 | `foliageColor` | nein    | Hex-Farbe | aus dem Klima | Laubfärbung, auf dieselbe Weise                                          |
+| `snowColor`    | nein    | Hex-Farbe | die der Dimension | Färbung des Schnees am Boden, vor der `snowColor` der Dimension      |
 
 ### Dekoration und Spawns
 
@@ -3164,6 +3166,44 @@ Ohne `cloudLayers` ändert `cloudSpeed` das Tempo der einen Vanilla-Schicht auf 
 | `heat.dayOnly`         | nein    | boolean        | `true`        | An, das Flimmern schwindet mit dem Tageslicht und ist nachts weg                    |
 | `heat.mode`            | nein    | string         | `screen`      | Wo das Flimmern liegt, `screen` oder `world`                                        |
 | `heat.startDistance`   | nein    | float          | `32`          | Im Modus `world` die Entfernung in Blöcken, ab der es flimmert                      |
+
+### Schnee, Flüssigkeiten, Sterne und Blitze
+
+*dimensions*
+
+Auch diese Schlüssel stehen im Block `sky`, und auch sie werden nur auf dem Client gezeichnet.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` färbt Schneeschichten und Schneeblöcke am Boden. Die eigene `snowColor` eines Bioms geht der der Dimension vor, und an Biomgrenzen gehen die Farben ineinander über wie beim Gras.
+
+`waterFogColor` und `lavaFogColor` ersetzen die Nebelfarbe, die die Kamera unter Wasser oder in Lava sieht. Nacht, Tiefe und Nachtsicht dunkeln sie weiterhin ab oder hellen sie auf, wie bei der Vanilla-Farbe.
+
+In dieser Version ersetzt `waterFogColor` überall in der Dimension die `water_fog_color`, die jedes Biom in seinen `effects` trägt. Ist der Schlüssel nicht gesetzt, wirkt die `water_fog_color` einer Vanilla-Biom-JSON wie gewohnt.
+
+`starColor` färbt die Sterne, im Vanilla-Himmel wie in einem eigenen aus [Der Himmelsrenderer](#der-himmelsrenderer). `starTwinkle` lässt sie funkeln: Die Sterne bilden acht Gruppen, die jede in ihrem eigenen Takt dunkler und wieder heller werden, und der Wert gibt an, wie weit sie abdunkeln; bei `1` verschwindet eine Gruppe an ihrem Tiefpunkt ganz.
+
+`lightningColor` färbt Blitze.
+
+| Schlüssel        | Pflicht | Wert           | Standard      | Was er macht                                                         |
+| ---------------- | ------- | -------------- | ------------- | -------------------------------------------------------------------- |
+| `snowColor`      | nein    | Hex-Farbe      | weiß          | Färbung von Schneeschichten und Schneeblöcken                        |
+| `waterFogColor`  | nein    | Hex-Farbe      | die des Bioms | Nebelfarbe unter Wasser                                              |
+| `lavaFogColor`   | nein    | Hex-Farbe      | `991A00`      | Nebelfarbe in Lava                                                   |
+| `starColor`      | nein    | Hex-Farbe      | weiß          | Färbung der Sterne                                                   |
+| `starTwinkle`    | nein    | float, 0 bis 1 | `0.0`         | Wie weit die Sterne beim Funkeln abdunkeln. `0` lässt sie ruhig leuchten |
+| `lightningColor` | nein    | Hex-Farbe      | `737380`      | Färbung der Blitze                                                   |
 
 ### Der Block `physics`
 
