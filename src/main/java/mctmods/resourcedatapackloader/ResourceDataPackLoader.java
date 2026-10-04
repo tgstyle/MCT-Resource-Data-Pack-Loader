@@ -293,6 +293,7 @@ import java.util.Set;
         modBus.addListener(ContentEntityTypes::placements);
         RDPLNetwork.register();
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
+        if (ContentExposures.spreads()) { MinecraftForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
         if (ContentCaveRegions.ambient()) { MinecraftForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         MinecraftForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);
