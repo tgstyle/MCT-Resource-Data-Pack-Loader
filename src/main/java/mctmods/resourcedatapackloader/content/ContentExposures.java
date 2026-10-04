@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.ExposureSpread;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -29,10 +30,12 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -55,9 +58,23 @@ public final class ContentExposures {
 
     public static boolean enabled() { return !ContentRegistry.exposures().isEmpty(); }
 
+    public static boolean spreads() {
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            if (def.spreads()) { return true; }
+        }
+        return false;
+    }
+
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         for (ExposureDef def : ContentRegistry.exposures()) { tick(def, player); }
+    }
+
+    public static void onMobTick(EntityTickEvent.Post event) {
+        if (!(event.getEntity() instanceof LivingEntity living) || living instanceof Player || living.level().isClientSide()) { return; }
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            if (def.spreads()) { tickMob(def, living); }
+        }
     }
 
     private static void tick(ExposureDef def, ServerPlayer player) {
@@ -65,20 +82,45 @@ public final class ContentExposures {
             applyLevel(def, player, 0);
             return;
         }
-        if (player.tickCount % def.scanInterval() == 0) { applyLevel(def, player, scan(def, player)); }
+        if (player.tickCount % def.scanInterval() == 0) {
+            int reached = scan(def, player);
+            applyLevel(def, player, reached);
+            spreadFrom(def, player, reached);
+        }
         damageTick(def, player);
     }
 
-    private static int scan(ExposureDef def, ServerPlayer player) {
-        if (!def.immunity().isEmpty()) {
-            Holder<MobEffect> immune = immunity(def);
-            if (immune != null && player.hasEffect(immune)) { return 0; }
+    private static void tickMob(ExposureDef def, LivingEntity mob) {
+        boolean catches = ExposureSpread.catches(def, mob);
+        if (!catches && ExposureSpread.carrierLevel(def, mob) <= 0) { return; }
+        if (mob.tickCount % def.scanInterval() == 0) {
+            int reached = catches && !immune(def, mob) ? Math.min(def.levels().size(), ExposureSpread.caughtLevel(def, mob)) : 0;
+            if (catches) { applyLevel(def, mob, reached); }
+            spreadFrom(def, mob, reached);
         }
+        if (catches) { damageTick(def, mob); }
+    }
+
+    private static void spreadFrom(ExposureDef def, LivingEntity living, int reached) {
+        if (!def.spreads()) { return; }
+        int spreading = Math.max(ExposureSpread.carrierLevel(def, living), def.contagious() ? reached : 0);
+        ExposureSpread.spread(def, living, Math.min(def.levels().size(), spreading));
+    }
+
+    private static int scan(ExposureDef def, ServerPlayer player) {
+        if (immune(def, player)) { return 0; }
         int most = def.levels().size();
         ServerLevel level = player.level();
         int reached = Math.max(def.dimensions().getOrDefault(level.dimension().identifier(), 0), scanItems(def, player, most));
+        reached = Math.max(reached, Math.max(ExposureSpread.weatherLevel(def, player), ExposureSpread.caughtLevel(def, player)));
         if (reached >= most) { return most; }
         return Math.max(reached, scanWorld(def, player, level, most));
+    }
+
+    private static boolean immune(ExposureDef def, LivingEntity living) {
+        if (def.immunity().isEmpty()) { return false; }
+        Holder<MobEffect> immune = immunity(def);
+        return immune != null && living.hasEffect(immune);
     }
 
     @Nullable private static Holder<MobEffect> immunity(ExposureDef def) {
@@ -150,41 +192,41 @@ public final class ContentExposures {
         return reached;
     }
 
-    private static void applyLevel(ExposureDef def, ServerPlayer player, int reached) {
+    private static void applyLevel(ExposureDef def, LivingEntity living, int reached) {
         int duration = def.scanInterval() * 2 + 20;
         List<Holder<MobEffect>> markers = markers(def);
         for (int index = 0; index < markers.size(); index++) {
             Holder<MobEffect> marker = markers.get(index);
             if (index + 1 == reached || marker == null) { continue; }
-            player.removeEffect(marker);
+            living.removeEffect(marker);
         }
         if (reached <= 0) { return; }
         ExposureLevelDef entry = def.levels().get(reached - 1);
         Holder<MobEffect> marker = markers.get(reached - 1);
         if (marker == null) { return; }
-        player.addEffect(new MobEffectInstance(marker, duration, 0, false, true));
+        living.addEffect(new MobEffectInstance(marker, duration, 0, false, true));
         for (PotionEffectDef extra : entry.extras()) {
             Holder<MobEffect> effect = extraEffect(extra, def);
             if (effect == null) { continue; }
-            player.addEffect(new MobEffectInstance(effect, extra.duration() > 0 ? extra.duration() : duration, extra.amplifier(), extra.ambient(), extra.showParticles()));
+            living.addEffect(new MobEffectInstance(effect, extra.duration() > 0 ? extra.duration() : duration, extra.amplifier(), extra.ambient(), extra.showParticles()));
         }
     }
 
-    private static void damageTick(ExposureDef def, ServerPlayer player) {
+    private static void damageTick(ExposureDef def, LivingEntity living) {
         ExposureLevelDef active = null;
         List<Holder<MobEffect>> markers = markers(def);
         for (int index = 0; index < markers.size(); index++) {
             Holder<MobEffect> marker = markers.get(index);
-            if (marker != null && player.hasEffect(marker)) { active = def.levels().get(index); }
+            if (marker != null && living.hasEffect(marker)) { active = def.levels().get(index); }
         }
-        CompoundTag data = player.getPersistentData();
+        CompoundTag data = living.getPersistentData();
         String tag = TIMER + def.name();
         if (active != null && active.damage() > 0.0F && active.damageInterval() > 0) {
             int timer = data.getIntOr(tag, 0) + 1;
             if (timer >= active.damageInterval()) {
                 timer = 0;
-                ServerLevel level = player.level();
-                player.hurtServer(level, source(def, player, level), active.damage());
+                ServerLevel level = (ServerLevel) living.level();
+                living.hurtServer(level, source(def, living, level), active.damage());
             }
             data.putInt(tag, timer);
         }
@@ -212,10 +254,10 @@ public final class ContentExposures {
         return found;
     }
 
-    private static DamageSource source(ExposureDef def, ServerPlayer player, ServerLevel level) {
+    private static DamageSource source(ExposureDef def, LivingEntity living, ServerLevel level) {
         ResourceKey<DamageType> key = ResourceKey.create(Registries.DAMAGE_TYPE, def.key());
         Holder<DamageType> type = level.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).get(key).orElse(null);
-        return type == null ? player.damageSources().magic() : new ExposureDamage(type);
+        return type == null ? living.damageSources().magic() : new ExposureDamage(type);
     }
 
     private static Map<Block, Integer> blockLevels(ExposureDef def) {

@@ -296,6 +296,7 @@ import java.util.Set;
         modBus.addListener(ContentEntityTypes::placements);
         modBus.addListener(RDPLNetwork::register);
         if (ContentExposures.enabled()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onPlayerTick); }
+        if (ContentExposures.spreads()) { NeoForge.EVENT_BUS.addListener(ContentExposures::onMobTick); }
         if (ContentCaveRegions.ambient()) { NeoForge.EVENT_BUS.addListener(ContentCaveAmbience::onPlayerTick); }
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPlacementCheck);
         NeoForge.EVENT_BUS.addListener(ContentSpawning::onPositionCheck);

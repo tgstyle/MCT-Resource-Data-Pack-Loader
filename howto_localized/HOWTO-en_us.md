@@ -2614,7 +2614,7 @@ A filter entry. The first entry that matches decides, and anything no entry matc
 
 The file's path is the hazard's name, and its death message comes from the lang key `death.attack.rdpl.<file name>`. Exposures load only while `load` is on and `vanillaClients` is off.
 
-A pack-defined hazard: named blocks, items and dimensions expose players standing near those blocks, carrying those items or staying in those dimensions, in levels, each level applying effects and periodic damage. One file defines one hazard; several run side by side.
+A pack-defined hazard: named blocks, items and dimensions expose players standing near those blocks, carrying those items or staying in those dimensions, in levels, each level applying effects and periodic damage. A hazard can also be caught from mobs and players nearby, or fall with the rain ([Contagion and weather](#contagion-and-weather)). One file defines one hazard; several run side by side.
 
 ```json
 {
@@ -2638,9 +2638,9 @@ A pack-defined hazard: named blocks, items and dimensions expose players standin
 
 | Key                   | Required         | Value                            | Default | What it does                                                                                    |
 | --------------------- | ---------------- | -------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
-| `blocks`              | one of the three | list of `block` or `block=level` |         | Blocks that expose a player standing near them. No level means 1                                |
-| `items`               | one of the three | list of `item` or `item=level`   |         | Items that expose a player carrying or wearing them                                             |
-| `dimensions`          | one of the three | list of `dim` or `dim=level`     |         | Dimension ids that expose any player in them                                                    |
+| `blocks`              | one of the five  | list of `block` or `block=level` |         | Blocks that expose a player standing near them. No level means 1                                |
+| `items`               | one of the five  | list of `item` or `item=level`   |         | Items that expose a player carrying or wearing them                                             |
+| `dimensions`          | one of the five  | list of `dim` or `dim=level`     |         | Dimension ids that expose any player in them                                                    |
 | `levels`              | yes              | list of levels                   |         | The severity ladder, first entry is level 1. A player gets the highest level any source reaches |
 | `immunity`            | no               | potion name                      | none    | An effect whose bearer is not exposed at all                                                    |
 | `scanInterval`        | no               | ticks                            | `20`    | How often surroundings and inventory are checked                                                |
@@ -2660,6 +2660,39 @@ A pack-defined hazard: named blocks, items and dimensions expose players standin
 | `effects`        | no       | list of effects | none    | Extra effects applied alongside, the same shape potion types use. Without a `duration` they follow the scan window           |
 
 The level effects last slightly past the next scan, so walking away lets them lapse on their own. Death by exposure damage reads its message from `death.attack.rdpl.<file name>`, which the pack's lang files supply.
+
+### Contagion and weather
+
+*exposures*
+
+Two more sources, written in the same file. Carriers and exposed bearers pass the hazard on to the catchers around them, and rain or thunder exposes players it falls on.
+
+```json
+{
+  "carriers": [ "minecraft:zombie_villager=2" ],
+  "contagious": true,
+  "catchers": [ "minecraft:player", "minecraft:villager" ],
+  "contagionRange": 4,
+  "contagionChance": 0.1,
+  "contagionDuration": 1200,
+  "weather": [ "rain", "thunder=2" ],
+  "weatherDimensions": [ "minecraft:overworld" ],
+  "levels": [ { "effect": "mypack:sickness_1", "damage": 1.0 }, { "effect": "mypack:sickness_2", "damage": 2.0, "damageInterval": 80 } ]
+}
+```
+
+| Key                 | Required        | Value                              | Default            | What it does                                                                                                            |
+| ------------------- | --------------- | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `carriers`          | one of the five | list of `entity` or `entity=level` |                    | Mobs, or `minecraft:player`, that always pass the hazard on at that level. No level means 1                             |
+| `contagious`        | no              | boolean                            | `false`            | Anyone exposed passes the hazard on at the level they hold                                                              |
+| `catchers`          | no              | list of entity names               | `minecraft:player` | Who can catch it. A mob catches it only from carriers and bearers, never from blocks, items or weather                  |
+| `contagionRange`    | no              | blocks                             | `4`                | How far a carrier or bearer reaches, as a sphere                                                                        |
+| `contagionChance`   | no              | `0` to `1`                         | `0.1`              | The chance, at every scan of the carrier or bearer, that each catcher in reach catches it                               |
+| `contagionDuration` | no              | ticks                              | `1200`             | How long a caught hazard holds the level caught. Catching it again starts the time over                                 |
+| `weather`           | one of the five | list of `kind` or `kind=level`     |                    | `rain` exposes a player the rain falls on: open sky overhead in a biome where it rains. `thunder` counts during a storm |
+| `weatherDimensions` | no              | list of `dim`                      | every dimension    | Dimension ids where the weather exposes                                                                                 |
+
+A caught hazard counts as one more source in the scan, the highest level winning as with any other, and `immunity` protects against it as well. Nothing spreads unless `contagionRange` and `contagionChance` are above `0` and the file names `carriers` or sets `contagious`, and mobs are only looked at when some file does.
 
 ---
 
