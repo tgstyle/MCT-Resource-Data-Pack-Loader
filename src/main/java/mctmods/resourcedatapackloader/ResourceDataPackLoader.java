@@ -236,6 +236,8 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CenterCard.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentFogSampler.class);
+            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentHeatShimmer.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.ProspectTooltip.class);
             MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
             if (mctmods.resourcedatapackloader.content.item.ContentItemContainer.baubled()) { mctmods.resourcedatapackloader.client.PouchKey.register(); }

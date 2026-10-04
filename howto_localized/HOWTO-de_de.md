@@ -3300,33 +3300,43 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 *dimensionen*
 
-| Schlüssel          | Pflicht | Wert               | Standard | Was er macht                                                                                              |
-| ------------------ | ------- | ------------------ | -------- | --------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | nein    | boolean            | `true`   | Ob Tageslicht sie erreicht                                                                                |
-| `surfaceWorld`     | nein    | boolean            | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                 |
-| `respawn`          | nein    | boolean            | `true`   | Ob Spieler hier respawnen                                                                                 |
-| `respawnDimension` | nein    | int                | keine    | Wo sie stattdessen respawnen                                                                              |
-| `spawning`         | nein    | boolean            | `true`   | Ob Mobs spawnen                                                                                           |
-| `nether`           | nein    | boolean            | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                      |
-| `beds`             | nein    | boolean            | `true`   | Aus explodieren Betten                                                                                    |
-| `waterVaporizes`   | nein    | boolean            | `false`  | Wasser verdampft                                                                                          |
-| `cloudHeight`      | nein    | int                | `128`    | Wo die Wolken hängen                                                                                      |
-| `cloudColor`       | nein    | Hex-Farbe          | keine    | Wolkenfärbung                                                                                             |
-| `groundLevel`      | nein    | int                | `63`     | Meereshöhe, genutzt für den Horizont und die Spawnsuche                                                   |
-| `movementFactor`   | nein    | float              | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                    |
-| `fogColor`         | nein    | Hex-Farbe          | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel                                     |
-| `showFog`          | nein    | boolean            | `false`  | Dichter Nebel, wie im Nether                                                                              |
-| `skyColor`         | nein    | Hex-Farbe          | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel |
-| `fixedTime`        | nein    | int, Ticks         | keine    | Hält die Tageszeit fest                                                                                   |
-| `sunriseColors`    | nein    | boolean            | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                            |
-| `ambientLight`     | nein    | float, 0 bis 1     | `0.0`    | Mindestlicht überall                                                                                      |
-| `starBrightness`   | nein    | float, 0 bis 1     | keine    | Wie hell die Sterne sind                                                                                  |
-| `renderSky`        | nein    | boolean            | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne – es bleibt die Nebelfarbe                         |
-| `renderClouds`     | nein    | boolean            | `true`   | Aus werden keine Wolken gezeichnet                                                                        |
-| `renderWeather`    | nein    | boolean            | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                             |
-| `sun`              | nein    | Objekt             | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                      |
-| `bodies`           | nein    | Liste von Objekten | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                           |
-| `stars`            | nein    | Objekt             | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                |
+| Schlüssel          | Pflicht | Wert                    | Standard | Was er macht                                                                                                                   |
+| ------------------ | ------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `hasSkyLight`      | nein    | boolean                 | `true`   | Ob Tageslicht sie erreicht                                                                                                     |
+| `surfaceWorld`     | nein    | boolean                 | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                      |
+| `respawn`          | nein    | boolean                 | `true`   | Ob Spieler hier respawnen                                                                                                      |
+| `respawnDimension` | nein    | int                     | keine    | Wo sie stattdessen respawnen                                                                                                   |
+| `spawning`         | nein    | boolean                 | `true`   | Ob Mobs spawnen                                                                                                                |
+| `nether`           | nein    | boolean                 | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                           |
+| `beds`             | nein    | boolean                 | `true`   | Aus explodieren Betten                                                                                                         |
+| `waterVaporizes`   | nein    | boolean                 | `false`  | Wasser verdampft                                                                                                               |
+| `cloudHeight`      | nein    | int                     | `128`    | Wo die Wolken hängen                                                                                                           |
+| `cloudColor`       | nein    | Hex-Farbe               | keine    | Wolkenfärbung                                                                                                                  |
+| `cloudSpeed`       | nein    | float                   | `1.0`    | Wie schnell die Wolken ziehen. `0` hält sie still, ein negativer Wert kehrt die Richtung um                                    |
+| `cloudLayers`      | nein    | Liste von Objekten      | keine    | Mehrere Wolkenschichten. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                                 |
+| `groundLevel`      | nein    | int                     | `63`     | Meereshöhe, genutzt für den Horizont und die Spawnsuche                                                                        |
+| `movementFactor`   | nein    | float                   | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                         |
+| `fogColor`         | nein    | Hex-Farbe oder `sample` | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler wie der Vanilla-Nebel. `sample` mischt den Himmel mit dem Boden um den Spieler |
+| `showFog`          | nein    | boolean                 | `false`  | Dichter Nebel, wie im Nether                                                                                                   |
+| `fogDensity`       | nein    | float, 0 bis 1          | `0.0`    | Wie dicht der Nebel ist. `0` lässt die Vanilla-Sichtweite, `1` zieht ihn bis auf 8 Blöcke heran                                |
+| `fogGroundWeight`  | nein    | float, 0 bis 1          | `0.5`    | Bei `fogColor: sample`, wie stark der Boden gegenüber dem Himmel zählt                                                         |
+| `skyColor`         | nein    | Hex-Farbe               | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                      |
+| `fixedTime`        | nein    | int, Ticks              | keine    | Hält die Tageszeit fest                                                                                                        |
+| `sunriseColors`    | nein    | boolean                 | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                 |
+| `ambientLight`     | nein    | float, 0 bis 1          | `0.0`    | Mindestlicht überall                                                                                                           |
+| `lightSkyColor`    | nein    | Hex-Farbe               | keine    | Färbung des Tageslichts auf Blöcken und Mobs                                                                                   |
+| `lightBlockColor`  | nein    | Hex-Farbe               | keine    | Färbung von Fackel- und anderem Blocklicht                                                                                     |
+| `skyFactor`        | nein    | float, 0 bis 1          | `1.0`    | Wie hell das Tageslicht wirkt. Nur auf dem Client gezeichnet, das Spawnen von Mobs ändert sich nicht                           |
+| `starBrightness`   | nein    | float, 0 bis 1          | keine    | Wie hell die Sterne sind                                                                                                       |
+| `sunBrightness`    | nein    | float, 0 bis 1          | `1.0`    | Wie hell die Sonne gezeichnet wird                                                                                             |
+| `moonBrightness`   | nein    | float, 0 bis 1          | `1.0`    | Wie hell der Mond gezeichnet wird, mit `bodies` jeder Körper außer der Sonne                                                   |
+| `heat`             | nein    | Objekt                  | keiner   | Hitzeflimmern über dem Bild. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                             |
+| `renderSky`        | nein    | boolean                 | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne – es bleibt die Nebelfarbe                                              |
+| `renderClouds`     | nein    | boolean                 | `true`   | Aus werden keine Wolken gezeichnet                                                                                             |
+| `renderWeather`    | nein    | boolean                 | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                  |
+| `sun`              | nein    | Objekt                  | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                           |
+| `bodies`           | nein    | Liste von Objekten      | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                |
+| `stars`            | nein    | Objekt                  | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                     |
 
 ### Der Himmelsrenderer
 
@@ -3347,6 +3357,56 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | `bodies[].followsTime` | nein    | boolean     | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
 | `stars.count`          | nein    | int         | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
 | `stars.size`           | nein    | float       | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
+
+### Nebel, Licht, Wolken und Hitze
+
+*dimensions*
+
+Diese Schlüssel stehen im Block `sky` neben den älteren, die wie bisher weiter funktionieren. Alle werden nur auf dem Client gezeichnet, ein dedizierter Server übergeht sie also, und kein Spielstand ändert sich.
+
+```json
+{
+  "sky": {
+    "fogColor": "sample",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
+  }
+}
+```
+
+`fogColor: "sample"` liest einmal pro Sekunde die obersten Blöcke in einem Quadrat von 33 mal 33 Blöcken um den Spieler, beleuchtet ihre Kartenfarben passend zur Tageszeit und mischt sie mit der Himmelsfarbe. Der Nebel gleitet zu jeder neuen Probe hinüber. `fogDensity` wirkt mit einer gemessenen, einer festen oder ganz ohne Nebelfarbe. Unter Wasser, in Lava und bei Blindheit bleibt der Vanilla-Nebel.
+
+`lightSkyColor` und `lightBlockColor` färben die Lightmap, also nimmt jeder beleuchtete Block und Mob die Färbung an. `skyFactor` regelt, wie hell das Tageslicht wirkt, während die Lichtstufe, die der Server für Spawnen und Pflanzen zählt, gleich bleibt.
+
+Ohne `cloudLayers` ändert `cloudSpeed` das Tempo der einen Vanilla-Schicht auf `cloudHeight`. Mit `cloudLayers` ist jeder Eintrag eine eigene Schicht, und `cloudHeight`, `cloudSpeed` und `cloudColor` füllen aus, was ein Eintrag weglässt. `renderClouds: false` zeichnet weiterhin keine.
+
+`sunBrightness` und `moonBrightness` blenden Sonne und Mond zusätzlich zum Vanilla-Ausblenden bei Regen aus, im Vanilla-Himmel wie in einem eigenen aus [Der Himmelsrenderer](#der-himmelsrenderer).
+
+`heat` legt ein welliges Flimmern über das Bild, solange der Spieler in einem Biom steht, das mindestens so warm ist wie `minTemperature`. Eine Wüste hat 2.0, Ebenen haben 0.8. Das Flimmern blendet über ein paar Sekunden ein und aus und bleibt unter Wasser aus. Es braucht Shader-Unterstützung der Grafikkarte und bleibt aus, solange ein anderer Vollbild-Shader läuft, etwa die Zuschaueransicht.
+
+`mode` bestimmt, wo das Flimmern liegt. `screen` verzerrt einen festen Streifen im unteren Teil des Bildschirms, ganz gleich, wohin der Spieler schaut. `world` folgt stattdessen der Landschaft: Gelände, das näher liegt als `startDistance` Blöcke, bleibt scharf, zum fernen Rand der Sichtweite hin, wo der Nebel einsetzt, wird das Flimmern stärker, und der Himmel flimmert nie, ob der Spieler nach unten, geradeaus oder nach oben schaut.
+
+| Schlüssel              | Pflicht | Wert           | Standard      | Was er macht                                                                        |
+| ---------------------- | ------- | -------------- | ------------- | ----------------------------------------------------------------------------------- |
+| `cloudLayers[].height` | nein    | float          | `cloudHeight` | Wo die Schicht hängt                                                                |
+| `cloudLayers[].speed`  | nein    | float          | `cloudSpeed`  | Wie schnell sie zieht. `0` hält sie still, ein negativer Wert kehrt die Richtung um |
+| `cloudLayers[].color`  | nein    | Hex-Farbe      | `cloudColor`  | Ihre Färbung                                                                        |
+| `heat.strength`        | nein    | float, 0 bis 1 | `0.1`         | Wie stark das Flimmern ist                                                          |
+| `heat.minTemperature`  | nein    | float          | `1.5`         | Die kühlste Biomtemperatur, bei der es flimmert                                     |
+| `heat.dayOnly`         | nein    | boolean        | `true`        | An, das Flimmern schwindet mit dem Tageslicht und ist nachts weg                    |
+| `heat.mode`            | nein    | string         | `screen`      | Wo das Flimmern liegt, `screen` oder `world`                                        |
+| `heat.startDistance`   | nein    | float          | `32`          | Im Modus `world` die Entfernung in Blöcken, ab der es flimmert                      |
 
 ### Der Block `physics`
 

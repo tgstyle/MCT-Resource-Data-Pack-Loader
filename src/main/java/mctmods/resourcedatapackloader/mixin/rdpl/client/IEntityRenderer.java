@@ -4,4 +4,10 @@ import net.minecraft.client.renderer.EntityRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(EntityRenderer.class) public interface IEntityRenderer { @Accessor int getRendererUpdateCount(); }
+@Mixin(EntityRenderer.class) public interface IEntityRenderer {
+    @Accessor int getRendererUpdateCount();
+
+    @Accessor float getBossColorModifier();
+
+    @Accessor float getBossColorModifierPrev();
+}

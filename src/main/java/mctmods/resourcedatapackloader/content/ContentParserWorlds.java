@@ -432,7 +432,9 @@ public final class ContentParserWorlds {
         }
         GalacticraftDef galacticraft = ContentParserCelestial.galacticraft(key, json);
         boolean belt = galacticraft != null && CelestialDef.ASTEROIDS.equals(galacticraft.body.kind);
-        String fog = JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
+        String fog = ContentParserSkyLook.samples(sky) ? "" : JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
+        int cloudHeight = JsonUtils.getInt(sky, "cloudHeight", 128);
+        int clouds = cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString());
         return new DimensionDef(key,
                 JsonUtils.getInt(json, "id"),
                 JsonUtils.getString(json, "suffix", "DIM_" + key.getPath()),
@@ -446,7 +448,7 @@ public final class ContentParserWorlds {
                 JsonUtils.getBoolean(sky, "surfaceWorld", true),
                 JsonUtils.getBoolean(sky, "respawn", true),
                 JsonUtils.getBoolean(sky, "spawning", true),
-                JsonUtils.getInt(sky, "cloudHeight", 128),
+                cloudHeight,
                 JsonUtils.getInt(sky, "groundLevel", 63),
                 JsonUtils.getFloat(sky, "movementFactor", 1.0F),
                 fog.isEmpty() ? -1 : ContentTypes.color(fog, key.toString()),
@@ -459,7 +461,7 @@ public final class ContentParserWorlds {
                 JsonUtils.getBoolean(sky, "showFog", false),
                 MathHelper.clamp(JsonUtils.getFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 JsonUtils.getFloat(sky, "starBrightness", -1.0F),
-                cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString()),
+                clouds,
                 JsonUtils.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
                 JsonUtils.getBoolean(sky, "renderSky", true),
                 JsonUtils.getBoolean(sky, "renderClouds", !belt),
@@ -468,7 +470,8 @@ public final class ContentParserWorlds {
                 strings(json, "requires"),
                 dimensionPortal(key, json),
                 galacticraft,
-                ContentParserDimensionTraits.traits(key, json, belt));
+                ContentParserDimensionTraits.traits(key, json, belt),
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds));
     }
 
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {

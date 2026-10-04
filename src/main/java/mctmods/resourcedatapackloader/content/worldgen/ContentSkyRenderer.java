@@ -65,9 +65,11 @@ import java.util.Random;
         GlStateManager.pushMatrix();
         GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F);
         if (sky.sunSize > 0.0F) {
+            GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.sun(world));
             mc.renderEngine.bindTexture(sky.sunTexture);
             quad(buffer, tessellator, sky.sunSize);
         }
+        GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.moon(world));
         if (sky.bodies == null) { moon(world, mc, buffer, tessellator); }
         GlStateManager.popMatrix();
         if (sky.bodies != null) {

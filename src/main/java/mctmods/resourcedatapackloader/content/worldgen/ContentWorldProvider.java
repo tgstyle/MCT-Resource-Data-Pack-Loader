@@ -3,7 +3,10 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -23,6 +26,7 @@ import net.minecraft.world.gen.ChunkGeneratorFlat;
 import net.minecraft.world.gen.ChunkGeneratorHell;
 import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.IChunkGenerator;
+import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
@@ -33,8 +37,12 @@ import javax.annotation.Nullable;
 public class ContentWorldProvider extends WorldProviderSurface {
     private static final String FLAT_DEFAULT = "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1";
     private static final float STILL_SUN = 0.25F;
+    private static final float BOSS_RED = 0.3F;
+    private static final float BOSS_GREEN_BLUE = 0.4F;
     private final ContentWeatherCycle weatherCycle = new ContentWeatherCycle();
     @Nullable protected DimensionDef def;
+    @Nullable private SkyLookDef.CloudLayer drawingLayer;
+    private boolean drawingClouds;
 
     @Override protected void init() {
         this.def = ContentDimensions.byId(getDimension());
@@ -90,9 +98,38 @@ public class ContentWorldProvider extends WorldProviderSurface {
     private static Vec3d color(int rgb) { return new Vec3d(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
+        if (drawingLayer != null && drawingLayer.color >= 0) { return color(drawingLayer.color); }
         if (def == null || def.cloudColor < 0) { return super.getCloudColor(partialTicks); }
         return color(def.cloudColor);
     }
+
+    @Nullable public SkyLookDef look() { return def == null ? null : def.look; }
+
+    @SideOnly(Side.CLIENT) public void drawLayer(@Nullable SkyLookDef.CloudLayer layer) { drawingLayer = layer; }
+
+    @SideOnly(Side.CLIENT) public void drawClouds(boolean drawing) { drawingClouds = drawing; }
+
+    @Override @Nullable @SideOnly(Side.CLIENT) public IRenderHandler getCloudRenderer() { return drawingClouds ? null : super.getCloudRenderer(); }
+
+    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) {
+        if (def == null || def.look == null || !def.look.tintsLight()) { return; }
+        SkyLookDef look = def.look;
+        float sky = skyLight * look.skyFactor;
+        float skyRed = sky * (sunBrightness * 0.65F + 0.35F);
+        float blockGreen = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
+        float blockBlue = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
+        colors[0] = (skyRed * channel(look.lightSkyColor, 16) + blockLight * channel(look.lightBlockColor, 16)) * 0.96F + 0.03F;
+        colors[1] = (skyRed * channel(look.lightSkyColor, 8) + blockGreen * channel(look.lightBlockColor, 8)) * 0.96F + 0.03F;
+        colors[2] = (sky * channel(look.lightSkyColor, 0) + blockBlue * channel(look.lightBlockColor, 0)) * 0.96F + 0.03F;
+        IEntityRenderer renderer = (IEntityRenderer) Minecraft.getMinecraft().entityRenderer;
+        float boss = renderer.getBossColorModifierPrev() + (renderer.getBossColorModifier() - renderer.getBossColorModifierPrev()) * partialTicks;
+        if (boss <= 0.0F) { return; }
+        colors[0] *= 1.0F - BOSS_RED * boss;
+        colors[1] *= 1.0F - BOSS_GREEN_BLUE * boss;
+        colors[2] *= 1.0F - BOSS_GREEN_BLUE * boss;
+    }
+
+    private static float channel(int rgb, int shift) { return rgb == SkyLookDef.UNSET ? 1.0F : ((rgb >> shift) & 255) / 255.0F; }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
         if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
@@ -110,7 +147,10 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override public double getMovementFactor() { return def == null ? super.getMovementFactor() : def.movementFactor; }
 
-    @Override @SideOnly(Side.CLIENT) public float getCloudHeight() { return def == null ? super.getCloudHeight() : def.cloudHeight; }
+    @Override @SideOnly(Side.CLIENT) public float getCloudHeight() {
+        if (drawingLayer != null) { return drawingLayer.height; }
+        return def == null ? super.getCloudHeight() : def.cloudHeight;
+    }
 
     @Override public long getWorldTime() {
         if (def == null || def.fixedTime < 0) { return super.getWorldTime(); }
@@ -176,6 +216,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
+        if (def != null && def.look != null && def.look.sampleFog) { return ContentFogSampler.color(super.getFogColor(celestialAngle, partialTicks)); }
         if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
         float light = daylight(celestialAngle);
         Vec3d fog = color(def.fogColor);
