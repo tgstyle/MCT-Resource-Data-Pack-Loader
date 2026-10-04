@@ -31,6 +31,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -232,16 +233,22 @@ public final class ContentHardness {
     }
 
     public static void dig(LivingEntity digger, BlockPos pos) {
-        if (!(digger.level() instanceof ServerLevel level)) { return; }
+        for (ItemStack stack : harvest(digger, pos, ItemStack.EMPTY)) { Block.popResource(digger.level(), pos, stack); }
+    }
+
+    public static List<ItemStack> harvest(LivingEntity digger, BlockPos pos, ItemStack tool) {
+        List<ItemStack> kept = new ArrayList<>();
+        if (!(digger.level() instanceof ServerLevel level)) { return kept; }
         BlockState state = level.getBlockState(pos);
-        int earned = ContentEntities.collectsExperience(digger) ? state.getExpDrop(level, level.getRandom(), pos, 0, 0) : 0;
-        if (breaksAway(state, null)) {
-            if (level.destroyBlock(pos, true, digger) && earned > 0) { state.getBlock().popExperience(level, pos, earned); }
-            return;
+        if (state.isAir()) { return kept; }
+        int earned = ContentEntities.collectsExperience(digger) ? state.getExpDrop(level, level.getRandom(), pos, tool.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE), tool.getEnchantmentLevel(Enchantments.SILK_TOUCH)) : 0;
+        for (ItemStack drop : Block.getDrops(state, level, pos, level.getBlockEntity(pos), digger, tool)) {
+            if (!drop.isEmpty()) { kept.add(drop); }
         }
-        Block.dropResources(state, level, pos, level.getBlockEntity(pos), digger, ItemStack.EMPTY);
-        if (earned > 0) { state.getBlock().popExperience(level, pos, earned); }
         level.levelEvent(BREAK_EFFECT, pos, Block.getId(state));
+        if (breaksAway(state, null)) { level.removeBlock(pos, false); }
+        if (earned > 0) { state.getBlock().popExperience(level, pos, earned); }
+        return kept;
     }
 
     public static float miningAt(@Nullable BlockState state, @Nullable LivingEntity who, int x, int y, int z) {

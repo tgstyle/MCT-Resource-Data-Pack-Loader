@@ -51,6 +51,7 @@ This guide is for the 1.20.1 and 1.21.1 builds. They read the same packs; the fe
 
 **Creatures and hazards**
 - [Entity variants](#entity-variants)
+- [Work orders](#work-orders)
 - [Exposures](#exposures)
 
 **The world**
@@ -143,6 +144,7 @@ Under `data/`:
 | `<namespace>/cards/*.json`                   | On-screen cards shown on a trigger, and the messages this mod says itself. [Cards](#cards)                            |
 | `<namespace>/dice/*.json` | Pack dice with weighted faces, decks of cards, who hears a roll, and the wording of the results. [Dice and decks](#dice-and-decks) |
 | `<namespace>/games/*.json` | Board games played with mobs as pieces: the board, the pieces and how they move, and what a result pays. [Board games](#board-games) |
+| `<namespace>/orders/*.json` | Jobs entity variants do for a player at a chest. [Work orders](#work-orders) |
 | `<namespace>/exposures/*.json`               | Hazards that expose players near named blocks, carrying named items or in named dimensions. [Exposures](#exposures)   |
 | `<namespace>/overrides/<target>/<name>.json` | Properties of existing blocks, items and potion types, changed in place. [Property overrides](#property-overrides)    |
 | `<namespace>/villages/*.json`                | Plots a city or village can build. [Village plots](#village-plots)                                                    |
@@ -2609,6 +2611,89 @@ A filter entry. The first entry that matches decides, and anything no entry matc
 | `tag`   | one of the three | item tag id | none    | Every item under that tag, such as `forge:ingots/iron`                                     |
 | `fluid` | one of the three | fluid id    | none    | A fluid by its id, such as `minecraft:water`. Read by a fluid filter only                  |
 | `max`   | no               | int         | `0`     | The most of it held at once, counted over all slots, or in mB for a fluid. `0` is no limit |
+
+## Work orders
+
+*creatures and hazards*
+
+`<namespace>/orders/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack. A file holds an `orders` list and, beside it, three settings for the whole pack; the first file that sets one decides it.
+
+An order is a job that the entity variants named as its takers do for a player: they dig the blocks it names within its area, or carry its items over from other chests, and bring what they get to its chest. Every way of opening one works from a vanilla client:
+
+- **A sign.** Place a sign on or beside a chest and write the order's `sign` word on its first line. The order opens at that chest, and the sign's second line shows how many items are still wanted. Breaking the sign, or the chest, cancels it.
+- **A tool.** Right-click a worker, not sneaking, with a tool of the order's `tool` kind. The worker takes the tool, any tool it held comes back to you, and it works the order at the nearest chest within its area.
+- **A stock chest.** Rename a chest to `stockName` in an anvil and place it. Each item in its first row is kept topped up to a full stack: workers fetch it from other chests within the area of the pack's first `haul` order, under that order's takers, priority and area.
+
+```json
+{
+  "stockName": "Stock",
+  "hire": "minecraft:emerald",
+  "spawnCap": 1,
+  "orders": [
+    {
+      "job": "mine",
+      "blocks": "forge:ores/iron",
+      "sign": "Mine",
+      "tool": "pickaxe",
+      "areaByTier": [8, 16, 24, 32],
+      "limit": 64,
+      "workers": 2,
+      "priority": 1,
+      "speed": 1.5,
+      "takers": ["mypack:miner", "team:Red", "tag:digger"]
+    },
+    {
+      "job": "farm",
+      "blocks": "forge:crops/wheat",
+      "sign": "Farm",
+      "tool": "hoe",
+      "standing": 64,
+      "takers": ["mypack:farmer"]
+    },
+    {
+      "job": "haul",
+      "blocks": "minecraft:logs",
+      "sign": "Haul",
+      "deliver": "chest",
+      "takers": ["mypack:porter"]
+    }
+  ]
+}
+```
+
+Settings beside `orders`:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `stockName` | no | string | `Stock` | The name that makes a placed chest a stock chest, matched without regard to case. Empty turns stock chests off |
+| `hire` | no | item name | none | Hires a free worker: right-click it with this item, not sneaking, and it is yours and the item is used up. A free worker belongs to no player and no team |
+| `spawnCap` | no | int | `1` | How many workers one order may spawn at its chest when none comes to it. `0` spawns none |
+
+Order keys:
+
+| Key | Required | Value | Default | What it does |
+| --- | --- | --- | --- | --- |
+| `job` | yes | `gather`, `mine`, `farm` or `haul` | | `gather` and `mine` dig the blocks `blocks` names, as the block itself or as what it drops, wherever one side is open to air or to a block that is not a full cube. `farm` harvests fully grown crops and replants each from its own seeds. `haul` carries the items `blocks` names out of other chests and containers into the order's chest |
+| `blocks` | yes, except on `farm` | item tag id | none | What the order wants, as an item tag such as `forge:ores/iron`, `minecraft:logs` or `forge:crops/wheat`. On a `mine` order whatever a block in the tag drops counts too, so `forge:ores/iron` fills with raw iron. On a `farm` order it limits the crops harvested to those that drop it |
+| `area` | no | int | `16` | How far from the chest the work reaches, in blocks along each axis |
+| `areaByTier` | no | list of int | none | The reach by the harvest level of the worker's tool: the first entry with no tool or level 0, then one entry per level, and the last entry for every level past the end. Overrides `area` |
+| `deliver` | no | `chest` or `self` | `chest` | `chest` brings what is gathered to the order's chest. `self` keeps it in the worker's own storage, and the order counts it as it is gathered |
+| `limit` | no | int | `64` | How many items the order wants before it closes |
+| `standing` | no | int | `0` | Above `0` the order never closes: it keeps that many of its items in the chest and works whenever there are fewer. `limit` is then not read |
+| `workers` | no | int | `1` | The most workers on the order at once |
+| `priority` | no | int | `0` | An idle worker takes the open order with the highest priority first, then the nearest |
+| `takers` | yes | list | | Who may work it: a variant name, `team:<team>` for any member of a scoreboard team, or `tag:<tag>` for any entity carrying that tag |
+| `sign` | no | string | none | The word on a sign's first line that opens the order, matched without regard to case |
+| `speed` | no | number | `1` | Multiplies the worker's dig speed. `2` digs twice as fast as a player with the same tool |
+| `tool` | no | tool kind | none | The tool kind, such as `pickaxe`, `axe`, `shovel` or `hoe`, that gives a worker this order by right-click. A worker whose tool cannot harvest a block goes back to the chest for one of this kind |
+
+**How a worker works.** A variant a taker names, or every variant when any taker is a team or a tag, looks for work once a second while idle. It takes the best open order whose chest is within its area plus 32 blocks, holds it on a lease that lapses when it stops working, and keeps the lease through a save and reload. Digging takes as long as it would take a player holding the worker's tool, Efficiency included, and Fortune and Silk Touch count toward the drops. What it digs goes into its `storage` items when the variant has them, otherwise into its off hand, never onto the ground. When it can carry no more, it walks to the chest and puts everything in. Each block wears the tool, and a worker whose tool breaks goes back to the chest for another of the same kind, or rests for a minute when there is none. A worker drops its tool and what is in its hands when it dies, and its storage spills once, as storage always does. `mobGriefing` does not stop it, since a player asked for the work.
+
+**Who works for whom.** When the player who opens an order is on a scoreboard team, only that team's workers take it. Otherwise the order belongs to that player, and a worker belongs to the first player who gives it a job, by a tool, by `hire` or by taking that player's order; from then on it works only that player's orders. A free worker hired or handed a tool by a player on a team joins that team.
+
+**Spawning at the chest.** An order that has had no worker for ten seconds spawns one of its variant takers beside its chest, up to `spawnCap` for that order. The worker it spawns belongs to the order's team or player.
 
 ## Exposures
 

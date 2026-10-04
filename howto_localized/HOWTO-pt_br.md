@@ -51,6 +51,7 @@ Este guia é para as versões 1.20.1 e 1.21.1. Elas leem os mesmos pacotes; os p
 
 **Criaturas e perigos**
 - [Variantes de entidades](#variantes-de-entidades)
+- [Ordens de trabalho](#ordens-de-trabalho)
 - [Exposições](#exposições)
 
 **O mundo**
@@ -143,6 +144,7 @@ Em `data/`:
 | `<namespace>/cards/*.json` | Cartas na tela exibidas por um gatilho e as mensagens que este mod diz por conta própria. [Cartas](#cartas) |
 | `<namespace>/dice/*.json` | Dados do pacote com faces ponderadas, baralhos de cartas, quem ouve uma rolagem e o texto dos resultados. [Dados e baralhos](#dados-e-baralhos) |
 | `<namespace>/games/*.json` | Jogos de tabuleiro com criaturas como peças: o tabuleiro, as peças e como se movem, e o que um resultado paga. [Jogos de tabuleiro](#jogos-de-tabuleiro) |
+| `<namespace>/orders/*.json` | Trabalhos que variantes de entidade fazem para um jogador em um baú. [Ordens de trabalho](#ordens-de-trabalho) |
 | `<namespace>/exposures/*.json` | Perigos que expõem jogadores perto de blocos nomeados, carregando itens nomeados ou em dimensões nomeadas. [Exposições](#exposições) |
 | `<namespace>/overrides/<target>/<name>.json` | Propriedades de blocos, itens e tipos de poção existentes, alteradas no lugar. [Substituições de propriedades](#substituições-de-propriedades) |
 | `<namespace>/villages/*.json` | Terrenos que uma cidade ou vila pode construir. [Terrenos de vilas](#terrenos-de-vilas) |
@@ -2609,6 +2611,89 @@ Uma entrada de filtro. A primeira entrada que corresponde decide, e tudo o que n
 | `tag` | uma das três | id de tag de item | nenhum | Todo item sob aquela tag, como `forge:ingots/iron` |
 | `fluid` | uma das três | id de fluido | nenhum | Um fluido pelo seu id, como `minecraft:water`. Lida apenas por um filtro de fluido |
 | `max` | não | int | `0` | O máximo dele guardado de uma vez, contado em todos os espaços, ou em mB para um fluido. `0` é sem limite |
+
+## Ordens de trabalho
+
+*criaturas e perigos*
+
+`<namespace>/orders/*.json`
+
+O nome do arquivo é você quem escolhe, só a pasta é lida, e vários arquivos se somam. Um arquivo contém uma lista `orders` e, ao lado dela, três ajustes para o pacote inteiro; o primeiro arquivo que define um deles decide.
+
+Uma ordem é um trabalho que as variantes de entidade nomeadas como seus executores fazem para um jogador: elas extraem os blocos que ela nomeia dentro da área, ou trazem os itens dela de outros baús, e levam o que obtêm para o baú dela. Todas as formas de abrir uma funcionam a partir de um cliente vanilla:
+
+- **Uma placa.** Coloque uma placa sobre um baú ou ao lado dele e escreva a palavra `sign` da ordem na primeira linha. A ordem abre naquele baú, e a segunda linha da placa mostra quantos itens ainda faltam. Quebrar a placa, ou o baú, a cancela.
+- **Uma ferramenta.** Clique com o botão direito em um trabalhador, sem agachar, com uma ferramenta do tipo `tool` da ordem. O trabalhador pega a ferramenta, a que ele segurava volta para você, e ele executa a ordem no baú mais próximo dentro da área dele.
+- **Um baú de estoque.** Renomeie um baú para `stockName` em uma bigorna e coloque-o. Cada item da primeira fileira dele é mantido cheio até uma pilha completa: trabalhadores o trazem de outros baús dentro da área da primeira ordem `haul` do pacote, com os executores, a prioridade e a área dessa ordem.
+
+```json
+{
+  "stockName": "Stock",
+  "hire": "minecraft:emerald",
+  "spawnCap": 1,
+  "orders": [
+    {
+      "job": "mine",
+      "blocks": "forge:ores/iron",
+      "sign": "Mine",
+      "tool": "pickaxe",
+      "areaByTier": [8, 16, 24, 32],
+      "limit": 64,
+      "workers": 2,
+      "priority": 1,
+      "speed": 1.5,
+      "takers": ["mypack:miner", "team:Red", "tag:digger"]
+    },
+    {
+      "job": "farm",
+      "blocks": "forge:crops/wheat",
+      "sign": "Farm",
+      "tool": "hoe",
+      "standing": 64,
+      "takers": ["mypack:farmer"]
+    },
+    {
+      "job": "haul",
+      "blocks": "minecraft:logs",
+      "sign": "Haul",
+      "deliver": "chest",
+      "takers": ["mypack:porter"]
+    }
+  ]
+}
+```
+
+Ajustes ao lado de `orders`:
+
+| Chave | Obrigatória | Valor | Padrão | O que faz |
+| --- | --- | --- | --- | --- |
+| `stockName` | não | string | `Stock` | O nome que torna um baú colocado um baú de estoque, sem diferenciar maiúsculas. Vazio desliga os baús de estoque |
+| `hire` | não | nome de item | nenhum | Contrata um trabalhador livre: clique nele com este item, sem agachar, e ele passa a ser seu e o item é gasto. Um trabalhador livre não pertence a nenhum jogador nem time |
+| `spawnCap` | não | int | `1` | Quantos trabalhadores uma ordem pode gerar no baú dela quando nenhum aparece. `0` não gera nenhum |
+
+Chaves da ordem:
+
+| Chave | Obrigatória | Valor | Padrão | O que faz |
+| --- | --- | --- | --- | --- |
+| `job` | sim | `gather`, `mine`, `farm` ou `haul` | | `gather` e `mine` extraem os blocos que `blocks` nomeia, como o próprio bloco ou como o que ele solta, sempre que um lado esteja aberto ao ar ou a um bloco que não é um cubo completo. `farm` colhe plantações maduras e replanta cada uma com as próprias sementes. `haul` leva os itens que `blocks` nomeia de outros baús e contêineres para o baú da ordem |
+| `blocks` | sim, exceto em `farm` | id de tag de item | nenhum | O que a ordem quer, como tag de item, por exemplo `forge:ores/iron`, `minecraft:logs` ou `forge:crops/wheat`. Em uma ordem `mine` também conta o que um bloco da tag deixa cair, então `forge:ores/iron` se enche de ferro bruto. Em uma ordem `farm`, limita a colheita às plantações que o soltam |
+| `area` | não | int | `16` | Até onde o trabalho alcança a partir do baú, em blocos ao longo de cada eixo |
+| `areaByTier` | não | lista de int | nenhum | O alcance pelo nível de extração da ferramenta do trabalhador: a primeira entrada sem ferramenta ou com nível 0, depois uma entrada por nível, e a última para todo nível além do fim. Substitui `area` |
+| `deliver` | não | `chest` ou `self` | `chest` | `chest` leva o que foi coletado para o baú da ordem. `self` guarda no armazenamento do próprio trabalhador, e a ordem conta ao coletar |
+| `limit` | não | int | `64` | Quantos itens a ordem quer antes de fechar |
+| `standing` | não | int | `0` | Acima de `0` a ordem nunca fecha: mantém essa quantidade dos itens dela no baú e trabalha sempre que houver menos. `limit` então não é lido |
+| `workers` | não | int | `1` | O máximo de trabalhadores na ordem ao mesmo tempo |
+| `priority` | não | int | `0` | Um trabalhador ocioso pega primeiro a ordem aberta de maior prioridade, depois a mais próxima |
+| `takers` | sim | lista | | Quem pode executá-la: um nome de variante, `team:<team>` para qualquer membro de um time do placar, ou `tag:<tag>` para qualquer entidade com essa tag |
+| `sign` | não | string | nenhum | A palavra na primeira linha de uma placa que abre a ordem, sem diferenciar maiúsculas |
+| `speed` | não | número | `1` | Multiplica a velocidade de extração do trabalhador. `2` extrai duas vezes mais rápido que um jogador com a mesma ferramenta |
+| `tool` | não | tipo de ferramenta | nenhum | O tipo de ferramenta, como `pickaxe`, `axe`, `shovel` ou `hoe`, que dá esta ordem a um trabalhador com clique direito. Um trabalhador cuja ferramenta não consegue extrair um bloco volta ao baú atrás de uma desse tipo |
+
+**Como um trabalhador trabalha.** Uma variante que um executor nomeia, ou toda variante quando algum executor é um time ou uma tag, procura trabalho uma vez por segundo enquanto está ociosa. Ela pega a melhor ordem aberta cujo baú esteja dentro da área dela mais 32 blocos, segura a ordem com uma concessão que expira quando para de trabalhar e mantém a concessão ao salvar e recarregar. Extrair leva o mesmo tempo que levaria a um jogador segurando a ferramenta do trabalhador, Eficiência incluída, e Fortuna e Toque Suave contam para o que cai. O que ela extrai vai para os itens de `storage` quando a variante os tem, senão para a mão secundária, nunca para o chão. Quando não consegue carregar mais, ela anda até o baú e põe tudo lá. Cada bloco desgasta a ferramenta, e um trabalhador cuja ferramenta quebra volta ao baú atrás de outra do mesmo tipo, ou descansa um minuto quando não há nenhuma. Ao morrer, um trabalhador solta a ferramenta e o que tem nas mãos, e o armazenamento dele se esvazia uma vez, como o armazenamento sempre faz. `mobGriefing` não o impede, já que um jogador pediu o trabalho.
+
+**Quem trabalha para quem.** Quando o jogador que abre uma ordem está em um time do placar, só os trabalhadores desse time a pegam. Caso contrário a ordem pertence a esse jogador, e um trabalhador pertence ao primeiro jogador que lhe dá um trabalho, por uma ferramenta, por `hire` ou ao pegar uma ordem desse jogador; a partir daí ele só executa ordens desse jogador. Um trabalhador livre contratado ou que recebe uma ferramenta de um jogador em um time entra nesse time.
+
+**Surgimento no baú.** Uma ordem que ficou dez segundos sem trabalhador gera um dos executores variantes dela ao lado do baú, até `spawnCap` para essa ordem. O trabalhador gerado pertence ao time ou ao jogador da ordem.
 
 ## Exposições
 

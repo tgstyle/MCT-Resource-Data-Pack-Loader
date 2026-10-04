@@ -32,6 +32,7 @@ import mctmods.resourcedatapackloader.content.util.ContentDisabledEvents;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentOrders;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
@@ -409,6 +410,7 @@ import java.util.Set;
                 ContentSpawners.apply();
                 ContentHardness.setup();
                 ContentAnvils.load();
+                if (ContentOrders.load()) { ContentOrders.listen(); }
                 ContentOverrides.reload();
             });
             return;
