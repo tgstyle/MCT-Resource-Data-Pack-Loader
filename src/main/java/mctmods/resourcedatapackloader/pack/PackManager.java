@@ -86,6 +86,7 @@ public final class PackManager {
     public static final String TEAMS = "teams";
     public static final String SCORING = "scoring";
     public static final String RAIDS = "raids";
+    public static final String DICE = "dice";
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
     public static final String ANVILS = "anvils";

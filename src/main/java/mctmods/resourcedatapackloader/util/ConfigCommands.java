@@ -8,6 +8,7 @@ public final class ConfigCommands {
     private final ForgeConfigSpec.IntValue gotoNextLevel;
     private final ForgeConfigSpec.IntValue gotoBackLevel;
     private final ForgeConfigSpec.ConfigValue<List<? extends String>> gotoPlaceLevels;
+    private final ForgeConfigSpec.ConfigValue<List<? extends String>> gameLevels;
 
     ConfigCommands(ForgeConfigSpec.Builder builder) {
         builder.comment("Who may run which parts of the mod's own commands").push("commands");
@@ -15,6 +16,7 @@ public final class ConfigCommands {
         gotoNextLevel = builder.comment("The permission level for /rdplserver goto <name> next, which passes over the one it last carried the sender to and finds another. Same scale as gotoLevel [Default=3]").defineInRange("gotoNextLevel", 3, 0, 4);
         gotoBackLevel = builder.comment("The permission level for /rdplserver goto <name> back, which returns the sender to the one before. Same scale as gotoLevel [Default=3]").defineInRange("gotoBackLevel", 3, 0, 4);
         gotoPlaceLevels = builder.comment("Permission levels for single places, as name=level entries, one per line, overriding the three settings above for that place alone and in all three of its forms. The name is what you would type after goto, so a vanilla one such as Village or Mansion, or a name a pack registered for its own structures with locateAs. Same scale: 3 an operator, 2 also a command block, 0 anybody. A pack can then open the way to its own ruins while every vanilla structure stays shut, or the other way about. A name nothing has registered is ignored with a note in the log [Default=[]]").defineListAllowEmpty("gotoPlaceLevels", List.of(), each -> each instanceof String);
+        gameLevels = builder.comment("Permission levels for the parts of /rdplserver game, as name=level entries, one per line. The name is the part as typed after game: coin, die, dice, advantage, disadvantage, pick, deck draw, deck shuffle, deck left, teamroll, tiebreak or last. Same scale: 3 an operator, 2 also a command block, 0 anybody. A part not listed keeps its own level: 2 for deck shuffle and tiebreak, 0 for every other [Default=[]]").defineListAllowEmpty("gameLevels", List.of(), each -> each instanceof String);
         builder.pop();
     }
 
@@ -25,4 +27,6 @@ public final class ConfigCommands {
     public int gotoBackLevel() { return Config.loaded() ? gotoBackLevel.get() : 3; }
 
     public List<String> gotoPlaceLevels() { return Config.loaded() ? List.copyOf(gotoPlaceLevels.get()) : List.of(); }
+
+    public List<String> gameLevels() { return Config.loaded() ? List.copyOf(gameLevels.get()) : List.of(); }
 }

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.item.ContentContainerItem;
 import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
 import mctmods.resourcedatapackloader.content.item.ContentFoodItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
+import mctmods.resourcedatapackloader.content.item.ContentRollItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -70,7 +71,7 @@ public final class ContentItemTypes {
             case ARMOR -> armor(def, variant, properties.stacksTo(1));
             case SEED -> seed(def, variant, properties);
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
-            default -> new Item(properties);
+            default -> def.rolls().isEmpty() ? new Item(properties) : new ContentRollItem(def, properties);
         };
     }
 

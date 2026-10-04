@@ -11,7 +11,7 @@ public record ScoreDef(String name, String displayName, ObjectiveCriteria criter
                        String resultsTitle, String resultsIcon, String resultsImage, int resultsBackground, int resultsTicks, boolean carries, boolean endsResets,
                        int endsIntermission, String awardsTo, boolean endsLocksTeams, int ownKillPoints, String intermissionSays, String startsSays, String opensBy,
                        String opensSays, String opensLeaderSays, @Nullable Place opensLobby, boolean opensLobbyJoins, String opensJoinsSays, boolean endsLastStanding,
-                       String endsOutSays, RoundResetDef reset) {
+                       String endsOutSays, RoundResetDef reset, boolean tiebreak) {
     public static final String AUTO = "auto";
     public static final String LEADER = "leader";
 
