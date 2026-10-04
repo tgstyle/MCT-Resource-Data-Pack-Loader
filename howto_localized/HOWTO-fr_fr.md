@@ -142,6 +142,7 @@ Sous `data/` :
 | `<namespace>/anvils/*.json`                  | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle octroie, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume) |
 | `<namespace>/cards/*.json`                   | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod dit lui-même. [Cartes](#cartes)                                 |
 | `<namespace>/dice/*.json` | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets) |
+| `<namespace>/games/*.json` | Jeux de plateau avec des créatures comme pièces : le plateau, les pièces et leur façon de se déplacer, et ce que rapporte un résultat. [Jeux de plateau](#jeux-de-plateau) |
 | `<namespace>/exposures/*.json`               | Dangers qui exposent les joueurs près de blocs nommés, portant des objets nommés ou dans des dimensions nommées. [Expositions](#expositions) |
 | `<namespace>/overrides/<target>/<name>.json` | Propriétés de blocs, d'objets et de types de potions existants, modifiées sur place. [Surcharges de propriétés](#surcharges-de-propriétés) |
 | `<namespace>/villages/*.json`                | Parcelles qu'une ville ou un village peut construire. [Parcelles de village](#parcelles-de-village)                                       |
@@ -5183,6 +5184,7 @@ Les titres et lignes de carte, les messages Says et les notes d'accueil et d'att
 | `rdpl:threat` | La bande de menace d'un joueur change | `threatSays` |
 | `rdpl:prospect` | Chaque ligne que rapporte une trouvaille de prospection | la trouvaille |
 | `rdpl:prospect_none` | La prospection n'a rien trouvé | le fichier de langue |
+| `rdpl:board_result` | Une partie de plateau se termine | le fichier de langue |
 | `rdpl:pregen_ended` | La prégénération se termine ou s'arrête | `pregenFinishedSays`, `pregenStoppedSays` dans [Prégénération](#prégénération) |
 | `rdpl:pregen_running` | La ligne de progression que voit un joueur qui se connecte pendant la prégénération | `pregenRunningSays` |
 
@@ -5247,6 +5249,98 @@ Chaque lancer utilise le hasard propre au monde et s'écrit dans le journal avec
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` dans l'ordre |
 
 La formulation propre du mod se trouve dans ses fichiers de langue sous `rdpl.game.<key>`, donc un pack de ressources peut aussi la changer langue par langue.
+
+## Jeux de plateau
+
+*modes de jeu*
+
+`<namespace>/games/*.json`
+
+Un fichier est un jeu de plateau, nommé d'après son nom de fichier. Il fixe le plateau, les deux camps, les pièces et leur façon de se déplacer, la position de départ et ce que rapporte un résultat. `game board start <game> <board>` installe un plateau là où se tient l'expéditeur, ou à la position donnée : les cases sont posées un bloc plus bas, les colonnes vont vers l'est et les rangées vers le sud, et chaque pièce est une créature au choix du pack, immobile, muette et invulnérable, et nommée d'après son camp. Une pièce prise se tient à côté du plateau.
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snow_golem", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:iron_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evoker", "minecraft:vindicator"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| Clé | Type | Par défaut | Ce qu'elle fait |
+| --- | --- | --- | --- |
+| `name` | texte | le nom du fichier | Le nom affiché dans le chat et dans le résultat |
+| `board` | objet | 8 sur 8 | `files` et `ranks`, de 2 à 16 chacun, et les états de bloc `light` et `dark` posés sous les cases. S'ils manquent, le sol reste tel quel |
+| `sides` | liste | `White`, `Black` | Deux objets de `name` et `color`, une couleur de chat. Le premier camp joue en premier et se place avec les lettres majuscules |
+| `pieces` | objet | aucun | Nom de pièce vers un objet des clés de pièce ci-dessous |
+| `setup` | liste | aucun | Un texte par rangée, la rangée 1 d'abord. La lettre d'une pièce la place, en majuscule pour le premier camp et en minuscule pour le second, et `.` laisse la case vide |
+| `rules` | objet | aucun | `mustCapture`, `chainCaptures`, `quietDraw` et `repeatDraw`, ci-dessous |
+| `clock` | objet | aucun | `minutes` pour chaque camp et `addSeconds` ajoutées après chaque coup. Le camp dont le temps s'écoule perd |
+| `ai` | nombre | `2` | Le niveau de l'ordinateur, de 1 à 4, pour un camp que personne ne tient |
+| `result` | objet | aucun | L'`objective` payé à la fin de la partie, avec les points `win`, `draw` et `loss`, 1, 0 et 0 s'ils manquent |
+
+| Clé de pièce | Type | Ce qu'elle fait |
+| --- | --- | --- |
+| `letter` | texte | La lettre utilisée dans `setup` et dans `game board show` |
+| `value` | nombre | Sa valeur pour l'ordinateur |
+| `mobs` | liste | La créature de chaque camp, le premier camp d'abord. `mob` en donne une pour les deux |
+| `moves` | liste | Des pas sous forme d'objets : `steps`, une liste de décalages `[file, rank]` vus depuis le bord du camp ; `slides`, pour continuer jusqu'à être bloqué ; `captures`, `both` (par défaut), `never`, `only` ou `hop`, qui saute une pièce de l'autre camp vers la case vide derrière elle et la prend ; et `firstRange`, combien de pas elle peut faire à son premier coup |
+| `royal` | vrai ou faux | Le camp perd quand cette pièce est mise en échec et mat, et aucun coup ne peut la laisser attaquée. Sans pièce royale, un camp qui n'a plus de coup perd |
+| `enPassant` | vrai ou faux | Peut prendre une pièce qui vient de passer deux cases à côté d'elle |
+| `castles` | texte | Une pièce partenaire : cette pièce avance de deux cases vers un partenaire qui n'a pas bougé, qui saute par-dessus elle |
+| `promotes` | liste | Ce qu'elle peut devenir sur la dernière rangée. La première est prise sauf si le coup en nomme une autre |
+
+| Règle | Ce qu'elle fait |
+| --- | --- |
+| `mustCapture` | Un camp qui peut prendre doit prendre |
+| `chainCaptures` | Après un saut qui prend, la même pièce continue de prendre tant qu'elle le peut |
+| `quietDraw` | Combien de coups d'affilée, les deux camps comptés, peuvent passer sans prise ni coup d'une pièce qui peut être promue avant que la partie soit nulle. 0 ne donne jamais nulle |
+| `repeatDraw` | La partie est nulle quand la même position, avec le même camp au trait, revient ce nombre de fois ; 3 est la triple répétition des échecs. Seules comptent les positions depuis la dernière prise ou le dernier coup d'une pièce qui peut être promue. 0 ne donne jamais nulle |
+
+Un camp appartient au premier joueur qui fait un clic droit sur l'une de ses pièces, ou à son équipe du tableau des scores s'il en a une, si bien que tout membre peut ensuite le jouer. Un camp que personne ne tient est joué par l'ordinateur dès que l'autre camp est pris, ou tout de suite quand `game board ai` lui fixe un niveau ; l'ordinateur réfléchit hors du fil du serveur, et son coup est joué sur celui-ci. Un clic droit sur une pièce montre où elle peut aller, puis un clic droit sur une case ou sur une pièce de l'autre camp l'y amène. `game board move` fait de même avec des noms de case, comme `e2 e4`, avec un nom de pièce à la fin pour une promotion. Quand un coup mène à une promotion et que `promotes` nomme plus d'une pièce, le joueur choisit parmi des options cliquables dans le chat ; sans choix dans les 10 secondes, ou s'il clique plutôt sur le plateau, la première est jouée. L'ordinateur choisit celle qu'il juge la meilleure.
+
+`game board resign` abandonne la partie. `game board draw` propose la nulle, que l'autre camp accepte avec la même commande ; l'ordinateur refuse quand il est mieux placé. `game board takeback` demande d'annuler le dernier coup du demandeur, et l'autre camp accepte avec la même commande ; contre l'ordinateur, il est annulé tout de suite.
+
+Un plateau est gardé dans les données sauvegardées du monde sous la forme de sa liste de coups. Quand le monde se charge ou que le pack est rechargé, la position est rejouée depuis cette liste, les pièces sont remises en place pour lui correspondre et toute pièce plus ancienne du plateau est retirée.
+
+À la fin, `result` paie le détenteur de chaque camp dans son objectif, comme ligne de joueur ou d'équipe. Le résultat va aux joueurs près du plateau et à ceux qui tiennent un camp, sous forme de carte `rdpl:board_result` quand un fichier de cartes fixe cet id, et sinon sous forme de ligne de chat. La formulation se trouve dans les fichiers de langue du mod sous `rdpl.game.board.<key>`.
 
 ---
 
@@ -6694,8 +6788,17 @@ Sur un serveur dédié, `/rdplserver` fait la même chose pour la copie du dossi
 | `/rdplserver game deck shuffle <name>` | 2 | Remettre toutes les cartes |
 | `/rdplserver game teamroll [roll]` | 0 | Chacun dans le camp de l'expéditeur lance et le plus haut gagne, une égalité tirée au sort. Sans équipes, l'expéditeur lance seul |
 | `/rdplserver game tiebreak [objective]` | 2 | Tirer au sort l'un des camps à égalité en tête d'un objectif : celui nommé, sinon le premier objectif de score avec `tiebreak`, sinon le premier |
-| `/rdplserver game pass` | 0 | Termine plus tôt le tour du camp de l'expéditeur quand un fichier de score fait jouer à tour de rôle. Depuis un bloc de commande ou la console, termine le tour de qui joue |
+| `/rdplserver game board list` | 0 | Chaque plateau du monde, avec son jeu, sa position et son état |
+| `/rdplserver game board start <game> <board> [x y z]` | 2 | Installer un plateau là où se tient l'expéditeur, ou à la position donnée, et placer ses pièces |
+| `/rdplserver game board end <board>` | 2 | Retirer un plateau et ses pièces |
+| `/rdplserver game board show <board>` | 0 | La position en lettres, rangée par rangée, avec qui tient chaque camp, son temps et à qui c'est de jouer |
+| `/rdplserver game board move <board> <from> <to> [piece]` | 0 | Déplacer une pièce par noms de case, comme `e2 e4`, avec la pièce que devient une promotion |
+| `/rdplserver game board resign <board>` | 0 | Abandonner la partie |
+| `/rdplserver game board draw <board>` | 0 | Proposer la nulle, ou accepter l'offre de l'autre camp |
+| `/rdplserver game board takeback <board>` | 0 | Demander d'annuler le dernier coup, ou accepter la demande de l'autre camp |
+| `/rdplserver game board ai <board> <side> <level>` | 2 | Faire jouer un camp par l'ordinateur à un niveau de 1 à 4, ou le rendre avec 0 |
 | `/rdplserver game last [count]` | 0 | Les derniers lancers, du plus récent au plus ancien : 10, ou le nombre donné jusqu'à 50 |
+| `/rdplserver game pass` | 0 | Termine plus tôt le tour du camp de l'expéditeur quand un fichier de score fait jouer à tour de rôle. Depuis un bloc de commande ou la console, termine le tour de qui joue |
 
 Tout lancer peut finir par `store <objective>`, qui écrit son nombre dans le score de l'expéditeur pour cet objectif, et par `audience <qui>`, qui remplace la valeur par défaut du pack : `self`, `team` (le camp de l'expéditeur, ou l'expéditeur seul sans équipes), `all`, `radius <blocs>` (les joueurs du même monde à cette distance) ou `silent`, qui ne fait qu'enregistrer. `/rdpl game` lui est transmis.
 
@@ -6737,7 +6840,7 @@ Ceux-ci se trouvent dans le groupe `commands`, donc `control.commands` dans la c
 
 *commandes*
 
-Chaque partie de `game` a son propre niveau : 0 pour chaque lancer, et 2 pour `deck shuffle` et `tiebreak`. `gameLevels` change n'importe lequel d'entre eux, sous forme d'entrées `partie=niveau`, où la partie est ce qui suit `game`.
+Chaque partie de `game` a son propre niveau : 0 pour chaque lancer, et 2 pour `deck shuffle`, `tiebreak`, `board start`, `board end` et `board ai`. `gameLevels` change n'importe lequel d'entre eux, sous forme d'entrées `partie=niveau`, où la partie est ce qui suit `game`.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -6751,7 +6854,7 @@ Chaque partie de `game` a son propre niveau : 0 pour chaque lancer, et 2 pour `d
 
 | Réglage | Ce qu'il régit |
 | --- | --- |
-| `gameLevels` | Une partie de `game` : `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` ou `pass` |
+| `gameLevels` | Une partie de `game` : `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` ou `board` avec son action, comme `board move` |
 
 L'échelle est celle de `goto`, et `4` ferme une partie à tout le monde. La complétion par tabulation ne propose que les parties qu'un expéditeur peut lancer. `gameLevels` se trouve dans le groupe `commands` avec les réglages de `goto`.
 

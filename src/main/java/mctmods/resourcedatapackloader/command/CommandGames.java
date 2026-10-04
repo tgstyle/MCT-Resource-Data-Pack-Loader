@@ -29,7 +29,7 @@ import javax.annotation.Nullable;
 final class CommandGames {
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass");
+    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
     private static final List<String> DECK_ACTIONS = List.of("draw", "shuffle", "left");
     private static final List<String> PICKS = List.of("player", "team");
     private static final List<String> OPTIONS = List.of("store", "audience");
@@ -41,6 +41,11 @@ final class CommandGames {
         for (String action : DECK_ACTIONS) { LEVELS.put("deck " + action, 0); }
         LEVELS.put("deck shuffle", 2);
         LEVELS.put("tiebreak", 2);
+        LEVELS.remove("board");
+        for (String action : CommandBoard.ACTIONS) { LEVELS.put("board " + action, 0); }
+        LEVELS.put("board start", 2);
+        LEVELS.put("board end", 2);
+        LEVELS.put("board ai", 2);
     }
 
     private CommandGames() {}
@@ -59,7 +64,7 @@ final class CommandGames {
                         .executes(context -> run(context.getSource(), name, StringArgumentType.getString(context, "roll"))));
     }
 
-    private static String sub(String[] args) { return args.length > 1 && "deck".equals(args[0]) ? "deck " + args[1] : args[0]; }
+    private static String sub(String[] args) { return args.length > 1 && ("deck".equals(args[0]) || "board".equals(args[0])) ? args[0] + " " + args[1] : args[0]; }
 
     private static int refuse(CommandSourceStack source, String text) {
         source.sendFailure(Component.literal(text));
@@ -71,6 +76,7 @@ final class CommandGames {
         String[] args = line.trim().split("\\s+");
         if (!ROLLS.contains(args[0])) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
         if (!source.hasPermission(level(sub(args)))) { return refuse(source, ContentDice.words(source.getPlayer(), "notallowed")); }
+        if ("board".equals(args[0])) { return CommandBoard.run(source, args); }
         MinecraftServer server = source.getServer();
         if ("pass".equals(args[0])) {
             String refusal = ContentTurns.pass(server, source.getPlayer());
@@ -162,6 +168,7 @@ final class CommandGames {
             }
             return open;
         }
+        if ("board".equals(words.getFirst())) { return CommandBoard.offered(source.getServer(), words); }
         String before = words.getLast();
         if ("store".equals(before)) { return new ArrayList<>(Scores.board(source.getServer()).getObjectiveNames()); }
         if ("audience".equals(before)) { return ContentDice.AUDIENCES; }
@@ -185,9 +192,9 @@ final class CommandGames {
     }
 
     private static int lowestOf(String roll) {
-        if (!"deck".equals(roll)) { return level(roll); }
+        if (!"deck".equals(roll) && !"board".equals(roll)) { return level(roll); }
         int lowest = CommandShared.OPERATOR;
-        for (String action : DECK_ACTIONS) { lowest = Math.min(lowest, level("deck " + action)); }
+        for (String action : "deck".equals(roll) ? DECK_ACTIONS : CommandBoard.ACTIONS) { lowest = Math.min(lowest, level(roll + " " + action)); }
         return lowest;
     }
 }

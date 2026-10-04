@@ -249,6 +249,19 @@ public final class ContentScoring {
         }
     }
 
+    public static void award(MinecraftServer server, String objective, String row, int points) {
+        Scoreboard board = Scores.board(server);
+        Objective held = Scores.objective(board, objective);
+        if (held == null) {
+            ContentLog.LOGGER.error("A board game pays {} points to {}, which is not an objective this world keeps, so nothing is paid", points, objective);
+            return;
+        }
+        bump(board, held, row, points);
+        ContentLog.LOGGER.info("{} is paid {} in {} for a board game", row, points, objective);
+        ScoreDef def = BY_NAME.get(objective);
+        if (def != null) { watch(server, def, Scores.score(board, row, held)); }
+    }
+
     private static void award(MinecraftServer server, ScoreDef def, @Nullable String winner) {
         if (def.awardsTo().isEmpty()) { return; }
         Scoreboard board = Scores.board(server);

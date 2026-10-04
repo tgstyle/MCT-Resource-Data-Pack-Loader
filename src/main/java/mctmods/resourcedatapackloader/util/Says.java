@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.network.MessageCard;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -22,6 +23,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import java.util.List;
+import java.util.Map;
 
 public final class Says {
     public static final int CARD_TICKS = 160;
@@ -49,6 +51,14 @@ public final class Says {
     public static void line(ServerPlayer player, ChatFormatting color, String said) {
         if (said.isEmpty()) { return; }
         player.sendSystemMessage(marked(said, color));
+    }
+
+    public static void options(ServerPlayer player, ChatFormatting color, String said, Map<String, String> commands) {
+        MutableComponent line = marked(said, color);
+        for (Map.Entry<String, String> option : commands.entrySet()) {
+            line.append(Component.literal(" [" + option.getKey() + "]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, option.getValue()))));
+        }
+        player.sendSystemMessage(line);
     }
 
     public static void line(ServerPlayer player, String rule, ChatFormatting color, String said) {
