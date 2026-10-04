@@ -3259,8 +3259,10 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3452,10 +3454,32 @@ Ce sont les mêmes multiplicateurs que dans [Physique du monde](#physique-du-mon
 | `rain.snowColor` | non | couleur hexadécimale | `#FFFFFF` | Teinte de la neige qui tombe |
 | `rain.angle` | non | flottant, 0 à 180 | `0` | Degrés par rapport à la verticale descendante : `90` souffle à l'horizontale, `180` monte tout droit. Elle est dessinée inclinée de 75 degrés au plus |
 | `rain.heading` | non | flottant, degrés | `0` | Direction du souffle : `0` sud, `90` ouest, `180` nord, `270` est |
+| `wind.gust` | non | flottant, 0 à 90 | `15` | Degrés qu'une rafale ajoute à `angle` à son plus fort, sans jamais dépasser l'horizontale |
+| `wind.every` | non | entier ou `[min, max]` | `[200, 600]` | Ticks d'une rafale à la suivante |
+| `wind.swing` | non | flottant, 0 à 180 | `30` | Degrés dont une rafale fait pivoter `heading` d'un côté |
+
+Un bloc `wind` rend la pluie rafaleuse. De temps à autre, une rafale l'incline jusqu'à `gust` degrés de plus et fait pivoter sa direction jusqu'à `swing` degrés d'un côté ; elle enfle puis retombe en moins de quatre secondes, et les rafales reviennent tous les `every` ticks. La pluie et la neige s'inclinent avec elle, et les particules d'ambiance de la dimension dérivent du côté où penche la pluie, avec ou sans rafales. Un bloc `wind` sans bloc `rain` donne à la pluie ses valeurs par défaut.
 
 Les autres dimensions partagent la pluie de l'Overworld. Un `cycle` donne à celle-ci une météo propre : les averses vont et viennent selon les durées ci-dessus, quoi que fasse l'Overworld. Avec `thunderTicks`, elle connaît aussi des orages, selon ses propres durées ; un orage qui rencontre une averse porte l'averse à pleine intensité, assombrit le ciel et, avec `lightning` activé, amène la foudre. `weatherCeiling` dans un [modèle de monde](#modèles-de-monde) plafonne toujours l'altitude que la pluie atteint.
 
 Un bloc `rain` change l'aspect et le son de la pluie et de la neige ici, avec ou sans `cycle` ; sans lui, ils ont l'aspect et le son vanilla. Il fonctionne de la même façon sur une planète ou une lune de Galacticraft.
+
+### Le bloc `ambience`
+
+*dimensions*
+
+| Clé              | Requis | Valeur                 | Défaut           | Rôle                                                                                                                                                                                                                                                |
+| ---------------- | ------ | ---------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `music`          | non    | nom de son             | aucun            | Musique jouée ici à la place des morceaux habituels, en créatif aussi. En arrivant, le morceau en cours est coupé                                                                                                                                   |
+| `musicDelay`     | non    | entier ou `[min, max]` | `[12000, 24000]` | Ticks de silence entre deux morceaux                                                                                                                                                                                                                |
+| `loopSound`      | non    | nom de son             | aucun            | Un son qui tourne en boucle tant que vous êtes ici, en fondu à l'arrivée comme au départ                                                                                                                                                            |
+| `ambientSound`   | non    | nom de son             | aucun            | Un son joué de temps à autre, comme les biomes modernes ajoutent les leurs. Envoyé par le serveur à ce seul joueur                                                                                                                                  |
+| `soundChance`    | non    | 0.0 à 1.0              | `0.0111`         | La probabilité à chaque tick que `ambientSound` soit joué                                                                                                                                                                                           |
+| `particle`       | non    | nom de particule       | aucun            | Une particule qui flotte dans l'air autour de vous, l'un des noms de particule du jeu comme `depthsuspend`, `townaura`, `reddust` ou `mobSpellAmbient`                                                                                              |
+| `particleChance` | non    | 0.0 à 1.0              | `0.00625`        | Sa densité, comptée comme pour les biomes modernes : à chaque tick environ 667 endroits dans un rayon de 16 blocs et 667 autres dans un rayon de 32 sont essayés, et chacun qui n'est pas un bloc plein affiche la particule avec cette probabilité |
+| `particleColor`  | non    | couleur hexadécimale   | aucun            | La teinte d'une particule qui en accepte une : `reddust`, `mobSpell` et `mobSpellAmbient`                                                                                                                                                           |
+
+Un bloc `ambience` donne à la dimension sa propre musique, ses propres sons et des particules qui flottent, comme un biome moderne. Le réglage vidéo « Particules » les réduit comme les particules vanilla, et les sons de grotte du jeu continuent de jouer.
 
 ## Corps célestes de Galacticraft
 

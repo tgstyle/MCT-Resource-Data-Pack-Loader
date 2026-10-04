@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.util.ResourceLocation;
+import javax.annotation.Nullable;
 
 public final class RainDef {
     public final String particle;
@@ -11,8 +12,9 @@ public final class RainDef {
     public final int snowColor;
     public final float angle;
     public final float heading;
+    @Nullable public final WindDef wind;
 
-    public RainDef(String particle, ResourceLocation sound, float volume, int interval, int color, int snowColor, float angle, float heading) {
+    public RainDef(String particle, ResourceLocation sound, float volume, int interval, int color, int snowColor, float angle, float heading, @Nullable WindDef wind) {
         this.particle = particle;
         this.sound = sound;
         this.volume = volume;
@@ -21,5 +23,6 @@ public final class RainDef {
         this.snowColor = snowColor;
         this.angle = angle;
         this.heading = heading;
+        this.wind = wind;
     }
 }

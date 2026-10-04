@@ -264,6 +264,7 @@
     "client.IGuiScreenResourcePacks",
     "client.IGuiVideoSettings",
     "client.INetHandlerPlayClient",
+    "client.IParticle",
     "client.IParticleManager",
     "client.IRenderGlobalClouds",
     "client.IShaderGroup",

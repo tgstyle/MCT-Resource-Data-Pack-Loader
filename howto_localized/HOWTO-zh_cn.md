@@ -3259,8 +3259,10 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3452,10 +3454,32 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `rain.snowColor` | 否 | 十六进制颜色 | `#FFFFFF` | 落下的雪的色调 |
 | `rain.angle` | 否 | 浮点数，0 到 180 | `0` | 与竖直向下的夹角度数：`90` 为横向吹，`180` 为笔直向上。绘制时最多倾斜 75 度 |
 | `rain.heading` | 否 | 浮点数，度 | `0` | 风吹的方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东 |
+| `wind.gust` | 否 | 浮点数，0 到 90 | `15` | 阵风在最强时给 `angle` 增加的度数，最多到水平 |
+| `wind.every` | 否 | 整数或 `[min, max]` | `[200, 600]` | 两阵风之间相隔的刻数 |
+| `wind.swing` | 否 | 浮点数，0 到 180 | `30` | 阵风让 `heading` 偏向一侧的度数 |
+
+`wind` 块让雨一阵一阵地刮。每隔一段时间，一阵风会让雨再多倾斜最多 `gust` 度，并把方向向一侧偏转最多 `swing` 度；风势在四秒内起落，阵风每隔 `every` 刻到来。雨和雪随风倾斜，维度的环境粒子也朝雨倾斜的方向飘，无论有没有阵风。只有 `wind` 块而没有 `rain` 块时，雨使用默认值。
 
 其他维度共用主世界的雨。`cycle` 为这个维度提供它自己的天气：阵雨按上述时间来去，不管主世界在做什么。有了 `thunderTicks`，它也会出现雷暴，按它自己的时间；雷暴遇上阵雨时，会使阵雨达到最大强度、让天空变暗，并在 `lightning` 开启时带来闪电。[世界模板](#世界模板)中的 `weatherCeiling` 仍然限制雨能到达的高度。
 
 `rain` 块改变这里雨和雪的外观与声音，无论有没有 `cycle`；没有时它们的外观和声音与原版相同。它在 Galacticraft 的行星或卫星上的作用方式相同。
+
+### `ambience` 块
+
+*维度*
+
+| 键                | 必填  | 值                | 默认值              | 作用                                                                                |
+| ---------------- | --- | ---------------- | ---------------- | --------------------------------------------------------------------------------- |
+| `music`          | 否   | 音效名称             | 无                | 在这里代替平常曲目播放的音乐，创造模式下也一样。进入时会切断正在播放的曲目                                             |
+| `musicDelay`     | 否   | 整数或 `[min, max]` | `[12000, 24000]` | 两首曲目之间安静的刻数                                                                       |
+| `loopSound`      | 否   | 音效名称             | 无                | 只要你在这里就循环播放的音效，进入时淡入，离开时淡出                                                        |
+| `ambientSound`   | 否   | 音效名称             | 无                | 不时播放的音效，就像现代生物群系添加自己的音效那样。由服务器只发送给那名玩家                                            |
+| `soundChance`    | 否   | 0.0 到 1.0        | `0.0111`         | 每刻播放 `ambientSound` 的几率                                                           |
+| `particle`       | 否   | 粒子名称             | 无                | 在你周围空气中飘浮的粒子，游戏的粒子名称之一，例如 `depthsuspend`、`townaura`、`reddust` 或 `mobSpellAmbient` |
+| `particleChance` | 否   | 0.0 到 1.0        | `0.00625`        | 它的密度，按现代生物群系的算法：每刻在 16 格范围内尝试约 667 个位置，在 32 格范围内再尝试 667 个，每个不是完整方块的位置以此几率显示粒子     |
+| `particleColor`  | 否   | 十六进制颜色           | 无                | 可着色粒子的颜色：`reddust`、`mobSpell` 和 `mobSpellAmbient`                                 |
+
+`ambience` 块为维度提供自己的音乐、音效和飘浮粒子，就像现代生物群系那样。视频设置中的“粒子”选项会像减少原版粒子一样减少它们，游戏的洞穴音效照常播放。
 
 ## Galacticraft 天体
 

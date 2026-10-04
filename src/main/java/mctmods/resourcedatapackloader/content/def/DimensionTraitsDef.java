@@ -19,8 +19,10 @@ public final class DimensionTraitsDef {
     @Nullable public final Cycle cycle;
     @Nullable public final RainDef rain;
     @Nullable public final Sky sky;
+    @Nullable public final AmbienceDef ambience;
 
-    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, @Nullable Cycle cycle, @Nullable RainDef rain, @Nullable Sky sky) {
+    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, @Nullable Cycle cycle, @Nullable RainDef rain, @Nullable Sky sky,
+                              @Nullable AmbienceDef ambience) {
         this.gravity = gravity;
         this.fallDamage = fallDamage;
         this.arrowGravity = arrowGravity;
@@ -32,6 +34,7 @@ public final class DimensionTraitsDef {
         this.cycle = cycle;
         this.rain = rain;
         this.sky = sky;
+        this.ambience = ambience;
     }
 
     public static final class Cycle {

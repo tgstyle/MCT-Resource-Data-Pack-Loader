@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
@@ -7,6 +8,7 @@ import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.audio.MusicTicker;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -177,6 +179,13 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Nullable public RainDef rain() { return def == null ? null : def.traits.rain; }
 
     @Nullable public RainDef rainSplash() { return rain(); }
+
+    @Nullable public AmbienceDef ambience() { return def == null ? null : def.traits.ambience; }
+
+    @Override @Nullable @SideOnly(Side.CLIENT) public MusicTicker.MusicType getMusicType() {
+        AmbienceDef ambience = ambience();
+        return ambience == null || ambience.music == null ? super.getMusicType() : ContentDimensionAmbience.music(ambience);
+    }
 
     @Override public boolean canDoLightning(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation && def.traits.lightning; }
 

@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.def.WindDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -30,6 +32,18 @@ public final class ContentParserDimensionTraits {
     private static final String RAIN_SOUND = "minecraft:weather.rain";
     private static final String WHITE = "#FFFFFF";
     private static final float MAX_ANGLE = 180.0F;
+    private static final String CYCLE = "a weather cycle";
+    private static final String AMBIENCE = "an ambience";
+    private static final String WIND = "a wind";
+    private static final float GUST = 15.0F;
+    private static final float MAX_GUST = 90.0F;
+    private static final float SWING = 30.0F;
+    private static final int EVERY_LOW = 200;
+    private static final int EVERY_HIGH = 600;
+    private static final int MUSIC_LOW = 12000;
+    private static final int MUSIC_HIGH = 24000;
+    private static final float SOUND_CHANCE = 0.0111F;
+    private static final float PARTICLE_CHANCE = 0.00625F;
 
     private ContentParserDimensionTraits() {}
 
@@ -55,11 +69,39 @@ public final class ContentParserDimensionTraits {
                 JsonUtils.getBoolean(weather, "snow", true),
                 JsonUtils.getBoolean(weather, "freeze", true),
                 weather.has("cycle") ? cycle(key, JsonUtils.getJsonObject(weather, "cycle")) : null,
-                weather.has("rain") ? rain(key, JsonUtils.getJsonObject(weather, "rain")) : null,
-                sky(key, sky));
+                weather.has("rain") || weather.has("wind") ? rain(key, JsonUtils.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, JsonUtils.getJsonObject(weather, "wind")) : null) : null,
+                sky(key, sky),
+                json.has("ambience") ? ambience(key, JsonUtils.getJsonObject(json, "ambience")) : null);
     }
 
-    private static RainDef rain(ResourceLocation key, JsonObject json) {
+    private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
+        int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
+        String particle = JsonUtils.getString(json, "particle", "").trim();
+        if (!particle.isEmpty() && EnumParticleTypes.getByName(particle) == null) {
+            ContentLog.LOGGER.error("Dimension {} names the ambience particle '{}', which is no particle Minecraft knows, so it shows none", key, particle);
+            particle = "";
+        }
+        return new AmbienceDef(sound(json, "music"), delay[0], delay[1], sound(json, "loopSound"),
+                JsonUtils.getString(json, "ambientSound", "").trim(),
+                chance(key, json, "soundChance", SOUND_CHANCE),
+                particle,
+                chance(key, json, "particleChance", PARTICLE_CHANCE),
+                json.has("particleColor") ? ContentTypes.color(JsonUtils.getString(json, "particleColor").trim(), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
+    }
+
+    @Nullable private static ResourceLocation sound(JsonObject json, String member) {
+        String name = JsonUtils.getString(json, member, "").trim();
+        return name.isEmpty() ? null : new ResourceLocation(name);
+    }
+
+    private static float chance(ResourceLocation key, JsonObject json, String member, float fallback) {
+        float chance = JsonUtils.getFloat(json, member, fallback);
+        if (chance >= 0.0F && chance <= 1.0F) { return chance; }
+        ContentLog.LOGGER.error("Dimension {} gives an ambience {} of {}, which is not from 0 to 1, using {}", key, member, chance, fallback);
+        return fallback;
+    }
+
+    private static RainDef rain(ResourceLocation key, JsonObject json, @Nullable WindDef wind) {
         String particle = JsonUtils.getString(json, "particle", RAIN_PARTICLE).trim().toLowerCase(Locale.ROOT);
         if (EnumParticleTypes.getByName(particle) == null) {
             ContentLog.LOGGER.error("Dimension {} names rain particle '{}', which is no particle Minecraft knows, using {}", key, particle, RAIN_PARTICLE);
@@ -77,7 +119,21 @@ public final class ContentParserDimensionTraits {
                 ContentTypes.color(JsonUtils.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
                 ContentTypes.color(JsonUtils.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
                 angle,
-                JsonUtils.getFloat(json, "heading", 0.0F));
+                JsonUtils.getFloat(json, "heading", 0.0F),
+                wind);
+    }
+
+    private static WindDef wind(ResourceLocation key, JsonObject json) {
+        return new WindDef(degrees(key, json, "gust", GUST, MAX_GUST),
+                span(key, json, WIND, "every", EVERY_LOW, EVERY_HIGH),
+                degrees(key, json, "swing", SWING, MAX_ANGLE));
+    }
+
+    private static float degrees(ResourceLocation key, JsonObject json, String member, float fallback, float most) {
+        float value = JsonUtils.getFloat(json, member, fallback);
+        if (value >= 0.0F && value <= most) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives a wind {} of {}, which is not from 0 to {}, using {}", key, member, value, most, fallback);
+        return fallback;
     }
 
     private static double factor(ResourceLocation key, JsonObject physics, String member) {
@@ -89,10 +145,10 @@ public final class ContentParserDimensionTraits {
     }
 
     private static DimensionTraitsDef.Cycle cycle(ResourceLocation key, JsonObject json) {
-        int[] rain = span(key, json, "rainTicks", CYCLE_LOW, 4600);
-        int[] clear = span(key, json, "clearTicks", CYCLE_LOW, 3000);
-        int[] thunder = json.has("thunderTicks") ? span(key, json, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
-        int[] calm = span(key, json, "calmTicks", CALM_LOW, CALM_HIGH);
+        int[] rain = span(key, json, CYCLE, "rainTicks", CYCLE_LOW, 4600);
+        int[] clear = span(key, json, CYCLE, "clearTicks", CYCLE_LOW, 3000);
+        int[] thunder = json.has("thunderTicks") ? span(key, json, CYCLE, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
+        int[] calm = span(key, json, CYCLE, "calmTicks", CALM_LOW, CALM_HIGH);
         return new DimensionTraitsDef.Cycle(rain, clear, strength(key, json, "maxStrength", 0.6F), thunder, calm, strength(key, json, "thunderStrength", 1.0F));
     }
 
@@ -103,7 +159,7 @@ public final class ContentParserDimensionTraits {
         return fallback;
     }
 
-    private static int[] span(ResourceLocation key, JsonObject json, String member, int low, int high) {
+    private static int[] span(ResourceLocation key, JsonObject json, String block, String member, int low, int high) {
         if (!json.has(member)) { return new int[] {low, high}; }
         JsonElement value = json.get(member);
         int min;
@@ -117,11 +173,11 @@ public final class ContentParserDimensionTraits {
             max = min;
         }
         else {
-            ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is neither a number nor [min, max], using [{}, {}]", key, member, value, low, high);
+            ContentLog.LOGGER.error("Dimension {} gives {} {} of {}, which is neither a number nor [min, max], using [{}, {}]", key, block, member, value, low, high);
             return new int[] {low, high};
         }
         if (min <= 0 || max < min) {
-            ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which needs 0 < min <= max, using [{}, {}]", key, member, value, low, high);
+            ContentLog.LOGGER.error("Dimension {} gives {} {} of {}, which needs 0 < min <= max, using [{}, {}]", key, block, member, value, low, high);
             return new int[] {low, high};
         }
         return new int[] {min, max};

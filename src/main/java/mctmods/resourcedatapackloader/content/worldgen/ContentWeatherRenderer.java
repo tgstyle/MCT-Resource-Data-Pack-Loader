@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
+import mctmods.resourcedatapackloader.util.WindGust;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -22,7 +23,6 @@ import java.util.Random;
 @SideOnly(Side.CLIENT) public final class ContentWeatherRenderer extends IRenderHandler {
     private static final ResourceLocation RAIN = new ResourceLocation("textures/environment/rain.png");
     private static final ResourceLocation SNOW = new ResourceLocation("textures/environment/snow.png");
-    private static final float MAX_LEAN = 75.0F;
     private static final int NONE = -1;
     private static final int RAINING = 0;
     private static final int SNOWING = 1;
@@ -35,9 +35,10 @@ import java.util.Random;
     private final float snowRed;
     private final float snowGreen;
     private final float snowBlue;
-    private final double slantX;
-    private final double slantZ;
+    private final RainDef rain;
     private final boolean upward;
+    private double slantX;
+    private double slantZ;
     private int drawing;
 
     public ContentWeatherRenderer(RainDef rain) {
@@ -56,18 +57,19 @@ import java.util.Random;
         snowRed = (rain.snowColor >> 16 & 255) / 255.0F;
         snowGreen = (rain.snowColor >> 8 & 255) / 255.0F;
         snowBlue = (rain.snowColor & 255) / 255.0F;
+        this.rain = rain;
         upward = rain.angle > 90.0F;
-        float lean = Math.min(Math.min(rain.angle, 180.0F - rain.angle), MAX_LEAN);
-        double slope = Math.tan(Math.toRadians(lean)) * (upward ? 1.0D : -1.0D);
-        double heading = Math.toRadians(rain.heading);
-        slantX = -Math.sin(heading) * slope;
-        slantZ = Math.cos(heading) * slope;
     }
 
     @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {
         float strength = world.getRainStrength(partialTicks);
         Entity view = mc.getRenderViewEntity();
         if (strength <= 0.0F || view == null) { return; }
+        double time = world.getTotalWorldTime() + partialTicks;
+        double slope = WindGust.slope(WindGust.angle(rain, time)) * (upward ? 1.0D : -1.0D);
+        double heading = Math.toRadians(WindGust.heading(rain, time));
+        slantX = -Math.sin(heading) * slope;
+        slantZ = Math.cos(heading) * slope;
         mc.entityRenderer.enableLightmap();
         int ticks = ((IEntityRenderer) mc.entityRenderer).getRendererUpdateCount();
         Tessellator tessellator = Tessellator.getInstance();

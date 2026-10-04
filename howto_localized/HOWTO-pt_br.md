@@ -3259,8 +3259,10 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "reddust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3452,10 +3454,32 @@ São os mesmos multiplicadores de [Física do mundo](#física-do-mundo), definid
 | `rain.snowColor` | não | cor hexadecimal | `#FFFFFF` | Tonalidade da neve que cai |
 | `rain.angle` | não | float, 0 a 180 | `0` | Graus a partir da vertical para baixo: `90` sopra de lado, `180` sobe reto para cima. É desenhada inclinada no máximo 75 graus |
 | `rain.heading` | não | float, graus | `0` | Para onde sopra: `0` sul, `90` oeste, `180` norte, `270` leste |
+| `wind.gust` | não | float, 0 a 90 | `15` | Graus que uma rajada soma a `angle` no auge, sem nunca passar da horizontal |
+| `wind.every` | não | int ou `[min, max]` | `[200, 600]` | Ticks de uma rajada até a seguinte |
+| `wind.swing` | não | float, 0 a 180 | `30` | Graus que uma rajada desvia `heading` para um dos lados |
+
+Um bloco `wind` deixa a chuva com rajadas. De vez em quando, uma rajada a inclina até `gust` graus a mais e desvia sua direção até `swing` graus para um lado; ela cresce e se desfaz em até quatro segundos, e as rajadas vêm a cada `every` ticks. A chuva e a neve se inclinam junto, e as partículas de ambiente da dimensão derivam para onde a chuva se inclina, com ou sem rajadas. Um bloco `wind` sem bloco `rain` dá à chuva os valores padrão.
 
 As outras dimensões compartilham a chuva do overworld. Um `cycle` dá a esta um clima próprio: aguaceiros vêm e vão nos tempos acima, seja o que for que o overworld esteja fazendo. Com `thunderTicks` ela também tem tempestades, em tempos próprios; uma tempestade que encontra um aguaceiro leva o aguaceiro à força total, escurece o céu e, com `lightning` ativado, traz raios. `weatherCeiling` em um [modelo de mundo](#modelos-de-mundo) ainda limita a altura que a chuva alcança.
 
 Um bloco `rain` muda o aspecto e o som da chuva e da neve aqui, com ou sem um `cycle`; sem um, elas têm o aspecto e o som do vanilla. Funciona do mesmo modo em um planeta ou lua do Galacticraft.
+
+### O bloco `ambience`
+
+*dimensões*
+
+| Chave            | Obrigatório | Valor               | Padrão           | O que faz                                                                                                                                                                                                                |
+| ---------------- | ----------- | ------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `music`          | não         | nome de som         | nenhum           | Música tocada aqui no lugar das faixas de sempre, no criativo também. Ao chegar, a faixa atual é cortada                                                                                                                 |
+| `musicDelay`     | não         | int ou `[min, max]` | `[12000, 24000]` | Ticks de silêncio entre duas faixas                                                                                                                                                                                      |
+| `loopSound`      | não         | nome de som         | nenhum           | Um som que toca em loop enquanto você está aqui, subindo ao chegar e sumindo ao sair                                                                                                                                     |
+| `ambientSound`   | não         | nome de som         | nenhum           | Um som tocado de vez em quando, como os biomas modernos adicionam os seus. Enviado pelo servidor só a esse jogador                                                                                                       |
+| `soundChance`    | não         | 0.0 a 1.0           | `0.0111`         | A chance por tick de `ambientSound` tocar                                                                                                                                                                                |
+| `particle`       | não         | nome de partícula   | nenhum           | Uma partícula flutuando no ar ao seu redor, um dos nomes de partícula do jogo, como `depthsuspend`, `townaura`, `reddust` ou `mobSpellAmbient`                                                                           |
+| `particleChance` | não         | 0.0 a 1.0           | `0.00625`        | Sua densidade, contada como nos biomas modernos: a cada tick cerca de 667 pontos num raio de 16 blocos e outros 667 num raio de 32 são tentados, e cada um que não é um bloco inteiro mostra a partícula com esta chance |
+| `particleColor`  | não         | cor hexadecimal     | nenhum           | A cor de uma partícula que aceita uma: `reddust`, `mobSpell` e `mobSpellAmbient`                                                                                                                                         |
+
+Um bloco `ambience` dá à dimensão música, sons e partículas flutuantes próprios, como um bioma moderno tem. A opção de vídeo “Partículas” reduz as partículas como faz com as do vanilla, e os sons de caverna do jogo continuam tocando.
 
 ## Corpos do Galacticraft
 
