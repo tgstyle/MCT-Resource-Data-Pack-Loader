@@ -3205,6 +3205,48 @@ On this version `waterFogColor` overrides the `water_fog_color` each biome carri
 | `starTwinkle`    | no       | float, 0 to 1 | `0.0`       | How deep the stars dim as they twinkle. `0` keeps them steady  |
 | `lightningColor` | no       | hex color     | `737380`    | Lightning bolt tint                                            |
 
+### Skybox, aurora and rainbow
+
+*dimensions*
+
+These keys sit in the `sky` block as well, and they too are drawn on the client only.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` paints your own images on the sky, behind the sunrise glow, the sun, the moon and the stars. Give all six faces of a cube as full texture paths, laid out as the cube unfolds: `up` meets the top edge of `north`, `down` its bottom edge, `west` sits to its left and `east` to its right, with `south` past `east`. Or give `panorama` alone instead, one 2:1 image wrapped around the whole sky: its left edge faces north and it runs clockwise through east, south and west, its top row is straight up and its bottom row straight down. A skybox with a face missing and no panorama is left out, with an error in the log.
+
+`aurora` hangs glowing curtains low over the northern sky at night. They ripple slowly, fade in as the sun sets, and are gone by day and in rain. `color` is the color at their foot and `topColor` the one they fade into at the top.
+
+`rainbow` shows a rainbow opposite the sun once rain stops in the daytime. It fades out over the two minutes after the rain ends, and a new shower clears it.
+
+No vanilla key gives a dimension its own sky images, an aurora or a rainbow, so these work the same on every version.
+
+| Key               | Required | Value        | Default  | What it does                                                                  |
+| ----------------- | -------- | ------------ | -------- | ----------------------------------------------------------------------------- |
+| `skybox.<face>`   | no       | texture path | none     | One cube face: `up`, `down`, `north`, `east`, `south` or `west`. Give all six |
+| `skybox.panorama` | no       | texture path | none     | One image wrapped around the whole sky, used in place of the faces            |
+| `aurora.color`    | no       | hex color    | `40FF90` | Color at the foot of the curtains                                             |
+| `aurora.topColor` | no       | hex color    | `8040FF` | Color at the top, where the curtains fade out                                 |
+| `rainbow`         | no       | boolean      | `false`  | Show a rainbow after rain                                                     |
+
 ### The `physics` block
 
 *dimensions*

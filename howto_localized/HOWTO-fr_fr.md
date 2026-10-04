@@ -3205,6 +3205,48 @@ Dans cette version, `waterFogColor` remplace dans toute la dimension le `water_f
 | `starTwinkle` | non | flottant, 0 à 1 | `0.0` | Jusqu'où les étoiles faiblissent en scintillant. `0` les garde fixes |
 | `lightningColor` | non | couleur hexadécimale | `737380` | Teinte des éclairs |
 
+### Skybox, aurore et arc-en-ciel
+
+*dimensions*
+
+Ces clés se placent elles aussi dans le bloc `sky`, et elles aussi ne sont dessinées que côté client.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` peint vos propres images sur le ciel, derrière la lueur de l'aube, le soleil, la lune et les étoiles. Donnez les six faces d'un cube sous forme de chemins de texture complets, disposées comme le cube déplié : `up` touche le bord supérieur de `north`, `down` son bord inférieur, `west` se trouve à sa gauche et `east` à sa droite, avec `south` après `east`. Ou donnez seulement `panorama`, une image 2:1 enroulée autour de tout le ciel : son bord gauche regarde le nord et elle tourne dans le sens des aiguilles d'une montre par l'est, le sud et l'ouest ; sa ligne du haut est à la verticale au-dessus et celle du bas à la verticale en dessous. Une skybox à laquelle il manque une face et qui n'a pas de panorama est ignorée, avec une erreur dans le journal.
+
+`aurora` suspend la nuit des rideaux lumineux bas sur le ciel du nord. Ils ondulent lentement, apparaissent quand le soleil se couche et disparaissent le jour et sous la pluie. `color` est la couleur à leur pied, `topColor` celle vers laquelle ils s'estompent en haut.
+
+`rainbow` affiche un arc-en-ciel à l'opposé du soleil dès que la pluie s'arrête en journée. Il s'estompe dans les deux minutes qui suivent la fin de la pluie, et une nouvelle averse l'efface.
+
+Aucune clé vanilla ne donne à une dimension ses propres images de ciel, une aurore ou un arc-en-ciel, ces clés fonctionnent donc de la même façon sur toutes les versions.
+
+| Clé | Requis | Valeur | Défaut | Rôle |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | non | chemin de texture | aucun | Une face du cube : `up`, `down`, `north`, `east`, `south` ou `west`. Les six sont nécessaires |
+| `skybox.panorama` | non | chemin de texture | aucun | Une image enroulée autour de tout le ciel, à la place des faces |
+| `aurora.color` | non | couleur hexadécimale | `40FF90` | Couleur au pied des rideaux |
+| `aurora.topColor` | non | couleur hexadécimale | `8040FF` | Couleur en haut, là où les rideaux s'estompent |
+| `rainbow` | non | booléen | `false` | Afficher un arc-en-ciel après la pluie |
+
 ### Le bloc `physics`
 
 *dimensions*
