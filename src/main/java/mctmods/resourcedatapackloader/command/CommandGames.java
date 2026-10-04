@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Scores;
@@ -28,7 +29,7 @@ import javax.annotation.Nullable;
 final class CommandGames {
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last");
+    private static final List<String> ROLLS = List.of("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass");
     private static final List<String> DECK_ACTIONS = List.of("draw", "shuffle", "left");
     private static final List<String> PICKS = List.of("player", "team");
     private static final List<String> OPTIONS = List.of("store", "audience");
@@ -71,6 +72,10 @@ final class CommandGames {
         if (!ROLLS.contains(args[0])) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
         if (!CommandShared.allowed(source, level(sub(args)))) { return refuse(source, ContentDice.words(source.getPlayer(), "notallowed")); }
         MinecraftServer server = source.getServer();
+        if ("pass".equals(args[0])) {
+            String refusal = ContentTurns.pass(server, source.getPlayer());
+            return refusal == null ? 1 : refuse(source, ContentDice.words(source.getPlayer(), refusal));
+        }
         List<String> plain = new ArrayList<>();
         String store = null;
         ContentDice.Audience audience = ContentDice.fallback();

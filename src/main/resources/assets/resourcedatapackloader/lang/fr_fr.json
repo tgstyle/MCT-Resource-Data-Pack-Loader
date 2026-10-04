@@ -165,6 +165,14 @@
   "rdpl.game.noteam": "Aucune équipe ne s'appelle {team}",
   "rdpl.game.noobjective": "Aucun objectif ne s'appelle {objective}",
   "rdpl.game.notie": "{objective} n'a pas d'égalité en tête",
+  "rdpl.game.turn": "Au tour de {group} : {seconds} secondes",
+  "rdpl.game.turnclock": "Au tour de {group} : {seconds}",
+  "rdpl.game.turnwarn": "{group} : plus que {seconds} secondes",
+  "rdpl.game.turnout": "{group} a dépassé son temps",
+  "rdpl.game.turnpass": "{group} passe son tour",
+  "rdpl.game.turngap": "Prochain tour dans {seconds}",
+  "rdpl.game.notturn": "Ce n'est pas ton tour",
+  "rdpl.game.noturns": "Aucun tour n'est en cours",
   "rdpl.game.notallowed": "Tu n'as pas le droit d'utiliser cette partie de /rdplserver game",
-  "rdpl.game.usage": "/rdplserver game <coin|die <faces|nom>|dice <lancer>|advantage [lancer]|disadvantage [lancer]|pick <player|team [équipe]>|deck <draw|shuffle|left> <nom>|teamroll [lancer]|tiebreak [objectif]|last [nombre]> [store <objectif>] [audience <self|team|all|radius <blocs>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <faces|nom>|dice <lancer>|advantage [lancer]|disadvantage [lancer]|pick <player|team [équipe]>|deck <draw|shuffle|left> <nom>|teamroll [lancer]|tiebreak [objectif]|last [nombre]|pass> [store <objectif>] [audience <self|team|all|radius <blocs>|silent>]"
 }

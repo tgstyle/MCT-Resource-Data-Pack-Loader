@@ -61,13 +61,18 @@ public final class ContentScoringLobby {
     }
 
     static void keepStill(MinecraftServer server) {
-        if (!ContentScoring.holding()) {
+        boolean all = ContentScoring.holding();
+        if (!all && ContentTurns.holdsNobody()) {
             STILL.clear();
             return;
         }
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (player.isSpectator()) { continue; }
             String name = player.getGameProfile().name();
+            if (!all && ContentTurns.free(player)) {
+                STILL.remove(name);
+                continue;
+            }
             Spot at = STILL.get(name);
             if (at == null || !at.dimension().equals(player.level().dimension())) {
                 STILL.put(name, new Spot(player.level().dimension(), player.getX(), player.getY(), player.getZ(), player.getYRot()));
@@ -78,7 +83,8 @@ public final class ContentScoringLobby {
     }
 
     static boolean refused(Player player) {
-        if (!(player instanceof ServerPlayer held) || !ContentScoring.holding()) { return false; }
+        if (!(player instanceof ServerPlayer held)) { return false; }
+        if (!ContentScoring.holding()) { return ContentTurns.refused(held); }
         ScoreDef lobby = ContentScoring.lobbyDef();
         long now = held.level().getGameTime();
         Long last = TOLD.get(held.getGameProfile().name());

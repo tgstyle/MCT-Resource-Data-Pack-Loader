@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.DiceDef;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
+import mctmods.resourcedatapackloader.content.def.TurnsDef;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.pack.port.Ids;
@@ -106,7 +107,25 @@ public final class ContentParserGames {
                 GsonHelper.getAsBoolean(ends, "lastStanding", false),
                 GsonHelper.getAsString(ends, "outSays", "You are out until the round ends"),
                 roundReset(key, GsonHelper.getAsJsonObject(json, "reset", new JsonObject())),
-                GsonHelper.getAsBoolean(json, "tiebreak", false));
+                GsonHelper.getAsBoolean(json, "tiebreak", false),
+                turns(key, json));
+    }
+
+    @Nullable private static TurnsDef turns(Identifier key, JsonObject json) {
+        if (!json.has("turns")) { return null; }
+        JsonObject turns = GsonHelper.getAsJsonObject(json, "turns");
+        String order = GsonHelper.getAsString(turns, "order", TurnsDef.FIXED).trim();
+        if (!TurnsDef.ORDERS.contains(order)) {
+            ContentLog.LOGGER.error("Score file {} takes turns in '{}' order, which is not fixed, random, lowestFirst or lastWinner, so they go in fixed order", key, order);
+            order = TurnsDef.FIXED;
+        }
+        String held = GsonHelper.getAsString(turns, "held", TurnsDef.FROZEN).trim();
+        if (!TurnsDef.HOLDS.contains(held)) {
+            ContentLog.LOGGER.error("Score file {} holds the sides waiting their turn as '{}', which is not frozen, spectator or adventure, so they are frozen", key, held);
+            held = TurnsDef.FROZEN;
+        }
+        return new TurnsDef(order, Math.max(1, GsonHelper.getAsInt(turns, "seconds", 60)), Math.max(0, GsonHelper.getAsInt(turns, "gapSeconds", 3)), held,
+                Math.max(0, GsonHelper.getAsInt(turns, "endsAtScore", 0)), Math.max(0, GsonHelper.getAsInt(turns, "cycles", 0)), names(turns, "mobTags"), names(turns, "mobTypes"));
     }
 
     private static RoundResetDef roundReset(Identifier key, JsonObject reset) {

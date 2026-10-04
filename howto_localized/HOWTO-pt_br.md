@@ -1315,6 +1315,7 @@ Um `potion_bottle` lista o que pode conter com `potionTypes`, um array de nomes 
 | `crop`         | seed        | nome de bloco                       | nenhum                 | A plantação que ele planta                                                                                                                                                                                                            |
 | `soil`         | seed        | nome de bloco                       | `minecraft:farmland`   | Onde pode ser plantado                                                                                                                                                                                                                |
 | `rolls` | não | `coin`, `d6`, `2d6+1`, um dado ou um baralho | nenhum | Num item simples, um clique direito rola como `/rdplserver game` faria e conta ao público padrão do pacote. Veja [Dados e baralhos](#dados-e-baralhos) |
+| `passesTurn` | não | booleano | `false` | Num item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Veja [Turnos](#turnos) |
 | `requires`     | não         | lista de ids de mods ou namespaces de pacotes | nenhum       | O arquivo é ignorado a menos que todos estejam presentes                                                                                                                                                                              |
 
 ### Chaves de variantes de itens
@@ -4908,6 +4909,43 @@ Todo jogador online em um lado vota, seja qual for o lado, com `/rdplserver roun
 | `results.background` | text    | uma ardósia escura      | A cor de fundo da carta |
 | `results.seconds`    | int     | `8`                    | Quanto tempo a carta permanece, no mínimo um segundo |
 
+### Turnos
+
+*pontuação*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Configuração | Tipo | Padrão | O que faz |
+| --- | --- | --- | --- |
+| `turns.order` | texto | `fixed` | Quem joga quando, definido no início de cada ciclo. `fixed` mantém a ordem em que os lados foram vistos pela primeira vez, `random` embaralha a cada ciclo, `lowestFirst` começa pela menor pontuação neste objetivo e `lastWinner` começa pelo lado que venceu a última rodada, o resto na ordem fixa |
+| `turns.seconds` | int | `60` | Quanto dura um turno, no mínimo um segundo |
+| `turns.gapSeconds` | int | `3` | Uma pausa entre turnos, enquanto todos os lados esperam. 0 segue direto |
+| `turns.held` | texto | `frozen` | Como um jogador espera a sua vez: `frozen` o deixa parado e o impede de bater, cavar, construir, usar ou largar, como faz o lobby; `spectator` ou `adventure` o põe nesse modo de jogo até a sua vez e depois devolve o dele |
+| `turns.endsAtScore` | int | `0` | Os turnos acabam, e a rodada com eles, assim que um lado chega a esta pontuação no objetivo. 0 nunca acaba por pontuação |
+| `turns.cycles` | int | `0` | Os turnos acabam, e a rodada com eles, depois deste número de ciclos, sendo um ciclo um turno para cada lado em jogo. 0 segue até que outra coisa encerre a rodada |
+| `turns.mobTags` | lista | vazio | Tags de placar que trazem para os turnos um mob sem time, um grupo por tag |
+| `turns.mobTypes` | lista | vazio | IDs de entidade que trazem para os turnos um mob sem time, um grupo por ID |
+
+`turns` faz os lados jogarem por turnos enquanto uma rodada corre. Cada time é um lado; sem times, cada jogador é um lado próprio, e um mob de um time joga com ele. Enquanto um lado tem a vez, todos os outros esperam: os jogadores como `held` manda, os mobs congelados do jeito que o lobby os segura. Um lado sem ninguém em jogo, ou com todos os jogadores eliminados, é pulado.
+
+Cada turno é anunciado no chat, e o relógio dele conta na barra de ação. O lado da vez é avisado no chat com um som quando faltam 10 segundos e de novo aos 3. `/rdplserver game pass`, ou um clique direito com um item que tenha `passesTurn`, encerra um turno mais cedo: um jogador só passa a vez do próprio lado, e um bloco de comando ou o console passa a de quem estiver jogando.
+
+Acabar por `endsAtScore` ou `cycles` encerra a rodada como qualquer outro fim: a classificação aparece, `awardsTo` e `tiebreak` valem, e `ends.resets` reinicia o mapa. Só o primeiro arquivo de pontuação com `turns` joga por turnos. Os textos são as chaves `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` e `noturns`, que o `says` de um arquivo de dados pode mudar.
+
 ## Invasões
 
 *modos de jogo*
@@ -5202,6 +5240,10 @@ Cada rolagem usa o acaso do próprio mundo e é gravada no log com quem a fez, o
 | `teamrollwin` | `{result}`, `{score}` |
 | `tiebreak` | `{objective}`, `{sides}`, `{result}` |
 | `notie`, `noobjective` | `{objective}` |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | nenhum |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}`, nessa ordem |
 
 O texto próprio do mod fica nos seus arquivos de idioma como `rdpl.game.<key>`, então um pacote de recursos também pode mudá-lo idioma por idioma.
@@ -6652,6 +6694,7 @@ Em um servidor dedicado, `/rdplserver` faz o mesmo pela cópia da pasta do próp
 | `/rdplserver game deck shuffle <name>` | 2 | Devolver todas as cartas |
 | `/rdplserver game teamroll [roll]` | 0 | Todos do lado do remetente rolam e o maior vence, com empate sorteado. Sem times, o remetente rola sozinho |
 | `/rdplserver game tiebreak [objective]` | 2 | Sortear um dos lados empatados no topo de um objetivo: o nomeado, senão o primeiro objetivo de pontuação com `tiebreak`, senão o primeiro |
+| `/rdplserver game pass` | 0 | Encerra mais cedo a vez do lado de quem envia quando um arquivo de pontuação joga por turnos. De um bloco de comando ou do console, encerra a vez de quem estiver jogando |
 | `/rdplserver game last [count]` | 0 | As últimas rolagens, a mais recente primeiro: 10, ou a quantidade dada até 50 |
 
 Qualquer rolagem pode terminar com `store <objective>`, que grava o seu número na pontuação do próprio remetente nesse objetivo, e com `audience <quem>`, que substitui o padrão do pacote: `self`, `team` (o lado do remetente, ou só o remetente sem times), `all`, `radius <blocos>` (jogadores no mesmo mundo dentro dessa distância) ou `silent`, que só grava. `/rdpl game` é repassado a ele.
@@ -6708,7 +6751,7 @@ Cada parte de `game` tem o seu próprio nível: 0 para cada rolagem, e 2 para `d
 
 | Configuração | O que rege |
 | --- | --- |
-| `gameLevels` | Uma parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` ou `last` |
+| `gameLevels` | Uma parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` ou `pass` |
 
 A escala é a de `goto`, e `4` fecha uma parte para todos. O preenchimento com Tab oferece só as partes que um remetente pode usar. `gameLevels` fica no grupo `commands` junto às configurações de `goto`.
 

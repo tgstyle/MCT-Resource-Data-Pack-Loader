@@ -165,6 +165,14 @@
   "rdpl.game.noteam": "There is no team called {team}",
   "rdpl.game.noobjective": "There is no objective called {objective}",
   "rdpl.game.notie": "{objective} has no tie at the top",
+  "rdpl.game.turn": "{group}'s turn: {seconds} seconds",
+  "rdpl.game.turnclock": "{group}'s turn: {seconds}",
+  "rdpl.game.turnwarn": "{group}: {seconds} seconds left",
+  "rdpl.game.turnout": "{group} ran out of time",
+  "rdpl.game.turnpass": "{group} passes the turn",
+  "rdpl.game.turngap": "Next turn in {seconds}",
+  "rdpl.game.notturn": "It is not your turn",
+  "rdpl.game.noturns": "No turns are running",
   "rdpl.game.notallowed": "You are not allowed to run that part of /rdplserver game",
-  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <sides|name>|dice <roll>|advantage [roll]|disadvantage [roll]|pick <player|team [team]>|deck <draw|shuffle|left> <name>|teamroll [roll]|tiebreak [objective]|last [count]|pass> [store <objective>] [audience <self|team|all|radius <blocks>|silent>]"
 }

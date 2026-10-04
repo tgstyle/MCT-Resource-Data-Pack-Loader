@@ -165,6 +165,14 @@
   "rdpl.game.noteam": "Команды с именем {team} нет",
   "rdpl.game.noobjective": "Цели с именем {objective} нет",
   "rdpl.game.notie": "В {objective} нет ничьей на первом месте",
+  "rdpl.game.turn": "Ходит {group}: {seconds} с",
+  "rdpl.game.turnclock": "Ходит {group}: {seconds}",
+  "rdpl.game.turnwarn": "{group}: осталось {seconds} с",
+  "rdpl.game.turnout": "У {group} вышло время",
+  "rdpl.game.turnpass": "{group} пропускает ход",
+  "rdpl.game.turngap": "Следующий ход через {seconds}",
+  "rdpl.game.notturn": "Сейчас не ваш ход",
+  "rdpl.game.noturns": "Сейчас никто не ходит по очереди",
   "rdpl.game.notallowed": "Вам нельзя выполнять эту часть /rdplserver game",
-  "rdpl.game.usage": "/rdplserver game <coin|die <грани|имя>|dice <бросок>|advantage [бросок]|disadvantage [бросок]|pick <player|team [команда]>|deck <draw|shuffle|left> <имя>|teamroll [бросок]|tiebreak [цель]|last [число]> [store <цель>] [audience <self|team|all|radius <блоки>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <грани|имя>|dice <бросок>|advantage [бросок]|disadvantage [бросок]|pick <player|team [команда]>|deck <draw|shuffle|left> <имя>|teamroll [бросок]|tiebreak [цель]|last [число]|pass> [store <цель>] [audience <self|team|all|radius <блоки>|silent>]"
 }
