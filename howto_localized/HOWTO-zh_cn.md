@@ -1315,6 +1315,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `crop` | seed | 方块名称 | 无 | 它种下的作物 |
 | `soil` | seed | 方块名称 | `minecraft:farmland` | 它可以种在什么方块上 |
 | `rolls` | 否 | `coin`、`d6`、`2d6+1`、一个骰子或一个牌堆 | 无 | 在普通物品上，右键会像 `/rdplserver game` 那样掷骰，并告知资源包的默认听众。参见[骰子与牌堆](#骰子与牌堆) |
+| `passesTurn` | 否 | 布尔值 | `false` | 在普通物品上，右键会像 `/rdplserver game pass` 那样结束持有者阵营的行动。参见[轮流行动](#轮流行动) |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
 
 ### 物品变种键
@@ -4908,6 +4909,43 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `results.background` | 文本 | 深石板色 | 卡片的背景色 |
 | `results.seconds` | 整数 | `8` | 卡片停留多久，至少一秒 |
 
+### 轮流行动
+
+*计分*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| 设置 | 类型 | 默认值 | 作用 |
+| --- | --- | --- | --- |
+| `turns.order` | 文本 | `fixed` | 谁在何时行动，在每一圈开始时决定。`fixed` 保持各阵营首次出现的顺序，`random` 每一圈重新打乱，`lowestFirst` 从此目标上分数最低的阵营开始，`lastWinner` 从赢得上一回合的阵营开始，其余按固定顺序 |
+| `turns.seconds` | 整数 | `60` | 每次行动持续多久，至少一秒 |
+| `turns.gapSeconds` | 整数 | `3` | 两次行动之间的停顿，期间所有阵营都在等待。0 表示直接继续 |
+| `turns.held` | 文本 | `frozen` | 玩家如何等待轮到自己：`frozen` 让其站着不动，并像大厅那样不让其攻击、挖掘、建造、使用或丢弃物品；`spectator` 或 `adventure` 把其切换到该游戏模式，轮到自己时再换回原来的模式 |
+| `turns.endsAtScore` | 整数 | `0` | 一旦有阵营在此目标上达到这个分数，轮流行动就结束，这一回合也随之结束。0 表示从不因分数结束 |
+| `turns.cycles` | 整数 | `0` | 这么多圈之后轮流行动结束，这一回合也随之结束；一圈就是在场的每个阵营各行动一次。0 表示一直进行到别的条件结束这一回合 |
+| `turns.mobTags` | 列表 | 空 | 让不在队伍中的生物加入轮流行动的计分板标签，每个标签一组 |
+| `turns.mobTypes` | 列表 | 空 | 让不在队伍中的生物加入轮流行动的实体 ID，每个 ID 一组 |
+
+`turns` 让各阵营在一回合进行时轮流行动。每个队伍是一个阵营；没有队伍时每个玩家各自为一个阵营，队伍中的生物随队伍行动。一个阵营行动时，其他阵营都要等待：玩家按 `held` 的设定等待，生物则像在大厅里那样被定住。没有人在场、或所有玩家都已出局的阵营会被跳过。
+
+每次行动都会在聊天栏中宣布，计时在动作栏上倒数。正在行动的阵营会在剩 10 秒时在聊天栏中收到带提示音的警告，剩 3 秒时再提醒一次。`/rdplserver game pass`，或用带 `passesTurn` 的物品右键，会提前结束行动：玩家只能结束自己阵营的行动，命令方块或控制台则结束当前正在行动的阵营。
+
+因 `endsAtScore` 或 `cycles` 结束时，这一回合会像其他结束方式一样结束：显示战况，`awardsTo` 和 `tiebreak` 生效，`ends.resets` 会重置地图。只有第一个带 `turns` 的计分文件会轮流行动。相关文字是 `turn`、`turnclock`、`turnwarn`、`turnout`、`turnpass`、`turngap`、`notturn` 和 `noturns` 这些键，骰子文件的 `says` 可以修改它们。
+
 ## 袭击
 
 *游戏模式*
@@ -5202,6 +5240,10 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `teamrollwin` | `{result}`、`{score}` |
 | `tiebreak` | `{objective}`、`{sides}`、`{result}` |
 | `notie`、`noobjective` | `{objective}` |
+| `turn`、`turnclock`、`turnwarn` | `{group}`、`{seconds}` |
+| `turnout`、`turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`、`noturns` | 无 |
 | `badsides`、`badroll`、`badaudience`、`nodie`、`noteam` | 依次为 `{sides}`、`{roll}`、`{audience}`、`{name}`、`{team}` |
 
 本模组自带的文字位于其语言文件中，键为 `rdpl.game.<key>`，所以资源包也可以按语言逐一更改它。
@@ -6652,6 +6694,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver game deck shuffle <name>` | 2 | 把所有牌放回 |
 | `/rdplserver game teamroll [roll]` | 0 | 发送者一方的每个人各掷一次，最高者胜，平局抽签决定。没有队伍时只有发送者自己掷 |
 | `/rdplserver game tiebreak [objective]` | 2 | 从某个目标并列第一的各方中抽出一方：指定的目标，否则是第一个带 `tiebreak` 的计分目标，再否则是第一个 |
+| `/rdplserver game pass` | 0 | 当计分文件设置了轮流行动时，提前结束发送者所在阵营的行动。从命令方块或控制台执行时，结束当前正在行动的阵营 |
 | `/rdplserver game last [count]` | 0 | 最近的掷骰，最新的在前：10 次，或给定的次数，最多 50 |
 
 任何掷骰都可以以 `store <objective>` 结尾，把结果数字写入发送者自己在该目标中的分数；也可以以 `audience <谁>` 结尾，取代资源包的默认值：`self`、`team`（发送者一方，没有队伍时只有发送者）、`all`、`radius <格数>`（同一世界中该距离内的玩家）或 `silent`，后者只写日志。`/rdpl game` 会转交给它。
@@ -6708,7 +6751,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 
 | 设置 | 管辖什么 |
 | --- | --- |
-| `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak` 或 `last` |
+| `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak`、`last` 或 `pass` |
 
 等级刻度与 `goto` 相同，`4` 会对所有人关闭某个部分。Tab 补全只提供发送者可以使用的部分。`gameLevels` 与 `goto` 的设置一起位于 `commands` 组中。
 

@@ -71,7 +71,7 @@ public final class ContentItemTypes {
             case ARMOR -> armor(def, variant, properties.stacksTo(1));
             case SEED -> seed(def, variant, properties);
             case CONTAINER -> new ContentContainerItem(def.holds() == null ? POUCH : def.holds(), properties);
-            default -> def.rolls().isEmpty() ? new Item(properties) : new ContentRollItem(def, properties);
+            default -> def.rolls().isEmpty() && !def.passesTurn() ? new Item(properties) : new ContentRollItem(def, properties);
         };
     }
 

@@ -1315,6 +1315,7 @@ Un `potion_bottle` liste ce qu'il peut contenir avec `potionTypes`, un tableau d
 | `crop` | seed | nom de bloc | aucun | La culture qu'il plante |
 | `soil` | seed | nom de bloc | `minecraft:farmland` | Ce sur quoi il peut être planté |
 | `rolls` | non | `coin`, `d6`, `2d6+1`, un dé ou un paquet | aucun | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets) |
+| `passesTurn` | non | booléen | `false` | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours) |
 | `requires` | non | liste d'ids de mods ou de namespaces de packs | aucun | Le fichier est ignoré à moins que tous soient présents |
 
 ### Clés de variantes d'objet
@@ -4908,6 +4909,43 @@ Chaque joueur en ligne appartenant à un camp vote, quel que soit son camp, avec
 | `results.background` | texte | une ardoise sombre | La couleur de fond de la carte |
 | `results.seconds` | entier | `8` | Durée d'affichage de la carte, une seconde au minimum |
 
+### Tours
+
+*score*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Réglage | Type | Défaut | Ce que ça fait |
+| --- | --- | --- | --- |
+| `turns.order` | texte | `fixed` | Qui joue quand, fixé au début de chaque cycle. `fixed` garde l'ordre dans lequel les camps ont été vus pour la première fois, `random` mélange à chaque cycle, `lowestFirst` commence par le score le plus bas sur cet objectif et `lastWinner` commence par le camp qui a gagné la dernière manche, le reste dans l'ordre fixe |
+| `turns.seconds` | int | `60` | Combien de temps dure un tour, au moins une seconde |
+| `turns.gapSeconds` | int | `3` | Une pause entre les tours, pendant laquelle tous les camps attendent. 0 enchaîne directement |
+| `turns.held` | texte | `frozen` | Comment un joueur attend son tour : `frozen` le fige et l'empêche de frapper, creuser, construire, utiliser ou jeter, comme le fait le hall d'attente ; `spectator` ou `adventure` le met dans ce mode de jeu jusqu'à son tour puis lui rend le sien |
+| `turns.endsAtScore` | int | `0` | Les tours s'arrêtent, et la manche avec eux, dès qu'un camp atteint ce score sur l'objectif. 0 ne finit jamais au score |
+| `turns.cycles` | int | `0` | Les tours s'arrêtent, et la manche avec eux, après ce nombre de cycles, un cycle étant un tour pour chaque camp en jeu. 0 continue jusqu'à ce que quelque chose d'autre finisse la manche |
+| `turns.mobTags` | liste | vide | Des tags de scoreboard qui font entrer dans les tours un mob sans équipe, un groupe par tag |
+| `turns.mobTypes` | liste | vide | Des identifiants d'entité qui font entrer dans les tours un mob sans équipe, un groupe par identifiant |
+
+`turns` fait jouer les camps à tour de rôle pendant une manche. Chaque équipe est un camp ; sans équipes, chaque joueur est un camp à lui seul, et un mob d'une équipe joue avec elle. Pendant qu'un camp a son tour, tous les autres attendent : leurs joueurs comme le dit `held`, leurs mobs figés comme le hall d'attente les retient. Un camp sans personne en jeu, ou dont tous les joueurs sont éliminés, est sauté.
+
+Chaque tour est annoncé dans le chat, et son chrono défile sur la barre d'action. Le camp dont c'est le tour est prévenu dans le chat avec un son à 10 secondes de la fin, puis à 3. `/rdplserver game pass`, ou un clic droit avec un objet qui a `passesTurn`, termine un tour plus tôt : un joueur ne passe que le tour de son propre camp, et un bloc de commande ou la console passe celui de qui joue.
+
+Finir sur `endsAtScore` ou `cycles` termine la manche comme toute autre fin : le classement s'affiche, `awardsTo` et `tiebreak` s'appliquent, et `ends.resets` réinitialise la carte. Seul le premier fichier de score avec `turns` fait jouer à tour de rôle. Les textes sont les clés `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` et `noturns`, que le `says` d'un fichier de dés peut changer.
+
 ## Raids
 
 *modes de jeu*
@@ -5202,6 +5240,10 @@ Chaque lancer utilise le hasard propre au monde et s'écrit dans le journal avec
 | `teamrollwin` | `{result}`, `{score}` |
 | `tiebreak` | `{objective}`, `{sides}`, `{result}` |
 | `notie`, `noobjective` | `{objective}` |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | aucun |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` dans l'ordre |
 
 La formulation propre du mod se trouve dans ses fichiers de langue sous `rdpl.game.<key>`, donc un pack de ressources peut aussi la changer langue par langue.
@@ -6652,6 +6694,7 @@ Sur un serveur dédié, `/rdplserver` fait la même chose pour la copie du dossi
 | `/rdplserver game deck shuffle <name>` | 2 | Remettre toutes les cartes |
 | `/rdplserver game teamroll [roll]` | 0 | Chacun dans le camp de l'expéditeur lance et le plus haut gagne, une égalité tirée au sort. Sans équipes, l'expéditeur lance seul |
 | `/rdplserver game tiebreak [objective]` | 2 | Tirer au sort l'un des camps à égalité en tête d'un objectif : celui nommé, sinon le premier objectif de score avec `tiebreak`, sinon le premier |
+| `/rdplserver game pass` | 0 | Termine plus tôt le tour du camp de l'expéditeur quand un fichier de score fait jouer à tour de rôle. Depuis un bloc de commande ou la console, termine le tour de qui joue |
 | `/rdplserver game last [count]` | 0 | Les derniers lancers, du plus récent au plus ancien : 10, ou le nombre donné jusqu'à 50 |
 
 Tout lancer peut finir par `store <objective>`, qui écrit son nombre dans le score de l'expéditeur pour cet objectif, et par `audience <qui>`, qui remplace la valeur par défaut du pack : `self`, `team` (le camp de l'expéditeur, ou l'expéditeur seul sans équipes), `all`, `radius <blocs>` (les joueurs du même monde à cette distance) ou `silent`, qui ne fait qu'enregistrer. `/rdpl game` lui est transmis.
@@ -6708,7 +6751,7 @@ Chaque partie de `game` a son propre niveau : 0 pour chaque lancer, et 2 pour `d
 
 | Réglage | Ce qu'il régit |
 | --- | --- |
-| `gameLevels` | Une partie de `game` : `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` ou `last` |
+| `gameLevels` | Une partie de `game` : `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` ou `pass` |
 
 L'échelle est celle de `goto`, et `4` ferme une partie à tout le monde. La complétion par tabulation ne propose que les parties qu'un expéditeur peut lancer. `gameLevels` se trouve dans le groupe `commands` avec les réglages de `goto`.
 

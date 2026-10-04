@@ -197,6 +197,7 @@ public final class ContentScoring {
             }
             if (!resetting.intermissionSays().isEmpty()) { ContentPregenHold.tellBar(server, resetting.intermissionSays().replace("{seconds}", Integer.toString(waiting))); }
         }
+        ContentTurns.second(server, !closed && waiting == 0);
         if (closed) { return; }
         for (ScoreDef def : BY_NAME.values()) {
             if (def.endsAfterMinutes() <= 0 || FINISHED.contains(def.name())) { continue; }
@@ -210,8 +211,9 @@ public final class ContentScoring {
         finish(server, def, "score", null);
     }
 
-    private static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
+    static void finish(MinecraftServer server, ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name())) { return; }
+        ContentTurns.over(server, def, winner);
         List<String> lines = standings(server, def);
         if (def.endsLastStanding()) { backIn(server); }
         if (winner != null) {
@@ -423,7 +425,7 @@ public final class ContentScoring {
     public static boolean standInWaits() { return lobbied ? !holding() : eliminating(); }
 
     public static void onStill(LivingEvent.LivingTickEvent event) {
-        if (event.getEntity() instanceof Player || event.getEntity().level().isClientSide() || !holding()) { return; }
+        if (event.getEntity() instanceof Player || event.getEntity().level().isClientSide() || !holding() && ContentTurns.free(event.getEntity())) { return; }
         event.setCanceled(true);
     }
 
@@ -517,6 +519,7 @@ public final class ContentScoring {
             ContentLog.LOGGER.info("The {} match is over, so its standing is cleared for the next one", def.displayName());
         }
         ticks = 0;
+        ContentTurns.reset(server);
         IN_PLAY.clear();
         KILLS.clear();
         DEATHS.clear();
