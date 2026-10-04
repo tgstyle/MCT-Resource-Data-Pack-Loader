@@ -84,7 +84,7 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
 
     private static StorageDef read(FriendlyByteBuf extra) {
         boolean hasItems = extra.readBoolean();
-        return new StorageDef(hasItems, FilterDef.NONE, Math.max(0, extra.readVarInt()), FilterDef.NONE, Math.max(0, extra.readVarInt()), 0, false, false);
+        return new StorageDef(hasItems, FilterDef.NONE, Math.max(0, extra.readVarInt()), FilterDef.NONE, Math.max(0, extra.readVarInt()), 0, false, false, 0, 0, StorageDef.Dry.STOPS);
     }
 
     public static ContainerDef shape(StorageDef def) { return ContentContainers.FALLBACK.sized(def.bands(), StorageDef.PER_ROW); }

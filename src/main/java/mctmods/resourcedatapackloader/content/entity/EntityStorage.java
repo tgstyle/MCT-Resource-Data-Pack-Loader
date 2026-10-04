@@ -18,6 +18,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
@@ -33,6 +37,7 @@ import net.minecraftforge.event.entity.living.LivingDropsEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.FluidUtil;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
@@ -40,6 +45,7 @@ import net.minecraftforge.network.NetworkHooks;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -48,6 +54,8 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
     private static final String ITEMS = "Items";
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
+    private static final UUID SLOWED = UUID.fromString("5c3f1a2e-8d47-4b61-9f0a-2e7d6c1b8a94");
+    private static final int SECOND = 20;
     private static final Map<Entity, EntityStorage> HELD = new MapMaker().weakKeys().makeMap();
     @Nullable private final Items items;
     @Nullable private final Tank tank;
@@ -57,6 +65,9 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
     private final LazyOptional<Energy> energyHeld;
     private final boolean buckets;
     private final boolean dropsOnDeath;
+    private final int fluidUse;
+    private final int energyUse;
+    private final StorageDef.Dry runsDry;
 
     private EntityStorage(StorageDef def) {
         this.items = def.slots() > 0 ? new Items(def.slots(), def.items()) : null;
@@ -67,6 +78,46 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
         this.energyHeld = energy == null ? LazyOptional.empty() : LazyOptional.of(() -> energy);
         this.buckets = def.buckets();
         this.dropsOnDeath = def.dropsOnDeath();
+        this.fluidUse = tank == null ? 0 : def.fluidUse();
+        this.energyUse = energy == null ? 0 : def.energyUse();
+        this.runsDry = def.runsDry();
+    }
+
+    private boolean spends() { return fluidUse > 0 || energyUse > 0; }
+
+    private boolean dry() { return tank != null && tank.getFluidAmount() < fluidUse || energy != null && energy.getEnergyStored() < energyUse; }
+
+    private void spend() {
+        if (tank != null && fluidUse > 0) { tank.drain(fluidUse, IFluidHandler.FluidAction.EXECUTE); }
+        if (energy != null && energyUse > 0) { energy.spend(energyUse); }
+    }
+
+    public static boolean stalled(Mob mob) {
+        EntityStorage storage = of(mob);
+        if (storage == null || storage.runsDry != StorageDef.Dry.STOPS || !storage.dry()) { return false; }
+        mob.setZza(0.0F);
+        mob.setXxa(0.0F);
+        mob.setYya(0.0F);
+        mob.setJumping(false);
+        mob.getNavigation().stop();
+        return true;
+    }
+
+    public static void tick(LivingEntity living) {
+        if (living.level().isClientSide() || living.tickCount % SECOND != 0) { return; }
+        EntityStorage storage = of(living);
+        if (storage == null || !storage.spends()) { return; }
+        boolean paid = !storage.dry();
+        if (paid) { storage.spend(); }
+        if (storage.runsDry == StorageDef.Dry.SLOWS) { slow(living, storage.dry()); }
+        else if (storage.runsDry == StorageDef.Dry.HURTS && !paid) { living.hurt(living.damageSources().starve(), 1.0F); }
+    }
+
+    private static void slow(LivingEntity living, boolean dry) {
+        AttributeInstance speed = living.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed == null || dry == (speed.getModifier(SLOWED) != null)) { return; }
+        if (dry) { speed.addTransientModifier(new AttributeModifier(SLOWED, "rdpl:dry", -0.5D, AttributeModifier.Operation.MULTIPLY_TOTAL)); }
+        else { speed.removeModifier(SLOWED); }
     }
 
     @Nullable public static StorageDef def(@Nullable Entity entity) {
@@ -210,5 +261,7 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
         private Energy(int capacity, int transfer) { super(capacity, transfer); }
 
         private void load(int stored) { energy = Mth.clamp(stored, 0, capacity); }
+
+        private void spend(int used) { energy = Math.max(0, energy - used); }
     }
 }

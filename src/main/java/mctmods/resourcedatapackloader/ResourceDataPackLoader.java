@@ -228,6 +228,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener((LivingEvent.LivingTickEvent event) -> {
             ContentEntities.tick(event.getEntity());
             ContentPhysics.tick(event.getEntity());
+            EntityStorage.tick(event.getEntity());
         });
         MinecraftForge.EVENT_BUS.addListener(ContentPhysics::onJoin);
         MinecraftForge.EVENT_BUS.addListener(ContentPhysics::onFall);
