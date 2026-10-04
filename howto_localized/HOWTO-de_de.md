@@ -2865,7 +2865,7 @@ Die Variante einer Galacticraft-Rakete (`galacticraftcore:rocket_t1`, `galacticr
 
 Der Pfad der Datei ist der Name der Gefahr, und ihre Todesmeldung kommt aus dem Sprachschlüssel `death.attack.rdpl.<Dateiname>`.
 
-Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belasten Spieler, die in der Nähe dieser Blöcke stehen, diese Items bei sich tragen oder sich in diesen Dimensionen aufhalten, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Datei definiert eine Gefahr, mehrere laufen nebeneinander. Die Vorgabewerte der Schlüssel entsprechen der Strahlung von Immersive World.
+Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belasten Spieler, die in der Nähe dieser Blöcke stehen, diese Items bei sich tragen oder sich in diesen Dimensionen aufhalten, in Stufen; jede Stufe bringt Effekte und wiederkehrenden Schaden. Eine Gefahr kann auch von Mobs und Spielern in der Nähe übertragen werden oder mit dem Regen fallen ([Ansteckung und Wetter](#ansteckung-und-wetter)). Eine Datei definiert eine Gefahr, mehrere laufen nebeneinander. Die Vorgabewerte der Schlüssel entsprechen der Strahlung von Immersive World.
 
 ```json
 {
@@ -2889,9 +2889,9 @@ Eine vom Pack definierte Gefahr: benannte Blöcke, Items und Dimensionen belaste
 
 | Schlüssel             | Pflicht        | Wert                                 | Vorgabe | Wirkung                                                                                           |
 | --------------------- | -------------- | ------------------------------------ | ------- | ------------------------------------------------------------------------------------------------- |
-| `blocks`              | eines der drei | Liste aus `block` oder `block=stufe` |         | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                 |
-| `items`               | eines der drei | Liste aus `item` oder `item=stufe`   |         | Items, die einen Spieler belasten, der sie trägt                                                  |
-| `dimensions`          | eines der drei | Liste aus `dim` oder `dim=stufe`     |         | Numerische Dimensions-IDs, die jeden Spieler darin belasten                                       |
+| `blocks`              | eines der fünf | Liste aus `block` oder `block=stufe` |         | Blöcke, die einen Spieler in der Nähe belasten. Ohne Stufe gilt 1                                 |
+| `items`               | eines der fünf | Liste aus `item` oder `item=stufe`   |         | Items, die einen Spieler belasten, der sie trägt                                                  |
+| `dimensions`          | eines der fünf | Liste aus `dim` oder `dim=stufe`     |         | Numerische Dimensions-IDs, die jeden Spieler darin belasten                                       |
 | `levels`              | ja             | Liste von Stufen                     |         | Die Schwereleiter, der erste Eintrag ist Stufe 1. Ein Spieler bekommt die höchste erreichte Stufe |
 | `immunity`            | nein           | Trankname                            | keine   | Ein Effekt, dessen Träger gar nicht belastet wird                                                 |
 | `scanInterval`        | nein           | Ticks                                | `20`    | Wie oft Umgebung und Inventar geprüft werden                                                      |
@@ -2913,6 +2913,39 @@ Jede Stufe:
 | `effects`        | nein    | Liste von Effekten | keine   | Zusätzliche Effekte, gleiche Form wie bei Trankarten. Ohne `duration` folgen sie dem Prüfintervall                                            |
 
 Die Stufeneffekte halten etwas über die nächste Prüfung hinaus, Weggehen lässt sie also von selbst auslaufen. Der Tod durch den Schaden liest seine Meldung aus `death.attack.rdpl.<dateiname>`, die die Sprachdateien des Packs liefern.
+
+### Ansteckung und Wetter
+
+*expositionen*
+
+Zwei weitere Quellen in derselben Datei. Träger und belastete Wesen geben die Gefahr an empfängliche Wesen in ihrer Nähe weiter, und Regen oder Gewitter belasten Spieler, die ungeschützt darin stehen.
+
+```json
+{
+  "carriers": [ "minecraft:zombie_villager=2" ],
+  "contagious": true,
+  "catchers": [ "minecraft:player", "minecraft:villager" ],
+  "contagionRange": 4,
+  "contagionChance": 0.1,
+  "contagionDuration": 1200,
+  "weather": [ "rain", "thunder=2" ],
+  "weatherDimensions": [ "0" ],
+  "levels": [ { "effect": "mypack:sickness_1", "damage": 1.0 }, { "effect": "mypack:sickness_2", "damage": 2.0, "damageInterval": 80 } ]
+}
+```
+
+| Schlüssel           | Pflicht        | Wert                                   | Vorgabe            | Wirkung                                                                                                                                  |
+| ------------------- | -------------- | -------------------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `carriers`          | eines der fünf | Liste aus `entity` oder `entity=stufe` |                    | Mobs oder `minecraft:player`, die die Gefahr immer auf dieser Stufe weitergeben. Ohne Stufe gilt 1                                       |
+| `contagious`        | nein           | boolean                                | `false`            | Wer belastet ist, gibt die Gefahr auf seiner aktuellen Stufe weiter                                                                      |
+| `catchers`          | nein           | Liste von Entity-Namen                 | `minecraft:player` | Wer sich anstecken kann. Ein Mob steckt sich nur bei Trägern und belasteten Wesen an; Blöcke, Items und Wetter wirken nicht auf ihn      |
+| `contagionRange`    | nein           | Blöcke                                 | `4`                | Wie weit ein Träger oder belastetes Wesen reicht, als Kugel                                                                              |
+| `contagionChance`   | nein           | `0` bis `1`                            | `0.1`              | Die Chance je Prüfung des Trägers oder belasteten Wesens, dass sich jedes empfängliche Wesen in Reichweite ansteckt                      |
+| `contagionDuration` | nein           | Ticks                                  | `1200`             | Wie lange eine Ansteckung die erreichte Stufe hält. Eine neue Ansteckung startet die Zeit neu                                            |
+| `weather`           | eines der fünf | Liste aus `art` oder `art=stufe`       |                    | `rain` belastet einen Spieler, auf den Regen fällt: freier Himmel über ihm in einem Biom, in dem es regnet. `thunder` zählt bei Gewitter |
+| `weatherDimensions` | nein           | Liste aus `dim`                        | jede Dimension     | Numerische Dimensions-IDs, in denen das Wetter belastet                                                                                  |
+
+Eine Ansteckung zählt beim Prüfen als weitere Quelle, die höchste Stufe gewinnt wie bei jeder anderen, und `immunity` schützt auch davor. Die Gefahr breitet sich nur aus, wenn `contagionRange` und `contagionChance` über `0` liegen und die Datei `carriers` nennt oder `contagious` setzt; Mobs werden nur betrachtet, wenn mindestens eine Datei das tut.
 
 ---
 

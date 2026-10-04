@@ -5,8 +5,10 @@ import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.ExposureSpread;
 
 import net.minecraft.block.Block;
+import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -18,6 +20,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -38,6 +41,13 @@ public final class ContentExposures {
 
     public static boolean enabled() { return !ContentRegistry.exposures().isEmpty(); }
 
+    public static boolean spreads() {
+        for (ExposureDef def : ContentRegistry.exposures()) {
+            if (def.spreads()) { return true; }
+        }
+        return false;
+    }
+
     @SubscribeEvent public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         EntityPlayer player = event.player;
         if (event.phase != TickEvent.Phase.END || player == null || player.world == null || player.world.isRemote) { return; }
@@ -49,19 +59,44 @@ public final class ContentExposures {
             applyLevel(def, player, 0);
             return;
         }
-        if (player.ticksExisted % def.scanInterval == 0) { applyLevel(def, player, scan(def, player)); }
+        if (player.ticksExisted % def.scanInterval == 0) {
+            int level = scan(def, player);
+            applyLevel(def, player, level);
+            spreadFrom(def, player, level);
+        }
         damageTick(def, player);
     }
 
-    private static int scan(ExposureDef def, EntityPlayer player) {
-        if (!def.immunity.isEmpty()) {
-            Potion immune = immunity(def);
-            if (immune != null && player.isPotionActive(immune)) { return 0; }
+    private static void tickMob(ExposureDef def, EntityLivingBase mob) {
+        boolean catches = ExposureSpread.catches(def, mob);
+        if (!catches && ExposureSpread.carrierLevel(def, mob) <= 0) { return; }
+        if (mob.ticksExisted % def.scanInterval == 0) {
+            int level = catches && !immune(def, mob) ? Math.min(def.levels.size(), ExposureSpread.caughtLevel(def, mob)) : 0;
+            if (catches) { applyLevel(def, mob, level); }
+            spreadFrom(def, mob, level);
         }
+        if (catches) { damageTick(def, mob); }
+    }
+
+    private static void spreadFrom(ExposureDef def, EntityLivingBase entity, int level) {
+        if (!def.spreads()) { return; }
+        int spreading = Math.max(ExposureSpread.carrierLevel(def, entity), def.contagious ? level : 0);
+        ExposureSpread.spread(def, entity, Math.min(def.levels.size(), spreading));
+    }
+
+    private static int scan(ExposureDef def, EntityPlayer player) {
+        if (immune(def, player)) { return 0; }
         int most = def.levels.size();
         int level = Math.max(def.dimensions.getOrDefault(player.dimension, 0), scanItems(def, player, most));
+        level = Math.max(level, Math.max(ExposureSpread.weatherLevel(def, player), ExposureSpread.caughtLevel(def, player)));
         if (level >= most) { return most; }
         return Math.max(level, scanWorld(def, player, most));
+    }
+
+    private static boolean immune(ExposureDef def, EntityLivingBase entity) {
+        if (def.immunity.isEmpty()) { return false; }
+        Potion immune = immunity(def);
+        return immune != null && entity.isPotionActive(immune);
     }
 
     @Nullable private static Potion immunity(ExposureDef def) {
@@ -133,42 +168,42 @@ public final class ContentExposures {
         return level;
     }
 
-    private static void applyLevel(ExposureDef def, EntityPlayer player, int level) {
+    private static void applyLevel(ExposureDef def, EntityLivingBase living, int level) {
         int duration = def.scanInterval * 2 + 20;
         Potion[] markers = markers(def);
         for (int index = 0; index < markers.length; index++) {
             if (index + 1 == level) { continue; }
-            if (markers[index] != null) { player.removePotionEffect(markers[index]); }
+            if (markers[index] != null) { living.removePotionEffect(markers[index]); }
         }
         if (level <= 0) { return; }
         ExposureLevelDef entry = def.levels.get(level - 1);
         Potion marker = markers[level - 1];
         if (marker == null) { return; }
-        player.addPotionEffect(new PotionEffect(marker, duration, 0, false, true));
+        living.addPotionEffect(new PotionEffect(marker, duration, 0, false, true));
         for (PotionEffectDef extra : entry.extras) {
             Potion potion = extraPotion(extra);
             if (potion == null) { continue; }
-            player.addPotionEffect(new PotionEffect(potion, extra.duration > 0 ? extra.duration : duration, extra.amplifier, extra.ambient, extra.showParticles));
+            living.addPotionEffect(new PotionEffect(potion, extra.duration > 0 ? extra.duration : duration, extra.amplifier, extra.ambient, extra.showParticles));
         }
     }
 
-    private static void damageTick(ExposureDef def, EntityPlayer player) {
+    private static void damageTick(ExposureDef def, EntityLivingBase living) {
         ExposureLevelDef active = null;
         Potion[] markers = markers(def);
         for (int index = 0; index < markers.length; index++) {
-            if (markers[index] != null && player.isPotionActive(markers[index])) { active = def.levels.get(index); }
+            if (markers[index] != null && living.isPotionActive(markers[index])) { active = def.levels.get(index); }
         }
-        NBTTagCompound data = player.getEntityData();
+        NBTTagCompound data = living.getEntityData();
         String tag = "RDPLExposure" + def.name;
         if (active != null && active.damage > 0.0F && active.damageInterval > 0) {
             int timer = data.getInteger(tag) + 1;
             if (timer >= active.damageInterval) {
                 timer = 0;
-                player.attackEntityFrom(source(def), active.damage);
+                living.attackEntityFrom(source(def), active.damage);
             }
             data.setInteger(tag, timer);
         }
-        else { data.setInteger(tag, 0); }
+        else if (data.hasKey(tag)) { data.setInteger(tag, 0); }
     }
 
     private static Potion[] markers(ExposureDef def) {
@@ -219,5 +254,17 @@ public final class ContentExposures {
             return null;
         }
         return ForgeRegistries.BLOCKS.getValue(name);
+    }
+
+    public static final class Mobs {
+        private Mobs() {}
+
+        @SubscribeEvent public static void onLivingUpdate(LivingEvent.LivingUpdateEvent event) {
+            EntityLivingBase living = event.getEntityLiving();
+            if (living instanceof EntityPlayer || living.world.isRemote) { return; }
+            for (ExposureDef def : ContentRegistry.exposures()) {
+                if (def.spreads()) { tickMob(def, living); }
+            }
+        }
     }
 }

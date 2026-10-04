@@ -25,9 +25,11 @@ import net.minecraft.util.math.AxisAlignedBB;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
 
@@ -364,9 +366,18 @@ public final class ContentParser {
         Map<ResourceLocation, Integer> blocks = leveled(key, json, "blocks", ResourceLocation::new);
         Map<ResourceLocation, Integer> items = leveled(key, json, "items", ResourceLocation::new);
         Map<Integer, Integer> dimensions = leveled(key, json, "dimensions", named -> dimension(key, named));
-        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks, items or dimensions, ignoring it", key);
+        Map<ResourceLocation, Integer> carriers = leveled(key, json, "carriers", ResourceLocation::new);
+        Map<String, Integer> weather = leveled(key, json, "weather", named -> weather(key, named));
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers or weather, ignoring it", key);
             return null;
+        }
+        Set<ResourceLocation> catchers = new LinkedHashSet<>();
+        for (String named : json.has("catchers") ? strings(json, "catchers") : Collections.singletonList("minecraft:player")) { catchers.add(new ResourceLocation(named.trim())); }
+        Set<Integer> weatherDimensions = new LinkedHashSet<>();
+        for (String named : strings(json, "weatherDimensions")) {
+            Integer dimension = dimension(key, named.trim());
+            if (dimension != null) { weatherDimensions.add(dimension); }
         }
         return new ExposureDef(key,
                 Math.max(1, JsonUtils.getInt(json, "scanInterval", 20)),
@@ -374,7 +385,19 @@ public final class ContentParser {
                 JsonUtils.getBoolean(json, "skipsCreative", true),
                 Math.max(0, JsonUtils.getInt(json, "sourcesForNextLevel", 0)),
                 JsonUtils.getString(json, "immunity", "").trim(),
-                blocks, items, dimensions, Collections.unmodifiableList(levels));
+                blocks, items, dimensions, Collections.unmodifiableList(levels),
+                carriers, JsonUtils.getBoolean(json, "contagious", false), catchers,
+                Math.max(0, JsonUtils.getInt(json, "contagionRange", 4)),
+                MathHelper.clamp(JsonUtils.getFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F),
+                Math.max(1, JsonUtils.getInt(json, "contagionDuration", 1200)),
+                weather, weatherDimensions);
+    }
+
+    @Nullable private static String weather(ResourceLocation key, String named) {
+        String kind = named.toLowerCase(Locale.ROOT);
+        if (kind.equals("rain") || kind.equals("thunder")) { return kind; }
+        ContentLog.LOGGER.error("The weather entry '{}' in {} is neither rain nor thunder, so it is ignored", named, key);
+        return null;
     }
 
     @Nullable private static Integer dimension(ResourceLocation key, String named) {
