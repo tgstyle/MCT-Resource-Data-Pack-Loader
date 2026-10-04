@@ -102,10 +102,10 @@ final class ContentDimensionTime {
     private static long ticks(JsonArray keyframes, int index) { return keyframes.get(index).getAsJsonObject().get(TICKS).getAsLong(); }
 
     static void clockItem(List<String> natural) {
-        if (natural.isEmpty()) { return; }
         JsonArray when = new JsonArray();
         when.add(OVERWORLD_CLOCK);
-        natural.forEach(when::add);
+        natural.stream().filter(key -> !OVERWORLD_CLOCK.equals(key)).forEach(when::add);
+        if (when.size() == 1) { return; }
         JsonObject shown = new JsonObject();
         shown.add("when", when);
         shown.add("model", dial("daytime"));
