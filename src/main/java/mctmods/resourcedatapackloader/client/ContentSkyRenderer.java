@@ -19,7 +19,6 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.material.FogType;
@@ -32,17 +31,19 @@ final class ContentSkyRenderer {
     private final DimensionTraitsDef.Sky sky;
     @Nullable private VertexBuffer skyBuffer;
     @Nullable private VertexBuffer darkBuffer;
-    @Nullable private VertexBuffer starBuffer;
+    private final ContentStars stars;
 
-    ContentSkyRenderer(DimensionTraitsDef.Sky sky) { this.sky = sky; }
+    ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+        this.sky = sky;
+        stars = new ContentStars(sky.starCount(), sky.starSize());
+    }
 
     void render(ClientLevel level, float partialTick, PoseStack poseStack, Camera camera, Matrix4f projection, boolean foggy, Runnable setupFog) {
         setupFog.run();
         if (foggy || hidden(camera)) { return; }
-        if (skyBuffer == null || darkBuffer == null || starBuffer == null) {
+        if (skyBuffer == null || darkBuffer == null) {
             skyBuffer = upload(disc(16.0F));
             darkBuffer = upload(disc(-16.0F));
-            starBuffer = upload(stars(sky.starCount(), sky.starSize()));
         }
         Vec3 color = level.getSkyColor(camera.getPosition(), partialTick);
         FogRenderer.levelFogColor();
@@ -79,9 +80,8 @@ final class ContentSkyRenderer {
         if (bright > 0.0F) {
             poseStack.pushPose();
             poseStack.mulPose(Axis.XP.rotationDegrees(turn));
-            RenderSystem.setShaderColor(bright, bright, bright, bright);
             FogRenderer.setupNoFog();
-            draw(starBuffer, poseStack, projection, GameRenderer.getPositionShader());
+            stars.draw(level, bright, poseStack.last().pose(), projection, partialTick);
             setupFog.run();
             poseStack.popPose();
         }
@@ -165,7 +165,7 @@ final class ContentSkyRenderer {
         VertexBuffer.unbind();
     }
 
-    private static VertexBuffer upload(BufferBuilder.RenderedBuffer built) {
+    static VertexBuffer upload(BufferBuilder.RenderedBuffer built) {
         VertexBuffer buffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
         buffer.bind();
         buffer.upload(built);
@@ -182,45 +182,6 @@ final class ContentSkyRenderer {
         for (int degrees = -180; degrees <= 180; degrees += 45) {
             float at = degrees * ((float) Math.PI / 180.0F);
             buffer.vertex(reach * Mth.cos(at), height, 512.0F * Mth.sin(at)).endVertex();
-        }
-        return buffer.end();
-    }
-
-    private static BufferBuilder.RenderedBuffer stars(int count, float smallest) {
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        RandomSource random = RandomSource.create(10842L);
-        RenderSystem.setShader(GameRenderer::getPositionShader);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        float spread = smallest * 2.0F / 3.0F;
-        for (int star = 0; star < count; ++star) {
-            double x = random.nextFloat() * 2.0F - 1.0F;
-            double y = random.nextFloat() * 2.0F - 1.0F;
-            double z = random.nextFloat() * 2.0F - 1.0F;
-            double size = smallest + random.nextFloat() * spread;
-            double length = x * x + y * y + z * z;
-            if (length >= 1.0D || length <= 0.01D) { continue; }
-            length = 1.0D / Math.sqrt(length);
-            x *= length;
-            y *= length;
-            z *= length;
-            double yaw = Math.atan2(x, z);
-            double yawSin = Math.sin(yaw);
-            double yawCos = Math.cos(yaw);
-            double pitch = Math.atan2(Math.sqrt(x * x + z * z), y);
-            double pitchSin = Math.sin(pitch);
-            double pitchCos = Math.cos(pitch);
-            double spin = random.nextDouble() * Math.PI * 2.0D;
-            double spinSin = Math.sin(spin);
-            double spinCos = Math.cos(spin);
-            for (int corner = 0; corner < 4; ++corner) {
-                double a = ((corner & 2) - 1) * size;
-                double b = ((corner + 1 & 2) - 1) * size;
-                double c = a * spinCos - b * spinSin;
-                double d = b * spinCos + a * spinSin;
-                double e = c * pitchSin;
-                double f = -c * pitchCos;
-                buffer.vertex(x * 100.0D + f * yawSin - d * yawCos, y * 100.0D + e, z * 100.0D + d * yawSin + f * yawCos).endVertex();
-            }
         }
         return buffer.end();
     }

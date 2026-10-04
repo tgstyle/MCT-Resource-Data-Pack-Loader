@@ -2809,6 +2809,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2882,6 +2883,7 @@ A biome is a data pack entry on this version, written for you under `worldgen/bi
 | `waterColor`   | no       | hex color  | `FFFFFF`         | Water tint                                                            |
 | `grassColor`   | no       | hex color  | from the climate | Grass tint, in place of the color temperature and rainfall would give |
 | `foliageColor` | no       | hex color  | from the climate | Leaf tint, the same way                                               |
+| `snowColor`    | no       | hex color  | the dimension's  | Tint of snow on the ground, over the dimension's `snowColor`          |
 
 ### Decoration and spawns
 
@@ -3164,6 +3166,44 @@ Without `cloudLayers`, `cloudSpeed` changes the speed of the one vanilla layer a
 | `heat.dayOnly`         | no       | boolean       | `true`        | On, the shimmer fades with the daylight and is gone at night         |
 | `heat.mode`            | no       | string        | `screen`      | Where the shimmer lands, `screen` or `world`                         |
 | `heat.startDistance`   | no       | float         | `32`          | In `world` mode, how many blocks away the shimmer begins             |
+
+### Snow, fluids, stars and lightning
+
+*dimensions*
+
+These keys sit in the `sky` block as well, and they too are drawn on the client only.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` tints snow layers and snow blocks on the ground. A biome's own `snowColor` wins over the dimension's, and the colors blend across biome borders the way grass does.
+
+`waterFogColor` and `lavaFogColor` replace the fog color the camera sees under water or in lava. Night, depth and night vision still darken or brighten it as they do the vanilla color.
+
+On this version `waterFogColor` overrides the `water_fog_color` each biome carries in its `effects`, everywhere in the dimension. Where it is not set, a vanilla biome JSON's `water_fog_color` works as usual.
+
+`starColor` tints the stars, in the vanilla sky as in your own from [The sky renderer](#the-sky-renderer). `starTwinkle` sets them twinkling: the stars fall into eight groups that each dim and brighten at their own pace, and the value is how deep they dim, so at `1` a group fades out completely at its lowest point.
+
+`lightningColor` tints lightning bolts.
+
+| Key              | Required | Value         | Default     | What it does                                                   |
+| ---------------- | -------- | ------------- | ----------- | -------------------------------------------------------------- |
+| `snowColor`      | no       | hex color     | white       | Tint of snow layers and snow blocks                            |
+| `waterFogColor`  | no       | hex color     | the biome's | Fog color under water                                          |
+| `lavaFogColor`   | no       | hex color     | `991A00`    | Fog color in lava                                              |
+| `starColor`      | no       | hex color     | white       | Star tint                                                      |
+| `starTwinkle`    | no       | float, 0 to 1 | `0.0`       | How deep the stars dim as they twinkle. `0` keeps them steady  |
+| `lightningColor` | no       | hex color     | `737380`    | Lightning bolt tint                                            |
 
 ### The `physics` block
 

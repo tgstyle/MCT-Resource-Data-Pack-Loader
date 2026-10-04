@@ -53,7 +53,7 @@ public final class ContentBiomeParser {
                 GsonHelper.getAsFloat(json, "rainfall", 0.5F),
                 GsonHelper.getAsBoolean(json, "rain", true),
                 GsonHelper.getAsBoolean(json, "snow", false),
-                color(json, "waterColor", key), color(json, "grassColor", key), color(json, "foliageColor", key),
+                color(json, "waterColor", key), color(json, "grassColor", key), color(json, "foliageColor", key), color(json, "snowColor", key),
                 base == null ? PLAINS : base,
                 GsonHelper.getAsString(json, "topBlock", "").trim(),
                 GsonHelper.getAsString(json, "fillerBlock", "").trim(),

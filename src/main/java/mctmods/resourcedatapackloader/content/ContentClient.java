@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 import mctmods.resourcedatapackloader.client.screen.ContentContainerScreen;
 import mctmods.resourcedatapackloader.client.screen.EntityStorageScreen;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
+import mctmods.resourcedatapackloader.client.ContentSnowTint;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.block.ContentBellBlockEntity;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBell;
@@ -61,6 +62,9 @@ public final class ContentClient {
         modBus.addListener(ContentClient::renderers);
         modBus.addListener(ContentClient::bellModels);
         modBus.addListener(ContentDimensionEffects::register);
+        modBus.addListener(ContentSnowTint::resolvers);
+        modBus.addListener(ContentSnowTint::colors);
+        modBus.addListener(ContentSnowTint::models);
     }
 
     private static void bellModels(ModelEvent.RegisterAdditional event) {
