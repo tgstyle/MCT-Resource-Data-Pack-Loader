@@ -51,6 +51,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 
 **Criaturas y peligros**
 - [Variantes de entidades](#variantes-de-entidades)
+- [Órdenes de trabajo](#órdenes-de-trabajo)
 - [Exposiciones](#exposiciones)
 
 **El mundo**
@@ -143,6 +144,7 @@ Bajo `data/`:
 | `<namespace>/cards/*.json` | Tarjetas en pantalla mostradas por un disparador y los mensajes que dice el propio mod. [Tarjetas](#tarjetas) |
 | `<namespace>/dice/*.json` | Dados del pack con caras ponderadas, mazos de cartas, quién oye una tirada y la redacción de los resultados. [Dados y mazos](#dados-y-mazos) |
 | `<namespace>/games/*.json` | Juegos de tablero con criaturas como piezas: el tablero, las piezas y cómo se mueven, y lo que paga un resultado. [Juegos de tablero](#juegos-de-tablero) |
+| `<namespace>/orders/*.json` | Trabajos que las variantes de entidad hacen para un jugador en un cofre. [Órdenes de trabajo](#órdenes-de-trabajo) |
 | `<namespace>/exposures/*.json` | Peligros que exponen a los jugadores cerca de bloques con nombre, al llevar ítems con nombre o en dimensiones con nombre. [Exposiciones](#exposiciones) |
 | `<namespace>/overrides/<target>/<name>.json` | Propiedades de bloques, ítems y tipos de poción existentes, modificadas en el sitio. [Sobrescritura de propiedades](#sobrescritura-de-propiedades) |
 | `<namespace>/villages/*.json` | Parcelas que puede construir una ciudad o aldea. [Parcelas de aldea](#parcelas-de-aldea) |
@@ -2609,6 +2611,89 @@ Una entrada de filtro. Decide la primera entrada que coincide, y todo lo que no 
 | `tag`   | una de las tres  | id de etiqueta de ítem | ninguno | Todos los ítems de esa etiqueta, como `c:ingots/iron` |
 | `fluid` | una de las tres  | id de fluido    | ninguno     | Un fluido por su id, como `minecraft:water`. Solo lo lee un filtro de fluido |
 | `max`   | no               | int             | `0`         | La mayor cantidad que se guarda a la vez, contada en todas las ranuras, o en mB para un fluido. `0` es sin límite |
+
+## Órdenes de trabajo
+
+*criaturas y peligros*
+
+`<namespace>/orders/*.json`
+
+El nombre del archivo lo eliges tú, solo se lee la carpeta y varios archivos se suman. Un archivo contiene una lista `orders` y, junto a ella, tres ajustes para todo el paquete; el primer archivo que fija uno lo decide.
+
+Una orden es un trabajo que las variantes de entidad nombradas como sus encargados hacen para un jugador: extraen los bloques que nombra dentro de su área, o traen sus ítems desde otros cofres, y llevan lo obtenido a su cofre. Todas las formas de abrir una funcionan desde un cliente vanilla:
+
+- **Un cartel.** Coloca un cartel sobre un cofre o junto a él y escribe la palabra `sign` de la orden en la primera línea. La orden se abre en ese cofre, y la segunda línea del cartel muestra cuántos ítems faltan. Romper el cartel, o el cofre, la cancela.
+- **Una herramienta.** Haz clic derecho sobre un trabajador, sin agacharte, con una herramienta del tipo `tool` de la orden. El trabajador toma la herramienta, la que tenía vuelve a ti, y trabaja la orden en el cofre más cercano dentro de su área.
+- **Un cofre de existencias.** Renombra un cofre a `stockName` en un yunque y colócalo. Cada ítem de su primera fila se mantiene lleno hasta un montón completo: los trabajadores lo traen de otros cofres dentro del área de la primera orden `haul` del paquete, con los encargados, la prioridad y el área de esa orden.
+
+```json
+{
+  "stockName": "Stock",
+  "hire": "minecraft:emerald",
+  "spawnCap": 1,
+  "orders": [
+    {
+      "job": "mine",
+      "blocks": "c:ores/iron",
+      "sign": "Mine",
+      "tool": "pickaxe",
+      "areaByTier": [8, 16, 24, 32],
+      "limit": 64,
+      "workers": 2,
+      "priority": 1,
+      "speed": 1.5,
+      "takers": ["mypack:miner", "team:Red", "tag:digger"]
+    },
+    {
+      "job": "farm",
+      "blocks": "c:crops/wheat",
+      "sign": "Farm",
+      "tool": "hoe",
+      "standing": 64,
+      "takers": ["mypack:farmer"]
+    },
+    {
+      "job": "haul",
+      "blocks": "minecraft:logs",
+      "sign": "Haul",
+      "deliver": "chest",
+      "takers": ["mypack:porter"]
+    }
+  ]
+}
+```
+
+Ajustes junto a `orders`:
+
+| Clave | Obligatorio | Valor | Predeterminado | Qué hace |
+| --- | --- | --- | --- | --- |
+| `stockName` | no | cadena | `Stock` | El nombre que convierte un cofre colocado en cofre de existencias, sin distinguir mayúsculas. Vacío desactiva los cofres de existencias |
+| `hire` | no | nombre de ítem | ninguno | Contrata a un trabajador libre: haz clic derecho sobre él con este ítem, sin agacharte, y será tuyo y el ítem se gasta. Un trabajador libre no pertenece a ningún jugador ni equipo |
+| `spawnCap` | no | int | `1` | Cuántos trabajadores puede generar una orden en su cofre cuando no acude ninguno. `0` no genera ninguno |
+
+Claves de la orden:
+
+| Clave | Obligatorio | Valor | Predeterminado | Qué hace |
+| --- | --- | --- | --- | --- |
+| `job` | sí | `gather`, `mine`, `farm` o `haul` | | `gather` y `mine` extraen los bloques que nombra `blocks`, como el bloque mismo o como lo que suelta, siempre que un lado dé al aire o a un bloque que no sea un cubo completo. `farm` cosecha los cultivos maduros y vuelve a plantar cada uno con sus propias semillas. `haul` lleva los ítems que nombra `blocks` desde otros cofres y contenedores al cofre de la orden |
+| `blocks` | sí, salvo en `farm` | id de etiqueta de ítem | ninguno | Lo que quiere la orden, como etiqueta de ítem, por ejemplo `c:ores/iron`, `minecraft:logs` o `c:crops/wheat`. En una orden `mine` también cuenta lo que suelta un bloque de la etiqueta, así que `c:ores/iron` se llena con hierro en bruto. En una orden `farm` limita la cosecha a los cultivos que lo sueltan |
+| `area` | no | int | `16` | Hasta dónde llega el trabajo desde el cofre, en bloques por cada eje |
+| `areaByTier` | no | lista de int | ninguno | El alcance según el nivel de extracción de la herramienta del trabajador: la primera entrada sin herramienta o con nivel 0, luego una entrada por nivel, y la última para cada nivel más allá del final. Sustituye a `area` |
+| `deliver` | no | `chest` o `self` | `chest` | `chest` lleva lo recogido al cofre de la orden. `self` lo guarda en el almacenamiento propio del trabajador, y la orden lo cuenta al recogerlo |
+| `limit` | no | int | `64` | Cuántos ítems quiere la orden antes de cerrarse |
+| `standing` | no | int | `0` | Por encima de `0` la orden nunca se cierra: mantiene esa cantidad de sus ítems en el cofre y trabaja cuando hay menos. `limit` entonces no se lee |
+| `workers` | no | int | `1` | El máximo de trabajadores en la orden a la vez |
+| `priority` | no | int | `0` | Un trabajador ocioso toma primero la orden abierta de mayor prioridad, luego la más cercana |
+| `takers` | sí | lista | | Quién puede trabajarla: un nombre de variante, `team:<team>` para cualquier miembro de un equipo del marcador, o `tag:<tag>` para cualquier entidad con esa etiqueta |
+| `sign` | no | cadena | ninguno | La palabra de la primera línea de un cartel que abre la orden, sin distinguir mayúsculas |
+| `speed` | no | número | `1` | Multiplica la velocidad de extracción del trabajador. `2` extrae el doble de rápido que un jugador con la misma herramienta |
+| `tool` | no | tipo de herramienta | ninguno | El tipo de herramienta, como `pickaxe`, `axe`, `shovel` o `hoe`, que da esta orden a un trabajador con clic derecho. Un trabajador cuya herramienta no puede extraer un bloque vuelve al cofre por una de este tipo |
+
+**Cómo trabaja un trabajador.** Una variante que nombra un encargado, o todas las variantes cuando algún encargado es un equipo o una etiqueta, busca trabajo una vez por segundo mientras está ociosa. Toma la mejor orden abierta cuyo cofre esté dentro de su área más 32 bloques, la sostiene con un arriendo que caduca si deja de trabajar y conserva el arriendo al guardar y volver a cargar. Extraer tarda lo mismo que para un jugador con la herramienta del trabajador, Eficiencia incluida, y Fortuna y Toque de seda cuentan para lo que suelta. Lo que extrae va a sus ítems de `storage` si la variante los tiene, si no a su mano secundaria, nunca al suelo. Cuando no puede cargar más, camina al cofre y lo deja todo dentro. Cada bloque desgasta la herramienta, y un trabajador cuya herramienta se rompe vuelve al cofre por otra del mismo tipo, o descansa un minuto si no la hay. Al morir, un trabajador suelta su herramienta y lo que tiene en las manos, y su almacenamiento se vacía una vez, como siempre lo hace el almacenamiento. `mobGriefing` no lo detiene, porque un jugador pidió el trabajo.
+
+**Quién trabaja para quién.** Si el jugador que abre una orden está en un equipo del marcador, solo la toman los trabajadores de ese equipo. Si no, la orden pertenece a ese jugador, y un trabajador pertenece al primer jugador que le da un trabajo, con una herramienta, con `hire` o al tomar una orden de ese jugador; desde entonces solo trabaja las órdenes de ese jugador. Un trabajador libre contratado o al que da una herramienta un jugador de un equipo se une a ese equipo.
+
+**Aparición en el cofre.** Una orden que lleva diez segundos sin trabajador genera a uno de sus encargados variante junto a su cofre, hasta `spawnCap` para esa orden. El trabajador generado pertenece al equipo o al jugador de la orden.
 
 ## Exposiciones
 

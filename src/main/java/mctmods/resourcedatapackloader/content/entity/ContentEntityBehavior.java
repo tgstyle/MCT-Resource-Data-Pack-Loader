@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.entity.goal.SniffGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.StrikeGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.SwoopGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.ThrowerGoal;
+import mctmods.resourcedatapackloader.content.entity.goal.WorkOrderGoal;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -66,6 +67,7 @@ final class ContentEntityBehavior {
             ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}", def.key(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), combat.charges() ? " charges" : "", combat.pounces() ? " pounces" : "", combat.sniffs() > 0 ? " sniffs " + combat.sniffs() : "", combat.fleesWhenHurt() > 0.0F ? " flees under " + combat.fleesWhenHurt() : "", combat.sleepsByDay() ? " sleeps by day" : "", combat.home() > 0 ? " home " + combat.home() : "", combat.patrols() ? " patrols" : "", combat.swoops() ? " swoops" : "", combat.gusts() ? " gusts " + combat.gustPower() : "");
         }
         if (def.flags().collectsExperience() && mob instanceof PathfinderMob creature) { mob.goalSelector.addGoal(0, new AnvilWorkGoal(creature)); }
+        if (mob instanceof PathfinderMob creature && ContentOrders.wants(def)) { mob.goalSelector.addGoal(3, new WorkOrderGoal(creature)); }
         settled(mob, def);
         if (def.passive()) {
             for (WrappedGoal wrapped : new ArrayList<>(mob.targetSelector.getAvailableGoals())) { mob.targetSelector.removeGoal(wrapped.getGoal()); }

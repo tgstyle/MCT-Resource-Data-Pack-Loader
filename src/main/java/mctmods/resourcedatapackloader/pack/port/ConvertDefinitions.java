@@ -238,4 +238,17 @@ final class ConvertDefinitions {
             pack.rewrote();
         }
     }
+
+    static void orderTags(JsonObject json, Ported pack) {
+        if (!json.has("orders") || !json.get("orders").isJsonArray()) { return; }
+        for (JsonElement element : json.getAsJsonArray("orders")) {
+            if (!element.isJsonObject()) { continue; }
+            JsonObject entry = element.getAsJsonObject();
+            if (!entry.has("blocks") || !entry.get("blocks").isJsonPrimitive()) { continue; }
+            String blocks = entry.get("blocks").getAsString().trim();
+            if (blocks.isEmpty() || blocks.contains(":")) { continue; }
+            entry.addProperty("blocks", Ids.oreDictTag(blocks));
+            pack.rewrote();
+        }
+    }
 }
