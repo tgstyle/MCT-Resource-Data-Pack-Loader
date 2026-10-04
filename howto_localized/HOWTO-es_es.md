@@ -3044,6 +3044,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -3122,6 +3123,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `waterColor`      | no       | color hex  | `FFFFFF`         | Tinte del agua                                                        |
 | `grassColor`      | no       | color hex  | según el clima   | Tinte de la hierba, en lugar del color que darían la temperatura y la lluvia |
 | `foliageColor`    | no       | color hex  | según el clima   | Tinte de las hojas, del mismo modo                                    |
+| `snowColor`       | no       | color hex  | el de la dimensión | Tinte de la nieve del suelo, por encima del `snowColor` de la dimensión |
 
 ### Decoración y apariciones
 
@@ -3409,6 +3411,84 @@ Sin `cloudLayers`, `cloudSpeed` cambia la velocidad de la única capa de vanilla
 | `heat.dayOnly`         | no       | booleano      | `true`        | Activado, el espejismo se desvanece con la luz del día y desaparece de noche |
 | `heat.mode`            | no       | string        | `screen`      | Dónde se aplica el espejismo, `screen` o `world` |
 | `heat.startDistance`   | no       | float         | `32`          | En el modo `world`, a cuántos bloques de distancia empieza el espejismo |
+
+### Nieve, fluidos, estrellas y rayos
+
+*dimensiones*
+
+Estas claves también van en el bloque `sky` y también se dibujan solo en el cliente.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` tiñe las capas de nieve y los bloques de nieve del suelo. El `snowColor` propio de un bioma tiene prioridad sobre el de la dimensión, y los colores se funden en los bordes entre biomas como lo hace la hierba.
+
+`waterFogColor` y `lavaFogColor` sustituyen el color de la niebla que ve la cámara bajo el agua o dentro de la lava. La noche, la profundidad y la visión nocturna lo siguen oscureciendo o aclarando como hacen con el color de vanilla.
+
+`starColor` tiñe las estrellas, tanto en el cielo de vanilla como en el tuyo de [El renderizador del cielo](#el-renderizador-del-cielo). `starTwinkle` las hace titilar: las estrellas se reparten en ocho grupos que se apagan y se avivan cada uno a su ritmo, y el valor indica cuánto se apagan; con `1` un grupo desaparece del todo en su punto más bajo.
+
+`lightningColor` tiñe los rayos.
+
+| Clave            | Obligatorio | Valor        | Por defecto | Qué hace |
+| ---------------- | ----------- | ------------ | ----------- | -------- |
+| `snowColor`      | no          | color hex    | blanco      | Tinte de las capas y los bloques de nieve |
+| `waterFogColor`  | no          | color hex    | `050533`    | Color de la niebla bajo el agua |
+| `lavaFogColor`   | no          | color hex    | `991A00`    | Color de la niebla en la lava |
+| `starColor`      | no          | color hex    | blanco      | Tinte de las estrellas |
+| `starTwinkle`    | no          | float, 0 a 1 | `0.0`       | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
+| `lightningColor` | no          | color hex    | `737380`    | Tinte de los rayos |
+
+### Skybox, aurora y arcoíris
+
+*dimensions*
+
+Estas claves también van en el bloque `sky`, y también se dibujan solo en el cliente.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` pinta tus propias imágenes en el cielo, detrás del resplandor del amanecer, el sol, la luna y las estrellas. Indica las seis caras de un cubo como rutas de textura completas, dispuestas como el cubo desplegado: `up` toca el borde superior de `north`, `down` su borde inferior, `west` queda a su izquierda y `east` a su derecha, con `south` después de `east`. O bien indica solo `panorama`, una imagen 2:1 que envuelve todo el cielo: su borde izquierdo mira al norte y recorre el cielo en el sentido de las agujas del reloj por el este, el sur y el oeste; su fila superior queda justo encima y la inferior justo debajo. Una skybox a la que le falta una cara y no tiene panorama se omite, con un error en el registro.
+
+`aurora` cuelga cortinas luminosas bajas sobre el cielo del norte durante la noche. Ondean despacio, aparecen al ponerse el sol y desaparecen de día y con lluvia. `color` es el color de su base y `topColor` aquel en el que se desvanecen arriba.
+
+`rainbow` muestra un arcoíris frente al sol cuando la lluvia para de día. Se desvanece en los dos minutos siguientes al final de la lluvia, y un nuevo chaparrón lo borra.
+
+Ninguna clave de vanilla da a una dimensión sus propias imágenes de cielo, una aurora o un arcoíris, así que estas claves funcionan igual en todas las versiones.
+
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | no | ruta de textura | ninguna | Una cara del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Hacen falta las seis |
+| `skybox.panorama` | no | ruta de textura | ninguna | Una imagen que envuelve todo el cielo, en lugar de las caras |
+| `aurora.color` | no | color hexadecimal | `40FF90` | Color en la base de las cortinas |
+| `aurora.topColor` | no | color hexadecimal | `8040FF` | Color arriba, donde las cortinas se desvanecen |
+| `rainbow` | no | booleano | `false` | Mostrar un arcoíris después de la lluvia |
 
 ### El bloque `physics`
 

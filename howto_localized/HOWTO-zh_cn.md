@@ -3044,6 +3044,7 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -3122,6 +3123,7 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `waterColor` | 否 | 十六进制颜色 | `FFFFFF` | 水的色调 |
 | `grassColor` | 否 | 十六进制颜色 | 取自气候 | 草的色调，取代由温度和降水量得出的颜色 |
 | `foliageColor` | 否 | 十六进制颜色 | 取自气候 | 树叶的色调，方式相同 |
+| `snowColor` | 否 | 十六进制颜色 | 取自维度 | 地面积雪的色调，优先于维度的 `snowColor` |
 
 ### 装饰与生成
 
@@ -3409,6 +3411,84 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `heat.dayOnly` | 否 | 布尔值 | `true` | 开启时，热浪随日光淡出，夜间消失 |
 | `heat.mode` | 否 | 字符串 | `screen` | 热浪扭曲落在哪里，`screen` 或 `world` |
 | `heat.startDistance` | 否 | 浮点数 | `32` | 在 `world` 模式下，热浪扭曲从多少格外开始 |
+
+### 雪、流体、星星与闪电
+
+*维度*
+
+这些键同样位于 `sky` 块中，同样只在客户端绘制。
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` 为地面上的雪层和雪块着色。生物群系自己的 `snowColor` 优先于维度的设置，颜色也会像草一样在生物群系交界处过渡混合。
+
+`waterFogColor` 和 `lavaFogColor` 替换镜头在水下或岩浆中看到的雾色。夜晚、深度和夜视仍会像对原版颜色那样让它变暗或变亮。
+
+`starColor` 为星星着色，对原版天空和你自己的[天空渲染器](#天空渲染器)均有效。`starTwinkle` 让星星闪烁：星星分为八组，每组按自己的节奏变暗又变亮，该值决定它们暗下去的程度；为 `1` 时，一组星星在最暗时会完全消失。
+
+`lightningColor` 为闪电着色。
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- | --- |
+| `snowColor` | 否 | 十六进制颜色 | 白色 | 雪层和雪块的色调 |
+| `waterFogColor` | 否 | 十六进制颜色 | `050533` | 水下的雾色 |
+| `lavaFogColor` | 否 | 十六进制颜色 | `991A00` | 岩浆中的雾色 |
+| `starColor` | 否 | 十六进制颜色 | 白色 | 星星的色调 |
+| `starTwinkle` | 否 | 浮点数，0 到 1 | `0.0` | 星星闪烁时变暗的程度。`0` 表示不闪烁 |
+| `lightningColor` | 否 | 十六进制颜色 | `737380` | 闪电的色调 |
+
+### 天空盒、极光与彩虹
+
+*dimensions*
+
+这些键同样位于 `sky` 块中，也同样只在客户端绘制。
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` 把你自己的图片画在天空上，位于日出霞光、太阳、月亮和星星之后。以完整的纹理路径给出立方体的全部六个面，按立方体展开图排列：`up` 接在 `north` 的上边缘，`down` 接在它的下边缘，`west` 在它左边，`east` 在它右边，`south` 接在 `east` 之后。也可以只给出 `panorama`，用一张 2:1 的图片包住整个天空：图片左边缘朝北，沿顺时针方向经过东、南、西，最上一行在正上方，最下一行在正下方。缺少某个面又没有全景图的天空盒会被跳过，并在日志中记录一条错误。
+
+`aurora` 在夜晚的北方低空挂起发光的光幕。光幕缓缓飘动，在日落时出现，白天和下雨时消失。`color` 是光幕底部的颜色，`topColor` 是它们在顶部淡出时的颜色。
+
+`rainbow` 在白天雨停后于太阳对面显示一道彩虹。彩虹会在雨停后的两分钟内逐渐淡去，再次下雨会让它消失。
+
+原版没有任何键能给维度设置自己的天空图片、极光或彩虹，因此这些键在所有版本中的效果都相同。
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | 否 | 纹理路径 | 无 | 立方体的一个面：`up`、`down`、`north`、`east`、`south` 或 `west`。六个面都要给出 |
+| `skybox.panorama` | 否 | 纹理路径 | 无 | 一张包住整个天空的图片，代替各个面 |
+| `aurora.color` | 否 | 十六进制颜色 | `40FF90` | 光幕底部的颜色 |
+| `aurora.topColor` | 否 | 十六进制颜色 | `8040FF` | 光幕顶部淡出处的颜色 |
+| `rainbow` | 否 | 布尔值 | `false` | 雨后显示彩虹 |
 
 ### `physics` 块
 

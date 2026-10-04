@@ -17,7 +17,10 @@ import javax.annotation.Nullable;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
-    private static final List<String> KEYS = Arrays.asList("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat");
+    private static final List<String> KEYS = Arrays.asList("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor", "skybox", "aurora", "rainbow");
+    private static final List<String> FACES = Arrays.asList("up", "down", "north", "east", "south", "west");
+    private static final int AURORA = 0x40FF90;
+    private static final int AURORA_TOP = 0x8040FF;
     private static final float GROUND_WEIGHT = 0.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
@@ -43,7 +46,37 @@ public final class ContentParserSkyLook {
                 layers(key, sky, cloudHeight, cloudSpeed, cloudColor),
                 unit(key, sky, "sunBrightness", 1.0F),
                 unit(key, sky, "moonBrightness", 1.0F),
-                sky.has("heat") ? heat(key, JsonUtils.getJsonObject(sky, "heat")) : null);
+                sky.has("heat") ? heat(key, JsonUtils.getJsonObject(sky, "heat")) : null,
+                color(key, sky, "snowColor"),
+                color(key, sky, "waterFogColor"),
+                color(key, sky, "lavaFogColor"),
+                color(key, sky, "starColor"),
+                unit(key, sky, "starTwinkle", 0.0F),
+                color(key, sky, "lightningColor"),
+                skybox(key, sky),
+                sky.has("aurora") ? aurora(key, JsonUtils.getJsonObject(sky, "aurora")) : null,
+                JsonUtils.getBoolean(sky, "rainbow", false));
+    }
+
+    @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
+        if (!sky.has("skybox")) { return null; }
+        JsonObject box = JsonUtils.getJsonObject(sky, "skybox");
+        if (box.has("panorama")) { return new SkyLookDef.Skybox(new ResourceLocation(JsonUtils.getString(box, "panorama").trim()), Collections.emptyList()); }
+        List<ResourceLocation> faces = new ArrayList<>();
+        for (String face : FACES) {
+            if (!box.has(face)) {
+                ContentLog.LOGGER.error("Dimension {} gives sky.skybox with no {} face and no panorama, so it draws no skybox", key, face);
+                return null;
+            }
+            faces.add(new ResourceLocation(JsonUtils.getString(box, face).trim()));
+        }
+        return new SkyLookDef.Skybox(null, Collections.unmodifiableList(faces));
+    }
+
+    private static SkyLookDef.Aurora aurora(ResourceLocation key, JsonObject aurora) {
+        int color = color(key, aurora, "color");
+        int top = color(key, aurora, "topColor");
+        return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top);
     }
 
     private static float unit(ResourceLocation key, JsonObject json, String member, float fallback) {

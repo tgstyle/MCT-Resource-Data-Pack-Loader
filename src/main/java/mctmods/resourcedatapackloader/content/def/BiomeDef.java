@@ -40,6 +40,7 @@ public final class BiomeDef {
     public final float undergroundNightMonsterRate;
     public final int grassColor;
     public final int foliageColor;
+    public final int snowColor;
     public final boolean banded;
     public final int minHeight;
     public final int maxHeight;
@@ -53,7 +54,7 @@ public final class BiomeDef {
     private boolean skyResolved;
     @Nullable private IBlockState skyState;
 
-    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, String skyStone, float skyIslands, float skyThickness) {
+    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, int snowColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, String skyStone, float skyIslands, float skyThickness) {
         this.registryName = registryName;
         this.name = name;
         this.id = id;
@@ -84,6 +85,7 @@ public final class BiomeDef {
         this.undergroundNightMonsterRate = undergroundNightMonsterRate;
         this.grassColor = grassColor;
         this.foliageColor = foliageColor;
+        this.snowColor = snowColor;
         this.banded = banded;
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;

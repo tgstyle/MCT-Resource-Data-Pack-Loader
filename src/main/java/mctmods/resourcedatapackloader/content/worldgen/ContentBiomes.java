@@ -160,6 +160,7 @@ public final class ContentBiomes {
                 rate(json, "undergroundNight"),
                 color(json, "grassColor", key),
                 color(json, "foliageColor", key),
+                color(json, "snowColor", key),
                 json.has("minHeight") || json.has("maxHeight"),
                 JsonUtils.getInt(json, "minHeight", Integer.MIN_VALUE),
                 JsonUtils.getInt(json, "maxHeight", Integer.MAX_VALUE),

@@ -139,6 +139,8 @@ public class ContentBiome extends Biome {
         return day ? def.undergroundDayMonsterRate : def.undergroundNightMonsterRate;
     }
 
+    @SideOnly(Side.CLIENT) public int snowColor() { return def.snowColor; }
+
     @Override @SideOnly(Side.CLIENT) public int getModdedBiomeGrassColor(int original) { return def.grassColor == ContentTypes.NO_COLOR ? original : def.grassColor; }
 
     private static Map<DecorateBiomeEvent.Decorate.EventType, String> suppressed() {

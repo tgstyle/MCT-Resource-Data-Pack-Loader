@@ -3044,6 +3044,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -3122,6 +3123,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `waterColor`      | nein    | Hex-Farbe | `FFFFFF`      | Wasserfärbung                                                            |
 | `grassColor`      | nein    | Hex-Farbe | aus dem Klima | Grasfärbung, anstelle der Farbe, die Temperatur und Niederschlag ergäben |
 | `foliageColor`    | nein    | Hex-Farbe | aus dem Klima | Laubfärbung, auf dieselbe Weise                                          |
+| `snowColor`       | nein    | Hex-Farbe | die der Dimension | Färbung des Schnees am Boden, vor der `snowColor` der Dimension      |
 
 ### Dekoration und Spawns
 
@@ -3409,6 +3411,84 @@ Ohne `cloudLayers` ändert `cloudSpeed` das Tempo der einen Vanilla-Schicht auf 
 | `heat.dayOnly`         | nein    | boolean        | `true`        | An, das Flimmern schwindet mit dem Tageslicht und ist nachts weg                    |
 | `heat.mode`            | nein    | string         | `screen`      | Wo das Flimmern liegt, `screen` oder `world`                                        |
 | `heat.startDistance`   | nein    | float          | `32`          | Im Modus `world` die Entfernung in Blöcken, ab der es flimmert                      |
+
+### Schnee, Flüssigkeiten, Sterne und Blitze
+
+*dimensions*
+
+Auch diese Schlüssel stehen im Block `sky`, und auch sie werden nur auf dem Client gezeichnet.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` färbt Schneeschichten und Schneeblöcke am Boden. Die eigene `snowColor` eines Bioms geht der der Dimension vor, und an Biomgrenzen gehen die Farben ineinander über wie beim Gras.
+
+`waterFogColor` und `lavaFogColor` ersetzen die Nebelfarbe, die die Kamera unter Wasser oder in Lava sieht. Nacht, Tiefe und Nachtsicht dunkeln sie weiterhin ab oder hellen sie auf, wie bei der Vanilla-Farbe.
+
+`starColor` färbt die Sterne, im Vanilla-Himmel wie in einem eigenen aus [Der Himmelsrenderer](#der-himmelsrenderer). `starTwinkle` lässt sie funkeln: Die Sterne bilden acht Gruppen, die jede in ihrem eigenen Takt dunkler und wieder heller werden, und der Wert gibt an, wie weit sie abdunkeln; bei `1` verschwindet eine Gruppe an ihrem Tiefpunkt ganz.
+
+`lightningColor` färbt Blitze.
+
+| Schlüssel        | Pflicht | Wert           | Standard | Was er macht                                                         |
+| ---------------- | ------- | -------------- | -------- | -------------------------------------------------------------------- |
+| `snowColor`      | nein    | Hex-Farbe      | weiß     | Färbung von Schneeschichten und Schneeblöcken                        |
+| `waterFogColor`  | nein    | Hex-Farbe      | `050533` | Nebelfarbe unter Wasser                                              |
+| `lavaFogColor`   | nein    | Hex-Farbe      | `991A00` | Nebelfarbe in Lava                                                   |
+| `starColor`      | nein    | Hex-Farbe      | weiß     | Färbung der Sterne                                                   |
+| `starTwinkle`    | nein    | float, 0 bis 1 | `0.0`    | Wie weit die Sterne beim Funkeln abdunkeln. `0` lässt sie ruhig leuchten |
+| `lightningColor` | nein    | Hex-Farbe      | `737380` | Färbung der Blitze                                                   |
+
+### Skybox, Polarlicht und Regenbogen
+
+*dimensions*
+
+Auch diese Schlüssel stehen im Block `sky` und werden ebenfalls nur auf dem Client gezeichnet.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` malt eigene Bilder an den Himmel, hinter das Morgenrot, die Sonne, den Mond und die Sterne. Gib alle sechs Seiten eines Würfels als vollständige Texturpfade an, so angeordnet wie der aufgeklappte Würfel: `up` grenzt an die Oberkante von `north`, `down` an ihre Unterkante, `west` liegt links davon und `east` rechts, `south` folgt hinter `east`. Oder gib stattdessen nur `panorama` an, ein Bild im Format 2:1, das um den ganzen Himmel gelegt wird: Sein linker Rand zeigt nach Norden, von dort läuft es im Uhrzeigersinn über Osten, Süden und Westen, die oberste Zeile liegt senkrecht oben und die unterste senkrecht unten. Eine Skybox, der eine Seite fehlt und die kein Panorama hat, wird weggelassen, mit einem Fehler im Log.
+
+`aurora` hängt nachts leuchtende Vorhänge tief über den Nordhimmel. Sie wogen langsam, erscheinen, wenn die Sonne untergeht, und sind bei Tag und bei Regen verschwunden. `color` ist die Farbe an ihrem Fuß, `topColor` die, in die sie oben verblassen.
+
+`rainbow` zeigt einen Regenbogen gegenüber der Sonne, sobald der Regen am Tag aufhört. Er verblasst in den zwei Minuten nach dem Regen, und ein neuer Schauer löscht ihn.
+
+Kein Vanilla-Schlüssel gibt einer Dimension eigene Himmelsbilder, ein Polarlicht oder einen Regenbogen, deshalb wirken diese Schlüssel in jeder Version gleich.
+
+| Schlüssel         | Pflicht | Wert       | Standard | Was er macht                                                                             |
+| ----------------- | ------- | ---------- | -------- | ---------------------------------------------------------------------------------------- |
+| `skybox.<face>`   | nein    | Texturpfad | keiner   | Eine Würfelseite: `up`, `down`, `north`, `east`, `south` oder `west`. Alle sechs angeben |
+| `skybox.panorama` | nein    | Texturpfad | keiner   | Ein Bild, das um den ganzen Himmel gelegt wird, anstelle der Seiten                      |
+| `aurora.color`    | nein    | Hex-Farbe  | `40FF90` | Farbe am Fuß der Vorhänge                                                                |
+| `aurora.topColor` | nein    | Hex-Farbe  | `8040FF` | Farbe oben, wo die Vorhänge verblassen                                                   |
+| `rainbow`         | nein    | boolean    | `false`  | Nach dem Regen einen Regenbogen zeigen                                                   |
 
 ### Der Block `physics`
 

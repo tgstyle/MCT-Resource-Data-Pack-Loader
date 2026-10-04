@@ -3044,6 +3044,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -3122,6 +3123,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `waterColor` | non | couleur hexadécimale | `FFFFFF` | Teinte de l'eau |
 | `grassColor` | non | couleur hexadécimale | selon le climat | Teinte de l'herbe, à la place de la couleur que donneraient la température et les précipitations |
 | `foliageColor` | non | couleur hexadécimale | selon le climat | Teinte des feuilles, de la même façon |
+| `snowColor` | non | couleur hexadécimale | celle de la dimension | Teinte de la neige au sol, prioritaire sur le `snowColor` de la dimension |
 
 ### Décoration et apparitions
 
@@ -3409,6 +3411,84 @@ Sans `cloudLayers`, `cloudSpeed` modifie la vitesse de l'unique couche vanilla �
 | `heat.dayOnly` | non | booléen | `true` | Activé, le mirage s'estompe avec la lumière du jour et disparaît la nuit |
 | `heat.mode` | non | chaîne | `screen` | Où le mirage se pose, `screen` ou `world` |
 | `heat.startDistance` | non | flottant | `32` | En mode `world`, à combien de blocs de distance le mirage commence |
+
+### Neige, fluides, étoiles et éclairs
+
+*dimensions*
+
+Ces clés se placent elles aussi dans le bloc `sky` et ne sont, elles aussi, dessinées que côté client.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` teinte les couches de neige et les blocs de neige au sol. Le `snowColor` propre à un biome l'emporte sur celui de la dimension, et les couleurs se fondent aux frontières entre biomes, comme pour l'herbe.
+
+`waterFogColor` et `lavaFogColor` remplacent la couleur du brouillard que voit la caméra sous l'eau ou dans la lave. La nuit, la profondeur et la vision nocturne continuent de l'assombrir ou de l'éclaircir, comme pour la couleur vanilla.
+
+`starColor` teinte les étoiles, dans le ciel vanilla comme dans le vôtre issu du [moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel). `starTwinkle` les fait scintiller : les étoiles se répartissent en huit groupes qui faiblissent et se ravivent chacun à son rythme, et la valeur indique jusqu'où elles faiblissent ; à `1`, un groupe s'éteint complètement au plus bas.
+
+`lightningColor` teinte les éclairs.
+
+| Clé | Requis | Valeur | Défaut | Rôle |
+| --- | --- | --- | --- | --- |
+| `snowColor` | non | couleur hexadécimale | blanc | Teinte des couches et des blocs de neige |
+| `waterFogColor` | non | couleur hexadécimale | `050533` | Couleur du brouillard sous l'eau |
+| `lavaFogColor` | non | couleur hexadécimale | `991A00` | Couleur du brouillard dans la lave |
+| `starColor` | non | couleur hexadécimale | blanc | Teinte des étoiles |
+| `starTwinkle` | non | flottant, 0 à 1 | `0.0` | Jusqu'où les étoiles faiblissent en scintillant. `0` les garde fixes |
+| `lightningColor` | non | couleur hexadécimale | `737380` | Teinte des éclairs |
+
+### Skybox, aurore et arc-en-ciel
+
+*dimensions*
+
+Ces clés se placent elles aussi dans le bloc `sky`, et elles aussi ne sont dessinées que côté client.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` peint vos propres images sur le ciel, derrière la lueur de l'aube, le soleil, la lune et les étoiles. Donnez les six faces d'un cube sous forme de chemins de texture complets, disposées comme le cube déplié : `up` touche le bord supérieur de `north`, `down` son bord inférieur, `west` se trouve à sa gauche et `east` à sa droite, avec `south` après `east`. Ou donnez seulement `panorama`, une image 2:1 enroulée autour de tout le ciel : son bord gauche regarde le nord et elle tourne dans le sens des aiguilles d'une montre par l'est, le sud et l'ouest ; sa ligne du haut est à la verticale au-dessus et celle du bas à la verticale en dessous. Une skybox à laquelle il manque une face et qui n'a pas de panorama est ignorée, avec une erreur dans le journal.
+
+`aurora` suspend la nuit des rideaux lumineux bas sur le ciel du nord. Ils ondulent lentement, apparaissent quand le soleil se couche et disparaissent le jour et sous la pluie. `color` est la couleur à leur pied, `topColor` celle vers laquelle ils s'estompent en haut.
+
+`rainbow` affiche un arc-en-ciel à l'opposé du soleil dès que la pluie s'arrête en journée. Il s'estompe dans les deux minutes qui suivent la fin de la pluie, et une nouvelle averse l'efface.
+
+Aucune clé vanilla ne donne à une dimension ses propres images de ciel, une aurore ou un arc-en-ciel, ces clés fonctionnent donc de la même façon sur toutes les versions.
+
+| Clé | Requis | Valeur | Défaut | Rôle |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | non | chemin de texture | aucun | Une face du cube : `up`, `down`, `north`, `east`, `south` ou `west`. Les six sont nécessaires |
+| `skybox.panorama` | non | chemin de texture | aucun | Une image enroulée autour de tout le ciel, à la place des faces |
+| `aurora.color` | non | couleur hexadécimale | `40FF90` | Couleur au pied des rideaux |
+| `aurora.topColor` | non | couleur hexadécimale | `8040FF` | Couleur en haut, là où les rideaux s'estompent |
+| `rainbow` | non | booléen | `false` | Afficher un arc-en-ciel après la pluie |
 
 ### Le bloc `physics`
 

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
 import net.minecraftforge.client.IRenderHandler;
@@ -31,6 +32,12 @@ import java.util.Map;
     public static float moon(World world) {
         SkyLookDef look = ContentFogSampler.look(world);
         return look == null ? 1.0F : look.moonBrightness;
+    }
+
+    public static BufferBuilder bolt(BufferBuilder buffer, float red, float green, float blue, float alpha) {
+        SkyLookDef look = ContentFogSampler.look(Minecraft.getMinecraft().world);
+        if (look == null || look.lightningColor == SkyLookDef.UNSET) { return buffer.color(red, green, blue, alpha); }
+        return buffer.color((look.lightningColor >> 16 & 255) / 255.0F, (look.lightningColor >> 8 & 255) / 255.0F, (look.lightningColor & 255) / 255.0F, alpha);
     }
 
     public static void apply(WorldProvider provider, DimensionDef def) {

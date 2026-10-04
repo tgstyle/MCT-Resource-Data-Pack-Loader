@@ -18,14 +18,17 @@ import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
-import java.util.Random;
 
 @SideOnly(Side.CLIENT) final class ContentSkyRenderer extends IRenderHandler {
     private static final ResourceLocation MOON_PHASES = new ResourceLocation("textures/environment/moon_phases.png");
     private final DimensionTraitsDef.Sky sky;
+    private final ContentStars starField;
     private int lists = -1;
 
-    ContentSkyRenderer(DimensionTraitsDef.Sky sky) { this.sky = sky; }
+    ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+        this.sky = sky;
+        starField = new ContentStars(sky.starCount, sky.starSize);
+    }
 
     @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {
         Entity viewer = mc.getRenderViewEntity();
@@ -53,6 +56,7 @@ import java.util.Random;
         GlStateManager.disableAlpha();
         GlStateManager.enableBlend();
         GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        ContentSkyExtras.backdrop(world);
         RenderHelper.disableStandardItemLighting();
         sunrise(world, mc, buffer, tessellator, partialTicks);
         GlStateManager.enableTexture2D();
@@ -88,8 +92,7 @@ import java.util.Random;
         if (stars > 0.0F) {
             GlStateManager.pushMatrix();
             GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F);
-            GlStateManager.color(stars, stars, stars, stars);
-            GlStateManager.callList(lists + 2);
+            starField.draw(world, stars, partialTicks);
             GlStateManager.popMatrix();
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -97,6 +100,7 @@ import java.util.Random;
         GlStateManager.enableAlpha();
         GlStateManager.enableFog();
         GlStateManager.popMatrix();
+        ContentSkyExtras.overlay(world, partialTicks);
         GlStateManager.disableTexture2D();
         GlStateManager.color(0.0F, 0.0F, 0.0F);
         double below = viewer.getPositionEyes(partialTicks).y - world.getHorizon();
@@ -183,7 +187,7 @@ import java.util.Random;
     }
 
     private void build() {
-        lists = GLAllocation.generateDisplayLists(3);
+        lists = GLAllocation.generateDisplayLists(2);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         GlStateManager.glNewList(lists, GL11.GL_COMPILE);
@@ -194,12 +198,6 @@ import java.util.Random;
         plane(buffer, -16.0F, true);
         tessellator.draw();
         GlStateManager.glEndList();
-        GlStateManager.pushMatrix();
-        GlStateManager.glNewList(lists + 2, GL11.GL_COMPILE);
-        stars(buffer);
-        tessellator.draw();
-        GlStateManager.glEndList();
-        GlStateManager.popMatrix();
     }
 
     private static void plane(BufferBuilder buffer, float height, boolean reverse) {
@@ -212,42 +210,6 @@ import java.util.Random;
                 buffer.pos(far, height, z).endVertex();
                 buffer.pos(far, height, z + 64).endVertex();
                 buffer.pos(near, height, z + 64).endVertex();
-            }
-        }
-    }
-
-    private void stars(BufferBuilder buffer) {
-        Random random = new Random(10842L);
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION);
-        float spread = sky.starSize * 2.0F / 3.0F;
-        for (int star = 0; star < sky.starCount; ++star) {
-            double x = random.nextFloat() * 2.0F - 1.0F;
-            double y = random.nextFloat() * 2.0F - 1.0F;
-            double z = random.nextFloat() * 2.0F - 1.0F;
-            double size = sky.starSize + random.nextFloat() * spread;
-            double length = x * x + y * y + z * z;
-            if (length >= 1.0D || length <= 0.01D) { continue; }
-            length = 1.0D / Math.sqrt(length);
-            x *= length;
-            y *= length;
-            z *= length;
-            double yaw = Math.atan2(x, z);
-            double yawSin = Math.sin(yaw);
-            double yawCos = Math.cos(yaw);
-            double pitch = Math.atan2(Math.sqrt(x * x + z * z), y);
-            double pitchSin = Math.sin(pitch);
-            double pitchCos = Math.cos(pitch);
-            double spin = random.nextDouble() * Math.PI * 2.0D;
-            double spinSin = Math.sin(spin);
-            double spinCos = Math.cos(spin);
-            for (int corner = 0; corner < 4; ++corner) {
-                double a = ((corner & 2) - 1) * size;
-                double b = ((corner + 1 & 2) - 1) * size;
-                double c = a * spinCos - b * spinSin;
-                double d = b * spinCos + a * spinSin;
-                double e = c * pitchSin;
-                double f = -c * pitchCos;
-                buffer.pos(x * 100.0D + f * yawSin - d * yawCos, y * 100.0D + e, z * 100.0D + d * yawSin + f * yawCos).endVertex();
             }
         }
     }
