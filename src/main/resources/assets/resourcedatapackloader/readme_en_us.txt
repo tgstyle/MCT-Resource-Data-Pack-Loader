@@ -144,6 +144,25 @@ anything else a mod keeps in its data folder. These are server side, so they
 work on a dedicated server as well, and a change to them takes effect with
 /reload.
 
+Things can also be taken away. A file in recipe_removals deletes recipes by
+name, namespace or output, and a file in disabled takes blocks and items out of
+play without unregistering them, so worlds keep their ids and deleting the file
+brings everything back. A loot injection adds a pool to a loot table that
+already exists instead of replacing it, and block_drops adds to or replaces what
+a block you do not own drops. Furnace recipes, fuel burn times, creative tabs
+and sound events are files of their own too.
+
+An anvil can be taught new work. A file in anvils names an item, the item that
+goes with it in the right slot, and the enchantments or result the anvil offers
+for the levels named. Taking it out can earn an advancement, and the item can
+stay unusable until that advancement is earned.
+
+A hardness file sets mining time and blast resistance for a group of blocks, and
+an exposures file defines a hazard such as radiation: it affects players near
+named blocks, carrying named items or in named dimensions, in levels that each
+apply effects and damage, and it can be caught from mobs and players nearby or
+fall with the rain.
+
 
 ADDING NEW CONTENT
 ------------------
@@ -187,7 +206,7 @@ Each of these is a folder under data/<yourpack>:
     fuels            brewing          potions          potion_types
     villagers        trades           loot_tables      loot_injections
     block_drops      player_loot      advancements     functions
-    tags             registry_remap   cards
+    tags             registry_remap   cards            disabled
 
 Blocks come in these shapes, set by the "type" field:
 
@@ -215,11 +234,17 @@ An entities/<name>.json file makes a new entity out of one that is already here.
 It names the entity to build on, and what is different about it: its name, its
 looks, how much health and damage it has, how it moves, how it fights and what
 it drops. It is an entity of its own, with its own spawn egg and loot table,
-and the one it was built from is left alone.
+and the one it was built from is left alone. It can also carry storage of its
+own, item slots, a fluid tank and an energy buffer that pipes and cables reach
+and a player opens by sneaking and right-clicking it.
 
 A villages/<name>.json file adds a plot a city or village can build from one of
 your .nbt templates, and a raids/<name>.json file sends waves at a village when
 a player brings an omen into it.
+
+A cards/<name>.json file shows an on-screen card when something happens, such as
+a player entering a biome, and a file in the same folder named after one of the
+mod's own messages changes what that message says.
 
 A worldintro/<name>.json file plays a run of pages when somebody enters the
 world, before they take control. The words are plain .txt files under
@@ -244,6 +269,11 @@ can ship a whole world shape at once instead of asking for a dozen config
 edits. It can shape the overworld itself too, such as its sea level and
 whether its oceans are lava.
 
+A dimension can also set how it looks and behaves overhead. Its fog, light tint,
+sun and moon dimming, cloud layers and heat shimmer are drawn on your own
+screen, and its weather decides whether it rains, snows or storms, how long
+showers last, and the color, particles, sound and angle of the rain.
+
 worldgen is more than ore. An entry places a shape, from a small blob of your
 block to one of your own .nbt templates, and decides how often, how high and in
 which biomes it appears.
@@ -257,8 +287,17 @@ WHERE THIS STOPS
 
 This describes what a thing is, not what it does over time. Anything needing a
 block entity, a screen or code running every tick still needs a real mod, with
-one exception: a block of type container holds an inventory with a screen of
-its own. A machine is out of reach; an ore, a fence, a food or a fluid is not.
+two exceptions: a block of type container holds an inventory with a screen of
+its own, and an entity variant can carry storage. A machine is out of reach; an
+ore, a fence, a food or a fluid is not.
+
+
+PACKS FROM OTHER VERSIONS
+-------------------------
+
+A pack made for the 1.12.2 line of this mod loads here as it is. A zip is
+converted once, inside itself, into a versions folder for this version, and the
+1.12.2 files stay as they were, so the same zip keeps working on every version.
 
 
 SEEING YOUR CHANGES
@@ -275,6 +314,11 @@ it.
 
 /rdpl which minecraft:textures/block/stone.png shows which pack serves a file
 and which packs are shadowed underneath it.
+
+/rdpl config unused lists option files in rdploader/config that no installed
+pack defines any more, and /rdpl config prune deletes them. /rdpl pixelmap shows
+what a pixel map came out as, and /rdpl biome list and here tell you about
+biomes.
 
 These work without being an operator, because they only read files on your own
 computer. On a dedicated server, /rdplserver reload rescans the server's copy,
