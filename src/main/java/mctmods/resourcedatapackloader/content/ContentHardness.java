@@ -30,6 +30,7 @@ import net.minecraft.scoreboard.Team;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.GameType;
 import net.minecraft.util.JsonUtils;
+import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
@@ -228,16 +229,25 @@ public final class ContentHardness {
     }
 
     public static void dig(EntityLivingBase digger, BlockPos pos) {
+        for (ItemStack stack : harvest(digger, pos, 0)) { Block.spawnAsEntity(digger.world, pos, stack); }
+    }
+
+    public static List<ItemStack> harvest(EntityLivingBase digger, BlockPos pos, int fortune) {
         World world = digger.world;
         IBlockState state = world.getBlockState(pos);
-        int earned = mctmods.resourcedatapackloader.content.entity.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, 0) : 0;
-        if (breaksAway(state, null)) {
-            if (world.destroyBlock(pos, true) && earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
-            return;
+        List<ItemStack> kept = new ArrayList<>();
+        if (state.getBlock().isAir(state, world, pos)) { return kept; }
+        int earned = mctmods.resourcedatapackloader.content.entity.ContentEntities.collectsExperience(digger) ? state.getBlock().getExpDrop(state, world, pos, fortune) : 0;
+        NonNullList<ItemStack> drops = NonNullList.create();
+        state.getBlock().getDrops(drops, world, pos, state, fortune);
+        float chance = ForgeEventFactory.fireBlockHarvesting(drops, world, pos, state, fortune, 1.0F, false, null);
+        for (ItemStack drop : drops) {
+            if (!drop.isEmpty() && world.rand.nextFloat() <= chance) { kept.add(drop); }
         }
-        state.getBlock().dropBlockAsItem(world, pos, state, 0);
-        if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
         world.playEvent(2001, pos, Block.getStateId(state));
+        if (breaksAway(state, null)) { world.setBlockToAir(pos); }
+        if (earned > 0) { state.getBlock().dropXpOnBlockBreak(world, pos, earned); }
+        return kept;
     }
 
     public static String swapToken(HardnessDef def) { return "swap:" + def.registryName; }

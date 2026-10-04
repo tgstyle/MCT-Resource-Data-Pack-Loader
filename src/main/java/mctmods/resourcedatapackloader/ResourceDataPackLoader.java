@@ -183,6 +183,7 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentMobExperience.class);
             MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.EntityStorage.class);
+            if (mctmods.resourcedatapackloader.content.entity.ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentOrders.class); }
         }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();

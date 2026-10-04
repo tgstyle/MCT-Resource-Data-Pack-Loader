@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.content.entity.ai.EntityAISwoop;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIKamikaze;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIStrike;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
+import mctmods.resourcedatapackloader.content.entity.ai.EntityAIWorkOrder;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registries;
 
@@ -69,6 +70,7 @@ final class ContentEntityBehavior {
             ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its behaviors:{}{}{}{}{}{}{}{}{}", def.registryName, (int) living.posX, (int) living.posY, (int) living.posZ, def.charges ? " charges" : "", def.pounces ? " pounces" : "", def.sniffs > 0 ? " sniffs " + def.sniffs : "", def.fleesWhenHurt > 0.0F ? " flees under " + def.fleesWhenHurt : "", def.sleepsByDay ? " sleeps by day" : "", def.home > 0 ? " home " + def.home : "", def.patrols ? " patrols" : "", def.swoops ? " swoops" : "", def.gusts ? " gusts " + def.gustPower : "");
         }
         if (def.collectsExperience && living instanceof EntityCreature) { living.tasks.addTask(0, new EntityAIAnvilWork((EntityCreature) living)); }
+        if (living instanceof EntityCreature && ContentOrders.wants(def)) { living.tasks.addTask(3, new EntityAIWorkOrder((EntityCreature) living)); }
         settled(living, def);
         if (def.passive) {
             clear(living.targetTasks);

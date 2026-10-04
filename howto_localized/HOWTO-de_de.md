@@ -59,6 +59,7 @@ Zwölf fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an
 
 **Kreaturen und Gefahren**
 - [Entity-Varianten](#entity-varianten)
+- [Arbeitsaufträge](#arbeitsaufträge)
 - [Expositionen](#expositionen)
 
 **Die Welt**
@@ -155,6 +156,7 @@ Jeder Pfad in diesem Handbuch ist ab `assets/` geschrieben, `<namespace>/blocks/
 | `<namespace>/raids/*.json`                                                                      | Wellen, die ein Dorf heimsuchen, wenn ein Spieler ein Omen hineinträgt. [Raids](#raids)                                                                        |
 | `<namespace>/entities/*.json`                                                                   | Entity-Varianten, aufgebaut auf vorhandenen Entities. [Entity-Varianten](#entity-varianten)                                                                    |
 | `<namespace>/hardness/*.json`                                                                   | Faktoren für Abbauzeit und Explosionswiderstand für Blockgruppen. [Härtegruppen](#härtegruppen)                                                                |
+| `<namespace>/orders/*.json`                                                                     | Arbeiten, die Entity-Varianten für einen Spieler an einer Truhe erledigen. [Arbeitsaufträge](#arbeitsaufträge) |
 | `<namespace>/exposures/*.json`                                                                  | Gefahren, denen Spieler in der Nähe benannter Blöcke, beim Tragen benannter Items oder in benannten Dimensionen ausgesetzt sind. [Expositionen](#expositionen) |
 | `<namespace>/overrides/<target>/<name>.json`                                                    | Eigenschaften vorhandener Blöcke, Items und Tranktypen, direkt geändert. [Eigenschaften überschreiben](#eigenschaften-überschreiben)                           |
 | `<namespace>/villages/*.json`                                                                   | Grundstücke, die Dörfer bauen können. [Dorfgrundstücke](#dorfgrundstücke)                                                                                      |
@@ -2862,6 +2864,89 @@ Die Variante einer Galacticraft-Rakete (`galacticraftcore:rocket_t1`, `galacticr
 | `cargo`           | nein    | Liste von Filtereinträgen | keine               | Was die Frachtslots und ein Frachtlader einlegen dürfen. Ohne sie nehmen sie alles an. Die Einträge sind die von `storage`, mit `item` oder `oreDict` |
 | `requiredPayload` | nein    | Liste                     | keine               | Was in der Fracht liegen muss, bevor die Rakete startet. Jeder Eintrag ist `item` oder `oreDict` und ein `count`, Standard `1`                        |
 | `payload`         | nein    | Liste                     | keine               | Was ein neu hergestelltes Raketenitem mitbringt, beim ersten Aufstellen in die Fracht geladen. Jeder Eintrag ist `item` und ein `count`, Standard `1` |
+
+## Arbeitsaufträge
+
+*kreaturen und gefahren*
+
+`<namespace>/orders/*.json`
+
+Den Dateinamen wählst du selbst, gelesen wird nur der Ordner, und mehrere Dateien ergänzen sich. Eine Datei enthält eine Liste `orders` und daneben drei Einstellungen für das ganze Pack; die erste Datei, die eine davon setzt, entscheidet sie.
+
+Ein Auftrag ist eine Arbeit, die die als Abnehmer genannten Entity-Varianten für einen Spieler erledigen: Sie bauen die genannten Blöcke in seinem Bereich ab oder holen seine Items aus anderen Truhen und bringen das Ergebnis in seine Truhe. Jeder Weg, einen Auftrag zu eröffnen, funktioniert mit einem Vanilla-Client:
+
+- **Ein Schild.** Setze ein Schild an oder neben eine Truhe und schreibe das `sign`-Wort des Auftrags in die erste Zeile. Der Auftrag öffnet sich an dieser Truhe, und die zweite Zeile des Schilds zeigt, wie viele Items noch fehlen. Wer das Schild oder die Truhe abbaut, bricht ihn ab.
+- **Ein Werkzeug.** Klicke einen Arbeiter ohne Schleichen mit einem Werkzeug der Art `tool` des Auftrags an. Der Arbeiter nimmt das Werkzeug, ein Werkzeug, das er hielt, bekommst du zurück, und er arbeitet den Auftrag an der nächsten Truhe in seinem Bereich ab.
+- **Eine Vorratstruhe.** Benenne eine Truhe im Amboss in `stockName` um und stelle sie auf. Jedes Item in ihrer ersten Reihe wird zu einem vollen Stapel aufgefüllt: Arbeiter holen es aus anderen Truhen im Bereich des ersten `haul`-Auftrags des Packs, mit dessen Abnehmern, Vorrang und Bereich.
+
+```json
+{
+  "stockName": "Stock",
+  "hire": "minecraft:emerald",
+  "spawnCap": 1,
+  "orders": [
+    {
+      "job": "mine",
+      "blocks": "oreIron",
+      "sign": "Mine",
+      "tool": "pickaxe",
+      "areaByTier": [8, 16, 24, 32],
+      "limit": 64,
+      "workers": 2,
+      "priority": 1,
+      "speed": 1.5,
+      "takers": ["mypack:miner", "team:Red", "tag:digger"]
+    },
+    {
+      "job": "farm",
+      "blocks": "cropWheat",
+      "sign": "Farm",
+      "tool": "hoe",
+      "standing": 64,
+      "takers": ["mypack:farmer"]
+    },
+    {
+      "job": "haul",
+      "blocks": "logWood",
+      "sign": "Haul",
+      "deliver": "chest",
+      "takers": ["mypack:porter"]
+    }
+  ]
+}
+```
+
+Einstellungen neben `orders`:
+
+| Schlüssel   | Pflicht | Wert     | Standard | Was er tut                                                                                                                                                                                                                   |
+| ----------- | ------- | -------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `stockName` | nein    | String   | `Stock`  | Der Name, der eine aufgestellte Truhe zur Vorratstruhe macht, ohne Rücksicht auf Groß- und Kleinschreibung. Leer schaltet Vorratstruhen ab                                                                                   |
+| `hire`      | nein    | Itemname | keiner   | Stellt einen freien Arbeiter ein: Klicke ihn ohne Schleichen mit diesem Item an, dann gehört er dir und das Item wird verbraucht. Ein freier Arbeiter gehört keinem Spieler und keinem Team. Metadaten als `minecraft:dye:4` |
+| `spawnCap`  | nein    | int      | `1`      | Wie viele Arbeiter ein Auftrag an seiner Truhe erscheinen lassen darf, wenn keiner kommt. `0` lässt keinen erscheinen                                                                                                        |
+
+Auftragsschlüssel:
+
+| Schlüssel    | Pflicht              | Wert                                 | Standard | Was er tut                                                                                                                                                                                                                                                                                                                                                                                            |
+| ------------ | -------------------- | ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `job`        | ja                   | `gather`, `mine`, `farm` oder `haul` |          | `gather` und `mine` bauen die in `blocks` genannten Blöcke ab, als Block selbst oder als das, was er fallen lässt, sofern eine Seite an Luft oder an einen Block grenzt, der kein voller Würfel ist. `farm` erntet ausgewachsene Feldfrüchte und pflanzt jede aus ihrem eigenen Saatgut nach. `haul` trägt die in `blocks` genannten Items aus anderen Truhen und Behältern in die Truhe des Auftrags |
+| `blocks`     | ja, außer bei `farm` | Ore-Dictionary-Name                  | keiner   | Was der Auftrag will, etwa `oreIron`, `logWood` oder `cropWheat`, ohne Rücksicht auf Groß- und Kleinschreibung. Bei `farm` beschränkt es die Ernte auf Feldfrüchte, die es fallen lassen                                                                                                                                                                                                              |
+| `area`       | nein                 | int                                  | `16`     | Wie weit die Arbeit von der Truhe reicht, in Blöcken entlang jeder Achse                                                                                                                                                                                                                                                                                                                              |
+| `areaByTier` | nein                 | Liste von int                        | keiner   | Die Reichweite nach der Abbaustufe des Werkzeugs: der erste Eintrag ohne Werkzeug oder bei Stufe 0, dann ein Eintrag je Stufe, und der letzte gilt für jede Stufe darüber hinaus. Ersetzt `area`                                                                                                                                                                                                      |
+| `deliver`    | nein                 | `chest` oder `self`                  | `chest`  | `chest` bringt das Gesammelte in die Truhe des Auftrags. `self` behält es im eigenen Speicher des Arbeiters, und der Auftrag zählt es beim Sammeln                                                                                                                                                                                                                                                    |
+| `limit`      | nein                 | int                                  | `64`     | Wie viele Items der Auftrag will, bevor er sich schließt                                                                                                                                                                                                                                                                                                                                              |
+| `standing`   | nein                 | int                                  | `0`      | Über `0` schließt sich der Auftrag nie: Er hält so viele seiner Items in der Truhe und arbeitet, sobald es weniger sind. `limit` wird dann nicht gelesen                                                                                                                                                                                                                                              |
+| `workers`    | nein                 | int                                  | `1`      | Die meisten Arbeiter gleichzeitig am Auftrag                                                                                                                                                                                                                                                                                                                                                          |
+| `priority`   | nein                 | int                                  | `0`      | Ein untätiger Arbeiter nimmt zuerst den offenen Auftrag mit dem höchsten Vorrang, dann den nächstgelegenen                                                                                                                                                                                                                                                                                            |
+| `takers`     | ja                   | Liste                                |          | Wer ihn bearbeiten darf: ein Variantenname, `team:<team>` für jedes Mitglied eines Scoreboard-Teams oder `tag:<tag>` für jede Entity mit diesem Tag                                                                                                                                                                                                                                                   |
+| `sign`       | nein                 | String                               | keiner   | Das Wort in der ersten Schildzeile, das den Auftrag eröffnet, ohne Rücksicht auf Groß- und Kleinschreibung                                                                                                                                                                                                                                                                                            |
+| `speed`      | nein                 | Zahl                                 | `1`      | Multipliziert die Abbaugeschwindigkeit des Arbeiters. `2` baut doppelt so schnell ab wie ein Spieler mit demselben Werkzeug                                                                                                                                                                                                                                                                           |
+| `tool`       | nein                 | Werkzeugart                          | keiner   | Die Werkzeugart, etwa `pickaxe`, `axe`, `shovel` oder `hoe`, die einem Arbeiter diesen Auftrag per Rechtsklick gibt. Ein Arbeiter, dessen Werkzeug einen Block nicht abbauen kann, holt sich eines dieser Art aus der Truhe                                                                                                                                                                           |
+
+**Wie ein Arbeiter arbeitet.** Eine Variante, die ein Abnehmer nennt, oder jede Variante, sobald ein Abnehmer ein Team oder ein Tag ist, sucht untätig einmal pro Sekunde nach Arbeit. Sie nimmt den besten offenen Auftrag, dessen Truhe innerhalb ihres Bereichs plus 32 Blöcke liegt, hält ihn über eine Pacht, die verfällt, wenn sie aufhört zu arbeiten, und behält die Pacht über Speichern und Laden hinweg. Abbauen dauert so lange wie bei einem Spieler mit dem Werkzeug des Arbeiters, Effizienz eingeschlossen, und Glück zählt für die Drops; Behutsamkeit nicht. Was er abbaut, landet in seinen `storage`-Items, wenn die Variante welche hat, sonst in seiner Nebenhand, nie auf dem Boden. Kann er nichts mehr tragen, geht er zur Truhe und legt alles hinein. Jeder Block nutzt das Werkzeug ab, und ein Arbeiter, dessen Werkzeug zerbricht, holt sich ein neues derselben Art aus der Truhe oder ruht eine Minute, wenn keines da ist. Stirbt ein Arbeiter, lässt er sein Werkzeug und was er in den Händen hält fallen, und sein Speicher leert sich einmal, wie Speicher es immer tut. `mobGriefing` hält ihn nicht auf, denn ein Spieler hat um die Arbeit gebeten.
+
+**Wer für wen arbeitet.** Ist der Spieler, der einen Auftrag eröffnet, in einem Scoreboard-Team, nehmen ihn nur Arbeiter dieses Teams. Sonst gehört der Auftrag diesem Spieler, und ein Arbeiter gehört dem ersten Spieler, der ihm Arbeit gibt, per Werkzeug, per `hire` oder indem er dessen Auftrag annimmt; danach arbeitet er nur noch Aufträge dieses Spielers ab. Ein freier Arbeiter, den ein Spieler in einem Team einstellt oder dem er ein Werkzeug gibt, tritt diesem Team bei.
+
+**Erscheinen an der Truhe.** Ein Auftrag, der zehn Sekunden lang keinen Arbeiter hatte, lässt einen seiner Varianten-Abnehmer neben seiner Truhe erscheinen, bis zu `spawnCap` für diesen Auftrag. Der erschienene Arbeiter gehört dem Team oder Spieler des Auftrags.
 
 ## Expositionen
 

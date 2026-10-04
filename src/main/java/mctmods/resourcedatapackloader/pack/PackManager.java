@@ -80,6 +80,7 @@ public final class PackManager {
     public static final String LOOT_INJECTIONS = "loot_injections";
     public static final String BLOCK_DROPS = "block_drops";
     public static final String ANVILS = "anvils";
+    public static final String ORDERS = "orders";
     public static final String PLAYER_LOOT = "player_loot";
     public static final String TABS = "tabs";
     public static final String FUNCTIONS = "functions";
