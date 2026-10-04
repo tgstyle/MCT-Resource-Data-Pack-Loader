@@ -165,6 +165,14 @@
   "rdpl.game.noteam": "Es gibt kein Team namens {team}",
   "rdpl.game.noobjective": "Es gibt kein Ziel namens {objective}",
   "rdpl.game.notie": "{objective} hat keinen Gleichstand an der Spitze",
+  "rdpl.game.turn": "{group} ist am Zug: {seconds} Sekunden",
+  "rdpl.game.turnclock": "{group} ist am Zug: {seconds}",
+  "rdpl.game.turnwarn": "{group}: noch {seconds} Sekunden",
+  "rdpl.game.turnout": "{group} hat die Zeit überschritten",
+  "rdpl.game.turnpass": "{group} passt",
+  "rdpl.game.turngap": "Nächster Zug in {seconds}",
+  "rdpl.game.notturn": "Du bist nicht am Zug",
+  "rdpl.game.noturns": "Gerade wird nicht reihum gespielt",
   "rdpl.game.notallowed": "Diesen Teil von /rdplserver game darfst du nicht ausführen",
-  "rdpl.game.usage": "/rdplserver game <coin|die <Seiten|Name>|dice <Wurf>|advantage [Wurf]|disadvantage [Wurf]|pick <player|team [Team]>|deck <draw|shuffle|left> <Name>|teamroll [Wurf]|tiebreak [Ziel]|last [Anzahl]> [store <Ziel>] [audience <self|team|all|radius <Blöcke>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <Seiten|Name>|dice <Wurf>|advantage [Wurf]|disadvantage [Wurf]|pick <player|team [Team]>|deck <draw|shuffle|left> <Name>|teamroll [Wurf]|tiebreak [Ziel]|last [Anzahl]|pass> [store <Ziel>] [audience <self|team|all|radius <Blöcke>|silent>]"
 }

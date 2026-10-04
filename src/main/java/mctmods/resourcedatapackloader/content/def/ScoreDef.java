@@ -11,13 +11,13 @@ public record ScoreDef(String name, String displayName, ObjectiveCriteria criter
                        String resultsTitle, String resultsIcon, String resultsImage, int resultsBackground, int resultsTicks, boolean carries, boolean endsResets,
                        int endsIntermission, String awardsTo, boolean endsLocksTeams, int ownKillPoints, String intermissionSays, String startsSays, String opensBy,
                        String opensSays, String opensLeaderSays, @Nullable Place opensLobby, boolean opensLobbyJoins, String opensJoinsSays, boolean endsLastStanding,
-                       String endsOutSays, RoundResetDef reset, boolean tiebreak) {
+                       String endsOutSays, RoundResetDef reset, boolean tiebreak, @Nullable TurnsDef turns) {
     public static final String AUTO = "auto";
     public static final String LEADER = "leader";
 
     public record Place(ResourceKey<Level> dimension, int x, int y, int z) {}
 
-    public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding; }
+    public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding || turns != null && turns.ends(); }
 
     public boolean fed() { return !killPoints.isEmpty() || deathPoints != 0; }
 

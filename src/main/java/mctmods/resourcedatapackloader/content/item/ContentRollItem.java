@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.item;
 
 import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -21,7 +22,10 @@ public class ContentRollItem extends Item {
     }
 
     @Override @Nonnull public InteractionResultHolder<ItemStack> use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
-        if (!level.isClientSide() && player instanceof ServerPlayer server) { ContentDice.byItem(server, def.rolls()); }
+        if (!level.isClientSide() && player instanceof ServerPlayer server) {
+            if (def.passesTurn()) { ContentTurns.byItem(server); }
+            else { ContentDice.byItem(server, def.rolls()); }
+        }
         if (def.cooldown() > 0) { player.getCooldowns().addCooldown(this, def.cooldown()); }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }

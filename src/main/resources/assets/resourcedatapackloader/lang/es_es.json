@@ -165,6 +165,14 @@
   "rdpl.game.noteam": "No hay ningún equipo llamado {team}",
   "rdpl.game.noobjective": "No hay ningún objetivo llamado {objective}",
   "rdpl.game.notie": "{objective} no tiene empate en cabeza",
+  "rdpl.game.turn": "Turno de {group}: {seconds} segundos",
+  "rdpl.game.turnclock": "Turno de {group}: {seconds}",
+  "rdpl.game.turnwarn": "{group}: quedan {seconds} segundos",
+  "rdpl.game.turnout": "{group} se quedó sin tiempo",
+  "rdpl.game.turnpass": "{group} pasa el turno",
+  "rdpl.game.turngap": "Siguiente turno en {seconds}",
+  "rdpl.game.notturn": "No es tu turno",
+  "rdpl.game.noturns": "No hay turnos en marcha",
   "rdpl.game.notallowed": "No tienes permiso para usar esa parte de /rdplserver game",
-  "rdpl.game.usage": "/rdplserver game <coin|die <caras|nombre>|dice <tirada>|advantage [tirada]|disadvantage [tirada]|pick <player|team [equipo]>|deck <draw|shuffle|left> <nombre>|teamroll [tirada]|tiebreak [objetivo]|last [cantidad]> [store <objetivo>] [audience <self|team|all|radius <bloques>|silent>]"
+  "rdpl.game.usage": "/rdplserver game <coin|die <caras|nombre>|dice <tirada>|advantage [tirada]|disadvantage [tirada]|pick <player|team [equipo]>|deck <draw|shuffle|left> <nombre>|teamroll [tirada]|tiebreak [objetivo]|last [cantidad]|pass> [store <objetivo>] [audience <self|team|all|radius <bloques>|silent>]"
 }

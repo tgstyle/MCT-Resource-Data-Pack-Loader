@@ -1315,6 +1315,7 @@ A `potion_bottle` lists what it can hold with `potionTypes`, an array of potion 
 | `crop`         | seed        | block name                          | none                   | The crop it plants                                                                                                                                                                                                                    |
 | `soil`         | seed        | block name                          | `minecraft:farmland`   | What it can be planted on                                                                                                                                                                                                             |
 | `rolls` | no | `coin`, `d6`, `2d6+1`, a die or deck | none | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks) |
+| `passesTurn` | no | boolean | `false` | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns) |
 | `requires`     | no          | list of mod ids or pack namespaces  | none                   | The file is skipped unless all are present                                                                                                                                                                                            |
 
 ### Item variant keys
@@ -4908,6 +4909,43 @@ Every online player on a side votes, whatever side they are on, with `/rdplserve
 | `results.background` | text    | a dark slate           | The card's background color                      |
 | `results.seconds`    | int     | `8`                    | How long the card stands, at least one second    |
 
+### Taking turns
+
+*scoring*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Setting | Type | Default | What it does |
+| --- | --- | --- | --- |
+| `turns.order` | text | `fixed` | Who goes when, settled as each cycle starts. `fixed` keeps the order the sides were first seen in, `random` shuffles every cycle, `lowestFirst` starts with the lowest score on this objective, and `lastWinner` starts with the side that won the last round, the rest in fixed order |
+| `turns.seconds` | int | `60` | How long a turn lasts, at least one second |
+| `turns.gapSeconds` | int | `3` | A pause between turns, while every side waits. 0 goes straight on |
+| `turns.held` | text | `frozen` | How a player waits for their turn: `frozen` stands them still and stops them hitting, digging, building, using or dropping, as the lobby does; `spectator` or `adventure` puts them in that game mode until their turn and gives their own back |
+| `turns.endsAtScore` | int | `0` | The turns end, and the round with them, once a side reaches this on the objective. 0 never ends on score |
+| `turns.cycles` | int | `0` | The turns end, and the round with them, after this many cycles, a cycle being one turn for every side in play. 0 runs until something else ends the round |
+| `turns.mobTags` | list | empty | Scoreboard tags that bring a mob on no team into the turns, one group per tag |
+| `turns.mobTypes` | list | empty | Entity ids that bring a mob on no team into the turns, one group per id |
+
+`turns` makes the sides take turns while a round runs. Each team is one side; with no teams each player is a side of their own, and a mob on a team goes with it. While one side has its turn, every other side waits: its players as `held` says, its mobs frozen in place the way the lobby holds them. A side with nobody in play, or with every player knocked out, is skipped.
+
+Each turn is announced in chat, and its clock counts down on the action bar. The side whose turn it is gets a warning in chat with a chime at 10 seconds left and again at 3. `/rdplserver game pass`, or a right-click with an item that has `passesTurn`, ends a turn early: a player passes only their own side's turn, and a command block or the console passes whoever is on.
+
+Ending on `endsAtScore` or `cycles` ends the round as any other ending does: the standings are shown, `awardsTo` and `tiebreak` apply, and `ends.resets` resets the map. Only the first score file with `turns` takes turns. The wording is the `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` and `noturns` keys, which a dice file's `says` can change.
+
 ## Raids
 
 *game modes*
@@ -5202,6 +5240,10 @@ Every roll uses the world's own random and is written to the log with who ran it
 | `teamrollwin` | `{result}`, `{score}` |
 | `tiebreak` | `{objective}`, `{sides}`, `{result}` |
 | `notie`, `noobjective` | `{objective}` |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | none |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` in turn |
 
 The mod's own wording is in its language files as `rdpl.game.<key>`, so a resource pack can also change it one language at a time.
@@ -6653,6 +6695,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver game teamroll [roll]` | 0 | Everyone on the sender's side rolls and the highest wins, a tie drawn. With no teams the sender rolls alone |
 | `/rdplserver game tiebreak [objective]` | 2 | Draw one of the sides level at the top of an objective: the one named, else the first scoring objective with `tiebreak`, else the first |
 | `/rdplserver game last [count]` | 0 | The latest rolls, newest first: 10, or the count given up to 50 |
+| `/rdplserver game pass` | 0 | End the sender's side's turn early where a score file takes turns. From a command block or the console it ends whoever's turn it is |
 
 Any roll can end with `store <objective>`, which writes its number to the sender's own score on that objective, and `audience <who>`, which overrides the pack's default: `self`, `team` (the sender's side, or the sender alone with no teams), `all`, `radius <blocks>` (players in the same world within that distance) or `silent`, which only stores. `/rdpl game` is passed through to it.
 
@@ -6708,7 +6751,7 @@ Each part of `game` carries a level of its own: 0 for every roll, and 2 for `dec
 
 | Setting | What it governs |
 | --- | --- |
-| `gameLevels` | One part of `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` or `last` |
+| `gameLevels` | One part of `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` or `pass` |
 
 The scale is the one `goto` uses, and `4` closes a part to everyone. Tab completion offers only the parts a sender may run. `gameLevels` sits in the `commands` group with the `goto` settings.
 
