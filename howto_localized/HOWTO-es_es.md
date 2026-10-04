@@ -142,6 +142,7 @@ Bajo `data/`:
 | `<namespace>/anvils/*.json` | Encantamientos que un yunque pone a un ítem con nombre, un logro que otorga y un bloqueo hasta entonces. [Trabajo en el yunque](#trabajo-en-el-yunque) |
 | `<namespace>/cards/*.json` | Tarjetas en pantalla mostradas por un disparador y los mensajes que dice el propio mod. [Tarjetas](#tarjetas) |
 | `<namespace>/dice/*.json` | Dados del pack con caras ponderadas, mazos de cartas, quién oye una tirada y la redacción de los resultados. [Dados y mazos](#dados-y-mazos) |
+| `<namespace>/games/*.json` | Juegos de tablero con criaturas como piezas: el tablero, las piezas y cómo se mueven, y lo que paga un resultado. [Juegos de tablero](#juegos-de-tablero) |
 | `<namespace>/exposures/*.json` | Peligros que exponen a los jugadores cerca de bloques con nombre, al llevar ítems con nombre o en dimensiones con nombre. [Exposiciones](#exposiciones) |
 | `<namespace>/overrides/<target>/<name>.json` | Propiedades de bloques, ítems y tipos de poción existentes, modificadas en el sitio. [Sobrescritura de propiedades](#sobrescritura-de-propiedades) |
 | `<namespace>/villages/*.json` | Parcelas que puede construir una ciudad o aldea. [Parcelas de aldea](#parcelas-de-aldea) |
@@ -5183,6 +5184,7 @@ Los títulos y líneas de las tarjetas, los mensajes Says y las notas de bienven
 | `rdpl:threat`           | Cambia la franja de amenaza de un jugador                                  | `threatSays` |
 | `rdpl:prospect`         | Cada línea que informa un hallazgo de prospección                            | el hallazgo |
 | `rdpl:prospect_none`    | La prospección no encontró nada                                       | el archivo de idioma |
+| `rdpl:board_result` | Una partida de tablero termina | el archivo de idioma |
 | `rdpl:pregen_ended`     | La pregeneración termina o se detiene                                 | `pregenFinishedSays`, `pregenStoppedSays` en [Pregeneración](#pregeneración) |
 | `rdpl:pregen_running`   | La línea de progreso que ve un jugador al entrar durante la pregeneración | `pregenRunningSays` |
 
@@ -5247,6 +5249,98 @@ Cada tirada usa el azar propio del mundo y se escribe en el registro con quién 
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` por orden |
 
 La redacción propia del mod está en sus archivos de idioma como `rdpl.game.<key>`, así que un paquete de recursos también puede cambiarla idioma por idioma.
+
+## Juegos de tablero
+
+*modos de juego*
+
+`<namespace>/games/*.json`
+
+Un archivo es un juego de tablero, con el nombre de su archivo. Fija el tablero, los dos bandos, las piezas y cómo se mueven, la posición inicial y lo que paga un resultado. `game board start <game> <board>` monta un tablero donde está quien lo envía, o en la posición indicada: las casillas se colocan un bloque más abajo, las columnas van hacia el este y las filas hacia el sur, y cada pieza es una criatura que elige el pack, quieta, muda e invulnerable, con el nombre de su bando. Una pieza capturada queda al lado del tablero.
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snow_golem", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:iron_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evoker", "minecraft:vindicator"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| Clave | Tipo | Por defecto | Qué hace |
+| --- | --- | --- | --- |
+| `name` | texto | el nombre del archivo | El nombre que se ve en el chat y en el resultado |
+| `board` | objeto | 8 por 8 | `files` y `ranks`, de 2 a 16 cada uno, y los estados de bloque `light` y `dark` que se ponen bajo las casillas. Si faltan, el suelo queda como está |
+| `sides` | lista | `White`, `Black` | Dos objetos de `name` y `color`, un color de chat. El primer bando mueve primero y se coloca con las letras mayúsculas |
+| `pieces` | objeto | ninguno | Nombre de pieza a un objeto con las claves de pieza de abajo |
+| `setup` | lista | ninguno | Un texto por fila, la fila 1 primero. La letra de una pieza la coloca, en mayúscula para el primer bando y en minúscula para el segundo, y `.` deja la casilla vacía |
+| `rules` | objeto | ninguno | `mustCapture`, `chainCaptures`, `quietDraw` y `repeatDraw`, abajo |
+| `clock` | objeto | ninguno | `minutes` para cada bando y `addSeconds` que se suman tras cada jugada. Pierde el bando al que se le acaba el tiempo |
+| `ai` | número | `2` | El nivel del ordenador, de 1 a 4, para un bando que nadie tiene |
+| `result` | objeto | ninguno | El `objective` que se paga al acabar la partida, con los puntos `win`, `draw` y `loss`, 1, 0 y 0 si faltan |
+
+| Clave de pieza | Tipo | Qué hace |
+| --- | --- | --- |
+| `letter` | texto | La letra que se usa en `setup` y en `game board show` |
+| `value` | número | Lo que vale para el ordenador |
+| `mobs` | lista | La criatura de cada bando, el primer bando primero. `mob` da una para ambos |
+| `moves` | lista | Pasos como objetos: `steps`, una lista de desplazamientos `[file, rank]` vistos desde el lado propio del bando; `slides`, para seguir hasta que algo lo impida; `captures`, `both` (por defecto), `never`, `only` o `hop`, que salta una pieza del otro bando a la casilla vacía de detrás y la captura; y `firstRange`, cuántos pasos puede dar en su primera jugada |
+| `royal` | verdadero o falso | El bando pierde cuando esta pieza recibe jaque mate, y ninguna jugada puede dejarla atacada. Sin pieza real, pierde el bando que se queda sin jugadas |
+| `enPassant` | verdadero o falso | Puede capturar una pieza que acaba de pasar dos casillas a su lado |
+| `castles` | texto | Una pieza compañera: esta pieza se mueve dos casillas hacia una compañera sin mover, que salta por encima de ella |
+| `promotes` | lista | En qué puede convertirse en la última fila. Se usa la primera salvo que la jugada nombre otra |
+
+| Regla | Qué hace |
+| --- | --- |
+| `mustCapture` | Un bando que puede capturar debe capturar |
+| `chainCaptures` | Tras un salto que captura, la misma pieza sigue capturando mientras pueda |
+| `quietDraw` | Cuántas jugadas seguidas, contando ambos bandos, pueden pasar sin una captura ni una jugada de una pieza que puede promocionar antes de que la partida quede en tablas. 0 nunca da tablas |
+| `repeatDraw` | La partida queda en tablas cuando la misma posición, con el mismo bando por mover, aparece este número de veces; 3 es la triple repetición del ajedrez. Solo cuentan las posiciones desde la última captura o jugada de una pieza que puede promocionar. 0 nunca da tablas |
+
+Un bando pertenece al primer jugador que hace clic derecho en una de sus piezas, o a su equipo del marcador si está en uno, de modo que cualquier miembro puede jugarlo después. Un bando que nadie tiene lo juega el ordenador en cuanto se toma el otro bando, o enseguida cuando `game board ai` le fija un nivel; el ordenador piensa fuera del hilo del servidor, y su jugada se hace en él. Haz clic derecho en una pieza para ver adónde puede ir, y luego clic derecho en una casilla o en una pieza del otro bando para moverla allí. `game board move` hace lo mismo con nombres de casilla, como `e2 e4`, con un nombre de pieza al final para una promoción. Cuando una jugada promociona y `promotes` nombra más de una pieza, el jugador elige entre opciones del chat en las que se puede hacer clic; si no elige en 10 segundos o hace clic en el tablero, se juega la primera. El ordenador elige la que considera mejor.
+
+`game board resign` abandona la partida. `game board draw` ofrece tablas, que el otro bando acepta con el mismo comando; el ordenador las rechaza cuando va mejor. `game board takeback` pide deshacer la última jugada de quien lo pide, y el otro bando acepta con el mismo comando; contra el ordenador se deshace al momento.
+
+Un tablero se guarda en los datos guardados del mundo como su lista de jugadas. Cuando el mundo carga o el pack se recarga, la posición se reproduce desde esa lista, las piezas se vuelven a colocar según ella y se quita cualquier pieza anterior del tablero.
+
+Al final, `result` paga al titular de cada bando en su objetivo, como fila de jugador o de equipo. El resultado llega a los jugadores cerca del tablero y a quienes tienen un bando, como la tarjeta `rdpl:board_result` cuando un archivo de tarjetas fija ese id y como una línea de chat si no. La redacción está en los archivos de idioma del mod como `rdpl.game.board.<key>`.
 
 ---
 
@@ -6694,8 +6788,17 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia propia del ser
 | `/rdplserver game deck shuffle <name>` | 2 | Devolver todas las cartas |
 | `/rdplserver game teamroll [roll]` | 0 | Todos en el bando del remitente tiran y gana el mayor, con el empate sorteado. Sin equipos, el remitente tira solo |
 | `/rdplserver game tiebreak [objective]` | 2 | Sortear uno de los bandos empatados en cabeza de un objetivo: el nombrado, si no el primer objetivo de puntuación con `tiebreak`, si no el primero |
-| `/rdplserver game pass` | 0 | Termina antes de tiempo el turno del bando de quien lo envía cuando un archivo de puntuación juega por turnos. Desde un bloque de comandos o la consola termina el turno de quien esté jugando |
+| `/rdplserver game board list` | 0 | Cada tablero del mundo, con su juego, su posición y su estado |
+| `/rdplserver game board start <game> <board> [x y z]` | 2 | Montar un tablero donde está quien lo envía, o en la posición indicada, y colocar sus piezas |
+| `/rdplserver game board end <board>` | 2 | Quitar un tablero y sus piezas |
+| `/rdplserver game board show <board>` | 0 | La posición en letras, fila por fila, con quién tiene cada bando, su tiempo y a quién le toca |
+| `/rdplserver game board move <board> <from> <to> [piece]` | 0 | Mover una pieza por nombres de casilla, como `e2 e4`, con la pieza en que se convierte una promoción |
+| `/rdplserver game board resign <board>` | 0 | Abandonar la partida |
+| `/rdplserver game board draw <board>` | 0 | Ofrecer tablas, o aceptar la oferta del otro bando |
+| `/rdplserver game board takeback <board>` | 0 | Pedir deshacer la última jugada, o aceptar la petición del otro bando |
+| `/rdplserver game board ai <board> <side> <level>` | 2 | Hacer que el ordenador juegue un bando a un nivel de 1 a 4, o devolverlo con 0 |
 | `/rdplserver game last [count]` | 0 | Las últimas tiradas, la más reciente primero: 10, o la cantidad indicada hasta 50 |
+| `/rdplserver game pass` | 0 | Termina antes de tiempo el turno del bando de quien lo envía cuando un archivo de puntuación juega por turnos. Desde un bloque de comandos o la consola termina el turno de quien esté jugando |
 
 Cualquier tirada puede terminar con `store <objective>`, que escribe su número en la puntuación propia del remitente en ese objetivo, y con `audience <quién>`, que sustituye el valor por defecto del pack: `self`, `team` (el bando del remitente, o solo el remitente sin equipos), `all`, `radius <bloques>` (jugadores del mismo mundo a esa distancia) o `silent`, que solo guarda. `/rdpl game` se pasa a este comando.
 
@@ -6737,7 +6840,7 @@ Estos están en el grupo `commands`, así que `control.commands` en la configura
 
 *comandos*
 
-Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck shuffle` y `tiebreak`. `gameLevels` cambia cualquiera de ellos, como entradas `parte=nivel`, donde la parte es lo que sigue a `game`.
+Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck shuffle`, `tiebreak`, `board start`, `board end` y `board ai`. `gameLevels` cambia cualquiera de ellos, como entradas `parte=nivel`, donde la parte es lo que sigue a `game`.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -6751,7 +6854,7 @@ Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck s
 
 | Ajuste | Qué rige |
 | --- | --- |
-| `gameLevels` | Una parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last` o `pass` |
+| `gameLevels` | Una parte de `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` o `board` con su acción, como `board move` |
 
 La escala es la de `goto`, y `4` cierra una parte a todos. El autocompletado con tabulador ofrece solo las partes que un remitente puede usar. `gameLevels` está en el grupo `commands` junto a los ajustes de `goto`.
 
