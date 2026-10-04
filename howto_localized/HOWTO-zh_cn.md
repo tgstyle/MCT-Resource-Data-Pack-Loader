@@ -3014,8 +3014,10 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3207,10 +3209,32 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `rain.snowColor` | 否 | 十六进制颜色 | `#FFFFFF` | 落下的雪的色调 |
 | `rain.angle` | 否 | float，0 到 180 | `0` | 偏离正下方的角度：`90` 为横向吹，`180` 为笔直向上飘。绘制时最多倾斜 75 度 |
 | `rain.heading` | 否 | float，单位度 | `0` | 吹向哪个方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东 |
+| `wind.gust` | 否 | float，0 到 90 | `15` | 阵风在最强时给 `angle` 增加的度数，最多到水平 |
+| `wind.every` | 否 | int 或 `[min, max]` | `[200, 600]` | 两阵风之间相隔的刻数 |
+| `wind.swing` | 否 | float，0 到 180 | `30` | 阵风让 `heading` 偏向一侧的度数 |
+
+`wind` 块让雨一阵一阵地刮。每隔一段时间，一阵风会让雨再多倾斜最多 `gust` 度，并把方向向一侧偏转最多 `swing` 度；风势在四秒内起落，阵风每隔 `every` 刻到来。雨和雪随风倾斜，维度的环境粒子也朝雨倾斜的方向飘，无论有没有阵风。只有 `wind` 块而没有 `rain` 块时，雨使用默认值。
 
 其他维度共用主世界的降雨。`cycle` 会让此维度拥有自己的天气：阵雨按上述时间来去，无论主世界是什么天气。写了 `thunderTicks` 后，此处也会有雷暴，按它自己的时间出现；雷暴遇上阵雨时，会让阵雨达到最大强度、使天空变暗，并且在 `lightning` 开启时带来闪电。[世界模板](#世界模板)中的 `weatherCeiling` 仍然限制雨能到达的最大高度。
 
 `rain` 块会改变此处雨雪的外观和声音，无论有没有 `cycle`；没有 `cycle` 时，雨雪的外观和声音与原版一致。
+
+### `ambience` 块
+
+*维度*
+
+| 键                | 必填  | 值                | 默认值              | 作用                                                                                                 |
+| ---------------- | --- | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
+| `music`          | 否   | 音效名称             | 无                | 在这里代替平常曲目播放的音乐，创造模式下也一样。进入时会切断正在播放的曲目                                                              |
+| `musicDelay`     | 否   | 整数或 `[min, max]` | `[12000, 24000]` | 两首曲目之间安静的刻数                                                                                        |
+| `loopSound`      | 否   | 音效名称             | 无                | 只要你在这里就循环播放的音效，进入时淡入，离开时淡出                                                                         |
+| `ambientSound`   | 否   | 音效名称             | 无                | 不时播放的音效，即生物群系的附加音效（additions）                                                                      |
+| `soundChance`    | 否   | 0.0 到 1.0        | `0.0111`         | 每刻播放 `ambientSound` 的几率                                                                            |
+| `particle`       | 否   | 粒子 id            | 无                | 在你周围空气中飘浮的粒子，例如 `minecraft:ash`、`minecraft:white_ash`、`minecraft:crimson_spore` 或 `minecraft:dust` |
+| `particleChance` | 否   | 0.0 到 1.0        | `0.00625`        | 它的密度，按现代生物群系的算法：每刻在 16 格范围内尝试约 667 个位置，在 32 格范围内再尝试 667 个，每个不是完整方块的位置以此几率显示粒子                      |
+| `particleColor`  | 否   | 十六进制颜色           | 无                | 可着色粒子的颜色：`minecraft:dust` 和 `minecraft:entity_effect`                                              |
+
+`ambience` 块为维度提供自己的音乐、音效和飘浮粒子。这些键成为维度的环境属性 `minecraft:audio/background_music`、`minecraft:audio/ambient_sounds` 和 `minecraft:visual/ambient_particles`，叠加在其生物群系之上，所以听起来、看起来都和原版一样，“粒子”设置也会同样减少它们。省略的键保留各生物群系自己的，因此带有自身属性的原版生物群系 JSON 同样有效。
 
 ## 传送门与门
 

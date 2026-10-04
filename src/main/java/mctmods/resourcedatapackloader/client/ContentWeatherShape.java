@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.util.WindGust;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.util.ARGB;
@@ -12,13 +14,11 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public final class ContentWeatherShape {
-    private static final float MAX_LEAN = 75.0F;
     private final float[] sizeX = new float[1024];
     private final float[] sizeZ = new float[1024];
+    private final RainDef rain;
     private final int color;
     private final int snowColor;
-    private final float slantX;
-    private final float slantZ;
     private final boolean upward;
 
     public ContentWeatherShape(RainDef rain) {
@@ -33,15 +33,16 @@ public final class ContentWeatherShape {
         }
         color = rain.color();
         snowColor = rain.snowColor();
+        this.rain = rain;
         upward = rain.angle() > 90.0F;
-        float lean = Math.min(Math.min(rain.angle(), 180.0F - rain.angle()), MAX_LEAN);
-        double slope = Math.tan(Math.toRadians(lean)) * (upward ? 1.0D : -1.0D);
-        double heading = Math.toRadians(rain.heading());
-        slantX = (float) (-Math.sin(heading) * slope);
-        slantZ = (float) (Math.cos(heading) * slope);
     }
 
     public void build(VertexConsumer builder, ClientLevel level, List<WeatherEffectRenderer.ColumnInstance> columns, Vec3 camera, boolean snow, int radius, float intensity) {
+        double time = level.getGameTime() + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false);
+        double slope = WindGust.slope(WindGust.angle(rain, time)) * (upward ? 1.0D : -1.0D);
+        double heading = Math.toRadians(WindGust.heading(rain, time));
+        float slantX = (float) (-Math.sin(heading) * slope);
+        float slantZ = (float) (Math.cos(heading) * slope);
         float radiusSq = radius * radius;
         float maxAlpha = snow ? 0.8F : 1.0F;
         int rgb = snow ? snowColor : color;
