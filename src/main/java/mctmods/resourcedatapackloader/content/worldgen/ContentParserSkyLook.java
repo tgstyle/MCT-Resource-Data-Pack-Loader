@@ -15,7 +15,7 @@ import javax.annotation.Nullable;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
-    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat");
+    private static final List<String> KEYS = List.of("fogDensity", "fogGroundWeight", "lightSkyColor", "lightBlockColor", "skyFactor", "cloudSpeed", "cloudLayers", "sunBrightness", "moonBrightness", "heat", "snowColor", "waterFogColor", "lavaFogColor", "starColor", "starTwinkle", "lightningColor");
     private static final float GROUND_WEIGHT = 0.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
@@ -33,7 +33,8 @@ public final class ContentParserSkyLook {
         float cloudSpeed = GsonHelper.getAsFloat(sky, "cloudSpeed", 1.0F);
         return new SkyLookDef(sample, unit(key, sky, "fogDensity", 0.0F), unit(key, sky, "fogGroundWeight", GROUND_WEIGHT), color(key, sky, "lightSkyColor"), color(key, sky, "lightBlockColor"),
                 unit(key, sky, "skyFactor", 1.0F), cloudSpeed, layers(key, sky, cloudHeight, cloudSpeed, cloudColor), unit(key, sky, "sunBrightness", 1.0F), unit(key, sky, "moonBrightness", 1.0F),
-                sky.has("heat") ? heat(key, GsonHelper.getAsJsonObject(sky, "heat")) : null);
+                sky.has("heat") ? heat(key, GsonHelper.getAsJsonObject(sky, "heat")) : null, color(key, sky, "snowColor"), color(key, sky, "waterFogColor"), color(key, sky, "lavaFogColor"),
+                color(key, sky, "starColor"), unit(key, sky, "starTwinkle", 0.0F), color(key, sky, "lightningColor"));
     }
 
     private static float unit(Identifier key, JsonObject json, String member, float fallback) {

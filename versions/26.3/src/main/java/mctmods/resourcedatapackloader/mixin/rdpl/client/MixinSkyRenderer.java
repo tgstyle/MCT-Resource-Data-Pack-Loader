@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
 import mctmods.resourcedatapackloader.client.ContentSkyRenderer;
+import mctmods.resourcedatapackloader.client.ContentStarField;
+import mctmods.resourcedatapackloader.client.ContentStars;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
@@ -22,6 +24,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     private void rdpl$preparePackSky(GpuBufferSlice skyFog, SkyRenderState state, CallbackInfo ci) {
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
         if (sky != null) { sky.prepare(); }
+        if (ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { ContentStars.VANILLA.prepare(); }
+    }
+
+    @Inject(method = "renderStars(Lcom/mojang/renderpearl/api/commands/RenderPass;FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"), cancellable = true)
+    private void rdpl$tintStars(RenderPass renderPass, float starBrightness, PoseStack poseStack, CallbackInfo ci) {
+        if (!ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { return; }
+        ContentStars.VANILLA.draw(renderPass, poseStack, starBrightness);
+        ci.cancel();
     }
 
     @Inject(method = "renderSunMoonAndStars(Lcom/mojang/renderpearl/api/commands/RenderPass;Lcom/mojang/blaze3d/vertex/PoseStack;FFFLnet/minecraft/world/level/MoonPhase;FF)V", at = @At("HEAD"), cancellable = true)

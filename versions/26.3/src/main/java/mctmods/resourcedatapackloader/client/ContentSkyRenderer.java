@@ -21,12 +21,8 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.Mth;
-import net.minecraft.util.RandomSource;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
-import org.joml.Vector3f;
 import org.joml.Vector4f;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -38,10 +34,12 @@ public final class ContentSkyRenderer {
     @Nullable private static GpuBuffer quadBuffer;
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
     private final DimensionTraitsDef.Sky sky;
-    @Nullable private GpuBuffer starBuffer;
-    private int starIndexCount = -1;
+    private final ContentStars stars;
 
-    private ContentSkyRenderer(DimensionTraitsDef.Sky sky) { this.sky = sky; }
+    private ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+        this.sky = sky;
+        this.stars = new ContentStars(sky.starCount(), sky.starSize());
+    }
 
     @Nullable public static ContentSkyRenderer of(@Nullable ClientLevel level) {
         DimensionDef def = level == null ? null : ContentDimensions.def(level);
@@ -51,7 +49,7 @@ public final class ContentSkyRenderer {
 
     public void prepare() {
         if (quadBuffer == null) { quadBuffer = corners(); }
-        if (starIndexCount < 0) { starBuffer = stars(sky.starCount(), sky.starSize()); }
+        stars.prepare();
         TextureManager textures = Minecraft.getInstance().getTextureManager();
         if (sky.sunSize() > 0.0F) { textures.getTexture(sky.sunTexture()); }
         if (sky.bodies() == null) { return; }
@@ -84,7 +82,7 @@ public final class ContentSkyRenderer {
         if (starBrightness > 0.0F) {
             poseStack.pushPose();
             poseStack.rotate(Axis.XP, starAngle);
-            draw(renderPass, poseStack, starBrightness);
+            stars.draw(renderPass, poseStack, starBrightness);
             poseStack.popPose();
         }
         poseStack.popPose();
@@ -111,23 +109,6 @@ public final class ContentSkyRenderer {
         renderPass.popDebugGroup();
     }
 
-    private void draw(RenderPass renderPass, PoseStack poseStack, float starBrightness) {
-        if (starBuffer == null) { return; }
-        Matrix4fStack modelView = RenderSystem.getModelViewStack();
-        modelView.pushMatrix();
-        modelView.mul(poseStack.last().pose());
-        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(modelView), new Vector4f(starBrightness, starBrightness, starBrightness, starBrightness));
-        modelView.popMatrix();
-        renderPass.pushDebugGroup(() -> "RDPL stars");
-        renderPass.setPipeline(RenderSystem.getCompiledPipeline(RenderPipelines.STARS));
-        RenderSystem.bindDefaultUniforms(renderPass);
-        renderPass.setUniform("DynamicTransforms", transforms);
-        renderPass.setVertexBuffer(0, starBuffer.slice());
-        renderPass.setIndexBuffer(quadIndices.getBuffer(starIndexCount), quadIndices.type());
-        renderPass.drawIndexed(starIndexCount, 1, 0, 0, 0);
-        renderPass.popDebugGroup();
-    }
-
     private static GpuBuffer corners() {
         try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(4 * DefaultVertexFormat.POSITION_TEX.getVertexSize())) {
             BufferBuilder buffer = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -136,36 +117,6 @@ public final class ContentSkyRenderer {
             buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(1.0F, 1.0F);
             buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(0.0F, 1.0F);
             try (MeshData mesh = buffer.buildOrThrow()) { return RenderSystem.getDevice().createBuffer(() -> "RDPL sky body", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer()); }
-        }
-    }
-
-    @Nullable private GpuBuffer stars(int count, float smallest) {
-        starIndexCount = 0;
-        if (count <= 0) { return null; }
-        RandomSource random = RandomSource.createThreadLocalInstance(10842L);
-        float spread = smallest * 2.0F / 3.0F;
-        try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(DefaultVertexFormat.POSITION.getVertexSize() * count * 4)) {
-            BufferBuilder buffer = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION);
-            for (int star = 0; star < count; ++star) {
-                float x = random.nextFloat() * 2.0F - 1.0F;
-                float y = random.nextFloat() * 2.0F - 1.0F;
-                float z = random.nextFloat() * 2.0F - 1.0F;
-                float size = smallest + random.nextFloat() * spread;
-                float length = Mth.lengthSquared(x, y, z);
-                if (length >= 1.0F || length <= 0.010000001F) { continue; }
-                Vector3f center = new Vector3f(x, y, z).normalize(100.0F);
-                float spin = (float) (random.nextDouble() * (float) Math.PI * 2.0D);
-                Matrix3f turn = new Matrix3f().rotateTowards(new Vector3f(center).negate(), new Vector3f(0.0F, 1.0F, 0.0F)).rotateZ(-spin);
-                buffer.addVertex(new Vector3f(size, -size, 0.0F).mul(turn).add(center));
-                buffer.addVertex(new Vector3f(size, size, 0.0F).mul(turn).add(center));
-                buffer.addVertex(new Vector3f(-size, size, 0.0F).mul(turn).add(center));
-                buffer.addVertex(new Vector3f(-size, -size, 0.0F).mul(turn).add(center));
-            }
-            try (MeshData mesh = buffer.build()) {
-                if (mesh == null) { return null; }
-                starIndexCount = mesh.drawState().indexCount();
-                return RenderSystem.getDevice().createBuffer(() -> "RDPL stars", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer());
-            }
         }
     }
 }

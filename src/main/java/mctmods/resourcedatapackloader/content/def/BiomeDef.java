@@ -4,7 +4,7 @@ import net.minecraft.resources.Identifier;
 import java.util.List;
 import java.util.Map;
 
-public record BiomeDef(Identifier key, String name, float temperature, float rainfall, boolean rain, boolean snow, int waterColor, int grassColor, int foliageColor,
+public record BiomeDef(Identifier key, String name, float temperature, float rainfall, boolean rain, boolean snow, int waterColor, int grassColor, int foliageColor, int snowColor,
         Identifier baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean playerSpawn,
         boolean villages, String villageType, boolean strongholds, Map<String, Integer> decoration, float spawnChance, float surfaceDayRate, float surfaceNightRate,
         float undergroundDayRate, float undergroundNightRate, boolean keepDefaultSpawns, List<BiomeSpawnDef> spawns, boolean banded, int minHeight, int maxHeight,

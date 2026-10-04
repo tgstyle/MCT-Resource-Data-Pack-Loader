@@ -2811,6 +2811,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2884,6 +2885,7 @@ Sur cette version, un biome est une entrée de data pack, écrite pour vous sous
 | `waterColor` | non | couleur hexadécimale | `FFFFFF` | Teinte de l'eau |
 | `grassColor` | non | couleur hexadécimale | selon le climat | Teinte de l'herbe, à la place de la couleur que donneraient la température et les précipitations |
 | `foliageColor` | non | couleur hexadécimale | selon le climat | Teinte des feuilles, de la même manière |
+| `snowColor` | non | couleur hexadécimale | celle de la dimension | Teinte de la neige au sol, prioritaire sur le `snowColor` de la dimension |
 
 ### Décoration et apparitions
 
@@ -3164,6 +3166,44 @@ Sans `cloudLayers`, `cloudSpeed` change la vitesse de l'unique couche vanilla à
 | `heat.dayOnly` | non | booléen | `true` | Activé, la brume s'estompe avec la lumière du jour et disparaît la nuit |
 | `heat.mode` | non | chaîne | `screen` | Où la brume se pose, `screen` ou `world` |
 | `heat.startDistance` | non | flottant | `32` | En mode `world`, à combien de blocs de distance la brume commence |
+
+### Neige, fluides, étoiles et éclairs
+
+*dimensions*
+
+Ces clés se placent elles aussi dans le bloc `sky` et ne sont, elles aussi, dessinées que côté client.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` teinte les couches de neige et les blocs de neige au sol. Le `snowColor` propre à un biome l'emporte sur celui de la dimension, et les couleurs se fondent aux frontières entre biomes, comme pour l'herbe.
+
+`waterFogColor` et `lavaFogColor` remplacent la couleur du brouillard que voit la caméra sous l'eau ou dans la lave. La nuit, la profondeur et la vision nocturne continuent de l'assombrir ou de l'éclaircir, comme pour la couleur vanilla.
+
+En 26.x, `waterFogColor` devient l'attribut d'environnement `visual/water_fog_color` de la dimension : un biome qui définit le sien, comme le marais, le garde donc. Un JSON de biome vanilla avec `visual/water_fog_color` dans ses `attributes` fonctionne aussi.
+
+`starColor` teinte les étoiles, dans le ciel vanilla comme dans le vôtre issu du [moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel). `starTwinkle` les fait scintiller : les étoiles se répartissent en huit groupes qui faiblissent et se ravivent chacun à son rythme, et la valeur indique jusqu'où elles faiblissent ; à `1`, un groupe s'éteint complètement au plus bas.
+
+`lightningColor` teinte les éclairs.
+
+| Clé | Requis | Valeur | Défaut | Rôle |
+| --- | --- | --- | --- | --- |
+| `snowColor` | non | couleur hexadécimale | blanc | Teinte des couches et des blocs de neige |
+| `waterFogColor` | non | couleur hexadécimale | celle du biome | Couleur du brouillard sous l'eau |
+| `lavaFogColor` | non | couleur hexadécimale | `991A00` | Couleur du brouillard dans la lave |
+| `starColor` | non | couleur hexadécimale | blanc | Teinte des étoiles |
+| `starTwinkle` | non | flottant, 0 à 1 | `0.0` | Jusqu'où les étoiles faiblissent en scintillant. `0` les garde fixes |
+| `lightningColor` | non | couleur hexadécimale | `737380` | Teinte des éclairs |
 
 ### Le bloc `physics`
 

@@ -2811,6 +2811,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
   "waterColor": "8040A0",
   "grassColor": "6BA33C",
   "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
   "decoration": {
     "trees": 10,
     "extratreechance": 10,
@@ -2884,6 +2885,7 @@ Um bioma é uma entrada de data pack nesta versão, escrita para você em `world
 | `waterColor` | não | cor hex | `FFFFFF` | Tonalidade da água |
 | `grassColor` | não | cor hex | do clima | Tonalidade da grama, no lugar da cor que a temperatura e a umidade dariam |
 | `foliageColor` | não | cor hex | do clima | Tonalidade das folhas, do mesmo modo |
+| `snowColor` | não | cor hex | a da dimensão | Tonalidade da neve no chão, acima do `snowColor` da dimensão |
 
 ### Decoração e spawns
 
@@ -3164,6 +3166,44 @@ Sem `cloudLayers`, `cloudSpeed` muda a velocidade da única camada vanilla em `c
 | `heat.dayOnly` | não | booleano | `true` | Ligado, a ondulação esmaece com a luz do dia e some à noite |
 | `heat.mode` | não | string | `screen` | Onde a ondulação aparece, `screen` ou `world` |
 | `heat.startDistance` | não | float | `32` | No modo `world`, a quantos blocos de distância a ondulação começa |
+
+### Neve, fluidos, estrelas e raios
+
+*dimensões*
+
+Estas chaves também ficam no bloco `sky` e também são desenhadas apenas no cliente.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` tinge as camadas de neve e os blocos de neve no chão. O `snowColor` próprio de um bioma tem prioridade sobre o da dimensão, e as cores se misturam nas bordas entre biomas, como acontece com a grama.
+
+`waterFogColor` e `lavaFogColor` substituem a cor da neblina que a câmera vê debaixo d'água ou dentro da lava. A noite, a profundidade e a visão noturna continuam escurecendo ou clareando essa cor, como fazem com a cor vanilla.
+
+No 26.x, `waterFogColor` vira o atributo de ambiente `visual/water_fog_color` da dimensão, então um bioma que define o seu próprio, como o pântano, o mantém. Um JSON de bioma vanilla com `visual/water_fog_color` nos seus `attributes` também funciona.
+
+`starColor` tinge as estrelas, no céu vanilla e no seu próprio, do [renderizador do céu](#o-renderizador-do-céu). `starTwinkle` faz as estrelas cintilarem: elas se dividem em oito grupos que escurecem e clareiam cada um no seu ritmo, e o valor diz o quanto escurecem; com `1`, um grupo some por completo no ponto mais baixo.
+
+`lightningColor` tinge os raios.
+
+| Chave | Obrigatória | Valor | Padrão | O que faz |
+| --- | --- | --- | --- | --- |
+| `snowColor` | não | cor hex | branco | Tonalidade das camadas e dos blocos de neve |
+| `waterFogColor` | não | cor hex | a do bioma | Cor da neblina debaixo d'água |
+| `lavaFogColor` | não | cor hex | `991A00` | Cor da neblina na lava |
+| `starColor` | não | cor hex | branco | Tonalidade das estrelas |
+| `starTwinkle` | não | float, 0 a 1 | `0.0` | O quanto as estrelas escurecem ao cintilar. `0` as mantém firmes |
+| `lightningColor` | não | cor hex | `737380` | Tonalidade dos raios |
 
 ### O bloco `physics`
 

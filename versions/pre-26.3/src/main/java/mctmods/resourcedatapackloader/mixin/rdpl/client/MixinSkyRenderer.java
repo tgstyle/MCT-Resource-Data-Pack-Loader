@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
 import mctmods.resourcedatapackloader.client.ContentSkyRenderer;
+import mctmods.resourcedatapackloader.client.ContentStarField;
+import mctmods.resourcedatapackloader.client.ContentStars;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -20,6 +22,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
         if (sky == null) { return; }
         sky.render(poseStack, sunAngle, moonAngle, starAngle, rainBrightness, starBrightness, turned -> renderMoon(moonPhase, rainBrightness, turned));
+        ci.cancel();
+    }
+
+    @Inject(method = "renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"), cancellable = true)
+    private void rdpl$tintStars(float starBrightness, PoseStack poseStack, CallbackInfo ci) {
+        if (!ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { return; }
+        ContentStars.VANILLA.draw(poseStack, starBrightness);
         ci.cancel();
     }
 }

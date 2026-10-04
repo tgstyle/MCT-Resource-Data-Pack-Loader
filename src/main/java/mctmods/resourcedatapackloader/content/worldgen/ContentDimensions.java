@@ -177,6 +177,7 @@ public final class ContentDimensions {
         if (look.lightSkyColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "sky_light_color", String.format("#%06x", look.lightSkyColor())); }
         if (look.lightBlockColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "block_light_tint", String.format("#%06x", ARGB.multiply(DimensionDefaults.BLOCK_LIGHT_TINT, ARGB.opaque(look.lightBlockColor())) & 0xFFFFFF)); }
         if (look.skyFactor() < 1.0F) { attributes.addProperty(VISUAL + "sky_light_factor", look.skyFactor()); }
+        if (look.waterFogColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "water_fog_color", String.format("#%06x", look.waterFogColor())); }
     }
 
     private static void effects(DimensionDef def, JsonObject type) {

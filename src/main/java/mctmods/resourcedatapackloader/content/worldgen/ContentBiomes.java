@@ -200,6 +200,8 @@ public final class ContentBiomes {
         return ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(scope);
     }
 
+    public static boolean tintsSnow() { return MADE.values().stream().anyMatch(made -> made.def().snowColor() != BiomeDef.NO_COLOR); }
+
     @Nullable public static BiomeDef def(Identifier key) {
         Made made = MADE.get(key);
         return made == null ? null : made.def();

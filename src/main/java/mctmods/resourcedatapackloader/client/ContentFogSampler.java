@@ -51,6 +51,16 @@ public final class ContentFogSampler {
         return look == null ? 1.0F : look.moonBrightness();
     }
 
+    public static int lavaFog() {
+        SkyLookDef look = look(Minecraft.getInstance().level);
+        return look == null ? SkyLookDef.UNSET : look.lavaFogColor();
+    }
+
+    public static int lightning() {
+        SkyLookDef look = look(Minecraft.getInstance().level);
+        return look == null ? SkyLookDef.UNSET : look.lightningColor();
+    }
+
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
