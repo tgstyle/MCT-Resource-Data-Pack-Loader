@@ -24,6 +24,7 @@ import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.ContentEvents;
 import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
+import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
@@ -188,6 +189,12 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentRaids::onJoin);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderHit);
         NeoForge.EVENT_BUS.addListener(ContentRaids::onRaiderTarget);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onTick);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onJoin);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onAttack);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onTouch);
+        NeoForge.EVENT_BUS.addListener(ContentBoards::onSquare);
         if (FMLEnvironment.getDist() == Dist.CLIENT) { NeoForge.EVENT_BUS.addListener(PouchKey::tick); NeoForge.EVENT_BUS.addListener(PouchKey::screen); }
         if (ContentPaths.enabled()) { NeoForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
         NeoForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
@@ -435,6 +442,7 @@ import java.util.Set;
         ContentTeams.load();
         ContentScoring.load();
         ContentDice.load();
+        ContentBoards.load();
         ContentRaids.load();
         CardRules.load();
         PackOptionsWorld.beforeWorldsLoad(event.getServer());

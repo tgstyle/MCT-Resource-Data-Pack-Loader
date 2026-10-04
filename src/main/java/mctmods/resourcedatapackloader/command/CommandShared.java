@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentFormats;
@@ -326,6 +327,8 @@ public final class CommandShared {
         ContentTeams.load();
         ContentScoring.load();
         ContentDice.load();
+        ContentBoards.load();
+        ContentBoards.rebuild(server);
         mctmods.resourcedatapackloader.content.card.CardRules.load();
         for (ServerLevel level : server.getAllLevels()) {
             ContentTeams.field(level);
