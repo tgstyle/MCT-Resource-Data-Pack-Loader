@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.util.WindGust;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -23,7 +24,6 @@ import javax.annotation.Nullable;
 public final class ContentWeatherRenderer {
     private static final ResourceLocation RAIN = ResourceLocation.withDefaultNamespace("textures/environment/rain.png");
     private static final ResourceLocation SNOW = ResourceLocation.withDefaultNamespace("textures/environment/snow.png");
-    private static final float MAX_LEAN = 75.0F;
     private final float[] sizeX = new float[1024];
     private final float[] sizeZ = new float[1024];
     private final float red;
@@ -32,9 +32,10 @@ public final class ContentWeatherRenderer {
     private final float snowRed;
     private final float snowGreen;
     private final float snowBlue;
-    private final double slantX;
-    private final double slantZ;
+    private final RainDef rain;
     private final boolean upward;
+    private double slantX;
+    private double slantZ;
     @Nullable private Biome.Precipitation drawing;
 
     public ContentWeatherRenderer(RainDef rain) {
@@ -53,17 +54,18 @@ public final class ContentWeatherRenderer {
         snowRed = (rain.snowColor() >> 16 & 255) / 255.0F;
         snowGreen = (rain.snowColor() >> 8 & 255) / 255.0F;
         snowBlue = (rain.snowColor() & 255) / 255.0F;
+        this.rain = rain;
         upward = rain.angle() > 90.0F;
-        float lean = Math.min(Math.min(rain.angle(), 180.0F - rain.angle()), MAX_LEAN);
-        double slope = Math.tan(Math.toRadians(lean)) * (upward ? 1.0D : -1.0D);
-        double heading = Math.toRadians(rain.heading());
-        slantX = -Math.sin(heading) * slope;
-        slantZ = Math.cos(heading) * slope;
     }
 
     public void render(ClientLevel level, int ticks, float partialTick, LightTexture lightTexture, double camX, double camY, double camZ) {
         float strength = level.getRainLevel(partialTick);
         if (strength <= 0.0F) { return; }
+        double time = level.getGameTime() + partialTick;
+        double slope = WindGust.slope(WindGust.angle(rain, time)) * (upward ? 1.0D : -1.0D);
+        double heading = Math.toRadians(WindGust.heading(rain, time));
+        slantX = -Math.sin(heading) * slope;
+        slantZ = Math.cos(heading) * slope;
         lightTexture.turnOnLightLayer();
         RenderSystem.disableCull();
         RenderSystem.enableBlend();

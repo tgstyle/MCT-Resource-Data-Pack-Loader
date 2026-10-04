@@ -3012,8 +3012,10 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3207,10 +3209,32 @@ Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity
 | `rain.snowColor`        | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Schnees                                                                                                      |
 | `rain.angle`            | nein    | float, 0 bis 180      | `0`                      | Grad gegenüber senkrecht nach unten: `90` weht seitwärts, `180` steigt senkrecht auf. Gezeichnet wird er höchstens 75 Grad geneigt |
 | `rain.heading`          | nein    | float, Grad           | `0`                      | Wohin er weht: `0` nach Süden, `90` nach Westen, `180` nach Norden, `270` nach Osten                                               |
+| `wind.gust`             | nein    | float, 0 bis 90       | `15`                     | Grad, die eine Böe auf ihrem Höhepunkt zu `angle` hinzufügt, nie über die Waagerechte hinaus                                       |
+| `wind.every`            | nein    | int oder `[min, max]` | `[200, 600]`             | Ticks von einer Böe zur nächsten                                                                                                   |
+| `wind.swing`            | nein    | float, 0 bis 180      | `30`                     | Grad, um die eine Böe `heading` zu einer Seite schwenkt                                                                            |
+
+Ein `wind`-Block macht den Regen böig. Hin und wieder neigt ihn eine Böe um bis zu `gust` Grad stärker und schwenkt seine Richtung um bis zu `swing` Grad zur Seite; sie schwillt an und flaut binnen vier Sekunden wieder ab, und die Böen kommen im Abstand von `every` Ticks. Regen und Schnee neigen sich mit, und die Umgebungspartikel der Dimension treiben dorthin, wohin der Regen sich neigt, mit oder ohne Böen. Ein `wind`-Block ohne `rain`-Block gibt dem Regen seine Standardwerte.
 
 Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, egal was die Oberwelt gerade tut. Mit `thunderTicks` gibt es auch Gewitter, nach eigenen Zeiten; trifft ein Gewitter auf einen Schauer, schwillt der Schauer zu voller Stärke an, der Himmel verdunkelt sich, und mit `lightning` an schlagen Blitze ein. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
 
 Ein `rain`-Block ändert, wie Regen und Schnee hier aussehen und klingen, mit oder ohne `cycle`; ohne ihn sehen sie aus und klingen wie in Vanilla.
+
+### Der Block `ambience`
+
+*dimensionen*
+
+| Schlüssel        | Pflicht | Wert                  | Standard         | Was er macht                                                                                                                                                                                                                    |
+| ---------------- | ------- | --------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `music`          | nein    | Soundname             | keiner           | Musik, die hier statt der üblichen Stücke läuft, auch im Kreativmodus. Beim Ankommen bricht das laufende Stück ab                                                                                                               |
+| `musicDelay`     | nein    | int oder `[min, max]` | `[12000, 24000]` | Ticks Stille zwischen zwei Stücken                                                                                                                                                                                              |
+| `loopSound`      | nein    | Soundname             | keiner           | Ein Geräusch, das in Schleife läuft, solange du hier bist; es blendet beim Ankommen ein und beim Gehen aus                                                                                                                      |
+| `ambientSound`   | nein    | Soundname             | keiner           | Ein Geräusch, das ab und zu spielt, wie der Zusatzklang (additions) eines Bioms                                                                                                                                                 |
+| `soundChance`    | nein    | 0,0 bis 1,0           | `0.0111`         | Die Chance pro Tick, dass `ambientSound` spielt                                                                                                                                                                                 |
+| `particle`       | nein    | Partikel-ID           | keiner           | Ein Partikel, der um dich herum durch die Luft treibt, etwa `minecraft:ash`, `minecraft:white_ash`, `minecraft:crimson_spore` oder `minecraft:dust`                                                                             |
+| `particleChance` | nein    | 0,0 bis 1,0           | `0.00625`        | Seine Dichte, gezählt wie bei modernen Biomen: Pro Tick werden etwa 667 Stellen im Umkreis von 16 Blöcken und 667 weitere im Umkreis von 32 versucht, und jede, die kein voller Block ist, zeigt den Partikel mit dieser Chance |
+| `particleColor`  | nein    | Hex-Farbe             | keiner           | Die Tönung eines Partikels, der eine annimmt: `minecraft:dust`, `minecraft:entity_effect` und `minecraft:ambient_entity_effect`                                                                                                 |
+
+Ein `ambience`-Block gibt der Dimension eigene Musik, eigene Geräusche und treibende Partikel. Die Schlüssel speisen die Biomeffekte des Spiels selbst (Musik, Umgebungsschleife, Zusatzklang und Umgebungspartikel), daher klingen und wirken sie wie die eines Bioms, und die Grafikeinstellung „Partikel“ dünnt sie genauso aus. Ein hier gesetzter Schlüssel gilt vor jedem Biom der Dimension; fehlt er, behält jedes Biom sein eigenes, also funktioniert auch eine Vanilla-Biom-JSON mit eigenen Effekten.
 
 ## Portale und Tore
 
