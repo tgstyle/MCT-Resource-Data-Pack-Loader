@@ -181,7 +181,8 @@ public final class GcCelestial {
             return false;
         }
         GalaxySpaceDef gs = galaxySpace(gc.body);
-        Class<? extends GcWorldProvider> provider = gs != null ? GsBodies.provider(gc, gs) : gc.rain == null ? GcWorldProvider.class : GcWeatherWorldProvider.class;
+        boolean rain = dimension.traits.rain != null;
+        Class<? extends GcWorldProvider> provider = gs != null ? GsBodies.provider(rain, gs) : rain ? GcWeatherWorldProvider.class : GcWorldProvider.class;
         body.setDimensionInfo(dimension.id, provider, gc.reachable);
         body.setDimensionSuffix(dimension.suffix);
         body.setForceStaticLoad(dimension.keepLoaded);

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.RainDef;
 
 import net.minecraft.init.Biomes;
 import net.minecraft.util.ResourceLocation;
@@ -132,6 +133,10 @@ public class ContentWorldProvider extends WorldProviderSurface {
         else if (def.traits.cycle != null) { weatherCycle.tick(world, def.traits.cycle); }
         else { super.updateWeather(); }
     }
+
+    @Nullable public RainDef rain() { return def == null ? null : def.traits.rain; }
+
+    @Nullable public RainDef rainSplash() { return rain(); }
 
     @Override public boolean canDoLightning(@Nonnull Chunk chunk) { return def == null || def.traits.precipitation && def.traits.lightning; }
 

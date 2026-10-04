@@ -3255,10 +3255,11 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "time": { "dayLength": 36000 },
   "weather": {
     "precipitation": true,
-    "lightning": false,
+    "lightning": true,
     "snow": false,
     "freeze": false,
-    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6 }
+    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
+    "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
   },
   "gameRules": { "doMobSpawning": "false" }
 }
@@ -3371,17 +3372,30 @@ Das sind dieselben Multiplikatoren wie in der [Weltphysik](#weltphysik), nur an 
 
 *dimensionen*
 
-| Schlüssel           | Pflicht | Wert                  | Standard       | Was er macht                                                                                                 |
-| ------------------- | ------- | --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| `precipitation`     | nein    | boolean               | `true`         | Aus regnet, schneit und stürmt es hier nie                                                                   |
-| `lightning`         | nein    | boolean               | `true`         | Aus kommt Regen ohne Blitze                                                                                  |
-| `snow`              | nein    | boolean               | `true`         | Aus bleibt nie Schnee liegen                                                                                 |
-| `freeze`            | nein    | boolean               | `true`         | Aus friert Wasser nie zu                                                                                     |
-| `cycle.rainTicks`   | nein    | int oder `[min, max]` | `[1000, 4600]` | Wie lange ein Schauer dauert                                                                                 |
-| `cycle.clearTicks`  | nein    | int oder `[min, max]` | `[1000, 3000]` | Wie lange es zwischen zwei Schauern trocken bleibt                                                           |
-| `cycle.maxStrength` | nein    | float, über 0 bis 1   | `0.6`          | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert |
+| Schlüssel               | Pflicht | Wert                  | Standard                 | Was er macht                                                                                                                       |
+| ----------------------- | ------- | --------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `precipitation`         | nein    | boolean               | `true`                   | Aus regnet, schneit und stürmt es hier nie                                                                                         |
+| `lightning`             | nein    | boolean               | `true`                   | Aus kommen Regen und Gewitter ohne Blitze                                                                                          |
+| `snow`                  | nein    | boolean               | `true`                   | Aus bleibt nie Schnee liegen                                                                                                       |
+| `freeze`                | nein    | boolean               | `true`                   | Aus friert Wasser nie zu                                                                                                           |
+| `cycle.rainTicks`       | nein    | int oder `[min, max]` | `[1000, 4600]`           | Wie lange ein Schauer dauert                                                                                                       |
+| `cycle.clearTicks`      | nein    | int oder `[min, max]` | `[1000, 3000]`           | Wie lange es zwischen zwei Schauern trocken bleibt                                                                                 |
+| `cycle.maxStrength`     | nein    | float, über 0 bis 1   | `0.6`                    | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert                       |
+| `cycle.thunderTicks`    | nein    | int oder `[min, max]` | keiner                   | Wie lange ein Gewitter dauert. Ohne diesen Wert gibt es in diesem Zyklus nie ein Gewitter                                          |
+| `cycle.calmTicks`       | nein    | int oder `[min, max]` | `[12000, 180000]`        | Wie lange die Ruhe zwischen zwei Gewittern dauert                                                                                  |
+| `cycle.thunderStrength` | nein    | float, über 0 bis 1   | `1`                      | Wie dunkel ein Gewitter wird. Blitze schlagen erst über `0.9` ein                                                                  |
+| `rain.particle`         | nein    | Partikelname          | `droplet`                | Was dort spritzt, wo Regen aufkommt                                                                                                |
+| `rain.sound`            | nein    | Soundname             | `minecraft:weather.rain` | Das Geräusch des Regens                                                                                                            |
+| `rain.volume`           | nein    | float                 | `0.2`                    | Seine Lautstärke, halbiert, wenn der Regen über dir fällt                                                                          |
+| `rain.interval`         | nein    | int                   | `3`                      | Wie selten das Geräusch spielt; höher ist seltener, `0` spielt es bei jeder Gelegenheit                                            |
+| `rain.color`            | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Regens                                                                                                       |
+| `rain.snowColor`        | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Schnees                                                                                                      |
+| `rain.angle`            | nein    | float, 0 bis 180      | `0`                      | Grad gegenüber senkrecht nach unten: `90` weht seitwärts, `180` steigt senkrecht auf. Gezeichnet wird er höchstens 75 Grad geneigt |
+| `rain.heading`          | nein    | float, Grad           | `0`                      | Wohin er weht: `0` nach Süden, `90` nach Westen, `180` nach Norden, `270` nach Osten                                               |
 
-Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, ohne Gewitter, egal was die Oberwelt gerade tut. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
+Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, egal was die Oberwelt gerade tut. Mit `thunderTicks` gibt es auch Gewitter, nach eigenen Zeiten; trifft ein Gewitter auf einen Schauer, schwillt der Schauer zu voller Stärke an, der Himmel verdunkelt sich, und mit `lightning` an schlagen Blitze ein. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
+
+Ein `rain`-Block ändert, wie Regen und Schnee hier aussehen und klingen, mit oder ohne `cycle`; ohne ihn sehen sie aus und klingen wie in Vanilla. Auf einem Planeten oder Mond von Galacticraft wirkt er genauso.
 
 ## Galacticraft-Himmelskörper
 
@@ -3470,7 +3484,10 @@ Ein `galacticraft`-Block in einer Dimensionsdatei macht diese Dimension zu einem
   "id": 71,
   "sky": { "skyColor": "3A1A10", "sun": { "size": 18 } },
   "physics": { "gravity": 0.4, "fallDamage": 0.5 },
-  "weather": { "cycle": { "maxStrength": 0.5 } },
+  "weather": {
+    "cycle": { "maxStrength": 0.5 },
+    "rain": { "particle": "smoke", "sound": "minecraft:block.lava.extinguish", "volume": 0.04, "interval": 20 }
+  },
   "galacticraft": {
     "kind": "planet",
     "name": "cinder",
@@ -3497,8 +3514,7 @@ Ein `galacticraft`-Block in einer Dimensionsdatei macht diese Dimension zu einem
     "soundReduction": 2.5,
     "solarEnergy": 1.6,
     "netherPortals": false,
-    "dungeon": { "spacing": 704, "chest": "mypack:chests/cinder_dungeon" },
-    "rain": { "particle": "smoke", "sound": "minecraft:block.lava.extinguish", "volume": 0.04, "interval": 20 }
+    "dungeon": { "spacing": 704, "chest": "mypack:chests/cinder_dungeon" }
   }
 }
 ```
@@ -3538,14 +3554,7 @@ Der Block nimmt die [Kartenschlüssel](#kartenschlüssel) und dazu:
 
 Galacticraft baut seine Dungeons nur in seinem eigenen Gelände, `dungeon` wirkt also nur dort, wo etwas den Dungeon-Generator von Galacticraft laufen lässt; RDPL-Gelände tut das nicht.
 
-| Schlüssel in `rain` | Pflicht | Wert         | Standard                 | Was er macht                                                                            |
-| ------------------- | ------- | ------------ | ------------------------ | --------------------------------------------------------------------------------------- |
-| `particle`          | nein    | Partikelname | `droplet`                | Was dort spritzt, wo Regen aufkommt                                                     |
-| `sound`             | nein    | Soundname    | `minecraft:weather.rain` | Das Geräusch des Regens                                                                 |
-| `volume`            | nein    | float        | `0.2`                    | Seine Lautstärke, halbiert, wenn der Regen über dir fällt                               |
-| `interval`          | nein    | int          | `3`                      | Wie selten das Geräusch spielt; höher ist seltener, `0` spielt es bei jeder Gelegenheit |
-
-Ohne `rain`-Block sieht Regen aus und klingt wie in Vanilla.
+Wie Regen auf einem Planeten aussieht und klingt, legt der eigene Block [`weather.rain`](#der-block-weather) der Dimension fest, wie im Beispiel oben.
 
 **Wer die Dimension registriert.** Die Dimension eines erreichbaren Körpers registriert Galacticraft, damit Raketen und Mehrspieler-Clients sie kennen; eine mit `reachable: false` registriert RDPL. Lässt sich der Körper nicht platzieren, weil sein `parent` unbekannt oder sein Name vergeben ist, wird die Dimension nicht registriert, und das Log sagt warum.
 

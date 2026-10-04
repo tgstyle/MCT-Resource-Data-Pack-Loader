@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
 
 import asmodeuscore.api.dimension.IAdvancedSpace;
@@ -28,9 +27,9 @@ final class GsBodies {
 
     static List<Class<? extends GcWorldProvider>> providers() { return Arrays.asList(GsWorldProvider.class, GsRainWorldProvider.class, GsStormWorldProvider.class, GsRainStormWorldProvider.class); }
 
-    static Class<? extends GcWorldProvider> provider(GalacticraftDef gc, GalaxySpaceDef gs) {
+    static Class<? extends GcWorldProvider> provider(boolean rain, GalaxySpaceDef gs) {
         boolean storm = gs.weather != null;
-        if (gc.rain != null) { return storm ? GsRainStormWorldProvider.class : GsRainWorldProvider.class; }
+        if (rain) { return storm ? GsRainStormWorldProvider.class : GsRainWorldProvider.class; }
         return storm ? GsStormWorldProvider.class : GsWorldProvider.class;
     }
 

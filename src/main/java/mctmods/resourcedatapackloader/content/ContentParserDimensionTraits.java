@@ -1,16 +1,20 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import javax.annotation.Nullable;
 
 public final class ContentParserDimensionTraits {
@@ -18,6 +22,14 @@ public final class ContentParserDimensionTraits {
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
     private static final int CYCLE_LOW = 1000;
+    private static final int THUNDER_LOW = 3600;
+    private static final int THUNDER_HIGH = 15600;
+    private static final int CALM_LOW = 12000;
+    private static final int CALM_HIGH = 180000;
+    private static final String RAIN_PARTICLE = "droplet";
+    private static final String RAIN_SOUND = "minecraft:weather.rain";
+    private static final String WHITE = "#FFFFFF";
+    private static final float MAX_ANGLE = 180.0F;
 
     private ContentParserDimensionTraits() {}
 
@@ -43,7 +55,29 @@ public final class ContentParserDimensionTraits {
                 JsonUtils.getBoolean(weather, "snow", true),
                 JsonUtils.getBoolean(weather, "freeze", true),
                 weather.has("cycle") ? cycle(key, JsonUtils.getJsonObject(weather, "cycle")) : null,
+                weather.has("rain") ? rain(key, JsonUtils.getJsonObject(weather, "rain")) : null,
                 sky(key, sky));
+    }
+
+    private static RainDef rain(ResourceLocation key, JsonObject json) {
+        String particle = JsonUtils.getString(json, "particle", RAIN_PARTICLE).trim().toLowerCase(Locale.ROOT);
+        if (EnumParticleTypes.getByName(particle) == null) {
+            ContentLog.LOGGER.error("Dimension {} names rain particle '{}', which is no particle Minecraft knows, using {}", key, particle, RAIN_PARTICLE);
+            particle = RAIN_PARTICLE;
+        }
+        float angle = JsonUtils.getFloat(json, "angle", 0.0F);
+        if (angle < 0.0F || angle > MAX_ANGLE) {
+            ContentLog.LOGGER.error("Dimension {} gives a rain angle of {}, which is not from 0 to 180, using 0", key, angle);
+            angle = 0.0F;
+        }
+        return new RainDef(particle,
+                new ResourceLocation(JsonUtils.getString(json, "sound", RAIN_SOUND).trim()),
+                Math.max(0.0F, JsonUtils.getFloat(json, "volume", 0.2F)),
+                Math.max(0, JsonUtils.getInt(json, "interval", 3)),
+                ContentTypes.color(JsonUtils.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
+                ContentTypes.color(JsonUtils.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
+                angle,
+                JsonUtils.getFloat(json, "heading", 0.0F));
     }
 
     private static double factor(ResourceLocation key, JsonObject physics, String member) {
@@ -55,18 +89,21 @@ public final class ContentParserDimensionTraits {
     }
 
     private static DimensionTraitsDef.Cycle cycle(ResourceLocation key, JsonObject json) {
-        int[] rain = span(key, json, "rainTicks", 4600);
-        int[] clear = span(key, json, "clearTicks", 3000);
-        float strength = JsonUtils.getFloat(json, "maxStrength", 0.6F);
-        if (strength <= 0.0F || strength > 1.0F) {
-            ContentLog.LOGGER.error("Dimension {} gives a weather cycle maxStrength of {}, which is not above 0 and at most 1, using 0.6", key, strength);
-            strength = 0.6F;
-        }
-        return new DimensionTraitsDef.Cycle(rain[0], rain[1], clear[0], clear[1], strength);
+        int[] rain = span(key, json, "rainTicks", CYCLE_LOW, 4600);
+        int[] clear = span(key, json, "clearTicks", CYCLE_LOW, 3000);
+        int[] thunder = json.has("thunderTicks") ? span(key, json, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
+        int[] calm = span(key, json, "calmTicks", CALM_LOW, CALM_HIGH);
+        return new DimensionTraitsDef.Cycle(rain, clear, strength(key, json, "maxStrength", 0.6F), thunder, calm, strength(key, json, "thunderStrength", 1.0F));
     }
 
-    private static int[] span(ResourceLocation key, JsonObject json, String member, int high) {
-        int low = CYCLE_LOW;
+    private static float strength(ResourceLocation key, JsonObject json, String member, float fallback) {
+        float strength = JsonUtils.getFloat(json, member, fallback);
+        if (strength > 0.0F && strength <= 1.0F) { return strength; }
+        ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is not above 0 and at most 1, using {}", key, member, strength, fallback);
+        return fallback;
+    }
+
+    private static int[] span(ResourceLocation key, JsonObject json, String member, int low, int high) {
         if (!json.has(member)) { return new int[] {low, high}; }
         JsonElement value = json.get(member);
         int min;

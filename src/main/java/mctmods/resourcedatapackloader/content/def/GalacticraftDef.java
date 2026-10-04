@@ -33,12 +33,11 @@ public final class GalacticraftDef {
     public final boolean netherPortals;
     public final int dungeonSpacing;
     @Nullable public final ResourceLocation dungeonChest;
-    @Nullable public final Rain rain;
     @Nullable public final ExtraPlanetsDef extraPlanets;
     public final Map<String, Integer> stationRecipe;
     public final boolean showName;
 
-    public GalacticraftDef(CelestialDef body, boolean reachable, int minTier, String landing, double landingHeight, String arrival, double exitHeight, @Nullable ResourceLocation rocketGui, List<String> checklist, @Nullable Boolean breathable, List<String> gases, boolean corrosive, float temperature, float wind, float density, double meteorFrequency, double fuelMultiplier, float soundReduction, double solarEnergy, boolean netherPortals, int dungeonSpacing, @Nullable ResourceLocation dungeonChest, @Nullable Rain rain, @Nullable ExtraPlanetsDef extraPlanets, Map<String, Integer> stationRecipe, boolean showName) {
+    public GalacticraftDef(CelestialDef body, boolean reachable, int minTier, String landing, double landingHeight, String arrival, double exitHeight, @Nullable ResourceLocation rocketGui, List<String> checklist, @Nullable Boolean breathable, List<String> gases, boolean corrosive, float temperature, float wind, float density, double meteorFrequency, double fuelMultiplier, float soundReduction, double solarEnergy, boolean netherPortals, int dungeonSpacing, @Nullable ResourceLocation dungeonChest, @Nullable ExtraPlanetsDef extraPlanets, Map<String, Integer> stationRecipe, boolean showName) {
         this.body = body;
         this.reachable = reachable;
         this.minTier = minTier;
@@ -61,23 +60,8 @@ public final class GalacticraftDef {
         this.netherPortals = netherPortals;
         this.dungeonSpacing = dungeonSpacing;
         this.dungeonChest = dungeonChest;
-        this.rain = rain;
         this.extraPlanets = extraPlanets;
         this.stationRecipe = stationRecipe;
         this.showName = showName;
-    }
-
-    public static final class Rain {
-        public final String particle;
-        public final ResourceLocation sound;
-        public final float volume;
-        public final int interval;
-
-        public Rain(String particle, ResourceLocation sound, float volume, int interval) {
-            this.particle = particle;
-            this.sound = sound;
-            this.volume = volume;
-            this.interval = interval;
-        }
     }
 }

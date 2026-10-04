@@ -258,6 +258,7 @@
     "client.IClientAdvancementManager",
     "client.MixinCommandSuccess",
     "client.IContainerLocalRenderInformation",
+    "client.IEntityRenderer",
     "client.IGuiOptionsRowList",
     "client.IGuiScreen",
     "client.IGuiScreenResourcePacks",

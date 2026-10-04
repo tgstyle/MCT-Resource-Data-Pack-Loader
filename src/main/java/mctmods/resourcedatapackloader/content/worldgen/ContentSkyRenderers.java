@@ -16,6 +16,7 @@ import java.util.Map;
         @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {}
     };
     private static final Map<DimensionDef, ContentSkyRenderer> PACK_SKIES = new HashMap<>();
+    private static final Map<DimensionDef, ContentWeatherRenderer> PACK_WEATHER = new HashMap<>();
 
     private ContentSkyRenderers() {}
 
@@ -24,5 +25,6 @@ import java.util.Map;
         else if (def.traits.sky != null) { provider.setSkyRenderer(PACK_SKIES.computeIfAbsent(def, held -> new ContentSkyRenderer(held.traits.sky))); }
         if (!def.renderClouds) { provider.setCloudRenderer(NOTHING); }
         if (!def.renderWeather) { provider.setWeatherRenderer(NOTHING); }
+        else if (def.traits.rain != null) { provider.setWeatherRenderer(PACK_WEATHER.computeIfAbsent(def, held -> new ContentWeatherRenderer(held.traits.rain))); }
     }
 }

@@ -9,7 +9,6 @@ import static mctmods.resourcedatapackloader.util.Json.strings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
@@ -26,8 +25,6 @@ public final class ContentParserCelestial {
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS, CelestialDef.STATION));
     private static final String RING = "#19E599";
     private static final String ICONS = "galacticraftcore:textures/gui/celestialbodies/";
-    private static final String RAIN_PARTICLE = "droplet";
-    private static final String RAIN_SOUND = "minecraft:weather.rain";
 
     private ContentParserCelestial() {}
 
@@ -83,7 +80,6 @@ public final class ContentParserCelestial {
                 JsonUtils.getBoolean(json, "netherPortals", false),
                 Math.max(0, JsonUtils.getInt(dungeon, "spacing", 0)),
                 chest.isEmpty() ? null : new ResourceLocation(chest),
-                json.has("rain") ? rain(key, JsonUtils.getJsonObject(json, "rain")) : null,
                 ContentParserModPlanets.extraPlanets(key, json),
                 recipe(key, json),
                 JsonUtils.getBoolean(json, "showName", false));
@@ -101,18 +97,6 @@ public final class ContentParserCelestial {
             found.put(entry.getKey().trim(), count.getAsInt());
         }
         return Collections.unmodifiableMap(found);
-    }
-
-    private static GalacticraftDef.Rain rain(ResourceLocation key, JsonObject json) {
-        String particle = JsonUtils.getString(json, "particle", RAIN_PARTICLE).trim().toLowerCase(Locale.ROOT);
-        if (EnumParticleTypes.getByName(particle) == null) {
-            ContentLog.LOGGER.error("Dimension {} names rain particle '{}', which is no particle Minecraft knows, using {}", key, particle, RAIN_PARTICLE);
-            particle = RAIN_PARTICLE;
-        }
-        return new GalacticraftDef.Rain(particle,
-                new ResourceLocation(JsonUtils.getString(json, "sound", RAIN_SOUND).trim()),
-                Math.max(0.0F, JsonUtils.getFloat(json, "volume", 0.2F)),
-                Math.max(0, JsonUtils.getInt(json, "interval", 3)));
     }
 
     @Nullable private static CelestialDef system(ResourceLocation key, JsonObject json) {

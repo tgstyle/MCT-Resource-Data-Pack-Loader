@@ -17,9 +17,10 @@ public final class DimensionTraitsDef {
     public final boolean snow;
     public final boolean freeze;
     @Nullable public final Cycle cycle;
+    @Nullable public final RainDef rain;
     @Nullable public final Sky sky;
 
-    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, @Nullable Cycle cycle, @Nullable Sky sky) {
+    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, @Nullable Cycle cycle, @Nullable RainDef rain, @Nullable Sky sky) {
         this.gravity = gravity;
         this.fallDamage = fallDamage;
         this.arrowGravity = arrowGravity;
@@ -29,6 +30,7 @@ public final class DimensionTraitsDef {
         this.snow = snow;
         this.freeze = freeze;
         this.cycle = cycle;
+        this.rain = rain;
         this.sky = sky;
     }
 
@@ -38,13 +40,23 @@ public final class DimensionTraitsDef {
         public final int clearMin;
         public final int clearMax;
         public final float strength;
+        public final int thunderMin;
+        public final int thunderMax;
+        public final int calmMin;
+        public final int calmMax;
+        public final float thunderStrength;
 
-        public Cycle(int rainMin, int rainMax, int clearMin, int clearMax, float strength) {
-            this.rainMin = rainMin;
-            this.rainMax = rainMax;
-            this.clearMin = clearMin;
-            this.clearMax = clearMax;
+        public Cycle(int[] rain, int[] clear, float strength, int[] thunder, int[] calm, float thunderStrength) {
+            this.rainMin = rain[0];
+            this.rainMax = rain[1];
+            this.clearMin = clear[0];
+            this.clearMax = clear[1];
             this.strength = strength;
+            this.thunderMin = thunder[0];
+            this.thunderMax = thunder[1];
+            this.calmMin = calm[0];
+            this.calmMax = calm[1];
+            this.thunderStrength = thunderStrength;
         }
     }
 
