@@ -34,9 +34,11 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentParser {
@@ -412,12 +414,38 @@ public final class ContentParser {
         Map<ResourceLocation, Integer> blocks = leveledNames(key, json, "blocks");
         Map<ResourceLocation, Integer> items = leveledNames(key, json, "items");
         Map<ResourceLocation, Integer> dimensions = leveledNames(key, json, "dimensions");
-        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty()) {
-            ContentLog.LOGGER.error("Exposure {} names no blocks, items or dimensions, ignoring it", key);
+        Map<ResourceLocation, Integer> carriers = leveledNames(key, json, "carriers");
+        Map<String, Integer> weather = weather(key, json);
+        if (blocks.isEmpty() && items.isEmpty() && dimensions.isEmpty() && carriers.isEmpty() && weather.isEmpty()) {
+            ContentLog.LOGGER.error("Exposure {} names no blocks, items, dimensions, carriers or weather, ignoring it", key);
             return null;
         }
+        Set<ResourceLocation> catchers = names(key, json.has("catchers") ? Json.strings(json, "catchers") : List.of("minecraft:player"), "catchers");
         return new ExposureDef(key, Math.max(1, GsonHelper.getAsInt(json, "scanInterval", 20)), Math.max(0, GsonHelper.getAsInt(json, "range", 10)), GsonHelper.getAsBoolean(json, "skipsCreative", true),
-                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels));
+                Math.max(0, GsonHelper.getAsInt(json, "sourcesForNextLevel", 0)), GsonHelper.getAsString(json, "immunity", "").trim(), blocks, items, dimensions, Collections.unmodifiableList(levels),
+                carriers, GsonHelper.getAsBoolean(json, "contagious", false), catchers, Math.max(0, GsonHelper.getAsInt(json, "contagionRange", 4)),
+                Mth.clamp(GsonHelper.getAsFloat(json, "contagionChance", 0.1F), 0.0F, 1.0F), Math.max(1, GsonHelper.getAsInt(json, "contagionDuration", 1200)),
+                weather, names(key, Json.strings(json, "weatherDimensions"), "weatherDimensions"));
+    }
+
+    private static Map<String, Integer> weather(ResourceLocation key, JsonObject json) {
+        Map<String, Integer> found = new LinkedHashMap<>();
+        for (Map.Entry<ResourceLocation, Integer> entry : leveledNames(key, json, "weather").entrySet()) {
+            String kind = entry.getKey().getPath();
+            if (entry.getKey().getNamespace().equals("minecraft") && (kind.equals("rain") || kind.equals("thunder"))) { found.put(kind, entry.getValue()); }
+            else { ContentLog.LOGGER.error("The weather entry '{}' in {} is neither rain nor thunder, so it is ignored", entry.getKey(), key); }
+        }
+        return found;
+    }
+
+    private static Set<ResourceLocation> names(ResourceLocation key, List<String> entries, String member) {
+        Set<ResourceLocation> found = new LinkedHashSet<>();
+        for (String entry : entries) {
+            ResourceLocation name = location(entry.trim());
+            if (name == null) { ContentLog.LOGGER.error("The {} entry '{}' in {} is not a name, ignoring it", member, entry, key); }
+            else { found.add(name); }
+        }
+        return found;
     }
 
     private static Map<ResourceLocation, Integer> leveledNames(ResourceLocation key, JsonObject json, String member) {
