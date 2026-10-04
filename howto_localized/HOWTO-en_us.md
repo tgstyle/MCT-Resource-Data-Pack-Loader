@@ -2383,8 +2383,9 @@ Every key, shown at once. A real file writes only the ones it needs.
   "trackingFrequency": 3,
   "storage": {
     "items": { "filter": [{ "item": "minecraft:coal", "max": 128 }] },
-    "fluid": { "capacity": 16000, "buckets": true, "filter": [{ "fluid": "water" }] },
-    "energy": { "capacity": 100000, "transfer": 1000 },
+    "fluid": { "capacity": 16000, "buckets": true, "use": 5, "filter": [{ "fluid": "water" }] },
+    "energy": { "capacity": 100000, "transfer": 1000, "use": 20 },
+    "runsDry": "stops",
     "dropsOnDeath": true
   },
   "galacticraft": {
@@ -2748,11 +2749,13 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
     "fluid": {
       "capacity": 16000,
       "buckets": true,
+      "use": 5,
       "filter": [
         { "fluid": "water", "max": 8000 }
       ]
     },
-    "energy": { "capacity": 100000, "transfer": 1000 },
+    "energy": { "capacity": 100000, "transfer": 1000, "use": 20 },
+    "runsDry": "stops",
     "dropsOnDeath": true
   }
 }
@@ -2760,12 +2763,15 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 
 `storage` gives a variant of any entity item slots, a fluid tank and an energy buffer, each one only when its object is written. Each is offered as the entity's Forge item, fluid or energy capability, so anything that moves items, fluid or energy into an entity reaches it. Where the base entity answers that capability itself, as a mob does for its hands and armor and a horse or a chest minecart does for its inventory, the pack storage answers in its place, on every side. A player opens the screen by sneaking and right-clicking the entity. The contents are saved with the entity.
 
-| Key            | Required | Value   | Default | What it does                                                                                                                                                                                                             |
-| -------------- | -------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `items`        | no       | object  | none    | Gives the entity item slots. The area is three rows of 9: each fluid or energy bar takes one row and the slots take the rest, so 1x9 with both bars, 2x9 with one and 3x9 with none. Without `items`, only the bars show |
-| `fluid`        | no       | object  | none    | One fluid tank                                                                                                                                                                                                           |
-| `energy`       | no       | object  | none    | One Forge Energy buffer                                                                                                                                                                                                  |
-| `dropsOnDeath` | no       | boolean | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way                                                                                                    |
+| Key            | Required | Value                       | Default | What it does                                                                                                                                                                                                                                                                                                                                              |
+| -------------- | -------- | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items`        | no       | object                      | none    | Gives the entity item slots. The area is three rows of 9: each fluid or energy bar takes one row and the slots take the rest, so 1x9 with both bars, 2x9 with one and 3x9 with none. Without `items`, only the bars show                                                                                                                                  |
+| `fluid`        | no       | object                      | none    | One fluid tank                                                                                                                                                                                                                                                                                                                                            |
+| `energy`       | no       | object                      | none    | One Forge Energy buffer                                                                                                                                                                                                                                                                                                                                   |
+| `dropsOnDeath` | no       | boolean                     | `true`  | The stored items spill as loose items where the entity dies. `false` loses them. Fluid and energy are lost either way                                                                                                                                                                                                                                     |
+| `runsDry`      | no       | `stops`, `slows` or `hurts` | `stops` | What happens while it cannot pay for a full second of `use`. `stops`: it thinks no more and stands where it is, its tasks, targets and behaviors all idle until it is refilled, though it still falls and can be pushed. `slows`: it moves at half speed. `hurts`: it takes 1 damage each second, as from starving, so `immuneTo` with `starve` spares it |
+
+**Running on what it carries.** A `use` on the tank or the buffer is a running cost: once a second the entity takes that much out of it, past `transfer`, `buckets` and the filters alike. When either one holds less than a full second's `use`, the entity has run dry: nothing more is taken, `runsDry` decides what happens, and it is back to normal the moment it is filled again. Only a creature spends; on a base that is not alive, such as a minecart, `use` does nothing.
 
 `items`:
 
@@ -2780,13 +2786,15 @@ The clock runs on world time, so it pauses when nobody is playing and it does no
 | `capacity` | yes      | int, mB                | none    | How much the tank holds                                                                                                                                                   |
 | `filter`   | no       | list of filter entries | none    | Which fluids the tank accepts. Without it it accepts anything                                                                                                             |
 | `buckets`  | no       | boolean                | `false` | A right-click with a bucket or other fluid container, not sneaking, empties it into the tank or fills it from the tank. A click that moves no fluid is left to the entity |
+| `use`      | no       | int, mB per second     | `0`     | How much the entity uses up from the tank each second it is alive. `0` costs nothing                                                                                      |
 
 `energy`:
 
-| Key        | Required | Value   | Default  | What it does                                     |
-| ---------- | -------- | ------- | -------- | ------------------------------------------------ |
-| `capacity` | yes      | int, FE | none     | How much energy it holds                         |
-| `transfer` | no       | int, FE | no limit | The most energy moved in or out in one operation |
+| Key        | Required | Value              | Default  | What it does                                                          |
+| ---------- | -------- | ------------------ | -------- | --------------------------------------------------------------------- |
+| `capacity` | yes      | int, FE            | none     | How much energy it holds                                              |
+| `transfer` | no       | int, FE            | no limit | The most energy moved in or out in one operation                      |
+| `use`      | no       | int, FE per second | `0`      | How much energy it uses up each second it is alive. `0` costs nothing |
 
 A filter entry. The first entry that matches decides, and anything no entry matches is refused:
 

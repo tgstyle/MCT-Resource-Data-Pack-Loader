@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
@@ -10,6 +11,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityLiving.class) public abstract class MixinEntityLiving {
@@ -33,6 +35,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     private SoundEvent rdpl$ambient(EntityLiving self) {
         SoundEvent wanted = ContentEntities.soundEvent(self, 0);
         return wanted != null ? wanted : getAmbientSound();
+    }
+
+    @Inject(method = "updateEntityActionState", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/profiler/Profiler;startSection(Ljava/lang/String;)V", args = "ldc=sensing"), cancellable = true)
+    private void rdpl$stalled(CallbackInfo ci) {
+        if (EntityStorage.stalled((EntityLiving) (Object) this)) { ci.cancel(); }
     }
 
     @Inject(method = "getMaxFallHeight", at = @At("RETURN"), cancellable = true) private void rdpl$fallHeight(CallbackInfoReturnable<Integer> cir) { cir.setReturnValue(ContentEntities.maxFallHeight((EntityLiving) (Object) this, cir.getReturnValueI())); }
