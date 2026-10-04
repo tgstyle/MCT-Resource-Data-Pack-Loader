@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
+import mctmods.resourcedatapackloader.client.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.ContentStars;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -35,6 +36,12 @@ import javax.annotation.Nullable;
         }
         ContentStars.VANILLA.draw(level, RenderSystem.getShaderColor()[3], modelViewMatrix, projectionMatrix, Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
     }
+
+    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V"))
+    private void rdpl$skybox(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { ContentSkyExtras.backdrop(level, frustumMatrix); }
+
+    @Inject(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;defaultBlendFunc()V", shift = At.Shift.AFTER))
+    private void rdpl$skyOverlay(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { ContentSkyExtras.overlay(level, frustumMatrix, partialTick); }
 
     @Inject(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;MOON_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC))
     private void rdpl$dimMoon(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) {

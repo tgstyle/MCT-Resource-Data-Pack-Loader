@@ -3205,6 +3205,48 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `starTwinkle` | 否 | 浮点数，0 到 1 | `0.0` | 星星闪烁时变暗的程度。`0` 表示不闪烁 |
 | `lightningColor` | 否 | 十六进制颜色 | `737380` | 闪电的色调 |
 
+### 天空盒、极光与彩虹
+
+*dimensions*
+
+这些键同样位于 `sky` 块中，也同样只在客户端绘制。
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` 把你自己的图片画在天空上，位于日出霞光、太阳、月亮和星星之后。以完整的纹理路径给出立方体的全部六个面，按立方体展开图排列：`up` 接在 `north` 的上边缘，`down` 接在它的下边缘，`west` 在它左边，`east` 在它右边，`south` 接在 `east` 之后。也可以只给出 `panorama`，用一张 2:1 的图片包住整个天空：图片左边缘朝北，沿顺时针方向经过东、南、西，最上一行在正上方，最下一行在正下方。缺少某个面又没有全景图的天空盒会被跳过，并在日志中记录一条错误。
+
+`aurora` 在夜晚的北方低空挂起发光的光幕。光幕缓缓飘动，在日落时出现，白天和下雨时消失。`color` 是光幕底部的颜色，`topColor` 是它们在顶部淡出时的颜色。
+
+`rainbow` 在白天雨停后于太阳对面显示一道彩虹。彩虹会在雨停后的两分钟内逐渐淡去，再次下雨会让它消失。
+
+原版没有任何键能给维度设置自己的天空图片、极光或彩虹，因此这些键在所有版本中的效果都相同。
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | 否 | 纹理路径 | 无 | 立方体的一个面：`up`、`down`、`north`、`east`、`south` 或 `west`。六个面都要给出 |
+| `skybox.panorama` | 否 | 纹理路径 | 无 | 一张包住整个天空的图片，代替各个面 |
+| `aurora.color` | 否 | 十六进制颜色 | `40FF90` | 光幕底部的颜色 |
+| `aurora.topColor` | 否 | 十六进制颜色 | `8040FF` | 光幕顶部淡出处的颜色 |
+| `rainbow` | 否 | 布尔值 | `false` | 雨后显示彩虹 |
+
 ### `physics` 块
 
 *维度*

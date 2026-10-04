@@ -54,6 +54,7 @@ final class ContentSkyRenderer {
         RenderSystem.setShaderColor((float) color.x, (float) color.y, (float) color.z, 1.0F);
         ShaderInstance shader = RenderSystem.getShader();
         draw(skyBuffer, poseStack, projection, shader);
+        ContentSkyExtras.backdrop(level, poseStack.last().pose());
         RenderSystem.enableBlend();
         sunrise(level, partialTick, poseStack);
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -92,6 +93,7 @@ final class ContentSkyRenderer {
         RenderSystem.disableBlend();
         RenderSystem.defaultBlendFunc();
         poseStack.popPose();
+        ContentSkyExtras.overlay(level, poseStack.last().pose(), partialTick);
         RenderSystem.setShaderColor(0.0F, 0.0F, 0.0F, 1.0F);
         if (camera.getEntity().getEyePosition(partialTick).y - level.getLevelData().getHorizonHeight(level) < 0.0D) {
             poseStack.pushPose();
