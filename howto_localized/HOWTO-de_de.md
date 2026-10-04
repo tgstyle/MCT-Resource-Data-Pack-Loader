@@ -3008,6 +3008,14 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   },
   "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
   "time": { "dayLength": 36000 },
+  "weather": {
+    "precipitation": true,
+    "lightning": true,
+    "snow": false,
+    "freeze": false,
+    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+  },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3121,17 +3129,30 @@ Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity
 
 *dimensionen*
 
-| Schlüssel           | Pflicht | Wert                  | Standard       | Was er macht                                                                                                 |
-| ------------------- | ------- | --------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| `precipitation`     | nein    | boolean               | `true`         | Aus regnet, schneit und stürmt es hier nie                                                                   |
-| `lightning`         | nein    | boolean               | `true`         | Aus kommt Regen ohne Blitze                                                                                  |
-| `snow`              | nein    | boolean               | `true`         | Aus bleibt nie Schnee liegen                                                                                 |
-| `freeze`            | nein    | boolean               | `true`         | Aus friert Wasser nie zu                                                                                     |
-| `cycle.rainTicks`   | nein    | int oder `[min, max]` | `[1000, 4600]` | Wie lange ein Schauer dauert                                                                                 |
-| `cycle.clearTicks`  | nein    | int oder `[min, max]` | `[1000, 3000]` | Wie lange es zwischen zwei Schauern trocken bleibt                                                           |
-| `cycle.maxStrength` | nein    | float, über 0 bis 1   | `0.6`          | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert |
+| Schlüssel               | Pflicht | Wert                  | Standard                 | Was er macht                                                                                                                       |
+| ----------------------- | ------- | --------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `precipitation`         | nein    | boolean               | `true`                   | Aus regnet, schneit und stürmt es hier nie                                                                                         |
+| `lightning`             | nein    | boolean               | `true`                   | Aus kommen Regen und Gewitter ohne Blitze                                                                                          |
+| `snow`                  | nein    | boolean               | `true`                   | Aus bleibt nie Schnee liegen                                                                                                       |
+| `freeze`                | nein    | boolean               | `true`                   | Aus friert Wasser nie zu                                                                                                           |
+| `cycle.rainTicks`       | nein    | int oder `[min, max]` | `[1000, 4600]`           | Wie lange ein Schauer dauert                                                                                                       |
+| `cycle.clearTicks`      | nein    | int oder `[min, max]` | `[1000, 3000]`           | Wie lange es zwischen zwei Schauern trocken bleibt                                                                                 |
+| `cycle.maxStrength`     | nein    | float, über 0 bis 1   | `0.6`                    | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert                       |
+| `cycle.thunderTicks`    | nein    | int oder `[min, max]` | keiner                   | Wie lange ein Gewitter dauert. Ohne diesen Wert gibt es in diesem Zyklus nie ein Gewitter                                          |
+| `cycle.calmTicks`       | nein    | int oder `[min, max]` | `[12000, 180000]`        | Wie lange die Ruhe zwischen zwei Gewittern dauert                                                                                  |
+| `cycle.thunderStrength` | nein    | float, über 0 bis 1   | `1`                      | Wie dunkel ein Gewitter wird. Blitze schlagen erst über `0.9` ein                                                                  |
+| `rain.particle`         | nein    | Partikel-ID           | `minecraft:rain`         | Was dort spritzt, wo Regen aufkommt                                                                                                |
+| `rain.sound`            | nein    | Soundname             | `minecraft:weather.rain` | Das Geräusch des Regens                                                                                                            |
+| `rain.volume`           | nein    | float                 | `0.2`                    | Seine Lautstärke, halbiert, wenn der Regen über dir fällt                                                                          |
+| `rain.interval`         | nein    | int                   | `3`                      | Wie selten das Geräusch spielt; höher ist seltener, `0` spielt es bei jeder Gelegenheit                                            |
+| `rain.color`            | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Regens                                                                                                       |
+| `rain.snowColor`        | nein    | Hex-Farbe             | `#FFFFFF`                | Färbung des fallenden Schnees                                                                                                      |
+| `rain.angle`            | nein    | float, 0 bis 180      | `0`                      | Grad gegenüber senkrecht nach unten: `90` weht seitwärts, `180` steigt senkrecht auf. Gezeichnet wird er höchstens 75 Grad geneigt |
+| `rain.heading`          | nein    | float, Grad           | `0`                      | Wohin er weht: `0` nach Süden, `90` nach Westen, `180` nach Norden, `270` nach Osten                                               |
 
-Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, ohne Gewitter, egal was die Oberwelt gerade tut. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
+Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, egal was die Oberwelt gerade tut. Mit `thunderTicks` gibt es auch Gewitter, nach eigenen Zeiten; trifft ein Gewitter auf einen Schauer, schwillt der Schauer zu voller Stärke an, der Himmel verdunkelt sich, und mit `lightning` an schlagen Blitze ein. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
+
+Ein `rain`-Block ändert, wie Regen und Schnee hier aussehen und klingen, mit oder ohne `cycle`; ohne ihn sehen sie aus und klingen wie in Vanilla.
 
 ## Portale und Tore
 

@@ -188,6 +188,7 @@ public final class ContentDimensions {
         if (!def.renderSky()) { attributes.addProperty("neoforge:custom_skybox", HIDDEN); }
         if (!def.renderClouds()) { attributes.addProperty("neoforge:custom_clouds", HIDDEN); }
         if (!def.renderWeather()) { attributes.addProperty("neoforge:custom_weather_effects", HIDDEN); }
+        else if (def.traits().rain() != null) { attributes.addProperty("neoforge:custom_weather_effects", def.key().toString()); }
     }
 
     private static JsonObject generator(DimensionDef def) {

@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 
 import net.minecraft.client.CloudStatus;
@@ -33,6 +35,9 @@ public final class ContentDimensionEffects implements CustomSkyboxRenderer, Cust
         event.registerSkyboxRenderer(HIDDEN, hidden);
         event.registerCloudRenderer(HIDDEN, hidden);
         event.registerWeatherEffectRenderer(HIDDEN, hidden);
+        for (DimensionDef def : ContentDimensions.all()) {
+            if (def.renderWeather() && def.traits().rain() != null) { event.registerWeatherEffectRenderer(def.key(), new ContentWeatherRenderer(def.traits().rain())); }
+        }
     }
 
     @Override public boolean renderSky(@Nonnull LevelRenderState level, @Nonnull SkyRenderState sky, @Nonnull Matrix4fc modelView, @Nonnull Runnable setupFog) { return true; }

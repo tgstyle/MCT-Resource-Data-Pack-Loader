@@ -24,7 +24,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
 
     public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans; }
 
-    public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null; }
+    public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null || traits.rain() != null; }
 
     public String base() {
         return switch (terrain) {

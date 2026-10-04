@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionPortalDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
+import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 
@@ -28,6 +29,14 @@ public final class ContentDimensionParser {
     private static final Gson GSON = new Gson();
     private static final int CLOUD_HEIGHT = 128;
     private static final int CYCLE_LOW = 1000;
+    private static final int THUNDER_LOW = 3600;
+    private static final int THUNDER_HIGH = 15600;
+    private static final int CALM_LOW = 12000;
+    private static final int CALM_HIGH = 180000;
+    private static final String RAIN_PARTICLE = "minecraft:rain";
+    private static final String RAIN_SOUND = "minecraft:weather.rain";
+    private static final String WHITE = "#FFFFFF";
+    private static final float MAX_ANGLE = 180.0F;
     private static final String SUN = "minecraft:textures/environment/celestial/sun.png";
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
@@ -106,7 +115,7 @@ public final class ContentDimensionParser {
         return new DimensionTraitsDef(factor(key, physics, "gravity"), factor(key, physics, "fallDamage"), factor(key, physics, "arrowGravity"), day,
                 GsonHelper.getAsBoolean(weather, "precipitation", true), GsonHelper.getAsBoolean(weather, "lightning", true), GsonHelper.getAsBoolean(weather, "snow", true),
                 GsonHelper.getAsBoolean(weather, "freeze", true), weather.has("cycle") ? cycle(key, GsonHelper.getAsJsonObject(weather, "cycle")) : null,
-                sky(key, GsonHelper.getAsJsonObject(json, "sky", new JsonObject())));
+                weather.has("rain") ? rain(key, GsonHelper.getAsJsonObject(weather, "rain")) : null, sky(key, GsonHelper.getAsJsonObject(json, "sky", new JsonObject())));
     }
 
     @Nullable private static DimensionTraitsDef.Sky sky(Identifier key, JsonObject sky) {
@@ -140,18 +149,43 @@ public final class ContentDimensionParser {
     }
 
     private static DimensionTraitsDef.Cycle cycle(Identifier key, JsonObject json) {
-        int[] rain = span(key, json, "rainTicks", 4600);
-        int[] clear = span(key, json, "clearTicks", 3000);
-        float strength = GsonHelper.getAsFloat(json, "maxStrength", 0.6F);
-        if (strength <= 0.0F || strength > 1.0F) {
-            ContentLog.LOGGER.error("Dimension {} gives a weather cycle maxStrength of {}, which is not above 0 and at most 1, using 0.6", key, strength);
-            strength = 0.6F;
-        }
-        return new DimensionTraitsDef.Cycle(rain[0], rain[1], clear[0], clear[1], strength);
+        int[] rain = span(key, json, "rainTicks", CYCLE_LOW, 4600);
+        int[] clear = span(key, json, "clearTicks", CYCLE_LOW, 3000);
+        int[] thunder = json.has("thunderTicks") ? span(key, json, "thunderTicks", THUNDER_LOW, THUNDER_HIGH) : new int[] {0, 0};
+        int[] calm = span(key, json, "calmTicks", CALM_LOW, CALM_HIGH);
+        return new DimensionTraitsDef.Cycle(rain[0], rain[1], clear[0], clear[1], strength(key, json, "maxStrength", 0.6F), thunder[0], thunder[1], calm[0], calm[1],
+                strength(key, json, "thunderStrength", 1.0F));
     }
 
-    private static int[] span(Identifier key, JsonObject json, String member, int high) {
-        int low = CYCLE_LOW;
+    private static float strength(Identifier key, JsonObject json, String member, float fallback) {
+        float strength = GsonHelper.getAsFloat(json, member, fallback);
+        if (strength > 0.0F && strength <= 1.0F) { return strength; }
+        ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is not above 0 and at most 1, using {}", key, member, strength, fallback);
+        return fallback;
+    }
+
+    private static RainDef rain(Identifier key, JsonObject json) {
+        Identifier particle = Identifier.tryParse(GsonHelper.getAsString(json, "particle", RAIN_PARTICLE).trim().toLowerCase(Locale.ROOT));
+        if (particle == null) {
+            ContentLog.LOGGER.error("Dimension {} names a rain particle that is no particle id, using {}", key, RAIN_PARTICLE);
+            particle = Identifier.parse(RAIN_PARTICLE);
+        }
+        Identifier sound = Identifier.tryParse(GsonHelper.getAsString(json, "sound", RAIN_SOUND).trim());
+        if (sound == null) {
+            ContentLog.LOGGER.error("Dimension {} names a rain sound that is no sound id, using {}", key, RAIN_SOUND);
+            sound = Identifier.parse(RAIN_SOUND);
+        }
+        float angle = GsonHelper.getAsFloat(json, "angle", 0.0F);
+        if (angle < 0.0F || angle > MAX_ANGLE) {
+            ContentLog.LOGGER.error("Dimension {} gives a rain angle of {}, which is not from 0 to 180, using 0", key, angle);
+            angle = 0.0F;
+        }
+        return new RainDef(particle, sound, Math.max(0.0F, GsonHelper.getAsFloat(json, "volume", 0.2F)), Math.max(0, GsonHelper.getAsInt(json, "interval", 3)),
+                ContentParser.color(GsonHelper.getAsString(json, "color", WHITE), key + " rain color"),
+                ContentParser.color(GsonHelper.getAsString(json, "snowColor", WHITE), key + " rain snowColor"), angle, GsonHelper.getAsFloat(json, "heading", 0.0F));
+    }
+
+    private static int[] span(Identifier key, JsonObject json, String member, int low, int high) {
         if (!json.has(member)) { return new int[] {low, high}; }
         JsonElement value = json.get(member);
         int min;
