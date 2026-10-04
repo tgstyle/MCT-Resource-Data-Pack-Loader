@@ -136,6 +136,8 @@
         "client.MixinClientLevel",
         "client.MixinLevelRenderer",
         "client.MixinLevelRendererWeather",
+        "client.MixinLevelRendererLook",
+        "client.IPostChain",
         "client.MixinChatScreen",
         "client.MixinCommandsKept",
         "client.MixinClientCommandHandler",

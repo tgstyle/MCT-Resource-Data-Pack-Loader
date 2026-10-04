@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -24,8 +26,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "getCloudColor", at = @At("HEAD"), cancellable = true)
     private void rdpl$cloudColor(float partialTick, CallbackInfoReturnable<Vec3> cir) {
+        int layer = ((ClientLevel) (Object) this).effects() instanceof ContentDimensionEffects effects ? effects.layerColor() : SkyLookDef.UNSET;
         DimensionDef def = rdpl$def();
-        if (def != null && def.cloudColor() >= 0) { cir.setReturnValue(Vec3.fromRGB24(def.cloudColor())); }
+        if (layer >= 0) { cir.setReturnValue(Vec3.fromRGB24(layer)); }
+        else if (def != null && def.cloudColor() >= 0) { cir.setReturnValue(Vec3.fromRGB24(def.cloudColor())); }
     }
 
     @Inject(method = "getStarBrightness", at = @At("HEAD"), cancellable = true)

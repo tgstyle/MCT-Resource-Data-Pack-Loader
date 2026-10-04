@@ -55,13 +55,14 @@ final class ContentSkyRenderer {
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         poseStack.pushPose();
         float clear = 1.0F - level.getRainLevel(partialTick);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.sun(level));
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         float turn = level.getTimeOfDay(partialTick) * 360.0F;
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees(turn));
         if (sky.sunSize() > 0.0F) { quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize()); }
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
         if (sky.bodies() == null) { moon(poseStack.last().pose(), level.getMoonPhase()); }
         poseStack.popPose();
         if (sky.bodies() != null) {
