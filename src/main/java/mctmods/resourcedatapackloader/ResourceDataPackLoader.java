@@ -39,6 +39,7 @@ import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.ContentOrders;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
@@ -410,6 +411,7 @@ import java.util.Set;
                 ContentVillagers.generateTrades();
                 ContentHardness.setup();
                 ContentAnvils.load();
+                if (ContentOrders.load()) { ContentOrders.listen(); }
                 ContentOverrides.reload();
             });
             return;

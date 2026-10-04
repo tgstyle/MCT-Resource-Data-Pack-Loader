@@ -69,6 +69,7 @@ import net.minecraft.world.level.block.BonemealableBlock;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.VegetationBlock;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
@@ -164,6 +165,10 @@ public final class LineCompat {
     public static void makeInvulnerable(Entity entity) { entity.setInvulnerable(true); }
 
     public static void drop(Player player, ItemStack stack) { player.drop(stack, false); }
+
+    public static String signWord(SignBlockEntity sign) { return sign.getFrontText().getMessage(0, false).getString().trim(); }
+
+    public static void signCount(SignBlockEntity sign, int count) { sign.updateText(text -> text.setMessage(1, Component.literal(String.valueOf(count))), true); }
 
     @SuppressWarnings("deprecation") public static boolean passable(BlockState state) { return !state.blocksMotion(); }
 

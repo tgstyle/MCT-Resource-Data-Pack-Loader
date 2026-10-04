@@ -92,6 +92,7 @@ public final class PackManager {
     public static final String OVERRIDES = "overrides";
     public static final String HARDNESS = "hardness";
     public static final String ANVILS = "anvils";
+    public static final String ORDERS = "orders";
     private static final String DISABLED_SUFFIX = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();

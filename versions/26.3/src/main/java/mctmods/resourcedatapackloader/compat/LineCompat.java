@@ -83,6 +83,8 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.VegetationBlock;
+import net.minecraft.world.level.block.entity.SignBlockEntity;
+import net.minecraft.world.level.block.entity.SignTextSlot;
 import net.minecraft.world.level.block.grower.TreeGrower;
 import net.minecraft.world.level.block.sounds.AmbientLeavesBlockSoundPlayer;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -180,6 +182,10 @@ public final class LineCompat {
 
     public static void drop(Player player, ItemStack stack) { player.drop(stack, false, Prediction.SERVER_ONLY); }
 
+    public static String signWord(SignBlockEntity sign) { return sign.getText(SignTextSlot.FRONT).getMessages(false).getFirst().getString().trim(); }
+
+    public static void signCount(SignBlockEntity sign, int count) { sign.updateText(text -> text.asMutable().setLine(1, Component.literal(String.valueOf(count))).asImmutable(), SignTextSlot.FRONT); }
+
     @SuppressWarnings("deprecation") public static boolean passable(BlockState state) {
         Block block = state.getBlock();
         return block == Blocks.COBWEB || block == Blocks.BAMBOO_SAPLING || !state.isSolid();
@@ -199,7 +205,7 @@ public final class LineCompat {
 
     public static Component title(DisplayInfo shown) { return shown.title(); }
 
-    @Nullable public static IoSupplier<InputStream> vanillaResource(VanillaPackResources vanilla, PackType type, Identifier at) { return vanilla.fullResources().getResource(type, at); }
+    @SuppressWarnings("resource") @Nullable public static IoSupplier<InputStream> vanillaResource(VanillaPackResources vanilla, PackType type, Identifier at) { return vanilla.fullResources().getResource(type, at); }
 
     public static Pack.ResourcesSupplier packSupplier(Function<PackLocationInfo, PackResources> open) {
         return new Pack.ResourcesSupplier() {
