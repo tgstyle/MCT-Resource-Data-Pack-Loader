@@ -151,6 +151,28 @@ alles andere, was eine Mod in ihrem data-Ordner hält. Das läuft serverseitig,
 funktioniert also auch auf einem dedizierten Server, und eine Änderung daran
 greift mit /reload.
 
+Dinge lassen sich auch wegnehmen. Eine Datei in recipe_removals löscht Rezepte
+nach Name, Namespace oder Ergebnis, und eine Datei in disabled nimmt Blöcke und
+Items aus dem Spiel, ohne sie abzumelden, die Welten behalten also ihre Ids und
+das Löschen der Datei bringt alles zurück. Eine Loot-Injektion fügt einer
+bereits vorhandenen Beutetabelle einen Pool hinzu, statt sie zu ersetzen, und
+block_drops ergänzt oder ersetzt, was ein Block fallen lässt, der nicht dir
+gehört. Ofenrezepte, Brennzeiten, Kreativ-Tabs und Sound-Ereignisse sind
+ebenfalls eigene Dateien.
+
+Ein Amboss lässt sich neue Arbeit beibringen. Eine Datei in anvils nennt ein
+Item, das Item, das im rechten Slot dazugehört, und die Verzauberungen oder das
+Ergebnis, die der Amboss für die genannten Stufen anbietet. Das Entnehmen kann
+einen Fortschritt einbringen, und das Item kann unbenutzbar bleiben, bis dieser
+Fortschritt erreicht ist.
+
+Eine Datei in hardness setzt Abbauzeit und Explosionswiderstand für eine Gruppe
+von Blöcken, und eine Datei in exposures beschreibt eine Gefahr wie Strahlung:
+Sie trifft Spieler in der Nähe genannter Blöcke, mit genannten Items im
+Inventar oder in genannten Dimensionen, in Stufen, die jeweils Effekte und
+Schaden anwenden, und sie lässt sich von Mobs und Spielern in der Nähe
+einfangen oder fällt mit dem Regen.
+
 
 NEUEN INHALT HINZUFÜGEN
 -----------------------
@@ -194,7 +216,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     fuels            brewing          potions          potion_types
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
-    tags             registry_remap   cards
+    tags             registry_remap   cards            disabled
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 
@@ -222,12 +244,20 @@ Eine Datei entities/<name>.json macht aus einem vorhandenen Wesen ein neues. Sie
 nennt das Wesen, auf dem es aufbaut, und was an ihm anders ist: seinen Namen,
 sein Aussehen, wie viel Leben und Schaden es hat, wie es sich bewegt, wie es
 kämpft und was es fallen lässt. Es ist ein eigenes Wesen mit eigenem Spawn-Ei
-und eigener Beutetabelle, und das Wesen, auf dem es aufbaut, bleibt unberührt.
+und eigener Beutetabelle, und das Wesen, auf dem es aufbaut, bleibt unberührt. Es kann außerdem einen
+eigenen Speicher tragen, Item-Slots, einen Flüssigkeitstank und einen
+Energiepuffer, die Rohre und Kabel erreichen und die ein Spieler öffnet, indem
+er sich duckt und es rechtsklickt.
 
 Eine Datei villages/<name>.json fügt ein Grundstück hinzu, das eine Stadt oder
 ein Dorf aus einer deiner .nbt-Vorlagen bauen kann, und eine Datei
 raids/<name>.json schickt Wellen gegen ein Dorf, wenn ein Spieler ein Omen
 hineinträgt.
+
+Eine Datei cards/<name>.json zeigt eine Karte auf dem Bildschirm, wenn etwas
+geschieht, etwa wenn ein Spieler ein Biom betritt, und eine Datei im selben
+Ordner, benannt nach einer der eigenen Meldungen der Mod, ändert, was diese
+Meldung sagt.
 
 Eine Datei worldintro/<name>.json spielt eine Folge von Seiten ab, wenn jemand
 die Welt betritt, bevor er die Kontrolle übernimmt. Die Texte sind einfache
@@ -255,6 +285,12 @@ ein Dutzend Änderungen an der Konfiguration zu bitten. Es kann auch die
 Oberwelt selbst formen, etwa ihren Meeresspiegel und ob ihre Ozeane aus Lava
 sind.
 
+Eine Dimension kann auch festlegen, wie sie über dir aussieht und sich verhält.
+Nebel, Lichttönung, Abdunkeln von Sonne und Mond, Wolkenschichten und
+Hitzeflimmern werden auf deinem eigenen Bildschirm gezeichnet, und ihr Wetter
+bestimmt, ob es regnet, schneit oder gewittert, wie lange Schauer dauern und
+welche Farbe, Partikel, welchen Ton und welchen Winkel der Regen hat.
+
 worldgen ist mehr als Erz. Ein Eintrag setzt eine Form, von einem kleinen
 Klumpen deines Blocks bis zu einer deiner eigenen .nbt-Vorlagen, und legt fest,
 wie oft, wie hoch und in welchen Biomen sie erscheint.
@@ -269,9 +305,19 @@ WO ES AUFHÖRT
 
 Das beschreibt, was ein Ding ist, nicht was es über die Zeit tut. Alles, was
 eine Blockentität, einen Bildschirm oder Code in jedem Tick braucht, braucht
-weiterhin eine echte Mod, mit einer Ausnahme: Ein Block vom Typ container hält
-ein Inventar mit eigenem Bildschirm. Eine Maschine ist außer Reichweite; ein
-Erz, ein Zaun, ein Essen oder eine Flüssigkeit nicht.
+weiterhin eine echte Mod, mit zwei Ausnahmen: Ein Block vom Typ container hält
+ein Inventar mit eigenem Bildschirm, und eine Wesen-Variante kann einen Speicher
+tragen. Eine Maschine ist außer Reichweite; ein Erz, ein Zaun, ein Essen oder
+eine Flüssigkeit nicht.
+
+
+PACKS AUS ANDEREN VERSIONEN
+---------------------------
+
+Ein Pack, das für die Linie 1.12.2 dieser Mod gemacht wurde, lädt hier, wie es
+ist. Eine Zip wird einmal in sich selbst in einen versions-Ordner für diese
+Version umgewandelt, und die 1.12.2-Dateien bleiben, wie sie waren, dieselbe Zip
+funktioniert also weiter auf jeder Version.
 
 
 ÄNDERUNGEN SEHEN
@@ -289,6 +335,11 @@ ein Pack, um es zu sehen.
 
 /rdpl which minecraft:textures/block/stone.png zeigt, welches Pack eine Datei
 liefert und welche Packs darunter verdeckt sind.
+
+/rdpl config unused listet Option-Dateien in rdploader/config, die kein
+installiertes Pack mehr definiert, und /rdpl config prune löscht sie. /rdpl
+pixelmap zeigt, was eine Pixelmap ergeben hat, und /rdpl biome list und here
+informieren über Biome.
 
 Das funktioniert ohne Operator zu sein, denn es liest nur Dateien auf deinem
 eigenen Rechner. Auf einem dedizierten Server liest /rdplserver reload die Kopie
