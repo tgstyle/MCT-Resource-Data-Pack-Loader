@@ -260,16 +260,8 @@ public final class ContentScoring {
             ContentLog.LOGGER.error("The round {} awards to {}, which is not an objective this pack keeps, so no round win is recorded", def.name, def.awardsTo);
             return;
         }
-        Score best = winner == null ? null : board.getOrCreateScore(winner, round);
-        boolean tied = false;
-        for (Score one : winner == null ? board.getSortedScores(round) : new ArrayList<Score>()) {
-            if (best == null || one.getScorePoints() > best.getScorePoints()) {
-                best = one;
-                tied = false;
-            }
-            else if (one.getScorePoints() == best.getScorePoints()) { tied = true; }
-        }
-        if (best == null || tied) {
+        Score best = winner == null ? ContentScoringTie.best(server, def, board.getSortedScores(round)) : board.getOrCreateScore(winner, round);
+        if (best == null) {
             ContentLog.LOGGER.info("The round ended level, so no round win is recorded");
             return;
         }

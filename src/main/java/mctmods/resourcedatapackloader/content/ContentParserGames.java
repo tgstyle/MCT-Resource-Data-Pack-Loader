@@ -17,10 +17,12 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.BossInfo;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentParserGames {
@@ -85,7 +87,8 @@ public final class ContentParserGames {
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "joinsSays", "Round is in progress, you can join after it ends"),
                 JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false),
                 JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "outSays", "You are out until the round ends"),
-                roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())));
+                roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())),
+                JsonUtils.getBoolean(json, "tiebreak", false));
     }
 
     private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
@@ -329,5 +332,43 @@ public final class ContentParserGames {
             }
         }
         return box;
+    }
+
+    @Nullable public static DiceDef diceFile(ResourceLocation key, String contents) {
+        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        if (json == null) { return null; }
+        Map<String, String> says = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "says", new JsonObject()).entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) { says.put(entry.getKey().trim(), entry.getValue().getAsString()); }
+            else { ContentLog.LOGGER.error("Dice file {} gives the wording '{}' something that is not text, so it is left out", key, entry.getKey()); }
+        }
+        Map<String, Map<String, Integer>> dice = new LinkedHashMap<>();
+        for (Map.Entry<String, JsonElement> die : JsonUtils.getJsonObject(json, "dice", new JsonObject()).entrySet()) {
+            if (!die.getValue().isJsonObject()) {
+                ContentLog.LOGGER.error("Dice file {} gives the die '{}' something that is not a set of faces and weights, so it is left out", key, die.getKey());
+                continue;
+            }
+            Map<String, Integer> faces = new LinkedHashMap<>();
+            for (Map.Entry<String, JsonElement> face : die.getValue().getAsJsonObject().entrySet()) {
+                int weight = face.getValue().isJsonPrimitive() && face.getValue().getAsJsonPrimitive().isNumber() ? face.getValue().getAsInt() : 0;
+                if (weight < 1) { ContentLog.LOGGER.error("Dice file {} weighs the face '{}' of '{}' at something that is not a whole number of 1 or more, so the face is left out", key, face.getKey(), die.getKey()); }
+                else { faces.put(face.getKey(), weight); }
+            }
+            if (faces.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the die '{}' no faces, so it is left out", key, die.getKey()); }
+            else { dice.put(die.getKey().trim(), faces); }
+        }
+        Map<String, List<String>> decks = new LinkedHashMap<>();
+        JsonObject held = JsonUtils.getJsonObject(json, "decks", new JsonObject());
+        Set<String> fixed = new HashSet<>();
+        for (Map.Entry<String, JsonElement> deck : held.entrySet()) {
+            boolean object = deck.getValue().isJsonObject();
+            List<String> cards = object ? names(deck.getValue().getAsJsonObject(), "cards") : names(held, deck.getKey());
+            if (cards.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the deck '{}' no cards, so it is left out", key, deck.getKey()); }
+            else {
+                decks.put(deck.getKey().trim(), cards);
+                if (object && !JsonUtils.getBoolean(deck.getValue().getAsJsonObject(), "reshuffle", true)) { fixed.add(deck.getKey().trim()); }
+            }
+        }
+        return new DiceDef(JsonUtils.getString(json, "audience", "").trim(), says, dice, decks, fixed);
     }
 }

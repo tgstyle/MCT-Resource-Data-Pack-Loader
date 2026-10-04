@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.item;
 
+import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -7,10 +8,16 @@ import mctmods.resourcedatapackloader.content.def.ItemVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentItem;
 
 import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.EnumActionResult;
+import net.minecraft.util.EnumHand;
 import net.minecraft.util.NonNullList;
+import net.minecraft.world.World;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -49,4 +56,11 @@ import javax.annotation.Nullable;
     }
 
     @Override public int getMetadata(int damage) { return damage; }
+
+    @Override @Nonnull public ActionResult<ItemStack> onItemRightClick(@Nonnull World world, @Nonnull EntityPlayer player, @Nonnull EnumHand hand) {
+        if (def.rolls.isEmpty()) { return super.onItemRightClick(world, player, hand); }
+        if (!world.isRemote && player instanceof EntityPlayerMP) { ContentDice.byItem((EntityPlayerMP) player, def.rolls); }
+        if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
+        return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
+    }
 }

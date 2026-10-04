@@ -59,8 +59,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
-    private static final int OPERATOR = 3;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card");
+    static final int OPERATOR = 3;
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "game");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
@@ -92,18 +92,18 @@ public class ServerCommands extends CommandBase {
 
     private static int clamp(int level) { return MathHelper.clamp(level, 0, OPERATOR + 1); }
 
-    private static int placeLevel(String place, int fallback) {
-        for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
-            String[] parts = Settings.pair(entry, "gotoPlaceLevels", "name=level");
+    static int listedLevel(String key, String[] global, String name, int fallback) {
+        for (String entry : ContentControl.list(ContentControl.COMMANDS, key, global)) {
+            String[] parts = Settings.pair(entry, key, "name=level");
             if (parts == null) { continue; }
-            if (!parts[0].equalsIgnoreCase(place)) { continue; }
-            try { return clamp(Integer.parseInt(parts[1])); }
-            catch (NumberFormatException ex) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, ignoring it", entry); }
+            if (!parts[0].trim().equalsIgnoreCase(name)) { continue; }
+            try { return clamp(Integer.parseInt(parts[1].trim())); }
+            catch (NumberFormatException ex) { ContentLog.LOGGER.error("{} entry '{}' has no number after the =, ignoring it", key, entry); }
         }
         return fallback;
     }
 
-    private static int neededFor(String place, String key, int fallback) { return placeLevel(place, level(key, fallback)); }
+    private static int neededFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels, place, level(key, fallback)); }
 
     private static int lowestGotoLevel() {
         int lowest = OPERATOR;
@@ -132,6 +132,7 @@ public class ServerCommands extends CommandBase {
         if (ContentTeams.any()) { open.add("team"); }
         if (mctmods.resourcedatapackloader.content.ContentScoring.any()) { open.add("round"); }
         if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
+        if (sender.canUseCommand(GameCommand.lowest(), getName())) { open.add("game"); }
         return open;
     }
 
@@ -141,6 +142,7 @@ public class ServerCommands extends CommandBase {
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
+        if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, mctmods.resourcedatapackloader.content.card.CardRules.keys()); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
@@ -179,7 +181,7 @@ public class ServerCommands extends CommandBase {
             else { throw new WrongUsageException(getUsage(sender)); }
         }
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
-        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
+        else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
         else if (args.length == 2 && "which".equals(args[0])) { which(sender, args[1]); }
@@ -206,6 +208,7 @@ public class ServerCommands extends CommandBase {
         else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
         else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
         else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
+        else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
@@ -380,6 +383,7 @@ public class ServerCommands extends CommandBase {
         server.reload();
         ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
+        mctmods.resourcedatapackloader.content.ContentDice.load();
         mctmods.resourcedatapackloader.content.card.CardRules.load();
         for (net.minecraft.world.WorldServer world : server.worlds) {
             ContentTeams.field(world);

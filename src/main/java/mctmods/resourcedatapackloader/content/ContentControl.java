@@ -55,7 +55,7 @@ public final class ContentControl {
             "recipeMatch", "recipeWhitelist", "slowDistance", "slowDistantEntities", "slowRate", "slowRecheck",
             "slowedKinds", "spawnChunkRadii", "spawnChunkRadius", "structureBiomes", "structureBiomesAreBlacklist",
             "structureMinDistanceFromSpawn", "structureSeparation", "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation",
-            "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels",
+            "gotoLevel", "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "gameLevels",
             "structureSpawns", "surfaceDayMonsterRate", "monsterSpawnLight", "skyAnimals", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice", "threatSays", "deepStone", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "noiseCaves", "deepRavines", "oreVeins",
             "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",

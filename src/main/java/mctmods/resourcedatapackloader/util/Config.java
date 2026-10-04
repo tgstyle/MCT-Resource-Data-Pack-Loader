@@ -476,6 +476,12 @@ import mctmods.resourcedatapackloader.pack.PackManager;
                 "A pack can then open the way to its own ruins while every vanilla structure stays shut, or the other",
                 "way about. A name nothing has registered is ignored with a note in the log [Default=empty]"})
         public String[] gotoPlaceLevels = new String[0];
+        @net.minecraftforge.common.config.Config.Comment({
+                "Permission levels for the parts of /rdplserver game, as name=level entries, one per line. The name is the",
+                "part as typed after game: coin, die, dice, advantage, disadvantage, pick, deck draw, deck shuffle, deck left,",
+                "teamroll, tiebreak or last. Same scale: 3 an operator, 2 also a command block, 0 anybody. A part not listed",
+                "keeps its own level: 2 for deck shuffle and tiebreak, 0 for every other [Default=empty]"})
+        public String[] gameLevels = new String[0];
     }
 
     public static class Tweaks {

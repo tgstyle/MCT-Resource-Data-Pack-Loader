@@ -176,6 +176,7 @@ public class ResourceDataPackLoader {
         ContentGameRules.load();
         mctmods.resourcedatapackloader.content.ContentTeams.load();
         mctmods.resourcedatapackloader.content.ContentScoring.load();
+        mctmods.resourcedatapackloader.content.ContentDice.load();
         mctmods.resourcedatapackloader.content.ContentRaids.load();
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);

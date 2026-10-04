@@ -290,7 +290,8 @@ public final class ContentParser {
                 JsonUtils.getFloat(json, "attackSpeed", Float.NaN),
                 Math.max(0, JsonUtils.getInt(json, "cooldown", 0)),
                 ContentParserContainers.holds(key, json),
-                JsonUtils.getString(json, "rocket", ""));
+                JsonUtils.getString(json, "rocket", ""),
+                JsonUtils.getString(json, "rolls", "").trim());
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {

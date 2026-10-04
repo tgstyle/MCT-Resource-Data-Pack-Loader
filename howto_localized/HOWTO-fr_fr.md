@@ -88,6 +88,7 @@ Douze exemples fonctionnels. Déposez-en un directement dans `rdploader` et obse
 - [Score](#score)
 - [Raids](#raids)
 - [Cartes](#cartes)
+- [Dés et paquets](#dés-et-paquets)
 
 **Contrôle**
 - [La couche de contrôle](#la-couche-de-contrôle)
@@ -178,6 +179,7 @@ Tous les chemins de ce guide sont écrits à partir de `assets/`, si bien que `<
 | `<namespace>/block_drops/*.json` | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs) |
 | `<namespace>/anvils/*.json` | Enchantements qu'une enclume applique à un objet nommé, un progrès qu'elle fait obtenir, et un verrou jusque-là. [Travail à l'enclume](#travail-à-lenclume) |
 | `<namespace>/cards/*.json` | Cartes affichées à l'écran sur un déclencheur, et les messages que ce mod émet lui-même. [Cartes](#cartes) |
+| `<namespace>/dice/*.json` | Dés du pack aux faces pondérées, paquets de cartes, qui entend un lancer, et la formulation des résultats. [Dés et paquets](#dés-et-paquets) |
 | `<namespace>/player_loot/*.json` | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs) |
 | `<namespace>/advancements/*.json` | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger) |
 | `<namespace>/functions/*.mcfunction` | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger) |
@@ -1403,6 +1405,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "useDuration": 32,
   "attackSpeed": -2.4,
   "cooldown": 40,
+  "rolls": "d6",
   "container": "minecraft:glass_bottle",
   "crop": "mypack:ruby_crop",
   "soil": "minecraft:farmland",
@@ -1460,11 +1463,12 @@ Un `rocket` nomme avec `rocket` la variante d'entité qu'il place. Il a besoin d
 | `alwaysEdible` | food | booléen | `false` | Peut être mangé avec une barre de faim pleine |
 | `useDuration` | non | entier, ticks | `32` | Durée de l'utilisation |
 | `attackSpeed` | non | décimal | adapté à la classe d'outil | Pour `tool`, l'attribut de vitesse d'attaque, comme `-2.4` pour une épée |
-| `cooldown` | non | entier, ticks | `0` | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé |
+| `cooldown` | non | entier, ticks | `0` | Pour `food`, `drink` et `potion`, durée pendant laquelle l'objet refuse d'être réutilisé après avoir été consommé ; pour un objet avec `rolls`, le délai entre deux lancers |
 | `container` | drink | nom d'objet | aucun | Ce qui reste, comme une bouteille |
 | `crop` | seed | nom de bloc | aucun | La culture qu'il plante |
 | `soil` | seed | nom de bloc | `minecraft:farmland` | Sur quoi il peut être planté |
 | `rocket` | rocket | `namespace:name` | aucun | La variante d'entité qu'il place |
+| `rolls` | non | `coin`, `d6`, `2d6+1`, un dé ou un paquet | aucun | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets) |
 | `requires` | non | liste d'identifiants de mods ou de namespaces de packs | aucun | Le fichier est ignoré sauf si tous sont présents |
 
 ### Clés de variantes d'objet
@@ -5488,6 +5492,7 @@ Un objectif est un véritable objectif du tableau des scores du jeu : `/scoreboa
   "criterion": "dummy",
   "display": "sidebar",
   "teamTotals": true,
+  "tiebreak": true,
   "points": {
     "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
     "death": -1
@@ -5520,6 +5525,7 @@ Un objectif est un véritable objectif du tableau des scores du jeu : `/scoreboa
 | `individuals` | booléen | `false` | Les points vont aussi sur une ligne propre au membre |
 | `carries` | booléen | `false` | L'objectif survit à une réinitialisation de la carte au lieu d'être effacé avec elle. Le décompte d'un match, avec les manches gagnées, en est un |
 | `awardsTo` | texte | vide | Un autre objectif auquel celui-ci donne un point à sa fin, au camp qui menait. Une égalité n'accorde rien |
+| `tiebreak` | booléen | `false` | Une manche qui finit à égalité en tête tire au sort l'un des camps à égalité avec le hasard du monde, consigne le tirage et l'attribue comme d'habitude |
 
 ### Points
 
@@ -5864,6 +5870,62 @@ Les titres et lignes de cartes, les messages Says et les notes d'accueil et de r
 | `rdpl:pregen_running` | La ligne de progression qu'un joueur voit en se connectant pendant la prégénération | `pregenRunningSays` |
 
 `welcomeSays` n'est pas une règle et garde son logo ; une règle `first_join` ou `dimension_enter` s'y ajoute. Les décomptes et les totaux d'une manche dans la barre d'action restent tels que leurs réglages les font.
+
+## Dés et paquets
+
+*modes de jeu*
+
+`<namespace>/dice/*.json`
+
+Le nom du fichier est à votre choix, et plusieurs fichiers s'additionnent. Un fichier nomme des dés dont les faces portent des poids, des paquets de cartes où l'on pioche sans remettre, qui entend un lancer par défaut, et la formulation des résultats. Les lancers se font avec [`/rdplserver game`](#jeux) et avec tout objet qui a [`rolls`](#clés-de-fichier-dobjet).
+
+```json
+{
+  "audience": "all",
+  "dice": {
+    "fate": { "plus": 1, "blank": 2, "minus": 1 }
+  },
+  "decks": {
+    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+  },
+  "says": {
+    "coin": "{player} tosses the old coin: {result}"
+  }
+}
+```
+
+| Clé | Type | Par défaut | Ce qu'elle fait |
+| --- | --- | --- | --- |
+| `audience` | texte | `all` | Qui entend un lancer qui ne nomme pas le sien : `self`, `team`, `all`, `radius <blocs>` ou `silent`. Le premier pack qui la définit l'emporte ; un suivant est consigné |
+| `dice` | objet | vide | Nom du dé vers un objet de face et de poids. Une face de poids 2 sort deux fois plus souvent qu'une de poids 1. Les poids sont des entiers à partir de 1 |
+| `decks` | objet | vide | Nom du paquet vers sa liste de cartes, ou vers un objet `{ "cards": [...], "reshuffle": false }`. `reshuffle` vaut `true` sauf indication : piocher dans un paquet vide remélange toutes les cartes puis pioche. Avec `false` le paquet reste vide jusqu'à `game deck shuffle` |
+| `says` | objet | vide | Clé de formulation vers un texte, à la place de la formulation du mod dans toutes les langues. Les clés et leurs champs sont plus bas |
+
+Un nom de dé ou de paquet appartient au premier pack qui le charge. Un autre pack qui reprend ce nom, ou le nom `coin`, est écarté avec une erreur dans le journal. Un dé du pack se lance avec `game die <name>` et montre sa face ; enregistré comme score, il compte comme la place de la face dans le fichier, à partir de 1.
+
+Un paquet est une pile qui s'épuise. `game deck draw <name>` pioche une carte au hasard dans ce qui reste, et rien ne revient avant que le paquet vide se remélange à la pioche suivante ou que `game deck shuffle <name>` remette toutes les cartes. La pile est enregistrée avec le monde, donc un redémarrage ne la mélange pas.
+
+Chaque lancer utilise le hasard propre au monde et s'écrit dans le journal avec qui l'a fait, ce qui a été lancé et le résultat. `game last` montre les plus récents. Les résultats partent en lignes de chat ordinaires construites sur le serveur, donc un joueur sans le mod les lit aussi. La notation des dés se lit comme le nombre, `d`, les faces et un modificateur facultatif : `3d8-2` fait trois dés à huit faces additionnés, moins 2, et `d20` un dé à vingt faces. Le chat et le journal écrivent le lancer en toutes lettres, comme « Boss lance 3 dés à huit faces, moins 2 : [2, 6, 7] = 13 », et `{dice}` contient cette formulation.
+
+| Clé de formulation | Champs |
+| --- | --- |
+| `coin`, `pickplayer`, `pickteam` | `{player}`, `{result}` |
+| `heads`, `tails`, `lastnone`, `nobody`, `notallowed`, `usage` | aucun |
+| `die` | `{player}`, `{dice}`, `{sides}`, `{result}` |
+| `packdie` | `{player}`, `{die}`, `{result}` |
+| `dice` | `{player}`, `{dice}`, `{rolls}`, `{result}` |
+| `advantage`, `disadvantage` | `{player}`, `{dice}`, `{first}`, `{second}`, `{result}` |
+| `pickmember` | `{player}`, `{team}`, `{result}` |
+| `draw`, `reshuffled` | `{player}`, `{deck}`, `{result}`, `{left}` |
+| `shuffle` | `{player}`, `{deck}`, `{left}` |
+| `left`, `empty`, `nodeck` | `{deck}`, et `{left}` pour `left` |
+| `teamroll` | `{member}`, `{dice}`, `{result}` |
+| `teamrollwin` | `{result}`, `{score}` |
+| `tiebreak` | `{objective}`, `{sides}`, `{result}` |
+| `notie`, `noobjective` | `{objective}` |
+| `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` dans l'ordre |
+
+La formulation propre du mod se trouve dans ses fichiers de langue sous `rdpl.game.<key>`, donc un pack de ressources peut aussi la changer langue par langue.
 
 ---
 
@@ -7537,11 +7599,11 @@ Chaque dossier, avec son chemin complet et un lien vers la section qui le décri
 | `/rdpl round start` | aucun | Lance la manche, lorsque le pack la retient dans un hall (`opens.by`). Pour le chef d'un camp, ou un opérateur |
 | `/rdpl round reset` | aucun | Réinitialise la manche en cours, ou soumet cette réinitialisation à un vote, selon le `reset` du pack. Pour le chef d'un camp, un joueur d'un camp que le pack autorise à lancer un vote, ou un opérateur |
 | `/rdpl round vote yes`, `no` | aucun | Voter dans un vote en cours pour réinitialiser la manche. Pour un joueur dans un camp |
-| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` | celui du serveur | Liées. Transmises mot pour mot à `/rdplserver`, qui décide ; voir le tableau ci-dessous |
+| `/rdpl oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein`, `game` | celui du serveur | Liées. Transmises mot pour mot à `/rdplserver`, qui décide ; voir le tableau ci-dessous |
 
-**Quelles sous-commandes serveur sont liées, et pourquoi les autres ne le sont pas.** Une sous-commande serveur reçoit une transmission exactement lorsque le client n'a aucun sens propre pour ce nom : `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` et `team` ne peuvent signifier que ce que veut le serveur, donc `/rdpl` les lui confie. Les six que le client possède aussi, `reload`, `list`, `which`, `unused`, `config` et `biome`, gardent leur propre sens, celui de vos packs et de votre client, et les transmettre le leur ôterait. `biome find` est de toute façon la seule partie d'un nom partagé qui revient au serveur, puisque lui seul connaît la seed du monde ; cette seule forme est donc transmise, tandis que `biome list` et `biome here` restent chez vous. Cela règle aussi la question des permissions : c'est la vérification d'opérateur du serveur qui tranche, et un client ne peut ni la contourner ni se voir donner une réponse fabriquée.
+**Quelles sous-commandes serveur sont liées, et pourquoi les autres ne le sont pas.** Une sous-commande serveur reçoit une transmission exactement lorsque le client n'a aucun sens propre pour ce nom : `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein`, `team` et `game` ne peuvent signifier que ce que veut le serveur, donc `/rdpl` les lui confie. Les six que le client possède aussi, `reload`, `list`, `which`, `unused`, `config` et `biome`, gardent leur propre sens, celui de vos packs et de votre client, et les transmettre le leur ôterait. `biome find` est de toute façon la seule partie d'un nom partagé qui revient au serveur, puisque lui seul connaît la seed du monde ; cette seule forme est donc transmise, tandis que `biome list` et `biome here` restent chez vous. Cela règle aussi la question des permissions : c'est la vérification d'opérateur du serveur qui tranche, et un client ne peut ni la contourner ni se voir donner une réponse fabriquée.
 
-**`/rdpl` atteint aussi la commande serveur.** Tout ce que `/rdpl` ne traite pas lui-même, `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein` et `team`, est transmis tel quel à `/rdplserver` et proposé dans la complétion par tabulation, de sorte qu'une seule commande suffit à taper en solo. Elle est transmise mot pour mot et le serveur décide comme toujours, permissions comprises : taper le nom plus court n'ouvre donc rien. Les sous-commandes que les deux possèdent, `reload`, `list`, `which`, `unused`, `biome` et `config`, restent à `/rdpl` et désignent les packs propres au client. `biome find` est la seule exception au sein d'un nom partagé : seul le serveur connaît la seed du monde, donc cette forme est transmise tandis que `biome list` et `biome here` répondent depuis votre propre client.
+**`/rdpl` atteint aussi la commande serveur.** Tout ce que `/rdpl` ne traite pas lui-même, `oregen`, `generators`, `gate`, `dimensions`, `pregen`, `intro`, `goto`, `vein`, `team` et `game`, est transmis tel quel à `/rdplserver` et proposé dans la complétion par tabulation, de sorte qu'une seule commande suffit à taper en solo. Elle est transmise mot pour mot et le serveur décide comme toujours, permissions comprises : taper le nom plus court n'ouvre donc rien. Les sous-commandes que les deux possèdent, `reload`, `list`, `which`, `unused`, `biome` et `config`, restent à `/rdpl` et désignent les packs propres au client. `biome find` est la seule exception au sein d'un nom partagé : seul le serveur connaît la seed du monde, donc cette forme est transmise tandis que `biome list` et `biome here` répondent depuis votre propre client.
 
 **Édition au quotidien :** `/rdpl reload textures` est bien plus rapide que F3+T dans un gros modpack. F3+T fonctionne toujours et recharge tout. Utilisez `/rdpl reload` seul lorsque vous *ajoutez* ou *supprimez* un fichier, car cela change le contenu du dossier.
 
@@ -7625,11 +7687,33 @@ Sur un serveur dédié, `/rdplserver` fait la même chose pour la copie du dossi
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Vous emmène plus loin vers la plus proche où l'on ne vous a pas encore conduit durant cette session, qu'elle ait déjà été visitée ou non |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Vous emmène à celle d'avant, en revenant en arrière parmi les lieux où cette session vous a envoyé |
 
+#### Jeux
+
+*commandes serveur*
+
+| Commande | Niveau | Ce qu'elle fait |
+| --- | --- | --- |
+| `/rdplserver game coin` | 0 | Lancer une pièce. Face compte pour 1, pile pour 0 |
+| `/rdplserver game die <sides>` | 0 | Lancer un dé de 2 à 1000 faces |
+| `/rdplserver game die <name>` | 0 | Lancer un [dé du pack](#dés-et-paquets) selon ses poids |
+| `/rdplserver game dice <roll>` | 0 | Lancer jusqu'à 100 dés et les additionner, comme `2d6`, `d20` ou `3d8-2`. Chaque dé est affiché |
+| `/rdplserver game advantage [roll]`, `disadvantage [roll]` | 0 | Lancer deux fois et garder le total le plus haut, ou le plus bas. Sans précision, le lancer est `1d20` |
+| `/rdplserver game pick player` | 0 | Tirer au sort un joueur connecté |
+| `/rdplserver game pick team [team]` | 0 | Tirer au sort une équipe du tableau des scores, ou un membre connecté de l'équipe nommée |
+| `/rdplserver game deck draw <name>` | 0 | Piocher une carte dans ce qui reste d'un paquet du pack |
+| `/rdplserver game deck left <name>` | 0 | Combien de cartes il reste au paquet |
+| `/rdplserver game deck shuffle <name>` | 2 | Remettre toutes les cartes |
+| `/rdplserver game teamroll [roll]` | 0 | Chacun dans le camp de l'expéditeur lance et le plus haut gagne, une égalité tirée au sort. Sans équipes, l'expéditeur lance seul |
+| `/rdplserver game tiebreak [objective]` | 2 | Tirer au sort l'un des camps à égalité en tête d'un objectif : celui nommé, sinon le premier objectif de score avec `tiebreak`, sinon le premier |
+| `/rdplserver game last [count]` | 0 | Les derniers lancers, du plus récent au plus ancien : 10, ou le nombre donné jusqu'à 50 |
+
+Tout lancer peut finir par `store <objective>`, qui écrit son nombre dans le score de l'expéditeur pour cet objectif, et par `audience <qui>`, qui remplace la valeur par défaut du pack : `self`, `team` (le camp de l'expéditeur, ou l'expéditeur seul sans équipes), `all`, `radius <blocs>` (les joueurs du même monde à cette distance) ou `silent`, qui ne fait qu'enregistrer. `/rdpl game` lui est transmis.
+
 ### Qui peut utiliser goto
 
 *commandes*
 
-**Ouvrir `goto`.** Chaque partie de `/rdplserver` demande un opérateur, niveau 3, sauf `intro` et `team`, qui sont des commandes propres au joueur et toujours de niveau 0, et `card`, de niveau 2 pour qu'un bloc de commande puisse afficher une carte. Les trois formes de `goto` sont la seule chose qu'un pack décide : chacune porte un niveau de permission qui lui est propre, qu'un pack ou la config peut abaisser, indépendamment des deux autres et du reste de la commande.
+**Ouvrir `goto`.** Chaque partie de `/rdplserver` demande un opérateur, niveau 3, sauf `intro` et `team`, qui sont des commandes propres au joueur et toujours de niveau 0, et `card`, de niveau 2 pour qu'un bloc de commande puisse afficher une carte, et `game`, dont les parties ont [leurs propres niveaux](#qui-peut-utiliser-game). Les trois formes de `goto` sont la seule chose qu'un pack décide : chacune porte un niveau de permission qui lui est propre, qu'un pack ou la config peut abaisser, indépendamment des deux autres et du reste de la commande.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7662,6 +7746,28 @@ Une entrée fixe un seul niveau pour les trois formes de ce lieu. Un lieu non li
 La complétion par tabulation suit les mêmes règles : après `goto`, un émetteur ne se voit donc proposer que les lieux où il peut réellement être conduit.
 
 Ceux-ci se trouvent dans le groupe `commands`, donc `control.commands` dans la config décide si un pack peut seulement les définir, et `off` y maintient tout au niveau opérateur quoi que demande un pack.
+
+### Qui peut utiliser game
+
+*commandes*
+
+Chaque partie de `game` a son propre niveau : 0 pour chaque lancer, et 2 pour `deck shuffle` et `tiebreak`. `gameLevels` change n'importe lequel d'entre eux, sous forme d'entrées `partie=niveau`, où la partie est ce qui suit `game`.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gameLevels": ["coin=0", "deck draw=0", "deck shuffle=3", "tiebreak=4"]
+  }
+}
+```
+
+| Réglage | Ce qu'il régit |
+| --- | --- |
+| `gameLevels` | Une partie de `game` : `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak` ou `last` |
+
+L'échelle est celle de `goto`, et `4` ferme une partie à tout le monde. La complétion par tabulation ne propose que les parties qu'un expéditeur peut lancer. `gameLevels` se trouve dans le groupe `commands` avec les réglages de `goto`.
 
 ## Bon à savoir
 

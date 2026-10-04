@@ -69,6 +69,7 @@ public final class PackManager {
     public static final String TEAMS = "teams";
     public static final String SCORING = "scoring";
     public static final String RAIDS = "raids";
+    public static final String DICE = "dice";
     public static final String FUELS = "fuels";
     public static final String OREDICT = "oredict";
     public static final String SOUNDS = "sounds";
