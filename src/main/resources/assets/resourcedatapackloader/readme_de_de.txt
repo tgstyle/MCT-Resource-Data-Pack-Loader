@@ -217,6 +217,28 @@ sich also beliebig oft umfärben, ohne eine einzige Bilddatei. Was sie zeichnen,
 liegt hier in pixelmap-cache und wird neu gezeichnet, sobald sich eine Map oder
 ihre Vorlage ändert.
 
+Dinge lassen sich auch wegnehmen. Eine Datei in recipe_removals löscht Rezepte
+nach Name, Namespace oder Ergebnis, und eine Datei in disabled nimmt Blöcke und
+Items aus dem Spiel, ohne sie abzumelden, die Welten behalten also ihre Ids und
+das Löschen der Datei bringt alles zurück. Eine Loot-Injektion fügt einer
+bereits vorhandenen Beutetabelle einen Pool hinzu, statt sie zu ersetzen, und
+block_drops ergänzt oder ersetzt, was ein Block fallen lässt, der nicht dir
+gehört. Ofenrezepte, Brennzeiten, Ore-Dictionary-Namen, Kreativ-Tabs und
+Sound-Ereignisse sind ebenfalls eigene Dateien.
+
+Ein Amboss lässt sich neue Arbeit beibringen. Eine Datei in anvils nennt ein
+Item, das Item, das im rechten Slot dazugehört, und die Verzauberungen oder das
+Ergebnis, die der Amboss für die genannten Stufen anbietet. Das Entnehmen kann
+einen Fortschritt einbringen, und das Item kann unbenutzbar bleiben, bis dieser
+Fortschritt erreicht ist.
+
+Eine Datei in hardness setzt Abbauzeit und Explosionswiderstand für eine Gruppe
+von Blöcken, und eine Datei in exposures beschreibt eine Gefahr wie Strahlung:
+Sie trifft Spieler in der Nähe genannter Blöcke, mit genannten Items im
+Inventar oder in genannten Dimensionen, in Stufen, die jeweils Effekte und
+Schaden anwenden, und sie lässt sich von Mobs und Spielern in der Nähe
+einfangen oder fällt mit dem Regen.
+
 CraftTweaker und GroovyScript funktionieren genau wie bisher. Sie laufen nach
 dieser Mod, alles, was deine Skripte entfernen oder ändern, gewinnt also über
 eine Datei hier.
@@ -269,19 +291,20 @@ Jedes davon ist ein Ordner unter assets/<yourpack>:
     hardness         blastplaster     player_loot      overrides
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
-    texts            anvils           cards
+    texts            anvils           cards            disabled
+    celestial        raids
 
 Blöcke gibt es in diesen Formen, gesetzt über das Feld "type":
 
     basic   ore     falling   slab    stairs   fence    door
     pane    wall    ladder    torch   crop     flower   cane
     log     leaves  sapling   vine    portal   trapdoor fence_gate
-    banner  container
+    banner  bell    container
 
 und Items in diesen:
 
     basic   food    drink     potion  tool     armor    seed
-    potion_bottle
+    potion_bottle   rocket
 
 Eine Trankart erscheint immer auf dem Vanilla-Trank, dem Wurftrank, dem
 Verweiltrank und dem Spitzpfeil, die in den Tabs Brauen und Kampf liegen. Der
@@ -305,7 +328,11 @@ und was es in Ruhe lässt, und ob es weiterhin den Spawn-Regeln des Entitys
 folgt, aus dem es gebaut wurde. Es ist ein Entity für sich, mit eigenem Spawn-Ei
 und eigener Beutetabelle, und das, aus dem es gebaut wurde, bleibt unberührt.
 Ein Dorfgrundstück lässt sich anweisen, statt eines Dorfbewohners eines davon
-zu beherbergen.
+zu beherbergen. Es kann außerdem einen eigenen Speicher tragen, Item-Slots, einen
+Flüssigkeitstank und einen Energiepuffer, die Rohre und Kabel erreichen und die
+ein Spieler öffnet, indem er sich duckt und es rechtsklickt, und eine
+Galacticraft-Rakete lässt sich auf dieselbe Weise abwandeln und von einem Item
+vom Typ rocket auf einer Startrampe platzieren.
 
 Eine Datei villages/<name>.json fügt ein Grundstück hinzu, das Dörfer bauen
 können, entweder eine Farm, die du beschreibst, oder eine deiner .nbt-Vorlagen.
@@ -324,6 +351,16 @@ Erscheinen beitreten, und eine Datei scoring/<name>.json ist ein Ziel, das
 Kills und Tode diesen Seiten anrechnet, eine Runde bei einem Stand oder nach
 einer Zeit beendet, den Stand als Chat oder als Karte zeigt und die Karte für
 die nächste Runde zurücksetzen kann.
+
+Eine Datei raids/<name>.json schickt Wellen gegen ein Dorf, wenn ein Spieler mit
+dem Effekt omen hineingeht. Eine Bossleiste zeigt, wie viele Plünderer übrig
+sind, die Dorfbewohner flüchten nach drinnen, Plünderer brechen Holztüren auf,
+und jede Glocke im Dorf läutet, wenn eine Welle eintrifft.
+
+Eine Datei cards/<name>.json zeigt eine Karte auf dem Bildschirm, wenn etwas
+geschieht, etwa wenn ein Spieler ein Biom betritt, und eine Datei im selben
+Ordner, benannt nach einer der eigenen Meldungen der Mod, ändert, was diese
+Meldung sagt.
 
 GANZE WELTEN
 ------------
@@ -344,6 +381,17 @@ Dutzend Config-Änderungen zu verlangen. Jede Gruppe, die sie setzen kann,
 antwortet auch der Kategorie control in der Config, die entscheidet, ob das Pack
 entscheidet, die Config entscheidet oder die Gruppe ganz aus ist und kein Pack
 sie einschalten kann.
+
+Eine Dimension kann auch festlegen, wie sie über dir aussieht und sich verhält.
+Nebel, Lichttönung, Abdunkeln von Sonne und Mond, Wolkenschichten und
+Hitzeflimmern werden auf deinem eigenen Bildschirm gezeichnet, und ihr Wetter
+bestimmt, ob es regnet, schneit oder gewittert, wie lange Schauer dauern und
+welche Farbe, Partikel, welchen Ton und welchen Winkel der Regen hat.
+
+Mit installiertem Galacticraft stellt celestial/<name>.json die eigenen
+Sternsysteme, Planeten, Monde, Asteroidengürtel und Raumstationen eines Packs
+auf die Galacticraft-Sternkarte, und eine Dimension mit einem Block galacticraft
+wird zu einem Ort, den eine Rakete anfliegt.
 
 worldgen ist mehr als Erz. Ein Eintrag ist eine Form, gesetzt von einer
 Verteilung: Klumpen, lange Adern, Platten, Geoden, Schalen, Nadeln, Knollen,
@@ -430,9 +478,20 @@ WO ES AUFHÖRT
 -------------
 
 Das beschreibt, was ein Ding ist, nicht was es über die Zeit tut. Alles, was ein
-Tile-Entity, eine GUI, ein Inventar oder Code in jedem Tick braucht, braucht
-weiterhin eine echte Mod. Eine Maschine ist außer Reichweite; ein Erz, ein Zaun,
-ein Essen oder eine Flüssigkeit nicht.
+Tile-Entity, eine GUI oder Code in jedem Tick braucht, braucht weiterhin eine
+echte Mod, mit zwei Ausnahmen: Ein Block vom Typ container hält ein Inventar mit
+eigenem Bildschirm, und eine Entity-Variante kann einen Speicher tragen. Eine
+Maschine ist außer Reichweite; ein Erz, ein Zaun, ein Essen oder eine
+Flüssigkeit nicht.
+
+
+PACKS AUS ANDEREN VERSIONEN
+---------------------------
+
+Ein Pack, das für die Linie 1.20.1, 1.21.1 oder 26.x dieser Mod gemacht wurde,
+lädt auch hier. Eine Zip wird einmal in sich selbst in einen Ordner
+versions/1.12.2 umgewandelt, und die modernen Dateien bleiben, wie sie waren,
+dieselbe Zip funktioniert also weiter auf jeder Version.
 
 
 ÄNDERUNGEN SEHEN
@@ -456,6 +515,12 @@ zu sehen.
 
 /rdpl which minecraft:textures/blocks/stone.png zeigt, welches Pack eine Datei
 liefert und welche Packs darunter verdeckt sind.
+
+/rdpl config unused listet Option-Dateien in rdploader/config, die kein
+installiertes Pack mehr definiert, und /rdpl config prune löscht sie. /rdpl
+pixelmap zeigt, was eine Pixelmap ergeben hat, /rdpl biome list und here
+informieren über Biome, und /rdpl team und /rdpl round sind für die Seiten und
+Runden, die ein Pack definiert.
 
 Das funktioniert ohne Operator zu sein, denn es liest nur Dateien auf deinem
 eigenen Rechner. Auf einem dedizierten Server liest /rdplserver reload die Kopie

@@ -202,6 +202,25 @@ only the colors it wants different, so one shape can be recolored as many
 times as you like without a single image file. What they draw is kept in
 pixelmap-cache here and redrawn whenever a map or its template changes.
 
+Things can also be taken away. A file in recipe_removals deletes recipes by
+name, namespace or output, and a file in disabled takes blocks and items out of
+play without unregistering them, so worlds keep their ids and deleting the file
+brings everything back. A loot injection adds a pool to a loot table that
+already exists instead of replacing it, and block_drops adds to or replaces what
+a block you do not own drops. Furnace recipes, fuel burn times, ore dictionary
+names, creative tabs and sound events are files of their own too.
+
+An anvil can be taught new work. A file in anvils names an item, the item that
+goes with it in the right slot, and the enchantments or result the anvil offers
+for the levels named. Taking it out can earn an advancement, and the item can
+stay unusable until that advancement is earned.
+
+A hardness file sets mining time and blast resistance for a group of blocks, and
+an exposures file defines a hazard such as radiation: it affects players near
+named blocks, carrying named items or in named dimensions, in levels that each
+apply effects and damage, and it can be caught from mobs and players nearby or
+fall with the rain.
+
 CraftTweaker and GroovyScript still work exactly as before. They run after this
 mod, so anything your scripts remove or change wins over a file here.
 
@@ -252,19 +271,20 @@ Each of these is a folder under assets/<yourpack>:
     hardness         blastplaster     player_loot      overrides
     teams            scoring          caveregions      exposures
     structuremaps    citymaps         portalframes     block_drops
-    texts            anvils           cards
+    texts            anvils           cards            disabled
+    celestial        raids
 
 Blocks come in these shapes, set by the "type" field:
 
     basic   ore     falling   slab    stairs   fence    door
     pane    wall    ladder    torch   crop     flower   cane
     log     leaves  sapling   vine    portal   trapdoor fence_gate
-    banner  container
+    banner  bell    container
 
 and items in these:
 
     basic   food    drink     potion  tool     armor    seed
-    potion_bottle
+    potion_bottle   rocket
 
 A potion type always appears on the vanilla potion, splash potion, lingering
 potion and tipped arrow, which live in the Brewing and Combat tabs. The tab is
@@ -284,7 +304,11 @@ how much health and damage it has, how fast it moves and how high it jumps, how 
 it is drawn, what it wears, what it hunts and what it ignores, and whether it
 still obeys the spawn rules of the entity it was built from. It is an entity of
 its own, with its own spawn egg and loot table, and the one it was built from is
-left alone. A village plot can be told to house one instead of a villager.
+left alone. A village plot can be told to house one instead of a villager. It can
+also carry storage of its own, item slots, a fluid tank and an energy buffer that
+pipes and cables reach and a player opens by sneaking and right-clicking it, and a
+Galacticraft rocket can be varied the same way and placed on a launch pad by an
+item of type rocket.
 
 A villages/<name>.json file adds a plot villages can build, either a farm you
 describe or one of your .nbt templates. The same settings choose which vanilla
@@ -301,6 +325,15 @@ players or anything spawning in a corner of the world join as they arrive, and
 a scoring/<name>.json file is an objective that scores kills and deaths to
 those sides, ends a round on a score or a clock, shows the standings as chat
 or as a card, and can reset the map for the next round.
+
+A raids/<name>.json file sends waves at a village when a player carrying the
+omen effect walks into it. A boss bar shows how many raiders are left, villagers
+run indoors, raiders break down wooden doors, and every bell in the village
+rings as a wave arrives.
+
+A cards/<name>.json file shows an on-screen card when something happens, such as
+a player entering a biome, and a file in the same folder named after one of the
+mod's own messages changes what that message says.
 
 WHOLE WORLDS
 ------------
@@ -319,6 +352,16 @@ can ship a whole world shape at once instead of asking for a dozen config
 edits. Every group it can set also answers to the control category in the
 config, which decides whether the pack decides, the config decides, or the
 group is off entirely and no pack can turn it on.
+
+A dimension can also set how it looks and behaves overhead. Its fog, light tint,
+sun and moon dimming, cloud layers and heat shimmer are drawn on your own
+screen, and its weather decides whether it rains, snows or storms, how long
+showers last, and the color, particles, sound and angle of the rain.
+
+With Galacticraft installed, celestial/<name>.json puts a pack's own star
+systems, planets, moons, asteroid belts and space stations on the Galacticraft
+star map, and a dimension with a galacticraft block becomes a place a rocket
+flies to.
 
 worldgen is more than ore. An entry is a shape placed by a spread: blobs, long
 veins, plates, geodes, bowls, spires, nodules, vents, surface decoration, whole
@@ -395,8 +438,18 @@ WHERE THIS STOPS
 ----------------
 
 This describes what a thing is, not what it does over time. Anything needing a
-tile entity, a GUI, an inventory or code running every tick still needs a real
-mod. A machine is out of reach; an ore, a fence, a food or a fluid is not.
+tile entity, a GUI or code running every tick still needs a real mod, with two
+exceptions: a block of type container holds an inventory with a screen of its
+own, and an entity variant can carry storage. A machine is out of reach; an ore,
+a fence, a food or a fluid is not.
+
+
+PACKS FROM OTHER VERSIONS
+-------------------------
+
+A pack made for the 1.20.1, 1.21.1 or 26.x line of this mod loads here too. A
+zip is converted once, inside itself, into a versions/1.12.2 folder, and the
+modern files stay as they were, so the same zip keeps working on every version.
 
 
 SEEING YOUR CHANGES
@@ -417,6 +470,11 @@ name off to rescan the folder and reload everything.
 
 /rdpl which minecraft:textures/blocks/stone.png shows which pack serves a file
 and which packs are shadowed underneath it.
+
+/rdpl config unused lists option files in rdploader/config that no installed
+pack defines any more, and /rdpl config prune deletes them. /rdpl pixelmap shows
+what a pixel map came out as, /rdpl biome list and here tell you about biomes,
+and /rdpl team and /rdpl round are for the sides and rounds a pack defines.
 
 These work without being an operator, because they only read files on your own
 computer. On a dedicated server, /rdplserver reload rescans the server's copy.
