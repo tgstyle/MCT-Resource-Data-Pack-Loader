@@ -85,20 +85,22 @@ public final class ContentStructureSearch {
 
     private static int level(String key, int fallback) { return Mth.clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback), 0, OPERATOR + 1); }
 
-    public static int levelFor(String place, String key, int fallback) {
-        for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels())) {
+    public static int levelFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels(), place, level(key, fallback)); }
+
+    public static int listedLevel(String key, List<String> global, String name, int fallback) {
+        for (String entry : ContentControl.list(ContentControl.COMMANDS, key, global)) {
             int split = entry.lastIndexOf('=');
             if (split <= 0) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' is not written as name=level, so it is left out", entry); }
+                if (WARNED.add(entry)) { ContentLog.LOGGER.error("{} entry '{}' is not written as name=level, so it is left out", key, entry); }
                 continue;
             }
-            if (!entry.substring(0, split).trim().equalsIgnoreCase(place)) { continue; }
+            if (!entry.substring(0, split).trim().equalsIgnoreCase(name)) { continue; }
             try { return Mth.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1); }
             catch (NumberFormatException ignored) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("gotoPlaceLevels entry '{}' has no number after the =, so it is left out", entry); }
+                if (WARNED.add(entry)) { ContentLog.LOGGER.error("{} entry '{}' has no number after the =, so it is left out", key, entry); }
             }
         }
-        return level(key, fallback);
+        return fallback;
     }
 
     public static int lowestLevel() {
