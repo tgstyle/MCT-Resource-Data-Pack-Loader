@@ -3012,8 +3012,10 @@ Every key, shown at once. A real file writes only the ones it needs.
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3207,10 +3209,32 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 | `rain.snowColor`        | no       | hex color              | `#FFFFFF`                | Tint of the falling snow                                                                                         |
 | `rain.angle`            | no       | float, 0 to 180        | `0`                      | Degrees from straight down: `90` blows sideways, `180` rises straight up. It is drawn leaning at most 75 degrees |
 | `rain.heading`          | no       | float, degrees         | `0`                      | Which way it blows: `0` south, `90` west, `180` north, `270` east                                                |
+| `wind.gust`             | no       | float, 0 to 90         | `15`                     | Degrees a gust adds to `angle` at its peak, never past level                                                     |
+| `wind.every`            | no       | int or `[min, max]`    | `[200, 600]`             | Ticks from one gust to the next                                                                                  |
+| `wind.swing`            | no       | float, 0 to 180        | `30`                     | Degrees a gust swings `heading` to either side                                                                   |
+
+A `wind` block makes the rain gusty. Now and then a gust leans it up to `gust` degrees further and swings its heading up to `swing` degrees to one side, rising and dying away within four seconds; the gusts come `every` ticks apart. Rain and snow lean with it, and the dimension's ambient particles drift the way the rain leans, with or without gusts. A `wind` block without a `rain` block gives the rain its defaults.
 
 Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, whatever the overworld is doing. With `thunderTicks` it storms as well, on timings of its own; a storm that meets a shower brings the shower to full strength, darkens the sky and, with `lightning` on, brings lightning. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
 
 A `rain` block changes how rain and snow look and sound here, with or without a `cycle`; without one they look and sound as vanilla's.
+
+### The `ambience` block
+
+*dimensions*
+
+| Key              | Required | Value               | Default          | What it does                                                                                                                                                                                          |
+| ---------------- | -------- | ------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `music`          | no       | sound name          | none             | Music played here in place of the usual tracks, in creative too. Arriving cuts the old track short                                                                                                    |
+| `musicDelay`     | no       | int or `[min, max]` | `[12000, 24000]` | Ticks of quiet between two tracks                                                                                                                                                                     |
+| `loopSound`      | no       | sound name          | none             | A sound that loops for as long as you are here, fading in as you arrive and out as you leave                                                                                                          |
+| `ambientSound`   | no       | sound name          | none             | A sound played now and then, a biome's additions sound                                                                                                                                                |
+| `soundChance`    | no       | 0.0 to 1.0          | `0.0111`         | The chance each tick that `ambientSound` plays                                                                                                                                                        |
+| `particle`       | no       | particle id         | none             | A particle drifting in the air around you, such as `minecraft:ash`, `minecraft:white_ash`, `minecraft:crimson_spore` or `minecraft:dust`                                                              |
+| `particleChance` | no       | 0.0 to 1.0          | `0.00625`        | Its density, counted the way modern biomes count it: each tick about 667 spots within 16 blocks and 667 more within 32 are tried, and each that is not a full block shows the particle at this chance |
+| `particleColor`  | no       | hex color           | none             | The tint of a particle that takes one: `minecraft:dust` and `minecraft:entity_effect`                                                                                                                 |
+
+An `ambience` block gives the dimension its own music, sounds and drifting particles. The keys feed the game's own biome effects (music, ambient loop, additions sound and ambient particle), so they play and look as a biome's do, and the Particles video setting thins them the same way. A key set here wins over every biome of the dimension; one left out leaves each biome its own, so a vanilla biome JSON with its effects works too.
 
 ## Portals and gates
 

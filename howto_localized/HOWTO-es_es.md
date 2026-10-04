@@ -3012,8 +3012,10 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "snow": false,
     "freeze": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
-    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 }
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
   },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
   "gameRules": { "doMobSpawning": "false" }
 }
 ```
@@ -3207,10 +3209,32 @@ Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravit
 | `rain.snowColor`        | no          | color hexadecimal      | `#FFFFFF`                | Tinte de la nieve al caer                                                                                                     |
 | `rain.angle`            | no          | float, de 0 a 180      | `0`                      | Grados respecto a la vertical descendente: `90` sopla de lado, `180` sube en vertical. Se dibuja inclinada 75 grados como máximo |
 | `rain.heading`          | no          | float, grados          | `0`                      | Hacia dónde sopla: `0` sur, `90` oeste, `180` norte, `270` este                                                               |
+| `wind.gust`             | no          | float, de 0 a 90       | `15`                     | Grados que una ráfaga suma a `angle` en su punto máximo, sin pasar nunca de la horizontal                                     |
+| `wind.every`            | no          | int o `[min, max]`     | `[200, 600]`             | Ticks entre una ráfaga y la siguiente                                                                                         |
+| `wind.swing`            | no          | float, de 0 a 180      | `30`                     | Grados que una ráfaga desvía `heading` hacia un lado                                                                          |
+
+Un bloque `wind` vuelve racheada la lluvia. De vez en cuando, una ráfaga la inclina hasta `gust` grados más y desvía su rumbo hasta `swing` grados hacia un lado; crece y se apaga en menos de cuatro segundos, y las ráfagas llegan cada `every` ticks. La lluvia y la nieve se inclinan con ella, y las partículas ambientales de la dimensión derivan hacia donde se inclina la lluvia, haya ráfagas o no. Un bloque `wind` sin bloque `rain` deja la lluvia con sus valores por defecto.
 
 Las demás dimensiones comparten la lluvia de la superficie. Un `cycle` da a esta dimensión un clima propio: los chubascos van y vienen según los tiempos indicados arriba, haga lo que haga la superficie. Con `thunderTicks` también hay tormentas, con tiempos propios; una tormenta que coincide con un chubasco lo lleva a su máxima intensidad, oscurece el cielo y, con `lightning` activado, trae rayos. `weatherCeiling` en una [plantilla de mundo](#plantillas-de-mundo) sigue limitando hasta qué altura llega la lluvia.
 
 Un bloque `rain` cambia el aspecto y el sonido de la lluvia y la nieve aquí, con o sin `cycle`; sin él se ven y suenan como en vanilla.
+
+### El bloque `ambience`
+
+*dimensiones*
+
+| Clave            | Obligatoria | Valor              | Por defecto      | Qué hace                                                                                                                                                                                                                      |
+| ---------------- | ----------- | ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `music`          | no          | nombre de sonido   | ninguno          | Música que suena aquí en lugar de las pistas habituales, también en creativo. Al llegar, corta la pista que suena                                                                                                             |
+| `musicDelay`     | no          | int o `[min, max]` | `[12000, 24000]` | Ticks de silencio entre dos pistas                                                                                                                                                                                            |
+| `loopSound`      | no          | nombre de sonido   | ninguno          | Un sonido que se repite en bucle mientras estás aquí; sube al llegar y se apaga al salir                                                                                                                                      |
+| `ambientSound`   | no          | nombre de sonido   | ninguno          | Un sonido que se reproduce de vez en cuando, como el sonido adicional (additions) de un bioma                                                                                                                                 |
+| `soundChance`    | no          | 0.0 a 1.0          | `0.0111`         | La probabilidad, en cada tick, de que se reproduzca `ambientSound`                                                                                                                                                            |
+| `particle`       | no          | id de partícula    | ninguno          | Una partícula que flota en el aire a tu alrededor, como `minecraft:ash`, `minecraft:white_ash`, `minecraft:crimson_spore` o `minecraft:dust`                                                                                  |
+| `particleChance` | no          | 0.0 a 1.0          | `0.00625`        | Su densidad, contada como en los biomas modernos: en cada tick se prueban unos 667 puntos a menos de 16 bloques y otros 667 a menos de 32, y cada uno que no es un bloque completo muestra la partícula con esta probabilidad |
+| `particleColor`  | no          | color hex          | ninguno          | El tinte de una partícula que lo admite: `minecraft:dust` y `minecraft:entity_effect`                                                                                                                                         |
+
+Un bloque `ambience` da a la dimensión música, sonidos y partículas flotantes propios. Las claves alimentan los propios efectos de bioma del juego (música, bucle ambiental, sonido adicional y partícula ambiental), así que suenan y se ven como los de un bioma, y el ajuste «Partículas» las reduce del mismo modo. Una clave puesta aquí manda sobre todos los biomas de la dimensión; si falta, cada bioma conserva el suyo, así que un JSON de bioma vanilla con sus efectos también funciona.
 
 ## Portales y puertas dimensionales
 
