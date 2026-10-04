@@ -83,9 +83,11 @@ public final class ContentDimensionParser {
             }
         }
         JsonObject options = customized(key, terrain);
-        String fog = GsonHelper.getAsString(sky, "fogColor", "").trim();
+        String fog = ContentParserSkyLook.samples(sky) ? "" : GsonHelper.getAsString(sky, "fogColor", "").trim();
         String skyColor = GsonHelper.getAsString(sky, "skyColor", "").trim();
         String cloudColor = GsonHelper.getAsString(sky, "cloudColor", "").trim();
+        int cloudHeight = GsonHelper.getAsInt(sky, "cloudHeight", CLOUD_HEIGHT);
+        int clouds = cloudColor.isEmpty() ? -1 : ContentParser.color(cloudColor, key + " cloudColor") & 0xFFFFFF;
         String respawn = GsonHelper.getAsString(sky, "respawnDimension", "").trim();
         ResourceLocation respawnDimension = respawn.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
@@ -93,14 +95,15 @@ public final class ContentDimensionParser {
                 GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), minHeight, maxHeight,
                 options.has("seaLevel") ? GsonHelper.getAsInt(options, "seaLevel") : -1, GsonHelper.getAsBoolean(options, "useLavaOceans", false),
                 GsonHelper.getAsBoolean(sky, "hasSkyLight", true), GsonHelper.getAsBoolean(sky, "surfaceWorld", true), GsonHelper.getAsBoolean(sky, "spawning", true),
-                GsonHelper.getAsInt(sky, "cloudHeight", CLOUD_HEIGHT), Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),
+                cloudHeight, Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),
                 fog.isEmpty() ? -1 : ContentParser.color(fog, key + " fogColor") & 0xFFFFFF, skyColor.isEmpty() ? -1 : ContentParser.color(skyColor, key + " skyColor") & 0xFFFFFF,
-                cloudColor.isEmpty() ? -1 : ContentParser.color(cloudColor, key + " cloudColor") & 0xFFFFFF, GsonHelper.getAsLong(sky, "fixedTime", -1L),
+                clouds, GsonHelper.getAsLong(sky, "fixedTime", -1L),
                 GsonHelper.getAsBoolean(sky, "sunriseColors", true), GsonHelper.getAsBoolean(sky, "nether", false), GsonHelper.getAsBoolean(sky, "beds", true),
                 GsonHelper.getAsBoolean(sky, "waterVaporizes", false), GsonHelper.getAsBoolean(sky, "showFog", false), Mth.clamp(GsonHelper.getAsFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
                 GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
-                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json));
+                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json),
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds));
     }
 
     private static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {

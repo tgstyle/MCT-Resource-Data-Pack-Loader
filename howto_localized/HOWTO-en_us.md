@@ -3055,33 +3055,43 @@ A dimension is a data pack entry on this version: the dimension type and the noi
 
 *dimensions*
 
-| Key                | Required | Value           | Default | What it does                                                                                                   |
-| ------------------ | -------- | --------------- | ------- | -------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | no       | boolean         | `true`  | Whether daylight reaches it                                                                                    |
-| `surfaceWorld`     | no       | boolean         | `true`  | Whether maps and compasses behave as in the overworld                                                          |
-| `respawn`          | no       | boolean         | `true`  | Whether players respawn here                                                                                   |
-| `respawnDimension` | no       | dimension id    | none    | Where they respawn instead                                                                                     |
-| `spawning`         | no       | boolean         | `true`  | Whether mobs spawn. Off stops every spawn, spawners included, whatever the `spawning` group says               |
-| `nether`           | no       | boolean         | `false` | Treated as the nether for portals and ceilings                                                                 |
-| `beds`             | no       | boolean         | `true`  | Off, beds explode                                                                                              |
-| `waterVaporizes`   | no       | boolean         | `false` | Water evaporates                                                                                               |
-| `cloudHeight`      | no       | int             | `128`   | Where clouds sit. A `cloudHeight` setting naming this dimension, or a bare one, wins over it                   |
-| `cloudColor`       | no       | hex color       | none    | Cloud tint                                                                                                     |
-| `groundLevel`      | no       | int             | `63`    | Sea level, used for the horizon, for spawn searches and for where a gate arrival or a fall over the void lands |
-| `movementFactor`   | no       | float           | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                             |
-| `fogColor`         | no       | hex color       | none    | Fog tint at noon. It darkens at night as vanilla fog does                                                      |
-| `showFog`          | no       | boolean         | `false` | Thick fog, as in the nether                                                                                    |
-| `skyColor`         | no       | hex color       | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                    |
-| `fixedTime`        | no       | int, ticks      | none    | Locks the time of day                                                                                          |
-| `sunriseColors`    | no       | boolean         | `true`  | Whether sunrise and sunset are tinted                                                                          |
-| `ambientLight`     | no       | float, 0 to 1   | `0.0`   | Minimum light everywhere                                                                                       |
-| `starBrightness`   | no       | float, 0 to 1   | none    | How bright the stars are                                                                                       |
-| `renderSky`        | no       | boolean         | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                          |
-| `renderClouds`     | no       | boolean         | `true`  | Off, no clouds are drawn                                                                                       |
-| `renderWeather`    | no       | boolean         | `true`  | Off, no rain or snow is drawn                                                                                  |
-| `sun`              | no       | object          | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                                        |
-| `bodies`           | no       | list of objects | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                                   |
-| `stars`            | no       | object          | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                                                 |
+| Key                | Required | Value                 | Default | What it does                                                                                                         |
+| ------------------ | -------- | --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | no       | boolean               | `true`  | Whether daylight reaches it                                                                                          |
+| `surfaceWorld`     | no       | boolean               | `true`  | Whether maps and compasses behave as in the overworld                                                                |
+| `respawn`          | no       | boolean               | `true`  | Whether players respawn here                                                                                         |
+| `respawnDimension` | no       | dimension id          | none    | Where they respawn instead                                                                                           |
+| `spawning`         | no       | boolean               | `true`  | Whether mobs spawn. Off stops every spawn, spawners included, whatever the `spawning` group says                     |
+| `nether`           | no       | boolean               | `false` | Treated as the nether for portals and ceilings                                                                       |
+| `beds`             | no       | boolean               | `true`  | Off, beds explode                                                                                                    |
+| `waterVaporizes`   | no       | boolean               | `false` | Water evaporates                                                                                                     |
+| `cloudHeight`      | no       | int                   | `128`   | Where clouds sit. A `cloudHeight` setting naming this dimension, or a bare one, wins over it                         |
+| `cloudColor`       | no       | hex color             | none    | Cloud tint                                                                                                           |
+| `cloudSpeed`       | no       | float                 | `1.0`   | How fast clouds drift. `0` holds them still, a negative value reverses them                                          |
+| `cloudLayers`      | no       | list of objects       | none    | Several cloud layers. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                                  |
+| `groundLevel`      | no       | int                   | `63`    | Sea level, used for the horizon, for spawn searches and for where a gate arrival or a fall over the void lands       |
+| `movementFactor`   | no       | float                 | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                                   |
+| `fogColor`         | no       | hex color or `sample` | none    | Fog tint at noon. It darkens at night as vanilla fog does. `sample` blends the sky with the ground around the player |
+| `showFog`          | no       | boolean               | `false` | Thick fog, as in the nether                                                                                          |
+| `fogDensity`       | no       | float, 0 to 1         | `0.0`   | How thick the fog is. `0` keeps the vanilla distance, `1` closes it in to 8 blocks                                   |
+| `fogGroundWeight`  | no       | float, 0 to 1         | `0.5`   | With `fogColor: sample`, how much the ground counts against the sky                                                  |
+| `skyColor`         | no       | hex color             | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                          |
+| `fixedTime`        | no       | int, ticks            | none    | Locks the time of day                                                                                                |
+| `sunriseColors`    | no       | boolean               | `true`  | Whether sunrise and sunset are tinted                                                                                |
+| `ambientLight`     | no       | float, 0 to 1         | `0.0`   | Minimum light everywhere                                                                                             |
+| `lightSkyColor`    | no       | hex color             | none    | Tint of daylight on blocks and mobs                                                                                  |
+| `lightBlockColor`  | no       | hex color             | none    | Tint of torchlight and other block light                                                                             |
+| `skyFactor`        | no       | float, 0 to 1         | `1.0`   | How bright daylight looks. Drawn on the client only, so mob spawning does not change                                 |
+| `starBrightness`   | no       | float, 0 to 1         | none    | How bright the stars are                                                                                             |
+| `sunBrightness`    | no       | float, 0 to 1         | `1.0`   | How bright the sun is drawn                                                                                          |
+| `moonBrightness`   | no       | float, 0 to 1         | `1.0`   | How bright the moon is drawn, and with `bodies` every body but the sun                                               |
+| `heat`             | no       | object                | none    | A heat shimmer over the view. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                          |
+| `renderSky`        | no       | boolean               | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                                |
+| `renderClouds`     | no       | boolean               | `true`  | Off, no clouds are drawn                                                                                             |
+| `renderWeather`    | no       | boolean               | `true`  | Off, no rain or snow is drawn                                                                                        |
+| `sun`              | no       | object                | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                                              |
+| `bodies`           | no       | list of objects       | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                                         |
+| `stars`            | no       | object                | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                                                       |
 
 ### The sky renderer
 
@@ -3102,6 +3112,56 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 | `bodies[].followsTime` | no       | boolean        | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
 | `stars.count`          | no       | int            | `1500`          | How many stars                                                                                                                                                                                   |
 | `stars.size`           | no       | float          | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
+
+### Fog, light, clouds and heat
+
+*dimensions*
+
+These keys sit in the `sky` block beside the older ones, which keep working as before. They are all drawn on the client only, so a dedicated server ignores them and no save changes.
+
+```json
+{
+  "sky": {
+    "fogColor": "sample",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
+  }
+}
+```
+
+`fogColor: "sample"` reads the top blocks in a 33 by 33 block square around the player once a second, lights their map colors for the time of day and blends them with the sky color. The fog eases toward each new sample. `fogDensity` works with a sampled fog color, a set one or none. Under water, in lava and while blinded the vanilla fog stays.
+
+`lightSkyColor` and `lightBlockColor` tint the light map, so every lit block and mob takes the tint. `skyFactor` scales how bright daylight looks, while the light level the server counts for spawning and crops stays the same.
+
+Without `cloudLayers`, `cloudSpeed` changes the speed of the one vanilla layer at `cloudHeight`. With `cloudLayers`, each entry is a layer of its own, and `cloudHeight`, `cloudSpeed` and `cloudColor` fill in what an entry leaves out. `renderClouds: false` still draws none.
+
+`sunBrightness` and `moonBrightness` fade the sun and the moon on top of the vanilla rain fade, in the vanilla sky and in your own from [The sky renderer](#the-sky-renderer).
+
+`heat` lays a wavy shimmer over the view while the player stands in a biome at least as warm as `minTemperature`. A desert is 2.0 and plains are 0.8. The shimmer fades in and out over a few seconds and stays off under water. It needs shader support from the graphics card and stays off while another full-screen shader, such as a spectator view, is on.
+
+`mode` decides where the shimmer lands. `screen` warps a fixed band across the lower part of the screen, wherever the player looks. `world` follows the land instead: terrain closer than `startDistance` blocks stays sharp, the shimmer builds toward the far edge of the render distance where the fog closes in, and the sky never shimmers, whether the player looks down, level or up.
+
+| Key                    | Required | Value         | Default       | What it does                                                         |
+| ---------------------- | -------- | ------------- | ------------- | -------------------------------------------------------------------- |
+| `cloudLayers[].height` | no       | float         | `cloudHeight` | Where the layer sits                                                 |
+| `cloudLayers[].speed`  | no       | float         | `cloudSpeed`  | How fast it drifts. `0` holds it still, a negative value reverses it |
+| `cloudLayers[].color`  | no       | hex color     | `cloudColor`  | Its tint                                                             |
+| `heat.strength`        | no       | float, 0 to 1 | `0.1`         | How strong the shimmer is                                            |
+| `heat.minTemperature`  | no       | float         | `1.5`         | The coolest biome temperature that shimmers                          |
+| `heat.dayOnly`         | no       | boolean       | `true`        | On, the shimmer fades with the daylight and is gone at night         |
+| `heat.mode`            | no       | string        | `screen`      | Where the shimmer lands, `screen` or `world`                         |
+| `heat.startDistance`   | no       | float         | `32`          | In `world` mode, how many blocks away the shimmer begins             |
 
 ### The `physics` block
 
