@@ -107,7 +107,7 @@ public final class BeardBlocks {
     public static void note(World world, BlockPos.MutableBlockPos at, String pass) {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }
         IBlockState held = world.getBlockState(at);
-        if (!held.getMaterial().isSolid()) { return; }
+        if (!covers(held) || BlastPlasterUtil.isTreeWood(held) || BlastPlasterUtil.isHugeMushroom(held)) { return; }
         if (terrainBlock(held.getBlock())) {
             StructureBoundingBox standing = BeardKeep.watchingBox();
             if (standing == null || !standing.isVecInside(at)) { return; }
