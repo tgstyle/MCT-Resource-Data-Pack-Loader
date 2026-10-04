@@ -18,6 +18,10 @@ import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
@@ -55,11 +59,16 @@ public final class EntityStorage {
     private static final String ENERGY = "Energy";
     private static final String SLOT = "Slot";
     private static final String SIZE = "Size";
+    private static final Identifier SLOWED = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "dry");
+    private static final int SECOND = 20;
     @Nullable private final Items items;
     @Nullable private final Tank tank;
     @Nullable private final SimpleEnergyHandler energy;
     private final boolean buckets;
     private final boolean dropsOnDeath;
+    private final int fluidUse;
+    private final int energyUse;
+    private final StorageDef.Dry runsDry;
 
     private EntityStorage(@Nullable StorageDef def) {
         this.items = def != null && def.slots() > 0 ? new Items(def.slots(), def.items()) : null;
@@ -67,6 +76,49 @@ public final class EntityStorage {
         this.energy = def != null && def.energyCapacity() > 0 ? new SimpleEnergyHandler(def.energyCapacity(), def.energyTransfer()) : null;
         this.buckets = def != null && def.buckets();
         this.dropsOnDeath = def != null && def.dropsOnDeath();
+        this.fluidUse = def == null || tank == null ? 0 : def.fluidUse();
+        this.energyUse = def == null || energy == null ? 0 : def.energyUse();
+        this.runsDry = def == null ? StorageDef.Dry.STOPS : def.runsDry();
+    }
+
+    private boolean spends() { return fluidUse > 0 || energyUse > 0; }
+
+    private boolean dry() { return tank != null && tank.getAmountAsInt(0) < fluidUse || energy != null && energy.getAmountAsInt() < energyUse; }
+
+    private void spend() {
+        if (tank != null && fluidUse > 0) {
+            int left = Math.max(0, tank.getAmountAsInt(0) - fluidUse);
+            tank.set(0, left > 0 ? tank.getResource(0) : FluidResource.EMPTY, left);
+        }
+        if (energy != null && energyUse > 0) { energy.set(Math.max(0, energy.getAmountAsInt() - energyUse)); }
+    }
+
+    public static boolean stalled(Mob mob) {
+        EntityStorage storage = of(mob);
+        if (storage == null || storage.runsDry != StorageDef.Dry.STOPS || !storage.dry()) { return false; }
+        mob.setZza(0.0F);
+        mob.setXxa(0.0F);
+        mob.setYya(0.0F);
+        mob.setJumping(false);
+        mob.getNavigation().stop();
+        return true;
+    }
+
+    public static void tick(LivingEntity living) {
+        if (!(living.level() instanceof ServerLevel level) || living.tickCount % SECOND != 0) { return; }
+        EntityStorage storage = of(living);
+        if (storage == null || !storage.spends()) { return; }
+        boolean paid = !storage.dry();
+        if (paid) { storage.spend(); }
+        if (storage.runsDry == StorageDef.Dry.SLOWS) { slow(living, storage.dry()); }
+        else if (storage.runsDry == StorageDef.Dry.HURTS && !paid) { living.hurtServer(level, living.damageSources().starve(), 1.0F); }
+    }
+
+    private static void slow(LivingEntity living, boolean dry) {
+        AttributeInstance speed = living.getAttribute(Attributes.MOVEMENT_SPEED);
+        if (speed == null || dry == speed.hasModifier(SLOWED)) { return; }
+        if (dry) { speed.addTransientModifier(new AttributeModifier(SLOWED, -0.5D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL)); }
+        else { speed.removeModifier(SLOWED); }
     }
 
     @Nullable public static StorageDef def(@Nullable Entity entity) {

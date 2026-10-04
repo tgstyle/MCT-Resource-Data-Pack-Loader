@@ -229,6 +229,7 @@ import java.util.Set;
             if (!(event.getEntity() instanceof LivingEntity living)) { return; }
             ContentEntities.tick(living);
             ContentPhysics.tick(living);
+            EntityStorage.tick(living);
         });
         NeoForge.EVENT_BUS.addListener(ContentPhysics::onFall);
         NeoForge.EVENT_BUS.addListener(ContentPhysics::onJump);
