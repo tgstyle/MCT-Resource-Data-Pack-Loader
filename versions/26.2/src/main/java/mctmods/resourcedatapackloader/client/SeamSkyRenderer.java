@@ -39,14 +39,14 @@ public final class SeamSkyRenderer {
         Identifier under = ContentSeams.below(dimension);
         Identifier over = ContentSeams.above(dimension);
         if (under == null && over == null) { return; }
-        double eyeY = event.getLevelRenderState().cameraRenderState.pos.y;
-        if (under != null) { plane(under, level.getMinY() - 1 - eyeY); }
-        if (over != null) { plane(over, ContentSeams.ceiling(level) + 1 - eyeY); }
+        Vec3 eye = event.getLevelRenderState().cameraRenderState.pos;
+        if (under != null) { plane(under, level.getMinY() - 1 - eye.y, eye); }
+        if (over != null) { plane(over, ContentSeams.ceiling(level) + 1 - eye.y, eye); }
     }
 
-    private static void plane(Identifier dimension, double height) {
+    private static void plane(Identifier dimension, double height, Vec3 eye) {
         if (Math.abs(height) > NEAR) { return; }
-        Vec3 tint = skyOf(dimension);
+        Vec3 tint = skyOf(dimension, eye);
         float extent = Math.max(64, Minecraft.getInstance().options.getEffectiveRenderDistance() * 16);
         float y = (float) height;
         int red = (int) (tint.x * 255.0D);
@@ -73,13 +73,13 @@ public final class SeamSkyRenderer {
         type.prepare().drawFromBuffer(vertices, indices.getBuffer(count), indices.type(), 0, 0, count);
     }
 
-    private static Vec3 skyOf(Identifier dimension) {
+    private static Vec3 skyOf(Identifier dimension, Vec3 eye) {
         DimensionDef def = ContentDimensions.def(dimension);
         String base = def == null ? dimension.toString() : "minecraft:" + def.base();
         MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
         ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
         if (target != null) {
-            float brightness = Mth.clamp(Mth.cos(target.environmentAttributes().getDimensionValue(EnvironmentAttributes.SUN_ANGLE) * Mth.DEG_TO_RAD) * 2.0F + 0.5F, 0.0F, 1.0F);
+            float brightness = Mth.clamp(Mth.cos(target.environmentAttributes().getValue(EnvironmentAttributes.SUN_ANGLE, eye) * Mth.DEG_TO_RAD) * 2.0F + 0.5F, 0.0F, 1.0F);
             return shaded(def != null && def.hasEffects() ? "minecraft:overworld" : base, rgb(def != null && def.fogColor() >= 0 ? def.fogColor() : fogOf(base)), brightness);
         }
         return switch (base) {

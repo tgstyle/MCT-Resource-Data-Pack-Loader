@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.compat;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
@@ -17,4 +19,8 @@ public final class ClientCompat {
     public static ChatComponent chat(Minecraft mc) { return mc.gui.hud.getChat(); }
 
     public static RenderType cutoutBlockSheet() { return Sheets.cutoutBlockItemSheet(); }
+
+    public static RenderTarget mainTarget(Minecraft mc) { return mc.gameRenderer.mainRenderTarget(); }
+
+    public static boolean depthZeroToOne() { return RenderSystem.getDevice().getDeviceInfo().isZZeroToOne(); }
 }

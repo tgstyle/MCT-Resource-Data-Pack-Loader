@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -21,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -29,6 +31,7 @@ import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.dimension.DimensionDefaults;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -170,10 +173,17 @@ public final class ContentDimensions {
         }
     }
 
+    private static void light(SkyLookDef look, JsonObject attributes) {
+        if (look.lightSkyColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "sky_light_color", String.format("#%06x", look.lightSkyColor())); }
+        if (look.lightBlockColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "block_light_tint", String.format("#%06x", ARGB.multiply(DimensionDefaults.BLOCK_LIGHT_TINT, ARGB.opaque(look.lightBlockColor())) & 0xFFFFFF)); }
+        if (look.skyFactor() < 1.0F) { attributes.addProperty(VISUAL + "sky_light_factor", look.skyFactor()); }
+    }
+
     private static void effects(DimensionDef def, JsonObject type) {
         JsonObject attributes = attributes(type);
         overworldVisualsAndMusic(type, attributes);
         if (def.fogColor() >= 0) { attributes.addProperty(VISUAL + "fog_color", String.format("#%06x", def.fogColor() & 0xFFFFFF)); }
+        if (def.look() != null) { light(def.look(), attributes); }
         if (!def.surfaceWorld()) {
             if (def.traits().sky() == null) { type.addProperty("skybox", "none"); }
             attributes.remove(VISUAL + "cloud_color");

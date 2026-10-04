@@ -57,7 +57,7 @@ public final class ContentSkyRenderer {
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotation(sunAngle));
-        if (sky.sunSize() > 0.0F) { quad(poseStack, sky.sunTexture(), sky.sunSize(), rainBrightness); }
+        if (sky.sunSize() > 0.0F) { quad(poseStack, sky.sunTexture(), sky.sunSize(), rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
         poseStack.popPose();
         if (sky.bodies() == null) {
             poseStack.pushPose();
@@ -71,7 +71,7 @@ public final class ContentSkyRenderer {
                 if (body.followsTime()) { poseStack.mulPose(Axis.XP.rotation(sunAngle)); }
                 poseStack.mulPose(Axis.XP.rotationDegrees(body.angle()));
                 poseStack.mulPose(Axis.ZP.rotationDegrees(body.tilt()));
-                quad(poseStack, body.texture(), body.size(), rainBrightness);
+                quad(poseStack, body.texture(), body.size(), rainBrightness * ContentFogSampler.moon(Minecraft.getInstance().level));
                 poseStack.popPose();
             }
         }
