@@ -3205,6 +3205,48 @@ No 26.x, `waterFogColor` vira o atributo de ambiente `visual/water_fog_color` da
 | `starTwinkle` | não | float, 0 a 1 | `0.0` | O quanto as estrelas escurecem ao cintilar. `0` as mantém firmes |
 | `lightningColor` | não | cor hex | `737380` | Tonalidade dos raios |
 
+### Skybox, aurora e arco-íris
+
+*dimensions*
+
+Essas chaves também ficam no bloco `sky`, e também são desenhadas só no cliente.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` pinta suas próprias imagens no céu, atrás do brilho do amanhecer, do sol, da lua e das estrelas. Informe as seis faces de um cubo como caminhos de textura completos, dispostas como o cubo aberto: `up` encosta na borda de cima de `north`, `down` na borda de baixo, `west` fica à esquerda e `east` à direita, com `south` depois de `east`. Ou informe só `panorama`, uma imagem 2:1 que envolve o céu inteiro: a borda esquerda aponta para o norte e ela segue no sentido horário pelo leste, sul e oeste; a linha de cima fica bem no alto e a de baixo bem embaixo. Uma skybox sem uma das faces e sem panorama é deixada de fora, com um erro no log.
+
+`aurora` pendura cortinas luminosas baixas sobre o céu do norte durante a noite. Elas ondulam devagar, surgem quando o sol se põe e somem de dia e na chuva. `color` é a cor na base delas e `topColor` aquela em que se apagam no alto.
+
+`rainbow` mostra um arco-íris do lado oposto ao sol quando a chuva para durante o dia. Ele se apaga nos dois minutos seguintes ao fim da chuva, e uma nova pancada o desfaz.
+
+Nenhuma chave vanilla dá a uma dimensão suas próprias imagens de céu, uma aurora ou um arco-íris, então essas chaves funcionam igual em todas as versões.
+
+| Chave | Obrigatória | Valor | Padrão | O que faz |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | não | caminho de textura | nenhum | Uma face do cubo: `up`, `down`, `north`, `east`, `south` ou `west`. As seis são necessárias |
+| `skybox.panorama` | não | caminho de textura | nenhum | Uma imagem que envolve o céu inteiro, no lugar das faces |
+| `aurora.color` | não | cor hex | `40FF90` | Cor na base das cortinas |
+| `aurora.topColor` | não | cor hex | `8040FF` | Cor no alto, onde as cortinas se apagam |
+| `rainbow` | não | booleano | `false` | Mostrar um arco-íris depois da chuva |
+
 ### O bloco `physics`
 
 *dimensões*

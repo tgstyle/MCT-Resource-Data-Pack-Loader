@@ -3205,6 +3205,48 @@ Unter 26.x wird `waterFogColor` zum Umgebungsattribut `visual/water_fog_color` d
 | `starTwinkle`    | nein    | float, 0 bis 1 | `0.0`         | Wie weit die Sterne beim Funkeln abdunkeln. `0` lässt sie ruhig leuchten |
 | `lightningColor` | nein    | Hex-Farbe      | `737380`      | Färbung der Blitze                                                   |
 
+### Skybox, Polarlicht und Regenbogen
+
+*dimensions*
+
+Auch diese Schlüssel stehen im Block `sky` und werden ebenfalls nur auf dem Client gezeichnet.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` malt eigene Bilder an den Himmel, hinter das Morgenrot, die Sonne, den Mond und die Sterne. Gib alle sechs Seiten eines Würfels als vollständige Texturpfade an, so angeordnet wie der aufgeklappte Würfel: `up` grenzt an die Oberkante von `north`, `down` an ihre Unterkante, `west` liegt links davon und `east` rechts, `south` folgt hinter `east`. Oder gib stattdessen nur `panorama` an, ein Bild im Format 2:1, das um den ganzen Himmel gelegt wird: Sein linker Rand zeigt nach Norden, von dort läuft es im Uhrzeigersinn über Osten, Süden und Westen, die oberste Zeile liegt senkrecht oben und die unterste senkrecht unten. Eine Skybox, der eine Seite fehlt und die kein Panorama hat, wird weggelassen, mit einem Fehler im Log.
+
+`aurora` hängt nachts leuchtende Vorhänge tief über den Nordhimmel. Sie wogen langsam, erscheinen, wenn die Sonne untergeht, und sind bei Tag und bei Regen verschwunden. `color` ist die Farbe an ihrem Fuß, `topColor` die, in die sie oben verblassen.
+
+`rainbow` zeigt einen Regenbogen gegenüber der Sonne, sobald der Regen am Tag aufhört. Er verblasst in den zwei Minuten nach dem Regen, und ein neuer Schauer löscht ihn.
+
+Kein Vanilla-Schlüssel gibt einer Dimension eigene Himmelsbilder, ein Polarlicht oder einen Regenbogen, deshalb wirken diese Schlüssel in jeder Version gleich.
+
+| Schlüssel         | Pflicht | Wert       | Standard | Was er macht                                                                             |
+| ----------------- | ------- | ---------- | -------- | ---------------------------------------------------------------------------------------- |
+| `skybox.<face>`   | nein    | Texturpfad | keiner   | Eine Würfelseite: `up`, `down`, `north`, `east`, `south` oder `west`. Alle sechs angeben |
+| `skybox.panorama` | nein    | Texturpfad | keiner   | Ein Bild, das um den ganzen Himmel gelegt wird, anstelle der Seiten                      |
+| `aurora.color`    | nein    | Hex-Farbe  | `40FF90` | Farbe am Fuß der Vorhänge                                                                |
+| `aurora.topColor` | nein    | Hex-Farbe  | `8040FF` | Farbe oben, wo die Vorhänge verblassen                                                   |
+| `rainbow`         | nein    | boolean    | `false`  | Nach dem Regen einen Regenbogen zeigen                                                   |
+
 ### Der Block `physics`
 
 *dimensionen*

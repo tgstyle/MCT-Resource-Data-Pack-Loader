@@ -3205,6 +3205,48 @@ En 26.x, `waterFogColor` pasa a ser el atributo de entorno `visual/water_fog_col
 | `starTwinkle`    | no          | float, 0 a 1      | `0.0`        | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
 | `lightningColor` | no          | color hexadecimal | `737380`     | Tinte de los rayos |
 
+### Skybox, aurora y arcoíris
+
+*dimensions*
+
+Estas claves también van en el bloque `sky`, y también se dibujan solo en el cliente.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` pinta tus propias imágenes en el cielo, detrás del resplandor del amanecer, el sol, la luna y las estrellas. Indica las seis caras de un cubo como rutas de textura completas, dispuestas como el cubo desplegado: `up` toca el borde superior de `north`, `down` su borde inferior, `west` queda a su izquierda y `east` a su derecha, con `south` después de `east`. O bien indica solo `panorama`, una imagen 2:1 que envuelve todo el cielo: su borde izquierdo mira al norte y recorre el cielo en el sentido de las agujas del reloj por el este, el sur y el oeste; su fila superior queda justo encima y la inferior justo debajo. Una skybox a la que le falta una cara y no tiene panorama se omite, con un error en el registro.
+
+`aurora` cuelga cortinas luminosas bajas sobre el cielo del norte durante la noche. Ondean despacio, aparecen al ponerse el sol y desaparecen de día y con lluvia. `color` es el color de su base y `topColor` aquel en el que se desvanecen arriba.
+
+`rainbow` muestra un arcoíris frente al sol cuando la lluvia para de día. Se desvanece en los dos minutos siguientes al final de la lluvia, y un nuevo chaparrón lo borra.
+
+Ninguna clave de vanilla da a una dimensión sus propias imágenes de cielo, una aurora o un arcoíris, así que estas claves funcionan igual en todas las versiones.
+
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
+| --- | --- | --- | --- | --- |
+| `skybox.<face>` | no | ruta de textura | ninguna | Una cara del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Hacen falta las seis |
+| `skybox.panorama` | no | ruta de textura | ninguna | Una imagen que envuelve todo el cielo, en lugar de las caras |
+| `aurora.color` | no | color hexadecimal | `40FF90` | Color en la base de las cortinas |
+| `aurora.topColor` | no | color hexadecimal | `8040FF` | Color arriba, donde las cortinas se desvanecen |
+| `rainbow` | no | booleano | `false` | Mostrar un arcoíris después de la lluvia |
+
 ### El bloque `physics`
 
 *dimensiones*
