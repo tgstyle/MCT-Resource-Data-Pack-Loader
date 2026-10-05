@@ -3628,6 +3628,7 @@ Ce sont les mêmes multiplicateurs que dans [Physique du monde](#physique-du-mon
 | `rain.snowColor` | non | couleur hexadécimale | `#FFFFFF` | Teinte de la neige qui tombe |
 | `rain.angle` | non | flottant, 0 à 180 | `0` | Degrés par rapport à la verticale descendante : `90` souffle à l'horizontale, `180` monte tout droit. Elle est dessinée inclinée de 75 degrés au plus |
 | `rain.heading` | non | flottant, degrés | `0` | Direction du souffle : `0` sud, `90` ouest, `180` nord, `270` est |
+| `rain.splashUpward` | non | booléen | `false` | Activé, la pluie qui monte (`angle` au-delà de `90`) éclabousse quand même le sol et reste audible |
 | `wind.gust` | non | flottant, 0 à 90 | `15` | Degrés qu'une rafale ajoute à `angle` à son plus fort, sans jamais dépasser l'horizontale |
 | `wind.every` | non | entier ou `[min, max]` | `[200, 600]` | Ticks d'une rafale à la suivante |
 | `wind.swing` | non | flottant, 0 à 180 | `30` | Degrés dont une rafale fait pivoter `heading` d'un côté |

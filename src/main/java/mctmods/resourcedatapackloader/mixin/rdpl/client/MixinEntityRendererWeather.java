@@ -31,14 +31,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "addRainParticles", at = @At("HEAD"), cancellable = true)
     private void rdpl$skipWeatherParticles(CallbackInfo ci) {
-        if (rdpl$aboveCeiling()) {
+        Minecraft mc = Minecraft.getMinecraft();
+        ContentWorldProvider provider = mc.world.provider instanceof ContentWorldProvider ? (ContentWorldProvider) mc.world.provider : null;
+        RainDef rain = provider == null ? null : provider.rain();
+        if (rdpl$aboveCeiling() || rain != null && rain.splashless()) {
             ci.cancel();
             return;
         }
-        Minecraft mc = Minecraft.getMinecraft();
-        RainDef rain = mc.world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) mc.world.provider).rainSplash() : null;
-        if (rain == null) { return; }
-        RainSplash.tick(mc, rain, rendererUpdateCount);
+        RainDef splash = provider == null ? null : provider.rainSplash();
+        if (splash == null) { return; }
+        RainSplash.tick(mc, splash, rendererUpdateCount);
         ci.cancel();
     }
 }

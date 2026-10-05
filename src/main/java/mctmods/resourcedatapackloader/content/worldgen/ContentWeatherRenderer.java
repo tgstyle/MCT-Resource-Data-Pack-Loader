@@ -58,7 +58,7 @@ import java.util.Random;
         snowGreen = (rain.snowColor >> 8 & 255) / 255.0F;
         snowBlue = (rain.snowColor & 255) / 255.0F;
         this.rain = rain;
-        upward = rain.angle > 90.0F;
+        upward = rain.upward();
     }
 
     @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {

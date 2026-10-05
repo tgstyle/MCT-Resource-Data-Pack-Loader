@@ -3628,6 +3628,7 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `rain.snowColor` | 否 | 十六进制颜色 | `#FFFFFF` | 落下的雪的色调 |
 | `rain.angle` | 否 | 浮点数，0 到 180 | `0` | 与竖直向下的夹角度数：`90` 为横向吹，`180` 为笔直向上。绘制时最多倾斜 75 度 |
 | `rain.heading` | 否 | 浮点数，度 | `0` | 风吹的方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东 |
+| `rain.splashUpward` | 否 | 布尔值 | `false` | 开启后，向上飘的雨（`angle` 大于 `90`）仍会在地面溅起水花并发出声音 |
 | `wind.gust` | 否 | 浮点数，0 到 90 | `15` | 阵风在最强时给 `angle` 增加的度数，最多到水平 |
 | `wind.every` | 否 | 整数或 `[min, max]` | `[200, 600]` | 两阵风之间相隔的刻数 |
 | `wind.swing` | 否 | 浮点数，0 到 180 | `30` | 阵风让 `heading` 偏向一侧的度数 |

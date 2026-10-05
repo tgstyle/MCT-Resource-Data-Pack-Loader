@@ -120,6 +120,7 @@ public final class ContentParserDimensionTraits {
                 ContentTypes.color(JsonUtils.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
                 angle,
                 JsonUtils.getFloat(json, "heading", 0.0F),
+                JsonUtils.getBoolean(json, "splashUpward", false),
                 wind);
     }
 

@@ -3628,6 +3628,7 @@ Son los mismos multiplicadores que en [Física del mundo](#física-del-mundo), e
 | `rain.snowColor`        | no       | color hex              | `#FFFFFF`                | Tinte de la nieve al caer                                                                                        |
 | `rain.angle`            | no       | float, 0 a 180         | `0`                      | Grados respecto a la vertical hacia abajo: `90` sopla de lado, `180` sube en vertical. Se dibuja inclinada 75 grados como máximo |
 | `rain.heading`          | no       | float, grados          | `0`                      | Hacia dónde sopla: `0` sur, `90` oeste, `180` norte, `270` este                                                  |
+| `rain.splashUpward`     | no       | booleano               | `false`                  | Activado, la lluvia que sube (`angle` mayor que `90`) sigue salpicando el suelo y sonando                        |
 | `wind.gust`             | no       | float, 0 a 90          | `15`                     | Grados que una ráfaga suma a `angle` en su punto máximo, sin pasar nunca de la horizontal                        |
 | `wind.every`            | no       | int o `[min, max]`     | `[200, 600]`             | Ticks entre una ráfaga y la siguiente                                                                            |
 | `wind.swing`            | no       | float, 0 a 180         | `30`                     | Grados que una ráfaga desvía `heading` hacia un lado                                                             |
