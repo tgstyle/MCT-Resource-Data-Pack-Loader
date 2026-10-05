@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.OrderDef;
 import mctmods.resourcedatapackloader.content.entity.OrderBoard;
 import mctmods.resourcedatapackloader.content.entity.OrderItems;
 import mctmods.resourcedatapackloader.content.entity.WorkOrder;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EntityCreature;
@@ -244,12 +245,13 @@ public final class EntityAIWorkOrder extends EntityAIBase {
         }
         if (walked % 20 != 1) { return; }
         BlockPos to = approach(pos);
-        if (mob.getNavigator().tryMoveToXYZ(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, 1.0D)) { return; }
+        double pace = Walking.pace(mob);
+        if (mob.getNavigator().tryMoveToXYZ(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, pace)) { return; }
         Vec3d aim = new Vec3d(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D);
         double floor = Math.min(mob.posY, to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {
             Vec3d toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 10, 7, aim);
-            if (toward != null && toward.y >= floor && mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, 1.0D)) { return; }
+            if (toward != null && toward.y >= floor && mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, pace)) { return; }
         }
     }
 

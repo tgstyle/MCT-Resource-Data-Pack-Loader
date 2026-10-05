@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
@@ -55,7 +56,7 @@ public final class EntityAIAnvilWork extends EntityAIBase {
     @Override public void startExecuting() {
         walked = 0;
         ContentLog.LOGGER.debug("{} at {}, {}, {} can pay for {} and heads for the anvil at {}, {}, {}", mob.getName(), (int) mob.posX, (int) mob.posY, (int) mob.posZ, work.registryName, anvil.getX(), anvil.getY(), anvil.getZ());
-        mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, 1.0D);
+        mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob));
     }
 
     @Override public void resetTask() {
@@ -72,6 +73,6 @@ public final class EntityAIAnvilWork extends EntityAIBase {
             anvil = null;
             return;
         }
-        if (mob.getNavigator().noPath() && walked % 20 == 0) { mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, 1.0D); }
+        if (mob.getNavigator().noPath() && walked % 20 == 0) { mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob)); }
     }
 }

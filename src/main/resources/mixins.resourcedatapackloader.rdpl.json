@@ -10,6 +10,7 @@
     "common.IBeamSegment",
     "common.IBiomeName",
     "common.IEntityAITarget",
+    "common.IEntityAIWander",
     "common.IBiomeForest",
     "common.IBiomeMesa",
     "common.IBiomePlains",
