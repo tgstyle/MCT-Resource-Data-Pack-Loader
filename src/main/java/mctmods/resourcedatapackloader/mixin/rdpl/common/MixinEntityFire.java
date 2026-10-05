@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 
 import net.minecraft.world.entity.Entity;
@@ -11,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Entity.class) public abstract class MixinEntityFire {
     @Inject(method = "setSecondsOnFire", at = @At("HEAD"), cancellable = true)
     private void rdpl$noFireFromBlows(int seconds, CallbackInfo ci) {
-        if (ContentEntities.struckFireless((Entity) (Object) this)) { ci.cancel(); }
+        Entity self = (Entity) (Object) this;
+        if (ContentEntities.struckFireless(self) || ContentBoards.piece(self)) { ci.cancel(); }
     }
 }

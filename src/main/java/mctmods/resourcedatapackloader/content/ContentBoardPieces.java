@@ -8,11 +8,15 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,6 +31,7 @@ final class ContentBoardPieces {
     private static final String BOARD = "rdplBoard";
     private static final String KIND = "rdplKind";
     private static final String SPAWN = "rdplSpawn";
+    private static final int STRIKE_TICKS = 10;
     private static final Set<String> UNMADE = new HashSet<>();
 
     private ContentBoardPieces() {}
@@ -59,8 +64,30 @@ final class ContentBoardPieces {
         for (Entity piece : held(level, game)) { piece.discard(); }
     }
 
+    static void strike(ServerLevel level, BoardGame game, BoardRules rules, int from, int victim) {
+        Entity striker = standing(level, game, rules, from);
+        Entity struck = standing(level, game, rules, victim);
+        if (struck == null) {
+            sync(level, game, rules);
+            return;
+        }
+        if (striker instanceof LivingEntity living) { living.swing(InteractionHand.MAIN_HAND); }
+        if (struck instanceof LivingEntity) { level.broadcastDamageEvent(struck, level.damageSources().generic()); }
+        level.sendParticles(ParticleTypes.CRIT, struck.getX(), struck.getY() + struck.getBbHeight() * 0.5D, struck.getZ(), 12, 0.3D, 0.3D, 0.3D, 0.2D);
+        level.playSound(null, struck.getX(), struck.getY(), struck.getZ(), SoundEvents.PLAYER_ATTACK_STRONG, struck.getSoundSource(), 1.0F, 1.0F);
+        game.strike = STRIKE_TICKS;
+    }
+
+    @Nullable private static Entity standing(ServerLevel level, BoardGame game, BoardRules rules, int square) {
+        for (Entity piece : held(level, game)) {
+            if (piece.distanceToSqr(game.x + square % rules.files + 0.5D, game.y, game.z + Math.floorDiv(square, rules.files) + 0.5D) < 0.01D) { return piece; }
+        }
+        return null;
+    }
+
     static void sync(ServerLevel level, BoardGame game, BoardRules rules) {
         BoardState state = game.state;
+        game.strike = 0;
         if (state == null) { return; }
         if (!load(level, game, rules)) {
             clear(level, game);

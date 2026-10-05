@@ -196,6 +196,14 @@ public final class BoardState {
         return false;
     }
 
+    public int victim(int move) {
+        int from = from(move);
+        int to = to(move);
+        int flags = flags(move);
+        int victim = (flags & PASSANT) != 0 ? passVictim : (flags & HOP) != 0 ? square((from % rules.files + to % rules.files) / 2, (from / rules.files + to / rules.files) / 2) : to;
+        return (flags & CAPTURE) != 0 && victim >= 0 && cells[victim] != 0 ? victim : -1;
+    }
+
     public void play(int move) {
         int from = from(move);
         int to = to(move);
@@ -203,8 +211,8 @@ public final class BoardState {
         int held = cells[from];
         int side = side(held);
         BoardPiece piece = rules.pieces.get(kind(held));
-        int victim = (flags & PASSANT) != 0 ? passVictim : (flags & HOP) != 0 ? square((from % rules.files + to % rules.files) / 2, (from / rules.files + to / rules.files) / 2) : to;
-        if ((flags & CAPTURE) != 0 && victim >= 0 && cells[victim] != 0) {
+        int victim = victim(move);
+        if (victim >= 0) {
             taken.get(side).add(kind(cells[victim]));
             cells[victim] = 0;
         }
