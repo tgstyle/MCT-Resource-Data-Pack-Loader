@@ -64,7 +64,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.PackRepository;
-import net.minecraft.server.rcon.RconConsoleSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -179,7 +178,7 @@ public final class CommandShared {
                     locate(context.getSource(), target);
                     return 1;
                 })))
-                .then(Commands.literal("goto").requires(source -> source.hasPermission(ContentStructureSearch.lowestLevel()))
+                .then(Commands.literal("goto").requires(source -> CommandPlaces.mayGo(source, ContentStructureSearch.lowestLevel()))
                         .then(Commands.argument("place", StringArgumentType.greedyString()).suggests((context, suggestions) -> CommandPlaces.suggestPlaces(context.getSource(), suggestions))
                                 .executes(context -> {
                                     String typed = StringArgumentType.getString(context, "place");
@@ -469,7 +468,7 @@ public final class CommandShared {
     private static Component shownName(@Nullable ResourceLocation key) { return key == null ? Component.literal("unknown") : Component.translatable(Util.makeDescriptionId("biome", key)); }
 
     private static int biomeHere(CommandSourceStack source, boolean server) {
-        if (server && (source.source instanceof MinecraftServer || source.source instanceof RconConsoleSource)) {
+        if (server && source.getEntity() == null) {
             source.sendFailure(tr("rdpl.command.hereplayer"));
             return 0;
         }
@@ -503,7 +502,7 @@ public final class CommandShared {
         return 1;
     }
 
-    @Nullable private static ResourceKey<Biome> findBiome(CommandSourceStack source, String asked) {
+    @Nullable static ResourceKey<Biome> findBiome(CommandSourceStack source, String asked) {
         Registry<Biome> registry = source.registryAccess().registryOrThrow(Registries.BIOME);
         ResourceLocation named = ResourceLocation.tryParse(asked);
         if (named != null && registry.containsKey(named)) { return ResourceKey.create(Registries.BIOME, named); }

@@ -6902,6 +6902,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | 带你前往最近的一处尚无人去过的地方，沿途查找而不生成陆地。资源包用 `locateAs` 注册的地点则是放置的最近一处，无论是否有人去过。`temple` 指所有零散的特征结构：沙漠神殿、丛林神庙、女巫小屋和雪屋。在造陆期间会被拒绝 |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | 带你继续前往本次会话中尚未带你去过的最近一处，无论以前是否有人去过。离你八个区块以内的会被跳过；对于资源包的地点，则是 128 格以外最近的一处 |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | 带你前往上一处，沿着本次会话把你送去过的地点向后退 |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | 带你前往该生物群系最近的地点，以 ID 指定，例如 `minecraft:river`，并落在其地表；`next` 与 `back` 的用法与结构相同。函数或命令方块以 2 级权限即可运行任何 `goto` |
 
 #### 游戏
 

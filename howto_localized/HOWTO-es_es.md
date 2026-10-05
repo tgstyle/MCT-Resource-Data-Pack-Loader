@@ -6902,6 +6902,7 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia propia del ser
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Te lleva a la más cercana a la que nadie ha ido aún, buscando sin generar el terreno por el camino. Un lugar que un pack registró con `locateAs` es el más cercano colocado, visitado o no. `temple` significa todas las características dispersas: templos del desierto y de la jungla, chozas de bruja e iglús. Se rechaza mientras se está creando terreno |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Te lleva más allá, a la más cercana a la que no te han llevado en esta sesión, haya sido visitada antes o no. Una a menos de ocho chunks de ti se pasa por alto; para el lugar de un pack es la más cercana a más de 128 bloques |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Te lleva a la anterior, retrocediendo por los lugares a los que te ha enviado esta sesión |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Te lleva al lugar más cercano de ese bioma, indicado por su ID como `minecraft:river`, y te deja en su superficie; `next` y `back` funcionan igual que con una estructura. Una función o un bloque de comandos puede ejecutar cualquier `goto` con nivel 2 |
 
 #### Juegos
 
