@@ -52,6 +52,9 @@ public final class RDPLNetwork {
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
         }).add();
+        channel.messageBuilder(MessageIntroLandMade.class, 8, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroLandMade()).consumerMainThread((message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); }
+        }).add();
         channel.messageBuilder(MessageIntroDone.class, 3, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroDone()).consumerMainThread((message, context) -> {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentIntroPlay.finished(player); }
@@ -84,6 +87,10 @@ public final class RDPLNetwork {
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {
         if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void introLandMade(ServerPlayer player) {
+        if (channel != null && reaches(player)) { channel.send(PacketDistributor.PLAYER.with(() -> player), new MessageIntroLandMade()); }
     }
 
     public static void sendToasts(ServerPlayer player, int kinds) {
