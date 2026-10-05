@@ -3395,6 +3395,7 @@ Ce sont les mêmes multiplicateurs que les clés de modèle de monde `worldGravi
 | `rain.snowColor` | non | couleur hexadécimale | `#FFFFFF` | Teinte de la neige qui tombe |
 | `rain.angle` | non | flottant, de 0 à 180 | `0` | Degrés par rapport à la verticale descendante : `90` souffle à l'horizontale, `180` monte droit vers le haut. Elle est dessinée inclinée de 75 degrés au maximum |
 | `rain.heading` | non | flottant, degrés | `0` | Direction du souffle : `0` sud, `90` ouest, `180` nord, `270` est |
+| `rain.splashUpward` | non | booléen | `false` | Activé, la pluie qui monte (`angle` au-delà de `90`) éclabousse quand même le sol et reste audible |
 | `wind.gust` | non | flottant, de 0 à 90 | `15` | Degrés qu'une rafale ajoute à `angle` à son plus fort, sans jamais dépasser l'horizontale |
 | `wind.every` | non | entier ou `[min, max]` | `[200, 600]` | Ticks d'une rafale à la suivante |
 | `wind.swing` | non | flottant, de 0 à 180 | `30` | Degrés dont une rafale fait pivoter `heading` d'un côté |

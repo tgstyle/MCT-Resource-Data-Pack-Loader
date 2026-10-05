@@ -43,7 +43,7 @@ public final class RainSplash {
 
     public static void tick(ClientLevel level, RainDef rain, long ticks, Camera camera) {
         float strength = level.getRainLevel(1.0F);
-        if (strength <= 0.0F) { return; }
+        if (strength <= 0.0F || rain.splashless()) { return; }
         Minecraft mc = Minecraft.getInstance();
         ParticleStatus status = mc.options.particles().get();
         int radius = mc.options.weatherRadius().get();

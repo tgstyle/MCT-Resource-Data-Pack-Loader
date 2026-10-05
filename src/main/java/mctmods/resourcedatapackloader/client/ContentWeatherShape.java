@@ -34,7 +34,7 @@ public final class ContentWeatherShape {
         color = rain.color();
         snowColor = rain.snowColor();
         this.rain = rain;
-        upward = rain.angle() > 90.0F;
+        upward = rain.upward();
     }
 
     public void build(VertexConsumer builder, ClientLevel level, List<WeatherEffectRenderer.ColumnInstance> columns, Vec3 camera, boolean snow, int radius, float intensity) {
