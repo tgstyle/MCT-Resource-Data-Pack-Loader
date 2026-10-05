@@ -6902,6 +6902,7 @@ On a dedicated server, `/rdplserver` does the same for the server's own copy of 
 | `/rdplserver goto <structure>`      | `gotoLevel`, `3`     | Take you to the nearest one nobody has been to yet, looking without generating the land on the way. A place a pack registered with `locateAs` is the nearest one placed, visited or not. `temple` means every scattered feature: desert and jungle temples, witch huts and igloos. Refused while land is being made |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Take you onward to the closest one you have not been taken to this session, whether or not it has been visited before. One within eight chunks of you is passed over; for a pack's place it is the nearest more than 128 blocks away                                                                                |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Take you to the one before it, stepping back through where this session has sent you                                                                                                                                                                                                                                |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Take you to the nearest place in that biome, named by its id such as `minecraft:river`, landing on its surface; `next` and `back` work as for a structure. A function or command block may run any `goto` at level 2 |
 
 #### Games
 

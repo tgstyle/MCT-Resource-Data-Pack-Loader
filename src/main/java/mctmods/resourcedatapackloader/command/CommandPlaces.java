@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.command;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
@@ -10,17 +11,23 @@ import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.biome.Biome;
 
 final class CommandPlaces {
     private static final String NEXT = "next";
     private static final String BACK = "back";
+    private static final int PACK_GOTO = 2;
     private CommandPlaces() {}
 
     static CompletableFuture<Suggestions> suggestPlaces(CommandSourceStack source, SuggestionsBuilder suggestions) {
@@ -29,12 +36,15 @@ final class CommandPlaces {
         if (space >= 0) { return SharedSuggestionProvider.suggest(List.of(NEXT, BACK), suggestions.createOffset(suggestions.getStart() + space + 1)); }
         List<String> known = new ArrayList<>(ContentLocate.names(source.getLevel()));
         known.addAll(ContentStructureSearch.aliases());
-        known.removeIf(place -> !source.hasPermission(ContentStructureSearch.levelFor(place, "gotoLevel", Config.commands.gotoLevel())));
+        for (ResourceLocation biome : source.registryAccess().registryOrThrow(Registries.BIOME).keySet()) { known.add(biome.toString()); }
+        known.removeIf(place -> !mayGo(source, ContentStructureSearch.levelFor(place, "gotoLevel", Config.commands.gotoLevel())));
         return SharedSuggestionProvider.suggest(known, suggestions);
     }
 
+    static boolean mayGo(CommandSourceStack source, int level) { return source.hasPermission(level) || !(source.source instanceof ServerPlayer) && source.hasPermission(PACK_GOTO); }
+
     private static boolean denied(CommandSourceStack source, String place, String key, int fallback) {
-        if (source.hasPermission(ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
+        if (mayGo(source, ContentStructureSearch.levelFor(place, key, fallback))) { return false; }
         source.sendFailure(CommandShared.tr("rdpl.command.gotodenied", place));
         return true;
     }
@@ -62,8 +72,14 @@ final class CommandPlaces {
         ServerLevel level = source.getLevel();
         String place = ContentStructureSearch.named(asked);
         BlockPos from = BlockPos.containing(source.getPosition());
-        BlockPos found = ContentLocate.names(level).contains(place) ? ContentLocate.nearest(level, place, from, next ? 128.0D : 0.0D)
-                                                                   : ContentStructureSearch.find(level, player, place, from, next);
+        ResourceKey<Biome> biome = biomeOf(source, level, place);
+        BlockPos found;
+        if (biome != null) {
+            place = biome.location().toString();
+            found = ContentBiomeSearch.find(level, player, biome, place, from, next);
+        }
+        else if (ContentLocate.names(level).contains(place)) { found = ContentLocate.nearest(level, place, from, next ? 128.0D : 0.0D); }
+        else { found = ContentStructureSearch.find(level, player, place, from, next); }
         if (found == null) {
             source.sendFailure(CommandShared.tr("rdpl.command.gotonothing", asked));
             return 0;
@@ -83,12 +99,19 @@ final class CommandPlaces {
             return 0;
         }
         String place = ContentStructureSearch.named(asked);
+        ResourceKey<Biome> biome = biomeOf(source, source.getLevel(), place);
+        if (biome != null) { place = biome.location().toString(); }
         BlockPos previous = ContentStructureSearch.stepBack(player, place);
         if (previous == null) {
             source.sendFailure(CommandShared.tr("rdpl.command.gotonoback", asked));
             return 0;
         }
         return carry(source, player, source.getLevel(), asked, place, previous);
+    }
+
+    @Nullable private static ResourceKey<Biome> biomeOf(CommandSourceStack source, ServerLevel level, String place) {
+        if (ContentLocate.names(level).contains(place) || ContentStructureSearch.known(level, place)) { return null; }
+        return CommandShared.findBiome(source, place.trim());
     }
 
     private static int carry(CommandSourceStack source, ServerPlayer player, ServerLevel level, String asked, String place, BlockPos found) {
