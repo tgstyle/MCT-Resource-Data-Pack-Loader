@@ -54,7 +54,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 public final class ContentStructureSearch implements WorldWorkerManager.IWorker {
-    private static final long SLICE_NANOS = 40_000_000L;
+    static final long SLICE_NANOS = 40_000_000L;
     private static final int CHUNK_REACH = 512;
     private static final long BEEN_NEAR = 128L * 128L;
     private static final Map<String, Deque<BlockPos>> VISITED = new ConcurrentHashMap<>();
@@ -252,7 +252,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         player.sendMessage(new TextComponentTranslation("commands.locate.success", name, best.getX(), best.getZ()));
     }
 
-    private static void arrive(EntityPlayerMP player, String name, BlockPos best) {
+    static void arrive(EntityPlayerMP player, String name, BlockPos best) {
         if (ContentPregen.busy()) {
             tell(player, TextFormatting.RED, Lang.tr(player, "rdpl.command.gotomakingland"));
             return;
@@ -286,14 +286,14 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return held.peekLast();
     }
 
-    private static List<BlockPos> been(EntityPlayerMP player, String name) {
+    static List<BlockPos> been(EntityPlayerMP player, String name) {
         Deque<BlockPos> held = VISITED.get(player.getUniqueID() + ":" + name);
         return held == null ? new ArrayList<>() : new ArrayList<>(held);
     }
 
     private boolean beenNear(int x, int z) { return beenNear(been, x, z); }
 
-    private static boolean beenNear(List<BlockPos> been, int x, int z) {
+    static boolean beenNear(List<BlockPos> been, int x, int z) {
         for (BlockPos at : been) {
             long awayX = x - (long) at.getX();
             long awayZ = z - (long) at.getZ();
@@ -461,9 +461,11 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         return null;
     }
 
-    private int onRing(int around) { return around == 0 ? 1 : around * 16; }
+    static int onRing(int around) { return around == 0 ? 1 : around * 8; }
 
-    private long ringSpot(int at) {
+    private long ringSpot(int at) { return ringSpot(middleX, middleZ, ring, at); }
+
+    static long ringSpot(int middleX, int middleZ, int ring, int at) {
         if (ring == 0) { return Longs.pack(middleX, middleZ); }
         int side = ring * 2;
         int leg = at / side;

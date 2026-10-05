@@ -7946,6 +7946,7 @@ Num servidor dedicado, `/rdplserver` faz o mesmo para a cópia da pasta do próp
 | `/rdplserver goto <structure>`      | `gotoLevel`, `3`     | Leva você à mais próxima que ninguém visitou ainda, procurando sem gerar o terreno pelo caminho                            |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Leva você adiante à mais próxima a que você ainda não foi levado nesta sessão, tenha ela sido visitada antes ou não        |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Leva você à anterior a ela, voltando pelos lugares para onde esta sessão enviou você                                       |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Leva você ao lugar mais próximo desse bioma, indicado pelo ID, como `minecraft:river`, e deixa você na superfície; `next` e `back` funcionam como para uma estrutura. Uma função ou um bloco de comando pode executar qualquer `goto` no nível 2 |
 
 #### Jogos
 

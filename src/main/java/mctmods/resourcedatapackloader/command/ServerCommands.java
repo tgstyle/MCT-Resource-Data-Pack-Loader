@@ -11,6 +11,7 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeAt;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
+import static mctmods.resourcedatapackloader.command.CommandShared.findBiome;
 import net.minecraft.entity.player.EntityPlayer;
 import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.ContentControl;
@@ -20,6 +21,7 @@ import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
@@ -47,6 +49,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,6 +63,7 @@ import javax.annotation.Nullable;
 
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
+    private static final int PACK_GOTO = 2;
     private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "game");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
@@ -164,6 +168,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 2 && "goto".equals(args[0])) {
             List<String> known = new ArrayList<>(STRUCTURE_NAMES);
             known.addAll(ContentLocate.names(sender.getEntityWorld()));
+            known.addAll(biomeNames());
             known.removeIf(place -> !sender.canUseCommand(neededFor(place, "gotoLevel", Config.commands.gotoLevel), getName()));
             return getListOfStringsMatchingLastWord(args, known);
         }
@@ -175,9 +180,9 @@ public class ServerCommands extends CommandBase {
         ContentLog.LOGGER.debug("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length == 0) { throw new WrongUsageException(getUsage(sender)); }
         if ("goto".equals(args[0])) {
-            if (args.length == 2) { allow(sender, neededFor(args[1], "gotoLevel", Config.commands.gotoLevel)); }
-            else if (args.length == 3 && "next".equals(args[2])) { allow(sender, neededFor(args[1], "gotoNextLevel", Config.commands.gotoNextLevel)); }
-            else if (args.length == 3 && "back".equals(args[2])) { allow(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
+            if (args.length == 2) { allowGoto(sender, neededFor(args[1], "gotoLevel", Config.commands.gotoLevel)); }
+            else if (args.length == 3 && "next".equals(args[2])) { allowGoto(sender, neededFor(args[1], "gotoNextLevel", Config.commands.gotoNextLevel)); }
+            else if (args.length == 3 && "back".equals(args[2])) { allowGoto(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
             else { throw new WrongUsageException(getUsage(sender)); }
         }
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
@@ -214,9 +219,15 @@ public class ServerCommands extends CommandBase {
 
     private void goTo(ICommandSender sender, String asked, boolean next) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
-        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        EntityPlayerMP player = CommandShared.goer(sender);
         World world = player.world;
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        Biome biome = biomeFor(world, name);
+        if (biome != null) {
+            if (ContentBiomeSearch.looking()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotobusy")); }
+            ContentBiomeSearch.start(player, String.valueOf(biome.getRegistryName()), biome, next);
+            return;
+        }
         if (ContentLocate.names(world).contains(name)) {
             BlockPos found = ContentLocate.nearest(world, name, player.getPosition(), next ? 128.0D : 0.0D);
             if (found == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonothing", name)); }
@@ -233,14 +244,26 @@ public class ServerCommands extends CommandBase {
 
     private void goBack(ICommandSender sender, String asked) throws CommandException {
         if (ContentPregen.busy()) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotomakingland")); }
-        EntityPlayerMP player = getCommandSenderAsPlayer(sender);
+        EntityPlayerMP player = CommandShared.goer(sender);
         String name = STRUCTURE_ALIASES.getOrDefault(asked, asked);
+        Biome biome = biomeFor(player.world, name);
+        if (biome != null) { name = String.valueOf(biome.getRegistryName()); }
         BlockPos previous = ContentStructureSearch.stepBack(player, name);
         if (previous == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoback", name)); }
         BlockPos landing = ContentStructureSearch.landing(player.world, previous);
         if (landing == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.gotonoground", name, previous.getX(), previous.getZ())); }
         player.setPositionAndUpdate(landing.getX() + 0.5D, ContentStructureSearch.stand(player.world, landing), landing.getZ() + 0.5D);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gotodone", name, landing.getX(), landing.getY(), landing.getZ()));
+    }
+
+    @Nullable private static Biome biomeFor(World world, String name) {
+        if (STRUCTURE_NAMES.contains(name) || ContentLocate.names(world).contains(name)) { return null; }
+        return findBiome(name);
+    }
+
+    private void allowGoto(ICommandSender sender, int needed) throws CommandException {
+        if (!(sender instanceof EntityPlayerMP) && sender.canUseCommand(PACK_GOTO, getName())) { return; }
+        allow(sender, needed);
     }
 
     private static String keyFor(String name) {

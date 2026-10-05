@@ -24,7 +24,7 @@ final class CardCommand {
         if (args.length < 2 || args.length > 3) { throw new WrongUsageException(usage); }
         CardRule rule = CardRules.find(args[1]);
         if (rule == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.nocard", args[1])); }
-        List<EntityPlayerMP> players = args.length == 3 ? CommandBase.getPlayers(server, sender, args[2]) : Collections.singletonList(CommandBase.getCommandSenderAsPlayer(sender));
+        List<EntityPlayerMP> players = args.length == 3 ? CommandBase.getPlayers(server, sender, args[2]) : Collections.singletonList(CommandShared.goer(sender));
         for (EntityPlayerMP player : players) { CardFire.show(rule, player); }
         CommandShared.send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.cardshown", rule.key(), players.size()));
     }

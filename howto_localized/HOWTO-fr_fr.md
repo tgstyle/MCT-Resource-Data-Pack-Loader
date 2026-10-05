@@ -7946,6 +7946,7 @@ Sur un serveur dédié, `/rdplserver` fait la même chose pour la copie du dossi
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Vous emmène à la plus proche où personne n'est encore allé, en cherchant sans générer le terrain en chemin |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Vous emmène plus loin vers la plus proche où l'on ne vous a pas encore conduit durant cette session, qu'elle ait déjà été visitée ou non |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Vous emmène à celle d'avant, en revenant en arrière parmi les lieux où cette session vous a envoyé |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Vous emmène à l'endroit le plus proche de ce biome, désigné par son ID comme `minecraft:river`, et vous pose à sa surface ; `next` et `back` fonctionnent comme pour une structure. Une fonction ou un bloc de commande peut lancer n'importe quel `goto` au niveau 2 |
 
 #### Jeux
 

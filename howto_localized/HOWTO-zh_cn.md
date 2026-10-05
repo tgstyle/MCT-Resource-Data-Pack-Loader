@@ -7946,6 +7946,7 @@ Blast Plaster（本模组的依赖）负责爆炸后的行为：逐方块修复�
 | `/rdplserver goto <structure>` | `gotoLevel`、`3` | 带你前往最近一个还没有人去过的该结构，查找时不会在途中生成陆地 |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`、`3` | 带你继续前往你在本次会话中尚未被带去过的最近一个，无论它之前是否有人去过 |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`、`3` | 带你前往它之前的那一个，沿着本次会话把你送去过的地方向回退 |
+| `/rdplserver goto <biome>` | `gotoLevel`、`3` | 带你前往该生物群系最近的地点，以 ID 指定，例如 `minecraft:river`，并落在其地表；`next` 与 `back` 的用法与结构相同。函数或命令方块以 2 级权限即可运行任何 `goto` |
 
 #### 游戏
 

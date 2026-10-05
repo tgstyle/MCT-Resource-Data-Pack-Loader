@@ -7946,6 +7946,7 @@ Auf einem dedizierten Server macht `/rdplserver` dasselbe für die Kopie des Ord
 | `/rdplserver goto <struktur>`      | `gotoLevel`, `3`     | Bringt dich zur nächsten, bei der noch niemand war, und sucht, ohne das Land auf dem Weg zu erzeugen                                |
 | `/rdplserver goto <struktur> next` | `gotoNextLevel`, `3` | Bringt dich weiter zur nächstgelegenen, zu der du in dieser Sitzung noch nicht gebracht wurdest, ob schon einmal besucht oder nicht |
 | `/rdplserver goto <struktur> back` | `gotoBackLevel`, `3` | Bringt dich zur vorherigen zurück und geht Schritt für Schritt durch das, wohin diese Sitzung dich geschickt hat                    |
+| `/rdplserver goto <biom>` | `gotoLevel`, `3` | Bringt dich zur nächsten Stelle dieses Bioms, angegeben mit seiner ID wie `minecraft:river`, und setzt dich auf seine Oberfläche; `next` und `back` wirken wie bei einer Struktur. Eine Funktion oder ein Befehlsblock darf jedes `goto` mit Stufe 2 ausführen |
 
 #### Spiele
 

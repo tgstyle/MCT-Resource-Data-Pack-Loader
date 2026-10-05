@@ -14,7 +14,9 @@ import java.util.Map;
 import java.nio.file.Path;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -37,6 +39,11 @@ public final class CommandShared {
     static void send(ICommandSender sender, TextFormatting color, String message) {
         Says.line(sender, color, message);
         ContentLog.LOGGER.debug("  {}", message);
+    }
+
+    static EntityPlayerMP goer(ICommandSender sender) throws CommandException {
+        if (sender.getCommandSenderEntity() instanceof EntityPlayerMP) { return (EntityPlayerMP) sender.getCommandSenderEntity(); }
+        throw new PlayerNotFoundException("commands.generic.player.unspecified");
     }
 
     static void listPacks(ICommandSender sender, BiConsumer<RDPLPack, String> each) {
