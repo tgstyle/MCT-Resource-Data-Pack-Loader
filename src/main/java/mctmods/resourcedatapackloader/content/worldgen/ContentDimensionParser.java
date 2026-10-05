@@ -222,7 +222,7 @@ public final class ContentDimensionParser {
         }
         return new RainDef(particle, sound, Math.max(0.0F, GsonHelper.getAsFloat(json, "volume", 0.2F)), Math.max(0, GsonHelper.getAsInt(json, "interval", 3)),
                 ContentParser.color(GsonHelper.getAsString(json, "color", WHITE), key + " rain color"),
-                ContentParser.color(GsonHelper.getAsString(json, "snowColor", WHITE), key + " rain snowColor"), angle, GsonHelper.getAsFloat(json, "heading", 0.0F), wind);
+                ContentParser.color(GsonHelper.getAsString(json, "snowColor", WHITE), key + " rain snowColor"), angle, GsonHelper.getAsFloat(json, "heading", 0.0F), GsonHelper.getAsBoolean(json, "splashUpward", false), wind);
     }
 
     private static WindDef wind(ResourceLocation key, JsonObject json) {
