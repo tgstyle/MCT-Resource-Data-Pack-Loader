@@ -6902,6 +6902,7 @@ Em um servidor dedicado, `/rdplserver` faz o mesmo pela cópia da pasta do próp
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | Leva você à mais próxima onde ninguém esteve ainda, procurando sem gerar o terreno no caminho. Um lugar que um pacote registrou com `locateAs` é o mais próximo colocado, visitado ou não. `temple` significa toda feature dispersa: templos do deserto e da selva, cabanas de bruxa e iglus. Recusado enquanto o terreno está sendo criado |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Leva você adiante à mais próxima para onde você não foi levado nesta sessão, tenha sido ela visitada antes ou não. Uma a até oito chunks de você é ignorada; para o lugar de um pacote, é a mais próxima a mais de 128 blocos de distância |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Leva você à anterior, voltando passo a passo pelos lugares para onde esta sessão o enviou |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Leva você ao lugar mais próximo desse bioma, indicado pelo ID, como `minecraft:river`, e deixa você na superfície; `next` e `back` funcionam como para uma estrutura. Uma função ou um bloco de comando pode executar qualquer `goto` no nível 2 |
 
 #### Jogos
 

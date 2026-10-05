@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
@@ -30,6 +31,7 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.placement.ConcentricRingsStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -221,6 +223,8 @@ public final class ContentStructureSearch {
         return level.getChunkSource().chunkMap.read(spot).join().map(tag -> SerializableChunkData.getChunkStatusFromTag(tag).getChunkType() == ChunkType.LEVELCHUNK).orElse(false);
     }
 
+    public static boolean known(ServerLevel level, String named) { return wanted(level, named) != null; }
+
     @Nullable private static HolderSet<Structure> wanted(ServerLevel level, String named) {
         Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         if (named.startsWith("#")) {
@@ -250,12 +254,12 @@ public final class ContentStructureSearch {
         return held.peekLast();
     }
 
-    private static List<BlockPos> been(ServerPlayer player, String name) {
+    static List<BlockPos> been(ServerPlayer player, String name) {
         Deque<BlockPos> held = VISITED.get(player.getUUID() + ":" + name);
         return held == null ? List.of() : new ArrayList<>(held);
     }
 
-    private static boolean beenNear(List<BlockPos> been, BlockPos at) {
+    static boolean beenNear(List<BlockPos> been, BlockPos at) {
         for (BlockPos site : been) {
             long awayX = at.getX() - (long) site.getX();
             long awayZ = at.getZ() - (long) site.getZ();
@@ -266,7 +270,8 @@ public final class ContentStructureSearch {
 
     public static double stand(ServerLevel level, BlockPos landing) {
         BlockPos below = landing.below();
-        return below.getY() + level.getBlockState(below).getCollisionShape(level, below).max(net.minecraft.core.Direction.Axis.Y);
+        VoxelShape shape = level.getBlockState(below).getCollisionShape(level, below);
+        return below.getY() + (shape.isEmpty() ? 1.0D : shape.max(Direction.Axis.Y));
     }
 
     @Nullable public static BlockPos landing(ServerLevel level, BlockPos found) {
