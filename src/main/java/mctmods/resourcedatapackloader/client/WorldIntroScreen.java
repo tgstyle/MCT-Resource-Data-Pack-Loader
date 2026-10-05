@@ -45,7 +45,7 @@ public final class WorldIntroScreen extends Screen {
     private MarkPage layout;
     private final List<String> written = new ArrayList<>();
     @Nullable private final SoundInstance music;
-    private final boolean landBeingMade;
+    private boolean landBeingMade;
     private int page;
     private boolean sounding;
     private float scale = 1.0F;
@@ -63,6 +63,10 @@ public final class WorldIntroScreen extends Screen {
         List<IntroPageDef> pages = ContentWorldIntro.pages();
         if (pages.isEmpty()) { return; }
         ClientCompat.setScreen(Minecraft.getInstance(), new WorldIntroScreen(pages, track(), landBeingMade));
+    }
+
+    public static void landMade() {
+        if (ClientCompat.screen(Minecraft.getInstance()) instanceof WorldIntroScreen screen) { screen.landBeingMade = false; }
     }
 
     @Override public boolean isPauseScreen() { return !landBeingMade; }
