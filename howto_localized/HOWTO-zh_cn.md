@@ -11,7 +11,7 @@
 - [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) 把主世界的底部降到 -320，在原版世界之下再生成 256 格：包括深层石头混合（安山岩从深板岩中逐渐过渡而出）、一直延伸到底部的游戏自带噪声洞穴，以及三个可向下探索的洞穴区域，每个区域都有自己的装饰和氛围。
 - [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) 添加了带有物品栏的方块与手持物品，格数从三格到允许的最大值各种尺寸齐备，配有战利品表、从原版贴图集中染色而来的箱子模型、全部以像素图绘制的纹理，以及可在 Curios 中佩戴的一个小袋和一个挎包。
 - [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) 生成一个超平坦世界，城市街区首尾相接铺满地面，扩展到一千个地块并固定在原点；有混凝土街道、街道之下的下水道、其下的两条地铁线和一条穿过城市的铁路，以及最高 123 格的框架建筑。
-- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) 是同一座城市，世界高度提升到 512、云层抬升到 384，配有行道树，以及建在 16、32 和 64 格宽地块上、最高 251 格的框架高楼。
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) 是同一座城市，世界高度提升到 512、云层抬升到 384，配有行道树，以及建在 16、32 和 64 格宽地块上、最高 251 格的框架高楼。这座城市没有边界：世界上的每个街区都是一座独立的城镇，无论走到哪里，街道都会一直延伸下去。
 - [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) 用一张城市地图来绘制同一座城市，而不是随机生成：一张每格 48 个方块的字符网格，配合调色板指明街道、广场、小巷以及按权重选取的建筑，因此街区布局由手工排定。
 - [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) 让四个阵营在永夜笼罩的基岩竞技场中互相对抗：每一方都是真正的原版计分板队伍，其生物在生成时加入；每击杀一只其他阵营的生物，本方就得分；一个回合在两分钟后以一张卡片结束，三个回合构成一场比赛。
 - [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) 把一个平坦世界布置在游戏自带的一座村庄周围，玩家加入时会获得不祥之兆：共五波敌人，包括原版的灾厄村民、一名女巫，以及资源包自带的掠夺者、袭击队长、掷斧者和劫掠兽；不祥之兆与村庄英雄是资源包自带的效果并配有像素图图标，另有资源包自带的钟方块、一种能让不祥之兆重新出现的饮品，以及结束袭击的函数。
