@@ -42,7 +42,7 @@ public final class RainSplash {
     public static void tick(ClientLevel level, RainDef rain, int ticks, Camera camera) {
         Minecraft mc = Minecraft.getInstance();
         float strength = level.getRainLevel(1.0F) / (Minecraft.useFancyGraphics() ? 1.0F : 2.0F);
-        if (strength <= 0.0F) { return; }
+        if (strength <= 0.0F || rain.splashless()) { return; }
         RandomSource random = RandomSource.create(ticks * 312987231L);
         BlockPos at = BlockPos.containing(camera.getPosition());
         BlockPos landed = null;

@@ -3395,6 +3395,7 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 | `rain.snowColor`        | no       | hex color              | `#FFFFFF`                | Tint of the falling snow                                                                                         |
 | `rain.angle`            | no       | float, 0 to 180        | `0`                      | Degrees from straight down: `90` blows sideways, `180` rises straight up. It is drawn leaning at most 75 degrees |
 | `rain.heading`          | no       | float, degrees         | `0`                      | Which way it blows: `0` south, `90` west, `180` north, `270` east                                                |
+| `rain.splashUpward`     | no       | boolean                | `false`                  | On, rain that rises (`angle` over `90`) still splashes on the ground and plays its sound                         |
 | `wind.gust`             | no       | float, 0 to 90         | `15`                     | Degrees a gust adds to `angle` at its peak, never past level                                                     |
 | `wind.every`            | no       | int or `[min, max]`    | `[200, 600]`             | Ticks from one gust to the next                                                                                  |
 | `wind.swing`            | no       | float, 0 to 180        | `30`                     | Degrees a gust swings `heading` to either side                                                                   |

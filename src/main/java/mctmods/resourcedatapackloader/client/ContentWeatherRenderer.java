@@ -55,7 +55,7 @@ public final class ContentWeatherRenderer {
         snowGreen = (rain.snowColor() >> 8 & 255) / 255.0F;
         snowBlue = (rain.snowColor() & 255) / 255.0F;
         this.rain = rain;
-        upward = rain.angle() > 90.0F;
+        upward = rain.upward();
     }
 
     public void render(ClientLevel level, int ticks, float partialTick, LightTexture lightTexture, double camX, double camY, double camZ) {

@@ -3395,6 +3395,7 @@ São os mesmos multiplicadores que as chaves de modelo de mundo `worldGravity` e
 | `rain.snowColor` | não | cor hexadecimal | `#FFFFFF` | Tom da neve que cai |
 | `rain.angle` | não | float, 0 a 180 | `0` | Graus a partir da vertical para baixo: `90` sopra de lado, `180` sobe em linha reta. É desenhada inclinada em no máximo 75 graus |
 | `rain.heading` | não | float, graus | `0` | Para onde sopra: `0` sul, `90` oeste, `180` norte, `270` leste |
+| `rain.splashUpward` | não | booleano | `false` | Ligado, a chuva que sobe (`angle` acima de `90`) continua respingando no chão e fazendo barulho |
 | `wind.gust` | não | float, 0 a 90 | `15` | Graus que uma rajada soma a `angle` no auge, sem nunca passar da horizontal |
 | `wind.every` | não | int ou `[min, max]` | `[200, 600]` | Ticks de uma rajada até a seguinte |
 | `wind.swing` | não | float, 0 a 180 | `30` | Graus que uma rajada desvia `heading` para um dos lados |
