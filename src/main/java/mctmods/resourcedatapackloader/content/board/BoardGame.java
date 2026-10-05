@@ -26,6 +26,7 @@ public final class BoardGame {
     @Nullable public BoardState state;
     public boolean thinking;
     public int wait;
+    public int strike;
     public int version;
 
     public BoardGame(String name, String game, String dimension, int x, int y, int z) {

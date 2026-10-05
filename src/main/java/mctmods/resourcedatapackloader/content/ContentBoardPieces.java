@@ -10,11 +10,16 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EntityLivingBase;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.EnumHand;
+import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -26,6 +31,7 @@ final class ContentBoardPieces {
     private static final String BOARD = "rdplBoard";
     private static final String KIND = "rdplKind";
     private static final String SPAWN = "rdplSpawn";
+    private static final int STRIKE_TICKS = 10;
     private static final Set<String> UNMADE = new HashSet<>();
 
     private ContentBoardPieces() {}
@@ -58,8 +64,30 @@ final class ContentBoardPieces {
         for (Entity piece : held(world, game)) { piece.setDead(); }
     }
 
+    static void strike(World world, BoardGame game, BoardRules rules, int from, int victim) {
+        Entity striker = standing(world, game, rules, from);
+        Entity struck = standing(world, game, rules, victim);
+        if (struck == null) {
+            sync(world, game, rules);
+            return;
+        }
+        if (striker instanceof EntityLivingBase) { ((EntityLivingBase) striker).swingArm(EnumHand.MAIN_HAND); }
+        if (struck instanceof EntityLivingBase) { world.setEntityState(struck, (byte) 2); }
+        if (world instanceof WorldServer) { ((WorldServer) world).spawnParticle(EnumParticleTypes.CRIT, struck.posX, struck.posY + struck.height * 0.5D, struck.posZ, 12, 0.3D, 0.3D, 0.3D, 0.2D); }
+        world.playSound(null, struck.posX, struck.posY, struck.posZ, SoundEvents.ENTITY_PLAYER_ATTACK_STRONG, struck.getSoundCategory(), 1.0F, 1.0F);
+        game.strike = STRIKE_TICKS;
+    }
+
+    @Nullable private static Entity standing(World world, BoardGame game, BoardRules rules, int square) {
+        for (Entity piece : held(world, game)) {
+            if (piece.getDistanceSq(game.x + square % rules.files + 0.5D, game.y, game.z + Math.floorDiv(square, rules.files) + 0.5D) < 0.01D) { return piece; }
+        }
+        return null;
+    }
+
     static void sync(World world, BoardGame game, BoardRules rules) {
         BoardState state = game.state;
+        game.strike = 0;
         if (state == null) { return; }
         load(world, game, rules);
         List<double[]> wanted = new ArrayList<>();

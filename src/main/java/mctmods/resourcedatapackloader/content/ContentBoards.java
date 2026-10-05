@@ -80,6 +80,8 @@ public final class ContentBoards {
         return data == null ? new ArrayList<>() : new ArrayList<>(data.boards.keySet());
     }
 
+    public static boolean piece(Entity entity) { return ContentBoardPieces.boardOf(entity) != null; }
+
     @Nullable static World world(MinecraftServer server, BoardGame game) {
         try { return server.getWorld(Integer.parseInt(game.dimension)); }
         catch (NumberFormatException notDimension) { return null; }
@@ -125,6 +127,8 @@ public final class ContentBoards {
         for (BoardGame game : new ArrayList<>(data.boards.values())) {
             BoardRules rules = RULES.get(game.game);
             BoardState state = game.state;
+            World world = rules != null && game.strike > 0 && --game.strike == 0 ? world(server, game) : null;
+            if (world != null) { ContentBoardPieces.sync(world, game, rules); }
             if (rules == null || state == null || !game.running()) { continue; }
             if (rules.clockTicks > 0 && !game.moves.isEmpty()) {
                 if (--game.clock[state.turn] <= 0) {

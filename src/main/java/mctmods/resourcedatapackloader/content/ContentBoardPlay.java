@@ -43,8 +43,12 @@ public final class ContentBoardPlay {
 
     static String say(@Nullable EntityPlayer viewer, String key, Object... pairs) { return ContentDice.words(viewer, "board." + key, pairs); }
 
-    static void tell(MinecraftServer server, BoardGame game, TextFormatting color, String key, Object... pairs) {
-        for (EntityPlayerMP hearer : hearers(server, game)) { Says.chat(hearer, color, say(hearer, key, pairs)); }
+    static void tell(MinecraftServer server, BoardGame game, TextFormatting color, String key, Object... pairs) { tell(server, game, false, color, key, pairs); }
+
+    private static void tell(MinecraftServer server, BoardGame game, boolean quiet, TextFormatting color, String key, Object... pairs) {
+        if (!quiet) {
+            for (EntityPlayerMP hearer : hearers(server, game)) { Says.chat(hearer, color, say(hearer, key, pairs)); }
+        }
         ContentLog.LOGGER.info("Board {}: {}", game.name, say(null, key, pairs));
     }
 
@@ -172,7 +176,7 @@ public final class ContentBoardPlay {
             return;
         }
         PICKED.put(player.getUniqueID(), new Picked(game.name, square));
-        Says.chat(player, TextFormatting.YELLOW, say(player, "picked", "piece", piece, "square", rules.square(square), "targets", String.join(", ", targets)));
+        if (!rules.quiet) { Says.chat(player, TextFormatting.YELLOW, say(player, "picked", "piece", piece, "square", rules.square(square), "targets", String.join(", ", targets))); }
     }
 
     public static void move(EntityPlayerMP player, BoardGame game, BoardRules rules, int from, int to, int promotion) {
@@ -261,6 +265,9 @@ public final class ContentBoardPlay {
         int side = state.turn;
         int took = state.taken.get(side).size();
         BoardPiece piece = rules.pieces.get(BoardState.kind(state.at(BoardState.from(move))));
+        int victim = state.victim(move);
+        World world = ContentBoards.world(server, game);
+        if (world != null && game.strike > 0) { ContentBoardPieces.sync(world, game, rules); }
         state.play(move);
         game.moves.add(move);
         if (rules.clockTicks > 0 && state.turn != side) { game.clock[side] += rules.addTicks; }
@@ -268,16 +275,16 @@ public final class ContentBoardPlay {
         game.takeback = -1;
         game.wait = THINK_AFTER;
         game.version++;
-        World world = ContentBoards.world(server, game);
-        if (world != null) { ContentBoardPieces.sync(world, game, rules); }
+        if (world != null && victim >= 0) { ContentBoardPieces.strike(world, game, rules, BoardState.from(move), victim); }
+        else if (world != null) { ContentBoardPieces.sync(world, game, rules); }
         String who = game.owners[side].isEmpty() ? say(null, "ai") : game.owners[side];
-        tell(server, game, TextFormatting.WHITE, "moved", "side", sideName(rules, side), "player", who, "piece", piece.name, "from", rules.square(BoardState.from(move)), "to", rules.square(BoardState.to(move)));
-        if (BoardState.promotion(move) >= 0) { tell(server, game, TextFormatting.WHITE, "promoted", "side", sideName(rules, side), "piece", piece.name, "to", rules.pieces.get(BoardState.promotion(move)).name); }
-        if (state.taken.get(side).size() > took) { tell(server, game, TextFormatting.GOLD, "takes", "side", sideName(rules, side), "piece", rules.pieces.get(state.taken.get(side).get(took)).name); }
+        tell(server, game, rules.quiet, TextFormatting.WHITE, "moved", "side", sideName(rules, side), "player", who, "piece", piece.name, "from", rules.square(BoardState.from(move)), "to", rules.square(BoardState.to(move)));
+        if (BoardState.promotion(move) >= 0) { tell(server, game, rules.quiet, TextFormatting.WHITE, "promoted", "side", sideName(rules, side), "piece", piece.name, "to", rules.pieces.get(BoardState.promotion(move)).name); }
+        if (state.taken.get(side).size() > took) { tell(server, game, rules.quiet, TextFormatting.GOLD, "takes", "side", sideName(rules, side), "piece", rules.pieces.get(state.taken.get(side).get(took)).name); }
         int status = state.status();
         if (status == BoardState.WON) { finish(server, game, rules, 1 - state.turn, state.reason()); }
         else if (status == BoardState.DRAWN) { finish(server, game, rules, BoardGame.DRAW, state.reason()); }
-        else if (state.checked(state.turn)) { tell(server, game, TextFormatting.RED, "check", "side", sideName(rules, state.turn)); }
+        else if (state.checked(state.turn)) { tell(server, game, rules.quiet, TextFormatting.RED, "check", "side", sideName(rules, state.turn)); }
         ContentBoards.dirty(server);
     }
 

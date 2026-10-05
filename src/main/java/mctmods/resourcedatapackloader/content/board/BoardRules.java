@@ -39,6 +39,7 @@ public final class BoardRules {
     public final int win;
     public final int draw;
     public final int loss;
+    public final boolean quiet;
     final boolean royal;
     private final boolean[] keepsMoved;
 
@@ -74,6 +75,7 @@ public final class BoardRules {
         win = number(result, "win", 1);
         draw = number(result, "draw", 0);
         loss = number(result, "loss", 0);
+        quiet = flag(json, "quiet");
         boolean anyRoyal = false;
         for (BoardPiece piece : pieces) { anyRoyal |= piece.royal; }
         royal = anyRoyal;
