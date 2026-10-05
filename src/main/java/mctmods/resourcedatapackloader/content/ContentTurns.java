@@ -289,7 +289,7 @@ public final class ContentTurns {
         return top.size() == 1 ? top.getFirst().owner() : null;
     }
 
-    private static String shown(String group) {
+    static String shown(String group) {
         TeamDef side = ContentTeams.named(group);
         return side == null ? group : side.displayName();
     }

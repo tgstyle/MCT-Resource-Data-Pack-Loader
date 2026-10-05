@@ -214,12 +214,10 @@ public final class ContentScoring {
         ContentTurns.over(server, def, winner);
         List<String> lines = standings(server, def);
         if (def.endsLastStanding()) { backIn(server); }
-        if (winner != null) {
-            TeamDef side = ContentTeams.named(winner);
-            lines.addFirst((side == null ? winner : side.displayName()) + " stood last");
-        }
+        if (winner != null) { lines.addFirst(ContentTurns.shown(winner) + " stood last"); }
         else if (LAST_STANDING.equals(why)) { lines.addFirst("No side was left standing"); }
         else if (RESET.equals(why)) { lines.addFirst("The round was reset"); }
+        else if (def.awardsTo().isEmpty() && def.tiebreak()) { ContentScoringTie.match(server, def, lines); }
         ContentLog.LOGGER.info("The {} round is over on {}: {}", def.displayName(), why, lines);
         ContentLog.LOGGER.info("Kills this round by the killer's kind: {}; deaths by kind: {}; kills of their own side: {}", KILLS, DEATHS, OWN);
         if (RESET.equals(why)) { ContentLog.LOGGER.info("A reset round is awarded to nobody"); }

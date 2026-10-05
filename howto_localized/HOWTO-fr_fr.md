@@ -4903,7 +4903,7 @@ Un objectif est un vrai objectif du tableau des scores du jeu lui-même : `/scor
 | `individuals` | boolean | `false`                    | Les points vont aussi sur une ligne propre au membre                                                                                                           |
 | `carries`     | boolean | `false`                    | L'objectif survit à une réinitialisation de la carte au lieu d'être effacé avec elle. Un décompte de victoires de manches en est un                            |
 | `awardsTo`    | texte   | vide                       | Un autre objectif auquel celui-ci donne un point à sa fin, au camp qui menait. Un classement par niveaux ne distribue rien                                    |
-| `tiebreak` | booléen | `false` | Une manche qui finit à égalité en tête tire au sort l'un des camps à égalité avec le hasard du monde, consigne le tirage et l'attribue comme d'habitude |
+| `tiebreak` | booléen | `false` | Une manche qui finit à égalité en tête tire au sort l'un des camps à égalité avec le hasard du monde, consigne le tirage et l'attribue comme d'habitude. Un match, un objectif sans `awardsTo`, tire au sort de la même façon et nomme le camp tiré en tête de ses résultats |
 
 ### Points
 
