@@ -2,7 +2,7 @@
 
 **Uma pasta que substitui qualquer coisa que o Minecraft ou um mod fornece, define conteúdo novo a partir de JSON e controla o que é gerado, em todos os mundos, em clientes e servidores, sem nada para os jogadores ativarem.**
 
-Doze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo é escrito.
+Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e veja como cada arquivo é escrito.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) cobre a maioria dos recursos, blocos, itens, biomas, uma dimensão, um modelo de mundo e todas as formas de worldgen.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) transforma o overworld em um vazio, com worldgen suspensa no ar, uma forma por faixa de altura, de modo que cada uma seja fácil de ver isoladamente.
@@ -16,6 +16,8 @@ Doze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e veja
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) coloca quatro facções umas contra as outras em uma arena de bedrock sob noite permanente: cada lado é uma equipe real do placar vanilla à qual seus mobs se juntam ao nascer, um lado pontua por cada mob de outro lado que mata, uma rodada termina em uma carta após dois minutos e três rodadas formam uma partida.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) monta um mundo plano em torno de uma vila cujo poço é um pavilhão com um sino e dá ao jogador um Mau Presságio ao entrar: cinco ondas de illagers vanilla, uma bruxa e os Pillagers, Capitães da Invasão, Lançadores de Machado e Ravagers do próprio pacote, o presságio e Herói da Vila como efeitos do próprio pacote com ícones em mapa de pixels, uma bebida que traz o presságio de volta e as funções que encerram a invasão.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) exige o Galacticraft e coloca um sistema estelar próprio no mapa estelar, com um planeta alcançado por um foguete de nível 2 que tem céu, gravidade, duração do dia, clima e atmosfera próprios, um planeta para apenas observar e nunca pousar e, com o GalaxySpace, um planeta de gelo em torno de Tau Ceti.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) transforma um mundo plano em um salão de jogos: dados ponderados do próprio pacote, um baralho de mobs que se embaralha sozinho e um baralho da sorte que fica vazio até ser embaralhado, um Copo de Dados que rola 2d6 com um clique direito, um Duelo de dados em turnos contra a Casa que resolve um empate por sorteio, e xadrez e damas jogados com mobs contra o computador.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) constrói sozinho um pátio de trabalho ao fechar a introdução e põe aldeões para fazer todo tipo de ordem de trabalho: um minerador cujo alcance cresce com a picareta, um lenhador que guarda o que corta, um fazendeiro que mantém um estoque fixo de trigo e um carregador que transporta pedregulho, cada ordem aberta por uma placa, uma ferramenta, uma contratação ou um baú de estoque.
 ---
 
 ## Conteúdo
@@ -6011,7 +6013,7 @@ O nome do arquivo é escolha sua, e vários arquivos se somam. Um arquivo nomeia
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

@@ -2,7 +2,7 @@
 
 **Una carpeta que sobrescribe todo lo que aporta Minecraft o un mod, define contenido nuevo desde JSON y controla qué se genera, en cualquier mundo, en clientes y servidores, sin nada que los jugadores tengan que activar.**
 
-Doce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploader` y fíjate en cómo está escrito cada archivo.
+Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploader` y fíjate en cómo está escrito cada archivo.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) cubre la mayoría de las funciones, bloques, ítems, biomas, una dimensión, una plantilla de mundo y todas las formas de worldgen.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) convierte el mundo principal en un vacío con worldgen suspendido en el aire, una forma por franja de altura, de modo que cada una se ve bien por separado.
@@ -16,6 +16,8 @@ Doce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploader
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) enfrenta a cuatro facciones en una arena de lecho de roca bajo una noche permanente: cada bando es un equipo real del marcador de vanilla al que se unen sus mobs al aparecer, un bando puntúa por cada mob de otro bando que mata, una ronda termina con una tarjeta a los dos minutos y tres rondas forman una partida.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) crea un mundo plano alrededor de una aldea cuyo pozo es un pabellón con campana y le da al jugador un Mal presagio al unirse: cinco oleadas de illagers de vanilla, una bruja y los propios Saqueadores, Capitanes de asalto, Lanzahachas y Devastadores del pack, el presagio y Héroe de la aldea como efectos propios del pack con iconos de mapas de píxeles, una bebida que devuelve el presagio y las funciones que ponen fin al asalto.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) requiere Galacticraft y coloca un sistema estelar propio en el mapa estelar, con un planeta al que se llega en un cohete de nivel 2 que tiene su propio cielo, gravedad, duración del día, clima y atmósfera, un planeta para contemplar pero en el que nunca se puede aterrizar y, con GalaxySpace, un planeta de hielo alrededor de Tau Ceti.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) convierte un mundo plano en una sala de juegos: dados ponderados del pack, una baraja de mobs que se baraja sola y una baraja de la fortuna que queda vacía hasta que se baraja, un Cubilete que tira 2d6 con un clic derecho, un Duelo de dados por turnos contra la Casa que resuelve un empate con un sorteo, y ajedrez y damas jugados con mobs contra el ordenador.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) construye solo un patio de trabajo al cerrar la introducción y pone a aldeanos a hacer todo tipo de órdenes de trabajo: un minero cuyo alcance crece con su pico, un leñador que se queda lo que tala, un granjero que mantiene una reserva fija de trigo y un porteador que acarrea roca, cada orden abierta con un cartel, una herramienta, una contratación o un cofre de reservas.
 ---
 
 ## Contenido
@@ -6011,7 +6013,7 @@ El nombre del archivo lo eliges tú, y varios archivos se suman. Un archivo nomb
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

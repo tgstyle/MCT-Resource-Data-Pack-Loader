@@ -2,7 +2,7 @@
 
 **一个文件夹，即可覆盖 Minecraft 或任何模组提供的内容，用 JSON 定义新内容，并控制世界的生成方式；在每个世界、客户端与服务器上均生效，无需玩家开启任何开关。**
 
-十二个可直接运行的示例。把其中任意一个直接放进 `rdploader`，看看每个文件是怎么写的。
+十四个可直接运行的示例。把其中任意一个直接放进 `rdploader`，看看每个文件是怎么写的。
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) 涵盖大部分功能：方块、物品、生物群系、一个维度、一个世界模板以及所有世界生成形状。
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) 把主世界变成一片空无一物的虚空，世界生成的内容悬浮在半空中，每个高度带一种形状，方便单独观察每一种。
@@ -16,6 +16,8 @@
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) 让四个阵营在永夜笼罩的基岩竞技场中互相对抗：每一方都是真正的原版计分板队伍，其生物在生成时加入；每击杀一只其他阵营的生物，本方就得分；一个回合在两分钟后以一张卡片结束，三个回合构成一场比赛。
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) 把一个平坦世界布置在一座村庄周围，村庄的水井是一座钟亭，玩家加入时会获得不祥之兆：共五波敌人，包括原版的灾厄村民、一名女巫，以及资源包自带的掠夺者、袭击队长、掷斧者和劫掠兽；不祥之兆与村庄英雄是资源包自带的效果并配有像素图图标，另有一种能让不祥之兆重新出现的饮品，以及结束袭击的函数。
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) 需要 Galacticraft，在星图上加入一个自己的星系，其中有一颗乘坐二级火箭即可抵达的行星，拥有自己的天空、重力、昼长、天气和大气；还有一颗只能观赏、无法降落的行星，并且在搭配 GalaxySpace 时，在天仓五周围多出一颗冰冻行星。
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) 把一个平坦世界变成游戏大厅：资源包自带的加权骰子、一副会自动重洗的生物牌和一副在洗牌前一直为空的命运牌、一个右键即可掷 2d6 的骰盅、与庄家轮流掷骰、以抽签决出平局的骰子对决，以及用生物作棋子、与电脑对弈的国际象棋和跳棋。
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) 在关闭介绍后自动建起一座工作院落，让村民工人承担每一种工作订单：随镐子提升作业范围的矿工、把砍下的木头留在身上的伐木工、始终保持固定小麦库存的农夫，以及搬运圆石的搬运工；每个订单都可以通过告示牌、工具、雇佣或库存箱来开启。
 ---
 
 ## 目录
@@ -6011,7 +6013,7 @@ RDPL 附带下列字体和字符。卡片、提示或介绍的 `font` 可以用�
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

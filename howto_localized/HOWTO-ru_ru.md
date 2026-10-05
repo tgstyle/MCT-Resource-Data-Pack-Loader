@@ -2,7 +2,7 @@
 
 **Одна папка. Переопределяет всё, что даёт Minecraft или мод, описывает новый контент в JSON и управляет генерацией мира.**
 
-Двенадцать готовых примеров. Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл.
+Четырнадцать готовых примеров. Положите любой прямо в `rdploader` и посмотрите, как написан каждый файл.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) покрывает большинство возможностей: блоки, предметы, биомы, измерение, шаблон мира и все формы генерации.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) превращает обычный мир в пустоту, где генерация висит в воздухе по одной форме на полосу высоты — так каждую видно отдельно.
@@ -16,6 +16,8 @@
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) сталкивает четыре фракции на арене из бедрока под вечной ночью: каждая сторона — настоящая ванильная команда табло, в которую её мобы вступают при появлении, сторона получает очко за каждого убитого моба другой стороны, раунд заканчивается карточкой через две минуты, а три раунда составляют матч.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) ставит плоский мир вокруг деревни, где вместо колодца стоит павильон с колоколом, и даёт игроку дурное предзнаменование при входе: пять волн из ванильных иллагеров, ведьмы и собственных разбойников, капитанов рейда, метателей топоров и разорителей пака, предзнаменование и «Герой деревни» как собственные эффекты пака со значками из пиксельных карт, напиток, возвращающий предзнаменование, и функции, завершающие рейд.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) требует Galacticraft и добавляет на звёздную карту собственную звёздную систему: планету, куда летят на ракете 2-го уровня, со своим небом, гравитацией, длиной дня, погодой и атмосферой, планету, на которую можно только смотреть, но не садиться, а с GalaxySpace ещё и ледяную планету у Тау Кита.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) превращает плоский мир в игровой зал: взвешенные кости пака, колода мобов, которая сама перетасовывается, и колода судьбы, которая остаётся пустой, пока её не перетасуют, стаканчик для костей, бросающий 2d6 по правому клику, поединок на костях против заведения, ход за ходом, где ничья решается жребием, и шахматы и шашки мобами против компьютера.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) сам строит рабочий двор, как только закрыто вступление, и ставит жителей на все виды рабочих заказов: шахтёра, чья дальность растёт с его киркой, лесоруба, который оставляет срубленное себе, фермера, который держит постоянный запас пшеницы, и носильщика, который перетаскивает булыжник; каждый заказ открывается табличкой, инструментом, наймом или сундуком запаса.
 ---
 
 ## Содержание
@@ -6011,7 +6013,7 @@ RDPL поставляет такие шрифты и символы. В пара
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

@@ -2,7 +2,7 @@
 
 **Ein Ordner, der alles überschreibt, was Minecraft oder ein Mod mitbringt, neuen Inhalt aus JSON beschreibt und steuert, was generiert wird – in jeder Welt, auf Clients und Servern, ohne dass Spieler irgendetwas einschalten müssen.**
 
-Zwölf fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
+Vierzehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) deckt die meisten Möglichkeiten ab: Blöcke, Items, Biome, eine Dimension, eine Weltvorlage und jede Worldgen-Form.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) verwandelt die Oberwelt in eine leere Void-Welt, in der die Generierung frei in der Luft hängt, eine Form pro Höhenband, sodass jede einzeln gut zu sehen ist.
@@ -16,6 +16,8 @@ Zwölf fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) lässt vier Fraktionen in einer Bedrock-Arena unter ewiger Nacht aufeinander los: jede Seite ist ein echtes Vanilla-Scoreboard-Team, dem ihre Mobs beim Spawnen beitreten, eine Seite punktet für jeden Mob einer anderen Seite, den sie tötet, eine Runde endet nach zwei Minuten mit einer Karte, und drei Runden ergeben ein Match.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) legt eine flache Welt um ein Dorf, dessen Brunnen ein Glockenpavillon ist, und gibt dem Spieler beim Beitreten ein böses Omen: fünf Wellen aus Vanilla-Illagern, einer Hexe und den eigenen Plünderern, Raid-Hauptmännern, Axtwerfern und Verwüstern des Packs, das Omen und Held des Dorfes als eigene Effekte des Packs mit Pixelkarten-Symbolen, ein Trank, der das Omen zurückbringt, und die Funktionen, die den Raid beenden.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) braucht Galacticraft und setzt ein eigenes Sternsystem auf die Sternenkarte, mit einem Planeten, den man mit einer Rakete der Stufe 2 erreicht und der eigenen Himmel, eigene Schwerkraft, Tageslänge, eigenes Wetter und eigene Atmosphäre hat, einem Planeten, den man nur ansehen, aber nie betreten kann, und, mit GalaxySpace, einem Eisplaneten um Tau Ceti.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) macht aus einer flachen Welt eine Spielhalle: gewichtete Würfel des Packs, ein Mob-Deck, das sich selbst neu mischt, und ein Glücksdeck, das leer bleibt, bis man es mischt, einen Würfelbecher, der per Rechtsklick 2d6 würfelt, ein Würfelduell gegen das Haus, Zug um Zug gespielt, das einen Gleichstand per Losentscheid klärt, sowie Schach und Dame, mit Mobs gegen den Computer gespielt.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) baut von selbst einen Arbeitshof, sobald man das Intro schließt, und setzt Dorfbewohner als Arbeiter für jede Art von Arbeitsauftrag ein: einen Bergmann, dessen Reichweite mit seiner Spitzhacke wächst, einen Holzfäller, der behält, was er fällt, einen Bauern, der einen festen Weizenvorrat hält, und einen Träger, der Bruchstein schleppt, jeweils eröffnet per Schild, Werkzeug, Anheuern oder Vorratstruhe.
 ---
 
 ## Inhalt
@@ -6011,7 +6013,7 @@ Den Dateinamen wählst du selbst, und mehrere Dateien addieren sich. Eine Datei 
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

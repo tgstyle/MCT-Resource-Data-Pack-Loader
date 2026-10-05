@@ -2,7 +2,7 @@
 
 **Un seul dossier qui remplace tout ce que Minecraft ou un mod fournit, définit du nouveau contenu à partir de JSON et contrôle ce qui se génère, dans tous les mondes, côté client comme côté serveur, sans rien à activer pour les joueurs.**
 
-Douze exemples fonctionnels. Déposez-en un directement dans `rdploader` et observez la manière dont chaque fichier est écrit.
+Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et observez la manière dont chaque fichier est écrit.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) couvre la plupart des fonctionnalités : blocs, objets, biomes, une dimension, un modèle de monde et toutes les formes de worldgen.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) transforme l'Overworld en un vide où la worldgen flotte dans les airs, une forme par bande d'altitude, pour que chacune soit facile à observer isolément.
@@ -16,6 +16,8 @@ Douze exemples fonctionnels. Déposez-en un directement dans `rdploader` et obse
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) oppose quatre factions dans une arène de bedrock sous une nuit permanente : chaque camp est une véritable équipe du tableau des scores de vanilla que ses mobs rejoignent en apparaissant, un camp marque des points pour chaque mob d'un autre camp qu'il tue, une manche se termine sur une carte au bout de deux minutes, et trois manches font une partie.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) place un monde plat autour d'un village dont le puits est un pavillon à cloche et donne au joueur un Mauvais présage dès sa connexion : cinq vagues d'illagers de vanilla, une sorcière et les propres Pillards, Capitaines de raid, Lanceurs de hache et Ravageurs du pack, le présage et Héros du village sous forme d'effets propres au pack avec des icônes en cartes de pixels, une boisson qui ramène le présage, et les fonctions qui mettent fin au raid.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) nécessite Galacticraft et place sur la carte stellaire un système solaire qui lui est propre, avec une planète atteinte par une fusée de niveau 2 qui possède son propre ciel, sa gravité, sa durée du jour, sa météo et son atmosphère, une planète à observer mais où l'on ne peut jamais atterrir, et, avec GalaxySpace, une planète de glace autour de Tau Ceti.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) fait d'un monde plat une salle de jeux : des dés pondérés propres au pack, un jeu de cartes de mobs qui se rebat tout seul et un jeu de la fortune qui reste vide jusqu'à ce qu'on le batte, un Gobelet à dés qui lance 2d6 d'un clic droit, un Duel de dés au tour par tour contre la Maison qui départage une égalité par tirage au sort, et des échecs et des dames joués avec des mobs contre l'ordinateur.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) construit tout seul une cour de travail à la fermeture de l'introduction et met des villageois au travail sur chaque type d'ordre de travail : un mineur dont la portée grandit avec sa pioche, un bûcheron qui garde ce qu'il abat, un fermier qui maintient une réserve fixe de blé et un porteur qui transporte de la pierre, chaque ordre ouvert par un panneau, un outil, une embauche ou un coffre de stock.
 ---
 
 ## Sommaire
@@ -6011,7 +6013,7 @@ Le nom du fichier est à votre choix, et plusieurs fichiers s'additionnent. Un f
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

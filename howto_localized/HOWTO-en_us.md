@@ -2,7 +2,7 @@
 
 **One folder that overrides anything Minecraft or a mod provides, defines new content from JSON, and controls what generates, in every world, on clients and servers, with nothing for players to switch on.**
 
-Twelve working examples. Drop any of them straight into `rdploader` and look at how each file is written.
+Fourteen working examples. Drop any of them straight into `rdploader` and look at how each file is written.
 
 - [RDPLExamplePack.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExamplePack.zip) covers most features, blocks, items, biomes, a dimension, a world template and every worldgen shape.
 - [RDPLExampleOrePackVoid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
@@ -16,6 +16,8 @@ Twelve working examples. Drop any of them straight into `rdploader` and look at 
 - [MCTKamikazeDemo.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
 - [RDPLExampleRaid.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleRaid.zip) sets a flat world around a village whose well is a bell pavilion and hands the player a Bad Omen on joining: five waves of vanilla illagers, a witch and the pack's own Pillagers, Raid Captains, Axe Throwers and Ravagers, the omen and Hero of the Village as the pack's own effects with pixel map icons, a drink that brings the omen back, and the functions that end the raid.
 - [RDPLExampleGalacticraft.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGalacticraft.zip) needs Galacticraft and puts a star system of its own on the star map, with a planet reached by a tier 2 rocket that has its own sky, gravity, day length, weather and atmosphere, a planet to look at but never land on, and, with GalaxySpace, an ice planet around Tau Ceti.
+- [RDPLExampleGameHall.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleGameHall.zip) makes a flat world into a game hall: weighted pack dice, a mobs deck that reshuffles itself and a fortune deck that stays empty until shuffled, a Dice Cup that rolls 2d6 on a right-click, a dice Duel against the House, played turn by turn, that settles a level finish by a tiebreak draw, and chess and checkers played with mobs against the computer.
+- [RDPLExampleColony.zip](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/raw/refs/heads/1.12.2-1.0-Release/example/RDPLExampleColony.zip) builds a work yard by itself when you close the intro and puts villager workers to every kind of work order: a miner whose reach grows with its pickaxe, a lumberjack that keeps what it chops, a farmer that keeps a standing stock of wheat, and a porter that hauls cobblestone, each opened by a sign, a tool, a hire or a stock chest.
 ---
 
 ## Contents
@@ -6011,7 +6013,7 @@ The file name is yours to choose, and several files stack. A file names dice who
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"
