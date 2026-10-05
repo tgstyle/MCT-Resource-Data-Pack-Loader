@@ -82,6 +82,7 @@ Catorce ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploa
 - [Mapas de estructuras](#mapas-de-estructuras)
 - [Parcelas de aldea](#parcelas-de-aldea)
 - [Mapas de trazado de ciudades](#mapas-de-trazado-de-ciudades)
+- [Ciudad continua](#ciudad-continua)
 - [Retrogen](#retrogen)
 - [Pregeneración](#pregeneración)
 
@@ -5187,6 +5188,40 @@ Un mapa de ciudad dibuja el plano de calles de una aldea sobre una cuadrícula, 
 
 Cada mapa tira una de las cuatro orientaciones a partir de la semilla del mundo y gira entero, así que un plano se lee igual desde cualquier lado. Los caminos se trazan primero, de modo que una parcela que se solaparía con un camino u otra parcela se deja abierta con una línea en el registro, y un nombre de parcela que ningún pack proporciona deja su celda abierta del mismo modo. El mapa no cambia cómo se visten las piezas: las claves de camino, `villageBlocks`, las lámparas y la sustitución del pozo se leen como en una aldea que crece. Nada crece a partir de un mapa dibujado: no se rellenan callejones junto a sus calles, y los extremos de sus caminos reciben sus bulbos, tres de cada cuatro como de costumbre o según digan sus celdas bulb, pero no casas a lo largo de ellos.
 
+## Ciudad continua
+
+*generación del mundo*
+
+Una ciudad continua no tiene borde. Con `villageCitySpacing` en `1`, cada distrito del mundo es una ciudad propia: una plaza con el pozo en su centro y calles que salen de ella y enlazan con las calles de los distritos de alrededor. La ciudad sigue generándose allá donde vayan los jugadores, sin campo abierto entre ciudades.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Ajuste | Tipo | Predeterminado | Qué hace |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | booleano | `false` | Traza las calles de ciudad propias de RDPL. Una ciudad continua lo necesita activado |
+| `villageCitySpacing` | entero, de 0 a 256 | `0` | `1` hace de cada distrito una ciudad, y eso es lo que vuelve continua la ciudad. En 1.12.2 solo `1` cambia algo: `0` y cualquier otro número siguen sembrando las aldeas según `structureSpacing` como antes |
+| `villageBlockSizes` | lista de `size=weight` | vacío | Qué profundidad tienen las manzanas entre calles paralelas, sorteada una vez por distrito, de modo que la ciudad mezcla cuadrículas finas y gruesas |
+| `villagePlotsMost` | entero, 0 o más | `0` | El máximo de parcelas que asienta un distrito. 0 no pone techo |
+| `villagePlotsBackRow` | booleano | `true` | Asienta una parcela detrás de cada parcela que da a una calle, para que también se edifique el interior de cada manzana |
+
+Un distrito es un cuadrado del mundo el doble de ancho que la parcela más grande, más una plaza y una calle a cada lado, redondeado a 16 bloques y nunca por debajo de 96. Todos los demás ajustes de calles, desde los bloques de la calzada hasta farolas, puentes, túneles y alcantarillas, visten una ciudad continua como visten cualquier otra. `villagePlotsLeast` no tiene efecto, porque cada distrito ya es una ciudad entera. Un distrito cuyo plano contiene dos o menos parcelas y pozos queda vacío, como cualquier ciudad así de pequeña.
+
+**Cómo se encuentran las calles.** Cada distrito funda su pozo en el mismo chunk del distrito y lleva su cruce principal, las dos calles que se cruzan en su pozo, hasta el borde del distrito. Por eso las calles del cruce de distritos vecinos se alinean en avenidas rectas que siguen por todo el mundo, y se encuentran en la costura entre dos distritos sin que ninguno mire al otro. Nada de lo que traza un distrito pasa de su borde, así que un distrito sale igual sea cual sea el vecino que se generó primero, y su pozo nunca se mueve.
+
+**Lo que cuesta.** Cada chunk de una ciudad continua está edificado, así que el terreno nuevo cuesta en todas partes lo que cuesta el centro de una gran ciudad: colocar los edificios e iluminarlos. Un jugador que vuela deprisa adelanta a la generación, y la tasa de ticks baja mientras se generan distritos nuevos. Pregenerar el terreno donde empiezan los jugadores, con `pregenOnNewWorld` o `/rdplserver pregen`, y una distancia de visión moderada lo mantienen a raya, pero los TPS siguen más bajos que en un mundo normal mientras los jugadores exploran terreno nuevo. La partida guardada crece con el terreno explorado, como cualquier terreno edificado. El juego guarda en memoria solo las aldeas a 96 chunks o menos de un jugador o del punto de aparición, aparta las demás junto al registro de aldeas de la partida y vuelve a leer una, exactamente como era, cuando se genera de nuevo el terreno cercano.
+
 ## Retrogen
 
 *generación del mundo*
@@ -6383,6 +6418,7 @@ Cada chunk se procesa una sola vez, al cargarse desde el disco, y se marca en lo
 | `villagePlotsBackRow` | booleano | `true` | Una vez que la aldea ha crecido, una segunda pasada sienta una parcela justo detrás de cada parcela que da a una calle, girada para mirar hacia ella, con la misma tirada y la misma prueba de espacio, de modo que el interior de una manzana entre dos calles se construye en lugar de quedar vacío |
 | `villagePlotsMost` | int | `0` | Las más que puede tener; al llegar al máximo deja de crecer por completo, sin más edificios ni más caminos. `0` mantiene vanilla |
 | `villageTieStreets` | booleano | `true` | Activado, un distrito que no puede hacer crecer sus calles hasta la aldea ya existente tiende una calle de enlace recta hasta la calle más cercana con la que se alinea. Desactivado, ese distrito se deshace |
+| `villageCitySpacing` | entero, de 0 a 256 | `0` | `1`, con `terrainAdaptation` activado, hace de cada distrito del mundo una ciudad, la ciudad continua. En 1.12.2 solo `1` cambia algo: `0` y cualquier otro número siguen sembrando las aldeas según `structureSpacing` |
 | `villageBlockSizes` | lista de `size=weight` | ninguno | Cuánto de profundas son las manzanas entre las calles paralelas de una ciudad, tirado una vez por distrito a partir de la posición de su plaza. Vacía, dimensiona todas las manzanas según la parcela más grande que incluye el pack |
 | `villageLayout` | cadena | vacía | Nombra un [mapa de trazado de ciudad](#mapas-de-trazado-de-ciudades) que dispone la aldea a partir de un plano de calles dibujado en lugar de hacerla crecer |
 

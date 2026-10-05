@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
@@ -89,6 +90,16 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         if (placed == null || placed instanceof StructureVillagePieces.Path) { return; }
         if (!ContentBeard.wanted() || start == null || facing == null) { return; }
         if (!BeardLayout.flatterFooting(placed, start, structureComponents, facing)) { cir.setReturnValue(null); }
+    }
+
+    @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$plotInDistrict(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
+        StructureComponent placed = cir.getReturnValue();
+        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, structureComponents, placed)) { cir.setReturnValue(null); }
+    }
+
+    @Inject(method = "generateAndAddRoadPiece", at = @At("RETURN"), cancellable = true) private static void rdpl$roadInDistrict(StructureVillagePieces.Start start, List<StructureComponent> p_176069_1_, Random rand, int p_176069_3_, int p_176069_4_, int p_176069_5_, EnumFacing facing, int p_176069_7_, CallbackInfoReturnable<StructureComponent> cir) {
+        StructureComponent placed = cir.getReturnValue();
+        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, p_176069_1_, placed)) { cir.setReturnValue(null); }
     }
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN")) private static void rdpl$endBuilding(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {

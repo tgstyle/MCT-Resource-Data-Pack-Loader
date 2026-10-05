@@ -42,6 +42,8 @@ public final class CitySeams {
 
     public static boolean reserved(StructureComponent piece) { return RESERVED.contains(piece); }
 
+    static void reserve(StructureComponent piece) { RESERVED.add(piece); }
+
     private static final class Arrival {
         final StructureStart start;
         final StructureComponent street;
@@ -428,6 +430,7 @@ public final class CitySeams {
 
     public static boolean facesNeighbor(World world, List<StructureComponent> own, boolean alongX, int end, int dir, int row) {
         if (own.isEmpty()) { return false; }
+        if (CityGrid.on()) { return CityGrid.atEdge(own, alongX, end, dir); }
         StructureBoundingBox well = own.get(0).getBoundingBox();
         int reach = CityGrowth.march();
         for (int[] site : neighbors(world, well.minX + 2, well.minZ + 2)) {

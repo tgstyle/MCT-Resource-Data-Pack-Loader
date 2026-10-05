@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IForgettingStarts;
@@ -7,7 +8,6 @@ import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureDa
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -50,17 +50,13 @@ import java.util.Random;
 
     @Inject(method = "recursiveGenerate", at = @At("TAIL"))
     private void rdpl$noticeStarts(World worldIn, int chunkX, int chunkZ, int originalX, int originalZ, ChunkPrimer chunkPrimerIn, CallbackInfo cbi) {
-        if (ContentPregen.makingLand(worldIn)) { ContentStructures.watchStarts(worldIn, (MapGenStructure) (Object) this); }
+        if (ContentPregen.makingLand(worldIn) || CityGrid.on()) { ContentStructures.watchStarts(worldIn, (MapGenStructure) (Object) this); }
     }
 
-    @Override public void rdpl$forgetFarStarts(int chunkX, int chunkZ) {
-        ObjectIterator<Long2ObjectMap.Entry<StructureStart>> each = structureMap.long2ObjectEntrySet().iterator();
-        while (each.hasNext()) {
-            long key = each.next().getLongKey();
-            int x = (int) key;
-            int z = (int) (key >>> 32);
-            if (Math.abs(x - chunkX) > KEEP_CHUNKS || Math.abs(z - chunkZ) > KEEP_CHUNKS) { each.remove(); }
-        }
-        if (structureData != null) { ((IPackingStructureData) structureData).rdpl$packFarStarts(chunkX, chunkZ, KEEP_CHUNKS); }
+    @Override public void rdpl$forgetFarStarts(long[] centers) {
+        int before = structureMap.size();
+        structureMap.long2ObjectEntrySet().removeIf(entry -> !ContentStructures.near(entry.getLongKey(), centers, KEEP_CHUNKS));
+        if (structureData != null) { ((IPackingStructureData) structureData).rdpl$packFarStarts(centers, KEEP_CHUNKS); }
+        if (before != structureMap.size()) { ContentLog.LOGGER.debug("The {} generator lets go of {} start(s) more than {} chunks from every player and the spawn, keeping {}; each is read back from its packed record when the land near it is made again", ((MapGenStructure) (Object) this).getStructureName(), before - structureMap.size(), KEEP_CHUNKS, structureMap.size()); }
     }
 }

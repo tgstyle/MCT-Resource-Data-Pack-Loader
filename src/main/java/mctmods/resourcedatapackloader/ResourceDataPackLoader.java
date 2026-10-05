@@ -28,6 +28,7 @@ import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.GateEvents;
 import mctmods.resourcedatapackloader.content.gate.VanillaPortalLink;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
@@ -225,6 +226,7 @@ public class ResourceDataPackLoader {
         MinecraftForge.EVENT_BUS.register(ContentChunkSaves.class);
         MinecraftForge.EVENT_BUS.register(ContentPregenDimensions.class);
         MinecraftForge.EVENT_BUS.register(ContentPregenHold.class);
+        MinecraftForge.EVENT_BUS.register(CityGrid.class);
         if (Config.worldgen.worldgenDebug) {
             MinecraftForge.EVENT_BUS.register(ContentEntityTicks.class);
             MinecraftForge.EVENT_BUS.register(ContentChunkWatch.class);

@@ -82,6 +82,7 @@ Fourteen working examples. Drop any of them straight into `rdploader` and look a
 - [Structure maps](#structure-maps)
 - [Village plots](#village-plots)
 - [City layout maps](#city-layout-maps)
+- [Continuous city](#continuous-city)
 - [Retrogen](#retrogen)
 - [Pregeneration](#pregeneration)
 
@@ -5187,6 +5188,40 @@ A city map draws a village's street plan on a grid, one character to a cell, and
 
 Every map rolls one of the four facings from the world seed and turns whole, so a plan reads the same from any side. Roads are laid first, so a plot that would overlap a road or another plot is left open with a line in the log, and a plot name no pack provides leaves its cell open the same way. The map does not change how the pieces dress: the road keys, `villageBlocks`, the lamps and the well replacement all read as they do for a grown village. Nothing grows out of a drawn map: no alleys are filled in beside its streets, and its road ends get their bulbs, three in four as usual or as its bulb cells say, but no houses along them.
 
+## Continuous city
+
+*generating the world*
+
+A continuous city has no edge. With `villageCitySpacing` at `1`, every district of the world is a town of its own: a plaza with the well at its center and streets out of it that meet the streets of the districts around it. The city keeps generating wherever players go, with no open country between towns.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Setting               | Type                  | Default | What it does                                                                                                                 |
+| --------------------- | --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `terrainAdaptation`   | boolean               | `false` | Lays RDPL's own city streets. A continuous city needs it on                                                                  |
+| `villageCitySpacing`  | int, 0 to 256         | `0`     | `1` makes every district a town, which is what makes the city continuous. On 1.12.2 only `1` changes anything: `0` and every other number keep villages seeded by `structureSpacing` as before |
+| `villageBlockSizes`   | list of `size=weight` | empty   | How deep the blocks between parallel streets are, rolled once per district, so the city mixes fine and coarse grids         |
+| `villagePlotsMost`    | int, 0 or more        | `0`     | The most plots one district seats. 0 sets no ceiling                                                                         |
+| `villagePlotsBackRow` | boolean               | `true`  | Seats a plot behind every plot that fronts a street, so the inside of each block is built                                    |
+
+A district is a square of the world twice as wide as the largest plot, plus a plaza and a street on each side, rounded up to 16 blocks and never under 96. Every other street setting, from the road blocks to lamps, bridges, tunnels and sewers, dresses a continuous city as it dresses any other. `villagePlotsLeast` has no effect, since every district is already a whole town. A district whose plan holds two or fewer plots and wells is left empty, as any city that small is.
+
+**How the streets meet.** Every district founds its well in the same chunk of the district and runs the two streets that cross at its well, its main cross, out to the district's edge. The cross streets of neighboring districts therefore line up into straight avenues that run on across the world, and meet at the seam between two districts without either looking at the other. Nothing a district lays crosses its edge, so a district comes out the same whichever of its neighbors was made first, and its well never moves.
+
+**What it costs.** Every chunk of a continuous city is built up, so new ground costs everywhere what the middle of a large city costs: placing the buildings and lighting them. A player flying fast outruns generation, and the tick rate drops while new districts generate. Pregenerating the ground players start on, with `pregenOnNewWorld` or `/rdplserver pregen`, and a moderate view distance keep that in hand, but TPS stays lower than in an ordinary world while players explore new ground. The save grows with the ground explored, like any built-up land. The game keeps in memory only the villages within 96 chunks of a player or the spawn, packs the rest away with the save's village record, and reads one back, exactly as it was, when the land near it is made again.
+
 ## Retrogen
 
 *generating the world*
@@ -6383,6 +6418,7 @@ Each chunk is done once, as it loads from disk, and marked in the chunk's own da
 | `villagePlotsBackRow`       | boolean                        | `true`  | Once the village has grown, a second pass seats a plot directly behind every plot that fronts a street, turned to face it, with the same roll and the same room test, so the inside of a block between two streets is built rather than left bare |
 | `villagePlotsMost`          | int                            | `0`     | The most it may have; at the maximum it stops growing outright, no more buildings and no more roads. `0` keeps vanilla                                                                                                                            |
 | `villageTieStreets`         | boolean                        | `true`  | On, a district that cannot grow its streets to the standing village gets a straight tie street laid to the nearest street it lines up with. Off, such a district is taken back down                                                               |
+| `villageCitySpacing`        | int, 0 to 256                  | `0`     | `1`, with `terrainAdaptation` on, makes every district of the world a town, the continuous city. On 1.12.2 only `1` changes anything: `0` and every other number keep villages seeded by `structureSpacing` |
 | `villageBlockSizes`         | list of `size=weight`          | none    | How deep the blocks between a city's parallel streets are, rolled once per district from its plaza position. Empty sizes every block to the largest plot the pack ships                                                                           |
 | `villageLayout`             | string                         | empty   | Names a [city layout map](#city-layout-maps) that lays the village out from a drawn street plan instead of growing it                                                                                                                             |
 

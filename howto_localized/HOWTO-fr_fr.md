@@ -82,6 +82,7 @@ Quatorze exemples fonctionnels. Déposez-en un directement dans `rdploader` et o
 - [Cartes de structures](#cartes-de-structures)
 - [Parcelles de village](#parcelles-de-village)
 - [Cartes de plan des villes](#cartes-de-plan-des-villes)
+- [Ville continue](#ville-continue)
 - [Retrogen](#retrogen)
 - [Prégénération](#prégénération)
 
@@ -5187,6 +5188,40 @@ Une carte de ville dessine le plan des rues d'un village sur une grille, un cara
 
 Chaque carte tire l'une des quatre orientations à partir de la graine du monde et tourne d'un bloc, de sorte qu'un plan se lit de la même façon de tous les côtés. Les routes sont posées en premier, donc une parcelle qui chevaucherait une route ou une autre parcelle est laissée ouverte avec une ligne dans le journal, et un nom de parcelle qu'aucun pack ne fournit laisse sa cellule ouverte de la même façon. La carte ne change pas la façon dont les pièces sont habillées : les clés de route, `villageBlocks`, les lampadaires et le remplacement du puits se lisent tous comme pour un village qui a grandi. Rien ne pousse à partir d'une carte dessinée : aucune ruelle n'est comblée à côté de ses rues, et ses bouts de route reçoivent leurs bulbes, trois sur quatre comme d'habitude ou selon ses cellules bulb, mais sans maisons le long.
 
+## Ville continue
+
+*générer le monde*
+
+Une ville continue n'a pas de bord. Avec `villageCitySpacing` à `1`, chaque quartier du monde est une ville à part entière : une place avec le puits en son centre et des rues qui en partent et rejoignent celles des quartiers voisins. La ville continue de se générer partout où vont les joueurs, sans campagne entre les villes.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Réglage | Type | Défaut | Ce que ça fait |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | booléen | `false` | Pose les rues de ville propres à RDPL. Une ville continue en a besoin |
+| `villageCitySpacing` | entier, 0 à 256 | `0` | `1` fait de chaque quartier une ville, et c'est ce qui rend la ville continue. En 1.12.2, seul `1` change quelque chose : `0` et tout autre nombre laissent les villages semés selon `structureSpacing` comme avant |
+| `villageBlockSizes` | liste de `size=weight` | vide | Profondeur des îlots entre rues parallèles, tirée une fois par quartier, si bien que la ville mêle grilles fines et grossières |
+| `villagePlotsMost` | entier, 0 ou plus | `0` | Le plus grand nombre de parcelles qu'un quartier accueille. 0 ne fixe aucun plafond |
+| `villagePlotsBackRow` | booléen | `true` | Place une parcelle derrière chaque parcelle donnant sur une rue, pour que l'intérieur de chaque îlot soit bâti lui aussi |
+
+Un quartier est un carré du monde deux fois plus large que la plus grande parcelle, plus une place et une rue de chaque côté, arrondi à 16 blocs et jamais sous 96. Tous les autres réglages de rue, des blocs de chaussée aux lampadaires, ponts, tunnels et égouts, habillent une ville continue comme toute autre ville. `villagePlotsLeast` n'a aucun effet, puisque chaque quartier est déjà une ville entière. Un quartier dont le plan compte deux parcelles et puits ou moins reste vide, comme toute ville aussi petite.
+
+**Comment les rues se rejoignent.** Chaque quartier fonde son puits dans le même chunk du quartier et mène sa croix principale, les deux rues qui se croisent à son puits, jusqu'au bord du quartier. Les rues de la croix de quartiers voisins s'alignent donc en avenues droites qui traversent tout le monde, et se rejoignent à la couture entre deux quartiers sans que l'un regarde l'autre. Rien de ce que pose un quartier ne dépasse son bord : un quartier sort donc pareil, quel que soit le voisin généré en premier, et son puits ne bouge jamais.
+
+**Ce que ça coûte.** Chaque chunk d'une ville continue est bâti, donc un terrain neuf coûte partout ce que coûte le centre d'une grande ville : poser les bâtiments et les éclairer. Un joueur qui vole vite dépasse la génération, et le taux de ticks baisse pendant que de nouveaux quartiers se génèrent. Prégénérer le terrain où les joueurs commencent, avec `pregenOnNewWorld` ou `/rdplserver pregen`, et une distance d'affichage modérée gardent cela en main, mais les TPS restent plus bas que dans un monde ordinaire tant que les joueurs explorent du terrain neuf. La sauvegarde grandit avec le terrain exploré, comme tout terrain bâti. Le jeu ne garde en mémoire que les villages à 96 chunks au plus d'un joueur ou du point d'apparition, range les autres avec le registre des villages de la sauvegarde et en relit un, exactement tel qu'il était, quand le terrain proche est de nouveau généré.
+
 ## Retrogen
 
 *générer le monde*
@@ -6383,6 +6418,7 @@ Chaque chunk est traité une seule fois, lorsqu'il est chargé depuis le disque,
 | `villagePlotsBackRow` | booléen | `true` | Une fois le village développé, une seconde passe installe une parcelle directement derrière chaque parcelle qui donne sur une rue, tournée vers elle, avec le même tirage et le même test de place, de sorte que l'intérieur d'un îlot entre deux rues soit bâti plutôt que laissé nu |
 | `villagePlotsMost` | entier | `0` | Le plus qu'il peut en avoir ; au maximum il cesse de croître tout net, plus de bâtiments ni de routes. `0` conserve vanilla |
 | `villageTieStreets` | booléen | `true` | Activé, un quartier qui ne peut pas raccorder ses rues au village existant se voit tracer une rue de liaison droite jusqu'à la rue la plus proche avec laquelle il s'aligne. Désactivé, un tel quartier est démoli |
+| `villageCitySpacing` | entier, 0 à 256 | `0` | `1`, avec `terrainAdaptation` activé, fait de chaque quartier du monde une ville, la ville continue. En 1.12.2, seul `1` change quelque chose : `0` et tout autre nombre laissent les villages semés selon `structureSpacing` |
 | `villageBlockSizes` | liste de `taille=poids` | aucun | La profondeur des îlots entre les rues parallèles d'une ville, tirée une fois par quartier d'après la position de sa place. Vide, tous les îlots prennent la taille de la plus grande parcelle que le pack fournit |
 | `villageLayout` | chaîne | vide | Désigne une [carte de plan de ville](#cartes-de-plan-des-villes) qui dispose le village d'après un plan de rues dessiné au lieu de le faire croître |
 

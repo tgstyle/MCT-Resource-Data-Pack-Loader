@@ -82,6 +82,7 @@ Catorze exemplos funcionais. Coloque qualquer um deles direto em `rdploader` e v
 - [Mapas de estruturas](#mapas-de-estruturas)
 - [Terrenos de vilas](#terrenos-de-vilas)
 - [Mapas de layout de cidades](#mapas-de-layout-de-cidades)
+- [Cidade contínua](#cidade-contínua)
 - [Retrogen](#retrogen)
 - [Pré-geração](#pré-geração)
 
@@ -5187,6 +5188,40 @@ Um mapa de cidade desenha a planta das ruas de uma vila em uma grade, um caracte
 
 Todo mapa sorteia uma das quatro orientações a partir da semente do mundo e gira inteiro, de modo que uma planta se lê igual de qualquer lado. As estradas são dispostas primeiro, então um terreno que se sobreporia a uma estrada ou a outro terreno é deixado aberto com uma linha no log, e um nome de terreno que nenhum pacote fornece deixa sua célula aberta do mesmo modo. O mapa não muda como as peças são vestidas: as chaves de estrada, `villageBlocks`, os postes de luz e a substituição do poço são todos lidos como em uma vila crescida. Nada cresce a partir de um mapa desenhado: nenhum beco é preenchido ao lado de suas ruas, e as pontas de suas estradas recebem seus bulbs, três em quatro como de costume ou como suas células bulb determinam, mas nenhuma casa ao longo delas.
 
+## Cidade contínua
+
+*gerando o mundo*
+
+Uma cidade contínua não tem borda. Com `villageCitySpacing` em `1`, todo distrito do mundo é uma cidade própria: uma praça com o poço no centro e ruas saindo dela que se unem às ruas dos distritos ao redor. A cidade continua sendo gerada para onde quer que os jogadores vão, sem campo aberto entre as cidades.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Configuração | Tipo | Padrão | O que faz |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | booleano | `false` | Assenta as ruas de cidade próprias do RDPL. Uma cidade contínua precisa dele ligado |
+| `villageCitySpacing` | int, 0 a 256 | `0` | `1` faz de todo distrito uma cidade, e é isso que torna a cidade contínua. No 1.12.2 só `1` muda alguma coisa: `0` e qualquer outro número mantêm as vilas semeadas por `structureSpacing` como antes |
+| `villageBlockSizes` | lista de `size=weight` | vazio | Qual a profundidade dos quarteirões entre ruas paralelas, sorteada uma vez por distrito, de modo que a cidade mistura grades finas e grossas |
+| `villagePlotsMost` | int, 0 ou mais | `0` | O máximo de terrenos que um distrito acomoda. 0 não define teto |
+| `villagePlotsBackRow` | booleano | `true` | Acomoda um terreno atrás de todo terreno voltado para uma rua, para que o interior de cada quarteirão também seja construído |
+
+Um distrito é um quadrado do mundo com o dobro da largura do maior terreno, mais uma praça e uma rua de cada lado, arredondado para 16 blocos e nunca abaixo de 96. Todas as outras configurações de rua, dos blocos da pista a postes, pontes, túneis e esgotos, vestem uma cidade contínua como vestem qualquer outra. `villagePlotsLeast` não tem efeito, já que todo distrito já é uma cidade inteira. Um distrito cujo plano tem dois ou menos terrenos e poços fica vazio, como qualquer cidade desse tamanho.
+
+**Como as ruas se encontram.** Todo distrito funda seu poço no mesmo chunk do distrito e leva sua cruz principal, as duas ruas que se cruzam no seu poço, até a borda do distrito. Por isso as ruas da cruz de distritos vizinhos se alinham em avenidas retas que seguem pelo mundo todo, e se encontram na costura entre dois distritos sem que um olhe para o outro. Nada que um distrito traça passa da sua borda, então um distrito sai igual não importa qual vizinho foi gerado primeiro, e o seu poço nunca muda de lugar.
+
+**Quanto custa.** Todo chunk de uma cidade contínua é construído, então terreno novo custa em toda parte o que custa o centro de uma cidade grande: colocar os prédios e iluminá-los. Um jogador voando rápido ultrapassa a geração, e a taxa de ticks cai enquanto distritos novos são gerados. Pré-gerar o terreno onde os jogadores começam, com `pregenOnNewWorld` ou `/rdplserver pregen`, e uma distância de visão moderada mantêm isso sob controle, mas o TPS continua mais baixo que em um mundo comum enquanto os jogadores exploram terreno novo. O save cresce com o terreno explorado, como qualquer terreno construído. O jogo mantém na memória só as vilas a até 96 chunks de um jogador ou do spawn, guarda as outras junto ao registro de vilas do save e lê uma de volta, exatamente como era, quando o terreno perto dela é gerado de novo.
+
 ## Retrogen
 
 *gerando o mundo*
@@ -6383,6 +6418,7 @@ Cada chunk é processado uma vez, quando carrega do disco, e marcado nos dados d
 | `villagePlotsBackRow` | booleano | `true` | Depois que a vila cresce, uma segunda passada coloca um terreno diretamente atrás de cada terreno que dá para uma rua, virado para ela, com o mesmo sorteio e o mesmo teste de espaço, de modo que o interior de um quarteirão entre duas ruas seja construído em vez de ficar vazio |
 | `villagePlotsMost` | inteiro | `0` | O máximo que ela pode ter; no máximo, ela para de crescer de vez, sem mais construções e sem mais estradas. `0` mantém o vanilla |
 | `villageTieStreets` | booleano | `true` | Ligado, um distrito que não consegue estender suas ruas até a vila já estabelecida ganha uma rua de ligação reta até a rua mais próxima com a qual se alinha. Desligado, esse distrito é desfeito |
+| `villageCitySpacing` | int, 0 a 256 | `0` | `1`, com `terrainAdaptation` ligado, faz de todo distrito do mundo uma cidade, a cidade contínua. No 1.12.2 só `1` muda alguma coisa: `0` e qualquer outro número mantêm as vilas semeadas por `structureSpacing` |
 | `villageBlockSizes` | lista de `size=weight` | nenhum | Qual a profundidade dos quarteirões entre as ruas paralelas de uma cidade, sorteada uma vez por distrito a partir da posição da sua praça. Vazio dimensiona todos os quarteirões pelo maior terreno que o pacote traz |
 | `villageLayout` | string | vazio | Nomeia um [mapa de layout de cidade](#mapas-de-layout-de-cidades) que organiza a vila a partir de uma planta de ruas desenhada em vez de fazê-la crescer |
 

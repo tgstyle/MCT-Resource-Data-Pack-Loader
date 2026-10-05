@@ -55,10 +55,17 @@ public final class ContentStructures {
         STARTS_WATCHED.computeIfAbsent(world, held -> Collections.newSetFromMap(new WeakHashMap<>())).add(generator);
     }
 
-    public static void forgetFarStarts(World world, int chunkX, int chunkZ) {
+    public static void forgetFarStarts(World world, long... centers) {
         Set<MapGenStructure> watched = STARTS_WATCHED.get(world);
         if (watched == null) { return; }
-        for (MapGenStructure generator : watched) { ((IForgettingStarts) generator).rdpl$forgetFarStarts(chunkX, chunkZ); }
+        for (MapGenStructure generator : watched) { ((IForgettingStarts) generator).rdpl$forgetFarStarts(centers); }
+    }
+
+    public static boolean near(long at, long[] centers, int keep) {
+        for (long center : centers) {
+            if (Math.abs((int) at - (int) center) <= keep && Math.abs((int) (at >>> 32) - (int) (center >>> 32)) <= keep) { return true; }
+        }
+        return false;
     }
 
     private static final Map<World, Set<MapGenStructure>> STARTS_WATCHED = new WeakHashMap<>();

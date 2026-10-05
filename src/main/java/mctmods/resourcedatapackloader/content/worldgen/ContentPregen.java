@@ -309,7 +309,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         speak();
         checkpoint(world);
         tellScreen(server);
-        if ((done & 1023L) == 0L) { ContentStructures.forgetFarStarts(world, next.x, next.z); }
+        if ((done & 1023L) == 0L) { ContentStructures.forgetFarStarts(world, ChunkPos.asLong(next.x, next.z)); }
         if ((done & 255L) == 0L && rubic) { RubicWorldControl.rdpl$unloadOldCubes(provider); }
         if ((done & 255L) == 0L) {
             Runtime memory = Runtime.getRuntime();

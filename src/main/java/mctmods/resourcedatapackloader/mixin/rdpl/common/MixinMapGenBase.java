@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.IMapGenVillageHold;
+import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSites;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
@@ -46,6 +47,15 @@ import java.util.Random;
 
     @Unique private void rdpl$visitSites(World worldIn, int x, int z, ChunkPrimer primer, long saltX, long saltZ) {
         if (BeardSurface.unreadable(worldIn)) { return; }
+        if (CityGrid.on()) {
+            for (int cellX = CityGrid.cellOf(x - range); cellX <= CityGrid.cellOf(x + range); cellX++) {
+                for (int cellZ = CityGrid.cellOf(z - range); cellZ <= CityGrid.cellOf(z + range); cellZ++) {
+                    long start = CityGrid.startIn(cellX, cellZ);
+                    rdpl$visit(worldIn, (int) (start >> 32), (int) start, x, z, primer, saltX, saltZ);
+                }
+            }
+            return;
+        }
         ContentSites known = ContentSites.of(worldIn, ((IMapGenVillage) this).rdpl$distance());
         int grid = known.spacing();
         for (int cellX = Math.floorDiv(x - range, grid); cellX <= Math.floorDiv(x + range, grid); cellX++) {

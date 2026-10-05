@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -58,12 +59,11 @@ import javax.annotation.Nullable;
         return false;
     }
 
-    @Override public void rdpl$packFarStarts(int chunkX, int chunkZ, int keep) {
+    @Override public void rdpl$packFarStarts(long[] centers, int keep) {
         NBTTagCompound far = null;
         for (String key : new ArrayList<>(tagCompound.getKeySet())) {
             long at = rdpl$coords(key);
-            if (at == Long.MIN_VALUE) { continue; }
-            if (Math.abs((int) at - chunkX) <= keep && Math.abs((int) (at >> 32) - chunkZ) <= keep) { continue; }
+            if (at == Long.MIN_VALUE || ContentStructures.near(at, centers, keep)) { continue; }
             if (far == null) { far = new NBTTagCompound(); }
             far.setTag(key, tagCompound.getTag(key));
             tagCompound.removeTag(key);

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.VanillaCompatibilityGenerator;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
+import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorBeardFields;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkGeneratorFlatFields;
@@ -386,7 +387,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
 
     public static Collection<StructureStart> villageStarts(World world) {
         MapGenStructure found = villages(world);
-        if (found == null) { return Collections.emptyList(); }
+        if (found == null || CityGrid.alone()) { return Collections.emptyList(); }
         return ((IMapGenStructure) found).rdpl$getStructureMap().values();
     }
 
