@@ -2,9 +2,21 @@
 
 **一个文件夹，即可覆盖 Minecraft 或任何模组提供的内容，用 JSON 定义新内容，并控制世界的生成方式；在每个世界、客户端与服务器上均生效，玩家无需开启任何开关。**
 
-一个可用的示例。直接把它放进 `rdploader`，看看每个文件是怎么写的。
+十三个可直接运行的示例。把其中任意一个直接放进 `rdploader`，看看每个文件是怎么写的。
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) 用到了加载器能读取的几乎所有文件类型：方块、物品、一种流体、一个创造模式标签页、生物群系、一个世界模板、一个设有传送门限制的维度、世界生成、一种药水及其酿造、一名村民及其交易、配方、战利品、对原版内容的覆盖、一个音效、一个进度和一个函数。其自述文件说明了在游戏中应检查什么。
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) 把主世界变成一片空无一物的虚空，世界生成的内容悬浮在半空中，每个高度带一种形状，方便单独观察每一种。
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) 在普通主世界中放入三种矿脉，每种对应一种矿脉样式（普通、条带和管状），各有富矿、普通和贫矿三个等级，并在其上方的地表放置了几个标记方块，供你据此勘探。
+- [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) 把同样的三种矿脉样式悬浮在空无一物的虚空中，让每种形状都能完整地看清。
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) 把主世界的底部降到 -320，在原版世界之下再生成 256 格：包括深层石头混合（安山岩从深板岩中逐渐过渡而出）、一直延伸到底部的游戏自带噪声洞穴，以及三个可向下探索的洞穴区域，每个区域都有自己的装饰和氛围。
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) 添加了带有物品栏的方块与手持物品，格数从三格到允许的最大值各种尺寸齐备，配有战利品表、从原版贴图集中染色而来的箱子模型、全部以像素图绘制的纹理，以及可在 Curios 中佩戴的一个小袋和一个挎包。
+- [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) 生成一个超平坦世界，城市街区首尾相接铺满地面，扩展到一千个地块并固定在原点；有混凝土街道、街道之下的下水道、其下的两条地铁线和一条穿过城市的铁路，以及最高 123 格的框架建筑。
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) 是同一座城市，世界高度提升到 512、云层抬升到 384，配有行道树，以及建在 16、32 和 64 格宽地块上、最高 251 格的框架高楼。
+- [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) 用一张城市地图来绘制同一座城市，而不是随机生成：一张每格 48 个方块的字符网格，配合调色板指明街道、广场、小巷以及按权重选取的建筑，因此街区布局由手工排定。
+- [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) 让四个阵营在永夜笼罩的基岩竞技场中互相对抗：每一方都是真正的原版计分板队伍，其生物在生成时加入；每击杀一只其他阵营的生物，本方就得分；一个回合在两分钟后以一张卡片结束，三个回合构成一场比赛。
+- [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) 把一个平坦世界布置在游戏自带的一座村庄周围，玩家加入时会获得不祥之兆：共五波敌人，包括原版的灾厄村民、一名女巫，以及资源包自带的掠夺者、袭击队长、掷斧者和劫掠兽；不祥之兆与村庄英雄是资源包自带的效果并配有像素图图标，另有资源包自带的钟方块、一种能让不祥之兆重新出现的饮品，以及结束袭击的函数。
+- [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) 把一个平坦世界变成游戏大厅：资源包自带的加权骰子、一副会自动重洗的生物牌和一副在洗牌前一直为空的命运牌、一个右键即可掷 2d6 的骰盅、与庄家轮流掷骰、以抽签决出平局的骰子对决，以及用生物作棋子、与电脑对弈的国际象棋和跳棋。
+- [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) 在关闭介绍后自动建起一座工作院落，让村民工人承担每一种工作订单：随镐子提升作业范围的矿工、把砍下的木头留在身上的伐木工、始终保持固定小麦库存的农夫，以及搬运圆石的搬运工；每个订单都可以通过告示牌、工具、雇佣或库存箱来开启。
 
 本指南适用于 1.20.1 和 1.21.1 版本。两者读取相同的资源包；两者不同的少数地方以 **1.20.1** 和 **1.21.1** 标出。
 
@@ -5290,7 +5302,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"
