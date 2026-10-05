@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
@@ -65,7 +66,7 @@ public final class AnvilWorkGoal extends Goal {
     }
 
     private void walk() {
-        if (anvil != null) { mob.getNavigation().moveTo(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, 1.0D); }
+        if (anvil != null) { mob.getNavigation().moveTo(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob)); }
     }
 
     @Override public void stop() {

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.OrderDef;
 import mctmods.resourcedatapackloader.content.entity.OrderBoard;
 import mctmods.resourcedatapackloader.content.entity.OrderItems;
 import mctmods.resourcedatapackloader.content.entity.WorkOrder;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -247,12 +248,13 @@ public final class WorkOrderGoal extends Goal {
         }
         if (walked % 20 != 1) { return; }
         BlockPos to = approach(pos);
-        if (mob.getNavigation().moveTo(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, 1.0D)) { return; }
+        double pace = Walking.pace(mob);
+        if (mob.getNavigation().moveTo(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, pace)) { return; }
         Vec3 aim = Vec3.atBottomCenterOf(to);
         double floor = Math.min(mob.getY(), to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {
             Vec3 toward = DefaultRandomPos.getPosTowards(mob, 10, 7, aim, Math.PI / 2.0D);
-            if (toward != null && toward.y >= floor && mob.getNavigation().moveTo(toward.x, toward.y, toward.z, 1.0D)) { return; }
+            if (toward != null && toward.y >= floor && mob.getNavigation().moveTo(toward.x, toward.y, toward.z, pace)) { return; }
         }
     }
 
