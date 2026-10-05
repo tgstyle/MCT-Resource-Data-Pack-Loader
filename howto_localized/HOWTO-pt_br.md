@@ -5614,7 +5614,7 @@ Um objetivo é um objetivo real no placar do próprio jogo, então `/scoreboard 
 | `individuals` | booleano | `false` | Os pontos vão também para uma linha do próprio membro |
 | `carries` | booleano | `false` | O objetivo sobrevive a uma redefinição do mapa em vez de ser apagado com ele. Um placar de vitórias de rodada de uma partida é um exemplo |
 | `awardsTo` | texto | vazio | Outro objetivo ao qual este concede um ponto quando termina, ao lado que liderou. Uma classificação empatada não concede nada |
-| `tiebreak` | booleano | `false` | Uma rodada que termina empatada no topo sorteia um dos lados empatados com o acaso do mundo, registra o sorteio e o premia como de costume |
+| `tiebreak` | booleano | `false` | Uma rodada que termina empatada no topo sorteia um dos lados empatados com o acaso do mundo, registra o sorteio e o premia como de costume. Uma partida, um objetivo sem `awardsTo`, sorteia do mesmo jeito e nomeia o lado sorteado no topo dos resultados |
 
 ### Pontos
 

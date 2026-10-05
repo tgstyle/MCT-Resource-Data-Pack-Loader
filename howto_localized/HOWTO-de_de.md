@@ -5614,7 +5614,7 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | `individuals` | Wahrheitswert | `false`            | Punkte landen zusätzlich auf einer Zeile für das Mitglied selbst                                                                         |
 | `carries`     | Wahrheitswert | `false`            | Das Ziel überlebt einen Kartenreset, statt mit ihm gelöscht zu werden. Eine Partiewertung der Rundensiege ist eines                      |
 | `awardsTo`    | Text          | leer               | Ein anderes Ziel, dem dieses beim Ende einen Punkt gibt, an die führende Seite. Bei Gleichstand gibt es nichts                           |
-| `tiebreak`    | Boolean       | `false`            | Endet eine Runde an der Spitze unentschieden, lost der Zufall der Welt eine der gleichauf liegenden Seiten aus, schreibt die Auslosung ins Log und wertet sie wie gewohnt |
+| `tiebreak`    | Boolean       | `false`            | Endet eine Runde an der Spitze unentschieden, lost der Zufall der Welt eine der gleichauf liegenden Seiten aus, schreibt die Auslosung ins Log und wertet sie wie gewohnt. Ein Match, ein Ziel ohne `awardsTo`, lost genauso aus und nennt die ausgeloste Seite oben in seinen Ergebnissen |
 
 ### Punkte
 

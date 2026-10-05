@@ -5614,7 +5614,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | `individuals` | boolean | `false`             | Points also land on a row for the member itself                                                                         |
 | `carries`     | boolean | `false`             | The objective survives a map reset instead of being wiped with it. A match tally of round wins is one                   |
 | `awardsTo`    | text    | empty               | Another objective this one hands a point to when it ends, to the side that led. Level standings hand out nothing        |
-| `tiebreak`    | boolean | `false`             | A round that ends level at the top draws one of the tied sides with the world's random, logs the draw, and awards it as usual |
+| `tiebreak`    | boolean | `false`             | A round that ends level at the top draws one of the tied sides with the world's random, logs the draw, and awards it as usual. A match, an objective with no `awardsTo`, draws the same way and names the drawn side at the top of its results |
 
 ### Points
 
