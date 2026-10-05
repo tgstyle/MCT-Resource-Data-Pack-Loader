@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Plot;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Rail;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlanPlots.Tally;
+import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.level.block.Rotation;
@@ -48,7 +49,9 @@ final class CityGrowth {
 
     static int pieces(int plots, int wells) { return plots + wells; }
 
-    static City grow(CityGround ground, int centerX, int centerZ, int spacing) {
+    static City city(CityGround ground, int[] center, int spacing) { return Capped.held(CITIES, CityPlan.HELD, "city", CityPlan.packed(center[0], center[1]), () -> grow(ground, center[0], center[1], spacing)); }
+
+    private static City grow(CityGround ground, int centerX, int centerZ, int spacing) {
         int least = ContentVillages.plotsLeast();
         int most = ContentVillages.plotsMost();
         int reach = (spacing / 2 - 1) / 2;

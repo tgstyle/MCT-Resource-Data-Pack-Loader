@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.worldgen.CityGrowth.Growth;
+import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -26,6 +27,7 @@ public final class CityPlan {
     static final long SALT = 0x1F0D3F5B7C9E1A37L;
     private static final int MOUTH = 4;
     private static final Map<Long, Optional<CityPlan>> RAILED = new ConcurrentHashMap<>();
+    static final int HELD = 1024;
 
     public enum End { MET, BARE, COURT }
 
@@ -340,7 +342,7 @@ public final class CityPlan {
         if (found != null) { return found.orElse(null); }
         CityDistricts.siteAhead(ground, List.of(new int[] {districtX, districtZ, districtX, districtZ}));
         CityPlan made = CityPlanTowns.railed(ground, districtX, districtZ);
-        RAILED.putIfAbsent(held, Optional.ofNullable(made));
+        Capped.kept(RAILED, HELD, "railed district plan", held, Optional.ofNullable(made));
         return made;
     }
 

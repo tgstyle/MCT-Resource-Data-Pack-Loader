@@ -56,7 +56,7 @@ public final class CityRailsFit {
         int wanted = rolled;
         Map<CityPlan.Rail, Optional<CityRails.Bed>> beds = new HashMap<>();
         Function<CityPlan.Rail, CityRails.Bed> bedOf = met -> beds.computeIfAbsent(met, key -> Optional.ofNullable(CityRailsGrade.stagedBed(ground, town, mine, key))).orElse(null);
-        for (int center : streetCenters(town, CityRails.placed(ground.seed(), town), alongX, rolled, reach)) {
+        for (int center : streetCenters(ground.seed(), town, CityRails.placed(ground.seed(), town), alongX, rolled, reach)) {
             int off = Math.abs(center - rolled);
             if (off > reach || off >= best) { continue; }
             if (wellMet(town, alongX, center) != null) {
@@ -115,7 +115,7 @@ public final class CityRailsFit {
         return null;
     }
 
-    private static List<Integer> streetCenters(CityPlan.Town town, List<CityPlan.Rail> rails, boolean alongX, int near, int reach) {
+    private static List<Integer> streetCenters(long seed, CityPlan.Town town,List<CityPlan.Rail> rails, boolean alongX, int near, int reach) {
         List<Integer> found = new ArrayList<>();
         if (!town.drawn().isEmpty()) {
             for (CityPlan.Line line : town.drawn()) {
@@ -127,7 +127,7 @@ public final class CityRailsFit {
         int side = CityAlleys.branchAt(town.crossAcross(alongX)) + (CityPlan.streetFullWidth() - 1) / 2;
         for (int k = CityPlan.districtOf(near - reach - offset, !alongX) - 1; k <= CityPlan.districtOf(near + reach - offset, !alongX) + 1; k++) {
             found.add(CityPlan.windowOf(k, !alongX) + offset);
-            if (CityAlleys.branches(town, rails, k, alongX)) { found.add(CityPlan.windowOf(k, !alongX) + side); }
+            if (CityAlleys.branches(seed, town, rails, k, alongX)) { found.add(CityPlan.windowOf(k, !alongX) + side); }
         }
         return found;
     }
@@ -197,7 +197,7 @@ public final class CityRailsFit {
         }
         int half = (CityPlan.streetFullWidth() - 1) / 2;
         int reach = (to - from) / 2 + CityPlan.district();
-        for (int street : streetCenters(town, CityRails.placed(ground.seed(), town), !alongX, (from + to) / 2, reach)) { boxes.add(new int[] {street - half, street + half}); }
+        for (int street : streetCenters(ground.seed(), town, CityRails.placed(ground.seed(), town), !alongX, (from + to) / 2, reach)) { boxes.add(new int[] {street - half, street + half}); }
         return boxes;
     }
 
