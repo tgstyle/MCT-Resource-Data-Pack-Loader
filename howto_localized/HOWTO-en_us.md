@@ -2,9 +2,21 @@
 
 **One folder that overrides anything Minecraft or a mod provides, defines new content from JSON, and controls what generates, in every world, on clients and servers, with nothing for players to switch on.**
 
-One working example. Drop it straight into `rdploader` and look at how each file is written.
+Thirteen working examples. Drop any of them straight into `rdploader` and look at how each file is written.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) uses nearly every kind of file the loader reads: blocks, items, a fluid, a creative tab, biomes, a world template, a dimension behind a gate, worldgen, a potion and its brewing, a villager and trades, recipes, loot, overrides of vanilla things, a sound, an advancement and a function. Its readme says what to check in game.
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) makes the overworld an empty void with worldgen hanging in the air, one shape per height band, so each is easy to see on its own.
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) puts three ore veins into an ordinary overworld, one per vein pattern (plain, banded and tube), each with rich, normal and poor tiers and a few marker blocks on the surface above it to prospect by.
+- [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) hangs the same three vein patterns in an empty void, so each shape can be seen whole.
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) lowers the overworld floor to -320, so 256 blocks of generated world lie below the vanilla one: the deep stone blend, andesite fading out of deepslate, the game's own noise caves carried all the way down, and three cave regions to descend through, each with its own decoration and ambience.
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) adds blocks and carried items that hold an inventory, in every size from three slots to the largest allowed, with a loot table, the chest model tinted out of the vanilla sheet, every texture drawn as a pixel map, and a pouch and a satchel that can be worn in Curios.
+- [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) makes a superflat world tiled edge to edge with city districts, grown to a thousand plots and pinned to the origin, with concrete streets, sewers under them, two subway lines under those and a railway across the city, and frame buildings up to 123 blocks tall.
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) is that same city with the world raised to 512 and the clouds lifted to 384, street trees, and frame towers up to 251 blocks tall on plots 16, 32 and 64 wide.
+- [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) draws that same city from a city map instead of rolling it: one grid of characters at 48 blocks a cell, with a palette naming streets, plazas, alleys and weighted picks of building, so the block plan is laid out by hand.
+- [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) pits four factions against each other in a bedrock arena under permanent night: each side is a real vanilla scoreboard team its mobs join as they spawn, a side scores for every mob of another side it kills, a round ends on a card after two minutes, and three rounds make a match.
+- [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) sets a flat world around one of the game's villages and hands the player a Bad Omen on joining: five waves of vanilla illagers, a witch and the pack's own Pillagers, Raid Captains, Axe Throwers and Ravagers, the omen and Hero of the Village as the pack's own effects with pixel map icons, the pack's own bell block, a drink that brings the omen back, and the functions that end the raid.
+- [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) makes a flat world into a game hall: weighted pack dice, a mobs deck that reshuffles itself and a fortune deck that stays empty until shuffled, a Dice Cup that rolls 2d6 on a right-click, a dice Duel against the House, played turn by turn, that settles a level finish by a tiebreak draw, and chess and checkers played with mobs against the computer.
+- [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) builds a work yard by itself when you close the intro and puts villager workers to every kind of work order: a miner whose reach grows with its pickaxe, a lumberjack that keeps what it chops, a farmer that keeps a standing stock of wheat, and a porter that hauls cobblestone, each opened by a sign, a tool, a hire or a stock chest.
 
 This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read the same packs.
 
@@ -5290,7 +5302,7 @@ The file name is yours to choose, and several files stack. A file names dice who
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

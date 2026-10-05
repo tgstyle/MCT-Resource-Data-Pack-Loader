@@ -2,9 +2,21 @@
 
 **Una carpeta que sobrescribe cualquier cosa que aporten Minecraft o un mod, define contenido nuevo a partir de JSON y controla qué se genera, en todos los mundos, en clientes y servidores, sin que los jugadores tengan que activar nada.**
 
-Un ejemplo funcional. Colócalo directamente en `rdploader` y fíjate en cómo está escrito cada archivo.
+Trece ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploader` y fíjate en cómo está escrito cada archivo.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) usa casi todos los tipos de archivo que lee el loader: bloques, ítems, un fluido, una pestaña creativa, biomas, una plantilla de mundo, una dimensión tras un portal, worldgen, una poción y su elaboración, un aldeano y sus comercios, recetas, botín, sobrescrituras de elementos de vanilla, un sonido, un logro y una función. Su readme indica qué comprobar en el juego.
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) convierte el mundo principal en un vacío con worldgen suspendido en el aire, una forma por franja de altura, de modo que cada una se ve bien por separado.
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) coloca tres vetas de mineral en un mundo principal corriente, una por patrón de veta (simple, con bandas y en tubo), cada una con niveles rico, normal y pobre y unos bloques marcadores en la superficie encima para prospectar.
+- [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) suspende los mismos tres patrones de veta en un vacío, para que cada forma se vea entera.
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) baja el suelo del mundo principal a -320, de modo que quedan 256 bloques de mundo generado por debajo del de vanilla: la mezcla de piedra profunda, con andesita que surge poco a poco de la pizarra profunda, las propias cuevas de ruido del juego hasta el fondo y tres regiones de cuevas por las que descender, cada una con su propia decoración y ambientación.
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) añade bloques e ítems de mano que guardan un inventario, en todos los tamaños desde tres ranuras hasta el máximo permitido, con una tabla de botín, el modelo del cofre teñido a partir de la hoja de vanilla, todas las texturas dibujadas como mapas de píxeles y una bolsa y una mochila que se pueden llevar puestas en Curios.
+- [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) crea un mundo superplano cubierto de distritos urbanos de borde a borde, crecido hasta mil parcelas y fijado en el origen, con calles de hormigón, alcantarillas debajo, dos líneas de metro bajo ellas y un ferrocarril que cruza la ciudad, y edificios de estructura de hasta 123 bloques de altura.
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) es esa misma ciudad con el mundo elevado a 512 y las nubes a 384, árboles en las calles y torres de estructura de hasta 251 bloques de altura en parcelas de 16, 32 y 64 de ancho.
+- [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) dibuja esa misma ciudad a partir de un mapa de ciudad en lugar de sortearla: una cuadrícula de caracteres a 48 bloques por celda, con una paleta que nombra calles, plazas, callejones y selecciones ponderadas de edificios, de modo que el plano de bloques se traza a mano.
+- [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) enfrenta a cuatro facciones en una arena de lecho de roca bajo una noche permanente: cada bando es un equipo real del marcador de vanilla al que se unen sus mobs al aparecer, un bando puntúa por cada mob de otro bando que mata, una ronda termina con una tarjeta a los dos minutos y tres rondas forman una partida.
+- [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) crea un mundo plano alrededor de una de las aldeas del juego y le da al jugador un Mal presagio al unirse: cinco oleadas de illagers de vanilla, una bruja y los propios Saqueadores, Capitanes de asalto, Lanzahachas y Devastadores del pack, el presagio y Héroe de la aldea como efectos propios del pack con iconos de mapas de píxeles, el bloque de campana propio del pack, una bebida que devuelve el presagio y las funciones que ponen fin al asalto.
+- [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) convierte un mundo plano en una sala de juegos: dados ponderados del pack, una baraja de mobs que se baraja sola y una baraja de la fortuna que queda vacía hasta que se baraja, un Cubilete que tira 2d6 con un clic derecho, un Duelo de dados por turnos contra la Casa que resuelve un empate con un sorteo, y ajedrez y damas jugados con mobs contra el ordenador.
+- [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) construye solo un patio de trabajo al cerrar la introducción y pone a aldeanos a hacer todo tipo de órdenes de trabajo: un minero cuyo alcance crece con su pico, un leñador que se queda lo que tala, un granjero que mantiene una reserva fija de trigo y un porteador que acarrea roca, cada orden abierta con un cartel, una herramienta, una contratación o un cofre de reservas.
 
 Esta guía es para la versión 26.x, que abarca 26.1.2, 26.2 y 26.3; las tres leen los mismos packs.
 
@@ -5290,7 +5302,7 @@ El nombre del archivo lo eliges tú, y varios archivos se suman. Un archivo nomb
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"

@@ -2,9 +2,21 @@
 
 **Ein Ordner, der alles überschreibt, was Minecraft oder ein Mod mitbringt, neuen Inhalt aus JSON beschreibt und steuert, was generiert wird – in jeder Welt, auf Clients und Servern, ohne dass Spieler irgendetwas einschalten müssen.**
 
-Ein fertiges Beispiel. Leg es direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
+Dreizehn fertige Beispiele. Leg eines davon direkt in `rdploader` und schau dir an, wie jede Datei geschrieben ist.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) nutzt fast jede Art von Datei, die der Loader liest: Blöcke, Items, ein Fluid, ein Kreativ-Tab, Biome, eine Weltvorlage, eine Dimension hinter einem Tor, Worldgen, einen Trank und sein Brauen, einen Dorfbewohner mit Handel, Rezepte, Beute, Änderungen an Vanilla-Dingen, einen Sound, einen Fortschritt und eine Funktion. Seine readme sagt, was im Spiel zu prüfen ist.
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) verwandelt die Oberwelt in eine leere Void-Welt, in der die Generierung frei in der Luft hängt, eine Form pro Höhenband, sodass jede einzeln gut zu sehen ist.
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) legt drei Erzadern in eine gewöhnliche Oberwelt, eine pro Adermuster (einfach, gebändert und Röhre), jede mit reicher, normaler und armer Stufe und ein paar Markierungsblöcken an der Oberfläche darüber, nach denen man prospektieren kann.
+- [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) hängt dieselben drei Adermuster in eine leere Void-Welt, sodass jede Form ganz zu sehen ist.
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) senkt den Boden der Oberwelt auf -320, sodass 256 Blöcke generierter Welt unter der von Vanilla liegen: der Übergang zum Tiefenstein, Andesit, der aus dem Tiefenschiefer heraus übergeht, die eigenen Rausch-Höhlen des Spiels bis ganz nach unten und drei Höhlenregionen, durch die man absteigt, jede mit eigener Dekoration und Atmosphäre.
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) fügt Blöcke und getragene Gegenstände hinzu, die ein Inventar halten, in jeder Größe von drei Plätzen bis zur größten erlaubten, mit einer Beutetabelle, dem aus dem Vanilla-Blatt eingefärbten Truhenmodell, jeder Textur als Pixelkarte gezeichnet und einem Beutel und einer Umhängetasche, die sich in Curios tragen lassen.
+- [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) erzeugt eine Superflat-Welt, Kante an Kante mit Stadtbezirken belegt, auf tausend Grundstücke gewachsen und am Ursprung festgesetzt, mit Betonstraßen, Kanälen darunter, zwei U-Bahn-Linien unter diesen und einer Eisenbahn quer durch die Stadt, und mit Rahmengebäuden bis zu 123 Blöcke hoch.
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) ist dieselbe Stadt mit einer auf 512 angehobenen Welt und Wolken auf 384, mit Straßenbäumen und Rahmentürmen bis zu 251 Blöcke hoch auf Grundstücken von 16, 32 und 64 Blöcken Breite.
+- [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) zeichnet dieselbe Stadt aus einer Stadtkarte, statt sie zu würfeln: ein Zeichenraster mit 48 Blöcken je Zelle und einer Palette für Straßen, Plätze, Gassen und gewichtete Gebäudeauswahlen, sodass der Blockplan von Hand gelegt ist.
+- [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) lässt vier Fraktionen in einer Bedrock-Arena unter ewiger Nacht aufeinander los: jede Seite ist ein echtes Vanilla-Scoreboard-Team, dem ihre Mobs beim Spawnen beitreten, eine Seite punktet für jeden Mob einer anderen Seite, den sie tötet, eine Runde endet nach zwei Minuten mit einer Karte, und drei Runden ergeben ein Match.
+- [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) legt eine flache Welt um eines der Dörfer des Spiels und gibt dem Spieler beim Beitreten ein böses Omen: fünf Wellen aus Vanilla-Illagern, einer Hexe und den eigenen Plünderern, Raid-Hauptmännern, Axtwerfern und Verwüstern des Packs, das Omen und Held des Dorfes als eigene Effekte des Packs mit Pixelkarten-Symbolen, der eigene Glockenblock des Packs, ein Trank, der das Omen zurückbringt, und die Funktionen, die den Raid beenden.
+- [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) macht aus einer flachen Welt eine Spielhalle: gewichtete Würfel des Packs, ein Mob-Deck, das sich selbst neu mischt, und ein Glücksdeck, das leer bleibt, bis man es mischt, einen Würfelbecher, der per Rechtsklick 2d6 würfelt, ein Würfelduell gegen das Haus, Zug um Zug gespielt, das einen Gleichstand per Losentscheid klärt, sowie Schach und Dame, mit Mobs gegen den Computer gespielt.
+- [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) baut von selbst einen Arbeitshof, sobald man das Intro schließt, und setzt Dorfbewohner als Arbeiter für jede Art von Arbeitsauftrag ein: einen Bergmann, dessen Reichweite mit seiner Spitzhacke wächst, einen Holzfäller, der behält, was er fällt, einen Bauern, der einen festen Weizenvorrat hält, und einen Träger, der Bruchstein schleppt, jeweils eröffnet per Schild, Werkzeug, Anheuern oder Vorratstruhe.
 
 Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; alle drei lesen dieselben Packs.
 
@@ -5290,7 +5302,7 @@ Den Dateinamen wählst du selbst, und mehrere Dateien addieren sich. Eine Datei 
     "fate": { "plus": 1, "blank": 2, "minus": 1 }
   },
   "decks": {
-    "tarot": ["The Fool", "The Magician", "The High Priestess", "The Empress"]
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
   },
   "says": {
     "coin": "{player} tosses the old coin: {result}"
