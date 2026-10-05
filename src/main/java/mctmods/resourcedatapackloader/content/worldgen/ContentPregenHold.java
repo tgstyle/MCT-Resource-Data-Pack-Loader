@@ -182,7 +182,11 @@ public final class ContentPregenHold {
         int released = 0;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUUID());
-            if (held == null || ContentIntroPlay.reading(player.getUUID())) { continue; }
+            if (held == null) { continue; }
+            if (ContentIntroPlay.reading(player.getUUID())) {
+                RDPLNetwork.introLandMade(player);
+                continue;
+            }
             HELD.remove(player.getUUID());
             release(player, held);
             if (welcomed) { ContentWelcome.welcome(player); }

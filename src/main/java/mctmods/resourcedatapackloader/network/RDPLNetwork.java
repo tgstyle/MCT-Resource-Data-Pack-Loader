@@ -35,6 +35,9 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, context) -> {
             if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); }
         });
+        registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (message, context) -> {
+            if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); }
+        });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (message, context) -> {
             if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); }
         });
@@ -59,6 +62,10 @@ public final class RDPLNetwork {
 
     public static void playIntro(ServerPlayer player, boolean landBeingMade) {
         if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageIntroPlay(landBeingMade)); }
+    }
+
+    public static void introLandMade(ServerPlayer player) {
+        if (reaches(player)) { PacketDistributor.sendToPlayer(player, new MessageIntroLandMade()); }
     }
 
     public static void sendToasts(ServerPlayer player, int kinds) {
