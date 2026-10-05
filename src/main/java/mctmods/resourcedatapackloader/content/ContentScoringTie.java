@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.scores.Objective;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +33,16 @@ public final class ContentScoringTie {
     @Nullable static Scores.Row best(MinecraftServer server, ScoreDef def, Collection<Scores.Row> rows) {
         List<Scores.Row> top = top(rows);
         if (top.size() < 2) { return top.isEmpty() ? null : top.get(0); }
-        if (!def.tiebreak()) { return null; }
+        return def.tiebreak() ? draw(server, def, top) : null;
+    }
+
+    static void match(MinecraftServer server, ScoreDef def, List<String> lines) {
+        Objective objective = Scores.objective(Scores.board(server), def.name());
+        List<Scores.Row> top = objective == null ? new ArrayList<>() : top(Scores.rows(Scores.board(server), objective));
+        if (top.size() > 1) { lines.add(0, ContentTurns.shown(draw(server, def, top).owner()) + " won the tiebreak"); }
+    }
+
+    private static Scores.Row draw(MinecraftServer server, ScoreDef def, List<Scores.Row> top) {
         Scores.Row drawn = top.get(server.overworld().getRandom().nextInt(top.size()));
         ContentLog.LOGGER.info("The {} round ended level at {} between {}, so the tiebreak drew {}", def.displayName(), drawn.value(), names(top), drawn.owner());
         return drawn;

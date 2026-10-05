@@ -4903,7 +4903,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 | `individuals` | boolean | `false`                 | Los puntos se anotan también en una fila del propio miembro                                                                                         |
 | `carries`     | boolean | `false`                 | El objetivo sobrevive a un reinicio del mapa en lugar de borrarse con él. Un recuento de rondas ganadas de una partida es un ejemplo               |
 | `awardsTo`    | texto   | vacío                   | Otro objetivo al que este concede un punto al terminar, al bando que iba en cabeza. La clasificación por niveles no concede nada                    |
-| `tiebreak` | booleano | `false` | Una ronda que termina con empate en cabeza sortea uno de los bandos empatados con el azar del mundo, registra el sorteo y lo premia como de costumbre |
+| `tiebreak` | booleano | `false` | Una ronda que termina con empate en cabeza sortea uno de los bandos empatados con el azar del mundo, registra el sorteo y lo premia como de costumbre. Una partida, un objetivo sin `awardsTo`, sortea igual y nombra al bando sorteado al principio de sus resultados |
 
 ### Puntos
 
