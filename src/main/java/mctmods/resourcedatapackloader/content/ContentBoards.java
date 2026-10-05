@@ -68,6 +68,8 @@ public final class ContentBoards {
 
     public static List<String> boardNames(MinecraftServer server) { return new ArrayList<>(ContentBoardData.get(server).boards.keySet()); }
 
+    public static boolean piece(Entity entity) { return ContentBoardPieces.boardOf(entity) != null; }
+
     @Nullable static ServerLevel world(MinecraftServer server, BoardGame game) {
         ResourceLocation id = ResourceLocation.tryParse(game.dimension);
         return id == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, id));
@@ -111,6 +113,8 @@ public final class ContentBoards {
         for (BoardGame game : new ArrayList<>(data.boards.values())) {
             BoardRules rules = RULES.get(game.game);
             BoardState state = game.state;
+            ServerLevel level = rules != null && game.strike > 0 && --game.strike == 0 ? world(server, game) : null;
+            if (level != null) { ContentBoardPieces.sync(level, game, rules); }
             if (rules == null || state == null || !game.running()) { continue; }
             if (rules.clockTicks > 0 && !game.moves.isEmpty()) {
                 if (--game.clock[state.turn] <= 0) {
