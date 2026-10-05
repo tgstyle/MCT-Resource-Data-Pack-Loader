@@ -91,6 +91,7 @@
         "common.MixinNearestAttackableTargetGoal",
         "common.INearestAttackableTargetGoal",
         "common.ILookAtPlayerGoal",
+        "common.IRandomStrollGoal",
         "common.MixinBreedGoal",
         "common.MixinTamableAnimal",
         "common.MixinTargetGoal",
