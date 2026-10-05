@@ -41,7 +41,7 @@ import javax.annotation.Nullable;
     private final List<IntroPageDef> pages;
     private final List<String> written = new ArrayList<>();
     @Nullable private final ISound music;
-    private final boolean landBeingMade;
+    private boolean landBeingMade;
     private int page;
     private boolean sounding;
     private MarkPage layout = new MarkPage("", new ArrayList<>(), TEXT_WIDTH);
@@ -59,6 +59,10 @@ import javax.annotation.Nullable;
         List<IntroPageDef> pages = ContentWorldIntro.pages();
         if (pages.isEmpty()) { return; }
         Minecraft.getMinecraft().displayGuiScreen(new GuiWorldIntro(pages, track(), landBeingMade));
+    }
+
+    public static void landMade() {
+        if (Minecraft.getMinecraft().currentScreen instanceof GuiWorldIntro) { ((GuiWorldIntro) Minecraft.getMinecraft().currentScreen).landBeingMade = false; }
     }
 
     @Override public boolean doesGuiPauseGame() { return !landBeingMade; }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.IntroLandMadeHandler;
 import mctmods.resourcedatapackloader.client.IntroPlayHandler;
 import mctmods.resourcedatapackloader.util.Says;
 
@@ -26,6 +27,8 @@ public final class RDPLNetwork {
         channel = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL);
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroPlayHandler.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
         else { channel.registerMessage(MessageIntroPlay.Idle.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
+        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroLandMadeHandler.class, MessageIntroLandMade.class, packetId++, Side.CLIENT); }
+        else { channel.registerMessage(MessageIntroLandMade.Idle.class, MessageIntroLandMade.class, packetId++, Side.CLIENT); }
         channel.registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class, packetId++, Side.SERVER);
         channel.registerMessage(MessagePouchKey.Handler.class, MessagePouchKey.class, packetId++, Side.SERVER);
         if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(CardOverlay.Handler.class, MessageCard.class, packetId++, Side.CLIENT); }
@@ -67,6 +70,11 @@ public final class RDPLNetwork {
     public static void playIntro(EntityPlayerMP player) {
         if (channel == null || vanilla(player)) { return; }
         channel.sendTo(new MessageIntroPlay(ContentPregen.busy()), player);
+    }
+
+    public static void introLandMade(EntityPlayerMP player) {
+        if (channel == null || vanilla(player)) { return; }
+        channel.sendTo(new MessageIntroLandMade(), player);
     }
 
     public static boolean sendNote(EntityPlayerMP player, String said) {

@@ -186,7 +186,10 @@ public final class ContentPregenHold {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Held held = HELD.get(player.getUniqueID());
             if (held == null) { continue; }
-            if (ContentIntroPlay.reading(player.getUniqueID())) { continue; }
+            if (ContentIntroPlay.reading(player.getUniqueID())) {
+                RDPLNetwork.introLandMade(player);
+                continue;
+            }
             HELD.remove(player.getUniqueID());
             release(player, held);
             if (welcomed) { welcome(player); }
