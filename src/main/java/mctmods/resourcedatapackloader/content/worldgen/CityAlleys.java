@@ -111,9 +111,10 @@ final class CityAlleys {
         return Mth.clamp(Math.floorMod(cross + full / 2 + size / 2, size) - full / 2, 0, size - full);
     }
 
-    static boolean branches(Town town, List<Rail> rails, int band, boolean alongX) {
+    static boolean branches(long seed, Town town, List<Rail> rails, int band, boolean alongX) {
         int at = CityPlan.windowOf(band, !alongX) + branchAt(town.crossAcross(alongX));
-        return Math.floorMod(Hashes.mix(town.hash() ^ BRANCH_SALT, band, alongX ? 1 : 0, 0), BRANCH_ODDS) > 0 && offRail(rails, alongX, at, at + CityPlan.fullWidth() - 1, 0);
+        long hash = CityPlan.spacing() == 1 ? seed : town.hash();
+        return Math.floorMod(Hashes.mix(hash ^ BRANCH_SALT, band, alongX ? 1 : 0, 0), BRANCH_ODDS) > 0 && offRail(rails, alongX, at, at + CityPlan.fullWidth() - 1, 0);
     }
 
     @Nullable private static Line branch(RandomSource roll, int low, int high, int depth, int edge, int side, boolean alongX) {

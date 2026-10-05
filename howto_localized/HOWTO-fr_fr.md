@@ -82,6 +82,7 @@ Ce guide s'adresse aux versions 1.20.1 et 1.21.1. Elles lisent les mêmes packs 
 - [Cartes de structures](#cartes-de-structures)
 - [Parcelles de village](#parcelles-de-village)
 - [Cartes de plan des villes](#cartes-de-plan-des-villes)
+- [Ville continue](#ville-continue)
 - [Retrogen](#retrogen)
 - [Prégénération](#prégénération)
 
@@ -4480,6 +4481,40 @@ Une carte de ville dessine le plan des rues d'une ville sur une grille, un carac
 | `.` ou `open`                                                           | Terrain libre, rien de posé                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 
 Chaque carte tire l'une des quatre orientations à partir de la graine du monde et tourne d'un bloc, de sorte qu'un plan se lit pareil quel que soit le côté. Les rues sont tracées en premier : une parcelle qui chevaucherait une rue ou une autre parcelle reste donc ouverte, avec une ligne dans le journal, et un nom de parcelle qu'aucun pack ne fournit laisse sa cellule ouverte de la même façon. La carte ne change pas l'habillage des pièces : les clés de rue, `villageBlocks`, les lampadaires et la pièce maîtresse de place se lisent tous comme pour une ville tirée au hasard.
+
+## Ville continue
+
+*générer le monde*
+
+Une ville continue n'a pas de bord. Avec `villageCitySpacing` à `1`, chaque quartier du monde est une ville à part entière : une place avec le puits en son centre et des rues qui en partent et rejoignent celles des quartiers voisins. La ville continue de se générer partout où vont les joueurs, sans campagne entre les villes.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Réglage | Type | Défaut | Ce que ça fait |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | booléen | `false` | Pose les rues de ville propres à RDPL. Une ville continue en a besoin |
+| `villageCitySpacing` | entier, 0 à 256 | `16` | `1` fait de chaque quartier une ville, et c'est ce qui rend la ville continue. Un nombre plus grand sème des villes séparées qui s'arrêtent à leur bord |
+| `villageBlockSizes` | liste de `size=weight` | vide | Profondeur des îlots entre rues parallèles, tirée une fois par quartier, si bien que la ville mêle grilles fines et grossières |
+| `villagePlotsMost` | entier, 0 ou plus | `0` | Le plus grand nombre de parcelles qu'un quartier accueille. 0 ne fixe aucun plafond |
+| `villagePlotsBackRow` | booléen | `true` | Place une parcelle derrière chaque parcelle donnant sur une rue, pour que l'intérieur de chaque îlot soit bâti lui aussi |
+
+Tous les autres réglages de rue, des blocs de chaussée aux lampadaires, ponts, tunnels et égouts, habillent une ville continue comme toute autre ville. `villagePlotsLeast` n'a aucun effet, puisque chaque quartier est déjà une ville entière. Un quartier dont le plan compte deux parcelles et puits ou moins reste vide, comme toute ville aussi petite.
+
+**Comment les rues se rejoignent.** Chaque quartier pose sa croix principale, les deux rues qui se croisent à son puits, au même endroit à l'intérieur du quartier. Les rues de la croix de quartiers voisins s'alignent donc en avenues droites qui traversent tout le monde, et les rues qui partent de chaque place rejoignent celles du quartier suivant. Le puits d'un quartier ne bouge jamais, quelle que soit la façon dont ses voisins sont tracés.
+
+**Ce que ça coûte.** Chaque chunk d'une ville continue est bâti, donc un terrain neuf coûte partout ce que coûte le centre d'une grande ville : poser les bâtiments et les éclairer. Un joueur qui vole vite dépasse la génération, et le taux de ticks baisse pendant que de nouveaux quartiers se génèrent. Prégénérer le terrain où les joueurs commencent, avec `pregenOnNewWorld` ou `/rdplserver pregen`, et une distance d'affichage modérée gardent cela en main, mais les TPS restent plus bas que dans un monde ordinaire tant que les joueurs explorent du terrain neuf. La sauvegarde grandit avec le terrain exploré, comme tout terrain bâti. Le jeu garde au plus 1024 plans de quartier en mémoire et refait à partir de la graine, exactement comme avant, un plan qu'il a lâché quand il en a de nouveau besoin.
 
 ## Retrogen
 
