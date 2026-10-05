@@ -82,6 +82,7 @@ Dieses Handbuch gilt für den 26.x-Build, der 26.1.2, 26.2 und 26.3 umfasst; all
 - [Strukturkarten](#strukturkarten)
 - [Dorfgrundstücke](#dorfgrundstücke)
 - [Stadtpläne](#stadtpläne)
+- [Durchgehende Stadt](#durchgehende-stadt)
 - [Retrogen](#retrogen)
 - [Vorgenerierung](#vorgenerierung)
 
@@ -4480,6 +4481,40 @@ Ein Stadtplan zeichnet den Straßenplan einer Stadt auf ein Raster, ein Zeichen 
 | `.` oder `open`                                                         | Offener Boden, nichts angelegt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 Jeder Plan lost eine der vier Richtungen aus dem Weltseed aus und dreht sich als Ganzes, ein Plan liest sich also von jeder Seite gleich. Straßen werden zuerst angelegt, ein Grundstück, das eine Straße oder ein anderes Grundstück überlappen würde, bleibt mit einer Zeile im Log offen, und ein Grundstücksname, den kein Pack liefert, lässt seine Zelle genauso offen. Der Plan ändert nicht, wie die Teile gestaltet werden: die Straßenschlüssel, `villageBlocks`, die Laternen und das Platzmittelstück gelten wie für eine gewürfelte Stadt.
+
+## Durchgehende Stadt
+
+*die welt generieren*
+
+Eine durchgehende Stadt hat keinen Rand. Steht `villageCitySpacing` auf `1`, ist jedes Viertel der Welt eine eigene Stadt: ein Platz mit dem Brunnen in der Mitte und Straßen heraus, die an die Straßen der Viertel ringsum anschließen. Die Stadt entsteht weiter, wohin die Spieler auch gehen, ohne freies Land zwischen den Städten.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Einstellung           | Typ                       | Standard | Was sie tut                                                                                                                  |
+| --------------------- | ------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `terrainAdaptation`   | Wahrheitswert             | `false`  | Legt die eigenen Stadtstraßen von RDPL an. Eine durchgehende Stadt braucht es eingeschaltet                                  |
+| `villageCitySpacing`  | int, 0 bis 256            | `16`     | `1` macht jedes Viertel zu einer Stadt, und das macht die Stadt durchgehend. Ein größerer Wert sät getrennte Städte, die an ihrem Rand enden |
+| `villageBlockSizes`   | Liste von `größe=gewicht` | leer     | Wie tief die Blocks zwischen parallelen Straßen sind, einmal je Viertel ausgewürfelt, so dass die Stadt feine und grobe Raster mischt |
+| `villagePlotsMost`    | int, 0 oder mehr          | `0`      | Die meisten Grundstücke, die ein Viertel aufnimmt. 0 setzt keine Obergrenze                                                  |
+| `villagePlotsBackRow` | Wahrheitswert             | `true`   | Setzt hinter jedes Grundstück an einer Straße ein weiteres, so dass auch das Innere jedes Blocks bebaut wird                 |
+
+Alle anderen Straßeneinstellungen, von den Straßenblöcken bis zu Laternen, Brücken, Tunneln und Kanälen, gestalten eine durchgehende Stadt wie jede andere. `villagePlotsLeast` wirkt nicht, denn jedes Viertel ist schon eine ganze Stadt. Ein Viertel, dessen Plan zwei oder weniger Grundstücke und Brunnen hält, bleibt leer, wie jede so kleine Stadt.
+
+**Wie die Straßen sich treffen.** Jedes Viertel legt sein Hauptkreuz, die beiden Straßen, die sich an seinem Brunnen kreuzen, an dieselbe Stelle im Viertel. Die Kreuzstraßen benachbarter Viertel liegen daher in einer Flucht und laufen als gerade Alleen durch die ganze Welt, und die Straßen aus jedem Platz schließen an die des nächsten Viertels an. Der Brunnen eines Viertels rückt nie, wie auch immer die Nachbarn angelegt sind.
+
+**Was es kostet.** Jeder Chunk einer durchgehenden Stadt ist bebaut, also kostet neues Land überall so viel wie die Mitte einer großen Stadt: die Gebäude setzen und sie beleuchten. Wer schnell fliegt, überholt die Generierung, und die Tickrate sinkt, solange neue Viertel entstehen. Das Land, auf dem die Spieler beginnen, mit `pregenOnNewWorld` oder `/rdplserver pregen` vorzugenerieren und die Sichtweite maßvoll zu halten, hält das im Rahmen, doch solange die Spieler Neuland erkunden, bleiben die TPS niedriger als in einer gewöhnlichen Welt. Der Spielstand wächst mit dem erkundeten Land wie jedes bebaute Land. Das Spiel hält höchstens 1024 Viertelpläne im Speicher und erstellt einen Plan, den es freigegeben hat, beim nächsten Bedarf genau wie zuvor aus dem Seed neu.
 
 ## Retrogen
 

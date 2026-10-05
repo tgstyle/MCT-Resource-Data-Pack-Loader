@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Plot;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Rail;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlanPlots.Tally;
+import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.RandomSource;
@@ -183,7 +184,7 @@ final class CityPlanTowns {
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
                 int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
                 if (center == null) { continue; }
-                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
+                City city = CityGrowth.city(ground, center, spacing);
                 if (!city.districts().isEmpty()) { found.add(town(ground, city)); }
             }
         }
@@ -205,7 +206,7 @@ final class CityPlanTowns {
             Town town = CityLayout.mapTown(ground, map, center[0], center[1], true);
             return town == null || CityGrowth.tooSmall(ground, map, center[0], center[1], true, town) ? null : town;
         }
-        City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
+        City city = CityGrowth.city(ground, center, spacing);
         return city.districts().isEmpty() ? null : town(ground, city);
     }
 
@@ -214,7 +215,7 @@ final class CityPlanTowns {
         Optional<CityPlan> found = RAW.get(held);
         if (found != null) { return found.orElse(null); }
         CityPlan made = unrailed(ground, districtX, districtZ);
-        RAW.putIfAbsent(held, Optional.ofNullable(made));
+        Capped.kept(RAW, CityPlan.HELD, "unrailed district plan", held, Optional.ofNullable(made));
         return made;
     }
 
@@ -224,8 +225,8 @@ final class CityPlanTowns {
         int spacing = CityPlan.spacing();
         if (spacing <= 0) { return null; }
         if (spacing == 1) {
-            CityPlan plan = plan(ground, districtX, districtZ, null);
-            return plan == null || CityGrowth.pieces(plan.plots().size(), 1) <= CityGrowth.FEWEST_PIECES ? null : plan.withTown(districtTown(ground, districtX, districtZ));
+            CityPlan plan = seated(ground, districtX, districtZ);
+            return plan == null ? null : facingEmpty(ground, plan, districtX, districtZ).withTown(districtTown(ground, districtX, districtZ));
         }
         City city = cityOf(ground, districtX, districtZ, spacing);
         if (city == null) { return null; }
@@ -267,7 +268,7 @@ final class CityPlanTowns {
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
                 int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
                 if (center == null) { continue; }
-                City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
+                City city = CityGrowth.city(ground, center, spacing);
                 if (city.has(districtX, districtZ)) { return city; }
             }
         }
@@ -285,9 +286,33 @@ final class CityPlanTowns {
         return city == null ? null : new int[] {city.centerX(), city.centerZ()};
     }
 
+    @Nullable private static CityPlan seated(CityGround ground, int districtX, int districtZ) {
+        CityPlan plan = plan(ground, districtX, districtZ, null);
+        return plan == null || CityGrowth.pieces(plan.plots().size(), 1) <= CityGrowth.FEWEST_PIECES ? null : plan;
+    }
+
+    private static CityPlan facingEmpty(CityGround ground, CityPlan plan, int districtX, int districtZ) {
+        int size = CityPlan.district();
+        Map<Line, Line> capped = new HashMap<>();
+        for (List<Line> lines : List.of(plan.alongX, plan.alongZ)) {
+            for (Line line : lines) {
+                if (line.alley()) { continue; }
+                int origin = line.alongX() ? plan.originX() : plan.originZ();
+                int stepX = line.alongX() ? 1 : 0;
+                int stepZ = line.alongX() ? 0 : 1;
+                End low = line.endsLow() == End.MET && line.from() == origin && seated(ground, districtX - stepX, districtZ - stepZ) == null ? End.BARE : line.endsLow();
+                End high = line.endsHigh() == End.MET && line.to() == origin + size - 1 && seated(ground, districtX + stepX, districtZ + stepZ) == null ? End.BARE : line.endsHigh();
+                if (low == line.endsLow() && high == line.endsHigh()) { continue; }
+                capped.put(line, line.ending(low, high));
+                ContentLog.LOGGER.debug("The street along {} at {} of the district at {}, {} meets a district left empty at its {} end, so it ends there as a dead end", line.alongX() ? "x" : "z", line.at(), plan.originX(), plan.originZ(), low != line.endsLow() && high != line.endsHigh() ? "both" : low != line.endsLow() ? "low" : "high");
+            }
+        }
+        return plan.pulledBack(capped);
+    }
+
     @Nullable static CityPlan plan(CityGround ground, int districtX, int districtZ, @Nullable int[] city) {
         List<Long> held = city == null ? List.of(CityPlan.packed(districtX, districtZ)) : List.of(CityPlan.packed(districtX, districtZ), CityPlan.packed(city[0], city[1]));
-        return PLANS.computeIfAbsent(held, _ -> build(ground, districtX, districtZ, city)).orElse(null);
+        return Capped.held(PLANS, CityPlan.HELD, "district plan", held, () -> build(ground, districtX, districtZ, city)).orElse(null);
     }
 
     private static Optional<CityPlan> build(CityGround ground, int districtX, int districtZ, @Nullable int[] city) { return Optional.of(laid(ground, districtX, districtZ, city == null ? districtTown(ground, districtX, districtZ) : protoTown(ground, city[0], city[1]))); }
@@ -311,7 +336,7 @@ final class CityPlanTowns {
         for (boolean acrossZ : new boolean[] {true, false}) {
             int at = (acrossZ ? originZ : originX) + CityAlleys.branchAt(proto.crossAcross(acrossZ));
             int from = acrossZ ? originX : originZ;
-            if (CityAlleys.branches(proto, placed, acrossZ ? districtZ : districtX, acrossZ)) { (acrossZ ? alongX : alongZ).add(new Line(at, full, false, acrossZ, from, from + size - 1, End.MET, End.MET)); }
+            if (CityAlleys.branches(seed, proto, placed, acrossZ ? districtZ : districtX, acrossZ)) { (acrossZ ? alongX : alongZ).add(new Line(at, full, false, acrossZ, from, from + size - 1, End.MET, End.MET)); }
             else { ContentLog.LOGGER.debug("The district at {}, {} lays no side street {} at {} {}: it did not roll, as a village road branches two times in three, or it would run on a railway line of its city", originX, originZ, acrossZ ? "east to west" : "north to south", acrossZ ? "z" : "x", at); }
         }
         int block = blockAt(seed, districtX, districtZ);

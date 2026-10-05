@@ -491,7 +491,7 @@ final class CitySeams {
 
     @Nullable private static Town site(CityGround ground, @Nullable CityMapDef map, int[] center, int spacing) {
         if (map != null) { return CityLayout.mapTown(ground, map, center[0], center[1], true); }
-        City city = CityGrowth.CITIES.computeIfAbsent(CityPlan.packed(center[0], center[1]), _ -> CityGrowth.grow(ground, center[0], center[1], spacing));
+        City city = CityGrowth.city(ground, center, spacing);
         return city.districts().isEmpty() ? null : CityPlanTowns.town(ground, city);
     }
 }

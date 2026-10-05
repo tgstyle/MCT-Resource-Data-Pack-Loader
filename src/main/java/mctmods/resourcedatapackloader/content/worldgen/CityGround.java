@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
 import mctmods.resourcedatapackloader.util.BiomeNames;
+import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Parallel;
 
@@ -101,7 +102,7 @@ public final class CityGround {
         CityCells cell = CELLS.get(cellKey);
         if (cell == null) {
             CityCells made = new CityCells(noise, random, shape, cellKey.x() * width, cellKey.z() * width);
-            if (CELLS.size() >= CELLS_HELD) { CELLS.clear(); }
+            Capped.room(CELLS, CELLS_HELD, "terrain cell");
             CityCells kept = CELLS.putIfAbsent(cellKey, made);
             cell = kept == null ? made : kept;
         }
@@ -149,7 +150,7 @@ public final class CityGround {
     }
 
     private static void hold(Column key, int found) {
-        if (HEIGHTS.size() >= HEIGHTS_HELD) { HEIGHTS.clear(); }
+        Capped.room(HEIGHTS, HEIGHTS_HELD, "ground height");
         HEIGHTS.put(key, found);
     }
 

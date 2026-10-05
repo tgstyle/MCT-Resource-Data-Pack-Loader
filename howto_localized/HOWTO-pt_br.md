@@ -82,6 +82,7 @@ Este guia é para a versão 26.x, que abrange a 26.1.2, a 26.2 e a 26.3; as trê
 - [Mapas de estruturas](#mapas-de-estruturas)
 - [Terrenos de vilas](#terrenos-de-vilas)
 - [Mapas de layout de cidades](#mapas-de-layout-de-cidades)
+- [Cidade contínua](#cidade-contínua)
 - [Retrogen](#retrogen)
 - [Pré-geração](#pré-geração)
 
@@ -4480,6 +4481,40 @@ Um mapa de cidade desenha a planta de ruas de uma cidade em uma grade, um caract
 | `.` ou `open`                                                           | Terreno aberto, nada traçado                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 Todo mapa sorteia uma das quatro orientações a partir da seed do mundo e gira inteiro, de modo que uma planta se lê igual de qualquer lado. As ruas são traçadas primeiro, então um terreno que sobreporia uma rua ou outro terreno é deixado aberto com uma linha no log, e um nome de terreno que nenhum pacote fornece deixa a célula aberta do mesmo modo. O mapa não muda a forma como as peças são decoradas: as chaves de rua, `villageBlocks`, os postes e a peça central da praça se leem como em uma cidade sorteada.
+
+## Cidade contínua
+
+*gerando o mundo*
+
+Uma cidade contínua não tem borda. Com `villageCitySpacing` em `1`, todo distrito do mundo é uma cidade própria: uma praça com o poço no centro e ruas saindo dela que se unem às ruas dos distritos ao redor. A cidade continua sendo gerada para onde quer que os jogadores vão, sem campo aberto entre as cidades.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Configuração | Tipo | Padrão | O que faz |
+| --- | --- | --- | --- |
+| `terrainAdaptation` | booleano | `false` | Assenta as ruas de cidade próprias do RDPL. Uma cidade contínua precisa dele ligado |
+| `villageCitySpacing` | int, 0 a 256 | `16` | `1` faz de todo distrito uma cidade, e é isso que torna a cidade contínua. Um número maior semeia cidades separadas que terminam na própria borda |
+| `villageBlockSizes` | lista de `size=weight` | vazio | Qual a profundidade dos quarteirões entre ruas paralelas, sorteada uma vez por distrito, de modo que a cidade mistura grades finas e grossas |
+| `villagePlotsMost` | int, 0 ou mais | `0` | O máximo de terrenos que um distrito acomoda. 0 não define teto |
+| `villagePlotsBackRow` | booleano | `true` | Acomoda um terreno atrás de todo terreno voltado para uma rua, para que o interior de cada quarteirão também seja construído |
+
+Todas as outras configurações de rua, dos blocos da pista a postes, pontes, túneis e esgotos, vestem uma cidade contínua como vestem qualquer outra. `villagePlotsLeast` não tem efeito, já que todo distrito já é uma cidade inteira. Um distrito cujo plano tem dois ou menos terrenos e poços fica vazio, como qualquer cidade desse tamanho.
+
+**Como as ruas se encontram.** Todo distrito traça sua cruz principal, as duas ruas que se cruzam no seu poço, no mesmo lugar dentro do distrito. Por isso as ruas da cruz de distritos vizinhos se alinham em avenidas retas que seguem pelo mundo todo, e as ruas que saem de cada praça se unem às do distrito seguinte. O poço de um distrito nunca muda de lugar, não importa como os vizinhos sejam traçados.
+
+**Quanto custa.** Todo chunk de uma cidade contínua é construído, então terreno novo custa em toda parte o que custa o centro de uma cidade grande: colocar os prédios e iluminá-los. Um jogador voando rápido ultrapassa a geração, e a taxa de ticks cai enquanto distritos novos são gerados. Pré-gerar o terreno onde os jogadores começam, com `pregenOnNewWorld` ou `/rdplserver pregen`, e uma distância de visão moderada mantêm isso sob controle, mas o TPS continua mais baixo que em um mundo comum enquanto os jogadores exploram terreno novo. O save cresce com o terreno explorado, como qualquer terreno construído. O jogo mantém no máximo 1024 planos de distrito na memória e refaz a partir da seed, exatamente como antes, um plano que liberou quando precisa dele de novo.
 
 ## Retrogen
 
