@@ -6957,18 +6957,20 @@ A single-track trunk has no second track to give the other spur, so a link whose
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Setting        | Type                  | Default | What it does                                                                                                                                                                                                |
-| -------------- | --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `villageDecor` | list of `name=weight` | none    | Scatters this pack's own worldgen along the verges of village roads. The name is a worldgen registry key, the weight is that entry's share of the spots, and `empty=weight` is the share of spots left bare |
+| Setting               | Type                  | Default | What it does                                                                                                                                                                                                |
+| --------------------- | --------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | list of `name=weight` | none    | Scatters this pack's own worldgen along the verges of village roads. The name is a worldgen registry key, the weight is that entry's share of the spots, and `empty=weight` is the share of spots left bare |
+| `villageDecorSpacing` | int, 1 to 16          | `3`     | The step between decoration spots along each side of a village road, in blocks. Clamped to 1 through 16. A template wider than the spacing can crowd its neighbor                                           |
 
 `villageDecor` scatters a pack's own worldgen along the verges of village roads, which is what stops a village reading as houses standing in bare grass. Each entry is `name=weight`: the name is a worldgen registry key, `mypack:street_flowers`, and the weight is that entry's share of the spots. The name `empty` is the share of spots left bare, and it is the one to get right, because a list without it fills every spot on every verge and the village comes out a nursery rather than a street.
 
-Every third block along each side of a road is a spot, counted from world coordinates so the spacing carries from one road piece into the next. A spot is passed over where it falls inside any piece of the village, on the road itself, in front of a door, or where the ground is not open air standing on something solid. What grows at a spot is worked out from the world seed and the spot itself, so the same world always scatters the same way.
+Spots lie along each side of a road at a step of `villageDecorSpacing` blocks, three by default, counted from world coordinates so the spacing carries from one road piece into the next. A template wider than the spacing can crowd its neighbor. A spot is passed over where it falls inside any piece of the village, on the road itself, in front of a door, or where the ground is not open air standing on something solid. What grows at a spot is worked out from the world seed and the spot itself, so the same world always scatters the same way.
 
 The name points at an ordinary worldgen entry from `<namespace>/worldgen/*.json`, so a `decoration`, a `tree` or an `imprint` all serve, and each keeps its own blocks, sizes and scatter. Only the shape of that entry is used here: its biomes, dimensions, heights and rarity are how it sows itself across the world at large, and the village does not consult them, so an entry meant for the verge is best written for nothing else. A verge is open air standing on ground, so such an entry wants `replace` set to `minecraft:air`; one that never names `replace` is given the usual default of `minecraft:stone` and quietly stands nothing here.
 

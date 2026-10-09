@@ -61,7 +61,7 @@ public final class ContentControl {
             "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "verticalCubeLoadDistance", "cubesSentPerTick", "cubeGenMillisPerRound", "cubeGCInterval",
             "surfaceNightMonsterRate", "terrainWorldTypes", "terrainWorldTypesAreBlacklist", "undergroundDayMonsterRate",
-            "undergroundNightMonsterRate", "villageBlocks", "villageDecor", "villagePieces", "villagePiecesAreBlacklist",
+            "undergroundNightMonsterRate", "villageBlocks", "villageDecor", "villageDecorSpacing", "villagePieces", "villagePiecesAreBlacklist",
             "villagePathBlock", "villagePathSupportBlock", "villagePathBridgeBlock", "villagePathExtraWidth",
             "villagePathCenterBlock", "villagePathCenterDash", "villagePathLineBlock", "villagePathSidewalkBlock",
             "villagePathSidewalkWidth", "villagePathAlleyBlock", "villagePathAlleyChance",

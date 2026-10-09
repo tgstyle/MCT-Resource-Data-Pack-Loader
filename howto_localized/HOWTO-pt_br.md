@@ -6957,18 +6957,20 @@ Um tronco de trilho único não tem um segundo trilho para dar ao outro ramal, e
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Configuração   | Tipo                   | Padrão | O que faz                                                                                                                                                                                                                          |
-| -------------- | ---------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `villageDecor` | lista de `name=weight` | nenhum | Espalha o worldgen próprio deste pacote ao longo dos acostamentos das estradas da vila. O nome é uma chave de registro de worldgen, o peso é a fatia dos pontos dessa entrada, e `empty=weight` é a fatia dos pontos deixada vazia |
+| Configuração          | Tipo                   | Padrão | O que faz                                                                                                                                                                                                                          |
+| --------------------- | ---------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | lista de `name=weight` | nenhum | Espalha o worldgen próprio deste pacote ao longo dos acostamentos das estradas da vila. O nome é uma chave de registro de worldgen, o peso é a fatia dos pontos dessa entrada, e `empty=weight` é a fatia dos pontos deixada vazia |
+| `villageDecorSpacing` | int, 1 a 16            | `3`    | O intervalo entre os pontos de decoração ao longo de cada lado de uma estrada da vila, em blocos. Limitado de 1 a 16. Um modelo mais largo que o espaçamento pode invadir o ponto vizinho                                  |
 
 `villageDecor` espalha o worldgen próprio de um pacote ao longo dos acostamentos das estradas da vila, o que impede que uma vila se pareça com casas em meio a grama nua. Cada entrada é `name=weight`: o nome é uma chave de registro de worldgen, `mypack:street_flowers`, e o peso é a fatia dos pontos dessa entrada. O nome `empty` é a fatia dos pontos deixada vazia, e é a que mais importa acertar, porque uma lista sem ela preenche todos os pontos de todos os acostamentos e a vila vira um viveiro em vez de uma rua.
 
-A cada terceiro bloco de cada lado de uma estrada há um ponto, contado a partir das coordenadas do mundo para que o espaçamento passe de uma peça de estrada para a seguinte. Um ponto é ignorado onde cai dentro de qualquer peça da vila, sobre a própria estrada, diante de uma porta, ou onde o chão não é ar livre sobre algo sólido. O que cresce em um ponto é calculado a partir da seed do mundo e do próprio ponto, de modo que o mesmo mundo sempre espalha da mesma maneira.
+Há um ponto a cada `villageDecorSpacing` blocos de cada lado de uma estrada, três por padrão, contado a partir das coordenadas do mundo para que o espaçamento passe de uma peça de estrada para a seguinte. Um modelo mais largo que o espaçamento pode invadir o ponto vizinho. Um ponto é ignorado onde cai dentro de qualquer peça da vila, sobre a própria estrada, diante de uma porta, ou onde o chão não é ar livre sobre algo sólido. O que cresce em um ponto é calculado a partir da seed do mundo e do próprio ponto, de modo que o mesmo mundo sempre espalha da mesma maneira.
 
 O nome aponta para uma entrada comum de worldgen de `<namespace>/worldgen/*.json`, então uma `decoration`, uma `tree` ou uma `imprint` servem, e cada uma mantém seus próprios blocos, tamanhos e dispersão. Somente a forma dessa entrada é usada aqui: seus biomas, dimensões, alturas e raridade são como ela se semeia pelo mundo em geral, e a vila não os consulta, então uma entrada pensada para o acostamento é melhor escrita para nada além disso. Um acostamento é ar livre sobre o chão, então essa entrada quer `replace` definido como `minecraft:air`; uma que nunca nomeia `replace` recebe o padrão usual de `minecraft:stone` e discretamente não coloca nada aqui.
 

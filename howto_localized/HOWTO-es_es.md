@@ -6957,18 +6957,20 @@ Un tronco de vía única no tiene una segunda vía que dar al otro ramal, así q
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Ajuste         | Tipo                   | Predeterminado | Qué hace                                                                                                                                                                                                                                                    |
-| -------------- | ---------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `villageDecor` | lista de `name=weight` | ninguno        | Reparte la generación propia de este pack por los arcenes de los caminos de aldea. El nombre es una clave de registro de generación, el peso es la proporción de lugares de esa entrada, y `empty=weight` es la proporción de lugares que se dejan desnudos |
+| Ajuste                | Tipo                   | Predeterminado | Qué hace                                                                                                                                                                                                                                                    |
+| --------------------- | ---------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | lista de `name=weight` | ninguno        | Reparte la generación propia de este pack por los arcenes de los caminos de aldea. El nombre es una clave de registro de generación, el peso es la proporción de lugares de esa entrada, y `empty=weight` es la proporción de lugares que se dejan desnudos |
+| `villageDecorSpacing` | entero, de 1 a 16      | `3`            | El intervalo entre lugares de decoración a lo largo de cada lado de un camino de aldea, en bloques. Se limita de 1 a 16. Una plantilla más ancha que el espaciado puede invadir el lugar vecino                                                          |
 
 `villageDecor` reparte la generación de un pack por los arcenes de los caminos de aldea, que es lo que evita que una aldea parezca casas en un terreno de hierba pelada. Cada entrada es `name=weight`: el nombre es una clave de registro de generación, `mypack:street_flowers`, y el peso es la proporción de lugares de esa entrada. El nombre `empty` es la proporción de lugares que se dejan desnudos, y es el que hay que acertar, porque una lista sin él llena todos los lugares de todos los arcenes y la aldea resulta un vivero en lugar de una calle.
 
-Cada tercer bloque a lo largo de cada lado de un camino es un lugar, contado a partir de las coordenadas del mundo para que el espaciado continúe de una pieza de camino a la siguiente. Un lugar se omite donde cae dentro de cualquier pieza de la aldea, sobre el propio camino, frente a una puerta, o donde el suelo no es aire libre apoyado en algo sólido. Lo que crece en un lugar se calcula a partir de la semilla del mundo y del propio lugar, de modo que el mismo mundo siempre reparte de la misma manera.
+Los lugares se suceden a lo largo de cada lado de un camino cada `villageDecorSpacing` bloques, tres por defecto, contados a partir de las coordenadas del mundo para que el espaciado continúe de una pieza de camino a la siguiente. Una plantilla más ancha que el espaciado puede invadir el lugar vecino. Un lugar se omite donde cae dentro de cualquier pieza de la aldea, sobre el propio camino, frente a una puerta, o donde el suelo no es aire libre apoyado en algo sólido. Lo que crece en un lugar se calcula a partir de la semilla del mundo y del propio lugar, de modo que el mismo mundo siempre reparte de la misma manera.
 
 El nombre apunta a una entrada de generación corriente de `<namespace>/worldgen/*.json`, así que sirven una `decoration`, un `tree` o un `imprint`, y cada una conserva sus propios bloques, tamaños y dispersión. Aquí solo se usa la forma de esa entrada: sus biomas, dimensiones, alturas y rareza son cómo se siembra por el mundo en general, y la aldea no los consulta, así que una entrada pensada para el arcén es mejor escribirla para nada más. Un arcén es aire libre sobre el suelo, así que una entrada así necesita `replace` con el valor `minecraft:air`; una que nunca nombra `replace` recibe el valor predeterminado habitual `minecraft:stone` y no coloca nada aquí sin avisar.
 

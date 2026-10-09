@@ -14,6 +14,7 @@ import net.minecraft.world.World;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentTree implements IContentShape {
@@ -42,13 +43,24 @@ public final class ContentTree implements IContentShape {
         if (!templated && (this.log == null || this.leaves == null)) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log, shape.leaves); }
     }
 
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) {
-        if (templated) { return imprint.places(world, wood, canopies); }
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return places(world, wood, canopies, null); }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies, @Nullable String structure) {
+        if (templated) { return imprint.places(world, wood, canopies, structure); }
         if (log == null || leaves == null || !ContentStates.alike(log, wood)) { return false; }
         for (IBlockState canopy : canopies) {
             if (ContentStates.alike(leaves, canopy)) { return true; }
         }
         return canopies.isEmpty();
+    }
+
+    @Override public int reach(World world) { return Math.max(scatterX, scatterZ) + (templated ? imprint.reach(world) : 0); }
+
+    @Override public Footprint footprint(World world, Random random, int x, int z, Predicate<Footprint> refused) {
+        int span = templated ? imprint.span(world) : 0;
+        int roamX = Math.max(0, scatterX - 1) + span;
+        int roamZ = Math.max(0, scatterZ - 1) + span;
+        return new Footprint(x - roamX, z - roamZ, x + roamX, z + roamZ, null);
     }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {

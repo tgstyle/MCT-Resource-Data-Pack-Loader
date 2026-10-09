@@ -18,10 +18,13 @@ import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
+import com.google.gson.JsonObject;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -30,18 +33,24 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
+import javax.annotation.Nullable;
 
 public final class ContentVillageDecor {
     private static final String NAME = "villageDecor";
-    private static final int STEP = 3;
+    private static final String SPACING = "villageDecorSpacing";
     private static final int SPREAD = 8;
     private static final int RISE = 16;
     private static final WeightedPicks CHOICES = new WeightedPicks(NAME);
+    private static final Long2ObjectOpenHashMap<Replay> REPLAYS = new Long2ObjectOpenHashMap<>();
+    private static final Scan SCAN = new Scan();
+    private static WeakReference<World> replayed = new WeakReference<>(null);
+    private static int widest;
     private static final String[] REASONS = { "outside the clip", "inside a piece or plaza", "without ground", "not open air on solid ground", "beside cubes not loaded", "before a door", "rolled bare", "without a shape", "planted", "against a keep-out", "refused by its shape" };
 
     private ContentVillageDecor() {}
@@ -49,7 +58,8 @@ public final class ContentVillageDecor {
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onDecorated(PopulateChunkEvent.Post event) {
         World world = event.getWorld();
         if (world.isRemote) { return; }
-        if (CHOICES.stale()) { load(); }
+        REPLAYS.clear();
+        if (CHOICES.stale()) { load(world); }
         if (CHOICES.isEmpty()) { return; }
         Collection<StructureStart> starts = ContentStructureSearch.villageStarts(world);
         if (starts.isEmpty()) { return; }
@@ -86,8 +96,9 @@ public final class ContentVillageDecor {
         int near = (alongX ? box.minZ : box.minX) - 1;
         int far = (alongX ? box.maxZ : box.maxX) + 1;
         BeardRoads.Grade grade = BeardRoads.layoutOf(piece);
+        int step = step();
         for (int row = from; row <= to; row++) {
-            if (Math.floorMod(row, STEP) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
+            if (Math.floorMod(row, step) != 0 ||BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
             tally[place(world, villages, wanted, clip, at, alongX ? row : near, alongX ? near : row)]++;
             tally[place(world, villages, wanted, clip, at, alongX ? row : far, alongX ? far : row)]++;
         }
@@ -124,34 +135,138 @@ public final class ContentVillageDecor {
         finally { ContentPlacer.releaseKeepOut(); }
     }
 
-    public static boolean plantedAt(World world, BlockPos wood) {
-        IContentShape figure = figureAt(world, wood);
-        return figure != null && figure.places(world, world.getBlockState(wood), canopiesOver(world, wood));
-    }
+    public static boolean plantedAt(World world, BlockPos wood) { return figureAt(world, wood) != null; }
 
     public static boolean sustains(World world, BlockPos wood, IBlockState leaf) {
-        IContentShape figure = figureAt(world, wood);
-        if (figure == null) { return true; }
-        IBlockState state = world.getBlockState(wood);
-        return !figure.places(world, state, canopiesOver(world, wood)) || figure.places(world, state, Collections.singletonList(leaf));
+        Replay replay = figureAt(world, wood);
+        return replay == null || replay.places(world, world.getBlockState(wood), Collections.singletonList(leaf));
     }
 
-    private static IContentShape figureAt(World world, BlockPos wood) {
-        if (CHOICES.stale()) { load(); }
+    @Nullable private static Replay figureAt(World world, BlockPos wood) {
+        if (CHOICES.stale()) { load(world); }
         if (CHOICES.isEmpty()) { return null; }
         int x = wood.getX();
         int z = wood.getZ();
-        boolean spot = false;
-        for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
-            if (village != null && BeardPlots.vergeSpot(village, x, z, STEP)) {
-                spot = true;
-                break;
+        Collection<StructureStart> villages = ContentStructureSearch.villageStarts(world);
+        IBlockState state = world.getBlockState(wood);
+        List<IBlockState> crowns = null;
+        int step = step();
+        for (StructureStart village : villages) {
+            if (village == null || !BeardPlots.vergeSpot(village, x, z, step)) { continue; }
+            Replay here = replayFor(world, villages, x, z);
+            if (here.planted()) {
+                crowns = canopiesOver(world, wood);
+                if (here.places(world, state, crowns)) { return here; }
+            }
+            break;
+        }
+        return widest > 0 ? SCAN.find(world, villages, wood, state, crowns, step) : null;
+    }
+
+    private static Replay replayFor(World world, Collection<StructureStart> villages, int x, int z) {
+        if (replayed.get() != world) {
+            REPLAYS.clear();
+            replayed = new WeakReference<>(world);
+        }
+        long key = BeardKeep.packed(x, 0, z);
+        Replay held = REPLAYS.get(key);
+        if (held == null) {
+            held = replay(world, villages, x, z);
+            REPLAYS.put(key, held);
+        }
+        return held;
+    }
+
+    private static Replay replay(World world, Collection<StructureStart> villages, int x, int z) {
+        boolean wanted = ContentBeard.wanted();
+        for (StructureStart village : villages) {
+            if (village == null) { continue; }
+            if (BeardPlots.underAnother(village, null, x, z) || BeardPlots.overRoad(village, x, z)) { return Replay.NONE; }
+            if (wanted && BeardPlots.insidePlaza(village.getComponents(), x, z)) { return Replay.NONE; }
+        }
+        Random random = SeededRandom.at(world, x, z);
+        WeightedPicks.Pick chosen = CHOICES.pick(random);
+        if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return Replay.NONE; }
+        IContentShape figure = ContentWorldgen.shapeFor(chosen.name);
+        if (figure == null) { return Replay.NONE; }
+        return new Replay(figure, figure.footprint(world, random, x, z, box -> underBuilding(villages, box)));
+    }
+
+    private static boolean underBuilding(Collection<StructureStart> villages, IContentShape.Footprint box) {
+        for (int x = box.minX; x <= box.maxX; x++) {
+            for (int z = box.minZ; z <= box.maxZ; z++) {
+                for (StructureStart village : villages) {
+                    if (village != null && BeardPlots.underBuilding(village, null, x, z)) { return true; }
+                }
             }
         }
-        if (!spot) { return null; }
-        WeightedPicks.Pick chosen = CHOICES.pick(SeededRandom.at(world, x, z));
-        if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return null; }
-        return ContentWorldgen.shapeFor(chosen.name);
+        return false;
+    }
+
+    private static int reachOf(World world) {
+        int most = 0;
+        for (String name : CHOICES.names()) {
+            IContentShape figure = WeightedPicks.EMPTY.equals(name) ? null : ContentWorldgen.shapeFor(name);
+            if (figure != null) { most = Math.max(most, figure.reach(world)); }
+        }
+        return most;
+    }
+
+    private static final class Replay {
+        static final Replay NONE = new Replay(null, null);
+        @Nullable private final IContentShape figure;
+        @Nullable private final IContentShape.Footprint box;
+
+        Replay(@Nullable IContentShape figure, @Nullable IContentShape.Footprint box) {
+            this.figure = figure;
+            this.box = box;
+        }
+
+        boolean planted() { return figure != null && box != null; }
+
+        boolean covers(int x, int z) { return box != null && box.covers(x, z); }
+
+        boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return figure != null && figure.places(world, wood, canopies, box == null ? null : box.structure); }
+    }
+
+    private static final class Scan implements BeardPlots.Spots {
+        private World world;
+        private Collection<StructureStart> villages;
+        private BlockPos wood;
+        private IBlockState state;
+        private List<IBlockState> crowns;
+        private Replay found;
+
+        @Nullable Replay find(World world, Collection<StructureStart> villages, BlockPos wood, IBlockState state, @Nullable List<IBlockState> crowns, int step) {
+            this.world = world;
+            this.villages = villages;
+            this.wood = wood;
+            this.state = state;
+            this.crowns = crowns;
+            try {
+                for (StructureStart village : villages) {
+                    if (village != null && BeardPlots.vergeSpotsNear(village, wood.getX(), wood.getZ(), widest, step, this)) { return found; }
+                }
+                return null;
+            }
+            finally {
+                this.world = null;
+                this.villages = null;
+                this.wood = null;
+                this.state = null;
+                this.crowns = null;
+                found = null;
+            }
+        }
+
+        @Override public boolean accept(int spotX, int spotZ) {
+            Replay replay = replayFor(world, villages, spotX, spotZ);
+            if (!replay.covers(wood.getX(), wood.getZ())) { return false; }
+            if (crowns == null) { crowns = canopiesOver(world, wood); }
+            if (!replay.places(world, state, crowns)) { return false; }
+            found = replay;
+            return true;
+        }
     }
 
     private static List<IBlockState> canopiesOver(World world, BlockPos wood) {
@@ -169,8 +284,18 @@ public final class ContentVillageDecor {
         return crowns;
     }
 
-    private static void load() {
-        CHOICES.load(ContentControl.list(ContentControl.VILLAGES, NAME, Config.worldgen.villageDecor));
+    private static int step() {
+        JsonObject was = ContentControl.roadKeys(null);
+        try { return MathHelper.clamp(ContentControl.number(ContentControl.VILLAGES, SPACING, 3), 1, 16); }
+        finally { ContentControl.roadKeys(was); }
+    }
+
+    private static void load(World world) {
+        JsonObject was = ContentControl.roadKeys(null);
+        try { CHOICES.load(ContentControl.list(ContentControl.VILLAGES, NAME, Config.worldgen.villageDecor)); }
+        finally { ContentControl.roadKeys(was); }
+        REPLAYS.clear();
+        widest = reachOf(world);
         for (String name : CHOICES.names()) {
             if (WeightedPicks.EMPTY.equals(name) || ContentWorldgen.shapeFor(name) != null) { continue; }
             ContentLog.LOGGER.error("{} names {}, which no pack registers as worldgen, so its share of the verge is left bare", NAME, name);

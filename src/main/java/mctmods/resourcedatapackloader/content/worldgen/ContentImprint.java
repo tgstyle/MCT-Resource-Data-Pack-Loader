@@ -13,7 +13,6 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.Rotation;
@@ -31,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import javax.annotation.Nullable;
 
 public final class ContentImprint implements IContentShape {
     private static final int WORLDGEN_FLAGS = BlockFlags.UPDATE_CLIENTS;
@@ -40,10 +41,15 @@ public final class ContentImprint implements IContentShape {
     private final ShapeDef shape;
     private final ResourceLocation key;
     private final boolean filtered;
+    private final List<String> names = new ArrayList<>();
 
     public ContentImprint(ContentPlacer placer, ShapeDef shape, ResourceLocation key, boolean filtered) {
         this.placer = placer;
         this.shape = shape;
+        if (shape.structures.isEmpty()) { names.add(shape.structure); }
+        else {
+            for (PickDef pick : shape.structures) { names.add(pick.name); }
+        }
         this.key = key;
         this.filtered = filtered;
     }
@@ -54,28 +60,61 @@ public final class ContentImprint implements IContentShape {
 
     public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
 
-    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) {
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return places(world, wood, canopies, null); }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies, @Nullable String structure) {
         if (!(world instanceof WorldServer)) { return false; }
-        WorldServer server = (WorldServer) world;
-        List<String> names = new ArrayList<>();
-        if (shape.structures.isEmpty()) { names.add(shape.structure); }
-        else {
-            for (PickDef pick : shape.structures) { names.add(pick.name); }
-        }
+        if (structure != null) { return offers(world, structure, wood, canopies); }
         for (String named : names) {
-            if (named == null || named.isEmpty()) { continue; }
-            List<IBlockState> states = PALETTES.get(named);
-            if (states == null) {
-                Template loaded = server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(named));
-                if (loaded == null) { continue; }
-                states = new ArrayList<>();
-                NBTTagList palette = loaded.writeToNBT(new NBTTagCompound()).getTagList("palette", Constants.NBT.TAG_COMPOUND);
-                for (int i = 0; i < palette.tagCount(); i++) { states.add(NBTUtil.readBlockState(palette.getCompoundTagAt(i))); }
-                PALETTES.put(named, states);
-            }
-            if (holds(states, wood, canopies)) { return true; }
+            if (offers(world, named, wood, canopies)) { return true; }
         }
         return false;
+    }
+
+    private boolean offers(World world, @Nullable String named, IBlockState wood, List<IBlockState> canopies) {
+        if (named == null || named.isEmpty()) { return false; }
+        List<IBlockState> states = PALETTES.get(named);
+        if (states == null) {
+            Template loaded = template(world, named);
+            if (loaded == null) { return false; }
+            states = new ArrayList<>();
+            NBTTagList palette = loaded.writeToNBT(new NBTTagCompound()).getTagList("palette", Constants.NBT.TAG_COMPOUND);
+            for (int i = 0; i < palette.tagCount(); i++) { states.add(NBTUtil.readBlockState(palette.getCompoundTagAt(i))); }
+            PALETTES.put(named, states);
+        }
+        return holds(states, wood, canopies);
+    }
+
+    @Nullable private static Template template(World world, String named) {
+        if (!(world instanceof WorldServer)) { return null; }
+        WorldServer server = (WorldServer) world;
+        return server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(named));
+    }
+
+    @Override public int reach(World world) { return span(world) + 16; }
+
+    public int span(World world) {
+        int widest = 0;
+        for (String named : names) {
+            if (named == null || named.isEmpty()) { continue; }
+            Template loaded = template(world, named);
+            if (loaded != null) { widest = Math.max(widest, Math.max(loaded.getSize().getX(), loaded.getSize().getZ())); }
+        }
+        return widest;
+    }
+
+    @Nullable @Override public Footprint footprint(World world, Random random, int x, int z, Predicate<Footprint> refused) {
+        String named = PickDef.pick(shape.structures, random, shape.structure);
+        if (named == null || named.isEmpty()) { return null; }
+        Template loaded = template(world, named);
+        if (loaded == null) { return null; }
+        Rotation rotation = turn(random);
+        mirror(random);
+        BlockPos span = loaded.transformedSize(rotation);
+        int cornerX = within(x, x - span.getX() / 2, span.getX());
+        int cornerZ = within(z, z - span.getZ() / 2, span.getZ());
+        Footprint box = new Footprint(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1, named);
+        return refused.test(box) ? null : box;
     }
 
     private static boolean holds(List<IBlockState> palette, IBlockState wood, List<IBlockState> canopies) {
@@ -93,10 +132,7 @@ public final class ContentImprint implements IContentShape {
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         String named = PickDef.pick(shape.structures, random, shape.structure);
         if (named == null || named.isEmpty() || !(world instanceof WorldServer)) { return false; }
-        ResourceLocation template = new ResourceLocation(named);
-        WorldServer server = (WorldServer) world;
-        MinecraftServer host = server.getMinecraftServer();
-        Template loaded = server.getStructureTemplateManager().get(host, template);
+        Template loaded = template(world, named);
         if (loaded == null) {
             ContentLog.LOGGER.error("Worldgen {} places structure '{}', which could not be loaded, so nothing generates", key, named);
             return false;

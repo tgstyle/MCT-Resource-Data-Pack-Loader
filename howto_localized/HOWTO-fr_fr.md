@@ -6957,18 +6957,20 @@ Une artère à voie unique n'a pas de seconde voie à offrir à l'autre embranch
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Réglage        | Type                 | Défaut | Ce qu'il fait                                                                                                                                                                                                                                   |
-| -------------- | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `villageDecor` | liste de `nom=poids` | aucun  | Disperse la worldgen propre à ce pack le long des bas-côtés des routes de village. Le nom est une clé de registre de worldgen, le poids est la part des emplacements de cette entrée, et `empty=poids` est la part des emplacements laissés nus |
+| Réglage               | Type                 | Défaut | Ce qu'il fait                                                                                                                                                                                                                                   |
+| --------------------- | -------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | liste de `nom=poids` | aucun  | Disperse la worldgen propre à ce pack le long des bas-côtés des routes de village. Le nom est une clé de registre de worldgen, le poids est la part des emplacements de cette entrée, et `empty=poids` est la part des emplacements laissés nus |
+| `villageDecorSpacing` | entier, 1 à 16       | `3`    | Le pas entre les emplacements de décoration le long de chaque côté d'une route de village, en blocs. Borné de 1 à 16. Un modèle plus large que l'espacement peut empiéter sur son voisin                                                        |
 
 `villageDecor` disperse la worldgen d'un pack le long des bas-côtés des routes de village, ce qui évite qu'un village ressemble à des maisons plantées dans de l'herbe nue. Chaque entrée est `nom=poids` : le nom est une clé de registre de worldgen, `mypack:street_flowers`, et le poids est la part des emplacements de cette entrée. Le nom `empty` est la part des emplacements laissés nus, et c'est celle qu'il faut bien régler, car une liste qui en est dépourvue remplit chaque emplacement de chaque bas-côté et le village devient une pépinière plutôt qu'une rue.
 
-Un bloc sur trois de chaque côté d'une route est un emplacement, compté à partir des coordonnées du monde pour que l'espacement se poursuive d'un élément de route au suivant. Un emplacement est ignoré lorsqu'il tombe à l'intérieur d'un élément du village, sur la route elle-même, devant une porte, ou là où le sol n'est pas de l'air libre reposant sur quelque chose de solide. Ce qui pousse à un emplacement est calculé à partir de la graine du monde et de l'emplacement lui-même, de sorte qu'un même monde disperse toujours de la même façon.
+Un emplacement revient tous les `villageDecorSpacing` blocs de chaque côté d'une route, trois par défaut, compté à partir des coordonnées du monde pour que l'espacement se poursuive d'un élément de route au suivant. Un modèle plus large que l'espacement peut empiéter sur son voisin. Un emplacement est ignoré lorsqu'il tombe à l'intérieur d'un élément du village, sur la route elle-même, devant une porte, ou là où le sol n'est pas de l'air libre reposant sur quelque chose de solide. Ce qui pousse à un emplacement est calculé à partir de la graine du monde et de l'emplacement lui-même, de sorte qu'un même monde disperse toujours de la même façon.
 
 Le nom pointe vers une entrée de worldgen ordinaire de `<namespace>/worldgen/*.json`, de sorte qu'une `decoration`, un `tree` ou un `imprint` conviennent tous, et chacun garde ses propres blocs, tailles et dispersion. Seule la forme de cette entrée est utilisée ici : ses biomes, dimensions, hauteurs et sa rareté sont la manière dont elle se sème dans le monde en général, et le village ne les consulte pas, une entrée destinée au bas-côté est donc mieux écrite pour rien d'autre. Un bas-côté est de l'air libre reposant sur le sol, une telle entrée veut donc que `replace` soit défini à `minecraft:air` ; une entrée qui ne nomme jamais `replace` reçoit la valeur par défaut habituelle de `minecraft:stone` et ne dresse discrètement rien ici.
 

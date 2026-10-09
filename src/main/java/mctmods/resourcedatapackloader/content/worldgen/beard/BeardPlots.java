@@ -237,6 +237,38 @@ public final class BeardPlots {
         return false;
     }
 
+    public interface Spots {
+        boolean accept(int x, int z);
+    }
+
+    public static boolean vergeSpotsNear(StructureStart start, int x, int z, int reach, int step, Spots spots) {
+        Index held = index(start);
+        int firstX = x - reach - 1;
+        int firstZ = z - reach - 1;
+        for (int cx = firstX >> 4; cx <= (x + reach + 1) >> 4; cx++) {
+            for (int cz = firstZ >> 4; cz <= (z + reach + 1) >> 4; cz++) {
+                for (StructureComponent other : held.at(cx << 4, cz << 4)) {
+                    if (!(other instanceof StructureVillagePieces.Path)) { continue; }
+                    StructureBoundingBox box = other.getBoundingBox();
+                    if (cx != Math.max(box.minX, firstX) >> 4 || cz != Math.max(box.minZ, firstZ) >> 4) { continue; }
+                    boolean alongX = roadAlongX(box);
+                    int along = alongX ? x : z;
+                    int across = alongX ? z : x;
+                    int near = (alongX ? box.minZ : box.minX) - 1;
+                    int far = (alongX ? box.maxZ : box.maxX) + 1;
+                    BeardRoads.Grade grade = BeardRoads.layoutOf(other);
+                    int last = Math.min(alongX ? box.maxX : box.maxZ, along + reach);
+                    for (int row = Math.max(alongX ? box.minX : box.minZ, along - reach); row <= last; row++) {
+                        if (Math.floorMod(row, step) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
+                        if (Math.abs(near - across) <= reach && spots.accept(alongX ? row : near, alongX ? near : row)) { return true; }
+                        if (Math.abs(far - across) <= reach && spots.accept(alongX ? row : far, alongX ? far : row)) { return true; }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean underRoad(StructureStart start, StructureComponent piece, int x, int z) { return hit(start, piece, x, z, ROADS); }
 
     public static boolean underBuilding(StructureStart start, StructureComponent piece, int x, int z) { return hit(start, piece, x, z, BUILDINGS); }

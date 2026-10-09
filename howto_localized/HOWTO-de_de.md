@@ -6957,18 +6957,20 @@ Eine eingleisige Stammstrecke hat kein zweites Gleis für die andere Stichstreck
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Einstellung    | Typ                      | Standard | Was sie tut                                                                                                                                                                                                                                   |
-| -------------- | ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `villageDecor` | Liste von `name=Gewicht` | keine    | Streut die eigene Weltgenerierung des Packs an die Ränder der Dorfwege. Der Name ist ein Worldgen-Registrierungsschlüssel, das Gewicht der Anteil dieses Eintrags an den Plätzen, und `empty=Gewicht` der Anteil der Plätze, die leer bleiben |
+| Einstellung           | Typ                      | Standard | Was sie tut                                                                                                                                                                                                                                   |
+| --------------------- | ------------------------ | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | Liste von `name=Gewicht` | keine    | Streut die eigene Weltgenerierung des Packs an die Ränder der Dorfwege. Der Name ist ein Worldgen-Registrierungsschlüssel, das Gewicht der Anteil dieses Eintrags an den Plätzen, und `empty=Gewicht` der Anteil der Plätze, die leer bleiben |
+| `villageDecorSpacing` | int, 1 bis 16            | `3`      | Der Abstand der Dekorationsplätze entlang jeder Seite eines Dorfwegs, in Blöcken. Auf 1 bis 16 begrenzt. Eine Vorlage, die breiter ist als der Abstand, kann in die benachbarte Vorlage hineinragen                                                         |
 
 `villageDecor` streut die eigene Weltgenerierung eines Packs an die Ränder der Dorfwege, und genau das nimmt einem Dorf den Eindruck, seine Häuser stünden in blankem Gras. Jeder Eintrag lautet `name=gewicht`: Der Name ist ein Registry-Schlüssel aus der Weltgenerierung, `meinpack:street_flowers`, das Gewicht ist der Anteil dieses Eintrags an den Plätzen. Der Name `empty` ist der Anteil der Plätze, die leer bleiben, und auf ihn kommt es an, denn eine Liste ohne ihn füllt jeden Platz an jedem Wegrand, und das Dorf gerät zur Gärtnerei statt zur Straße.
 
-Jeder dritte Block entlang beider Wegseiten ist ein Platz, gezählt nach Weltkoordinaten, damit der Abstand von einem Wegstück ins nächste durchläuft. Ein Platz wird übergangen, wo er in ein Teil des Dorfes fällt, auf den Weg selbst, vor eine Tür, oder wo der Boden nicht offene Luft über etwas Festem ist. Was auf einem Platz wächst, ergibt sich aus dem Weltseed und dem Platz selbst, dieselbe Welt streut also immer gleich.
+Entlang beider Wegseiten liegt im Abstand von `villageDecorSpacing` Blöcken ein Platz, standardmäßig drei, gezählt nach Weltkoordinaten, damit der Abstand von einem Wegstück ins nächste durchläuft. Eine Vorlage, die breiter ist als der Abstand, kann in die benachbarte Vorlage hineinragen. Ein Platz wird übergangen, wo er in ein Teil des Dorfes fällt, auf den Weg selbst, vor eine Tür, oder wo der Boden nicht offene Luft über etwas Festem ist. Was auf einem Platz wächst, ergibt sich aus dem Weltseed und dem Platz selbst, dieselbe Welt streut also immer gleich.
 
 Der Name zeigt auf einen gewöhnlichen Weltgenerierungs-Eintrag aus `<namespace>/worldgen/*.json`, eine `decoration`, ein `tree` oder ein `imprint` taugen also alle und behalten ihre eigenen Blöcke, Größen und Streuung. Genutzt wird hier allein die Form dieses Eintrags: Seine Biome, Dimensionen, Höhen und Seltenheit sind der Weg, auf dem er sich von selbst über die Welt sät, und das Dorf zieht sie nicht zu Rate – ein Eintrag für den Wegrand schreibt sich daher am besten für nichts anderes. Ein Wegrand ist offene Luft über Boden, ein solcher Eintrag will `replace` also auf `minecraft:air` gesetzt haben; einer, der `replace` nie nennt, bekommt den üblichen Standard `minecraft:stone` und stellt hier stillschweigend nichts hin.
 
