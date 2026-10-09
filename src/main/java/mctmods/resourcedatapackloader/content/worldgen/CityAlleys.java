@@ -31,12 +31,13 @@ final class CityAlleys {
     private static final int ALLEY_SHORTEST = 14;
     private static final int ALLEY_LONGEST = 42;
     private static final int ALLEY_STEP = 7;
-    private static final int ATTACH_GAP = 8;
     public static final int ALLEY_WIDTH = 3;
     private static final long BRANCH_SALT = 0xB4A7C5L;
     private static final int BRANCH_ODDS = 3;
 
     private CityAlleys() {}
+
+    private static int chance() { return Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance()), 0, 100); }
 
     static void idleAlleys(List<Plot> plots, List<Line> alongX, List<Line> alongZ) {
         int most = ContentVillages.plotsMost();
@@ -47,35 +48,27 @@ final class CityAlleys {
     }
 
     static void alleys(RandomSource roll, int originX, int originZ, int size, Line row, Line column, List<Line> alongX, List<Line> alongZ, List<Rail> rails, int block) {
-        int chance = Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance()), 0, 100);
+        int chance = chance();
         int least = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathMinimumWidth", Config.worldgen.villagePathMinimumWidth()));
         if (chance <= 0 || ALLEY_WIDTH < least) { return; }
         int clear = CityPlan.plazaReach() + CityPlan.WELL_HALF + ALLEY_WIDTH;
-        int centerX = column.middle();
-        int centerZ = row.middle();
         for (int side = -1; side <= 1; side += 2) {
             for (int end = -1; end <= 1; end += 2) {
-                if (roll.nextInt(100) < chance) {
-                    int lowX = end < 0 ? originX + ALLEY_APART : centerX + clear;
-                    int highX = end < 0 ? centerX - clear - ALLEY_WIDTH : originX + size - ALLEY_APART - ALLEY_WIDTH;
-                    int depth = reach(alongX, row, side, side < 0 ? originZ : originZ + size - 1);
-                    Line alley = branch(roll, lowX, highX, depth, side < 0 ? row.at() - 1 : row.last() + 1, side, false);
-                    if (alley != null && clear(alongZ, alley) && apart(alongZ, alley, column) && !hugsStreet(alongZ, alley, block) && offRail(rails, alley.alongX(), alley.at(), alley.last(), CityPlanPlots.GAP)) {
-                        alongZ.add(alley);
-                        ContentLog.LOGGER.debug("An alley off the row street at x {} to {} runs z {} to {}", alley.at(), alley.last(), alley.from(), alley.to());
-                    }
-                }
-                if (roll.nextInt(100) < chance) {
-                    int lowZ = end < 0 ? originZ + ALLEY_APART : centerZ + clear;
-                    int highZ = end < 0 ? centerZ - clear - ALLEY_WIDTH : originZ + size - ALLEY_APART - ALLEY_WIDTH;
-                    int depth = reach(alongZ, column, side, side < 0 ? originX : originX + size - 1);
-                    Line alley = branch(roll, lowZ, highZ, depth, side < 0 ? column.at() - 1 : column.last() + 1, side, true);
-                    if (alley != null && clear(alongX, alley) && apart(alongX, alley, row) && !hugsStreet(alongX, alley, block) && offRail(rails, alley.alongX(), alley.at(), alley.last(), CityPlanPlots.GAP)) {
-                        alongX.add(alley);
-                        ContentLog.LOGGER.debug("An alley off the column street at z {} to {} runs x {} to {}", alley.at(), alley.last(), alley.from(), alley.to());
-                    }
-                }
+                spur(roll, chance, clear, side, end, originX, originZ, size, block, row, column, alongX, alongZ, rails);
+                spur(roll, chance, clear, side, end, originZ, originX, size, block, column, row, alongZ, alongX, rails);
             }
+        }
+    }
+
+    private static void spur(RandomSource roll, int chance, int clear, int side, int end, int slide, int bound, int size, int block, Line street, Line cross, List<Line> parallel, List<Line> joined, List<Rail> rails) {
+        if (roll.nextInt(100) >= chance) { return; }
+        int low = end < 0 ? slide + ALLEY_APART : cross.middle() + clear;
+        int high = end < 0 ? cross.middle() - clear - ALLEY_WIDTH : slide + size - ALLEY_APART - ALLEY_WIDTH;
+        int depth = reach(parallel, street, side, side < 0 ? bound : bound + size - 1);
+        Line alley = branch(roll, low, high, depth, side < 0 ? street.at() - 1 : street.last() + 1, side, !street.alongX());
+        if (alley != null && clear(joined, alley) && apart(joined, alley, cross) && !hugsStreet(joined, alley, block) && offRail(rails, alley.alongX(), alley.at(), alley.last(), CityPlanPlots.GAP)) {
+            joined.add(alley);
+            ContentLog.LOGGER.debug("An alley off the {} street at {} {} to {} runs {} {} to {}", street.alongX() ? "row" : "column", street.alongX() ? "x" : "z", alley.at(), alley.last(), street.alongX() ? "z" : "x", alley.from(), alley.to());
         }
     }
 
@@ -128,7 +121,7 @@ final class CityAlleys {
 
     static List<Line> alleyFill(CityGround ground, RandomSource roll, List<VillageDef> choices, Tally tally, List<Plot> found, List<Rail> rails, List<Line> refusing, List<Junction> plazas, List<Line> lines, List<Line> beyond, List<Court> courts, Map<Line, StreetGrade> grades, Town town, int block, int most) {
         List<Line> laid = new ArrayList<>();
-        if (Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villagePathAlleyChance", Config.worldgen.villagePathAlleyChance()), 0, 100) <= 0) { return laid; }
+        if (chance() <= 0) { return laid; }
         List<Held> pieces = new ArrayList<>();
         List<Line> roads = new ArrayList<>(lines);
         for (Line line : lines) { pieces.add(CityCulDeSacs.held(line)); }
@@ -136,11 +129,14 @@ final class CityAlleys {
         for (Court court : courts) {
             if (court.room() > 0) { pieces.add(CityCulDeSacs.courtBox(court.street(), court.end(), court.dir(), court.room(), court.stem())); }
         }
-        for (Plot plot : found) { pieces.add(new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true)); }
-        for (BoundingBox well : CityLayout.mapWells(town)) { pieces.add(new Held(well.minX(), well.minZ(), well.maxX(), well.maxZ(), Hold.FIXED, true)); }
-        for (Rail rail : rails) { pieces.add(rail.alongX() ? new Held(rail.from(), rail.at(), rail.to(), rail.last(), Hold.FIXED, true) : new Held(rail.at(), rail.from(), rail.last(), rail.to(), Hold.FIXED, false)); }
+        for (Plot plot : found) { pieces.add(Held.ofPlot(plot)); }
+        for (BoundingBox well : CityLayout.mapWells(town)) { pieces.add(Held.ofWell(well)); }
+        for (Rail rail : rails) {
+            if (rail.subway()) { continue; }
+            pieces.add(Held.ofRail(rail));
+        }
         int spacing = 2 * block;
-        int attach = Math.max(ATTACH_GAP, CityPlan.fullWidth() + 2);
+        int attach = CityEnds.attachGap();
         int reach = CityPlan.plazaReach();
         for (Line street : lines) {
             if (street.alley()) { continue; }
@@ -179,7 +175,7 @@ final class CityAlleys {
                     pieces.add(box);
                     int before = found.size();
                     if (!choices.isEmpty()) { CityPlanPlots.flank(roll, choices, tally, found, rails, refusing, plazas, alley, block, most); }
-                    for (Plot plot : found.subList(before, found.size())) { pieces.add(new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true)); }
+                    for (Plot plot : found.subList(before, found.size())) { pieces.add(Held.ofPlot(plot)); }
                     ContentLog.LOGGER.debug("An alley {} long fills the block beside the drawn street at {}, {}, running from {}, {} with {} house(s) along it", Math.abs(to - from) + 1, alongX ? street.from() : street.at(), alongX ? street.at() : street.from(), box.minX(), box.minZ(), found.size() - before);
                     row += spacing;
                 }

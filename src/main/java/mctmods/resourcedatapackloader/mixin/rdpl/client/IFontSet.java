@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import java.util.List;
 
 @Mixin(FontSet.class) public interface IFontSet {
-    @Accessor("activeProviders") List<GlyphProvider> rdpl$activeProviders();
+    @Accessor("activeProviders") List<GlyphProvider> rdpl$getActiveProviders();
 }

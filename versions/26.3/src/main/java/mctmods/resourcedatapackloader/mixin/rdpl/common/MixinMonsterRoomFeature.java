@@ -17,11 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MonsterRoomFeature.class) public abstract class MixinMonsterRoomFeature {
-    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
-    private void rdpl$notIntoABore(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.intoBore(level, origin)) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true) private void rdpl$notIntoABore(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.intoBore(level, origin)) { cir.setReturnValue(false); } }
 
-    @Redirect(method = "place", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/SpawnerBlockEntity;setEntityId(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/util/RandomSource;)V"))
-    private void rdpl$spawner(SpawnerBlockEntity spawner, EntityType<?> type, RandomSource random) { spawner.setEntityId(ContentStructureSpawners.pick(ContentStructureSpawners.DUNGEONS, type, random), random); }
+    @Redirect(method = "place", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/SpawnerBlockEntity;setEntityId(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/util/RandomSource;)V")) private void rdpl$spawner(SpawnerBlockEntity spawner, EntityType<?> type, RandomSource random) { ContentStructureSpawners.place(spawner, ContentStructureSpawners.DUNGEONS, type, random); }
 }

@@ -57,13 +57,9 @@ public class TintedCollector implements OrderedSubmitNodeCollector {
 
     @Override public void submitLeash(@Nonnull PoseStack poseStack, @Nonnull EntityRenderState.LeashState leash) { inner.submitLeash(poseStack, leash); }
 
-    @Override public <S> void submitModel(@Nonnull Model<? super S> model, @Nonnull S state, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, int tintedColor, @Nullable TextureAtlasSprite sprite, int outlineColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling) {
-        inner.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, multiply(tintedColor, tint), sprite, outlineColor, crumbling);
-    }
+    @Override public <S> void submitModel(@Nonnull Model<? super S> model, @Nonnull S state, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, int tintedColor, @Nullable TextureAtlasSprite sprite, int outlineColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling) { inner.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, multiply(tintedColor, tint), sprite, outlineColor, crumbling); }
 
-    @Override public void submitModelPart(@Nonnull ModelPart part, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, @Nullable TextureAtlasSprite sprite, boolean sheeted, boolean hasFoil, int tintedColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling, int outlineColor) {
-        inner.submitModelPart(part, poseStack, renderType, lightCoords, overlayCoords, sprite, sheeted, hasFoil, multiply(tintedColor, tint), crumbling, outlineColor);
-    }
+    @Override public void submitModelPart(@Nonnull ModelPart part, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, @Nullable TextureAtlasSprite sprite, boolean sheeted, boolean hasFoil, int tintedColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling, int outlineColor) { inner.submitModelPart(part, poseStack, renderType, lightCoords, overlayCoords, sprite, sheeted, hasFoil, multiply(tintedColor, tint), crumbling, outlineColor); }
 
     @Override public void submitMovingBlock(@Nonnull PoseStack poseStack, @Nonnull MovingBlockRenderState state) { inner.submitMovingBlock(poseStack, state); }
 
@@ -79,9 +75,7 @@ public class TintedCollector implements OrderedSubmitNodeCollector {
         inner.submitItem(poseStack, context, lightCoords, overlayCoords, outlineColor, marked, quads, foil);
     }
 
-    @Override public void submitCustomGeometry(@Nonnull PoseStack poseStack, @Nonnull RenderType renderType, @Nonnull SubmitNodeCollector.CustomGeometryRenderer renderer) {
-        inner.submitCustomGeometry(poseStack, renderType, (pose, consumer) -> renderer.render(pose, EntityTint.wrap(consumer, tint)));
-    }
+    @Override public void submitCustomGeometry(@Nonnull PoseStack poseStack, @Nonnull RenderType renderType, @Nonnull SubmitNodeCollector.CustomGeometryRenderer renderer) { inner.submitCustomGeometry(poseStack, renderType, (pose, consumer) -> renderer.render(pose, EntityTint.wrap(consumer, tint))); }
 
     @Override public void submitParticleGroup(@Nonnull SubmitNodeCollector.ParticleGroupRenderer renderer) { inner.submitParticleGroup(renderer); }
 

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import mctmods.resourcedatapackloader.content.ContentParser;
 
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.ARGB;
 import java.util.List;
 
 public record FluidDef(Identifier key, String name, int color, Identifier still, Identifier flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket,
@@ -18,9 +19,9 @@ public record FluidDef(Identifier key, String name, int color, Identifier still,
 
     public int tint() {
         if (!ContentParser.DEFAULT_STILL.equals(still.toString())) { return color | OPAQUE; }
-        int red = (color >> 16 & 0xFF) * (LEGACY_WATER >> 16 & 0xFF) / 0xFF;
-        int green = (color >> 8 & 0xFF) * (LEGACY_WATER >> 8 & 0xFF) / 0xFF;
-        int blue = (color & 0xFF) * (LEGACY_WATER & 0xFF) / 0xFF;
+        int red = ARGB.red(color) * ARGB.red(LEGACY_WATER) / 0xFF;
+        int green = ARGB.green(color) * ARGB.green(LEGACY_WATER) / 0xFF;
+        int blue = ARGB.blue(color) * ARGB.blue(LEGACY_WATER) / 0xFF;
         return OPAQUE | red << 16 | green << 8 | blue;
     }
 }

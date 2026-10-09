@@ -21,7 +21,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ci.cancel();
     }
 
-    @Inject(method = "tryRespawn", at = @At("HEAD"), cancellable = true) private void rdpl$noRespawn(CallbackInfo ci) {
-        if (ContentEndDragon.unwanted(level)) { ci.cancel(); }
-    }
+    @Inject(method = "tryRespawn", at = @At("HEAD"), cancellable = true) private void rdpl$noRespawn(CallbackInfo ci) { if (ContentEndDragon.unwanted(level)) { ci.cancel(); } }
 }

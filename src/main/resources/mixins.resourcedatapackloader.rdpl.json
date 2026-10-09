@@ -48,13 +48,12 @@
         "common.MixinServerPlayerRespawn",
         "common.MixinItemEntity",
         "common.MixinEntity",
-        "common.MixinExplosion",
+        "common.MixinServerLevelExplode",
         "common.MixinPrimedTnt",
         "common.MixinTntBlock",
         "common.MixinLevel",
         "common.MixinServerLevelHold",
         "common.MixinFallingBlock",
-        "common.MixinServerLevelSpawn",
         "common.MixinServerLevelRules",
         "common.MixinServerFlight",
         "common.MixinServerClockManager",
@@ -101,6 +100,7 @@
         "common.MixinBreedGoal",
         "common.MixinTamableAnimal",
         "common.MixinTargetGoal",
+        "common.MixinNodeEvaluator",
         "common.MixinSwimNodeEvaluator",
         "common.MixinWalkNodeEvaluator",
         "common.MixinExplosionDamageCalculator",
@@ -188,7 +188,6 @@
     ],
     "server": [
         "server.ISettings",
-        "server.MixinDedicatedServerGameMode",
         "server.MixinDedicatedServerProperties"
     ],
     "injectors": {

@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -25,8 +26,7 @@ final class CommandStacks {
     static String item(String named, int meta, @Nullable String nbt, Ported pack) {
         String name = Commands.namespaced(named);
         if (pack.owns(name)) {
-            String own = pack.ownItem(name, meta);
-            if (own == null) { own = pack.ownBlock(name, meta); }
+            String own = pack.item(name, meta);
             return stack(own == null ? name : own, 0, nbt);
         }
         if (Ids.isModded(name)) {
@@ -46,7 +46,7 @@ final class CommandStacks {
     static String itemTest(String named, int meta, @Nullable String nbt, Ported pack) {
         if (meta >= 0) { return item(named, meta, nbt, pack); }
         String name = Commands.namespaced(named);
-        List<String> names = pack.owns(name) ? pack.ownItems(name) : Ids.isModded(name) ? List.of(name) : Ids.items(name);
+        List<String> names = pack.variants(name, false);
         if (names.size() > 1) { throw new Commands.Kept(name + " with any data value is " + names.size() + " items on this version, and one test cannot name them all"); }
         return stack(names.getFirst(), 0, nbt);
     }
@@ -61,8 +61,7 @@ final class CommandStacks {
         }
         if (pack.owns(name)) {
             if (legacy != null) { throw new Commands.Kept("the block state " + data + " of the pack's own " + name + " has no twin, since each variant is a block of its own"); }
-            String own = pack.ownBlock(name, meta);
-            if (own == null) { own = pack.ownItem(name, meta); }
+            String own = pack.block(name, meta);
             return (own == null ? name : own) + (nbt == null ? "" : nbt(nbt));
         }
         if (Ids.isModded(name)) {
@@ -77,28 +76,22 @@ final class CommandStacks {
     static String blockTest(String named, @Nullable String data, @Nullable String nbt, Ported pack) {
         if (data != null && !"-1".equals(data) && !"*".equals(data)) { return block(named, data, nbt, pack); }
         String name = Commands.namespaced(named);
-        List<String> names = pack.owns(name) ? pack.ownItems(name) : Ids.isModded(name) ? List.of(name) : Ids.blocks(name);
+        List<String> names = pack.variants(name, true);
         if (names.size() > 1) { throw new Commands.Kept(name + " with any data value is " + names.size() + " blocks on this version, and one test cannot name them all"); }
         return names.getFirst() + (nbt == null ? "" : Ids.isModded(name) ? nbt(nbt) : tileData(name, nbt));
     }
 
     private static String tileData(String name, String nbt) {
-        String path = name.substring(name.indexOf(':') + 1);
+        String path = IdNames.path(name);
         String tile = path.endsWith("_shulker_box") ? "shulker_box" : TILE_BLOCKS.getOrDefault(path, path);
         if (!TILE_ENTITIES.contains(tile)) { return ""; }
-        String fixed = Ids.blockEntityData(name, Commands.MINECRAFT + tile, nbt);
+        String fixed = Ids.blockEntityData(name, IdNames.MINECRAFT + tile, nbt);
         if (fixed == null) { throw new Commands.Kept("the block nbt " + nbt + " could not be carried through the data fixers"); }
         return fixed;
     }
 
     private static Map<String, String> properties(String data) {
-        Map<String, String> out = new LinkedHashMap<>();
-        for (String pair : data.split(",")) {
-            int equals = pair.indexOf('=');
-            if (equals <= 0) { throw new Commands.Kept("the block state " + data + " is not a list of name=value pairs"); }
-            out.put(pair.substring(0, equals), pair.substring(equals + 1));
-        }
-        return out;
+        return Commands.pairs(data, _ -> "the block state " + data + " is not a list of name=value pairs");
     }
 
     private static String state(Map<String, String> properties) {

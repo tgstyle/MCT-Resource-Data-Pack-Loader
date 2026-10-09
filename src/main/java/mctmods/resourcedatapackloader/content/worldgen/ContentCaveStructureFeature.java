@@ -1,10 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
-import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
-import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 
@@ -15,6 +13,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
@@ -22,8 +21,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import java.util.Optional;
 
 public final class ContentCaveStructureFeature {
-    private static final int FLAGS = 2;
-    private static final Rotation[] TURNS = Rotation.values();
 
     private ContentCaveStructureFeature() {}
 
@@ -31,10 +28,8 @@ public final class ContentCaveStructureFeature {
         CaveRegionDef region = ContentCaveRegions.def(id);
         if (region == null || !region.hasStructures()) { return false; }
         ChunkPos center = ChunkPos.containing(origin);
-        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
-        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
-        int spanXZ = cellsXZ >> 2;
-        int spanY = cellsY >> 2;
+        int spanXZ = ContentCaveRegions.spanXZ();
+        int spanY = ContentCaveRegions.spanY();
         int blockX0 = center.getMinBlockX();
         int blockZ0 = center.getMinBlockZ();
         int floor = level.getMinY();
@@ -49,10 +44,10 @@ public final class ContentCaveStructureFeature {
             for (int cellZ = Math.floorDiv(qz0 + 3 - (spanXZ - 1), spanXZ); cellZ <= Math.floorDiv(qz0 + 3, spanXZ); cellZ++) {
                 for (int cellY = cellY0; cellY <= cellY1; cellY++) {
                     long cellHash = Hashes.mix(level.getSeed(), cellX, cellY, cellZ);
-                    int wx = (int) ((cellX * (long) spanXZ + Math.floorMod(cellHash, spanXZ)) << 2);
-                    int wz = (int) ((cellZ * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ)) << 2);
+                    int wx = (int) (ContentCaveRegions.center(cellHash, 0, cellX, spanXZ) << 2);
+                    int wz = (int) (ContentCaveRegions.center(cellHash, 40, cellZ, spanXZ) << 2);
                     if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
-                    int centerY = (int) ((cellY * (long) spanY + Math.floorMod(cellHash >>> 20, spanY)) << 2);
+                    int centerY = (int) (ContentCaveRegions.center(cellHash, 20, cellY, spanY) << 2);
                     int least = region.minHeight() == CaveRegionDef.WORLD_FLOOR ? floor + 1 : region.minHeight();
                     if (centerY < least || centerY > region.maxHeight()) { continue; }
                     int lowest = Math.max(least, floor + 1);
@@ -99,14 +94,14 @@ public final class ContentCaveStructureFeature {
             return false;
         }
         StructureTemplate loaded = held.get();
-        Rotation rotation = TURNS[random.nextInt(TURNS.length)];
+        Rotation rotation = Turns.ALL[random.nextInt(Turns.ALL.length)];
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setRandom(random);
         Vec3i span = loaded.getSize(rotation);
         int cornerX = x - span.getX() / 2;
         int cornerZ = z - span.getZ() / 2;
         if (placer.unwritable(cornerX, cornerZ) || placer.unwritable(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
         BlockPos fitted = new BlockPos(cornerX + ContentImprint.backX(rotation, span), y, cornerZ + ContentImprint.backZ(rotation, span));
-        if (!loaded.placeInWorld(level, fitted, fitted, settings, random, FLAGS)) { return false; }
+        if (!loaded.placeInWorld(level, fitted, fitted, settings, random, Block.UPDATE_CLIENTS)) { return false; }
         if (!region.structureLoot().isEmpty()) {
             Identifier table = Identifier.tryParse(region.structureLoot());
             if (table == null) { ContentLog.LOGGER.error("Cave region {} names structureLoot '{}', which is not a valid id, so the containers are left as the template holds them", region.key(), region.structureLoot()); }

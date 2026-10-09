@@ -19,9 +19,9 @@ import javax.annotation.Nullable;
 
 public final class GameFont {
     private static final Identifier ASCII = Identifier.withDefaultNamespace("textures/font/ascii.png");
-    private static final Identifier RDPL = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl");
-    private static final Identifier ITALIC = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_italic");
-    private static final Identifier BOLD = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_bold");
+    private static final Identifier RDPL = Identifier.parse(CardFont.RDPL);
+    private static final Identifier ITALIC = Identifier.parse(CardFont.RDPL_ITALIC);
+    private static final Identifier BOLD = Identifier.parse(CardFont.RDPL_BOLD);
     private static final String VANILLA = "vanilla";
     private static final Map<Identifier, Identifier> SLANTS = new ConcurrentHashMap<>();
     private static volatile boolean yields;
@@ -50,9 +50,7 @@ public final class GameFont {
     public static List<GlyphProviderDefinition.Conditional> providers(List<GlyphProviderDefinition.Conditional> providers) {
         if (!yields) { return providers; }
         List<GlyphProviderDefinition.Conditional> kept = new ArrayList<>(providers.size());
-        for (GlyphProviderDefinition.Conditional provider : providers) {
-            if (!(provider.definition() instanceof ProviderReferenceDefinition(Identifier id) && RDPL.equals(id))) { kept.add(provider); }
-        }
+        for (GlyphProviderDefinition.Conditional provider : providers) { if (!(provider.definition() instanceof ProviderReferenceDefinition(Identifier id) && RDPL.equals(id))) { kept.add(provider); } }
         return kept;
     }
 }

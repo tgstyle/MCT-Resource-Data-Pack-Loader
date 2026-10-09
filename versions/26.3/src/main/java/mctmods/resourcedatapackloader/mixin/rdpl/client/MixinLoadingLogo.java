@@ -10,6 +10,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(LoadingOverlay.class) public abstract class MixinLoadingLogo {
-    @ModifyArg(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V"), index = 0)
-    private RenderPipeline rdpl$logoBlend(RenderPipeline pipeline) { return pipeline == RenderPipelines.MOJANG_LOGO && !Config.tweaks.darkSplashOff() ? RenderPipelines.GUI_TEXTURED : pipeline; }
+    @ModifyArg(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIIIIII)V"), index = 0) private RenderPipeline rdpl$logoBlend(RenderPipeline pipeline) { return pipeline == RenderPipelines.MOJANG_LOGO && !Config.tweaks.darkSplashOff() ? RenderPipelines.GUI_TEXTURED : pipeline; }
 }

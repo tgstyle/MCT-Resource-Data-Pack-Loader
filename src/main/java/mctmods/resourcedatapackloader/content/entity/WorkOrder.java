@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.util.PosTags;
+import mctmods.resourcedatapackloader.util.TileScan;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
@@ -9,7 +11,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.transfer.ResourceHandler;
 import net.neoforged.neoforge.transfer.item.ItemResource;
 import net.neoforged.neoforge.transfer.item.ItemUtil;
@@ -59,8 +60,8 @@ public final class WorkOrder {
         CompoundTag tag = new CompoundTag();
         tag.putInt("Id", id);
         tag.putString("Def", def.name());
-        tag.store("Chest", BlockPos.CODEC, chest);
-        tag.storeNullable("Sign", BlockPos.CODEC, sign);
+        tag.put("Chest", PosTags.write(chest));
+        if (sign != null) { tag.put("Sign", PosTags.write(sign)); }
         tag.putString("Team", team);
         tag.storeNullable("Owner", UUIDUtil.CODEC, owner);
         tag.putBoolean("Stock", stock);
@@ -71,9 +72,9 @@ public final class WorkOrder {
 
     @Nullable static WorkOrder load(CompoundTag tag) {
         OrderDef def = ContentOrders.def(tag.getStringOr("Def", ""));
-        BlockPos chest = tag.read("Chest", BlockPos.CODEC).orElse(null);
+        BlockPos chest = tag.getCompound("Chest").map(PosTags::read).orElse(null);
         if (def == null || chest == null) { return null; }
-        BlockPos sign = tag.read("Sign", BlockPos.CODEC).orElse(null);
+        BlockPos sign = tag.getCompound("Sign").map(PosTags::read).orElse(null);
         UUID owner = tag.read("Owner", UUIDUtil.CODEC).orElse(null);
         WorkOrder order = new WorkOrder(tag.getIntOr("Id", 0), def, chest, sign, tag.getStringOr("Team", ""), owner, tag.getBooleanOr("Stock", false), tag.getIntOr("Left", 0));
         order.spawned = tag.getIntOr("Spawned", 0);
@@ -102,9 +103,7 @@ public final class WorkOrder {
         return wants;
     }
 
-    public void delivered(int count) {
-        if (!standing() && count > 0) { left = Math.max(0, left - count); }
-    }
+    public void delivered(int count) { if (!standing() && count > 0) { left = Math.max(0, left - count); } }
 
     public boolean done() { return !standing() && left <= 0; }
 
@@ -124,9 +123,7 @@ public final class WorkOrder {
         return null;
     }
 
-    public void giveBack(BlockPos pos) {
-        if (queue.size() < QUEUE) { queue.addLast(pos); }
-    }
+    public void giveBack(BlockPos pos) { if (queue.size() < QUEUE) { queue.addLast(pos); } }
 
     private boolean still(Level level, BlockPos pos) {
         if (!level.isLoaded(pos)) { return false; }
@@ -170,17 +167,14 @@ public final class WorkOrder {
         List<ItemStack> wants = stock ? stockWants(own) : null;
         if (wants != null && wants.isEmpty()) { return; }
         int radius = def.widest();
-        for (int cx = chest.getX() - radius >> 4; cx <= chest.getX() + radius >> 4; cx++) {
-            for (int cz = chest.getZ() - radius >> 4; cz <= chest.getZ() + radius >> 4; cz++) {
-                if (!level.hasChunk(cx, cz)) { continue; }
-                for (BlockEntity tile : level.getChunk(cx, cz).getBlockEntities().values()) {
-                    BlockPos pos = tile.getBlockPos();
-                    if (beyond(pos, radius) || ContentOrders.isOrderChest(level, pos) || queue.contains(pos)) { continue; }
-                    ResourceHandler<ItemResource> items = OrderItems.handler(level, pos);
-                    if (items != null && holds(items, wants)) { queue.addLast(pos); }
-                }
-            }
-        }
+        TileScan.within(level, chest, radius, tile -> {
+            if (queue.size() >= QUEUE) { return false; }
+            BlockPos pos = tile.getBlockPos();
+            if (beyond(pos, radius) || ContentOrders.isOrderChest(level, pos) || queue.contains(pos)) { return true; }
+            ResourceHandler<ItemResource> items = OrderItems.handler(level, pos);
+            if (items != null && holds(items, wants)) { queue.addLast(pos); }
+            return true;
+        });
     }
 
     private boolean holds(ResourceHandler<ItemResource> items, @Nullable List<ItemStack> wants) {

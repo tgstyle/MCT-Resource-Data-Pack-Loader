@@ -13,9 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.stream.Stream;
 
 @Mixin(TheEndBiomeSource.class) public abstract class MixinTheEndBiomeSource {
-    @Inject(method = "getNoiseBiome(IIILnet/minecraft/world/level/biome/Climate$Sampler;)Lnet/minecraft/core/Holder;", at = @At("RETURN"), cancellable = true)
-    private void rdpl$blockedBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler, CallbackInfoReturnable<Holder<Biome>> cir) { cir.setReturnValue(ContentBiomeControl.inEnd(cir.getReturnValue())); }
+    @Inject(method = "getNoiseBiome(IIILnet/minecraft/world/level/biome/Climate$Sampler;)Lnet/minecraft/core/Holder;", at = @At("RETURN"), cancellable = true) private void rdpl$blockedBiome(int quartX, int quartY, int quartZ, Climate.Sampler sampler, CallbackInfoReturnable<Holder<Biome>> cir) { cir.setReturnValue(ContentBiomeControl.inEnd(cir.getReturnValue())); }
 
-    @Inject(method = "collectPossibleBiomes", at = @At("RETURN"), cancellable = true)
-    private void rdpl$blockedBiomes(CallbackInfoReturnable<Stream<Holder<Biome>>> cir) { cir.setReturnValue(cir.getReturnValue().map(ContentBiomeControl::inEnd).distinct()); }
+    @Inject(method = "collectPossibleBiomes", at = @At("RETURN"), cancellable = true) private void rdpl$blockedBiomes(CallbackInfoReturnable<Stream<Holder<Biome>>> cir) { cir.setReturnValue(cir.getReturnValue().map(ContentBiomeControl::inEnd).distinct()); }
 }

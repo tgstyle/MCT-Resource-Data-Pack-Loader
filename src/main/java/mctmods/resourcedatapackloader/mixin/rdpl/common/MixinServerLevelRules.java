@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.ContentServer;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
@@ -12,6 +13,7 @@ import net.minecraft.world.entity.animal.fish.WaterAnimal;
 import net.minecraft.world.entity.npc.Npc;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.entity.EntityTickList;
+import net.minecraft.world.level.gamerules.GameRules;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,27 +22,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.function.Consumer;
 
 @Mixin(ServerLevel.class) public abstract class MixinServerLevelRules {
-    @Inject(method = "isAllowedToEnterPortal(Lnet/minecraft/world/level/Level;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$nether(Level toLevel, CallbackInfoReturnable<Boolean> cir) {
-        if (toLevel.dimension() == Level.NETHER && Boolean.FALSE.equals(ContentServer.nether())) { cir.setReturnValue(false); }
+    @Inject(method = "getGameRules()Lnet/minecraft/world/level/gamerules/GameRules;", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {
+        GameRules held = ContentGameRules.forLevel((ServerLevel) (Object) this);
+        if (held != null) { cir.setReturnValue(held); }
     }
+
+    @Inject(method = "isAllowedToEnterPortal(Lnet/minecraft/world/level/Level;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$nether(Level toLevel, CallbackInfoReturnable<Boolean> cir) { if (toLevel.dimension() == Level.NETHER && ContentServer.off(ContentServer.nether())) { cir.setReturnValue(false); } }
 
     @Inject(method = "isPvpAllowed()Z", at = @At("HEAD"), cancellable = true) private void rdpl$pvp(CallbackInfoReturnable<Boolean> cir) {
         Boolean asked = ContentServer.pvp();
         if (asked != null) { cir.setReturnValue(asked); }
     }
 
-    @Inject(method = "isCommandBlockEnabled()Z", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) {
-        if (Boolean.FALSE.equals(ContentServer.commandBlocks())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "isCommandBlockEnabled()Z", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) { if (ContentServer.off(ContentServer.commandBlocks())) { cir.setReturnValue(false); } }
 
-    @Inject(method = "isSpawningMonsters()Z", at = @At("HEAD"), cancellable = true) private void rdpl$spawnMonsters(CallbackInfoReturnable<Boolean> cir) {
-        if (Boolean.FALSE.equals(ContentServer.spawnMonsters())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "isSpawningMonsters()Z", at = @At("HEAD"), cancellable = true) private void rdpl$spawnMonsters(CallbackInfoReturnable<Boolean> cir) { if (ContentServer.off(ContentServer.spawnMonsters())) { cir.setReturnValue(false); } }
 
-    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/entity/EntityTickList;forEach(Ljava/util/function/Consumer;)V"))
-    private void rdpl$spawnAnimalsAndNpcs(EntityTickList list, Consumer<Entity> output, Operation<Void> original) {
-        boolean animals = !Boolean.FALSE.equals(ContentServer.spawnAnimals());
-        boolean npcs = !Boolean.FALSE.equals(ContentServer.spawnNpcs());
+    @WrapOperation(method = "tick(Ljava/util/function/BooleanSupplier;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/entity/EntityTickList;forEach(Ljava/util/function/Consumer;)V")) private void rdpl$spawnAnimalsAndNpcs(EntityTickList list, Consumer<Entity> output, Operation<Void> original) {
+        boolean animals = !ContentServer.off(ContentServer.spawnAnimals());
+        boolean npcs = !ContentServer.off(ContentServer.spawnNpcs());
         if (animals && npcs) {
             original.call(list, output);
             return;

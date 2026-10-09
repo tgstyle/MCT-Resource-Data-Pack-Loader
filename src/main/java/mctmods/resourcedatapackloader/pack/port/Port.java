@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 
 import com.google.gson.JsonElement;
@@ -16,7 +17,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class Port {
-    public static final String LANG_SUFFIX = ".lang";
+    private static final String LANG_SUFFIX = ".lang";
     private static final String SOUNDS = "sounds";
     private static final Set<String> CLIENT_FOLDERS = Set.of("models", "blockstates", "textures", "lang", "texts", "font", "shaders", "particles", "sounds.json", "gui", "logo.png");
     private static final String[][] FOLDERS = {{"loot_tables/", "loot_table/"}, {"recipes/", "recipe/"}, {"advancements/", "advancement/"}, {"functions/", "function/"}, {"structures/", "structure/"}, {"predicates/", "predicate/"}, {"item_modifiers/", "item_modifier/"}, {"tags/items/", "tags/item/"}, {"tags/blocks/", "tags/block/"}, {"tags/fluids/", "tags/fluid/"}, {"tags/functions/", "tags/function/"}, {"tags/entity_types/", "tags/entity_type/"}, {"tags/game_events/", "tags/game_event/"}};
@@ -112,7 +113,7 @@ public final class Port {
     private static String folder(String prefix) { return prefix.substring(0, prefix.length() - 1); }
 
     @Nullable private static JsonObject packSection(Path root) {
-        Path meta = root.resolve("pack.mcmeta");
+        Path meta = root.resolve(PackManager.PACK_META);
         if (!Files.isRegularFile(meta)) { return null; }
         try {
             JsonObject json = JsonParser.parseString(Files.readString(meta, StandardCharsets.UTF_8)).getAsJsonObject();
@@ -124,15 +125,9 @@ public final class Port {
     public static boolean legacy(Path root) {
         Path assets = root.resolve(RDPLPack.ASSETS);
         if (!Files.isDirectory(assets)) { return false; }
-        Path meta = root.resolve("pack.mcmeta");
-        if (Files.isRegularFile(meta)) {
-            try {
-                JsonObject json = JsonParser.parseString(Files.readString(meta, StandardCharsets.UTF_8)).getAsJsonObject();
-                JsonObject pack = json.has("pack") && json.get("pack").isJsonObject() ? json.getAsJsonObject("pack") : null;
-                if (pack != null && pack.has("pack_format") && pack.get("pack_format").getAsInt() <= 3) { return true; }
-            }
-            catch (IOException | RuntimeException ignored) { }
-        }
+        JsonObject pack = packSection(root);
+        try { if (pack != null && pack.has("pack_format") && pack.get("pack_format").getAsInt() <= 3) { return true; } }
+        catch (RuntimeException ignored) { }
         try (DirectoryStream<Path> namespaces = Files.newDirectoryStream(assets)) {
             for (Path namespace : namespaces) {
                 if (!Files.isDirectory(namespace)) { continue; }
@@ -159,7 +154,7 @@ public final class Port {
     public static Mapped map(String path) {
         int slash = path.indexOf('/');
         String head = slash < 0 ? path : path.substring(0, slash);
-        if (slash > 0 && SOUNDS.equals(head) && !path.endsWith(".json")) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW); }
+        if (slash > 0 && SOUNDS.equals(head) && !path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW); }
         if (slash < 0 || CLIENT_FOLDERS.contains(head)) { return client(path); }
         Mapped mapped = data(path, head);
         String folder = singular(mapped.path());
@@ -175,27 +170,27 @@ public final class Port {
         if (path.startsWith("lang/") && path.endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + ".json", Kind.LANG); }
         if (path.startsWith("textures/blocks/") || path.startsWith("textures/items/")) {
             String moved = path.startsWith("textures/blocks/") ? "textures/block/" + path.substring("textures/blocks/".length()) : "textures/item/" + path.substring("textures/items/".length());
-            return new Mapped(PackType.CLIENT_RESOURCES, moved, path.endsWith(".json") ? Kind.PIXELMAP : Kind.RAW);
+            return new Mapped(PackType.CLIENT_RESOURCES, moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.PIXELMAP : Kind.RAW);
         }
-        if (path.startsWith("textures/") && path.endsWith(".json")) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.PIXELMAP); }
-        if (path.startsWith("models/") && path.endsWith(".json")) {
+        if (path.startsWith("textures/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.PIXELMAP); }
+        if (path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX)) {
             String[] parts = path.split("/");
             if (parts.length == 4 && "item".equals(parts[1])) { return new Mapped(PackType.CLIENT_RESOURCES, "models/item/" + parts[3], Kind.MODEL); }
             return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.MODEL);
         }
-        if (path.startsWith("blockstates/") && path.endsWith(".json")) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.BLOCKSTATE); }
+        if (path.startsWith("blockstates/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.BLOCKSTATE); }
         return new Mapped(PackType.CLIENT_RESOURCES, path, Kind.RAW);
     }
 
     private static Mapped data(String path, String head) {
         return switch (head) {
-            case "recipes" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.RECIPE : Kind.RAW);
-            case "loot_tables", "loot_injections" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.LOOT : Kind.RAW);
-            case "advancements" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.ADVANCEMENT : Kind.RAW);
+            case "recipes" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.RECIPE : Kind.RAW);
+            case "loot_tables", "loot_injections" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW);
+            case "advancements" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.ADVANCEMENT : Kind.RAW);
             case "functions" -> new Mapped(PackType.SERVER_DATA, path, Kind.FUNCTION);
-            case "oredict" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.OREDICT : Kind.DROPPED);
+            case "oredict" -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.OREDICT : Kind.DROPPED);
             case "structures", "tags" -> new Mapped(PackType.SERVER_DATA, path, Kind.RAW);
-            default -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(".json") ? Kind.DEFINITION : Kind.RAW);
+            default -> new Mapped(PackType.SERVER_DATA, path, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.DEFINITION : Kind.RAW);
         };
     }
 }

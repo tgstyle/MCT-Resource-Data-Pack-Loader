@@ -7,13 +7,13 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -23,7 +23,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentPathIntersects {
-    private static final Gson GSON = new Gson();
     private static final Map<String, PathIntersectDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> WARNED = new LinkedHashSet<>();
     private static boolean loaded;
@@ -47,32 +46,20 @@ public final class ContentPathIntersects {
         List<String> wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathIntersects", Config.worldgen.villagePathIntersects());
         if (wanted.isEmpty()) { return null; }
         List<PathIntersectDef> picks = new ArrayList<>();
-        int total = 0;
         for (String named : wanted) {
             PathIntersectDef def = DEFS.get(named.trim());
             if (def == null) {
-                if (WARNED.add(named)) { ContentLog.LOGGER.error("villagePathIntersects names design '{}', which no pack provides, so junctions are left plain", named); }
+                ContentLog.LOGGER.errorOnce(WARNED, named, "villagePathIntersects names design '{}', which no pack provides, so junctions are left plain", named);
                 continue;
             }
             picks.add(def);
-            total += def.weight();
         }
-        if (total <= 0) { return null; }
-        RandomSource roll = RandomSource.create(seed ^ (x * 341873128712L + z * 132897987541L));
-        int at = roll.nextInt(total);
-        for (PathIntersectDef def : picks) {
-            at -= def.weight();
-            if (at < 0) { return def; }
-        }
-        return picks.getFirst();
+        return WeightedPicks.pick(picks, PathIntersectDef::weight, SeededRandom.at(seed, x, z));
     }
 
     @Nullable private static PathIntersectDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Path intersect design {} is empty, so it is dropped", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "path intersect design");
+        if (json == null) { return null; }
         Map<Character, String> legend = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "legend", new JsonObject()).entrySet()) {
             String symbol = entry.getKey().trim();

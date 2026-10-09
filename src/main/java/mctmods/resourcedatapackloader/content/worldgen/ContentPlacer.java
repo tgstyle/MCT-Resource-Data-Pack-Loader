@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.util.RandomSource;
@@ -10,7 +12,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class ContentPlacer {
-    private static final int FLAGS = 2 | 16;
     private static final int WRITE_REACH = 1;
     public static final int CHUNK_ONLY = 0;
     private final WorldGenLevel level;
@@ -54,9 +55,7 @@ public final class ContentPlacer {
 
     public int ceilingY() { return level.getMaxY() + 1; }
 
-    public boolean unwritable(int x, int z) {
-        return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) > reach || Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) > reach;
-    }
+    public boolean unwritable(int x, int z) { return Math.abs(SectionPos.blockToSectionCoord(x) - centerX) > reach || Math.abs(SectionPos.blockToSectionCoord(z) - centerZ) > reach; }
 
     public boolean unreadable(BlockPos pos) { return !loaded(level, pos); }
 
@@ -76,9 +75,21 @@ public final class ContentPlacer {
         return placeExactly(palette.choose(random), x, y, z);
     }
 
+    public boolean disc(RandomSource random, BlockPos origin, int radius, boolean round, int lowY, int highY) {
+        int span = radius * radius;
+        boolean placed = false;
+        for (int offX = -radius; offX <= radius; offX++) {
+            for (int offZ = -radius; offZ <= radius; offZ++) {
+                if (round && offX * offX + offZ * offZ > span) { continue; }
+                for (int y = lowY; y <= highY; y++) { placed |= place(random, origin.getX() + offX, y, origin.getZ() + offZ); }
+            }
+        }
+        return placed;
+    }
+
     public boolean placeExactly(BlockState state, int x, int y, int z) {
         if (y < floorY() || y >= ceilingY() || unwritable(x, z)) { return false; }
-        return level.setBlock(scratch.set(x, y, z), state, FLAGS);
+        return level.setBlock(scratch.set(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     public boolean occupied(int x, int y, int z) {

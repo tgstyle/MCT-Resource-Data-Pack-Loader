@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.compat.ClientCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -16,14 +17,13 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
-import java.util.Locale;
 
 public final class HoldView {
     private static final float FOG_REACH = 2.0F;
     private static final float VANILLA_START = 0.25F;
     private static final int SHOW = 60;
     private static final int FADE = 60;
-    private static final Identifier LOGO = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "textures/gui/hold.png");
+    private static final Identifier LOGO = ResourceDataPackLoader.id("textures/gui/hold.png");
     private static final int LOGO_WIDTH = 329;
     private static final int LOGO_HEIGHT = 150;
     private static final int MARGIN = 12;
@@ -43,7 +43,9 @@ public final class HoldView {
     private static boolean shaded = true;
     private static final int NOTE_COLOR = 0x55FF55;
     private static final float NOTE_SCALE = 2.0F;
+    private static final int WARNING_COLOR = 0xFF5555;
     private static final int BACKDROP_ALPHA = 0x99;
+    private static final int BACKDROP_PAD = 4;
     private static boolean held;
     private static int showing;
 
@@ -105,14 +107,14 @@ public final class HoldView {
 
     private static void welcome(GuiGraphicsExtractor graphics, float strength) {
         if (strength <= 0.0F) { return; }
-        double gui = Crisp.factor();
-        int screenWidth = (int) Math.round(Crisp.fit(graphics.guiWidth()) * gui);
+        double gui = Crisp.gui();
+        int screenWidth = (int) Math.round(Crisp.width() * gui);
         int times = Math.max(1, screenWidth / 4 / LOGO_WIDTH);
         int width = LOGO_WIDTH * times;
         int height = LOGO_HEIGHT * times;
         int margin = (int) Math.round(MARGIN * gui);
         int left = leftFor(screenWidth, width, margin);
-        int top = Math.max(margin, (int) Math.round((Crisp.fit(graphics.guiHeight()) / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
+        int top = Math.max(margin, (int) Math.round((Crisp.height() / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         graphics.pose().pushMatrix();
         graphics.pose().scale((float) (1.0D / gui), (float) (1.0D / gui));
         graphics.blit(RenderPipelines.GUI_TEXTURED, LOGO, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(strength));
@@ -129,42 +131,38 @@ public final class HoldView {
 
     private static void greet(GuiGraphicsExtractor graphics, float strength) {
         if (note.isEmpty() || strength < PULSE_LEAST) { return; }
-        Minecraft mc = Minecraft.getInstance();
-        float scale = Crisp.scale(NOTE_SCALE);
-        Component text = MarkText.text(face, note);
-        int width = mc.font.width(text);
-        float x = Crisp.snap((Crisp.fit(graphics.guiWidth()) - width * scale) / 2.0F);
-        float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F + SUBTITLE_TOP);
-        int pad = 4;
-        if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(strength * BACKDROP_ALPHA) << 24); }
-        graphics.pose().pushMatrix();
-        graphics.pose().scale(scale, scale);
-        graphics.pose().translate(x / scale, y / scale);
-        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(strength * 0xFF) << 24 | NOTE_COLOR, true);
-        graphics.pose().popMatrix();
+        line(graphics, note, NOTE_SCALE, Crisp.height() / 2.0F + SUBTITLE_TOP, strength, NOTE_COLOR);
     }
 
     private static void warn(GuiGraphicsExtractor graphics) {
         if (warning.isEmpty()) { return; }
         float pulse = pulse();
         if (pulse < PULSE_LEAST) { return; }
+        line(graphics, warning, TEXT_SCALE, Crisp.height() / 2.0F - TEXT_ABOVE_MIDDLE, pulse, WARNING_COLOR);
+    }
+
+    private static void line(GuiGraphicsExtractor graphics, String said, float wanted, float top, float strength, int color) {
         Minecraft mc = Minecraft.getInstance();
-        float scale = Crisp.scale(TEXT_SCALE);
-        Component text = MarkText.text(face, warning);
+        float scale = Crisp.scale(wanted);
+        Component text = MarkText.text(face, said);
         int width = mc.font.width(text);
-        float x = Crisp.snap((Crisp.fit(graphics.guiWidth()) - width * scale) / 2.0F);
-        float y = Crisp.snap(Crisp.fit(graphics.guiHeight()) / 2.0F - TEXT_ABOVE_MIDDLE);
-        int pad = 4;
-        if (shaded) { graphics.fill(Math.round(x) - pad, Math.round(y) - pad, Math.round(x + width * scale) + pad, Math.round(y + mc.font.lineHeight * scale) + pad, Math.round(pulse * 0x99) << 24); }
+        float x = Crisp.snap((Crisp.width() - width * scale) / 2.0F);
+        float y = Crisp.snap(top);
+        backdrop(graphics, x, y, Math.round(width * scale), Math.round(mc.font.lineHeight * scale), strength);
         graphics.pose().pushMatrix();
         graphics.pose().scale(scale, scale);
         graphics.pose().translate(x / scale, y / scale);
-        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(pulse * 0xFF) << 24 | 0xFF5555, true);
+        graphics.text(mc.font, text.getVisualOrderText(), 0, 0, Math.round(strength * 0xFF) << 24 | color, true);
         graphics.pose().popMatrix();
     }
 
+    private static void backdrop(GuiGraphicsExtractor graphics, float x, float y, int width, int height, float strength) {
+        if (!shaded) { return; }
+        graphics.fill(Math.round(x) - BACKDROP_PAD, Math.round(y) - BACKDROP_PAD, Math.round(x) + width + BACKDROP_PAD, Math.round(y) + height + BACKDROP_PAD, Math.round(strength * BACKDROP_ALPHA) << 24);
+    }
+
     private static int leftFor(int screenWidth, int width, int margin) {
-        String asked = ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo()).trim().toLowerCase(Locale.ROOT);
+        String asked = Settings.lower(ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo()));
         if ("left".equals(asked)) { return margin; }
         if ("right".equals(asked)) { return screenWidth - margin - width; }
         if (!"center".equals(asked) && !asked.isEmpty() && !asked.equals(warnedAbout)) {

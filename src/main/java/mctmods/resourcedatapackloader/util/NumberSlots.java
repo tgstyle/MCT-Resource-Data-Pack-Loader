@@ -4,13 +4,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 public final class NumberSlots {
     private static final String TYPE = "type";
-    private static final String MINECRAFT = "minecraft:";
     private static final String COUNT = "count";
 
     private NumberSlots() {}
@@ -18,20 +16,14 @@ public final class NumberSlots {
     private enum Slot { INT, FLOAT, RANGE }
 
     public static JsonElement walk(JsonElement element, BiFunction<JsonElement, Boolean, JsonElement> fit) {
-        if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(walk(item, fit)); }
-            return out;
-        }
+        if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> walk(item, fit)); }
         if (!element.isJsonObject()) { return element; }
         JsonObject in = element.getAsJsonObject();
-        JsonObject out = new JsonObject();
         String owner = type(in);
-        for (Map.Entry<String, JsonElement> entry : in.entrySet()) {
-            Slot slot = slot(in, owner, entry.getKey());
-            out.add(entry.getKey(), slot == null ? nested(owner, entry.getKey(), entry.getValue(), fit) : fitted(entry.getValue(), slot, fit));
-        }
-        return out;
+        return JsonTree.map(in, (key, value) -> {
+            Slot slot = slot(in, owner, key);
+            return slot == null ? nested(owner, key, value, fit) : fitted(value, slot, fit);
+        });
     }
 
     @Nullable private static Slot slot(JsonObject owner, String type, String key) {
@@ -97,13 +89,11 @@ public final class NumberSlots {
     private static JsonElement fitted(JsonElement value, Slot slot, BiFunction<JsonElement, Boolean, JsonElement> fit) {
         if (slot != Slot.RANGE) { return fit.apply(value, slot == Slot.INT); }
         if (!value.isJsonObject() || value.getAsJsonObject().has(TYPE)) { return fit.apply(value, true); }
-        JsonObject out = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : value.getAsJsonObject().entrySet()) { out.add(entry.getKey(), List.of("min", "max").contains(entry.getKey()) ? fit.apply(entry.getValue(), true) : entry.getValue().deepCopy()); }
-        return out;
+        return JsonTree.map(value.getAsJsonObject(), (key, held) -> List.of("min", "max").contains(key) ? fit.apply(held, true) : held.deepCopy());
     }
 
     public static String type(JsonObject object) {
-        String type = object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? object.get(TYPE).getAsString() : "";
-        return type.startsWith(MINECRAFT) ? type.substring(MINECRAFT.length()) : type;
+        String type = Json.text(object, TYPE);
+        return IdNames.bare(type);
     }
 }

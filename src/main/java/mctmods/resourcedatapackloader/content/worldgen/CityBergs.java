@@ -12,6 +12,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -53,12 +54,12 @@ public final class CityBergs {
     }
 
     public static void cleared(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
-        BoundingBox scan = new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ());
+        BoundingBox scan = CityCrown.clip(level, chunk);
         BoundingBox window = scan.inflatedBy(REACH + TOUCH);
         List<BoundingBox> pieces = ContentCityTrees.footprints(manager, chunk, null, window);
         if (pieces.isEmpty()) { return; }
         CityBergs bergs = new CityBergs(level, window);
-        if (!bergs.any(scan)) { return; }
+        if (bergs.bergless(scan)) { return; }
         int cleared = bergs.clear(scan, bergs.reach(pieces));
         if (cleared > 0) { ContentLog.LOGGER.debug("Cleared {} block(s) of berg ice a city reaches in chunk {}, {}", cleared, chunk.x(), chunk.z()); }
     }
@@ -67,13 +68,13 @@ public final class CityBergs {
 
     private boolean inside(int x, int z) { return x >= minX && z >= minZ && x < minX + side && z < minZ + side; }
 
-    private boolean any(BoundingBox scan) {
+    private boolean bergless(BoundingBox scan) {
         for (int x = scan.minX(); x <= scan.maxX(); x++) {
             for (int z = scan.minZ(); z <= scan.maxZ(); z++) {
-                if (berg(x, z)) { return true; }
+                if (berg(x, z)) { return false; }
             }
         }
-        return false;
+        return true;
     }
 
     private boolean berg(int x, int z) {
@@ -140,7 +141,7 @@ public final class CityBergs {
                 for (int y = sea; y < top; y++) {
                     BlockState state = level.getBlockState(at.set(x, y, z));
                     if (state.is(Blocks.PACKED_ICE) || state.is(Blocks.SNOW_BLOCK)) {
-                        level.setBlock(at, air, 2);
+                        level.setBlock(at, air, Block.UPDATE_CLIENTS);
                         cleared++;
                     }
                 }

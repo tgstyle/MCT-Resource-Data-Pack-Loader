@@ -16,14 +16,13 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.fluid.FluidTintSource;
 import net.neoforged.neoforge.fluids.FluidStack;
-
 import javax.annotation.Nonnull;
 
-public class EntityStorageScreen extends AbstractContainerScreen<EntityStorageMenu> {
+public final class EntityStorageScreen extends AbstractContainerScreen<EntityStorageMenu> {
     private static final int TROUGH = 0xFF373737;
     private static final int ENERGY = 0xFFC03030;
     private static final int TEXT = 0xFFFFFFFF;
-    private static final int HEADER = 17;
+    private static final int HEADER = ContentContainerScreen.HEADER;
     private static final int CELL = ContentContainerMenu.SLOT;
     private static final int EDGE = ContentContainerScreen.EDGE;
     private static final int TILE = 16;

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentFallingBlock extends LineCompat.FallingBase implements LineCompat.TreeSoil {
+public final class ContentFallingBlock extends LineCompat.FallingBase implements LineCompat.TreeSoil {
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
 
@@ -23,19 +23,11 @@ public class ContentFallingBlock extends LineCompat.FallingBase implements LineC
         this.shape = ContentBlock.shape(def);
     }
 
-    @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return shape == null ? super.getShape(state, level, pos, context) : shape;
-    }
+    @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
     @Override public int getDustColor(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos) { return -16777216; }
 
     @Override @Nonnull public TriState canSustainPlant(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos soilPosition, @Nonnull Direction facing, @Nonnull BlockState plant) { return ContentBlock.sustains(def, facing, plant); }
 
     @Override public boolean keepsUnderTree() { return def.behavesAs().contains(ContentBlock.BUSH); }
-
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
-
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
-
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
 }

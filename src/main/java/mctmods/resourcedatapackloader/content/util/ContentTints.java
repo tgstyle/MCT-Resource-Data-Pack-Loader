@@ -1,8 +1,7 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
-
-import java.util.Locale;
+import mctmods.resourcedatapackloader.util.Settings;
 
 public final class ContentTints {
     public static final int WHITE = 0xFFFFFF;
@@ -14,7 +13,7 @@ public final class ContentTints {
 
     private ContentTints() {}
 
-    public static String mode(String tint) { return tint == null ? "" : tint.trim().toLowerCase(Locale.ROOT); }
+    public static String mode(String tint) { return tint == null ? "" : Settings.lower(tint); }
 
     public static int fixed(String tint, Object context) {
         return switch (tint) {

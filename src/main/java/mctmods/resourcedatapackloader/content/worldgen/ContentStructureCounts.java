@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
@@ -12,7 +12,7 @@ import java.util.Collection;
 public final class ContentStructureCounts extends SavedData {
     public static final String NAME = "rdpl_structure_most";
     private static final String FOUNDED = "Founded";
-    private static final SavedDataType<ContentStructureCounts> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), ContentStructureCounts::new, CompoundTag.CODEC.xmap(ContentStructureCounts::read, ContentStructureCounts::write));
+    private static final SavedDataType<ContentStructureCounts> TYPE = SavedTypes.of(NAME, ContentStructureCounts::new, ContentStructureCounts::read, ContentStructureCounts::write);
     private CompoundTag founded = new CompoundTag();
 
     private static ContentStructureCounts of(ServerLevel level) {

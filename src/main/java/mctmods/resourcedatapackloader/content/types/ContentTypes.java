@@ -5,8 +5,10 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.world.level.block.SoundType;
@@ -18,8 +20,10 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class ContentTypes {
+    public static final String WALL_SUFFIX = "_wall";
     private static final float UNBREAKABLE = 3600000.0F;
     private static final float LEGACY_RESISTANCE = 0.6F;
     private static final Set<String> HOLDS_BACK_LIQUID = Set.of("portal", "structure_void");
@@ -28,6 +32,8 @@ public final class ContentTypes {
     private static final Map<String, SoundType> SOUND_TYPES = new HashMap<>();
 
     private ContentTypes() {}
+
+    public static Identifier wallId(Identifier id) { return Identifier.fromNamespaceAndPath(id.getNamespace(), id.getPath() + WALL_SUFFIX); }
 
     static {
         material("air", MapColor.NONE, false, false, false, true, LineCompat.PUSH_NORMAL);
@@ -138,7 +144,7 @@ public final class ContentTypes {
 
     public static boolean washedAway(BlockState state) {
         ContentRegistry.BlockEntry entry = ContentRegistry.entry(state.getBlock());
-        return entry != null && LineCompat.passable(state) &&!HOLDS_BACK_LIQUID.contains(materialName(entry.def()));
+        return entry != null && LineCompat.passable(state) && !HOLDS_BACK_LIQUID.contains(materialName(entry.def()));
     }
 
     private static String modelledType(String type) { return ContentBlockTypes.borrowsModel(type) ? ContentBlockTypes.BASIC : type; }
@@ -207,7 +213,7 @@ public final class ContentTypes {
         int light = variant.light();
         if (light > 0) { properties = properties.lightLevel(_ -> light); }
         if (preset.tool()) { properties = properties.requiresCorrectToolForDrops(); }
-        if (!def.opaque() || !def.fullCube() || def.container() != null && def.container().chestModel()) { properties = properties.noOcclusion(); }
+        if (!def.opaque() || !def.fullCube() || def.chested()) { properties = properties.noOcclusion(); }
         if (preset.burns()) { properties = properties.ignitedByLava(); }
         if (preset.replaceable()) { properties = properties.replaceable(); }
         properties = preset.blocks() ? properties.forceSolidOn() : properties.forceSolidOff();
@@ -215,7 +221,24 @@ public final class ContentTypes {
         return properties;
     }
 
-    private static String key(String name) { return name == null ? "" : name.trim().toLowerCase(Locale.ROOT); }
+    private static String key(String name) { return name == null ? "" : Settings.lower(name); }
+
+    public static String digits(String value) {
+        String cleaned = value == null ? "" : value.trim();
+        if (cleaned.startsWith("#")) { cleaned = cleaned.substring(1); }
+        if (cleaned.startsWith("0x") || cleaned.startsWith("0X")) { cleaned = cleaned.substring(2); }
+        return cleaned;
+    }
+
+    @Nullable public static Long hex(String value) {
+        String digits = digits(value);
+        if (digits.isEmpty()) { return null; }
+        for (int at = 0; at < digits.length(); at++) {
+            if (Character.digit(digits.charAt(at), 16) < 0) { return null; }
+        }
+        try { return Long.parseLong(digits, 16); }
+        catch (NumberFormatException ex) { return null; }
+    }
 
     public record Preset(MapColor color, SoundType sound, boolean blocks, boolean tool, boolean burns, boolean replaceable, PushReaction push) {
         Preset sounding(SoundType other) { return new Preset(color, other, blocks, tool, burns, replaceable, push); }

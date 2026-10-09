@@ -26,8 +26,7 @@ import java.util.List;
 @Mixin(MinecraftServer.class) public abstract class MixinMinecraftServer {
     @Unique private List<Long> rdpl$sentLocks = List.of();
 
-    @ModifyExpressionValue(method = "forceGameTimeSynchronization()V", at = @At(value = "NEW", target = "(JLjava/util/Map;)Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;"))
-    private ClientboundSetTimePacket rdpl$lockedTime(ClientboundSetTimePacket packet) {
+    @ModifyExpressionValue(method = "forceGameTimeSynchronization()V", at = @At(value = "NEW", target = "(JLjava/util/Map;)Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;")) private ClientboundSetTimePacket rdpl$lockedTime(ClientboundSetTimePacket packet) {
         MinecraftServer self = (MinecraftServer) (Object) this;
         List<Long> locks = self.registryAccess().lookupOrThrow(Registries.WORLD_CLOCK).listElements().map(ContentTerrain::lockedTime).toList();
         if (locks.equals(rdpl$sentLocks)) { return packet; }
@@ -44,8 +43,7 @@ import java.util.List;
 
     @Inject(method = "prepareLevels()V", at = @At("HEAD")) private void rdpl$spawnPreparing(CallbackInfo ci) { SpawnProgress.spawnPreparing(); }
 
-    @WrapOperation(method = "prepareLevels()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkLoadCounter;track(Lnet/minecraft/server/level/ServerLevel;Ljava/lang/Runnable;)V"))
-    private void rdpl$spawnBoot(ChunkLoadCounter counter, ServerLevel level, Runnable scheduler, Operation<Void> original) {
+    @WrapOperation(method = "prepareLevels()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ChunkLoadCounter;track(Lnet/minecraft/server/level/ServerLevel;Ljava/lang/Runnable;)V")) private void rdpl$spawnBoot(ChunkLoadCounter counter, ServerLevel level, Runnable scheduler, Operation<Void> original) {
         if (ContentSpawnChunks.leftToTheGame() || level.dimension() != Level.OVERWORLD) {
             original.call(counter, level, scheduler);
             return;
@@ -56,9 +54,7 @@ import java.util.List;
         });
     }
 
-    @Inject(method = "prepareLevels()V", at = @At("TAIL")) private void rdpl$spawnPrepared(CallbackInfo ci) {
-        if (!ContentSpawnChunks.leftToTheGame()) { ContentSpawnChunks.booted(((MinecraftServer) (Object) this).overworld()); }
-    }
+    @Inject(method = "prepareLevels()V", at = @At("TAIL")) private void rdpl$spawnPrepared(CallbackInfo ci) { if (!ContentSpawnChunks.leftToTheGame()) { ContentSpawnChunks.booted(((MinecraftServer) (Object) this).overworld()); } }
 
     @Inject(method = "setRespawnData(Lnet/minecraft/world/level/storage/LevelData$RespawnData;)V", at = @At("TAIL")) private void rdpl$spawnHeld(LevelData.RespawnData respawnData, CallbackInfo ci) {
         if (ContentSpawnChunks.leftToTheGame() || respawnData.dimension() != Level.OVERWORLD) { return; }

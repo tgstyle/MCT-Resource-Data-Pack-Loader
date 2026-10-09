@@ -1,15 +1,22 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.bare;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
+import net.minecraft.util.GsonHelper;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 final class ModernLoot {
-    private static final String COMPONENTS = "components";
     private static final String TYPE_SPECIFIC = "type_specific";
     private static final Map<String, String> TARGETS = Map.of("killer", "attacker", "direct_killer", "direct_attacker", "killer_player", "attacking_player");
     private static final Set<String> TARGET_KEYS = Set.of("entity", "source");
@@ -31,10 +38,11 @@ final class ModernLoot {
                 if (display.has(key)) { display.add(key, ModernFixes.text(display.get(key))); }
             }
         }
-        if (json.has("rewards") && json.get("rewards").isJsonObject() && json.getAsJsonObject("rewards").has("recipes") && json.getAsJsonObject("rewards").get("recipes").isJsonArray()) {
+        JsonObject rewards = json.has("rewards") && json.get("rewards").isJsonObject() ? json.getAsJsonObject("rewards") : null;
+        if (rewards != null && rewards.has("recipes") && rewards.get("recipes").isJsonArray()) {
             JsonArray recipes = new JsonArray();
-            for (JsonElement recipe : json.getAsJsonObject("rewards").getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? ModernFixes.recipe(recipe.getAsString()) : recipe.getAsString()); }
-            json.getAsJsonObject("rewards").add("recipes", recipes);
+            for (JsonElement recipe : rewards.getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? new JsonPrimitive(ModernFixes.recipe(recipe.getAsString())) : recipe); }
+            rewards.add("recipes", recipes);
         }
         loot(json, file, stacks, note);
     }
@@ -47,22 +55,22 @@ final class ModernLoot {
         if (!element.isJsonObject()) { return; }
         JsonObject json = element.getAsJsonObject();
         for (String key : TARGET_KEYS) {
-            if (json.has(key) && json.get(key).isJsonPrimitive() && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
+            if (GsonHelper.isValidPrimitive(json, key) && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
-        String condition = json.has("condition") && json.get("condition").isJsonPrimitive() ? json.get("condition").getAsString() : "";
-        if (("minecraft:time_check".equals(condition) || "time_check".equals(condition)) && !json.has("clock")) { json.addProperty("clock", ModernFixes.MINECRAFT + "overworld"); }
-        if (json.has("recipe") && json.get("recipe").isJsonPrimitive()) { json.addProperty("recipe", ModernFixes.recipe(json.get("recipe").getAsString())); }
-        String function = json.has("function") && json.get("function").isJsonPrimitive() ? json.get("function").getAsString() : "";
+        String condition = namespaced(Json.text(json, "condition"));
+        if ("minecraft:time_check".equals(condition) && !json.has("clock")) { json.addProperty("clock", MINECRAFT + "overworld"); }
+        if (GsonHelper.isValidPrimitive(json, "recipe")) { json.addProperty("recipe", ModernFixes.recipe(json.get("recipe").getAsString())); }
+        String function = Json.text(json, "function");
         if (!function.isEmpty()) { function(json, function, stacks); }
-        else if (stacks && json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) { json.add(COMPONENTS, ModernFixes.components(ModernFixes.firstItem(json.get("items")), json.getAsJsonObject(COMPONENTS))); }
+        else if (stacks && json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) { json.add(CrossJson.COMPONENTS, ModernFixes.components(ModernFixes.firstItem(json.get("items")), json.getAsJsonObject(CrossJson.COMPONENTS))); }
         if (json.has(TYPE_SPECIFIC) && json.get(TYPE_SPECIFIC).isJsonObject()) { variant(json, file, note); }
         json.entrySet().forEach(entry -> walk(entry.getValue(), file, stacks, note));
     }
 
     private static void function(JsonObject json, String function, boolean stacks) {
-        switch (function.startsWith(ModernFixes.MINECRAFT) ? function.substring(ModernFixes.MINECRAFT.length()) : function) {
+        switch (bare(function)) {
             case "set_components" -> {
-                if (stacks && json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) { json.add(COMPONENTS, ModernFixes.components("minecraft:stone", json.getAsJsonObject(COMPONENTS))); }
+                if (stacks && json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) { json.add(CrossJson.COMPONENTS, ModernFixes.components("minecraft:stone", json.getAsJsonObject(CrossJson.COMPONENTS))); }
             }
             case "set_custom_model_data" -> {
                 if (!json.has("value")) { return; }
@@ -88,8 +96,7 @@ final class ModernLoot {
 
     private static void variant(JsonObject json, String file, Consumer<String> note) {
         JsonObject specific = json.getAsJsonObject(TYPE_SPECIFIC);
-        String type = specific.has("type") && specific.get("type").isJsonPrimitive() ? specific.get("type").getAsString() : "";
-        String bare = type.startsWith(ModernFixes.MINECRAFT) ? type.substring(ModernFixes.MINECRAFT.length()) : type;
+        String bare = bare(Json.text(specific, "type"));
         String component = VARIANTS.contains(bare) ? bare + "/variant" : "tropical_fish".equals(bare) ? "tropical_fish/pattern" : null;
         if ("boat".equals(bare)) {
             json.remove(TYPE_SPECIFIC);
@@ -103,8 +110,8 @@ final class ModernLoot {
             return;
         }
         json.remove(TYPE_SPECIFIC);
-        JsonObject components = json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject() ? json.getAsJsonObject(COMPONENTS) : new JsonObject();
-        components.add(ModernFixes.MINECRAFT + component, variant);
-        json.add(COMPONENTS, components);
+        JsonObject components = json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject() ? json.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
+        components.add(MINECRAFT + component, variant);
+        json.add(CrossJson.COMPONENTS, components);
     }
 }

@@ -23,8 +23,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow @Final private WorldGenLevel level;
     @Shadow @Final private ChunkGenerator generator;
 
-    @Inject(method = "placeWithBiomeCheck(Lnet/minecraft/world/level/levelgen/placement/PlacedFeature;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$populate(PlacedFeature placedFeature, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentFlatSource.undecorated(generator) || ContentVoidWorld.voidRefuses(level, placedFeature) || ContentPopulateControl.refuses(generator, placedFeature) || ContentOreControl.refuses(generator, placedFeature) || ContentGeneratorControl.refuses(generator, placedFeature)) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "placeWithBiomeCheck(Lnet/minecraft/world/level/levelgen/placement/PlacedFeature;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$populate(PlacedFeature placedFeature, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) { if (ContentFlatSource.undecorated(generator) || ContentVoidWorld.voidRefuses(level, placedFeature) || ContentPopulateControl.refuses(generator, placedFeature) || ContentOreControl.refuses(generator, placedFeature) || ContentGeneratorControl.refuses(generator, placedFeature)) { cir.setReturnValue(false); } }
 }

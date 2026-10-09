@@ -3,12 +3,9 @@ package mctmods.resourcedatapackloader.recipe;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -20,11 +17,10 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 public final class RecipeRemovals {
-    public static final String REMOVE = "remove";
+    private static final String REMOVE = "remove";
     private static final String NAMES = "names";
     private static final String NAMESPACES = "namespaces";
     private static final String OUTPUTS = "outputs";
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> NAMED = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
     private static final Set<Item> OUTPUT_ITEMS = new LinkedHashSet<>();
@@ -38,15 +34,10 @@ public final class RecipeRemovals {
         PREFIXES.clear();
         OUTPUT_ITEMS.clear();
         if (!Config.recipes.removals()) { return; }
-        Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
+        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
     }
 
-    private static void read(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Recipe removal file {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(Identifier key, JsonObject json) {
         for (JsonElement element : array(json, NAMES)) {
             String name = element.getAsString();
             if (name.endsWith("*")) { PREFIXES.add(name.substring(0, name.length() - 1)); }

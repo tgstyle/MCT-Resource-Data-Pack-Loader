@@ -19,7 +19,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentPotionItem extends PotionItem {
+public final class ContentPotionItem extends PotionItem {
     private final ItemDef def;
     private final Identifier id;
     @Nullable private List<ItemStack> stacks;

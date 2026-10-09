@@ -69,7 +69,6 @@ public final class VanillaPortalLink {
     }
 
     @Nullable private static double[] point(CompoundTag data, String tag, String x, String y, String z) {
-        if (data.getCompound(tag).isEmpty()) { return null; }
         CompoundTag portal = data.getCompoundOrEmpty(tag);
         if (!portal.contains(x) || !portal.contains(y) || !portal.contains(z)) { return null; }
         return new double[] { portal.getDoubleOr(x, 0.0), portal.getDoubleOr(y, 0.0), portal.getDoubleOr(z, 0.0) };

@@ -65,9 +65,7 @@ public final class ContentFluids {
 
     private static int reach(int drop) { return (SOURCE_AMOUNT - 1) / drop; }
 
-    public static void registerTypes(BiConsumer<Identifier, ContentFluidType> out) {
-        for (Made made : MADE.values()) { out.accept(made.def.id(), made.type); }
-    }
+    public static void registerTypes(BiConsumer<Identifier, ContentFluidType> out) { for (Made made : MADE.values()) { out.accept(made.def.id(), made.type); } }
 
     public static void registerFluids(BiConsumer<Identifier, BaseFlowingFluid> out) {
         for (Made made : MADE.values()) {

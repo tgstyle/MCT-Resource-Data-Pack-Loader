@@ -9,8 +9,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Rabbit.class) public abstract class MixinRabbit {
-    @Inject(method = "customServerAiStep", at = @At("HEAD"), cancellable = true)
-    private void rdpl$walks(CallbackInfo ci) {
-        if (ContentEntities.walks(Rabbit.class.cast(this))) { ci.cancel(); }
-    }
+    @Inject(method = "customServerAiStep", at = @At("HEAD"), cancellable = true) private void rdpl$walks(CallbackInfo ci) { if (ContentEntities.walks((Rabbit) (Object) this)) { ci.cancel(); } }
 }

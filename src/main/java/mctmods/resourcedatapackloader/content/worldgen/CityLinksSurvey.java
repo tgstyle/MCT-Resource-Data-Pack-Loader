@@ -71,9 +71,9 @@ final class CityLinksSurvey {
 
     private static int tunnelMost() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailLinkTunnelMost", Config.worldgen.villageRailLinkTunnelMost())); }
 
-    private static int crowd(boolean buried) { return 2 * CityPlan.railWidth(buried) + 2 * ((CityPlan.railWidth(CityLinks.carriedUnderground()) - 1) / 2 + 1); }
+    private static int crowd(boolean buried) { return 2 * CityPlan.railWidth(buried) + 2 * (CityRails.railHalf(CityLinks.carriedUnderground()) + 1); }
 
-    private static int spurRoom(boolean sub) { return Math.max(CityRails.clear(sub), CityPlan.plazaReach() + CityPlan.streetFullWidth()); }
+    private static int spurRoom(boolean sub) { return Math.max(CityRails.clear(sub), CityPlan.plazaReach() + CityPlan.fullWidth()); }
 
     private static int climbRoom() { return spurRoom(true) + CityLinks.pinRows(false) + 2 * CityLinks.ramp() + CityRails.LEAST_OPEN; }
 
@@ -104,7 +104,7 @@ final class CityLinksSurvey {
             CityPlan.Rail lower = rolled(ground, lowX - (alongX ? 1 : 0), lowZ - (alongX ? 0 : 1));
             boolean lowMoves = lower != null && lower.alongX() == alongX && crowds(ground, lowX - (alongX ? 1 : 0), lowZ - (alongX ? 0 : 1), alongX, lower.middle(), low.middle());
             if (!lowMoves && low.middle() - town.wellAcross(alongX) >= CityRails.clear(CityLinks.carriedUnderground()) && clearsWell(town, alongX, low.middle())) {
-                ContentLog.LOGGER.debug("The first line of the city at {}, {} moves from {} to {} to meet its neighbor's line head on and cross the seam straight",town.wellX(), town.wellZ(), center, low.middle());
+                ContentLog.LOGGER.debug("The first line of the city at {}, {} moves from {} to {} to meet its neighbor's line head on and cross the seam straight", town.wellX(), town.wellZ(), center, low.middle());
                 center = low.middle();
             }
         }
@@ -126,7 +126,7 @@ final class CityLinksSurvey {
 
     private static boolean clearsWell(CityPlan.Town town, boolean alongX, int center) {
         if (!CityLinks.carriedUnderground()) { return true; }
-        int reach = (CityPlan.railWidth(true) - 1) / 2 + ContentCity.stationReach() + 1 + CityLinks.platformReach(false);
+        int reach = CityRails.railHalf(true) + ContentCity.stationReach() + 1 + CityLinks.platformReach(false);
         return Math.abs(center - town.wellAcross(alongX)) > reach + CityPlan.WELL_HALF;
     }
 
@@ -192,8 +192,8 @@ final class CityLinksSurvey {
         boolean buried = buried(alongX, lowX, lowZ, low.town(), high.town());
         int segLeast = edge(alongX ? lowZ : lowX, !alongX);
         int segMost = segLeast + span() - 1;
-        int half = (CityPlan.railWidth(buried) - 1) / 2;
-        int reach = (CityPlan.railWidth(sub) - 1) / 2 + 1;
+        int half = CityRails.railHalf(buried);
+        int reach = CityRails.railHalf(sub) + 1;
         int margin = half + CityRails.MARGIN + reach + CityLinks.platformReach(buried);
         int rowLeast = Math.min(low.center(), high.center());
         int rowMost = Math.max(low.center(), high.center());
@@ -248,7 +248,6 @@ final class CityLinksSurvey {
         }
         for (int[] at : corners) {
             if (live ? CityBorder.beyond(at[0], at[1]) : Math.abs(at[0]) > edge || Math.abs(at[1]) > edge) { return at; }
-
         }
         return null;
     }
@@ -283,7 +282,7 @@ final class CityLinksSurvey {
         int from = node.wellAlong() + dir * Math.max(CityRails.clear(node.sub()), CityPlan.plazaReach());
         int rowLeast = Math.min(from, end);
         int rowMost = Math.max(from, end);
-        int half = (CityPlan.railWidth(node.sub()) - 1) / 2;
+        int half = CityRails.railHalf(node.sub());
         int[] floor = CityRails.floorRows(ground, node.alongX(), rowLeast, rowMost, node.center() - half, node.center() + half);
         int climb = ContentCity.railClimb(false);
         int[] profile = CityGrade.railLine(floor, ground.sea(), climb);
@@ -318,19 +317,11 @@ final class CityLinksSurvey {
         return null;
     }
 
-    private static boolean[] bridgedRows(int[] profile, int[] floor) {
-        boolean[] bridged = new boolean[profile.length];
-        for (int at = 0; at < profile.length; at++) { bridged[at] = floor[at] == Integer.MIN_VALUE || profile[at] > floor[at] + CityRails.FILL; }
-        return bridged;
-    }
-
     private static boolean[] decked(int[] profile, int[] floor, boolean[] keep, int climb) {
-        boolean[] bridged = bridgedRows(profile, floor);
+        boolean[] bridged = CityRails.bridgedRows(profile, floor);
         CityGrade.levelDecks(profile, bridged, keep, climb);
         return bridged;
     }
-
-    private static void deck(int[] profile, int[] floor, boolean[] keep, int climb) { CityGrade.levelDecks(profile, bridgedRows(profile, floor), keep, climb); }
 
     @Nullable static Graded graded(CityGround ground, Trunk trunk) {
         int half = trunk.half();
@@ -338,10 +329,10 @@ final class CityLinksSurvey {
         int climb = ContentCity.railClimb(trunk.buried());
         boolean[] lowered = new boolean[floor.length];
         if (trunk.buried()) { Arrays.fill(lowered, true); }
-        double[] base = CityGrade.railBase(floor, ground.sea(), lowered, ContentCity.subwayDepth(), ground.bottom() + ContentCitySewerPiece.FLOOR_LEAST);
+        double[] base = CityGrade.railBase(floor, ground.sea(), lowered, ContentCity.subwayDepth(), ground.lined());
         int[] profile = trunk.buried() ? CityGrade.sunken(base, climb) : CityGrade.smoothed(base, climb);
         boolean[] fixed = new boolean[profile.length];
-        if (!trunk.buried()) { deck(profile, floor, fixed, climb); }
+        if (!trunk.buried()) { decked(profile, floor, fixed, climb); }
         int reach = trunk.reach() + CityLinks.APPROACH;
         for (boolean low : new boolean[] {true, false}) {
             int at = trunk.row(low) - trunk.least();

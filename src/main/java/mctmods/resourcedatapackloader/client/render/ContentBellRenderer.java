@@ -31,11 +31,10 @@ import net.neoforged.neoforge.client.model.standalone.StandaloneModelKey;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlockEntity, ContentBellRenderer.State> {
+public final class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlockEntity, ContentBellRenderer.State> {
     private static final float PIVOT_Y = 0.75F;
     private static final String MISSING = MissingCuboidModel.LOCATION.toString();
     private static final Map<Identifier, StandaloneModelKey<List<BlockStateModelPart>>> BODIES = new ConcurrentHashMap<>();
@@ -50,9 +49,7 @@ public class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlock
 
     private static StandaloneModelKey<List<BlockStateModelPart>> body(Identifier id) { return BODIES.computeIfAbsent(id, held -> new StandaloneModelKey<>(ContentBells.body(held)::toString)); }
 
-    public static void register(ModelEvent.RegisterStandalone event, Identifier id) {
-        event.register(body(id), new SimpleUnbakedStandaloneModel<>(ContentBells.body(id), (model, baker, _) -> MISSING.equals(model.debugName()) ? List.of() : List.of(SimpleModelWrapper.bake(baker, model, BlockModelRotation.IDENTITY))));
-    }
+    public static void register(ModelEvent.RegisterStandalone event, Identifier id) { event.register(body(id), new SimpleUnbakedStandaloneModel<>(ContentBells.body(id), (model, baker, _) -> MISSING.equals(model.debugName()) ? List.of() : List.of(SimpleModelWrapper.bake(baker, model, BlockModelRotation.IDENTITY)))); }
 
     @Override @Nonnull public State createRenderState() { return new State(); }
 

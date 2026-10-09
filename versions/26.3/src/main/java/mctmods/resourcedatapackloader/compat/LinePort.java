@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.compat;
 
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.util.FeatureForms;
 import mctmods.resourcedatapackloader.util.FormatUp;
 import mctmods.resourcedatapackloader.util.LineNote;
@@ -48,7 +49,7 @@ public final class LinePort {
         if (path.startsWith("worldgen/density_function/")) { return WorldgenUp.density(json, 0, 0, note); }
         if (!json.isJsonObject()) { return json; }
         if (path.startsWith("recipe/")) { return recipe(json.getAsJsonObject()); }
-        if (path.startsWith("worldgen/biome/")) { return WorldgenUp.biome(json.getAsJsonObject(), note); }
+        if (path.startsWith(WorldgenFiles.BIOME + "/")) { return WorldgenUp.biome(json.getAsJsonObject(), note); }
         if (path.startsWith("worldgen/configured_carver/") || path.startsWith("worldgen/carver/")) { return WorldgenUp.carver(WorldgenUp.ported(json.getAsJsonObject(), note), note); }
         return path.startsWith("worldgen/") ? WorldgenUp.ported(json.getAsJsonObject(), note) : json;
     }

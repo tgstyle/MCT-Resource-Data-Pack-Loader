@@ -11,8 +11,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SpringFeature.class) public abstract class MixinSpringFeature {
-    @Inject(method = "place(Lnet/minecraft/world/level/levelgen/feature/FeaturePlaceContext;)Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$notIntoACut(FeaturePlaceContext<SpringConfiguration> context, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.springIntoCut(context.level(), context.origin())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place(Lnet/minecraft/world/level/levelgen/feature/FeaturePlaceContext;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$notIntoACut(FeaturePlaceContext<SpringConfiguration> context, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.springIntoCut(context.level(), context.origin())) { cir.setReturnValue(false); } }
 }

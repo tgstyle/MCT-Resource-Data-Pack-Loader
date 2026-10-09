@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.types;
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -15,10 +16,8 @@ import mctmods.resourcedatapackloader.content.item.ContentRollItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
@@ -122,16 +121,14 @@ public final class ContentItemTypes {
         }
         int uses = slot.getDurability(material.durability() / 10);
         Item made = new Item(lasting(properties.humanoidArmor(ContentMaterials.armor(material), slot), uses));
-        if (ContentMaterials.customArmor(material)) { ContentMaterials.repairWith(ResourceKey.create(Registries.ITEM, variant.id()), null); }
+        if (ContentMaterials.customArmor(material)) { ContentMaterials.repairWith(ResourceKey.create(Registries.ITEM, variant.id()), material); }
         return made;
     }
 
     private static Item.Properties lasting(Item.Properties properties, int uses) { return uses > 0 ? properties : properties.component(DataComponents.UNBREAKABLE, Unit.INSTANCE).component(DataComponents.TOOLTIP_DISPLAY, TooltipDisplay.DEFAULT.withHidden(DataComponents.UNBREAKABLE, true)); }
 
     @Nullable private static Item seed(ItemDef def, ItemVariant variant, Item.Properties properties) {
-        Identifier named = Identifier.tryParse(def.crop());
-        ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
-        Block crop = made != null ? made.block() : Registered.find(BuiltInRegistries.BLOCK, named);
+        Block crop = ContentStates.registered(def.crop());
         if (crop == null) {
             ContentLog.LOGGER.error("Seed {} plants '{}', which is not a registered block, the item is skipped", variant.id(), def.crop());
             return null;

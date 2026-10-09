@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 
 import net.neoforged.fml.loading.FMLPaths;
+import org.apache.logging.log4j.Level;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,6 +13,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
@@ -20,6 +22,10 @@ public final class ContentLog {
     public static final ContentLog LOGGER = new ContentLog();
     private static final String PATH = "logs/rdpl.log";
     private static final String DEBUG = "DEBUG";
+    private static final String INFO = "INFO";
+    private static final String WARN = "WARN";
+    private static final String ERROR = "ERROR";
+    private static final String FATAL = "FATAL";
     private static final int KEPT_AT_MOST = 1000;
     private final SimpleDateFormat time = new SimpleDateFormat("HH:mm:ss");
     @Nullable private PrintWriter writer;
@@ -44,27 +50,43 @@ public final class ContentLog {
         finally { quiet.set(was); }
     }
 
-    public void info(String message, Object... args) { write("INFO", message, args); }
+    public void info(String message, Object... args) { write(INFO, message, args); }
 
-    public void warn(String message, Object... args) { write("WARN", message, args); }
+    public void warn(String message, Object... args) { write(WARN, message, args); }
 
-    public void error(String message, Object... args) { write("ERROR", message, args); }
+    public void error(String message, Object... args) { write(ERROR, message, args); }
+
+    public <T> void errorOnce(Set<T> told, T key, String message, Object... args) {
+        boolean first;
+        synchronized (this) { first = told.add(key); }
+        if (first) { error(message, args); }
+    }
 
     public void debug(String message, Object... args) { write(DEBUG, message, args); }
 
-    public void fatal(String message, Object... args) { write("FATAL", message, args); }
+    public void fatal(String message, Object... args) { write(FATAL, message, args); }
 
     private synchronized void write(String level, String message, Object... args) {
-        if ((DEBUG.equals(level) && !debug) || (quiet.get() && (DEBUG.equals(level) || "INFO".equals(level)))) { return; }
+        if ((DEBUG.equals(level) && !debug) || (quiet.get() && (DEBUG.equals(level) || INFO.equals(level)))) { return; }
         PrintWriter out = open();
         if (out == null) {
-            ResourceDataPackLoader.LOGGER.info(format(message, args, false));
+            Throwable fallen = thrownOf(args);
+            ResourceDataPackLoader.LOGGER.log(levelOf(level), format(message, args, fallen != null), fallen);
             return;
         }
-        Throwable thrown = args.length > 0 && args[args.length - 1] instanceof Throwable ? (Throwable) args[args.length - 1] : null;
+        Throwable thrown = thrownOf(args);
         out.println("[" + time.format(new Date()) + "] [" + Thread.currentThread().getName() + "/" + level + "]: " + format(message, args, thrown != null));
         if (thrown != null) { thrown.printStackTrace(out); }
         out.flush();
+    }
+
+    @Nullable private static Throwable thrownOf(Object[] args) { return args.length > 0 && args[args.length - 1] instanceof Throwable ? (Throwable) args[args.length - 1] : null; }
+
+    private static Level levelOf(String level) {
+        if (WARN.equals(level)) { return Level.WARN; }
+        if (ERROR.equals(level)) { return Level.ERROR; }
+        if (FATAL.equals(level)) { return Level.FATAL; }
+        return Level.INFO;
     }
 
     @Nullable private PrintWriter open() {
@@ -95,8 +117,7 @@ public final class ContentLog {
         }
         if (kept == null) { return; }
         try (InputStream in = Files.newInputStream(file.toPath()); OutputStream out = new GZIPOutputStream(Files.newOutputStream(kept.toPath()))) {
-            byte[] buffer = new byte[8192];
-            for (int read = in.read(buffer); read > 0; read = in.read(buffer)) { out.write(buffer, 0, read); }
+            in.transferTo(out);
         }
         catch (IOException | RuntimeException ex) {
             ResourceDataPackLoader.LOGGER.error("Could not roll {} into {}, so the old one is lost: {}", PATH, kept.getName(), ex.getMessage());

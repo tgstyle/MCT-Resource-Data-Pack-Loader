@@ -16,6 +16,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow @Final private RecipeManager recipes;
     @Shadow @Final private RegistryAccess registryAccess;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void rdpl$recipeRegistries(CallbackInfo ci) { ((IRecipeRegistries) recipes).rdpl$registries(registryAccess); }
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$recipeRegistries(CallbackInfo ci) { ((IRecipeRegistries) recipes).rdpl$registries(registryAccess); }
 }

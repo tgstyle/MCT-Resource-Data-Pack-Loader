@@ -87,9 +87,7 @@ public final class PackOptionsButton {
     }
 
     @Nullable private static Button button(Screen screen, String key) {
-        for (GuiEventListener listener : screen.children()) {
-            if (listener instanceof Button held && key.equals(keyOf(held.getMessage()))) { return held; }
-        }
+        for (GuiEventListener listener : screen.children()) { if (listener instanceof Button held && key.equals(keyOf(held.getMessage()))) { return held; } }
         return null;
     }
 

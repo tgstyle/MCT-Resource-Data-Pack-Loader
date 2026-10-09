@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -17,7 +16,7 @@ import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import javax.annotation.Nullable;
 
 public final class PouchKey {
-    public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "main"));
+    public static final KeyMapping.Category CATEGORY = new KeyMapping.Category(ResourceDataPackLoader.id("main"));
     public static final String NAME = "key." + ResourceDataPackLoader.MOD_ID + ".pouch";
     @Nullable private static KeyMapping key;
 

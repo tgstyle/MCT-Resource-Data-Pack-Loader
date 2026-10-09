@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.compat.LinePort;
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.Snbt;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -28,7 +30,7 @@ final class Modern {
 
     private static void definition(JsonObject json, String path, String file, boolean stacks, Consumer<String> note) {
         if (path.startsWith("dimension_type/")) { ModernWorld.dimensionType(json, file, note); }
-        else if (path.startsWith("worldgen/biome/")) { ModernWorld.biome(json, file, note); }
+        else if (path.startsWith(WorldgenFiles.BIOME + "/")) { ModernWorld.biome(json, file, note); }
         else if (path.startsWith("worldgen/configured_feature/")) { ModernWorld.feature(json, file, note); }
         else if (path.startsWith("trim_material/") || path.startsWith("trim_pattern/")) { ModernWorld.trim(json, path.startsWith("trim_material/")); }
         else if (path.startsWith("wolf_variant/")) { ModernWorld.wolf(json, file, note); }
@@ -67,7 +69,7 @@ final class Modern {
             String trimmed = line.trim();
             String out = trimmed.startsWith(GAMERULE) ? gamerule(trimmed, file, note) : trimmed;
             boolean macro = out.startsWith("$");
-            List<String> args = CrossCommands.split(macro ? out.substring(1) : out, ' ');
+            List<String> args = Snbt.split(macro ? out.substring(1) : out, ' ');
             command(args, 0);
             out = (macro ? "$" : "") + String.join(" ", args);
             if (out.equals(trimmed)) { continue; }
@@ -131,6 +133,6 @@ final class Modern {
             note.accept("'" + file + "' sets the game rule " + args[1] + ", which this version does not have, so that line is kept as written");
             return line;
         }
-        return "gamerule " + rule.getKey() + (args.length > 2 ? " " + rule.getValue() : "");
+        return GAMERULE + rule.getKey() + (args.length > 2 ? " " + rule.getValue() : "");
     }
 }

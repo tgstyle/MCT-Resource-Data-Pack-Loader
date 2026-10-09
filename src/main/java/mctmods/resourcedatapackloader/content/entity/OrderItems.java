@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -101,17 +102,23 @@ public final class OrderItems {
         }
     }
 
-    public static boolean harvestable(Mob mob, BlockState state) {
+    public static boolean unharvestable(Mob mob, BlockState state) {
         ItemStack tool = mob.getMainHandItem();
-        if (ContentHardness.digBarred(mob, state, tool)) { return false; }
-        return !state.requiresCorrectToolForDrops() || tool.isCorrectToolForDrops(state);
+        if (ContentHardness.digBarred(mob, state, tool)) { return true; }
+        return state.requiresCorrectToolForDrops() && !tool.isCorrectToolForDrops(state);
     }
+
+    public static void wear(Mob mob) { mob.getMainHandItem().hurtAndBreak(1, mob, EquipmentSlot.MAINHAND); }
 
     public static int digTicks(Mob mob, BlockPos pos, BlockState state, float speed) {
         ItemStack tool = mob.getMainHandItem();
         float dig = tool.isEmpty() ? 1.0F : tool.getDestroySpeed(state);
         int efficiency = mob.level().registryAccess().lookupOrThrow(Registries.ENCHANTMENT).get(Enchantments.EFFICIENCY).map(tool::getEnchantmentLevel).orElse(0);
         if (dig > 1.0F && efficiency > 0) { dig += efficiency * efficiency + 1; }
+        return breakTicks(mob, pos, state, dig, speed);
+    }
+
+    public static int breakTicks(Mob mob, BlockPos pos, BlockState state, float dig, float speed) {
         float hardness = state.getDestroySpeed(mob.level(), pos);
         float ticks = hardness * 30.0F / dig * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ()) / Math.max(0.01F, speed);
         return Math.max(1, Mth.ceil(ticks));
@@ -135,8 +142,8 @@ public final class OrderItems {
     }
 
     public static String kind(ItemStack tool) {
-        for (Map.Entry<String, TagKey<Item>> kind : KINDS.entrySet()) {
-            if (!tool.isEmpty() && tool.is(kind.getValue())) { return kind.getKey(); }
+        for (String kind : ContentToolTypes.HARVEST) {
+            if (isKind(tool, kind)) { return kind; }
         }
         return "";
     }

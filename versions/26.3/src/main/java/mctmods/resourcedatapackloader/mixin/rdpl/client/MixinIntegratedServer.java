@@ -16,7 +16,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "initServer()Z", at = @At(value = "INVOKE", target = "Lnet/neoforged/neoforge/server/ServerLifecycleHooks;handleServerStarting(Lnet/minecraft/server/MinecraftServer;)V")) private void rdpl$packServerRules(CallbackInfoReturnable<Boolean> cir) { ContentServer.applyTo((MinecraftServer) (Object) this); }
 
-    @Inject(method = "getForcedGameType()Lnet/minecraft/world/level/GameType;", at = @At("HEAD"), cancellable = true) private void rdpl$forceGameMode(CallbackInfoReturnable<GameType> cir) {
-        if (Boolean.FALSE.equals(ContentServer.forceGameMode())) { cir.setReturnValue(null); }
-    }
+    @Inject(method = "getForcedGameType()Lnet/minecraft/world/level/GameType;", at = @At("HEAD"), cancellable = true) private void rdpl$forceGameMode(CallbackInfoReturnable<GameType> cir) { if (ContentServer.off(ContentServer.forceGameMode())) { cir.setReturnValue(null); } }
 }

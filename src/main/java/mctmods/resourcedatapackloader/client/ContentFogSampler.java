@@ -10,6 +10,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -32,12 +34,13 @@ public final class ContentFogSampler {
     private static final float FULL_LIGHT = 15.0F;
     @Nullable private static Vec3 target;
     @Nullable private static Vec3 current;
+    @Nullable private static ResourceKey<Level> sampledIn;
     private static boolean sampled;
 
     private ContentFogSampler() {}
 
     @Nullable public static SkyLookDef look(@Nullable Level level) {
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         return def == null ? null : def.look();
     }
 
@@ -67,10 +70,17 @@ public final class ContentFogSampler {
         SkyLookDef look = look(level);
         Entity camera = mc.getCameraEntity();
         if (level == null || look == null || !look.sampleFog() || camera == null) {
+            sampledIn = null;
             sampled = false;
             target = null;
             current = null;
             return;
+        }
+        if (!level.dimension().equals(sampledIn)) {
+            sampledIn = level.dimension();
+            sampled = false;
+            target = null;
+            current = null;
         }
         if (!sampled || level.getGameTime() % INTERVAL == 0L) {
             target = ground(level, camera);
@@ -92,9 +102,9 @@ public final class ContentFogSampler {
                 BlockPos top = new BlockPos(x + dx, level.getHeight(Heightmap.Types.WORLD_SURFACE, x + dx, z + dz) - 1, z + dz);
                 MapColor map = level.getBlockState(top).getMapColor(level, top);
                 if (map == MapColor.NONE) { continue; }
-                red += (map.col >> 16 & 255) / 255.0D;
-                green += (map.col >> 8 & 255) / 255.0D;
-                blue += (map.col & 255) / 255.0D;
+                red += ARGB.redFloat(map.col);
+                green += ARGB.greenFloat(map.col);
+                blue += ARGB.blueFloat(map.col);
                 count++;
             }
         }

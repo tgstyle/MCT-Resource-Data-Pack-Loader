@@ -60,9 +60,7 @@ public class TintedCollector implements OrderedSubmitNodeCollector {
 
     @Override public void submitLeash(@Nonnull PoseStack poseStack, @Nonnull EntityRenderState.LeashState leash) { inner.submitLeash(poseStack, leash); }
 
-    @Override public <S> void submitModel(@Nonnull Model<? super S> model, @Nonnull S state, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, int tintedColor, @Nullable TextureAtlasSprite sprite, int outlineColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling) {
-        inner.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, multiply(tintedColor, tint), sprite, outlineColor, crumbling);
-    }
+    @Override public <S> void submitModel(@Nonnull Model<? super S> model, @Nonnull S state, @Nonnull PoseStack poseStack, @Nonnull RenderType renderType, int lightCoords, int overlayCoords, int tintedColor, @Nullable TextureAtlasSprite sprite, int outlineColor, @Nullable ModelFeatureRenderer.CrumblingOverlay crumbling) { inner.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, multiply(tintedColor, tint), sprite, outlineColor, crumbling); }
 
     @Override public void submitMovingBlock(@Nonnull PoseStack poseStack, @Nonnull MovingBlockRenderState state, int outlineColor) { inner.submitMovingBlock(poseStack, state, outlineColor); }
 
@@ -80,9 +78,7 @@ public class TintedCollector implements OrderedSubmitNodeCollector {
         inner.submitItem(poseStack, context, lightCoords, overlayCoords, outlineColor, marked, quads, foil);
     }
 
-    @Override public void submitCustomGeometry(@Nonnull PoseStack poseStack, @Nonnull RenderType renderType, @Nonnull SubmitNodeCollector.CustomGeometryRenderer renderer) {
-        inner.submitCustomGeometry(poseStack, renderType, (pose, consumer) -> renderer.render(pose, EntityTint.wrap(consumer, tint)));
-    }
+    @Override public void submitCustomGeometry(@Nonnull PoseStack poseStack, @Nonnull RenderType renderType, @Nonnull SubmitNodeCollector.CustomGeometryRenderer renderer) { inner.submitCustomGeometry(poseStack, renderType, (pose, consumer) -> renderer.render(pose, EntityTint.wrap(consumer, tint))); }
 
     @Override public void submitQuadParticleGroup(@Nonnull QuadParticleRenderState particles) { inner.submitQuadParticleGroup(particles); }
 

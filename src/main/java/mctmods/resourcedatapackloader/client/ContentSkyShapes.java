@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
@@ -12,7 +13,7 @@ import javax.annotation.Nullable;
 public final class ContentSkyShapes {
     public static final int TEXTURED = 5;
     public static final int COLORED = 7;
-    private static final float SIZE = 100.0F;
+    static final float SIZE = 100.0F;
     private static final float[][][] FACES = {
             {{-1, 1, 1}, {1, 1, 1}, {1, 1, -1}, {-1, 1, -1}},
             {{-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, {-1, -1, 1}},
@@ -182,9 +183,9 @@ public final class ContentSkyShapes {
         out[at] = x;
         out[at + 1] = y;
         out[at + 2] = z;
-        out[at + 3] = (color >> 16 & 255) / 255.0F;
-        out[at + 4] = (color >> 8 & 255) / 255.0F;
-        out[at + 5] = (color & 255) / 255.0F;
+        out[at + 3] = ARGB.redFloat(color);
+        out[at + 4] = ARGB.greenFloat(color);
+        out[at + 5] = ARGB.blueFloat(color);
         out[at + 6] = alpha;
         return at + COLORED;
     }

@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
@@ -29,10 +31,10 @@ public final class ContentStarField {
         SkyLookDef look = ContentFogSampler.look(level);
         int color = look == null || look.starColor() == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor();
         float twinkle = look == null ? 0.0F : look.starTwinkle();
-        float red = (color >> 16 & 255) / 255.0F;
-        float green = (color >> 8 & 255) / 255.0F;
-        float blue = (color & 255) / 255.0F;
-        float time = level == null ? 0.0F : (level.getGameTime() % 24000L + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) / 20.0F;
+        float red = ARGB.redFloat(color);
+        float green = ARGB.greenFloat(color);
+        float blue = ARGB.blueFloat(color);
+        float time = level == null ? 0.0F : (level.getGameTime() % SharedConstants.TICKS_PER_GAME_DAY + Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false)) / SharedConstants.TICKS_PER_SECOND;
         Vector4f[] colors = new Vector4f[GROUPS];
         for (int group = 0; group < GROUPS; ++group) {
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
@@ -71,7 +73,7 @@ public final class ContentStarField {
         float size = smallest + random.nextFloat() * spread;
         float length = Mth.lengthSquared(x, y, z);
         if (length >= 1.0F || length <= 0.010000001F) { return null; }
-        Vector3f center = new Vector3f(x, y, z).normalize(100.0F);
+        Vector3f center = new Vector3f(x, y, z).normalize(ContentSkyShapes.SIZE);
         float spin = (float) (random.nextDouble() * (float) Math.PI * 2.0D);
         Matrix3f turn = new Matrix3f().rotateTowards(new Vector3f(center).negate(), new Vector3f(0.0F, 1.0F, 0.0F)).rotateZ(-spin);
         float[] corners = new float[12];

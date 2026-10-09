@@ -47,7 +47,7 @@ public final class ContentBoards {
     public static void load() {
         RULES.clear();
         Json.eachFile(PackManager.GAMES, "game file", (key, contents) -> {
-            JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.object(key, contents, "game file");
             if (json == null) { return; }
             String name = key.getPath();
             if (RULES.containsKey(name)) {
@@ -63,6 +63,8 @@ public final class ContentBoards {
     public static List<String> gameNames() { return new ArrayList<>(RULES.keySet()); }
 
     @Nullable public static BoardRules rules(String game) { return RULES.get(game); }
+
+    @Nullable public static BoardRules rules(BoardGame game) { return RULES.get(game.game); }
 
     @Nullable public static BoardGame board(MinecraftServer server, String name) { return ContentBoardData.get(server).boards.get(name); }
 
@@ -82,7 +84,7 @@ public final class ContentBoards {
     public static void rebuild(MinecraftServer server) {
         ContentBoardData data = ContentBoardData.get(server);
         for (BoardGame game : data.boards.values()) {
-            BoardRules rules = RULES.get(game.game);
+            BoardRules rules = rules(game);
             ServerLevel level = world(server, game);
             if (rules == null || level == null) {
                 ContentLog.LOGGER.error("Board {} plays {} in dimension {}, which this pack no longer has, so its pieces wait", game.name, game.game, game.dimension);
@@ -102,16 +104,14 @@ public final class ContentBoards {
         data.setDirty();
     }
 
-    public static void onTick(ServerTickEvent.Post event) {
-        if (!RULES.isEmpty()) { tick(event.getServer()); }
-    }
+    public static void onTick(ServerTickEvent.Post event) { if (!RULES.isEmpty()) { tick(event.getServer()); } }
 
     private static void tick(MinecraftServer server) {
         ContentBoardData data = ContentBoardData.get(server);
         ContentBoardPlay.expire(server);
         boolean second = ++beat % SECOND == 0;
         for (BoardGame game : new ArrayList<>(data.boards.values())) {
-            BoardRules rules = RULES.get(game.game);
+            BoardRules rules = rules(game);
             BoardState state = game.state;
             ServerLevel level = rules != null && game.strike > 0 && --game.strike == 0 ? world(server, game) : null;
             if (level != null) { ContentBoardPieces.sync(level, game, rules); }
@@ -147,9 +147,7 @@ public final class ContentBoards {
         if (ContentBoardPieces.stale(entity, board(level.getServer(), board))) { event.setCanceled(true); }
     }
 
-    public static void onAttack(AttackEntityEvent event) {
-        if (ContentBoardPieces.boardOf(event.getTarget()) != null) { event.setCanceled(true); }
-    }
+    public static void onAttack(AttackEntityEvent event) { if (ContentBoardPieces.boardOf(event.getTarget()) != null) { event.setCanceled(true); } }
 
     public static void onTouch(PlayerInteractEvent.EntityInteract event) {
         Entity target = event.getTarget();
@@ -165,7 +163,7 @@ public final class ContentBoards {
         if (RULES.isEmpty() || event.getHand() != InteractionHand.MAIN_HAND || !(event.getEntity() instanceof ServerPlayer player)) { return; }
         String dimension = player.level().dimension().identifier().toString();
         for (BoardGame game : ContentBoardData.get(player.level().getServer()).boards.values()) {
-            BoardRules rules = RULES.get(game.game);
+            BoardRules rules = rules(game);
             if (rules == null || !game.dimension.equals(dimension)) { continue; }
             int square = ContentBoardPieces.square(game, rules, event.getPos());
             if (square >= 0 && ContentBoardPlay.clickSquare(player, game, square)) {

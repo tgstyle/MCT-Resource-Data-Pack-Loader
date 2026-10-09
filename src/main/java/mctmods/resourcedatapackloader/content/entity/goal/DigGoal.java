@@ -1,8 +1,8 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
-import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.OrderItems;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -20,7 +20,6 @@ import javax.annotation.Nullable;
 public final class DigGoal extends Goal {
     private static final int LOOK = 10;
     private static final int REST = 30;
-    private static final int SWING = 6;
     private static final double SPEED = 1.0D;
     private final PathfinderMob mob;
     @Nullable private LivingEntity target;
@@ -72,13 +71,10 @@ public final class DigGoal extends Goal {
             advance(aim);
             return;
         }
-        mob.getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F);
-        if ((total - left) % SWING == 0) { LineCompat.swing(mob); }
-        left--;
-        mob.level().destroyBlockProgress(mob.getId(), pos, (int) (9.0F * (total - left) / total));
+        left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
         ContentHardness.dig(mob, pos);
-        if (mob.level() instanceof ServerLevel level) { mob.getMainHandItem().hurtAndBreak(1, level, mob, _ -> { }); }
+        OrderItems.wear(mob);
         digging = null;
         begin(pick());
     }
@@ -100,8 +96,7 @@ public final class DigGoal extends Goal {
         if (pos == null) { return; }
         BlockState state = mob.level().getBlockState(pos);
         ItemStack tool = mob.getMainHandItem();
-        float speed = Math.max(1.0F, tool.getDestroySpeed(state));
-        total = Math.max(1, Mth.ceil(state.getDestroySpeed(mob.level(), pos) * 30.0F / speed * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ())));
+        total = OrderItems.breakTicks(mob, pos, state, Math.max(1.0F, tool.getDestroySpeed(state)), 1.0F);
         left = total;
         mob.getNavigation().stop();
     }

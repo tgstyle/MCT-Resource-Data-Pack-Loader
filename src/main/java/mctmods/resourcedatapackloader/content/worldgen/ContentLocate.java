@@ -1,10 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -15,9 +14,8 @@ import javax.annotation.Nullable;
 public final class ContentLocate extends SavedData {
     public static final String NAME = "rdpl_locate";
     private static final String PLACED = "Placed";
+    private static final SavedDataType<ContentLocate> TYPE = SavedTypes.of(NAME, ContentLocate::new, ContentLocate::read, ContentLocate::write);
     private CompoundTag placed = new CompoundTag();
-
-    private static final SavedDataType<ContentLocate> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), ContentLocate::new, CompoundTag.CODEC.xmap(ContentLocate::read, ContentLocate::write));
 
     private static ContentLocate of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
 

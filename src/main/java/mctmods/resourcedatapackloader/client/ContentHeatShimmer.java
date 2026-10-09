@@ -25,7 +25,7 @@ import java.util.Arrays;
 import javax.annotation.Nullable;
 
 public final class ContentHeatShimmer {
-    private static final Identifier EFFECT = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "heat");
+    private static final Identifier EFFECT = ResourceDataPackLoader.id("heat");
     private static final String UNIFORM = "HeatConfig";
     private static final float EASE = 0.05F;
     private static final float GONE = 0.002F;

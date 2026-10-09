@@ -37,17 +37,13 @@ public final class ContentMaterials {
 
     private ContentMaterials() {}
 
-    public static ToolMaterial tool(MaterialDef def) {
-        return TOOLS.computeIfAbsent(def.key(), key -> new ToolMaterial(incorrect(def.harvestLevel()), def.durability(), def.efficiency(), def.damage(), def.enchantability(), TagKey.create(Registries.ITEM, key)));
-    }
+    public static ToolMaterial tool(MaterialDef def) { return TOOLS.computeIfAbsent(def.key(), key -> new ToolMaterial(incorrect(def.harvestLevel()), def.durability(), def.efficiency(), def.damage(), def.enchantability(), TagKey.create(Registries.ITEM, key))); }
 
     public static ArmorMaterial armor(MaterialDef def) { return ARMORS.computeIfAbsent(def.key(), _ -> armorMaterial(def)); }
 
     public static boolean customArmor(MaterialDef def) { return !VANILLA_ARMORS.containsKey(def.key().toString()); }
 
-    public static void repairWith(ResourceKey<Item> id, @Nullable MaterialDef def) {
-        BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.add(id, (components, _, _) -> components.set(DataComponents.REPAIRABLE, def == null ? null : repair(def)));
-    }
+    public static void repairWith(ResourceKey<Item> id, MaterialDef def) { BuiltInRegistries.DATA_COMPONENT_INITIALIZERS.add(id, (components, _, _) -> components.set(DataComponents.REPAIRABLE, repair(def))); }
 
     private static ArmorMaterial armorMaterial(MaterialDef def) {
         int durability = def.durability() / 10;

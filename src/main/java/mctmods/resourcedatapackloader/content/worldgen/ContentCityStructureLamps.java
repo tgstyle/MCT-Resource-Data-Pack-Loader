@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -27,6 +28,8 @@ public final class ContentCityStructureLamps {
 
     private ContentCityStructureLamps() {}
 
+    private static boolean lampless(@Nullable Object template) { return template == null && ContentCity.lampBlock().isEmpty(); }
+
     @Nullable private static Identifier lampTemplate(GenerationContext context) {
         String named = ContentCity.lampStructure();
         Identifier template = named.isEmpty() ? null : Identifier.tryParse(named);
@@ -41,11 +44,11 @@ public final class ContentCityStructureLamps {
         if (laid == null) { return; }
         CityCross cross = CityCross.of(line);
         Identifier template = lampTemplate(context);
-        if (template == null && ContentCity.lampBlock().isEmpty()) { return; }
+        if (lampless(template)) { return; }
         int from = line.from();
         int to = line.to();
         if (to - from < LAMP_SHORTEST) { return; }
-        RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ (line.at() * 341873128712L + (line.alongX() ? 1L : 2L)));
+        RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ (line.at() * SeededRandom.ACROSS + (line.alongX() ? 1L : 2L)));
         List<Integer> along = new ArrayList<>();
         along.add(from);
         for (int step = from + LAMP_LEAST + roll.nextInt(LAMP_SPREAD); step < to - 1; step += LAMP_LEAST + roll.nextInt(LAMP_SPREAD)) { along.add(step); }
@@ -117,7 +120,7 @@ public final class ContentCityStructureLamps {
 
     static void bulbLamps(GenerationContext context, CityPlan plan, ContentCityStructure.Bulb bulb, List<ContentCityStructure.Well> wells, Set<Long> doors, StructurePiecesBuilder builder) {
         Identifier template = lampTemplate(context);
-        if (template == null && ContentCity.lampBlock().isEmpty()) { return; }
+        if (lampless(template)) { return; }
         ContentCityBulbPiece.Court court = bulb.court();
         boolean walked = CityCross.of(bulb.line()).walk() > 0;
         int ring = walked ? court.reach() : court.reach() + 1;
@@ -152,21 +155,19 @@ public final class ContentCityStructureLamps {
     }
 
     private static boolean cleared(CityPlan plan, @Nullable CityPlan.Line line, List<ContentCityStructure.Well> wells, BoundingBox stood) {
-        if (line != null && ((line.alongX() ? stood.minX() : stood.minZ()) < line.from() || (line.alongX() ? stood.maxX() : stood.maxZ()) > line.to())) { return true; }
+        if (line != null && (CityLines.least(line, stood) < line.from() || CityLines.most(line, stood) > line.to())) { return true; }
         int reach = CityPlan.plazaPaved() + CityPlan.walkWidth() + ContentCityPlazaPiece.MOUTH_MOST;
         for (ContentCityStructure.Well well : wells) {
             BoundingBox box = well.box();
-            if (stood.maxX() >= box.minX() - reach && stood.minX() <= box.maxX() + reach && stood.maxZ() >= box.minZ() - reach && stood.minZ() <= box.maxZ() + reach) { return true; }
+            if (stood.intersects(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { return true; }
         }
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line other : lines) {
-                if (other.equals(line)) { continue; }
-                int leastX = other.alongX() ? other.from() : other.at();
-                int mostX = other.alongX() ? other.to() : other.last();
-                int leastZ = other.alongX() ? other.at() : other.from();
-                int mostZ = other.alongX() ? other.last() : other.to();
-                if (stood.maxX() >= leastX && stood.minX() <= mostX && stood.maxZ() >= leastZ && stood.minZ() <= mostZ) { return true; }
-            }
+        for (CityPlan.Line other : CityLines.of(plan)) {
+            if (other.equals(line)) { continue; }
+            int leastX = other.alongX() ? other.from() : other.at();
+            int mostX = other.alongX() ? other.to() : other.last();
+            int leastZ = other.alongX() ? other.at() : other.from();
+            int mostZ = other.alongX() ? other.last() : other.to();
+            if (stood.intersects(leastX, leastZ, mostX, mostZ)) { return true; }
         }
         return false;
     }

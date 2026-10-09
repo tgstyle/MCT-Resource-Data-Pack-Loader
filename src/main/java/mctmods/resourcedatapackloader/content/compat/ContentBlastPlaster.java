@@ -1,47 +1,60 @@
 package mctmods.resourcedatapackloader.content.compat;
 
+import mctmods.blastplaster.Config.ExplosionMode;
+import mctmods.blastplaster.Config.View;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
+import static mctmods.blastplaster.Config.provider;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import net.minecraft.world.level.Level;
 
 public final class ContentBlastPlaster {
     private static final Map<String, JsonElement> EVERYWHERE = new LinkedHashMap<>();
     private static final Map<String, Map<String, JsonElement>> PER_DIMENSION = new LinkedHashMap<>();
-    private static final Map<String, mctmods.blastplaster.Config.View> RESOLVED = new ConcurrentHashMap<>();
+    private static final Map<String, View> RESOLVED = new ConcurrentHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentBlastPlaster() {}
 
     public static void install() {
         if (ContentControl.off(ContentControl.BLAST_PLASTER)) { return; }
-        mctmods.blastplaster.Config.provider(ContentBlastPlaster::viewFor);
+        provider(ContentBlastPlaster::viewFor);
         ContentLog.LOGGER.info("Driving Blast Plaster through pack settings, EJECT_DROPS unless a pack says otherwise");
     }
 
-    private static mctmods.blastplaster.Config.View viewFor(Level level) {
+    private static View viewFor(Level level) {
         load();
         return RESOLVED.computeIfAbsent(level.dimension().identifier().toString(), ContentBlastPlaster::resolve);
     }
 
-    private static mctmods.blastplaster.Config.View resolve(String dimension) {
+    private static View resolve(String dimension) {
         Map<String, JsonElement> settings = new LinkedHashMap<>(EVERYWHERE);
         Map<String, JsonElement> dimensional = PER_DIMENSION.get(dimension);
         if (dimensional != null) { settings.putAll(dimensional); }
-        return new PackView(settings);
+        return new PackView(settings, explosionMode(settings.get("explosionMode")));
+    }
+
+    private static ExplosionMode explosionMode(JsonElement held) {
+        if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
+            ExplosionMode found = Enums.byName(ExplosionMode.class, held.getAsString());
+            if (found != null) { return found; }
+            ContentLog.LOGGER.error("Blast Plaster explosionMode '{}' is not HEAL, EJECT_DROPS or VISUAL_TOSS, using EJECT_DROPS", held.getAsString());
+        }
+        return ExplosionMode.EJECT_DROPS;
     }
 
     private static void load() {
@@ -54,42 +67,41 @@ public final class ContentBlastPlaster {
 
     private static void read() {
         int[] read = {0};
-        PackManager.get().forEach(PackManager.BLASTPLASTER, PackManager.JSON, (namespace, path, contents) -> {
-            try {
-                JsonObject held = JsonParser.parseString(contents).getAsJsonObject();
-                for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
-                    if (!"dimensions".equals(entry.getKey())) {
-                        EVERYWHERE.put(entry.getKey(), entry.getValue());
-                        continue;
-                    }
-                    for (Map.Entry<String, JsonElement> given : entry.getValue().getAsJsonObject().entrySet()) {
-                        Map<String, JsonElement> section = PER_DIMENSION.computeIfAbsent(given.getKey().trim(), _ -> new LinkedHashMap<>());
-                        for (Map.Entry<String, JsonElement> inner : given.getValue().getAsJsonObject().entrySet()) { section.put(inner.getKey(), inner.getValue()); }
-                    }
+        Json.eachObject(PackManager.BLASTPLASTER, "Blast Plaster settings file", (_, held) -> {
+            for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
+                if (!"dimensions".equals(entry.getKey())) {
+                    EVERYWHERE.put(entry.getKey(), entry.getValue());
+                    continue;
                 }
-                read[0]++;
+                for (Map.Entry<String, JsonElement> given : entry.getValue().getAsJsonObject().entrySet()) {
+                    Map<String, JsonElement> section = PER_DIMENSION.computeIfAbsent(given.getKey().trim(), _ -> new LinkedHashMap<>());
+                    for (Map.Entry<String, JsonElement> inner : given.getValue().getAsJsonObject().entrySet()) { section.put(inner.getKey(), inner.getValue()); }
+                }
             }
-            catch (JsonParseException | IllegalStateException ex) { ContentLog.LOGGER.error("Parsing error in Blast Plaster settings file {}:{}, ignoring it", namespace, path, ex); }
+            read[0]++;
         });
         if (read[0] > 0) { Summary.info("blastplaster", "Loaded " + read[0] + " Blast Plaster settings file(s) from packs"); }
     }
 
-    private record PackView(Map<String, JsonElement> settings) implements mctmods.blastplaster.Config.View {
-        private Boolean flag(String key) {
+    private record PackView(Map<String, JsonElement> settings, ExplosionMode mode) implements View {
+        private JsonElement given(String key, Predicate<JsonElement> fits) {
             JsonElement held = settings.get(key);
-            if (held == null || !held.isJsonPrimitive() || !held.getAsJsonPrimitive().isBoolean()) { return null; }
-            return held.getAsBoolean();
+            return held != null && fits.test(held) ? held : null;
+        }
+
+        private Boolean flag(String key) {
+            JsonElement held = given(key, found -> found.isJsonPrimitive() && found.getAsJsonPrimitive().isBoolean());
+            return held == null ? null : held.getAsBoolean();
         }
 
         private Integer number(String key) {
-            JsonElement held = settings.get(key);
-            if (held == null || !held.isJsonPrimitive() || !held.getAsJsonPrimitive().isNumber()) { return null; }
-            return held.getAsInt();
+            JsonElement held = given(key, found -> found.isJsonPrimitive() && found.getAsJsonPrimitive().isNumber());
+            return held == null ? null : held.getAsInt();
         }
 
         private List<String> strings(String key) {
-            JsonElement held = settings.get(key);
-            if (held == null || !held.isJsonArray()) { return null; }
+            JsonElement held = given(key, JsonElement::isJsonArray);
+            if (held == null) { return null; }
             List<String> given = new ArrayList<>();
             for (JsonElement entry : held.getAsJsonArray()) {
                 if (entry.isJsonPrimitive() && entry.getAsJsonPrimitive().isString()) { given.add(entry.getAsString()); }
@@ -97,146 +109,63 @@ public final class ContentBlastPlaster {
             return given;
         }
 
-        @Override public mctmods.blastplaster.Config.ExplosionMode getExplosionMode() {
-            JsonElement held = settings.get("explosionMode");
-            if (held != null && held.isJsonPrimitive() && held.getAsJsonPrimitive().isString()) {
-                for (mctmods.blastplaster.Config.ExplosionMode mode : mctmods.blastplaster.Config.ExplosionMode.values()) {
-                    if (mode.name().equalsIgnoreCase(held.getAsString().trim())) { return mode; }
-                }
-                ContentLog.LOGGER.error("Blast Plaster explosionMode '{}' is not HEAL, EJECT_DROPS or VISUAL_TOSS, using EJECT_DROPS", held.getAsString());
-            }
-            return mctmods.blastplaster.Config.ExplosionMode.EJECT_DROPS;
-        }
+        @Override public ExplosionMode getExplosionMode() { return mode; }
 
-        @Override public boolean enableFakeTossedBlocks() {
-            Boolean held = flag("enableFakeTossedBlocks");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.enableFakeTossedBlocks();
-        }
+        private static <T> T or(T held, Supplier<T> fallback) { return held != null ? held : fallback.get(); }
+
+        @Override public boolean enableFakeTossedBlocks() { return or(flag("enableFakeTossedBlocks"), View.super::enableFakeTossedBlocks); }
 
         @Override public boolean enableExplosionFlash() {
             if (Config.content.vanillaClients()) { return false; }
-            Boolean held = flag("enableExplosionFlash");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.enableExplosionFlash();
+            return or(flag("enableExplosionFlash"), View.super::enableExplosionFlash);
         }
 
-        @Override public int getExplosionFlashDuration() {
-            Integer held = number("explosionFlashDuration");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionFlashDuration();
-        }
+        @Override public int getExplosionFlashDuration() { return or(number("explosionFlashDuration"), View.super::getExplosionFlashDuration); }
 
-        @Override public int getExplosionFlashLightLevel() {
-            Integer held = number("explosionFlashLightLevel");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionFlashLightLevel();
-        }
+        @Override public int getExplosionFlashLightLevel() { return or(number("explosionFlashLightLevel"), View.super::getExplosionFlashLightLevel); }
 
-        @Override public int getExplosionFlashParticleCount() {
-            Integer held = number("explosionFlashParticleCount");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionFlashParticleCount();
-        }
+        @Override public int getExplosionFlashParticleCount() { return or(number("explosionFlashParticleCount"), View.super::getExplosionFlashParticleCount); }
 
-        @Override public int getExplosionFlashPulses() {
-            Integer held = number("explosionFlashPulses");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionFlashPulses();
-        }
+        @Override public int getExplosionFlashPulses() { return or(number("explosionFlashPulses"), View.super::getExplosionFlashPulses); }
 
-        @Override public boolean enableExplosionSmoke() {
-            Boolean held = flag("enableExplosionSmoke");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.enableExplosionSmoke();
-        }
+        @Override public boolean enableExplosionSmoke() { return or(flag("enableExplosionSmoke"), View.super::enableExplosionSmoke); }
 
-        @Override public int getExplosionSmokeDuration() {
-            Integer held = number("explosionSmokeDuration");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionSmokeDuration();
-        }
+        @Override public int getExplosionSmokeDuration() { return or(number("explosionSmokeDuration"), View.super::getExplosionSmokeDuration); }
 
-        @Override public int getExplosionSmokeParticleCount() {
-            Integer held = number("explosionSmokeParticleCount");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getExplosionSmokeParticleCount();
-        }
+        @Override public int getExplosionSmokeParticleCount() { return or(number("explosionSmokeParticleCount"), View.super::getExplosionSmokeParticleCount); }
 
-        @Override public boolean playerTNTAlwaysDrops() {
-            Boolean held = flag("playerTNTAlwaysDrops");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.playerTNTAlwaysDrops();
-        }
+        @Override public boolean playerTNTAlwaysDrops() { return or(flag("playerTNTAlwaysDrops"), View.super::playerTNTAlwaysDrops); }
 
-        @Override public boolean playerTNTDropFullBlocks() {
-            Boolean held = flag("playerTNTDropFullBlocks");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.playerTNTDropFullBlocks();
-        }
+        @Override public boolean playerTNTDropFullBlocks() { return or(flag("playerTNTDropFullBlocks"), View.super::playerTNTDropFullBlocks); }
 
-        @Override public boolean healCreepers() {
-            Boolean held = flag("healCreepers");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.healCreepers();
-        }
+        @Override public boolean healCreepers() { return or(flag("healCreepers"), View.super::healCreepers); }
 
-        @Override public boolean healNonPlayerTNT() {
-            Boolean held = flag("healNonPlayerTNT");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.healNonPlayerTNT();
-        }
+        @Override public boolean healNonPlayerTNT() { return or(flag("healNonPlayerTNT"), View.super::healNonPlayerTNT); }
 
-        @Override public boolean healWither() {
-            Boolean held = flag("healWither");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.healWither();
-        }
+        @Override public boolean healWither() { return or(flag("healWither"), View.super::healWither); }
 
-        @Override public boolean healAll() {
-            Boolean held = flag("healAll");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.healAll();
-        }
+        @Override public boolean healAll() { return or(flag("healAll"), View.super::healAll); }
 
-        @Override public boolean processPlayerIgnitedTNT() {
-            Boolean held = flag("processPlayerIgnitedTNT");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.processPlayerIgnitedTNT();
-        }
+        @Override public boolean processPlayerIgnitedTNT() { return or(flag("processPlayerIgnitedTNT"), View.super::processPlayerIgnitedTNT); }
 
-        @Override public List<String> getCustomEntitiesToHeal() {
-            List<String> held = strings("customEntitiesToHeal");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getCustomEntitiesToHeal();
-        }
+        @Override public List<String> getCustomEntitiesToHeal() { return or(strings("customEntitiesToHeal"), View.super::getCustomEntitiesToHeal); }
 
-        @Override public int getMinimumTicksBeforeHeal() {
-            Integer held = number("minimumTicksBeforeHeal");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getMinimumTicksBeforeHeal();
-        }
+        @Override public int getMinimumTicksBeforeHeal() { return or(number("minimumTicksBeforeHeal"), View.super::getMinimumTicksBeforeHeal); }
 
-        @Override public int getRandomTickVar() {
-            Integer held = number("randomTickVar");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getRandomTickVar();
-        }
+        @Override public int getRandomTickVar() { return or(number("randomTickVar"), View.super::getRandomTickVar); }
 
-        @Override public boolean isOverride() {
-            Boolean held = flag("overrideBlocks");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.isOverride();
-        }
+        @Override public boolean isOverride() { return or(flag("overrideBlocks"), View.super::isOverride); }
 
-        @Override public boolean healFullTrees() {
-            Boolean held = flag("healFullTrees");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.healFullTrees();
-        }
+        @Override public boolean healFullTrees() { return or(flag("healFullTrees"), View.super::healFullTrees); }
 
-        @Override public boolean dtSpecialDrops() {
-            Boolean held = flag("dtSpecialDrops");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.dtSpecialDrops();
-        }
+        @Override public boolean dtSpecialDrops() { return or(flag("dtSpecialDrops"), View.super::dtSpecialDrops); }
 
-        @Override public int getMaxTreeSize() {
-            Integer held = number("maxTreeSize");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getMaxTreeSize();
-        }
+        @Override public int getMaxTreeSize() { return or(number("maxTreeSize"), View.super::getMaxTreeSize); }
 
-        @Override public List<String> getBlockConversions() {
-            List<String> held = strings("blockConversions");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.getBlockConversions();
-        }
+        @Override public List<String> getBlockConversions() { return or(strings("blockConversions"), View.super::getBlockConversions); }
 
-        @Override public boolean enableDropSuppression() {
-            Boolean held = flag("enableDropSuppression");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.enableDropSuppression();
-        }
+        @Override public boolean enableDropSuppression() { return or(flag("enableDropSuppression"), View.super::enableDropSuppression); }
 
-        @Override public boolean preventMobDrops() {
-            Boolean held = flag("preventMobDrops");
-            return held != null ? held : mctmods.blastplaster.Config.View.super.preventMobDrops();
-        }
+        @Override public boolean preventMobDrops() { return or(flag("preventMobDrops"), View.super::preventMobDrops); }
     }
 }

@@ -18,6 +18,7 @@ import mctmods.resourcedatapackloader.content.entity.goal.ThrowerGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.WorkOrderGoal;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Goals;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -31,6 +32,7 @@ import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.FollowMobGoal;
 import net.minecraft.world.entity.ai.goal.FollowOwnerGoal;
 import net.minecraft.world.entity.ai.goal.FollowParentGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.LandOnOwnersShoulderGoal;
 import net.minecraft.world.entity.ai.goal.MeleeAttackGoal;
@@ -44,7 +46,6 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import java.util.ArrayList;
 import java.util.List;
 
 final class ContentEntityBehavior {
@@ -52,6 +53,18 @@ final class ContentEntityBehavior {
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
     private static final String HOME_Z = "rdplHomeZ";
+    private static final String[][] PEACEFUL_ASKS = {
+            { "charge", "it never takes a target to charge at" },
+            { "pounce", "it never takes a target to pounce on" },
+            { "sniff players out", "it never takes a target when it finds one" },
+            { "flee when hurt", "it never has a fight to flee" },
+            { "patrol", "its patrol never converges on anyone" },
+            { "swoop", "it never takes a target to dive on" },
+            { "gust", "it never takes a target to blow away" },
+            { "dig", "it never has a target to dig toward" },
+            { "explode", "it never takes a target to close on" },
+            { "throw what it holds", "it never takes a target to throw at" }
+    };
 
     private ContentEntityBehavior() {}
 
@@ -70,31 +83,23 @@ final class ContentEntityBehavior {
         if (mob instanceof PathfinderMob creature && ContentOrders.wants(def)) { mob.goalSelector.addGoal(3, new WorkOrderGoal(creature)); }
         settled(mob, def);
         if (def.passive()) {
-            for (WrappedGoal wrapped : new ArrayList<>(mob.targetSelector.getAvailableGoals())) { mob.targetSelector.removeGoal(wrapped.getGoal()); }
+            Goals.remove(mob.targetSelector, _ -> true);
             removeMelee(mob.goalSelector);
             mob.setTarget(null);
             return;
         }
         if (!def.hostile()) {
-            if (combat.charges()) { ContentLog.LOGGER.error("Entity variant {} asks to charge, but is not hostile, so it never takes a target to charge at", def.key()); }
-            if (combat.pounces()) { ContentLog.LOGGER.error("Entity variant {} asks to pounce, but is not hostile, so it never takes a target to pounce on", def.key()); }
-            if (combat.sniffs() > 0) { ContentLog.LOGGER.error("Entity variant {} asks to sniff players out, but is not hostile, so it never takes a target when it finds one", def.key()); }
-            if (combat.fleesWhenHurt() > 0.0F) { ContentLog.LOGGER.error("Entity variant {} asks to flee when hurt, but is not hostile, so it never has a fight to flee", def.key()); }
-            if (combat.patrols()) { ContentLog.LOGGER.error("Entity variant {} asks to patrol, but is not hostile, so its patrol never converges on anyone", def.key()); }
-            if (combat.swoops()) { ContentLog.LOGGER.error("Entity variant {} asks to swoop, but is not hostile, so it never takes a target to dive on", def.key()); }
-            if (combat.gusts()) { ContentLog.LOGGER.error("Entity variant {} asks to gust, but is not hostile, so it never takes a target to blow away", def.key()); }
-            if (combat.digs()) { ContentLog.LOGGER.error("Entity variant {} asks to dig, but is not hostile, so it never has a target to dig toward", def.key()); }
-            if (combat.explodes()) { ContentLog.LOGGER.error("Entity variant {} asks to explode, but is not hostile, so it never takes a target to close on", def.key()); }
-            if (combat.throwsItems()) { ContentLog.LOGGER.error("Entity variant {} asks to throw what it holds, but is not hostile, so it never takes a target to throw at", def.key()); }
+            boolean[] asked = { combat.charges(), combat.pounces(), combat.sniffs() > 0, combat.fleesWhenHurt() > 0.0F, combat.patrols(), combat.swoops(), combat.gusts(), combat.digs(), combat.explodes(), combat.throwsItems() };
+            for (int i = 0; i < asked.length; i++) {
+                if (asked[i]) { ContentLog.LOGGER.error("Entity variant {} asks to {}, but is not hostile, so {}", def.key(), PEACEFUL_ASKS[i][0], PEACEFUL_ASKS[i][1]); }
+            }
             return;
         }
         if (!(mob instanceof PathfinderMob creature)) {
             ContentLog.LOGGER.error("Entity variant {} asks to be hostile, but {} does not walk the ground the way the attack behavior needs", def.key(), def.base());
             return;
         }
-        for (WrappedGoal wrapped : new ArrayList<>(mob.goalSelector.getAvailableGoals())) {
-            if (wrapped.getGoal() instanceof AvoidEntityGoal || wrapped.getGoal() instanceof PanicGoal || tame(wrapped)) { mob.goalSelector.removeGoal(wrapped.getGoal()); }
-        }
+        Goals.remove(mob.goalSelector, goal -> goal instanceof AvoidEntityGoal || goal instanceof PanicGoal || tame(goal));
         if (ownStrike(mob, def)) {
             removeMelee(mob.goalSelector);
             mob.goalSelector.addGoal(2, new StrikeGoal(creature, 1.2D, false));
@@ -138,9 +143,9 @@ final class ContentEntityBehavior {
         return false;
     }
 
-    private static boolean tame(WrappedGoal wrapped) {
-        return wrapped.getGoal() instanceof BreedGoal || wrapped.getGoal() instanceof TemptGoal || wrapped.getGoal() instanceof FollowParentGoal || wrapped.getGoal() instanceof FollowMobGoal
-                || wrapped.getGoal() instanceof FollowOwnerGoal || wrapped.getGoal() instanceof SitWhenOrderedToGoal || wrapped.getGoal() instanceof LandOnOwnersShoulderGoal;
+    private static boolean tame(Goal goal) {
+        return goal instanceof BreedGoal || goal instanceof TemptGoal || goal instanceof FollowParentGoal || goal instanceof FollowMobGoal
+                || goal instanceof FollowOwnerGoal || goal instanceof SitWhenOrderedToGoal || goal instanceof LandOnOwnersShoulderGoal;
     }
 
     private static void settled(Mob mob, EntityVariantDef def) {
@@ -163,9 +168,5 @@ final class ContentEntityBehavior {
         if (combat.sleepsByDay()) { mob.goalSelector.addGoal(1, new SleepByDayGoal(creature)); }
     }
 
-    private static void removeMelee(GoalSelector selector) {
-        for (WrappedGoal wrapped : new ArrayList<>(selector.getAvailableGoals())) {
-            if (wrapped.getGoal() instanceof MeleeAttackGoal) { selector.removeGoal(wrapped.getGoal()); }
-        }
-    }
+    private static void removeMelee(GoalSelector selector) { Goals.remove(selector, goal -> goal instanceof MeleeAttackGoal); }
 }

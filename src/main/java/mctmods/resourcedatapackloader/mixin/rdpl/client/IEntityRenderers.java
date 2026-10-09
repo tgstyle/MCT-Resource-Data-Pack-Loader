@@ -8,5 +8,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import java.util.Map;
 
 @Mixin(EntityRenderers.class) public interface IEntityRenderers {
-    @Accessor("PROVIDERS") static Map<EntityType<?>, EntityRendererProvider<?>> rdpl$providers() { throw new AssertionError(); }
+    @Accessor("PROVIDERS") static Map<EntityType<?>, EntityRendererProvider<?>> rdpl$getProviders() { throw new AssertionError(); }
 }

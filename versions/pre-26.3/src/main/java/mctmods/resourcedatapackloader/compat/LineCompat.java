@@ -224,13 +224,13 @@ public final class LineCompat {
 
     public static double surfaceNoise(RandomState random, int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceNoise().getValue(x, 0.0, z); }
 
-    public static float temperatureNoise(BlockPos pos) { return (float) (IBiomeNoise.rdpl$temperatureNoise().getValue(pos.getX() / 8.0F, pos.getZ() / 8.0F, false) * 8.0D); }
+    public static float temperatureNoise(BlockPos pos) { return (float) (IBiomeNoise.rdpl$getTemperatureNoise().getValue(pos.getX() / 8.0F, pos.getZ() / 8.0F, false) * 8.0D); }
 
     public static RandomState randomState(NoiseGeneratorSettings settings, RegistryAccess registries, long seed) { return RandomState.create(settings, registries.lookupOrThrow(Registries.NOISE), seed); }
 
     public static Registry<?> carvers(RegistryAccess registries) { return registries.lookupOrThrow(Registries.CONFIGURED_CARVER); }
 
-    @Nullable public static JsonObject worldgenIn(String path) { return GameData.json(Identifier.fromNamespaceAndPath("minecraft", path)); }
+    @Nullable public static JsonObject worldgenIn(String path) { return GameData.json(Identifier.withDefaultNamespace(path)); }
 
     public static JsonObject worldgenOut(@SuppressWarnings("unused") String path, JsonObject json) { return json; }
 

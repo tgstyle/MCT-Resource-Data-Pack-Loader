@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -14,7 +16,6 @@ public final class LootUp {
     private static final String FUNCTIONS = "functions";
     private static final String MODIFIER = "modifier";
     private static final String GIVEN = "given_item_modifiers";
-    private static final String MINECRAFT = "minecraft:";
     private static final String DESTINATION = "destination";
     private static final Set<String> ENTITY_KEYS = Set.of("bystander", "cause", "child", "entity", "lightning", "parent", "partner", "player", "projectile", "source", "villager", "zombie");
     private static final Map<String, String> TRIGGER_KEYS = Map.of("block", "blocks", "loot_table", "loot_tables", "recipe", "recipes", "recipe_id", "recipes");
@@ -138,9 +139,7 @@ public final class LootUp {
 
     private static JsonElement modifier(JsonArray functions) { return functions.size() < 2 ? functions.isEmpty() ? null : functions.get(0) : functions; }
 
-    private static void put(JsonObject out, String key, JsonElement value) {
-        if (value != null) { out.add(key, value); }
-    }
+    private static void put(JsonObject out, String key, JsonElement value) { if (value != null) { out.add(key, value); } }
 
     private static void rename(JsonObject out, String from, String to) {
         JsonElement held = out.remove(from);
@@ -159,6 +158,6 @@ public final class LootUp {
 
     private static String id(JsonObject object, String key) {
         String held = named(object, key) ? object.get(key).getAsString() : "";
-        return held.startsWith(MINECRAFT) ? held.substring(MINECRAFT.length()) : held;
+        return IdNames.bare(held);
     }
 }

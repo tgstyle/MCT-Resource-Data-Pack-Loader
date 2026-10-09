@@ -14,16 +14,16 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ChunkHolder;
@@ -38,7 +38,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.scores.Team;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.event.EventHooks;
 import net.neoforged.neoforge.event.entity.player.AdvancementEvent;
@@ -59,7 +58,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -70,7 +68,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentHardness {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<Identifier, HardnessDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, List<HardnessDef>> WHOLE = new IdentityHashMap<>();
     private static final Map<BlockState, List<HardnessDef>> EXACT = new IdentityHashMap<>();
@@ -88,9 +85,7 @@ public final class ContentHardness {
 
     private ContentHardness() {}
 
-    public static void setup() {
-        if (load()) { resolve(); }
-    }
+    public static void setup() { if (load()) { resolve(); } }
 
     public static boolean load() {
         if (loaded) { return !DEFS.isEmpty(); }
@@ -128,9 +123,10 @@ public final class ContentHardness {
                 if (!stack.isEmpty()) { tools.add(stack); }
             }
             TOOLS.put(def, tools);
-            if (!def.swaps()) { continue; }
-            BlockState target = ContentStates.known(def.becomes(), def.key() + " becomes");
-            if (target != null) { BECOMES.put(def, target); }
+            if (def.swaps()) {
+                BlockState target = ContentStates.known(def.becomes(), def.key() + " becomes");
+                if (target != null) { BECOMES.put(def, target); }
+            }
         }
         anyRolls = rolls;
     }
@@ -177,8 +173,7 @@ public final class ContentHardness {
 
     @Nullable public static HardnessDef groupFor(@Nullable BlockState state, @Nullable LivingEntity who) {
         if (state == null || idle()) { return null; }
-        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return null; }
-        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return null; }
+        if (denied(state)) { return null; }
         HardnessDef open = null;
         for (int side = 0; side < 2; side++) {
             List<HardnessDef> defs = side == 0 ? WHOLE.get(state.getBlock()) : EXACT.isEmpty() ? null : EXACT.get(state);
@@ -235,9 +230,7 @@ public final class ContentHardness {
         return !mayBreak(mob, state, held);
     }
 
-    public static void dig(LivingEntity digger, BlockPos pos) {
-        for (ItemStack stack : harvest(digger, pos, ItemStack.EMPTY)) { Block.popResource(digger.level(), pos, stack); }
-    }
+    public static void dig(LivingEntity digger, BlockPos pos) { for (ItemStack stack : harvest(digger, pos, ItemStack.EMPTY)) { Block.popResource(digger.level(), pos, stack); } }
 
     public static List<ItemStack> harvest(LivingEntity digger, BlockPos pos, ItemStack tool) {
         List<ItemStack> kept = new ArrayList<>();
@@ -254,9 +247,7 @@ public final class ContentHardness {
         return kept;
     }
 
-    public static void onDrops(BlockDropsEvent event) {
-        if (event.getBreaker() instanceof Mob mob && ContentEntities.def(mob) != null && ContentEntities.ignoresExperience(mob)) { event.setDroppedExperience(0); }
-    }
+    public static void onDrops(BlockDropsEvent event) { if (event.getBreaker() instanceof Mob mob && ContentEntities.def(mob) != null && ContentEntities.ignoresExperience(mob)) { event.setDroppedExperience(0); } }
 
     public static float miningAt(@Nullable BlockState state, @Nullable LivingEntity who, int x, int y, int z) {
         HardnessDef def = groupFor(state, who);
@@ -300,9 +291,10 @@ public final class ContentHardness {
 
     private static boolean unlocked(MinecraftServer server, HardnessDef def) { return BECOMES.containsKey(def) && GateStorage.unlockedGlobally(server, swapKey(def)); }
 
+    private static boolean denied(BlockState state) { return (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) || (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)); }
+
     private static boolean outsideGroup(HardnessDef def, BlockState state) {
-        if (!DENIED.isEmpty() && DENIED.containsKey(state.getBlock())) { return true; }
-        if (!DENIED_EXACT.isEmpty() && DENIED_EXACT.containsKey(state)) { return true; }
+        if (denied(state)) { return true; }
         List<HardnessDef> whole = WHOLE.get(state.getBlock());
         if (whole != null && whole.contains(def)) { return false; }
         List<HardnessDef> exact = EXACT.isEmpty() ? null : EXACT.get(state);
@@ -337,12 +329,10 @@ public final class ContentHardness {
     }
 
     private static void swapped(ServerLevel level, LevelChunk chunk, List<HardnessDef> defs) {
-        Set<String> tokens = new HashSet<>(ContentChunkTokens.get(chunk));
         for (HardnessDef def : defs) {
             swap(level, chunk, def);
-            tokens.add(swapToken(def));
+            ContentChunkTokens.add(chunk, swapToken(def));
         }
-        ContentChunkTokens.put(chunk, tokens);
     }
 
     private static List<HardnessDef> missing(MinecraftServer server, LevelChunk chunk) {
@@ -358,13 +348,11 @@ public final class ContentHardness {
         int swapped = 0;
         int chunks = 0;
         for (ServerLevel level : server.getAllLevels()) {
-            for (ChunkHolder holder : ((IChunkMap) level.getChunkSource().chunkMap).rdpl$visibleChunkMap().values()) {
+            for (ChunkHolder holder : ((IChunkMap) level.getChunkSource().chunkMap).rdpl$getVisibleChunkMap().values()) {
                 LevelChunk chunk = level.getChunkSource().getChunkNow(holder.getPos().x(), holder.getPos().z());
                 if (chunk == null) { continue; }
                 swapped += swap(level, chunk, def);
-                Set<String> tokens = new HashSet<>(ContentChunkTokens.get(chunk));
-                tokens.add(swapToken(def));
-                ContentChunkTokens.put(chunk, tokens);
+                ContentChunkTokens.add(chunk, swapToken(def));
                 chunks++;
             }
         }
@@ -387,9 +375,7 @@ public final class ContentHardness {
         if (!missing(level.getServer(), chunk).isEmpty()) { SWAPS.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(chunk.getPos()); }
     }
 
-    public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level) { SWAPS.remove(level.dimension()); }
-    }
+    public static void onLevelUnload(LevelEvent.Unload event) { if (event.getLevel() instanceof ServerLevel level) { SWAPS.remove(level.dimension()); } }
 
     public static void onLevelTick(LevelTickEvent.Post event) {
         if (SWAPS.isEmpty() || !(event.getLevel() instanceof ServerLevel level)) { return; }
@@ -439,7 +425,7 @@ public final class ContentHardness {
     }
 
     public static long derive(long seed) {
-        long value = seed * -7046029254386353131L;
+        long value = seed * Hashes.GOLDEN;
         value ^= value >>> 32;
         value *= -4658895280553007687L;
         value ^= value >>> 29;
@@ -447,11 +433,8 @@ public final class ContentHardness {
     }
 
     @Nullable private static HardnessDef read(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Hardness group {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "hardness group");
+        if (json == null) { return null; }
         List<BlockMatchDef> blocks = matches(key, json, "blocks");
         if (blocks.isEmpty()) {
             ContentLog.LOGGER.error("Hardness group {} names no blocks, ignoring it", key);

@@ -31,9 +31,9 @@ import net.minecraft.world.item.equipment.trim.ArmorTrim;
 import net.minecraft.world.item.equipment.trim.TrimMaterial;
 import net.minecraft.world.item.equipment.trim.TrimMaterials;
 import net.minecraft.world.item.equipment.trim.TrimPattern;
-import java.util.HashMap;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -186,9 +186,13 @@ public final class RecipeLoading {
         if (!pending || filter != attached) { return; }
         pending = false;
         filter.rdpl$filter(false);
-        if (FurnaceRecipes.resolvedAtLoad() && !ContentDisabled.any()) { return; }
+        if (FurnaceRecipes.resolvedAtLoad() && ContentDisabled.none()) { return; }
         filter.rdpl$filter(true);
         if (FurnaceRecipes.resolvedAtLoad()) { return; }
+        reportFurnaces();
+    }
+
+    private static void reportFurnaces() {
         FurnaceBlocking.report();
         FurnaceRecipes.report();
     }
@@ -200,8 +204,7 @@ public final class RecipeLoading {
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output"); }
         RecipeBlocking.report();
         if (!FurnaceRecipes.resolvedAtLoad()) { return; }
-        FurnaceBlocking.report();
-        FurnaceRecipes.report();
+        reportFurnaces();
     }
 
     @Nullable private static String missingItem(JsonElement element, String namespace) {

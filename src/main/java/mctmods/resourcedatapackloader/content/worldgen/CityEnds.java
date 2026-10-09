@@ -29,9 +29,7 @@ final class CityEnds {
             return all;
         }
 
-        void say(String text, Object... values) {
-            if (told) { ContentLog.LOGGER.debug(text, values); }
-        }
+        void say(String text, Object... values) { if (told) { ContentLog.LOGGER.debug(text, values); } }
     }
 
     private record Dead(Line line, boolean alongX, boolean outward, int end, int acrossLo, int acrossHi, int endX, int endZ) {}
@@ -100,8 +98,8 @@ final class CityEnds {
         int metNear = outward ? met.from() : met.to();
         int cFrom = outward ? dead.end() + 1 : metNear + 1;
         int cTo = outward ? metNear - 1 : dead.end() - 1;
-        int offset = (met.at() + met.last()) / 2 - (dead.acrossLo() + dead.acrossHi()) / 2;
-        BoundingBox metBox = CityMapDistricts.box(met);
+        int offset = met.middle() - dead.line().middle();
+        BoundingBox metBox = met.box();
         if (offset != 0) {
             if (!mergeInto(closing, dead, met, cFrom, cTo, offset)) { crossStreet(closing, dead, met, cFrom, cTo); }
             return;
@@ -113,7 +111,7 @@ final class CityEnds {
         }
         Line beside = beside(closing, strip, dead.alongX());
         if (beside != null) {
-            closing.say("The dead end at {}, {} cannot reach the facing street at {}, {}: it would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), CityMapDistricts.box(beside).minX(), CityMapDistricts.box(beside).minZ());
+            runsBeside(closing, dead, metBox, "reach the facing street", "it", beside);
             return;
         }
         swap(closing, dead.line(), reached(dead.line(), outward, outward ? metNear - 1 : metNear + 1));
@@ -124,7 +122,7 @@ final class CityEnds {
     private static void crossing(Closing closing, Dead dead, Line met) {
         boolean alongX = dead.alongX();
         boolean outward = dead.outward();
-        BoundingBox metBox = CityMapDistricts.box(met);
+        BoundingBox metBox = met.box();
         boolean overlaps = met.to() >= dead.acrossLo() && met.from() <= dead.acrossHi();
         int from = outward ? dead.end() + 1 : overlaps ? met.last() + 1 : met.at();
         int to = outward ? (overlaps ? met.at() - 1 : met.last()) : dead.end() - 1;
@@ -135,7 +133,7 @@ final class CityEnds {
         }
         Line beside = beside(closing, strip, alongX);
         if (beside != null) {
-            closing.say("The dead end at {}, {} cannot reach the road at {}, {}: it would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), CityMapDistricts.box(beside).minX(), CityMapDistricts.box(beside).minZ());
+            runsBeside(closing, dead, metBox, "reach the road", "it", beside);
             return;
         }
         if (hill(closing, List.of(met), strip)) {
@@ -156,7 +154,7 @@ final class CityEnds {
                 if (held(closing, dead.line(), met, side)) { return; }
                 Line metBeside = beside(closing, side, !alongX);
                 if (metBeside != null) {
-                    closing.say("The dead end at {}, {} cannot close into a corner with the road at {}, {}: that road would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), CityMapDistricts.box(metBeside).minX(), CityMapDistricts.box(metBeside).minZ());
+                    runsBeside(closing, dead, metBox, "close into a corner with the road", "that road", metBeside);
                     return;
                 }
             }
@@ -171,9 +169,9 @@ final class CityEnds {
         boolean alongX = dead.alongX();
         int rows = cTo - cFrom + 1;
         int shift = Math.abs(offset);
-        BoundingBox metBox = CityMapDistricts.box(met);
-        int full = CityPlan.fullWidth();
-        if (shift > (full - 1) / 2 || rows < MERGE_ROWS * shift) {
+        BoundingBox metBox = met.box();
+        int half = CityRails.halfWidth(CityPlan.fullWidth());
+        if (shift > half || rows < MERGE_ROWS * shift) {
             closing.say("The dead end at {}, {} faces the street at {}, {} {} block(s) off its line with {} row(s) between them, too far off or too close to merge", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), shift, rows);
             return false;
         }
@@ -195,19 +193,18 @@ final class CityEnds {
         }
         Line beside = beside(closing, merge, alongX);
         if (beside != null) {
-            closing.say("The dead end at {}, {} cannot merge into the street at {}, {}: the merge would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), CityMapDistricts.box(beside).minX(), CityMapDistricts.box(beside).minZ());
+            runsBeside(closing, dead, metBox, "merge into the street", "the merge", beside);
             return false;
         }
-        int ownCenter = (dead.acrossLo() + dead.acrossHi()) / 2;
-        int metCenter = (met.at() + met.last()) / 2;
+        int ownCenter = dead.line().middle();
+        int metCenter = met.middle();
         int fromCenter = dead.outward() ? ownCenter : metCenter;
         int toCenter = dead.outward() ? metCenter : ownCenter;
-        int half = (full - 1) / 2;
         int run = cFrom;
         for (int row = cFrom; row <= cTo; row++) {
             int center = centerAt(row, cFrom, rows, fromCenter, toCenter);
             if (row < cTo && centerAt(row + 1, cFrom, rows, fromCenter, toCenter) == center) { continue; }
-            closing.of(alongX).add(new Line(center - half, half * 2 + 1, false, alongX, run, row, End.MET, End.MET));
+            closing.of(alongX).add(Line.met(center - half, half * 2 + 1, alongX, run, row));
             run = row + 1;
         }
         swap(closing, dead.line(), reached(dead.line(), dead.outward(), dead.end()));
@@ -227,7 +224,7 @@ final class CityEnds {
     private static void crossStreet(Closing closing, Dead dead, Line met, int cFrom, int cTo) {
         boolean alongX = dead.alongX();
         boolean outward = dead.outward();
-        BoundingBox metBox = CityMapDistricts.box(met);
+        BoundingBox metBox = met.box();
         int full = CityPlan.fullWidth();
         if (cTo - cFrom + 1 < full) {
             closing.say("The dead end at {}, {} faces the offset street at {}, {} too closely for a cross street to tie them, so both stay closed", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ());
@@ -253,7 +250,7 @@ final class CityEnds {
         }
         Line beside = beside(closing, avenue, !alongX);
         if (beside != null) {
-            closing.say("The dead end at {}, {} cannot tie to the offset street at {}, {}: the cross street would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), CityMapDistricts.box(beside).minX(), CityMapDistricts.box(beside).minZ());
+            runsBeside(closing, dead, metBox, "tie to the offset street", "the cross street", beside);
             return;
         }
         int exFrom = outward ? dead.end() + 1 : conHi + 1;
@@ -269,7 +266,7 @@ final class CityEnds {
                 return;
             }
         }
-        closing.of(!alongX).add(new Line(conLo, full, false, !alongX, unionLo, unionHi, End.MET, End.MET));
+        closing.of(!alongX).add(Line.met(conLo, full, !alongX, unionLo, unionHi));
         swap(closing, dead.line(), reached(dead.line(), outward, outward ? conHi : conLo));
         swap(closing, met, reached(met, !outward, outward ? conLo : conHi));
         closing.say("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), avenue.minX(), avenue.minZ());
@@ -278,7 +275,7 @@ final class CityEnds {
     static boolean metBeyond(List<Line> lines, Line line, boolean alongX, int beyond, int acrossLo, int acrossHi) {
         for (Line other : lines) {
             if (other.equals(line) || other.alley()) { continue; }
-            BoundingBox met = CityMapDistricts.box(other);
+            BoundingBox met = other.box();
             int lo = alongX ? met.minX() : met.minZ();
             int hi = alongX ? met.maxX() : met.maxZ();
             if (beyond < lo - 1 || beyond > hi + 1) { continue; }
@@ -294,21 +291,21 @@ final class CityEnds {
         if (box.maxX() < box.minX() || box.maxZ() < box.minZ()) { return false; }
         for (Line other : closing.everyone()) {
             if (other.equals(line) || other.equals(met) || other.alley()) { continue; }
-            if (CityMapDistricts.box(other).intersects(box)) { return true; }
+            if (other.box().intersects(box)) { return true; }
         }
         for (BoundingBox well : closing.wells()) {
             if (well.intersects(box)) { return true; }
         }
         BoundingBox whole = whole(line, box);
         for (Rail rail : closing.rails()) {
-            if (CityRails.railBox(rail).intersects(box) && !CityRails.crosses(rail, whole)) { return true; }
+            if (rail.box().intersects(box) && !CityRails.crosses(rail, whole)) { return true; }
         }
         return false;
     }
 
     @Nullable private static Rail railUnder(Closing closing, BoundingBox box) {
         for (Rail rail : closing.rails()) {
-            if (!rail.subway() && CityRails.railBox(rail).intersects(box)) { return rail; }
+            if (!rail.subway() && rail.box().intersects(box)) { return rail; }
         }
         return null;
     }
@@ -330,7 +327,7 @@ final class CityEnds {
 
     private static boolean stubCrosses(Closing closing, Town town, Line street, BoundingBox strip) {
         for (Line other : closing.everyone()) {
-            if (other.equals(street) || other.alley() || other.width() < CityPlan.fullWidth() || !CityMapDistricts.box(other).intersects(strip)) { continue; }
+            if (other.equals(street) || other.alley() || other.width() < CityPlan.fullWidth() || !other.box().intersects(strip)) { continue; }
             if (other.alongX() != street.alongX() && town.drawn().contains(other)) { continue; }
             return true;
         }
@@ -340,13 +337,13 @@ final class CityEnds {
         List<Rail> own = CityRails.placed(closing.ground().seed(), town);
         BoundingBox whole = whole(street, strip);
         for (Rail rail : closing.rails()) {
-            if (CityRails.railBox(rail).intersects(strip) && !(own.contains(rail) && CityRails.crosses(rail, whole))) { return true; }
+            if (rail.box().intersects(strip) && !(own.contains(rail) && CityRails.crosses(rail, whole))) { return true; }
         }
         return false;
     }
 
     private static BoundingBox whole(Line line, BoundingBox box) {
-        BoundingBox road = CityMapDistricts.box(line);
+        BoundingBox road = line.box();
         return new BoundingBox(Math.min(road.minX(), box.minX()), 0, Math.min(road.minZ(), box.minZ()), Math.max(road.maxX(), box.maxX()), 0, Math.max(road.maxZ(), box.maxZ()));
     }
 
@@ -366,7 +363,7 @@ final class CityEnds {
         if (ContentCity.tunnelDepth() <= 0) { return false; }
         List<Line> everyone = closing.everyone();
         for (Line road : roads) { closing.grades().computeIfAbsent(road, line -> CityCulDeSacs.streetGrade(closing.ground(), line, everyone)); }
-        return CityCulDeSacs.crossesHill(closing.ground(), closing.grades(), roads, new Held(box.minX(), box.minZ(), box.maxX(), box.maxZ(), Hold.STREET, true));
+        return CityCulDeSacs.crossesHill(closing.ground(), closing.grades(), roads, Held.ofBox(box, Hold.STREET));
     }
 
     private static boolean buriedEnd(Closing closing, Dead dead, int reach) {
@@ -380,6 +377,11 @@ final class CityEnds {
     private static BoundingBox strip(Dead dead, int from, int to) { return dead.alongX() ? new BoundingBox(from, 0, dead.acrossLo(), to, 0, dead.acrossHi()) : new BoundingBox(dead.acrossLo(), 0, from, dead.acrossHi(), 0, to); }
 
     private static Line reached(Line line, boolean high, int end) { return line.reaching(high ? line.from() : end, high ? end : line.to()).ending(high ? line.endsLow() : End.MET, high ? End.MET : line.endsHigh()); }
+
+    private static void runsBeside(Closing closing, Dead dead, BoundingBox metBox, String action, String subject, Line beside) {
+        BoundingBox besideBox = beside.box();
+        closing.say("The dead end at {}, {} cannot " + action + " at {}, {}: " + subject + " would run beside the road at {}, {}", dead.endX(), dead.endZ(), metBox.minX(), metBox.minZ(), besideBox.minX(), besideBox.minZ());
+    }
 
     private static void swap(Closing closing, Line was, Line now) {
         List<Line> lines = closing.of(was.alongX());

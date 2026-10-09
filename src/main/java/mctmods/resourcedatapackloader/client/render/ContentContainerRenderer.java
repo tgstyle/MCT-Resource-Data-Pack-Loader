@@ -21,12 +21,11 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity, ContentContainerRenderer.State> {
-    private static final Identifier VANILLA = Identifier.fromNamespaceAndPath("minecraft", "textures/entity/chest/normal.png");
+public final class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity, ContentContainerRenderer.State> {
+    private static final Identifier VANILLA = Identifier.withDefaultNamespace("textures/entity/chest/normal.png");
     private final ChestModel model;
 
     public ContentContainerRenderer(BlockEntityRendererProvider.Context context) { this.model = new ChestModel(context.bakeLayer(ModelLayers.CHEST)); }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 
 import net.minecraft.resources.Identifier;
@@ -17,7 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public final class CardEvents {
-    private static final Identifier CARD = Identifier.fromNamespaceAndPath("rdpl", "card");
+    private static final Identifier CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
 
     private CardEvents() {}
@@ -62,13 +63,9 @@ public final class CardEvents {
         }
     }
 
-    public static void onCraft(PlayerEvent.ItemCraftedEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { item(CardRules.on(CardRule.CRAFT), player, event.getCrafting()); }
-    }
+    public static void onCraft(PlayerEvent.ItemCraftedEvent event) { if (event.getEntity() instanceof ServerPlayer player) { item(CardRules.on(CardRule.CRAFT), player, event.getCrafting()); } }
 
-    public static void onPickup(ItemEntityPickupEvent.Post event) {
-        if (event.getPlayer() instanceof ServerPlayer player) { item(CardRules.on(CardRule.PICKUP), player, event.getOriginalStack()); }
-    }
+    public static void onPickup(ItemEntityPickupEvent.Post event) { if (event.getPlayer() instanceof ServerPlayer player) { item(CardRules.on(CardRule.PICKUP), player, event.getOriginalStack()); } }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         CardFire.forget(event.getEntity().getUUID());

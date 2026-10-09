@@ -11,6 +11,7 @@ public record ShapeDef(String type, AmountDef radius, AmountDef height, AmountDe
         int rarity, boolean perChunk, @Nullable ContentField field, float threshold, int fade, String lootTable, String locateAs, @Nullable int[] at,
         String pattern, float density, String rich, String poor, float richAt, float poorAt, String middle, String budding, float buddingChance, String crystal,
         float crystalChance, float crack) {
+    public static final int FULL_INTEGRITY = 100;
     public static final int MOST_REACH = 8;
     public static final String CLUSTER = "cluster";
     public static final String PLATE = "plate";
@@ -46,7 +47,7 @@ public record ShapeDef(String type, AmountDef radius, AmountDef height, AmountDe
 
     public static ShapeDef cluster() {
         return new ShapeDef(CLUSTER, AmountDef.of(4), AmountDef.of(1), AmountDef.of(12), CIRCLE, false, "", "", List.of(), AmountDef.of(1), true, true,
-                8, 4, 8, "", "", false, "", List.of(), List.of(), List.of(), STRAIGHT, 100, 0, false, null, 0.5F, 0, "", "", null, DEFAULT, 1.0F, "", "", 0.88F, 0.4F, "", "", 0.083F, "", 0.35F, 0.0F);
+                8, 4, 8, "", "", false, "", List.of(), List.of(), List.of(), STRAIGHT, FULL_INTEGRITY, 0, false, null, 0.5F, 0, "", "", null, DEFAULT, 1.0F, "", "", 0.88F, 0.4F, "", "", 0.083F, "", 0.35F, 0.0F);
     }
 
     public boolean isRound() { return CIRCLE.equals(plane); }

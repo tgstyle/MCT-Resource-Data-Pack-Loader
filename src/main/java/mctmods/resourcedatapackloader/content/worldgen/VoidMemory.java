@@ -1,9 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.server.MinecraftServer;
@@ -21,8 +20,7 @@ public final class VoidMemory extends SavedData {
     private boolean enabled;
     private List<String> dimensions = List.of();
     private boolean areBlacklist;
-
-    private static final SavedDataType<VoidMemory> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), VoidMemory::new, CompoundTag.CODEC.xmap(VoidMemory::read, VoidMemory::write));
+    private static final SavedDataType<VoidMemory> TYPE = SavedTypes.of(NAME, VoidMemory::new, VoidMemory::read, VoidMemory::write);
 
     public static VoidMemory of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
 

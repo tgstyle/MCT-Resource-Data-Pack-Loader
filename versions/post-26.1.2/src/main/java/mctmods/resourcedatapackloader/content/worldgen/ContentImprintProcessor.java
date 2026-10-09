@@ -15,8 +15,7 @@ public final class ContentImprintProcessor implements StructureProcessor {
 
     public ContentImprintProcessor(@Nullable ContentPlacer placer) { this.placer = placer; }
 
-    @Override @Nullable public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos offset, @Nonnull BlockPos pos, @Nonnull StructureTemplate.StructureBlockInfo raw,
-            @Nonnull StructureTemplate.StructureBlockInfo info, @Nonnull StructurePlaceSettings settings, @Nullable StructureTemplate template) {
+    @Override @Nullable public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos offset, @Nonnull BlockPos pos, @Nonnull StructureTemplate.StructureBlockInfo raw, @Nonnull StructureTemplate.StructureBlockInfo info, @Nonnull StructurePlaceSettings settings, @Nullable StructureTemplate template) {
         if (placer == null) { return info; }
         return placer.occupied(info.pos().getX(), info.pos().getY(), info.pos().getZ()) ? null : info;
     }

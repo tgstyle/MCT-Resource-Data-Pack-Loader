@@ -2,15 +2,16 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.entity.SpawnerBlockEntity;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -33,14 +34,14 @@ public final class ContentStructureSpawners {
             for (String entry : entries) {
                 String[] parts = ContentStructureControl.split(entry, KEY);
                 if (parts == null) { continue; }
-                String key = parts[0].trim().toLowerCase(Locale.ROOT);
+                String key = Settings.lower(parts[0]);
                 if (!KNOWN.contains(key)) {
                     ContentLog.LOGGER.error("{} names '{}', and only {} build a spawner, so that entry does nothing", KEY, parts[0].trim(), KNOWN);
                     continue;
                 }
                 List<String> names = new ArrayList<>();
                 for (String one : parts[1].split(",")) {
-                    if (!one.trim().isEmpty()) { names.add(one.trim().toLowerCase(Locale.ROOT)); }
+                    if (!one.trim().isEmpty()) { names.add(Settings.lower(one)); }
                 }
                 if (names.isEmpty()) { continue; }
                 RAW.put(key, names);
@@ -68,7 +69,9 @@ public final class ContentStructureSpawners {
         }
     }
 
-    public static EntityType<?> pick(String structure, EntityType<?> vanilla, RandomSource random) {
+    public static void place(SpawnerBlockEntity spawner, String structure, EntityType<?> vanilla, RandomSource random) { spawner.setEntityId(pick(structure, vanilla, random), random); }
+
+    private static EntityType<?> pick(String structure, EntityType<?> vanilla, RandomSource random) {
         if (RAW.isEmpty()) { return vanilla; }
         List<EntityType<?>> wanted = picks().get(structure);
         if (wanted == null || wanted.isEmpty()) { return vanilla; }

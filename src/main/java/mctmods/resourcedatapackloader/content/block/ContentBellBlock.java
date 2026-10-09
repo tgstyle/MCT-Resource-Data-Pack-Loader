@@ -5,12 +5,10 @@ import mctmods.resourcedatapackloader.content.ContentBells;
 import mctmods.resourcedatapackloader.content.def.BellDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBell;
-import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
@@ -46,13 +44,11 @@ public final class ContentBellBlock extends LineCompat.BellBase implements ICont
     @Override @Nonnull public BlockEntity newBlockEntity(@Nonnull BlockPos pos, @Nonnull BlockState state) { return new ContentBellBlockEntity(pos, state); }
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
-        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.registeredType();
+        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.TYPE.registeredType();
         return bells == null ? null : createTickerHelper(type, bells, ContentBellBlockEntity::tick);
     }
 
-    @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
-        return hit(level, state, hit, player) ? InteractionResult.SUCCESS : InteractionResult.PASS;
-    }
+    @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) { return hit(level, state, hit, player) ? InteractionResult.SUCCESS : InteractionResult.PASS; }
 
     @Override protected void onProjectileHit(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockHitResult hit, @Nonnull Projectile projectile) {
         Entity owner = projectile.getOwner();
@@ -97,7 +93,7 @@ public final class ContentBellBlock extends LineCompat.BellBase implements ICont
 
     private static void play(Level level, BlockPos pos, String name, float volume) {
         if (name.isEmpty()) { return; }
-        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, Identifier.tryParse(name));
+        SoundEvent sound = ContentSounds.find(name);
         if (sound != null) { level.playSound(null, pos, sound, SoundSource.BLOCKS, volume, 1.0F); }
     }
 }

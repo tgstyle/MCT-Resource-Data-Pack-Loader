@@ -29,9 +29,8 @@ import java.util.Optional;
     @Shadow protected abstract SoundEvent getAmbientSound();
     @Unique private boolean rdpl$slower;
 
-    @Inject(method = "getLootTable", at = @At("HEAD"), cancellable = true)
-    private void rdpl$variantLoot(CallbackInfoReturnable<Optional<ResourceKey<LootTable>>> cir) {
-        Mob self = Mob.class.cast(this);
+    @Inject(method = "getLootTable", at = @At("HEAD"), cancellable = true) private void rdpl$variantLoot(CallbackInfoReturnable<Optional<ResourceKey<LootTable>>> cir) {
+        Mob self = (Mob) (Object) this;
         EntityVariantDef def = ContentEntities.def(self);
         if (def == null) { return; }
         if (!def.lootTable().isEmpty()) {
@@ -43,40 +42,29 @@ import java.util.Optional;
         if (base != null) { cir.setReturnValue(base.getDefaultLootTable()); }
     }
 
-    @Redirect(method = "playAmbientSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getAmbientSound()Lnet/minecraft/sounds/SoundEvent;"))
-    private SoundEvent rdpl$ambientSound(Mob self) {
-        SoundEvent sound = ContentEntities.sound(self, ContentEntities.AMBIENT);
-        return sound != null ? sound : getAmbientSound();
-    }
+    @Redirect(method = "playAmbientSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getAmbientSound()Lnet/minecraft/sounds/SoundEvent;")) private SoundEvent rdpl$ambientSound(Mob self) { return ContentEntities.sound(self, ContentEntities.AMBIENT, this::getAmbientSound); }
 
-    @Inject(method = "getMaxFallDistance", at = @At("HEAD"), cancellable = true)
-    private void rdpl$maxFall(CallbackInfoReturnable<Integer> cir) {
-        EntityVariantDef def = ContentEntities.def(Mob.class.cast(this));
+    @Inject(method = "getMaxFallDistance", at = @At("HEAD"), cancellable = true) private void rdpl$maxFall(CallbackInfoReturnable<Integer> cir) {
+        EntityVariantDef def = ContentEntities.def((Mob) (Object) this);
         if (def != null && def.physics().maxFallHeight() >= 0) { cir.setReturnValue(def.physics().maxFallHeight()); }
     }
 
-    @Inject(method = "canBeLeashed()Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$leashable(CallbackInfoReturnable<Boolean> cir) {
-        EntityVariantDef def = ContentEntities.def(Mob.class.cast(this));
+    @Inject(method = "canBeLeashed()Z", at = @At("HEAD"), cancellable = true) private void rdpl$leashable(CallbackInfoReturnable<Boolean> cir) {
+        EntityVariantDef def = ContentEntities.def((Mob) (Object) this);
         if (def != null && def.flags().leashable()) { cir.setReturnValue(true); }
     }
 
-    @Inject(method = "serverAiStep", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", args = "ldc=sensing"), cancellable = true)
-    private void rdpl$stalled(CallbackInfo ci) {
-        if (EntityStorage.stalled(Mob.class.cast(this))) { ci.cancel(); }
-    }
+    @Inject(method = "serverAiStep", at = @At(value = "INVOKE_STRING", target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V", args = "ldc=sensing"), cancellable = true) private void rdpl$stalled(CallbackInfo ci) { if (EntityStorage.stalled((Mob) (Object) this)) { ci.cancel(); } }
 
-    @Redirect(method = "serverAiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;tick()V"))
-    private void rdpl$slowThinking(GoalSelector selector) {
-        Mob self = Mob.class.cast(this);
-        if (selector == self.targetSelector) { rdpl$slower = ContentEntityTicks.thinksSlower(self); }
+    @Redirect(method = "serverAiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;tick()V")) private void rdpl$slowThinking(GoalSelector selector) {
+        Mob self = (Mob) (Object) this;
+        if (selector == self.targetSelector) { rdpl$slower = ContentEntityTicks.slowedNow(self); }
         if (rdpl$slower) { selector.tickRunningGoals(false); }
         else { selector.tick(); }
     }
 
-    @Inject(method = "getControllingPassenger", at = @At("RETURN"), cancellable = true)
-    private void rdpl$steered(CallbackInfoReturnable<LivingEntity> cir) {
-        Mob self = Mob.class.cast(this);
+    @Inject(method = "getControllingPassenger", at = @At("RETURN"), cancellable = true) private void rdpl$steered(CallbackInfoReturnable<LivingEntity> cir) {
+        Mob self = (Mob) (Object) this;
         if (cir.getReturnValue() == null && ContentEntities.steerable(self) && self.getFirstPassenger() instanceof Player player) { cir.setReturnValue(player); }
     }
 }

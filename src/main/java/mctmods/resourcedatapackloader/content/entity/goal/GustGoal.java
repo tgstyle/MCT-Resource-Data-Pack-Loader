@@ -9,60 +9,34 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
-import java.util.EnumSet;
 import java.util.List;
-import javax.annotation.Nullable;
 
-public final class GustGoal extends Goal {
+public final class GustGoal extends CooldownGoal {
     private static final int WIND = 20;
-    private static final int REST = 180;
     private static final double SPREAD = 3.0D;
-    private final PathfinderMob mob;
     private final float power;
-    @Nullable private LivingEntity target;
     private int winding;
-    private int restUntil;
 
     public GustGoal(PathfinderMob mob, float power) {
-        this.mob = mob;
+        super(mob, false, 16.0D, 144.0D);
         this.power = power;
-        setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-    }
-
-    @Override public boolean requiresUpdateEveryTick() { return true; }
-
-    @Override public boolean canUse() {
-        if (mob.tickCount < restUntil) { return false; }
-        LivingEntity found = mob.getTarget();
-        if (found == null || !found.isAlive()) { return false; }
-        double away = mob.distanceToSqr(found);
-        return away > 16.0D && away < 144.0D && mob.getSensing().hasLineOfSight(found);
     }
 
     @Override public boolean canContinueToUse() { return target != null && target.isAlive() && winding < WIND; }
 
     @Override public void start() {
-        target = mob.getTarget();
+        super.start();
         winding = 0;
         mob.getNavigation().stop();
     }
 
-    @Override public void stop() {
-        target = null;
-        restUntil = mob.tickCount + REST;
-    }
-
-    @Override public void tick() {
-        if (!canContinueToUse()) { return; }
-        if (target == null) { return; }
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+    @Override protected void act(LivingEntity current) {
         winding++;
         if (winding < WIND) { return; }
-        if (mob.level() instanceof ServerLevel server) { server.sendParticles(ParticleTypes.POOF, target.getX(), target.getY() + target.getBbHeight() * 0.5D, target.getZ(), 12, 0.6D, 0.4D, 0.6D, 0.0D); }
-        mob.level().playSound(null, target.getX(), target.getY(), target.getZ(), SoundEvents.GHAST_SHOOT, mob.getSoundSource(), 0.8F, 1.6F);
-        List<LivingEntity> struck = mob.level().getEntitiesOfClass(LivingEntity.class, target.getBoundingBox().inflate(SPREAD), other -> other != mob && other.isAlive());
+        if (mob.level() instanceof ServerLevel server) { server.sendParticles(ParticleTypes.POOF, current.getX(), current.getY() + current.getBbHeight() * 0.5D, current.getZ(), 12, 0.6D, 0.4D, 0.6D, 0.0D); }
+        mob.level().playSound(null, current.getX(), current.getY(), current.getZ(), SoundEvents.GHAST_SHOOT, mob.getSoundSource(), 0.8F, 1.6F);
+        List<LivingEntity> struck = mob.level().getEntitiesOfClass(LivingEntity.class, current.getBoundingBox().inflate(SPREAD), other -> other != mob && other.isAlive());
         DamageSource source = mob.damageSources().mobAttack(mob);
         for (LivingEntity other : struck) {
             if (other.level() instanceof ServerLevel level) { other.hurtServer(level, source, 1.0F); }

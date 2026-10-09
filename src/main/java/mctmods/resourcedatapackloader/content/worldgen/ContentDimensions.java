@@ -20,18 +20,19 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.ARGB;
-import net.minecraft.util.Mth;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.GsonHelper;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionDefaults;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,7 +46,7 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentDimensions {
-    private static final Identifier OVERWORLD = Identifier.fromNamespaceAndPath("minecraft", "overworld");
+    private static final Identifier OVERWORLD = Level.OVERWORLD.identifier();
     private static final Map<Identifier, DimensionDef> DEFS = new LinkedHashMap<>();
     private static final Map<UUID, Identifier> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
@@ -75,16 +76,16 @@ public final class ContentDimensions {
 
     @Nullable public static DimensionDef def(Identifier dimension) { return DEFS.get(dimension); }
 
-    @Nullable public static DimensionDef def(Level level) { return DEFS.get(level.dimension().identifier()); }
+    @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : DEFS.get(level.dimension().identifier()); }
 
     public static boolean bedsWork(Level level) {
         DimensionDef def = def(level);
         return def != null && def.beds();
     }
 
-    public static boolean spawns(Level level) {
+    public static boolean spawnsOff(Level level) {
         DimensionDef def = def(level);
-        return def == null || def.spawning();
+        return def != null && !def.spawning();
     }
 
     public static void generate() {
@@ -93,7 +94,7 @@ public final class ContentDimensions {
         ContentDimensionTime.reset();
         for (DimensionDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            JsonObject type = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/" + def.base() + ".json"));
+            JsonObject type = GameData.json(Identifier.withDefaultNamespace("dimension_type/" + def.base() + ".json"));
             if (type == null) { continue; }
             String namespace = def.key().getNamespace();
             String path = def.key().getPath();
@@ -166,7 +167,7 @@ public final class ContentDimensions {
             if ((name.startsWith(VISUAL) && !name.equals(VISUAL + "default_dripstone_particle")) || name.equals(MUSIC)) { own.add(name); }
         }
         own.forEach(attributes::remove);
-        JsonObject overworld = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/overworld.json"));
+        JsonObject overworld = GameData.json(Identifier.withDefaultNamespace("dimension_type/overworld.json"));
         if (overworld == null || !overworld.has("attributes")) { return; }
         for (Map.Entry<String, JsonElement> entry : overworld.getAsJsonObject("attributes").entrySet()) {
             if (entry.getKey().startsWith(VISUAL) || entry.getKey().equals(MUSIC)) { attributes.add(entry.getKey(), entry.getValue()); }
@@ -235,14 +236,15 @@ public final class ContentDimensions {
         }
         generator.addProperty("type", "minecraft:noise");
         generator.add("biome_source", biomeSource(def, dimension));
-        String vanillaSettings = DimensionDef.NETHER.equals(def.terrain()) ? "nether" : DimensionDef.END.equals(def.terrain()) ? "end" : "overworld";
+        boolean overworldNoise = !DimensionDef.NETHER.equals(def.terrain()) && !DimensionDef.END.equals(def.terrain());
+        String vanillaSettings = overworldNoise ? "overworld" : DimensionDef.NETHER.equals(def.terrain()) ? "nether" : "end";
         String settingsId = "minecraft:" + vanillaSettings;
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
         boolean flatBedrock = ContentBedrock.bedrockApplies(dimension);
-        boolean veinless = "overworld".equals(vanillaSettings) && ContentOreControl.veinsBlocked(dimension);
-        boolean grounded = "overworld".equals(vanillaSettings) && ContentBiomes.any();
+        boolean veinless = overworldNoise && ContentOreControl.veinsBlocked(dimension);
+        boolean grounded = overworldNoise && ContentBiomes.any();
         if (def.shapesNoise() || seamed || flatBedrock || veinless || grounded) {
-            JsonObject settings = LineCompat.worldgenIn("worldgen/noise_settings/" + vanillaSettings + ".json");
+            JsonObject settings = GameData.noiseSettings(vanillaSettings);
             if (settings != null) {
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
@@ -252,7 +254,7 @@ public final class ContentDimensions {
                     JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
                     noise.addProperty("min_y", def.minHeight());
                     noise.addProperty("height", def.maxHeight() - def.minHeight());
-                    if ("overworld".equals(vanillaSettings) && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight()); }
+                    if (overworldNoise && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight()); }
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
                 if (def.lavaOceans()) {
@@ -266,7 +268,7 @@ public final class ContentDimensions {
                 Identifier id = Identifier.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
                 String settingsPath = "worldgen/noise_settings/" + id.getPath() + ".json";
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());
-                if ("overworld".equals(vanillaSettings)) { ContentWorldShape.overworldNoise(id); }
+                if (overworldNoise) { ContentWorldShape.overworldNoise(id); }
                 settingsId = id.toString();
             }
         }
@@ -339,7 +341,7 @@ public final class ContentDimensions {
             ContentLog.LOGGER.error("Dimension {} sends respawns to {}, which is not a loaded dimension, so the player respawns where the game put them", diedIn, sentTo);
             return;
         }
-        BlockPos feet = landing(target, target.getRespawnData().pos(), net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
+        BlockPos feet = landing(target, target.getRespawnData().pos(), Heightmap.Types.MOTION_BLOCKING_NO_LEAVES);
         player.stopRiding();
         player.teleportTo(target, feet.getX() + 0.5D, feet.getY(), feet.getZ() + 0.5D, Set.of(), target.getRespawnData().yaw(), 0.0F, true);
         ContentLog.LOGGER.debug("Player {} died in {}, which {}, and respawns in {} at {}", player.getName().getString(), diedIn, def.respawn() ? "sends respawns on" : "allows no respawn", sentTo, feet);
@@ -348,24 +350,24 @@ public final class ContentDimensions {
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { DIED_IN.remove(event.getEntity().getUUID()); }
 
     public static boolean structuresOff(ServerLevel level) {
-        DimensionDef def = DEFS.get(level.dimension().identifier());
+        DimensionDef def = def(level);
         return def != null && !def.structures();
     }
 
-    public static boolean anyStructuresOff() {
-        for (DimensionDef def : DEFS.values()) { if (!def.structures()) { return true; } }
-        return false;
+    public static boolean allStructuresOn() {
+        for (DimensionDef def : DEFS.values()) { if (!def.structures()) { return false; } }
+        return true;
     }
 
-    public static BlockPos landing(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
+    public static BlockPos landing(ServerLevel level, BlockPos column, Heightmap.Types type) {
         BlockPos top = top(level, column, type);
         if (top.getY() > level.getMinY() + 1) { return top; }
-        DimensionDef def = DEFS.get(level.dimension().identifier());
+        DimensionDef def = def(level);
         if (def == null) { return top; }
         return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinY() + 1, level.getMaxY() - 1), column.getZ());
     }
 
-    public static BlockPos top(ServerLevel level, BlockPos column, net.minecraft.world.level.levelgen.Heightmap.Types type) {
+    public static BlockPos top(ServerLevel level, BlockPos column, Heightmap.Types type) {
         LevelChunk held = level.getChunkAt(column);
         return new BlockPos(column.getX(), held.getHeight(type, column.getX() & 15, column.getZ() & 15) + 1, column.getZ());
     }

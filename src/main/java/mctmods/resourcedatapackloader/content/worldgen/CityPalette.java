@@ -3,13 +3,12 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
-import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Snbt;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.Property;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -91,7 +90,7 @@ public final class CityPalette {
         List<BlockState> held = HELD.get(text);
         if (held != null) { return held; }
         List<BlockState> found = new ArrayList<>();
-        for (String part : Settings.entries(text)) {
+        for (String part : Snbt.split(text, ',')) {
             String entry = part.trim();
             if (entry.isEmpty()) { continue; }
             int weight = 1;
@@ -105,7 +104,7 @@ public final class CityPalette {
             }
             BlockState state = ContentStates.parse(entry, "'" + text + "'");
             if (state == null) {
-                if (WARNED.add(text + "|" + entry)) { ContentLog.LOGGER.error("The city block '{}' names '{}', which is not a registered block, so it is left out of the mix", text, entry); }
+                ContentLog.LOGGER.errorOnce(WARNED, text + "|" + entry, "The city block '{}' names '{}', which is not a registered block, so it is left out of the mix", text, entry);
                 continue;
             }
             for (int at = 0; at < Math.max(1, weight) && found.size() < MIX_MOST; at++) { found.add(state); }

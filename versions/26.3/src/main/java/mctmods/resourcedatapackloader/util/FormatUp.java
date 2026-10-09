@@ -1,15 +1,18 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public final class FormatUp {
     private static final String TYPE = "type";
-    private static final String MINECRAFT = "minecraft:";
     private static final String BRICK = "minecraft:brick";
     private static final String OLD_PALETTES = "trims/color_palettes/";
     private static final String OLD_BASE = "trims/color_palettes/trim_palette";
@@ -40,7 +43,7 @@ public final class FormatUp {
         JsonObject out = new JsonObject();
         for (int i = 0; i < Math.min(items.size(), Snbt.SIDES.size()); i++) {
             JsonElement item = items.get(i);
-            if (item.isJsonPrimitive() && !BRICK.equals(id(item.getAsString()))) { out.add(Snbt.SIDES.get(i), item); }
+            if (item.isJsonPrimitive() && !BRICK.equals(namespaced(item.getAsString()))) { out.add(Snbt.SIDES.get(i), item); }
         }
         return out;
     }
@@ -83,10 +86,10 @@ public final class FormatUp {
         else if (path.startsWith("items/")) { tints(out, note); }
         else if (path.startsWith("atlases/") && out.has("sources") && out.get("sources").isJsonArray()) {
             for (JsonElement source : out.getAsJsonArray("sources")) {
-                if (!source.isJsonObject() || !"paletted_permutations".equals(bare(text(source.getAsJsonObject(), TYPE)))) { continue; }
+                if (!source.isJsonObject() || !"paletted_permutations".equals(IdNames.bare(Json.text(source.getAsJsonObject(), TYPE)))) { continue; }
                 JsonObject permuted = source.getAsJsonObject();
-                if (permuted.has("palette_key")) { permuted.addProperty("palette_key", palette(text(permuted, "palette_key"), note)); }
-                if (permuted.has("permutations") && permuted.get("permutations").isJsonObject()) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new com.google.gson.JsonPrimitive(palette(entry.getValue().getAsString(), note)))); }
+                if (permuted.has("palette_key")) { permuted.addProperty("palette_key", palette(Json.text(permuted, "palette_key"), note)); }
+                if (permuted.has("permutations") && permuted.get("permutations").isJsonObject()) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new JsonPrimitive(palette(entry.getValue().getAsString(), note)))); }
             }
         }
         else if (path.startsWith("post_effect/") || path.startsWith("shaders/")) { note.accept("carries shader programs, which 26.3 compiles differently, so they are served as written"); }
@@ -98,7 +101,7 @@ public final class FormatUp {
             JsonArray array = element.getAsJsonArray();
             for (int i = 0; i < array.size(); i++) {
                 JsonElement item = array.get(i);
-                if (item.isJsonObject() && "map_color".equals(bare(text(item.getAsJsonObject(), TYPE)))) {
+                if (item.isJsonObject() && "map_color".equals(IdNames.bare(Json.text(item.getAsJsonObject(), TYPE)))) {
                     note.accept("tints an item with map_color, which 26.3 removed, so it uses the tint's default color");
                     JsonObject constant = new JsonObject();
                     constant.addProperty(TYPE, MINECRAFT + "constant");
@@ -131,7 +134,7 @@ public final class FormatUp {
             List<String> items = Snbt.items(value.substring(1, value.length() - 1));
             StringBuilder out = new StringBuilder("{");
             for (int i = 0; i < Math.min(items.size(), Snbt.SIDES.size()); i++) {
-                String item = id(Snbt.unquoted(items.get(i)));
+                String item = namespaced(Snbt.unquoted(items.get(i)));
                 if (BRICK.equals(item)) { continue; }
                 if (out.length() > 1) { out.append(','); }
                 out.append(Snbt.SIDES.get(i)).append(":\"").append(item).append('"');
@@ -139,10 +142,4 @@ public final class FormatUp {
             return out.append('}').toString();
         });
     }
-
-    private static String id(String id) { return id.contains(":") ? id : MINECRAFT + id; }
-
-    private static String text(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : ""; }
-
-    private static String bare(String id) { return id.startsWith(MINECRAFT) ? id.substring(MINECRAFT.length()) : id; }
 }

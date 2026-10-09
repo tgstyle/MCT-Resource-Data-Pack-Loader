@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.content.def.PortalFrameDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
@@ -30,8 +31,7 @@ import javax.annotation.Nullable;
 
 public final class ContentPortals {
     private static final String PREFIX = "portal_";
-    private static final List<Binding> BINDINGS = new ArrayList<>();
-    private static boolean bound;
+    private static volatile List<Binding> bound = List.of();
 
     private ContentPortals() {}
 
@@ -62,23 +62,40 @@ public final class ContentPortals {
     }
 
     private static String blockJson(Identifier dimension, DimensionPortalDef portal) {
-        return "{\"type\":\"portal\",\"material\":\"portal\",\"renderLayer\":\"translucent\",\"opaque\":false,\"fullCube\":false"
-                + ",\"tint\":\"#" + String.format("%06X", portal.color() & 0xFFFFFF) + "\""
-                + ",\"variants\":{\"" + PREFIX + dimension.getPath() + "\":{\"hardness\":-1,\"light\":11}}"
-                + ",\"portal\":{\"dimension\":\"" + dimension + "\""
-                + ",\"returnDimension\":\"" + portal.travel().returnDimension() + "\""
-                + ",\"gate\":\"" + portal.travel().gate() + "\""
-                + ",\"cooldown\":" + portal.travel().cooldown()
-                + ",\"platform\":" + portal.travel().platform()
-                + ",\"platformBlock\":\"" + portal.travel().platformBlock() + "\""
-                + ",\"sound\":\"" + portal.travel().sound() + "\""
-                + ",\"owned\":" + portal.travel().owned()
-                + ",\"walkIn\":true}}";
+        JsonObject json = new JsonObject();
+        json.addProperty("type", "portal");
+        json.addProperty("material", "portal");
+        json.addProperty("renderLayer", "translucent");
+        json.addProperty("opaque", false);
+        json.addProperty("fullCube", false);
+        json.addProperty("tint", "#" + String.format("%06X", portal.color() & 0xFFFFFF));
+        JsonObject variant = new JsonObject();
+        variant.addProperty("hardness", -1);
+        variant.addProperty("light", 11);
+        JsonObject variants = new JsonObject();
+        variants.add(PREFIX + dimension.getPath(), variant);
+        json.add("variants", variants);
+        json.add("portal", travel(dimension, portal));
+        return json.toString();
     }
 
-    private static void bind() {
-        if (bound) { return; }
-        bound = true;
+    private static JsonObject travel(Identifier dimension, DimensionPortalDef portal) {
+        JsonObject travel = new JsonObject();
+        travel.addProperty("dimension", dimension.toString());
+        travel.addProperty("returnDimension", portal.travel().returnDimension().toString());
+        travel.addProperty("gate", portal.travel().gate());
+        travel.addProperty("cooldown", portal.travel().cooldown());
+        travel.addProperty("platform", portal.travel().platform());
+        travel.addProperty("platformBlock", portal.travel().platformBlock());
+        travel.addProperty("sound", portal.travel().sound());
+        travel.addProperty("owned", portal.travel().owned());
+        travel.addProperty("walkIn", true);
+        return travel;
+    }
+
+    public static void bind() {
+        ContentPortalFrames.resolve();
+        List<Binding> made = new ArrayList<>();
         Set<String> claimed = new LinkedHashSet<>();
         for (Map.Entry<Identifier, DimensionDef> entry : opening().entrySet()) {
             DimensionDef dimension = entry.getValue();
@@ -109,15 +126,13 @@ public final class ContentPortals {
                 frames.add(frame);
             }
             if (frames.isEmpty()) { continue; }
-            BINDINGS.add(new Binding(entry.getKey(), dimension, portal, igniter, frames, block));
+            made.add(new Binding(entry.getKey(), dimension, portal, igniter, frames, block));
         }
-        if (!BINDINGS.isEmpty()) { ContentLog.LOGGER.info("{} dimension(s) can be opened by building a frame and lighting it", BINDINGS.size()); }
+        if (!made.isEmpty()) { ContentLog.LOGGER.info("{} dimension(s) can be opened by building a frame and lighting it", made.size()); }
+        bound = List.copyOf(made);
     }
 
-    public static List<Binding> bindings() {
-        bind();
-        return BINDINGS;
-    }
+    public static List<Binding> bindings() { return bound; }
 
     @Nullable public static Binding forBlock(Block block) {
         for (Binding binding : bindings()) {
@@ -130,7 +145,7 @@ public final class ContentPortals {
         if (held.isEmpty()) { return null; }
         for (Binding binding : bindings()) {
             if (held.getItem() != binding.igniter()) { continue; }
-            if (level.dimension().identifier().equals(binding.name()) && !binding.portal().lightsBack()) { continue; }
+            if (level.dimension().identifier().equals(binding.name()) && binding.portal().noLightBack()) { continue; }
             for (PortalFrameDef frame : binding.frames()) {
                 for (BlockPos candidate : candidates(level, clicked, face)) {
                     PortalFit fit = ContentPortalFrames.fit(level, candidate, frame);
@@ -142,14 +157,14 @@ public final class ContentPortals {
         return null;
     }
 
-    public static boolean light(Level level, BlockPos clicked, @Nullable Direction face, ItemStack held) {
-        if (level.isClientSide()) { return false; }
+    public static boolean lightFailed(Level level, BlockPos clicked, @Nullable Direction face, ItemStack held) {
+        if (level.isClientSide()) { return true; }
         Lighting found = find(level, clicked, face, held);
-        if (found == null) { return false; }
+        if (found == null) { return true; }
         fill(level, found.fit(), found.binding());
         PortalFit fit = found.fit();
         ContentLog.LOGGER.debug("{} was lit at {} and opened {}: {} by {} {}, {} block(s) of portal in it", fit.frame().name(), found.at(), found.binding().name(), fit.columns(), fit.rows(), fit.flat() ? "lying flat" : fit.alongX() ? "standing along x" : "standing along z", fit.size());
-        return true;
+        return false;
     }
 
     private static List<BlockPos> candidates(Level level, BlockPos clicked, @Nullable Direction face) {
@@ -164,12 +179,14 @@ public final class ContentPortals {
 
     public static void fill(Level level, PortalFit fit, Binding binding) {
         BlockState state = binding.block().oriented(fit);
-        for (BlockPos hole : fit.holes()) { level.setBlock(hole, state, 2); }
+        for (BlockPos hole : fit.holes()) { level.setBlock(hole, state, Block.UPDATE_CLIENTS); }
     }
 
-    @Nullable public static PortalFit fitAt(Level level, BlockPos pos, Binding binding) {
+    @Nullable public static PortalFit fitAt(Level level, BlockPos pos, Binding binding) { return fitAt(level, pos, binding, null); }
+
+    @Nullable private static PortalFit fitAt(Level level, BlockPos pos, Binding binding, @Nullable BlockPos broken) {
         for (PortalFrameDef frame : binding.frames()) {
-            PortalFit found = ContentPortalFrames.fit(level, pos, frame);
+            PortalFit found = ContentPortalFrames.fit(level, pos, frame, broken);
             if (found != null) { return found; }
         }
         return null;
@@ -186,7 +203,7 @@ public final class ContentPortals {
         for (BlockPos at : BlockPos.betweenClosed(pos.offset(-reach, -reach, -reach), pos.offset(reach, reach, reach))) {
             if (!level.isLoaded(at)) { continue; }
             Binding binding = forBlock(level.getBlockState(at).getBlock());
-            if (binding == null || standing(level, at, binding)) { continue; }
+            if (binding == null || fitAt(level, at, binding, pos) != null) { continue; }
             going.add(at.immutable());
         }
         for (BlockPos at : going) { level.removeBlock(at, false); }

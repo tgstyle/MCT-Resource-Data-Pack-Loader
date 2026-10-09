@@ -43,9 +43,13 @@ public final class ContentStructurePins {
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         ServerLevel overworld = server == null ? null : server.getLevel(Level.OVERWORLD);
         BlockPos from = overworld != null ? overworld.getRespawnData().pos() : new BlockPos(spawn.size() == 2 ? spawn.get(0) : 0, 0, spawn.size() == 2 ? spawn.get(1) : 0);
-        double offX = (x * 16 + 8) - from.getX();
-        double offZ = (z * 16 + 8) - from.getZ();
-        return offX * offX + offZ * offZ >= (double) minDistanceFromSpawn * minDistanceFromSpawn;
+        return farFrom(from, minDistanceFromSpawn, x * 16 + 8, z * 16 + 8);
+    }
+
+    static boolean farFrom(BlockPos spawn, int least, int centerX, int centerZ) {
+        double offX = centerX - spawn.getX();
+        double offZ = centerZ - spawn.getZ();
+        return offX * offX + offZ * offZ >= (double) least * least;
     }
 
     public static boolean pinned(ChunkPos chunk) { return !PINNED.isEmpty() && PINNED.contains(chunk.pack()); }

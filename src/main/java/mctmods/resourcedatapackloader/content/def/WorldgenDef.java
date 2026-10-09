@@ -19,9 +19,7 @@ public record WorldgenDef(Identifier key, Identifier block, List<BlockWeightDef>
 
     public boolean follows() { return !indicators.isEmpty() || !then.isEmpty(); }
 
-    public boolean needsBiome() { return hasBiomeFilter() || hasClimateFilter(); }
+    public boolean worksAnywhere() { return !hasBiomeFilter() && !hasClimateFilter(); }
 
-    public boolean climateAllows(float temperature, float rainfall) {
-        return temperature >= leastTemperature && temperature <= mostTemperature && rainfall >= leastRainfall && rainfall <= mostRainfall;
-    }
+    public boolean climateAllows(float temperature, float rainfall) { return temperature >= leastTemperature && temperature <= mostTemperature && rainfall >= leastRainfall && rainfall <= mostRainfall; }
 }

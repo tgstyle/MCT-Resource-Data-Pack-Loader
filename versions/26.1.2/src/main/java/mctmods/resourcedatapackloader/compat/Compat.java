@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.compat;
 
+import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.SwoopMoveControl;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.TagKey;
@@ -25,18 +28,14 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.levelgen.feature.LakeFeature;
 import net.minecraft.world.level.levelgen.feature.stateproviders.BlockStateProvider;
 import net.minecraft.world.scores.PlayerTeam;
-import java.util.Locale;
-import java.util.Optional;
 import javax.annotation.Nullable;
 
 public final class Compat {
     private Compat() {}
 
-    public static Optional<EntityType<?>> lookupEntityType(Identifier id) { return EntityType.byString(id.toString()); }
+    @Nullable public static EntityType<?> entityType(@Nullable Identifier id) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, id); }
 
-    @Nullable public static EntityType<?> entityType(@Nullable Identifier id) { return id == null ? null : EntityType.byString(id.toString()).orElse(null); }
-
-    @Nullable public static EntityType<?> entityType(String name) { return EntityType.byString(name).orElse(null); }
+    @Nullable public static EntityType<?> entityType(String name) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, Identifier.tryParse(name)); }
 
     public static EntityType<Player> player() { return EntityType.PLAYER; }
 
@@ -59,7 +58,7 @@ public final class Compat {
     @SuppressWarnings("unused") public static void knockback(LivingEntity target, double power, double x, double z, DamageSource source, float damage) { target.knockback(power, x, z); }
 
     @Nullable public static ChatFormatting teamColor(String name) {
-        ChatFormatting color = ChatFormatting.getByName(name.trim().toLowerCase(Locale.ROOT));
+        ChatFormatting color = ChatFormatting.getByName(Settings.lower(name));
         return color != null && color.isColor() ? color : null;
     }
 

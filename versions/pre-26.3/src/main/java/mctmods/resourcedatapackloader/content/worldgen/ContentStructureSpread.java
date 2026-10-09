@@ -1,10 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import com.mojang.datafixers.Products;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Vec3i;
-import net.minecraft.util.ExtraCodecs;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkGeneratorStructureState;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
@@ -16,17 +17,20 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public final class ContentStructureSpread extends RandomSpreadStructurePlacement {
-    public static final MapCodec<ContentStructureSpread> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Vec3i.offsetCodec(16).optionalFieldOf("locate_offset", Vec3i.ZERO).forGetter(ContentStructureSpread::locateOffset),
-            StructurePlacement.FrequencyReductionMethod.CODEC.optionalFieldOf("frequency_reduction_method", StructurePlacement.FrequencyReductionMethod.DEFAULT).forGetter(ContentStructureSpread::frequencyReductionMethod),
-            Codec.floatRange(0.0F, 1.0F).optionalFieldOf("frequency", 1.0F).forGetter(ContentStructureSpread::frequency),
-            ExtraCodecs.NON_NEGATIVE_INT.fieldOf("salt").forGetter(ContentStructureSpread::salt),
-            Codec.intRange(0, 4096).fieldOf("spacing").forGetter(ContentStructureSpread::spacing),
-            Codec.intRange(0, 4096).fieldOf("separation").forGetter(ContentStructureSpread::separation),
-            RandomSpreadType.CODEC.optionalFieldOf("spread_type", RandomSpreadType.LINEAR).forGetter(ContentStructureSpread::spreadType),
-            Codec.INT.listOf().listOf().optionalFieldOf("pins", List.of()).forGetter(ContentStructureSpread::pins),
-            Codec.INT.optionalFieldOf("min_distance_from_spawn", 0).forGetter(ContentStructureSpread::minDistanceFromSpawn),
-            Codec.INT.listOf().optionalFieldOf("spawn", List.of(0, 0)).forGetter(ContentStructureSpread::spawn)).apply(instance, ContentStructureSpread::new));
+    static final MapCodec<List<List<Integer>>> PINS = Codec.INT.listOf().listOf().optionalFieldOf("pins", List.of());
+    private static final MapCodec<ContentStructureSpread> FIELDS = RecordCodecBuilder.mapCodec(instance -> {
+        var placed = placementCodec(instance);
+        var own = instance.group(
+                Codec.intRange(0, 4096).fieldOf("spacing").forGetter(ContentStructureSpread::spacing),
+                Codec.intRange(0, 4096).fieldOf("separation").forGetter(ContentStructureSpread::separation),
+                RandomSpreadType.CODEC.optionalFieldOf("spread_type", RandomSpreadType.LINEAR).forGetter(ContentStructureSpread::spreadType),
+                PINS.forGetter(ContentStructureSpread::pins),
+                Codec.INT.optionalFieldOf("min_distance_from_spawn", 0).forGetter(ContentStructureSpread::minDistanceFromSpawn),
+                Codec.INT.listOf().optionalFieldOf("spawn", List.of(0, 0)).forGetter(ContentStructureSpread::spawn));
+        return new Products.P11<>(placed.t1(), placed.t2(), placed.t3(), placed.t4(), placed.t5(), own.t1(), own.t2(), own.t3(), own.t4(), own.t5(), own.t6()).apply(instance,
+                (offset, reduction, frequency, salt, _, spacing, separation, type, pins, nearest, spawn) -> new ContentStructureSpread(offset, reduction, frequency, salt, spacing, separation, type, pins, nearest, spawn));
+    });
+    public static final MapCodec<ContentStructureSpread> CODEC = FIELDS.validate(ContentStructureSpread::validate);
     public static final StructurePlacementType<ContentStructureSpread> TYPE = () -> CODEC;
     private final List<List<Integer>> pins;
     private final int minDistanceFromSpawn;
@@ -60,4 +64,6 @@ public final class ContentStructureSpread extends RandomSpreadStructurePlacement
     @Override public boolean isStructureChunk(@Nonnull ChunkGeneratorStructureState state, int x, int z) { return pins.isEmpty() ? super.isStructureChunk(state, x, z) : ContentStructurePins.pinnedAt(pins, x, z); }
 
     @Override @Nonnull public StructurePlacementType<?> type() { return TYPE; }
+
+    private static DataResult<ContentStructureSpread> validate(ContentStructureSpread placement) { return placement.spacing() <= placement.separation() ? DataResult.error(() -> "Spacing has to be larger than separation") : DataResult.success(placement); }
 }

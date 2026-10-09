@@ -1,5 +1,6 @@
-package mctmods.resourcedatapackloader.client;
+package mctmods.resourcedatapackloader.client.render;
 
+import mctmods.resourcedatapackloader.client.SeamSkyColors;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
@@ -103,7 +104,7 @@ public final class SeamSkyRenderer {
         ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
         if (target != null) {
             float brightness = Mth.clamp(Mth.cos(target.environmentAttributes().getValue(EnvironmentAttributes.SUN_ANGLE, eye) * Mth.DEG_TO_RAD) * 2.0F + 0.5F, 0.0F, 1.0F);
-            return shaded(def != null && def.hasEffects() ? "minecraft:overworld" : base, rgb(def != null && def.fogColor() >= 0 ? def.fogColor() : fogOf(base)), brightness);
+            return shaded(def != null && def.hasEffects() ? "minecraft:overworld" : base, SeamSkyColors.rgb(def != null && def.fogColor() >= 0 ? def.fogColor() : SeamSkyColors.fogOf(base)), brightness);
         }
         return switch (base) {
             case "minecraft:the_nether" -> new Vec3(0.2D, 0.03D, 0.03D);
@@ -117,16 +118,6 @@ public final class SeamSkyRenderer {
             case "minecraft:the_nether" -> color;
             case "minecraft:the_end" -> color.scale(0.15F);
             default -> color.multiply(brightness * 0.94F + 0.06F, brightness * 0.94F + 0.06F, brightness * 0.91F + 0.09F);
-        };
-    }
-
-    private static Vec3 rgb(int rgb) { return new Vec3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
-
-    private static int fogOf(String base) {
-        return switch (base) {
-            case "minecraft:the_nether" -> 0x330808;
-            case "minecraft:the_end" -> 0xA080A0;
-            default -> 0xC0D8FF;
         };
     }
 }

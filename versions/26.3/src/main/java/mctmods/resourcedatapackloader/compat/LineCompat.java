@@ -191,9 +191,7 @@ public final class LineCompat {
         return block == Blocks.COBWEB || block == Blocks.BAMBOO_SAPLING || !state.isSolid();
     }
 
-    public static void fluidTags(BlockState state, Consumer<String> tag) {
-        if (ContentTypes.washedAway(state) && !(state.getBlock() instanceof DoorBlock)) { tag.accept(BlockTags.WASHED_AWAY_BY_FLUIDS.location().toString()); }
-    }
+    public static void fluidTags(BlockState state, Consumer<String> tag) { if (ContentTypes.washedAway(state) && !(state.getBlock() instanceof DoorBlock)) { tag.accept(BlockTags.WASHED_AWAY_BY_FLUIDS.location().toString()); } }
 
     public static BlockBehaviour.Properties notViewBlocking(BlockBehaviour.Properties properties) { return properties.isViewBlocking((_, _, _, _) -> false); }
 
@@ -242,14 +240,14 @@ public final class LineCompat {
 
     public static double surfaceNoise(RandomState random, int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceNoise().get(x, 0.0, z); }
 
-    public static float temperatureNoise(BlockPos pos) { return IBiomeNoise.rdpl$temperatureNoise().get(pos.getX() / 8.0F, pos.getZ() / 8.0F) * 8.0F; }
+    public static float temperatureNoise(BlockPos pos) { return IBiomeNoise.rdpl$getTemperatureNoise().get(pos.getX() / 8.0F, pos.getZ() / 8.0F) * 8.0F; }
 
     public static RandomState randomState(NoiseGeneratorSettings settings, RegistryAccess registries, long seed) { return RandomState.create(registries.lookupOrThrow(Registries.NOISE), seed, settings); }
 
     public static Registry<?> carvers(RegistryAccess registries) { return registries.lookupOrThrow(Registries.CARVER); }
 
     @Nullable public static JsonObject worldgenIn(String path) {
-        JsonObject json = GameData.json(Identifier.fromNamespaceAndPath("minecraft", path));
+        JsonObject json = GameData.json(Identifier.withDefaultNamespace(path));
         if (json == null || !path.startsWith(NOISE_SETTINGS)) { return json; }
         JsonElement rule = json.remove("material_rule");
         if (rule != null) { json.add("surface_rule", inlineRule(rule)); }

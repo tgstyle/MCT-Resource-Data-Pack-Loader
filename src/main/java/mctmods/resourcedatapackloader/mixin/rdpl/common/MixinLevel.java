@@ -16,13 +16,10 @@ import javax.annotation.Nonnull;
 
 @Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class MixinLevel {
     @Nonnull public Difficulty level$getDifficulty() {
-        Level self = Level.class.cast(this);
+        Level self = (Level) (Object) this;
         Difficulty asked = ContentServer.difficultyFor(self.dimension().identifier().toString());
         return asked != null ? asked : self.getLevelData().getDifficulty();
     }
 
-    @Redirect(method = "tickBlockEntities()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V"))
-    private void rdpl$standStillWhileLandIsMade(TickingBlockEntity ticker) {
-        if (Level.class.cast(this).isClientSide() || !ContentPregen.busy()) { ticker.tick(); }
-    }
+    @Redirect(method = "tickBlockEntities()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V")) private void rdpl$standStillWhileLandIsMade(TickingBlockEntity ticker) { if (((Level) (Object) this).isClientSide() || !ContentPregen.busy()) { ticker.tick(); } }
 }

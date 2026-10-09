@@ -13,8 +13,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(SpringFeature.class) public abstract class MixinSpringFeature {
-    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
-    private void rdpl$notIntoACut(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.springIntoCut(level, origin)) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true) private void rdpl$notIntoACut(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.springIntoCut(level, origin)) { cir.setReturnValue(false); } }
 }

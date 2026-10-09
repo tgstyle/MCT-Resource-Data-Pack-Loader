@@ -1,14 +1,20 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.Json.flag;
+
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.SharedConstants;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -40,7 +46,7 @@ final class ModernWorld {
         String effects = json.has(EFFECTS) && json.get(EFFECTS).isJsonPrimitive() ? json.get(EFFECTS).getAsString() : "minecraft:overworld";
         String base = "minecraft:the_nether".equals(effects) ? "the_nether" : "minecraft:the_end".equals(effects) ? "the_end" : "overworld";
         JsonObject attributes = new JsonObject();
-        JsonObject template = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "dimension_type/" + base + ".json"));
+        JsonObject template = GameData.json(Identifier.withDefaultNamespace("dimension_type/" + base + ".json"));
         if (template != null && template.has(ATTRIBUTES) && template.get(ATTRIBUTES).isJsonObject()) {
             for (Map.Entry<String, JsonElement> entry : template.getAsJsonObject(ATTRIBUTES).entrySet()) {
                 if (entry.getKey().startsWith(VISUAL) || entry.getKey().startsWith(AUDIO)) { attributes.add(entry.getKey(), entry.getValue().deepCopy()); }
@@ -82,16 +88,14 @@ final class ModernWorld {
         json.add(ATTRIBUTES, attributes);
     }
 
-    private static boolean flag(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() && json.get(key).getAsBoolean(); }
-
     private static double timeOfDay(long time) {
-        double turn = (time / 24000.0 - 0.25) - Math.floor(time / 24000.0 - 0.25);
+        double turn = (time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25) - Math.floor(time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25);
         return (turn * 2.0 + (0.5 - Math.cos(turn * Math.PI) / 2.0)) / 3.0;
     }
 
     private static int skyLight(long time) {
         double day = timeOfDay(time);
-        double dark = 1.0 - Math.clamp(1.0 - (Math.cos(day * Math.PI * 2.0) * 2.0 + 0.5), 0.0, 1.0);
+        double dark = 1.0 - Mth.clamp(1.0 - (Math.cos(day * Math.PI * 2.0) * 2.0 + 0.5), 0.0, 1.0);
         return FULL_SKY_LIGHT - (int) ((1.0 - dark) * 11.0);
     }
 
@@ -168,15 +172,15 @@ final class ModernWorld {
     }
 
     static void feature(JsonObject json, String file, Consumer<String> note) {
-        String type = json.has("type") && json.get("type").isJsonPrimitive() ? json.get("type").getAsString() : "";
+        String type = Json.text(json, "type");
         JsonObject config = json.has(CONFIG) && json.get(CONFIG).isJsonObject() ? json.getAsJsonObject(CONFIG) : null;
         if (config == null) { return; }
         if ("minecraft:ice_spike".equals(type) || "minecraft:forest_rock".equals(type)) {
-            replaced(json, config, type.substring(ModernFixes.MINECRAFT.length()), file, note);
+            replaced(json, config, type.substring(IdNames.MINECRAFT.length()), file, note);
             return;
         }
         if (MUSHROOMS.contains(type) && !config.has("can_place_on")) {
-            JsonObject vanilla = vanillaFeature(type.substring(ModernFixes.MINECRAFT.length()));
+            JsonObject vanilla = vanillaFeature(type.substring(IdNames.MINECRAFT.length()));
             if (vanilla != null && vanilla.getAsJsonObject(CONFIG).has("can_place_on")) { config.add("can_place_on", vanilla.getAsJsonObject(CONFIG).get("can_place_on").deepCopy()); }
             else { note.accept("'" + file + "' is a " + type + ", which now names the blocks it grows on, and the game's own could not be read; add \"can_place_on\" by hand"); }
             return;
@@ -233,7 +237,7 @@ final class ModernWorld {
     }
 
     @Nullable private static JsonObject vanillaFeature(String name) {
-        JsonObject vanilla = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "worldgen/configured_feature/" + name + ".json"));
+        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("worldgen/configured_feature/" + name + ".json"));
         return vanilla != null && vanilla.has("type") && vanilla.has(CONFIG) && vanilla.get(CONFIG).isJsonObject() ? vanilla : null;
     }
 
@@ -245,7 +249,7 @@ final class ModernWorld {
             if (texture != null) { assets.add(look, texture); }
         }
         json.add("assets", assets);
-        JsonObject pale = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "wolf_variant/pale.json"));
+        JsonObject pale = GameData.json(Identifier.withDefaultNamespace("wolf_variant/pale.json"));
         boolean plain = pale != null && pale.has("baby_assets") && pale.get("baby_assets").isJsonObject();
         json.add("baby_assets", plain ? pale.get("baby_assets").deepCopy() : assets.deepCopy());
         note.accept("'" + file + "' is a wolf variant, and this version gives pups their own textures, which the pack has none of, so its pups look like " + (plain ? "plain wolf pups" : "its grown wolves"));

@@ -17,6 +17,7 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -61,20 +62,20 @@ public final class CityCrown {
 
     private static boolean reaches(StructurePiece piece, BoundingBox clip) { return settling(piece) && piece.getBoundingBox().inflatedBy(REACH).intersects(clip); }
 
-    private static boolean crowns(List<StructureStart> starts, BoundingBox clip) {
+    private static boolean crownless(List<StructureStart> starts, BoundingBox clip) {
         for (StructureStart start : starts) {
             for (StructurePiece piece : start.getPieces()) {
-                if (reaches(piece, clip)) { return true; }
+                if (reaches(piece, clip)) { return false; }
             }
         }
-        return false;
+        return true;
     }
 
     static BoundingBox clip(WorldGenLevel level, ChunkPos chunk) { return new BoundingBox(chunk.getMinBlockX(), level.getMinY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), level.getMaxY(), chunk.getMaxBlockZ()); }
 
     public static void born(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
         BORN.remove();
-        if (!crowns(cities(manager, chunk), clip(level, chunk))) { return; }
+        if (crownless(cities(manager, chunk), clip(level, chunk))) { return; }
         Born born = new Born(chunk);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = born.minX; x < born.minX + 16; x++) {
@@ -99,7 +100,7 @@ public final class CityCrown {
             for (StructurePiece piece : start.getPieces()) {
                 BoundingBox box = piece.getBoundingBox();
                 boxes.add(box);
-                if (street(piece)) { streets.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ())); }
+                if (street(piece)) { CityBoxes.add(streets, box); }
             }
             int[] roadways = streets.toIntArray();
             for (StructurePiece piece : start.getPieces()) {
@@ -243,7 +244,7 @@ public final class CityCrown {
                     crowning.took(Crowned.BORN_UNDER_SOIL, x, top, z);
                     continue;
                 }
-                level.setBlock(at, underSoil(was) ? CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, x, z)) : was, 2);
+                level.setBlock(at, underSoil(was) ? CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, x, z)) : was, Block.UPDATE_CLIENTS);
                 crowning.took(Crowned.WRITTEN, x, top, z);
             }
         }
@@ -293,13 +294,13 @@ public final class CityCrown {
                 BlockState top = mesaTop(ground, x, y, z, sea, depth, wooded, plain, sand);
                 laying = y >= low && y <= high && top != null && bare(level, at, keep, x, y, z);
                 if (laying) {
-                    level.setBlock(at, top, 2);
+                    level.setBlock(at, top, Block.UPDATE_CLIENTS);
                     if (first == Integer.MIN_VALUE) { first = y; }
                 }
             }
             else if (left > 0) {
                 left--;
-                if (laying && bare(level, at, keep, x, y, z)) { level.setBlock(at, sand ? Compat.orangeTerracotta().defaultBlockState() : ground.band(x, y, z), 2); }
+                if (laying && bare(level, at, keep, x, y, z)) { level.setBlock(at, sand ? Compat.orangeTerracotta().defaultBlockState() : ground.band(x, y, z), Block.UPDATE_CLIENTS); }
             }
             stone++;
         }
@@ -352,13 +353,13 @@ public final class CityCrown {
                 else { top = filler; }
                 laying = y >= low && y <= high && bare(level, at, keep, x, y, z);
                 if (laying) {
-                    level.setBlock(at, top, 2);
+                    level.setBlock(at, top, Block.UPDATE_CLIENTS);
                     if (first == Integer.MIN_VALUE) { first = y; }
                 }
             }
             else if (left > 0) {
                 left--;
-                if (laying && !filler.is(Blocks.STONE) && bare(level, at, keep, x, y, z)) { level.setBlock(at, filler, 2); }
+                if (laying && !filler.is(Blocks.STONE) && bare(level, at, keep, x, y, z)) { level.setBlock(at, filler, Block.UPDATE_CLIENTS); }
                 if (left == 0 && filler.is(BlockTags.SAND) && depth > 1) {
                     left = RandomSource.create(Hashes.mix(ground.seed(), x, y, z)).nextInt(4) + Math.max(0, y - 63);
                     filler = filler.is(Blocks.RED_SAND) ? Blocks.RED_SANDSTONE.defaultBlockState() : Blocks.SANDSTONE.defaultBlockState();

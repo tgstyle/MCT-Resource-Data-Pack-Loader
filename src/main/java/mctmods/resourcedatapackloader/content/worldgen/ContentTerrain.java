@@ -1,7 +1,15 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import com.google.gson.JsonObject;
+import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentServer;
+import mctmods.resourcedatapackloader.pack.port.Ids;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Summary;
 
+import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.clock.WorldClock;
@@ -9,26 +17,25 @@ import net.minecraft.world.clock.WorldClocks;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.levelgen.WorldOptions;
-
-import java.util.HashSet;
 import java.util.ArrayList;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nullable;
-
-import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentServer;
-import mctmods.resourcedatapackloader.pack.port.Ids;
-import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Summary;
 
 public final class ContentTerrain {
     public static final String HARDCORE = "hardcore";
     private static final Set<String> WARNED = new HashSet<>();
+    private static final Map<String, List<String>> FLAT_STRUCTURES = Map.of("village", List.of("minecraft:villages"), "mineshaft", List.of("minecraft:mineshafts"), "stronghold", List.of("minecraft:strongholds"),
+            "oceanmonument", List.of("minecraft:ocean_monuments"), "mansion", List.of("minecraft:woodland_mansions"), "biome_1", List.of("minecraft:desert_pyramids", "minecraft:jungle_temples", "minecraft:swamp_huts", "minecraft:igloos"));
+    private static final List<String> LEGACY_BIOMES = List.of("ocean", "plains", "desert", "extreme_hills", "forest", "taiga", "swampland", "river", "hell", "sky", "frozen_ocean", "frozen_river", "ice_flats",
+            "ice_mountains", "mushroom_island", "mushroom_island_shore", "beaches", "desert_hills", "forest_hills", "taiga_hills", "smaller_extreme_hills", "jungle", "jungle_hills", "jungle_edge", "deep_ocean",
+            "stone_beach", "cold_beach", "birch_forest", "birch_forest_hills", "roofed_forest", "taiga_cold", "taiga_cold_hills", "redwood_taiga", "redwood_taiga_hills", "extreme_hills_with_trees", "savanna",
+            "savanna_rock", "mesa", "mesa_rock", "mesa_clear_rock");
+    private static final String PLAINS = "minecraft:plains";
+    private static final List<String> FLAT_TYPES = List.of("flat", "superflat");
 
     private ContentTerrain() {}
 
@@ -47,7 +54,7 @@ public final class ContentTerrain {
         boolean hardcore = HARDCORE.equals(mode);
         GameType asked = hardcore ? GameType.SURVIVAL : GameType.byName(mode, null);
         if (asked == null) {
-            if (WARNED.add("gamemode." + mode)) { ContentLog.LOGGER.error("A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so '{}' is played the way it was chosen", mode, settings.levelName()); }
+            ContentLog.LOGGER.errorOnce(WARNED, "gamemode." + mode, "A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so '{}' is played the way it was chosen", mode, settings.levelName());
             return settings;
         }
         Summary.info("terrain.gamemode", "Starting every new world in " + (hardcore ? HARDCORE : asked.getName()) + ", which is what a pack asks for");
@@ -67,9 +74,19 @@ public final class ContentTerrain {
 
     public static String worldType() { return text("worldType", Config.worldgen.worldType()); }
 
-    public static List<String> worldTypeExceptions() {
+    private static List<String> worldTypeExceptions() {
         if (ContentControl.off(ContentControl.TERRAIN)) { return Config.worldgen.worldTypeExceptions(); }
         return ContentControl.list(ContentControl.TERRAIN, "worldTypeExceptions", Config.worldgen.worldTypeExceptions());
+    }
+
+    public static boolean keeps(String worldType) {
+        String id = worldType.trim();
+        String path = IdNames.path(id);
+        for (String exception : worldTypeExceptions()) {
+            String kept = exception.trim();
+            if (kept.equalsIgnoreCase(id) || kept.equalsIgnoreCase(path) || kept.equalsIgnoreCase("minecraft:" + id)) { return true; }
+        }
+        return false;
     }
 
     @Nullable public static JsonObject generatorOptions() {
@@ -82,7 +99,7 @@ public final class ContentTerrain {
     public static void properties(Map<String, String> asked, String levelType) {
         String seed = worldSeed();
         if (!seed.isEmpty()) { asked.put("level-seed", seed); }
-        if (ContentWorldShape.kept(levelType)) { return; }
+        if (keeps(levelType)) { return; }
         String type = ContentWorldShape.levelType();
         if (type != null) { asked.put("level-type", type); }
         JsonObject settings = generatorSettings();
@@ -93,21 +110,17 @@ public final class ContentTerrain {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
         JsonObject flat = ContentWorldShape.flatSettings();
         if (flat == null) { return customizedOptions(); }
-        return String.join("", ContentControl.lines(ContentControl.TERRAIN, "generatorOptions", List.of(Config.worldgen.generatorOptions()))).isBlank() ? null : flat;
+        return String.join("", optionLines()).isBlank() ? null : flat;
+    }
+
+    private static List<String> optionLines() {
+        List<String> configured = List.of(Config.worldgen.generatorOptions());
+        return ContentControl.off(ContentControl.TERRAIN) ? configured : ContentControl.lines(ContentControl.TERRAIN, "generatorOptions", configured);
     }
 
     public record Flat(List<String> layers, List<String> structures, boolean decorated, boolean waterLakes, boolean lakes, String biome) {}
 
-    private static final Map<String, List<String>> FLAT_STRUCTURES = Map.of("village", List.of("minecraft:villages"), "mineshaft", List.of("minecraft:mineshafts"), "stronghold", List.of("minecraft:strongholds"),
-            "oceanmonument", List.of("minecraft:ocean_monuments"), "mansion", List.of("minecraft:woodland_mansions"), "biome_1", List.of("minecraft:desert_pyramids", "minecraft:jungle_temples", "minecraft:swamp_huts", "minecraft:igloos"));
-    private static final List<String> LEGACY_BIOMES = List.of("ocean", "plains", "desert", "extreme_hills", "forest", "taiga", "swampland", "river", "hell", "sky", "frozen_ocean", "frozen_river", "ice_flats",
-            "ice_mountains", "mushroom_island", "mushroom_island_shore", "beaches", "desert_hills", "forest_hills", "taiga_hills", "smaller_extreme_hills", "jungle", "jungle_hills", "jungle_edge", "deep_ocean",
-            "stone_beach", "cold_beach", "birch_forest", "birch_forest_hills", "roofed_forest", "taiga_cold", "taiga_cold_hills", "redwood_taiga", "redwood_taiga_hills", "extreme_hills_with_trees", "savanna",
-            "savanna_rock", "mesa", "mesa_rock", "mesa_clear_rock");
-    private static final String PLAINS = "minecraft:plains";
-    private static final List<String> FLAT_TYPES = List.of("flat", "superflat");
-
-    public static Flat flat() { return flat(ContentControl.off(ContentControl.TERRAIN) ? List.of(Config.worldgen.generatorOptions()) : ContentControl.lines(ContentControl.TERRAIN, "generatorOptions", List.of(Config.worldgen.generatorOptions()))); }
+    public static Flat flat() { return flat(optionLines()); }
 
     public static Flat flat(List<String> written) {
         List<String> layers = new ArrayList<>();
@@ -122,7 +135,7 @@ public final class ContentTerrain {
             if (parts.length > 2 && !parts[2].trim().isEmpty()) { biome = flatBiome(parts[2].trim()); }
             if (parts.length > 3) {
                 for (String named : parts[3].split(",")) {
-                    String key = named.trim().toLowerCase(Locale.ROOT);
+                    String key = Settings.lower(named);
                     int at = key.indexOf('(');
                     if (at >= 0) { key = key.substring(0, at); }
                     List<String> sets = FLAT_STRUCTURES.get(key);
@@ -141,9 +154,7 @@ public final class ContentTerrain {
         return new Flat(layers, structures, decorated, waterLakes, lakes, biome);
     }
 
-    public static void leavesWaterLakes(Flat asked) {
-        if (asked.waterLakes() && WARNED.add("flat.lake")) { ContentLog.LOGGER.info("generatorOptions names the flat feature '{}', which this version has no switch for, so it is left out{}", "lake", "; water lakes come only on a flat dimension that keeps the overworld biomes"); }
-    }
+    public static void leavesWaterLakes(Flat asked) { if (asked.waterLakes() && WARNED.add("flat.lake")) { ContentLog.LOGGER.info("generatorOptions names the flat feature '{}', which this version has no switch for, so it is left out{}", "lake", "; water lakes come only on a flat dimension that keeps the overworld biomes"); } }
 
     private static String flatBiome(String written) {
         String found = shippedBiome(written);
@@ -154,7 +165,7 @@ public final class ContentTerrain {
         String found = legacyBiome(written);
         Identifier id = found == null ? null : Identifier.tryParse(found);
         if (id != null && ContentBiomes.shipped(id)) { return id.toString(); }
-        if (found != null && WARNED.add("biome." + found)) { ContentLog.LOGGER.error("generatorOptions names biome '{}', which is not a biome the game, a mod or a pack ships, so it is left to the game", written); }
+        if (found != null) { ContentLog.LOGGER.errorOnce(WARNED, "biome." + found, "generatorOptions names biome '{}', which is not a biome the game, a mod or a pack ships, so it is left to the game", written); }
         return null;
     }
 
@@ -164,7 +175,7 @@ public final class ContentTerrain {
             if (id < 0) { return null; }
             if (id == 127) { return "minecraft:the_void"; }
             if (id < LEGACY_BIOMES.size()) { return Ids.biome("minecraft:" + LEGACY_BIOMES.get(id)); }
-            if (WARNED.add("biome." + written)) { ContentLog.LOGGER.error("generatorOptions names biome number {}, which is not one this version can map, so it is left to the game", written); }
+            ContentLog.LOGGER.errorOnce(WARNED, "biome." + written, "generatorOptions names biome number {}, which is not one this version can map, so it is left to the game", written);
             return null;
         }
         catch (NumberFormatException named) { return Ids.biome(written); }

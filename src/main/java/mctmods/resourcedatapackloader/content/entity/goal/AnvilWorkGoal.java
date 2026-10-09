@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.entity.goal;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
-import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.core.BlockPos;
@@ -61,13 +60,11 @@ public final class AnvilWorkGoal extends Goal {
     @Override public void start() {
         walked = 0;
         if (anvil == null || work == null) { return; }
-        ContentLog.LOGGER.debug("{} at {}, {}, {} can pay for {} and heads for the anvil at {}, {}, {}", mob.getName().getString(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), work.key(), anvil.getX(), anvil.getY(), anvil.getZ());
+        GoalLog.debug(mob, "can pay for {} and heads for the anvil at {}, {}, {}", work.key(), anvil.getX(), anvil.getY(), anvil.getZ());
         walk();
     }
 
-    private void walk() {
-        if (anvil != null) { mob.getNavigation().moveTo(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob)); }
-    }
+    private void walk() { if (anvil != null) { Walking.toBlock(mob, anvil, Walking.pace(mob)); } }
 
     @Override public void stop() {
         anvil = null;

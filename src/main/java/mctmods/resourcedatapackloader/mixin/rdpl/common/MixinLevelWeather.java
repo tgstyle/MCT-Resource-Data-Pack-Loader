@@ -13,20 +13,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Level.class) public abstract class MixinLevelWeather {
-    @Inject(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$rainBelowCeiling(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentWeather.above(Level.class.cast(this), pos.getY())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos pos, CallbackInfoReturnable<Boolean> cir) { if (ContentWeather.above((Level) (Object) this, pos.getY())) { cir.setReturnValue(false); } }
 
-    @ModifyExpressionValue(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;precipitationAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/biome/Biome$Precipitation;"))
-    private Biome.Precipitation rdpl$rainWhereSnowIsOff(Biome.Precipitation found, BlockPos pos) {
-        Level level = Level.class.cast(this);
+    @ModifyExpressionValue(method = "isRainingAt(Lnet/minecraft/core/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;precipitationAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/biome/Biome$Precipitation;")) private Biome.Precipitation rdpl$rainWhereSnowIsOff(Biome.Precipitation found, BlockPos pos) {
+        Level level = (Level) (Object) this;
         return ContentWeather.fallsAs(level, level.getBiome(pos).value(), found);
     }
 
-    @Inject(method = "canHaveWeather()Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$cycleHasWeather(CallbackInfoReturnable<Boolean> cir) {
-        DimensionTraitsDef traits = ContentWeather.traits(Level.class.cast(this));
+    @Inject(method = "canHaveWeather()Z", at = @At("HEAD"), cancellable = true) private void rdpl$cycleHasWeather(CallbackInfoReturnable<Boolean> cir) {
+        DimensionTraitsDef traits = ContentWeather.traits((Level) (Object) this);
         if (traits.precipitation() && traits.cycle() != null) { cir.setReturnValue(true); }
     }
 }

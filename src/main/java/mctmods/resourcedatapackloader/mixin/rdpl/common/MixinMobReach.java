@@ -11,9 +11,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Mob.class) public abstract class MixinMobReach {
-    @Inject(method = "getAttackBoundingBox", at = @At("RETURN"), cancellable = true)
-    private void rdpl$ownReach(CallbackInfoReturnable<AABB> cir) {
-        Mob self = Mob.class.cast(this);
+    @Inject(method = "getAttackBoundingBox", at = @At("RETURN"), cancellable = true) private void rdpl$ownReach(CallbackInfoReturnable<AABB> cir) {
+        Mob self = (Mob) (Object) this;
         EntityVariantDef def = ContentEntities.def(self);
         if (def == null || def.combat().attackReach() <= 0.0F) { return; }
         double wanted = def.combat().attackReach() - self.getBbWidth() / 2.0D;

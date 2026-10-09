@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
@@ -33,7 +31,6 @@ public final class FurnaceRecipes {
     private static final String COUNT = "count";
     private static final String EXPERIENCE = "experience";
     private static final int KEPT = Integer.MAX_VALUE;
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<Removal> REMOVALS = new ArrayList<>();
     private static final List<Addition> ADDITIONS = new ArrayList<>();
     private static final List<Smelted> SMELTED = new ArrayList<>();
@@ -50,7 +47,7 @@ public final class FurnaceRecipes {
         ADDITIONS.clear();
         order = 0;
         if (!Config.recipes.furnace()) { return; }
-        Json.eachFile(PackManager.FURNACE, "furnace file", FurnaceRecipes::read);
+        Json.eachObject(PackManager.FURNACE, "furnace file", FurnaceRecipes::read);
     }
 
     public static void begin() {
@@ -60,15 +57,8 @@ public final class FurnaceRecipes {
         for (Removal removal : REMOVALS) { removal.matched = 0; }
     }
 
-    private static void read(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Furnace file {} is empty, ignoring it", key);
-            return;
-        }
-        if (json.has(REMOVE)) {
-            for (JsonElement element : GsonHelper.getAsJsonArray(json, REMOVE)) { removal(key, element); }
-        }
+    private static void read(Identifier key, JsonObject json) {
+        if (json.has(REMOVE)) { for (JsonElement element : GsonHelper.getAsJsonArray(json, REMOVE)) { removal(key, element); } }
         if (json.has(ADD)) {
             int index = 0;
             for (JsonElement element : GsonHelper.getAsJsonArray(json, ADD)) { addition(key, element, index++); }
@@ -109,9 +99,7 @@ public final class FurnaceRecipes {
 
     public static boolean resolvedAtLoad() {
         if (!ADDITIONS.isEmpty()) { return false; }
-        for (Removal removal : REMOVALS) {
-            if (removal.input != null) { return false; }
-        }
+        for (Removal removal : REMOVALS) { if (removal.input != null) { return false; } }
         return true;
     }
 
@@ -137,16 +125,12 @@ public final class FurnaceRecipes {
 
     private static boolean accepts(List<Ingredient> ingredients, Item input) {
         ItemStack probe = new ItemStack(input);
-        for (Ingredient ingredient : ingredients) {
-            if (ingredient.test(probe)) { return true; }
-        }
+        for (Ingredient ingredient : ingredients) { if (ingredient.test(probe)) { return true; } }
         return false;
     }
 
     private static boolean added(Identifier id) {
-        for (Addition addition : ADDITIONS) {
-            if (addition.id().equals(id)) { return true; }
-        }
+        for (Addition addition : ADDITIONS) { if (addition.id().equals(id)) { return true; } }
         return false;
     }
 
@@ -178,9 +162,7 @@ public final class FurnaceRecipes {
 
     @Nullable private static Identifier inTheWay(Addition addition, List<Addition> placed) {
         ItemStack probe = new ItemStack(addition.input());
-        for (Smelted smelted : SMELTED) {
-            if (smelted.removedAt() > addition.order() && smelted.ingredient().test(probe)) { return smelted.id(); }
-        }
+        for (Smelted smelted : SMELTED) { if (smelted.removedAt() > addition.order() && smelted.ingredient().test(probe)) { return smelted.id(); } }
         for (Addition earlier : placed) {
             if (earlier.input() != addition.input()) { continue; }
             Removal removal = removalOf(earlier);
@@ -209,9 +191,7 @@ public final class FurnaceRecipes {
         if (removed == 0 && added == 0) { return; }
         Summary.info("furnace", "Removed " + removed + " and added " + added + " furnace recipe(s)");
         if (perPack.size() < 2) { return; }
-        for (Map.Entry<String, int[]> entry : perPack.entrySet()) {
-            ContentLog.LOGGER.debug("  {} removed {} and added {}", entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
-        }
+        for (Map.Entry<String, int[]> entry : perPack.entrySet()) { ContentLog.LOGGER.debug("  {} removed {} and added {}", entry.getKey(), entry.getValue()[0], entry.getValue()[1]); }
     }
 
     public record Addition(Identifier id, Item input, ItemStackTemplate output, float experience, int order) {}

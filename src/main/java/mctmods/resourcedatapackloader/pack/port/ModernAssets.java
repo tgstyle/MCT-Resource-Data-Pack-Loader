@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentGeneratedModels;
+import mctmods.resourcedatapackloader.util.IdNames;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -51,7 +52,7 @@ final class ModernAssets {
         for (JsonElement override : model.getAsJsonArray("overrides")) {
             if (!override.isJsonObject() || !override.getAsJsonObject().has(MODEL) || !override.getAsJsonObject().has("predicate") || !override.getAsJsonObject().get("predicate").isJsonObject()) { continue; }
             List<Map.Entry<String, JsonElement>> tests = new ArrayList<>(override.getAsJsonObject().getAsJsonObject("predicate").entrySet());
-            JsonObject inner = plain(qualified(override.getAsJsonObject().get(MODEL).getAsString()));
+            JsonObject inner = plain(IdNames.namespaced(override.getAsJsonObject().get(MODEL).getAsString()));
             boolean kept = true;
             for (int i = tests.size() - 1; i >= 0 && kept; i--) {
                 JsonObject tested = test(tests.get(i).getKey(), tests.get(i).getValue().getAsFloat(), inner, current);
@@ -72,7 +73,6 @@ final class ModernAssets {
         return definition;
     }
 
-    private static String qualified(String model) { return model.indexOf(':') < 0 ? ModernFixes.MINECRAFT + model : model; }
 
     private static JsonObject plain(String model) {
         JsonObject out = new JsonObject();
@@ -82,7 +82,7 @@ final class ModernAssets {
     }
 
     @Nullable private static JsonObject test(String predicate, float value, JsonObject on, JsonObject off) {
-        String bare = predicate.startsWith(ModernFixes.MINECRAFT) ? predicate.substring(ModernFixes.MINECRAFT.length()) : predicate;
+        String bare = IdNames.bare(predicate);
         if (value <= 0.0F && !RANGES.containsKey(bare)) { return on; }
         JsonObject out = new JsonObject();
         if (RANGES.containsKey(bare)) {

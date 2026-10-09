@@ -11,6 +11,13 @@ import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import it.unimi.dsi.fastutil.longs.LongIterator;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
 import javax.annotation.Nullable;
 
 final class ContentEntityWatch {
@@ -20,13 +27,18 @@ final class ContentEntityWatch {
     private static final Long2LongOpenHashMap FACED = new Long2LongOpenHashMap();
     private static final Long2LongOpenHashMap HEALTHS = new Long2LongOpenHashMap();
 
+    static {
+        HEALTHS.defaultReturnValue(Long.MIN_VALUE);
+        FACED.defaultReturnValue(Long.MIN_VALUE);
+    }
+
     private ContentEntityWatch() {}
 
     static void tally(@Nullable MinecraftServer server) {
         if (server == null) { return; }
         for (ServerLevel level : server.getAllLevels()) {
             StringBuilder where = new StringBuilder();
-            for (net.minecraft.server.level.ServerPlayer player : level.players()) { where.append(' ').append(player.getGameProfile().name()).append('@').append(player.chunkPosition()); }
+            for (ServerPlayer player : level.players()) { where.append(' ').append(player.getGameProfile().name()).append('@').append(player.chunkPosition()); }
             ContentLog.LOGGER.debug("{} holds {} loaded chunk(s), spawn chunk {}, players:{}", level.dimension().identifier(), level.getChunkSource().getLoadedChunksCount(), ChunkPos.containing(level.getRespawnData().pos()), where.isEmpty() ? " none" : where);
         }
         int mobs = 0;
@@ -43,8 +55,8 @@ final class ContentEntityWatch {
         int inTickingChunk = 0;
         int spun = 0;
         int hurt = 0;
-        java.util.List<Mob> here = new java.util.ArrayList<>();
-        it.unimi.dsi.fastutil.longs.LongOpenHashSet seen = new it.unimi.dsi.fastutil.longs.LongOpenHashSet();
+        List<Mob> here = new ArrayList<>();
+        LongOpenHashSet seen = new LongOpenHashSet();
         long away = 0L;
         for (ServerLevel level : server.getAllLevels()) {
             for (Entity entity : level.getAllEntities()) {
@@ -57,7 +69,7 @@ final class ContentEntityWatch {
                 long was = WAS_AT.put(mob.getId(), mob.blockPosition().asLong());
                 if (was != WAS_AT.defaultReturnValue() && was != mob.blockPosition().asLong()) { walked++; }
                 long faced = FACED.put(mob.getId(), (long) mob.getYRot());
-                if (was != WAS_AT.defaultReturnValue() && was == mob.blockPosition().asLong() && faced != FACED.defaultReturnValue() && Math.abs(net.minecraft.util.Mth.wrapDegrees(mob.getYRot() - faced)) >= 90.0F) { spun++; }
+                if (was != WAS_AT.defaultReturnValue() && was == mob.blockPosition().asLong() && faced != FACED.defaultReturnValue() && Math.abs(Mth.wrapDegrees(mob.getYRot() - faced)) >= 90.0F) { spun++; }
                 long ticked = TICKED.put(mob.getId(), mob.tickCount);
                 if (ticked != TICKED.defaultReturnValue() && ticked != mob.tickCount) { ticking++; }
                 if (level.getChunkSource().chunkMap.getDistanceManager().inEntityTickingRange(mob.chunkPosition().pack())) { inRange++; }
@@ -74,13 +86,13 @@ final class ContentEntityWatch {
                     else if (Math.abs(before - (long) (gap * 100.0D)) <= 100L) { milling++; }
                 }
                 if (mob.getNavigation().isDone()) { pathless++; }
-                if (ContentEntityTicks.thinksSlower(mob)) { slowed++; }
+                if (ContentEntityTicks.slowedNow(mob)) { slowed++; }
                 if (mob.isNoAi()) { still++; }
                 if (gap <= mob.getBbWidth() * 2.0F + aim.getBbWidth()) { reaching++; }
             }
         }
         int gone = 0;
-        for (it.unimi.dsi.fastutil.longs.LongIterator held = WAS_AT.keySet().iterator(); held.hasNext();) {
+        for (LongIterator held = WAS_AT.keySet().iterator(); held.hasNext();) {
             long id = held.nextLong();
             if (seen.contains(id)) { continue; }
             held.remove();
@@ -105,8 +117,6 @@ final class ContentEntityWatch {
                 for (Mob other : here) { if (one.distanceToSqr(other) <= 64.0D) { near++; } }
                 thickest = Math.max(thickest, near);
             }
-        }
-        if (!here.isEmpty()) {
             double leastX = Double.MAX_VALUE;
             double mostX = -Double.MAX_VALUE;
             double leastZ = Double.MAX_VALUE;
@@ -138,6 +148,6 @@ final class ContentEntityWatch {
         }
         if (mobs == 0) { return; }
         ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average; {} of {} still ticking moved since the last look, {} closed on their target and {} held the same distance, {} stand in entity-ticking range and {} in a chunk at entity-ticking status, {} are gone since the last look and {} turned 90 degrees or more without leaving their block, {} lost health since the last look, the thickest crowd holds {} within 8 blocks and a mob stands {} block(s) from the middle of them all on average, {} were given a slower pace this tick and {} have no AI at all",
-                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, ticking, closing, milling, inRange, inTickingChunk, gone, spun, hurt, thickest, String.format(java.util.Locale.ROOT, "%.1f", spread), slowed, still);
+                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, ticking, closing, milling, inRange, inTickingChunk, gone, spun, hurt, thickest, String.format(Locale.ROOT, "%.1f", spread), slowed, still);
     }
 }

@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nonnull;
 
-public class ContentTorchBlock extends TorchBlock {
+public final class ContentTorchBlock extends TorchBlock {
     private final BlockDef def;
     private final ParticleOptions flame;
 
@@ -28,13 +28,10 @@ public class ContentTorchBlock extends TorchBlock {
         return new DustParticleOptions(color, 1.0F);
     }
 
-    static boolean particles(BlockDef def) { return !BlockDef.PARTICLE_NONE.equals(def.torchParticle()); }
-
-    @Override public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        double x = pos.getX() + 0.5D;
-        double y = pos.getY() + 0.7D;
-        double z = pos.getZ() + 0.5D;
+    static void spawn(BlockDef def, ParticleOptions flame, Level level, double x, double y, double z) {
         if (def.torchSmoke()) { level.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0D, 0.0D, 0.0D); }
-        if (particles(def)) { level.addParticle(flame, x, y, z, 0.0D, 0.0D, 0.0D); }
+        if (!BlockDef.PARTICLE_NONE.equals(def.torchParticle())) { level.addParticle(flame, x, y, z, 0.0D, 0.0D, 0.0D); }
     }
+
+    @Override public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource random) { spawn(def, flame, level, pos.getX() + 0.5D, pos.getY() + 0.7D, pos.getZ() + 0.5D); }
 }

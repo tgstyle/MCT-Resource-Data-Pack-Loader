@@ -1,11 +1,15 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 public final class LootDown {
     private static final String TYPE = "type";
@@ -15,22 +19,17 @@ public final class LootDown {
     private static final String FUNCTIONS = "functions";
     private static final String MODIFIER = "modifier";
     private static final String TERMS = "terms";
-    private static final String MINECRAFT = "minecraft:";
     private static final Set<String> PREDICATE_KEYS = Set.of("bystander", "cause", "child", "entity", "lightning", "parent", "partner", "player", "projectile", "source", "villager", "zombie", "location");
     private static final Set<String> SINGLE_BLOCK = Set.of("enter_block", "bee_nest_destroyed", "slide_down_block");
 
     private LootDown() {}
 
     public static JsonElement loot(JsonElement element, Consumer<String> note) {
-        if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(loot(item, note)); }
-            return out;
-        }
+        if (element.isJsonArray()) { return each(element, item -> loot(item, note)); }
         if (!element.isJsonObject()) { return element.deepCopy(); }
         JsonObject out = new JsonObject();
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) { walked(out, entry.getKey(), entry.getValue(), note); }
-        if (out.size() == 2 && out.has("expected") && out.has("id") && out.get("id").isJsonPrimitive() && out.get("id").getAsString().startsWith("#")) { out.addProperty("id", out.get("id").getAsString().substring(1)); }
+        if (out.size() == 2 && out.has("expected") && GsonHelper.isValidPrimitive(out, "id") && out.get("id").getAsString().startsWith("#")) { out.addProperty("id", out.get("id").getAsString().substring(1)); }
         if ("add".equals(type(out)) && out.has("inputs")) {
             out.addProperty(TYPE, MINECRAFT + "sum");
             out.add("summands", out.remove("inputs"));
@@ -42,9 +41,7 @@ public final class LootDown {
 
     public static JsonElement modifier(JsonElement element, Consumer<String> note) {
         if (!element.isJsonArray()) { return function(element, note); }
-        JsonArray out = new JsonArray();
-        for (JsonElement item : element.getAsJsonArray()) { out.add(function(item, note)); }
-        return out;
+        return each(element, item -> function(item, note));
     }
 
     public static JsonObject advancement(JsonObject json, Consumer<String> note) {
@@ -54,8 +51,8 @@ public final class LootDown {
         for (Map.Entry<String, JsonElement> criterion : criteria.getAsJsonObject().entrySet()) {
             if (!criterion.getValue().isJsonObject()) { continue; }
             JsonObject held = criterion.getValue().getAsJsonObject();
-            String trigger = held.has("trigger") ? bare(held.get("trigger").getAsString()) : "";
-            if (held.has(CONDITIONS) && held.get(CONDITIONS).isJsonObject()) { held.add(CONDITIONS, trigger(held.getAsJsonObject(CONDITIONS), trigger, note)); }
+            String trigger = held.has("trigger") ? IdNames.bare(held.get("trigger").getAsString()) : "";
+            if (GsonHelper.isObjectNode(held, CONDITIONS)) { held.add(CONDITIONS, trigger(held.getAsJsonObject(CONDITIONS), trigger, note)); }
         }
         return out;
     }
@@ -102,29 +99,20 @@ public final class LootDown {
     }
 
     private static JsonArray conditions(JsonElement value, Consumer<String> note) {
-        if (value.isJsonObject() && "all_of".equals(type(value.getAsJsonObject())) && value.getAsJsonObject().has(TERMS) && value.getAsJsonObject().get(TERMS).isJsonArray()) { return terms(value.getAsJsonObject().get(TERMS), note); }
+        if (value.isJsonObject() && "all_of".equals(type(value.getAsJsonObject())) && GsonHelper.isArrayNode(value.getAsJsonObject(), TERMS)) { return terms(value.getAsJsonObject().get(TERMS), note); }
         JsonArray out = new JsonArray();
         out.add(condition(value, note));
         return out;
     }
 
-    private static JsonArray terms(JsonElement value, Consumer<String> note) {
-        JsonArray out = new JsonArray();
-        if (!value.isJsonArray()) {
-            out.add(condition(value, note));
-            return out;
-        }
-        for (JsonElement term : value.getAsJsonArray()) { out.add(condition(term, note)); }
-        return out;
-    }
+    private static JsonArray terms(JsonElement value, Consumer<String> note) { return each(value, term -> condition(term, note)); }
 
-    private static JsonArray functions(JsonElement value, Consumer<String> note) {
+    private static JsonArray functions(JsonElement value, Consumer<String> note) { return each(value, item -> function(item, note)); }
+
+    private static JsonArray each(JsonElement value, UnaryOperator<JsonElement> mapper) {
+        if (value.isJsonArray()) { return JsonTree.map(value.getAsJsonArray(), mapper); }
         JsonArray out = new JsonArray();
-        if (!value.isJsonArray()) {
-            out.add(function(value, note));
-            return out;
-        }
-        for (JsonElement item : value.getAsJsonArray()) { out.add(function(item, note)); }
+        out.add(mapper.apply(value));
         return out;
     }
 
@@ -186,7 +174,5 @@ public final class LootDown {
         return out;
     }
 
-    private static String type(JsonObject object) { return object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? bare(object.get(TYPE).getAsString()) : ""; }
-
-    private static String bare(String id) { return id.startsWith(MINECRAFT) ? id.substring(MINECRAFT.length()) : id; }
+    private static String type(JsonObject object) { return IdNames.bare(Json.text(object, TYPE)); }
 }

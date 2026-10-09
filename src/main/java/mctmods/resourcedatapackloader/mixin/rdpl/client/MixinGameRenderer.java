@@ -9,8 +9,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class) public class MixinGameRenderer {
-    @Inject(method = "tryTakeScreenshotIfNeeded", at = @At("HEAD"), cancellable = true)
-    private void rdpl$iconAfterTheFog(CallbackInfo ci) {
-        if (HoldView.showing()) { ci.cancel(); }
-    }
+    @Inject(method = "tryTakeScreenshotIfNeeded", at = @At("HEAD"), cancellable = true) private void rdpl$iconAfterTheFog(CallbackInfo ci) { if (HoldView.showing()) { ci.cancel(); } }
 }

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.SharedConstants;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -52,15 +53,13 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class EntityStorage {
-    public static final Identifier KEY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "storage");
+    public static final Identifier KEY = ResourceDataPackLoader.id("storage");
     public static final AttachmentType<EntityStorage> TYPE = AttachmentType.builder(holder -> new EntityStorage(holder instanceof Entity entity ? def(entity) : null)).serialize(new Saved()).build();
     private static final String ITEMS = "Items";
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
     private static final String SLOT = "Slot";
-    private static final String SIZE = "Size";
-    private static final Identifier SLOWED = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "dry");
-    private static final int SECOND = 20;
+    private static final Identifier SLOWED = ResourceDataPackLoader.id("dry");
     @Nullable private final Items items;
     @Nullable private final Tank tank;
     @Nullable private final SimpleEnergyHandler energy;
@@ -105,7 +104,7 @@ public final class EntityStorage {
     }
 
     public static void tick(LivingEntity living) {
-        if (!(living.level() instanceof ServerLevel level) || living.tickCount % SECOND != 0) { return; }
+        if (!(living.level() instanceof ServerLevel level) || living.tickCount % SharedConstants.TICKS_PER_SECOND != 0) { return; }
         EntityStorage storage = of(living);
         if (storage == null || !storage.spends()) { return; }
         boolean paid = !storage.dry();
@@ -189,9 +188,7 @@ public final class EntityStorage {
             }
             return;
         }
-        if (event.getEntity() instanceof ServerPlayer player) {
-            player.openMenu(new SimpleMenuProvider((id, inventory, _) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def));
-        }
+        if (event.getEntity() instanceof ServerPlayer player) { player.openMenu(new SimpleMenuProvider((id, inventory, _) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def)); }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
@@ -241,7 +238,6 @@ public final class EntityStorage {
                 ItemStack stack = stacks.get(slot);
                 if (!stack.isEmpty()) { list.add(new Held(slot, stack)); }
             }
-            output.putInt(SIZE, size());
         }
 
         @Override public boolean isValid(int index, @Nonnull ItemResource resource) { return filter.room(resource.toStack(), stacks) > 0; }

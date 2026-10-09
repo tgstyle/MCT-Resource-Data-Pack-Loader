@@ -18,7 +18,7 @@ public final class RecipeDisabled {
     private RecipeDisabled() {}
 
     public static boolean uses(Recipe<?> recipe, ItemStack result) {
-        if (!ContentDisabled.any()) { return false; }
+        if (ContentDisabled.none()) { return false; }
         if (ContentDisabled.disabled(result)) { return true; }
         for (Ingredient ingredient : ingredients(recipe)) {
             if (onlyDisabled(ingredient)) { return true; }

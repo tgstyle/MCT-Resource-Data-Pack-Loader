@@ -16,10 +16,7 @@ import javax.annotation.Nullable;
 @Mixin(PrimedTnt.class) public abstract class MixinPrimedTnt implements IContentTnt {
     @Unique @Nullable private EntityType<?> rdpl$lighter;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/entity/LivingEntity;)V", at = @At("TAIL"))
-    private void rdpl$litBy(Level level, double x, double y, double z, @Nullable LivingEntity owner, CallbackInfo ci) {
-        if (owner != null) { rdpl$lighter = owner.getType(); }
-    }
+    @Inject(method = "<init>(Lnet/minecraft/world/level/Level;DDDLnet/minecraft/world/entity/LivingEntity;)V", at = @At("TAIL")) private void rdpl$litBy(Level level, double x, double y, double z, @Nullable LivingEntity owner, CallbackInfo ci) { if (owner != null) { rdpl$lighter = owner.getType(); } }
 
     @Override @Nullable public EntityType<?> rdpl$lighter() { return rdpl$lighter; }
 

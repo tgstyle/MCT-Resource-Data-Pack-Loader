@@ -36,7 +36,7 @@ public final class ContentServer {
         if (held.isEmpty()) { return null; }
         if ("true".equalsIgnoreCase(held)) { return Boolean.TRUE; }
         if ("false".equalsIgnoreCase(held)) { return Boolean.FALSE; }
-        if (WARNED.add(key)) { ContentLog.LOGGER.error("{} is '{}', which is not true or false, so the server keeps its own", key, held); }
+        ContentLog.LOGGER.errorOnce(WARNED, key, "{} is '{}', which is not true or false, so the server keeps its own", key, held);
         return null;
     }
 
@@ -56,6 +56,8 @@ public final class ContentServer {
     @Nullable public static Boolean pvp() { return choice("worldPvp", Config.worldgen.worldPvp()); }
 
     @Nullable public static Boolean flight() { return choice("worldFlight", Config.worldgen.worldFlight()); }
+
+    public static boolean off(@Nullable Boolean choice) { return Boolean.FALSE.equals(choice); }
 
     @Nullable public static Boolean nether() { return choice("worldNether", Config.worldgen.worldNether()); }
 
@@ -99,13 +101,9 @@ public final class ContentServer {
         return asked;
     }
 
-    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) {
-        if (value != null) { asked.put(key, value.toString()); }
-    }
+    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) { if (value != null) { asked.put(key, value.toString()); } }
 
-    private static void put(Map<String, String> asked, String key, int value) {
-        if (value >= 0) { asked.put(key, Integer.toString(value)); }
-    }
+    private static void put(Map<String, String> asked, String key, int value) { if (value >= 0) { asked.put(key, Integer.toString(value)); } }
 
     public static void applyTo(MinecraftServer server) {
         int idle = idleTimeout();

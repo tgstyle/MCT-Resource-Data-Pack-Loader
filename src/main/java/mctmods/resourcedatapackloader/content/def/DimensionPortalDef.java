@@ -7,7 +7,7 @@ public record DimensionPortalDef(List<String> frames, String ignitedBy, int colo
     public static final String PLAYER = "player";
     public static final String NONE = "none";
 
-    public boolean buildsReturn() { return BUILT.equals(back); }
+    public boolean noReturn() { return !BUILT.equals(back); }
 
-    public boolean lightsBack() { return !NONE.equals(back); }
+    public boolean noLightBack() { return NONE.equals(back); }
 }

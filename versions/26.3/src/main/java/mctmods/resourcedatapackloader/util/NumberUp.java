@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -8,7 +10,6 @@ import java.util.List;
 
 public final class NumberUp {
     private static final String TYPE = "type";
-    private static final String MINECRAFT = "minecraft:";
     private static final String INPUT = "input";
     private static final String VALUE = "value";
 

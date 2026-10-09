@@ -11,8 +11,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(BlockBlobFeature.class) public abstract class MixinBlockBlobFeature {
-    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
-    private void rdpl$spareRoads(FeaturePlaceContext<BlockBlobConfiguration> context, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.boulderOnRoad(context.level(), context.origin())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true) private void rdpl$spareRoads(FeaturePlaceContext<BlockBlobConfiguration> context, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.boulderOnRoad(context.level(), context.origin())) { cir.setReturnValue(false); } }
 }

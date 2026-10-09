@@ -25,8 +25,8 @@ public final class ContentFeatureTypes {
     public static void register(RegisterEvent event) {
         event.register(Registries.FEATURE_TYPE, helper -> {
             helper.register(id(ContentWorldgen.SHAPE_FEATURE), Shape.CODEC);
-            helper.register(id(ContentCaveRegions.COVER_FEATURE), Cover.CODEC);
-            helper.register(id(ContentCaveRegions.STRUCTURE_FEATURE), CaveStructure.CODEC);
+            helper.register(id(ContentCaveRegions.COVER_FEATURE), Region.COVER);
+            helper.register(id(ContentCaveRegions.STRUCTURE_FEATURE), Region.CAVE_STRUCTURE);
         });
         event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
             helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.CODEC);
@@ -35,11 +35,11 @@ public final class ContentFeatureTypes {
         event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), Spread.CODEC));
     }
 
-    private static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, path); }
+    private static Identifier id(String path) { return ResourceDataPackLoader.id(path); }
 
     public static boolean foreign(PlacedFeature placed) {
         Feature kind = placed.feature().value();
-        return !(kind instanceof Shape || kind instanceof Cover || kind instanceof CaveStructure);
+        return !(kind instanceof Shape || kind instanceof Region);
     }
 
     public static boolean nonOre(PlacedFeature placed) { return !(placed.feature().value() instanceof AbstractOreFeature); }
@@ -52,20 +52,17 @@ public final class ContentFeatureTypes {
         @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return ContentShapeFeature.place(level, random, origin, entry); }
     }
 
-    private record Cover(Identifier region) implements Feature {
-        private static final MapCodec<Cover> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(Identifier.CODEC.fieldOf("region").forGetter(Cover::region)).apply(instance, Cover::new));
+    private enum Kind { COVER, CAVE_STRUCTURE }
 
-        @Override @Nonnull public MapCodec<Cover> codec() { return CODEC; }
+    private record Region(Identifier region, Kind kind) implements Feature {
+        private static final MapCodec<Region> COVER = codecOf(Kind.COVER);
+        private static final MapCodec<Region> CAVE_STRUCTURE = codecOf(Kind.CAVE_STRUCTURE);
 
-        @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return ContentCoverFeature.place(level, origin, region); }
-    }
+        private static MapCodec<Region> codecOf(Kind kind) { return RecordCodecBuilder.mapCodec(instance -> instance.group(Identifier.CODEC.fieldOf("region").forGetter(Region::region)).apply(instance, region -> new Region(region, kind))); }
 
-    private record CaveStructure(Identifier region) implements Feature {
-        private static final MapCodec<CaveStructure> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(Identifier.CODEC.fieldOf("region").forGetter(CaveStructure::region)).apply(instance, CaveStructure::new));
+        @Override @Nonnull public MapCodec<Region> codec() { return kind == Kind.COVER ? COVER : CAVE_STRUCTURE; }
 
-        @Override @Nonnull public MapCodec<CaveStructure> codec() { return CODEC; }
-
-        @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return ContentCaveStructureFeature.place(level, origin, region); }
+        @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return kind == Kind.COVER ? ContentCoverFeature.place(level, origin, region) : ContentCaveStructureFeature.place(level, origin, region); }
     }
 
     private record Spread(Identifier entry) implements PlacementModifier {

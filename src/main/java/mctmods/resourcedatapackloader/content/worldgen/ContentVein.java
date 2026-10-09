@@ -72,9 +72,7 @@ public final class ContentVein implements IContentShape {
 
     private static boolean scatter(ContentPlacer placer, RandomSource random, int blocks, BlockPos origin) {
         boolean placed = placer.place(random, origin.getX(), origin.getY(), origin.getZ());
-        for (int step = 1; step < blocks; step++) {
-            placed |= placer.place(random, origin.getX() + random.nextInt(2), origin.getY() + random.nextInt(2), origin.getZ() + random.nextInt(2));
-        }
+        for (int step = 1; step < blocks; step++) { placed |= placer.place(random, origin.getX() + random.nextInt(2), origin.getY() + random.nextInt(2), origin.getZ() + random.nextInt(2)); }
         return placed;
     }
 }

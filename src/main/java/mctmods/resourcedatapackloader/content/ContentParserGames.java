@@ -15,6 +15,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import java.util.LinkedHashMap;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.SharedConstants;
 import net.minecraft.util.Mth;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.criteria.ObjectiveCriteria;
@@ -32,26 +33,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentParserGames {
     private ContentParserGames() {}
 
-    private static List<String> names(JsonObject json, String field) {
-        List<String> found = new ArrayList<>();
-        for (String entry : Json.strings(json, field)) {
-            String named = entry.trim();
-            if (!named.isEmpty()) { found.add(named); }
-        }
-        return found;
-    }
-
     @Nullable public static ScoreDef scoreFile(Identifier key, String contents) {
-        JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Score file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "score file");
+        if (json == null) { return null; }
         String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
         if (name.isEmpty() || name.length() > 16) {
             ContentLog.LOGGER.error("Score file {} names the objective '{}', and an objective name is 1 to 16 characters, so it is left out", key, name);
@@ -65,7 +55,7 @@ public final class ContentParserGames {
         }
         String slot = GsonHelper.getAsString(json, "display", "").trim();
         slot = "belowName".equals(slot) ? "below_name" : slot;
-        if (!slot.isEmpty() && !displaySlotKnown(slot)) {
+        if (!slot.isEmpty() && displaySlotUnknown(slot)) {
             ContentLog.LOGGER.error("Objective {} asks to be shown in '{}', which is not list, sidebar, belowName, below_name or sidebar.team.<color>, so it is not shown", name, slot);
             slot = "";
         }
@@ -89,7 +79,7 @@ public final class ContentParserGames {
                 GsonHelper.getAsString(results, "icon", "").trim(),
                 GsonHelper.getAsString(results, "image", "").trim(),
                 cardColor(results, name),
-                Math.max(20, GsonHelper.getAsInt(results, "seconds", 8) * 20),
+                Math.max(SharedConstants.TICKS_PER_SECOND, GsonHelper.getAsInt(results, "seconds", 8) * SharedConstants.TICKS_PER_SECOND),
                 GsonHelper.getAsBoolean(json, "carries", false),
                 GsonHelper.getAsBoolean(ends, "resets", false),
                 Math.max(0, GsonHelper.getAsInt(ends, "intermissionSeconds", 10)),
@@ -114,31 +104,16 @@ public final class ContentParserGames {
     @Nullable private static TurnsDef turns(Identifier key, JsonObject json) {
         if (!json.has("turns")) { return null; }
         JsonObject turns = GsonHelper.getAsJsonObject(json, "turns");
-        String order = GsonHelper.getAsString(turns, "order", TurnsDef.FIXED).trim();
-        if (!TurnsDef.ORDERS.contains(order)) {
-            ContentLog.LOGGER.error("Score file {} takes turns in '{}' order, which is not fixed, random, lowestFirst or lastWinner, so they go in fixed order", key, order);
-            order = TurnsDef.FIXED;
-        }
-        String held = GsonHelper.getAsString(turns, "held", TurnsDef.FROZEN).trim();
-        if (!TurnsDef.HOLDS.contains(held)) {
-            ContentLog.LOGGER.error("Score file {} holds the sides waiting their turn as '{}', which is not frozen, spectator or adventure, so they are frozen", key, held);
-            held = TurnsDef.FROZEN;
-        }
+        String order = Json.choice(turns, "order", TurnsDef.FIXED, "Score file " + key + " turns", TurnsDef.ORDERS);
+        String held = Json.choice(turns, "held", TurnsDef.FROZEN, "Score file " + key + " turns", TurnsDef.HOLDS);
         return new TurnsDef(order, Math.max(1, GsonHelper.getAsInt(turns, "seconds", 60)), Math.max(0, GsonHelper.getAsInt(turns, "gapSeconds", 3)), held,
-                Math.max(0, GsonHelper.getAsInt(turns, "endsAtScore", 0)), Math.max(0, GsonHelper.getAsInt(turns, "cycles", 0)), names(turns, "mobTags"), names(turns, "mobTypes"));
+                Math.max(0, GsonHelper.getAsInt(turns, "endsAtScore", 0)), Math.max(0, GsonHelper.getAsInt(turns, "cycles", 0)), Json.names(turns, "mobTags"), Json.names(turns, "mobTypes"));
     }
 
     private static RoundResetDef roundReset(Identifier key, JsonObject reset) {
-        String lead = GsonHelper.getAsString(reset, "lead", RoundResetDef.NONE).trim();
-        if (!RoundResetDef.NONE.equals(lead) && !RoundResetDef.NOW.equals(lead) && !RoundResetDef.VOTE.equals(lead)) {
-            ContentLog.LOGGER.error("Score file {} lets the lead reset the round by '{}', which is not none, now or vote, so the lead cannot", key, lead);
-            lead = RoundResetDef.NONE;
-        }
-        String players = GsonHelper.getAsString(reset, "players", RoundResetDef.NONE).trim();
-        if (!RoundResetDef.NONE.equals(players) && !RoundResetDef.VOTE.equals(players)) {
-            ContentLog.LOGGER.error("Score file {} lets players reset the round by '{}', which is not none or vote, so they cannot", key, players);
-            players = RoundResetDef.NONE;
-        }
+        String owner = "Score file " + key + " reset";
+        String lead = Json.choice(reset, "lead", RoundResetDef.NONE, owner, List.of(RoundResetDef.NONE, RoundResetDef.NOW, RoundResetDef.VOTE));
+        String players = Json.choice(reset, "players", RoundResetDef.NONE, owner, List.of(RoundResetDef.NONE, RoundResetDef.VOTE));
         return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.strings(reset, "teams"),
                 Mth.clamp(GsonHelper.getAsInt(reset, "passPercent", 51), 1, 100),
                 Math.max(5, GsonHelper.getAsInt(reset, "voteSeconds", 30)),
@@ -150,11 +125,13 @@ public final class ContentParserGames {
                 GsonHelper.getAsString(reset, "failSays", "The vote failed, so the round goes on"));
     }
 
-    private static String opensBy(JsonObject opens, Identifier key) {
-        String asked = GsonHelper.getAsString(opens, "by", ScoreDef.AUTO).trim();
-        if (ScoreDef.AUTO.equals(asked) || ScoreDef.LEADER.equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Score file {} opens its round by '{}', which is not auto or leader, so it opens on its own", key, asked);
-        return ScoreDef.AUTO;
+    private static String opensBy(JsonObject opens, Identifier key) { return Json.choice(opens, "by", ScoreDef.AUTO, "Score file " + key + " opens", List.of(ScoreDef.AUTO, ScoreDef.LEADER)); }
+
+    @Nullable private static <T> T named(T[] values, Function<T, String> name, String asked) {
+        for (T held : values) {
+            if (name.apply(held).equalsIgnoreCase(asked)) { return held; }
+        }
+        return null;
     }
 
     @Nullable private static ScoreDef.Place lobbyAt(Identifier key, JsonObject opens) {
@@ -164,7 +141,7 @@ public final class ContentParserGames {
         int colon = comma < 0 ? -1 : asked.lastIndexOf(':', comma);
         if (colon > 0) {
             String named = asked.substring(0, colon).trim();
-            Identifier id = "-1".equals(named) ? Level.NETHER.identifier() : "1".equals(named) ? Level.END.identifier() : "0".equals(named) ? Level.OVERWORLD.identifier() : Identifier.tryParse(named);
+            Identifier id = Identifier.tryParse(ContentFormats.dimensionId(named));
             if (id == null) {
                 ContentLog.LOGGER.error("Score file {} gives opens.lobby '{}', whose dimension is not a dimension id, so the lobby has no area of its own", key, asked);
                 return null;
@@ -182,11 +159,8 @@ public final class ContentParserGames {
     }
 
     @Nullable public static RaidDef raidFile(Identifier key, String contents) {
-        JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Raid file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "raid file");
+        if (json == null) { return null; }
         String omen = GsonHelper.getAsString(json, "omen", "").trim();
         if (omen.isEmpty()) {
             ContentLog.LOGGER.error("Raid {} names no omen effect, and nothing else starts a raid, so it is left out", key);
@@ -230,11 +204,8 @@ public final class ContentParserGames {
     }
 
     @Nullable public static TeamDef teamFile(Identifier key, String contents) {
-        JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Team file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "team file");
+        if (json == null) { return null; }
         String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
         if (name.isEmpty() || name.length() > 16) {
             ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
@@ -251,12 +222,12 @@ public final class ContentParserGames {
                 friendlyFire, GsonHelper.getAsBoolean(json, "mobFriendlyFire", friendlyFire),
                 GsonHelper.getAsBoolean(json, "seeFriendlyInvisibles", true),
                 visible(json, "nameTags", key), visible(json, "deathMessages", key), collision(json, key),
-                names(json, "entities"), names(json, "players"), box(json, key),
+                Json.names(json, "entities"), Json.names(json, "players"), box(json, key),
                 GsonHelper.getAsBoolean(json, "joinable", true),
                 leadWay(json, name), GsonHelper.getAsString(json, "leadOn", "").trim(), GsonHelper.getAsString(json, "leadIs", "").trim(),
                 GsonHelper.getAsString(json, "leadSays", "You are the current round leader"), GsonHelper.getAsString(json, "leadRuns", "").trim(),
                 GsonHelper.getAsBoolean(json, "balance", false), GsonHelper.getAsBoolean(json, "scoreboard", true),
-                Math.max(0, GsonHelper.getAsInt(json, "picks", 0)), names(json, "picksFrom"), gives(key, json),
+                Math.max(0, GsonHelper.getAsInt(json, "picks", 0)), Json.names(json, "picksFrom"), gives(key, json),
                 standIn(json), standInAt(key, json), point(key, GsonHelper.getAsString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"));
     }
 
@@ -296,27 +267,20 @@ public final class ContentParserGames {
         return values;
     }
 
-    private static String leadWay(JsonObject json, String team) {
-        String asked = GsonHelper.getAsString(json, "lead", TeamDef.NONE).trim();
-        if (TeamDef.NONE.equals(asked) || TeamDef.FIRST.equals(asked) || TeamDef.TOP_SCORE.equals(asked) || TeamDef.APPOINTED.equals(asked) || TeamDef.VOTE.equals(asked) || TeamDef.CLAIM.equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, first, topScore, appointed, vote or claim, so it has no lead", team, asked);
-        return TeamDef.NONE;
-    }
+    private static String leadWay(JsonObject json, String team) { return Json.choice(json, "lead", TeamDef.NONE, "Team " + team, List.of(TeamDef.NONE, TeamDef.FIRST, TeamDef.TOP_SCORE, TeamDef.APPOINTED, TeamDef.VOTE, TeamDef.CLAIM)); }
 
     private static Team.Visibility visible(JsonObject json, String field, Identifier key) {
         String asked = GsonHelper.getAsString(json, field, "always").trim();
-        for (Team.Visibility held : Team.Visibility.values()) {
-            if (held.name.equalsIgnoreCase(asked)) { return held; }
-        }
+        Team.Visibility held = named(Team.Visibility.values(), visibility -> visibility.name, asked);
+        if (held != null) { return held; }
         ContentLog.LOGGER.error("Team file {} sets {} to '{}', which is not always, never, hideForOtherTeams or hideForOwnTeam, so it is always", key, field, asked);
         return Team.Visibility.ALWAYS;
     }
 
     private static Team.CollisionRule collision(JsonObject json, Identifier key) {
         String asked = GsonHelper.getAsString(json, "collision", "always").trim();
-        for (Team.CollisionRule held : Team.CollisionRule.values()) {
-            if (held.name.equalsIgnoreCase(asked)) { return held; }
-        }
+        Team.CollisionRule held = named(Team.CollisionRule.values(), rule -> rule.name, asked);
+        if (held != null) { return held; }
         ContentLog.LOGGER.error("Team file {} sets collision to '{}', which is not always, never, pushOtherTeams or pushOwnTeam, so it is always", key, asked);
         return Team.CollisionRule.ALWAYS;
     }
@@ -340,10 +304,10 @@ public final class ContentParserGames {
         return box;
     }
 
-    private static boolean displaySlotKnown(String slot) { return DisplaySlot.CODEC.byName(slot) != null; }
+    private static boolean displaySlotUnknown(String slot) { return DisplaySlot.CODEC.byName(slot) == null; }
 
     @Nullable public static DiceDef diceFile(Identifier key, String contents) {
-        JsonObject json = ContentParser.GSON.fromJson(contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "dice file");
         if (json == null) { return null; }
         Map<String, String> says = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "says", new JsonObject()).entrySet()) {
@@ -370,7 +334,7 @@ public final class ContentParserGames {
         Set<String> fixed = new HashSet<>();
         for (Map.Entry<String, JsonElement> deck : held.entrySet()) {
             boolean object = deck.getValue().isJsonObject();
-            List<String> cards = object ? names(deck.getValue().getAsJsonObject(), "cards") : names(held, deck.getKey());
+            List<String> cards = object ? Json.names(deck.getValue().getAsJsonObject(), "cards") : Json.names(held, deck.getKey());
             if (cards.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the deck '{}' no cards, so it is left out", key, deck.getKey()); }
             else {
                 decks.put(deck.getKey().trim(), cards);

@@ -14,5 +14,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 
 @Mixin(Villager.class) public abstract class MixinVillager {
-    @Inject(method = "finalizeSpawn", at = @At("TAIL")) private void rdpl$joblessProfession(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData groupData, CallbackInfoReturnable<SpawnGroupData> cir) { ContentVillagers.spawned(Villager.class.cast(this), spawnReason); }
+    @Inject(method = "finalizeSpawn", at = @At("TAIL")) private void rdpl$joblessProfession(ServerLevelAccessor level, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData groupData, CallbackInfoReturnable<SpawnGroupData> cir) { ContentVillagers.spawned((Villager) (Object) this, spawnReason); }
 }

@@ -7,11 +7,11 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -29,7 +29,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -38,12 +37,11 @@ import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentDisabled {
-    public static final Identifier TAG = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "disabled");
+    public static final Identifier TAG = ResourceDataPackLoader.id("disabled");
     public static final TagKey<Item> ITEMS = TagKey.create(Registries.ITEM, TAG);
     public static final TagKey<Block> BLOCKS = TagKey.create(Registries.BLOCK, TAG);
     private static final String ITEM_TAGS = Registries.tagsDirPath(Registries.ITEM);
     private static final String BLOCK_TAGS = Registries.tagsDirPath(Registries.BLOCK);
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> NAMES = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
     private static final Set<Identifier> TAGS = new LinkedHashSet<>();
@@ -58,7 +56,7 @@ public final class ContentDisabled {
 
     public static boolean disabled(BlockState state) { return state.is(BLOCKS); }
 
-    public static boolean any() { return active; }
+    public static boolean none() { return !active; }
 
     public static boolean emptiedTag(ItemStack stack) {
         if (!stack.is(Items.BARRIER)) { return false; }
@@ -129,21 +127,18 @@ public final class ContentDisabled {
     }
 
     private static void read(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Disabled file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "disabled file");
+        if (json == null) { return; }
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
         for (String name : Json.strings(json, "names")) {
-            String trimmed = name.trim().toLowerCase(Locale.ROOT);
+            String trimmed = Settings.lower(name);
             if (trimmed.indexOf(':') < 0) { ContentLog.LOGGER.error("Name '{}' in {} needs a namespace, such as minecraft:iron_ingot, skipping it", name, key); }
             else if (trimmed.endsWith("*")) { PREFIXES.add(trimmed.substring(0, trimmed.length() - 1)); }
             else { NAMES.add(trimmed); }
         }
-        for (String namespace : Json.strings(json, "namespaces")) { PREFIXES.add(namespace.trim().toLowerCase(Locale.ROOT) + ":"); }
+        for (String namespace : Json.strings(json, "namespaces")) { PREFIXES.add(Settings.lower(namespace) + ":"); }
         for (String tag : Json.strings(json, "tags")) {
-            Identifier location = Identifier.tryParse(tag.startsWith("#") ? tag.substring(1) : tag);
+            Identifier location = Registered.tagId(tag);
             if (location == null) { ContentLog.LOGGER.error("Tag '{}' in {} is not a valid name, skipping it", tag, key); }
             else { TAGS.add(location); }
         }

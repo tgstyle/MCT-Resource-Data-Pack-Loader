@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(RegistryLoadTask.class) public interface IRegistryLoadTask {
-    @Invoker("registryKey") ResourceKey<? extends Registry<?>> rdpl$registryKey();
+    @Invoker("registryKey") ResourceKey<? extends Registry<?>> rdpl$getRegistryKey();
 }

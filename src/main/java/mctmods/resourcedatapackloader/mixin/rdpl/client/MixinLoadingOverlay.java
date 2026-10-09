@@ -15,6 +15,5 @@ import org.spongepowered.asm.mixin.injection.At;
     @Shadow @Final private static int LOGO_BACKGROUND_COLOR;
     @Shadow @Final private static int LOGO_BACKGROUND_COLOR_DARK;
 
-    @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V", at = @At(value = "INVOKE", target = "Ljava/util/function/IntSupplier;getAsInt()I"))
-    private int rdpl$slate(int brand) { return (brand == LOGO_BACKGROUND_COLOR || brand == LOGO_BACKGROUND_COLOR_DARK) && !Config.tweaks.darkSplashOff() ? ARGB.opaque(SplashSlate.SLATE) : brand; }
+    @ModifyExpressionValue(method = "extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V", at = @At(value = "INVOKE", target = "Ljava/util/function/IntSupplier;getAsInt()I")) private int rdpl$slate(int brand) { return (brand == LOGO_BACKGROUND_COLOR || brand == LOGO_BACKGROUND_COLOR_DARK) && !Config.tweaks.darkSplashOff() ? ARGB.opaque(SplashSlate.SLATE) : brand; }
 }

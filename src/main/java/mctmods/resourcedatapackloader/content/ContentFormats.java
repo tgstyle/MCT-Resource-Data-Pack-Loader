@@ -2,12 +2,13 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
@@ -71,7 +72,7 @@ public final class ContentFormats {
     }
 
     @Nullable public static String biomeTag(String type) {
-        String wanted = type.trim().toLowerCase(Locale.ROOT);
+        String wanted = Settings.lower(type);
         return switch (wanted) {
             case "ocean" -> "minecraft:is_ocean";
             case "deepocean", "deep_ocean" -> "minecraft:is_deep_ocean";
@@ -116,7 +117,7 @@ public final class ContentFormats {
     public static String dimensionId(String named) {
         String wanted = named.trim();
         return switch (wanted) {
-            case "0" -> "minecraft:overworld";
+            case "0" -> ContentBiomes.OVERWORLD;
             case "-1" -> "minecraft:the_nether";
             case "1" -> "minecraft:the_end";
             default -> {

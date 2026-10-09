@@ -19,22 +19,22 @@ final class CardWhen {
     String objective = "";
     @Nullable Integer scoreAtLeast;
 
-    boolean passes(ServerPlayer player) {
-        if (!biomes.isEmpty() && !CardPlace.biomeMatches(biomes, player.level().getBiome(player.blockPosition()))) { return false; }
-        if (timeFrom >= 0 && timeTo >= 0 && !within(CardPlace.timeOfDay(player.level()))) { return false; }
-        if (dayAtLeast >= 0L && CardPlace.day(player.level()) < dayAtLeast) { return false; }
-        if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return false; }
-        if (!gameMode.isEmpty() && !gameMode.equalsIgnoreCase(player.gameMode.getGameModeForPlayer().getName())) { return false; }
-        if (!team.isEmpty() && !team.equals(teamOf(player))) { return false; }
-        if (objective.isEmpty() || scoreAtLeast == null) { return true; }
+    boolean fails(ServerPlayer player) {
+        if (!biomes.isEmpty() && !CardPlace.biomeMatches(biomes, player.level().getBiome(player.blockPosition()))) { return true; }
+        if (timeFrom >= 0 && timeTo >= 0 && !within(CardPlace.timeOfDay(player.level()))) { return true; }
+        if (dayAtLeast >= 0L && CardPlace.day(player.level()) < dayAtLeast) { return true; }
+        if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }
+        if (!gameMode.isEmpty() && !gameMode.equalsIgnoreCase(player.gameMode.getGameModeForPlayer().getName())) { return true; }
+        if (!team.isEmpty() && !team.equals(teamOf(player))) { return true; }
+        if (objective.isEmpty() || scoreAtLeast == null) { return false; }
         Integer score = CardPlace.score(player, objective);
-        return score != null && score >= scoreAtLeast;
+        return score == null || score < scoreAtLeast;
     }
 
     private boolean within(int time) { return timeFrom <= timeTo ? time >= timeFrom && time <= timeTo : time >= timeFrom || time <= timeTo; }
 
     static String teamOf(ServerPlayer player) {
-        PlayerTeam team = Scores.teamOf(player.level().getScoreboard(), player.getScoreboardName());
+        PlayerTeam team = Scores.teamOf(player);
         return team == null ? "" : team.getName();
     }
 }

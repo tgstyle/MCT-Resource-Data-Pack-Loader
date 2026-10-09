@@ -94,7 +94,7 @@ public final class ContentSkyRenderer {
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
         modelView.mul(poseStack.last().pose());
-        modelView.translate(0.0F, 100.0F, 0.0F);
+        modelView.translate(0.0F, ContentSkyShapes.SIZE, 0.0F);
         modelView.scale(size, 1.0F, size);
         GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(new Matrix4f(modelView), new Vector4f(1.0F, 1.0F, 1.0F, rainBrightness));
         modelView.popMatrix();

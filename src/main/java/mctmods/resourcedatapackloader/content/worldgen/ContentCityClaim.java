@@ -37,10 +37,11 @@ import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 public final class ContentCityClaim {
-    private static final Identifier CITY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE);
+    private static final Identifier CITY = ResourceDataPackLoader.id(ContentCity.STRUCTURE);
     private static final int LAKE_SPAN = 15;
     private static final int LAKE_BACK = 8;
     private static final int LAKE_OVER = 8;
@@ -81,14 +82,32 @@ public final class ContentCityClaim {
         if (ContentStructurePins.pinned(start.getChunkPos())) { return false; }
         CityGround ground = CityGround.of(seed, generator, random, registries);
         BoundingBox box = start.getBoundingBox();
-        for (int districtX = CityPlan.districtOf(box.minX(), true); districtX <= CityPlan.districtOf(box.maxX(), true); districtX++) {
-            for (int districtZ = CityPlan.districtOf(box.minZ(), false); districtZ <= CityPlan.districtOf(box.maxZ(), false); districtZ++) {
-                if (outside(ground, generator, random, registries, CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false))) { continue; }
-                ContentLog.LOGGER.debug("Village {} at chunk {} would reach into the city district at {}, {}, where the city is the village, so it is not founded", id, start.getChunkPos(), CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false));
-                return true;
+        int[] window = cityWindow(ground, generator, random, registries, box.minX(), box.maxX(), box.minZ(), box.maxZ());
+        if (window == null) { return false; }
+        ContentLog.LOGGER.debug("Village {} at chunk {} would reach into the city district at {}, {}, where the city is the village, so it is not founded", id, start.getChunkPos(), window[0], window[1]);
+        return true;
+    }
+
+    @Nullable private static int[] cityWindow(CityGround ground, ChunkGenerator generator, RandomState random, RegistryAccess registries, int minX, int maxX, int minZ, int maxZ) {
+        for (int districtX = CityPlan.districtOf(minX, true); districtX <= CityPlan.districtOf(maxX, true); districtX++) {
+            for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
+                int windowX = CityPlan.windowOf(districtX, true);
+                int windowZ = CityPlan.windowOf(districtZ, false);
+                if (!outside(ground, generator, random, registries, windowX, windowZ)) { return new int[] {windowX, windowZ}; }
             }
         }
-        return false;
+        return null;
+    }
+
+    @Nullable private static <T> T first(CityGround ground, int minX, int maxX, int minZ, int maxZ, Function<CityPlan, T> find) {
+        for (int districtX = CityPlan.districtOf(minX, true); districtX <= CityPlan.districtOf(maxX, true); districtX++) {
+            for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
+                CityPlan plan = CityPlan.of(ground, districtX, districtZ);
+                T found = plan == null ? null : find.apply(plan);
+                if (found != null) { return found; }
+            }
+        }
+        return null;
     }
 
     private record Road(String what, int x, int z) {}
@@ -105,18 +124,17 @@ public final class ContentCityClaim {
         }
         if (ContentCity.idle()) { return false; }
         CityGround ground = CityGround.of(level);
-        for (int districtX = CityPlan.districtOf(leastX, true); districtX <= CityPlan.districtOf(mostX, true); districtX++) {
-            for (int districtZ = CityPlan.districtOf(leastZ, false); districtZ <= CityPlan.districtOf(mostZ, false); districtZ++) {
-                CityPlan plan = CityPlan.of(ground, districtX, districtZ);
-                if (plan == null) { continue; }
-                for (CityPlan.Plot plot : plan.plots()) {
-                    if (plot.toX() < leastX || plot.fromX() > mostX || plot.toZ() < leastZ || plot.fromZ() > mostZ) { continue; }
-                    ContentLog.LOGGER.debug("A lake at {}, {}, {} would reach into the city plot {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), plot.def().key(), plot.fromX(), plot.fromZ());
-                    return true;
-                }
-            }
+        CityPlan.Plot plot = first(ground, leastX, mostX, leastZ, mostZ, plan -> plotIn(plan, leastX, mostX, leastZ, mostZ));
+        if (plot == null) { return false; }
+        ContentLog.LOGGER.debug("A lake at {}, {}, {} would reach into the city plot {} at {}, {}, so it is not made", origin.getX(), origin.getY(), origin.getZ(), plot.def().key(), plot.fromX(), plot.fromZ());
+        return true;
+    }
+
+    @Nullable private static CityPlan.Plot plotIn(CityPlan plan, int minX, int maxX, int minZ, int maxZ) {
+        for (CityPlan.Plot plot : plan.plots()) {
+            if (plot.meets(minX, minZ, maxX, maxZ)) { return plot; }
         }
-        return false;
+        return null;
     }
 
     public static boolean boulderOnRoad(WorldGenLevel level, BlockPos origin) {
@@ -129,23 +147,18 @@ public final class ContentCityClaim {
     @Nullable private static Road roadIn(WorldGenLevel level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
         Road village = villageRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ);
         if (village != null || ContentCity.idle()) { return village; }
-        CityGround ground = CityGround.of(level);
-        for (int districtX = CityPlan.districtOf(minX, true); districtX <= CityPlan.districtOf(maxX, true); districtX++) {
-            for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
-                CityPlan plan = CityPlan.of(ground, districtX, districtZ);
-                if (plan == null) { continue; }
-                for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-                    for (CityPlan.Line line : lines) {
-                        Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, CityRails.lineBox(line), 0, ROAD_TALL);
-                        if (met != null) { return met; }
-                    }
-                }
-                for (CityPlan.Rail rail : plan.rails()) {
-                    BoundingBox bed = rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to());
-                    Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, bed, rail.subway() ? ContentCity.subwayDepth() : 0, ContentCityRailPiece.CLEAR + 1);
-                    if (met != null) { return met; }
-                }
-            }
+        return first(CityGround.of(level), minX, maxX, minZ, maxZ, plan -> cityRoadOf(level, plan, minX, minY, minZ, maxX, maxY, maxZ));
+    }
+
+    @Nullable private static Road cityRoadOf(WorldGenLevel level, CityPlan plan, int minX, int minY, int minZ, int maxX, int maxY, int maxZ) {
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, line.box(), 0, ROAD_TALL);
+            if (met != null) { return met; }
+        }
+        for (CityPlan.Rail rail : plan.rails()) {
+            BoundingBox bed = rail.box();
+            Road met = cityRoadIn(level, minX, minY, minZ, maxX, maxY, maxZ, bed, rail.subway() ? ContentCity.subwayDepth() : 0, CityRails.CLEAR + 1);
+            if (met != null) { return met; }
         }
         return null;
     }
@@ -175,30 +188,30 @@ public final class ContentCityClaim {
         ServerLevel server = level.getLevel();
         RandomState random = server.getChunkSource().randomState();
         RegistryAccess registries = server.registryAccess();
-        for (int districtX = CityPlan.districtOf(origin.getX() - BERG_REACH, true); districtX <= CityPlan.districtOf(origin.getX() + BERG_REACH, true); districtX++) {
-            for (int districtZ = CityPlan.districtOf(origin.getZ() - BERG_REACH, false); districtZ <= CityPlan.districtOf(origin.getZ() + BERG_REACH, false); districtZ++) {
-                if (outside(ground, generator, random, registries, CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false))) { continue; }
-                ContentLog.LOGGER.debug("An iceberg at {}, {} would stand in the city district at {}, {}, so it is not made", origin.getX(), origin.getZ(), CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false));
-                return true;
-            }
-        }
-        return false;
+        int[] window = cityWindow(ground, generator, random, registries, origin.getX() - BERG_REACH, origin.getX() + BERG_REACH, origin.getZ() - BERG_REACH, origin.getZ() + BERG_REACH);
+        if (window == null) { return false; }
+        ContentLog.LOGGER.debug("An iceberg at {}, {} would stand in the city district at {}, {}, so it is not made", origin.getX(), origin.getZ(), window[0], window[1]);
+        return true;
     }
 
     public static boolean intoBore(WorldGenLevel level, BlockPos origin) {
-        if (ContentCity.idle() || !ContentCity.subways()) { return false; }
-        List<CityRails.Laid> subways = CityRails.subways(CityGround.of(level), origin.getX() - DUNGEON_REACH, origin.getZ() - DUNGEON_REACH, origin.getX() + DUNGEON_REACH, origin.getZ() + DUNGEON_REACH);
-        if (subways.isEmpty()) { return false; }
-        for (int x = origin.getX() - DUNGEON_REACH; x <= origin.getX() + DUNGEON_REACH; x++) {
-            for (int z = origin.getZ() - DUNGEON_REACH; z <= origin.getZ() + DUNGEON_REACH; z++) {
-                for (int y = origin.getY() - DUNGEON_UNDER; y <= origin.getY() + DUNGEON_OVER; y++) {
-                    if (!CityRails.insideBore(subways, x, y, z)) { continue; }
-                    ContentLog.LOGGER.debug("A dungeon at {}, {}, {} would have opened into a subway bore, so it is left out", origin.getX(), origin.getY(), origin.getZ());
-                    return true;
+        if (boreFree(level, new BoundingBox(origin.getX() - DUNGEON_REACH, origin.getY() - DUNGEON_UNDER, origin.getZ() - DUNGEON_REACH, origin.getX() + DUNGEON_REACH, origin.getY() + DUNGEON_OVER, origin.getZ() + DUNGEON_REACH))) { return false; }
+        ContentLog.LOGGER.debug("A dungeon at {}, {}, {} would have opened into a subway bore, so it is left out", origin.getX(), origin.getY(), origin.getZ());
+        return true;
+    }
+
+    private static boolean boreFree(WorldGenLevel level, BoundingBox box) {
+        if (ContentCity.idle() || !ContentCity.subways()) { return true; }
+        List<CityRails.Laid> subways = CityRails.subways(CityGround.of(level), box.minX(), box.minZ(), box.maxX(), box.maxZ());
+        if (subways.isEmpty()) { return true; }
+        for (int x = box.minX(); x <= box.maxX(); x++) {
+            for (int z = box.minZ(); z <= box.maxZ(); z++) {
+                for (int y = box.minY(); y <= box.maxY(); y++) {
+                    if (CityRails.insideBore(subways, x, y, z)) { return false; }
                 }
             }
         }
-        return false;
+        return true;
     }
 
     public static boolean springIntoCut(WorldGenLevel level, BlockPos origin) {
@@ -266,7 +279,7 @@ public final class ContentCityClaim {
 
     public static boolean oreMayFill(BlockState ore, BlockPos at) {
         Vein vein = VEIN.get();
-        if (vein.lines.isEmpty() || !(ore.getBlock() instanceof FallingBlock) || !CityRails.underBed(vein.lines, at.getX(), at.getY(), at.getZ())) { return true; }
+        if (vein.lines.isEmpty() || !(ore.getBlock() instanceof FallingBlock) || CityRails.notUnderBed(vein.lines, at.getX(), at.getY(), at.getZ())) { return true; }
         vein.spared++;
         return false;
     }
@@ -278,19 +291,9 @@ public final class ContentCityClaim {
     }
 
     public static boolean fossilIntoBore(WorldGenLevel level, BoundingBox box) {
-        if (ContentCity.idle() || !ContentCity.subways()) { return false; }
-        List<CityRails.Laid> subways = CityRails.subways(CityGround.of(level), box.minX(), box.minZ(), box.maxX(), box.maxZ());
-        if (subways.isEmpty()) { return false; }
-        for (int x = box.minX(); x <= box.maxX(); x++) {
-            for (int z = box.minZ(); z <= box.maxZ(); z++) {
-                for (int y = box.minY(); y <= box.maxY(); y++) {
-                    if (!CityRails.insideBore(subways, x, y, z)) { continue; }
-                    ContentLog.LOGGER.debug("A fossil at {}, {}, {} would have written into a subway bore, so it is left out", box.minX(), box.minY(), box.minZ());
-                    return true;
-                }
-            }
-        }
-        return false;
+        if (boreFree(level, box)) { return false; }
+        ContentLog.LOGGER.debug("A fossil at {}, {}, {} would have written into a subway bore, so it is left out", box.minX(), box.minY(), box.minZ());
+        return true;
     }
 
     private static boolean overBore(StructureStart start, CityGround ground, @Nullable Identifier id) {
@@ -316,22 +319,18 @@ public final class ContentCityClaim {
     }
 
     private static boolean streetWithin(CityGround ground, BoundingBox box) {
-        for (int districtX = CityPlan.districtOf(box.minX(), true); districtX <= CityPlan.districtOf(box.maxX(), true); districtX++) {
-            for (int districtZ = CityPlan.districtOf(box.minZ(), false); districtZ <= CityPlan.districtOf(box.maxZ(), false); districtZ++) {
-                CityPlan plan = CityPlan.of(ground, districtX, districtZ);
-                if (plan == null) { continue; }
-                for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-                    for (CityPlan.Line line : lines) {
-                        int fromX = line.alongX() ? line.from() : line.at();
-                        int toX = line.alongX() ? line.to() : line.last();
-                        int fromZ = line.alongX() ? line.at() : line.from();
-                        int toZ = line.alongX() ? line.last() : line.to();
-                        if (box.intersects(fromX, fromZ, toX, toZ)) { return true; }
-                    }
-                }
-            }
+        return first(ground, box.minX(), box.maxX(), box.minZ(), box.maxZ(), plan -> streetIn(plan, box)) != null;
+    }
+
+    @Nullable private static CityPlan.Line streetIn(CityPlan plan, BoundingBox box) {
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            int fromX = line.alongX() ? line.from() : line.at();
+            int toX = line.alongX() ? line.to() : line.last();
+            int fromZ = line.alongX() ? line.at() : line.from();
+            int toZ = line.alongX() ? line.last() : line.to();
+            if (box.intersects(fromX, fromZ, toX, toZ)) { return line; }
         }
-        return false;
+        return null;
     }
 
     @Nullable private static Road cityRoadIn(WorldGenLevel level, int minX, int minY, int minZ, int maxX, int maxY, int maxZ, BoundingBox road, int under, int tall) {

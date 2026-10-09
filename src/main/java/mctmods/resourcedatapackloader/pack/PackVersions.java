@@ -29,13 +29,13 @@ final class PackVersions {
 
     @Nullable static Path home(Path root) {
         Path home = root.resolve(FOLDER).resolve(SharedConstants.getCurrentVersion().name());
-        return Files.isDirectory(home) && !stale(home.resolve(STAMP)) ? home : null;
+        return Files.isDirectory(home) && current(home.resolve(STAMP)) ? home : null;
     }
 
-    private static boolean stale(Path stamp) {
-        if (!Files.isRegularFile(stamp)) { return false; }
-        try { return !Files.readString(stamp, StandardCharsets.UTF_8).trim().equals(modVersion()); }
-        catch (IOException unreadable) { return false; }
+    private static boolean current(Path stamp) {
+        if (!Files.isRegularFile(stamp)) { return true; }
+        try { return Files.readString(stamp, StandardCharsets.UTF_8).trim().equals(modVersion()); }
+        catch (IOException unreadable) { return true; }
     }
 
     private static String modVersion() { return ModList.get().getModContainerById(ResourceDataPackLoader.MOD_ID).map(held -> held.getModInfo().getVersion().toString()).orElse(""); }
@@ -71,15 +71,15 @@ final class PackVersions {
         }
     }
 
-    static boolean swap(Path written, Path zip) {
+    static boolean swapFailed(Path written, Path zip) {
         try {
             FileMoves.replace(written, zip);
-            return true;
+            return false;
         }
         catch (IOException ex) {
             ContentLog.LOGGER.error("Pack '{}': the ported zip could not replace the original, which is left as it was", zip.getFileName(), ex);
             FileMoves.deleteQuietly(written);
-            return false;
+            return true;
         }
     }
 }

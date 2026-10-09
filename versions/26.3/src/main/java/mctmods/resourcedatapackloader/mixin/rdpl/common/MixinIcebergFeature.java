@@ -13,8 +13,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(IcebergFeature.class) public abstract class MixinIcebergFeature {
-    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
-    private void rdpl$spareCity(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.bergInCity(level, chunkGenerator, origin)) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true) private void rdpl$spareCity(WorldGenLevel level, ChunkGenerator chunkGenerator, RandomSource random, BlockPos origin, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.bergInCity(level, chunkGenerator, origin)) { cir.setReturnValue(false); } }
 }

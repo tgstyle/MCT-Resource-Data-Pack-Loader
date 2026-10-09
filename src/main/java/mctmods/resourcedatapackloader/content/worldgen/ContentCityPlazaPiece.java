@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityCross.ALL_ARMS;
+import static mctmods.resourcedatapackloader.content.worldgen.CityPlotGround.FILL_UNDER;
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
+
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -11,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -28,9 +33,7 @@ import java.util.List;
 
 public final class ContentCityPlazaPiece extends StructurePiece implements PieceBeardifierModifier {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPlazaPiece::new;
-    public static final int CLEAR = 4;
     static final int MOUTH_MOST = 4;
-    private static final int FILL = 8;
     private static final int TAPER_MOST = 3;
     private static final String LEVEL = "Level";
     private static final String WELL = "Well";
@@ -42,7 +45,6 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
     private static final String MIDDLE_Z = "MidZ";
     private static final String KEEP = "Keep";
     private static final String ARMS = "Arms";
-    private static final int ALL_ARMS = CityCross.WEST | CityCross.EAST | CityCross.NORTH | CityCross.SOUTH;
     private final int level;
     private final int[] well;
     private final int paved;
@@ -55,7 +57,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
     private final int arms;
 
     public ContentCityPlazaPiece(int fromX, int fromZ, int toX, int toZ, int level, int paved, int walk, int core, String design, int middleX, int middleZ, int arms, int[] footprints) {
-        super(TYPE, 0, new BoundingBox(fromX - paved - walk - MOUTH_MOST - TAPER_MOST, level - FILL, fromZ - paved - walk - MOUTH_MOST - TAPER_MOST, toX + paved + walk + MOUTH_MOST + TAPER_MOST, level + CLEAR + 1, toZ + paved + walk + MOUTH_MOST + TAPER_MOST));
+        super(TYPE, 0, new BoundingBox(fromX - paved - walk - MOUTH_MOST - TAPER_MOST, level - FILL_UNDER, fromZ - paved - walk - MOUTH_MOST - TAPER_MOST, toX + paved + walk + MOUTH_MOST + TAPER_MOST, level + CLEAR + 1, toZ + paved + walk + MOUTH_MOST + TAPER_MOST));
         this.level = level;
         this.well = new int[] {fromX, fromZ, toX, toZ};
         this.paved = paved;
@@ -157,10 +159,11 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         List<BoundingBox> others = ContentCityTrees.foreign(manager, chunk, this, held, piece -> piece instanceof ContentCityTrees.IFelling && !(piece instanceof ContentCityPiece) || piece instanceof ContentCityWellPiece);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         List<BlockPos> open = new ArrayList<>();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 int band = CityPlotGround.band(well, x, z);
-                boolean paves = !CityPlotGround.kept(keep, x, z) && !CityPlotGround.covered(others, x, z) && (band <= ring || (band <= ring + rows.size() && armOffset(x, z) <= core));
+                boolean paves = !CityPlotGround.nearRoad(keep, x, z, 0) && !CityPlotGround.covered(others, x, z) && (band <= ring || (band <= ring + rows.size() && armOffset(x, z) <= core));
                 if (paves && (band > paved || x < well[0] || x > well[2] || z < well[1] || z > well[3])) { open.add(new BlockPos(x, this.level, z)); }
             }
         }
@@ -172,9 +175,15 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
         int spared = 0;
         int yielded = 0;
         boolean chosen = ContentCity.pathChosen();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
-                if (CityPlotGround.kept(keep, x, z)) { continue; }
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                if (CityBiome.moved(level, x, z)) {
+                    road = CityPalette.stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
+                    edge = CityPalette.stateOr(ContentCity.lineBlock(), road);
+                    sidewalk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
+                    chosen = ContentCity.pathChosen();
+                }
+                if (CityPlotGround.nearRoad(keep, x, z, 0)) { continue; }
                 int band = CityPlotGround.band(well, x, z);
                 int arm = armOffset(x, z);
                 BlockState laid;
@@ -199,7 +208,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
                     int street = surface(level, x, z, this.level, rows.size() + 1);
                     if (street != Integer.MIN_VALUE) {
                         BlockState painted = chosen ? laid : natural(level.getBlockState(at.set(x, street, z)));
-                        level.setBlock(at.set(x, street, z), painted, 2);
+                        level.setBlock(at.set(x, street, z), painted, Block.UPDATE_CLIENTS);
                         columns++;
                     }
                     continue;
@@ -217,13 +226,13 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
                 int roof = CityRails.boreRoof(bores, x, z);
                 if (!chosen) { laid = natural(level.getBlockState(at.set(x, this.level, z))); }
                 at.set(x, this.level, z);
-                level.setBlock(at, laid, 2);
-                CityPlotGround.fillUnder(level, box, x, z, this.level - 1, Math.max(this.level - FILL, roof + 1));
+                level.setBlock(at, laid, Block.UPDATE_CLIENTS);
+                CityPlotGround.fillUnder(level, box, x, z, this.level - 1, Math.max(this.level - FILL_UNDER, roof + 1));
                 if (outside) {
                     for (int up = 1; up <= Math.max(CLEAR, top - this.level + 2); up++) {
                         at.set(x, this.level + up, z);
                         BlockState over = level.getBlockState(at);
-                        if (ContentCityTrees.clears(level, at, over)) { level.setBlock(at, air, 2); }
+                        if (ContentCityTrees.clears(level, at, over)) { level.setBlock(at, air, Block.UPDATE_CLIENTS); }
                     }
                 }
                 columns++;
@@ -252,10 +261,11 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
     }
 
     @SuppressWarnings("deprecation") private void taper(WorldGenLevel level, BoundingBox box, int reach, List<CityRails.Laid> bores, List<BoundingBox> others, BlockPos.MutableBlockPos at) {
-        for (int x = Math.max(well[0] - reach - TAPER_MOST, box.minX()); x <= Math.min(well[2] + reach + TAPER_MOST, box.maxX()); x++) {
-            for (int z = Math.max(well[1] - reach - TAPER_MOST, box.minZ()); z <= Math.min(well[3] + reach + TAPER_MOST, box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, well[0] - reach - TAPER_MOST, well[1] - reach - TAPER_MOST, well[2] + reach + TAPER_MOST, well[3] + reach + TAPER_MOST);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 int ring = CityPlotGround.band(well, x, z) - reach;
-                if (ring < 1 || armOffset(x, z) <= core + walk + 1 || CityPlotGround.kept(keep, x, z) || CityPlotGround.covered(others, x, z)) { continue; }
+                if (ring < 1 || armOffset(x, z) <= core + walk + 1 || CityPlotGround.nearRoad(keep, x, z, 0) || CityPlotGround.covered(others, x, z)) { continue; }
                 BlockState ground = CityPlotGround.groundFor(level, x, z);
                 int rings = ground.is(Blocks.SAND) ? 3 : ground.is(Blocks.TERRACOTTA) ? 1 : 2;
                 if (ring > rings) { continue; }
@@ -263,7 +273,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
                 BlockState over = level.getBlockState(at.set(x, shelf + 1, z));
                 if (over.isSolid() || !over.getFluidState().isEmpty()) { continue; }
                 int footing = Integer.MIN_VALUE;
-                for (int y = shelf; y >= Math.max(shelf - 4 - FILL, CityRails.boreRoof(bores, x, z) + 1); y--) {
+                for (int y = shelf; y >= Math.max(shelf - 4 - FILL_UNDER, CityRails.boreRoof(bores, x, z) + 1); y--) {
                     BlockState held = level.getBlockState(at.set(x, y, z));
                     if (!held.getFluidState().isEmpty()) { break; }
                     if (held.isSolid()) {
@@ -272,7 +282,7 @@ public final class ContentCityPlazaPiece extends StructurePiece implements Piece
                     }
                 }
                 if (footing == Integer.MIN_VALUE) { continue; }
-                for (int y = shelf; y > footing; y--) { level.setBlock(at.set(x, y, z), CityPlotGround.exposed(level, at, ground), 2); }
+                for (int y = shelf; y > footing; y--) { level.setBlock(at.set(x, y, z), CityPlotGround.exposed(level, at, ground), Block.UPDATE_CLIENTS); }
             }
         }
     }

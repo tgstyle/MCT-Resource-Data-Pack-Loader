@@ -12,6 +12,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(ItemStack.class) public abstract class MixinItemStack {
-    @WrapOperation(method = "validateStrict(Lnet/minecraft/world/item/ItemStack;)Lcom/mojang/serialization/DataResult;", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;validateComponents(Lnet/minecraft/core/component/DataComponentMap;)Lcom/mojang/serialization/DataResult;"))
-    private static DataResult<?> rdpl$stackDamageable(DataComponentMap components, Operation<DataResult<?>> original, @Local(argsOnly = true) ItemStack itemStack) { return original.call(ContentOverrides.validating(itemStack.getItem(), components)); }
+    @WrapOperation(method = "validateStrict(Lnet/minecraft/world/item/ItemStack;)Lcom/mojang/serialization/DataResult;", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;validateComponents(Lnet/minecraft/core/component/DataComponentMap;)Lcom/mojang/serialization/DataResult;")) private static DataResult<?> rdpl$stackDamageable(DataComponentMap components, Operation<DataResult<?>> original, @Local(argsOnly = true) ItemStack itemStack) { return original.call(ContentOverrides.validating(itemStack.getItem(), components)); }
 }

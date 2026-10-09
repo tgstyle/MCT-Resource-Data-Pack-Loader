@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Particle.class) public interface IParticle {
-    @Accessor("xd") void setXd(double xd);
+    @Accessor("xd") void rdpl$setXd(double xd);
 
-    @Accessor("zd") void setZd(double zd);
+    @Accessor("zd") void rdpl$setZd(double zd);
 }

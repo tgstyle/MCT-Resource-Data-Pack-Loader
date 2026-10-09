@@ -1,8 +1,12 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Locale;
 import java.util.Map;
@@ -20,6 +24,8 @@ final class CrossLoot {
     private static final String ENCHANTMENTS = "enchantments";
     private static final String OPTIONS = "options";
     private static final String LOOTING = "minecraft:looting";
+    private static final String DAMAGE = "minecraft:damage";
+    private static final String SET_NBT = "minecraft:set_nbt";
     private static final Set<String> ITEM_KEYS = Set.of("item", "items", "mainhand", "offhand", "head", "chest", "legs", "feet", "body", "rod");
     private static final Map<String, String> OPERATIONS = Map.of("addition", "add_value", "multiply_base", "add_multiplied_base", "multiply_total", "add_multiplied_total");
     private static final Map<String, String> PREDICATE_KEYS = Map.of("nbt", "minecraft:custom_data", ENCHANTMENTS, "minecraft:enchantments", "stored_enchantments", "minecraft:stored_enchantments", "potion", "minecraft:potion_contents");
@@ -44,19 +50,15 @@ final class CrossLoot {
         else if ("block".equals(key)) { block(held, up, "blocks", "blocks"); }
         else if ("fluid".equals(key)) { block(held, up, "fluid", "fluids"); }
         location(held, up);
-        String function = string(held, FUNCTION);
+        String function = Json.text(held,FUNCTION);
         if (!function.isEmpty()) { function(held, function, up, file, pack); }
-        String condition = string(held, CONDITION);
+        String condition = Json.text(held,CONDITION);
         if (!condition.isEmpty()) { condition(held, condition, up, file, pack); }
-        if ("minecraft:loot_table".equals(string(held, CrossJson.TYPE))) { rename(held, up ? "name" : "value", up ? "value" : "name"); }
+        if ("minecraft:loot_table".equals(Json.text(held,CrossJson.TYPE))) { rename(held, up ? "name" : "value", up ? "value" : "name"); }
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(held.entrySet())) { node(entry.getValue(), entry.getKey(), file, pack); }
     }
 
-    private static String string(JsonObject held, String key) { return held.has(key) && held.get(key).isJsonPrimitive() ? held.get(key).getAsString() : ""; }
-
-    private static void rename(JsonObject held, String from, String to) {
-        if (held.has(from) && !held.has(to)) { held.add(to, held.remove(from)); }
-    }
+    private static void rename(JsonObject held, String from, String to) { if (held.has(from) && !held.has(to)) { held.add(to, held.remove(from)); } }
 
     private static void item(JsonObject held, boolean up, String file, Crossed pack) {
         if (up) {
@@ -73,12 +75,12 @@ final class CrossLoot {
             if (held.has("durability")) {
                 JsonObject damage = new JsonObject();
                 damage.add("durability", held.remove("durability"));
-                predicates.add("minecraft:damage", damage);
+                predicates.add(DAMAGE, damage);
             }
             if (!predicates.keySet().isEmpty()) { held.add(PREDICATES, predicates); }
             return;
         }
-        if (held.has(ITEMS) && held.get(ITEMS).isJsonPrimitive()) {
+        if (GsonHelper.isValidPrimitive(held, ITEMS)) {
             String items = held.remove(ITEMS).getAsString();
             if (items.startsWith("#")) { held.addProperty(TAG, items.substring(1)); }
             else {
@@ -97,7 +99,7 @@ final class CrossLoot {
         for (Map.Entry<String, String> moved : PREDICATE_KEYS.entrySet()) {
             if (predicates.has(moved.getValue())) { held.add(moved.getKey(), predicates.remove(moved.getValue())); }
         }
-        if (predicates.has("minecraft:damage") && predicates.get("minecraft:damage").isJsonObject() && predicates.getAsJsonObject("minecraft:damage").has("durability")) { held.add("durability", predicates.remove("minecraft:damage").getAsJsonObject().get("durability")); }
+        if (predicates.has(DAMAGE) && predicates.get(DAMAGE).isJsonObject() && predicates.getAsJsonObject(DAMAGE).has("durability")) { held.add("durability", predicates.remove(DAMAGE).getAsJsonObject().get("durability")); }
         if (!predicates.keySet().isEmpty()) { pack.note("'" + file + "' tests the item predicate(s) " + String.join(", ", predicates.keySet()) + ", which 1.20.1 does not have, so they are left out"); }
     }
 
@@ -116,7 +118,7 @@ final class CrossLoot {
             if (held.has(TAG) && !held.has(holders)) { held.addProperty(holders, "#" + held.remove(TAG).getAsString()); }
             return;
         }
-        if (!held.has(holders) || !held.get(holders).isJsonPrimitive()) { return; }
+        if (!GsonHelper.isValidPrimitive(held, holders)) { return; }
         String named = held.remove(holders).getAsString();
         if (named.startsWith("#")) { held.addProperty(TAG, named.substring(1)); }
         else if ("blocks".equals(single)) {
@@ -129,17 +131,17 @@ final class CrossLoot {
 
     private static void location(JsonObject held, boolean up) {
         if (up) {
-            if (held.has("biome") && held.get("biome").isJsonPrimitive()) { rename(held, "biome", "biomes"); }
-            if (held.has("structure") && held.get("structure").isJsonPrimitive()) { rename(held, "structure", "structures"); }
+            if (GsonHelper.isValidPrimitive(held, "biome")) { rename(held, "biome", "biomes"); }
+            if (GsonHelper.isValidPrimitive(held, "structure")) { rename(held, "structure", "structures"); }
             return;
         }
-        if (held.has("biomes") && held.get("biomes").isJsonPrimitive() && !held.get("biomes").getAsString().startsWith("#")) { rename(held, "biomes", "biome"); }
-        if (held.has("structures") && held.get("structures").isJsonPrimitive() && !held.get("structures").getAsString().startsWith("#")) { rename(held, "structures", "structure"); }
+        if (GsonHelper.isValidPrimitive(held, "biomes") && !held.get("biomes").getAsString().startsWith("#")) { rename(held, "biomes", "biome"); }
+        if (GsonHelper.isValidPrimitive(held, "structures") && !held.get("structures").getAsString().startsWith("#")) { rename(held, "structures", "structure"); }
     }
 
     private static void function(JsonObject held, String function, boolean up, String file, Crossed pack) {
         switch (function) {
-            case "minecraft:set_nbt" -> {
+            case SET_NBT -> {
                 if (!up) { return; }
                 held.addProperty(FUNCTION, "minecraft:set_components");
                 held.add(CrossJson.COMPONENTS, CrossStacks.upJson("minecraft:stick", held.remove(TAG)));
@@ -147,10 +149,10 @@ final class CrossLoot {
             case "minecraft:set_components" -> {
                 if (up || !held.has(CrossJson.COMPONENTS)) { return; }
                 String nbt = CrossJson.downNbt(held.remove(CrossJson.COMPONENTS).getAsJsonObject(), file, pack);
-                held.addProperty(FUNCTION, "minecraft:set_nbt");
+                held.addProperty(FUNCTION, SET_NBT);
                 held.addProperty(TAG, nbt == null ? "{}" : nbt);
             }
-            case "minecraft:set_custom_data" -> { if (!up) { held.addProperty(FUNCTION, "minecraft:set_nbt"); } }
+            case "minecraft:set_custom_data" -> { if (!up) { held.addProperty(FUNCTION, SET_NBT); } }
             case "minecraft:copy_nbt" -> { if (up) { held.addProperty(FUNCTION, "minecraft:copy_custom_data"); } }
             case "minecraft:copy_custom_data" -> { if (!up) { held.addProperty(FUNCTION, "minecraft:copy_nbt"); } }
             case "minecraft:enchant_randomly" -> enchantRandomly(held, up, file, pack);
@@ -168,7 +170,7 @@ final class CrossLoot {
             }
             case "minecraft:enchanted_count_increase" -> {
                 if (up) { return; }
-                if (!LOOTING.equals(string(held, ENCHANTMENT))) { pack.note("'" + file + "' raises the count by " + string(held, ENCHANTMENT) + ", and 1.20.1 only raises it by looting"); }
+                if (!LOOTING.equals(Json.text(held,ENCHANTMENT))) { pack.note("'" + file + "' raises the count by " + Json.text(held,ENCHANTMENT) + ", and 1.20.1 only raises it by looting"); }
                 held.remove(ENCHANTMENT);
                 held.addProperty(FUNCTION, "minecraft:looting_enchant");
             }
@@ -197,11 +199,12 @@ final class CrossLoot {
 
     private static void attributes(JsonObject held, boolean up, String file) {
         if (!held.has("modifiers") || !held.get("modifiers").isJsonArray()) { return; }
-        String namespace = file.split("/").length > 1 ? file.split("/")[1] : "minecraft";
+        String[] segments = file.split("/");
+        String namespace = segments.length > 1 ? segments[1] : "minecraft";
         for (JsonElement one : held.getAsJsonArray("modifiers")) {
             if (!one.isJsonObject()) { continue; }
             JsonObject modifier = one.getAsJsonObject();
-            String operation = string(modifier, "operation");
+            String operation = Json.text(modifier,"operation");
             if (up) {
                 if (modifier.has("name")) {
                     modifier.remove("id");
@@ -212,7 +215,7 @@ final class CrossLoot {
             }
             if (modifier.has("id") && !modifier.has("name")) {
                 String id = modifier.remove("id").getAsString();
-                modifier.addProperty("name", id.substring(id.indexOf(':') + 1));
+                modifier.addProperty("name", IdNames.path(id));
             }
             for (Map.Entry<String, String> named : OPERATIONS.entrySet()) {
                 if (named.getValue().equals(operation)) { modifier.addProperty("operation", named.getKey()); }
@@ -236,7 +239,7 @@ final class CrossLoot {
         }
         if (!up && "minecraft:random_chance_with_enchanted_bonus".equals(condition)) {
             JsonElement enchanted = held.get("enchanted_chance");
-            if (!LOOTING.equals(string(held, ENCHANTMENT)) || enchanted == null || !enchanted.isJsonObject() || !enchanted.getAsJsonObject().has("per_level_above_first")) {
+            if (!LOOTING.equals(Json.text(held,ENCHANTMENT)) || enchanted == null || !enchanted.isJsonObject() || !enchanted.getAsJsonObject().has("per_level_above_first")) {
                 pack.note("'" + file + "' uses random_chance_with_enchanted_bonus in a form 1.20.1 cannot express; it is kept as written, so replace it by hand");
                 return;
             }

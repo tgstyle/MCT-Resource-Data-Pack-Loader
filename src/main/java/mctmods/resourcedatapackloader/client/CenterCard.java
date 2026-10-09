@@ -22,10 +22,8 @@ public final class CenterCard {
     private static final int FADE_IN = 10;
     private static final int FADE_OUT = 20;
     private static final int PAD = 8;
-    private static final int LINE = 10;
     private static final int TITLE_SCALE = 2;
     private static final int ABOVE_MIDDLE = 24;
-    private static final int TEXT = 0xE8E8E8;
     private static final Deque<MessageCard> WAITING = new ArrayDeque<>();
     @Nullable private static MessageCard shown;
     @Nullable private static Identifier image;
@@ -55,9 +53,7 @@ public final class CenterCard {
         WAITING.clear();
     }
 
-    public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel().isClientSide()) { WAITING.clear(); }
-    }
+    public static void onLevelUnload(LevelEvent.Unload event) { if (event.getLevel().isClientSide()) { WAITING.clear(); } }
 
     @SuppressWarnings("unused") public static void onClientTick(ClientTickEvent.Post event) {
         if (shown == null) { return; }
@@ -72,25 +68,20 @@ public final class CenterCard {
         Minecraft mc = Minecraft.getInstance();
         if (card == null || ClientCompat.screen(mc) != null) { return; }
         Font font = mc.font;
-        int screenWidth = Crisp.fit(mc.getWindow().getGuiScaledWidth());
+        int screenWidth = Crisp.width();
         if (widest < 0) {
             widest = font.width(MarkText.text(face, card.title())) * TITLE_SCALE;
             for (String line : card.lines()) { widest = Math.max(widest, font.width(MarkText.text(face, line))); }
         }
-        int titleHeight = card.title().isEmpty() ? 0 : LINE * TITLE_SCALE + PAD / 2;
+        int titleHeight = card.title().isEmpty() ? 0 : CardOverlay.LINE * TITLE_SCALE + PAD / 2;
         int width = widest + PAD * 2;
-        int height = titleHeight + card.lines().size() * LINE + PAD * 2;
+        int height = titleHeight + card.lines().size() * CardOverlay.LINE + PAD * 2;
         int left = (screenWidth - width) / 2;
-        int top = Math.max(PAD, Crisp.fit(mc.getWindow().getGuiScaledHeight()) / 2 - ABOVE_MIDDLE - height);
+        int top = Math.max(PAD, Crisp.height() / 2 - ABOVE_MIDDLE - height);
         float alpha = alpha(delta.getGameTimeDeltaPartialTick(false));
         Crisp.raise(graphics);
-        if (card.panel()) {
-            graphics.fill(left - 1, top - 1, left + width + 1, top + height + 1, CardOverlay.withAlpha(CardOverlay.darker(card.background()), alpha));
-            graphics.fill(left, top, left + width, top + height, CardOverlay.withAlpha(card.background(), 0.85F * alpha));
-        }
-        if (image != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, image, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(alpha));
-        }
+        if (card.panel()) { CardOverlay.panel(graphics, left, top, width, height, card.background(), alpha); }
+        if (image != null) { graphics.blit(RenderPipelines.GUI_TEXTURED, image, left, top, 0.0F, 0.0F, width, height, width, height, ARGB.white(alpha)); }
         int y = top + PAD;
         if (!card.title().isEmpty()) {
             graphics.pose().pushMatrix();
@@ -101,8 +92,8 @@ public final class CenterCard {
             y += titleHeight;
         }
         for (String line : card.lines()) {
-            graphics.text(font, MarkText.text(face, line), (screenWidth - font.width(MarkText.text(face, line))) / 2, y, CardOverlay.withAlpha(TEXT, alpha), true);
-            y += LINE;
+            graphics.text(font, MarkText.text(face, line), (screenWidth - font.width(MarkText.text(face, line))) / 2, y, CardOverlay.withAlpha(CardOverlay.LINE_COLOR, alpha), true);
+            y += CardOverlay.LINE;
         }
         Crisp.lower(graphics);
     }

@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Rail;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import com.google.gson.JsonObject;
 import net.minecraft.world.level.block.Rotation;
@@ -36,7 +37,6 @@ final class CityLayout {
     static final Map<Long, Optional<Town>> MAP_TOWNS = new ConcurrentHashMap<>();
     static final Map<Long, List<BoundingBox>> MAP_WELLS = new ConcurrentHashMap<>();
     private static final int VILLAGE_START = 2;
-    private static final Rotation[] TURNS = {Rotation.NONE, Rotation.CLOCKWISE_90, Rotation.CLOCKWISE_180, Rotation.COUNTERCLOCKWISE_90};
 
     record Drawing(CityMapDef map, CityMapDef.Kind[][] grid, char[][] marks, int[][] groups, int originX, int originZ, boolean hinted, boolean[][] rows, boolean[][] columns) {
         Drawing(CityMapDef map, CityMapDef.Kind[][] grid, char[][] marks, int[][] groups, int originX, int originZ, boolean hinted) { this(map, grid, marks, groups, originX, originZ, hinted, new boolean[grid.length][grid[0].length], new boolean[grid.length][grid[0].length]); }
@@ -52,6 +52,8 @@ final class CityLayout {
             else { columns[at][fixed] = true; }
         }
     }
+
+    record Sketch(List<Line> rows, List<Line> columns, int runRows, int runColumns) {}
 
     private CityLayout() {}
 
@@ -97,11 +99,9 @@ final class CityLayout {
         int[][] groups = new int[deep][wide];
         List<Lift> lifts = lifts(grid, marks, map, originX, originZ, groups);
         Drawing drawing = new Drawing(map, grid, marks, groups, originX, originZ, map.bulbHinted());
-        List<Line> alongX = new ArrayList<>();
-        List<Line> alongZ = new ArrayList<>();
-        for (int z = 0; z < deep; z++) { runs(drawing, z, wide, deep, true, alongX); }
-        for (int x = 0; x < wide; x++) { runs(drawing, x, deep, wide, false, alongZ); }
-        junctions(drawing, alongX, alongZ);
+        Sketch sketch = sketch(drawing);
+        List<Line> alongX = sketch.rows();
+        List<Line> alongZ = sketch.columns();
         if (alongX.isEmpty() && alongZ.isEmpty()) { return null; }
         Town town = mapTown(ground, map, cityX, cityZ, centered);
         settle(ground, town, alongX, alongX.size(), alongZ, drawing.hinted());
@@ -127,7 +127,7 @@ final class CityLayout {
             found.addAll(growth.plots());
             CitySeams.madeWay(reaches, found);
         }
-        return new CityPlan(originX, originZ, map.cell(), List.copyOf(alongX), List.copyOf(alongZ), List.copyOf(found), List.copyOf(rails), windowX, windowZ, true, plazas, List.copyOf(lifts), type, town);
+        return new CityPlan(originX, originZ, List.copyOf(alongX), List.copyOf(alongZ), List.copyOf(found), List.copyOf(rails), windowX, windowZ, true, plazas, List.copyOf(lifts), type, town);
     }
 
     @Nullable static Town mapTown(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered) {
@@ -144,42 +144,28 @@ final class CityLayout {
         int originX = origin[0];
         int originZ = origin[1];
         Drawing drawing = new Drawing(map, grid, marks, new int[deep][wide], originX, originZ, map.bulbHinted());
-        List<Line> drawn = new ArrayList<>();
-        List<Line> columns = new ArrayList<>();
-        for (int z = 0; z < deep; z++) { runs(drawing, z, wide, deep, true, drawn); }
-        for (int x = 0; x < wide; x++) { runs(drawing, x, deep, wide, false, columns); }
-        junctions(drawing, drawn, columns);
+        Sketch sketch = sketch(drawing);
+        List<Line> drawn = sketch.rows();
+        List<Line> columns = sketch.columns();
         List<BoundingBox> wells = new ArrayList<>();
         int full = CityPlan.fullWidth();
-        for (int z = 0; z < deep; z++) {
-            for (int x = 0; x < wide; x++) {
-                if (grid[z][x] != CityMapDef.Kind.PLAZA) { continue; }
-                int midX = originX + x * cell + cell / 2;
-                int midZ = originZ + z * cell + cell / 2;
-                Line row = through(drawn, midZ, midX);
-                Line column = through(columns, midX, midZ);
-                int wellX = (column == null ? midX - full / 2 + (full - 1) / 2 : (column.at() + column.last()) / 2) - ContentCityWellPiece.SIZE / 2;
-                int wellZ = (row == null ? midZ - full / 2 + (full - 1) / 2 : (row.at() + row.last()) / 2) - ContentCityWellPiece.SIZE / 2;
-                wells.add(new BoundingBox(wellX, 0, wellZ, wellX + ContentCityWellPiece.SIZE - 1, 0, wellZ + ContentCityWellPiece.SIZE - 1));
-            }
+        for (int[] at : plazaCells(grid)) {
+            int midX = originX + at[0] * cell + cell / 2;
+            int midZ = originZ + at[1] * cell + cell / 2;
+            Line row = through(drawn, midZ, midX);
+            Line column = through(columns, midX, midZ);
+            int wellX = (column == null ? midX - full / 2 + CityRails.halfWidth(full) : column.middle()) -ContentCityWellPiece.SIZE / 2;
+            int wellZ = (row == null ? midZ - full / 2 + CityRails.halfWidth(full) : row.middle()) -ContentCityWellPiece.SIZE / 2;
+            wells.add(CityBoxes.well(wellX, 0, wellZ, 0));
         }
         if (MAP_WELLS.putIfAbsent(held, List.copyOf(wells)) == null) { ContentLog.LOGGER.info("The drawn city of district {}, {} lays its map turned {}, rolled from the seed and the village start at chunk {}, {}", cityX, cityZ, turn, startChunk(cityX, cityZ, 0), startChunk(cityX, cityZ, 1)); }
         drawn.addAll(columns);
         Town made = null;
         if (!drawn.isEmpty()) {
-            int wellX = originX + wide * cell / 2;
-            int wellZ = originZ + deep * cell / 2;
-            boolean plaza = false;
-            for (int z = 0; z < deep && !plaza; z++) {
-                for (int x = 0; x < wide; x++) {
-                    if (grid[z][x] != CityMapDef.Kind.PLAZA) { continue; }
-                    wellX = originX + x * cell + cell / 2;
-                    wellZ = originZ + z * cell + cell / 2;
-                    plaza = true;
-                    break;
-                }
-            }
-            made = new Town(held, CityPlan.key(ground.seed() ^ MAP_SALT, cityX, cityZ), MAP_SALT ^ CityPlanTowns.citySalt(cityX, cityZ), wellX, wellZ, originX, originX + wide * cell - 1, originZ, originZ + deep * cell - 1, List.copyOf(drawn), CityDistricts.crossAt(), CityDistricts.crossAt());
+            int[] anchor = anchor(grid);
+            int wellX = originX + anchor[0] * cell + cell / 2;
+            int wellZ = originZ + anchor[1] * cell + cell / 2;
+            made = new Town(held, SeededRandom.keyed(ground.seed() ^ MAP_SALT, cityX, cityZ), MAP_SALT ^ SeededRandom.salt(cityX, cityZ), wellX, wellZ, originX, originX + wide * cell - 1, originZ, originZ + deep * cell - 1, List.copyOf(drawn), CityDistricts.crossAt(), CityDistricts.crossAt());
         }
         MAP_TOWNS.putIfAbsent(held, Optional.ofNullable(made));
         return made;
@@ -187,7 +173,7 @@ final class CityLayout {
 
     static List<BoundingBox> mapWells(Town town) { return MAP_WELLS.getOrDefault(town.key(), List.of()); }
 
-    static Rotation turnOf(long seed, int cityX, int cityZ) { return TURNS[Math.floorMod(Hashes.mix(seed, startChunk(cityX, cityZ, 0) * 16 + VILLAGE_START, 7, startChunk(cityX, cityZ, 1) * 16 + VILLAGE_START), TURNS.length)]; }
+    static Rotation turnOf(long seed, int cityX, int cityZ) { return Turns.ALL[Math.floorMod(Hashes.mix(seed, startChunk(cityX, cityZ, 0) * 16 + VILLAGE_START, 7, startChunk(cityX, cityZ, 1) * 16 + VILLAGE_START), Turns.ALL.length)]; }
 
     private static int startChunk(int cityX, int cityZ, int axis) {
         int[] pin = CityDistricts.pinnedAt().get(CityPlan.packed(cityX, cityZ));
@@ -206,12 +192,18 @@ final class CityLayout {
     }
 
     private static int[] anchor(CityMapDef.Kind[][] grid) {
+        List<int[]> plazas = plazaCells(grid);
+        return plazas.isEmpty() ? new int[] {grid[0].length / 2, grid.length / 2} : plazas.getFirst();
+    }
+
+    private static List<int[]> plazaCells(CityMapDef.Kind[][] grid) {
+        List<int[]> found = new ArrayList<>();
         for (int z = 0; z < grid.length; z++) {
             for (int x = 0; x < grid[z].length; x++) {
-                if (grid[z][x] == CityMapDef.Kind.PLAZA) { return new int[] {x, z}; }
+                if (grid[z][x] == CityMapDef.Kind.PLAZA) { found.add(new int[] {x, z}); }
             }
         }
-        return new int[] {grid[0].length / 2, grid.length / 2};
+        return found;
     }
 
     static int pinSlack(CityMapDef map) { return CityDistricts.pinnedAt().isEmpty() ? 0 : (Math.max(map.blocksWide(), map.blocksDeep()) + CityPlan.district() - 1) / CityPlan.district() + 1; }
@@ -229,17 +221,16 @@ final class CityLayout {
     static List<Junction> mapPlazas(CityMapDef map, CityMapDef.Kind[][] grid, int originX, int originZ, List<Line> rows, List<Line> columns, int full) {
         List<Junction> found = new ArrayList<>();
         int cell = map.cell();
-        for (int z = 0; z < grid.length; z++) {
-            for (int x = 0; x < grid[z].length; x++) {
-                if (grid[z][x] != CityMapDef.Kind.PLAZA) { continue; }
-                int midX = originX + x * cell + cell / 2;
-                int midZ = originZ + z * cell + cell / 2;
-                Line row = through(rows, midZ, midX);
-                Line column = through(columns, midX, midZ);
-                if (row == null) { row = new Line(midZ - full / 2, full, false, true, originX + x * cell, originX + (x + 1) * cell - 1, End.MET, End.MET); }
-                if (column == null) { column = new Line(midX - full / 2, full, false, false, originZ + z * cell, originZ + (z + 1) * cell - 1, End.MET, End.MET); }
-                found.add(new Junction(row, column));
-            }
+        for (int[] at : plazaCells(grid)) {
+            int x = at[0];
+            int z = at[1];
+            int midX = originX + x * cell + cell / 2;
+            int midZ = originZ + z * cell + cell / 2;
+            Line row = through(rows, midZ, midX);
+            Line column = through(columns, midX, midZ);
+            if (row == null) { row = Line.met(midZ - full / 2, full, true, originX + x * cell, originX + (x + 1) * cell - 1); }
+            if (column == null) { column = Line.met(midX - full / 2, full, false, originZ + z * cell, originZ + (z + 1) * cell - 1); }
+            found.add(new Junction(row, column));
         }
         return List.copyOf(found);
     }
@@ -285,7 +276,7 @@ final class CityLayout {
         return found;
     }
 
-    static void runs(Drawing drawing, int fixed, int span, int other, boolean alongX, List<Line> found) {
+    private static void runs(Drawing drawing, int fixed, int span, int other, boolean alongX, List<Line> found) {
         int at = 0;
         while (at < span) {
             CityMapDef.Kind kind = drawing.kind(fixed, at, alongX);
@@ -328,7 +319,20 @@ final class CityLayout {
         return new Line(center - width / 2, width, alley, alongX, from, to, low, high, keys, List.copyOf(touched));
     }
 
-    static void junctions(Drawing drawing, List<Line> alongX, List<Line> alongZ) {
+    static Sketch sketch(Drawing drawing) {
+        int deep = drawing.grid().length;
+        int wide = drawing.grid()[0].length;
+        List<Line> rows = new ArrayList<>();
+        List<Line> columns = new ArrayList<>();
+        for (int z = 0; z < deep; z++) { runs(drawing, z, wide, deep, true, rows); }
+        for (int x = 0; x < wide; x++) { runs(drawing, x, deep, wide, false, columns); }
+        int runRows = rows.size();
+        int runColumns = columns.size();
+        junctions(drawing, rows, columns);
+        return new Sketch(rows, columns, runRows, runColumns);
+    }
+
+    private static void junctions(Drawing drawing, List<Line> alongX, List<Line> alongZ) {
         CityMapDef.Kind[][] grid = drawing.grid();
         for (int z = 0; z < grid.length; z++) {
             for (int x = 0; x < grid[z].length; x++) {
@@ -401,7 +405,7 @@ final class CityLayout {
             if (dir > 0 ? target <= end : target >= end) { continue; }
             int grown = end;
             for (int row = end + dir; dir > 0 ? row <= target : row >= target; row += dir) {
-                if (!openAt(drawing, line, row) || crossedAt(rows, columns, line, row) || landAt(ground, line, row)) { break; }
+                if (closedAt(drawing, line, row) || crossedAt(rows, columns, line, row) || landAt(ground, line, row)) { break; }
                 grown = row;
             }
             if (grown == end || Math.abs(grown - shore) < PIER_LEAST) { continue; }
@@ -414,17 +418,17 @@ final class CityLayout {
 
     private static boolean landAt(CityGround ground, Line line, int row) { return ground.floor(line.alongX() ? row : line.middle(), line.alongX() ? line.middle() : row) >= ground.sea() - 1; }
 
-    private static boolean openAt(Drawing drawing, Line line, int row) {
+    private static boolean closedAt(Drawing drawing, Line line, int row) {
         int cell = drawing.map().cell();
         CityMapDef.Kind[][] grid = drawing.grid();
         int span = line.alongX() ? grid[0].length : grid.length;
         int origin = line.alongX() ? drawing.originX() : drawing.originZ();
         boolean alongX = line.alongX();
-        if (row < CityPlan.windowOf(CityPlan.districtOf(origin, alongX), alongX) || row >= CityPlan.windowOf(CityPlan.districtOf(origin + span * cell - 1, alongX) + 1, alongX)) { return false; }
+        if (row < CityPlan.windowOf(CityPlan.districtOf(origin, alongX), alongX) || row >= CityPlan.windowOf(CityPlan.districtOf(origin + span * cell - 1, alongX) + 1, alongX)) { return true; }
         int index = Math.floorDiv(row - origin, cell);
-        if (index < 0 || index >= span) { return true; }
+        if (index < 0 || index >= span) { return false; }
         int fixed = Math.floorDiv(line.middle() - (line.alongX() ? drawing.originZ() : drawing.originX()), cell);
-        return fixed < 0 || fixed >= (line.alongX() ? grid.length : grid[0].length) || drawing.kind(fixed, index, line.alongX()) == CityMapDef.Kind.OPEN;
+        return fixed >= 0 && fixed < (line.alongX() ? grid.length : grid[0].length) && drawing.kind(fixed, index, line.alongX()) != CityMapDef.Kind.OPEN;
     }
 
     private static boolean crossedAt(List<Line> rows, List<Line> columns, Line line, int row) {

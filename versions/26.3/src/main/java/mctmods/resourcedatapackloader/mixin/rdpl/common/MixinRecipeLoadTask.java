@@ -28,9 +28,8 @@ import java.util.function.Supplier;
     @Shadow @Final private ResourceManager resourceManager;
     @Shadow @Final private List<Registry.PendingTags<?>> pendingTags;
 
-    @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-    private CompletableFuture<Map<Identifier, Resource>> rdpl$recipes(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
-        if (!Registries.RECIPE.equals(((IRegistryLoadTask) this).rdpl$registryKey())) { return original.call(supplier, executor); }
+    @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;")) private CompletableFuture<Map<Identifier, Resource>> rdpl$recipes(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
+        if (!Registries.RECIPE.equals(((IRegistryLoadTask) (Object) this).rdpl$getRegistryKey())) { return original.call(supplier, executor); }
         Supplier<Map<Identifier, Resource>> filtered = () -> {
             try { return RecipeFiles.filter(supplier.get(), resourceManager, context, pendingTags); }
             finally { RecipeAdvancements.publish(context, Set.of()); }

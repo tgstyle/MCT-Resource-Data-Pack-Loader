@@ -12,11 +12,13 @@ public final class Crisp {
 
     private static int lift() { return setting() == 1.0D ? LIFTED : 1; }
 
-    private static double gui() { return setting() * lift(); }
-
-    public static double factor() { return gui(); }
+    public static double gui() { return setting() * lift(); }
 
     public static int fit(int scaled) { return scaled / lift(); }
+
+    public static int width() { return fit(Minecraft.getInstance().getWindow().getGuiScaledWidth()); }
+
+    public static int height() { return fit(Minecraft.getInstance().getWindow().getGuiScaledHeight()); }
 
     public static double fit(double scaled) { return scaled / lift(); }
 

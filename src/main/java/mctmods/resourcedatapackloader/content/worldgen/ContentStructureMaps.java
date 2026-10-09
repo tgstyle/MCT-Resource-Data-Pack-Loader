@@ -9,10 +9,11 @@ import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,7 +28,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -35,7 +35,6 @@ import javax.annotation.Nullable;
 public final class ContentStructureMaps {
     public static final String MAP_STRUCTURE = "map";
     public static final String MAP_PIECE = "map_piece";
-    private static final Gson GSON = new Gson();
     private static final Map<Identifier, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new LinkedHashSet<>();
     private static final Set<String> OVERSIZE = new LinkedHashSet<>();
@@ -72,8 +71,8 @@ public final class ContentStructureMaps {
             structure.addProperty("step", "surface_structures");
             structure.add("spawn_overrides", new JsonObject());
             structure.addProperty("terrain_adaptation", "none");
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/structure/" + def.key().getPath() + ".json", structure.toString());
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/structure_set/" + def.key().getPath() + ".json", set(def).toString());
+            GeneratedResources.put(PackType.SERVER_DATA, namespace, WorldgenFiles.file(WorldgenFiles.STRUCTURE, def.key().getPath()), structure.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, namespace, WorldgenFiles.file(WorldgenFiles.STRUCTURE_SET, def.key().getPath()), set(def).toString());
             SETS.add(def.key().toString());
             generated++;
         }
@@ -106,27 +105,18 @@ public final class ContentStructureMaps {
 
     @Nullable public static StructureMapDef def(Identifier key) { return DEFS.get(key); }
 
-    public static void missing(StructureMapDef def, String named) {
-        if (MISSING.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key(), named); }
-    }
+    public static void missing(StructureMapDef def, String named) { ContentLog.LOGGER.errorOnce(MISSING, named, "Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key(), named); }
 
-    public static void oversize(StructureMapDef def, String named, int span) {
-        if (OVERSIZE.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which is {} block(s) across, where the game carries a map's pieces at most {} block(s) from the cell they start in, so the far side of it may be left out", def.key(), named, span, StructureMapDef.CELL_MOST); }
-    }
+    public static void oversize(StructureMapDef def, String named, int span) { ContentLog.LOGGER.errorOnce(OVERSIZE, named, "Structure map {} places structure '{}', which is {} block(s) across, where the game carries a map's pieces at most {} block(s) from the cell they start in, so the far side of it may be left out", def.key(), named, span, StructureMapDef.CELL_MOST); }
 
     public static boolean refuses(LevelAccessor level, Structure structure) {
         if (!(structure instanceof ContentMapStructure held) || !(level instanceof ServerLevel server)) { return false; }
         StructureMapDef def = DEFS.get(held.map());
-        if (def == null || def.dimensions().isEmpty()) { return false; }
-        String here = server.dimension().identifier().toString();
-        for (String named : def.dimensions()) {
-            if (ContentFormats.dimensionId(named).equals(here)) { return false; }
-        }
-        return true;
+        return def != null && !DimensionValues.listed(server.dimension().identifier().toString(), def.dimensions(), false);
     }
 
     @Nullable private static StructureMapDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
+        JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
         if (json == null || !json.has("layers")) {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
             return null;
@@ -140,6 +130,10 @@ public final class ContentStructureMaps {
         int wide = 1;
         int deep = 1;
         for (int at = 0; at < held.size(); at++) {
+            if (!held.get(at).isJsonObject()) {
+                ContentLog.LOGGER.error("Structure map {} layer {} is not an object, so the map is dropped", key, at);
+                return null;
+            }
             JsonObject entry = held.get(at).getAsJsonObject();
             Map<Character, List<PickDef>> palette = new LinkedHashMap<>();
             for (Map.Entry<String, JsonElement> mark : GsonHelper.getAsJsonObject(entry, "palette", new JsonObject()).entrySet()) {
@@ -194,7 +188,7 @@ public final class ContentStructureMaps {
     }
 
     static PickDef weighted(String written) {
-        String text = written.trim().toLowerCase(Locale.ROOT);
+        String text = Settings.lower(written);
         int at = text.lastIndexOf('=');
         if (at < 0) { return new PickDef(text, 1); }
         int weight;

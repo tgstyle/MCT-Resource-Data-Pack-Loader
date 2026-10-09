@@ -18,8 +18,7 @@ import java.util.stream.Stream;
 @Mixin(HeightRangePlacement.class) public abstract class MixinHeightRangePlacement {
     @Shadow @Final private HeightProvider height;
 
-    @Inject(method = "getPositions", at = @At("HEAD"), cancellable = true)
-    private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos origin, CallbackInfoReturnable<Stream<BlockPos>> cir) {
+    @Inject(method = "getPositions", at = @At("HEAD"), cancellable = true) private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos origin, CallbackInfoReturnable<Stream<BlockPos>> cir) {
         VanillaWindow window = VanillaWindow.of(context);
         if (window == null) { return; }
         int y = height.sample(random, window);

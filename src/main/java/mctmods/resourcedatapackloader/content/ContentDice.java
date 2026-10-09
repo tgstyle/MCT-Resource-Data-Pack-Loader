@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
@@ -113,23 +114,15 @@ public final class ContentDice {
 
     public static Result die(RandomSource random, int sides) {
         if (sides < 2 || sides > MOST_SIDES) { return Result.refused("badsides", "sides", sides); }
-        int rolled = 1 + random.nextInt(sides);
-        return new Result(rolled).say("die", "dice", new Spell(1, sides, 0), "sides", sides, "result", rolled);
+        return dice(random, "1d" + sides);
     }
 
     public static Result packDie(RandomSource random, String name) {
         Map<String, Integer> faces = DICE.get(name);
         if (faces == null) { return Result.refused("nodie", "name", name); }
-        int total = 0;
-        for (int weight : faces.values()) { total += weight; }
-        int landed = random.nextInt(total);
-        int at = 0;
-        for (Map.Entry<String, Integer> face : faces.entrySet()) {
-            at++;
-            landed -= face.getValue();
-            if (landed < 0) { return new Result(at).say("packdie", "die", name, "result", face.getKey()); }
-        }
-        return Result.refused("nodie", "name", name);
+        Map.Entry<String, Integer> face = WeightedPicks.pick(faces.entrySet(), Map.Entry::getValue, random);
+        if (face == null) { return Result.refused("nodie", "name", name); }
+        return new Result(new ArrayList<>(faces.keySet()).indexOf(face.getKey()) + 1).say("packdie", "die", name, "result", face.getKey());
     }
 
     @Nullable private static int[] parse(String roll) {
@@ -283,7 +276,7 @@ public final class ContentDice {
         return mates;
     }
 
-    public static boolean keeps(MinecraftServer server, String objective) { return Scores.objective(Scores.board(server), objective) != null; }
+    public static boolean lacks(MinecraftServer server, String objective) { return Scores.objective(Scores.board(server), objective) == null; }
 
     public static void announce(MinecraftServer server, CommandSourceStack source, String command, Result result, Audience audience, @Nullable String store) {
         String who = source.getTextName();
@@ -334,7 +327,7 @@ public final class ContentDice {
     private static String said(@Nullable ServerPlayer viewer, Line line, String who) { return words(viewer, line.key, line.pairs).replace("{player}", who); }
 
     public static String words(@Nullable ServerPlayer viewer, String key, Object... pairs) {
-        String text = SAYS.containsKey(key) ? SAYS.get(key) : viewer == null ? Lang.tr("rdpl.game." + key) : Lang.tr(viewer, "rdpl.game." + key);
+        String text = SAYS.containsKey(key) ? SAYS.get(key) : Lang.tr(viewer, "rdpl.game." + key);
         for (int at = 0; at + 1 < pairs.length; at += 2) {
             Object value = pairs[at + 1];
             text = text.replace("{" + pairs[at] + "}", value instanceof Term(String term) ? words(viewer, term) : value instanceof Spell spell ? spelled(viewer, spell) : String.valueOf(value));

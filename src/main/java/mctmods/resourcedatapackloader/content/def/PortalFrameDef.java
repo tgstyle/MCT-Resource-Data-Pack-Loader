@@ -16,7 +16,7 @@ public record PortalFrameDef(Identifier key, String name, String axis, Map<Chara
 
     public int leastTall() { return liesFlat() ? LEAST_WIDE : LEAST_TALL; }
 
-    public boolean standsUp() { return !HORIZONTAL.equals(axis); }
+    public boolean flatOnly() { return HORIZONTAL.equals(axis); }
 
     public boolean liesFlat() { return !VERTICAL.equals(axis); }
 }

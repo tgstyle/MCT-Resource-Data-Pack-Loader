@@ -21,18 +21,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     protected MixinNearestAttackableTargetGoal(Mob mob, boolean mustSee) { super(mob, mustSee); }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;IZZLnet/minecraft/world/entity/ai/targeting/TargetingConditions$Selector;)V", at = @At("RETURN"))
-    private void rdpl$unseen(CallbackInfo ci) {
-        if (!mustSee && ContentEntities.def(mob) != null) { targetConditions.ignoreLineOfSight(); }
-    }
+    @Inject(method = "<init>(Lnet/minecraft/world/entity/Mob;Ljava/lang/Class;IZZLnet/minecraft/world/entity/ai/targeting/TargetingConditions$Selector;)V", at = @At("RETURN")) private void rdpl$unseen(CallbackInfo ci) { if (!mustSee && ContentEntities.def(mob) != null) { targetConditions.ignoreLineOfSight(); } }
 
-    @Inject(method = "start()V", at = @At("TAIL"))
-    private void rdpl$forget(CallbackInfo ci) {
-        if (ContentThreat.plainNearestTarget(this)) { target = null; }
-    }
+    @Inject(method = "start()V", at = @At("TAIL")) private void rdpl$forget(CallbackInfo ci) { if (ContentThreat.plainNearestTarget(this)) { target = null; } }
 
-    @Inject(method = "findTarget()V", at = @At("TAIL"))
-    private void rdpl$docile(CallbackInfo ci) {
-        if (ContentThreat.docile(target, mob)) { target = null; }
-    }
+    @Inject(method = "findTarget()V", at = @At("TAIL")) private void rdpl$docile(CallbackInfo ci) { if (ContentThreat.docile(target, mob)) { target = null; } }
 }

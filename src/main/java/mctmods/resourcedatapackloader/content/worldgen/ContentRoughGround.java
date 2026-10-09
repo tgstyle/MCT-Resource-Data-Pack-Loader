@@ -15,12 +15,12 @@ public final class ContentRoughGround {
     private static final int TOLERANCE = 6;
     private static final int MANSION_OFFSET = 40;
     private static final int MANSION_REACH = 32;
-    private static final Identifier MANSION = Identifier.fromNamespaceAndPath("minecraft", "mansion");
+    private static final Identifier MANSION = Identifier.withDefaultNamespace("mansion");
     private static final Map<Identifier, Integer> TEMPLE_REACH = Map.of(
-            Identifier.fromNamespaceAndPath("minecraft", "desert_pyramid"), 10,
-            Identifier.fromNamespaceAndPath("minecraft", "jungle_pyramid"), 7,
-            Identifier.fromNamespaceAndPath("minecraft", "swamp_hut"), 4,
-            Identifier.fromNamespaceAndPath("minecraft", "igloo"), 4);
+            Identifier.withDefaultNamespace("desert_pyramid"), 10,
+            Identifier.withDefaultNamespace("jungle_pyramid"), 7,
+            Identifier.withDefaultNamespace("swamp_hut"), 4,
+            Identifier.withDefaultNamespace("igloo"), 4);
 
     private ContentRoughGround() {}
 

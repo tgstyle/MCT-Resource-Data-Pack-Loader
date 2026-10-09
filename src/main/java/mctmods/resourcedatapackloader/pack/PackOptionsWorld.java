@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.pack;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
 
 import com.google.gson.JsonArray;
@@ -14,7 +15,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
@@ -24,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -65,7 +64,7 @@ public final class PackOptionsWorld {
 
     @SuppressWarnings("resource") private static void backup(MinecraftServer server) {
         try {
-            long size = ((IMinecraftServer) server).rdpl$storageSource().makeWorldBackup();
+            long size = ((IMinecraftServer) server).rdpl$getStorageSource().makeWorldBackup();
             backedUp = true;
             ContentLog.LOGGER.info("The world was backed up to the game's backups folder before the changed pack options touch it, {} KB", size / 1024);
         }
@@ -99,10 +98,7 @@ public final class PackOptionsWorld {
     }
 
     private static Set<String> packNamespaces() {
-        Set<String> out = new HashSet<>();
-        for (RDPLPack pack : PackManager.get().getPacks()) {
-            for (PackType type : PackType.values()) { out.addAll(pack.getNamespaces(type)); }
-        }
+        Set<String> out = PackManager.get().namespaces();
         out.add(ResourceDataPackLoader.MOD_ID);
         out.remove(Identifier.DEFAULT_NAMESPACE);
         return out;
@@ -143,7 +139,7 @@ public final class PackOptionsWorld {
                 if (!ids.isEmpty()) { content.add(registry.getKey().toString(), ids); }
             }
             out.add(CONTENT, content);
-            Files.writeString(file, ModPacks.GSON.toJson(out), StandardCharsets.UTF_8);
+            Files.writeString(file, Json.PRETTY.toJson(out), StandardCharsets.UTF_8);
         }
         catch (IOException failed) { ContentLog.LOGGER.error("The world's record of its pack options at {} could not be written: {}", file, failed.toString()); }
     }

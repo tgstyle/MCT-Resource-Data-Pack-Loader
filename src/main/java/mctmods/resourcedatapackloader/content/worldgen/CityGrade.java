@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.Mth;
 import java.util.Arrays;
+import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
 public final class CityGrade {
@@ -49,25 +50,10 @@ public final class CityGrade {
         }
     }
 
-    public static void smooth(int[] profile, boolean[] held) {
-        for (int i = 1; i < profile.length; i++) {
-            if (held[i]) { continue; }
-            if (profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; }
-            else if (profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; }
-        }
-        for (int i = profile.length - 2; i >= 0; i--) {
-            if (held[i]) { continue; }
-            if (profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; }
-            else if (profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; }
-        }
-    }
-
     public static void smoothRoad(int[] profile) {
         int rows = profile.length;
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; } }
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; } }
+        rein(profile, _ -> true, i -> joined(profile, i), 1);
+        rein(profile, _ -> true, i -> joined(profile, i), -1);
         for (int i = 1; i < rows - 1; i++) {
             if (!joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
             if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
@@ -143,8 +129,7 @@ public final class CityGrade {
                 at++;
                 continue;
             }
-            int end = at;
-            while (end + 1 < rows && under[end + 1]) { end++; }
+            int end = CityRuns.end(under, at);
             boolean spanned = at > 0 && end < rows - 1 && end - at < SPAN_MOST;
             for (int row = at; row <= end; row++) { open[row] = !spanned && !valued[row]; }
             at = end + 1;
@@ -167,8 +152,8 @@ public final class CityGrade {
             evenOut(profile, held, i, end, -1);
             i = end + 1;
         }
-        rein(profile, held, open, 1);
-        rein(profile, held, open, -1);
+        rein(profile, row -> !held[row], row -> linked(open, row), 1);
+        rein(profile, row -> !held[row], row -> linked(open, row), -1);
         flattenBumps(profile, held, open);
     }
 
@@ -200,14 +185,12 @@ public final class CityGrade {
         }
     }
 
-    private static void rein(int[] profile, boolean[] held, boolean[] open, int sign) {
-        for (int i = 1; i < profile.length; i++) { if (!held[i] && linked(open, i) && sign * (profile[i] - profile[i - 1]) > 1) { profile[i] = profile[i - 1] + sign; } }
-        for (int i = profile.length - 2; i >= 0; i--) { if (!held[i] && linked(open, i + 1) && sign * (profile[i] - profile[i + 1]) > 1) { profile[i] = profile[i + 1] + sign; } }
+    private static void rein(int[] profile, IntPredicate moves, IntPredicate linked, int sign) {
+        for (int i = 1; i < profile.length; i++) { if (moves.test(i) && linked.test(i) && sign * (profile[i] - profile[i - 1]) > 1) { profile[i] = profile[i - 1] + sign; } }
+        for (int i = profile.length - 2; i >= 0; i--) { if (moves.test(i) && linked.test(i + 1) && sign * (profile[i] - profile[i + 1]) > 1) { profile[i] = profile[i + 1] + sign; } }
     }
 
-    private static void flattenBumps(int[] profile, boolean[] held, boolean[] open) {
-        for (int i = 1; i < profile.length - 1; i++) { if (!held[i] && linked(open, i) && !open[i + 1] && profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; } }
-    }
+    private static void flattenBumps(int[] profile, boolean[] held, boolean[] open) { for (int i = 1; i < profile.length - 1; i++) { if (!held[i] && linked(open, i) && !open[i + 1] && profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; } } }
 
     private static boolean linked(boolean[] open, int i) { return !open[i] && !open[i - 1]; }
 
@@ -227,8 +210,7 @@ public final class CityGrade {
                 at++;
                 continue;
             }
-            int end = at;
-            while (end + 1 < rows && bridged[end + 1]) { end++; }
+            int end = CityRuns.end(bridged, at);
             int mine = 0;
             for (int row = at; row <= end; row++) { mine += own[row] ? 1 : 0; }
             if (mine > 0 && end - at + 1 < DECK_LEAST) {
@@ -299,8 +281,8 @@ public final class CityGrade {
 
     public static void rampSteps(int[] profile, boolean[] held, boolean[] keep) {
         for (int round = 0; round < 4 && stepsOverOne(profile); round++) {
-            if (!letGo(profile, held, keep)) { return; }
-            smooth(profile, held);
+            if (freedNone(profile, held, keep)) { return; }
+            CityGradeRails.rein(profile, held);
         }
     }
 
@@ -311,9 +293,9 @@ public final class CityGrade {
         return false;
     }
 
-    private static boolean letGo(int[] profile, boolean[] held, boolean[] keep) {
+    private static boolean freedNone(int[] profile, boolean[] held, boolean[] keep) {
         int rows = profile.length;
-        boolean freed = false;
+        boolean none = true;
         for (int i = 1; i < rows; i++) {
             if (Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
             int lo = i;
@@ -334,11 +316,11 @@ public final class CityGrade {
             for (int k = lo; k <= hi; k++) {
                 profile[k] = a + step * Math.min(k - lo + 1, Math.abs(b - a));
                 held[k] = false;
-                freed = true;
+                none = false;
             }
             i = hi + 1;
         }
-        return freed;
+        return none;
     }
 
     public static boolean[] bore(int[] profile, int[] ground, boolean[] held, boolean[] bridged, int depth, boolean openLow, boolean openHigh) {
@@ -494,7 +476,7 @@ public final class CityGrade {
             int[] before = profile.clone();
             for (int deck = most; deck >= least; deck--) {
                 CityGradeDecks.layDeck(profile, before, keep, i, end, deck, run);
-                if (!CityGradeDecks.stepped(profile, before, run)) { break; }
+                if (CityGradeDecks.cleanSteps(profile, before, run)) { break; }
                 System.arraycopy(before, 0, profile, 0, rows);
             }
             i = end + 1;
@@ -510,8 +492,7 @@ public final class CityGrade {
                 i++;
                 continue;
             }
-            int end = i;
-            while (end + 1 < rows && bridged[end + 1]) { end++; }
+            int end = CityRuns.end(bridged, i);
             int first = i;
             for (; first <= end && landed[first]; first++) {
                 bridged[first] = false;
@@ -552,8 +533,7 @@ public final class CityGrade {
                 from++;
                 continue;
             }
-            int to = from;
-            while (to + 1 < tunnels.length && tunnels[to + 1]) { to++; }
+            int to = CityRuns.end(tunnels, from);
             if (to - from + 1 < TUNNEL_LEAST) { Arrays.fill(tunnels, from, to + 1, false); }
             from = to + 1;
         }
@@ -564,8 +544,7 @@ public final class CityGrade {
         boolean[] frames = new boolean[rows];
         for (int i = 0; i < rows; i++) {
             if (!decking[i]) { continue; }
-            int end = i;
-            while (end + 1 < rows && decking[end + 1]) { end++; }
+            int end = CityRuns.end(decking, i);
             int span = end - i + 1;
             if (span >= least) {
                 int count = Math.max(1, span / run);

@@ -11,8 +11,8 @@ import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.WindDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -22,13 +22,11 @@ import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentDimensionParser {
-    private static final Gson GSON = new Gson();
     private static final int CLOUD_HEIGHT = 128;
     private static final int CYCLE_LOW = 1000;
     private static final int THUNDER_LOW = 3600;
@@ -60,22 +58,19 @@ public final class ContentDimensionParser {
     private ContentDimensionParser() {}
 
     @Nullable public static DimensionDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Dimension {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "dimension");
+        if (json == null) { return null; }
         JsonObject terrain = GsonHelper.getAsJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = GsonHelper.getAsJsonObject(json, "biomes", new JsonObject());
         JsonObject sky = GsonHelper.getAsJsonObject(json, "sky", new JsonObject());
         if (json.has("id")) { ContentLog.LOGGER.debug("Dimension {} names an id, which this line does not use, the dimension being {} everywhere", key, key); }
         if (json.has("keepLoaded")) { ContentLog.LOGGER.debug("Dimension {} asks to be kept loaded, which this line leaves to forceload", key); }
-        String type = GsonHelper.getAsString(terrain, "type", DimensionDef.OVERWORLD).trim().toLowerCase(Locale.ROOT);
+        String type = Settings.lower(GsonHelper.getAsString(terrain, "type", DimensionDef.OVERWORLD));
         if (!KNOWN_TERRAIN.contains(type)) {
             ContentLog.LOGGER.error("Dimension {} asks for terrain '{}', which is not one of {}, using {}", key, type, KNOWN_TERRAIN, DimensionDef.OVERWORLD);
             type = DimensionDef.OVERWORLD;
         }
-        String source = GsonHelper.getAsString(biomes, "source", DimensionDef.INHERIT).trim().toLowerCase(Locale.ROOT);
+        String source = Settings.lower(GsonHelper.getAsString(biomes, "source", DimensionDef.INHERIT));
         if (!DimensionDef.SINGLE.equals(source) && !DimensionDef.INHERIT.equals(source)) {
             ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.INHERIT);
             source = DimensionDef.INHERIT;
@@ -138,23 +133,23 @@ public final class ContentDimensionParser {
 
     private static AmbienceDef ambience(Identifier key, JsonObject json) {
         int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
-        return new AmbienceDef(id(key, json, "music"), delay[0], delay[1], id(key, json, "loopSound"), id(key, json, "ambientSound"), chance(key, json, "soundChance", SOUND_CHANCE),
-                id(key, json, "particle"), chance(key, json, "particleChance", PARTICLE_CHANCE),
+        return new AmbienceDef(id(key, json, "music"), delay[0], delay[1], id(key, json, "loopSound"), id(key, json, "ambientSound"), ranged(key, json, AMBIENCE, "soundChance", SOUND_CHANCE, 1.0F),
+                id(key, json, "particle"), ranged(key, json, AMBIENCE, "particleChance", PARTICLE_CHANCE, 1.0F),
                 json.has("particleColor") ? ContentParser.color(GsonHelper.getAsString(json, "particleColor"), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
     }
 
     @Nullable private static Identifier id(Identifier key, JsonObject json, String member) {
         String name = GsonHelper.getAsString(json, member, "").trim();
         if (name.isEmpty()) { return null; }
-        Identifier id = Identifier.tryParse(name);
+        Identifier id = Identifier.tryParse(Settings.lower(name));
         if (id == null) { ContentLog.LOGGER.error("Dimension {} gives an ambience {} of '{}', which is no id, ignoring it", key, member, name); }
         return id;
     }
 
-    private static float chance(Identifier key, JsonObject json, String member, float fallback) {
-        float chance = GsonHelper.getAsFloat(json, member, fallback);
-        if (chance >= 0.0F && chance <= 1.0F) { return chance; }
-        ContentLog.LOGGER.error("Dimension {} gives an ambience {} of {}, which is not from 0 to 1, using {}", key, member, chance, fallback);
+    private static float ranged(Identifier key, JsonObject json, String block, String member, float fallback, float most) {
+        float value = GsonHelper.getAsFloat(json, member, fallback);
+        if (value >= 0.0F && value <= most) { return value; }
+        ContentLog.LOGGER.error("Dimension {} gives {} {} of {}, which is not from 0 to {}, using {}", key, block, member, value, most, fallback);
         return fallback;
     }
 
@@ -171,13 +166,22 @@ public final class ContentDimensionParser {
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
-                found.add(new DimensionTraitsDef.Body(Identifier.parse(GsonHelper.getAsString(body, "texture").trim()), Math.max(0.0F, GsonHelper.getAsFloat(body, "size", 20.0F)),
+                Identifier texture = texture(key, GsonHelper.getAsString(body, "texture"));
+                if (texture == null) { continue; }
+                found.add(new DimensionTraitsDef.Body(texture, Math.max(0.0F, GsonHelper.getAsFloat(body, "size", 20.0F)),
                         GsonHelper.getAsFloat(body, "angle", 180.0F), GsonHelper.getAsFloat(body, "tilt", 0.0F), GsonHelper.getAsBoolean(body, "followsTime", true)));
             }
             bodies = List.copyOf(found);
         }
-        return new DimensionTraitsDef.Sky(Identifier.parse(GsonHelper.getAsString(sun, "texture", SUN).trim()), Math.max(0.0F, GsonHelper.getAsFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
+        Identifier sunTexture = texture(key, GsonHelper.getAsString(sun, "texture", SUN));
+        return new DimensionTraitsDef.Sky(sunTexture == null ? Identifier.parse(SUN) : sunTexture, Math.max(0.0F, GsonHelper.getAsFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
                 Math.max(0, GsonHelper.getAsInt(stars, "count", STARS)), Math.max(0.0F, GsonHelper.getAsFloat(stars, "size", STAR_SIZE)));
+    }
+
+    @Nullable private static Identifier texture(Identifier key, String named) {
+        Identifier texture = Identifier.tryParse(Settings.lower(named));
+        if (texture == null) { ContentLog.LOGGER.error("Dimension {} names a sky texture '{}' that is no id, ignoring it", key, named); }
+        return texture;
     }
 
     private static double factor(Identifier key, JsonObject physics, String member) {
@@ -205,12 +209,12 @@ public final class ContentDimensionParser {
     }
 
     private static RainDef rain(Identifier key, JsonObject json, @Nullable WindDef wind) {
-        Identifier particle = Identifier.tryParse(GsonHelper.getAsString(json, "particle", RAIN_PARTICLE).trim().toLowerCase(Locale.ROOT));
+        Identifier particle = Identifier.tryParse(Settings.lower(GsonHelper.getAsString(json, "particle", RAIN_PARTICLE)));
         if (particle == null) {
             ContentLog.LOGGER.error("Dimension {} names a rain particle that is no particle id, using {}", key, RAIN_PARTICLE);
             particle = Identifier.parse(RAIN_PARTICLE);
         }
-        Identifier sound = Identifier.tryParse(GsonHelper.getAsString(json, "sound", RAIN_SOUND).trim());
+        Identifier sound = Identifier.tryParse(Settings.lower(GsonHelper.getAsString(json, "sound", RAIN_SOUND)));
         if (sound == null) {
             ContentLog.LOGGER.error("Dimension {} names a rain sound that is no sound id, using {}", key, RAIN_SOUND);
             sound = Identifier.parse(RAIN_SOUND);
@@ -227,14 +231,7 @@ public final class ContentDimensionParser {
 
     private static WindDef wind(Identifier key, JsonObject json) {
         int[] every = span(key, json, WIND, "every", EVERY_LOW, EVERY_HIGH);
-        return new WindDef(degrees(key, json, "gust", GUST, MAX_GUST), every[0], every[1], degrees(key, json, "swing", SWING, MAX_ANGLE));
-    }
-
-    private static float degrees(Identifier key, JsonObject json, String member, float fallback, float most) {
-        float value = GsonHelper.getAsFloat(json, member, fallback);
-        if (value >= 0.0F && value <= most) { return value; }
-        ContentLog.LOGGER.error("Dimension {} gives a wind {} of {}, which is not from 0 to {}, using {}", key, member, value, most, fallback);
-        return fallback;
+        return new WindDef(ranged(key, json, WIND, "gust", GUST, MAX_GUST), every[0], every[1], ranged(key, json, WIND, "swing", SWING, MAX_ANGLE));
     }
 
     private static int[] span(Identifier key, JsonObject json, String block, String member, int low, int high) {
@@ -269,8 +266,8 @@ public final class ContentDimensionParser {
             ContentLog.LOGGER.error("Dimension {} has a portal section naming no frames, so nothing could ever open it", key);
             return null;
         }
-        int color = ContentParser.color(GsonHelper.getAsString(entry, "color", "#FFFFFF"), key + " portal color");
-        String back = GsonHelper.getAsString(entry, "return", DimensionPortalDef.BUILT).trim().toLowerCase(Locale.ROOT);
+        int color = ContentParser.color(GsonHelper.getAsString(entry, "color", WHITE), key + " portal color");
+        String back = Settings.lower(GsonHelper.getAsString(entry, "return", DimensionPortalDef.BUILT));
         if (!DimensionPortalDef.BUILT.equals(back) && !DimensionPortalDef.PLAYER.equals(back) && !DimensionPortalDef.NONE.equals(back)) {
             ContentLog.LOGGER.error("Dimension {} asks for a return of '{}', which is none of {}, {} or {}, building one instead", key, back, DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE);
             back = DimensionPortalDef.BUILT;
@@ -292,23 +289,27 @@ public final class ContentDimensionParser {
         if (options == null) { return new JsonObject(); }
         if (options.isJsonObject()) { return options.getAsJsonObject(); }
         if (!options.isJsonPrimitive() || !options.getAsString().trim().startsWith("{")) { return new JsonObject(); }
-        try { return GSON.fromJson(options.getAsString(), JsonObject.class); }
+        try { return Json.GSON.fromJson(options.getAsString(), JsonObject.class); }
         catch (JsonParseException unreadable) {
             ContentLog.LOGGER.error("Dimension {} has generatorOptions '{}', which is not readable JSON, so the terrain keeps its own settings", key, options.getAsString());
             return new JsonObject();
         }
     }
 
-    public static Map<String, String> gameRules(Identifier key, JsonObject json) {
-        Map<String, String> found = new LinkedHashMap<>();
+    private static Map<String, String> gameRules(Identifier key, JsonObject json) {
         if (!json.has("gameRules")) { return Map.of(); }
-        for (Map.Entry<String, JsonElement> rule : GsonHelper.getAsJsonObject(json, "gameRules").entrySet()) {
+        Map<String, String> found = new LinkedHashMap<>();
+        rules(key, GsonHelper.getAsJsonObject(json, "gameRules"), found);
+        return Map.copyOf(found);
+    }
+
+    static void rules(Identifier key, JsonObject set, Map<String, String> into) {
+        for (Map.Entry<String, JsonElement> rule : set.entrySet()) {
             if (!rule.getValue().isJsonPrimitive()) {
                 ContentLog.LOGGER.error("Dimension {} sets game rule '{}' to something that is not a value, ignoring it", key, rule.getKey());
                 continue;
             }
-            found.put(rule.getKey(), rule.getValue().getAsString());
+            into.put(rule.getKey(), rule.getValue().getAsString());
         }
-        return Map.copyOf(found);
     }
 }

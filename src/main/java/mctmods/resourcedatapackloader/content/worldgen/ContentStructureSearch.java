@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.command.CommandShared;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -11,8 +13,8 @@ import net.minecraft.core.HolderSet;
 import net.minecraft.core.Registry;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.StructureTags;
@@ -47,7 +49,6 @@ import javax.annotation.Nullable;
 public final class ContentStructureSearch {
     private static final int SEARCH_CHUNKS = 128;
     private static final int HERE_CHUNKS = 8;
-    private static final int OPERATOR = 3;
     private static final long BEEN_NEAR = 128L * 128L;
     private static final int LANDING_REACH = 6;
     private static final int HEAD_ROOM = 2;
@@ -85,35 +86,34 @@ public final class ContentStructureSearch {
 
     public static List<String> aliases() { return List.copyOf(ALIASES.keySet()); }
 
-    private static int level(String key, int fallback) { return Mth.clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback), 0, OPERATOR + 1); }
+    private static int level(String key, int fallback) { return Mth.clamp(ContentControl.number(ContentControl.COMMANDS, key, fallback), 0, CommandShared.OPERATOR + 1); }
 
     public static int levelFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels(), place, level(key, fallback)); }
 
     public static int listedLevel(String key, List<String> global, String name, int fallback) {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, key, global)) {
-            int split = entry.lastIndexOf('=');
-            if (split <= 0) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("{} entry '{}' is not written as name=level, so it is left out", key, entry); }
+            String[] sides = Settings.split(entry);
+            if (sides == null || sides[0].isEmpty()) {
+                ContentLog.LOGGER.errorOnce(WARNED, entry, "{} entry '{}' is not written as name=level, so it is left out", key, entry);
                 continue;
             }
-            if (!entry.substring(0, split).trim().equalsIgnoreCase(name)) { continue; }
-            try { return Mth.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1); }
-            catch (NumberFormatException ignored) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("{} entry '{}' has no number after the =, so it is left out", key, entry); }
-            }
+            if (!sides[0].equalsIgnoreCase(name)) { continue; }
+            Integer asked = Settings.clamped(sides[1], 0, CommandShared.OPERATOR + 1);
+            if (asked != null) { return asked; }
+            ContentLog.LOGGER.errorOnce(WARNED, entry, "{} entry '{}' has no number after the =, so it is left out", key, entry);
         }
         return fallback;
     }
 
     public static int lowestLevel() {
-        int lowest = Math.min(OPERATOR, level("gotoLevel", Config.commands.gotoLevel()));
+        int lowest = Math.min(CommandShared.OPERATOR, level("gotoLevel", Config.commands.gotoLevel()));
         lowest = Math.min(lowest, level("gotoNextLevel", Config.commands.gotoNextLevel()));
         lowest = Math.min(lowest, level("gotoBackLevel", Config.commands.gotoBackLevel()));
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels())) {
-            int split = entry.lastIndexOf('=');
-            if (split <= 0) { continue; }
-            try { lowest = Math.min(lowest, Mth.clamp(Integer.parseInt(entry.substring(split + 1).trim()), 0, OPERATOR + 1)); }
-            catch (NumberFormatException ignored) { }
+            String[] sides = Settings.split(entry);
+            if (sides == null || sides[0].isEmpty()) { continue; }
+            Integer asked = Settings.clamped(sides[1], 0, CommandShared.OPERATOR + 1);
+            if (asked != null) { lowest = Math.min(lowest, asked); }
         }
         return lowest;
     }
@@ -192,9 +192,7 @@ public final class ContentStructureSearch {
         return best;
     }
 
-    private static boolean here(BlockPos site, int middleX, int middleZ) {
-        return Math.abs(SectionPos.blockToSectionCoord(site.getX()) - middleX) <= HERE_CHUNKS && Math.abs(SectionPos.blockToSectionCoord(site.getZ()) - middleZ) <= HERE_CHUNKS;
-    }
+    private static boolean here(BlockPos site, int middleX, int middleZ) { return Math.abs(SectionPos.blockToSectionCoord(site.getX()) - middleX) <= HERE_CHUNKS && Math.abs(SectionPos.blockToSectionCoord(site.getZ()) - middleZ) <= HERE_CHUNKS; }
 
     @Nullable private static BlockPos nearer(BlockPos from, @Nullable BlockPos best, @Nullable BlockPos site) {
         if (site == null) { return best; }
@@ -286,9 +284,7 @@ public final class ContentStructureSearch {
         return null;
     }
 
-    private static boolean open(ServerLevel level, BlockPos at) {
-        return level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getFluidState(at).isEmpty();
-    }
+    private static boolean open(ServerLevel level, BlockPos at) { return level.getBlockState(at).getCollisionShape(level, at).isEmpty() && level.getFluidState(at).isEmpty(); }
 
     @Nullable private static BlockPos footing(ServerLevel level, int x, int z) {
         BlockPos.MutableBlockPos ground = new BlockPos.MutableBlockPos();

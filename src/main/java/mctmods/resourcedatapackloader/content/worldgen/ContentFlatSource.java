@@ -149,7 +149,7 @@ public final class ContentFlatSource extends LineCompat.FlatBase {
                     BlockPos below = cell.below();
                     BlockState state = level.getBlockState(cell);
                     boolean hollowed = state.is(Blocks.CAVE_AIR) || (y == 4 && state.is(Blocks.ICE));
-                    if (hollowed && level.getBlockState(below).is(Blocks.DIRT) && skyLit(level, cell.above())) { level.setBlock(below, level.getBiome(below).is(Biomes.MUSHROOM_FIELDS) ? Blocks.MYCELIUM.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState(), 2); }
+                    if (hollowed && level.getBlockState(below).is(Blocks.DIRT) && skyLit(level, cell.above())) { level.setBlock(below, level.getBiome(below).is(Biomes.MUSHROOM_FIELDS) ? Blocks.MYCELIUM.defaultBlockState() : Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS); }
                 }
             }
         }

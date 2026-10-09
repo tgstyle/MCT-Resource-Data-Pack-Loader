@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,13 +23,11 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentPopulateControl {
-    private static final String ANIMALS = "animals";
     private static final Map<String, List<String>> FEATURES = Map.of(
             "dungeons", List.of("monster_room", "monster_room_deep"), "waterlakes", List.of(), "lavalakes", List.of("lake_lava_underground", "lake_lava_surface"),
             "netherlava", List.of("spring_open", "spring_delta"), "fire", List.of("patch_fire", "patch_soul_fire"), "glowstone", List.of("glowstone", "glowstone_extra"),
@@ -56,14 +55,14 @@ public final class ContentPopulateControl {
     static List<String> names() {
         List<String> out = new ArrayList<>(FEATURES.keySet());
         out.addAll(CARVERS.keySet());
-        out.add(ANIMALS);
+        out.add(ContentSpawning.ANIMALS);
         Collections.sort(out);
         return out;
     }
 
     public static boolean populates(String key) {
-        String wanted = key.trim().toLowerCase(Locale.ROOT);
-        return FEATURES.containsKey(wanted) || CARVERS.containsKey(wanted) || ANIMALS.equals(wanted);
+        String wanted = Settings.lower(key);
+        return FEATURES.containsKey(wanted) || CARVERS.containsKey(wanted) || ContentSpawning.ANIMALS.equals(wanted);
     }
 
     public static void load(@Nullable WorldTemplateDef template, List<String> structuresOff, List<String> touched) {
@@ -74,11 +73,11 @@ public final class ContentPopulateControl {
         Set<String> carvers = new LinkedHashSet<>();
         boolean animals = false;
         for (Map.Entry<String, Boolean> entry : template.structures().entrySet()) {
-            String key = entry.getKey().trim().toLowerCase(Locale.ROOT);
+            String key = Settings.lower(entry.getKey());
             if (entry.getValue() || !populates(key)) { continue; }
             features.addAll(FEATURES.getOrDefault(key, List.of()));
             carvers.addAll(CARVERS.getOrDefault(key, List.of()));
-            animals |= ANIMALS.equals(key);
+            animals |= ContentSpawning.ANIMALS.equals(key);
             touched.add(key + " off");
         }
         for (String key : structuresOff) { touched.add(key + " off"); }
@@ -122,10 +121,10 @@ public final class ContentPopulateControl {
         }
         Set<PlacedFeature> features = Collections.newSetFromMap(new IdentityHashMap<>());
         Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);
-        for (String path : featureNames) { placed.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(features::add); }
+        for (String path : featureNames) { placed.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(features::add); }
         Set<Object> carvers = Collections.newSetFromMap(new IdentityHashMap<>());
         Registry<?> configured = LineCompat.carvers(level.registryAccess());
-        for (String path : carverNames) { configured.getOptional(Identifier.fromNamespaceAndPath("minecraft", path)).ifPresent(carvers::add); }
+        for (String path : carverNames) { configured.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(carvers::add); }
         Set<Structure> structures = Collections.newSetFromMap(new IdentityHashMap<>());
         Registry<Structure> registry = level.registryAccess().lookupOrThrow(Registries.STRUCTURE);
         for (String key : structureNames) {

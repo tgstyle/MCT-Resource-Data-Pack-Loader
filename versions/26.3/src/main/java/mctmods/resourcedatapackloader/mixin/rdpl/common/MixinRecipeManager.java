@@ -38,16 +38,14 @@ import java.util.List;
 import java.util.Set;
 
 @Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter, IRecipeRegistries {
-    @Unique private static final int RDPL_COOKING_TIME = 200;
+    @Unique private static final int rdpl$COOKING_TIME = 200;
     @Shadow @Final @Mutable private RecipeMap recipes;
     @Shadow @Final @Mutable private Collection<RecipeHolder<?>> learnableRecipes;
     @Unique private RegistryAccess rdpl$registries;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void rdpl$afterRecipes(HolderLookup.Provider registries, CallbackInfo ci) { RecipeLoading.attach(this); }
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$afterRecipes(HolderLookup.Provider registries, CallbackInfo ci) { RecipeLoading.attach(this); }
 
-    @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD"))
-    private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
+    @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD")) private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
 
     @Override public void rdpl$registries(RegistryAccess registries) { rdpl$registries = registries; }
 
@@ -67,7 +65,7 @@ import java.util.Set;
         if (late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
                 if (!named.add(addition.id())) { continue; }
-                SmeltingRecipe smelting = new SmeltingRecipe(new Recipe.CommonInfo(true), new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""), Ingredient.of(addition.input()), addition.output(), addition.output().count() *Math.min(addition.experience(), 1.0F), RDPL_COOKING_TIME);
+                SmeltingRecipe smelting = new SmeltingRecipe(new Recipe.CommonInfo(true), new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""), Ingredient.of(addition.input()), addition.output(), addition.output().count() * Math.min(addition.experience(), 1.0F), rdpl$COOKING_TIME);
                 kept.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, addition.id()), smelting));
             }
         }

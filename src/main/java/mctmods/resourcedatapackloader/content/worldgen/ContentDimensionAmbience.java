@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
@@ -42,14 +43,12 @@ public final class ContentDimensionAmbience {
         if (ambience == null) { return; }
         Layers layers = LAYERS.computeIfAbsent(ambience, held -> new Layers(def.key(), held));
         builder.addConstantLayer(layers.fixed);
-        if (layers.loop != null || !layers.additions.isEmpty()) {
-            builder.addConstantLayer(EnvironmentAttributes.AMBIENT_SOUNDS, base -> new AmbientSounds(layers.loop == null ? base.loop() : Optional.of(layers.loop), base.mood(), layers.additions.isEmpty() ? base.additions() : layers.additions));
-        }
+        if (layers.loop != null || !layers.additions.isEmpty()) { builder.addConstantLayer(EnvironmentAttributes.AMBIENT_SOUNDS, base -> new AmbientSounds(layers.loop == null ? base.loop() : Optional.of(layers.loop), base.mood(), layers.additions.isEmpty() ? base.additions() : layers.additions)); }
     }
 
     @Nullable private static Holder<SoundEvent> sound(@Nullable Identifier name) {
         if (name == null) { return null; }
-        Holder<SoundEvent> registered = Registered.holder(BuiltInRegistries.SOUND_EVENT, name);
+        Holder<SoundEvent> registered = ContentSounds.holder(name);
         return registered == null ? Holder.direct(SoundEvent.createVariableRangeEvent(name)) : registered;
     }
 

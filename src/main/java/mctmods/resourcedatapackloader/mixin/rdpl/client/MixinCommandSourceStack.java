@@ -10,6 +10,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(CommandSourceStack.class) public abstract class MixinCommandSourceStack {
-    @Inject(method = "sendFailure", at = @At("HEAD"))
-    private void rdpl$noteFailure(Component message, CallbackInfo ci) { ChatHistoryKeeper.failed(CommandSourceStack.class.cast(this)); }
+    @Inject(method = "sendFailure", at = @At("HEAD")) private void rdpl$noteFailure(Component message, CallbackInfo ci) { ChatHistoryKeeper.failed((CommandSourceStack) (Object) this); }
 }

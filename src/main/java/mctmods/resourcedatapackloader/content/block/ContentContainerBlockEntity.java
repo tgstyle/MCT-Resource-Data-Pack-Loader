@@ -5,15 +5,14 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -33,11 +32,10 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
+public final class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
     private static final String STOCKED = "RdplStocked";
     private static final String ROWS = "RdplRows";
     private static final String COLUMNS = "RdplColumns";
@@ -49,16 +47,14 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     private boolean stocked;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
-        super(ContentContainers.type(), pos, state);
+        super(ContentContainers.TYPE.get(), pos, state);
         ContainerDef def = def(state);
         this.rows = def.rows();
         this.columns = def.columns();
         this.items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
     }
 
-    private static ContainerDef def(BlockState state) {
-        return state.getBlock() instanceof IContentContainer held ? held.container() : ContentContainers.FALLBACK;
-    }
+    private static ContainerDef def(BlockState state) { return state.getBlock() instanceof IContentContainer held ? held.container() : ContentContainers.FALLBACK; }
 
     public ContainerDef def() { return def(getBlockState()); }
 
@@ -72,9 +68,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
 
     @Override @Nonnull protected Component getDefaultName() { return getBlockState().getBlock().getName(); }
 
-    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) {
-        return new ContentContainerMenu(id, inventory, this, shape());
-    }
+    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) { return new ContentContainerMenu(id, inventory, this, shape()); }
 
     @Override public void startOpen(@Nonnull ContainerUser user) {
         if (user.getLivingEntity().isSpectator()) { return; }
@@ -99,8 +93,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     private void sound(SoundEvent event) {
         if (level == null || !def().chestModel()) { return; }
         BlockPos at = getBlockPos();
-        level.playSound(null, at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D, event, SoundSource.BLOCKS,
-                0.5F, level.getRandom().nextFloat() * 0.1F + 0.9F);
+        level.playSound(null, at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D, event, SoundSource.BLOCKS, 0.5F, level.getRandom().nextFloat() * 0.1F + 0.9F);
     }
 
     @Override public float getOpenNess(float partial) { return lid.getOpenness(partial); }
@@ -139,10 +132,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
 
     @Override public boolean canOpen(@Nonnull Player player) { return true; }
 
-    @Override public boolean stillValid(@Nonnull Player player) {
-        if (level == null || level.getBlockEntity(worldPosition) != this) { return false; }
-        return player.distanceToSqr(worldPosition.getX() + 0.5D, worldPosition.getY() + 0.5D, worldPosition.getZ() + 0.5D) <= 64.0D;
-    }
+    @Override public boolean stillValid(@Nonnull Player player) { return Container.stillValidBlockEntity(this, player); }
 
     @Override protected void applyImplicitComponents(@Nonnull DataComponentGetter input) {
         super.applyImplicitComponents(new DataComponentGetter() {
@@ -170,10 +160,8 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
             ContentLog.LOGGER.error("The container at {} names the loot table '{}', which is not a valid id, so it starts empty", getBlockPos(), named);
             return;
         }
-        setLootTable(ResourceKey.create(Registries.LOOT_TABLE, table), seed);
+        StructureLoot.stock(this, table, seed);
     }
 
-    public static int comparatorOutput(BlockEntity held) {
-        return held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0;
-    }
+    public static int comparatorOutput(BlockEntity held) { return held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0; }
 }

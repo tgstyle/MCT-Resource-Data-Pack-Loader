@@ -80,27 +80,36 @@ public final class ContentRetrogen {
 
     public static void onChunkLoad(ChunkEvent.Load event) {
         boolean bedrock = ContentBedrock.bedrockAsked();
-        if ((STAMP.isEmpty() && !bedrock) || !(event.getLevel() instanceof ServerLevel level)) { return; }
+        if ((STAMP.isEmpty() && !bedrock && !ContentReplacements.wanted()) || !(event.getLevel() instanceof ServerLevel level)) { return; }
         LevelChunk chunk = event.getChunk();
         Set<String> already = ContentChunkTokens.get(chunk);
         if (event.isNewChunk()) {
-            stamp(chunk, already, bedrock);
+            if (!STAMP.isEmpty() || bedrock) { already = stamp(chunk, already, bedrock); }
+            enqueue(level, chunk.getPos(), List.of(), false, replaces(level, already));
             return;
         }
         if (adoptWanted() && !STAMP.isEmpty() && adoptable(already)) {
             already = stamp(chunk, already, false);
             ContentLog.LOGGER.debug("Adopted chunk {} as though this pack had generated it", chunk.getPos());
         }
-        if (!wanted()) { return; }
         List<ContentWorldgen.Entry> pending = new ArrayList<>();
-        for (ContentWorldgen.Entry entry : ARMED) {
-            if (!already.contains(token(entry.def())) && ContentWorldgen.dimensionAllows(entry, level)) { pending.add(entry); }
+        boolean flatten = false;
+        if (wanted()) {
+            for (ContentWorldgen.Entry entry : ARMED) {
+                if (!already.contains(token(entry.def())) && ContentWorldgen.dimensionAllows(entry, level)) { pending.add(entry); }
+            }
+            flatten = ContentBedrock.bedrockRetrogen() && !already.contains(ContentBedrock.bedrockToken()) && ContentBedrock.flattens(level);
         }
-        boolean flatten = ContentBedrock.bedrockRetrogen() && !already.contains(ContentBedrock.bedrockToken()) && ContentBedrock.flattens(level);
-        if (pending.isEmpty() && !flatten) { return; }
-        QUEUES.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(new Pending(chunk.getPos(), pending, flatten));
+        enqueue(level, chunk.getPos(), pending, flatten, replaces(level, already));
+    }
+
+    private static boolean replaces(ServerLevel level, Set<String> already) { return ContentReplacements.wanted() && ContentReplacements.appliesTo(level) && !already.contains(ContentReplacements.token()); }
+
+    private static void enqueue(ServerLevel level, ChunkPos pos, List<ContentWorldgen.Entry> pending, boolean flatten, boolean replace) {
+        if (pending.isEmpty() && !flatten && !replace) { return; }
+        QUEUES.computeIfAbsent(level.dimension(), _ -> new ArrayDeque<>()).add(new Pending(pos, pending, flatten, replace));
         queued++;
-        ContentLog.LOGGER.debug("Queued chunk {} for retrogen, {} entries behind{}", chunk.getPos(), pending.size(), flatten ? ", bedrock to flatten" : "");
+        ContentLog.LOGGER.debug("Queued chunk {} for retrogen, {} entries behind{}{}", pos, pending.size(), flatten ? ", bedrock to flatten" : "", replace ? ", blocks to replace" : "");
     }
 
     public static void onLevelUnload(LevelEvent.Unload event) {
@@ -114,12 +123,15 @@ public final class ContentRetrogen {
         if (queued == 0 || !(event.getLevel() instanceof ServerLevel level)) { return; }
         Deque<Pending> queue = QUEUES.get(level.dimension());
         if (queue == null || queue.isEmpty()) { return; }
+        boolean replaced = false;
         while (!queue.isEmpty() && canCatchUp(level, queue.peekFirst().pos())) {
             Pending pending = queue.removeFirst();
             run(level, pending);
+            replaced |= pending.replace();
             queued--;
             caughtUp(level, pending.pos());
         }
+        if (replaced && queue.isEmpty()) { ContentReplacements.report(); }
         if (queue.isEmpty() && completed > 0) {
             Summary.info("retrogen.done", "Caught up " + completed + " chunk(s) that were made before the pack" + (flattened > 0 ? ", flattening bedrock in " + flattened + " of them" : ""));
             completed = 0;
@@ -133,6 +145,10 @@ public final class ContentRetrogen {
         PlacementContext context = new PlacementContext(level, level.getChunkSource().getGenerator(), Optional.empty());
         Set<String> already = new LinkedHashSet<>(ContentChunkTokens.get(chunk));
         try {
+            if (pending.replace() && !already.contains(ContentReplacements.token())) {
+                ContentReplacements.replace(level, chunk);
+                already.add(ContentReplacements.token());
+            }
             if (pending.flatten() && !already.contains(ContentBedrock.bedrockToken())) {
                 ContentBedrock.flattenChunk(level, pending.pos());
                 already.add(ContentBedrock.bedrockToken());
@@ -151,7 +167,7 @@ public final class ContentRetrogen {
             return;
         }
         ContentChunkTokens.put(chunk, already);
-        completed++;
+        if (pending.retro()) { completed++; }
     }
 
     private static Set<String> stamp(LevelChunk chunk, Set<String> already, boolean bedrock) {
@@ -169,7 +185,9 @@ public final class ContentRetrogen {
         return true;
     }
 
-    private record Pending(ChunkPos pos, List<ContentWorldgen.Entry> entries, boolean flatten) {}
+    private record Pending(ChunkPos pos, List<ContentWorldgen.Entry> entries, boolean flatten, boolean replace) {
+        private boolean retro() { return !entries.isEmpty() || flatten; }
+    }
 
     private static final class Spent {
         private final Set<ChunkPos> chunks = new HashSet<>();

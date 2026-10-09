@@ -20,8 +20,6 @@ public final class ContentPixelImages {
         return location == null ? Optional.empty() : Minecraft.getInstance().getResourceManager().getResource(location);
     }
 
-    public static boolean exists(String namespace, String path) { return find(namespace, path).isPresent(); }
-
     @Nullable public static int[][] read(String namespace, String path) {
         Optional<Resource> held = find(namespace, path);
         if (held.isEmpty()) { return null; }

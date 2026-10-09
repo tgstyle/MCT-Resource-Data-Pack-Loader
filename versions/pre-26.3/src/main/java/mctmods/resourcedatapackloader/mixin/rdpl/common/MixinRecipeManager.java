@@ -45,12 +45,11 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 @Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter {
-    @Unique private static final int RDPL_COOKING_TIME = 200;
+    @Unique private static final int rdpl$COOKING_TIME = 200;
     @Shadow @Final private HolderLookup.Provider registries;
     @Shadow private RecipeMap recipes;
 
-    @WrapOperation(method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)Lnet/minecraft/world/item/crafting/RecipeMap;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/SimpleJsonResourceReloadListener;scanDirectoryWithModifier(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/FileToIdConverter;Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;Ljava/util/Map;Ljava/util/function/Consumer;)V"))
-    private void rdpl$beforeRecipes(ResourceManager manager, FileToIdConverter lister, DynamicOps<JsonElement> ops, Codec<Recipe<?>> codec, Map<Identifier, Recipe<?>> result, Consumer<Map<Identifier, JsonElement>> jsonConsumer, Operation<Void> original) {
+    @WrapOperation(method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)Lnet/minecraft/world/item/crafting/RecipeMap;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/packs/resources/SimpleJsonResourceReloadListener;scanDirectoryWithModifier(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/resources/FileToIdConverter;Lcom/mojang/serialization/DynamicOps;Lcom/mojang/serialization/Codec;Ljava/util/Map;Ljava/util/function/Consumer;)V")) private void rdpl$beforeRecipes(ResourceManager manager, FileToIdConverter lister, DynamicOps<JsonElement> ops, Codec<Recipe<?>> codec, Map<Identifier, Recipe<?>> result, Consumer<Map<Identifier, JsonElement>> jsonConsumer, Operation<Void> original) {
         Consumer<Map<Identifier, JsonElement>> loading = jsons -> {
             RecipeLoading.begin(jsons, manager, json -> ICondition.conditionsMatched(ops, json), json -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
             jsonConsumer.accept(jsons);
@@ -58,11 +57,9 @@ import java.util.function.Consumer;
         original.call(manager, lister, ops, codec, result, loading);
     }
 
-    @Inject(method = "apply(Lnet/minecraft/world/item/crafting/RecipeMap;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN"))
-    private void rdpl$afterRecipes(RecipeMap recipes, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.attach(this); }
+    @Inject(method = "apply(Lnet/minecraft/world/item/crafting/RecipeMap;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(RecipeMap recipes, ResourceManager manager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.attach(this); }
 
-    @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD"))
-    private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
+    @Inject(method = "finalizeRecipeLoading(Lnet/minecraft/world/flag/FeatureFlagSet;)V", at = @At("HEAD")) private void rdpl$beforeFinalize(FeatureFlagSet enabledFlags, CallbackInfo ci) { RecipeLoading.componentsBound(this); }
 
     @Override public void rdpl$filter(boolean late) {
         ContextMap context = LineCompat.displayContext(registries);
@@ -78,7 +75,7 @@ import java.util.function.Consumer;
         if (late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
                 if (!named.add(addition.id())) { continue; }
-                SmeltingRecipe smelting = new SmeltingRecipe(new Recipe.CommonInfo(true), new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""), Ingredient.of(addition.input()), addition.output(), addition.output().count() *Math.min(addition.experience(), 1.0F), RDPL_COOKING_TIME);
+                SmeltingRecipe smelting = new SmeltingRecipe(new Recipe.CommonInfo(true), new AbstractCookingRecipe.CookingBookInfo(CookingBookCategory.MISC, ""), Ingredient.of(addition.input()), addition.output(), addition.output().count() * Math.min(addition.experience(), 1.0F), rdpl$COOKING_TIME);
                 kept.add(new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, addition.id()), smelting));
             }
         }

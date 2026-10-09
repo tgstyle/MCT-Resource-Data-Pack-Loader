@@ -23,8 +23,7 @@ import javax.annotation.Nullable;
 @Mixin(Font.class) public abstract class MixinFont {
     @Shadow @Final private Font.Provider provider;
 
-    @SuppressWarnings("resource") @Inject(method = "getGlyph(ILnet/minecraft/network/chat/Style;)Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;", at = @At("HEAD"), cancellable = true)
-    private void rdpl$styledGlyph(int codepoint, Style style, CallbackInfoReturnable<BakedGlyph> cir) {
+    @SuppressWarnings("resource") @Inject(method = "getGlyph(ILnet/minecraft/network/chat/Style;)Lnet/minecraft/client/gui/font/glyphs/BakedGlyph;", at = @At("HEAD"), cancellable = true) private void rdpl$styledGlyph(int codepoint, Style style, CallbackInfoReturnable<BakedGlyph> cir) {
         if (style.isObfuscated() && codepoint != 32) { return; }
         Identifier styled = GameFont.styled(style);
         if (styled == null) { return; }
@@ -36,7 +35,7 @@ import javax.annotation.Nullable;
 
     @SuppressWarnings("resource") @Unique @Nullable private static GlyphProvider rdpl$from(GlyphSource source, int codepoint) {
         if (!(source instanceof FontSet.Source set)) { return null; }
-        for (GlyphProvider provider : ((IFontSet) ((IFontSetSource) set).rdpl$fontSet()).rdpl$activeProviders()) {
+        for (GlyphProvider provider : ((IFontSet) ((IFontSetSource) set).rdpl$getFontSet()).rdpl$getActiveProviders()) {
             if (provider.getGlyph(codepoint) != null) { return provider; }
         }
         return null;

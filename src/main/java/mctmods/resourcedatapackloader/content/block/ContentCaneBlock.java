@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.FluidDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,26 +28,23 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.common.CommonHooks;
-import java.util.Collections;
-import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
-public final class ContentCaneBlock extends Block {
+public final class ContentCaneBlock extends Block implements IContentSoil {
     public static final IntegerProperty AGE = BlockStateProperties.AGE_15;
     private static final VoxelShape SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 16.0D, 14.0D);
-    private final BlockDef def;
     private final GrowthDef growth;
-    private Set<Block> soil = Collections.emptySet();
+    private final ContentSoil soil;
 
     public ContentCaneBlock(BlockDef def, GrowthDef growth, Properties properties) {
         super(properties);
-        this.def = def;
         this.growth = growth;
+        this.soil = new ContentSoil(def.key());
         registerDefaultState(stateDefinition.any().setValue(AGE, 0));
     }
 
-    public void resolveSoil() { soil = ContentRegistry.resolveSoil(growth.soil(), def.key()); }
+    @Override public void resolveSoil(@Nonnull ContentRegistry.BlockEntry entry) { soil.resolve(growth.soil()); }
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(AGE); }
 
@@ -73,24 +71,20 @@ public final class ContentCaneBlock extends Block {
         CommonHooks.fireCropGrowPost(level, pos, state);
     }
 
-    @Override protected void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) {
-        if (!level.isClientSide() && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); }
-    }
+    @Override protected void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) { if (!level.isClientSide() && !old.is(this) && !state.canSurvive(level, pos)) { level.destroyBlock(pos, true); } }
 
     @Override @Nonnull protected BlockState updateShape(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull ScheduledTickAccess ticks, @Nonnull BlockPos pos, @Nonnull Direction direction, @Nonnull BlockPos neighborPos, @Nonnull BlockState neighbor, @Nonnull RandomSource random) {
         if (!state.canSurvive(level, pos)) { ticks.scheduleTick(pos, this, 1); }
         return super.updateShape(state, level, ticks, pos, direction, neighborPos, neighbor, random);
     }
 
-    @Override protected void tick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        if (!state.canSurvive(level, pos)) { level.destroyBlock(pos, true); }
-    }
+    @Override protected void tick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) { if (!state.canSurvive(level, pos)) { level.destroyBlock(pos, true); } }
 
     @Override protected boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) {
         BlockPos below = pos.below();
         BlockState under = level.getBlockState(below);
         if (under.is(this)) { return true; }
-        if (!soil.isEmpty() && !soil.contains(under.getBlock())) { return false; }
+        if (!soil.sustains(level, below, defaultBlockState())) { return false; }
         if (growth.needsSky() && !level.canSeeSky(pos)) { return false; }
         if (growth.breaksNeighbors() && crowded(level, pos)) { return false; }
         if (!growth.needsWater()) { return true; }
@@ -120,7 +114,5 @@ public final class ContentCaneBlock extends Block {
         return held.getBlock() instanceof ContentLiquidBlock liquid && material.test(liquid.getDef());
     }
 
-    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) {
-        if (growth.damage() && level instanceof ServerLevel server) { entity.hurtServer(server, level.damageSources().cactus(), growth.damageAmount()); }
-    }
+    @Override protected void entityInside(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Entity entity, @Nonnull InsideBlockEffectApplier applier, boolean precise) { if (growth.damage() && level instanceof ServerLevel server) { entity.hurtServer(server, level.damageSources().cactus(), growth.damageAmount()); } }
 }

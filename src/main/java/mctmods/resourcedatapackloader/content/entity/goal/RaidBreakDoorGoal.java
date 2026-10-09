@@ -53,15 +53,13 @@ public final class RaidBreakDoorGoal extends Goal {
         shown = -1;
     }
 
-    @Override public void stop() {
-        if (door != null) { mob.level().destroyBlockProgress(mob.getId(), door, -1); }
-    }
+    @Override public void stop() { if (door != null) { mob.level().destroyBlockProgress(mob.getId(), door, -1); } }
 
     @Override public void tick() {
         if (!canContinueToUse()) { return; }
         if (door == null) { return; }
         Level level = mob.level();
-        mob.getLookControl().setLookAt(door.getX() + 0.5D, door.getY() + 0.5D, door.getZ() + 0.5D, 30.0F, 30.0F);
+        BlockBreak.look(mob, door);
         if (mob.getRandom().nextInt(20) == 0) {
             level.levelEvent(LevelEvent.SOUND_ZOMBIE_WOODEN_DOOR, door, 0);
             LineCompat.swing(mob);

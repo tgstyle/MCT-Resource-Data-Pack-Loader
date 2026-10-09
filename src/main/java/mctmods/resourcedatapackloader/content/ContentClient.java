@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.client.SplashDark;
 import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
+import mctmods.resourcedatapackloader.client.render.ContentBannerItemRenderer;
+import mctmods.resourcedatapackloader.client.render.ContentBannerRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.render.ReturningThrowRenderer;
@@ -76,15 +78,15 @@ public final class ContentClient {
     private static void specialRenderers(RegisterSpecialModelRendererEvent event) { event.register(ContentGeneratedItems.BANNER_RENDERER, ContentBannerItemRenderer.Unbaked.MAP_CODEC); }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
-        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
+        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.TYPE.registeredType();
         if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
-        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.registeredType();
+        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.TYPE.registeredType();
         if (chests != null) { event.registerBlockEntityRenderer(chests, ContentContainerRenderer::new); }
-        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.registeredType();
+        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.TYPE.registeredType();
         if (bells != null) { event.registerBlockEntityRenderer(bells, ContentBellRenderer::new); }
         EntityType<ReturningThrow> returning = ContentEntities.returningThrow();
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
-        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$getProviders();
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
             EntityRendererProvider<?> provider = base == null ? null : providers.get(base);
@@ -96,17 +98,15 @@ public final class ContentClient {
     @SuppressWarnings("unchecked") private static EntityRendererProvider<Entity> provider(EntityRendererProvider<?> provider) { return (EntityRendererProvider<Entity>) provider; }
 
     private static void screens(RegisterMenuScreensEvent event) {
-        MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
+        MenuType<ContentContainerMenu> menu = ContentContainers.MENU.registeredType();
         if (menu != null) { event.register(menu, ContentContainerScreen::new); }
-        MenuType<EntityStorageMenu> storage = ContentContainers.registeredStorageMenu();
+        MenuType<EntityStorageMenu> storage = ContentContainers.STORAGE_MENU.registeredType();
         if (storage != null) { event.register(storage, EntityStorageScreen::new); }
     }
 
     private static void setup(FMLClientSetupEvent event) { event.enqueueWork(SplashDark::apply); }
 
-    private static void fluidModels(RegisterFluidModelsEvent event) {
-        for (ContentFluids.Made made : ContentFluids.made()) { event.register(new FluidModel.Unbaked(new Material(made.def.still(), true), new Material(made.def.flowing(), true), null, FluidTintSources.constant(made.def.tint())), made.still, made.flowing); }
-    }
+    private static void fluidModels(RegisterFluidModelsEvent event) { for (ContentFluids.Made made : ContentFluids.made()) { event.register(new FluidModel.Unbaked(new Material(made.def.still(), true), new Material(made.def.flowing(), true), null, FluidTintSources.constant(made.def.tint())), made.still, made.flowing); } }
 
     private static void blockColors(RegisterColorHandlersEvent.BlockTintSources event) {
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {

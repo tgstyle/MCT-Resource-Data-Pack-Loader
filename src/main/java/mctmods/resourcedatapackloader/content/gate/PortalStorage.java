@@ -1,13 +1,12 @@
 package mctmods.resourcedatapackloader.content.gate;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 import mctmods.resourcedatapackloader.content.block.ContentPortalBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -22,10 +21,10 @@ public final class PortalStorage extends SavedData {
     public static final String NAME = "rdpl_portals";
     private static final String TAG = "positions";
     private static final String EARLIER_TAG = "Positions";
+    private static final SavedDataType<PortalStorage> TYPE = SavedTypes.of(NAME, PortalStorage::new, PortalStorage::read, PortalStorage::write);
     private final Map<Long, String> positions = new LinkedHashMap<>();
-    private static final SavedDataType<PortalStorage> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), PortalStorage::new, CompoundTag.CODEC.xmap(PortalStorage::read, PortalStorage::write));
 
-    private static PortalStorage of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
+    private static PortalStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }
 
     private static PortalStorage read(CompoundTag tag) {
         PortalStorage held = new PortalStorage();
@@ -57,7 +56,7 @@ public final class PortalStorage extends SavedData {
     }
 
     public static void add(ServerLevel level, BlockPos pos, @Nullable UUID owner) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         String stored = owner == null ? "" : owner.toString();
         if (stored.equals(data.positions.get(pos.asLong()))) { return; }
         data.positions.put(pos.asLong(), stored);
@@ -65,20 +64,20 @@ public final class PortalStorage extends SavedData {
     }
 
     @Nullable public static UUID owner(ServerLevel level, BlockPos pos) {
-        String stored = of(level).positions.get(pos.asLong());
+        String stored = get(level).positions.get(pos.asLong());
         if (stored == null || stored.isEmpty()) { return null; }
         try { return UUID.fromString(stored); }
         catch (IllegalArgumentException broken) { return null; }
     }
 
     public static void remove(ServerLevel level, BlockPos pos) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         if (data.positions.remove(pos.asLong()) == null) { return; }
         data.setDirty();
     }
 
     @Nullable public static BlockPos nearest(ServerLevel level, BlockPos around) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         if (data.positions.isEmpty()) { return null; }
         BlockPos best = null;
         double closest = Double.MAX_VALUE;

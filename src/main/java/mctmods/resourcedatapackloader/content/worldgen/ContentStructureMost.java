@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -17,7 +18,6 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,9 +26,10 @@ import javax.annotation.Nullable;
 public final class ContentStructureMost {
     private static final String KEY = "structureMost";
     private static final String VILLAGES = "villages";
-    private static final Identifier CITY = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentCity.STRUCTURE);
+    private static final Identifier CITY = ResourceDataPackLoader.id(ContentCity.STRUCTURE);
     private static final List<String> RAW = new ArrayList<>();
     @Nullable private static Map<Identifier, Integer> caps;
+    private static int most = -1;
     private static final Set<Identifier> SILENCED = ConcurrentHashMap.newKeySet();
 
     private ContentStructureMost() {}
@@ -38,6 +39,7 @@ public final class ContentStructureMost {
             RAW.clear();
             RAW.addAll(entries);
             caps = null;
+            most = -1;
             SILENCED.clear();
         }
         for (String entry : entries) {
@@ -47,7 +49,7 @@ public final class ContentStructureMost {
     }
 
     private static boolean villages(String name) {
-        String named = name.trim().toLowerCase(Locale.ROOT);
+        String named = Settings.lower(name);
         return VILLAGES.equals(named) || ContentCity.STRUCTURE.equals(named);
     }
 
@@ -55,16 +57,8 @@ public final class ContentStructureMost {
         synchronized (RAW) {
             if (caps != null) { return caps; }
             Map<Identifier, Integer> made = new LinkedHashMap<>();
-            for (String entry : RAW) {
-                String[] parts = ContentStructureControl.split(entry, KEY);
-                if (parts == null || !VILLAGES.equals(parts[0].trim().toLowerCase(Locale.ROOT))) { continue; }
-                int most;
-                try { most = Integer.parseInt(parts[1].trim()); }
-                catch (NumberFormatException ex) {
-                    ContentLog.LOGGER.error("{} entry '{}' does not end in a number, ignoring it", KEY, entry);
-                    continue;
-                }
-                if (most <= 0) { continue; }
+            int most = most();
+            if (most > 0) {
                 for (Identifier id : ContentStructureControl.structures(VILLAGES)) { made.put(id, most); }
             }
             caps = made;
@@ -73,7 +67,7 @@ public final class ContentStructureMost {
     }
 
     public static boolean refuses(Structure structure, StructureManager manager, RegistryAccess registries, ChunkPos chunk) {
-        if (RAW.isEmpty() && !ContentDimensions.anyStructuresOff()) { return false; }
+        if (RAW.isEmpty() && ContentDimensions.allStructuresOn()) { return false; }
         ServerLevel level = level(manager);
         if (level == null) { return false; }
         if (ContentDimensions.structuresOff(level)) {
@@ -92,15 +86,21 @@ public final class ContentStructureMost {
         return true;
     }
 
-    private static int cityMost() {
+    private static int most() {
         synchronized (RAW) {
+            if (most >= 0) { return most; }
+            int parsed = 0;
             for (String entry : RAW) {
                 String[] parts = ContentStructureControl.split(entry, KEY);
                 if (parts == null || !villages(parts[0])) { continue; }
-                try { return Integer.parseInt(parts[1].trim()); }
-                catch (NumberFormatException ex) { return 0; }
+                try {
+                    int value = Integer.parseInt(parts[1].trim());
+                    if (value > 0) { parsed = value; }
+                }
+                catch (NumberFormatException ex) { ContentLog.LOGGER.error("{} entry '{}' does not end in a number, ignoring it", KEY, entry); }
             }
-            return 0;
+            most = parsed;
+            return parsed;
         }
     }
 
@@ -118,18 +118,18 @@ public final class ContentStructureMost {
     }
 
     public static boolean mayFound(ServerLevel level, ChunkPos chunk) {
-        int most = cityMost();
-        if (most <= 0 || ContentStructurePins.pinned(chunk)) { return true; }
+        int cap = most();
+        if (cap <= 0 || ContentStructurePins.pinned(chunk)) { return true; }
         Identifier marker = cityMarker(level, chunk);
         if (marker == null || ContentStructureCounts.count(level, marker) > 0) { return true; }
-        return villagesFounded(level) < most;
+        return villagesFounded(level) < cap;
     }
 
     public static void founded(Structure structure, StructureManager manager, RegistryAccess registries, ChunkPos chunk) {
         if (RAW.isEmpty()) { return; }
         if (structure instanceof ContentCityStructure) {
             ServerLevel level = level(manager);
-            Identifier marker = level == null || cityMost() <= 0 ? null : cityMarker(level, chunk);
+            Identifier marker = level == null || most() <= 0 ? null : cityMarker(level, chunk);
             if (marker != null && ContentStructureCounts.count(level, marker) == 0) {
                 ContentStructureCounts.add(level, marker);
                 ContentStructureCounts.add(level, CITY);
@@ -147,7 +147,7 @@ public final class ContentStructureMost {
     }
 
     @Nullable private static ServerLevel level(StructureManager manager) {
-        LevelAccessor held = ((IStructureManager) manager).rdpl$level();
+        LevelAccessor held = ((IStructureManager) manager).rdpl$getLevel();
         return held instanceof ServerLevelAccessor accessor ? accessor.getLevel() : null;
     }
 }

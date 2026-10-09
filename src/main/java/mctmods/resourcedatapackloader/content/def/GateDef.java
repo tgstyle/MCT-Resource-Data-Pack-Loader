@@ -9,4 +9,6 @@ public record GateDef(Identifier key, Identifier dimension, String name, boolean
     public static final String PLAYER = "player";
 
     public String id() { return key.toString(); }
+
+    public String scope() { return global ? GLOBAL : PLAYER; }
 }

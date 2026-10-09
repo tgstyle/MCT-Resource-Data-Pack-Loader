@@ -4,11 +4,15 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -34,13 +38,13 @@ import javax.annotation.Nullable;
 
 public final class ContentProspect {
     private static final String KEY = "prospectItems";
-    private static final Identifier ITEMS = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "prospectitems");
+    private static final Identifier ITEMS = ResourceDataPackLoader.id("prospectitems");
     private static final int RADIUS = 8;
     private static final int LEVEL = 6;
     private static final int WEAR = 2;
     private static final String[] POINTS = { "n", "ne", "e", "se", "s", "sw", "w", "nw" };
     private static final List<Entry> ENTRIES = new ArrayList<>();
-    private static List<String> loadedFrom = null;
+    private static final TemplateMemo<Boolean> LIVE = new TemplateMemo<>();
 
     private ContentProspect() {}
 
@@ -56,28 +60,27 @@ public final class ContentProspect {
 
     public record Reads(boolean blacklist, List<String> labels) {}
 
-    private static synchronized boolean idle() {
-        List<String> asked = ContentControl.list(ContentControl.ORES, KEY, Config.worldgen.prospectItems());
-        if (!asked.equals(loadedFrom)) {
-            ENTRIES.clear();
-            for (String entry : asked) { parse(entry); }
-            loadedFrom = new ArrayList<>(asked);
-            if (!ENTRIES.isEmpty()) { ContentLog.LOGGER.debug("{} item(s) prospect for veins when a sneaking player breaks a block with them", ENTRIES.size()); }
-        }
-        return ENTRIES.isEmpty();
+    private static synchronized boolean idle() { return !LIVE.get(ContentProspect::load); }
+
+    private static boolean load() {
+        ENTRIES.clear();
+        for (String entry : ContentControl.list(ContentControl.ORES, KEY, Config.worldgen.prospectItems())) { parse(entry); }
+        if (!ENTRIES.isEmpty()) { ContentLog.LOGGER.debug("{} item(s) prospect for veins when a sneaking player breaks a block with them", ENTRIES.size()); }
+        return !ENTRIES.isEmpty();
     }
 
     private static void parse(String entry) {
-        String[] sides = entry.split("=", 2);
-        if (sides.length < 2) {
+        String[] sides = Settings.split(entry);
+        if (sides == null) {
             ContentLog.LOGGER.error("{} entry '{}' needs the form item=entry|entry[,radius] or item=*[,radius], skipping it", KEY, entry);
             return;
         }
         String[] parts = sides[1].split(",");
         int radius = RADIUS;
         if (parts.length > 1) {
-            try { radius = Mth.clamp(Integer.parseInt(parts[1].trim()), 1, 64); }
-            catch (NumberFormatException bad) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
+            Integer asked = Settings.clamped(parts[1], 1, 64);
+            if (asked == null) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
+            else { radius = asked; }
         }
         Set<String> names = new HashSet<>();
         for (String name : parts[0].split("\\|")) {
@@ -85,7 +88,7 @@ public final class ContentProspect {
             if (trimmed.isEmpty() || "*".equals(trimmed)) { continue; }
             names.add(trimmed);
         }
-        ItemStack stack = ContentStacks.parse(ITEMS, sides[0].trim(), 1);
+        ItemStack stack = ContentStacks.parse(ITEMS, sides[0], 1);
         if (stack.isEmpty()) { return; }
         ENTRIES.add(new Entry(stack, Collections.unmodifiableSet(names), radius));
     }
@@ -107,7 +110,7 @@ public final class ContentProspect {
         List<String> labels = new ArrayList<>();
         for (String name : entry.names()) {
             ContentWorldgen.Entry found = ContentWorldgen.byName(name);
-            labels.add(found != null && !found.def().prospectAs().isEmpty() ? found.def().prospectAs() : name.substring(name.indexOf(':') + 1));
+            labels.add(found != null && !found.def().prospectAs().isEmpty() ? found.def().prospectAs() : IdNames.path(name));
         }
         Collections.sort(labels);
         if (labels.isEmpty() && blacklist) { return null; }
@@ -178,10 +181,10 @@ public final class ContentProspect {
             String line = dx * dx + dz * dz <= ContentOreVein.REACH * ContentOreVein.REACH
                     ? Lang.tr(player, "rdpl.prospect.here", ore, height)
                     : Lang.tr(player, "rdpl.prospect.hit", ore, Lang.tr(player, "rdpl.dir." + point(dx, dz)), height);
-            Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT, line, ChatFormatting.YELLOW);
+            Says.tell(player, CardIds.PROSPECT, ChatFormatting.YELLOW, line);
             said++;
         }
-        if (said == 0) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT_NONE, Lang.tr(player, "rdpl.prospect.none"), ChatFormatting.GRAY); }
+        if (said == 0) { Says.tell(player, CardIds.PROSPECT_NONE, ChatFormatting.GRAY, Lang.tr(player, "rdpl.prospect.none")); }
     }
 
     private static String point(int dx, int dz) {

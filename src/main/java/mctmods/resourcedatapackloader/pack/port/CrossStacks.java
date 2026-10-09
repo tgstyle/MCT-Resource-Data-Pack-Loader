@@ -1,11 +1,13 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Snbt;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.SharedConstants;
 import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -25,11 +27,8 @@ import javax.annotation.Nullable;
 final class CrossStacks {
     private static final String ID = "id";
     private static final String DISPLAY = "display";
-    private static final String COMPONENTS = "components";
 
     private CrossStacks() {}
-
-    private static int current() { return SharedConstants.getCurrentVersion().dataVersion().version(); }
 
     static CompoundTag parse(String snbt) {
         try { return TagParser.parseCompoundFully(snbt); }
@@ -45,19 +44,15 @@ final class CrossStacks {
     static JsonElement json(Tag tag) { return new Dynamic<>(NbtOps.INSTANCE, tag).convert(JsonOps.INSTANCE).getValue(); }
 
     static CompoundTag up(String id, @Nullable CompoundTag tag) {
-        CompoundTag stack = new CompoundTag();
-        stack.putString(ID, id);
-        stack.putByte("Count", (byte) 1);
-        if (tag != null && !tag.isEmpty()) { stack.put("tag", tag); }
-        return upStack(stack);
+        return upStack(Ids.legacyStack(id, tag != null && !tag.isEmpty() ? tag : null));
     }
 
     private static CompoundTag upStack(CompoundTag stack) {
-        Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), CrossIds.DATA_1_20, current());
+        Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), CrossIds.DATA_1_20, Ids.current());
         return fixed.getValue() instanceof CompoundTag held ? held : stack;
     }
 
-    static CompoundTag components(CompoundTag stack) { return stack.getCompound(COMPONENTS).isPresent() ? stack.getCompoundOrEmpty(COMPONENTS) : new CompoundTag(); }
+    static CompoundTag components(CompoundTag stack) { return stack.getCompound(CrossJson.COMPONENTS).isPresent() ? stack.getCompoundOrEmpty(CrossJson.COMPONENTS) : new CompoundTag(); }
 
     static String upCommand(String id, @Nullable String snbt) {
         CompoundTag stack = up(id, snbt == null ? null : parse(snbt));
@@ -71,7 +66,7 @@ final class CrossStacks {
 
     static String downCommand(String id, String bracketed, List<String> lost) {
         CompoundTag components = new CompoundTag();
-        for (String part : CrossCommands.split(bracketed.substring(1, bracketed.length() - 1), ',')) {
+        for (String part : Snbt.split(bracketed.substring(1, bracketed.length() - 1), ',')) {
             String trimmed = part.trim();
             if (trimmed.isEmpty()) { continue; }
             int equals = trimmed.indexOf('=');
@@ -89,7 +84,7 @@ final class CrossStacks {
         CompoundTag display = new CompoundTag();
         for (String key : components.keySet()) {
             Tag value = components.get(key);
-            String bare = key.startsWith(CrossIds.MINECRAFT) ? key.substring(CrossIds.MINECRAFT.length()) : key;
+            String bare = IdNames.bare(key);
             if (value == null) { continue; }
             switch (bare) {
                 case "custom_data" -> { if (value instanceof CompoundTag data) { tag.merge(data); } }
@@ -167,7 +162,7 @@ final class CrossStacks {
             CompoundTag out = held.copy();
             out.remove("count");
             out.put("Count", ByteTag.valueOf((byte) held.getIntOr("count", 0)));
-            out.remove(COMPONENTS);
+            out.remove(CrossJson.COMPONENTS);
             CompoundTag nbt = down(components(held), lost);
             if (!nbt.isEmpty()) { out.put("tag", nbt); }
             out.putString(ID, CrossIds.id(held.getStringOr(ID, ""), to));

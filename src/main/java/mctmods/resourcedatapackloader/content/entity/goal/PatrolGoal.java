@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.util.Walking;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
@@ -13,6 +15,7 @@ import javax.annotation.Nullable;
 public final class PatrolGoal extends Goal {
     private static final String LEADER = "rdplPatrolLeader";
     private static final int LEG = 400;
+    private static final int RETRY = 20;
     private static final int LEG_LEAST = 24;
     private static final int LEG_MOST = 48;
     private static final double MUSTER = 32.0D;
@@ -28,7 +31,7 @@ public final class PatrolGoal extends Goal {
 
     @Override public boolean requiresUpdateEveryTick() { return true; }
 
-    private boolean leads() { return mob.getPersistentData().getBooleanOr(LEADER, false); }
+    private static boolean leads(PathfinderMob who) { return who.getPersistentData().getBooleanOr(LEADER, false); }
 
     private void lead() { mob.getPersistentData().putBoolean(LEADER, true); }
 
@@ -39,7 +42,7 @@ public final class PatrolGoal extends Goal {
 
     @Nullable private PathfinderMob leaderNear() {
         AABB around = mob.getBoundingBox().inflate(MUSTER, 8.0D, MUSTER);
-        List<? extends PathfinderMob> others = mob.level().getEntitiesOfClass(mob.getClass(), around, other -> other != mob && other.isAlive() && other.getType() == mob.getType() && other.getPersistentData().getBooleanOr(LEADER, false));
+        List<? extends PathfinderMob> others = mob.level().getEntitiesOfClass(mob.getClass(), around, other -> other != mob && other.isAlive() && other.getType() == mob.getType() && leads(other));
         PathfinderMob best = null;
         double nearest = Double.MAX_VALUE;
         for (PathfinderMob other : others) {
@@ -55,7 +58,7 @@ public final class PatrolGoal extends Goal {
     @Override public boolean canUse() {
         if (mob.getTarget() != null) { return false; }
         decide();
-        if (leads()) { return true; }
+        if (leads(mob)) { return true; }
         if (leader == null || !leader.isAlive()) { leader = leaderNear(); }
         if (leader == null) { lead(); }
         return true;
@@ -75,16 +78,17 @@ public final class PatrolGoal extends Goal {
 
     @Override public void tick() {
         if (!canContinueToUse()) { return; }
-        if (leads()) {
+        if (leads(mob)) {
             walked++;
-            if (waypoint != null && walked < LEG && mob.distanceToSqr(waypoint.getX(), waypoint.getY(), waypoint.getZ()) > 16.0D && !mob.getNavigation().isDone()) { return; }
+            if (waypoint != null && walked < LEG && mob.distanceToSqr(waypoint.getX(), waypoint.getY(), waypoint.getZ()) > 16.0D && (walked < RETRY || !mob.getNavigation().isDone())) { return; }
             double angle = mob.getRandom().nextDouble() * Math.PI * 2.0D;
             double reach = LEG_LEAST + mob.getRandom().nextInt(LEG_MOST - LEG_LEAST + 1);
             int x = (int) (mob.getX() + Math.cos(angle) * reach);
             int z = (int) (mob.getZ() + Math.sin(angle) * reach);
+            if (!mob.level().hasChunk(x >> 4, z >> 4)) { return; }
             waypoint = new BlockPos(x, mob.level().getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
             walked = 0;
-            mob.getNavigation().moveTo(waypoint.getX() + 0.5D, waypoint.getY(), waypoint.getZ() + 0.5D, 1.0D);
+            Walking.toBlock(mob, waypoint, 1.0D);
             return;
         }
         if (leader == null || !leader.isAlive()) {

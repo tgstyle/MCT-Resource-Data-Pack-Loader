@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,7 +20,6 @@ import javax.annotation.Nullable;
 
 final class ModernFixes {
     static final int DATA_1_21 = 3955;
-    static final String MINECRAFT = "minecraft:";
     private static final List<String> ATTRIBUTE_PREFIXES = List.of("generic.", "horse.", "player.", "zombie.");
     private static final Map<String, String> NAMES = new ConcurrentHashMap<>();
     private static final Map<String, String> RECIPES = new ConcurrentHashMap<>();
@@ -38,9 +40,9 @@ final class ModernFixes {
         JsonObject stack = new JsonObject();
         stack.addProperty("id", item);
         stack.addProperty("count", 1);
-        stack.add("components", components);
+        stack.add(CrossJson.COMPONENTS, components);
         JsonObject fixed = stack(stack);
-        return fixed.has("components") && fixed.get("components").isJsonObject() ? fixed.getAsJsonObject("components") : new JsonObject();
+        return fixed.has(CrossJson.COMPONENTS) && fixed.get(CrossJson.COMPONENTS).isJsonObject() ? fixed.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
     }
 
     static JsonElement text(JsonElement text) { return fix(References.TEXT_COMPONENT, new JsonPrimitive(text.toString())); }
@@ -61,7 +63,7 @@ final class ModernFixes {
     }
 
     private static String attribute(String id) {
-        String named = id.indexOf(':') < 0 ? MINECRAFT + id : id;
+        String named = namespaced(id);
         for (String prefix : ATTRIBUTE_PREFIXES) {
             if (named.startsWith(MINECRAFT + prefix)) { return MINECRAFT + named.substring(MINECRAFT.length() + prefix.length()); }
         }

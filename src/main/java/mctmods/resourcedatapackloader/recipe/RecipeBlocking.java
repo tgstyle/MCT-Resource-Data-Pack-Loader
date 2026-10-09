@@ -2,73 +2,34 @@ package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
-import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Settings;
-import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class RecipeBlocking {
-    public static final String MATCH_RECIPE = "recipe";
-    public static final String MATCH_OUTPUT = "output";
-    public static final String MATCH_BOTH = "both";
-    private static final Blocked BLOCKED = new Blocked();
+    private static final String MATCH_RECIPE = "recipe";
+    private static final String MATCH_OUTPUT = "output";
+    private static final String MATCH_BOTH = "both";
+    private static final ModBlocking BLOCKING = new ModBlocking("recipeWhitelist", "blockedRecipeMods", "blockRecipes", "recipes.blocked", "crafting recipe(s)");
     private static final Set<String> WARNED = new LinkedHashSet<>();
-    private static Set<String> whitelist = Collections.emptySet();
-    private static Set<String> blocked = Collections.emptySet();
     private static String match = MATCH_RECIPE;
-    private static boolean blockAll;
-    private static boolean off;
 
     private RecipeBlocking() {}
 
     public static void reload() {
-        BLOCKED.clear();
-        off = ContentControl.off(ContentControl.RECIPES);
-        whitelist = Settings.lower(ContentControl.list(ContentControl.RECIPES, "recipeWhitelist", Config.recipes.recipeWhitelist()));
-        blocked = Settings.lower(ContentControl.list(ContentControl.RECIPES, "blockedRecipeMods", Config.recipes.blockedRecipeMods()));
+        BLOCKING.reload(Config.recipes.recipeWhitelist(), Config.recipes.blockedRecipeMods(), Config.recipes.blockRecipes());
         match = ContentControl.text(ContentControl.RECIPES, "recipeMatch", Config.recipes.recipeMatch()).toLowerCase(Locale.ROOT);
-        blockAll = ContentControl.flag(ContentControl.RECIPES, "blockRecipes", Config.recipes.blockRecipes());
     }
 
-    public static boolean disabled() { return off || (!blockAll && blocked.isEmpty()); }
+    public static boolean blocks(Identifier id, ItemStack result) { return BLOCKING.blocks(() -> owners(id, result)); }
 
-    public static boolean blocks(Identifier id, ItemStack result) {
-        if (disabled()) { return false; }
-        String reason = reason(owners(id, result));
-        if (reason == null) { return false; }
-        BLOCKED.count(reason);
-        return true;
-    }
-
-    public static void report() { summarize(BLOCKED, "recipes.blocked", "crafting recipe(s)"); }
-
-    static void summarize(Blocked blocked, String key, String what) {
-        int total = blocked.total();
-        if (total == 0) { return; }
-        Summary.info(key, "Blocked " + total + " " + what);
-        if (ContentControl.flag(ContentControl.RECIPES, "logBlockedRecipes", Config.recipes.logBlockedRecipes())) { blocked.report(what); }
-    }
-
-    @Nullable private static String reason(Set<String> owners) {
-        for (String owner : owners) {
-            if (blocked.contains(owner)) { return owner; }
-        }
-        if (!blockAll) { return null; }
-        for (String owner : owners) {
-            if (whitelist.contains(owner)) { return null; }
-        }
-        for (String owner : owners) { return owner; }
-        return null;
-    }
+    public static void report() { BLOCKING.report(); }
 
     private static Set<String> owners(Identifier id, ItemStack result) {
         Set<String> owners = new LinkedHashSet<>();
@@ -83,9 +44,7 @@ public final class RecipeBlocking {
             if (output != null) { owners.add(output); }
             return owners;
         }
-        if (!MATCH_RECIPE.equals(match) && WARNED.add(match)) {
-            ContentLog.LOGGER.error("recipeMatch is '{}', which is not one of {}, {} or {}. Reading the mod id from the recipe name instead", match, MATCH_RECIPE, MATCH_OUTPUT, MATCH_BOTH);
-        }
+        if (!MATCH_RECIPE.equals(match)) { ContentLog.LOGGER.errorOnce(WARNED, match, "recipeMatch is '{}', which is not one of {}, {} or {}. Reading the mod id from the recipe name instead", match, MATCH_RECIPE, MATCH_OUTPUT, MATCH_BOTH); }
         owners.add(namespace);
         return owners;
     }

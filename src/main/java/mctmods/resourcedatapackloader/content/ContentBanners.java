@@ -3,38 +3,17 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Held;
 
 import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.neoforge.registries.RegisterEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import javax.annotation.Nullable;
 
 public final class ContentBanners {
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "banner");
-    @Nullable private static BlockEntityType<ContentBannerBlockEntity> type;
+    public static final Identifier ID = ResourceDataPackLoader.id("banner");
+    public static final Held<BlockEntityType<ContentBannerBlockEntity>> TYPE = new Held<>("pack banner block entity type");
 
     private ContentBanners() {}
 
-    public static BlockEntityType<ContentBannerBlockEntity> type() {
-        if (type == null) { throw new IllegalStateException("No pack banner block entity type is registered"); }
-        return type;
-    }
-
-    @Nullable public static BlockEntityType<ContentBannerBlockEntity> registered() { return type; }
-
-    public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) {
-        List<Block> blocks = new ArrayList<>();
-        for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
-            if (entry.block() instanceof IContentBanner) { blocks.add(entry.block()); }
-        }
-        if (blocks.isEmpty()) { return; }
-        type = new BlockEntityType<>(ContentBannerBlockEntity::new, Set.copyOf(blocks));
-        helper.register(ID, type);
-        ContentLog.LOGGER.info("Registered the banner block entity type for {} pack banner block(s)", blocks.size());
-    }
+    public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) { ContentBlockEntities.typeFor(helper, ID, IContentBanner.class, ContentBannerBlockEntity::new, TYPE, "banner"); }
 }

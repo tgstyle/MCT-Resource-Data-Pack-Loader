@@ -1,10 +1,9 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.board.BoardGame;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -14,7 +13,7 @@ import java.util.Map;
 public final class ContentBoardData extends SavedData {
     private static final String NAME = "rdpl_boards";
     private static final String TAG = "rdplBoards";
-    private static final SavedDataType<ContentBoardData> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), ContentBoardData::new, CompoundTag.CODEC.xmap(ContentBoardData::read, ContentBoardData::write));
+    private static final SavedDataType<ContentBoardData> TYPE = SavedTypes.of(NAME, ContentBoardData::new, ContentBoardData::read, ContentBoardData::write);
     final Map<String, BoardGame> boards = new LinkedHashMap<>();
 
     static ContentBoardData get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }

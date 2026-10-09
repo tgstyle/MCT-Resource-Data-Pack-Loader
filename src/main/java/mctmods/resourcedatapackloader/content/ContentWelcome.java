@@ -1,12 +1,14 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.registries.Registries;
@@ -29,9 +31,7 @@ public final class ContentWelcome {
 
     private ContentWelcome() {}
 
-    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && !ContentPregenHold.welcomesLater(player) && ContentIntroPlay.skips(player)) { welcome(player); }
-    }
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player && ContentPregenHold.welcomesNow(player) && ContentIntroPlay.skips(player)) { welcome(player); } }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ARRIVED.remove(event.getEntity().getUUID()); }
 
@@ -47,7 +47,7 @@ public final class ContentWelcome {
     public static void welcome(ServerPlayer player) {
         greet(player);
         if (!ARRIVED.add(player.getUUID())) { return; }
-        mctmods.resourcedatapackloader.content.card.CardEvents.joined(player);
+        CardEvents.joined(player);
         ContentScoring.greet(player);
         ContentTeams.greet(player);
     }
@@ -58,7 +58,7 @@ public final class ContentWelcome {
         String greeting = atDefault ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player, player.level().dimension(), true);
         if (greeting == null || greeting.isEmpty()) { return; }
         if (Says.card()) {
-            Says.tell(player, greeting, ChatFormatting.GREEN);
+            Says.tell(player, ChatFormatting.GREEN, greeting);
             return;
         }
         show(player, greeting, ChatFormatting.GREEN);
@@ -67,12 +67,12 @@ public final class ContentWelcome {
     @Nullable private static String greetingFor(ServerPlayer player, ResourceKey<Level> dimension, boolean fallBack) {
         String everywhere = null;
         for (String entry : entries()) {
-            String[] parts = entry.split("=", 2);
-            ResourceKey<Level> named = parts.length == 2 ? dimensionNamed(player, parts[0].trim()) : null;
+            String[] parts = Settings.split(entry);
+            ResourceKey<Level> named = parts != null ? dimensionNamed(player, parts[0]) : null;
             if (named == null) {
                 if (everywhere == null) { everywhere = entry.trim(); }
             }
-            else if (named.equals(dimension)) { return parts[1].trim(); }
+            else if (named.equals(dimension)) { return parts[1]; }
         }
         return fallBack ? everywhere : null;
     }

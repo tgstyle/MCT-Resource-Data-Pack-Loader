@@ -7,9 +7,9 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
@@ -23,7 +23,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentCityMaps {
-    private static final Gson GSON = new Gson();
     private static final Map<String, CityMapDef> DEFS = new LinkedHashMap<>();
     private static final int CELL_LEAST = 8;
     private static final int CELL_MOST = 128;
@@ -33,6 +32,12 @@ public final class ContentCityMaps {
     private static boolean loaded;
 
     private ContentCityMaps() {}
+
+    public static void reload() {
+        loaded = false;
+        DEFS.clear();
+        load();
+    }
 
     public static void load() {
         if (loaded) { return; }
@@ -52,10 +57,10 @@ public final class ContentCityMaps {
         return def.settings().get(key);
     }
 
-    @Nullable public static CityMapDef byName(String named) { return named == null || named.isEmpty() ? null : DEFS.get(named.trim().toLowerCase(Locale.ROOT)); }
+    @Nullable public static CityMapDef byName(String named) { return named == null || named.isEmpty() ? null : DEFS.get(Settings.lower(named)); }
 
     @Nullable private static CityMapDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "city map");
         if (json == null) { return null; }
         List<String> rows = Json.strings(json, "map");
         if (rows.isEmpty() || rows.size() > CityMapDef.LIMIT) {

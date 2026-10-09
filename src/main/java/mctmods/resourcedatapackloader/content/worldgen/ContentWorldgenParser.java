@@ -12,8 +12,8 @@ import mctmods.resourcedatapackloader.content.def.SpreadDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,13 +22,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentWorldgenParser {
-    private static final Gson GSON = new Gson();
     private static final Set<String> KNOWN_SHAPES = Set.of(ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION,
             ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING);
     private static final Set<String> KNOWN_SPREADS = Set.of(SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED);
@@ -36,11 +35,8 @@ public final class ContentWorldgenParser {
     private ContentWorldgenParser() {}
 
     @Nullable public static WorldgenDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Worldgen definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "worldgen definition");
+        if (json == null) { return null; }
         Identifier block = ContentParser.location(GsonHelper.getAsString(json, "block", ""));
         if (block == null) {
             ContentLog.LOGGER.error("Worldgen definition {} names no block, ignoring it", key);
@@ -60,7 +56,7 @@ public final class ContentWorldgenParser {
             Identifier region = name.indexOf(':') >= 0 ? Identifier.tryParse(name) : Identifier.tryBuild(key.getNamespace(), name);
             if (region != null) { regions.add(region); }
         }
-        String snap = GsonHelper.getAsString(json, "snap", "").trim().toLowerCase(Locale.ROOT);
+        String snap = Settings.lower(GsonHelper.getAsString(json, "snap", ""));
         if (!snap.isEmpty() && !WorldgenDef.FLOOR.equals(snap) && !WorldgenDef.CEILING.equals(snap)) {
             ContentLog.LOGGER.error("Worldgen {} asks for snap '{}', which is not floor or ceiling, so it does not snap", key, snap);
             snap = "";
@@ -102,7 +98,7 @@ public final class ContentWorldgenParser {
         List<PickDef> picked = new ArrayList<>();
         for (String entry : Json.strings(json, "indicators")) {
             int at = entry.indexOf('=', Math.max(0, entry.indexOf(']')));
-            String name = at < 0 ? "" : entry.substring(0, at).trim().toLowerCase(Locale.ROOT);
+            String name = at < 0 ? "" : Settings.lower(entry.substring(0, at));
             String said = at < 0 ? "" : entry.substring(at + 1).trim();
             int comma = said.indexOf(',');
             if (comma >= 0) { said = said.substring(0, comma).trim(); }
@@ -130,7 +126,7 @@ public final class ContentWorldgenParser {
         List<FollowDef> followers = new ArrayList<>();
         for (JsonElement element : json.getAsJsonArray("then")) {
             String name;
-            int weight = 1;
+            int weight;
             int spread = -1;
             AmountDef depth = null;
             if (element.isJsonObject()) {
@@ -140,14 +136,16 @@ public final class ContentWorldgenParser {
                 spread = follow.has("spread") ? Math.max(0, GsonHelper.getAsInt(follow, "spread", 0)) : -1;
                 depth = follow.has("depth") ? ContentParser.amount(follow, "depth", 0, Integer.MIN_VALUE) : null;
             }
-            else {
+            else if (element.isJsonPrimitive()) {
                 String entry = element.getAsString();
-                int at = entry.indexOf('=');
-                name = at < 0 ? entry : entry.substring(0, at);
-                if (at >= 0) {
-                    try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
-                    catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
-                }
+                Settings.Weighted split = Settings.weighted(entry, 1);
+                name = split.name();
+                weight = split.weight();
+                if (split.unreadable()) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+            }
+            else {
+                ContentLog.LOGGER.error("Worldgen definition {} has a then entry that is neither a name nor an object, ignoring it", key);
+                continue;
             }
             name = name.trim();
             if (name.isEmpty()) {
@@ -207,11 +205,7 @@ public final class ContentWorldgenParser {
     private static SpreadDef spread(Identifier key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "spread");
-        String type = GsonHelper.getAsString(entry, "type", SpreadDef.EVEN).trim().toLowerCase(Locale.ROOT);
-        if (!KNOWN_SPREADS.contains(type)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for spread type '{}', which is not one of {}, using {}", key, type, KNOWN_SPREADS, SpreadDef.EVEN);
-            type = SpreadDef.EVEN;
-        }
+        String type = choice(key, entry, "type", "spread type", SpreadDef.EVEN, KNOWN_SPREADS);
         int offsetMin = GsonHelper.getAsInt(entry, "offsetMin", 0);
         return new SpreadDef(type,
                 GsonHelper.getAsInt(entry, "center", (minHeight + maxHeight) / 2),
@@ -228,16 +222,8 @@ public final class ContentWorldgenParser {
     private static ShapeDef shape(Identifier key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
         JsonObject entry = GsonHelper.getAsJsonObject(json, "shape");
-        String type = GsonHelper.getAsString(entry, "type", ShapeDef.CLUSTER).trim().toLowerCase(Locale.ROOT);
-        if (!KNOWN_SHAPES.contains(type)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for shape '{}', which is not one of {}, using {}", key, type, KNOWN_SHAPES, ShapeDef.CLUSTER);
-            type = ShapeDef.CLUSTER;
-        }
-        String plane = GsonHelper.getAsString(entry, "plane", ShapeDef.CIRCLE).trim().toLowerCase(Locale.ROOT);
-        if (!ShapeDef.CIRCLE.equals(plane) && !ShapeDef.SQUARE.equals(plane)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for plane '{}', which is not {} or {}, using {}", key, plane, ShapeDef.CIRCLE, ShapeDef.SQUARE, ShapeDef.CIRCLE);
-            plane = ShapeDef.CIRCLE;
-        }
+        String type = choice(key, entry, "type", "shape", ShapeDef.CLUSTER, KNOWN_SHAPES);
+        String plane = choice(key, entry, "plane", "plane", ShapeDef.CIRCLE, List.of(ShapeDef.CIRCLE, ShapeDef.SQUARE));
         float richAt = Mth.clamp(GsonHelper.getAsFloat(entry, "richAt", 0.88F), 0.0F, 1.0F);
         return new ShapeDef(type,
                 ContentParser.amount(entry, "radius", ShapeDef.BELT.equals(type) ? 32 : 6, 0),
@@ -259,8 +245,8 @@ public final class ContentWorldgenParser {
                 GsonHelper.getAsBoolean(entry, "hanging", false),
                 GsonHelper.getAsString(entry, "structure", "").trim(),
                 picks(entry, "structures", "structure"), picks(entry, "turns", "turn"), picks(entry, "mirrors", "mirror"),
-                taper(key, entry),
-                Mth.clamp(GsonHelper.getAsInt(entry, "integrity", 100), 1, 100),
+                choice(key, entry, "taper", "taper", ShapeDef.STRAIGHT, List.of(ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE)),
+                Mth.clamp(GsonHelper.getAsInt(entry, "integrity", ShapeDef.FULL_INTEGRITY), 1, ShapeDef.FULL_INTEGRITY),
                 Math.max(0, GsonHelper.getAsInt(entry, "rarity", 0)),
                 GsonHelper.getAsBoolean(entry, "rarityIsPerChunk", false),
                 ShapeDef.FIELD.equals(type) ? ContentHardness.fieldFrom(GsonHelper.getAsJsonObject(entry, "field", new JsonObject())) : null,
@@ -269,7 +255,7 @@ public final class ContentWorldgenParser {
                 GsonHelper.getAsString(entry, "lootTable", "").trim(),
                 GsonHelper.getAsString(entry, "locateAs", "").trim(),
                 pinned(key, entry, type),
-                pattern(key, entry),
+                choice(key, entry, "pattern", "vein pattern", ShapeDef.DEFAULT, List.of(ShapeDef.DEFAULT, ShapeDef.BANDED, ShapeDef.TUBE)),
                 Mth.clamp(GsonHelper.getAsFloat(entry, "density", 1.0F), 0.0F, 1.0F),
                 GsonHelper.getAsString(entry, "rich", "").trim(),
                 GsonHelper.getAsString(entry, "poor", "").trim(),
@@ -283,11 +269,11 @@ public final class ContentWorldgenParser {
                 Mth.clamp(GsonHelper.getAsFloat(entry, "crack", 0.0F), 0.0F, 1.0F));
     }
 
-    private static String pattern(Identifier key, JsonObject entry) {
-        String named = GsonHelper.getAsString(entry, "pattern", ShapeDef.DEFAULT).trim().toLowerCase(Locale.ROOT);
-        if (ShapeDef.DEFAULT.equals(named) || ShapeDef.BANDED.equals(named) || ShapeDef.TUBE.equals(named)) { return named; }
-        ContentLog.LOGGER.error("Worldgen {} asks for vein pattern '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.DEFAULT, ShapeDef.BANDED, ShapeDef.TUBE, ShapeDef.DEFAULT);
-        return ShapeDef.DEFAULT;
+    private static String choice(Identifier key, JsonObject entry, String member, String what, String fallback, Collection<String> allowed) {
+        String named = Settings.lower(GsonHelper.getAsString(entry, member, fallback));
+        if (allowed.contains(named)) { return named; }
+        ContentLog.LOGGER.error("Worldgen {} asks for {} '{}', which is not one of {}, using {}", key, what, named, allowed, fallback);
+        return fallback;
     }
 
     @Nullable private static int[] pinned(Identifier key, JsonObject entry, String type) {
@@ -301,7 +287,8 @@ public final class ContentWorldgenParser {
     private static List<String> surface(JsonObject entry) {
         if (!entry.has("surface")) { return List.of(); }
         JsonElement element = entry.get("surface");
-        if (!element.isJsonArray()) { return List.of(element.getAsString()); }
+        if (element.isJsonPrimitive()) { return List.of(element.getAsString()); }
+        if (!element.isJsonArray()) { return List.of(); }
         return Json.strings(entry, "surface");
     }
 
@@ -309,19 +296,12 @@ public final class ContentWorldgenParser {
         if (!entry.has(listKey)) { return List.of(); }
         List<PickDef> picked = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(entry, listKey)) {
-            if (element.isJsonPrimitive()) { picked.add(new PickDef(element.getAsString().trim().toLowerCase(Locale.ROOT), 1)); }
+            if (element.isJsonPrimitive()) { picked.add(new PickDef(Settings.lower(element.getAsString()), 1)); }
             else if (element.isJsonObject()) {
                 JsonObject held = element.getAsJsonObject();
-                picked.add(new PickDef(GsonHelper.getAsString(held, nameKey, "").trim().toLowerCase(Locale.ROOT), Math.max(1, GsonHelper.getAsInt(held, "weight", 1))));
+                picked.add(new PickDef(Settings.lower(GsonHelper.getAsString(held, nameKey, "")),Math.max(1, GsonHelper.getAsInt(held, "weight", 1))));
             }
         }
         return List.copyOf(picked);
-    }
-
-    private static String taper(Identifier key, JsonObject entry) {
-        String named = GsonHelper.getAsString(entry, "taper", ShapeDef.STRAIGHT).trim().toLowerCase(Locale.ROOT);
-        if (ShapeDef.STRAIGHT.equals(named) || ShapeDef.BELL.equals(named) || ShapeDef.NEEDLE.equals(named)) { return named; }
-        ContentLog.LOGGER.error("Worldgen {} asks for taper '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE, ShapeDef.STRAIGHT);
-        return ShapeDef.STRAIGHT;
     }
 }

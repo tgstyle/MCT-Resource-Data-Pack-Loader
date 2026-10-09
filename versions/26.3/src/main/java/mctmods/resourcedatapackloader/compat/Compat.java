@@ -40,8 +40,6 @@ import javax.annotation.Nullable;
 public final class Compat {
     private Compat() {}
 
-    public static Optional<EntityType<?>> lookupEntityType(Identifier id) { return BuiltInRegistries.ENTITY_TYPE.getOptional(id); }
-
     @Nullable public static EntityType<?> entityType(@Nullable Identifier id) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, id); }
 
     @Nullable public static EntityType<?> entityType(String name) { return Registered.find(BuiltInRegistries.ENTITY_TYPE, Identifier.tryParse(name)); }

@@ -10,8 +10,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ClientPacketListener.class) public abstract class MixinClientPacketListener {
-    @Redirect(method = "handleLogin", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;addToast(Lnet/minecraft/client/gui/components/toasts/Toast;)V"))
-    private void rdpl$noUnsecureServerToast(ToastManager toasts, Toast toast) {
-        if (!ContentServer.privacy()) { toasts.addToast(toast); }
-    }
+    @Redirect(method = "handleLogin", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/toasts/ToastManager;addToast(Lnet/minecraft/client/gui/components/toasts/Toast;)V")) private void rdpl$noUnsecureServerToast(ToastManager toasts, Toast toast) { if (!ContentServer.privacy()) { toasts.addToast(toast); } }
 }

@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Parallel;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
@@ -43,7 +44,7 @@ import javax.annotation.Nullable;
 
 public final class CityGround {
     public static final List<String> VILLAGE_TYPES = List.of("plains", "desert", "savanna", "snowy", "taiga");
-    private static final Identifier MANSIONS = Identifier.fromNamespaceAndPath("minecraft", "woodland_mansions");
+    private static final Identifier MANSIONS = Identifier.withDefaultNamespace("woodland_mansions");
     private static final int HEIGHTS_HELD = 1 << 18;
     private static final Map<Column, Integer> HEIGHTS = new ConcurrentHashMap<>();
     private static final int CELLS_HELD = 256;
@@ -118,7 +119,7 @@ public final class CityGround {
         List<int[]> open = new ArrayList<>();
         for (int cellX = Math.floorDiv(minX, width); cellX <= Math.floorDiv(maxX, width); cellX++) {
             for (int cellZ = Math.floorDiv(minZ, width); cellZ <= Math.floorDiv(maxZ, width); cellZ++) {
-                if (!known(cellX * width, cellZ * width, width)) { open.add(new int[] {cellX, cellZ}); }
+                if (unknown(cellX * width, cellZ * width, width)) { open.add(new int[] {cellX, cellZ}); }
             }
         }
         if (open.isEmpty()) { return; }
@@ -133,13 +134,13 @@ public final class CityGround {
         });
     }
 
-    private boolean known(int originX, int originZ, int width) {
+    private boolean unknown(int originX, int originZ, int width) {
         for (int x = originX; x < originX + width; x++) {
             for (int z = originZ; z < originZ + width; z++) {
-                if (!HEIGHTS.containsKey(column(Heightmap.Types.WORLD_SURFACE_WG, x, z)) || !HEIGHTS.containsKey(column(Heightmap.Types.OCEAN_FLOOR_WG, x, z))) { return false; }
+                if (!HEIGHTS.containsKey(column(Heightmap.Types.WORLD_SURFACE_WG, x, z)) || !HEIGHTS.containsKey(column(Heightmap.Types.OCEAN_FLOOR_WG, x, z))) { return true; }
             }
         }
-        return true;
+        return false;
     }
 
     private int held(CityCells cell, int x, int z, Heightmap.Types type) {
@@ -164,6 +165,8 @@ public final class CityGround {
     }
 
     public int bottom() { return height.getMinY(); }
+
+    public int lined() { return bottom() + ContentCitySewerPiece.FLOOR_LEAST; }
 
     public int surfaceDepth(int x, int z) { return ((ISurfaceSystem) random.surfaceSystem()).rdpl$getSurfaceDepth(x, z); }
 
@@ -197,7 +200,7 @@ public final class CityGround {
 
     @Nullable private static String villageTag(Holder<Biome> held) {
         for (String type : VILLAGE_TYPES) {
-            if (held.is(TagKey.create(Registries.BIOME, Identifier.fromNamespaceAndPath("minecraft", "has_structure/village_" + type)))) { return type; }
+            if (held.is(TagKey.create(Registries.BIOME, Identifier.withDefaultNamespace("has_structure/village_" + type)))) { return type; }
         }
         return null;
     }
@@ -213,9 +216,9 @@ public final class CityGround {
 
     @Nullable private static String biomeEntry() {
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureBiomes", Config.worldgen.structureBiomes())) {
-            int at = entry.indexOf('=');
-            if (at <= 0) { continue; }
-            String name = entry.substring(0, at).trim().toLowerCase(Locale.ROOT);
+            String[] sides = Settings.split(entry);
+            if (sides == null || sides[0].isEmpty()) { continue; }
+            String name = sides[0].toLowerCase(Locale.ROOT);
             if (name.equals("villages") || name.equals(ContentCity.STRUCTURE)) { return entry; }
         }
         return null;
@@ -224,7 +227,7 @@ public final class CityGround {
     private static boolean listed(Holder<Biome> held, String names) {
         Identifier id = held.unwrapKey().map(ResourceKey::identifier).orElse(null);
         for (String named : names.split(",")) {
-            String biome = named.trim().toLowerCase(Locale.ROOT);
+            String biome = Settings.lower(named);
             if (biome.isEmpty()) { continue; }
             Set<String> found = new LinkedHashSet<>();
             if (biome.contains(":")) { found.add(biome); }
@@ -236,8 +239,8 @@ public final class CityGround {
             }
             for (String value : found) {
                 if (value.startsWith("#")) {
-                    Identifier tag = Identifier.tryParse(value.substring(1));
-                    if (tag != null && held.is(TagKey.create(Registries.BIOME, tag))) { return true; }
+                    TagKey<Biome> tag = BiomeNames.tagged(value);
+                    if (tag != null && held.is(tag)) { return true; }
                 }
                 else if (id != null && id.toString().equals(value)) { return true; }
             }

@@ -10,6 +10,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(ModelBlockRenderer.class) public abstract class MixinModelBlockRendererSnow {
-    @ModifyExpressionValue(method = "putQuadWithTint", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;tintIndex()I"))
-    private int rdpl$tintSnow(int tintIndex, @Local(argsOnly = true) BlockState state) { return tintIndex == -1 && ContentSnowTint.tints(state) ? 0 : tintIndex; }
+    @ModifyExpressionValue(method = "putQuadWithTint", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/resources/model/geometry/BakedQuad$MaterialInfo;tintIndex()I")) private int rdpl$tintSnow(int tintIndex, @Local(argsOnly = true) BlockState state) { return tintIndex == -1 && ContentSnowTint.tints(state) ? 0 : tintIndex; }
 }

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.compat.LineClientCompat;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.util.ARGB;
 import javax.annotation.Nonnull;
 
 public final class EntityTint {
@@ -17,16 +18,16 @@ public final class EntityTint {
 
         Tinted(VertexConsumer inner, int tint) {
             super(inner);
-            this.red = tint >> 16 & 255;
-            this.green = tint >> 8 & 255;
-            this.blue = tint & 255;
+            this.red = ARGB.red(tint);
+            this.green = ARGB.green(tint);
+            this.blue = ARGB.blue(tint);
         }
 
         @Override @Nonnull public VertexConsumer addVertex(float x, float y, float z) { inner.addVertex(x, y, z); return this; }
 
         @Override @Nonnull public VertexConsumer setColor(int r, int g, int b, int a) { inner.setColor(r * red / 255, g * green / 255, b * blue / 255, a); return this; }
 
-        @Override @Nonnull public VertexConsumer setColor(int argb) { return setColor(argb >> 16 & 255, argb >> 8 & 255, argb & 255, argb >>> 24); }
+        @Override @Nonnull public VertexConsumer setColor(int argb) { return setColor(ARGB.red(argb), ARGB.green(argb), ARGB.blue(argb), ARGB.alpha(argb)); }
 
         @Override @Nonnull public VertexConsumer setUv(float u, float v) { inner.setUv(u, v); return this; }
 

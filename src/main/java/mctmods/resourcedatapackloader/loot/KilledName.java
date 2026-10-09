@@ -55,12 +55,12 @@ public final class KilledName extends LineCompat.LootFunction {
     }
 
     @Nullable private static Entity looted(LootContext context) {
-        if (LineCompat.param(context,LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
-        Vec3 origin = LineCompat.param(context,LootContextParams.ORIGIN);
-        if (origin == null || context.hasParameter(LootContextParams.DAMAGE_SOURCE) || context.hasParameter(LootContextParams.BLOCK_STATE) || context.hasParameter(LootContextParams.TOOL)) { return LineCompat.param(context,LootContextParams.THIS_ENTITY); }
-        if (LineCompat.param(context,LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
+        if (LineCompat.param(context, LootContextParams.THIS_ENTITY) instanceof FishingHook) { return null; }
+        Vec3 origin = LineCompat.param(context, LootContextParams.ORIGIN);
+        if (origin == null || context.hasParameter(LootContextParams.DAMAGE_SOURCE) || context.hasParameter(LootContextParams.BLOCK_STATE) || context.hasParameter(LootContextParams.TOOL)) { return LineCompat.param(context, LootContextParams.THIS_ENTITY); }
+        if (LineCompat.param(context, LootContextParams.ATTACKING_ENTITY) instanceof AbstractMinecartContainer cart) { return cart; }
         BlockPos pos = BlockPos.containing(origin);
         if (origin.equals(Vec3.atCenterOf(pos)) && context.getLevel().getBlockEntity(pos) instanceof RandomizableContainer) { return null; }
-        return LineCompat.param(context,LootContextParams.THIS_ENTITY);
+        return LineCompat.param(context, LootContextParams.THIS_ENTITY);
     }
 }

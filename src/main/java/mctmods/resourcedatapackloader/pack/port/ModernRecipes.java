@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -18,12 +21,10 @@ final class ModernRecipes {
     private static final String NEOFORGE = "neoforge:";
     private static final String COMPOUND = "neoforge:compound";
     private static final String CHILDREN = "children";
-    private static final String COMPONENTS = "components";
     private static final String TEMPLATE_SUFFIX = "_armor_trim_smithing_template";
     private static final List<String> SINGLE = List.of("ingredient", "base", "addition", "template");
     private static final List<String> NESTED = List.of("base", "subtracted");
     private static final Set<String> GONE = Set.of("minecraft:crafting_special_armordye", "minecraft:crafting_special_mapcloning", "minecraft:crafting_special_tippedarrow", "minecraft:crafting_special_shulkerboxcoloring", "minecraft:crafting_special_suspiciousstew");
-
     private static final Map<String, String> SPECIAL = Map.of("minecraft:crafting_special_bookcloning", "book_cloning", "minecraft:crafting_special_firework_star", "firework_star", "minecraft:crafting_special_firework_star_fade", "firework_star_fade",
             "minecraft:crafting_special_firework_rocket", "firework_rocket", "minecraft:crafting_special_mapextending", "map_extending", "minecraft:crafting_special_repairitem", "repair_item", "minecraft:crafting_special_shielddecoration", "shield_decoration",
             "minecraft:crafting_decorated_pot", "decorated_pot");
@@ -31,8 +32,7 @@ final class ModernRecipes {
     private ModernRecipes() {}
 
     static void recipe(JsonObject json, String file, boolean stacks, Consumer<String> note) {
-        String named = json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : "";
-        String type = named.isEmpty() || named.indexOf(':') >= 0 ? named : ModernFixes.MINECRAFT + named;
+        String type = namespaced(Json.text(json, TYPE));
         if (GONE.contains(type) || "minecraft:crafting_special_bannerduplicate".equals(type)) { note.accept("'" + file + "' is a " + type + " recipe, a type this version replaced with per-item recipes, so it no longer loads; remove or rewrite it by hand"); }
         if (SPECIAL.containsKey(type)) { special(json, type, file, note); }
         for (String key : SINGLE) {
@@ -52,7 +52,7 @@ final class ModernRecipes {
     }
 
     private static void special(JsonObject json, String type, String file, Consumer<String> note) {
-        JsonObject vanilla = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "recipe/" + SPECIAL.get(type) + ".json"));
+        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("recipe/" + SPECIAL.get(type) + ".json"));
         if (vanilla == null || !vanilla.has(TYPE) || !type.equals(vanilla.get(TYPE).getAsString())) {
             note.accept("'" + file + "' is a " + type + " recipe, which now names its ingredients, and the game's own could not be read; it is served as written");
             return;
@@ -76,7 +76,7 @@ final class ModernRecipes {
         if (held.isJsonArray()) { return alternatives(held.getAsJsonArray(), file, stacks, note); }
         if (!held.isJsonObject()) { return held; }
         JsonObject object = held.getAsJsonObject();
-        String type = object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? object.get(TYPE).getAsString() : "";
+        String type = Json.text(object, TYPE);
         if (type.startsWith(NEOFORGE)) { return custom(object, type, file, stacks, note); }
         if (object.has("item") && object.get("item").isJsonPrimitive()) { return new JsonPrimitive(object.get("item").getAsString()); }
         if (object.has("tag") && object.get("tag").isJsonPrimitive()) { return new JsonPrimitive("#" + object.get("tag").getAsString()); }
@@ -112,7 +112,7 @@ final class ModernRecipes {
                 out.add(key, children);
             }
             else if (NESTED.contains(key)) { out.add(key, ingredient(value, file, stacks, note)); }
-            else if (COMPONENTS.equals(key) && value.isJsonObject() && stacks) { out.add(key, ModernFixes.components(ModernFixes.firstItem(object.get("items")), value.getAsJsonObject())); }
+            else if (CrossJson.COMPONENTS.equals(key) && value.isJsonObject() && stacks) { out.add(key, ModernFixes.components(ModernFixes.firstItem(object.get("items")), value.getAsJsonObject())); }
             else { out.add(key, value); }
         }
         return out;

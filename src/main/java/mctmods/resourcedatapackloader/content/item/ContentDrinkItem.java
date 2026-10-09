@@ -21,7 +21,7 @@ import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentDrinkItem extends Item {
+public final class ContentDrinkItem extends Item {
     private final ItemDef def;
     @Nullable private final MobEffectInstance effect;
     @Nullable private Item container;
@@ -46,7 +46,7 @@ public class ContentDrinkItem extends Item {
     @Override @Nonnull public ItemStack finishUsingItem(@Nonnull ItemStack stack, @Nonnull Level level, @Nonnull LivingEntity entity) {
         if (!level.isClientSide() && effect != null) { entity.addEffect(ContentEffects.copy(effect)); }
         Player player = entity instanceof Player held ? held : null;
-        if (player != null && def.cooldown() > 0) { player.getCooldowns().addCooldown(stack, def.cooldown()); }
+        ContentEffects.cooldown(entity, stack, def.cooldown());
         if (player != null && player.getAbilities().instabuild) { return stack; }
         stack.shrink(1);
         if (container == null) { return stack; }
@@ -56,5 +56,5 @@ public class ContentDrinkItem extends Item {
         return stack;
     }
 
-    @Override public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext context, @Nonnull TooltipDisplay display, @Nonnull Consumer<Component> tooltip, @Nonnull TooltipFlag flag) { ContentEffects.tooltip(effect, tooltip); }
+    @SuppressWarnings("deprecation") @Override public void appendHoverText(@Nonnull ItemStack stack, @Nonnull Item.TooltipContext context, @Nonnull TooltipDisplay display, @Nonnull Consumer<Component> tooltip, @Nonnull TooltipFlag flag) { ContentEffects.tooltip(effect, tooltip); }
 }

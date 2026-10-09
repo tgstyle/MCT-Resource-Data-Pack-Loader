@@ -53,7 +53,7 @@ public final class ContentPristine {
         Path save = save(server);
         Path kept = holdingFor(server);
         Path stamp = stampFor(server);
-        if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || !bare(save)) { return; }
+        if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || populated(save)) { return; }
         if (!stamped(stamp)) {
             ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is thrown away and the world is generated, then copied afresh", save.getFileName());
             clear(kept, stamp);
@@ -64,11 +64,11 @@ public final class ContentPristine {
         if (files > 0) { ContentLog.LOGGER.info("Restored {} from the pristine copy, {} file(s) in {} ms, so it is not generated again", save.getFileName(), files, System.currentTimeMillis() - begun); }
     }
 
-    private static boolean bare(Path save) {
+    private static boolean populated(Path save) {
         Path region = save.resolve("region");
-        if (!Files.isDirectory(region)) { return true; }
-        try (Stream<Path> held = Files.list(region)) { return held.findAny().isEmpty(); }
-        catch (IOException unreadable) { return false; }
+        if (!Files.isDirectory(region)) { return false; }
+        try (Stream<Path> held = Files.list(region)) { return held.findAny().isPresent(); }
+        catch (IOException unreadable) { return true; }
     }
 
     private static boolean stamped(Path stamp) {
@@ -139,9 +139,7 @@ public final class ContentPristine {
         List<Path> found = new ArrayList<>();
         if (!Files.isDirectory(save)) { return found; }
         Files.walkFileTree(save, new SimpleFileVisitor<>() {
-            @Override @Nonnull public FileVisitResult preVisitDirectory(@Nonnull Path at, @Nonnull BasicFileAttributes attrs) {
-                return SKIPPED.contains(at.getFileName().toString()) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
-            }
+            @Override @Nonnull public FileVisitResult preVisitDirectory(@Nonnull Path at, @Nonnull BasicFileAttributes attrs) { return SKIPPED.contains(at.getFileName().toString()) ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE; }
 
             @Override @Nonnull public FileVisitResult visitFile(@Nonnull Path at, @Nonnull BasicFileAttributes attrs) {
                 if (!SKIPPED.contains(at.getFileName().toString())) { found.add(at); }

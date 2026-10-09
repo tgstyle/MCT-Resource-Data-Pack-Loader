@@ -19,13 +19,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(ClientLevel.class) public abstract class MixinClientLevel {
     @Unique private DimensionDef rdpl$def() { return ContentDimensions.def((ClientLevel) (Object) this); }
 
-    @Inject(method = "tickWeatherEffects()V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipWeatherParticles(CallbackInfo ci) {
-        if (ContentDimensionEffects.cameraAboveCeiling()) { ci.cancel(); }
-    }
+    @Inject(method = "tickWeatherEffects()V", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) { if (ContentDimensionEffects.cameraAboveCeiling()) { ci.cancel(); } }
 
-    @Inject(method = "addEnvironmentAttributeLayers(Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;)Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;", at = @At("RETURN"))
-    private void rdpl$packSky(EnvironmentAttributeSystem.Builder environmentAttributes, CallbackInfoReturnable<EnvironmentAttributeSystem.Builder> cir) {
+    @Inject(method = "addEnvironmentAttributeLayers(Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;)Lnet/minecraft/world/attribute/EnvironmentAttributeSystem$Builder;", at = @At("RETURN")) private void rdpl$packSky(EnvironmentAttributeSystem.Builder environmentAttributes, CallbackInfoReturnable<EnvironmentAttributeSystem.Builder> cir) {
         environmentAttributes.addTimeBasedLayer(EnvironmentAttributes.CLOUD_COLOR, (cloud, _) -> {
             DimensionDef def = rdpl$def();
             return def != null && def.cloudColor() >= 0 ? new Vector4f(ARGB.vector3fFromRGB24(def.cloudColor()), cloud.w()) : cloud;

@@ -15,7 +15,7 @@ import net.neoforged.neoforge.client.renderstate.RegisterRenderStateModifiersEve
 import javax.annotation.Nullable;
 
 public record EntityLook(@Nullable Identifier texture, int body, int armor, int held, boolean lying, boolean hidesArmor, boolean hidesHeld) {
-    private static final ContextKey<EntityLook> KEY = new ContextKey<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "entity_look"));
+    private static final ContextKey<EntityLook> KEY = new ContextKey<>(ResourceDataPackLoader.id("entity_look"));
     private static final EntityLook PLAIN = new EntityLook(null, 0, 0, 0, false, false, false);
 
     public static void register(RegisterRenderStateModifiersEvent event) { event.registerEntityModifier(new TypeToken<LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>>() {}, EntityLook::extract); }

@@ -3,11 +3,13 @@ package mctmods.resourcedatapackloader.pack.port;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Snbt;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.util.GsonHelper;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,7 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
-public final class Convert {
+final class Convert {
     private static final Set<String> BLOCK_KEYS = Set.of("block", "replace", "adjacent", "soil", "log", "leaves", "topBlock", "fillerBlock", "stoneBlock", "edge", "ground", "crops", "platformBlock", "portalBlocks", "outline", "fill", "surface", "coverReplace", "floorCover", "ceilingCover", "jobSite", "modelBlock", "leafSapling", "crop", "rich", "poor", "middle", "budding", "crystal", "bell", "deepStone", "skyStone", "voidPlatformBlock", "except", "blocks", "flatBedrockFiller", "hoeTillsInto", "shovelPathBecomes", "shovelPathReverts", "sewerBlock");
     private static final Set<String> ITEM_KEYS = Set.of("item", "items", "tools", "container", "seed", "produce", "icon", "repairItem", "hold", "consume", "craft", "killedDrops", "drop", "output", "input", "result", "ingredient", "opensWith", "containerItem", "mainhand", "offhand", "head", "chest", "legs", "feet", "immunityItem", "ignitedBy", "saysIcon", "outputs", "with");
     private static final Set<String> ENTITY_KEYS = Set.of("entity", "entities", "targets", "killed", "variant", "customEntitiesToHeal", "villagerEntity", "becomes", "picksFrom", "mob", "mobs");
@@ -36,18 +38,16 @@ public final class Convert {
     static final String WILDCARD = ":*";
     private static final String AT_BLOCK = "at=";
     private static final String UNDER_BLOCK = "under=";
-
-    public static final String GAME_LOOP = "gameLoopFunction";
-    public static final String FLAT = "flat";
-    public static final String OVERWORLD = "minecraft:overworld";
-    public static final int FLAT_FLOOR = ContentWorldShape.VANILLA_MIN;
+    static final String GAME_LOOP = "gameLoopFunction";
+    static final String FLAT = "flat";
+    static final int FLAT_FLOOR = ContentWorldShape.VANILLA_MIN;
     private static final List<String> FLAT_TYPES = List.of(FLAT, "superflat");
 
     private Convert() {}
 
-    public enum Context { NONE, BLOCK, ITEM, ENTITY, BIOME, DIMENSION }
+    enum Context { NONE, BLOCK, ITEM, ENTITY, BIOME, DIMENSION }
 
-    public static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
+    static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
         Map<String, String> renamed = pack.renamedIn(namespace, folder, file);
         if (!renamed.isEmpty() && json.has("variants") && json.get("variants").isJsonObject()) {
             JsonObject variants = json.getAsJsonObject("variants");
@@ -57,7 +57,7 @@ public final class Convert {
             pack.rewrote();
         }
         if ("blocks".equals(folder) && json.has("harvestLevel") && !json.has("harvestToolLevel")) { json.add("harvestToolLevel", json.remove("harvestLevel")); }
-        if (("blocks".equals(folder) || "items".equals(folder) || "fluids".equals(folder)) && json.has("creativeTab") && json.get("creativeTab").isJsonPrimitive()) {
+        if (("blocks".equals(folder) || "items".equals(folder) || "fluids".equals(folder)) && GsonHelper.isValidPrimitive(json, "creativeTab")) {
             String tab = json.get("creativeTab").getAsString().trim();
             if (!tab.isEmpty() && tab.indexOf(':') < 0) {
                 String vanilla = ContentFormats.vanillaTab(tab);
@@ -65,14 +65,7 @@ public final class Convert {
             }
         }
         if ("fluids".equals(folder)) {
-            for (String named : FLUID_TEXTURES) {
-                if (!json.has(named) || !json.get(named).isJsonPrimitive()) { continue; }
-                String held = json.get(named).getAsString();
-                String mapped = ConvertAssets.texturePath(held.trim());
-                if (mapped.equals(held)) { continue; }
-                json.addProperty(named, mapped);
-                pack.rewrote();
-            }
+            for (String named : FLUID_TEXTURES) { renamed(json, named, Convert::texture, pack); }
         }
         if ("gamerules".equals(folder)) {
             for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
@@ -97,16 +90,14 @@ public final class Convert {
         }
         if ("raids".equals(folder)) { renamed(json, "sound", Commands::sound, pack); }
         if ("anvils".equals(folder)) { ConvertDefinitions.anvil(json, pack); }
-        if ("player_loot".equals(folder) && json.has("table") && json.get("table").isJsonPrimitive()) { ConvertLoot.lootTable(json, "table", pack); }
+        if ("player_loot".equals(folder) && GsonHelper.isValidPrimitive(json, "table")) { ConvertLoot.lootTable(json, "table", pack); }
         JsonArray furnaceRemovals = "furnace".equals(folder) && json.has("remove") && json.get("remove").isJsonArray() ? ConvertDefinitions.furnaceRemovals(json.remove("remove").getAsJsonArray(), pack) : null;
         JsonArray exposureBlocks = "exposures".equals(folder) && json.has("blocks") && json.get("blocks").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
         JsonArray exposureItems = "exposures".equals(folder) && json.has("items") && json.get("items").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
         JsonArray exposureDimensions = "exposures".equals(folder) && json.has("dimensions") && json.get("dimensions").isJsonArray() ? ConvertDefinitions.exposureDimensions(json.remove("dimensions").getAsJsonArray(), pack) : null;
         if ("fuels".equals(folder)) { ConvertDefinitions.oreDictTags(json, "fuels", pack); }
         if ("orders".equals(folder)) { ConvertDefinitions.orderTags(json, pack); }
-        if ("entities".equals(folder) && json.has("storage") && json.get("storage").isJsonObject() && json.getAsJsonObject("storage").has("items") && json.getAsJsonObject("storage").get("items").isJsonObject()) {
-            ConvertDefinitions.oreDictTags(json.getAsJsonObject("storage").getAsJsonObject("items"), "filter", pack);
-        }
+        if ("entities".equals(folder) && json.has("storage") && json.get("storage").isJsonObject() && json.getAsJsonObject("storage").has("items") && json.getAsJsonObject("storage").get("items").isJsonObject()) { ConvertDefinitions.oreDictTags(json.getAsJsonObject("storage").getAsJsonObject("items"), "filter", pack); }
         if ("worldgen".equals(folder) && json.has("block") && json.has("meta")) {
             json.addProperty("block", json.get("block").getAsString() + ":" + json.get("meta").getAsInt());
             json.remove("meta");
@@ -119,8 +110,8 @@ public final class Convert {
         return Ported.GSON.toJson(json);
     }
 
-    private static void renamed(JsonObject json, String key, UnaryOperator<String> rename, Ported pack) {
-        if (!json.has(key) || !json.get(key).isJsonPrimitive()) { return; }
+    static void renamed(JsonObject json, String key, UnaryOperator<String> rename, Ported pack) {
+        if (!GsonHelper.isValidPrimitive(json, key)) { return; }
         String held = json.get(key).getAsString();
         String mapped = rename.apply(held);
         if (mapped.equals(held)) { return; }
@@ -128,11 +119,13 @@ public final class Convert {
         pack.rewrote();
     }
 
-    static boolean flat(JsonObject settings) { return settings.has("worldType") && settings.get("worldType").isJsonPrimitive() && FLAT_TYPES.contains(settings.get("worldType").getAsString().trim().toLowerCase(Locale.ROOT)); }
+    private static String texture(String held) { return ConvertAssets.texturePath(held.trim()); }
 
-    public static int flatShift(JsonObject settings) {
+    static boolean flat(JsonObject settings) { return GsonHelper.isValidPrimitive(settings, "worldType") && FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString())); }
+
+    static int flatShift(JsonObject settings) {
         if (!flat(settings)) { return 0; }
-        return settings.has("worldMinHeight") && settings.get("worldMinHeight").isJsonPrimitive() && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : FLAT_FLOOR;
+        return GsonHelper.isNumberValue(settings, "worldMinHeight") ? settings.get("worldMinHeight").getAsInt() : FLAT_FLOOR;
     }
 
     static String shiftY(String written, int shift) {
@@ -313,7 +306,7 @@ public final class Convert {
             return null;
         }
         if ("biomeTypes".equals(key) || "types".equals(key)) {
-            String lowered = text.trim().toLowerCase(Locale.ROOT);
+            String lowered = Settings.lower(text);
             return lowered.equals(text) ? null : new JsonPrimitive(lowered);
         }
         if ("potion".equals(key) && text.indexOf(',') > 0) {
@@ -328,7 +321,7 @@ public final class Convert {
             }
             case ENTITY -> {
                 if (text.indexOf(':') < 0 || text.contains("=")) { yield null; }
-                String mapped = pack.owns(text) ? text : Ids.entity(text);
+                String mapped = Commands.entityId(text, pack);
                 yield mapped.equals(text) ? null : rewrite(pack, mapped);
             }
             case BIOME -> {
@@ -344,7 +337,7 @@ public final class Convert {
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(json.entrySet())) {
             String named = entry.getKey().trim();
             if (named.indexOf(':') < 0) { continue; }
-            String mapped = pack.owns(named) ? named : Ids.entity(named);
+            String mapped = Commands.entityId(named, pack);
             if (mapped.equals(entry.getKey())) { continue; }
             json.remove(entry.getKey());
             json.add(mapped, entry.getValue());
@@ -364,8 +357,7 @@ public final class Convert {
         String name = split == null ? trimmed : split[0];
         int meta = split == null ? 0 : Integer.parseInt(split[1]);
         if (pack.owns(name)) {
-            String own = pack.ownBlock(name, meta);
-            if (own == null) { own = pack.ownItem(name, meta); }
+            String own = pack.block(name, meta);
             if (own == null || own.equals(trimmed)) { return null; }
             pack.rewrote();
             return new JsonPrimitive(own);
@@ -386,7 +378,7 @@ public final class Convert {
     @Nullable private static String mix(String text, Ported pack, boolean states) {
         List<String> parts = new ArrayList<>();
         boolean changed = false;
-        for (String part : Settings.entries(text)) {
+        for (String part : Snbt.split(text, ',')) {
             String entry = part.trim();
             String weight = "";
             int gap = entry.lastIndexOf(' ');
@@ -415,7 +407,7 @@ public final class Convert {
         return out.toString();
     }
 
-    public static String blockName(String text, Ported pack) {
+    static String blockName(String text, Ported pack) {
         JsonElement mapped = block(text, pack, false);
         if (mapped == null) { return text; }
         return mapped.isJsonObject() ? mapped.getAsJsonObject().get("block").getAsString() : mapped.getAsString();
@@ -426,11 +418,10 @@ public final class Convert {
         if (!trimmed.endsWith(WILDCARD)) { return List.of(itemName(text, pack)); }
         String name = trimmed.substring(0, trimmed.length() - WILDCARD.length());
         pack.rewrote();
-        if (pack.owns(name)) { return pack.ownItems(name); }
-        return Ids.isModded(name) ? List.of(name) : Ids.items(name);
+        return pack.variants(name, false);
     }
 
-    public static String itemName(String text, Ported pack) {
+    static String itemName(String text, Ported pack) {
         String trimmed = text.trim();
         if (trimmed.endsWith(WILDCARD)) {
             pack.rewrote();
@@ -441,8 +432,7 @@ public final class Convert {
         String name = split == null ? trimmed : split[0];
         int meta = split == null ? 0 : Integer.parseInt(split[1]);
         if (pack.owns(name)) {
-            String own = pack.ownItem(name, meta);
-            if (own == null) { own = pack.ownBlock(name, meta); }
+            String own = pack.item(name, meta);
             if (own == null) { return text; }
             if (!own.equals(trimmed)) { pack.rewrote(); }
             return own;
@@ -454,15 +444,10 @@ public final class Convert {
     }
 
     private static void container(JsonObject held, Ported pack) {
-        if (held.has("lootTable") && held.get("lootTable").isJsonPrimitive()) { ConvertLoot.lootTable(held, "lootTable", pack); }
+        if (GsonHelper.isValidPrimitive(held, "lootTable")) { ConvertLoot.lootTable(held, "lootTable", pack); }
         for (String key : CONTAINER_TEXTURES) {
-            if (!held.has(key) || !held.get(key).isJsonPrimitive() || !held.getAsJsonPrimitive(key).isString()) { continue; }
-            String named = held.get(key).getAsString();
-            String mapped = ConvertAssets.texturePath(named.trim());
-            if (mapped.equals(named)) { continue; }
-            held.addProperty(key, mapped);
-            pack.rewrote();
+            if (!GsonHelper.isStringValue(held, key)) { continue; }
+            renamed(held, key, Convert::texture, pack);
         }
     }
-
 }

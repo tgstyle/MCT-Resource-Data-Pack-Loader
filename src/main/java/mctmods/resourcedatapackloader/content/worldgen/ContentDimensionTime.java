@@ -122,7 +122,7 @@ final class ContentDimensionTime {
     }
 
     @Nullable private static JsonObject timeline(String name, String clock) {
-        JsonObject timeline = GameData.json(Identifier.fromNamespaceAndPath("minecraft", "timeline/" + name + ".json"));
+        JsonObject timeline = GameData.json(Identifier.withDefaultNamespace("timeline/" + name + ".json"));
         if (timeline == null) { return null; }
         timeline.addProperty("clock", clock);
         timeline.remove("time_markers");

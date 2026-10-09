@@ -18,8 +18,7 @@ import java.util.function.Consumer;
 @Mixin(HeightRangePlacement.class) public abstract class MixinHeightRangePlacement {
     @Shadow @Final private HeightProvider height;
 
-    @Inject(method = "modify(Lnet/minecraft/world/level/levelgen/placement/PlacementContext;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos origin, Consumer<BlockPos> output, CallbackInfo ci) {
+    @Inject(method = "modify(Lnet/minecraft/world/level/levelgen/placement/PlacementContext;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;Ljava/util/function/Consumer;)V", at = @At("HEAD"), cancellable = true) private void rdpl$vanillaWindow(PlacementContext context, RandomSource random, BlockPos origin, Consumer<BlockPos> output, CallbackInfo ci) {
         VanillaWindow window = VanillaWindow.of(context);
         if (window == null) { return; }
         int y = height.sample(random, window);

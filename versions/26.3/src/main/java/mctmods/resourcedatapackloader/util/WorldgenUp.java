@@ -49,6 +49,7 @@ public final class WorldgenUp {
     private static final Set<String> CACHES = Set.of("minecraft:flat_cache", "minecraft:cache_2d", "minecraft:cache_once", "minecraft:cache_all_in_cell");
     private static final Set<String> SHIFTS = Set.of("minecraft:shift_a", "minecraft:shift_b", "minecraft:shift");
     private static final Set<String> CARRIED = Set.of("minecraft:constant", "minecraft:noise", "minecraft:abs", "minecraft:square", "minecraft:cube", "minecraft:half_negative", "minecraft:quarter_negative", "minecraft:squeeze", "minecraft:add", "minecraft:mul", "minecraft:min", "minecraft:max", "minecraft:spline", "minecraft:clamp", "minecraft:range_choice", "minecraft:interval_select", "minecraft:blend_density", "minecraft:blend_alpha", "minecraft:blend_offset", "minecraft:beardifier", "minecraft:find_top_surface", "minecraft:old_blended_noise", "minecraft:interpolated");
+
     private WorldgenUp() {}
 
     public static JsonObject portedNoiseSettings(JsonObject settings, Consumer<String> note) {
@@ -343,7 +344,6 @@ public final class WorldgenUp {
                 }
             }
             case "minecraft:condition" -> {
-                if (rule.has("if_true")) { condition(rule.get("if_true")); }
                 if (rule.has("then_run")) { rule(rule.get("then_run")); }
             }
             case "minecraft:block" -> {
@@ -356,12 +356,6 @@ public final class WorldgenUp {
             }
             default -> {}
         }
-    }
-
-    private static void condition(JsonElement element) {
-        if (!element.isJsonObject()) { return; }
-        JsonObject condition = element.getAsJsonObject();
-        if ("minecraft:not".equals(type(condition)) && condition.has("invert")) { condition(condition.get("invert")); }
     }
 
     private static JsonElement withoutVeins(JsonElement element) {

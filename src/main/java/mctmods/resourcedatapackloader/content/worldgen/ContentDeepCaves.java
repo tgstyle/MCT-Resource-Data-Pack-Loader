@@ -54,8 +54,8 @@ public final class ContentDeepCaves {
 
     public static void deepen(JsonObject settings, Identifier owner, int floor) {
         JsonObject router = GsonHelper.getAsJsonObject(settings, "noise_router", null);
-        JsonObject noodle = GameData.json(Identifier.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/noodle.json"));
-        JsonObject spaghetti = GameData.json(Identifier.fromNamespaceAndPath("minecraft", FOLDER + "/overworld/caves/spaghetti_2d.json"));
+        JsonObject noodle = GameData.json(WorldgenFiles.id(FOLDER, Identifier.parse(VANILLA_NOODLE)));
+        JsonObject spaghetti = GameData.json(WorldgenFiles.id(FOLDER, Identifier.parse(VANILLA_SPAGHETTI)));
         if (router == null || !router.has("final_density") || noodle == null || spaghetti == null) {
             ContentLog.LOGGER.error("The game's overworld noise could not be read for {}, so the world under {} stays solid", owner, ContentWorldShape.VANILLA_MIN);
             return;

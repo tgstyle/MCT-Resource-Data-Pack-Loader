@@ -1,9 +1,8 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -14,7 +13,7 @@ import java.util.List;
 public final class ContentDicePile extends SavedData {
     private static final String NAME = "rdpl_dice";
     private static final String TAG = "rdplDecks";
-    private static final SavedDataType<ContentDicePile> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), ContentDicePile::new, CompoundTag.CODEC.xmap(ContentDicePile::read, ContentDicePile::write));
+    private static final SavedDataType<ContentDicePile> TYPE = SavedTypes.of(NAME, ContentDicePile::new, ContentDicePile::read, ContentDicePile::write);
     private CompoundTag piles = new CompoundTag();
 
     private static ContentDicePile of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }

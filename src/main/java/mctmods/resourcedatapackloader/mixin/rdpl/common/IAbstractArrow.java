@@ -5,5 +5,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(AbstractArrow.class) public interface IAbstractArrow {
-    @Accessor("baseDamage") double rdpl$baseDamage();
+    @Accessor("baseDamage") double rdpl$getBaseDamage();
 }

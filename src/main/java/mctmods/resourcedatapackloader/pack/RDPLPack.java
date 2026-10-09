@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
-import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Crossed;
 import mctmods.resourcedatapackloader.pack.port.IPackPort;
+import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -25,6 +25,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
@@ -45,9 +46,7 @@ public final class RDPLPack {
     @Nullable private final IPackPort ported;
     private int fileCount;
 
-    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) {
-        this(name, priority, overriding, root, owned, null);
-    }
+    RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned) { this(name, priority, overriding, root, owned, null); }
 
     RDPLPack(String name, int priority, boolean overriding, Path root, @Nullable FileSystem owned, @Nullable Set<String> ownedNamespaces) {
         this.name = name;
@@ -134,7 +133,7 @@ public final class RDPLPack {
         try (Stream<Path> stream = Files.walk(dir)) {
             for (String path : (Iterable<String>) stream.filter(Files::isRegularFile).map(p -> relative(dir, p))::iterator) {
                 if (path.startsWith(PackManager.ROOT_DIRECTORY + "/")) { nested++; }
-                else if ((!carriedOnly || Port.unchanged(path)) && (superseded == null || !Crossed.moves(namespace, path, superseded))) { paths.add(path); }
+                else if ((!carriedOnly || Port.unchanged(path)) && (superseded == null || Crossed.keepsPlace(namespace, path, superseded))) { paths.add(path); }
             }
         }
         catch (IOException | UncheckedIOException ex) {
@@ -155,7 +154,7 @@ public final class RDPLPack {
         }
     }
 
-    private static String key(PackType type, String namespace, String path) { return type.getDirectory() + "/" + namespace + "/" + path; }
+    public static String key(PackType type, String namespace, String path) { return type.getDirectory() + "/" + namespace + "/" + path; }
 
     private static String relative(Path dir, Path file) {
         String base = dir.toString().replace('\\', '/');
@@ -190,31 +189,29 @@ public final class RDPLPack {
         try (InputStream stream = open(type, namespace, path)) { return new String(stream.readAllBytes(), StandardCharsets.UTF_8); }
     }
 
-    public List<String> files(PackType type, String folder, String ext) {
+    private void matching(PackType type, String folder, String ext, BiConsumer<String, String> consumer) {
         String prefix = folder + "/";
         String suffix = "." + ext;
-        List<String> found = new ArrayList<>();
         for (Map.Entry<String, Set<String>> entry : index.getOrDefault(type, Collections.emptyMap()).entrySet()) {
             for (String path : entry.getValue()) {
-                if (path.startsWith(prefix) && path.endsWith(suffix)) { found.add(entry.getKey() + ":" + path.substring(prefix.length(), path.length() - suffix.length())); }
+                if (path.startsWith(prefix) && path.endsWith(suffix)) { consumer.accept(entry.getKey(), path.substring(prefix.length(), path.length() - suffix.length())); }
             }
         }
+    }
+
+    public List<String> files(PackType type, String folder, String ext) {
+        List<String> found = new ArrayList<>();
+        matching(type, folder, ext, (namespace, id) -> found.add(namespace + ":" + id));
         Collections.sort(found);
         return found;
     }
 
     public void forEach(PackType type, String folder, String ext, IPackConsumer consumer) {
-        String prefix = folder + "/";
-        String suffix = "." + ext;
-        for (Map.Entry<String, Set<String>> entry : index.getOrDefault(type, Collections.emptyMap()).entrySet()) {
-            String namespace = entry.getKey();
-            for (String path : entry.getValue()) {
-                if (!path.startsWith(prefix) || !path.endsWith(suffix)) { continue; }
-                String id = path.substring(prefix.length(), path.length() - suffix.length());
-                try { consumer.accept(namespace, id, read(type, namespace, path)); }
-                catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}/{}/{}", name, type.getDirectory(), namespace, path, ex); }
-            }
-        }
+        matching(type, folder, ext, (namespace, id) -> {
+            String path = folder + "/" + id + "." + ext;
+            try { consumer.accept(namespace, id, read(type, namespace, path)); }
+            catch (IOException ex) { ContentLog.LOGGER.error("Pack '{}': could not read {}/{}/{}", name, type.getDirectory(), namespace, path, ex); }
+        });
     }
 
     public List<String> packFiles(String folder, String ext) {

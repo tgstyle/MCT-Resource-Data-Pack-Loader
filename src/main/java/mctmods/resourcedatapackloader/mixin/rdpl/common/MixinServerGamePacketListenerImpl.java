@@ -10,7 +10,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerGamePacketListenerImpl.class) public abstract class MixinServerGamePacketListenerImpl {
-    @Inject(method = "handleChatSessionUpdate", at = @At("HEAD"), cancellable = true) private void rdpl$keepNoSession(ServerboundChatSessionUpdatePacket packet, CallbackInfo ci) {
-        if (ContentServer.privacy()) { ci.cancel(); }
-    }
+    @Inject(method = "handleChatSessionUpdate", at = @At("HEAD"), cancellable = true) private void rdpl$keepNoSession(ServerboundChatSessionUpdatePacket packet, CallbackInfo ci) { if (ContentServer.privacy()) { ci.cancel(); } }
 }

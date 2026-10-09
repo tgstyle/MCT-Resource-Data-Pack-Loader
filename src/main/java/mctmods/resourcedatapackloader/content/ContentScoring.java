@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.card.CardFire;
 import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.card.CardLook;
@@ -21,8 +22,8 @@ import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -35,6 +36,7 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
+import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.neoforge.event.entity.item.ItemTossEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
@@ -66,7 +68,7 @@ public final class ContentScoring {
     private static final Set<String> IN_PLAY = new LinkedHashSet<>();
     private static final int OPENS_IN = 5;
     private static final int SETTLE_TICKS = 3;
-    private static final int MINUTE_TICKS = 20 * 60;
+    private static final int MINUTE_TICKS = SharedConstants.TICKS_PER_MINUTE;
     private static final String PLAYER = "minecraft:player";
     private static final String RESET = "reset";
     private static final String LAST_STANDING = "last standing";
@@ -84,6 +86,7 @@ public final class ContentScoring {
 
     public static void load() {
         BY_NAME.clear();
+        FINISHED.clear();
         ContentRoundReset.clear();
         Json.eachFile(PackManager.SCORING, "score file", (key, contents) -> {
             ScoreDef def = ContentParserGames.scoreFile(key, contents);
@@ -110,9 +113,7 @@ public final class ContentScoring {
         return false;
     }
 
-    public static void onLevelLoad(LevelEvent.Load event) {
-        if (event.getLevel() instanceof ServerLevel level) { keep(level); }
-    }
+    public static void onLevelLoad(LevelEvent.Load event) { if (event.getLevel() instanceof ServerLevel level) { keep(level); } }
 
     public static void onDeath(LivingDeathEvent event) {
         if (BY_NAME.isEmpty()) { return; }
@@ -125,7 +126,7 @@ public final class ContentScoring {
         boolean own = killerSide != null && killerSide.equals(diedSide);
         boolean scored = false;
         for (ScoreDef def : BY_NAME.values()) {
-            if (!def.fed()) { continue; }
+            if (def.unfed()) { continue; }
             Integer worth = def.killPoints().get(killed);
             if (worth != null && killer != null) {
                 scored = true;
@@ -143,14 +144,12 @@ public final class ContentScoring {
 
     private static String kindOf(Entity entity) { return entity instanceof Player ? PLAYER : EntityType.getKey(entity.getType()).toString(); }
 
-    private static String memberOf(Entity entity) { return entity instanceof Player player ? player.getGameProfile().name() : entity.getStringUUID(); }
-
     private static void credit(ServerLevel level, ScoreDef def, Entity who, int points) {
         if (closed || def.ends() && FINISHED.contains(def.name())) { return; }
         Scoreboard board = Scores.board(level.getServer());
         Objective objective = Scores.objective(board, def.name());
         if (objective == null) { return; }
-        if (def.individuals()) { bump(board, objective, memberOf(who), points); }
+        if (def.individuals()) { bump(board, objective, ContentTeams.memberName(who), points); }
         if (!def.teamTotals()) { return; }
         String side = sideOf(level, who);
         if (side == null) { return; }
@@ -159,7 +158,7 @@ public final class ContentScoring {
     }
 
     @Nullable static String sideOf(ServerLevel level, Entity who) {
-        PlayerTeam team = Scores.teamOf(Scores.board(level.getServer()), memberOf(who));
+        PlayerTeam team = ContentTeams.teamOf(level.getServer(), ContentTeams.memberName(who));
         if (team != null) { return team.getName(); }
         if (who instanceof Player) { return null; }
         List<TeamDef> claiming = ContentTeams.claiming(kindOf(who));
@@ -227,14 +226,14 @@ public final class ContentScoring {
             waiting = Math.max(1, def.endsIntermission());
             ContentLog.LOGGER.info("The map is reset in {} second(s), so the scores can be read first", def.endsIntermission());
         }
-        ItemStack icon = def.resultsIcon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(Identifier.fromNamespaceAndPath("resourcedatapackloader", "results"), def.resultsIcon(), 1);
+        ItemStack icon = def.resultsIcon().isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(ResourceDataPackLoader.id("results"), def.resultsIcon(), 1);
         if (!CardRules.unset(CardIds.SCORING_RESULTS)) {
             for (ServerPlayer player : server.getPlayerList().getPlayers()) { CardFire.builtin(CardIds.SCORING_RESULTS, player, CardLook.card(def.resultsTitle(), lines, icon, def.resultsImage(), def.resultsBackground(), def.resultsTicks())); }
             return;
         }
         if (!def.resultsCard()) {
-            Says.tellAll(server, def.displayName() + " is over", ChatFormatting.GOLD);
-            for (String line : lines) { Says.tellAll(server, line, ChatFormatting.YELLOW); }
+            Says.tellAll(server, ChatFormatting.GOLD, def.displayName() + " is over");
+            for (String line : lines) { Says.tellAll(server, ChatFormatting.YELLOW, line); }
             return;
         }
         MessageCard card = new MessageCard(def.resultsTitle(), lines, icon, def.resultsImage(), def.resultsBackground(), 0xFFFFFF, def.resultsTicks(), false, Says.panel(), Says.font());
@@ -243,8 +242,8 @@ public final class ContentScoring {
                 RDPLNetwork.sendCard(player, card);
                 continue;
             }
-            Says.tell(player, def.resultsTitle(), ChatFormatting.GOLD);
-            for (String line : lines) { Says.tell(player, line, ChatFormatting.YELLOW); }
+            Says.tell(player, ChatFormatting.GOLD, def.resultsTitle());
+            for (String line : lines) { Says.tell(player, ChatFormatting.YELLOW, line); }
         }
     }
 
@@ -344,13 +343,10 @@ public final class ContentScoring {
             String side = sideOf(overworld, player);
             if (side != null) { sides.merge(side, 1, Integer::sum); }
         }
-        for (ServerLevel level : server.getAllLevels()) {
-            for (Entity one : level.getAllEntities()) {
-                if (one instanceof Player || !one.isAlive() || !(one instanceof LivingEntity living) || living.getHealth() <= 0.0F) { continue; }
-                String side = sideOf(level, one);
-                if (side != null) { sides.merge(side, 1, Integer::sum); }
-            }
-        }
+        ContentTeams.eachAlive(server, LivingEntity.class, (level, one) -> {
+            String side = sideOf(level, one);
+            if (side != null) { sides.merge(side, 1, Integer::sum); }
+        });
         if (IN_PLAY.isEmpty()) {
             IN_PLAY.addAll(sides.keySet());
             if (IN_PLAY.size() < 2) { ContentLog.LOGGER.info("Only {} side(s) are in play, so the round cannot end on the last side standing", IN_PLAY.size()); }
@@ -385,7 +381,7 @@ public final class ContentScoring {
         }
         player.setGameMode(GameType.SPECTATOR);
         String said = outSays();
-        if (!said.isEmpty()) { Says.tell(player, CardIds.SCORING_OUT, said, ChatFormatting.GRAY); }
+        if (!said.isEmpty()) { Says.tell(player, CardIds.SCORING_OUT, ChatFormatting.GRAY, said); }
     }
 
     public static void onBack(PlayerEvent.PlayerLoggedInEvent event) {
@@ -438,37 +434,23 @@ public final class ContentScoring {
         event.setCanceled(true);
     }
 
-    public static void onHeldHurt(LivingIncomingDamageEvent event) {
-        if (event.getEntity() instanceof Player && !event.getEntity().level().isClientSide() && holding()) { event.setCanceled(true); }
-    }
+    public static void onHeldHurt(LivingIncomingDamageEvent event) { if (event.getEntity() instanceof Player && !event.getEntity().level().isClientSide() && holding()) { event.setCanceled(true); } }
 
-    public static void onHeldHit(AttackEntityEvent event) {
-        if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
-    }
+    public static void onHeldHit(AttackEntityEvent event) { refuse(event, event.getEntity()); }
 
-    public static void onHeldDig(PlayerInteractEvent.LeftClickBlock event) {
-        if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
-    }
+    public static void onHeldDig(PlayerInteractEvent.LeftClickBlock event) { refuse(event, event.getEntity()); }
 
-    public static void onHeldUse(PlayerInteractEvent.RightClickBlock event) {
-        if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
-    }
+    public static void onHeldUse(PlayerInteractEvent.RightClickBlock event) { refuse(event, event.getEntity()); }
 
-    public static void onHeldItem(PlayerInteractEvent.RightClickItem event) {
-        if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
-    }
+    public static void onHeldItem(PlayerInteractEvent.RightClickItem event) { refuse(event, event.getEntity()); }
 
-    public static void onHeldTouch(PlayerInteractEvent.EntityInteract event) {
-        if (ContentScoringLobby.refused(event.getEntity())) { event.setCanceled(true); }
-    }
+    public static void onHeldTouch(PlayerInteractEvent.EntityInteract event) { refuse(event, event.getEntity()); }
 
-    public static void onHeldBreak(BreakBlockEvent event) {
-        if (ContentScoringLobby.refused(event.getPlayer())) { event.setCanceled(true); }
-    }
+    public static void onHeldBreak(BreakBlockEvent event) { refuse(event, event.getPlayer()); }
 
-    public static void onHeldPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof Player player && ContentScoringLobby.refused(player)) { event.setCanceled(true); }
-    }
+    public static void onHeldPlace(BlockEvent.EntityPlaceEvent event) { if (event.getEntity() instanceof Player player) { refuse(event, player); } }
+
+    private static void refuse(ICancellableEvent event, Player player) { if (ContentScoringLobby.refused(player)) { event.setCanceled(true); } }
 
     public static void onHeldToss(ItemTossEvent event) {
         if (!ContentScoringLobby.refused(event.getPlayer())) { return; }
@@ -477,25 +459,23 @@ public final class ContentScoring {
         event.getPlayer().inventoryMenu.broadcastChanges();
     }
 
-    public static void greet(ServerPlayer player) {
-        if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getGameProfile().name(), player.level().getGameTime() + ContentScoringLobby.NOTE_TICKS); }
-    }
+    public static void greet(ServerPlayer player) { if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getGameProfile().name(), player.level().getGameTime() + ContentScoringLobby.NOTE_TICKS); } }
 
-    public static String start(MinecraftServer server, @Nullable ServerPlayer who, String name, boolean operator) {
-        if (lobbyDef() == null) { return "This pack's rounds open on their own"; }
-        if (!closed) { return "The round is already running"; }
-        if (!operator && (who == null || ContentTeams.leadsNoSide(who))) { return "Only a side's leader starts the round"; }
+    public static RoundSay start(MinecraftServer server, @Nullable ServerPlayer who, String name, boolean operator) {
+        if (lobbyDef() == null) { return RoundSay.bad("rdpl.round.start.opens"); }
+        if (!closed) { return RoundSay.bad("rdpl.round.start.running"); }
+        if (!operator && (who == null || ContentTeams.leadsNoSide(who))) { return RoundSay.bad("rdpl.round.start.leaderonly"); }
         List<String> reading = new ArrayList<>();
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (ContentIntroPlay.reading(player.getUUID())) { reading.add(player.getGameProfile().name()); }
         }
-        if (!reading.isEmpty()) { return "Not yet: still reading the intro: " + String.join(", ", reading); }
+        if (!reading.isEmpty()) { return RoundSay.bad("rdpl.round.start.reading", String.join(", ", reading)); }
         closed = false;
         opening = lobbyDef();
         starting = OPENS_IN;
         count(server);
         ContentLog.LOGGER.info("{} started the round", name);
-        return "The round starts";
+        return RoundSay.good("rdpl.round.start.ok");
     }
 
     private static void count(MinecraftServer server) {

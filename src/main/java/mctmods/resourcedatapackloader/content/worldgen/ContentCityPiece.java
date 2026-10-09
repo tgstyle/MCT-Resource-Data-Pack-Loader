@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.LEG;
+
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
@@ -13,6 +15,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -22,17 +25,16 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
+import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 public final class ContentCityPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPiece::new;
-    private static final int CLEAR = 4;
     private static final int VERGE = 1;
-    private static final int LEG = 4;
     private static final int NARROW = 3;
     private static final String PAVING = "Paving";
     private static final String LEVEL = "Level";
@@ -61,7 +63,8 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
     private final int lampAt;
     private final String keys;
     private final boolean pinned;
-    @javax.annotation.Nullable private JsonObject roadKeys;
+    @Nullable private JsonObject roadKeys;
+    private boolean keysRead;
 
     public ContentCityPiece(int fromX, int fromZ, int toX, int toZ, int level, String paving, int middle, boolean alongX, boolean alley, int width, boolean bridged, boolean bored, int[] frames, int lampAt, String keys, boolean pinned) {
         super(TYPE, 0, box(fromX, fromZ, toX, toZ, level, alongX));
@@ -133,7 +136,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         return bored && y >= level - 1 && x >= held.minX() && x <= held.maxX() && z >= held.minZ() && z <= held.maxZ();
     }
 
-    @Override @javax.annotation.Nullable public BoundingBox stood() { return bored ? null : paved(); }
+    @Override @Nullable public BoundingBox stood() { return bored ? null : paved(); }
 
     @Override @Nonnull public BoundingBox owned() {
         if (bridged) { return ContentCityTrees.bridge(paved(), level, ContentCity.frameHeight()); }
@@ -143,10 +146,21 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
 
     @Override public int fellFloor() { return level - 1; }
 
-    @Override @javax.annotation.Nullable public BoundingBox crowned() {
+    @Override @Nullable public BoundingBox crowned() {
         if (bored) { return null; }
         BoundingBox paved = paved();
         return new BoundingBox(paved.minX() - CityPlotGround.RING, level + 1, paved.minZ() - CityPlotGround.RING, paved.maxX() + CityPlotGround.RING, Math.max(level + CityPlotClearing.OPEN_LEAST, paved.maxY() + CityPlotClearing.OPEN_LEAST + 1), paved.maxZ() + CityPlotGround.RING);
+    }
+
+    private record Dress(BlockState road, BlockState deck, BlockState support, boolean chosen, BlockState edge, BlockState walk, BlockState center) {
+        static Dress of(String paving, BlockState planks, @Nullable CityPlan plan, boolean bridged, boolean alley, boolean alongX) {
+            BlockState deck = CityPalette.stateOr(ContentCity.bridgeBlock(), planks);
+            BlockState road = CityPalette.stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
+            if (bridged) { road = deck; }
+            BlockState walk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
+            if (bridged) { walk = CityPalette.stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
+            return new Dress(road, deck, ContentCity.support(plan), bridged || ContentCity.pavingChosen(alley), CityPalette.axised(CityPalette.stateOr(ContentCity.lineBlock(), road), alongX), walk, CityPalette.axised(CityPalette.stateOr(ContentCity.centerBlock(), road), alongX));
+        }
     }
 
     private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
@@ -156,15 +170,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         List<CityPlan.Line> crossing = street == null ? List.of() : plan.crossing(street);
         Map<CityPlan.Line, Square> squares = new HashMap<>();
         BlockState planks = ContentCity.planks(plan);
-        BlockState road = CityPalette.stateOr(paving, Blocks.DIRT_PATH.defaultBlockState());
-        BlockState deck = CityPalette.stateOr(ContentCity.bridgeBlock(), planks);
-        BlockState support = ContentCity.support(plan);
-        boolean chosen = bridged || ContentCity.pavingChosen(alley);
-        if (bridged) { road = deck; }
-        BlockState edge = CityPalette.axised(CityPalette.stateOr(ContentCity.lineBlock(), road), alongX);
-        BlockState walk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
-        if (bridged) { walk = CityPalette.stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
-        BlockState center = CityPalette.axised(CityPalette.stateOr(ContentCity.centerBlock(), road), alongX);
+        Dress dress = Dress.of(paving, planks, plan, bridged, alley, alongX);
         BlockState air = Blocks.AIR.defaultBlockState();
         CityCross cross = CityCross.of(width, alley);
         int dash = ContentCity.centerDash();
@@ -178,18 +184,11 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         int spared = 0;
         int blocked = 0;
         int lifted = 0;
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (CityBiome.moved(level, x, z)) {
-                    road = CityPalette.stateOr(ContentCity.paving(alley), Blocks.DIRT_PATH.defaultBlockState());
-                    deck = CityPalette.stateOr(ContentCity.bridgeBlock(), planks);
-                    support = ContentCity.support(plan);
-                    chosen = bridged || ContentCity.pavingChosen(alley);
-                    if (bridged) { road = deck; }
-                    edge = CityPalette.axised(CityPalette.stateOr(ContentCity.lineBlock(), road), alongX);
-                    walk = CityPalette.stateOr(ContentCity.sidewalkBlock(), road);
-                    if (bridged) { walk = CityPalette.stateOr(ContentCity.bridgeSidewalkBlock(), walk); }
-                    center = CityPalette.axised(CityPalette.stateOr(ContentCity.centerBlock(), road), alongX);
+                    dress = Dress.of(ContentCity.paving(alley), planks, plan, bridged, alley, alongX);
                 }
                 int across = alongX ? z : x;
                 if (across < pavedLeast() || across > pavedMost()) { continue; }
@@ -204,7 +203,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 BlockState standing = level.getBlockState(at);
                 boolean wet = !bridged && overWater(level, ground, at, x, z);
                 at.set(x, deckY, z);
-                if (!bridged && CityPlotGround.inTheWay(standing, road, support, deck)) {
+                if (!bridged && CityPlotGround.inTheWay(standing, dress.road(), dress.support(), dress.deck())) {
                     if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The street at {}, {} left {}, {}, {} unpaved because {} was already standing there and is not a surface a street may be laid over", held.minX(), held.minZ(), x, this.level, z, standing); }
                     blocked++;
                     continue;
@@ -213,33 +212,33 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                     blocked++;
                     continue;
                 }
-                BlockState surface = chosen ? road : CityPlotGround.pathForGround(level, x, z, road, support, CityPlotGround.earthy(standing));
+                BlockState surface = dress.chosen() ? dress.road() : CityPlotGround.pathForGround(level, x, z, dress.road(), dress.support(), CityPlotGround.earthy(standing));
                 int along = alongX ? x : z;
                 int offset = Math.abs(across - middle);
                 CityPlan.Line other = street == null ? null : squareAt(street, crossing, along);
                 BlockState mouthed = ContentCityPlazaPiece.mouthAt(plazas, x, z);
-                BlockState laid = mouthed != null ? mouthed : other != null ? squares.computeIfAbsent(other, met -> Square.of(ground, plan, alongX ? street : met, alongX ? met : street)).cell(x, z, surface, road, walk) : switch (cross.role(offset)) {
-                    case CityCross.WALK -> walk == road ? surface : walk;
-                    case CityCross.LINE -> edge == road ? surface : edge;
-                    case CityCross.CORE -> offset == 0 && !alley && dashed(along, dash) && center != road ? center : surface;
+                BlockState laid = mouthed != null ? mouthed : other != null ? squares.computeIfAbsent(other, met -> Square.of(ground, plan, alongX ? street : met, alongX ? met : street)).cell(x, z, surface, dress.road(), dress.walk()) : switch (cross.role(offset)) {
+                    case CityCross.WALK -> dress.walk() == dress.road() ? surface : dress.walk();
+                    case CityCross.LINE -> dress.edge() == dress.road() ? surface : dress.edge();
+                    case CityCross.CORE -> offset == 0 && !alley && dashed(along, dash) && dress.center() != dress.road() ? dress.center() : surface;
                     default -> surface;
                 };
                 at.set(x, deckY, z);
-                level.setBlock(at, laid, 2);
+                level.setBlock(at, laid, Block.UPDATE_CLIENTS);
                 if (wet) {
                     if (!pinned || onPiling(along, offset)) {
                         at.set(x, this.level - 1, z);
-                        level.setBlock(at, support, 2);
-                        CityPlotGround.pier(level, box, x, this.level - 2, z, fillFloor(bores, x, z, level.getMinY() + 1), ground.floor(x, z), support);
+                        level.setBlock(at, dress.support(), Block.UPDATE_CLIENTS);
+                        CityPlotGround.pier(level, box, x, this.level - 2, z, CityRails.fillFloor(bores, x, z, level.getMinY() + 1), ground.floor(x, z), dress.support());
                     }
                 }
-                else if (!bridged) { CityPlotGround.fillUnder(level, box, x, z, this.level - 1, fillFloor(bores, x, z, this.level - CityPlotGround.FILL_UNDER)); }
+                else if (!bridged) { CityPlotGround.fillUnder(level, box, x, z, this.level - 1, CityRails.fillFloor(bores, x, z, this.level - CityPlotGround.FILL_UNDER)); }
                 int reach = bridged || bored ? CLEAR : Math.max(CLEAR, level.getHeight(Heightmap.Types.WORLD_SURFACE, x, z) + 1 - this.level);
                 for (int up = 1; up <= reach; up++) {
                     at.set(x, deckY + up, z);
                     BlockState over = level.getBlockState(at);
                     if (bridged && CityPlotGround.solid(over) || up > CLEAR && CityPlotGround.liquid(over)) { break; }
-                    if (ContentCityTrees.clears(level, at, over) && !CityPlotGround.decoration(over)) { level.setBlock(at, air, 2); }
+                    if (ContentCityTrees.clears(level, at, over) && !CityPlotGround.decoration(over)) { level.setBlock(at, air, Block.UPDATE_CLIENTS); }
                     else if (up > CLEAR && CityPlotGround.solid(over)) { break; }
                 }
             }
@@ -247,7 +246,6 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         if (spared > 0) { ContentLog.LOGGER.debug("The street at {}, {} left {} column(s) to a well or the plaza paved around one", held.minX(), held.minZ(), spared); }
         if (blocked > 0) { ContentLog.LOGGER.debug("The street at {}, {} left {} column(s) unpaved to blocks already standing at its level", held.minX(), held.minZ(), blocked); }
         if (lifted > 0) { ContentLog.LOGGER.debug("The street at {}, {} lifts its deck over {} column(s) of water standing at its level", held.minX(), held.minZ(), lifted); }
-
         if (!bored) { verges(level, box, ContentCityTrees.footprints(manager, chunk, this, box), bores); }
         if (bridged && width > NARROW) { barriers(level, box, cross); }
         if (bridged) { frames(level, manager, chunk, box, cross, bores); }
@@ -268,15 +266,10 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         return false;
     }
 
-    private static int fillFloor(List<CityRails.Laid> bores, int x, int z, int deep) {
-        int roof = CityRails.boreRoof(bores, x, z);
-        return roof == Integer.MIN_VALUE ? deep : Math.max(deep, roof + 1);
-    }
-
     private void verges(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, List<CityRails.Laid> bores) {
         BoundingBox held = getBoundingBox();
-        int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int first = CityClip.first(box, held, alongX);
+        int last = CityClip.last(box, held, alongX);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int along = first; along <= last; along++) {
             for (int side = 0; side < 2; side++) {
@@ -294,14 +287,14 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         CityPalette linings = CityPalette.mixed(ContentCity.tunnelBlock());
         if (linings == null) { return; }
         long seed = level.getSeed();
-        BlockState lamp = block(ContentCity.tunnelLightBlock());
+        BlockState lamp = CityPalette.state(ContentCity.tunnelLightBlock());
         BlockState air = Blocks.AIR.defaultBlockState();
         int run = ContentCity.tunnelLightRun();
         int wall = cross.curb() + 1;
         int roof = this.level + CLEAR + 1;
         BoundingBox held = getBoundingBox();
-        int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int first = CityClip.first(box, held, alongX);
+        int last = CityClip.last(box, held, alongX);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int along = first; along <= last; along++) {
             for (int side = -1; side <= 1; side += 2) {
@@ -309,7 +302,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 int wallZ = alongX ? middle + side * wall : along;
                 for (int up = 0; up <= CLEAR; up++) {
                     at.set(wallX, this.level + up, wallZ);
-                    if (box.isInside(at)) { level.setBlock(at, linings.pick(seed, wallX, this.level + up, wallZ), 2); }
+                    if (box.isInside(at)) { level.setBlock(at, linings.pick(seed, wallX, this.level + up, wallZ), Block.UPDATE_CLIENTS); }
                 }
                 CityPlotGround.wallFoot(level, box, bores, wallX, wallZ, this.level - 1, linings.pick(seed, wallX, this.level - 1, wallZ));
             }
@@ -319,19 +312,19 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 at.set(roofX, roof, roofZ);
                 if (!box.isInside(at)) { continue; }
                 boolean lit = across == middle && (Math.floorMod(along, run) == 0 || along == lampAt);
-                level.setBlock(at, lit && lamp != null ? lamp : linings.pick(seed, roofX, roof, roofZ), 2);
+                level.setBlock(at, lit && lamp != null ? lamp : linings.pick(seed, roofX, roof, roofZ), Block.UPDATE_CLIENTS);
             }
             for (int across = middle - cross.curb(); across <= middle + cross.curb(); across++) {
                 for (int up = 1; up <= CLEAR; up++) {
                     at.set(alongX ? along : across, this.level + up, alongX ? across : along);
-                    if (box.isInside(at)) { level.setBlock(at, air, 2); }
+                    if (box.isInside(at)) { level.setBlock(at, air, Block.UPDATE_CLIENTS); }
                 }
             }
         }
     }
 
     private void barriers(WorldGenLevel level, BoundingBox box, CityCross cross) {
-        BlockState rail = block(ContentCity.bridgeBarrierBlock());
+        BlockState rail = CityPalette.state(ContentCity.bridgeBarrierBlock());
         if (rail == null) { return; }
         int height = ContentCity.bridgeBarrierHeight();
         BoundingBox held = getBoundingBox();
@@ -341,8 +334,8 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         List<CityRails.Laid> tracks = street == null ? List.of() : CityRails.subways(ground, held.minX(), held.minZ(), held.maxX(), held.maxZ());
         List<CityPlan.Line> crossing = street == null ? List.of() : plan.crossing(street);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        int from = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int to = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int from = CityClip.first(box, held, alongX);
+        int to = CityClip.last(box, held, alongX);
         for (int along = from; along <= to; along++) {
             CityPlan.Line square = street == null ? null : squareAt(street, crossing, along);
             if (square != null) {
@@ -359,7 +352,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         }
     }
 
-    @javax.annotation.Nullable private CityPlan.Line squareAt(CityPlan.Line street, List<CityPlan.Line> crossing, int along) {
+    @Nullable private CityPlan.Line squareAt(CityPlan.Line street, List<CityPlan.Line> crossing, int along) {
         for (CityPlan.Line other : crossing) {
             if (!alley && other.alley()) { continue; }
             if (along >= other.at() && along <= other.last() && other.from() <= street.last() + 1 && other.to() >= street.at() - 1) { return other; }
@@ -372,22 +365,16 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         CityPlan.Line ns = alongX ? other : street;
         CityCross ewCross = alongX ? cross : CityCross.of(other);
         CityCross nsCross = alongX ? CityCross.of(other) : cross;
-        boolean west = ew.from() < ns.at();
-        boolean east = ew.to() > ns.last();
-        boolean north = ns.from() < ew.at();
-        boolean south = ns.to() > ew.last();
+        int arms = (ew.from() < ns.at() ? CityCross.WEST : 0) | (ew.to() > ns.last() ? CityCross.EAST : 0) | (ns.from() < ew.at() ? CityCross.NORTH : 0) | (ns.to() > ew.last() ? CityCross.SOUTH : 0);
+        Square square = new Square(ew, ns, ewCross, nsCross, arms);
         for (int across = middle - cross.curb(); across <= middle + cross.curb(); across++) {
             int x = alongX ? along : across;
             int z = alongX ? across : along;
-            int offX = Math.abs(x - ns.middle());
-            int offZ = Math.abs(z - ew.middle());
-            boolean onEw = offZ <= ewCross.core() && (offX <= nsCross.core() || (x < ns.middle() && west) || (x > ns.middle() && east));
-            boolean onNs = offX <= nsCross.core() && (offZ <= ewCross.core() || (z < ew.middle() && north) || (z > ew.middle() && south));
-            if (onEw || onNs) { continue; }
-            boolean armX = x > ns.middle() ? east : x == ns.middle() || west;
-            boolean armZ = z > ew.middle() ? south : z == ew.middle() || north;
-            boolean edgeX = offX == nsCross.curb();
-            boolean edgeZ = offZ == ewCross.curb();
+            if (square.road(x, z)) { continue; }
+            boolean armX = square.armedX(x);
+            boolean armZ = square.armedZ(z);
+            boolean edgeX = Math.abs(x - ns.middle()) == nsCross.curb();
+            boolean edgeZ = Math.abs(z - ew.middle()) == ewCross.curb();
             if (!((!armX && edgeX) || (!armZ && edgeZ) || (armX && armZ && edgeX && edgeZ))) { continue; }
             raise(level, box, at, rail, height, x, z);
         }
@@ -399,22 +386,14 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         return deckY;
     }
 
-    private void raise(WorldGenLevel level, BoundingBox box, BlockPos.MutableBlockPos at, BlockState rail, int height, int x, int z) {
-        int deckY = risen(level, at, x, z);
-        for (int up = 1; up <= height; up++) {
-            at.set(x, deckY + up, z);
-            if (!box.isInside(at)) { continue; }
-            if (CityPlotGround.solid(level.getBlockState(at))) { break; }
-            level.setBlock(at, rail, 2);
-        }
-    }
+    private void raise(WorldGenLevel level, BoundingBox box, BlockPos.MutableBlockPos at, BlockState rail, int height, int x, int z) { CityPlotGround.raise(level, box, at, rail, height, x, risen(level, at, x, z), z); }
 
     static boolean deckBlocked(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int deckY, int z) {
         for (int up = 0; up <= CLEAR; up++) {
             BlockState held = level.getBlockState(at.set(x, deckY + up, z));
             if (!CityPlotGround.solid(held)) { continue; }
             if (!CityPlotGround.terrain(held)) { break; }
-            level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+            level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
         }
         return CityPlotGround.solid(level.getBlockState(at.set(x, deckY, z)));
     }
@@ -424,16 +403,26 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
 
         private boolean has(int arm) { return (arms & arm) != 0; }
 
-        BlockState cell(int x, int z, BlockState surface, BlockState road, BlockState walk) {
+        private boolean road(int x, int z) {
             int centerX = ns.middle();
             int centerZ = ew.middle();
             int offX = Math.abs(x - centerX);
             int offZ = Math.abs(z - centerZ);
             boolean onEw = offZ <= ewCross.core() && (offX <= nsCross.core() || (x < centerX && has(CityCross.WEST)) || (x > centerX && has(CityCross.EAST)));
             boolean onNs = offX <= nsCross.core() && (offZ <= ewCross.core() || (z < centerZ && has(CityCross.NORTH)) || (z > centerZ && has(CityCross.SOUTH)));
-            if (onEw || onNs) { return surface; }
-            boolean armX = x > centerX ? has(CityCross.EAST) : x == centerX || has(CityCross.WEST);
-            boolean armZ = z > centerZ ? has(CityCross.SOUTH) : z == centerZ || has(CityCross.NORTH);
+            return onEw || onNs;
+        }
+
+        private boolean armedX(int x) { return x > ns.middle() ? has(CityCross.EAST) : x == ns.middle() || has(CityCross.WEST); }
+
+        private boolean armedZ(int z) { return z > ew.middle() ? has(CityCross.SOUTH) : z == ew.middle() || has(CityCross.NORTH); }
+
+        BlockState cell(int x, int z, BlockState surface, BlockState road, BlockState walk) {
+            if (road(x, z)) { return surface; }
+            int offX = Math.abs(x - ns.middle());
+            int offZ = Math.abs(z - ew.middle());
+            boolean armX = armedX(x);
+            boolean armZ = armedZ(z);
             boolean withinX = offX <= nsCross.core() + nsCross.lines();
             boolean withinZ = offZ <= ewCross.core() + ewCross.lines();
             boolean bandX = offX > nsCross.core() && withinX;
@@ -462,12 +451,12 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         }
     }
 
-    @javax.annotation.Nullable private CityPlan plan(CityGround ground) {
+    @Nullable private CityPlan plan(CityGround ground) {
         BoundingBox held = getBoundingBox();
         return CityPlan.of(ground, CityPlan.districtOf(alongX ? held.minX() : middle, true), CityPlan.districtOf(alongX ? middle : held.minZ(), false));
     }
 
-    @javax.annotation.Nullable private CityPlan.Line street(CityPlan plan) {
+    @Nullable private CityPlan.Line street(CityPlan plan) {
         BoundingBox held = getBoundingBox();
         int along = alongX ? held.minX() : held.minZ();
         for (CityPlan.Line line : alongX ? plan.alongX() : plan.alongZ()) {
@@ -529,7 +518,7 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 boolean open = !CityPlotGround.covered(plazas, postX, postZ);
                 for (int up = 1; up <= clear; up++) {
                     at.set(postX, this.level + up, postZ);
-                    if (open && box.isInside(at)) { level.setBlock(at, posts.pick(seed, postX, this.level + up, postZ), 2); }
+                    if (open && box.isInside(at)) { level.setBlock(at, posts.pick(seed, postX, this.level + up, postZ), Block.UPDATE_CLIENTS); }
                 }
                 if (width > NARROW && box.isInside(at.set(postX, this.level, postZ))) { CityPlotGround.piling(level, postX, postZ, this.level - 1, support, CityRails.boreRoof(bores, postX, postZ), at); }
             }
@@ -538,20 +527,17 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
                 int beamZ = alongX ? across : along;
                 if (CityPlotGround.covered(plazas, beamX, beamZ)) { continue; }
                 at.set(beamX, this.level + clear + 1, beamZ);
-                if (box.isInside(at)) { level.setBlock(at, beams.pick(seed, beamX, this.level + clear + 1, beamZ), 2); }
+                if (box.isInside(at)) { level.setBlock(at, beams.pick(seed, beamX, this.level + clear + 1, beamZ), Block.UPDATE_CLIENTS); }
             }
         }
     }
 
     private boolean onPiling(int along, int offset) {
-        int edge = Math.min(2 + CityPlan.extraWidth(), (width - 1) / 2);
+        int edge = Math.min(2 + CityPlan.extraWidth(), CityRails.halfWidth(width));
         return edge < 1 || Math.floorMod(along, PILING_ROWS) == 0 && offset == edge;
     }
 
-    private static boolean dashed(int along, int dash) {
- return dash <= 0 || Math.floorMod(along, dash + 1) != dash; }
-
-    @javax.annotation.Nullable private static BlockState block(String named) { return CityPalette.state(named); }
+    private static boolean dashed(int along, int dash) { return dash <= 0 || Math.floorMod(along, dash + 1) != dash; }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(paved(), level); }
 
@@ -563,8 +549,9 @@ public final class ContentCityPiece extends StructurePiece implements PieceBeard
         CityBiome.within(level, box, () -> ContentControl.layOnRoad(roadKeys(), () -> laid(level, manager, chunk, box)));
     }
 
-    @javax.annotation.Nullable private JsonObject roadKeys() {
-        if (keys.isEmpty() || roadKeys != null) { return roadKeys; }
+    @Nullable private JsonObject roadKeys() {
+        if (keys.isEmpty() || keysRead) { return roadKeys; }
+        keysRead = true;
         try { roadKeys = JsonParser.parseString(keys).getAsJsonObject(); }
         catch (JsonParseException | IllegalStateException unreadable) { ContentLog.LOGGER.error("A city street at {}, {} carries road settings that no longer read as an object, so it is paved with the city's own: {}", getBoundingBox().minX(), getBoundingBox().minZ(), keys); }
         return roadKeys;

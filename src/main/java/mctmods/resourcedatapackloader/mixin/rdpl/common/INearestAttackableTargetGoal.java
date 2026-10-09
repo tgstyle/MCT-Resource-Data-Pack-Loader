@@ -5,5 +5,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(NearestAttackableTargetGoal.class) public interface INearestAttackableTargetGoal {
-    @Accessor("targetType") Class<?> rdpl$targetType();
+    @Accessor("targetType") Class<?> rdpl$getTargetType();
 }

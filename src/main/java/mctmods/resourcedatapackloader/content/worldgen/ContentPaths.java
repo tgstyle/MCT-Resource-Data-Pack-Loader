@@ -18,7 +18,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
-import javax.annotation.Nullable;
 
 public final class ContentPaths {
     public static final String PATH = "path";
@@ -26,11 +25,11 @@ public final class ContentPaths {
 
     private ContentPaths() {}
 
-    public static boolean enabled() { return Config.content.shovelPaths() || Config.content.hoeTilling(); }
+    private static boolean idle() { return !Config.content.shovelPaths() && !Config.content.hoeTilling(); }
 
     public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
         ItemStack held = event.getItemStack();
-        if (held.isEmpty()) { return; }
+        if (held.isEmpty() || idle()) { return; }
         Direction face = event.getFace();
         if (face == null || face == Direction.DOWN) { return; }
         Level level = event.getLevel();
@@ -52,8 +51,7 @@ public final class ContentPaths {
 
     private static boolean blocked(Level level, BlockPos pos) { return !Config.tweaks.lenientPaths() && !level.isEmptyBlock(pos.above()); }
 
-    private static void apply(PlayerInteractEvent.RightClickBlock event, Level level, BlockPos pos, Direction face, Player player, ItemStack held, @Nullable Block result, SoundEvent sound) {
-        if (result == null) { return; }
+    private static void apply(PlayerInteractEvent.RightClickBlock event, Level level, BlockPos pos, Direction face, Player player, ItemStack held, Block result, SoundEvent sound) {
         if (!player.mayUseItemAt(pos, face, held)) { return; }
         level.playSound(player, pos, sound, SoundSource.BLOCKS, 1.0F, 1.0F);
         if (!level.isClientSide()) {
@@ -64,7 +62,7 @@ public final class ContentPaths {
         event.setCanceled(true);
     }
 
-    @Nullable private static Block named(String name, Block fallback) {
+    private static Block named(String name, Block fallback) {
         if (name.isEmpty()) { return fallback; }
         Identifier key = Identifier.tryParse(name);
         Block block = Registered.find(BuiltInRegistries.BLOCK, key);

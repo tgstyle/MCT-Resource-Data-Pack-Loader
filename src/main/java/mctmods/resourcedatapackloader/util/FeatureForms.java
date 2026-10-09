@@ -1,10 +1,14 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.util.GsonHelper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,7 +28,6 @@ public final class FeatureForms {
     private static final String FEATURE = "feature";
     private static final String FEATURES = "features";
     private static final String PLACEMENT = "placement";
-    private static final String MINECRAFT = "minecraft:";
     private static final String CONFIGURED = "worldgen/configured_feature";
     private static final String NETHER = "minecraft:nether_forest_vegetation";
     private static final String SEAGRASS = "minecraft:seagrass";
@@ -43,17 +46,12 @@ public final class FeatureForms {
 
     public static JsonElement up(JsonElement element, LineNote note) {
         load();
-        if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(up(item, note)); }
-            return out;
-        }
+        if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> up(item, note)); }
         if (!element.isJsonObject()) { return element.deepCopy(); }
-        JsonObject out = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) { out.add(entry.getKey(), up(entry.getValue(), note)); }
-        JsonObject form = FORMS.get(id(text(out, TYPE)));
+        JsonObject out = JsonTree.map(element.getAsJsonObject(), (_, value) -> up(value, note));
+        JsonObject form = FORMS.get(id(Json.text(out, TYPE)));
         if (form != null && !out.has(FEATURE)) {
-            Map<String, JsonElement> params = params(id(text(out, TYPE)), out, note);
+            Map<String, JsonElement> params = params(id(Json.text(out, TYPE)), out, note);
             return params == null ? out : filled(form, params);
         }
         String reference = referenced(out);
@@ -67,20 +65,15 @@ public final class FeatureForms {
 
     public static JsonElement down(JsonElement element, LineNote note) {
         load();
-        if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(down(item, note)); }
-            return out;
-        }
+        if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> down(item, note)); }
         if (!element.isJsonObject()) { return element.deepCopy(); }
         JsonObject in = element.getAsJsonObject();
         JsonObject matched = matched(in, note);
         if (matched != null) { return matched; }
-        JsonObject grouped = "minecraft:simple_random_selector".equals(id(text(in, TYPE))) ? corals(in) : null;
+        JsonObject grouped = "minecraft:simple_random_selector".equals(id(Json.text(in, TYPE))) ? corals(in) : null;
         if (grouped != null) { return grouped; }
-        JsonObject out = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : in.entrySet()) { out.add(entry.getKey(), down(entry.getValue(), note)); }
-        String type = id(text(out, TYPE));
+        JsonObject out = JsonTree.map(in, (_, value) -> down(value, note));
+        String type = id(Json.text(out, TYPE));
         if ("minecraft:overlay".equals(type)) {
             note.accept("places a 26.3 overlay feature, which 26.2 writes as a sequence that stops at the first entry placing nothing");
             out.addProperty(TYPE, MINECRAFT + "sequence");
@@ -104,7 +97,7 @@ public final class FeatureForms {
     @Nullable private static JsonObject matched(JsonObject in, LineNote note) {
         for (Map.Entry<String, JsonObject> form : FORMS.entrySet()) {
             Map<String, JsonElement> caught = new HashMap<>();
-            if (!text(form.getValue(), TYPE).equals(text(in, TYPE)) || differs(form.getValue(), in, caught)) { continue; }
+            if (!Json.text(form.getValue(), TYPE).equals(Json.text(in, TYPE)) || differs(form.getValue(), in, caught)) { continue; }
             JsonObject base = base(form.getKey(), caught);
             if (base == null) { continue; }
             Map<String, JsonElement> params = params(form.getKey(), base, note);
@@ -189,7 +182,7 @@ public final class FeatureForms {
                 out.put("-high", new JsonPrimitive(1 - height));
             }
             case SEAGRASS -> {
-                if (!config.has("probability") || !config.get("probability").isJsonPrimitive()) { return null; }
+                if (!GsonHelper.isValidPrimitive(config, "probability")) { return null; }
                 double chance = config.get("probability").getAsDouble();
                 int scale = 100;
                 while (scale < 10000 && Math.abs(chance * scale - Math.round(chance * scale)) > 1.0E-6) { scale *= 10; }
@@ -222,15 +215,9 @@ public final class FeatureForms {
 
     private static JsonElement filled(JsonElement form, Map<String, JsonElement> params) {
         if (form.isJsonPrimitive() && form.getAsJsonPrimitive().isString() && form.getAsString().startsWith("$")) { return params.get(form.getAsString().substring(1)).deepCopy(); }
-        if (form.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : form.getAsJsonArray()) { out.add(filled(item, params)); }
-            return out;
-        }
+        if (form.isJsonArray()) { return JsonTree.map(form.getAsJsonArray(), item -> filled(item, params)); }
         if (!form.isJsonObject()) { return form.deepCopy(); }
-        JsonObject out = new JsonObject();
-        for (Map.Entry<String, JsonElement> entry : form.getAsJsonObject().entrySet()) { out.add(entry.getKey(), filled(entry.getValue(), params)); }
-        return out;
+        return JsonTree.map(form.getAsJsonObject(), (_, value) -> filled(value, params));
     }
 
     @Nullable private static JsonObject corals(JsonObject selector) {
@@ -275,15 +262,13 @@ public final class FeatureForms {
 
     @Nullable private static String referenced(JsonObject placed) {
         if (!placed.has(PLACEMENT) || !placed.get(PLACEMENT).isJsonArray()) { return null; }
-        String feature = text(placed, FEATURE);
+        String feature = Json.text(placed, FEATURE);
         return feature.isEmpty() || feature.startsWith("#") ? null : id(feature);
     }
 
     private static boolean unfit(@Nullable JsonElement value) { return value == null || !value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber() || value.getAsDouble() != Math.rint(value.getAsDouble()); }
 
-    private static String id(String id) { return id.isEmpty() || id.contains(":") ? id : MINECRAFT + id; }
-
-    private static String text(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : ""; }
+    private static String id(String id) { return id.isEmpty() ? id : namespaced(id); }
 
     private static synchronized void load() {
         if (loaded) { return; }

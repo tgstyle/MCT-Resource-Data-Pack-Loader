@@ -1,12 +1,17 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.datafixers.DSL;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.SharedConstants;
@@ -35,9 +40,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class Ids {
-    public static final int LEGACY = 1343;
+    private static final int LEGACY = 1343;
     private static final int FLATTENED = 1451;
-    private static final String MINECRAFT = "minecraft";
     private static final String ENTITY_TABLES = "entities/";
     private static final String SPAWNER = "minecraft:mob_spawner";
     private static final String SPAWN_DATA = "SpawnData";
@@ -61,29 +65,25 @@ public final class Ids {
             Map.entry("fence", "fences"), Map.entry("chest", "chests"), Map.entry("wire", "wires"), Map.entry("coin", "coins"), Map.entry("shard", "shards"),
             Map.entry("raw", "raw_materials"), Map.entry("cluster", "clusters"), Map.entry("clump", "clumps"), Map.entry("crystal", "crystals"));
     private static final Map<String, String> ORE_WHOLE = Map.ofEntries(
-            Map.entry("logWood", "minecraft:logs"), Map.entry("plankWood", "minecraft:planks"), Map.entry("stickWood", CONVENTION() + ":rods/wooden"), Map.entry("slabWood", "minecraft:wooden_slabs"),
+            Map.entry("logWood", "minecraft:logs"), Map.entry("plankWood", "minecraft:planks"), Map.entry("stickWood", ContentFormats.CONVENTION + ":rods/wooden"), Map.entry("slabWood", "minecraft:wooden_slabs"),
             Map.entry("stairWood", "minecraft:wooden_stairs"), Map.entry("fenceWood", "minecraft:wooden_fences"), Map.entry("fenceGateWood", "minecraft:fence_gates"), Map.entry("doorWood", "minecraft:wooden_doors"),
-            Map.entry("trapdoorWood", "minecraft:wooden_trapdoors"), Map.entry("treeSapling", "minecraft:saplings"), Map.entry("treeLeaves", "minecraft:leaves"), Map.entry("stone", CONVENTION() + ":stone"),
-            Map.entry("cobblestone", CONVENTION() + ":cobblestone"), Map.entry("sand", "minecraft:sand"), Map.entry("sandstone", CONVENTION() + ":sandstone"), Map.entry("blockGlass", CONVENTION() + ":glass"),
-            Map.entry("paneGlass", CONVENTION() + ":glass_panes"), Map.entry("wool", "minecraft:wool"), Map.entry("string", CONVENTION() + ":string"), Map.entry("feather", CONVENTION() + ":feathers"),
-            Map.entry("leather", CONVENTION() + ":leather"), Map.entry("egg", CONVENTION() + ":eggs"), Map.entry("bone", CONVENTION() + ":bones"), Map.entry("slimeball", CONVENTION() + ":slimeballs"),
-            Map.entry("enderpearl", CONVENTION() + ":ender_pearls"), Map.entry("gunpowder", CONVENTION() + ":gunpowder"), Map.entry("netherStar", CONVENTION() + ":nether_stars"), Map.entry("obsidian", CONVENTION() + ":obsidian"),
-            Map.entry("record", "minecraft:music_discs"), Map.entry("bookshelf", CONVENTION() + ":bookshelves"), Map.entry("chest", CONVENTION() + ":chests"), Map.entry("workbench", CONVENTION() + ":workbenches"),
-            Map.entry("torch", CONVENTION() + ":torches"), Map.entry("glowstone", CONVENTION() + ":glowstone"), Map.entry("netherrack", CONVENTION() + ":netherrack"), Map.entry("endstone", CONVENTION() + ":end_stones"),
-            Map.entry("gravel", CONVENTION() + ":gravel"), Map.entry("dirt", "minecraft:dirt"), Map.entry("grass", CONVENTION() + ":grass"), Map.entry("ice", CONVENTION() + ":ice"),
-            Map.entry("blockCoal", CONVENTION() + ":storage_blocks/coal"), Map.entry("blockRedstone", CONVENTION() + ":storage_blocks/redstone"));
+            Map.entry("trapdoorWood", "minecraft:wooden_trapdoors"), Map.entry("treeSapling", "minecraft:saplings"), Map.entry("treeLeaves", "minecraft:leaves"), Map.entry("stone", ContentFormats.CONVENTION + ":stone"),
+            Map.entry("cobblestone", ContentFormats.CONVENTION + ":cobblestone"), Map.entry("sand", "minecraft:sand"), Map.entry("sandstone", ContentFormats.CONVENTION + ":sandstone"), Map.entry("blockGlass", ContentFormats.CONVENTION + ":glass"),
+            Map.entry("paneGlass", ContentFormats.CONVENTION + ":glass_panes"), Map.entry("wool", "minecraft:wool"), Map.entry("string", ContentFormats.CONVENTION + ":string"), Map.entry("feather", ContentFormats.CONVENTION + ":feathers"),
+            Map.entry("leather", ContentFormats.CONVENTION + ":leather"), Map.entry("egg", ContentFormats.CONVENTION + ":eggs"), Map.entry("bone", ContentFormats.CONVENTION + ":bones"), Map.entry("slimeball", ContentFormats.CONVENTION + ":slimeballs"),
+            Map.entry("enderpearl", ContentFormats.CONVENTION + ":ender_pearls"), Map.entry("gunpowder", ContentFormats.CONVENTION + ":gunpowder"), Map.entry("netherStar", ContentFormats.CONVENTION + ":nether_stars"), Map.entry("obsidian", ContentFormats.CONVENTION + ":obsidian"),
+            Map.entry("record", "minecraft:music_discs"), Map.entry("bookshelf", ContentFormats.CONVENTION + ":bookshelves"), Map.entry("chest", ContentFormats.CONVENTION + ":chests"), Map.entry("workbench", ContentFormats.CONVENTION + ":workbenches"),
+            Map.entry("torch", ContentFormats.CONVENTION + ":torches"), Map.entry("glowstone", ContentFormats.CONVENTION + ":glowstone"), Map.entry("netherrack", ContentFormats.CONVENTION + ":netherrack"), Map.entry("endstone", ContentFormats.CONVENTION + ":end_stones"),
+            Map.entry("gravel", ContentFormats.CONVENTION + ":gravel"), Map.entry("dirt", "minecraft:dirt"), Map.entry("grass", ContentFormats.CONVENTION + ":grass"), Map.entry("ice", ContentFormats.CONVENTION + ":ice"),
+            Map.entry("blockCoal", ContentFormats.CONVENTION + ":storage_blocks/coal"), Map.entry("blockRedstone", ContentFormats.CONVENTION + ":storage_blocks/redstone"));
 
     private Ids() {}
 
-    private static String CONVENTION() { return ContentFormats.CONVENTION; }
-
     public record Block(String name, Map<String, String> properties) {}
 
-    private static int current() { return SharedConstants.getCurrentVersion().dataVersion().version(); }
+    static int current() { return SharedConstants.getCurrentVersion().dataVersion().version(); }
 
-    public static boolean isModded(String name) { return !name.startsWith(MINECRAFT + ":") && name.indexOf(':') >= 0; }
-
-    private static String namespaced(String name) { return name.indexOf(':') < 0 ? MINECRAFT + ":" + name : name; }
+    public static boolean isModded(String name) { return !name.startsWith(IdNames.MINECRAFT) && name.indexOf(':') >= 0; }
 
     public static String item(String name, int meta) {
         String asked = namespaced(name.trim());
@@ -93,11 +93,7 @@ public final class Ids {
         if (held != null) { return held; }
         String found = asked;
         try {
-            JsonObject stack = new JsonObject();
-            stack.addProperty("id", asked);
-            stack.addProperty("Count", 1);
-            stack.addProperty("Damage", meta);
-            Dynamic<JsonElement> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(JsonOps.INSTANCE, stack), LEGACY, current());
+            Dynamic<JsonElement> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(JsonOps.INSTANCE, CrossStacks.json(legacyStack(asked, meta, null))), LEGACY, current());
             found = fixed.get("id").asString(asked);
         }
         catch (RuntimeException failed) { warn("item", asked, failed); }
@@ -154,17 +150,26 @@ public final class Ids {
         catch (RuntimeException failed) { return null; }
     }
 
+    static CompoundTag legacyStack(String id, @Nullable CompoundTag tag) {
+        CompoundTag stack = new CompoundTag();
+        stack.putString("id", id);
+        stack.putByte("Count", (byte) 1);
+        if (tag != null) { stack.put("tag", tag); }
+        return stack;
+    }
+
+    private static CompoundTag legacyStack(String id, int meta, @Nullable CompoundTag tag) {
+        CompoundTag stack = legacyStack(id, tag);
+        stack.putShort("Damage", (short) meta);
+        return stack;
+    }
+
     @Nullable public static String stack(String name, int meta, @Nullable String nbt) {
         String asked = namespaced(name.trim());
         try {
-            CompoundTag stack = new CompoundTag();
-            stack.putString("id", asked);
-            stack.putByte("Count", (byte) 1);
-            stack.putShort("Damage", (short) meta);
-            if (nbt != null) { stack.put("tag", TagParser.parseCompoundFully(nbt)); }
-            Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), LEGACY, current());
+            Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, legacyStack(asked, meta, nbt == null ? null : TagParser.parseCompoundFully(nbt))), LEGACY, current());
             String id = fixed.get("id").asString(asked);
-            Tag components = fixed.get("components").result().map(Dynamic::getValue).orElse(null);
+            Tag components = fixed.get(CrossJson.COMPONENTS).result().map(Dynamic::getValue).orElse(null);
             if (!(components instanceof CompoundTag held) || held.isEmpty()) { return id; }
             List<String> pairs = new ArrayList<>();
             for (String key : new TreeSet<>(held.keySet())) { pairs.add(key + "=" + held.get(key)); }
@@ -244,10 +249,10 @@ public final class Ids {
     }
 
     @Nullable public static String enchantment(String named) {
-        CompoundTag stack = enchantedBook(named.trim().toLowerCase(Locale.ROOT));
+        CompoundTag stack = enchantedBook(Settings.lower(named));
         try {
             Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), LEGACY, current());
-            String found = fixed.get("components").get("minecraft:enchantments").get("levels").asMapOpt(k -> k.asString(""), v -> v.asInt(0)).result().flatMap(levels -> levels.keySet().stream().findFirst()).orElse("");
+            String found = fixed.get(CrossJson.COMPONENTS).get("minecraft:enchantments").get("levels").asMapOpt(k -> k.asString(""), v -> v.asInt(0)).result().flatMap(levels -> levels.keySet().stream().findFirst()).orElse("");
             return found.isEmpty() || "null".equals(found) ? null : found;
         }
         catch (RuntimeException failed) { return null; }
@@ -269,32 +274,25 @@ public final class Ids {
         enchantments.add(enchantment);
         CompoundTag tag = new CompoundTag();
         tag.put(key, enchantments);
-        CompoundTag stack = new CompoundTag();
-        stack.putString("id", "minecraft:enchanted_book");
-        stack.putByte("Count", (byte) 1);
-        stack.put("tag", tag);
-        return stack;
+        return legacyStack("minecraft:enchanted_book", tag);
     }
 
     public static String entity(String name) {
         String asked = namespaced(name.trim());
-        if (isModded(asked)) { return asked; }
-        return ENTITIES.computeIfAbsent(asked, held -> {
-            try { return DataFixers.getDataFixer().update(References.ENTITY_NAME, new Dynamic<>(JsonOps.INSTANCE, new JsonPrimitive(held)), LEGACY, current()).asString(held); }
-            catch (RuntimeException failed) {
-                warn("entity", held, failed);
-                return held;
-            }
-        });
+        return fixedName(ENTITIES, References.ENTITY_NAME, "entity", asked);
     }
 
     public static String biome(String name) {
         String asked = namespaced(name.trim());
+        return fixedName(BIOMES, References.BIOME, "biome", asked);
+    }
+
+    private static String fixedName(Map<String, String> cache, DSL.TypeReference reference, String kind, String asked) {
         if (isModded(asked)) { return asked; }
-        return BIOMES.computeIfAbsent(asked, held -> {
-            try { return DataFixers.getDataFixer().update(References.BIOME, new Dynamic<>(JsonOps.INSTANCE, new JsonPrimitive(held)), LEGACY, current()).asString(held); }
+        return cache.computeIfAbsent(asked, held -> {
+            try { return DataFixers.getDataFixer().update(reference, new Dynamic<>(JsonOps.INSTANCE, new JsonPrimitive(held)), LEGACY, current()).asString(held); }
             catch (RuntimeException failed) {
-                warn("biome", held, failed);
+                warn(kind, held, failed);
                 return held;
             }
         });
@@ -335,16 +333,11 @@ public final class Ids {
     @Nullable public static JsonObject nbtIngredient(String name, int meta, String nbt) {
         String asked = namespaced(name.trim());
         try {
-            CompoundTag stack = new CompoundTag();
-            stack.putString("id", asked);
-            stack.putByte("Count", (byte) 1);
-            stack.putShort("Damage", (short) meta);
-            stack.put("tag", TagParser.parseCompoundFully(nbt));
-            Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, stack), LEGACY, current());
+            Dynamic<Tag> fixed = DataFixers.getDataFixer().update(References.ITEM_STACK, new Dynamic<>(NbtOps.INSTANCE, legacyStack(asked, meta, TagParser.parseCompoundFully(nbt))), LEGACY, current());
             JsonObject out = new JsonObject();
             out.addProperty("type", "neoforge:components");
             out.addProperty("items", fixed.get("id").asString(asked));
-            out.add("components", fixed.get("components").result().map(held -> held.convert(JsonOps.INSTANCE).getValue()).orElseGet(JsonObject::new));
+            out.add(CrossJson.COMPONENTS, fixed.get(CrossJson.COMPONENTS).result().map(held -> held.convert(JsonOps.INSTANCE).getValue()).orElseGet(JsonObject::new));
             return out;
         }
         catch (CommandSyntaxException | RuntimeException failed) {
@@ -354,16 +347,16 @@ public final class Ids {
     }
 
     public static String lootTable(String name) {
-        String asked = namespaced(name.trim().toLowerCase(Locale.ROOT));
+        String asked = namespaced(Settings.lower(name));
         if (isModded(asked)) { return asked; }
-        String path = asked.substring(MINECRAFT.length() + 1);
+        String path = asked.substring(IdNames.MINECRAFT.length());
         String renamed = LOOT_TABLES.get(path);
-        if (renamed != null) { return MINECRAFT + ":" + renamed; }
+        if (renamed != null) { return IdNames.MINECRAFT + renamed; }
         if (!path.startsWith(ENTITY_TABLES)) { return asked; }
         String rest = path.substring(ENTITY_TABLES.length());
         int slash = rest.indexOf('/');
         String entity = entity(slash < 0 ? rest : rest.substring(0, slash));
-        return MINECRAFT + ":" + ENTITY_TABLES + entity.substring(entity.indexOf(':') + 1) + (slash < 0 ? "" : rest.substring(slash));
+        return IdNames.MINECRAFT + ENTITY_TABLES + IdNames.path(entity) + (slash < 0 ? "" : rest.substring(slash));
     }
 
     public static String attribute(String name) {
@@ -379,8 +372,8 @@ public final class Ids {
         String prefix = ore.substring(0, split);
         String rest = ore.substring(split);
         String folder = ORE_PREFIXES.get(prefix);
-        if (folder == null || rest.isEmpty()) { return CONVENTION() + ":" + snake(ore); }
-        return CONVENTION() + ":" + folder + "/" + snake(rest);
+        if (folder == null || rest.isEmpty()) { return ContentFormats.CONVENTION + ":" + snake(ore); }
+        return ContentFormats.CONVENTION + ":" + folder + "/" + snake(rest);
     }
 
     private static String snake(String camel) {
@@ -395,9 +388,7 @@ public final class Ids {
 
     private static synchronized Map<String, Integer> blockIds() {
         if (BLOCK_IDS.isEmpty()) {
-            for (int id = 0; id < 256; id++) {
-                BLOCK_IDS.putIfAbsent(ItemIdFix.getItem(id), id);
-            }
+            for (int id = 0; id < 256; id++) { BLOCK_IDS.putIfAbsent(ItemIdFix.getItem(id), id); }
             for (int i = 0; i < LATE_BLOCKS.length; i++) {
                 if (!LATE_BLOCKS[i].isEmpty()) { BLOCK_IDS.putIfAbsent("minecraft:" + LATE_BLOCKS[i], FIRST_LATE_BLOCK + i); }
             }
@@ -405,9 +396,7 @@ public final class Ids {
         return BLOCK_IDS;
     }
 
-    private static void warn(String kind, String name, Exception failed) {
-        if (WARNED.add(kind + " " + name)) { ContentLog.LOGGER.warn("The forward port could not resolve the 1.12.2 {} '{}' through the game's data fixers, so it is left as written: {}", kind, name, failed.toString()); }
-    }
+    private static void warn(String kind, String name, Exception failed) { if (WARNED.add(kind + " " + name)) { ContentLog.LOGGER.warn("The forward port could not resolve the 1.12.2 {} '{}' through the game's data fixers, so it is left as written: {}", kind, name, failed.toString()); } }
 
     @Nullable public static String[] splitMeta(String named) {
         String[] parts = named.trim().split(":");

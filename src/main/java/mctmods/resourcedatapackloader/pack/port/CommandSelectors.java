@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.pack.port;
 
-import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
@@ -19,33 +19,24 @@ final class CommandSelectors {
         Matcher m = SELECTOR.matcher(token);
         if (!m.matches()) { return token; }
         String kind = m.group(1);
-        Map<String, String> given = new LinkedHashMap<>();
-        if (m.group(2) != null && !m.group(2).isEmpty()) {
-            for (String part : m.group(2).split(",")) {
-                int equals = part.indexOf('=');
-                if (equals <= 0) { throw new Commands.Kept("the selector " + token + " holds '" + part + "', which is not an argument"); }
-                given.put(part.substring(0, equals), part.substring(equals + 1));
-            }
-        }
+        Map<String, String> given = m.group(2) != null && !m.group(2).isEmpty() ? Commands.pairs(m.group(2), part -> "the selector " + token + " holds '" + part + "', which is not an argument") : new LinkedHashMap<>();
         List<String> out = new ArrayList<>();
         String type = given.remove("type");
-        if (type != null) { out.add("type=" + (type.startsWith("!") ? "!" + Commands.entity(type.substring(1), pack) : Commands.entity(type, pack))); }
+        if (type != null) { out.add("type=" + negated(type, id -> Commands.entity(id, pack))); }
         for (String key : new String[] {"name", "team", "tag"}) {
             String value = given.remove(key);
             if (value == null) { continue; }
-            boolean not = value.startsWith("!");
-            String bare = not ? value.substring(1) : value;
-            out.add(key + "=" + (not ? "!" : "") + ("name".equals(key) ? quoted(bare) : bare));
+            out.add(key + "=" + negated(value, bare -> "name".equals(key) ? quoted(bare) : bare));
         }
         range(out, "distance", given.remove("rm"), given.remove("r"));
         range(out, "level", given.remove("lm"), given.remove("l"));
         range(out, "x_rotation", given.remove("rxm"), given.remove("rx"));
         range(out, "y_rotation", given.remove("rym"), given.remove("ry"));
         String mode = given.remove("m");
-        if (mode != null) { out.add("gamemode=" + (mode.startsWith("!") ? "!" + Commands.named(Commands.GAME_MODES, mode.substring(1), "game mode") : Commands.named(Commands.GAME_MODES, mode, "game mode"))); }
+        if (mode != null) { out.add("gamemode=" + negated(mode, name -> Commands.named(Commands.GAME_MODES, name, "game mode"))); }
         for (String key : new String[] {"x", "y", "z", "dx", "dy", "dz"}) {
             String value = given.remove(key);
-            if (value != null) { out.add(key + "=" + ("y".equals(key) ? Commands.height(String.valueOf(Commands.number(value)), pack) : String.valueOf(Commands.number(value)))); }
+            if (value != null) { out.add(key + "=" + ("y".equals(key) ? Commands.height(Commands.numberText(value), pack) : Commands.numberText(value))); }
         }
         Map<String, String[]> scores = new LinkedHashMap<>();
         for (String key : new ArrayList<>(given.keySet())) {
@@ -53,7 +44,7 @@ final class CommandSelectors {
             String objective = key.substring("score_".length());
             boolean least = objective.endsWith("_min") && objective.length() > "_min".length();
             if (least) { objective = objective.substring(0, objective.length() - "_min".length()); }
-            scores.computeIfAbsent(objective, _ -> new String[2])[least ? 0 : 1] = String.valueOf(Commands.number(given.remove(key)));
+            scores.computeIfAbsent(objective, _ -> new String[2])[least ? 0 : 1] = Commands.numberText(given.remove(key));
         }
         if (!scores.isEmpty()) {
             List<String> each = new ArrayList<>();
@@ -65,6 +56,8 @@ final class CommandSelectors {
         kind = limited(kind, type != null, count == null ? null : Commands.number(count), out);
         return "@" + kind + (out.isEmpty() ? "" : "[" + String.join(",", out) + "]");
     }
+
+    static String negated(String value, UnaryOperator<String> shape) { return value.startsWith("!") ? "!" + shape.apply(value.substring(1)) : shape.apply(value); }
 
     private static String limited(String kind, boolean typed, @Nullable Integer count, List<String> out) {
         if ("s".equals(kind)) { return kind; }
@@ -81,7 +74,7 @@ final class CommandSelectors {
 
     private static void range(List<String> out, String key, @Nullable String least, @Nullable String most) {
         if (least == null && most == null) { return; }
-        out.add(key + "=" + bounds(least == null ? null : String.valueOf(Commands.number(least)), most == null ? null : String.valueOf(Commands.number(most))));
+        out.add(key + "=" + bounds(least == null ? null : Commands.numberText(least), most == null ? null : Commands.numberText(most)));
     }
 
     static String bounds(@Nullable String least, @Nullable String most) {
@@ -89,7 +82,7 @@ final class CommandSelectors {
         return (least == null ? "" : least) + ".." + (most == null ? "" : most);
     }
 
-    private static String quoted(String name) { return PLAIN.matcher(name).matches() ? name : Commands.GSON.toJson(new JsonPrimitive(name)); }
+    private static String quoted(String name) { return PLAIN.matcher(name).matches() ? name : Commands.quote(name); }
 
     static String narrowed(String target, String argument) {
         if (!target.startsWith("@")) { return "@a[name=" + quoted(target) + "," + argument + "]"; }

@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.client.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.ProspectTooltip;
-import mctmods.resourcedatapackloader.client.SeamSkyRenderer;
+import mctmods.resourcedatapackloader.client.render.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.FaceCacheReset;
 import mctmods.resourcedatapackloader.command.ClientCommands;
@@ -134,6 +134,8 @@ import java.util.Set;
     public static final String MOD_ID = "resourcedatapackloader";
     public static final Logger LOGGER = LogManager.getLogger("RDPL");
 
+    public static Identifier id(String path) { return Identifier.fromNamespaceAndPath(MOD_ID, path); }
+
     public ResourceDataPackLoader(IEventBus modBus, ModContainer container) {
         Lang.load();
         LineCompat.registerConfig(container, Config.SPEC);
@@ -197,7 +199,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentBoards::onTouch);
         NeoForge.EVENT_BUS.addListener(ContentBoards::onSquare);
         if (FMLEnvironment.getDist() == Dist.CLIENT) { NeoForge.EVENT_BUS.addListener(PouchKey::tick); NeoForge.EVENT_BUS.addListener(PouchKey::screen); }
-        if (ContentPaths.enabled()) { NeoForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
+        NeoForge.EVENT_BUS.addListener(ContentPaths::onRightClick);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onAnvil);
         NeoForge.EVENT_BUS.addListener(ContentAnvils::onTaken);
@@ -283,10 +285,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentPregenDimensions::onDimensionChange);
         NeoForge.EVENT_BUS.addListener(ContentPregenHold::onTravel);
         NeoForge.EVENT_BUS.addListener(ContentPregenHold::onTeleport);
-        NeoForge.EVENT_BUS.addListener(ContentReplacements::onChunkLoad);
-        NeoForge.EVENT_BUS.addListener(ContentReplacements::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
-        NeoForge.EVENT_BUS.addListener(ContentReplacements::onLevelUnload);
         NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
@@ -346,12 +345,12 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(EventPriority.HIGHEST, SavedDataMigration::onAboutToStart);
         NeoForge.EVENT_BUS.addListener(this::onServerStopped);
         if (FMLEnvironment.getDist() == Dist.CLIENT) {
-            modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "face_cache_reset"), FaceCacheReset.INSTANCE));
+            modBus.addListener((AddClientReloadListenersEvent held) -> held.addListener(id("face_cache_reset"), FaceCacheReset.INSTANCE));
             NeoForge.EVENT_BUS.addListener(ClientCommands::register);
             NeoForge.EVENT_BUS.addListener(ContentWorldScreen::onScreenInit);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onClientTick);
-            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(Identifier.fromNamespaceAndPath(MOD_ID, "cards"), CardOverlay::onLayer));
-            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(Identifier.fromNamespaceAndPath(MOD_ID, "center_cards"), CenterCard::onLayer));
+            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(id("cards"), CardOverlay::onLayer));
+            modBus.addListener((RegisterGuiLayersEvent held) -> held.registerAboveAll(id("center_cards"), CenterCard::onLayer));
             NeoForge.EVENT_BUS.addListener(CenterCard::onClientTick);
             NeoForge.EVENT_BUS.addListener(CenterCard::onLevelUnload);
             NeoForge.EVENT_BUS.addListener(CardOverlay::onScreen);
@@ -372,7 +371,7 @@ import java.util.Set;
             NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, _ -> {
                 HoldView.reset();
                 CenterCard.reset();
-                Toasts.show(0);
+                Toasts.leave();
             });
             ContentClient.register(modBus);
             if (Config.worldgen.worldgenDebug()) {
@@ -408,10 +407,16 @@ import java.util.Set;
             RegistryRemaps.applyAliases();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
+                ContentPortals.bind();
                 ContentVillagers.generateTrades();
                 ContentHardness.setup();
                 ContentAnvils.load();
-                if (ContentOrders.load()) { ContentOrders.listen(); }
+                if (ContentOrders.load()) {
+                    NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
+                    NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
+                    NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
+                    NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
+                }
                 ContentOverrides.reload();
             });
             return;
@@ -421,11 +426,7 @@ import java.util.Set;
         throw new IllegalStateException(message);
     }
 
-    private void onAddReloadListeners(AddServerReloadListenersEvent event) {
-        event.addListener(Identifier.fromNamespaceAndPath(MOD_ID, "recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
-            if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); }
-        }, executor2));
-    }
+    private void onAddReloadListeners(AddServerReloadListenersEvent event) { event.addListener(id("recipe_filter"), (_, _, barrier, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
     private void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 
@@ -439,6 +440,7 @@ import java.util.Set;
         RegistryRemaps.applyAliases();
         ContentOverrides.reload();
         ContentReplacements.reload();
+        ContentCityMaps.reload();
         ContentWorldTemplates.load();
         ContentEntityTicks.reload();
         ContentTeams.load();
@@ -456,6 +458,7 @@ import java.util.Set;
 
     private void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
+        CityBorder.forget();
         if (FMLEnvironment.getDist() == Dist.CLIENT) { return; }
         PackManager.get().close();
     }

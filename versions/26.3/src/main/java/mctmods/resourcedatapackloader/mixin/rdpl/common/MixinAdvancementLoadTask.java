@@ -18,10 +18,9 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 @Mixin(ResourceManagerRegistryLoadTask.class) public abstract class MixinAdvancementLoadTask {
-    @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;"))
-    private CompletableFuture<Map<Identifier, Resource>> rdpl$advancements(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
+    @WrapOperation(method = "load(Lnet/minecraft/resources/RegistryOps$RegistryInfoLookup;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;", at = @At(value = "INVOKE", target = "Ljava/util/concurrent/CompletableFuture;supplyAsync(Ljava/util/function/Supplier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture;")) private CompletableFuture<Map<Identifier, Resource>> rdpl$advancements(Supplier<Map<Identifier, Resource>> supplier, Executor executor, Operation<CompletableFuture<Map<Identifier, Resource>>> original, @Local(argsOnly = true) RegistryOps.RegistryInfoLookup context) {
         CompletableFuture<Map<Identifier, Resource>> listed = original.call(supplier, executor);
-        if (!Registries.ADVANCEMENT.equals(((IRegistryLoadTask) this).rdpl$registryKey())) { return listed; }
+        if (!Registries.ADVANCEMENT.equals(((IRegistryLoadTask) (Object) this).rdpl$getRegistryKey())) { return listed; }
         return RecipeAdvancements.pruned(context, listed);
     }
 }

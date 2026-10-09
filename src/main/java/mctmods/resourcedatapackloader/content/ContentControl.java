@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -13,10 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -45,7 +43,7 @@ public final class ContentControl {
     private static final String OFF = "off";
     private static final String LAYOUT = "villageLayout";
     private static final ThreadLocal<JsonObject> ROAD_KEYS = new ThreadLocal<>();
-    private static final Set<String> WARNED = new LinkedHashSet<>();
+    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
     private static final Set<String> KNOWN = Set.of(
             "ambientCap", "bedrockLayers", "biomeNames", "biomeNamesAreBlacklist", "biomeTemperatureCenterY",
             "biomeTemperatureHeightFactor", "biomeTemperatureScaleMaxY", "biomeWhitelist",
@@ -106,17 +104,15 @@ public final class ContentControl {
             "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
             "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
             "worldTypeExceptions");
-    private static final Map<String, String[]> MODES = new HashMap<>();
-    private static final Map<String, JsonElement> SETTINGS = new HashMap<>();
+    private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
+    private static final Map<String, JsonElement> SETTINGS = new ConcurrentHashMap<>();
     @Nullable private static WorldTemplateDef settingsFrom;
-
-    private ContentControl() {}
-
-    private static final String BIOME_SETTINGS = "biomes";
     private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
     private static final ThreadLocal<String> BUILDING = new ThreadLocal<>();
     @Nullable private static JsonObject biomeSettings;
     @Nullable private static WorldTemplateDef biomesFrom;
+
+    private ContentControl() {}
 
     @Nullable private static synchronized JsonObject biomeSections() {
         WorldTemplateDef template = ContentWorldTemplates.active();
@@ -124,9 +120,9 @@ public final class ContentControl {
             biomesFrom = template;
             BIOME_KEYS.clear();
             JsonObject settings = template == null ? null : template.settings();
-            JsonElement held = settings == null || !settings.has(BIOME_SETTINGS) ? null : settings.get(BIOME_SETTINGS);
+            JsonElement held = settings == null || !settings.has(BIOMES) ? null : settings.get(BIOMES);
             if (held != null && !held.isJsonObject()) {
-                if (WARNED.add(BIOME_SETTINGS)) { ContentLog.LOGGER.error("The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOME_SETTINGS); }
+                ContentLog.LOGGER.errorOnce(WARNED, BIOMES, "The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOMES);
                 held = null;
             }
             biomeSettings = held == null ? null : held.getAsJsonObject();
@@ -136,7 +132,7 @@ public final class ContentControl {
                     named.add(section.getKey());
                     if (!section.getValue().isJsonObject()) { continue; }
                     for (String key : section.getValue().getAsJsonObject().keySet()) {
-                        if (!KNOWN.contains(key) && WARNED.add(BIOME_SETTINGS + "." + section.getKey() + "." + key)) { ContentLog.LOGGER.error("World template {} sets '{}' under biomes.{}, which is not a setting anything reads, so it does nothing", template.key(), key, section.getKey()); }
+                        if (!KNOWN.contains(key)) { ContentLog.LOGGER.errorOnce(WARNED, BIOMES + "." + section.getKey() + "." + key, "World template {} sets '{}' under biomes.{}, which is not a setting anything reads, so it does nothing", template.key(), key, section.getKey()); }
                     }
                 }
                 ContentLog.LOGGER.info("Village settings of their own for {} biome(s): {}", named.size(), named);
@@ -205,10 +201,10 @@ public final class ContentControl {
     }
 
     public static void layOnRoad(@Nullable JsonObject keys, Runnable laying) {
-        JsonObject was = ROAD_KEYS.get();
-        road(keys);
-        try { laying.run(); }
-        finally { road(was); }
+        onRoad(keys, () -> {
+            laying.run();
+            return null;
+        });
     }
 
     private static void road(@Nullable JsonObject keys) {
@@ -261,7 +257,7 @@ public final class ContentControl {
         return texts(value, key, "a list of text values", fallback);
     }
 
-    public static boolean listed(String group, String key) { return setting(group, key) instanceof JsonArray; }
+    public static boolean notArray(String group, String key) { return !(setting(group, key) instanceof JsonArray); }
 
     public static List<String> lines(String group, String key, List<String> fallback) {
         JsonElement value = setting(group, key);
@@ -291,12 +287,12 @@ public final class ContentControl {
             if (parsed.isJsonObject()) { return parsed.getAsJsonObject(); }
         }
         catch (JsonParseException ignored) {}
-        if (WARNED.add(key)) { ContentLog.LOGGER.error("'{}' is not written as a JSON object, so it does nothing: {}", key, text); }
+        ContentLog.LOGGER.errorOnce(WARNED, key, "'{}' is not written as a JSON object, so it does nothing: {}", key, text);
         return null;
     }
 
     private static <T> T rejected(String key, String wanted, T fallback) {
-        if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
+        ContentLog.LOGGER.errorOnce(WARNED, key, "The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted);
         return fallback;
     }
 
@@ -310,9 +306,11 @@ public final class ContentControl {
         }
         WorldTemplateDef template = ContentWorldTemplates.active();
         if (template == null || template.settings() == null) { return null; }
-        if (template != settingsFrom) {
-            SETTINGS.clear();
-            settingsFrom = template;
+        synchronized (SETTINGS) {
+            if (template != settingsFrom) {
+                SETTINGS.clear();
+                settingsFrom = template;
+            }
         }
         JsonElement held = SETTINGS.get(key);
         if (held == null) {
@@ -327,7 +325,7 @@ public final class ContentControl {
         String held = raw(group);
         String[] known = MODES.get(group);
         if (known != null && known[0].equals(held)) { return known[1]; }
-        String value = held.trim().toLowerCase(Locale.ROOT);
+        String value = Settings.lower(held);
         if (!DEFAULT.equals(value) && !GLOBAL.equals(value) && !OFF.equals(value)) {
             ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);
             value = DEFAULT;

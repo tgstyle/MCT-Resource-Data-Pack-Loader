@@ -14,8 +14,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LavaFogEnvironment.class) public abstract class MixinLavaFogEnvironment {
-    @Inject(method = "getBaseColor", at = @At("HEAD"), cancellable = true)
-    private void rdpl$lavaFog(ClientLevel level, Camera camera, int renderDistance, float partialTicks, CallbackInfoReturnable<Vector3fc> cir) {
+    @Inject(method = "getBaseColor", at = @At("HEAD"), cancellable = true) private void rdpl$lavaFog(ClientLevel level, Camera camera, int renderDistance, float partialTicks, CallbackInfoReturnable<Vector3fc> cir) {
         int color = ContentFogSampler.lavaFog();
         if (color != SkyLookDef.UNSET) { cir.setReturnValue(ARGB.vector3fFromRGB24(color)); }
     }

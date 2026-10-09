@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.util;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
 public final class ConfigControl {
+    private static final String DEFAULT = "default";
     private final ModConfigSpec.ConfigValue<String> terrain;
     private final ModConfigSpec.ConfigValue<String> replacements;
     private final ModConfigSpec.ConfigValue<String> entities;
@@ -22,54 +23,54 @@ public final class ConfigControl {
 
     ConfigControl(ModConfigSpec.Builder builder) {
         builder.comment("Who decides each group of settings: default lets the active world template override the config, global uses the config alone, off turns the group off").push("control");
-        terrain = builder.comment("The world's name and seed at creation, generatorOptions, the cave regions, the cloud height and the seams between worlds [default|global|off]").define("terrain", "default");
-        chunks = builder.comment("The spawn chunk radius, pregeneration, retrogen and the reset, the welcome lines and the says card [default|global|off]").define("chunks", "default");
-        bedrock = builder.comment("Flat bedrock and its dimension and biome lists [default|global|off]").define("bedrock", "default");
-        voidWorld = builder.comment("Void world generation and its platform [default|global|off]").define("voidWorld", "default");
-        ores = builder.comment("Blocking ore generation by mod and by ore type [default|global|off]").define("ores", "default");
-        generators = builder.comment("Blocking other mods' world generation by mod, by type and by dimension [default|global|off]").define("generators", "default");
-        biomes = builder.comment("Blocking biomes by mod and by name, and what replaces them [default|global|off]").define("biomes", "default");
-        spawning = builder.comment("Mob spawn caps, hostile spawn rates and the light cap [default|global|off]").define("spawning", "default");
-        replacements = builder.comment("Block replacement in chunks that already exist [default|global|off]").define("replacements", "default");
-        entities = builder.comment("The slower pace of entities far from every player [default|global|off]").define("entities", "default");
-        structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", "default");
-        villages = builder.comment("The city and village streets a pack lays: their shape, dress, bridges, tunnels, rails, plots and plaza [default|global|off]").define("villages", "default");
-        commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", "default");
-        recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", "default");
-        blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", "default");
-        server = builder.comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view and simulation distances, and commands on a world opened to LAN [default|global|off]").define("server", "default");
+        terrain = builder.comment("The world's name and seed at creation, generatorOptions, the cave regions, the cloud height and the seams between worlds [default|global|off]").define("terrain", DEFAULT);
+        chunks = builder.comment("The spawn chunk radius, pregeneration, retrogen and the reset, the welcome lines and the says card [default|global|off]").define("chunks", DEFAULT);
+        bedrock = builder.comment("Flat bedrock and its dimension and biome lists [default|global|off]").define("bedrock", DEFAULT);
+        voidWorld = builder.comment("Void world generation and its platform [default|global|off]").define("voidWorld", DEFAULT);
+        ores = builder.comment("Blocking ore generation by mod and by ore type [default|global|off]").define("ores", DEFAULT);
+        generators = builder.comment("Blocking other mods' world generation by mod, by type and by dimension [default|global|off]").define("generators", DEFAULT);
+        biomes = builder.comment("Blocking biomes by mod and by name, and what replaces them [default|global|off]").define("biomes", DEFAULT);
+        spawning = builder.comment("Mob spawn caps, hostile spawn rates and the light cap [default|global|off]").define("spawning", DEFAULT);
+        replacements = builder.comment("Block replacement in chunks that already exist [default|global|off]").define("replacements", DEFAULT);
+        entities = builder.comment("The slower pace of entities far from every player [default|global|off]").define("entities", DEFAULT);
+        structures = builder.comment("Vanilla structures switched off, their spacing, separation, spawn distance, biomes, spawns, pins and terrain adaptation [default|global|off]").define("structures", DEFAULT);
+        villages = builder.comment("The city and village streets a pack lays: their shape, dress, bridges, tunnels, rails, plots and plaza [default|global|off]").define("villages", DEFAULT);
+        commands = builder.comment("Who may run the mod's own commands: the goto permission levels [default|global|off]").define("commands", DEFAULT);
+        recipes = builder.comment("Recipe and furnace blocking and their whitelists [default|global|off]").define("recipes", DEFAULT);
+        blastPlaster = builder.comment("Blast Plaster explosion handling driven from packs, with per dimension settings [default|global|off]").define("blastPlaster", DEFAULT);
+        server = builder.comment("The server.properties lines a pack may set, written into server.properties on a dedicated server: the game mode, the difficulty, pvp, flight, spawn protection, the Nether, command blocks, the idle timeout, the motd, the world size, structures, mob spawning, the view and simulation distances, and commands on a world opened to LAN [default|global|off]").define("server", DEFAULT);
         builder.pop();
     }
 
-    public String terrain() { return Config.loaded() ? terrain.get() : ConfigCore.text("control.terrain", "default"); }
+    public String terrain() { return ConfigCore.text(terrain); }
 
-    public String chunks() { return Config.loaded() ? chunks.get() : ConfigCore.text("control.chunks", "default"); }
+    public String chunks() { return ConfigCore.text(chunks); }
 
-    public String bedrock() { return Config.loaded() ? bedrock.get() : ConfigCore.text("control.bedrock", "default"); }
+    public String bedrock() { return ConfigCore.text(bedrock); }
 
-    public String voidWorld() { return Config.loaded() ? voidWorld.get() : ConfigCore.text("control.voidWorld", "default"); }
+    public String voidWorld() { return ConfigCore.text(voidWorld); }
 
-    public String ores() { return Config.loaded() ? ores.get() : ConfigCore.text("control.ores", "default"); }
+    public String ores() { return ConfigCore.text(ores); }
 
-    public String generators() { return Config.loaded() ? generators.get() : ConfigCore.text("control.generators", "default"); }
+    public String generators() { return ConfigCore.text(generators); }
 
-    public String biomes() { return Config.loaded() ? biomes.get() : ConfigCore.text("control.biomes", "default"); }
+    public String biomes() { return ConfigCore.text(biomes); }
 
-    public String spawning() { return Config.loaded() ? spawning.get() : ConfigCore.text("control.spawning", "default"); }
+    public String spawning() { return ConfigCore.text(spawning); }
 
-    public String structures() { return Config.loaded() ? structures.get() : ConfigCore.text("control.structures", "default"); }
+    public String structures() { return ConfigCore.text(structures); }
 
-    public String villages() { return Config.loaded() ? villages.get() : ConfigCore.text("control.villages", "default"); }
+    public String villages() { return ConfigCore.text(villages); }
 
-    public String commands() { return Config.loaded() ? commands.get() : ConfigCore.text("control.commands", "default"); }
+    public String commands() { return ConfigCore.text(commands); }
 
-    public String recipes() { return Config.loaded() ? recipes.get() : ConfigCore.text("control.recipes", "default"); }
+    public String recipes() { return ConfigCore.text(recipes); }
 
-    public String blastPlaster() { return Config.loaded() ? blastPlaster.get() : ConfigCore.text("control.blastPlaster", "default"); }
+    public String blastPlaster() { return ConfigCore.text(blastPlaster); }
 
-    public String replacements() { return Config.loaded() ? replacements.get() : ConfigCore.text("control.replacements", "default"); }
+    public String replacements() { return ConfigCore.text(replacements); }
 
-    public String entities() { return Config.loaded() ? entities.get() : ConfigCore.text("control.entities", "default"); }
+    public String entities() { return ConfigCore.text(entities); }
 
-    public String server() { return Config.loaded() ? server.get() : ConfigCore.text("control.server", "default"); }
+    public String server() { return ConfigCore.text(server); }
 }

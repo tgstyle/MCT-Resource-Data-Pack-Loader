@@ -40,7 +40,7 @@ public final class PortalShapes {
 
     public static boolean roomy(List<String> shape, PortalFrameDef frame) { return roomy(shape, frame, frame.leastTall()); }
 
-    public static boolean roomy(List<String> shape, PortalFrameDef frame, boolean flat) { return roomy(shape, frame, flat ? PortalFrameDef.LEAST_WIDE : PortalFrameDef.LEAST_TALL); }
+    public static boolean cramped(List<String> shape, PortalFrameDef frame, boolean flat) { return !roomy(shape, frame, flat ? PortalFrameDef.LEAST_WIDE : PortalFrameDef.LEAST_TALL); }
 
     private static boolean roomy(List<String> shape, PortalFrameDef frame, int leastTall) {
         int[] span = hole(shape);

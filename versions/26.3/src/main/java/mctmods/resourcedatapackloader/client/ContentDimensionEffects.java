@@ -26,7 +26,7 @@ import org.joml.Matrix4fc;
 import javax.annotation.Nonnull;
 
 public final class ContentDimensionEffects implements CustomSkyboxRenderer, CustomCloudsRenderer, CustomWeatherEffectRenderer {
-    public static final Identifier HIDDEN = Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "hidden");
+    public static final Identifier HIDDEN = ResourceDataPackLoader.id("hidden");
 
     private ContentDimensionEffects() {}
 

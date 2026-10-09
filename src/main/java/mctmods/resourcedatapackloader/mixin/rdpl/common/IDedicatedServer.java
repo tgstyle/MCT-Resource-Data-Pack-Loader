@@ -6,5 +6,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(DedicatedServer.class) public interface IDedicatedServer {
-    @Accessor("settings") DedicatedServerSettings rdpl$settings();
+    @Accessor("settings") DedicatedServerSettings rdpl$getSettings();
 }

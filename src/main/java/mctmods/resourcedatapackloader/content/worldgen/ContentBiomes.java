@@ -1,17 +1,19 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
@@ -23,9 +25,10 @@ import com.mojang.serialization.JsonOps;
 import net.minecraft.core.Holder;
 import net.minecraft.core.QuartPos;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.GsonHelper;
@@ -40,7 +43,6 @@ import net.minecraft.world.level.biome.MultiNoiseBiomeSourceParameterList;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +50,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -119,7 +120,7 @@ public final class ContentBiomes {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             JsonObject biome = build(def);
             if (biome == null) { continue; }
-            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "worldgen/biome/" + def.key().getPath() + ".json", biome.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), WorldgenFiles.file(WorldgenFiles.BIOME, def.key().getPath()), biome.toString());
             MADE.put(def.key(), new Made(def, block(def, def.topBlock(), "topBlock"), block(def, def.fillerBlock(), "fillerBlock"), block(def, def.stoneBlock(), "stoneBlock"), box(def)));
             tags(def);
         }
@@ -129,7 +130,7 @@ public final class ContentBiomes {
             JsonArray values = new JsonArray();
             for (String biome : tag.getValue()) { values.add(biome); }
             json.add("values", values);
-            GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), ContentFormats.BIOME_TAGS + "/" + tag.getKey().getPath() + ".json", json.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), WorldgenFiles.file(ContentFormats.BIOME_TAGS, tag.getKey().getPath()), json.toString());
         }
         for (Made made : MADE.values()) {
             if (!made.def().replaces().isEmpty() && !made.def().banded()) { ContentLog.LOGGER.info("Biome {} names replaces but no minHeight or maxHeight; replaces only narrows a height band, so it does nothing here", made.def().key()); }
@@ -190,14 +191,14 @@ public final class ContentBiomes {
     }
 
     public static boolean shipped(Identifier biome) {
-        String path = "worldgen/biome/" + biome.getPath() + ".json";
+        String path = WorldgenFiles.file(WorldgenFiles.BIOME, biome.getPath());
         return GameData.has(Identifier.fromNamespaceAndPath(biome.getNamespace(), path)) || GeneratedResources.has(PackType.SERVER_DATA, biome.getNamespace(), path) || PackManager.get().provides(PackType.SERVER_DATA, biome.getNamespace(), path);
     }
 
     public static boolean placesBiomes(String list, String scope) {
         if (OVERWORLD.equals(list) && any()) { return true; }
         if (ContentCaveRegions.placesIn(scope)) { return true; }
-        return ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(scope);
+        return ContentBiomeControl.blocksIn(scope);
     }
 
     public static boolean tintsSnow() { return MADE.values().stream().anyMatch(made -> made.def().snowColor() != BiomeDef.NO_COLOR); }
@@ -214,7 +215,7 @@ public final class ContentBiomes {
 
     public static JsonArray biomes(String list, String scope) {
         JsonArray out = new JsonArray();
-        boolean blocking = ContentBiomeControl.enabled() && ContentBiomeControl.appliesTo(scope);
+        boolean blocking = ContentBiomeControl.blocksIn(scope);
         ContentBiomeControl.reset();
         boolean overworld = OVERWORLD.equals(list);
         int placed = 0;
@@ -249,7 +250,7 @@ public final class ContentBiomes {
             Holder<Biome> held = registry.get(ResourceKey.create(Registries.BIOME, made.def().key())).orElse(null);
             if (held == null || !source.possibleBiomes().contains(held)) { continue; }
             Set<String> replaces = new LinkedHashSet<>();
-            for (String named : made.def().replaces()) { replaces.add(named.trim().toLowerCase(Locale.ROOT)); }
+            for (String named : made.def().replaces()) { replaces.add(Settings.lower(named)); }
             bands.add(new Band(made.def().minHeight(), made.def().maxHeight(), Set.copyOf(replaces), held));
         }
         if (!bands.isEmpty()) { HEIGHT_BANDS.put(source, List.copyOf(bands)); }
@@ -317,10 +318,10 @@ public final class ContentBiomes {
     }
 
     @Nullable private static JsonObject build(BiomeDef def) {
-        JsonObject base = GameData.json(Identifier.fromNamespaceAndPath(def.baseBiome().getNamespace(), "worldgen/biome/" + def.baseBiome().getPath() + ".json"));
+        JsonObject base = GameData.json(WorldgenFiles.id(WorldgenFiles.BIOME, def.baseBiome()));
         if (base == null && !ContentBiomeParser.PLAINS.equals(def.baseBiome())) {
             ContentLog.LOGGER.error("Biome {} is built on {}, which is not a biome the game or a mod ships, so it is built on {}", def.key(), def.baseBiome(), ContentBiomeParser.PLAINS);
-            base = GameData.json(Identifier.fromNamespaceAndPath(ContentBiomeParser.PLAINS.getNamespace(), "worldgen/biome/" + ContentBiomeParser.PLAINS.getPath() + ".json"));
+            base = GameData.json(WorldgenFiles.id(WorldgenFiles.BIOME, ContentBiomeParser.PLAINS));
         }
         if (base == null) { return null; }
         JsonObject biome = base.deepCopy();
@@ -339,9 +340,7 @@ public final class ContentBiomes {
         return biome;
     }
 
-    private static void color(JsonObject effects, String key, int color) {
-        if (color != BiomeDef.NO_COLOR) { effects.addProperty(key, color); }
-    }
+    private static void color(JsonObject effects, String key, int color) { if (color != BiomeDef.NO_COLOR) { effects.addProperty(key, color); } }
 
     private static JsonObject spawners(BiomeDef def, JsonObject base) {
         JsonObject out = base.deepCopy();
@@ -405,7 +404,7 @@ public final class ContentBiomes {
     }
 
     @Nullable private static String kindOf(String id) {
-        String path = id.substring(id.indexOf(':') + 1);
+        String path = IdNames.path(id);
         for (Map.Entry<String, List<String>> kind : KINDS) {
             for (String word : kind.getValue()) {
                 if (path.contains(word)) { return kind.getKey(); }
@@ -424,7 +423,7 @@ public final class ContentBiomes {
 
     private static String withoutExtra(BiomeDef def, String id) {
         Identifier feature = Identifier.tryParse(id);
-        JsonObject placed = feature == null ? null : GameData.json(Identifier.fromNamespaceAndPath(feature.getNamespace(), "worldgen/placed_feature/" + feature.getPath() + ".json"));
+        JsonObject placed = feature == null ? null : GameData.json(WorldgenFiles.id(WorldgenFiles.PLACED_FEATURE, feature));
         if (placed == null) { return id; }
         for (JsonElement modifier : GsonHelper.getAsJsonArray(placed, "placement", new JsonArray())) {
             if (!modifier.isJsonObject() || !"minecraft:count".equals(GsonHelper.getAsString(modifier.getAsJsonObject(), "type", ""))) { continue; }
@@ -456,7 +455,7 @@ public final class ContentBiomes {
     @Nullable private static String rewritten(BiomeDef def, String id, JsonObject head, String suffix) {
         Identifier feature = Identifier.tryParse(id);
         if (feature == null) { return null; }
-        JsonObject placed = GameData.json(Identifier.fromNamespaceAndPath(feature.getNamespace(), "worldgen/placed_feature/" + feature.getPath() + ".json"));
+        JsonObject placed = GameData.json(WorldgenFiles.id(WorldgenFiles.PLACED_FEATURE, feature));
         if (placed == null) {
             ContentLog.LOGGER.error("Biome {} sets a count for {}, whose placement could not be read, so it keeps the base biome's own", def.key(), id);
             return null;
@@ -475,7 +474,7 @@ public final class ContentBiomes {
         else { placement.set(at, head); }
         out.add("placement", placement);
         String path = def.key().getPath() + "/" + feature.getPath() + "_" + suffix;
-        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "worldgen/placed_feature/" + path + ".json", out.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), WorldgenFiles.file(WorldgenFiles.PLACED_FEATURE, path), out.toString());
         return def.key().getNamespace() + ":" + path;
     }
 
@@ -506,9 +505,7 @@ public final class ContentBiomes {
         return out;
     }
 
-    private static JsonObject encode(Climate.ParameterPoint point) {
-        return Climate.ParameterPoint.CODEC.encodeStart(JsonOps.INSTANCE, point).result().map(JsonElement::getAsJsonObject).orElseGet(JsonObject::new);
-    }
+    private static JsonObject encode(Climate.ParameterPoint point) { return Climate.ParameterPoint.CODEC.encodeStart(JsonOps.INSTANCE, point).result().map(JsonElement::getAsJsonObject).orElseGet(JsonObject::new); }
 
     private static void tags(BiomeDef def) {
         String id = def.key().toString();

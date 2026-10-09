@@ -5,9 +5,8 @@ import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedBakedModel;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.client.Minecraft;
@@ -29,9 +28,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class ContentHardnessCheck {
-    private static final Gson GSON = new GsonBuilder().create();
     private static boolean looked;
 
     private ContentHardnessCheck() {}
@@ -119,11 +118,9 @@ public final class ContentHardnessCheck {
         for (Resource one : found) {
             StringBuilder says = new StringBuilder();
             try (InputStream stream = one.open()) {
-                JsonObject held = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
-                if (held != null && held.has("variants")) {
-                    for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(held, "variants").entrySet()) {
-                        says.append(' ').append(entry.getKey()).append('=').append(entry.getValue().isJsonArray() ? entry.getValue().getAsJsonArray().size() : 1);
-                    }
+                JsonObject variants = variants(stream);
+                if (variants != null) {
+                    for (Map.Entry<String, JsonElement> entry : variants.entrySet()) { says.append(' ').append(entry.getKey()).append('=').append(entries(entry.getValue())); }
                 }
                 else { says.append(" no variants block"); }
             }
@@ -132,17 +129,24 @@ public final class ContentHardnessCheck {
         }
     }
 
+    @Nullable private static JsonObject variants(InputStream stream) {
+        JsonObject json = Json.GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
+        return json == null || !json.has("variants") ? null : GsonHelper.getAsJsonObject(json, "variants");
+    }
+
+    private static int entries(JsonElement held) { return held.isJsonArray() ? held.getAsJsonArray().size() : 1; }
+
     private static void count(String namespace, String path, boolean overriding) {
         try (InputStream stream = PackManager.get().openRaw(PackType.CLIENT_RESOURCES, namespace, path, overriding)) {
             if (stream == null) { return; }
-            JsonObject json = GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
-            if (json == null || !json.has("variants")) {
+            JsonObject variants = variants(stream);
+            if (variants == null) {
                 ContentLog.LOGGER.debug("  the file the pack serves has no variants block at all");
                 return;
             }
-            for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "variants").entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : variants.entrySet()) {
                 JsonElement held = entry.getValue();
-                ContentLog.LOGGER.debug("  the file the pack serves lists {} entry/entries for '{}'", held.isJsonArray() ? held.getAsJsonArray().size() : 1, entry.getKey());
+                ContentLog.LOGGER.debug("  the file the pack serves lists {} entry/entries for '{}'", entries(held), entry.getKey());
                 if (!held.isJsonArray()) { continue; }
                 for (JsonElement one : held.getAsJsonArray()) {
                     if (!one.isJsonObject() || !one.getAsJsonObject().has("model")) { continue; }

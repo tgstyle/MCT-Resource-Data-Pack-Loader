@@ -11,6 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MinecraftServer.class) public abstract class MixinMinecraftServerRules {
     @Inject(method = "getAbsoluteMaxWorldSize()I", at = @At("HEAD"), cancellable = true) private void rdpl$maxSize(CallbackInfoReturnable<Integer> cir) {
         int asked = ContentServer.maxSize();
-        if (asked > 0) { cir.setReturnValue(Math.min(asked, 29999984)); }
+        if (asked > 0) { cir.setReturnValue(Math.min(asked, MinecraftServer.ABSOLUTE_MAX_WORLD_SIZE)); }
     }
 }

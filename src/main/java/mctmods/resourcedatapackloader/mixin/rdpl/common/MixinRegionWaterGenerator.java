@@ -12,9 +12,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(NoiseBasedChunkGenerator.class) public abstract class MixinRegionWaterGenerator {
-    @Inject(method = "createNoiseChunk", at = @At("RETURN"))
-    private void rdpl$regionWater(CallbackInfoReturnable<NoiseChunk> cir) {
-        ChunkGenerator generator = ChunkGenerator.class.cast(this);
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$regionWater(CallbackInfoReturnable<NoiseChunk> cir) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
         if (cir.getReturnValue().aquifer() instanceof IRegionAquifer aquifer && ContentCaveRegions.pinsWater(generator.getBiomeSource())) { aquifer.rdpl$pinRegions(generator.getBiomeSource(), generator.getSeaLevel()); }
     }
 }

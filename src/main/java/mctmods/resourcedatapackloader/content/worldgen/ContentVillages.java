@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.StructureMapDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -10,9 +11,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureTemplatePool;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.core.Registry;
@@ -39,7 +40,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentVillages {
-    private static final Gson GSON = new Gson();
     private static final int LARGEST_LEAST = 13;
     private static final int[][] VANILLA_LIMITS = {{2, 1, 4, 2}, {0, 1, 1, 1}, {0, 1, 2, 1}, {2, 1, 5, 3}, {0, 1, 2, 1}, {1, 1, 4, 1}, {2, 1, 4, 2}, {0, 0, 1, 1}, {0, 1, 3, 2}};
     private static final Map<Identifier, VillageDef> DEFS = new LinkedHashMap<>();
@@ -73,9 +73,9 @@ public final class ContentVillages {
         Registry<StructureTemplatePool> pools = registries.lookupOrThrow(Registries.TEMPLATE_POOL);
         int joined = 0;
         for (String type : CityGround.VILLAGE_TYPES) {
-            StructureTemplatePool pool = pools.getValue(Identifier.fromNamespaceAndPath("minecraft", "village/" + type + "/houses"));
+            StructureTemplatePool pool = pools.getValue(Identifier.withDefaultNamespace("village/" + type + "/houses"));
             if (pool == null) { continue; }
-            ObjectArrayList<StructurePoolElement> held = ((IStructureTemplatePool) pool).rdpl$templates();
+            ObjectArrayList<StructurePoolElement> held = ((IStructureTemplatePool) pool).rdpl$getTemplates();
             if (held.stream().anyMatch(ContentPlotPoolElement.class::isInstance)) { continue; }
             for (VillageDef def : allowed()) {
                 if (!def.template() || vanillaHouse(def) || ContentStructureMaps.def(Identifier.tryParse(def.structure())) != null) { continue; }
@@ -103,7 +103,7 @@ public final class ContentVillages {
             Vec3i size = house.getValue().size();
             TURNS.put(house.getKey(), house.getValue().turn());
             VANILLA.put(house.getKey(), new VillageDef(house.getKey(), VillageDef.TEMPLATE, 3, 1, 4, Math.max(3, size.getX()), Math.max(1, size.getY()), Math.max(3, size.getZ()), 2,
-                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", 100, "", 0, "", 1, 1, 1, List.of()));
+                    List.of(), "minecraft:oak_log", "minecraft:farmland", true, 2, house.getKey().toString(), "minecraft:dirt", ShapeDef.FULL_INTEGRITY, "", 0, "", 1, 1, 1, List.of()));
         }
     }
 
@@ -213,27 +213,13 @@ public final class ContentVillages {
     }
 
     @Nullable public static VillageDef pick(List<VillageDef> choices, RandomSource random, int widest, int deepest) {
-        int total = 0;
-        for (VillageDef def : choices) {
-            if (def.width() <= widest && def.depth() <= deepest) { total += chance(def); }
-        }
-        if (total <= 0) { return null; }
-        int roll = random.nextInt(total);
-        for (VillageDef def : choices) {
-            if (def.width() > widest || def.depth() > deepest) { continue; }
-            roll -= chance(def);
-            if (roll < 0) { return def; }
-        }
-        return null;
+        return WeightedPicks.pick(choices, def -> def.width() <= widest && def.depth() <= deepest ? chance(def) : 0, random);
     }
 
     @Nullable private static VillageDef parse(Identifier key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Village plot {} is empty, so it is dropped", key);
-            return null;
-        }
-        String type = GsonHelper.getAsString(json, "type", VillageDef.FARM).trim().toLowerCase(Locale.ROOT);
+        JsonObject json = Json.object(key, contents, "village plot");
+        if (json == null) { return null; }
+        String type = Settings.lower(GsonHelper.getAsString(json, "type", VillageDef.FARM));
         if (!VillageDef.FARM.equals(type) && !VillageDef.TEMPLATE.equals(type)) {
             ContentLog.LOGGER.error("Village plot {} asks for type '{}', which is not {} or {}, so {} stands in", key, type, VillageDef.FARM, VillageDef.TEMPLATE, VillageDef.FARM);
             type = VillageDef.FARM;
@@ -241,6 +227,10 @@ public final class ContentVillages {
         String structure = GsonHelper.getAsString(json, "structure", "");
         if (VillageDef.TEMPLATE.equals(type) && structure.isEmpty()) {
             ContentLog.LOGGER.error("Village plot {} is a template but names no structure, so it is dropped", key);
+            return null;
+        }
+        if (VillageDef.TEMPLATE.equals(type) && Identifier.tryParse(structure) == null) {
+            ContentLog.LOGGER.error("Village plot {} names structure '{}', which is not a valid id, so it is dropped", key, structure);
             return null;
         }
         return grown(new VillageDef(key, type,
@@ -258,7 +248,7 @@ public final class ContentVillages {
                 Math.max(1, GsonHelper.getAsInt(json, "rowWidth", 2)),
                 structure,
                 GsonHelper.getAsString(json, "ground", "minecraft:dirt"),
-                Mth.clamp(GsonHelper.getAsInt(json, "integrity", 100), 1, 100),
+                Mth.clamp(GsonHelper.getAsInt(json, "integrity", ShapeDef.FULL_INTEGRITY), 1, ShapeDef.FULL_INTEGRITY),
                 GsonHelper.getAsString(json, "lootTable", ""),
                 Math.max(0, GsonHelper.getAsInt(json, "villagers", 0)),
                 GsonHelper.getAsString(json, "villagerEntity", ""),

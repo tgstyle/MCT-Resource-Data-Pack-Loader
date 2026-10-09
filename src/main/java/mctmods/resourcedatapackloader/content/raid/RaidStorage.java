@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.raid;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 
 import net.minecraft.core.BlockPos;
@@ -17,7 +17,7 @@ import java.util.List;
 public final class RaidStorage extends SavedData {
     public static final String NAME = "rdpl_raids";
     private static final String RAIDS = "Raids";
-    private static final SavedDataType<RaidStorage> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), RaidStorage::new, CompoundTag.CODEC.xmap(RaidStorage::read, RaidStorage::write));
+    private static final SavedDataType<RaidStorage> TYPE = SavedTypes.of(NAME, RaidStorage::new, RaidStorage::read, RaidStorage::write);
     private final List<ActiveRaid> raids = new ArrayList<>();
 
     public static RaidStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(TYPE); }

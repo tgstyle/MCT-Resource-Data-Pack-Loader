@@ -9,6 +9,7 @@ import net.minecraft.world.level.Level;
 public final class ContentWeatherCycle {
     private static final float STEP = 0.004F;
     private static final float THUNDER_STEP = 0.01F;
+    private boolean started;
     private boolean raining;
     private boolean thundering;
     private int left;
@@ -26,14 +27,18 @@ public final class ContentWeatherCycle {
     public void tick(Level level, DimensionTraitsDef.Cycle cycle) {
         if (level.isClientSide()) { return; }
         RandomSource random = level.getRandom();
-        if (--left <= 0) {
+        if (!started) {
+            started = true;
+            left = Mth.randomBetweenInclusive(random, cycle.clearMin(), cycle.clearMax());
+        }
+        else if (--left <= 0) {
             raining = !raining;
-            left = raining ? between(random, cycle.rainMin(), cycle.rainMax()) : between(random, cycle.clearMin(), cycle.clearMax());
+            left = raining ? Mth.randomBetweenInclusive(random, cycle.rainMin(), cycle.rainMax()) : Mth.randomBetweenInclusive(random, cycle.clearMin(), cycle.clearMax());
         }
         if (cycle.thunderMax() <= 0) { thundering = false; }
         else if (--thunderLeft <= 0) {
             thundering = !thundering;
-            thunderLeft = thundering ? between(random, cycle.thunderMin(), cycle.thunderMax()) : between(random, cycle.calmMin(), cycle.calmMax());
+            thunderLeft = thundering ? Mth.randomBetweenInclusive(random, cycle.thunderMin(), cycle.thunderMax()) : Mth.randomBetweenInclusive(random, cycle.calmMin(), cycle.calmMax());
         }
         if (--shift <= 0) {
             target = cycle.strength() * (0.25F + random.nextFloat() * 0.75F);
@@ -48,6 +53,4 @@ public final class ContentWeatherCycle {
         level.oThunderLevel = thunder;
         level.thunderLevel = Mth.clamp(thunder + (storming ? THUNDER_STEP : -THUNDER_STEP), 0.0F, cycle.thunderStrength());
     }
-
-    private static int between(RandomSource random, int min, int max) { return max > min ? min + random.nextInt(max - min + 1) : min; }
 }

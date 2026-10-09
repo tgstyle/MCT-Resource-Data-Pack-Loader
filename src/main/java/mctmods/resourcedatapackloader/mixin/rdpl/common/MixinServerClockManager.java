@@ -14,8 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Mixin(ServerClockManager.class) public abstract class MixinServerClockManager {
-    @ModifyExpressionValue(method = {"createFullSyncPacket()Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;", "modifyClock(Lnet/minecraft/core/Holder;Ljava/util/function/Consumer;)V"}, at = @At(value = "NEW", target = "(JLjava/util/Map;)Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;"))
-    private ClientboundSetTimePacket rdpl$lockedSync(ClientboundSetTimePacket packet) {
+    @ModifyExpressionValue(method = {"createFullSyncPacket()Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;", "modifyClock(Lnet/minecraft/core/Holder;Ljava/util/function/Consumer;)V"}, at = @At(value = "NEW", target = "(JLjava/util/Map;)Lnet/minecraft/network/protocol/game/ClientboundSetTimePacket;")) private ClientboundSetTimePacket rdpl$lockedSync(ClientboundSetTimePacket packet) {
         Map<Holder<WorldClock>, ClockNetworkState> updates = new HashMap<>(packet.clockUpdates());
         updates.replaceAll((clock, state) -> {
             long locked = ContentTerrain.lockedTime(clock);

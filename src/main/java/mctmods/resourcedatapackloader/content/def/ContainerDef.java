@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.resources.Identifier;
-
 import javax.annotation.Nullable;
 
 public record ContainerDef(int rows, int columns, String lootTable, boolean chestModel, @Nullable Identifier chestTexture,

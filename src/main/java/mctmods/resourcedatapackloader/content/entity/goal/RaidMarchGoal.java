@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
 import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
+import mctmods.resourcedatapackloader.util.PosTags;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
@@ -25,7 +26,7 @@ public final class RaidMarchGoal extends Goal {
     @Override public boolean canUse() {
         if (mob.getTarget() != null || mob.tickCount < nextLook || !mob.getPersistentData().contains(ActiveRaid.RAIDER)) { return false; }
         nextLook = mob.tickCount + LOOK_EVERY;
-        BlockPos center = ActiveRaid.position(mob.getPersistentData().getCompoundOrEmpty(ActiveRaid.RAIDER));
+        BlockPos center = PosTags.read(mob.getPersistentData().getCompoundOrEmpty(ActiveRaid.RAIDER));
         if (center.distToLowCornerSqr(mob.getX(), mob.getY(), mob.getZ()) <= ARRIVED_SQ) { return false; }
         toward = DefaultRandomPos.getPosTowards(mob, 15, 4, Vec3.atBottomCenterOf(center), Math.PI / 2.0D);
         return toward != null;
@@ -33,9 +34,7 @@ public final class RaidMarchGoal extends Goal {
 
     @Override public boolean canContinueToUse() { return mob.getTarget() == null && !mob.getNavigation().isDone(); }
 
-    @Override public void start() {
-        if (toward != null) { mob.getNavigation().moveTo(toward.x, toward.y, toward.z, 1.0D); }
-    }
+    @Override public void start() { if (toward != null) { mob.getNavigation().moveTo(toward.x, toward.y, toward.z, 1.0D); } }
 
     @Override public void stop() { toward = null; }
 }

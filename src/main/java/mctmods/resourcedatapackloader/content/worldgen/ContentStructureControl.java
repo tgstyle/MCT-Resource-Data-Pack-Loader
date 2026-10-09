@@ -1,23 +1,25 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.compat.Compat;
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
@@ -26,21 +28,16 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentStructureControl {
-    private static final String MINECRAFT = "minecraft";
-    private static final String SETS = "worldgen/structure_set";
-    private static final String STRUCTURES = "worldgen/structure";
     private static final String RANDOM_SPREAD = "minecraft:random_spread";
     private static final String CONCENTRIC_RINGS = "minecraft:concentric_rings";
     private static final String RINGS = ResourceDataPackLoader.MOD_ID + ":" + ContentWorldgen.RINGS_PLACEMENT;
@@ -62,7 +59,7 @@ public final class ContentStructureControl {
 
     private ContentStructureControl() {}
 
-    public static boolean enabled() { return !ContentControl.off(ContentControl.STRUCTURES); }
+    public static boolean disabled() { return ContentControl.off(ContentControl.STRUCTURES); }
 
     public static void generate() {
         SET_JSON.clear();
@@ -70,7 +67,10 @@ public final class ContentStructureControl {
         SET_MEMBERS.clear();
         BIOME_FILTERED.clear();
         beardMansions();
-        if (!enabled()) {
+        if (disabled()) {
+            ContentPopulateControl.load(null, List.of(), new ArrayList<>());
+            ContentStructureMost.load(List.of(), new ArrayList<>());
+            ContentStructureSpawners.load(List.of(), new ArrayList<>());
             written();
             return;
         }
@@ -109,20 +109,15 @@ public final class ContentStructureControl {
     }
 
     private static void written() {
-        for (Map.Entry<Identifier, JsonObject> set : SET_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, set.getKey().getNamespace(), SETS + "/" + set.getKey().getPath() + ".json", set.getValue().toString()); }
-        for (Map.Entry<Identifier, JsonObject> structure : STRUCTURE_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, structure.getKey().getNamespace(), STRUCTURES + "/" + structure.getKey().getPath() + ".json", structure.getValue().toString()); }
+        for (Map.Entry<Identifier, JsonObject> set : SET_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, set.getKey().getNamespace(), WorldgenFiles.file(WorldgenFiles.STRUCTURE_SET, set.getKey().getPath()), set.getValue().toString()); }
+        for (Map.Entry<Identifier, JsonObject> structure : STRUCTURE_JSON.entrySet()) { GeneratedResources.put(PackType.SERVER_DATA, structure.getKey().getNamespace(), WorldgenFiles.file(WorldgenFiles.STRUCTURE, structure.getKey().getPath()), structure.getValue().toString()); }
     }
 
     private static void numbers(String entry, String key, List<String> touched, boolean spacing) {
         String[] parts = split(entry, key);
         if (parts == null) { return; }
-        int value;
-        try { value = Integer.parseInt(parts[1].trim()); }
-        catch (NumberFormatException notNumber) {
-            ContentLog.LOGGER.error("{} entry '{}' does not end in a number", key, entry);
-            return;
-        }
-        if (value <= 0) { return; }
+        int value = positive(parts[1], entry, key);
+        if (value == 0) { return; }
         for (Identifier set : sets(parts[0])) {
             if ((spacing ? SPACING_FIXED : SEPARATION_FIXED).contains(set.getPath())) { continue; }
             JsonObject json = set(set);
@@ -151,16 +146,19 @@ public final class ContentStructureControl {
         }
     }
 
+    private static int positive(String written, String entry, String key) {
+        try { return Math.max(0, Integer.parseInt(written.trim())); }
+        catch (NumberFormatException notNumber) {
+            ContentLog.LOGGER.error("{} entry '{}' does not end in a number", key, entry);
+            return 0;
+        }
+    }
+
     private static void distance(String entry, List<String> touched) {
         String[] parts = split(entry, "structureMinDistanceFromSpawn");
         if (parts == null) { return; }
-        int value;
-        try { value = Integer.parseInt(parts[1].trim()); }
-        catch (NumberFormatException notNumber) {
-            ContentLog.LOGGER.error("structureMinDistanceFromSpawn entry '{}' does not end in a number", entry);
-            return;
-        }
-        if (value <= 0) { return; }
+        int value = positive(parts[1], entry, "structureMinDistanceFromSpawn");
+        if (value == 0) { return; }
         for (Identifier set : sets(parts[0])) {
             JsonObject placement = spread(set, "structureMinDistanceFromSpawn");
             if (placement == null) { continue; }
@@ -172,25 +170,18 @@ public final class ContentStructureControl {
 
     private static void pins(List<String> touched) {
         Map<String, JsonArray> byName = new LinkedHashMap<>();
-        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAt", Config.worldgen.structureAt())) {
-            String[] parts = split(entry, "structureAt");
-            if (parts == null) { continue; }
-            if (ContentCity.STRUCTURE.equals(parts[0])) {
-                touched.add("the city center district pinned at " + parts[1].trim());
+        for (Map.Entry<String, List<int[]>> pinned : StructureAtPins.all().entrySet()) {
+            if (ContentCity.STRUCTURE.equals(pinned.getKey())) {
+                for (int[] at : pinned.getValue()) { touched.add("the city center district pinned at " + at[0] + "," + at[1]); }
                 continue;
             }
-            String[] xz = parts[1].split(",");
-            if (xz.length != 2) {
-                ContentLog.LOGGER.error("structureAt entry '{}' is not written as structure=x,z", entry);
-                continue;
-            }
-            try {
+            JsonArray pins = byName.computeIfAbsent(pinned.getKey(), _ -> new JsonArray());
+            for (int[] at : pinned.getValue()) {
                 JsonArray pin = new JsonArray();
-                pin.add(Integer.parseInt(xz[0].trim()));
-                pin.add(Integer.parseInt(xz[1].trim()));
-                byName.computeIfAbsent(parts[0], _ -> new JsonArray()).add(pin);
+                pin.add(at[0]);
+                pin.add(at[1]);
+                pins.add(pin);
             }
-            catch (NumberFormatException notNumbers) { ContentLog.LOGGER.error("structureAt entry '{}' does not name two whole numbers", entry); }
         }
         for (Map.Entry<String, JsonArray> pinned : byName.entrySet()) {
             for (Identifier set : sets(pinned.getKey())) {
@@ -214,7 +205,7 @@ public final class ContentStructureControl {
         Set<String> found = new LinkedHashSet<>();
         Set<String> ids = new LinkedHashSet<>();
         for (String named : parts[1].split(",")) {
-            String biome = named.trim().toLowerCase(Locale.ROOT);
+            String biome = Settings.lower(named);
             if (biome.isEmpty()) { continue; }
             if (biome.contains(":")) {
                 found.add(biome);
@@ -275,9 +266,11 @@ public final class ContentStructureControl {
                 present = true;
                 if (structure.biomes().size() > 0) { empty = false; }
             }
-            if (present && empty) { ContentLog.LOGGER.warn("Biome settings for {} leave no biome at all, so the vanilla list is left alone", entry.getKey()); }
+            if (present && empty) { warnNoBiome(entry.getKey()); }
         }
     }
+
+    static void warnNoBiome(Object name) { ContentLog.LOGGER.warn("Biome settings for {} leave no biome at all, so the vanilla list is left alone", name); }
 
     private static JsonElement filtered(JsonElement original, JsonElement listed, boolean blacklist, Set<String> ids) {
         JsonObject kept = composite("and", original.deepCopy(), listed.deepCopy());
@@ -354,7 +347,7 @@ public final class ContentStructureControl {
     private static void adaptation(String entry, List<String> touched) {
         String[] parts = split(entry, "structureAdaptation");
         if (parts == null) { return; }
-        String asked = parts[1].trim().toLowerCase(Locale.ROOT);
+        String asked = Settings.lower(parts[1]);
         if (("temples".equals(parts[0]) || "mansions".equals(parts[0])) && !"none".equals(asked) && !"beard_thin".equals(asked)) {
             ContentLog.LOGGER.error("structureAdaptation asks for {}={}, but that structure settles itself only as it is built, so the terrain cannot be shaped for it beforehand. Only beard_thin is offered there, which banks the ground around it once it stands", parts[0], parts[1].trim());
             return;
@@ -377,7 +370,7 @@ public final class ContentStructureControl {
         JsonObject placement = GsonHelper.getAsJsonObject(json, "placement");
         String type = GsonHelper.getAsString(placement, "type", "");
         if (!RANDOM_SPREAD.equals(type) && !(ResourceDataPackLoader.MOD_ID + ":spread").equals(type)) {
-            if (WARNED.add(key + set)) { ContentLog.LOGGER.error("{} names {}, which is placed by {} rather than on a grid, so it cannot be pinned or held off spawn", key, set, type); }
+            ContentLog.LOGGER.errorOnce(WARNED, key + set, "{} names {}, which is placed by {} rather than on a grid, so it cannot be pinned or held off spawn", key, set, type);
             return null;
         }
         placement.addProperty("type", ResourceDataPackLoader.MOD_ID + ":spread");
@@ -425,22 +418,22 @@ public final class ContentStructureControl {
     }
 
     static boolean blacklisted(String structure) {
-        String wanted = structure.trim().toLowerCase(Locale.ROOT);
+        String wanted = Settings.lower(structure);
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureBiomesAreBlacklist", Config.worldgen.structureBiomesAreBlacklist())) {
             String[] parts = split(entry, "structureBiomesAreBlacklist");
             if (parts == null) { continue; }
-            if (parts[0].trim().toLowerCase(Locale.ROOT).equals(wanted)) { return Boolean.parseBoolean(parts[1].trim()); }
+            if (parts[0].equals(wanted)) { return Boolean.parseBoolean(parts[1].trim()); }
         }
         return false;
     }
 
     @Nullable static String[] split(String entry, String key) {
-        int at = entry.indexOf('=');
-        if (at <= 0) {
+        String[] sides = Settings.filled(entry);
+        if (sides == null) {
             ContentLog.LOGGER.error("{} entry '{}' is not written as structure=value", key, entry);
             return null;
         }
-        return new String[] { entry.substring(0, at).trim().toLowerCase(Locale.ROOT), entry.substring(at + 1) };
+        return new String[] { Settings.lower(sides[0]), sides[1] };
     }
 
     private static String known() {
@@ -453,38 +446,38 @@ public final class ContentStructureControl {
     private static List<Identifier> sets(String name) { return sets(name, true); }
 
     private static List<Identifier> sets(String name, boolean told) {
-        String wanted = name.trim().toLowerCase(Locale.ROOT);
+        String wanted = Settings.lower(name);
         List<String> legacy = LEGACY_NAMES.get(wanted);
         List<Identifier> out = new ArrayList<>();
         if (legacy != null) {
-            for (String set : legacy) { out.add(Identifier.fromNamespaceAndPath(MINECRAFT, set)); }
+            for (String set : legacy) { out.add(Identifier.withDefaultNamespace(set)); }
             return out;
         }
-        Identifier id = wanted.contains(":") ? Identifier.tryParse(wanted) : Identifier.fromNamespaceAndPath(MINECRAFT, wanted);
+        Identifier id = wanted.contains(":") ? Identifier.tryParse(wanted) : Identifier.withDefaultNamespace(wanted);
         if (id == null) {
             if (told) { ContentLog.LOGGER.error("'{}' is not a structure name this line knows nor a valid id", name); }
             return out;
         }
-        if (GameData.has(Identifier.fromNamespaceAndPath(id.getNamespace(), SETS + "/" + id.getPath() + ".json"))) {
+        if (GameData.has(WorldgenFiles.id(WorldgenFiles.STRUCTURE_SET, id))) {
             out.add(id);
             return out;
         }
         for (String set : VANILLA_SETS) {
-            Identifier setId = Identifier.fromNamespaceAndPath(MINECRAFT, set);
+            Identifier setId = Identifier.withDefaultNamespace(set);
             if (members(setId).contains(id)) {
                 out.add(setId);
                 return out;
             }
         }
-        if (told && WARNED.add(wanted)) { ContentLog.LOGGER.error("'{}' is neither a 1.12.2 structure name, a structure set nor a structure the game ships, so its settings do nothing", name); }
+        if (told) { ContentLog.LOGGER.errorOnce(WARNED, wanted, "'{}' is neither a 1.12.2 structure name, a structure set nor a structure the game ships, so its settings do nothing", name); }
         return out;
     }
 
     static List<Identifier> structures(String name) {
-        String wanted = name.trim().toLowerCase(Locale.ROOT);
+        String wanted = Settings.lower(name);
         List<Identifier> out = new ArrayList<>();
-        Identifier id = wanted.contains(":") ? Identifier.tryParse(wanted) : Identifier.fromNamespaceAndPath(MINECRAFT, wanted);
-        if (id != null && !LEGACY_NAMES.containsKey(wanted) && GameData.has(Identifier.fromNamespaceAndPath(id.getNamespace(), STRUCTURES + "/" + id.getPath() + ".json"))) {
+        Identifier id = wanted.contains(":") ? Identifier.tryParse(wanted) : Identifier.withDefaultNamespace(wanted);
+        if (id != null && !LEGACY_NAMES.containsKey(wanted) && GameData.has(WorldgenFiles.id(WorldgenFiles.STRUCTURE, id))) {
             out.add(id);
             return out;
         }
@@ -497,7 +490,7 @@ public final class ContentStructureControl {
         if (known != null) { return known; }
         Set<Identifier> found = new LinkedHashSet<>();
         SET_MEMBERS.put(set, found);
-        JsonObject json = GameData.json(Identifier.fromNamespaceAndPath(set.getNamespace(), SETS + "/" + set.getPath() + ".json"));
+        JsonObject json = GameData.json(WorldgenFiles.id(WorldgenFiles.STRUCTURE_SET, set));
         if (json == null) { return found; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
             if (!element.isJsonObject()) { continue; }
@@ -507,23 +500,17 @@ public final class ContentStructureControl {
         return found;
     }
 
-    @Nullable private static JsonObject set(Identifier set) {
-        JsonObject held = SET_JSON.get(set);
-        if (held != null) { return held; }
-        JsonObject json = GameData.json(Identifier.fromNamespaceAndPath(set.getNamespace(), SETS + "/" + set.getPath() + ".json"));
-        if (json == null) { return null; }
-        JsonObject copy = json.deepCopy();
-        SET_JSON.put(set, copy);
-        return copy;
-    }
+    @Nullable private static JsonObject set(Identifier set) { return copyOf(SET_JSON, WorldgenFiles.STRUCTURE_SET, set); }
 
-    @Nullable private static JsonObject structure(Identifier structure) {
-        JsonObject held = STRUCTURE_JSON.get(structure);
-        if (held != null) { return held; }
-        JsonObject json = GameData.json(Identifier.fromNamespaceAndPath(structure.getNamespace(), STRUCTURES + "/" + structure.getPath() + ".json"));
+    @Nullable private static JsonObject structure(Identifier structure) { return copyOf(STRUCTURE_JSON, WorldgenFiles.STRUCTURE, structure); }
+
+    @Nullable private static JsonObject copyOf(Map<Identifier, JsonObject> held, String folder, Identifier id) {
+        JsonObject known = held.get(id);
+        if (known != null) { return known; }
+        JsonObject json = GameData.json(WorldgenFiles.id(folder, id));
         if (json == null) { return null; }
         JsonObject copy = json.deepCopy();
-        STRUCTURE_JSON.put(structure, copy);
+        held.put(id, copy);
         return copy;
     }
 }

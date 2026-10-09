@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.compat;
 
+import static mctmods.resourcedatapackloader.util.Json.object;
+import static mctmods.resourcedatapackloader.util.Json.text;
+
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.util.FeatureForms;
 import mctmods.resourcedatapackloader.util.FormatDown;
 import mctmods.resourcedatapackloader.util.LineNote;
@@ -55,7 +59,7 @@ public final class LinePort {
         if (path.startsWith("worldgen/configured_feature/") || path.startsWith("worldgen/feature/")) { return WorldgenDown.configured(json.getAsJsonObject(), note); }
         if (path.startsWith("worldgen/noise_settings/")) { return WorldgenDown.noiseSettings(json.getAsJsonObject(), note); }
         if (path.startsWith("worldgen/density_function/")) { return WorldgenDown.density(json, note); }
-        if (path.startsWith("worldgen/biome/")) { return WorldgenDown.biome(json.getAsJsonObject(), note); }
+        if (path.startsWith(WorldgenFiles.BIOME + "/")) { return WorldgenDown.biome(json.getAsJsonObject(), note); }
         return path.startsWith("worldgen/") ? WorldgenDown.ported(json.getAsJsonObject(), note) : json;
     }
 
@@ -85,8 +89,4 @@ public final class LinePort {
         out.add("brewing", brewing);
         return out;
     }
-
-    private static JsonObject object(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : new JsonObject(); }
-
-    private static String text(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonPrimitive() ? parent.get(key).getAsString() : ""; }
 }

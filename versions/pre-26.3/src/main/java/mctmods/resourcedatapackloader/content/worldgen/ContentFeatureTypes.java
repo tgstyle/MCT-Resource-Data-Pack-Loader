@@ -42,7 +42,7 @@ public final class ContentFeatureTypes {
         event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), Spread.TYPE));
     }
 
-    private static Identifier id(String path) { return Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, path); }
+    private static Identifier id(String path) { return ResourceDataPackLoader.id(path); }
 
     public static boolean foreign(PlacedFeature placed) {
         Feature<?> kind = placed.feature().value().feature();

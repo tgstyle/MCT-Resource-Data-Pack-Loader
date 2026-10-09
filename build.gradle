@@ -28,10 +28,8 @@ tasks.named('wrapper', Wrapper).configure {
 
 subprojects {
     apply plugin: 'java-library'
-    apply plugin: 'maven-publish'
     apply plugin: 'net.neoforged.moddev'
     apply plugin: 'idea'
-    apply plugin: 'eclipse'
 
     def versionProps = new Properties()
     file('gradle.properties').withInputStream { versionProps.load(it) }
@@ -46,14 +44,8 @@ subprojects {
     def newVersion = "${baseVersion}-b${nextBuild}-${stage}"
 
     version = newVersion
-    ext.version_buildnumber = nextBuild
-    ext.stage = stage
 
     println "-> build.gradle applying version: $version (build ${nextBuild})"
-
-    tasks.withType(Jar).configureEach {
-        archiveVersion.set(newVersion)
-    }
 
     group = 'mctmods.resourcedatapackloader'
 
@@ -62,6 +54,7 @@ subprojects {
     java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
     tasks.withType(Jar).configureEach {
+        archiveVersion.set(newVersion)
         zip64 = true
     }
 
@@ -86,10 +79,7 @@ subprojects {
 
     def version_replaces = [
             'version'             : project.version,
-            'build_number'        : version_buildnumber,
-            'version_mc'          : version_minecraft,
             'version_mc_range'    : version_minecraft_range,
-            'version_neoforge'    : version_neoforge,
             'version_neoforge_min': version_neoforge_min,
             'version_bp'          : version_bp,
             'mod_license'         : mod_license,
@@ -97,7 +87,6 @@ subprojects {
             'mod_authors'         : mod_authors,
             'mod_description'     : mod_description,
             'mod_url'             : mod_url,
-            'stage'               : stage,
     ]
 
     def layerDirs = (project.name in ['26.1.2', '26.2'] ? ["$rootDir/versions/pre-26.3/src/main/java"] : []) + (project.name in ['26.2', '26.3'] ? ["$rootDir/versions/post-26.1.2/src/main/java"] : [])
@@ -119,13 +108,6 @@ subprojects {
                 }
             }
         }
-    }
-
-    tasks.register('copyModsTomlForIntelliJ', Copy) {
-        from processResources.destinationDir
-        into "$projectDir/out/production/resources"
-        include "META-INF/neoforge.mods.toml"
-        dependsOn processResources
     }
 
     neoForge {
@@ -228,28 +210,8 @@ subprojects {
         }
     }
 
-    tasks.register('optimizePng') {
-        def pngPatterns = ["**/*.png"]
-        def resourceDirs = sourceSets.main.resources.srcDirs
-        def pngFiles = resourceDirs.collectMany { dir -> fileTree(dir: dir, includes: pngPatterns).files as List }
-        def execOps = project.services.get(ExecOperations)
-        doLast {
-            pngFiles.each { File file ->
-                long size = file.length()
-                execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
-                long newSize = file.length()
-                if (newSize < size) {
-                    System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
-                            file, size, newSize, ((double) (size - newSize)) / ((double) size) * 100.0)
-                }
-            }
-        }
-    }
-
     processResources.dependsOn bumpVersion
     jar.dependsOn bumpVersion
-
-    tasks.register('genIntellijRunsDummy') {}
 
     jar {
         archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft_label}")
@@ -263,11 +225,4 @@ subprojects {
     tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
     idea { module { downloadSources = true; downloadJavadoc = true } }
-
-    publishing {
-        publications.register('mavenJava', MavenPublication) { from(components.java as SoftwareComponent) }
-        repositories { maven { url = "file://${project.projectDir}/repo" } }
-    }
-
-    build.dependsOn bumpVersion
 }

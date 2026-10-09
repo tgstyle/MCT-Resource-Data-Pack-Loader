@@ -12,6 +12,30 @@ public final class Snbt {
 
     private Snbt() {}
 
+    public static List<String> split(String text, char separator) {
+        List<String> out = new ArrayList<>();
+        int depth = 0;
+        char quote = 0;
+        int start = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (quote != 0) {
+                if (c == '\\') { i++; }
+                else if (c == quote) { quote = 0; }
+                continue;
+            }
+            if (c == '"' || c == '\'') { quote = c; }
+            else if (c == '[' || c == '{' || c == '(') { depth++; }
+            else if (c == ']' || c == '}' || c == ')') { depth--; }
+            else if (c == separator && depth == 0) {
+                out.add(text.substring(start, i));
+                start = i + 1;
+            }
+        }
+        out.add(text.substring(start));
+        return out;
+    }
+
     public static String pots(String line, Function<String, String> rewrite) {
         StringBuilder out = new StringBuilder();
         int at = 0;
@@ -36,7 +60,7 @@ public final class Snbt {
         return at == 0 ? line : out.append(line.substring(at)).toString();
     }
 
-    public static int end(String text, int from) {
+    private static int end(String text, int from) {
         if (from >= text.length()) { return from; }
         char first = text.charAt(from);
         if (first == '"' || first == '\'') { return quoted(text, from) + 1; }
@@ -45,14 +69,8 @@ public final class Snbt {
             while (at < text.length() && ",]}: ".indexOf(text.charAt(at)) < 0) { at++; }
             return at;
         }
-        int depth = 0;
-        for (int at = from; at < text.length(); at++) {
-            char held = text.charAt(at);
-            if (held == '"' || held == '\'') { at = quoted(text, at); }
-            else if (held == '[' || held == '{') { depth++; }
-            else if ((held == ']' || held == '}') && --depth == 0) { return at + 1; }
-        }
-        return text.length();
+        int close = Brackets.close(text, from);
+        return close < 0 ? text.length() : close + 1;
     }
 
     public static List<String> items(String inner) {

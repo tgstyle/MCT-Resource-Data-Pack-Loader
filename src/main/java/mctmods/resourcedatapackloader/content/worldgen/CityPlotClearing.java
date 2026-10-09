@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -19,15 +20,16 @@ public final class CityPlotClearing {
         int ceiling = Math.max(seat + OPEN_LEAST, held.maxY() + 1);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int opened = 0;
-        for (int x = Math.max(held.minX() - CityPlotGround.RING, box.minX()); x <= Math.min(held.maxX() + CityPlotGround.RING, box.maxX()); x++) {
-            for (int z = Math.max(held.minZ() - CityPlotGround.RING, box.minZ()); z <= Math.min(held.maxZ() + CityPlotGround.RING, box.maxZ()); z++) {
-                if (CityPlotGround.inside(held, x, z) || CityPlotGround.kept(keep, x, z) || CityPlotGround.nearRoad(roads, x, z, CityPlotGround.ROAD_BESIDE)) { continue; }
+        CityClip clip = CityClip.of(box, held, CityPlotGround.RING);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                if (CityPlotGround.inside(held, x, z) || CityPlotGround.nearRoad(keep, x, z, 0) || CityPlotGround.nearRoad(roads, x, z, CityPlotGround.ROAD_BESIDE)) { continue; }
                 int bed = pathTop(level, at, x, z, seat + 1, ceiling);
                 for (int y = bed == Integer.MIN_VALUE ? seat + 1 : bed + 1; y <= ceiling; y++) {
                     at.set(x, y, z);
                     BlockState state = level.getBlockState(at);
                     if (!CityPlotGround.opening(state) && !state.is(Blocks.VINE)) { continue; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     opened++;
                 }
             }
@@ -37,19 +39,23 @@ public final class CityPlotClearing {
     }
 
     private static void doorsteps(WorldGenLevel level, BoundingBox held, BoundingBox box, int seat, int[] keep, int[] roads, BlockPos.MutableBlockPos at) {
-        for (int x = Math.max(held.minX() - CityPlotGround.RING, box.minX()); x <= Math.min(held.maxX() + CityPlotGround.RING, box.maxX()); x++) {
-            for (int z = Math.max(held.minZ() - CityPlotGround.RING, box.minZ()); z <= Math.min(held.maxZ() + CityPlotGround.RING, box.maxZ()); z++) {
-                if (CityPlotGround.kept(keep, x, z) || !CityPlotGround.nearRoad(roads, x, z, DOORSTEP_REACH)) { continue; }
+        CityClip clip = CityClip.of(box, held, CityPlotGround.RING);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                if (CityPlotGround.nearRoad(keep, x, z, 0) || !CityPlotGround.nearRoad(roads, x, z, DOORSTEP_REACH)) { continue; }
                 for (int y = seat - DOORSTEP_REACH; y <= seat + 1; y++) {
                     BlockState step = level.getBlockState(at.set(x, y, z));
-                    if (!(step.getBlock() instanceof StairBlock)) { continue; }
-                    BlockState below = level.getBlockState(at.set(x, y - 1, z));
-                    at.set(x, y, z);
-                    if (CityPlotGround.stoneStep(step) && CityPlotGround.liquid(below)) { level.setBlock(at, CityPlotGround.overWater(level, x, y, z), 2); }
-                    else if (CityPlotGround.terrain(below)) { level.setBlock(at, CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, x, z)), 2); }
+                    if (!(step.getBlock() instanceof StairBlock) || laidOverWater(level, at, step)) { continue; }
+                    if (CityPlotGround.terrain(level.getBlockState(at.below()))) { level.setBlock(at, CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, x, z)), Block.UPDATE_CLIENTS); }
                 }
             }
         }
+    }
+
+    private static boolean laidOverWater(WorldGenLevel level, BlockPos.MutableBlockPos at, BlockState step) {
+        if (!CityPlotGround.stoneStep(step) || !CityPlotGround.liquid(level.getBlockState(at.below()))) { return false; }
+        level.setBlock(at, CityPlotGround.overWater(level, at.getX(), at.getY(), at.getZ()), Block.UPDATE_CLIENTS);
+        return true;
     }
 
     private static int pathTop(WorldGenLevel level, BlockPos.MutableBlockPos at, int x, int z, int from, int to) {
@@ -62,29 +68,29 @@ public final class CityPlotClearing {
     public static int doorways(WorldGenLevel level, BoundingBox held, BoundingBox box, int[] keep, int[] roads) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int freed = 0;
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (x != held.minX() && x != held.maxX() && z != held.minZ() && z != held.maxZ()) { continue; }
                 for (int y = held.minY(); y <= held.maxY() - 1; y++) {
                     at.set(x, y, z);
-                    if (!level.getBlockState(at).is(BlockTags.DOORS) && !doorwayAt(level, x, y, z)) { continue; }
+                    if (!level.getBlockState(at).is(BlockTags.DOORS) && lacksDoorwayAt(level, x, y, z)) { continue; }
                     int outX = x == held.minX() ? -1 : x == held.maxX() ? 1 : 0;
                     int outZ = outX != 0 ? 0 : z == held.minZ() ? -1 : 1;
                     at.set(x + outX, y - 1, z + outZ);
-                    if (box.isInside(at) && !CityPlotGround.nearRoad(roads, x + outX, z + outZ, 0) && !CityPlotGround.kept(keep, x + outX, z + outZ)) {
+                    if (box.isInside(at) && !CityPlotGround.nearRoad(roads, x + outX, z + outZ, 0) && !CityPlotGround.nearRoad(keep, x + outX, z + outZ, 0)) {
                         BlockState step = level.getBlockState(at);
-                        if (CityPlotGround.stoneStep(step) && CityPlotGround.liquid(level.getBlockState(at.below()))) { level.setBlock(at, CityPlotGround.overWater(level, at.getX(), at.getY(), at.getZ()), 2); }
-                        else if (!CityPlotGround.solid(step) && !CityPlotGround.liquid(step)) { level.setBlock(at, CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, at.getX(), at.getZ())), 2); }
+                        if (!laidOverWater(level, at, step) && !CityPlotGround.solid(step) && !CityPlotGround.liquid(step)) { level.setBlock(at, CityPlotGround.exposed(level, at, CityPlotGround.groundFor(level, at.getX(), at.getZ())), Block.UPDATE_CLIENTS); }
                     }
                     for (int out = 1; out <= DOOR_STEPS; out++) {
                         int stepX = x + outX * out;
                         int stepZ = z + outZ * out;
                         if (CityPlotGround.nearRoad(roads, stepX, stepZ, 0)) { break; }
-                        if (CityPlotGround.kept(keep, stepX, stepZ)) { continue; }
+                        if (CityPlotGround.nearRoad(keep, stepX, stepZ, 0)) { continue; }
                         for (int up = 0; up <= DOOR_HEIGHT; up++) {
                             at.set(stepX, y + up, stepZ);
                             if (!box.isInside(at) || (!CityPlotGround.clearable(level.getBlockState(at)) && !level.getBlockState(at).is(Blocks.DIRT_PATH))) { continue; }
-                            level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                            level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                             freed++;
                         }
                     }
@@ -95,11 +101,11 @@ public final class CityPlotClearing {
         return freed;
     }
 
-    private static boolean doorwayAt(WorldGenLevel level, int x, int y, int z) {
+    private static boolean lacksDoorwayAt(WorldGenLevel level, int x, int y, int z) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        if (CityPlotGround.solid(level.getBlockState(at.set(x, y, z))) || CityPlotGround.solid(level.getBlockState(at.set(x, y + 1, z)))) { return false; }
-        if (!CityPlotGround.solid(level.getBlockState(at.set(x, y + 2, z))) || !CityPlotGround.solid(level.getBlockState(at.set(x, y - 1, z)))) { return false; }
-        if (CityPlotGround.solid(level.getBlockState(at.set(x - 1, y, z))) && CityPlotGround.solid(level.getBlockState(at.set(x + 1, y, z)))) { return true; }
-        return CityPlotGround.solid(level.getBlockState(at.set(x, y, z - 1))) && CityPlotGround.solid(level.getBlockState(at.set(x, y, z + 1)));
+        if (CityPlotGround.solid(level.getBlockState(at.set(x, y, z))) || CityPlotGround.solid(level.getBlockState(at.set(x, y + 1, z)))) { return true; }
+        if (!CityPlotGround.solid(level.getBlockState(at.set(x, y + 2, z))) || !CityPlotGround.solid(level.getBlockState(at.set(x, y - 1, z)))) { return true; }
+        if (CityPlotGround.solid(level.getBlockState(at.set(x - 1, y, z))) && CityPlotGround.solid(level.getBlockState(at.set(x + 1, y, z)))) { return false; }
+        return !CityPlotGround.solid(level.getBlockState(at.set(x, y, z - 1))) || !CityPlotGround.solid(level.getBlockState(at.set(x, y, z + 1)));
     }
 }

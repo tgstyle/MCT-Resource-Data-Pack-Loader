@@ -13,9 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(PrimaryLevelData.class) public abstract class MixinPrimaryLevelData {
     @Shadow private LevelSettings settings;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/LevelSettings;Lnet/minecraft/world/level/storage/PrimaryLevelData$SpecialWorldProperty;Lcom/mojang/serialization/Lifecycle;)V", at = @At("RETURN"))
-    private void rdpl$packWorld(CallbackInfo ci) {
-        if (PrimaryLevelData.class.cast(this).isDebugWorld()) { return; }
+    @Inject(method = "<init>(Lnet/minecraft/world/level/LevelSettings;Lnet/minecraft/world/level/storage/PrimaryLevelData$SpecialWorldProperty;Lcom/mojang/serialization/Lifecycle;)V", at = @At("RETURN")) private void rdpl$packWorld(CallbackInfo ci) {
+        if (((PrimaryLevelData) (Object) this).isDebugWorld()) { return; }
         settings = ContentTerrain.newWorld(settings);
     }
 }

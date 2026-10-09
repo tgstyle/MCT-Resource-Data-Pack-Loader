@@ -8,7 +8,6 @@ import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.predicates.PotionsPredicate;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -50,8 +49,7 @@ public final class BrewingRecipes implements ContentPotions.Brewing {
 
     private static boolean potionMix(BrewingRecipe recipe) {
         if (recipe.getInput().potions().isEmpty() || recipe.getOutput().typeHolder().value() != Items.POTION) { return false; }
-        List<Holder<Item>> items = recipe.getInput().ingredient().items().toList();
-        return items.size() == 1 && items.getFirst().value() == Items.POTION;
+        return recipe.getInput().ingredient().getSingleItem().filter(item -> item.value() == Items.POTION).isPresent();
     }
 
     private static BrewingRecipe onto(BrewingRecipe mix, Item container) {
@@ -59,7 +57,7 @@ public final class BrewingRecipes implements ContentPotions.Brewing {
         return new BrewingRecipe(input, mix.getReagent(), new ItemStackTemplate(container, mix.getOutput().components()));
     }
 
-    private static RecipeHolder<?> holder(int index, BrewingRecipe recipe) { return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "brewing/" + index)), recipe); }
+    private static RecipeHolder<?> holder(int index, BrewingRecipe recipe) { return new RecipeHolder<>(ResourceKey.create(Registries.RECIPE, ResourceDataPackLoader.id("brewing/" + index)), recipe); }
 
     @Override public void mix(Holder<Potion> from, Item ingredient, Holder<Potion> to) {
         DataComponentPatch output = DataComponentPatch.builder().set(DataComponents.POTION_CONTENTS, new PotionContents(to)).build();

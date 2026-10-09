@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -26,7 +27,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentTree implements IContentShape {
-    private static final int FLAGS = 2 | 16;
     private final AmountDef count;
     private final AmountDef height;
     private final int scatterX;
@@ -78,7 +78,7 @@ public final class ContentTree implements IContentShape {
         if (!clear(placer, position, tall)) { return false; }
         BlockPos below = position.below();
         BlockState soil = level.getBlockState(below);
-        if (soil.is(Blocks.GRASS_BLOCK) || soil.is(Blocks.FARMLAND)) { level.setBlock(below, Blocks.DIRT.defaultBlockState(), FLAGS); }
+        if (soil.is(Blocks.GRASS_BLOCK) || soil.is(Blocks.FARMLAND)) { level.setBlock(below, Blocks.DIRT.defaultBlockState(), BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE); }
         Set<BlockPos> canopy = canopy(placer, random, position, tall);
         Set<BlockPos> logs = trunk(placer, position, tall);
         canopy.removeAll(logs);

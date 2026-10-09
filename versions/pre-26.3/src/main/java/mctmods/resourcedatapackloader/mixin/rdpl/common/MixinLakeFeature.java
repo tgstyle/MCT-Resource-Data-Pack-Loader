@@ -10,8 +10,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings("deprecation") @Mixin(LakeFeature.class) public abstract class MixinLakeFeature {
-    @Inject(method = "place", at = @At("HEAD"), cancellable = true)
-    private void rdpl$spareCity(FeaturePlaceContext<LakeFeature.Configuration> context, CallbackInfoReturnable<Boolean> cir) {
-        if (ContentCityClaim.floods(context.level(), context.origin())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "place", at = @At("HEAD"), cancellable = true) private void rdpl$spareCity(FeaturePlaceContext<LakeFeature.Configuration> context, CallbackInfoReturnable<Boolean> cir) { if (ContentCityClaim.floods(context.level(), context.origin())) { cir.setReturnValue(false); } }
 }

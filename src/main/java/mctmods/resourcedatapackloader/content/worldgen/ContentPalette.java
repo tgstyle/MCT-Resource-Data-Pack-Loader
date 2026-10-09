@@ -1,15 +1,18 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.WeightedPicks;
+
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.IntStream;
 
 public final class ContentPalette {
     private final List<BlockState> states;
-    private final int[] ladder;
-    private final int weight;
+    private final int[] stepWeights;
+    private final List<Integer> indices;
     private final Set<Block> targets;
     private final Set<BlockState> exact;
     private final Set<Block> nearby;
@@ -25,23 +28,15 @@ public final class ContentPalette {
         this.nearbyExact = Set.copyOf(nearbyExact);
         this.surface = Set.copyOf(surface);
         this.wantsNearby = !nearby.isEmpty() || !nearbyExact.isEmpty();
-        int[] steps = new int[this.states.size()];
-        int running = 0;
-        for (int index = 0; index < steps.length; index++) {
-            running += Math.max(1, weights.get(index));
-            steps[index] = running;
-        }
-        this.ladder = steps;
-        this.weight = Math.max(1, running);
+        this.stepWeights = new int[this.states.size()];
+        for (int index = 0; index < stepWeights.length; index++) { stepWeights[index] = Math.max(1, weights.get(index)); }
+        this.indices = IntStream.range(0, stepWeights.length).boxed().toList();
     }
 
     public BlockState choose(RandomSource random) {
         if (states.size() < 2) { return states.getFirst(); }
-        int roll = random.nextInt(weight);
-        for (int index = 0; index < ladder.length; index++) {
-            if (roll < ladder[index]) { return states.get(index); }
-        }
-        return states.getLast();
+        Integer picked = WeightedPicks.pick(indices, index -> stepWeights[index], random);
+        return picked == null ? states.getLast() : states.get(picked);
     }
 
     public boolean places(BlockState state) { return states.contains(state); }

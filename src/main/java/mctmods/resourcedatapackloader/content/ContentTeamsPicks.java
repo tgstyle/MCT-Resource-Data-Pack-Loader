@@ -1,23 +1,23 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Scores;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
@@ -29,6 +29,11 @@ public final class ContentTeamsPicks {
     static final Map<String, Set<String>> LEFT = new LinkedHashMap<>();
 
     private ContentTeamsPicks() {}
+
+    static void clear() {
+        PICKED.clear();
+        LEFT.clear();
+    }
 
     static void stoodDown(MinecraftServer server, TeamDef def, String member) {
         Map<String, String> held = PICKED.get(def.name());
@@ -64,19 +69,16 @@ public final class ContentTeamsPicks {
         }
         List<Entity> pool = new ArrayList<>();
         if (def.picksFrom().contains(TeamDef.PLAYERS)) { pool.addAll(server.getPlayerList().getPlayers()); }
-        for (ServerLevel each : server.getAllLevels()) {
-            for (Entity one : each.getAllEntities()) {
-                if (one instanceof Player || !one.isAlive()) { continue; }
-                if (def.picksFrom().contains(EntityType.getKey(one.getType()).toString())) { pool.add(one); }
-            }
-        }
+        ContentTeams.eachNonPlayer(server, (_, one) -> {
+            if (def.picksFrom().contains(EntityType.getKey(one.getType()).toString())) { pool.add(one); }
+        });
         if (joining != null && !pool.contains(joining)) { pool.add(joining); }
-        Collections.shuffle(pool, new Random(overworld.getRandom().nextLong()));
+        Util.shuffle(pool, overworld.getRandom());
         int have = picked(server, def);
         List<String> newlySeated = new ArrayList<>();
         for (Entity one : pool) {
             if (have >= def.picks()) { break; }
-            String member = one instanceof Player player ? player.getGameProfile().name() : one.getStringUUID();
+            String member = ContentTeams.memberName(one);
             if (held.containsKey(member) || pickedAlready(member) || left(def, member)) { continue; }
             PlayerTeam before = Scores.teamOf(board, member);
             if (before != null && one instanceof Player) { continue; }
@@ -89,7 +91,7 @@ public final class ContentTeamsPicks {
                 ContentTeams.seated(member, def);
                 if (drawnBefore.contains(member)) { ContentLog.LOGGER.debug("{} was drawn for {} again", member, def.displayName()); }
                 else {
-                    if (ContentWelcome.arrived(player)) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_PICKED, "You were picked for " + def.displayName(), def.color()); }
+                    if (ContentWelcome.arrived(player)) { Says.tell(player, CardIds.TEAM_PICKED, def.color(), "You were picked for " + def.displayName()); }
                     ContentTeams.give(player, def);
                     newlySeated.add(member);
                 }
@@ -103,8 +105,7 @@ public final class ContentTeamsPicks {
 
     private static void release(Scoreboard board, TeamDef def, Map<String, String> held) {
         for (Map.Entry<String, String> one : held.entrySet()) {
-            PlayerTeam standing = Scores.teamOf(board, one.getKey());
-            if (standing == null || !standing.getName().equals(def.name())) { continue; }
+            if (!Scores.memberOf(board, one.getKey(), def.name())) { continue; }
             Scores.leave(board, one.getKey());
             PlayerTeam back = one.getValue().isEmpty() ? null : Scores.team(board, one.getValue());
             if (back != null) { Scores.join(board, one.getKey(), back); }
@@ -122,8 +123,7 @@ public final class ContentTeamsPicks {
                 count++;
                 continue;
             }
-            PlayerTeam standing = Scores.teamOf(board, member);
-            if (standing != null && standing.getName().equals(def.name())) { Scores.leave(board, member); }
+            if (Scores.memberOf(board, member, def.name())) { Scores.leave(board, member); }
             held.remove(member);
         }
         return count;
@@ -137,7 +137,7 @@ public final class ContentTeamsPicks {
     }
 
     private static boolean alive(MinecraftServer server, String member) {
-        if (member.length() != 36 || member.indexOf('-') != 8) { return server.getPlayerList().getPlayerByName(member) != null; }
+        if (Scores.isPlayerName(member)) { return server.getPlayerList().getPlayerByName(member) != null; }
         UUID id;
         try { id = UUID.fromString(member); }
         catch (IllegalArgumentException notAnId) { return false; }

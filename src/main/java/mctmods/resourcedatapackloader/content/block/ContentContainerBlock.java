@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentContainers;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
@@ -39,7 +40,7 @@ import net.minecraft.util.TriState;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentContainer {
+public final class ContentContainerBlock extends LineCompat.ContainerBase implements IContentBlock, IContentContainer {
     private final ContainerDef container;
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
@@ -56,21 +57,15 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
 
     @Override public ContainerDef container() { return container; }
 
-    public BlockDef getDef() { return def; }
+    @Override public BlockDef getDef() { return def; }
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(HorizontalDirectionalBlock.FACING); }
 
-    @Override @Nonnull public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) {
-        return defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite());
-    }
+    @Override @Nonnull public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) { return defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite()); }
 
-    @Override @Nonnull protected BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(HorizontalDirectionalBlock.FACING, rotation.rotate(state.getValue(HorizontalDirectionalBlock.FACING)));
-    }
+    @Override @Nonnull protected BlockState rotate(BlockState state, Rotation rotation) { return state.setValue(HorizontalDirectionalBlock.FACING, rotation.rotate(state.getValue(HorizontalDirectionalBlock.FACING))); }
 
-    @Override @Nonnull protected BlockState mirror(BlockState state, Mirror mirror) {
-        return state.setValue(HorizontalDirectionalBlock.FACING, mirror.mirror(state.getValue(HorizontalDirectionalBlock.FACING)));
-    }
+    @Override @Nonnull protected BlockState mirror(BlockState state, Mirror mirror) { return state.setValue(HorizontalDirectionalBlock.FACING, mirror.getRotation(state.getValue(HorizontalDirectionalBlock.FACING)).rotate(state.getValue(HorizontalDirectionalBlock.FACING))); }
 
     @Override @Nonnull protected RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.INVISIBLE : RenderShape.MODEL; }
 
@@ -80,7 +75,7 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
         if (!level.isClientSide() || !container.chestModel()) { return null; }
-        return createTickerHelper(type, ContentContainers.type(), ContentContainerBlockEntity::lidTick);
+        return createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::lidTick);
     }
 
     @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
@@ -106,9 +101,7 @@ public final class ContentContainerBlock extends LineCompat.ContainerBase implem
 
     @Override protected boolean hasAnalogOutputSignal(@Nonnull BlockState state) { return true; }
 
-    @Override protected int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Direction direction) {
-        return ContentContainerBlockEntity.comparatorOutput(level.getBlockEntity(pos));
-    }
+    @Override protected int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Direction direction) { return ContentContainerBlockEntity.comparatorOutput(level.getBlockEntity(pos)); }
 
     @Override protected boolean triggerEvent(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, int id, int value) {
         super.triggerEvent(state, level, pos, id, value);

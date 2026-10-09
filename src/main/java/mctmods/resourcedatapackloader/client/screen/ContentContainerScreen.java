@@ -9,13 +9,13 @@ import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Inventory;
-
 import javax.annotation.Nonnull;
 
-public class ContentContainerScreen extends AbstractContainerScreen<ContentContainerMenu> {
-    private static final Identifier SHEET = Identifier.fromNamespaceAndPath("minecraft", "textures/gui/container/generic_54.png");
+public final class ContentContainerScreen extends AbstractContainerScreen<ContentContainerMenu> {
+    private static final Identifier SHEET = Identifier.withDefaultNamespace("textures/gui/container/generic_54.png");
     static final int EDGE = 7;
-    private static final int HEADER = 17;
+    static final int HEADER = 17;
+    private static final int PIXELS = 256;
     private static final int CELL = ContentContainerMenu.SLOT;
     private static final int FOOT = 96;
     private static final int FOOT_SOURCE = 126;
@@ -42,7 +42,7 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
         super.extractBackground(graphics, mouseX, mouseY, partial);
         Identifier own = def.guiTexture();
         if (own != null) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, own, leftPos, topPos, 0, 0, imageWidth, imageHeight, 256, 256);
+            graphics.blit(RenderPipelines.GUI_TEXTURED, own, leftPos, topPos, 0, 0, imageWidth, imageHeight, PIXELS, PIXELS);
             return;
         }
         frame(graphics, leftPos, topPos, imageWidth, def.rows(), def.columns());
@@ -57,43 +57,35 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
     }
 
     private static void head(GuiGraphicsExtractor graphics, int left, int y, int wide) {
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, 0, EDGE, HEADER, 256, 256);
-        for (int across = EDGE; across < wide - EDGE; across += CELL) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER, 256, 256);
-        }
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, 0, EDGE, HEADER, PIXELS, PIXELS);
+        for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER, PIXELS, PIXELS); }
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER, PIXELS, PIXELS);
     }
 
     private static void band(GuiGraphicsExtractor graphics, int left, int y, int wide, int columns) {
         int cells = columns * CELL;
         int start = (wide - cells) / 2;
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, HEADER, EDGE, CELL, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, HEADER, EDGE, CELL, PIXELS, PIXELS);
         plain(graphics, left + EDGE, y, start - EDGE, CELL);
-        for (int column = 0; column < columns; column++) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + start + column * CELL, y, EDGE, HEADER, CELL, CELL, 256, 256); }
+        for (int column = 0; column < columns; column++) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + start + column * CELL, y, EDGE, HEADER, CELL, CELL, PIXELS, PIXELS); }
         plain(graphics, left + start + cells, y, wide - EDGE - start - cells, CELL);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, HEADER, EDGE, CELL, PIXELS, PIXELS);
     }
 
     private static void foot(GuiGraphicsExtractor graphics, int left, int y, int wide) {
         plain(graphics, left + EDGE, y, wide - EDGE - EDGE, FOOT);
         sill(graphics, left, y + FOOT - SILL, wide);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, FOOT_SOURCE, EDGE, FOOT, 256, 256);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT, 256, 256);
-        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT, 256, 256);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left, y, 0, FOOT_SOURCE, EDGE, FOOT, PIXELS, PIXELS);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + wide - EDGE, y, RIGHT_SOURCE, FOOT_SOURCE, EDGE, FOOT, PIXELS, PIXELS);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT, PIXELS, PIXELS);
     }
 
-    private static void sill(GuiGraphicsExtractor graphics, int left, int y, int wide) {
-        for (int across = EDGE; across < wide - EDGE; across += CELL) {
-            graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL, 256, 256);
-        }
-    }
+    private static void sill(GuiGraphicsExtractor graphics, int left, int y, int wide) { for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL, PIXELS, PIXELS); } }
 
     private static void plain(GuiGraphicsExtractor graphics, int x, int y, int wide, int tall) {
         for (int down = 0; down < tall; down += PLAIN_TALL) {
             int high = Math.min(PLAIN_TALL, tall - down);
-            for (int across = 0; across < wide; across += PLAIN_WIDE) {
-                graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_WIDE, wide - across), high, 256, 256);
-            }
+            for (int across = 0; across < wide; across += PLAIN_WIDE) { graphics.blit(RenderPipelines.GUI_TEXTURED, SHEET, x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_WIDE, wide - across), high, PIXELS, PIXELS); }
         }
     }
 }

@@ -78,21 +78,23 @@ final class MarkPage {
             case MarkLines.ITEM -> block(MarkText.text(face, line.text), MarkText.literal(face, line.lead + " "), (line.level + 1) * INDENT, 1.0F, TEXT);
             case MarkLines.QUOTE -> block(MarkText.text(face, line.text), null, INDENT, 1.0F, DIM);
             case MarkLines.RULE -> {
-                Row rule = new Row(font, FormattedCharSequence.EMPTY, FormattedCharSequence.EMPTY, 0, 0, 1.0F, TEXT, LINE);
+                Row rule = blank(TEXT, LINE);
                 rule.rule = true;
                 rule.span = widest;
                 rows.add(rule);
             }
             case MarkLines.IMAGE -> {
-                if (!image(line)) { block(MarkText.literal(face, line.text), null, 0, 1.0F, TEXT); }
+                if (imageMissing(line)) { block(MarkText.literal(face, line.text), null, 0, 1.0F, TEXT); }
             }
             default -> block(MarkText.text(face, line.text), null, 0, 1.0F, TEXT);
         }
     }
 
+    private Row blank(int color, float tall) { return new Row(font, FormattedCharSequence.EMPTY, FormattedCharSequence.EMPTY, 0, 0, 1.0F, color, tall); }
+
     private void block(Component text, @Nullable Component lead, int indent, float size, int color) {
         if (text.getString().isEmpty()) {
-            rows.add(new Row(font, FormattedCharSequence.EMPTY, FormattedCharSequence.EMPTY, 0, 0, 1.0F, color, LINE));
+            rows.add(blank(color, LINE));
             return;
         }
         int shift = lead == null ? 0 : font.width(lead);
@@ -109,9 +111,9 @@ final class MarkPage {
         for (int i = first; i < rows.size(); i++) { rows.get(i).span = span; }
     }
 
-    private boolean image(MarkLines.Line line) {
+    private boolean imageMissing(MarkLines.Line line) {
         Identifier where = ContentParser.location(line.lead);
-        if (where == null) { return false; }
+        if (where == null) { return true; }
         int width;
         int tall;
         try (InputStream stream = Minecraft.getInstance().getResourceManager().open(where); NativeImage read = NativeImage.read(stream)) {
@@ -120,17 +122,17 @@ final class MarkPage {
         }
         catch (IOException | RuntimeException e) {
             ContentLog.LOGGER.error("World intro image {} could not be read, so its alt text shows instead: {}", where, e.getMessage());
-            return false;
+            return true;
         }
         int shown = Math.min(width, widest);
         int shownHeight = Math.max(1, Math.round(tall * shown / (float) width));
-        Row row = new Row(font, FormattedCharSequence.EMPTY, FormattedCharSequence.EMPTY, 0, 0, 1.0F, TEXT, shownHeight + GAP);
+        Row row = blank(TEXT, shownHeight + GAP);
         row.image = where;
         row.imageWidth = shown;
         row.imageHeight = shownHeight;
         row.span = shown;
         rows.add(row);
-        return true;
+        return false;
     }
 
     void draw(GuiGraphicsExtractor graphics, int screenWidth, int screenHeight, float top, float scale, boolean centered) {

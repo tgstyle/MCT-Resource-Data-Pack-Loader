@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.util.Hashes;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -66,7 +68,7 @@ public final class PathShortcut {
     private void begin(Mob mob, Level level, Vec3 from) {
         this.mob = mob;
         this.from = from;
-        x =Mth.floor(from.x);
+        x = Mth.floor(from.x);
         y = Mth.floor(from.y);
         z = Mth.floor(from.z);
         width = Mth.ceil(mob.getBbWidth());
@@ -242,7 +244,7 @@ public final class PathShortcut {
         private static final int SLOTS = 1 << BITS;
         private static final int MASK = SLOTS - 1;
         private static final int LIMIT = SLOTS * 3 / 4;
-        private static final long SPREAD = 0x9E3779B97F4A7C15L;
+        private static final long SPREAD = Hashes.GOLDEN;
         private final long[] keys = new long[SLOTS];
         private final int[] stamps = new int[SLOTS];
         private final byte[] values = new byte[SLOTS];

@@ -50,7 +50,8 @@ public final class Lang {
 
     public static String tr(String key, Object... args) { return line(TABLES.get(DEFAULT), key, args); }
 
-    public static String tr(ServerPlayer player, String key, Object... args) {
+    public static String tr(@Nullable ServerPlayer player, String key, Object... args) {
+        if (player == null) { return tr(key, args); }
         Map<String, String> table = TABLES.get(player.getLanguage().toLowerCase(Locale.ROOT));
         if (table == null || !table.containsKey(key)) { table = TABLES.get(DEFAULT); }
         return line(table, key, args);

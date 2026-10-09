@@ -108,15 +108,16 @@ public final class ThrowerGoal extends Goal {
         mob.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         retreating = retreat;
         if (carried > 0) {
-            int left = mob.getPersistentData().contains(LEFT) ? mob.getPersistentData().getIntOr(LEFT, 0) : carried;
-            left--;
-            mob.getPersistentData().putInt(LEFT, left);
-            if (left <= 0) { return; }
+            int remaining = left() - 1;
+            mob.getPersistentData().putInt(LEFT, remaining);
+            if (remaining <= 0) { return; }
         }
         reloading = Math.max(1, reload);
     }
 
-    private boolean spent() { return carried > 0 && mob.getPersistentData().contains(LEFT) && mob.getPersistentData().getIntOr(LEFT, 0) <= 0; }
+    private int left() { return mob.getPersistentData().contains(LEFT) ? mob.getPersistentData().getIntOr(LEFT, 0) : carried; }
+
+    private boolean spent() { return carried > 0 && left() <= 0; }
 
     private void restock() { mob.setItemSlot(EquipmentSlot.MAINHAND, pack.copy()); }
 

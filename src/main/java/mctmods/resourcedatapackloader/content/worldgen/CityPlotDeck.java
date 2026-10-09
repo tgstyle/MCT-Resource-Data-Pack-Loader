@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.StairBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -16,11 +17,12 @@ public final class CityPlotDeck {
     public static void approach(WorldGenLevel level, BoundingBox box, int seat, int[] strip) {
         if (strip.length < 4) { return; }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(strip[0], box.minX()); x <= Math.min(strip[2], box.maxX()); x++) {
-            for (int z = Math.max(strip[1], box.minZ()); z <= Math.min(strip[3], box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, strip[0], strip[1], strip[2], strip[3]);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 for (int y = seat + 1; y <= seat + APPROACH; y++) {
                     at.set(x, y, z);
-                    if (CityPlotGround.clearable(level.getBlockState(at))) { level.setBlock(at, Blocks.AIR.defaultBlockState(), 2); }
+                    if (CityPlotGround.clearable(level.getBlockState(at))) { level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
                 }
             }
         }
@@ -36,10 +38,11 @@ public final class CityPlotDeck {
         int tall = ContentCity.bridgeBarrierHeight();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int last = first + decked.length - 1;
-        for (int x = Math.max(alongX ? first : strip[0], box.minX()); x <= Math.min(alongX ? last : strip[2], box.maxX()); x++) {
-            for (int z = Math.max(alongX ? strip[1] : first, box.minZ()); z <= Math.min(alongX ? strip[3] : last, box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, alongX ? first : strip[0], alongX ? strip[1] : first, alongX ? last : strip[2], alongX ? strip[3] : last);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 int index = (alongX ? x : z) - first;
-                if (index < 0 || index >= decked.length || CityPlotGround.kept(keep, x, z) || pastStrip(strip, alongX, x, z, edge)) { continue; }
+                if (index < 0 || index >= decked.length || CityPlotGround.nearRoad(keep, x, z, 0) || pastStrip(strip, alongX, x, z, edge)) { continue; }
                 int seat = deck[DECK_HEAD + index];
                 if (seat == Integer.MIN_VALUE) { continue; }
                 BlockState held = level.getBlockState(at.set(x, seat, z));
@@ -49,12 +52,12 @@ public final class CityPlotDeck {
                     groundTo(level, box, at, x, seat, z);
                     continue;
                 }
-                level.setBlock(at.set(x, seat, z), planks, 2);
+                level.setBlock(at.set(x, seat, z), planks, Block.UPDATE_CLIENTS);
                 if (barrier != null) { unrail(level, box, at, alongX ? x : edge, seat + 1, alongX ? edge : z, barrier, tall); }
                 for (int up = 1; up <= 2; up++) {
                     at.set(x, seat + up, z);
                     if (!CityPlotGround.liquid(level.getBlockState(at))) { break; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -73,7 +76,7 @@ public final class CityPlotDeck {
         if (high > tall) { return; }
         for (int up = 0; up < high; up++) {
             at.set(x, y + up, z);
-            if (box.isInside(at)) { level.setBlock(at, Blocks.AIR.defaultBlockState(), 2); }
+            if (box.isInside(at)) { level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
         }
     }
 
@@ -94,7 +97,7 @@ public final class CityPlotDeck {
         for (int y = seat; y > footing; y--) {
             at.set(x, y, z);
             if (!box.isInside(at)) { continue; }
-            level.setBlock(at, CityPlotGround.verge(level, at, false, x, y, z), 2);
+            level.setBlock(at, CityPlotGround.verge(level, at, false, x, y, z), Block.UPDATE_CLIENTS);
         }
     }
 }

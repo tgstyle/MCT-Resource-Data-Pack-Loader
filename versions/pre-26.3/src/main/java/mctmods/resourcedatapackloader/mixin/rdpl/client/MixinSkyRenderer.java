@@ -18,11 +18,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(SkyRenderer.class) public abstract class MixinSkyRenderer {
     @Shadow protected abstract void renderMoon(MoonPhase moonPhase, float rainBrightness, PoseStack poseStack);
 
-    @Inject(method = "renderSkyDisc(I)V", at = @At("TAIL"))
-    private void rdpl$skybox(int skyColor, CallbackInfo ci) { ContentSkyExtras.backdrop(); }
+    @Inject(method = "renderSkyDisc(I)V", at = @At("TAIL")) private void rdpl$skybox(int skyColor, CallbackInfo ci) { ContentSkyExtras.backdrop(); }
 
-    @Inject(method = "renderSunMoonAndStars(Lcom/mojang/blaze3d/vertex/PoseStack;FFFLnet/minecraft/world/level/MoonPhase;FF)V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$packSky(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
+    @Inject(method = "renderSunMoonAndStars(Lcom/mojang/blaze3d/vertex/PoseStack;FFFLnet/minecraft/world/level/MoonPhase;FF)V", at = @At("HEAD"), cancellable = true) private void rdpl$packSky(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, MoonPhase moonPhase, float rainBrightness, float starBrightness, CallbackInfo ci) {
         ContentSkyExtras.overlay(poseStack, sunAngle);
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
         if (sky == null) { return; }
@@ -30,8 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ci.cancel();
     }
 
-    @Inject(method = "renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$tintStars(float starBrightness, PoseStack poseStack, CallbackInfo ci) {
+    @Inject(method = "renderStars(FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"), cancellable = true) private void rdpl$tintStars(float starBrightness, PoseStack poseStack, CallbackInfo ci) {
         if (!ContentStarField.replacesVanilla(Minecraft.getInstance().level)) { return; }
         ContentStars.VANILLA.draw(poseStack, starBrightness);
         ci.cancel();

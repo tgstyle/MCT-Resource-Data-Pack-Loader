@@ -1,16 +1,17 @@
 package mctmods.resourcedatapackloader.content.entity;
 
-import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.util.SavedTypes;
 import mctmods.resourcedatapackloader.compat.Compat;
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
@@ -35,16 +36,15 @@ public final class OrderBoard extends SavedData {
     private static final String ORDERS = "Orders";
     private static final String NEXT = "NextId";
     static final String ORDER = "rdplOrder";
-    static final String LEASE = "rdplOrderLease";
     private static final String PAUSED = "rdplOrderPaused";
-    private static final int PAUSE = 1200;
+    private static final int PAUSE = SharedConstants.TICKS_PER_MINUTE;
     private static final int BUDGET = 2048;
     private static final int LEASE_TICKS = 200;
     private static final int CHECK = 20;
     private static final int SPAWN_EVERY = 100;
     private static final int SPAWN_WAIT = 200;
     private static final int SEEK = 32;
-    private static final SavedDataType<OrderBoard> TYPE = new SavedDataType<>(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, NAME), OrderBoard::new, CompoundTag.CODEC.xmap(OrderBoard::read, OrderBoard::write));
+    private static final SavedDataType<OrderBoard> TYPE = SavedTypes.of(NAME, OrderBoard::new, OrderBoard::read, OrderBoard::write);
     private final List<WorkOrder> orders = new ArrayList<>();
     private int nextId = 1;
     private int turn;
@@ -77,7 +77,7 @@ public final class OrderBoard extends SavedData {
         for (WorkOrder order : orders) {
             if (order.def == def && order.chest.equals(chest) && order.stock == stock) { return order; }
         }
-        PlayerTeam side = level.getScoreboard().getPlayersTeam(by.getScoreboardName());
+        PlayerTeam side = ContentOrders.teamOf(by);
         WorkOrder order = new WorkOrder(nextId++, def, chest.immutable(), sign == null ? null : sign.immutable(), side == null ? "" : side.getName(), by.getUUID(), stock, def.limit());
         order.idleSince = level.getGameTime();
         orders.add(order);
@@ -215,7 +215,6 @@ public final class OrderBoard extends SavedData {
         order.idleSince = now;
         CompoundTag kept = mob.getPersistentData();
         kept.putInt(ORDER, order.id);
-        kept.putLong(LEASE, now + LEASE_TICKS);
         if (order.team.isEmpty() && order.owner != null && ContentOrders.boss(mob) == null) { ContentOrders.bind(mob, order.owner); }
     }
 
@@ -223,7 +222,6 @@ public final class OrderBoard extends SavedData {
         if (order != null) { order.leases.remove(mob.getUUID()); }
         if (order != null && mob.getPersistentData().getIntOr(ORDER, 0) != order.id) { return; }
         mob.getPersistentData().remove(ORDER);
-        mob.getPersistentData().remove(LEASE);
     }
 
     private void spawn(ServerLevel level, WorkOrder order) {
@@ -239,7 +237,7 @@ public final class OrderBoard extends SavedData {
             EventHooks.finalizeMobSpawn(living, level, level.getCurrentDifficultyAt(at), EntitySpawnReason.EVENT, null);
             living.setPersistenceRequired();
             PlayerTeam team = order.team.isEmpty() ? null : level.getScoreboard().getPlayerTeam(order.team);
-            if (team != null) { level.getScoreboard().addPlayerToTeam(living.getScoreboardName(), team); }
+            if (team != null) { Scores.join(living, team); }
             else if (order.owner != null) { ContentOrders.bind(living, order.owner); }
             level.addFreshEntity(living);
             order.spawned++;

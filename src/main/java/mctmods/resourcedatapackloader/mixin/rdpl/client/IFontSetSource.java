@@ -5,5 +5,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(FontSet.Source.class) public interface IFontSetSource {
-    @Accessor("this$0") FontSet rdpl$fontSet();
+    @Accessor("this$0") FontSet rdpl$getFontSet();
 }

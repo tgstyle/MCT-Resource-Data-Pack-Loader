@@ -7,13 +7,13 @@ import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
@@ -22,26 +22,16 @@ import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentEntityParser {
-    private static final Gson GSON = new Gson();
 
     private ContentEntityParser() {}
 
     @Nullable public static EntityVariantDef parse(Identifier key, String contents) {
-        JsonObject json;
-        try { json = GSON.fromJson(contents, JsonObject.class); }
-        catch (JsonParseException ex) {
-            ContentLog.LOGGER.error("Entity file {} could not be read, ignoring it", key, ex);
-            return null;
-        }
-        if (json == null) {
-            ContentLog.LOGGER.error("Entity file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "entity file");
+        if (json == null) { return null; }
         Identifier base = ContentParser.location(GsonHelper.getAsString(json, "entity", ""));
         if (base == null) {
             ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
@@ -49,7 +39,7 @@ public final class ContentEntityParser {
         }
         List<String> tintParts = new ArrayList<>();
         for (String part : Json.strings(json, "tintParts")) {
-            String named = part.trim().toLowerCase(Locale.ROOT);
+            String named = Settings.lower(part);
             if (EntityVariantDef.PARTS.contains(named)) { tintParts.add(named); }
             else { ContentLog.LOGGER.error("Entity variant {} tints part '{}', which is not one of {}, leaving it out", key, part, EntityVariantDef.PARTS); }
         }
@@ -80,10 +70,10 @@ public final class ContentEntityParser {
                         Math.max(-1, GsonHelper.getAsInt(json, "hurtResistance", -1)), GsonHelper.getAsBoolean(json, "walks", false)),
                 Math.max(-1, GsonHelper.getAsInt(json, "experience", -1)),
                 Math.max(0.0F, GsonHelper.getAsFloat(json, "absorption", 0.0F)),
-                GsonHelper.getAsString(json, "creatureAttribute", "").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "creatureAttribute", "")),
                 effects(key, json),
                 GsonHelper.getAsBoolean(json, "despawns", true),
-                Math.max(0, GsonHelper.getAsInt(json, "despawnAfter", 0)) * 20,
+                Math.max(0, GsonHelper.getAsInt(json, "despawnAfter", 0)) * SharedConstants.TICKS_PER_SECOND,
                 new EntityVariantDef.Flags(GsonHelper.getAsBoolean(json, "noAI", false), GsonHelper.getAsBoolean(json, "leftHanded", false), GsonHelper.getAsBoolean(json, "fireproof", false),
                         GsonHelper.getAsBoolean(json, "invulnerable", false), GsonHelper.getAsBoolean(json, "glowing", false), GsonHelper.getAsBoolean(json, "invisible", false),
                         GsonHelper.getAsBoolean(json, "persistent", false), GsonHelper.getAsBoolean(json, "silent", false), GsonHelper.getAsBoolean(json, "picksUpLoot", false),
@@ -108,7 +98,7 @@ public final class ContentEntityParser {
                 tintParts,
                 new EntityVariantDef.Combat(GsonHelper.getAsBoolean(json, "explodes", false), Math.max(0.0F, GsonHelper.getAsFloat(json, "explosionPower", 3.0F)),
                         Math.max(1, GsonHelper.getAsInt(json, "explosionFuse", 30)), GsonHelper.getAsBoolean(json, "explosionFire", false),
-                        GsonHelper.getAsBoolean(json, "throws", false), Math.max(0, GsonHelper.getAsInt(json, "throwReload", 0)) * 20, Math.max(0, GsonHelper.getAsInt(json, "throwRetreat", 0)) * 20,
+                        GsonHelper.getAsBoolean(json, "throws", false), Math.max(0, GsonHelper.getAsInt(json, "throwReload", 0)) * SharedConstants.TICKS_PER_SECOND, Math.max(0, GsonHelper.getAsInt(json, "throwRetreat", 0)) * SharedConstants.TICKS_PER_SECOND,
                         Math.max(0, GsonHelper.getAsInt(json, "throwAmmo", 0)), Math.max(0.0F, GsonHelper.getAsFloat(json, "throwPower", 1.0F)), GsonHelper.getAsFloat(json, "throwArc", 0.35F), GsonHelper.getAsBoolean(json, "throwReturns", false),
                         GsonHelper.getAsBoolean(json, "charges", false), GsonHelper.getAsBoolean(json, "pounces", false), Math.max(0, GsonHelper.getAsInt(json, "sniffs", 0)),
                         GsonHelper.getAsBoolean(json, "sleepsByDay", false), Math.max(0, GsonHelper.getAsInt(json, "home", 0)), Mth.clamp(GsonHelper.getAsFloat(json, "fleesWhenHurt", 0.0F), 0.0F, 1.0F),
@@ -134,22 +124,21 @@ public final class ContentEntityParser {
         JsonObject energy = GsonHelper.getAsJsonObject(storage, "energy", new JsonObject());
         int energyCapacity = Math.max(0, GsonHelper.getAsInt(energy, "capacity", 0));
         int energyTransfer = Mth.clamp(GsonHelper.getAsInt(energy, "transfer", energyCapacity), 0, energyCapacity);
-        int gauges = (fluidCapacity > 0 ? 1 : 0) + (energyCapacity > 0 ? 1 : 0);
         boolean hasItems = storage.has("items");
-        if (!hasItems && gauges == 0) {
+        StorageDef def = new StorageDef(hasItems, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
+                GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true), Math.max(0, GsonHelper.getAsInt(fluid, "use", 0)),
+                Math.max(0, GsonHelper.getAsInt(energy, "use", 0)), runsDry(key, storage));
+        if (!hasItems && def.gauges() == 0) {
             ContentLog.LOGGER.error("The storage on entity variant {} holds no items, fluid or energy, ignoring it", key);
             return null;
         }
-        return new StorageDef(hasItems, new FilterDef(entries(key, items)), fluidCapacity, new FilterDef(entries(key, fluid)), energyCapacity, energyTransfer,
-                GsonHelper.getAsBoolean(fluid, "buckets", false), GsonHelper.getAsBoolean(storage, "dropsOnDeath", true), Math.max(0, GsonHelper.getAsInt(fluid, "use", 0)),
-                Math.max(0, GsonHelper.getAsInt(energy, "use", 0)), runsDry(key, storage));
+        return def;
     }
 
     private static StorageDef.Dry runsDry(Identifier key, JsonObject storage) {
         String named = GsonHelper.getAsString(storage, "runsDry", "stops");
-        for (StorageDef.Dry dry : StorageDef.Dry.values()) {
-            if (dry.name().equalsIgnoreCase(named)) { return dry; }
-        }
+        StorageDef.Dry dry = Enums.byName(StorageDef.Dry.class, named);
+        if (dry != null) { return dry; }
         ContentLog.LOGGER.error("The storage on entity variant {} sets runsDry to '{}', which is not stops, slows or hurts, so it stops", key, named);
         return StorageDef.Dry.STOPS;
     }
@@ -187,7 +176,7 @@ public final class ContentEntityParser {
                 ContentLog.LOGGER.error("A becomes entry in {} is neither a variant name nor an object, skipping it", key);
                 continue;
             }
-            String name = (element.isJsonObject() ? GsonHelper.getAsString(element.getAsJsonObject(), "variant", "") : element.getAsString()).trim().toLowerCase(Locale.ROOT);
+            String name = Settings.lower(element.isJsonObject() ? GsonHelper.getAsString(element.getAsJsonObject(), "variant", "") : element.getAsString());
             if (name.isEmpty()) {
                 ContentLog.LOGGER.error("A becomes entry in {} names no variant, skipping it", key);
                 continue;
@@ -220,8 +209,9 @@ public final class ContentEntityParser {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            spawns.add(new SpawnEntryDef(GsonHelper.getAsString(entry, "creatureType", "creature").trim().toLowerCase(Locale.ROOT),
-                    Math.max(1, GsonHelper.getAsInt(entry, "weight", 8)), Math.max(1, GsonHelper.getAsInt(entry, "min", 1)), Math.max(1, GsonHelper.getAsInt(entry, "max", 4))));
+            int least = Math.max(1, GsonHelper.getAsInt(entry, "min", 1));
+            spawns.add(new SpawnEntryDef(Settings.lower(GsonHelper.getAsString(entry, "creatureType", "creature")),
+                    Math.max(1, GsonHelper.getAsInt(entry, "weight", 8)), least, Math.max(least, GsonHelper.getAsInt(entry, "max", 4))));
         }
         return spawns;
     }
@@ -253,7 +243,7 @@ public final class ContentEntityParser {
                 ContentLog.LOGGER.error("Entity variant {} sets slot '{}' to something that is not a name, ignoring it", key, entry.getKey());
                 continue;
             }
-            found.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue().getAsString().trim());
+            found.put(Settings.lower(entry.getKey()),entry.getValue().getAsString().trim());
         }
         return found;
     }

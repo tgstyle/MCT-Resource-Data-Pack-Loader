@@ -8,10 +8,10 @@ import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class ContentCityStructureStations {
     private ContentCityStructureStations() {}
@@ -20,17 +20,14 @@ public final class ContentCityStructureStations {
         IntList boxes = new IntArrayList();
         for (CityRails.Laid track : tracks) {
             if (!track.rail().subway()) { continue; }
-            for (CityRails.Station station : track.stations()) {
-                BoundingBox box = stationBox(track.rail(), station);
-                boxes.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
-            }
+            for (CityRails.Station station : track.stations()) { CityBoxes.add(boxes, stationBox(track.rail(), station)); }
         }
         return boxes.toIntArray();
     }
 
     static boolean claimed(List<BoundingBox> claims, CityPlan.Plot plot) {
         for (BoundingBox claim : claims) {
-            if (claim.maxX() >= plot.fromX() && claim.minX() <= plot.toX() && claim.maxZ() >= plot.fromZ() && claim.minZ() <= plot.toZ()) { return true; }
+            if (plot.meets(claim.minX(), claim.minZ(), claim.maxX(), claim.maxZ())) { return true; }
         }
         return false;
     }
@@ -111,8 +108,7 @@ public final class ContentCityStructureStations {
             int to = heart + half;
             while (!track.tunnelAt(from)) { from++; }
             while (!track.tunnelAt(to)) { to--; }
-            int low =
- track.tunnelAt(from - 1) ? track.level(from - 1) : ContentCityStationPiece.OPEN;
+            int low = track.tunnelAt(from - 1) ? track.level(from - 1) : ContentCityStationPiece.OPEN;
             int high = track.tunnelAt(to + 1) ? track.level(to + 1) : ContentCityStationPiece.OPEN;
             builder.addPiece(new ContentCityStationPiece(from, to, track.level(heart), rail.middle(), rail.alongX(), bedHalf, low, high, station.row() - 1, station.way()));
         }

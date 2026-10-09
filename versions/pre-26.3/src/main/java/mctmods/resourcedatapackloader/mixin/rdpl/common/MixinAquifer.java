@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Aquifer.NoiseBasedAquifer.class) public abstract class MixinAquifer {
-    @Inject(method = "computeSubstance", at = @At("RETURN"), cancellable = true)
-    private void rdpl$dryCityCut(DensityFunction.FunctionContext context, double density, CallbackInfoReturnable<BlockState> cir) {
+    @Inject(method = "computeSubstance", at = @At("RETURN"), cancellable = true) private void rdpl$dryCityCut(DensityFunction.FunctionContext context, double density, CallbackInfoReturnable<BlockState> cir) {
         BlockState held = cir.getReturnValue();
         if (held == null || held.getFluidState().isEmpty() || !(context instanceof INoiseChunk chunk)) { return; }
         if (chunk.rdpl$getBeardifier() instanceof CityDeckBeard city && city.dug(context, density)) { cir.setReturnValue(Blocks.AIR.defaultBlockState()); }

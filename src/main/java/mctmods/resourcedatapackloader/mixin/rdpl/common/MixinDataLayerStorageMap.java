@@ -28,12 +28,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         return rdpl$issued;
     }
 
-    @Inject(method = "copyDataLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD"))
-    private void rdpl$touchedByCopy(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
+    @Inject(method = "copyDataLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD")) private void rdpl$touchedByCopy(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
 
-    @Inject(method = "removeLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD"))
-    private void rdpl$touchedByRemove(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
+    @Inject(method = "removeLayer(J)Lnet/minecraft/world/level/chunk/DataLayer;", at = @At("HEAD")) private void rdpl$touchedByRemove(long sectionNode, CallbackInfoReturnable<DataLayer> cir) { rdpl$touched.add(sectionNode); }
 
-    @Inject(method = "setLayer(JLnet/minecraft/world/level/chunk/DataLayer;)V", at = @At("HEAD"))
-    private void rdpl$touchedBySet(long sectionNode, DataLayer layer, CallbackInfo ci) { rdpl$touched.add(sectionNode); }
+    @Inject(method = "setLayer(JLnet/minecraft/world/level/chunk/DataLayer;)V", at = @At("HEAD")) private void rdpl$touchedBySet(long sectionNode, DataLayer layer, CallbackInfo ci) { rdpl$touched.add(sectionNode); }
 }

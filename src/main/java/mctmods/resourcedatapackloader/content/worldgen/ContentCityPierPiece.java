@@ -1,22 +1,22 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
+
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -27,17 +27,14 @@ import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 
 import java.util.List;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class ContentCityPierPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityPierPiece::new;
     public static final String RAILED = "railed";
     public static final String PILINGS = "pilings";
     public static final String BOARDWALK = "boardwalk";
-    private static final int CLEAR = 4;
     private static final int PILING_RUN = 4;
     private static final int CARGO_RUN = 2;
-    private static final int PILING_REACH = 24;
     private static final String LEVEL = "Level";
     private static final String MIDDLE = "Mid";
     private static final String ALONG_X = "AlongX";
@@ -90,7 +87,7 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
         CityCross cross = CityCross.of(width, false);
         CityPlan plan = CityPlan.of(CityGround.of(level), CityPlan.districtOf(alongX ? getBoundingBox().minX() : middle, true), CityPlan.districtOf(alongX ? middle : getBoundingBox().minZ(), false));
         BlockState deck = CityPalette.stateOr(ContentCity.bridgeBlock(), ContentCity.planks(plan));
-        BlockState rail = block(ContentCity.bridgeBarrierBlock());
+        BlockState rail = CityPalette.state(ContentCity.bridgeBarrierBlock());
         BlockState piling = CityPalette.stateOr(ContentCity.supportBlock(), Blocks.OAK_LOG.defaultBlockState());
         BlockState air = Blocks.AIR.defaultBlockState();
         int half = BOARDWALK.equals(style) ? Math.min(CityPlan.extraWidth() + 2, cross.curb()) : cross.curb();
@@ -98,19 +95,19 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
         BoundingBox held = getBoundingBox();
         ContentCityTrees.fellAround(level, manager, chunk, this, box);
         List<CityRails.Laid> bores = CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ());
-        int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int first = CityClip.first(box, held, alongX);
+        int last = CityClip.last(box, held, alongX);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int along = first; along <= last; along++) {
             for (int across = middle - half; across <= middle + half; across++) {
                 at.set(alongX ? along : across, this.level, alongX ? across : along);
                 if (!box.isInside(at) || ContentCityPiece.deckBlocked(level, at, alongX ? along : across, this.level, alongX ? across : along)) { continue; }
-                level.setBlock(at, deck, 2);
+                level.setBlock(at, deck, Block.UPDATE_CLIENTS);
                 for (int up = 1; up <= CLEAR; up++) {
                     at.set(alongX ? along : across, this.level + up, alongX ? across : along);
                     BlockState over = level.getBlockState(at);
                     if (CityPlotGround.solid(over)) { break; }
-                    if (!over.isAir()) { level.setBlock(at, air, 2); }
+                    if (!over.isAir()) { level.setBlock(at, air, Block.UPDATE_CLIENTS); }
                 }
             }
             boolean posted = Math.floorMod(along - head, PILING_RUN) == 0;
@@ -118,15 +115,9 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
                 int across = middle + side * half;
                 if (rail != null && (!PILINGS.equals(style) || posted)) { raise(level, box, rail, alongX ? along : across, alongX ? across : along, rise, at); }
                 if (!posted) { continue; }
-                int roof = CityRails.boreRoof(bores, alongX ? along : across, alongX ? across : along);
-                int floor = Math.max(this.level - 1 - PILING_REACH, roof == Integer.MIN_VALUE ? level.getMinY() + 1 : roof + 1);
-                for (int down = this.level - 1; down >= floor; down--) {
-                    at.set(alongX ? along : across, down, alongX ? across : along);
-                    if (!box.isInside(at)) { break; }
-                    BlockState under = level.getBlockState(at);
-                    if (!under.isAir() && under.getFluidState().isEmpty()) { break; }
-                    level.setBlock(at, piling, 2);
-                }
+                int postX = alongX ? along : across;
+                int postZ = alongX ? across : along;
+                if (box.isInside(at.set(postX, this.level - 1, postZ))) { CityPlotGround.piling(level, postX, postZ, this.level - 1, piling, CityRails.boreRoof(bores, postX, postZ), at); }
             }
             if (rail != null && along == head) {
                 for (int across = middle - half; across <= middle + half; across++) { raise(level, box, rail, alongX ? along : across, alongX ? across : along, rise, at); }
@@ -136,29 +127,25 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
     }
 
     private void raise(WorldGenLevel level, BoundingBox box, BlockState rail, int x, int z, int rise, BlockPos.MutableBlockPos at) {
-        for (int up = 1; up <= rise; up++) {
-            at.set(x, this.level + up, z);
-            if (!box.isInside(at) || CityPlotGround.solid(level.getBlockState(at))) { break; }
-            level.setBlock(at, rail, 2);
-        }
+        CityPlotGround.raise(level, box, at, rail, rise, x, this.level, z);
     }
 
     private void cargo(WorldGenLevel level, BoundingBox box, int along, int half, BlockPos.MutableBlockPos at) {
         if (Math.floorMod(along, CARGO_RUN) != 0 || along == head || half < 2) { return; }
         for (int side = -1; side <= 1; side += 2) {
             int across = middle + side * (half - 1);
-            RandomSource roll = RandomSource.create(ContentCityBlocks.spot(level.getSeed(), alongX ? along : across, alongX ? across : along));
+            RandomSource roll = RandomSource.create(SeededRandom.spot(level.getSeed(), alongX ? along : across, alongX ? across : along));
             ContentCity.Cargo stood = ContentCity.pierCargo(roll);
             if (stood == null) { continue; }
             BlockState parsed = ContentStates.known(stood.name(), "villagePathPierCargo");
             if (parsed == null) { continue; }
             Direction inward = alongX ? (side < 0 ? Direction.SOUTH : Direction.NORTH) : (side < 0 ? Direction.EAST : Direction.WEST);
-            BlockState laid = parsed.hasProperty(BlockStateProperties.HORIZONTAL_FACING) ? parsed.setValue(BlockStateProperties.HORIZONTAL_FACING, inward) : parsed.hasProperty(BlockStateProperties.FACING) ? parsed.setValue(BlockStateProperties.FACING, inward) : parsed;
+            BlockState laid = CityPalette.faced(parsed, inward);
             if (blocked(level, box, across, along, stood.height(), at)) { continue; }
             for (int up = 1; up <= stood.height(); up++) {
                 at.set(alongX ? along : across, this.level + up, alongX ? across : along);
                 if (!box.isInside(at)) { break; }
-                level.setBlock(at, laid, 2);
+                level.setBlock(at, laid, Block.UPDATE_CLIENTS);
                 fill(level, at, roll);
             }
         }
@@ -177,13 +164,8 @@ public final class ContentCityPierPiece extends StructurePiece implements PieceB
         if (named.isEmpty()) { return; }
         Identifier table = Identifier.tryParse(named);
         if (table == null) { return; }
-        BlockEntity found = level.getBlockEntity(at);
-        if (!(found instanceof RandomizableContainerBlockEntity container)) { return; }
-        container.setLootTable(ResourceKey.create(Registries.LOOT_TABLE, table));
-        container.setLootTableSeed(roll.nextLong());
+        StructureLoot.stock(level, roll, at, table);
     }
-
-    @Nullable private static BlockState block(String named) { return CityPalette.state(named); }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(getBoundingBox(), level); }
 

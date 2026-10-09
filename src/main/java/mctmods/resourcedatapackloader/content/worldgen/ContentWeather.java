@@ -13,7 +13,8 @@ import net.minecraft.world.level.biome.Biome;
 import javax.annotation.Nullable;
 
 public final class ContentWeather {
-    private static final String KEY = "weatherCeiling";    private static final DimensionValues<Integer> HEIGHTS = new DimensionValues<>(KEY, ContentDimensions::height, "which is not a whole number");
+    private static final String KEY = "weatherCeiling";
+    private static final DimensionValues<Integer> HEIGHTS = new DimensionValues<>(KEY, ContentDimensions::height, "which is not a whole number");
 
     private ContentWeather() {}
 
@@ -26,7 +27,7 @@ public final class ContentWeather {
 
     public static DimensionTraitsDef traits(@Nullable LevelReader world) {
         Level level = level(world);
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         return def == null ? DimensionTraitsDef.DEFAULTS : def.traits();
     }
 

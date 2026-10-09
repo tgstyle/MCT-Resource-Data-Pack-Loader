@@ -22,7 +22,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fStack;
 import org.joml.Vector3f;
@@ -32,8 +31,8 @@ import java.util.OptionalInt;
 import javax.annotation.Nullable;
 
 public final class ContentSkyExtras {
-    private static final RenderPipeline BOX = RenderPipelines.CELESTIAL.toBuilder().withLocation(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "pipeline/sky_box")).withColorTargetState(ColorTargetState.DEFAULT).withCull(false).build();
-    private static final RenderPipeline GLOW = RenderPipelines.SUNRISE_SUNSET.toBuilder().withLocation(Identifier.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "pipeline/sky_glow")).withColorTargetState(new ColorTargetState(BlendFunction.OVERLAY)).withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS).withCull(false).build();
+    private static final RenderPipeline BOX = RenderPipelines.CELESTIAL.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sky_box")).withColorTargetState(ColorTargetState.DEFAULT).withCull(false).build();
+    private static final RenderPipeline GLOW = RenderPipelines.SUNRISE_SUNSET.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sky_glow")).withColorTargetState(new ColorTargetState(BlendFunction.OVERLAY)).withVertexFormat(DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.QUADS).withCull(false).build();
     private static final RenderSystem.AutoStorageIndexBuffer QUAD_INDICES = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
     @Nullable private static GpuBuffer box;
     @Nullable private static GpuBuffer panorama;
