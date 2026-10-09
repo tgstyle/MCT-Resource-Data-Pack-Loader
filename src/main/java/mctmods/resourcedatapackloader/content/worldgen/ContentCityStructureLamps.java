@@ -181,9 +181,10 @@ public final class ContentCityStructureLamps {
         IntList spots = new IntArrayList();
         IntList levels = new IntArrayList();
         IntList across = new IntArrayList();
+        int run = ContentCity.decorSpacing();
         for (int at = 0; at < profile.length; at++) {
             int along = start + at;
-            if (Math.floorMod(along, ContentCityStructure.VERGE_RUN) != 0 || !line.covers(along) || !plan.emitsAlong(line, along)) { continue; }
+            if (Math.floorMod(along, run) != 0 || !line.covers(along) || !plan.emitsAlong(line, along)) { continue; }
             if (laid != null && laid.bored()[at]) { continue; }
             for (int side = -1; side <= 1; side += 2) {
                 int sideways = line.middle() + side * verge;

@@ -6151,14 +6151,16 @@ xxoxoxx
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `villageDecor` | 列表 | 空 | 散布在城市街道旁的装饰，写作 name=weight 对，名称指向资源包提供的世界生成，如 mypack:street_flowers=2。名称 empty 表示留空的位置所占份额，不是 name=weight 写法的条目会被忽略。街道每侧路肩上每隔三格就对列表抽取一次，落在那里的地面上，无论它多高，但不在隧道中、地块下、广场上，或距门两格以内。留空则什么也不散布 |
+| `villageDecor` | 列表 | 空 | 散布在城市街道旁的装饰，写作 name=weight 对，名称指向资源包提供的世界生成，如 mypack:street_flowers=2。名称 empty 表示留空的位置所占份额，不是 name=weight 写法的条目会被忽略。街道每侧路肩上每隔 villageDecorSpacing 格（默认三格）就对列表抽取一次，落在那里的地面上，无论它多高，但不在隧道中、地块下、广场上，或距门两格以内。留空则什么也不散布 |
+| `villageDecorSpacing` | 整数，1 到 16 | `3` | 沿街道每一侧的装饰位置之间的间隔，单位为方块。限制在 1 到 16 之间。比间距更宽的模板可能会挤到相邻的模板 |
 
 ### 结构
 
