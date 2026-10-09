@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.AmbienceDef;
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.util.Colors;
 import mctmods.resourcedatapackloader.util.WindGust;
@@ -49,7 +50,10 @@ import javax.annotation.Nullable;
 
     private ContentDimensionAmbience() {}
 
-    @Nullable private static AmbienceDef ambience(@Nullable World world) { return world != null && world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) world.provider).ambience() : null; }
+    @Nullable private static AmbienceDef ambience(@Nullable World world) {
+        DimensionDef def = ContentDimensions.of(world);
+        return def == null ? null : def.traits.ambience;
+    }
 
     public static MusicTicker.MusicType music(AmbienceDef ambience) { return MUSIC.computeIfAbsent(ambience, held -> EnumHelperClient.addMusicType("RDPL_AMBIENCE_" + MUSIC.size(), sound(held.music), held.musicMinDelay, held.musicMaxDelay)); }
 
@@ -100,7 +104,7 @@ import javax.annotation.Nullable;
         int y = MathHelper.floor(view.posY);
         int z = MathHelper.floor(view.posZ);
         Minecraft mc = Minecraft.getMinecraft();
-        RainDef rain = ((ContentWorldProvider) world.provider).rain();
+        RainDef rain = ContentDimensions.rain(world);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int i = 0; i < TRIES; i++) {
             spot(mc, world, view, at, NEAR, x, y, z, type, ambience.particleChance, red, green, blue, rain);

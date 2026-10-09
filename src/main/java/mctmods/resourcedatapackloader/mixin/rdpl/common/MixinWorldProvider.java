@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensionRules;
 import mctmods.resourcedatapackloader.util.NotRubicWorldException;
 
 import net.minecraft.world.World;
@@ -56,7 +57,7 @@ import javax.annotation.Nullable;
         return Objects.requireNonNull(
                         VanillaCompatibilityGeneratorProviderBase.REGISTRY.getValue(savedData.compatibilityGeneratorType),
                         "unregistered compatibility generator " + savedData.compatibilityGeneratorType)
-                .provideGenerator(this.createChunkGenerator(), world);
+                .provideGenerator(ContentDimensionRules.existingGenerator(world, this::createChunkGenerator), world);
     }
 
     @Inject(method = "getRandomizedSpawnPoint", at = @At(value = "HEAD"), cancellable = true, remap = false) private void rdpl$findRandomizedSpawnPoint(CallbackInfoReturnable<BlockPos> cir) {

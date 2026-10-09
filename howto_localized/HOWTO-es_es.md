@@ -3347,6 +3347,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3360,6 +3361,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "droplet", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3380,6 +3382,24 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `keepLoaded` | no          | booleano                                          | `false`        | La mantiene cargada cuando no hay nadie en ella          |
 | `gameRules`  | no          | objeto                                            | ninguno        | Reglas que se aplican solo aquí                          |
 | `requires`   | no          | lista de ids de mod o espacios de nombres de pack | ninguno        | El archivo se omite a menos que estén presentes todos    |
+
+### Dimensiones existentes
+
+*dimensiones*
+
+```json
+{
+  "id": 0,
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+Un archivo cuyo `id` es una dimensión que ya existe, como `0` para el overworld, `-1` para el Nether, `1` para el End o una dimensión que registra otro mod, cambia esa dimensión en lugar de añadir una nueva. Cada clave que escribe el archivo se aplica allí, y cada clave que omite mantiene el comportamiento propio de la dimensión, así que sus datos de nivel y sus chunks quedan como están y una partida existente sigue cargando.
+
+`terrain.type` cambia el generador: los chunks generados a partir de entonces salen de él, y `generatorOptions` y `structures` se aplican junto con él; sin `terrain.type` esas dos se omiten y el registro lo indica. Un bloque `biomes` cambia los biomas de los chunks generados a partir de entonces. `suffix` se ignora, ya que la carpeta de guardado sigue siendo la de la dimensión. La línea `dimensions.existing` del resumen lista cada archivo aplicado de esta forma.
+
+Un `sun` o un `moon` que solo establece `texture` cambia la imagen en el cielo propio de la dimensión, y la luna mantiene sus fases. Establecer `bodies`, `stars`, `sun.size` o `moon.size` reemplaza todo el cielo por [el propio de RDPL](#el-renderizador-del-cielo).
 
 ### El bloque `terrain`
 
@@ -3446,7 +3466,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *dimensiones*
 
-Establecer cualquiera de `sun`, `bodies` o `stars` cambia el cielo de vanilla por el propio de RDPL, que dibuja la misma cúpula, el mismo resplandor del amanecer y el mismo vacío que vanilla, pero toma el sol, los demás cuerpos y las estrellas del pack. Se dibuja solo en el cliente, y un servidor dedicado nunca lo carga. `renderSky: false` sigue ganando y no dibuja nada, y `renderClouds: false` es la forma de conseguir un cielo sin nubes.
+Establecer cualquiera de `sun`, `moon`, `bodies` o `stars` cambia el cielo de vanilla por el propio de RDPL, que dibuja la misma cúpula, el mismo resplandor del amanecer y el mismo vacío que vanilla, pero toma el sol, los demás cuerpos y las estrellas del pack. Se dibuja solo en el cliente, y un servidor dedicado nunca lo carga. `renderSky: false` sigue ganando y no dibuja nada, y `renderClouds: false` es la forma de conseguir un cielo sin nubes.
 
 Sin `bodies` se mantienen la luna de vanilla y sus fases. Con `bodies`, la lista es todo lo que no sea el sol, así que una lista vacía es un cielo sin luna.
 
@@ -3454,6 +3474,8 @@ Sin `bodies` se mantienen la luna de vanilla y sus fases. Con `bodies`, la lista
 | ---------------------- | ----------- | --------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sun.texture`          | no          | ruta de textura | el sol de vanilla | La imagen del sol                                                                                                                                                                                        |
 | `sun.size`             | no          | float           | `30`              | La mitad del ancho del sol a una distancia de 100. `0` lo oculta                                                                                                                                         |
+| `moon.texture`         | no          | ruta de textura | la luna de vanilla | La imagen de la luna: una hoja con sus ocho fases, cuatro a lo ancho y dos a lo alto, como `moon_phases.png` de vanilla |
+| `moon.size`            | no          | float           | `20`              | La mitad del ancho de la luna a una distancia de 100. `0` la oculta. Con `bodies` no se usa |
 | `bodies[].texture`     | sí          | ruta de textura |                   | La imagen del cuerpo                                                                                                                                                                                     |
 | `bodies[].size`        | no          | float           | `20`              | La mitad de su ancho a una distancia de 100. La luna de vanilla es `20`                                                                                                                                  |
 | `bodies[].angle`       | no          | float, grados   | `180`             | Cuánto avanza por el recorrido del sol por detrás de este. `180` es donde está la luna de vanilla. Con `followsTime` desactivado se mide desde justo encima, así que `0` es el cénit y `90` el horizonte |
@@ -3621,6 +3643,7 @@ Son los mismos multiplicadores que en [Física del mundo](#física-del-mundo), e
 | `lightning`             | no          | booleano                   | `true`                   | Desactivado, la lluvia y las tormentas llegan sin rayos                                                                          |
 | `snow`                  | no          | booleano                   | `true`                   | Desactivado, la nieve nunca se acumula                                                                                           |
 | `freeze`                | no          | booleano                   | `true`                   | Desactivado, el agua nunca se congela                                                                                            |
+| `alwaysRain`            | no       | booleano               | `false`                  | Activado, aquí llueve todo el tiempo sin claros, antes que cualquier `cycle`. Con `precipitation` desactivado no se usa |
 | `cycle.rainTicks`       | no          | int o `[min, max]`         | `[1000, 4600]`           | Cuánto dura un chaparrón                                                                                                         |
 | `cycle.clearTicks`      | no          | int o `[min, max]`         | `[1000, 3000]`           | Cuánto dura el periodo seco entre chaparrones                                                                                    |
 | `cycle.maxStrength`     | no          | float, mayor que 0 hasta 1 | `0.6`                    | Lo fuerte que llega a ser un chaparrón. Cada chaparrón oscila entre una cuarta parte de este valor y su totalidad                |

@@ -21,15 +21,20 @@ import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
+import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT) final class ContentSkyRenderer extends IRenderHandler {
     private static final ResourceLocation MOON_PHASES = new ResourceLocation("textures/environment/moon_phases.png");
     private final DimensionTraitsDef.Sky sky;
+    private final ResourceLocation moonTexture;
+    private final float moonSize;
     private final ContentStars starField;
     private int lists = -1;
 
-    ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+    ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
+        moonTexture = moon == null ? MOON_PHASES : moon.texture;
+        moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size;
         starField = new ContentStars(sky.starCount, sky.starSize);
     }
 
@@ -71,7 +76,7 @@ import org.lwjgl.opengl.GL11;
             quad(buffer, tessellator, sky.sunSize);
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.moon(world));
-        if (sky.bodies == null) { moon(world, mc, buffer, tessellator); }
+        if (sky.bodies == null && moonSize > 0.0F) { moon(world, mc, buffer, tessellator); }
         GlStateManager.popMatrix();
         if (sky.bodies != null) {
             for (DimensionTraitsDef.Body body : sky.bodies) {
@@ -149,9 +154,9 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.shadeModel(GL11.GL_FLAT);
     }
 
-    private static void moon(WorldClient world, Minecraft mc, BufferBuilder buffer, Tessellator tessellator) {
-        float size = 20.0F;
-        mc.renderEngine.bindTexture(MOON_PHASES);
+    private void moon(WorldClient world, Minecraft mc, BufferBuilder buffer, Tessellator tessellator) {
+        float size = moonSize;
+        mc.renderEngine.bindTexture(moonTexture);
         int phase = world.getMoonPhase();
         int column = phase % 4;
         int row = phase / 4 % 2;

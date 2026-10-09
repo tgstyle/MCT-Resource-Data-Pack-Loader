@@ -5,15 +5,9 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
-import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
-import mctmods.resourcedatapackloader.util.Colors;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MusicTicker;
-import net.minecraft.init.Biomes;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -21,33 +15,19 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldProviderSurface;
-import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeProvider;
-import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.gen.ChunkGeneratorEnd;
-import net.minecraft.world.gen.ChunkGeneratorFlat;
-import net.minecraft.world.gen.ChunkGeneratorHell;
-import net.minecraft.world.gen.ChunkGeneratorOverworld;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.function.IntUnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ContentWorldProvider extends WorldProviderSurface {
-    private static final String FLAT_DEFAULT = "3;minecraft:bedrock,59*minecraft:stone,3*minecraft:dirt,minecraft:grass;1";
     private static final float STILL_SUN = 0.25F;
-    private static final float BOSS_RED = 0.3F;
-    private static final float BOSS_GREEN_BLUE = 0.4F;
     private final ContentWeatherCycle weatherCycle = new ContentWeatherCycle();
     @Nullable protected DimensionDef def;
-    @Nullable private SkyLookDef.CloudLayer drawingLayer;
-    private boolean drawingClouds;
 
     @Override protected void init() {
         this.def = ContentDimensions.byId(getDimension());
@@ -56,22 +36,9 @@ public class ContentWorldProvider extends WorldProviderSurface {
         if (def != null && FMLCommonHandler.instance().getSide().isClient()) { ContentSkyRenderers.apply(this, def); }
     }
 
-    private BiomeProvider provider() {
-        if (def == null || DimensionDef.INHERIT.equals(def.biomeSource)) { return new BiomeProvider(world.getWorldInfo()); }
-        Biome single = ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
-        return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
-    }
+    private BiomeProvider provider() { return def == null ? new BiomeProvider(world.getWorldInfo()) : ContentDimensionRules.biomes(world, def); }
 
-    @Override @Nonnull public IChunkGenerator createChunkGenerator() {
-        if (def == null) { return super.createChunkGenerator(); }
-        switch (def.terrain) {
-            case DimensionDef.FLAT: return new ChunkGeneratorFlat(world, world.getSeed(), def.structures, def.generatorOptions.isEmpty() ? FLAT_DEFAULT : def.generatorOptions);
-            case DimensionDef.VOID: return new ChunkGeneratorFlat(world, world.getSeed(), false, "3;minecraft:air;1");
-            case DimensionDef.NETHER: return new ChunkGeneratorHell(world, def.structures, world.getSeed());
-            case DimensionDef.END: return new ChunkGeneratorEnd(world, def.structures, world.getSeed(), new BlockPos(100, 50, 0));
-            default: return new ChunkGeneratorOverworld(world, world.getSeed(), def.structures, def.generatorOptions);
-        }
-    }
+    @Override @Nonnull public IChunkGenerator createChunkGenerator() { return def == null ? super.createChunkGenerator() : ContentDimensionRules.generator(world, def); }
 
     @Override @Nonnull public DimensionType getDimensionType() { return ContentDimensions.typeFor(getDimension()); }
 
@@ -100,49 +67,21 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return def.starBrightness;
     }
 
-    private static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
-
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
-        if (drawingLayer != null && drawingLayer.color >= 0) { return color(drawingLayer.color); }
+        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
+        if (layer != null && layer.color >= 0) { return ContentDimensionRules.color(layer.color); }
         if (def == null || def.cloudColor < 0) { return super.getCloudColor(partialTicks); }
-        return color(def.cloudColor);
+        return ContentDimensionRules.color(def.cloudColor);
     }
-
-    @Nullable public SkyLookDef look() { return def == null ? null : def.look; }
-
-    @SideOnly(Side.CLIENT) public void drawLayer(@Nullable SkyLookDef.CloudLayer layer) { drawingLayer = layer; }
-
-    @SideOnly(Side.CLIENT) public void drawClouds(boolean drawing) { drawingClouds = drawing; }
-
-    @Override @Nullable @SideOnly(Side.CLIENT) public IRenderHandler getCloudRenderer() { return drawingClouds ? null : super.getCloudRenderer(); }
 
     @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) {
-        if (def == null || def.look == null || def.look.plainLight()) { return; }
-        SkyLookDef look = def.look;
-        float sky = skyLight * look.skyFactor;
-        float skyRed = sky * (sunBrightness * 0.65F + 0.35F);
-        float blockGreen = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
-        float blockBlue = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * 0.96F + 0.03F;
-        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * 0.96F + 0.03F;
-        colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * 0.96F + 0.03F;
-        IEntityRenderer renderer = (IEntityRenderer) Minecraft.getMinecraft().entityRenderer;
-        float boss = renderer.getBossColorModifierPrev() + (renderer.getBossColorModifier() - renderer.getBossColorModifierPrev()) * partialTicks;
-        if (boss <= 0.0F) { return; }
-        colors[0] *= 1.0F - BOSS_RED * boss;
-        colors[1] *= 1.0F - BOSS_GREEN_BLUE * boss;
-        colors[2] *= 1.0F - BOSS_GREEN_BLUE * boss;
+        if (def != null && def.look != null && !def.look.plainLight()) { ContentDimensionRules.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); }
     }
-
-    private static float channel(int rgb, IntUnaryOperator pick) { return rgb == SkyLookDef.UNSET ? 1.0F : pick.applyAsInt(rgb) / 255.0F; }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
         if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
         float[] table = new float[16];
-        for (int level = 0; level <= 15; level++) {
-            float fade = 1.0F - level / 15.0F;
-            table[level] = (1.0F - fade) / (fade * 3.0F + 1.0F) * (1.0F - def.ambientLight) + def.ambientLight;
-        }
+        ContentDimensionRules.lightTable(def.ambientLight, table);
         return table;
     }
 
@@ -153,7 +92,8 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public double getMovementFactor() { return def == null ? super.getMovementFactor() : def.movementFactor; }
 
     @Override @SideOnly(Side.CLIENT) public float getCloudHeight() {
-        if (drawingLayer != null) { return drawingLayer.height; }
+        SkyLookDef.CloudLayer layer = ContentCloudRenderer.drawing();
+        if (layer != null) { return layer.height; }
         return def == null ? super.getCloudHeight() : def.cloudHeight;
     }
 
@@ -165,28 +105,20 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public float calculateCelestialAngle(long worldTime, float partialTicks) {
         if (def == null || def.traits.dayLength == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
         if (def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
-        float angle = ((float) (worldTime % def.traits.dayLength) + partialTicks) / def.traits.dayLength - 0.25F;
-        if (angle < 0.0F) { angle++; }
-        if (angle > 1.0F) { angle--; }
-        float eased = 1.0F - (float) ((Math.cos(angle * Math.PI) + 1.0D) / 2.0D);
-        return angle + (eased - angle) / 3.0F;
+        return ContentDimensionRules.celestialAngle(def.traits.dayLength, worldTime, partialTicks);
     }
 
     @Override public void updateWeather() {
         if (def == null) { super.updateWeather(); }
-        else if (!def.traits.precipitation) { ContentWeatherCycle.clear(world); }
-        else if (def.traits.cycle != null) { weatherCycle.tick(world, def.traits.cycle); }
-        else { super.updateWeather(); }
+        else { ContentDimensionRules.weather(world, def.traits, weatherCycle, super::updateWeather); }
     }
 
     @Nullable public RainDef rain() { return def == null ? null : def.traits.rain; }
 
     @Nullable public RainDef rainSplash() { return rain(); }
 
-    @Nullable public AmbienceDef ambience() { return def == null ? null : def.traits.ambience; }
-
     @Override @Nullable @SideOnly(Side.CLIENT) public MusicTicker.MusicType getMusicType() {
-        AmbienceDef ambience = ambience();
+        AmbienceDef ambience = def == null ? null : def.traits.ambience;
         return ambience == null || ambience.music == null ? super.getMusicType() : ContentDimensionAmbience.music(ambience);
     }
 
@@ -201,8 +133,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public boolean isDaytime() {
         if (def != null && def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return true; }
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
-        long time = def.fixedTime % DimensionTraitsDef.VANILLA_DAY;
-        return time < 12300L || time > 23850L;
+        return ContentDimensionRules.daytime(def.fixedTime);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nullable public float[] calcSunriseSunsetColors(float celestialAngle, float partialTicks) {
@@ -212,30 +143,14 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getSkyColor(@Nonnull Entity camera, float partialTicks) {
         if (def == null || def.skyColor < 0) { return super.getSkyColor(camera, partialTicks); }
-        Vec3d sky = color(def.skyColor).scale(daylight(world.getCelestialAngle(partialTicks)));
-        sky = overcast(sky, world.getRainStrength(partialTicks), 0.6D);
-        sky = overcast(sky, world.getThunderStrength(partialTicks), 0.2D);
-        if (world.getLastLightningBolt() <= 0) { return sky; }
-        double flash = Math.min(world.getLastLightningBolt() - partialTicks, 1.0F) * 0.45D;
-        return new Vec3d(sky.x * (1.0D - flash) + 0.8D * flash, sky.y * (1.0D - flash) + 0.8D * flash, sky.z * (1.0D - flash) + flash);
-    }
-
-    private static Vec3d overcast(Vec3d sky, float strength, double dim) {
-        if (strength <= 0.0F) { return sky; }
-        double gray = (sky.x * 0.3D + sky.y * 0.59D + sky.z * 0.11D) * dim;
-        double keep = 1.0D - strength * 0.75D;
-        return new Vec3d(sky.x * keep + gray * (1.0D - keep), sky.y * keep + gray * (1.0D - keep), sky.z * keep + gray * (1.0D - keep));
+        return ContentDimensionRules.skyColor(world, def.skyColor, partialTicks);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
         if (def != null && def.look != null && def.look.sampleFog) { return ContentFogSampler.color(super.getFogColor(celestialAngle, partialTicks)); }
         if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
-        float light = daylight(celestialAngle);
-        Vec3d fog = color(def.fogColor);
-        return new Vec3d(fog.x * (light * 0.94F + 0.06F), fog.y * (light * 0.94F + 0.06F), fog.z * (light * 0.91F + 0.09F));
+        return ContentDimensionRules.fogColor(def.fogColor, celestialAngle);
     }
-
-    private static float daylight(float celestialAngle) { return MathHelper.clamp(MathHelper.cos(celestialAngle * (float) Math.PI * 2.0F) * 2.0F + 0.5F, 0.0F, 1.0F); }
 
     @Override @Nonnull public String getSaveFolder() { return def == null ? "DIM" + getDimension() : def.suffix; }
 }

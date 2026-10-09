@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldProvider;
 import mctmods.resourcedatapackloader.util.RainSplash;
@@ -30,13 +31,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "addRainParticles", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
-        ContentWorldProvider provider = mc.world.provider instanceof ContentWorldProvider ? (ContentWorldProvider) mc.world.provider : null;
-        RainDef rain = provider == null ? null : provider.rain();
+        RainDef rain = ContentDimensions.rain(mc.world);
         if (rdpl$aboveCeiling() || rain != null && rain.splashless()) {
             ci.cancel();
             return;
         }
-        RainDef splash = provider == null ? null : provider.rainSplash();
+        RainDef splash = mc.world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) mc.world.provider).rainSplash() : rain;
         if (splash == null) { return; }
         RainSplash.tick(mc, splash, rendererUpdateCount);
         ci.cancel();

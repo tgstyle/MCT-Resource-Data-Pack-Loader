@@ -444,7 +444,8 @@ public final class ContentParserWorlds {
                 dimensionPortal(key, json),
                 galacticraft,
                 ContentParserDimensionTraits.traits(key, json, belt),
-                ContentParserSkyLook.look(key, sky, cloudHeight, clouds));
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds),
+                Json.paths(json));
     }
 
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {

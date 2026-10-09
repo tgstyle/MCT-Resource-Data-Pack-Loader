@@ -9,6 +9,8 @@ import java.util.Random;
 final class ContentWeatherCycle {
     private static final float STEP = 0.004F;
     private static final float THUNDER_STEP = 0.01F;
+    private static final float RAIN_STEP = 0.01F;
+    private static final int RAIN_HOLD = 12000;
     private boolean started;
     private boolean raining;
     private boolean thundering;
@@ -26,6 +28,14 @@ final class ContentWeatherCycle {
         world.rainingStrength = 0.0F;
         world.prevThunderingStrength = 0.0F;
         world.thunderingStrength = 0.0F;
+    }
+
+    static void pour(World world) {
+        if (world.isRemote) { return; }
+        world.getWorldInfo().setRaining(true);
+        if (world.getWorldInfo().getRainTime() < 2) { world.getWorldInfo().setRainTime(RAIN_HOLD); }
+        if (!world.provider.hasSkyLight()) { world.prevRainingStrength = world.rainingStrength; }
+        world.rainingStrength = Math.max(world.rainingStrength, MathHelper.clamp(world.prevRainingStrength + RAIN_STEP, 0.0F, 1.0F));
     }
 
     void tick(World world, DimensionTraitsDef.Cycle cycle) {

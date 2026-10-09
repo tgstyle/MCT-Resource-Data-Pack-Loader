@@ -248,6 +248,13 @@
     "common.MixinWorldLight",
     "common.MixinWorldProvider",
     "common.MixinWorldProviderContent",
+    "common.MixinWorldDimensionOverlay",
+    "common.MixinWorldServerDimensionOverlay",
+    "common.MixinPlayerListDimensionOverlay",
+    "common.MixinEntityDimensionOverlay",
+    "common.MixinEntityPlayerDimensionOverlay",
+    "common.MixinBlockBedDimensionOverlay",
+    "common.MixinBlockPortalDimensionOverlay",
     "common.MixinWorldServer",
     "common.MixinWorldServerContent",
     "common.MixinWorldServerWeather",
@@ -318,7 +325,13 @@
     "client.MixinViewFrustumOptifine",
     "client.MixinViewFrustumVertViewDistance",
     "client.MixinWorldClient",
-    "client.MixinWorldProvider"
+    "client.MixinWorldProvider",
+    "client.MixinWorldDimensionOverlayClient",
+    "client.MixinEntityRendererDimensionOverlay",
+    "client.MixinRenderGlobalDimensionOverlay",
+    "client.MixinCloudRendererDimensionOverlay",
+    "client.MixinFMLClientHandlerClouds",
+    "client.MixinMinecraftDimensionOverlay"
   ],
   "server": [
     "server.MixinDedicatedPlayerList",

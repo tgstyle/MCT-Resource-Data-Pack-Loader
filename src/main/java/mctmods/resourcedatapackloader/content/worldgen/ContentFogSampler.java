@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.util.Colors;
 
@@ -36,7 +37,10 @@ import javax.annotation.Nullable;
 
     private ContentFogSampler() {}
 
-    @Nullable public static SkyLookDef look(@Nullable World world) { return world != null && world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) world.provider).look() : null; }
+    @Nullable public static SkyLookDef look(@Nullable World world) {
+        DimensionDef def = ContentDimensions.of(world);
+        return def == null ? null : def.look;
+    }
 
     public static Vec3d color(Vec3d fallback) { return current == null ? fallback : current; }
 

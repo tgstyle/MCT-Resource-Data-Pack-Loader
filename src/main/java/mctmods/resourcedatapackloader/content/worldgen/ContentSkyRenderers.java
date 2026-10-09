@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.Colors;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
 import net.minecraftforge.client.IRenderHandler;
@@ -36,6 +37,13 @@ import java.util.Map;
         Minecraft.getMinecraft().addScheduledTask(() -> retired.forEach(ContentSkyRenderer::release));
     }
 
+    private static boolean drawsWholeSky(DimensionDef def) {
+        if (ContentDimensions.overlay(def.id) == null) { return true; }
+        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size");
+    }
+
+    private static boolean fogHidesEndSky(WorldProvider provider, DimensionDef def) { return def.showFog && provider.getDimensionType() == DimensionType.THE_END; }
+
     public static float sun(World world) {
         SkyLookDef look = ContentFogSampler.look(world);
         return look == null ? 1.0F : look.sunBrightness;
@@ -53,10 +61,10 @@ import java.util.Map;
     }
 
     public static void apply(WorldProvider provider, DimensionDef def) {
-        if (!def.renderSky) { provider.setSkyRenderer(NOTHING); }
-        else if (def.traits.sky != null) { provider.setSkyRenderer(PACK_SKIES.computeIfAbsent(def, held -> new ContentSkyRenderer(held.traits.sky))); }
+        if (!def.renderSky || fogHidesEndSky(provider, def)) { provider.setSkyRenderer(NOTHING); }
+        else if (def.traits.sky != null && drawsWholeSky(def)) { provider.setSkyRenderer(PACK_SKIES.computeIfAbsent(def, held -> new ContentSkyRenderer(held.traits.sky, held.traits.moon))); }
         if (!def.renderClouds) { provider.setCloudRenderer(NOTHING); }
-        else if (def.look != null && def.look.movesClouds() && provider instanceof ContentWorldProvider) { provider.setCloudRenderer(PACK_CLOUDS.computeIfAbsent(def, held -> new ContentCloudRenderer(held.look))); }
+        else if (def.look != null && def.look.movesClouds()) { provider.setCloudRenderer(PACK_CLOUDS.computeIfAbsent(def, held -> new ContentCloudRenderer(held.look))); }
         if (!def.renderWeather) { provider.setWeatherRenderer(NOTHING); }
         else if (def.traits.rain != null) { provider.setWeatherRenderer(PACK_WEATHER.computeIfAbsent(def, held -> new ContentWeatherRenderer(held.traits.rain))); }
     }

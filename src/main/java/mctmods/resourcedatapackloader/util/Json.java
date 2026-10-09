@@ -13,10 +13,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
+
 public final class Json {
     public static final Gson GSON = new GsonBuilder().create();
     public static final Gson PRETTY = new GsonBuilder().setPrettyPrinting().create();
@@ -101,6 +104,20 @@ public final class Json {
             values.put(entry.getKey(), entry.getValue().getAsString());
         }
         return Collections.unmodifiableMap(values);
+    }
+
+    public static Set<String> paths(JsonObject json) {
+        Set<String> found = new LinkedHashSet<>();
+        paths(json, "", found);
+        return Collections.unmodifiableSet(found);
+    }
+
+    private static void paths(JsonObject json, String prefix, Set<String> found) {
+        for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
+            String path = prefix + entry.getKey();
+            found.add(path);
+            if (entry.getValue().isJsonObject()) { paths(entry.getValue().getAsJsonObject(), path + ".", found); }
+        }
     }
 
     public static void eachFile(String type, String kind, BiConsumer<ResourceLocation, String> reader) {

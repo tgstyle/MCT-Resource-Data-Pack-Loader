@@ -8,6 +8,7 @@ public final class DimensionTraitsDef {
     public static final long VANILLA_DAY = 24000L;
     public static final long NO_DAY = 0L;
     public static final float VANILLA_SUN = 30.0F;
+    public static final float VANILLA_MOON = 20.0F;
     public final double gravity;
     public final double fallDamage;
     public final double arrowGravity;
@@ -16,13 +17,15 @@ public final class DimensionTraitsDef {
     public final boolean lightning;
     public final boolean snow;
     public final boolean freeze;
+    public final boolean alwaysRain;
     @Nullable public final Cycle cycle;
     @Nullable public final RainDef rain;
     @Nullable public final Sky sky;
+    @Nullable public final Moon moon;
     @Nullable public final AmbienceDef ambience;
 
-    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, @Nullable Cycle cycle, @Nullable RainDef rain, @Nullable Sky sky,
-                              @Nullable AmbienceDef ambience) {
+    public DimensionTraitsDef(double gravity, double fallDamage, double arrowGravity, long dayLength, boolean precipitation, boolean lightning, boolean snow, boolean freeze, boolean alwaysRain, @Nullable Cycle cycle, @Nullable RainDef rain,
+                              @Nullable Sky sky, @Nullable Moon moon, @Nullable AmbienceDef ambience) {
         this.gravity = gravity;
         this.fallDamage = fallDamage;
         this.arrowGravity = arrowGravity;
@@ -31,10 +34,22 @@ public final class DimensionTraitsDef {
         this.lightning = lightning;
         this.snow = snow;
         this.freeze = freeze;
+        this.alwaysRain = alwaysRain;
         this.cycle = cycle;
         this.rain = rain;
         this.sky = sky;
+        this.moon = moon;
         this.ambience = ambience;
+    }
+
+    public static final class Moon {
+        public final ResourceLocation texture;
+        public final float size;
+
+        public Moon(ResourceLocation texture, float size) {
+            this.texture = texture;
+            this.size = size;
+        }
     }
 
     public static final class Cycle {

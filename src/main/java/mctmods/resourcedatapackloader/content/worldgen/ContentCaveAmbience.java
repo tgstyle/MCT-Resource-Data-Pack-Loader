@@ -52,7 +52,8 @@ public final class ContentCaveAmbience {
         if (event.phase != TickEvent.Phase.END || !(player instanceof EntityPlayerMP) || !(player.world instanceof WorldServer) || player.ticksExisted % EVERY != 0 || player.isSpectator()) { return; }
         WorldServer world = (WorldServer) player.world;
         Random random = world.rand;
-        AmbienceDef ambience = world.provider instanceof ContentWorldProvider ? ((ContentWorldProvider) world.provider).ambience() : null;
+        DimensionDef dimension = ContentDimensions.of(world);
+        AmbienceDef ambience = dimension == null ? null : dimension.traits.ambience;
         if (ambience != null && ambience.sounds() && chance(random, ambience.soundChance)) { sound((EntityPlayerMP) player, ambience.ambientSound, "Dimension " + world.provider.getDimension(), 1.0F); }
         BlockPos eyes = new BlockPos(player.posX, player.posY + player.getEyeHeight(), player.posZ);
         CaveRegionDef region = ContentCaveRegions.regionAt(world, eyes.getX(), eyes.getY(), eyes.getZ());
