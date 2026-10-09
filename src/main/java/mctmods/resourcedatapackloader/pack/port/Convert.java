@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Snbt;
 
@@ -49,56 +50,60 @@ final class Convert {
 
     static String definition(JsonObject json, String folder, String namespace, String file, Ported pack) {
         Map<String, String> renamed = pack.renamedIn(namespace, folder, file);
-        if (!renamed.isEmpty() && json.has("variants") && json.get("variants").isJsonObject()) {
+        if (!renamed.isEmpty() && GsonHelper.isObjectNode(json, "variants")) {
             JsonObject variants = json.getAsJsonObject("variants");
             JsonObject out = new JsonObject();
             for (Map.Entry<String, JsonElement> variant : variants.entrySet()) { out.add(renamed.getOrDefault(variant.getKey(), variant.getKey()), variant.getValue()); }
             json.add("variants", out);
             pack.rewrote();
         }
-        if ("blocks".equals(folder) && json.has("harvestLevel") && !json.has("harvestToolLevel")) { json.add("harvestToolLevel", json.remove("harvestLevel")); }
-        if (("blocks".equals(folder) || "items".equals(folder) || "fluids".equals(folder)) && GsonHelper.isValidPrimitive(json, "creativeTab")) {
+        if (PackManager.BLOCKS.equals(folder) && json.has("harvestLevel") && !json.has("harvestToolLevel")) { json.add("harvestToolLevel", json.remove("harvestLevel")); }
+        if ((PackManager.BLOCKS.equals(folder) || PackManager.ITEMS.equals(folder) || PackManager.FLUIDS.equals(folder)) && GsonHelper.isValidPrimitive(json, "creativeTab")) {
             String tab = json.get("creativeTab").getAsString().trim();
             if (!tab.isEmpty() && tab.indexOf(':') < 0) {
                 String vanilla = ContentFormats.vanillaTab(tab);
                 json.addProperty("creativeTab", vanilla != null ? vanilla : pack.mainNamespace() + ":" + tab.toLowerCase(Locale.ROOT));
             }
         }
-        if ("fluids".equals(folder)) {
+        if (PackManager.FLUIDS.equals(folder)) {
             for (String named : FLUID_TEXTURES) { renamed(json, named, Convert::texture, pack); }
         }
-        if ("gamerules".equals(folder)) {
+        if (PackManager.GAMERULES.equals(folder)) {
             for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
                 if (dimension.getValue().isJsonObject() && dimension.getValue().getAsJsonObject().remove(GAME_LOOP) != null) { pack.rewrote(); }
             }
         }
-        if ("gamerules".equals(folder) || "blastplaster".equals(folder)) { renameDimensionKeys("gamerules".equals(folder) ? json : json.has("dimensions") && json.get("dimensions").isJsonObject() ? json.getAsJsonObject("dimensions") : new JsonObject(), pack); }
-        if ("worldtemplates".equals(folder) && json.has("structures") && json.get("structures").isJsonObject()) { ConvertDefinitions.modernStructuresOff(json, pack); }
-        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.templatePositions(json.getAsJsonObject("settings"), namespace + ":" + file, pack); }
-        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.flatLayers(json.getAsJsonObject("settings"), pack); }
-        if ("worldtemplates".equals(folder) && json.has("settings") && json.get("settings").isJsonObject()) { ConvertDefinitions.villagePieces(json.getAsJsonObject("settings"), pack); }
-        if ("teams".equals(folder)) { ConvertDefinitions.teamPositions(json, namespace + ":" + file, pack); }
-        if ("scoring".equals(folder) && json.has("opens") && json.get("opens").isJsonObject()) { ConvertDefinitions.movedPoint(json.getAsJsonObject("opens"), "lobby", pack.overworldShift(), pack, "Score file " + namespace + ":" + file); }
-        if ("dimensions".equals(folder)) {
+        if (PackManager.GAMERULES.equals(folder) || PackManager.BLASTPLASTER.equals(folder)) { renameDimensionKeys(PackManager.GAMERULES.equals(folder) ? json : GsonHelper.isObjectNode(json, "dimensions") ? json.getAsJsonObject("dimensions") : new JsonObject(), pack); }
+        if (PackManager.WORLDTEMPLATES.equals(folder)) {
+            if (GsonHelper.isObjectNode(json, "structures")) { ConvertDefinitions.modernStructuresOff(json, pack); }
+            if (GsonHelper.isObjectNode(json, "settings")) {
+                ConvertDefinitions.templatePositions(json.getAsJsonObject("settings"), namespace + ":" + file, pack);
+                ConvertDefinitions.flatLayers(json.getAsJsonObject("settings"), pack);
+                ConvertDefinitions.villagePieces(json.getAsJsonObject("settings"), pack);
+            }
+        }
+        if (PackManager.TEAMS.equals(folder)) { ConvertDefinitions.teamPositions(json, namespace + ":" + file, pack); }
+        if (PackManager.SCORING.equals(folder) && GsonHelper.isObjectNode(json, "opens")) { ConvertDefinitions.movedPoint(json.getAsJsonObject("opens"), "lobby", pack.overworldShift(), pack, "Score file " + namespace + ":" + file); }
+        if (PackManager.DIMENSIONS.equals(folder)) {
             ConvertDefinitions.groundLevel(json, namespace + ":" + file, pack);
             json.remove("id");
             json.remove("suffix");
         }
-        if ("caveregions".equals(folder)) {
+        if (PackManager.CAVEREGIONS.equals(folder)) {
             renamed(json, "ambientSound", Commands::sound, pack);
             renamed(json, "particle", Commands::particleId, pack);
         }
-        if ("raids".equals(folder)) { renamed(json, "sound", Commands::sound, pack); }
-        if ("anvils".equals(folder)) { ConvertDefinitions.anvil(json, pack); }
-        if ("player_loot".equals(folder) && GsonHelper.isValidPrimitive(json, "table")) { ConvertLoot.lootTable(json, "table", pack); }
-        JsonArray furnaceRemovals = "furnace".equals(folder) && json.has("remove") && json.get("remove").isJsonArray() ? ConvertDefinitions.furnaceRemovals(json.remove("remove").getAsJsonArray(), pack) : null;
-        JsonArray exposureBlocks = "exposures".equals(folder) && json.has("blocks") && json.get("blocks").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
-        JsonArray exposureItems = "exposures".equals(folder) && json.has("items") && json.get("items").isJsonArray() ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
-        JsonArray exposureDimensions = "exposures".equals(folder) && json.has("dimensions") && json.get("dimensions").isJsonArray() ? ConvertDefinitions.exposureDimensions(json.remove("dimensions").getAsJsonArray(), pack) : null;
-        if ("fuels".equals(folder)) { ConvertDefinitions.oreDictTags(json, "fuels", pack); }
-        if ("orders".equals(folder)) { ConvertDefinitions.orderTags(json, pack); }
-        if ("entities".equals(folder) && json.has("storage") && json.get("storage").isJsonObject() && json.getAsJsonObject("storage").has("items") && json.getAsJsonObject("storage").get("items").isJsonObject()) { ConvertDefinitions.oreDictTags(json.getAsJsonObject("storage").getAsJsonObject("items"), "filter", pack); }
-        if ("worldgen".equals(folder) && json.has("block") && json.has("meta")) {
+        if (PackManager.RAIDS.equals(folder)) { renamed(json, "sound", Commands::sound, pack); }
+        if (PackManager.ANVILS.equals(folder)) { ConvertDefinitions.anvil(json, pack); }
+        if (PackManager.PLAYER_LOOT.equals(folder) && GsonHelper.isValidPrimitive(json, "table")) { ConvertLoot.lootTable(json, "table", pack); }
+        JsonArray furnaceRemovals = PackManager.FURNACE.equals(folder) && GsonHelper.isArrayNode(json, "remove") ? ConvertDefinitions.furnaceRemovals(json.remove("remove").getAsJsonArray(), pack) : null;
+        JsonArray exposureBlocks = PackManager.EXPOSURES.equals(folder) && GsonHelper.isArrayNode(json, "blocks") ? ConvertDefinitions.exposureNames(json.remove("blocks").getAsJsonArray(), true, pack) : null;
+        JsonArray exposureItems = PackManager.EXPOSURES.equals(folder) && GsonHelper.isArrayNode(json, "items") ? ConvertDefinitions.exposureNames(json.remove("items").getAsJsonArray(), false, pack) : null;
+        JsonArray exposureDimensions = PackManager.EXPOSURES.equals(folder) && GsonHelper.isArrayNode(json, "dimensions") ? ConvertDefinitions.exposureDimensions(json.remove("dimensions").getAsJsonArray(), pack) : null;
+        if (PackManager.FUELS.equals(folder)) { ConvertDefinitions.oreDictTags(json, "fuels", pack); }
+        if (PackManager.ORDERS.equals(folder)) { ConvertDefinitions.orderTags(json, pack); }
+        if (PackManager.ENTITIES.equals(folder) && GsonHelper.isObjectNode(json, "storage") && GsonHelper.isObjectNode(json.getAsJsonObject("storage"), "items")) { ConvertDefinitions.oreDictTags(json.getAsJsonObject("storage").getAsJsonObject("items"), "filter", pack); }
+        if (PackManager.WORLDGEN.equals(folder) && json.has("block") && json.has("meta")) {
             json.addProperty("block", json.get("block").getAsString() + ":" + json.get("meta").getAsInt());
             json.remove("meta");
         }
@@ -163,7 +168,7 @@ final class Convert {
                 JsonObject held = variant.getValue().getAsJsonObject();
                 held.remove("meta");
                 if (held.has("oreDict")) {
-                    JsonArray tags = held.has("tags") && held.get("tags").isJsonArray() ? held.getAsJsonArray("tags") : new JsonArray();
+                    JsonArray tags = GsonHelper.isArrayNode(held, "tags") ? held.getAsJsonArray("tags") : new JsonArray();
                     for (JsonElement ore : held.getAsJsonArray("oreDict")) { tags.add(Ids.oreDictTag(ore.getAsString())); }
                     held.remove("oreDict");
                     held.add("tags", tags);
@@ -178,7 +183,7 @@ final class Convert {
             JsonElement value = entry.getValue();
             Context context = contextOf(key, inherited);
             if (value.isJsonObject()) {
-                if ("blocks".equals(key) && "worldgen".equals(folder)) { continue; }
+                if ("blocks".equals(key) && PackManager.WORLDGEN.equals(folder)) { continue; }
                 if ("kill".equals(key) && "points".equals(parentKey)) {
                     entityKeys(value.getAsJsonObject(), pack);
                     continue;
@@ -399,7 +404,7 @@ final class Convert {
         if (!mapped.isJsonObject()) { return mapped.getAsString(); }
         JsonObject state = mapped.getAsJsonObject();
         StringBuilder out = new StringBuilder(state.get("block").getAsString());
-        if (state.has("properties") && state.get("properties").isJsonObject() && !state.getAsJsonObject("properties").isEmpty()) {
+        if (GsonHelper.isObjectNode(state, "properties") && !state.getAsJsonObject("properties").isEmpty()) {
             List<String> pairs = new ArrayList<>();
             for (Map.Entry<String, JsonElement> entry : state.getAsJsonObject("properties").entrySet()) { pairs.add(entry.getKey() + "=" + entry.getValue().getAsString()); }
             out.append('[').append(String.join(",", pairs)).append(']');

@@ -119,7 +119,7 @@ final class DownWorld {
         }
         JsonElement held = json.remove(ATTRIBUTES);
         JsonObject attributes = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
-        JsonObject effects = json.has(EFFECTS) && json.get(EFFECTS).isJsonObject() ? json.getAsJsonObject(EFFECTS) : new JsonObject();
+        JsonObject effects = GsonHelper.isObjectNode(json, EFFECTS) ? json.getAsJsonObject(EFFECTS) : new JsonObject();
         for (String named : List.of("fog_color", "sky_color", "water_fog_color")) {
             JsonElement color = attributes.remove(VISUAL + named);
             if (color != null) { effects.add(named, color); }
@@ -135,7 +135,7 @@ final class DownWorld {
         JsonElement sounds = attributes.remove(AUDIO + "ambient_sounds");
         if (sounds != null && sounds.isJsonObject()) { SOUNDS.forEach((from, to) -> { if (sounds.getAsJsonObject().has(from)) { effects.add(to, sounds.getAsJsonObject().get(from)); } }); }
         JsonElement music = attributes.remove(AUDIO + "background_music");
-        if (music != null && music.isJsonObject() && music.getAsJsonObject().has("default") && music.getAsJsonObject().get("default").isJsonObject()) {
+        if (music != null && music.isJsonObject() && GsonHelper.isObjectNode(music.getAsJsonObject(), "default")) {
             JsonObject track = music.getAsJsonObject().getAsJsonObject("default").deepCopy();
             if (!track.has("replace_current_music")) { track.addProperty("replace_current_music", false); }
             effects.add("music", track);
@@ -159,11 +159,11 @@ final class DownWorld {
 
     static void feature(JsonObject json, String file, Consumer<String> note) {
         String type = namespaced(Json.text(json, "type"));
-        JsonObject config = json.has(CONFIG) && json.get(CONFIG).isJsonObject() ? json.getAsJsonObject(CONFIG) : null;
+        JsonObject config = GsonHelper.isObjectNode(json, CONFIG) ? json.getAsJsonObject(CONFIG) : null;
         if (config == null) { return; }
         switch (type) {
             case "minecraft:spike" -> {
-                String block = config.has("state") && config.get("state").isJsonObject() ? Json.text(config.getAsJsonObject("state"), "Name") : "";
+                String block = GsonHelper.isObjectNode(config, "state") ? Json.text(config.getAsJsonObject("state"), "Name") : "";
                 if (!block.isEmpty() && !"minecraft:packed_ice".equals(block)) { note.accept("'" + file + "' is a spike of " + block + ", and " + Port.Line.running().title() + " builds spikes of packed ice only, so it is an ice spike"); }
                 json.addProperty("type", "minecraft:ice_spike");
                 json.add(CONFIG, new JsonObject());
@@ -196,12 +196,12 @@ final class DownWorld {
     }
 
     @Nullable private static JsonElement guarded(JsonObject provider) {
-        if (!"minecraft:rule_based_state_provider".equals(namespaced(Json.text(provider, "type"))) || !provider.has("rules") || !provider.get("rules").isJsonArray()) { return null; }
+        if (!"minecraft:rule_based_state_provider".equals(namespaced(Json.text(provider, "type"))) || !GsonHelper.isArrayNode(provider, "rules")) { return null; }
         JsonArray rules = provider.getAsJsonArray("rules");
         if (rules.size() != 1 || !rules.get(0).isJsonObject()) { return null; }
         JsonObject rule = rules.get(0).getAsJsonObject();
         JsonElement test = rule.get("if_true");
-        JsonObject inner = test != null && test.isJsonObject() && test.getAsJsonObject().has("predicate") && test.getAsJsonObject().get("predicate").isJsonObject() ? test.getAsJsonObject().getAsJsonObject("predicate") : null;
+        JsonObject inner = test != null && test.isJsonObject() && GsonHelper.isObjectNode(test.getAsJsonObject(), "predicate") ? test.getAsJsonObject().getAsJsonObject("predicate") : null;
         boolean vanilla = inner != null && "minecraft:cannot_replace_below_tree_trunk".equals(Json.text(inner, "tag"));
         return vanilla ? rule.get("then") : null;
     }
@@ -235,7 +235,7 @@ final class DownWorld {
     }
 
     static void wolf(JsonObject json, String file, Consumer<String> note) {
-        if (!json.has("assets") || !json.get("assets").isJsonObject()) { return; }
+        if (!GsonHelper.isObjectNode(json, "assets")) { return; }
         JsonObject assets = json.remove("assets").getAsJsonObject();
         for (String look : List.of("wild", "tame", "angry")) {
             if (assets.has(look)) { json.add(look + "_texture", assets.get(look)); }
@@ -248,7 +248,7 @@ final class DownWorld {
         int named = 0;
         if (conditions != null && conditions.isJsonArray()) {
             for (JsonElement selector : conditions.getAsJsonArray()) {
-                JsonObject condition = selector.isJsonObject() && selector.getAsJsonObject().has("condition") && selector.getAsJsonObject().get("condition").isJsonObject() ? selector.getAsJsonObject().getAsJsonObject("condition") : null;
+                JsonObject condition = selector.isJsonObject() && GsonHelper.isObjectNode(selector.getAsJsonObject(), "condition") ? selector.getAsJsonObject().getAsJsonObject("condition") : null;
                 if (condition == null || !"minecraft:biome".equals(namespaced(Json.text(condition, "type"))) || !condition.has("biomes")) { continue; }
                 JsonElement held = condition.get("biomes");
                 named++;

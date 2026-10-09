@@ -86,7 +86,7 @@ final class ConvertAssets {
     }
 
     static String texturePath(String path) {
-        String namespace = path.indexOf(':') < 0 ? "minecraft" : path.substring(0, path.indexOf(':'));
+        String namespace = IdNames.namespace(path);
         String rest = IdNames.path(path);
         if (rest.startsWith("blocks/")) { rest = "block/" + rest.substring("blocks/".length()); }
         else if (rest.startsWith("items/")) { rest = "item/" + rest.substring("items/".length()); }
@@ -97,7 +97,7 @@ final class ConvertAssets {
     }
 
     static String model(JsonObject json, Ported pack) {
-        if (json.has("textures") && json.get("textures").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "textures")) {
             JsonObject textures = json.getAsJsonObject("textures");
             for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
                 if (!texture.getValue().isJsonPrimitive()) { continue; }

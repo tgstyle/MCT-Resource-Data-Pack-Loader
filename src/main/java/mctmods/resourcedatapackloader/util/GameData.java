@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
@@ -29,7 +31,7 @@ public final class GameData {
         return found;
     }
 
-    @Nullable public static JsonObject noiseSettings(String name) { return json(ResourceLocation.withDefaultNamespace("worldgen/noise_settings/" + name + ".json")); }
+    @Nullable public static JsonObject noiseSettings(String name) { return json(ResourceLocation.withDefaultNamespace("worldgen/noise_settings/" + name + PackManager.JSON_SUFFIX)); }
 
     public static boolean has(ResourceLocation at) { return read(at) != null; }
 

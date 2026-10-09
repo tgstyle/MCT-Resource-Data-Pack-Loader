@@ -123,14 +123,14 @@ public final class ContentAnvils {
     }
 
     private static String resultOf(JsonObject json) {
-        if (json.has("result") && json.get("result").isJsonObject()) { return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "result"), "item", "").trim(); }
+        if (GsonHelper.isObjectNode(json, "result")) { return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "result"), "item", "").trim(); }
         return GsonHelper.getAsString(json, "result", "").trim();
     }
 
     private static List<String> itemsOf(JsonObject json, String name) {
-        JsonObject holder = json.has(name) && json.get(name).isJsonObject() ? GsonHelper.getAsJsonObject(json, name) : json;
+        JsonObject holder = GsonHelper.isObjectNode(json, name) ? GsonHelper.getAsJsonObject(json, name) : json;
         String field = holder == json ? name : "item";
-        if (holder.has(field) && holder.get(field).isJsonArray()) {
+        if (GsonHelper.isArrayNode(holder, field)) {
             List<String> names = new ArrayList<>();
             for (String each : Json.strings(holder, field)) {
                 if (!each.trim().isEmpty()) { names.add(each.trim()); }
@@ -161,7 +161,7 @@ public final class ContentAnvils {
     public static boolean anvil(BlockState state) { return state.is(Blocks.ANVIL) || state.is(Blocks.CHIPPED_ANVIL) || state.is(Blocks.DAMAGED_ANVIL); }
 
     private static int countOf(JsonObject json, String name) {
-        if (!json.has(name) || !json.get(name).isJsonObject()) { return 1; }
+        if (!GsonHelper.isObjectNode(json, name)) { return 1; }
         return Math.max(1, GsonHelper.getAsInt(GsonHelper.getAsJsonObject(json, name), "count", 1));
     }
 

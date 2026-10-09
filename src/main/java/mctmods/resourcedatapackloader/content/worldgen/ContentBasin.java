@@ -6,8 +6,13 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.state.BlockState;
+import java.util.List;
 
 public final class ContentBasin implements IContentShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     private final ShapeDef shape;
 
     public ContentBasin(ShapeDef shape) { this.shape = shape; }

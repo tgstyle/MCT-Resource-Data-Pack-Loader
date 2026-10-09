@@ -12,6 +12,7 @@ import com.google.gson.JsonPrimitive;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,15 @@ import java.util.function.Consumer;
 final class DownFixes {
     private static final String SHOWN = "show_in_tooltip";
     private static final String LUCK = "minecraft:luck";
+    private static final String ATTRIBUTE_MODIFIERS = "minecraft:attribute_modifiers";
+    private static final String CAN_BREAK = "minecraft:can_break";
+    private static final String CAN_PLACE_ON = "minecraft:can_place_on";
+    private static final String DYED_COLOR = "minecraft:dyed_color";
+    private static final String ENCHANTMENTS = "minecraft:enchantments";
+    private static final String JUKEBOX_PLAYABLE = "minecraft:jukebox_playable";
+    private static final String STORED_ENCHANTMENTS = "minecraft:stored_enchantments";
+    private static final String TRIM = "minecraft:trim";
+    private static final String UNBREAKABLE = "minecraft:unbreakable";
     private static final Map<String, String> NAMES = Map.of("minecraft:iron_chain", "minecraft:chain");
     private static final List<String> PREFIXED = List.of("generic.armor", "generic.armor_toughness", "generic.attack_damage", "generic.attack_knockback", "generic.attack_speed", "player.block_break_speed",
             "player.block_interaction_range", "generic.burning_time", "generic.explosion_knockback_resistance", "player.entity_interaction_range", "generic.fall_damage_multiplier", "generic.flying_speed",
@@ -40,10 +50,10 @@ final class DownFixes {
             Map.entry("prismarine_brick_slab_from_prismarine_bricks_stonecutting", "prismarine_brick_slab_from_prismarine_stonecutting"),
             Map.entry("prismarine_brick_stairs_from_prismarine_bricks_stonecutting", "prismarine_brick_stairs_from_prismarine_stonecutting"),
             Map.entry("quartz_slab_from_quartz_block_stonecutting", "quartz_slab_from_stonecutting"), Map.entry("stone_brick_wall_from_stone_stonecutting", "stone_brick_walls_from_stone_stonecutting"));
-    private static final Set<String> TOOLTIP_SHOWN = Set.of("minecraft:trim", "minecraft:unbreakable", "minecraft:dyed_color", "minecraft:attribute_modifiers", "minecraft:enchantments",
-            "minecraft:stored_enchantments", "minecraft:jukebox_playable", "minecraft:can_place_on", "minecraft:can_break");
-    private static final Map<String, String> WRAPPED = Map.of("minecraft:dyed_color", "rgb", "minecraft:attribute_modifiers", "modifiers", "minecraft:enchantments", "levels",
-            "minecraft:stored_enchantments", "levels", "minecraft:jukebox_playable", "song", "minecraft:can_place_on", "predicates", "minecraft:can_break", "predicates");
+    private static final Set<String> TOOLTIP_SHOWN = Set.of(TRIM, UNBREAKABLE, DYED_COLOR, ATTRIBUTE_MODIFIERS, ENCHANTMENTS,
+            STORED_ENCHANTMENTS, JUKEBOX_PLAYABLE, CAN_PLACE_ON, CAN_BREAK);
+    private static final Map<String, String> WRAPPED = Map.of(DYED_COLOR, "rgb", ATTRIBUTE_MODIFIERS, "modifiers", ENCHANTMENTS, "levels",
+            STORED_ENCHANTMENTS, "levels", JUKEBOX_PLAYABLE, "song", CAN_PLACE_ON, "predicates", CAN_BREAK, "predicates");
     private static final Map<String, String> CLICKS = Map.of("open_url", "url", "run_command", "command", "suggest_command", "command", "change_page", "page", "open_file", "path", "copy_to_clipboard", "value");
 
     private DownFixes() {}
@@ -148,7 +158,7 @@ final class DownFixes {
                 JsonObject item = new JsonObject();
                 if (event.has("id")) { item.add("id", event.get("id")); }
                 if (event.has("count")) { item.add("count", event.get("count")); }
-                if (event.has(CrossJson.COMPONENTS) && event.get(CrossJson.COMPONENTS).isJsonObject()) { item.add(CrossJson.COMPONENTS, event.get(CrossJson.COMPONENTS)); }
+                if (GsonHelper.isObjectNode(event, CrossJson.COMPONENTS)) { item.add(CrossJson.COMPONENTS, event.get(CrossJson.COMPONENTS)); }
                 out.add("contents", item);
             }
             case "show_entity" -> {
@@ -163,7 +173,7 @@ final class DownFixes {
         return out;
     }
 
-    static void stack(JsonObject stack, String file, Consumer<String> note) { if (stack.has(CrossJson.COMPONENTS) && stack.get(CrossJson.COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(CrossJson.COMPONENTS), file, note); } }
+    static void stack(JsonObject stack, String file, Consumer<String> note) { if (GsonHelper.isObjectNode(stack, CrossJson.COMPONENTS)) { components(stack.getAsJsonObject(CrossJson.COMPONENTS), file, note); } }
 
     static void components(JsonObject components, String file, Consumer<String> note) {
         List<String> lost = new ArrayList<>();
@@ -172,7 +182,7 @@ final class DownFixes {
         if (display != null && display.isJsonObject()) {
             JsonObject shown = display.getAsJsonObject();
             if (shown.has("hide_tooltip") && shown.get("hide_tooltip").getAsBoolean()) { components.add(MINECRAFT + "hide_tooltip", new JsonObject()); }
-            if (shown.has("hidden_components") && shown.get("hidden_components").isJsonArray()) { shown.getAsJsonArray("hidden_components").forEach(one -> hidden.add(namespaced(one.getAsString()))); }
+            if (GsonHelper.isArrayNode(shown, "hidden_components")) { shown.getAsJsonArray("hidden_components").forEach(one -> hidden.add(namespaced(one.getAsString()))); }
         }
         food(components, lost);
         for (String key : new ArrayList<>(components.keySet())) {
@@ -203,7 +213,7 @@ final class DownFixes {
             case "minecraft:custom_model_data" -> {
                 if (value.isJsonPrimitive()) { return value; }
                 JsonObject data = value.getAsJsonObject();
-                JsonArray floats = data.has("floats") && data.get("floats").isJsonArray() ? data.getAsJsonArray("floats") : null;
+                JsonArray floats = GsonHelper.isArrayNode(data, "floats") ? data.getAsJsonArray("floats") : null;
                 return floats == null || floats.isEmpty() ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
             }
             case "minecraft:damage_resistant" -> {
@@ -211,7 +221,7 @@ final class DownFixes {
                 return fire ? new JsonObject() : null;
             }
             case "minecraft:lock" -> { return lock(value); }
-            case "minecraft:trim", "minecraft:unbreakable" -> { return value; }
+            case TRIM, UNBREAKABLE -> { return value; }
             default -> { return WRAPPED.containsKey(named) ? wrapped(named, value) : value; }
         }
     }
@@ -230,7 +240,7 @@ final class DownFixes {
     private static JsonElement lock(JsonElement value) {
         if (value.isJsonPrimitive()) { return value; }
         JsonObject predicate = value.getAsJsonObject();
-        JsonObject held = predicate.has(CrossJson.COMPONENTS) && predicate.get(CrossJson.COMPONENTS).isJsonObject() ? predicate.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
+        JsonObject held = GsonHelper.isObjectNode(predicate, CrossJson.COMPONENTS) ? predicate.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
         JsonElement name = held.get(MINECRAFT + "custom_name");
         if (name == null) { return null; }
         if (name.isJsonPrimitive()) { return name; }
@@ -251,7 +261,7 @@ final class DownFixes {
         if (consumable == null || !consumable.isJsonObject()) { return; }
         JsonObject used = consumable.getAsJsonObject();
         if (used.has("consume_seconds")) { eaten.add("eat_seconds", used.get("consume_seconds")); }
-        if (!used.has("on_consume_effects") || !used.get("on_consume_effects").isJsonArray()) { return; }
+        if (!GsonHelper.isArrayNode(used, "on_consume_effects")) { return; }
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();

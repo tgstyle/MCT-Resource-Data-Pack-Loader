@@ -62,7 +62,7 @@ public final class ContentDimensions {
             DimensionDef def = ContentDimensionParser.parse(key, contents);
             if (def == null) { return; }
             DEFS.put(key, def);
-            if (VANILLA.contains(key) || GameData.has(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + ".json"))) { EXISTING.add(key); }
+            if (VANILLA.contains(key) || GameData.has(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + PackManager.JSON_SUFFIX))) { EXISTING.add(key); }
         });
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
     }
@@ -94,11 +94,11 @@ public final class ContentDimensions {
                 applied.add(def.key().toString());
                 continue;
             }
-            JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + ".json"));
+            JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + PackManager.JSON_SUFFIX));
             if (type == null) { continue; }
             retype(def, type);
             type.addProperty("effects", def.hasEffects() ? def.key().toString() : OVERWORLD.toString());
-            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + ".json", type.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
             stem(def, def.key());
             made.add(def.key().toString());
         }
@@ -110,20 +110,20 @@ public final class ContentDimensions {
         if (!def.gives(TERRAIN_TYPE) && (def.gives("terrain") || def.gives("biomes"))) { ContentLog.LOGGER.error("Dimension {} already exists and sets terrain or biome options without terrain.type, so its terrain is left as it is", def.key()); }
         ResourceLocation typeId = typeOf(def.key());
         if (typeId == null) { return; }
-        JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath(typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json"));
+        JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath(typeId.getNamespace(), "dimension_type/" + typeId.getPath() + PackManager.JSON_SUFFIX));
         if (type != null) {
             String before = type.toString();
             retype(def, type);
             if (before.equals(type.toString())) { ContentLog.LOGGER.debug("Dimension {} sets nothing its type {} holds, so the type is left as it is", def.key(), typeId); }
             else if (!VANILLA.contains(def.key()) && ResourceLocation.DEFAULT_NAMESPACE.equals(typeId.getNamespace())) { ContentLog.LOGGER.error("Dimension {} uses the game's own type {}, which other dimensions share, so its type options are left out", def.key(), typeId); }
-            else { GeneratedResources.put(PackType.SERVER_DATA, typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json", type.toString()); }
+            else { GeneratedResources.put(PackType.SERVER_DATA, typeId.getNamespace(), "dimension_type/" + typeId.getPath() + PackManager.JSON_SUFFIX, type.toString()); }
         }
         if (def.gives(TERRAIN_TYPE)) { stem(def, typeId); }
     }
 
     @Nullable private static ResourceLocation typeOf(ResourceLocation dimension) {
         if (VANILLA.contains(dimension)) { return dimension; }
-        JsonObject stem = GameData.json(ResourceLocation.fromNamespaceAndPath(dimension.getNamespace(), "dimension/" + dimension.getPath() + ".json"));
+        JsonObject stem = GameData.json(ResourceLocation.fromNamespaceAndPath(dimension.getNamespace(), "dimension/" + dimension.getPath() + PackManager.JSON_SUFFIX));
         ResourceLocation type = stem == null ? null : ResourceLocation.tryParse(Json.text(stem, "type"));
         if (stem != null && type == null) { ContentLog.LOGGER.error("Dimension {} names its type inline or not at all, so the file's type options are left out", dimension); }
         return type;
@@ -152,7 +152,7 @@ public final class ContentDimensions {
         JsonObject dimension = new JsonObject();
         dimension.addProperty("type", type.toString());
         dimension.add("generator", generator(def));
-        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension/" + def.key().getPath() + ".json", dimension.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension/" + def.key().getPath() + PackManager.JSON_SUFFIX, dimension.toString());
     }
 
     private static JsonObject generator(DimensionDef def) {
@@ -218,7 +218,7 @@ public final class ContentDimensions {
                     settings.add("default_fluid", lava);
                 }
                 ResourceLocation id = ResourceLocation.fromNamespaceAndPath(def.key().getNamespace(), def.key().getPath() + "_noise");
-                GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+                GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX, settings.toString());
                 if (overworldNoise) { ContentWorldShape.overworldNoise(id); }
                 settingsId = id.toString();
             }

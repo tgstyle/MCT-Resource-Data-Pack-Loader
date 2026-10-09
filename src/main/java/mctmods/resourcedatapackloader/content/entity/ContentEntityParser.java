@@ -45,7 +45,7 @@ public final class ContentEntityParser {
         }
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         JsonObject sounds = GsonHelper.getAsJsonObject(json, "sounds", new JsonObject());
-        JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? GsonHelper.getAsJsonObject(json, "egg") : null;
+        JsonObject egg = GsonHelper.isObjectNode(json, "egg") ? GsonHelper.getAsJsonObject(json, "egg") : null;
         boolean wantsEgg = !json.has("egg") || egg != null || GsonHelper.getAsBoolean(json, "egg", true);
         float scale = Math.max(0.05F, GsonHelper.getAsFloat(json, "scale", 1.0F));
         return new EntityVariantDef(key, base,

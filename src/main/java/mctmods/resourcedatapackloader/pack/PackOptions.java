@@ -70,7 +70,7 @@ public final class PackOptions {
             if (shown.entrySet().isEmpty()) { continue; }
             try {
                 Files.createDirectories(held);
-                JsonObject merged = merge(shown, held.resolve(key + ".json"), key);
+                JsonObject merged = merge(shown, held.resolve(key + PackManager.JSON_SUFFIX), key);
                 Map<String, Boolean> options = new HashMap<>();
                 for (Map.Entry<String, JsonElement> entry : merged.entrySet()) {
                     if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isBoolean()) { options.put(entry.getKey(), entry.getValue().getAsBoolean()); }
@@ -109,7 +109,7 @@ public final class PackOptions {
         int gone = 0;
         for (String one : orphans()) {
             try {
-                Files.delete(held.resolve(one + ".json"));
+                Files.delete(held.resolve(one + PackManager.JSON_SUFFIX));
                 ContentLog.LOGGER.debug("Removed unused option file '{}.json'", one);
                 gone++;
             }
@@ -237,7 +237,7 @@ public final class PackOptions {
         JsonObject out = new JsonObject();
         out.addProperty("_note", "Options for " + fileKey + ". Changes apply on the next game start.");
         for (Map.Entry<String, Boolean> entry : options.entrySet()) { out.addProperty(entry.getKey(), entry.getValue()); }
-        try { Files.writeString(folder.resolve(fileKey + ".json"), gsonPretty(out)); }
+        try { Files.writeString(folder.resolve(fileKey + PackManager.JSON_SUFFIX), gsonPretty(out)); }
         catch (IOException ex) { ContentLog.LOGGER.error("Could not save {}", fileKey, ex); }
     }
 

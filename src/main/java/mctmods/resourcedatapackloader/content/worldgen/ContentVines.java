@@ -10,9 +10,12 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentVines implements IContentShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     private final AmountDef count;
     private final AmountDef drop;
     private final int scatterX;

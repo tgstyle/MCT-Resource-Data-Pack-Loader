@@ -377,18 +377,18 @@ public final class ContentCaveRegions {
         JsonObject configured = new JsonObject();
         configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + feature);
         configured.add("config", config);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + path + ".json", configured.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + path + PackManager.JSON_SUFFIX, configured.toString());
         JsonObject placed = new JsonObject();
         placed.addProperty("feature", namespace + ":" + path);
         placed.add("placement", new JsonArray());
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.PLACED_FEATURES + "/" + path + ".json", placed.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.PLACED_FEATURES + "/" + path + PackManager.JSON_SUFFIX, placed.toString());
         JsonObject modifier = new JsonObject();
         modifier.addProperty("type", ContentFormats.ADD_FEATURES);
         if (def.biome() == null) { modifier.add("biomes", ContentFormats.anyBiomes()); }
         else { modifier.addProperty("biomes", def.key().toString()); }
         modifier.addProperty("features", namespace + ":" + path);
         modifier.addProperty("step", step);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.BIOME_MODIFIERS + "/" + path + ".json", modifier.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.BIOME_MODIFIERS + "/" + path + PackManager.JSON_SUFFIX, modifier.toString());
     }
 
     @Nullable private static BlockState state(CaveRegionDef def, @Nullable BlockMatchDef cover, String key) {

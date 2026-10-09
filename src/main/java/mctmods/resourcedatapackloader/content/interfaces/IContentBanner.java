@@ -12,5 +12,5 @@ public interface IContentBanner {
 
     static ResourceLocation textureOf(ResourceLocation id) { return ResourceLocation.fromNamespaceAndPath(id.getNamespace(), "textures/entity/banner/" + id.getPath() + ".png"); }
 
-    static boolean shipsBlockstate(String namespace, String name) { return PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json"); }
+    static boolean shipsBlockstate(String namespace, String name) { return PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + PackManager.JSON_SUFFIX); }
 }

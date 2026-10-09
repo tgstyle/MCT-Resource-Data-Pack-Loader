@@ -18,6 +18,8 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentCover implements IContentChunkShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     private static final List<TagKey<Block>> ROCK = List.of(BlockTags.BASE_STONE_OVERWORLD, BlockTags.BASE_STONE_NETHER, BlockTags.STONE_ORE_REPLACEABLES, BlockTags.DEEPSLATE_ORE_REPLACEABLES, BlockTags.TERRACOTTA, Tags.Blocks.ORES, Tags.Blocks.COBBLESTONES, Tags.Blocks.END_STONES, Tags.Blocks.SANDSTONE_BLOCKS, Tags.Blocks.OBSIDIANS);
     @Nullable private final BlockState floor;
     private final float floorChance;

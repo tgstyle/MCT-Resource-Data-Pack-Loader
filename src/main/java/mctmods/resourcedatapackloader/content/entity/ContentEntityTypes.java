@@ -169,7 +169,7 @@ public final class ContentEntityTypes {
             JsonArray values = new JsonArray();
             for (String id : entry.getValue()) { values.add(id); }
             json.add("values", values);
-            GeneratedResources.put(PackType.SERVER_DATA, tag.getNamespace(), ContentFormats.ENTITY_TYPE_TAGS + "/" + tag.getPath() + ".json", json.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, tag.getNamespace(), ContentFormats.ENTITY_TYPE_TAGS + "/" + tag.getPath() + PackManager.JSON_SUFFIX, json.toString());
         }
         TAGS.clear();
     }

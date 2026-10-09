@@ -115,7 +115,7 @@ public final class ContentCityMaps {
             JsonObject described = value.getAsJsonObject();
             names.add(GsonHelper.getAsString(described, "kind", "").trim());
             height = Mth.clamp(GsonHelper.getAsInt(described, "height", CityMapDef.LIFT), LIFT_LEAST, LIFT_MOST);
-            if (described.has("settings") && described.get("settings").isJsonObject()) {
+            if (GsonHelper.isObjectNode(described, "settings")) {
                 roadKeys = described.getAsJsonObject("settings");
                 for (String named : roadKeys.keySet()) {
                     if (ContentControl.ignores(named)) { ContentLog.LOGGER.error("City map {} mark '{}' sets '{}', which is not a setting anything reads, so it does nothing", key, symbol, named); }

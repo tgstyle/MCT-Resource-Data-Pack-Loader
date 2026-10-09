@@ -28,7 +28,6 @@ import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 public final class Crossed extends PortBase<Crossed.Source> {
-    private static final String JSON = ".json";
     private static final String TAGS = "tags/";
     private static final String BIOME_MODIFIERS = "/biome_modifier/";
     private static final String LOOT_MODIFIERS = "loot_modifiers/";
@@ -83,9 +82,9 @@ public final class Crossed extends PortBase<Crossed.Source> {
         if (loaderFrom.equals(namespace) && moved.startsWith(LOOT_MODIFIERS)) { return new Target(loaderTo, moved); }
         String singular = from == Port.Line.V1_20 ? moved : path;
         String registry = CrossIds.registry(singular);
-        if (registry == null || !moved.endsWith(JSON)) { return new Target(namespace, moved); }
-        String rest = singular.substring((TAGS + registry + "/").length(), singular.length() - JSON.length());
-        String prefix = moved.substring(0, moved.length() - rest.length() - JSON.length());
+        if (registry == null || !moved.endsWith(PackManager.JSON_SUFFIX)) { return new Target(namespace, moved); }
+        String rest = singular.substring((TAGS + registry + "/").length(), singular.length() - PackManager.JSON_SUFFIX.length());
+        String prefix = moved.substring(0, moved.length() - rest.length() - PackManager.JSON_SUFFIX.length());
         Port.Line to = from == Port.Line.V1_20 ? Port.Line.V1_21 : Port.Line.V1_20;
         String converted = CrossIds.tag(registry, namespace + ":" + rest, to);
         if (converted.contains(CrossIds.BOTH)) {
@@ -93,13 +92,13 @@ public final class Crossed extends PortBase<Crossed.Source> {
             converted = CrossIds.COMMON + ":" + rest;
         }
         int colon = converted.indexOf(':');
-        return new Target(converted.substring(0, colon), prefix + converted.substring(colon + 1) + JSON);
+        return new Target(converted.substring(0, colon), prefix + converted.substring(colon + 1) + PackManager.JSON_SUFFIX);
     }
 
     private Port.Kind kind(String path) {
         String singular = layout(path);
         if (singular.startsWith("function/")) { return singular.endsWith(".mcfunction") ? Port.Kind.FUNCTION : Port.Kind.RAW; }
-        if (!singular.endsWith(JSON)) { return Port.Kind.RAW; }
+        if (!singular.endsWith(PackManager.JSON_SUFFIX)) { return Port.Kind.RAW; }
         if (singular.startsWith("recipe/")) { return Port.Kind.RECIPE; }
         if (singular.startsWith("loot_table/") || singular.startsWith("predicate/") || singular.startsWith("item_modifier/") || singular.startsWith(LOOT_MODIFIERS)) { return Port.Kind.LOOT; }
         return singular.startsWith("advancement/") ? Port.Kind.ADVANCEMENT : Port.Kind.DEFINITION;
@@ -126,10 +125,10 @@ public final class Crossed extends PortBase<Crossed.Source> {
         for (String written : realPaths) {
             Path real = home.resolve(written);
             String path = lined ? LinePort.assetPath(written) : written;
-            boolean model = path.startsWith("models/") && path.endsWith(JSON);
+            boolean model = path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX);
             boolean same = path.equals(written);
             if (!same) { moved++; }
-            Port.Kind kind = model ? Port.Kind.MODEL : lined && path.endsWith(JSON) ? Port.Kind.DEFINITION : Port.Kind.RAW;
+            Port.Kind kind = model ? Port.Kind.MODEL : lined && path.endsWith(PackManager.JSON_SUFFIX) ? Port.Kind.DEFINITION : Port.Kind.RAW;
             expose(PackType.CLIENT_RESOURCES, namespace, path, new Source(real, base + written, kind, same));
             String alias = DownAssets.moved(path);
             if (alias != null && !present.contains(alias)) {
@@ -201,7 +200,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
     @Nullable private JsonElement carried(String folder, String id) {
         int colon = id.indexOf(':');
         String namespace = colon < 0 ? "minecraft" : id.substring(0, colon);
-        Source source = exposed.getOrDefault(PackType.SERVER_DATA, Map.of()).getOrDefault(namespace, Map.of()).get(folder + "/" + id.substring(colon + 1) + JSON);
+        Source source = exposed.getOrDefault(PackType.SERVER_DATA, Map.of()).getOrDefault(namespace, Map.of()).get(folder + "/" + id.substring(colon + 1) + PackManager.JSON_SUFFIX);
         if (source == null) { return null; }
         try { return JsonParser.parseString(Files.readString(source.real(), StandardCharsets.UTF_8)); }
         catch (IOException | RuntimeException failed) { return null; }

@@ -26,9 +26,18 @@ final class CrossLoot {
     private static final String LOOTING = "minecraft:looting";
     private static final String DAMAGE = "minecraft:damage";
     private static final String SET_NBT = "minecraft:set_nbt";
+    private static final String COPY_CUSTOM_DATA = "minecraft:copy_custom_data";
+    private static final String COPY_NBT = "minecraft:copy_nbt";
+    private static final String ENCHANTED_COUNT_INCREASE = "minecraft:enchanted_count_increase";
+    private static final String ENCHANTMENTS_ID = "minecraft:enchantments";
+    private static final String LOOTING_ENCHANT = "minecraft:looting_enchant";
+    private static final String RANDOM_CHANCE_WITH_ENCHANTED_BONUS = "minecraft:random_chance_with_enchanted_bonus";
+    private static final String RANDOM_CHANCE_WITH_LOOTING = "minecraft:random_chance_with_looting";
+    private static final String SET_COMPONENTS = "minecraft:set_components";
+    private static final String STORED_ENCHANTMENTS = "minecraft:stored_enchantments";
     private static final Set<String> ITEM_KEYS = Set.of("item", "items", "mainhand", "offhand", "head", "chest", "legs", "feet", "body", "rod");
     private static final Map<String, String> OPERATIONS = Map.of("addition", "add_value", "multiply_base", "add_multiplied_base", "multiply_total", "add_multiplied_total");
-    private static final Map<String, String> PREDICATE_KEYS = Map.of("nbt", "minecraft:custom_data", ENCHANTMENTS, "minecraft:enchantments", "stored_enchantments", "minecraft:stored_enchantments", "potion", "minecraft:potion_contents");
+    private static final Map<String, String> PREDICATE_KEYS = Map.of("nbt", "minecraft:custom_data", ENCHANTMENTS, ENCHANTMENTS_ID, "stored_enchantments", STORED_ENCHANTMENTS, "potion", "minecraft:potion_contents");
     private static final Pattern ID_CHARACTERS = Pattern.compile("[^a-z0-9_./-]");
 
     private CrossLoot() {}
@@ -62,7 +71,7 @@ final class CrossLoot {
 
     private static void item(JsonObject held, boolean up, String file, Crossed pack) {
         if (up) {
-            JsonObject predicates = held.has(PREDICATES) && held.get(PREDICATES).isJsonObject() ? held.getAsJsonObject(PREDICATES) : new JsonObject();
+            JsonObject predicates = GsonHelper.isObjectNode(held, PREDICATES) ? held.getAsJsonObject(PREDICATES) : new JsonObject();
             if (held.has(TAG)) {
                 String tag = held.remove(TAG).getAsString();
                 if (!held.has(ITEMS)) { held.addProperty(ITEMS, "#" + tag); }
@@ -89,23 +98,23 @@ final class CrossLoot {
                 held.add(ITEMS, list);
             }
         }
-        if (held.has(CrossJson.COMPONENTS) && held.get(CrossJson.COMPONENTS).isJsonObject()) {
+        if (GsonHelper.isObjectNode(held, CrossJson.COMPONENTS)) {
             String nbt = CrossJson.downNbt(held.remove(CrossJson.COMPONENTS).getAsJsonObject(), file, pack);
             if (nbt != null) { held.addProperty(CrossJson.NBT, nbt); }
         }
-        if (!held.has(PREDICATES) || !held.get(PREDICATES).isJsonObject()) { return; }
+        if (!GsonHelper.isObjectNode(held, PREDICATES)) { return; }
         JsonObject predicates = held.remove(PREDICATES).getAsJsonObject();
         enchantmentKeys(predicates, ENCHANTMENTS, ENCHANTMENT);
         for (Map.Entry<String, String> moved : PREDICATE_KEYS.entrySet()) {
             if (predicates.has(moved.getValue())) { held.add(moved.getKey(), predicates.remove(moved.getValue())); }
         }
-        if (predicates.has(DAMAGE) && predicates.get(DAMAGE).isJsonObject() && predicates.getAsJsonObject(DAMAGE).has("durability")) { held.add("durability", predicates.remove(DAMAGE).getAsJsonObject().get("durability")); }
+        if (GsonHelper.isObjectNode(predicates, DAMAGE) && predicates.getAsJsonObject(DAMAGE).has("durability")) { held.add("durability", predicates.remove(DAMAGE).getAsJsonObject().get("durability")); }
         if (!predicates.keySet().isEmpty()) { pack.note("'" + file + "' tests the item predicate(s) " + String.join(", ", predicates.keySet()) + ", which 1.20.1 does not have, so they are left out"); }
     }
 
     private static void enchantmentKeys(JsonObject predicates, String from, String to) {
-        for (String list : new String[] {"minecraft:enchantments", "minecraft:stored_enchantments"}) {
-            if (!predicates.has(list) || !predicates.get(list).isJsonArray()) { continue; }
+        for (String list : new String[] {ENCHANTMENTS_ID, STORED_ENCHANTMENTS}) {
+            if (!GsonHelper.isArrayNode(predicates, list)) { continue; }
             for (JsonElement one : predicates.getAsJsonArray(list)) {
                 if (one.isJsonObject()) { rename(one.getAsJsonObject(), from, to); }
             }
@@ -143,18 +152,18 @@ final class CrossLoot {
         switch (function) {
             case SET_NBT -> {
                 if (!up) { return; }
-                held.addProperty(FUNCTION, "minecraft:set_components");
+                held.addProperty(FUNCTION, SET_COMPONENTS);
                 held.add(CrossJson.COMPONENTS, CrossStacks.upJson("minecraft:stick", held.remove(TAG)));
             }
-            case "minecraft:set_components" -> {
+            case SET_COMPONENTS -> {
                 if (up || !held.has(CrossJson.COMPONENTS)) { return; }
                 String nbt = CrossJson.downNbt(held.remove(CrossJson.COMPONENTS).getAsJsonObject(), file, pack);
                 held.addProperty(FUNCTION, SET_NBT);
                 held.addProperty(TAG, nbt == null ? "{}" : nbt);
             }
             case "minecraft:set_custom_data" -> { if (!up) { held.addProperty(FUNCTION, SET_NBT); } }
-            case "minecraft:copy_nbt" -> { if (up) { held.addProperty(FUNCTION, "minecraft:copy_custom_data"); } }
-            case "minecraft:copy_custom_data" -> { if (!up) { held.addProperty(FUNCTION, "minecraft:copy_nbt"); } }
+            case COPY_NBT -> { if (up) { held.addProperty(FUNCTION, COPY_CUSTOM_DATA); } }
+            case COPY_CUSTOM_DATA -> { if (!up) { held.addProperty(FUNCTION, COPY_NBT); } }
             case "minecraft:enchant_randomly" -> enchantRandomly(held, up, file, pack);
             case "minecraft:enchant_with_levels" -> {
                 String gone = up ? "treasure" : OPTIONS;
@@ -163,16 +172,16 @@ final class CrossLoot {
                     pack.note("'" + file + "' sets '" + gone + "' on enchant_with_levels, which " + pack.to().title() + " does not read, so it is left out");
                 }
             }
-            case "minecraft:looting_enchant" -> {
+            case LOOTING_ENCHANT -> {
                 if (!up) { return; }
-                held.addProperty(FUNCTION, "minecraft:enchanted_count_increase");
+                held.addProperty(FUNCTION, ENCHANTED_COUNT_INCREASE);
                 held.addProperty(ENCHANTMENT, LOOTING);
             }
-            case "minecraft:enchanted_count_increase" -> {
+            case ENCHANTED_COUNT_INCREASE -> {
                 if (up) { return; }
                 if (!LOOTING.equals(Json.text(held,ENCHANTMENT))) { pack.note("'" + file + "' raises the count by " + Json.text(held,ENCHANTMENT) + ", and 1.20.1 only raises it by looting"); }
                 held.remove(ENCHANTMENT);
-                held.addProperty(FUNCTION, "minecraft:looting_enchant");
+                held.addProperty(FUNCTION, LOOTING_ENCHANT);
             }
             case "minecraft:set_attributes" -> attributes(held, up, file);
             case "minecraft:set_contents" -> pack.note("'" + file + "' fills a container with set_contents, whose form differs on " + pack.to().title() + "; it is kept as written, so check it by hand");
@@ -198,7 +207,7 @@ final class CrossLoot {
     }
 
     private static void attributes(JsonObject held, boolean up, String file) {
-        if (!held.has("modifiers") || !held.get("modifiers").isJsonArray()) { return; }
+        if (!GsonHelper.isArrayNode(held, "modifiers")) { return; }
         String[] segments = file.split("/");
         String namespace = segments.length > 1 ? segments[1] : "minecraft";
         for (JsonElement one : held.getAsJsonArray("modifiers")) {
@@ -224,20 +233,20 @@ final class CrossLoot {
     }
 
     private static void condition(JsonObject held, String condition, boolean up, String file, Crossed pack) {
-        if ("minecraft:match_tool".equals(condition) && held.has(PREDICATE) && held.get(PREDICATE).isJsonObject()) { item(held.getAsJsonObject(PREDICATE), up, file, pack); }
-        if (up && "minecraft:random_chance_with_looting".equals(condition)) {
+        if ("minecraft:match_tool".equals(condition) && GsonHelper.isObjectNode(held, PREDICATE)) { item(held.getAsJsonObject(PREDICATE), up, file, pack); }
+        if (up && RANDOM_CHANCE_WITH_LOOTING.equals(condition)) {
             float chance = held.has("chance") ? held.remove("chance").getAsFloat() : 0.0F;
             float multiplier = held.has("looting_multiplier") ? held.remove("looting_multiplier").getAsFloat() : 0.0F;
             JsonObject enchanted = new JsonObject();
             enchanted.addProperty("type", "minecraft:linear");
             enchanted.addProperty("base", chance + multiplier);
             enchanted.addProperty("per_level_above_first", multiplier);
-            held.addProperty(CONDITION, "minecraft:random_chance_with_enchanted_bonus");
+            held.addProperty(CONDITION, RANDOM_CHANCE_WITH_ENCHANTED_BONUS);
             held.addProperty(ENCHANTMENT, LOOTING);
             held.addProperty("unenchanted_chance", chance);
             held.add("enchanted_chance", enchanted);
         }
-        if (!up && "minecraft:random_chance_with_enchanted_bonus".equals(condition)) {
+        if (!up && RANDOM_CHANCE_WITH_ENCHANTED_BONUS.equals(condition)) {
             JsonElement enchanted = held.get("enchanted_chance");
             if (!LOOTING.equals(Json.text(held,ENCHANTMENT)) || enchanted == null || !enchanted.isJsonObject() || !enchanted.getAsJsonObject().has("per_level_above_first")) {
                 pack.note("'" + file + "' uses random_chance_with_enchanted_bonus in a form 1.20.1 cannot express; it is kept as written, so replace it by hand");
@@ -246,7 +255,7 @@ final class CrossLoot {
             float chance = held.has("unenchanted_chance") ? held.remove("unenchanted_chance").getAsFloat() : 0.0F;
             held.remove(ENCHANTMENT);
             held.remove("enchanted_chance");
-            held.addProperty(CONDITION, "minecraft:random_chance_with_looting");
+            held.addProperty(CONDITION, RANDOM_CHANCE_WITH_LOOTING);
             held.addProperty("chance", chance);
             held.addProperty("looting_multiplier", enchanted.getAsJsonObject().get("per_level_above_first").getAsFloat());
         }

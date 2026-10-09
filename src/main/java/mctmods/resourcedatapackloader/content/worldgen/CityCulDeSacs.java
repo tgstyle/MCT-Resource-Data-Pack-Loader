@@ -28,7 +28,9 @@ final class CityCulDeSacs {
 
         static Held ofRail(Rail rail) { return rail.alongX() ? new Held(rail.from(), rail.at(), rail.to(), rail.last(), Hold.FIXED, true) : new Held(rail.at(), rail.from(), rail.last(), rail.to(), Hold.FIXED, false); }
 
-        boolean meets(int fromX, int fromZ, int toX, int toZ) { return maxX >= fromX && minX <= toX && maxZ >= fromZ && minZ <= toZ; }
+        BoundingBox box() { return new BoundingBox(minX, 0, minZ, maxX, 0, maxZ); }
+
+        boolean meets(int fromX, int fromZ, int toX, int toZ) { return box().intersects(fromX, fromZ, toX, toZ); }
     }
 
     record StreetGrade(int start, int[] profile, boolean[] bored) {}

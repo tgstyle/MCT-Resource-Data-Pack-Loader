@@ -87,22 +87,22 @@ public final class ContentEvents {
     private static ResourceLocation id(String path) { return ResourceDataPackLoader.id(path); }
 
     public static void onRegister(RegisterEvent event) {
-        if (event.getRegistryKey().equals(Registries.FEATURE)) { event.register(Registries.FEATURE, helper -> {
+        event.register(Registries.FEATURE, helper -> {
             helper.register(id(ContentWorldgen.SHAPE_FEATURE), ContentShapeFeature.INSTANCE);
             helper.register(id(ContentCaveRegions.COVER_FEATURE), ContentCoverFeature.INSTANCE);
             helper.register(id(ContentCaveRegions.STRUCTURE_FEATURE), ContentCaveStructureFeature.INSTANCE);
-        }); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS)) { event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
+        });
+        event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
             helper.register(id(ContentOreControl.ID), ContentOreControl.CODEC);
             helper.register(id(ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
-        }); }
-        else if (event.getRegistryKey().equals(Registries.CHUNK_GENERATOR)) { event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(id(ContentFlatSource.ID), ContentFlatSource.CODEC)); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_TYPE)) { event.register(Registries.STRUCTURE_TYPE, helper -> {
+        });
+        event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(id(ContentFlatSource.ID), ContentFlatSource.CODEC));
+        event.register(Registries.STRUCTURE_TYPE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
             helper.register(id(ContentCity.STRUCTURE), ContentCityStructure.TYPE);
-        }); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_POOL_ELEMENT)) { event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(id(ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE)); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PIECE)) { event.register(Registries.STRUCTURE_PIECE, helper -> {
+        });
+        event.register(Registries.STRUCTURE_POOL_ELEMENT, helper -> helper.register(id(ContentCity.STRUCTURE + "_plot_element"), ContentPlotPoolElement.TYPE));
+        event.register(Registries.STRUCTURE_PIECE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_PIECE), ContentMapPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_piece"), ContentCityPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_plot"), ContentCityPlotPiece.TYPE);
@@ -123,39 +123,37 @@ public final class ContentEvents {
             helper.register(id(ContentCity.STRUCTURE + "_station"), ContentCityStationPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_stairs"), ContentCityStairsPiece.TYPE);
             helper.register(id(ContentCity.STRUCTURE + "_stamp"), ContentCityStampPiece.TYPE);
-        }); }
-        else if (event.getRegistryKey().equals(Registries.STRUCTURE_PLACEMENT)) { event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
+        });
+        event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
             helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
             helper.register(id(ContentWorldgen.RINGS_PLACEMENT), ContentStructureRings.TYPE);
-        }); }
-        else if (event.getRegistryKey().equals(Registries.PLACEMENT_MODIFIER_TYPE)) { event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.ATTACHMENT_TYPES)) { event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> {
+        });
+        event.register(Registries.PLACEMENT_MODIFIER_TYPE, helper -> helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentSpreadPlacement.TYPE));
+        event.register(NeoForgeRegistries.Keys.ATTACHMENT_TYPES, helper -> {
             helper.register(id(ContentWorldgen.RETROGEN_TOKENS), ContentChunkTokens.type());
             helper.register(EntityStorage.KEY, EntityStorage.TYPE);
-        }); }
+        });
         if (Config.contentOff()) {
-            if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, helper -> generateData()); }
+            event.register(Registries.ITEM, helper -> generateData());
             return;
         }
         ContentFluids.prepare();
-        if (event.getRegistryKey().equals(Registries.ARMOR_MATERIAL)) { event.register(Registries.ARMOR_MATERIAL, helper -> ContentMaterials.registerArmor(helper::register)); }
-        else if (event.getRegistryKey().equals(NeoForgeRegistries.Keys.FLUID_TYPES)) { event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register)); }
-        else if (event.getRegistryKey().equals(Registries.FLUID)) { event.register(Registries.FLUID, helper -> ContentFluids.registerFluids(helper::register)); }
-        else if (event.getRegistryKey().equals(Registries.BLOCK)) { event.register(Registries.BLOCK, ContentEvents::registerBlocks); }
-        else if (event.getRegistryKey().equals(Registries.ITEM)) { event.register(Registries.ITEM, ContentEvents::registerItems); }
-        else if (event.getRegistryKey().equals(Registries.CREATIVE_MODE_TAB)) { event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs); }
-        else if (event.getRegistryKey().equals(Registries.ENTITY_TYPE)) { event.register(Registries.ENTITY_TYPE, ContentEntityTypes::registerTypes); }
-        else if (event.getRegistryKey().equals(Registries.BLOCK_ENTITY_TYPE)) {
-            event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register);
-            event.register(Registries.BLOCK_ENTITY_TYPE, ContentContainers::register);
-            event.register(Registries.BLOCK_ENTITY_TYPE, ContentBells::register);
-        }
-        else if (event.getRegistryKey().equals(Registries.MENU)) { event.register(Registries.MENU, ContentContainers::registerMenu); }
-        else if (event.getRegistryKey().equals(Registries.SOUND_EVENT)) { event.register(Registries.SOUND_EVENT, ContentSounds::register); }
-        else if (event.getRegistryKey().equals(Registries.MOB_EFFECT)) { event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions); }
-        else if (event.getRegistryKey().equals(Registries.POTION)) { event.register(Registries.POTION, ContentPotions::registerTypes); }
-        else if (event.getRegistryKey().equals(Registries.POINT_OF_INTEREST_TYPE)) { event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites); }
-        else if (event.getRegistryKey().equals(Registries.VILLAGER_PROFESSION)) { event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions); }
+        event.register(Registries.ARMOR_MATERIAL, helper -> ContentMaterials.registerArmor(helper::register));
+        event.register(NeoForgeRegistries.Keys.FLUID_TYPES, helper -> ContentFluids.registerTypes(helper::register));
+        event.register(Registries.FLUID, helper -> ContentFluids.registerFluids(helper::register));
+        event.register(Registries.BLOCK, ContentEvents::registerBlocks);
+        event.register(Registries.ITEM, ContentEvents::registerItems);
+        event.register(Registries.CREATIVE_MODE_TAB, ContentEvents::registerTabs);
+        event.register(Registries.ENTITY_TYPE, ContentEntityTypes::registerTypes);
+        event.register(Registries.BLOCK_ENTITY_TYPE, ContentBanners::register);
+        event.register(Registries.BLOCK_ENTITY_TYPE, ContentContainers::register);
+        event.register(Registries.BLOCK_ENTITY_TYPE, ContentBells::register);
+        event.register(Registries.MENU, ContentContainers::registerMenu);
+        event.register(Registries.SOUND_EVENT, ContentSounds::register);
+        event.register(Registries.MOB_EFFECT, ContentPotions::registerPotions);
+        event.register(Registries.POTION, ContentPotions::registerTypes);
+        event.register(Registries.POINT_OF_INTEREST_TYPE, ContentVillagers::registerJobSites);
+        event.register(Registries.VILLAGER_PROFESSION, ContentVillagers::registerProfessions);
     }
 
     private static void registerBlocks(RegisterEvent.RegisterHelper<Block> helper) {

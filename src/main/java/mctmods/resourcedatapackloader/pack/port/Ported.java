@@ -86,7 +86,7 @@ public final class Ported extends PortBase<Ported.Source> {
             String named = held.byMeta().get(meta);
             if (named == null && held.byMeta().size() == 1) { named = held.byMeta().values().iterator().next(); }
             if (named == null) { named = held.main(); }
-            return id.substring(0, id.indexOf(':')) + ":" + named;
+            return IdNames.namespace(id) + ":" + named;
         }
         return variants.containsKey(id) ? id : null;
     }
@@ -113,7 +113,7 @@ public final class Ported extends PortBase<Ported.Source> {
     private static List<String> variantNames(@Nullable Variants held, String id) {
         if (held == null) { return List.of(id); }
         Set<String> names = new LinkedHashSet<>();
-        for (String named : held.byMeta().values()) { names.add(id.substring(0, id.indexOf(':')) + ":" + named); }
+        for (String named : held.byMeta().values()) { names.add(IdNames.namespace(id) + ":" + named); }
         return List.copyOf(names);
     }
 
@@ -177,7 +177,7 @@ public final class Ported extends PortBase<Ported.Source> {
         String name = PackManager.stripJson(path, "models/block/".length());
         String file = blockVariants.get(namespace + ":" + name);
         if (file == null) { return false; }
-        return !banners.containsKey(namespace + ":" + file) || !realPaths.contains("blockstates/" + file + ".json");
+        return !banners.containsKey(namespace + ":" + file) || !realPaths.contains("blockstates/" + file + PackManager.JSON_SUFFIX);
     }
 
     @Nullable private Banner banner(String namespace, String path) {
@@ -193,17 +193,17 @@ public final class Ported extends PortBase<Ported.Source> {
     private void bannerState(String namespace, Path real, String path, Banner banner) {
         JsonObject json = readJson(real);
         if (json == null) { return; }
-        JsonObject defaults = json.has("defaults") && json.get("defaults").isJsonObject() ? json.getAsJsonObject("defaults") : new JsonObject();
-        JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
-        JsonObject byValue = variants.has(banner.property()) && variants.get(banner.property()).isJsonObject() ? variants.getAsJsonObject(banner.property()) : null;
+        JsonObject defaults = GsonHelper.isObjectNode(json, "defaults") ? json.getAsJsonObject("defaults") : new JsonObject();
+        JsonObject variants = GsonHelper.isObjectNode(json, "variants") ? json.getAsJsonObject("variants") : new JsonObject();
+        JsonObject byValue = GsonHelper.isObjectNode(variants, banner.property()) ? variants.getAsJsonObject(banner.property()) : null;
         JsonObject states = new JsonObject();
         for (String value : banner.values()) {
             JsonObject entry = merged(defaults, firstEntry(byValue != null ? byValue.get(value) : variants.get(banner.property() + "=" + value)));
             if (!GsonHelper.isValidPrimitive(entry, "model")) { continue; }
             String model = entry.get("model").getAsString();
             JsonObject child = new JsonObject();
-            child.addProperty("parent", (model.indexOf(':') < 0 ? "minecraft" : model.substring(0, model.indexOf(':'))) + ":block/" + IdNames.path(model));
-            if (entry.has("textures") && entry.get("textures").isJsonObject()) {
+            child.addProperty("parent", IdNames.namespace(model) + ":block/" + IdNames.path(model));
+            if (GsonHelper.isObjectNode(entry, "textures")) {
                 JsonObject textures = new JsonObject();
                 for (Map.Entry<String, JsonElement> texture : entry.getAsJsonObject("textures").entrySet()) {
                     String held = texture.getValue().isJsonPrimitive() ? texture.getValue().getAsString() : null;
@@ -211,14 +211,14 @@ public final class Ported extends PortBase<Ported.Source> {
                 }
                 child.add("textures", textures);
             }
-            if (entry.has("transform") && entry.get("transform").isJsonObject()) {
+            if (GsonHelper.isObjectNode(entry, "transform")) {
                 JsonObject transform = entry.getAsJsonObject("transform").deepCopy();
                 if (!transform.has("origin")) { transform.addProperty("origin", "center"); }
                 child.add("transform", transform);
             }
             if (!banner.layer().isEmpty() && !"solid".equals(banner.layer())) { child.addProperty("render_type", "minecraft:" + banner.layer()); }
             String childName = banner.name() + "_" + banner.property() + "_" + value;
-            serve(namespace, "models/block/" + childName + ".json", real, child);
+            serve(namespace, "models/block/" + childName + PackManager.JSON_SUFFIX, real, child);
             JsonObject state = new JsonObject();
             state.addProperty("model", namespace + ":block/" + childName);
             for (String turn : new String[] {"x", "y", "uvlock"}) {
@@ -233,7 +233,7 @@ public final class Ported extends PortBase<Ported.Source> {
         }
         JsonObject out = new JsonObject();
         out.add("variants", states);
-        serve(namespace, "blockstates/" + banner.name() + ".json", real, out);
+        serve(namespace, "blockstates/" + banner.name() + PackManager.JSON_SUFFIX, real, out);
         note("'" + path + "' is a 1.12.2 banner blockstate: it became blockstates/" + banner.name() + ".json and " + states.size() + " model(s) turning the pack's own banner model");
     }
 
@@ -241,7 +241,7 @@ public final class Ported extends PortBase<Ported.Source> {
         JsonObject out = defaults.deepCopy();
         if (variant == null) { return out; }
         for (Map.Entry<String, JsonElement> field : variant.entrySet()) {
-            if ("textures".equals(field.getKey()) && field.getValue().isJsonObject() && out.has("textures") && out.get("textures").isJsonObject()) {
+            if ("textures".equals(field.getKey()) && field.getValue().isJsonObject() && GsonHelper.isObjectNode(out, "textures")) {
                 for (Map.Entry<String, JsonElement> texture : field.getValue().getAsJsonObject().entrySet()) { out.getAsJsonObject("textures").add(texture.getKey(), texture.getValue()); }
             }
             else { out.add(field.getKey(), field.getValue().deepCopy()); }
@@ -269,7 +269,7 @@ public final class Ported extends PortBase<Ported.Source> {
         List<String> mapped = blocks.equals(List.of(target)) ? Ids.items(target) : blocks;
         if (mapped.equals(List.of(target))) { return List.of(path); }
         List<String> paths = new ArrayList<>();
-        for (String name : mapped) { paths.add("overrides/" + name.replace(':', '/') + ".json"); }
+        for (String name : mapped) { paths.add("overrides/" + name.replace(':', '/') + PackManager.JSON_SUFFIX); }
         note("'" + path + "' changes " + target + ", which is " + String.join(", ", mapped) + " now, so it is read as the override of each");
         return paths;
     }
@@ -351,7 +351,7 @@ public final class Ported extends PortBase<Ported.Source> {
         for (Map.Entry<String, JsonElement> dimension : json.entrySet()) {
             if (!dimension.getValue().isJsonObject() || !dimension.getValue().getAsJsonObject().has(Convert.GAME_LOOP)) { continue; }
             String function = dimension.getValue().getAsJsonObject().get(Convert.GAME_LOOP).getAsString().trim();
-            if (!function.isEmpty()) { ticking.add(function.indexOf(':') < 0 ? "minecraft:" + function : function); }
+            if (!function.isEmpty()) { ticking.add(IdNames.namespaced(function)); }
         }
         if (ticking.size() == before) { return; }
         JsonObject tag = new JsonObject();
@@ -370,8 +370,8 @@ public final class Ported extends PortBase<Ported.Source> {
         Map<String, JsonObject> tags = ConvertRecipes.oreDict(json, this);
         for (Map.Entry<String, JsonObject> tag : tags.entrySet()) {
             String id = tag.getKey();
-            String namespace = id.substring(0, id.indexOf(':'));
-            String tagPath = ContentFormats.ITEM_TAGS + "/" + IdNames.path(id) + ".json";
+            String namespace = IdNames.namespace(id);
+            String tagPath = ContentFormats.ITEM_TAGS + "/" + IdNames.path(id) + PackManager.JSON_SUFFIX;
             cache.put(key(PackType.SERVER_DATA, namespace, tagPath), GSON.toJson(tag.getValue()).getBytes(StandardCharsets.UTF_8));
             expose(PackType.SERVER_DATA, namespace, tagPath, new Source(real, Port.Kind.OREDICT));
             moved++;
@@ -384,9 +384,9 @@ public final class Ported extends PortBase<Ported.Source> {
         String file = PackManager.stripJson(path, "blockstates/".length());
         Variants held = blockFiles.get(namespace + ":" + file);
         if (json == null || held == null) { return; }
-        JsonObject defaults = json.has("defaults") && json.get("defaults").isJsonObject() ? json.getAsJsonObject("defaults") : new JsonObject();
-        JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
-        JsonObject blocks = variants.has("blocks") && variants.get("blocks").isJsonObject() ? variants.getAsJsonObject("blocks") : new JsonObject();
+        JsonObject defaults = GsonHelper.isObjectNode(json, "defaults") ? json.getAsJsonObject("defaults") : new JsonObject();
+        JsonObject variants = GsonHelper.isObjectNode(json, "variants") ? json.getAsJsonObject("variants") : new JsonObject();
+        JsonObject blocks = GsonHelper.isObjectNode(variants, "blocks") ? variants.getAsJsonObject("blocks") : new JsonObject();
         Map<String, String> original = new LinkedHashMap<>();
         for (Map.Entry<String, String> rename : renamedIn(namespace, "blocks", file).entrySet()) { original.put(rename.getValue(), rename.getKey()); }
         Map<String, String> modeled = new LinkedHashMap<>();
@@ -397,7 +397,7 @@ public final class Ported extends PortBase<Ported.Source> {
             String key = original.getOrDefault(variant, variant);
             Map<String, String> textures = new LinkedHashMap<>();
             gather(defaults, textures);
-            if (blocks.has(key) && blocks.get(key).isJsonObject()) { gather(blocks.getAsJsonObject(key), textures); }
+            if (GsonHelper.isObjectNode(blocks, key)) { gather(blocks.getAsJsonObject(key), textures); }
             textures.putAll(modeled);
             for (Map.Entry<Integer, String> stage : stages.entrySet()) {
                 if (alias(namespace, realPaths, home, "textures/block/" + variant + "_stage" + stage.getKey(), stage.getValue())) { made++; }
@@ -413,7 +413,7 @@ public final class Ported extends PortBase<Ported.Source> {
             String top = textures.getOrDefault("end", textures.get("top"));
             if (top != null && alias(namespace, realPaths, home, "textures/block/" + variant + "_top", top)) { made++; }
             if (textures.containsKey("bottom") && alias(namespace, realPaths, home, "textures/block/" + variant + "_bottom", textures.get("bottom"))) { made++; }
-            JsonObject inventory = variants.has("inventory") && variants.get("inventory").isJsonArray() && !variants.getAsJsonArray("inventory").isEmpty() && variants.getAsJsonArray("inventory").get(0).isJsonObject() ? variants.getAsJsonArray("inventory").get(0).getAsJsonObject() : new JsonObject();
+            JsonObject inventory = GsonHelper.isArrayNode(variants, "inventory") && !variants.getAsJsonArray("inventory").isEmpty() && variants.getAsJsonArray("inventory").get(0).isJsonObject() ? variants.getAsJsonArray("inventory").get(0).getAsJsonObject() : new JsonObject();
             if (GsonHelper.isObjectNode(inventory, "textures") && GsonHelper.isValidPrimitive(inventory.getAsJsonObject("textures"), "layer0")) {
                 if (alias(namespace, realPaths, home, "textures/item/" + variant, inventory.getAsJsonObject("textures").get("layer0").getAsString())) { made++; }
             }
@@ -423,7 +423,7 @@ public final class Ported extends PortBase<Ported.Source> {
     }
 
     private void gatherModels(Path home, JsonObject json, Map<String, String> textures, Map<Integer, String> stages) {
-        if (json.has("variants") && json.get("variants").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "variants")) {
             for (Map.Entry<String, JsonElement> variant : json.getAsJsonObject("variants").entrySet()) {
                 Map<String, String> found = new LinkedHashMap<>();
                 gatherModel(home, variant.getValue(), found);
@@ -434,7 +434,7 @@ public final class Ported extends PortBase<Ported.Source> {
                 }
             }
         }
-        if (json.has("multipart") && json.get("multipart").isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, "multipart")) {
             for (JsonElement part : json.getAsJsonArray("multipart")) {
                 if (part.isJsonObject() && part.getAsJsonObject().has("apply")) { gatherModel(home, part.getAsJsonObject().get("apply"), textures); }
             }
@@ -452,19 +452,19 @@ public final class Ported extends PortBase<Ported.Source> {
         if (!GsonHelper.isValidPrimitive(entry, "model")) { return; }
         String model = entry.get("model").getAsString();
         String rest = IdNames.path(model);
-        JsonObject json = readJson(home.resolve("models/block/" + rest + ".json"));
+        JsonObject json = readJson(home.resolve("models/block/" + rest + PackManager.JSON_SUFFIX));
         if (json != null) { gather(json, textures); }
     }
 
     private static void gather(JsonObject holder, Map<String, String> textures) {
-        if (!holder.has("textures") || !holder.get("textures").isJsonObject()) { return; }
+        if (!GsonHelper.isObjectNode(holder, "textures")) { return; }
         for (Map.Entry<String, JsonElement> texture : holder.getAsJsonObject("textures").entrySet()) {
             if (texture.getValue().isJsonPrimitive() && !texture.getValue().getAsString().startsWith("#")) { textures.put(texture.getKey(), texture.getValue().getAsString()); }
         }
     }
 
     private boolean alias(String namespace, List<String> realPaths, Path home, String exposedPath, String texture) {
-        String textureNamespace = texture.indexOf(':') < 0 ? "minecraft" : texture.substring(0, texture.indexOf(':'));
+        String textureNamespace = IdNames.namespace(texture);
         if (!textureNamespace.equals(namespace)) { return false; }
         String rest = IdNames.path(texture);
         String legacy = "textures/" + rest;

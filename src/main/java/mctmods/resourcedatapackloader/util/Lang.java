@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.pack.PackManager;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -21,7 +22,6 @@ import javax.annotation.Nullable;
 
 public final class Lang {
     private static final String DEFAULT = "en_us";
-    private static final String EXT = ".json";
     private static final Map<String, Map<String, String>> TABLES = new HashMap<>();
 
     private Lang() {}
@@ -34,7 +34,7 @@ public final class Lang {
             try (Stream<Path> files = Files.list(home)) {
                 for (Path file : (Iterable<Path>) files::iterator) {
                     String name = file.getFileName().toString();
-                    if (name.endsWith(EXT) && Files.isRegularFile(file)) { table(name.substring(0, name.length() - EXT.length()).toLowerCase(Locale.ROOT), file); }
+                    if (name.endsWith(PackManager.JSON_SUFFIX) && Files.isRegularFile(file)) { table(name.substring(0, name.length() - PackManager.JSON_SUFFIX.length()).toLowerCase(Locale.ROOT), file); }
                 }
             }
         }

@@ -108,7 +108,7 @@ public final class Port {
         if (!Files.isRegularFile(meta)) { return null; }
         try {
             JsonObject json = JsonParser.parseString(Files.readString(meta, StandardCharsets.UTF_8)).getAsJsonObject();
-            return json.has("pack") && json.get("pack").isJsonObject() ? json.getAsJsonObject("pack") : null;
+            return GsonHelper.isObjectNode(json, "pack") ? json.getAsJsonObject("pack") : null;
         }
         catch (IOException | RuntimeException ignored) { return null; }
     }
@@ -158,7 +158,7 @@ public final class Port {
     }
 
     private static Mapped client(String path) {
-        if (path.startsWith("lang/") && path.endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + ".json", Kind.LANG); }
+        if (path.startsWith("lang/") && path.endsWith(LANG_SUFFIX)) { return new Mapped(PackType.CLIENT_RESOURCES, path.substring(0, path.length() - LANG_SUFFIX.length()) + PackManager.JSON_SUFFIX, Kind.LANG); }
         if (path.startsWith("textures/blocks/") || path.startsWith("textures/items/")) {
             String moved = path.startsWith("textures/blocks/") ? "textures/block/" + path.substring("textures/blocks/".length()) : "textures/item/" + path.substring("textures/items/".length());
             return new Mapped(PackType.CLIENT_RESOURCES, moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.PIXELMAP : Kind.RAW);

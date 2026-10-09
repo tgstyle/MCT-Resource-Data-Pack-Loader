@@ -76,6 +76,7 @@ public final class ContentWorldgen {
     public static void generate() {
         ENTRIES.clear();
         CHAIN_WARNED.clear();
+        ContentImprint.forget();
         for (WorldgenDef def : DEFS.values()) {
             Entry entry = resolve(def);
             if (entry == null) { continue; }
@@ -359,7 +360,7 @@ public final class ContentWorldgen {
         JsonObject configured = new JsonObject();
         configured.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + SHAPE_FEATURE);
         configured.add("config", config);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + key.getPath() + ".json", configured.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.CONFIGURED_FEATURES + "/" + key.getPath() + PackManager.JSON_SUFFIX, configured.toString());
         JsonObject spread = new JsonObject();
         spread.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + SPREAD_PLACEMENT);
         spread.addProperty("entry", key.toString());
@@ -368,7 +369,7 @@ public final class ContentWorldgen {
         JsonObject placed = new JsonObject();
         placed.addProperty("feature", key.toString());
         placed.add("placement", placement);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.PLACED_FEATURES + "/" + key.getPath() + ".json", placed.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, ContentFormats.PLACED_FEATURES + "/" + key.getPath() + PackManager.JSON_SUFFIX, placed.toString());
         JsonObject modifier = new JsonObject();
         modifier.addProperty("type", ContentFormats.ADD_FEATURES);
         modifier.add("biomes", ContentFormats.anyBiomes());

@@ -10,6 +10,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.util.GsonHelper;
 
 final class DownRecipes {
     private static final String TYPE = "type";
@@ -31,15 +32,15 @@ final class DownRecipes {
         for (String key : SINGLE) {
             if (json.has(key)) { json.add(key, ingredient(json.get(key), file, note)); }
         }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, "ingredients")) {
             JsonArray out = new JsonArray();
             for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, file, note)); }
             json.add("ingredients", out);
         }
-        if (json.has("key") && json.get("key").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "key")) {
             for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), file, note)); }
         }
-        if (json.has("result") && json.get("result").isJsonObject()) { DownFixes.stack(json.getAsJsonObject("result"), file, note); }
+        if (GsonHelper.isObjectNode(json, "result")) { DownFixes.stack(json.getAsJsonObject("result"), file, note); }
         CrossJson.replace(json, DownFixes.names(json).getAsJsonObject());
     }
 

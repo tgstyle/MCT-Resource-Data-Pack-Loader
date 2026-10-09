@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.port.Ids;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -68,7 +69,7 @@ public record ContentEntitySpawns() implements BiomeModifier {
         if (spawning == 0) { return 0; }
         JsonObject modifier = new JsonObject();
         modifier.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + ID);
-        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, ContentFormats.BIOME_MODIFIERS + "/" + ID + ".json", modifier.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, ContentFormats.BIOME_MODIFIERS + "/" + ID + PackManager.JSON_SUFFIX, modifier.toString());
         return spawning;
     }
 

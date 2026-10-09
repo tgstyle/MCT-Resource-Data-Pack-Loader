@@ -28,9 +28,9 @@ public final class ContentParserContainers {
         return Json.text(json, "container", "");
     }
 
-    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null; }
+    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return GsonHelper.isObjectNode(json, "container") ? container(key, json) : null; }
 
-    static boolean chested(JsonObject json) { return json.has("container") && json.get("container").isJsonObject() && chestModel(json.getAsJsonObject("container")) != null; }
+    static boolean chested(JsonObject json) { return GsonHelper.isObjectNode(json, "container") && chestModel(json.getAsJsonObject("container")) != null; }
 
     @Nullable private static JsonElement chestModel(JsonObject held) {
         JsonElement asked = held.get("chestModel");
