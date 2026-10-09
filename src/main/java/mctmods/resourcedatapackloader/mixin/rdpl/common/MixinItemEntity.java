@@ -9,8 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntity.class) public abstract class MixinItemEntity {
-    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void rdpl$slowTick(CallbackInfo ci) {
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true) private void rdpl$slowTick(CallbackInfo ci) {
         ItemEntity self = (ItemEntity) (Object) this;
         if (!ContentEntityTicks.slowedNow(self)) { return; }
         IItemEntity aging = (IItemEntity) self;

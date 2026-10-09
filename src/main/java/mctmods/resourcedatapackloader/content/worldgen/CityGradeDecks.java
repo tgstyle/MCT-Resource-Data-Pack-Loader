@@ -40,7 +40,7 @@ final class CityGradeDecks {
         }
     }
 
-    static boolean stepped(int[] profile, int[] before, int run) {
+    static boolean cleanSteps(int[] profile, int[] before, int run) {
         int lo = -1;
         int hi = -1;
         for (int k = 0; k < profile.length; k++) {
@@ -48,16 +48,16 @@ final class CityGradeDecks {
             if (lo < 0) { lo = k; }
             hi = k;
         }
-        if (lo < 0) { return false; }
+        if (lo < 0) { return true; }
         int from = Math.max(1, lo - run);
         int to = Math.min(profile.length - 1, hi + run);
         int last = Integer.MIN_VALUE;
         for (int k = from; k <= to; k++) {
-            if (Math.abs(profile[k] - profile[k - 1]) > 1) { return true; }
+            if (Math.abs(profile[k] - profile[k - 1]) > 1) { return false; }
             if (profile[k] == profile[k - 1]) { continue; }
-            if (last != Integer.MIN_VALUE && k - last < run) { return true; }
+            if (last != Integer.MIN_VALUE && k - last < run) { return false; }
             last = k;
         }
-        return false;
+        return true;
     }
 }

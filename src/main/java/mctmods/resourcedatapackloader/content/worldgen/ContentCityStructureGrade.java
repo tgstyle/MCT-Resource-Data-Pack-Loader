@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Medians;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -51,7 +52,7 @@ public final class ContentCityStructureGrade {
         }
         for (ContentCityStructure.Well well : wells) {
             BoundingBox box = well.box();
-            if (box.maxX() >= lift.fromX() - reach && box.minX() <= lift.toX() + reach && box.maxZ() >= lift.fromZ() - reach && box.minZ() <= lift.toZ() + reach) { return true; }
+            if (box.intersects(lift.fromX() - reach, lift.fromZ() - reach, lift.toX() + reach, lift.toZ() + reach)) { return true; }
         }
         return false;
     }
@@ -68,9 +69,7 @@ public final class ContentCityStructureGrade {
                 int sampled = ground.surface(x, lift.fromZ() + step * LIFT_SAMPLE);
                 if (sampled >= sea - 1) { across[count++] = sampled; }
             }
-            if (count * 2 <= acrossCount) { continue; }
-            Arrays.sort(across, 0, count);
-            highest = Math.max(highest, across[count / 2]);
+            highest = Math.max(highest, Medians.majority(across, count, acrossCount));
         }
         return highest;
     }
@@ -80,7 +79,7 @@ public final class ContentCityStructureGrade {
         for (int index : line.lifts()) {
             Integer deck = decks.get(index);
             CityPlan.Lift lift = plan.lifts().get(index);
-            if (deck == null || !lift.spans(line)) { continue; }
+            if (deck == null || lift.misses(line)) { continue; }
             int from = lift.fromAlong(line.alongX()) - start;
             int to = lift.toAlong(line.alongX()) - start;
             for (int at = 0; at < profile.length; at++) {
@@ -97,6 +96,34 @@ public final class ContentCityStructureGrade {
             }
         }
         if (lifted > 0) { ContentLog.LOGGER.debug("Raised {} row(s) of the street at {} onto the deck its city map draws there", lifted, line.at()); }
+    }
+
+    static void clearRows(boolean[] flags, int start, int low, int high) { for (int row = Math.max(low, start); row <= high && row < start + flags.length; row++) { flags[row - start] = false; } }
+
+    static boolean[] lifted(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
+        boolean[] decked = new boolean[graded.profile().length];
+        lift(plan, line, graded.start(), graded.profile(), decked, graded.bridged(), graded.bored(), decks);
+        return decked;
+    }
+
+    static void settle(ContentCityStructure.Graded graded, boolean[] decked) {
+        for (int at = 0; at < decked.length; at++) { graded.held()[at] |= decked[at]; }
+        ramp(graded);
+    }
+
+    static void ramp(ContentCityStructure.Graded graded) { CityGrade.rampSteps(graded.profile(), graded.held(), graded.pinned()); }
+
+    record Shaped(int[] grade, boolean[] decked) {}
+
+    static Shaped shaped(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
+        ramp(graded);
+        int[] grade = graded.profile().clone();
+        return new Shaped(grade, lifted(plan, line, graded, decks));
+    }
+
+    static void rampAndSettle(CityPlan plan, CityPlan.Line line, ContentCityStructure.Graded graded, Map<Integer, Integer> decks) {
+        ramp(graded);
+        settle(graded, lifted(plan, line, graded, decks));
     }
 
     static ContentCityStructure.Graded graded(GenerationContext context, CityPlan plan, CityPlan.Line line, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells, boolean squaresFree) { return grade(context, plan, line, levels, run, rails, wells, squaresFree, false); }
@@ -166,7 +193,7 @@ public final class ContentCityStructureGrade {
         CityGrade.smoothRoad(smoothed);
         List<CityPlan.Line> crossing = plan.crossing(line);
         for (CityPlan.Line other : crossing) {
-            CityPlan.Junction junction = line.alongX() ? new CityPlan.Junction(line, other) : new CityPlan.Junction(other, line);
+            CityPlan.Junction junction = CityPlan.Junction.of(line, other);
             Integer level = levels.get(junction);
             if (level == null || !line.covers(other.middle()) || !other.covers(line.middle())) { continue; }
             CityGrade.pin(profile, held, start, other.at(), other.last(), level);
@@ -178,14 +205,12 @@ public final class ContentCityStructureGrade {
                 dry[row - start] |= !decked;
             }
             if (!other.beats(line)) { continue; }
-            for (int row = other.at(); row <= other.last(); row++) {
-                if (row >= start && row < start + mine.length) { mine[row - start] = false; }
-            }
+            clearRows(mine, start, other.at(), other.last());
         }
         boolean[] wet = new boolean[span];
         boolean[] mouth = new boolean[span];
         for (CityPlan.Line other : crossing) {
-            CityPlan.Junction junction = line.alongX() ? new CityPlan.Junction(line, other) : new CityPlan.Junction(other, line);
+            CityPlan.Junction junction = CityPlan.Junction.of(line, other);
             Integer level = levels.get(junction);
             if (level == null || !line.covers(other.middle()) || !other.covers(line.middle())) { continue; }
             int[] rows = CityPlan.mouth(line, other, start, span);
@@ -214,7 +239,7 @@ public final class ContentCityStructureGrade {
             CityPlan.Rail rail = entry.getKey();
             if (rail.subway() || rail.alongX() == line.alongX()) { continue; }
             CityRails.Laid over = entry.getValue();
-            int center = line.at() + (line.width() - 1) / 2;
+            int center = line.middle();
             if (!over.within(center) || rail.last() < start || rail.at() > start + span - 1 || rail.middle() < line.from() || rail.middle() > line.to()) { continue; }
             int level = over.level(center);
             if (over.boredAt(center)) {
@@ -235,7 +260,7 @@ public final class ContentCityStructureGrade {
         boolean[] front = frontHold(surveyed, plan, line, start, profile, held, !squaresFree);
         for (int at = 0; at < span; at++) { held[at] |= front[at]; }
         CityGrade.reconcile(profile, held);
-        CityGrade.smooth(profile, held);
+        CityGradeRails.rein(profile, held);
         int[] ground = new int[profile.length];
         int afloat = 0;
         for (int at = 0; at < profile.length; at++) {
@@ -253,14 +278,14 @@ public final class ContentCityStructureGrade {
         boolean[] authority = held.clone();
         for (int at = 0; at < span; at++) { authority[at] &= !wet[at] && !front[at]; }
         boolean[] bridged = bridges(surveyed, line, start, profile, held, authority, ground, crossed, wet);
-        CityGrade.smooth(profile, held);
+        CityGradeRails.rein(profile, held);
         boolean[] kept = pinned.clone();
         for (int at = 0; at < span; at++) { kept[at] |= mouth[at]; }
         CityGrade.rampSteps(profile, held, kept);
         CityGrade.settle(profile, held, open);
         boolean[] bored = CityGrade.bore(profile, ground, held, bridged, ContentCity.tunnelDepth(), line.endsLow() != CityPlan.End.MET, line.endsHigh() != CityPlan.End.MET);
         for (int at = 0; at < bored.length; at++) { held[at] |= bored[at]; }
-        CityGrade.smooth(profile, held);
+        CityGradeRails.rein(profile, held);
         boolean[] capped = held.clone();
         for (int at = 0; at < span; at++) {
             capped[at] &= !front[at] || underfoot[at] == Integer.MIN_VALUE || profile[at] <= underfoot[at] + CityGrade.CAP;
@@ -305,9 +330,7 @@ public final class ContentCityStructureGrade {
             if (floor < ground.sea() - 1) { continue; }
             taken[count++] = floor;
         }
-        if (count * 2 <= line.width()) { return Integer.MIN_VALUE; }
-        Arrays.sort(taken, 0, count);
-        return taken[count / 2];
+        return Medians.majority(taken, count, line.width());
     }
 
     private static boolean[] frontHold(CityGround ground, CityPlan plan, CityPlan.Line line, int start, int[] profile, boolean[] held, boolean told) {

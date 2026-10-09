@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content;
+package mctmods.resourcedatapackloader.client.render;
 
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
@@ -26,7 +26,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 
 public final class ContentBannerRenderer implements BlockEntityRenderer<ContentBannerBlockEntity> {
-    private static final ResourceLocation FALLBACK = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/banner_base.png");
+    private static final ResourceLocation FALLBACK = ResourceLocation.withDefaultNamespace("textures/entity/banner_base.png");
     private static final float SCALE = 0.6666667F;
     private final ModelPart flag;
     private final ModelPart pole;

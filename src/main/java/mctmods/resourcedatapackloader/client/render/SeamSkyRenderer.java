@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.client;
+package mctmods.resourcedatapackloader.client.render;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;

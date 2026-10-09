@@ -14,16 +14,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldOpenFlows.class) public abstract class MixinWorldOpenFlows {
-    @Inject(method = "confirmWorldCreation", at = @At("HEAD"), cancellable = true)
-    private static void rdpl$skipCreationWarning(Minecraft minecraft, CreateWorldScreen screen, Lifecycle lifecycle, Runnable loadWorld, boolean skipWarnings, CallbackInfo ci) {
+    @Inject(method = "confirmWorldCreation", at = @At("HEAD"), cancellable = true) private static void rdpl$skipCreationWarning(Minecraft minecraft, CreateWorldScreen screen, Lifecycle lifecycle, Runnable loadWorld, boolean skipWarnings, CallbackInfo ci) {
         if (Config.tweaks.experimentalWarning() || lifecycle == Lifecycle.stable()) { return; }
         ContentLog.LOGGER.debug("Skipping the experimental settings warning for the new world, tweaks.experimentalWarning is off");
         loadWorld.run();
         ci.cancel();
     }
 
-    @Inject(method = "askForBackup", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipLoadWarning(LevelStorageSource.LevelStorageAccess levelStorage, boolean customized, Runnable loadLevel, Runnable onCancel, CallbackInfo ci) {
+    @Inject(method = "askForBackup", at = @At("HEAD"), cancellable = true) private void rdpl$skipLoadWarning(LevelStorageSource.LevelStorageAccess levelStorage, boolean customized, Runnable loadLevel, Runnable onCancel, CallbackInfo ci) {
         if (customized || Config.tweaks.experimentalWarning()) { return; }
         ContentLog.LOGGER.debug("Skipping the experimental settings warning while opening the world, tweaks.experimentalWarning is off");
         loadLevel.run();

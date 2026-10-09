@@ -5,7 +5,9 @@ import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 import mctmods.resourcedatapackloader.util.Parallel;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
@@ -63,8 +65,8 @@ final class CityDistricts {
     }
 
     private static int[] gridOffset() {
-        List<int[]> pinned = pins(ContentCity.STRUCTURE);
-        if (pinned.isEmpty()) { pinned = pins(VILLAGES); }
+        List<int[]> pinned = StructureAtPins.of(ContentCity.STRUCTURE);
+        if (pinned.isEmpty()) { pinned = StructureAtPins.of(VILLAGES); }
         if (pinned.isEmpty()) { return new int[] {0, 0}; }
         int lead = crossAt() + CityPlan.fullWidth() / 2 - 1;
         int[] pin = pinned.getFirst();
@@ -76,10 +78,21 @@ final class CityDistricts {
         if (held != null) { return held; }
         Map<Long, int[]> found = new LinkedHashMap<>();
         for (String named : List.of(ContentCity.STRUCTURE, VILLAGES)) {
-            for (int[] pin : pins(named)) { found.putIfAbsent(CityPlan.packed(CityPlan.districtOf(pin[0], true), CityPlan.districtOf(pin[1], false)), pin); }
+            for (int[] pin : StructureAtPins.of(named)) { found.putIfAbsent(CityPlan.packed(CityPlan.districtOf(pin[0], true), CityPlan.districtOf(pin[1], false)), pin); }
         }
         pinnedAt = Map.copyOf(found);
         return pinnedAt;
+    }
+
+    static List<int[]> around(CityGround ground, int regionX, int regionZ, int spacing) {
+        List<int[]> found = new ArrayList<>();
+        for (int aroundX = -1; aroundX <= 1; aroundX++) {
+            for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
+                int[] center = center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
+                if (center != null) { found.add(center); }
+            }
+        }
+        return found;
     }
 
     @Nullable static int[] center(CityGround ground, int districtX, int districtZ) {
@@ -92,13 +105,7 @@ final class CityDistricts {
         return SITES.computeIfAbsent(CityPlan.packed(regionX, regionZ), key -> Optional.ofNullable(founded(ground, regionX, regionZ, spacing))).orElse(null);
     }
 
-    private static boolean villagesPinned() {
-        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAt", Config.worldgen.structureAt())) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length == 2 && parts[0].trim().equalsIgnoreCase(VILLAGES)) { return true; }
-        }
-        return false;
-    }
+    private static boolean villagesPinned() { return !StructureAtPins.of(VILLAGES).isEmpty(); }
 
     @Nullable private static int[] pinnedIn(String named, int regionX, int regionZ, int spacing) {
         for (int[] pinned : pinnedDistricts(named)) {
@@ -129,20 +136,7 @@ final class CityDistricts {
 
     private static List<int[]> pinnedDistricts(String named) {
         List<int[]> pinned = new ArrayList<>();
-        for (int[] pin : pins(named)) { pinned.add(new int[] {CityPlan.districtOf(pin[0], true), CityPlan.districtOf(pin[1], false)}); }
-        return pinned;
-    }
-
-    private static List<int[]> pins(String named) {
-        List<int[]> pinned = new ArrayList<>();
-        for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAt", Config.worldgen.structureAt())) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length != 2 || !parts[0].trim().equalsIgnoreCase(named)) { continue; }
-            String[] xz = parts[1].split(",");
-            if (xz.length != 2) { continue; }
-            try { pinned.add(new int[] {Integer.parseInt(xz[0].trim()), Integer.parseInt(xz[1].trim())}); }
-            catch (NumberFormatException notNumbers) { ContentLog.LOGGER.debug("structureAt entry '{}' is not {}=x,z, so it does not seat a city", entry, named); }
-        }
+        for (int[] pin : StructureAtPins.of(named)) { pinned.add(new int[] {CityPlan.districtOf(pin[0], true), CityPlan.districtOf(pin[1], false)}); }
         return pinned;
     }
 
@@ -215,8 +209,8 @@ final class CityDistricts {
         if (villageNumber("structureSeparation") <= 0) { return; }
         Set<Long> earlier = new LinkedHashSet<>();
         for (long region : founding) {
-            int regionX = (int) (region >> 32);
-            int regionZ = (int) region;
+            int regionX = Longs.high(region);
+            int regionZ = Longs.low(region);
             if (site(ground, regionX, regionZ, spacing) == null) { continue; }
             for (int aroundZ = -1; aroundZ <= 1; aroundZ++) { earlier.add(CityPlan.packed(regionX - 1, regionZ + aroundZ)); }
             earlier.add(CityPlan.packed(regionX, regionZ - 1));
@@ -227,8 +221,8 @@ final class CityDistricts {
     private static void siteAll(CityGround ground, Set<Long> regions, int spacing) {
         List<int[]> open = new ArrayList<>();
         for (long region : regions) {
-            int regionX = (int) (region >> 32);
-            int regionZ = (int) region;
+            int regionX = Longs.high(region);
+            int regionZ = Longs.low(region);
             if (!PLACES.containsKey(CityPlan.packed(regionX, regionZ))) { open.add(new int[] {regionX, regionZ}); }
         }
         int count = open.size();
@@ -281,13 +275,14 @@ final class CityDistricts {
     }
 
     static int villageNumber(String key) {
+        int found = 0;
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, key, key.equals("structureSpacing") ? Config.worldgen.structureSpacing() : key.equals("structureSeparation") ? Config.worldgen.structureSeparation() : Config.worldgen.structureMinDistanceFromSpawn())) {
-            int at = entry.indexOf('=');
-            if (at <= 0 || !entry.substring(0, at).trim().equalsIgnoreCase(VILLAGES)) { continue; }
-            try { return Integer.parseInt(entry.substring(at + 1).trim()); }
-            catch (NumberFormatException notNumber) { return 0; }
+            String[] sides = Settings.filled(entry);
+            if (sides == null || !sides[0].equalsIgnoreCase(VILLAGES)) { continue; }
+            Integer asked = Settings.clamped(sides[1], Integer.MIN_VALUE, Integer.MAX_VALUE);
+            if (asked != null) { found = asked; }
         }
-        return 0;
+        return found;
     }
 
     static int crossAt() {

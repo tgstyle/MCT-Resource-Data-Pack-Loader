@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import com.electronwill.nightconfig.core.UnmodifiableConfig;
 import com.electronwill.nightconfig.toml.TomlFormat;
 import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -15,10 +16,14 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public final class ConfigCore {
-    public static final String FILE = ResourceDataPackLoader.MOD_ID + "-common.toml";
+    public static final Supplier<String> BLANK = () -> "";
+    public static final Predicate<Object> IS_TEXT = each -> each instanceof String;
+    private static final String FILE = ResourceDataPackLoader.MOD_ID + "-common.toml";
     private static final long RESTAT_MILLIS = 1000L;
     @Nullable private static Map<String, Object> cached;
     @Nullable private static FileTime cachedStamp;
@@ -28,7 +33,7 @@ public final class ConfigCore {
 
     private ConfigCore() {}
 
-    public static synchronized Path file() {
+    private static synchronized Path file() {
         if (located == null) { located = FMLPaths.CONFIGDIR.get().resolve(FILE); }
         return located;
     }
@@ -55,6 +60,21 @@ public final class ConfigCore {
         for (Object value : values) { out.add(String.valueOf(value)); }
         return out;
     }
+
+    public static boolean flag(ModConfigSpec.BooleanValue value) { return Config.loaded() ? value.get() : flag(path(value), value.getDefault()); }
+
+    public static String text(ModConfigSpec.ConfigValue<String> value) { return Config.loaded() ? value.get() : text(path(value), value.getDefault()); }
+
+    public static int number(ModConfigSpec.IntValue value) { return Config.loaded() ? value.get() : number(path(value), value.getDefault()); }
+
+    public static float decimal(ModConfigSpec.DoubleValue value) {
+        if (Config.loaded()) { return value.get().floatValue(); }
+        return read(path(value)) instanceof Number number ? number.floatValue() : value.getDefault().floatValue();
+    }
+
+    public static List<String> strings(ModConfigSpec.ConfigValue<List<? extends String>> value) { return Config.loaded() ? List.copyOf(value.get()) : strings(path(value), List.copyOf(value.getDefault())); }
+
+    private static String path(ModConfigSpec.ConfigValue<?> value) { return String.join(".", value.getPath()); }
 
     @Nullable private static synchronized Object read(String path) {
         long now = System.currentTimeMillis();

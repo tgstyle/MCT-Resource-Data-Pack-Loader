@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.worldgen.CityLinksSurvey.Link;
 import mctmods.resourcedatapackloader.content.worldgen.CityLinksSurvey.Node;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -15,6 +16,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.RailShape;
@@ -22,7 +24,6 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
@@ -38,6 +39,9 @@ public final class CityLinks {
     private static final int HEAD = 5;
     private static final int PACKED = 10;
     private static final int END = HEAD + PACKED;
+    private static final int WELL_X = 3;
+    private static final int WELL_Z = 4;
+    private static final int BURIED = HEAD + 5;
     private static final int[] NO_ENDS = new int[0];
     private static final Map<Long, List<Link>> JOINED = new ConcurrentHashMap<>();
     private static final Map<CityPlan.Rail, Half> HALVES = new ConcurrentHashMap<>();
@@ -46,9 +50,9 @@ public final class CityLinks {
     private CityLinks() {}
 
     public record Trunk(boolean alongX, int across, int least, int most, boolean sub, boolean buried, int lowRow, int lowSide, int highRow, int highSide) {
-        public int half() { return (CityPlan.railWidth(buried) - 1) / 2; }
+        public int half() { return CityRails.railHalf(buried); }
 
-        public int spurHalf() { return (CityPlan.railWidth(sub) - 1) / 2; }
+        public int spurHalf() { return CityRails.railHalf(sub); }
 
         public int reach() { return spurHalf() + 1; }
 
@@ -71,6 +75,15 @@ public final class CityLinks {
 
     private record Half(Trunk trunk, int partnerX, int partnerZ) {}
 
+    private record Surveyed(Trunk trunk, Graded graded, int first, int last, boolean[] bored) {}
+
+    @Nullable private static Surveyed surveyed(CityGround ground, CityPlan.Rail rail) {
+        Half half = HALVES.get(rail);
+        if (half == null) { return null; }
+        Graded graded = CityLinksSurvey.graded(ground, half.trunk());
+        return graded == null ? null : new Surveyed(half.trunk(), graded, rail.from() - half.trunk().least(), rail.to() - half.trunk().least() + 1, bored(half.trunk(), graded));
+    }
+
     public static void forget() {
         CityLinksSurvey.forget();
         JOINED.clear();
@@ -82,7 +95,7 @@ public final class CityLinks {
 
     static boolean carriedUnderground() { return CityRails.lines(false) <= 0; }
 
-    private static String stationShape() { return ContentControl.text(ContentControl.VILLAGES, "villageRailLinkStation", Config.worldgen.villageRailLinkStation()).trim().toLowerCase(Locale.ROOT); }
+    private static String stationShape() { return Settings.lower(ContentControl.text(ContentControl.VILLAGES, "villageRailLinkStation", Config.worldgen.villageRailLinkStation())); }
 
     private static int stationLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailLinkStationLength", Config.worldgen.villageRailLinkStationLength())); }
 
@@ -198,6 +211,8 @@ public final class CityLinks {
 
     public static int[] ends(CityPlan.Rail rail) { return ENDS.getOrDefault(rail, NO_ENDS); }
 
+    private static boolean buried(int[] ends, int at) { return ends[at + BURIED] != 0; }
+
     private static boolean founded(ServerLevel level, int wellX, int wellZ) { return ContentStructureMost.mayFound(level, new ChunkPos((wellX + 2) >> 4, (wellZ + 2) >> 4)); }
 
     public static boolean partnerless(WorldGenLevel level, @Nullable int[] packed, BoundingBox held) {
@@ -209,7 +224,7 @@ public final class CityLinks {
     public static int[] unfounded(ServerLevel level, int[] ends) {
         int[] found = NO_ENDS;
         for (int at = 0; at + END <= ends.length; at += END) {
-            if (founded(level, ends[at + 3], ends[at + 4])) { continue; }
+            if (founded(level, ends[at + WELL_X], ends[at + WELL_Z])) { continue; }
             found = Arrays.copyOf(found, found.length + END);
             System.arraycopy(ends, at, found, found.length - END, END);
         }
@@ -240,22 +255,21 @@ public final class CityLinks {
     public static int claimReach(CityPlan.Rail rail) {
         int[] ends = ends(rail);
         for (int at = 0; at + END <= ends.length; at += END) {
-            if (ends[at + HEAD + 5] == 0) { return platformReach(false); }
+            if (!buried(ends, at)) { return platformReach(false); }
         }
         return 0;
     }
 
     @Nullable public static CityRails.Laid trunkLaid(CityGround ground, CityPlan.Rail rail) {
-        Half half = HALVES.get(rail);
-        if (half == null) { return null; }
-        Trunk trunk = half.trunk();
-        Graded graded = CityLinksSurvey.graded(ground, trunk);
-        if (graded == null) { return null; }
+        Surveyed found = surveyed(ground, rail);
+        if (found == null) { return null; }
+        Trunk trunk = found.trunk();
+        Graded graded = found.graded();
         int length = graded.profile().length;
         int start = rail.from();
-        int first = start - trunk.least();
-        int last = rail.to() - trunk.least() + 1;
-        boolean[] bored = trunk.buried() ? new boolean[length] : CityGrade.roofed(graded.profile(), graded.floor(), graded.bridged(), ContentCity.railTunnelDepth());
+        int first = found.first();
+        int last = found.last();
+        boolean[] bored = found.bored();
         boolean[] decking = trunk.buried() || ContentCity.railFrameBlock().isEmpty() ? new boolean[length] : CityGrade.frameRows(graded.bridged(), ContentCity.railFrameLeast(), ContentCity.railFrameRun());
         int[] packed = trunk.pack();
         List<CityPlan.Line> streets = trunk.buried() ? List.of() : CityRails.streetsAcross(ground, rail);
@@ -273,7 +287,7 @@ public final class CityLinks {
         int crossings = 0;
         for (CityPlan.Line line : streets) {
             if (line.alongX() == trunk.alongX() || trunk.across() < line.from() || trunk.across() > line.to() || line.last() < start || line.at() > rail.to()) { continue; }
-            int level = graded.profile()[Mth.clamp(line.at() + (line.width() - 1) / 2 - trunk.least(), 0, length - 1)];
+            int level = graded.profile()[Mth.clamp(line.middle() - trunk.least(), 0, length - 1)];
             boolean met = false;
             for (int row = Math.max(start, line.at()); row <= Math.min(rail.to(), line.last()); row++) {
                 if (!crossed[row - start]) { continue; }
@@ -283,20 +297,16 @@ public final class CityLinks {
             if (met) { crossings++; }
         }
         ContentLog.LOGGER.debug("The railway link trunk at {} {} grades rows {} to {} of its trunk from y {} to y {}, {} street crossing(s){}", trunk.alongX() ? "z" : "x", trunk.across(), start, rail.to(), graded.profile()[first], graded.profile()[last - 1], crossings, trunk.buried() ? ", underground, with no station chamber" : "");
-        return new CityRails.Laid(rail, start, profile, Arrays.copyOfRange(graded.floor(), first, last), Arrays.copyOfRange(graded.bridged(), first, last), tunnel, Arrays.copyOfRange(bored, first, last), crossed, frames, null, List.of(), List.of());
+        return new CityRails.Laid(rail, start, profile, Arrays.copyOfRange(graded.bridged(), first, last), tunnel, Arrays.copyOfRange(bored, first, last), crossed, frames, null, List.of(), List.of());
     }
 
     @Nullable static CityRails.Bed trunkBed(CityGround ground, CityPlan.Rail rail) {
-        Half half = HALVES.get(rail);
-        if (half == null) { return null; }
-        Trunk trunk = half.trunk();
-        Graded graded = CityLinksSurvey.graded(ground, trunk);
-        if (graded == null) { return null; }
-        int first = rail.from() - trunk.least();
-        int last = rail.to() - trunk.least() + 1;
-        boolean[] bored = trunk.buried() ? new boolean[graded.profile().length] : CityGrade.roofed(graded.profile(), graded.floor(), graded.bridged(), ContentCity.railTunnelDepth());
-        return new CityRails.Bed(rail.from(), Arrays.copyOfRange(graded.profile(), first, last), Arrays.copyOfRange(bored, first, last));
+        Surveyed found = surveyed(ground, rail);
+        if (found == null) { return null; }
+        return new CityRails.Bed(rail.from(), Arrays.copyOfRange(found.graded().profile(), found.first(), found.last()), Arrays.copyOfRange(found.bored(), found.first(), found.last()));
     }
+
+    private static boolean[] bored(Trunk trunk, Graded graded) { return trunk.buried() ? new boolean[graded.profile().length] : CityGrade.roofed(graded.profile(), graded.floor(), graded.bridged(), ContentCity.railTunnelDepth()); }
 
     static int pin(CityGround ground, CityPlan.Rail rail, int rowLeast, int[] profile, boolean[] fixed, int climb) {
         int[] ends = ends(rail);
@@ -323,14 +333,14 @@ public final class CityLinks {
     }
 
     @Nullable static int[] climbOut(int[] ends) {
-        if (ends.length < END || ends[HEAD + 5] != 0) { return null; }
+        if (ends.length < END || buried(ends, 0)) { return null; }
         int dir = ends[0];
         return new int[] {ends[1] - dir * (pinRows(false) - 1) - dir * ramp(), dir};
     }
 
     private static int fromEnd(int[] ends, int row, boolean surfaceOnly, boolean station) {
         for (int at = 0; at + END <= ends.length; at += END) {
-            boolean buried = ends[at + HEAD + 5] != 0;
+            boolean buried = buried(ends, at);
             if (surfaceOnly && buried) { continue; }
             int k = (ends[at + 1] - row) * ends[at];
             if (k >= 0 && k < (station ? pinRows(buried) : APPROACH)) { return k; }
@@ -386,7 +396,7 @@ public final class CityLinks {
         int span = ContentCity.benchLength();
         int laid = 0;
         for (int end = 0; end + END <= ends.length; end += END) {
-            if (ends[end + HEAD + 5] != 0) { continue; }
+            if (buried(ends, end)) { continue; }
             int dir = ends[end];
             int near = ends[end + 1] - dir * APPROACH;
             int far = ends[end + 1] - dir * (pinRows(false) - 1);
@@ -461,7 +471,7 @@ public final class CityLinks {
     }
 
     private static RailShape turn(Trunk trunk, boolean low) {
-        Direction toSpur =Direction.get(trunk.side(low) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, trunk.alongX() ? Direction.Axis.Z : Direction.Axis.X);
+        Direction toSpur = Direction.get(trunk.side(low) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, trunk.alongX() ? Direction.Axis.Z : Direction.Axis.X);
         Direction along = Direction.get(trunk.body(low) > 0 ? Direction.AxisDirection.POSITIVE : Direction.AxisDirection.NEGATIVE, trunk.alongX() ? Direction.Axis.X : Direction.Axis.Z);
         boolean north = toSpur == Direction.NORTH || along == Direction.NORTH;
         boolean east = toSpur == Direction.EAST || along == Direction.EAST;
@@ -484,7 +494,7 @@ public final class CityLinks {
                     if (!clip.isInside(at)) { continue; }
                     BlockState held = level.getBlockState(at);
                     if (held.getBlock() != wanted.getBlock() || held == wanted) { continue; }
-                    level.setBlock(at, wanted, 2);
+                    level.setBlock(at, wanted, Block.UPDATE_CLIENTS);
                     forced++;
                 }
             }

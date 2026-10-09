@@ -10,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -42,7 +43,7 @@ public final class ContentCityLampPiece extends StructurePiece {
     @Override protected void addAdditionalSaveData(@Nonnull StructurePieceSerializationContext context, @Nonnull CompoundTag tag) { tag.putInt(FOOT, foot); }
 
     private static void place(WorldGenLevel level, BlockPos at, ContentStates.Spec spec, BlockState state) {
-        level.setBlock(at, state, 2);
+        level.setBlock(at, state, Block.UPDATE_CLIENTS);
         if (spec.tag() == null) { return; }
         BlockEntity entity = level.getBlockEntity(at);
         if (entity == null) { return; }
@@ -80,7 +81,7 @@ public final class ContentCityLampPiece extends StructurePiece {
     @Nullable private static ContentStates.Spec spec(String key, String named) {
         if (named.isEmpty()) { return null; }
         ContentStates.Spec found = ContentStates.spec(named, "a street lamp");
-        if (found == null && WARNED.add(key + "|" + named)) { ContentLog.LOGGER.error("{} '{}' is not a registered block, nothing is placed", key, named); }
+        if (found == null) { ContentLog.LOGGER.errorOnce(WARNED, key + "|" + named, "{} '{}' is not a registered block, nothing is placed", key, named); }
         return found == null || found.state().isAir() ? null : found;
     }
 }

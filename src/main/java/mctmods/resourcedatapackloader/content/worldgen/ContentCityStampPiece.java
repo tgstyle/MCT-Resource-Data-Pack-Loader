@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 
+import com.google.common.collect.MapMaker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.Vec3i;
@@ -32,12 +34,14 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentCityStampPiece extends StructurePiece implements ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStampPiece::new;
+    private static final Map<StructureTemplate, boolean[][]> OPENINGS = new MapMaker().weakKeys().makeMap();
     private static final int PASSAGE_MOST = 32;
     private static final int DOOR = 7;
     private static final int HEADROOM = 2;
@@ -138,9 +142,13 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         return way > 0 ? Rotation.COUNTERCLOCKWISE_90 : Rotation.CLOCKWISE_90;
     }
 
+    private static BlockPos local(Rotation turn, int x, int y, int z) { return StructureTemplate.transform(new BlockPos(x, y, z), Mirror.NONE, turn, BlockPos.ZERO); }
+
+    private static BlockPos placed(Rotation turn, BlockPos origin, int x, int y, int z) { return local(turn, x, y, z).offset(origin); }
+
     private static BlockPos origin(Vec3i size, Rotation turn, boolean alongX, int row, int near, int base) {
-        BlockPos front = StructureTemplate.transform(BlockPos.ZERO, Mirror.NONE, turn, BlockPos.ZERO);
-        BlockPos back = StructureTemplate.transform(new BlockPos(size.getX() - 1, 0, size.getZ() - 1), Mirror.NONE, turn, BlockPos.ZERO);
+        BlockPos front = local(turn, 0, 0, 0);
+        BlockPos back = local(turn, size.getX() - 1, 0, size.getZ() - 1);
         return new BlockPos((alongX ? row - 1 : near - 1) - Math.min(front.getX(), back.getX()), base, (alongX ? near - 1 : row - 1) - Math.min(front.getZ(), back.getZ()));
     }
 
@@ -152,7 +160,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
 
     private static List<BlockPos> mouths(Rotation turn, BlockPos origin) {
         List<BlockPos> mouths = new ArrayList<>();
-        for (int door = DOOR; door <= DOOR + 1; door++) { mouths.add(StructureTemplate.transform(new BlockPos(door, 1, 0), Mirror.NONE, turn, BlockPos.ZERO).offset(origin)); }
+        for (int door = DOOR; door <= DOOR + 1; door++) { mouths.add(placed(turn, origin, door, 1, 0)); }
         return mouths;
     }
 
@@ -213,7 +221,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         StructureTemplate held = key == null ? null : level.getLevel().getServer().getStructureManager().get(key).orElse(null);
         BoundingBox stood = getBoundingBox();
         if (held == null) {
-            ContentCity.missingStation(named);
+            if (!named.isEmpty()) { ContentCity.missingStation(named); }
             return;
         }
         Vec3i size = held.getSize();
@@ -248,11 +256,11 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         int packed = 0;
         for (int x = 0; x < size.getX(); x++) {
             for (int z = 0; z < size.getZ(); z++) {
-                BlockPos spot = StructureTemplate.transform(new BlockPos(x, 0, z), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+                BlockPos spot = placed(turn, origin, x, 0, z);
                 for (int y = this.level; y < base; y++) {
                     at.set(spot.getX(), y, spot.getZ());
                     if (!box.isInside(at)) { continue; }
-                    level.setBlock(at, lining, 2);
+                    level.setBlock(at, lining, Block.UPDATE_CLIENTS);
                     packed++;
                 }
             }
@@ -278,7 +286,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         how.setBoundingBox(only);
         how.setIgnoreEntities(false);
         how.addProcessor(new ContentCityStationBlocks(lining));
-        held.placeInWorld(level, new BlockPos(leastX, at, leastZ), new BlockPos(leastX, at, leastZ), how, random, 2);
+        held.placeInWorld(level, new BlockPos(leastX, at, leastZ), new BlockPos(leastX, at, leastZ), how, random, Block.UPDATE_CLIENTS);
     }
 
     private int headroom(WorldGenLevel level, BoundingBox box, Vec3i size, Rotation turn, BlockPos origin, BlockPos.MutableBlockPos at) {
@@ -286,13 +294,13 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         int cleared = 0;
         for (int x = 0; x < size.getX(); x++) {
             for (int z = 0; z < size.getZ(); z++) {
-                BlockPos spot = StructureTemplate.transform(new BlockPos(x, 0, z), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+                BlockPos spot = placed(turn, origin, x, 0, z);
                 if (!box.isInside(at.set(spot.getX(), top + 1, spot.getZ()))) { continue; }
                 for (int y = top + 1; y <= top + HEAD_CLEARANCE; y++) {
                     BlockState above = level.getBlockState(at.set(spot.getX(), y, spot.getZ()));
                     if (above.isAir()) { continue; }
                     if (!CityPlotGround.terrain(above) && CityPlotGround.solid(above)) { break; }
-                    level.setBlock(at, air, 2);
+                    level.setBlock(at, air, Block.UPDATE_CLIENTS);
                     cleared++;
                 }
             }
@@ -312,9 +320,8 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         int extra = turnBack(alongX, first, wall, this.level);
         if (corridor(alongX, first, wall, this.level) > PASSAGE_MOST) { return 0; }
         if (extra > 0) { ContentLog.LOGGER.debug("The station corridor turns back along the line for {} block(s) to fall {} onto the platform, {} straight across would not have been enough", extra, first.getY() - target, Math.abs(fromAcross - wall)); }
-
-        BlockPos near = StructureTemplate.transform(BlockPos.ZERO, Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
-        BlockPos far = StructureTemplate.transform(new BlockPos(size.getX() - 1, 0, size.getZ() - 1), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+        BlockPos near = placed(turn, origin, 0, 0, 0);
+        BlockPos far = placed(turn, origin, size.getX() - 1, 0, size.getZ() - 1);
         int buildLeastX = Math.min(near.getX(), far.getX());
         int buildMostX = Math.max(near.getX(), far.getX());
         int buildLeastZ = Math.min(near.getZ(), far.getZ());
@@ -342,7 +349,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
                 if (!start && walk > target) { walk--; }
                 start = false;
                 dug.add(new int[] {spot[0], spot[1], walk, mouth.getY()});
-                taken.add(packed(spot[0], spot[1]));
+                taken.add(Longs.pack(spot[0], spot[1]));
             }
         }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -355,7 +362,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
                 if (!box.isInside(at.set(x, y, z))) { continue; }
                 boolean roof = y > spot[2] + HEADROOM;
                 boolean shell = y == spot[2] - 1 || roof;
-                level.setBlock(at, roof && lit ? lamp : shell ? linings.pick(seed, x, y, z) : air, 2);
+                level.setBlock(at, roof && lit ? lamp : shell ? linings.pick(seed, x, y, z) : air, Block.UPDATE_CLIENTS);
                 laid++;
             }
         }
@@ -363,7 +370,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
             for (int side = 0; side < 4; side++) {
                 int nextAlong = spot[0] + (side == 0 ? 1 : side == 1 ? -1 : 0);
                 int nextAcross = spot[1] + (side == 2 ? 1 : side == 3 ? -1 : 0);
-                if (taken.contains(packed(nextAlong, nextAcross))) { continue; }
+                if (taken.contains(Longs.pack(nextAlong, nextAcross))) { continue; }
                 if (way > 0 ? nextAcross < wall : nextAcross > wall) { continue; }
                 int x = alongX ? nextAlong : nextAcross;
                 int z = alongX ? nextAcross : nextAlong;
@@ -371,7 +378,7 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
                 for (int y = spot[2] - 1; y <= spot[3] + HEADROOM + 1; y++) {
                     if (!box.isInside(at.set(x, y, z))) { continue; }
                     if (level.getBlockState(at).getBlock() instanceof BaseRailBlock) { continue; }
-                    level.setBlock(at, linings.pick(seed, x, y, z), 2);
+                    level.setBlock(at, linings.pick(seed, x, y, z), Block.UPDATE_CLIENTS);
                     laid++;
                 }
             }
@@ -395,10 +402,10 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         for (int x = leastOpen; x < open.length; x++) {
             for (int z = 0; z < open[x].length; z++) {
                 if (open[x][z] || !beside(open, x, z)) { continue; }
-                BlockPos spot = StructureTemplate.transform(new BlockPos(x, 0, z), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+                BlockPos spot = placed(turn, origin, x, 0, z);
                 if (!box.isInside(at.set(spot.getX(), top + 1, spot.getZ()))) { continue; }
                 if (CityPlotGround.solid(level.getBlockState(at))) { continue; }
-                level.setBlock(at, rails.pick(seed, spot.getX(), top + 1, spot.getZ()), 2);
+                level.setBlock(at, rails.pick(seed, spot.getX(), top + 1, spot.getZ()), Block.UPDATE_CLIENTS);
                 level.getChunk(at).markPosForPostprocessing(at);
                 laid++;
             }
@@ -406,7 +413,9 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         return laid;
     }
 
-    private static boolean[][] topOpening(WorldGenLevel level, StructureTemplate held) {
+    private static boolean[][] topOpening(WorldGenLevel level, StructureTemplate held) { return OPENINGS.computeIfAbsent(held, template -> opening(level, template)); }
+
+    private static boolean[][] opening(WorldGenLevel level, StructureTemplate held) {
         Vec3i size = held.getSize();
         boolean[][] open = new boolean[size.getX()][size.getZ()];
         CompoundTag saved = held.save(new CompoundTag());
@@ -437,15 +446,13 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
     }
 
     private int bench(WorldGenLevel level, BoundingBox box, Rotation turn, BlockPos origin, BlockPos.MutableBlockPos at) {
-        BlockPos seatFrom = StructureTemplate.transform(new BlockPos(DOOR - 3, 0, 1), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
-        BlockPos seatTo = StructureTemplate.transform(new BlockPos(DOOR + 1, 0, 1), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+        BlockPos seatFrom = placed(turn, origin, DOOR - 3, 0, 1);
+        BlockPos seatTo = placed(turn, origin, DOOR + 1, 0, 1);
         boolean seatAlongX = seatFrom.getZ() == seatTo.getZ();
         int from = Math.min(seatAlongX ? seatFrom.getX() : seatFrom.getZ(), seatAlongX ? seatTo.getX() : seatTo.getZ());
         int across = seatAlongX ? seatFrom.getZ() : seatFrom.getX();
         return ContentCityStairsPiece.bench(level, box, seatAlongX, from, across, top + 1, ContentCityStairsPiece.awayFrom(alongX, way), at);
     }
-
-    private static long packed(int along, int across) { return ((long) along << 32) ^ (across & 0xFFFFFFFFL); }
 
     private int lamps(WorldGenLevel level, BoundingBox box, Vec3i size, BlockPos origin, Rotation turn, int base, int grown, BlockPos.MutableBlockPos at) {
         BlockState lamp = CityPalette.state(ContentCity.railTunnelLightBlock(true));
@@ -453,11 +460,11 @@ public final class ContentCityStampPiece extends StructurePiece implements Conte
         int run = ContentCity.railTunnelLightRun(true);
         int lit = 0;
         for (int along : new int[] {size.getX() / 3, size.getX() * 2 / 3}) {
-            BlockPos mid = StructureTemplate.transform(new BlockPos(along, 0, (size.getZ() - 1) / 2), Mirror.NONE, turn, BlockPos.ZERO).offset(origin);
+            BlockPos mid = placed(turn, origin, along, 0, (size.getZ() - 1) / 2);
             for (int y = base + 2; y < base + grown - 1; y += run) {
                 at.set(mid.getX(), y, mid.getZ());
                 if (!box.isInside(at)) { continue; }
-                level.setBlock(at, lamp, 2);
+                level.setBlock(at, lamp, Block.UPDATE_CLIENTS);
                 lit++;
             }
         }

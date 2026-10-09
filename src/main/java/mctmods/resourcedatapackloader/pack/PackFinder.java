@@ -36,7 +36,7 @@ public final class PackFinder implements RepositorySource {
 
     public static void ensureScanned() {
         PackManager manager = PackManager.get();
-        if (manager.getRoot() != null) { return; }
+        if (manager.scanned()) { return; }
         Path root = root();
         ContentLog.LOGGER.info("Pack root: {}", root);
         StrayPacks.collect(FMLPaths.GAMEDIR.get(), root);
@@ -48,32 +48,23 @@ public final class PackFinder implements RepositorySource {
         ensureScanned();
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
-        if (!GeneratedResources.isEmpty()) { offerGenerated(out); }
+        if (GeneratedResources.holds()) { offerGenerated(out); }
         if (manager.hasTier(false)) { offer(out, false); }
         if (manager.hasTier(true)) { offer(out, true); }
     }
 
-    private void offerGenerated(Consumer<Pack> out) {
-        PackLocationInfo location = new PackLocationInfo(GeneratedPack.ID, Component.literal(GeneratedPack.ID), SOURCE, Optional.empty());
-        Pack pack = Pack.readMetaAndCreate(location, GeneratedPack.supplier(type), type, new PackSelectionConfig(true, Pack.Position.BOTTOM, true));
-        if (pack == null) {
-            ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", GeneratedPack.ID, type.getDirectory());
-            return;
-        }
-        out.accept(pack);
-    }
+    private void offerGenerated(Consumer<Pack> out) { offer(out, GeneratedPack.ID, GeneratedPack.supplier(type), UnaryOperator.identity(), Pack.Position.BOTTOM, SOURCE); }
 
-    private void offer(Consumer<Pack> out, boolean overriding) {
-        String id = RDPLResourcePack.id(overriding);
-        PackLocationInfo location = new PackLocationInfo(id, Component.literal(id), tierSource(), Optional.empty());
-        PackSelectionConfig selection = new PackSelectionConfig(true, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true);
-        Pack.ResourcesSupplier supplier = RDPLResourcePack.supplier(type, overriding);
+    private void offer(Consumer<Pack> out, boolean overriding) { offer(out, RDPLResourcePack.id(overriding), RDPLResourcePack.supplier(type, overriding), meta -> described(meta, overriding), overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, tierSource()); }
+
+    private void offer(Consumer<Pack> out, String id, Pack.ResourcesSupplier supplier, UnaryOperator<Pack.Metadata> describe, Pack.Position position, PackSource source) {
+        PackLocationInfo location = new PackLocationInfo(id, Component.literal(id), source, Optional.empty());
         Pack.Metadata meta = Pack.readPackMetadata(location, supplier, SharedConstants.getCurrentVersion().getPackVersion(type));
         if (meta == null) {
             ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", id, type.getDirectory());
             return;
         }
-        out.accept(new Pack(location, supplier, described(meta, overriding), selection));
+        out.accept(new Pack(location, supplier, describe.apply(meta), new PackSelectionConfig(true, position, true)));
     }
 
     private PackSource tierSource() { return type == PackType.CLIENT_RESOURCES ? PLAIN : SOURCE; }
@@ -108,24 +99,22 @@ public final class PackFinder implements RepositorySource {
         for (int i = 0; i < opened.size(); i++) {
             PackResources pack = opened.get(i);
             if (pack.getClass().getName().startsWith(KUBEJS)) { scripted.add(pack); }
-            else if (own < 0 && (pack instanceof RDPLResourcePack || pack instanceof GeneratedPack)) { own = i; }
+            else if (own < 0 && pack instanceof RDPLPackResources) { own = i; }
         }
         if (scripted.isEmpty() || own < 0) { return opened; }
         List<PackResources> ordered = new ArrayList<>(opened);
         ordered.removeAll(scripted);
         int at = 0;
-        while (at < ordered.size() && !(ordered.get(at) instanceof RDPLResourcePack) && !(ordered.get(at) instanceof GeneratedPack)) { at++; }
+        while (at < ordered.size() && !(ordered.get(at) instanceof RDPLPackResources)) { at++; }
         ordered.addAll(at, scripted);
         return ordered;
     }
 
     private static int lastBase(List<Pack> packs) {
         int last = -1;
-        for (int i = 0; i < packs.size(); i++) {
-            if (!userPicked(packs.get(i))) { last = i; }
-        }
+        for (int i = 0; i < packs.size(); i++) { if (base(packs.get(i))) { last = i; } }
         return last;
     }
 
-    private static boolean userPicked(@Nullable Pack pack) { return pack != null && (pack.getId().startsWith("file/") || pack.getPackSource() == PackSource.SERVER); }
+    private static boolean base(@Nullable Pack pack) { return pack == null || !pack.getId().startsWith("file/") && pack.getPackSource() != PackSource.SERVER; }
 }

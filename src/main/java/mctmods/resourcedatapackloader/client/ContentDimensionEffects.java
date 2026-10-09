@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.util.RainSplash;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Camera;
@@ -82,7 +83,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     @Override public void adjustLightmapColors(@Nonnull ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, int pixelY, @Nonnull Vector3f colors) {
         SkyLookDef look = look();
-        if (look == null || !look.tintsLight() || forceBrightLightmap()) { return; }
+        if (look == null || look.plainLight() || forceBrightLightmap()) { return; }
         float block = LightTexture.getBrightness(level.dimensionType(), pixelX) * blockLightRedFlicker;
         float sky = skyLight * look.skyFactor();
         float skyRed = sky * Mth.lerp(SKY_FLOOR, skyDarken, 1.0F);
@@ -95,7 +96,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         if (darken > 0.0F) { colors.lerp(new Vector3f(colors).mul(BOSS_SHADE), darken); }
     }
 
-    private static float channel(int rgb, int shift) { return rgb == SkyLookDef.UNSET ? 1.0F : ((rgb >> shift) & 255) / 255.0F; }
+    private static float channel(int rgb, int shift) { return rgb == SkyLookDef.UNSET ? 1.0F : Rgb.channel(rgb, shift); }
 
     @Override public boolean isFoggyAt(int x, int z) { return (def != null && def.showFog()) || base.isFoggyAt(x, z); }
 

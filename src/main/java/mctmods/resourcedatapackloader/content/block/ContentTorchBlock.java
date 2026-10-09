@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.def.BlockDef;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
@@ -13,7 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.joml.Vector3f;
 import javax.annotation.Nonnull;
 
-public class ContentTorchBlock extends TorchBlock {
+public final class ContentTorchBlock extends TorchBlock {
     private final BlockDef def;
     private final ParticleOptions flame;
 
@@ -26,16 +27,13 @@ public class ContentTorchBlock extends TorchBlock {
     static ParticleOptions flame(BlockDef def) {
         if (!BlockDef.PARTICLE_COLORED.equals(def.torchParticle())) { return ParticleTypes.FLAME; }
         int color = def.torchColor();
-        return new DustParticleOptions(new Vector3f((color >> 16 & 0xFF) / 255.0F, (color >> 8 & 0xFF) / 255.0F, (color & 0xFF) / 255.0F), 1.0F);
+        return new DustParticleOptions(new Vector3f(Rgb.red(color), Rgb.green(color), Rgb.blue(color)), 1.0F);
     }
 
-    static boolean particles(BlockDef def) { return !BlockDef.PARTICLE_NONE.equals(def.torchParticle()); }
-
-    @Override public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        double x = pos.getX() + 0.5D;
-        double y = pos.getY() + 0.7D;
-        double z = pos.getZ() + 0.5D;
+    static void spawn(BlockDef def, ParticleOptions flame, Level level, double x, double y, double z) {
         if (def.torchSmoke()) { level.addParticle(ParticleTypes.SMOKE, x, y, z, 0.0D, 0.0D, 0.0D); }
-        if (particles(def)) { level.addParticle(flame, x, y, z, 0.0D, 0.0D, 0.0D); }
+        if (!BlockDef.PARTICLE_NONE.equals(def.torchParticle())) { level.addParticle(flame, x, y, z, 0.0D, 0.0D, 0.0D); }
     }
+
+    @Override public void animateTick(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull RandomSource random) { spawn(def, flame, level, pos.getX() + 0.5D, pos.getY() + 0.7D, pos.getZ() + 0.5D); }
 }

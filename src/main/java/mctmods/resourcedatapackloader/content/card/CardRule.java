@@ -71,6 +71,4 @@ public final class CardRule {
     CardRule(String key) { this.key = key; }
 
     public String key() { return key; }
-
-    public String trigger() { return trigger; }
 }

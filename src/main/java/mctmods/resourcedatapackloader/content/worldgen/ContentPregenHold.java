@@ -2,11 +2,13 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.ContentWelcome;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -99,9 +101,7 @@ public final class ContentPregenHold {
         if (held != null) { held.rebase(player); }
     }
 
-    public static void holdEveryone(MinecraftServer server, boolean fog) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player, fog); }
-    }
+    public static void holdEveryone(MinecraftServer server, boolean fog) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { hold(player, fog); } }
 
     private static void hold(ServerPlayer player, boolean fog) {
         if (HELD.containsKey(player.getUUID())) { return; }
@@ -136,9 +136,7 @@ public final class ContentPregenHold {
     }
 
     private static void flashHeld() {
-        ContentPregen live = ContentPregen.running;
-        String said = live == null ? progress : ContentPregenProgress.sofar(live);
-        if (!said.isEmpty()) { progress = said; }
+        String said = progress;
         long beat = BEATS.getAndIncrement();
         boolean titles = beat % 6L == 0L;
         boolean keepAlive = beat % 8L == 0L;
@@ -206,7 +204,7 @@ public final class ContentPregenHold {
     }
 
     private static void release(ServerPlayer player, Held held) {
-        String mode = ContentServer.worldGameMode().trim().toLowerCase(java.util.Locale.ROOT);
+        String mode = Settings.lower(ContentServer.worldGameMode());
         GameType asked = ContentTerrain.HARDCORE.equals(mode) ? GameType.SURVIVAL : GameType.byName(mode, null);
         player.setGameMode(asked == null ? held.before : asked);
         player.getPersistentData().remove(HELD_MODE);
@@ -231,11 +229,10 @@ public final class ContentPregenHold {
             hold(player, true);
             return;
         }
-        ContentPregen worker = ContentPregen.running;
-        if (worker == null) { return; }
+        if (ContentPregen.running == null) { return; }
         hold(player, true);
-        String said = ContentPregenProgress.sofar(worker);
-        if (!said.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_RUNNING, said, ChatFormatting.YELLOW); }
+        String said = progress;
+        if (!said.isEmpty()) { Says.tell(player, CardIds.PREGEN_RUNNING, ChatFormatting.YELLOW, said); }
     }
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -245,15 +242,11 @@ public final class ContentPregenHold {
         if (held != null) { release(player, held); }
     }
 
-    public static void onTravel(EntityTravelToDimensionEvent event) {
-        if (ContentPregen.busy()) { event.setCanceled(true); }
-    }
+    public static void onTravel(EntityTravelToDimensionEvent event) { if (ContentPregen.busy()) { event.setCanceled(true); } }
 
-    public static void onTeleport(EntityTeleportEvent event) {
-        if (ContentPregen.busy() && (event instanceof EntityTeleportEvent.EnderPearl || event instanceof EntityTeleportEvent.EnderEntity || event instanceof EntityTeleportEvent.ChorusFruit)) { event.setCanceled(true); }
-    }
+    public static void onTeleport(EntityTeleportEvent event) { if (ContentPregen.busy() && (event instanceof EntityTeleportEvent.EnderPearl || event instanceof EntityTeleportEvent.EnderEntity || event instanceof EntityTeleportEvent.ChorusFruit)) { event.setCanceled(true); } }
 
-    public static boolean welcomesLater(ServerPlayer player) { return ContentPregen.busy() || HELD.containsKey(player.getUUID()); }
+    public static boolean welcomesNow(ServerPlayer player) { return !ContentPregen.busy() && !HELD.containsKey(player.getUUID()); }
 
     public static void fallInstantly(ServerLevel level, BlockPos pos, BlockState state) {
         int floor = level.getMinBuildHeight();

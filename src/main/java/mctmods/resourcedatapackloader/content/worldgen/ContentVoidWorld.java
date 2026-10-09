@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureManager;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.DimensionValues;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
@@ -25,7 +26,7 @@ public final class ContentVoidWorld {
     @Nullable private static volatile VoidMemory remembered;
     private ContentVoidWorld() {}
 
-    public static boolean voidEmpties(StructureManager structures) { return ((IStructureManager) structures).rdpl$level() instanceof WorldGenLevel level && voidApplies(level.getLevel()); }
+    public static boolean voidEmpties(StructureManager structures) { return ((IStructureManager) structures).rdpl$getLevel() instanceof WorldGenLevel level && voidApplies(level.getLevel()); }
 
     static boolean voidAsked() {
         if (ContentControl.off(ContentControl.VOID)) { return false; }
@@ -40,7 +41,7 @@ public final class ContentVoidWorld {
 
     static boolean voidApplies(String dimension, boolean asked, List<String> wanted, boolean blacklist) {
         if (!asked) { return false; }
-        return wanted.isEmpty() ? blacklist : ContentWorldShape.listed(dimension, wanted, blacklist);
+        return wanted.isEmpty() ? blacklist : DimensionValues.listed(dimension, wanted, blacklist);
     }
 
     public static boolean voidApplies(ServerLevel level) {
@@ -86,7 +87,7 @@ public final class ContentVoidWorld {
         BlockState state = found == null ? Blocks.STONE.defaultBlockState() : found.defaultBlockState();
         int reach = Math.max(0, (ContentControl.number(ContentControl.VOID, "voidPlatformSize", Config.worldgen.voidPlatformSize()) - 1) / 2);
         for (int x = -reach; x <= reach; x++) {
-            for (int z = -reach; z <= reach; z++) { level.setBlock(center.offset(x, 0, z), state, 2); }
+            for (int z = -reach; z <= reach; z++) { level.setBlock(center.offset(x, 0, z), state, Block.UPDATE_CLIENTS); }
         }
     }
 }

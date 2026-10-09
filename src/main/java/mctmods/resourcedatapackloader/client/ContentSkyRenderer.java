@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
+import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
+
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -122,7 +124,7 @@ final class ContentSkyRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
         Matrix4f pose = poseStack.last().pose();
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-        buffer.addVertex(pose, 0.0F, 100.0F, 0.0F).setColor(glow[0], glow[1], glow[2], glow[3]);
+        buffer.addVertex(pose, 0.0F, SIZE, 0.0F).setColor(glow[0], glow[1], glow[2], glow[3]);
         for (int step = 0; step <= 16; ++step) {
             float at = step * ((float) Math.PI * 2.0F) / 16.0F;
             float sin = Mth.sin(at);
@@ -143,20 +145,20 @@ final class ContentSkyRenderer {
         float bottom = (row + 1) / 2.0F;
         RenderSystem.setShaderTexture(0, MOON_PHASES);
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(pose, -size, -100.0F, size).setUv(right, bottom);
-        buffer.addVertex(pose, size, -100.0F, size).setUv(left, bottom);
-        buffer.addVertex(pose, size, -100.0F, -size).setUv(left, top);
-        buffer.addVertex(pose, -size, -100.0F, -size).setUv(right, top);
+        buffer.addVertex(pose, -size, -SIZE, size).setUv(right, bottom);
+        buffer.addVertex(pose, size, -SIZE, size).setUv(left, bottom);
+        buffer.addVertex(pose, size, -SIZE, -size).setUv(left, top);
+        buffer.addVertex(pose, -size, -SIZE, -size).setUv(right, top);
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 
     private static void quad(Matrix4f pose, ResourceLocation texture, float size) {
         RenderSystem.setShaderTexture(0, texture);
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(pose, -size, 100.0F, -size).setUv(0.0F, 0.0F);
-        buffer.addVertex(pose, size, 100.0F, -size).setUv(1.0F, 0.0F);
-        buffer.addVertex(pose, size, 100.0F, size).setUv(1.0F, 1.0F);
-        buffer.addVertex(pose, -size, 100.0F, size).setUv(0.0F, 1.0F);
+        buffer.addVertex(pose, -size, SIZE, -size).setUv(0.0F, 0.0F);
+        buffer.addVertex(pose, size, SIZE, -size).setUv(1.0F, 0.0F);
+        buffer.addVertex(pose, size, SIZE, size).setUv(1.0F, 1.0F);
+        buffer.addVertex(pose, -size, SIZE, size).setUv(0.0F, 1.0F);
         BufferUploader.drawWithShader(buffer.buildOrThrow());
     }
 

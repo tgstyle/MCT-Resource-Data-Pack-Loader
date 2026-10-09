@@ -3,12 +3,14 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.shaders.FogShape;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -30,11 +32,12 @@ public final class ContentFogSampler {
     private static final float START = 0.75F;
     @Nullable private static Vec3 target;
     @Nullable private static Vec3 current;
+    @Nullable private static ResourceKey<Level> sampledIn;
 
     private ContentFogSampler() {}
 
     @Nullable public static SkyLookDef look(@Nullable Level level) {
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         return def == null ? null : def.look();
     }
 
@@ -61,9 +64,15 @@ public final class ContentFogSampler {
         SkyLookDef look = look(level);
         Entity camera = mc.getCameraEntity();
         if (level == null || look == null || !look.sampleFog() || camera == null) {
+            sampledIn = null;
             target = null;
             current = null;
             return;
+        }
+        if (!level.dimension().equals(sampledIn)) {
+            sampledIn = level.dimension();
+            target = null;
+            current = null;
         }
         if (target == null || level.getGameTime() % INTERVAL == 0L) { target = sample(level, camera, look.fogGroundWeight()); }
         current = current == null ? target : current.add(target.subtract(current).scale(EASE));
@@ -81,9 +90,9 @@ public final class ContentFogSampler {
                 BlockPos top = new BlockPos(x + dx, level.getHeight(Heightmap.Types.WORLD_SURFACE, x + dx, z + dz) - 1, z + dz);
                 MapColor map = level.getBlockState(top).getMapColor(level, top);
                 if (map == MapColor.NONE) { continue; }
-                red += (map.col >> 16 & 255) / 255.0D;
-                green += (map.col >> 8 & 255) / 255.0D;
-                blue += (map.col & 255) / 255.0D;
+                red += Rgb.red(map.col);
+                green += Rgb.green(map.col);
+                blue += Rgb.blue(map.col);
                 count++;
             }
         }

@@ -15,33 +15,32 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentContainerMenu extends AbstractContainerMenu {
     public static final int SLOT = 18;
+
+    public interface Merge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
+
     private final Container held;
     private final ContainerDef def;
     private final ItemStack open;
     @Nullable private final Supplier<ItemStack> source;
     private final int worn;
 
-    public ContentContainerMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) {
-        this(id, inventory, read(extra), extra.readVarInt());
-    }
+    public ContentContainerMenu(int id, Inventory inventory, RegistryFriendlyByteBuf extra) { this(id, inventory, read(extra), extra.readVarInt()); }
 
-    private ContentContainerMenu(int id, Inventory inventory, ContainerDef def, int worn) {
-        this(id, inventory, new SimpleContainer(def.size()), def, ItemStack.EMPTY, null, worn);
-    }
+    private ContentContainerMenu(int id, Inventory inventory, ContainerDef def, int worn) { this(id, inventory, new SimpleContainer(def.size()), def, ItemStack.EMPTY, null, worn); }
 
-    public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def) {
-        this(id, inventory, held, def, ItemStack.EMPTY, null, -1);
-    }
+    public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def) { this(id, inventory, held, def, ItemStack.EMPTY, null, -1); }
 
     public ContentContainerMenu(int id, Inventory inventory, Container held, ContainerDef def, ItemStack open, @Nullable Supplier<ItemStack> source, int worn) {
-        super(ContentContainers.menu(), id);
+        super(ContentContainers.MENU.get(), id);
         this.open = open;
         this.held = held;
         this.def = def;
@@ -57,14 +56,19 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
                 });
             }
         }
-        int playerLeft = (width(def) - 9 * SLOT) / 2 + 1;
-        int playerTop = height(def) - 83;
+        for (Slot slot : playerSlots(inventory, width(def), height(def), this::locking)) { addSlot(slot); }
+    }
+
+    public interface PlayerSlot { Slot create(Inventory inventory, int index, int x, int y); }
+
+    public static List<Slot> playerSlots(Inventory inventory, int wide, int tall, PlayerSlot factory) {
+        List<Slot> slots = new ArrayList<>();
+        int left = (wide - 9 * SLOT) / 2 + 1;
         for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(locking(inventory, column + row * 9 + 9, playerLeft + column * SLOT, playerTop + row * SLOT));
-            }
+            for (int column = 0; column < 9; column++) { slots.add(factory.create(inventory, column + row * 9 + 9, left + column * SLOT, tall - 83 + row * SLOT)); }
         }
-        for (int column = 0; column < 9; column++) { addSlot(locking(inventory, column, playerLeft + column * SLOT, height(def) - 25)); }
+        for (int column = 0; column < 9; column++) { slots.add(factory.create(inventory, column, left + column * SLOT, tall - 25)); }
+        return slots;
     }
 
     public static void write(RegistryFriendlyByteBuf extra, ContainerDef def) { write(extra, def, -1); }
@@ -116,15 +120,17 @@ public final class ContentContainerMenu extends AbstractContainerMenu {
 
     @Override @Nonnull public ItemStack quickMoveStack(@Nonnull Player player, int index) {
         int size = held.getContainerSize();
-        Slot slot = slots.get(index);
+        return transfer(this, player, index, size, this::moveItemStackTo, stack -> moveItemStackTo(stack, 0, size, false));
+    }
+
+    @Nonnull public static ItemStack transfer(AbstractContainerMenu menu, Player player, int index, int mine, Merge merge, Predicate<ItemStack> store) {
+        Slot slot = menu.slots.get(index);
         if (!slot.hasItem()) { return ItemStack.EMPTY; }
         ItemStack stack = slot.getItem();
         ItemStack copy = stack.copy();
         if (!slot.mayPickup(player)) { return ItemStack.EMPTY; }
-        if (index < size) {
-            if (!moveItemStackTo(stack, size, slots.size(), true)) { return ItemStack.EMPTY; }
-        }
-        else if (!moveItemStackTo(stack, 0, size, false)) { return ItemStack.EMPTY; }
+        boolean done = index < mine ? merge.into(stack, mine, menu.slots.size(), true) : store.test(stack);
+        if (!done) { return ItemStack.EMPTY; }
         if (stack.isEmpty()) { slot.set(ItemStack.EMPTY); }
         else { slot.setChanged(); }
         return copy;

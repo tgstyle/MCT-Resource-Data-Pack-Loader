@@ -12,7 +12,5 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 @Mixin(AccountProfileKeyPairManager.class) public abstract class MixinAccountProfileKeyPairManager {
-    @Inject(method = "prepareKeyPair", at = @At("HEAD"), cancellable = true) private void rdpl$signNothing(CallbackInfoReturnable<CompletableFuture<Optional<ProfileKeyPair>>> cir) {
-        if (ContentServer.privacy()) { cir.setReturnValue(CompletableFuture.completedFuture(Optional.empty())); }
-    }
+    @Inject(method = "prepareKeyPair", at = @At("HEAD"), cancellable = true) private void rdpl$signNothing(CallbackInfoReturnable<CompletableFuture<Optional<ProfileKeyPair>>> cir) { if (ContentServer.privacy()) { cir.setReturnValue(CompletableFuture.completedFuture(Optional.empty())); } }
 }

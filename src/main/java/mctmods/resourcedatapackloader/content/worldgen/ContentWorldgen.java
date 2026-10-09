@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -22,9 +23,9 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
@@ -34,7 +35,6 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -42,6 +42,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.UnaryOperator;
 import javax.annotation.Nullable;
 
 public final class ContentWorldgen {
@@ -55,7 +57,7 @@ public final class ContentWorldgen {
     private static final Map<ResourceLocation, WorldgenDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Entry> ENTRIES = new LinkedHashMap<>();
     private static boolean loaded;
-    private static final Set<String> CHAIN_WARNED = new LinkedHashSet<>();
+    private static final Set<String> CHAIN_WARNED = ConcurrentHashMap.newKeySet();
     private static final int EDGE_REACH = 16;
 
     private ContentWorldgen() {}
@@ -124,7 +126,7 @@ public final class ContentWorldgen {
                 continue;
             }
             if (chain.contains(next.def())) {
-                if (CHAIN_WARNED.add(def.key() + ">" + chosen.name())) { ContentLog.LOGGER.error("Worldgen entry {} queues {}, which already generated earlier in this chain, so the chain stops here rather than running forever", def.key(), chosen.name()); }
+                ContentLog.LOGGER.errorOnce(CHAIN_WARNED, def.key() + ">" + chosen.name(), "Worldgen entry {} queues {}, which already generated earlier in this chain, so the chain stops here rather than running forever", def.key(), chosen.name());
                 continue;
             }
             if (next.shape() instanceof IContentChunkShape) {
@@ -166,21 +168,21 @@ public final class ContentWorldgen {
     }
 
     public static boolean allows(Entry entry, WorldGenLevel level, BlockPos pos) {
-        if (!entry.def().needsBiome()) { return true; }
+        if (entry.def().worksAnywhere()) { return true; }
         if (!ContentPlacer.loaded(level, pos)) { return false; }
         Holder<Biome> biome = level.getBiome(pos);
         if (entry.def().hasBiomeFilter() && matches(entry, biome) == entry.def().biomesAreBlacklist()) { return false; }
         return entry.def().climateAllows(biome.value().getBaseTemperature(), biome.value().getModifiedClimateSettings().downfall());
     }
 
-    public static boolean inRegion(Entry entry, WorldGenLevel level, BlockPos pos) {
-        if (entry.def().caveRegions().isEmpty()) { return true; }
-        if (!ContentPlacer.loaded(level, pos)) { return false; }
+    public static boolean outsideRegion(Entry entry, WorldGenLevel level, BlockPos pos) {
+        if (entry.def().caveRegions().isEmpty()) { return false; }
+        if (!ContentPlacer.loaded(level, pos)) { return true; }
         for (ResourceLocation region : entry.def().caveRegions()) {
             CaveRegionDef def = ContentCaveRegions.def(region);
-            if (def != null && ContentCaveRegions.holds(level, def, pos)) { return true; }
+            if (def != null && ContentCaveRegions.holds(level, def, pos)) { return false; }
         }
-        return false;
+        return true;
     }
 
     private static boolean matches(Entry entry, Holder<Biome> biome) {
@@ -214,7 +216,7 @@ public final class ContentWorldgen {
         if (ShapeDef.DECORATION.equals(def.shape().type()) || ShapeDef.TREE.equals(def.shape().type())) {
             List<String> unknown = new ArrayList<>();
             for (String name : def.shape().surface()) {
-                Block found = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.trim()));
+                Block found = Registered.block(name);
                 if (found == null) { unknown.add(name); }
                 else { surface.add(found); }
             }
@@ -253,7 +255,7 @@ public final class ContentWorldgen {
         }
         ContentPalette palette = new ContentPalette(states, weights, targets, exact, nearby, nearbyExact, surface);
         IContentShape shape = build(def, extra(def.shape().outline(), key), extra(def.shape().fill(), key), extra(def.shape().log(), key), extra(def.shape().leaves(), key));
-        return new Entry(def, palette, shape, biomeNames(def), biomeTags(def), dimensions(def));
+        return new Entry(def, palette, shape, ids(def, def.biomes(), String::trim, "biome"), biomeTags(def), ids(def, def.dimensions(), ContentFormats::dimensionId, "dimension"));
     }
 
     private static IContentShape build(WorldgenDef def, @Nullable BlockState outline, @Nullable BlockState fill, @Nullable BlockState log, @Nullable BlockState leaves) {
@@ -285,22 +287,20 @@ public final class ContentWorldgen {
     }
 
     @Nullable private static BlockState extra(String named, ResourceLocation key) {
-        BlockState state = state(named, key);
-        if (state == null && !named.isEmpty()) { ContentLog.LOGGER.error("Worldgen {} names block {} in its shape, which is not registered, leaving it out", key, named); }
-        return state;
+        return namedState(key, named, "Worldgen {} names block {} in its shape, which is not registered, leaving it out");
     }
 
     @Nullable private static BlockState layer(WorldgenDef def, String named, String which) {
-        if (named.isEmpty()) { return null; }
-        BlockState state = state(named, def.key());
-        if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} as its geode {}, which is not registered, leaving that layer out", def.key(), named, which); }
-        return state;
+        return namedState(def.key(), named, "Worldgen {} names block {} as its geode " + which + ", which is not registered, leaving that layer out");
     }
 
     @Nullable private static BlockState tier(WorldgenDef def, String named, String which) {
-        if (named.isEmpty()) { return null; }
-        BlockState state = state(named, def.key());
-        if (state == null) { ContentLog.LOGGER.error("Worldgen {} names {} as its {} block, which is not a registered block, so that tier places the normal block", def.key(), named, which); }
+        return namedState(def.key(), named, "Worldgen {} names {} as its " + which + " block, which is not a registered block, so that tier places the normal block");
+    }
+
+    @Nullable private static BlockState namedState(ResourceLocation key, String named, String message) {
+        BlockState state = state(named, key);
+        if (state == null && !named.isEmpty()) { ContentLog.LOGGER.error(message, key, named); }
         return state;
     }
 
@@ -328,12 +328,12 @@ public final class ContentWorldgen {
         return name.isEmpty() ? null : state(ResourceLocation.tryParse(name), Map.of(), key);
     }
 
-    private static Set<ResourceLocation> biomeNames(WorldgenDef def) {
+    private static Set<ResourceLocation> ids(WorldgenDef def, List<String> entries, UnaryOperator<String> normalizer, String what) {
         Set<ResourceLocation> named = new LinkedHashSet<>();
-        for (String name : def.biomes()) {
-            ResourceLocation biome = ResourceLocation.tryParse(name.trim());
-            if (biome == null) { ContentLog.LOGGER.error("Worldgen {} names biome '{}', which is not a valid id, leaving it out", def.key(), name); }
-            else { named.add(biome); }
+        for (String entry : entries) {
+            ResourceLocation id = ResourceLocation.tryParse(normalizer.apply(entry));
+            if (id == null) { ContentLog.LOGGER.error("Worldgen {} names {} '{}', which is not a valid id, leaving it out", def.key(), what, entry); }
+            else { named.add(id); }
         }
         return Set.copyOf(named);
     }
@@ -341,25 +341,14 @@ public final class ContentWorldgen {
     private static List<TagKey<Biome>> biomeTags(WorldgenDef def) {
         List<TagKey<Biome>> tags = new ArrayList<>();
         for (String type : def.biomeTypes()) {
-            String tag = ContentFormats.biomeTag(type);
+            TagKey<Biome> tag = BiomeNames.tag(type);
             if (tag == null) {
                 ContentLog.LOGGER.error("Worldgen {} names biome type '{}', which no biome tag on this line answers to", def.key(), type);
                 continue;
             }
-            ResourceLocation named = ResourceLocation.tryParse(tag);
-            if (named != null) { tags.add(TagKey.create(Registries.BIOME, named)); }
+            tags.add(tag);
         }
         return List.copyOf(tags);
-    }
-
-    private static Set<ResourceLocation> dimensions(WorldgenDef def) {
-        Set<ResourceLocation> named = new LinkedHashSet<>();
-        for (String entry : def.dimensions()) {
-            ResourceLocation dimension = ResourceLocation.tryParse(ContentFormats.dimensionId(entry));
-            if (dimension == null) { ContentLog.LOGGER.error("Worldgen {} names dimension '{}', which is not a valid id, leaving it out", def.key(), entry); }
-            else { named.add(dimension); }
-        }
-        return Set.copyOf(named);
     }
 
     private static void write(Entry entry) {

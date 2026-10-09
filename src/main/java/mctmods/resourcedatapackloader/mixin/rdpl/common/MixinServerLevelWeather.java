@@ -23,9 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ServerLevel.class) public abstract class MixinServerLevelWeather {
     @Unique private final ContentWeatherCycle rdpl$weatherCycle = new ContentWeatherCycle();
 
-    @WrapOperation(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;hasSkyLight()Z"))
-    private boolean rdpl$ownWeather(DimensionType type, Operation<Boolean> original) {
-        ServerLevel level = ServerLevel.class.cast(this);
+    @WrapOperation(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;hasSkyLight()Z")) private boolean rdpl$ownWeather(DimensionType type, Operation<Boolean> original) {
+        ServerLevel level = (ServerLevel) (Object) this;
         DimensionTraitsDef traits = ContentWeather.traits(level);
         DimensionTraitsDef.Cycle cycle = traits.cycle();
         if (!traits.precipitation()) {
@@ -39,19 +38,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return original.call(type);
     }
 
-    @WrapOperation(method = "tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;isThundering()Z"))
-    private boolean rdpl$lightningWhereAllowed(ServerLevel level, Operation<Boolean> original) {
+    @WrapOperation(method = "tickChunk(Lnet/minecraft/world/level/chunk/LevelChunk;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;isThundering()Z")) private boolean rdpl$lightningWhereAllowed(ServerLevel level, Operation<Boolean> original) {
         DimensionTraitsDef traits = ContentWeather.traits(level);
         return traits.precipitation() && traits.lightning() && original.call(level);
     }
 
-    @Inject(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$noPrecipitation(BlockPos blockPos, CallbackInfo ci) {
-        if (!ContentWeather.traits(ServerLevel.class.cast(this)).precipitation()) { ci.cancel(); }
-    }
+    @Inject(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At("HEAD"), cancellable = true) private void rdpl$noPrecipitation(BlockPos blockPos, CallbackInfo ci) { if (!ContentWeather.traits((ServerLevel) (Object) this).precipitation()) { ci.cancel(); } }
 
-    @Redirect(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;handlePrecipitation(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/biome/Biome$Precipitation;)V"))
-    private void rdpl$rainFillBelowCeiling(Block block, BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
+    @Redirect(method = "tickPrecipitation(Lnet/minecraft/core/BlockPos;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/Block;handlePrecipitation(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/biome/Biome$Precipitation;)V")) private void rdpl$rainFillBelowCeiling(Block block, BlockState state, Level level, BlockPos pos, Biome.Precipitation precipitation) {
         if (ContentWeather.above(level, pos.getY())) { return; }
         Biome.Precipitation falls = ContentWeather.fallsAs(level, level.getBiome(pos.above()).value(), precipitation);
         if (falls == Biome.Precipitation.SNOW && !ContentWeather.traits(level).snow()) { return; }

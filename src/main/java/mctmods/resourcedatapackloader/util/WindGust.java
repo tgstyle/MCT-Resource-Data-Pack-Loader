@@ -16,7 +16,7 @@ public final class WindGust {
     private static final double LONGEST = 80.0D;
     private static final double DRIFT = 0.1D;
     private static final double SHOWN = 1024.0D;
-    private static final long MIX = 0x9E3779B97F4A7C15L;
+    private static final long MIX = Hashes.GOLDEN;
     private static final long SWING = 0x632BE59BD9B4E019L;
 
     private WindGust() {}
@@ -52,8 +52,8 @@ public final class WindGust {
         double speed = slope(angle(rain, time)) * DRIFT;
         if (speed <= 0.0D) { return; }
         double heading = Math.toRadians(heading(rain, time));
-        ((IParticle) particle).setXd(-Math.sin(heading) * speed);
-        ((IParticle) particle).setZd(Math.cos(heading) * speed);
+        ((IParticle) particle).rdpl$setXd(-Math.sin(heading) * speed);
+        ((IParticle) particle).rdpl$setZd(Math.cos(heading) * speed);
     }
 
     private static long segment(WindDef wind, double time) { return (long) Math.floor(time / mean(wind)); }

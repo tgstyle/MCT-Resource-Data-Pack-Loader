@@ -12,8 +12,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ChatScreen.class) public abstract class MixinChatScreen {
     @Shadow public abstract String normalizeChatMessage(String message);
 
-    @Inject(method = "handleChatInput", at = @At("HEAD"))
-    private void rdpl$keepTyped(String input, boolean addToRecentChat, CallbackInfo ci) {
-        if (addToRecentChat) { ChatHistoryKeeper.caught(normalizeChatMessage(input)); }
-    }
+    @Inject(method = "handleChatInput", at = @At("HEAD")) private void rdpl$keepTyped(String message, boolean addToRecentChat, CallbackInfo ci) { if (addToRecentChat) { ChatHistoryKeeper.caught(normalizeChatMessage(message)); } }
 }

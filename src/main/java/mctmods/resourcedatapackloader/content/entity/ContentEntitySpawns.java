@@ -8,6 +8,8 @@ import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.port.Ids;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonObject;
 import com.mojang.serialization.MapCodec;
@@ -26,7 +28,6 @@ import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import java.util.Collection;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -61,7 +62,7 @@ public record ContentEntitySpawns() implements BiomeModifier {
                 if (category(entry.creatureType()) == null) { ContentLog.LOGGER.error("Entity variant {} has spawn type '{}', which is not one of monster, creature, ambient or water, so that entry adds nothing", def.key(), entry.creatureType()); }
             }
             for (String type : def.biomeTypes()) {
-                if (tag(type) == null) { ContentLog.LOGGER.error("Entity variant {} names biome type '{}', which no biome tag on this line answers to", def.key(), type); }
+                if (BiomeNames.tag(type) == null) { ContentLog.LOGGER.error("Entity variant {} names biome type '{}', which no biome tag on this line answers to", def.key(), type); }
             }
         }
         if (spawning == 0) { return 0; }
@@ -103,29 +104,20 @@ public record ContentEntitySpawns() implements BiomeModifier {
         }
         if (id != null && BiomeNames.named(id, def.biomes())) { return true; }
         for (String type : def.biomeTypes()) {
-            TagKey<Biome> tag = tag(type);
+            TagKey<Biome> tag = BiomeNames.tag(type);
             if (tag != null && biome.is(tag)) { return true; }
         }
         return false;
     }
 
     private static String biomeId(String wanted) {
-        String asked = wanted.trim().toLowerCase(Locale.ROOT);
+        String asked = Settings.lower(wanted);
         String legacy = SHOWN.get(asked);
         return Ids.biome(legacy == null ? asked : legacy);
     }
 
-    @Nullable private static TagKey<Biome> tag(String type) {
-        String named = ContentFormats.biomeTag(type);
-        ResourceLocation id = named == null ? null : ResourceLocation.tryParse(named.startsWith("#") ? named.substring(1) : named);
-        return id == null ? null : TagKey.create(Registries.BIOME, id);
-    }
-
     @Nullable private static MobCategory category(String name) {
         if ("water".equals(name)) { return MobCategory.WATER_CREATURE; }
-        for (MobCategory category : MobCategory.values()) {
-            if (category.getName().equalsIgnoreCase(name)) { return category; }
-        }
-        return null;
+        return Enums.byName(MobCategory.class, name);
     }
 }

@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,8 +15,7 @@ public final class ContentCityStructureJoins {
 
     static void raiseJunctions(GenerationContext context, CityPlan plan, Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<ContentCityStructure.Well> wells) {
         Map<CityPlan.Junction, Integer> first = new HashMap<>(levels);
-        List<CityPlan.Line> lines = new ArrayList<>(plan.alongX());
-        lines.addAll(plan.alongZ());
+        List<CityPlan.Line> lines = CityLines.of(plan);
         int passes = 0;
         Set<CityPlan.Junction> moved = raisedOnce(context, plan, lines, levels, run, rails, wells, null);
         while (!moved.isEmpty()) {
@@ -37,11 +35,11 @@ public final class ContentCityStructureJoins {
         Map<CityPlan.Junction, Integer> raised = new HashMap<>();
         CityGround ground = CityGround.of(context);
         for (CityPlan.Line line : lines) {
-            if (moved != null && moved.stream().noneMatch(junction -> junction.alongX().equals(line) || junction.alongZ().equals(line))) { continue; }
+            if (moved != null && moved.stream().noneMatch(junction -> junction.on(line))) { continue; }
             ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, levels, run, rails, wells, true);
             int start = graded.start();
             for (CityPlan.Line other : plan.crossing(line)) {
-                CityPlan.Junction junction = line.alongX() ? new CityPlan.Junction(line, other) : new CityPlan.Junction(other, line);
+                CityPlan.Junction junction = CityPlan.Junction.of(line, other);
                 Integer level = levels.get(junction);
                 if (level == null || !line.covers(other.middle()) || !other.covers(line.middle()) || ContentCityStructurePlaza.plazaOf(wells, junction) != null) { continue; }
                 int most = level;
@@ -64,7 +62,7 @@ public final class ContentCityStructureJoins {
         int afterLevel = 0;
         for (CityPlan.Line other : plan.crossing(owner)) {
             if (other.equals(met) || !owner.covers(other.middle()) || !other.covers(owner.middle())) { continue; }
-            Integer level = levels.get(owner.alongX() ? new CityPlan.Junction(owner, other) : new CityPlan.Junction(other, owner));
+            Integer level = levels.get(CityPlan.Junction.of(owner, other));
             if (level == null) { continue; }
             if (other.last() < met.at() && other.last() > before) {
                 before = other.last();

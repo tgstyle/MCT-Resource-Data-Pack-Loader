@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -42,7 +43,7 @@ public final class ContentCityStructurePlaza {
             if (!plan.emits(x, z)) { continue; }
             int level = CityPlan.wellGround(ground, x, z);
             levels.put(middle, level);
-            long placed = found.isEmpty() && plan.plazas().size() == 1 ? plan.originX() * 341873128712L + plan.originZ() * 132897987541L : x * 341873128712L + z * 132897987541L;
+            long placed = found.isEmpty() && plan.plazas().size() == 1 ? SeededRandom.salt(plan.originX(), plan.originZ()) : SeededRandom.salt(x, z);
             String named = ContentCity.wellStructure(RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ placed));
             ResourceLocation template = named == null ? null : ResourceLocation.tryParse(named);
             if (named != null && (template == null || context.structureTemplateManager().get(template).isEmpty())) {
@@ -51,7 +52,7 @@ public final class ContentCityStructurePlaza {
             }
             int tall = template == null ? -1 : context.structureTemplateManager().get(template).orElseThrow().getSize(Rotation.NONE).getY();
             int top = level + Math.max(4, tall);
-            found.add(new ContentCityStructure.Well(template, tall, new BoundingBox(x, level, z, x + ContentCityWellPiece.SIZE - 1, top, z + ContentCityWellPiece.SIZE - 1), level, middle));
+            found.add(new ContentCityStructure.Well(template, tall, CityBoxes.well(x, level, z, top), level, middle));
         }
         return found;
     }
@@ -81,8 +82,8 @@ public final class ContentCityStructurePlaza {
 
     static int[] footprints(List<BoundingBox> claims, List<ContentCityStructure.Seated> seated) {
         IntList boxes = new IntArrayList();
-        for (BoundingBox claim : claims) { boxes.addAll(IntList.of(claim.minX(), claim.minZ(), claim.maxX(), claim.maxZ())); }
-        for (ContentCityStructure.Seated held : seated) { boxes.addAll(IntList.of(held.box().minX(), held.box().minZ(), held.box().maxX(), held.box().maxZ())); }
+        for (BoundingBox claim : claims) { CityBoxes.add(boxes, claim); }
+        for (ContentCityStructure.Seated held : seated) { CityBoxes.add(boxes, held.box()); }
         return boxes.toIntArray();
     }
 
@@ -93,9 +94,7 @@ public final class ContentCityStructurePlaza {
         for (CityPlan.Line line : List.of(well.middle().alongX(), well.middle().alongZ())) {
             ContentCityStructure.Laid street = laid.get(line);
             if (street == null) { continue; }
-            int low = (line.alongX() ? box.minX() : box.minZ()) - reach;
-            int high = (line.alongX() ? box.maxX() : box.maxZ()) + reach;
-            for (int row = low; row <= high; row++) {
+            for (int row = CityLines.least(line, box) - reach; row <= CityLines.most(line, box) + reach; row++) {
                 int index = row - street.start();
                 if (index < 0 || index >= street.profile().length || !street.paved()[index] || street.bridged()[index] || street.profile()[index] >= well.level()) { continue; }
                 for (int across = line.at() - 1; across <= line.last() + 1; across++) {
@@ -134,7 +133,7 @@ public final class ContentCityStructurePlaza {
             builder.addPiece(new ContentCityPlotPiece(context.structureTemplateManager(), well.template(), Rotation.NONE, 100, new BlockPos(box.minX() + (ContentCityWellPiece.SIZE - span.getX()) / 2, well.level() + 1, box.minZ() + (ContentCityWellPiece.SIZE - span.getZ()) / 2), true));
         }
         PathIntersectDef design = ContentPathIntersects.forJunction(context.seed(), box.minX(), box.minZ());
-        builder.addPiece(new ContentCityPlazaPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), CityPlan.plazaPaved(), CityPlan.walkWidth(), CityCross.of(CityPlan.streetFullWidth(), false).core(), design == null ? "" : design.key().toString(), middleX, middleZ, arms, footprints));
+        builder.addPiece(new ContentCityPlazaPiece(box.minX(), box.minZ(), box.maxX(), box.maxZ(), well.level(), CityPlan.plazaPaved(), CityPlan.walkWidth(), CityCross.of(CityPlan.fullWidth(), false).core(), design == null ? "" : design.key().toString(), middleX, middleZ, arms, footprints));
         ContentLog.LOGGER.debug("The well {} stands at {}, {} to {}, {} on the plaza of the district at {}, {}, at level {}", well.template() == null ? "of the game's own build" : well.template(), box.minX(), box.minZ(), box.maxX(), box.maxZ(), plan.originX(), plan.originZ(), well.level());
         if (!ContentCity.sewers() || !ContentCity.sewerWellEntrance()) { return; }
         if (ContentCitySewerPiece.cramped(context.heightAccessor().getMinBuildHeight(), well.level())) {

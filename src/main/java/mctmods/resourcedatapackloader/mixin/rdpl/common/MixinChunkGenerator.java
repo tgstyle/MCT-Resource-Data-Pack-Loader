@@ -32,25 +32,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ChunkGenerator.class) public abstract class MixinChunkGenerator {
-    @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true)
-    private void rdpl$structureMost(StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk, ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "tryGenerateStructure", at = @At("HEAD"), cancellable = true) private void rdpl$structureMost(StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk, ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
         ContentPregen.worldgenMoved();
-        if (ContentPopulateControl.refusesStructure(ChunkGenerator.class.cast(this), structureSelectionEntry.structure().value()) || ContentStructureMost.refuses(structureSelectionEntry.structure().value(), structureManager, registryAccess, chunkPos) || ContentVoidWorld.voidRefuses(((IStructureManager) structureManager).rdpl$level(), structureSelectionEntry.structure().value()) || ContentStructureMaps.refuses(((IStructureManager) structureManager).rdpl$level(), structureSelectionEntry.structure().value())) { cir.setReturnValue(false); }
+        if (ContentPopulateControl.refusesStructure((ChunkGenerator) (Object) this, structureSelectionEntry.structure().value()) || ContentStructureMost.refuses(structureSelectionEntry.structure().value(), structureManager, registryAccess, chunkPos) || ContentVoidWorld.voidRefuses(((IStructureManager) structureManager).rdpl$getLevel(), structureSelectionEntry.structure().value()) || ContentStructureMaps.refuses(((IStructureManager) structureManager).rdpl$getLevel(), structureSelectionEntry.structure().value())) { cir.setReturnValue(false); }
     }
 
-    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE"))
-    private StructureStart rdpl$cityGround(StructureStart structurestart, StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed) {
-        return ContentCityClaim.overrides(structurestart, seed, ChunkGenerator.class.cast(this), random, registryAccess) || ContentRoughGround.refuses(structurestart, seed, ChunkGenerator.class.cast(this), random, registryAccess) ? StructureStart.INVALID_START : structurestart;
-    }
+    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE")) private StructureStart rdpl$cityGround(StructureStart structurestart, StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed) { return ContentCityClaim.overrides(structurestart, seed, (ChunkGenerator) (Object) this, random, registryAccess) || ContentRoughGround.refuses(structurestart, seed, (ChunkGenerator) (Object) this, random, registryAccess) ? StructureStart.INVALID_START : structurestart; }
 
-    @Inject(method = "tryGenerateStructure", at = @At("RETURN"))
-    private void rdpl$founded(StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk, ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "tryGenerateStructure", at = @At("RETURN")) private void rdpl$founded(StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk, ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
         ContentPregen.worldgenMoved();
         if (cir.getReturnValueZ()) { ContentStructureMost.founded(structureSelectionEntry.structure().value(), structureManager, registryAccess, chunkPos); }
     }
 
-    @Inject(method = "applyBiomeDecoration", at = @At("HEAD"))
-    private void rdpl$born(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager, CallbackInfo ci) {
+    @Inject(method = "applyBiomeDecoration", at = @At("HEAD")) private void rdpl$born(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager, CallbackInfo ci) {
         ContentPregen.worldgenMoved();
         ContentBedrock.flattenChunk(level, chunk.getPos());
         if (ContentVoidWorld.voidApplies(level.getLevel())) { return; }
@@ -58,8 +52,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         CityCrown.born(level, chunk.getPos(), structureManager);
     }
 
-    @Inject(method = "applyBiomeDecoration", at = @At("TAIL"))
-    private void rdpl$dressed(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager, CallbackInfo ci) {
+    @Inject(method = "applyBiomeDecoration", at = @At("TAIL")) private void rdpl$dressed(WorldGenLevel level, ChunkAccess chunk, StructureManager structureManager, CallbackInfo ci) {
         ContentPregen.worldgenMoved();
         if (ContentVoidWorld.voidApplies(level.getLevel())) { return; }
         ContentCityTrees.dressed(level, chunk.getPos(), structureManager);

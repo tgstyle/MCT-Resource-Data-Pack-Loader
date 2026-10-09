@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.OverrideDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
+import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockBehaviour;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStateBase;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IFireBlock;
@@ -14,10 +16,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
@@ -41,14 +42,11 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentOverrides {
-    private static final Gson GSON = new GsonBuilder().create();
-    private static final List<String> TOOLS = List.of("pickaxe", "axe", "shovel", "hoe", "sword");
     private static final List<String> TIERS = List.of("minecraft:needs_stone_tool", "minecraft:needs_iron_tool", "minecraft:needs_diamond_tool", ContentFormats.NEEDS_NETHERITE_TOOL);
     private static final int DEFAULT_FIRE_SPREAD = 5;
     private static final float DEFAULT_EAT_SECONDS = 1.6F;
@@ -88,7 +86,7 @@ public final class ContentOverrides {
         for (OverrideDef def : DEFS.values()) {
             if (def.harvestTool() == null || !ContentRegistry.available(def.requires(), def.target()) || !BuiltInRegistries.BLOCK.containsKey(def.target())) { continue; }
             ContentGenerated.harvestTags(tags, def.target(), def.harvestTool(), def.harvestToolLevel());
-            for (String tool : TOOLS) {
+            for (String tool : ContentToolTypes.HARVEST) {
                 if (!tool.equals(def.harvestTool())) { ContentGenerated.tag(removed, mineable(tool), def.target()); }
             }
             int tier = Math.min(def.harvestToolLevel(), TIERS.size());
@@ -125,14 +123,11 @@ public final class ContentOverrides {
     }
 
     @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Override file {} is empty, ignoring it", source);
-            return null;
-        }
-        String tool = json.has("harvestTool") ? GsonHelper.getAsString(json, "harvestTool").trim().toLowerCase(Locale.ROOT) : null;
-        if (tool != null && !TOOLS.contains(tool)) {
-            ContentLog.LOGGER.error("Override file {} names harvestTool '{}', which is not one of {}, leaving the tool alone", source, tool, TOOLS);
+        JsonObject json = Json.object(source, contents, "override file");
+        if (json == null) { return null; }
+        String tool = json.has("harvestTool") ? Settings.lower(GsonHelper.getAsString(json, "harvestTool")) : null;
+        if (tool != null && !ContentToolTypes.HARVEST.contains(tool)) {
+            ContentLog.LOGGER.error("Override file {} names harvestTool '{}', which is not one of {}, leaving the tool alone", source, tool, ContentToolTypes.HARVEST);
             tool = null;
         }
         List<PotionEffectDef> effects = null;
@@ -158,9 +153,7 @@ public final class ContentOverrides {
         return def;
     }
 
-    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) {
-        return new OverrideDef.FoodDef(Math.max(0, GsonHelper.getAsInt(json, "heal", 1)), Math.max(0.0F, GsonHelper.getAsFloat(json, "saturation", 0.6F)), GsonHelper.getAsBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json));
-    }
+    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, GsonHelper.getAsInt(json, "heal", 1)), Math.max(0.0F, GsonHelper.getAsFloat(json, "saturation", 0.6F)), GsonHelper.getAsBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
 
     private static boolean apply(OverrideDef def, Map<Block, Integer> lights) {
         boolean block = def.touchesBlock() && applyBlock(def, lights);
@@ -255,7 +248,7 @@ public final class ContentOverrides {
     }
 
     @Nullable private static MobEffectInstance effect(OverrideDef def, PotionEffectDef entry) {
-        Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(entry.potion()));
+        Holder<MobEffect> effect = ContentEffects.find(entry.potion());
         if (effect == null) {
             ContentLog.LOGGER.error("Override {} names effect {}, which does not exist, skipping that effect", def.source(), entry.potion());
             return null;
@@ -276,6 +269,8 @@ public final class ContentOverrides {
     }
 
     private static FireBlock fire() { return (FireBlock) Blocks.FIRE; }
+
+    public static void flammable(Block block, int ignite, int burn) { fire().setFlammable(block, ignite, burn); }
 
     @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsFloat(json, key) : null; }
 

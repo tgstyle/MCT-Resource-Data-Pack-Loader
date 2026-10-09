@@ -3,68 +3,42 @@ package mctmods.resourcedatapackloader.content.entity.goal;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
-import java.util.EnumSet;
-import javax.annotation.Nullable;
 
-public final class PounceGoal extends Goal {
+public final class PounceGoal extends CooldownGoal {
     private static final int CROUCH = 20;
-    private static final int REST = 180;
-    private final PathfinderMob mob;
-    @Nullable private LivingEntity target;
     private int crouched;
     private boolean airborne;
-    private int restUntil;
 
-    public PounceGoal(PathfinderMob mob) {
-        this.mob = mob;
-        setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
-    }
-
-    @Override public boolean requiresUpdateEveryTick() { return true; }
-
-    @Override public boolean canUse() {
-        if (mob.tickCount < restUntil) { return false; }
-        LivingEntity found = mob.getTarget();
-        if (found == null || !found.isAlive() || !mob.onGround()) { return false; }
-        double away = mob.distanceToSqr(found);
-        return away > 9.0D && away < 64.0D && mob.getSensing().hasLineOfSight(found);
-    }
+    public PounceGoal(PathfinderMob mob) { super(mob, true, 9.0D, 64.0D); }
 
     @Override public boolean canContinueToUse() { return target != null && target.isAlive() && (crouched < CROUCH || airborne); }
 
     @Override public void start() {
-        target = mob.getTarget();
+        super.start();
         crouched = 0;
         airborne = false;
         mob.getNavigation().stop();
     }
 
     @Override public void stop() {
-        target = null;
+        super.stop();
         airborne = false;
-        restUntil = mob.tickCount + REST;
     }
 
-    @Override public void tick() {
-        if (!canContinueToUse()) { return; }
-        if (target == null) { return; }
-        mob.getLookControl().setLookAt(target, 30.0F, 30.0F);
+    @Override protected void act(LivingEntity current) {
         if (!airborne) {
             crouched++;
             if (crouched < CROUCH) { return; }
-            Vec3 leap = new Vec3(target.getX() - mob.getX(), 0.0D, target.getZ() - mob.getZ()).normalize();
+            Vec3 leap = new Vec3(current.getX() - mob.getX(), 0.0D, current.getZ() - mob.getZ()).normalize();
             mob.setDeltaMovement(leap.x * 0.9D, 0.5D, leap.z * 0.9D);
             mob.hurtMarked = true;
             airborne = true;
             return;
         }
-        if (mob.distanceToSqr(target) < 4.0D) {
-            float damage = (float) mob.getAttributeValue(Attributes.ATTACK_DAMAGE);
-            target.hurt(mob.damageSources().mobAttack(mob), damage);
-            target.knockback(1.0D, Mth.sin(mob.getYRot() * 0.017453292F), -Mth.cos(mob.getYRot() * 0.017453292F));
+        if (mob.distanceToSqr(current) < 4.0D) {
+            StrikeGoal.hit(mob, current);
+            current.knockback(1.0D, Mth.sin(mob.getYRot() * Mth.DEG_TO_RAD), -Mth.cos(mob.getYRot() * Mth.DEG_TO_RAD));
             airborne = false;
             return;
         }

@@ -3,10 +3,12 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -35,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import javax.annotation.Nullable;
@@ -43,7 +44,7 @@ import javax.annotation.Nullable;
 public final class ContentThreat {
     private static final int SAMPLE = 100;
     private static final double REACH = 128.0D * 128.0D;
-    private static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "threatitems");
+    private static final ResourceLocation KEY = ResourceDataPackLoader.id("threatitems");
     private static final Map<UUID, Integer> BANDS = new HashMap<>();
     private static final Map<Level, List<Carrier>> CARRIERS = new HashMap<>();
     private static final Map<Level, Integer> OTHERS = new HashMap<>();
@@ -90,13 +91,13 @@ public final class ContentThreat {
         }
         for (String entry : ContentControl.list(ContentControl.SPAWNING, "threatItems", Config.worldgen.threatItems())) { parse(entry); }
         for (String entry : ContentControl.list(ContentControl.SPAWNING, "threatSays", Config.worldgen.threatSays())) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length < 2) {
+            String[] parts = Settings.split(entry);
+            if (parts == null) {
                 ContentLog.LOGGER.error("threatSays entry '{}' needs the form band=message, skipping it", entry);
                 continue;
             }
-            try { SAYS.put(Integer.parseInt(parts[0].trim()), parts[1].trim()); }
-            catch (NumberFormatException wrong) { ContentLog.LOGGER.error("threatSays entry '{}' names band '{}', which is not a number, skipping it", entry, parts[0].trim()); }
+            try { SAYS.put(Integer.parseInt(parts[0]), parts[1]); }
+            catch (NumberFormatException wrong) { ContentLog.LOGGER.error("threatSays entry '{}' names band '{}', which is not a number, skipping it", entry, parts[0]); }
         }
         scratch = new int[ENTRIES.size()];
         boolean on = levels.length > 0 && !ENTRIES.isEmpty();
@@ -105,8 +106,8 @@ public final class ContentThreat {
     }
 
     private static void parse(String entry) {
-        String[] sides = entry.split("=", 2);
-        if (sides.length < 2) {
+        String[] sides = Settings.split(entry);
+        if (sides == null) {
             ContentLog.LOGGER.error("threatItems entry '{}' needs the form item=level,count[,each|batch], skipping it", entry);
             return;
         }
@@ -131,14 +132,14 @@ public final class ContentThreat {
         }
         boolean batch = false;
         if (parts.length == 3) {
-            String mode = parts[2].trim().toLowerCase(Locale.ROOT);
+            String mode = Settings.lower(parts[2]);
             if ("batch".equals(mode)) { batch = true; }
             else if (!"each".equals(mode)) {
                 ContentLog.LOGGER.error("threatItems entry '{}' ends in '{}', which is neither each nor batch, skipping it", entry, parts[2].trim());
                 return;
             }
         }
-        ItemStack stack = ContentStacks.parse(KEY, sides[0].trim(), 1);
+        ItemStack stack = ContentStacks.parse(KEY, sides[0], 1);
         if (stack.isEmpty()) { return; }
         ENTRIES.add(new Entry(stack.getItem(), level, Math.min(count, stack.getMaxStackSize()), batch));
     }
@@ -193,7 +194,7 @@ public final class ContentThreat {
         ContentLog.LOGGER.debug("Player {} carries a threat score of {} and stands in band {} of {}", player.getName().getString(), score, band, levels.length);
         if (before == null) { return; }
         String said = SAYS.get(band);
-        if (said != null && !said.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.THREAT, said, ChatFormatting.YELLOW); }
+        if (said != null && !said.isEmpty()) { Says.tell(player, CardIds.THREAT, ChatFormatting.YELLOW, said); }
     }
 
     private static int score(Entity entity) {
@@ -223,9 +224,7 @@ public final class ContentThreat {
         return most >= 0 ? Math.min(score, most) : score;
     }
 
-    private static void tally(int[] held, Iterable<ItemStack> stacks) {
-        for (ItemStack stack : stacks) { tally(held, stack); }
-    }
+    private static void tally(int[] held, Iterable<ItemStack> stacks) { for (ItemStack stack : stacks) { tally(held, stack); } }
 
     private static void tally(int[] held, ItemStack stack) {
         if (stack.isEmpty()) { return; }
@@ -252,11 +251,11 @@ public final class ContentThreat {
         return 1.0F + (spawnRate - 1.0F) * band / levels.length;
     }
 
-    public static boolean allowed(Entity entity) {
+    public static boolean barred(Entity entity) {
         int least = least(entity);
-        if (least <= 0) { return true; }
-        if (disabled()) { return false; }
-        return bandNear(entity.level(), entity.getX(), entity.getY(), entity.getZ(), REACH) >= least;
+        if (least <= 0) { return false; }
+        if (disabled()) { return true; }
+        return bandNear(entity.level(), entity.getX(), entity.getY(), entity.getZ(), REACH) < least;
     }
 
     public static boolean deniedAtGeneration(Entity entity) {
@@ -275,17 +274,17 @@ public final class ContentThreat {
         return def == null ? 0 : def.threatLeast();
     }
 
-    public static boolean docile(@Nullable LivingEntity target, Entity mob) { return target instanceof Player player && !provokes(player, mob); }
+    public static boolean docile(@Nullable LivingEntity target, Entity mob) { return target instanceof Player player && calm(player, mob); }
 
     public static boolean plainNearestTarget(Object goal) { return goal.getClass() == NearestAttackableTargetGoal.class; }
 
-    public static boolean provokes(Player player, Entity mob) {
+    private static boolean calm(Player player, Entity mob) {
         EntityVariantDef def = ContentEntities.def(mob);
         int least = def == null ? 0 : def.threatHostile();
-        if (least <= 0) { return true; }
-        if (disabled()) { return false; }
+        if (least <= 0) { return false; }
+        if (disabled()) { return true; }
         Integer band = BANDS.get(player.getUUID());
-        return band != null && band >= least;
+        return band == null || band < least;
     }
 
     public static double notice(Entity owner, double base) {

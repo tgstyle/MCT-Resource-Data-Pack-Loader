@@ -4,12 +4,14 @@ import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,9 +66,15 @@ public final class ContentSounds {
 
     @Nullable public static SoundEvent find(@Nullable String name) { return Registered.find(BuiltInRegistries.SOUND_EVENT, ContentParser.location(modern(name))); }
 
+    @Nullable public static SoundEvent find(@Nullable ResourceLocation name) { return name == null ? null : find(name.toString()); }
+
+    @Nullable public static Holder<SoundEvent> holder(@Nullable String name) { return Registered.holder(BuiltInRegistries.SOUND_EVENT, ContentParser.location(modern(name))); }
+
+    @Nullable public static Holder<SoundEvent> holder(@Nullable ResourceLocation name) { return name == null ? null : holder(name.toString()); }
+
     private static String modern(@Nullable String name) {
         String named = name == null ? "" : name.trim();
-        String path = named.startsWith("minecraft:") ? named.substring("minecraft:".length()) : named;
+        String path = IdNames.bare(named);
         if (path.indexOf(':') >= 0) { return named; }
         String renamed = RENAMED.get(path);
         if (renamed != null) { return "minecraft:" + renamed; }

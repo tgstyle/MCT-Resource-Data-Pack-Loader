@@ -1,13 +1,14 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
 
-import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -17,13 +18,12 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
+import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import java.util.List;
 import javax.annotation.Nonnull;
 
 public final class ContentCityBulbPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityBulbPiece::new;
-    private static final int CLEAR = 4;
     static final int VERGE = 6;
     private static final String LEVEL = "Level";
     private static final String REACH = "Reach";
@@ -119,8 +119,9 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
         List<BoundingBox> others = ContentCityTrees.footprints(manager, chunk, this, box);
         List<CityRails.Laid> bores = CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ());
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (court.unpavedAt(x, z)) {
                     if (court.shoulderAt(x, z, VERGE)) { CityPlotGround.vergeFill(level, box, others, bores, x, z, pad, at); }
                     continue;
@@ -131,18 +132,18 @@ public final class ContentCityBulbPiece extends StructurePiece implements PieceB
                     case CityCross.WALK -> curb;
                     case CityCross.LINE -> edge;
                     default -> road;
-                }, 2);
+                }, Block.UPDATE_CLIENTS);
                 CityPlotGround.fillUnder(level, box, x, z, pad - 1, pad - CityPlotGround.FILL_UNDER);
                 for (int up = 1; up <= CLEAR; up++) {
                     at.set(x, pad + up, z);
-                    if (!level.getBlockState(at).isAir()) { level.setBlock(at, air, 2); }
+                    if (!level.getBlockState(at).isAir()) { level.setBlock(at, air, Block.UPDATE_CLIENTS); }
                 }
                 for (int y = pad + CLEAR + 1; y <= top; y++) {
                     at.set(x, y, z);
                     BlockState over = level.getBlockState(at);
                     if (over.isAir()) { continue; }
                     if (!over.getFluidState().isEmpty() || !CityPlotGround.cuts(level, at, over)) { break; }
-                    level.setBlock(at, air, 2);
+                    level.setBlock(at, air, Block.UPDATE_CLIENTS);
                 }
             }
         }

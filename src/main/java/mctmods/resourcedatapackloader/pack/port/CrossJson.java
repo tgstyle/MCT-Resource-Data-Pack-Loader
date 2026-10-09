@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -87,7 +89,7 @@ final class CrossJson {
         if (!element.isJsonObject()) { return element; }
         JsonObject out = new JsonObject();
         element.getAsJsonObject().entrySet().forEach(entry -> out.add(entry.getKey(), providers(entry.getValue(), down)));
-        String type = out.has(TYPE) && out.get(TYPE).isJsonPrimitive() ? out.get(TYPE).getAsString() : "";
+        String type = Json.text(out, TYPE);
         if (!PROVIDERS.contains(type.indexOf(':') < 0 ? "minecraft:" + type : type)) { return out; }
         JsonObject inner = down ? out : out.size() == 2 && out.has(VALUE) && out.get(VALUE).isJsonObject() ? out.getAsJsonObject(VALUE) : null;
         if (inner == null || !bounded(inner)) { return out; }
@@ -133,15 +135,13 @@ final class CrossJson {
     static void recipe(JsonObject json, String file, Crossed pack) {
         boolean up = pack.to() == Port.Line.V1_21;
         rename(json, up ? CONDITIONS : NEO_CONDITIONS, up ? NEO_CONDITIONS : CONDITIONS);
-        String type = json.has(TYPE) && json.get(TYPE).isJsonPrimitive() ? json.get(TYPE).getAsString() : "";
+        String type = Json.text(json, TYPE);
         if (json.has(RESULT)) { result(json, type, file, pack); }
         ingredients(json, file, pack);
         replace(json, walk(json, "", CrossIds.ITEM_REGISTRY, file, pack).getAsJsonObject());
     }
 
-    private static void rename(JsonObject json, String from, String to) {
-        if (json.has(from) && !json.has(to)) { json.add(to, json.remove(from)); }
-    }
+    private static void rename(JsonObject json, String from, String to) { if (json.has(from) && !json.has(to)) { json.add(to, json.remove(from)); } }
 
     private static void result(JsonObject json, String type, String file, Crossed pack) {
         JsonElement result = json.get(RESULT);
@@ -191,7 +191,7 @@ final class CrossJson {
         }
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        String type = held.has(TYPE) && held.get(TYPE).isJsonPrimitive() ? held.get(TYPE).getAsString() : "";
+        String type = Json.text(held, TYPE);
         if (pack.to() == Port.Line.V1_21 && ("forge:nbt".equals(type) || "forge:partial_nbt".equals(type))) {
             String item = held.has(ITEM) ? held.remove(ITEM).getAsString() : "minecraft:stone";
             held.addProperty(TYPE, NEO_COMPONENTS);

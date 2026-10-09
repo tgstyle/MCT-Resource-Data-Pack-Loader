@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -33,7 +34,7 @@ public final class RainSplash {
     public static ParticleOptions particle(RainDef rain) { return BuiltInRegistries.PARTICLE_TYPE.get(rain.particle()) instanceof SimpleParticleType type ? type : ParticleTypes.RAIN; }
 
     public static void sound(ClientLevel level, RainDef rain, BlockPos camera, BlockPos at) {
-        SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(rain.sound());
+        SoundEvent sound = ContentSounds.find(rain.sound());
         if (sound == null) { return; }
         if (at.getY() > camera.getY() + 1 && level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, camera).getY() > Mth.floor(camera.getY())) { level.playLocalSound(at, sound, SoundSource.WEATHER, rain.volume() * 0.5F, 0.5F, false); }
         else { level.playLocalSound(at, sound, SoundSource.WEATHER, rain.volume(), 1.0F, false); }

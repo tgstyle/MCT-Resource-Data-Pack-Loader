@@ -4,10 +4,10 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -16,14 +16,13 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.fluids.FluidStack;
-
 import javax.annotation.Nonnull;
 
-public class EntityStorageScreen extends AbstractContainerScreen<EntityStorageMenu> {
+public final class EntityStorageScreen extends BackdropContainerScreen<EntityStorageMenu> {
     private static final int TROUGH = 0xFF373737;
     private static final int ENERGY = 0xFFC03030;
     private static final int TEXT = 0xFFFFFFFF;
-    private static final int HEADER = 17;
+    private static final int HEADER = ContentContainerScreen.HEADER;
     private static final int CELL = ContentContainerMenu.SLOT;
     private static final int EDGE = ContentContainerScreen.EDGE;
     private static final int TILE = 16;
@@ -37,12 +36,6 @@ public class EntityStorageScreen extends AbstractContainerScreen<EntityStorageMe
         this.imageWidth = ContentContainerMenu.width(shape);
         this.imageHeight = ContentContainerMenu.height(shape);
         this.inventoryLabelY = this.imageHeight - 94;
-    }
-
-    @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partial) {
-        renderBackground(graphics, mouseX, mouseY, partial);
-        super.render(graphics, mouseX, mouseY, partial);
-        renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override protected void renderBg(@Nonnull GuiGraphics graphics, float partial, int mouseX, int mouseY) {
@@ -85,7 +78,7 @@ public class EntityStorageScreen extends AbstractContainerScreen<EntityStorageMe
         int color = client.getTintColor(held);
         graphics.enableScissor(x, y, x + wide, y + FILL_TALL);
         for (int across = 0; across < wide; across += TILE) {
-            graphics.blit(x + across, y, 0, TILE, TILE, sprite, (color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, (color >>> 24) / 255.0F);
+            graphics.blit(x + across, y, 0, TILE, TILE, sprite, Rgb.red(color), Rgb.green(color), Rgb.blue(color), (color >>> 24) / 255.0F);
         }
         graphics.disableScissor();
     }

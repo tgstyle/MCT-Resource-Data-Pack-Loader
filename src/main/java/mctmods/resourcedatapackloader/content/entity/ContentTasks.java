@@ -7,7 +7,9 @@ import mctmods.resourcedatapackloader.content.def.TaskDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ILookAtPlayerGoal;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.INearestAttackableTargetGoal;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Goals;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -272,7 +274,7 @@ public final class ContentTasks {
     }
 
     @Nullable private static Kind known(ResourceLocation key, String name) {
-        Kind kind = KINDS.get(name.trim().toLowerCase(Locale.ROOT));
+        Kind kind = KINDS.get(Settings.lower(name));
         if (kind == null) { ContentLog.LOGGER.error("Entity variant {} names the task '{}', which is not one of {}", key, name, names()); }
         return kind;
     }
@@ -308,11 +310,7 @@ public final class ContentTasks {
         ContentLog.LOGGER.debug("Entity variant {} at {}, {}, {} takes its tasks:{}", def.key(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), taken);
     }
 
-    public static void drop(GoalSelector selector, Class<? extends Goal> type) {
-        for (WrappedGoal wrapped : new ArrayList<>(selector.getAvailableGoals())) {
-            if (wrapped.getGoal().getClass() == type) { selector.removeGoal(wrapped.getGoal()); }
-        }
-    }
+    public static void drop(GoalSelector selector, Class<? extends Goal> type) { Goals.remove(selector, goal -> goal.getClass() == type); }
 
     public static boolean landsOnLeaves(TamableAnimal tamable, boolean flies) {
         for (WrappedGoal wrapped : tamable.goalSelector.getAvailableGoals()) {
@@ -322,11 +320,7 @@ public final class ContentTasks {
         return flies;
     }
 
-    private static void strip(Mob mob, GoalSelector selector, Kind kind) {
-        for (WrappedGoal wrapped : new ArrayList<>(selector.getAvailableGoals())) {
-            if (kindOf(mob, wrapped.getGoal()) == kind) { selector.removeGoal(wrapped.getGoal()); }
-        }
-    }
+    private static void strip(Mob mob, GoalSelector selector, Kind kind) { Goals.remove(selector, goal -> kindOf(mob, goal) == kind); }
 
     @Nullable private static Kind kindOf(Mob mob, Goal goal) {
         Kind made = MADE.get(goal);
@@ -335,7 +329,7 @@ public final class ContentTasks {
         if (type == FollowOwnerGoal.class) { return KINDS.get(mob instanceof FlyingAnimal ? "followownerflying" : "followowner"); }
         if (type == NearestAttackableTargetGoal.class) {
             if (mob instanceof Ghast) { return KINDS.get("findentitynearestplayer"); }
-            if (mob instanceof Slime) { return KINDS.get(((INearestAttackableTargetGoal) goal).rdpl$targetType() == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
+            if (mob instanceof Slime) { return KINDS.get(((INearestAttackableTargetGoal) goal).rdpl$getTargetType() == Player.class ? "findentitynearestplayer" : "findentitynearest"); }
             return KINDS.get("nearestattackabletarget");
         }
         if (type == LookAtPlayerGoal.class) { return KINDS.get("watchclosest"); }
@@ -392,7 +386,7 @@ public final class ContentTasks {
 
     private static Goal watching(LookAtPlayerGoal goal, TaskDef task) {
         Predicate<LivingEntity> only = only(task.entity());
-        if (only != null) { ((ILookAtPlayerGoal) goal).rdpl$lookAtContext().selector(only); }
+        if (only != null) { ((ILookAtPlayerGoal) goal).rdpl$getLookAtContext().selector(only); }
         return goal;
     }
 

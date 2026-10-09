@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
@@ -58,13 +58,11 @@ public final class SleepByDayGoal extends Goal {
     @Override public void start() {
         settled = false;
         if (shade == null) { return; }
-        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {}, {} heads for shade at {}, {}, {} for the day, sky over it {}", mob.getName().getString(), mob.getBlockX(), mob.getBlockY(), mob.getBlockZ(), shade.getX(), shade.getY(), shade.getZ(), covered(mob.blockPosition()) ? "covered" : "open"); }
+        GoalLog.debug(mob, "heads for shade at {}, {}, {} for the day, sky over it {}", shade.getX(), shade.getY(), shade.getZ(), covered(mob.blockPosition()) ? "covered" : "open");
         walk();
     }
 
-    private void walk() {
-        if (shade != null) { mob.getNavigation().moveTo(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D, 1.0D); }
-    }
+    private void walk() { if (shade != null) { Walking.toBlock(mob, shade, 1.0D); } }
 
     @Override public void stop() {
         shade = null;

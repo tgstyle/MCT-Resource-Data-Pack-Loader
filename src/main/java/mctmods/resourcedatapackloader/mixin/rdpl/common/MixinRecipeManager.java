@@ -34,19 +34,17 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter {
-    @Unique private static final int RDPL_COOKING_TIME = 200;
+    @Unique private static final int rdpl$COOKING_TIME = 200;
     @Shadow @Final private HolderLookup.Provider registries;
     @Shadow private Multimap<RecipeType<?>, RecipeHolder<?>> byType;
     @Shadow private Map<ResourceLocation, RecipeHolder<?>> byName;
 
-    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
-    private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
-        ConditionalOps<JsonElement> ops = ((IContextAwareReloadListener) this).rdpl$makeConditionalOps();
+    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD")) private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
+        ConditionalOps<JsonElement> ops = ((IContextAwareReloadListener) (Object) this).rdpl$makeConditionalOps();
         RecipeLoading.begin(object, resourceManager, json -> ICondition.conditionsMatched(ops, json), (id, json) -> Recipe.CONDITIONAL_CODEC.parse(ops, json).getOrThrow(JsonParseException::new));
     }
 
-    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN"))
-    private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
+    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
         rdpl$rebuild(false);
         RecipeLoading.attach(this);
     }
@@ -70,7 +68,7 @@ import java.util.Map;
         if (late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
                 if (named.containsKey(addition.id())) { continue; }
-                RecipeHolder<SmeltingRecipe> holder = new RecipeHolder<>(addition.id(), new SmeltingRecipe("", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.output().getCount() * Math.min(addition.experience(), 1.0F), RDPL_COOKING_TIME));
+                RecipeHolder<SmeltingRecipe> holder = new RecipeHolder<>(addition.id(), new SmeltingRecipe("", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.output().getCount() * Math.min(addition.experience(), 1.0F), rdpl$COOKING_TIME));
                 kept.put(RecipeType.SMELTING, holder);
                 named.put(addition.id(), holder);
             }

@@ -27,13 +27,13 @@ import javax.annotation.Nullable;
         rdpl$seaLevel = seaLevel;
     }
 
-    @Inject(method = "computeFluid", at = @At("HEAD"), cancellable = true)
-    private void rdpl$regionWater(int x, int y, int z, CallbackInfoReturnable<Aquifer.FluidStatus> cir) {
+    @Inject(method = "computeFluid", at = @At("HEAD"), cancellable = true) private void rdpl$regionWater(int x, int y, int z, CallbackInfoReturnable<Aquifer.FluidStatus> cir) {
         if (rdpl$regions == null) { return; }
         int pinned = ContentCaveRegions.waterLevel(rdpl$regions, x, y, z);
         if (pinned == CaveRegionDef.NO_WATER) { return; }
         IFluidStatus deep = (IFluidStatus) (Object) globalFluidPicker.computeFluid(x, DimensionType.WAY_BELOW_MIN_Y, z);
         int floor = deep.rdpl$getFluidType().is(Blocks.LAVA) ? deep.rdpl$getFluidLevel() + 2 : pinned;
-        cir.setReturnValue(new Aquifer.FluidStatus(Math.min(rdpl$seaLevel - 1, Math.max(pinned, floor)), Blocks.WATER.defaultBlockState()));
+        int level = Math.max(pinned, floor);
+        cir.setReturnValue(new Aquifer.FluidStatus(Math.min(rdpl$seaLevel - 1, level), Blocks.WATER.defaultBlockState()));
     }
 }

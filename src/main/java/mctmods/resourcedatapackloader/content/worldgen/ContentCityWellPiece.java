@@ -1,22 +1,23 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityPlotGround.FILL_UNDER;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.RotatedPillarBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.core.Direction;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
 import javax.annotation.Nonnull;
 
 public final class ContentCityWellPiece extends StructurePiece {
@@ -24,7 +25,6 @@ public final class ContentCityWellPiece extends StructurePiece {
     public static final int SIZE = 6;
     private static final int RIM = 11;
     private static final int CLEAR_LEAST = 4;
-    private static final int FILL = 8;
     private static final String LEVEL = "Level";
     private static final String TALL = "Tall";
     private static final String KIND = "Kind";
@@ -61,7 +61,7 @@ public final class ContentCityWellPiece extends StructurePiece {
 
     private void set(WorldGenLevel world, BoundingBox box, int localX, int localY, int localZ, BlockState state) {
         BlockPos at = new BlockPos(boundingBox.minX() + localX, level - RIM + localY, boundingBox.minZ() + localZ);
-        if (box.isInside(at)) { world.setBlock(at, state, 2); }
+        if (box.isInside(at)) { world.setBlock(at, state, Block.UPDATE_CLIENTS); }
     }
 
     private BlockState typed(BlockState plain) {
@@ -111,7 +111,7 @@ public final class ContentCityWellPiece extends StructurePiece {
                 for (int y = level + 1; y < world.getMaxBuildHeight(); y++) {
                     at.set(boundingBox.minX() + x, y, boundingBox.minZ() + z);
                     if (!box.isInside(at) || world.getBlockState(at).isAir()) { break; }
-                    world.setBlock(at, air, 2);
+                    world.setBlock(at, air, Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -127,25 +127,23 @@ public final class ContentCityWellPiece extends StructurePiece {
                 if (!box.isInside(at)) { continue; }
                 for (int y = level + 1; y <= level + Math.max(CLEAR_LEAST, tall); y++) {
                     at.set(x, y, z);
-                    if (!world.getBlockState(at).isAir()) { world.setBlock(at, air, 2); }
+                    if (!world.getBlockState(at).isAir()) { world.setBlock(at, air, Block.UPDATE_CLIENTS); }
                 }
-                for (int y = level - 1; y >= level - FILL; y--) {
+                for (int y = level - 1; y >= level - FILL_UNDER; y--) {
                     at.set(x, y, z);
                     BlockState held = world.getBlockState(at);
                     if (held.isSolid()) { break; }
-                    world.setBlock(at, Blocks.DIRT.defaultBlockState(), 2);
+                    world.setBlock(at, Blocks.DIRT.defaultBlockState(), Block.UPDATE_CLIENTS);
                 }
-                world.setBlock(at.set(x, level, z), floor, 2);
+                world.setBlock(at.set(x, level, z), floor, Block.UPDATE_CLIENTS);
             }
         }
     }
 
     @Override public void postProcess(@Nonnull WorldGenLevel world, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(world, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
-        try {
+        CityBiome.within(world, box, () -> {
             if (tall < 0) { vanilla(world, box); }
             else { seat(world, box); }
-        }
-        finally { CityBiome.leave(); }
+        });
     }
 }

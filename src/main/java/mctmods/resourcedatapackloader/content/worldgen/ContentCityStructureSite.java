@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Medians;
+import mctmods.resourcedatapackloader.util.Raced;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -14,6 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
+import java.util.function.Supplier;
 
 public final class ContentCityStructureSite {
     private static final int KEEP_REACH = 6;
@@ -29,34 +32,26 @@ public final class ContentCityStructureSite {
 
     static ContentCityStructure.District district(GenerationContext context, CityGround ground, CityPlan plan) {
         CityPlan own = settled(context, ground, plan);
-        ContentCityStructure.District held = ContentCityStructure.DISTRICTS.get(own);
-        if (held != null) { return held; }
-        ContentCityStructure.District made = ContentLog.LOGGER.quietly(() -> survey(context, ground, own));
-        ContentCityStructure.District raced = ContentCityStructure.DISTRICTS.putIfAbsent(own, made);
-        return raced == null ? made : raced;
+        return cached(ContentCityStructure.DISTRICTS, own, () -> survey(context, ground, own));
     }
 
-    static Map<CityPlan.Line, int[]> joints(GenerationContext context, CityGround ground, CityPlan plan) {
-        Map<CityPlan.Line, int[]> held = JOINTS.get(plan);
-        if (held != null) { return held; }
-        Map<CityPlan.Line, int[]> made = ContentLog.LOGGER.quietly(() -> jointsOf(context, ground, plan));
-        Map<CityPlan.Line, int[]> raced = JOINTS.putIfAbsent(plan, made);
-        return raced == null ? made : raced;
+    static Map<CityPlan.Line, int[]> joints(GenerationContext context, CityGround ground, CityPlan plan) { return cached(JOINTS, plan, () -> jointsOf(context, ground, plan)); }
+
+    private static <V> V cached(Map<CityPlan, V> cache, CityPlan key, Supplier<V> make) {
+        return Raced.held(cache, key, () -> ContentLog.LOGGER.quietly(make));
     }
 
     private static Map<CityPlan.Line, int[]> jointsOf(GenerationContext context, CityGround ground, CityPlan plan) {
         Grading grading = grading(context, ground, plan);
         Map<CityPlan.Line, int[]> found = new HashMap<>();
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line line : lines) {
-                ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
-                int[] profile = graded.profile();
-                boolean[] held = graded.held();
-                CityGrade.rampSteps(profile, held, graded.pinned());
-                int low = Mth.clamp(line.from() - graded.start(), 0, profile.length - 1);
-                int high = Mth.clamp(line.to() - graded.start(), 0, profile.length - 1);
-                found.put(line, new int[] {profile[low], held[low] ? 1 : 0, profile[high], held[high] ? 1 : 0});
-            }
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
+            int[] profile = graded.profile();
+            boolean[] held = graded.held();
+            ContentCityStructureGrade.ramp(graded);
+            int low = Mth.clamp(line.from() - graded.start(), 0, profile.length - 1);
+            int high = Mth.clamp(line.to() - graded.start(), 0, profile.length - 1);
+            found.put(line, new int[] {profile[low], held[low] ? 1 : 0, profile[high], held[high] ? 1 : 0});
         }
         return found;
     }
@@ -65,21 +60,13 @@ public final class ContentCityStructureSite {
         Grading grading = grading(context, ground, plan);
         Map<CityPlan.Line, ContentCityStructure.Street> streets = new HashMap<>();
         Map<CityPlan.Line, int[]> finals = new HashMap<>();
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line line : lines) {
-                ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells());
-                int[] profile = graded.profile();
-                CityGrade.rampSteps(profile, graded.held(), graded.pinned());
-                int[] grade = profile.clone();
-                boolean[] decked = new boolean[profile.length];
-                ContentCityStructureGrade.lift(plan, line, graded.start(), profile, decked, graded.bridged(), graded.bored(), grading.decks());
-                streets.put(line, new ContentCityStructure.Street(graded.start(), grade, CityGrade.roofed(profile, CityGradeBore.openEnds(graded.ground(), graded.start(), line), graded.bridged(), ContentCity.tunnelDepth())));
-                int[] built = profile.clone();
-                boolean[] held = graded.held().clone();
-                for (int at = 0; at < decked.length; at++) { held[at] |= decked[at]; }
-                CityGrade.rampSteps(built, held, graded.pinned());
-                finals.put(line, built);
-            }
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells());
+            int[] profile = graded.profile();
+            ContentCityStructureGrade.Shaped shaped = ContentCityStructureGrade.shaped(plan, line, graded, grading.decks());
+            streets.put(line, new ContentCityStructure.Street(graded.start(), shaped.grade(),CityGrade.roofed(profile, CityGradeBore.openEnds(graded.ground(), graded.start(), line), graded.bridged(), ContentCity.tunnelDepth())));
+            ContentCityStructureGrade.settle(graded, shaped.decked());
+            finals.put(line, profile);
         }
         courtStreets(ground, plan, streets, finals);
         return new ContentCityStructure.District(streets, grading.wells(), grading.claims());
@@ -103,9 +90,9 @@ public final class ContentCityStructureSite {
         }
     }
 
-    private record Grading(Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<BoundingBox> claims, List<ContentCityStructure.Well> wells, Map<Integer, Integer> decks) {}
+    record Grading(Map<CityPlan.Junction, Integer> levels, int run, Map<CityPlan.Rail, CityRails.Laid> rails, List<BoundingBox> claims, List<ContentCityStructure.Well> wells, Map<Integer, Integer> decks) {}
 
-    private static Grading grading(GenerationContext context, CityGround ground, CityPlan plan) {
+    static Grading grading(GenerationContext context, CityGround ground, CityPlan plan) {
         ground.warm(plan.windowX() - 1, plan.windowZ() - 1, plan.windowX() + CityPlan.district(), plan.windowZ() + CityPlan.district());
         Map<CityPlan.Junction, Integer> levels = new HashMap<>();
         Map<CityPlan.Line, int[]> setters = new HashMap<>();
@@ -143,34 +130,25 @@ public final class ContentCityStructureSite {
         BoundingBox heart = grading.wells().isEmpty() ? null : grading.wells().getFirst().box();
         int middleX = heart == null ? plan.windowX() + CityPlan.district() / 2 : (heart.minX() + heart.maxX()) / 2;
         int middleZ = heart == null ? plan.windowZ() + CityPlan.district() / 2 : (heart.minZ() + heart.maxZ()) / 2;
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line line : lines) {
-                ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
-                int[] profile = graded.profile();
-                boolean[] held = graded.held();
-                CityGrade.rampSteps(profile, held, graded.pinned());
-                boolean[] decked = new boolean[profile.length];
-                ContentCityStructureGrade.lift(plan, line, graded.start(), profile, decked, graded.bridged(), graded.bored(), grading.decks());
-                for (int at = 0; at < decked.length; at++) { held[at] |= decked[at]; }
-                CityGrade.rampSteps(profile, held, graded.pinned());
-                int middle = line.alongX() ? middleX : middleZ;
-                boolean growsUp = Math.abs(line.from() - middle) <= Math.abs(line.to() - middle);
-                int kept = shoreBeforeSlopedDeck(ground, line, graded.start(), profile, graded.bridged(), growsUp);
-                if (kept < 0) { continue; }
-                int trimmed = Math.max(kept, attachedRows(plan, line, grading.wells(), growsUp));
-                if (trimmed >= line.to() - line.from() + 1 || trimmed < PULL_LEAST) { continue; }
-                pulled.put(line, growsUp ? line.reaching(line.from(), line.from() + trimmed - 1).ending(line.endsLow(), CityPlan.End.BARE) : line.reaching(line.to() - trimmed + 1, line.to()).ending(CityPlan.End.BARE, line.endsHigh()));
-            }
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            ContentCityStructure.Graded graded = ContentCityStructureGrade.graded(context, plan, line, grading.levels(), grading.run(), grading.rails(), grading.wells(), false);
+            int[] profile = graded.profile();
+            ContentCityStructureGrade.rampAndSettle(plan, line, graded, grading.decks());
+            int middle = line.alongX() ? middleX : middleZ;
+            boolean growsUp = Math.abs(line.from() - middle) <= Math.abs(line.to() - middle);
+            int kept = shoreBeforeSlopedDeck(ground, line, graded.start(), profile, graded.bridged(), growsUp);
+            if (kept < 0) { continue; }
+            int trimmed = Math.max(kept, attachedRows(plan, line, grading.wells(), growsUp));
+            if (trimmed >= line.to() - line.from() + 1 || trimmed < PULL_LEAST) { continue; }
+            pulled.put(line, growsUp ? line.reaching(line.from(), line.from() + trimmed - 1).ending(line.endsLow(), CityPlan.End.BARE) : line.reaching(line.to() - trimmed + 1, line.to()).ending(CityPlan.End.BARE, line.endsHigh()));
         }
         int depth = ContentCity.tunnelDepth();
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line line : lines) {
-                if (pulled.containsKey(line)) { continue; }
-                CityPlan.Line moved = line;
-                if (line.endsLow() != CityPlan.End.MET) { moved = reach(context, plan, grading, line, moved, true, depth); }
-                if (line.endsHigh() != CityPlan.End.MET) { moved = reach(context, plan, grading, line, moved, false, depth); }
-                if (!moved.equals(line)) { reached.put(line, moved); }
-            }
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            if (pulled.containsKey(line)) { continue; }
+            CityPlan.Line moved = line;
+            if (line.endsLow() != CityPlan.End.MET) { moved = reach(context, plan, grading, line, moved, true, depth); }
+            if (line.endsHigh() != CityPlan.End.MET) { moved = reach(context, plan, grading, line, moved, false, depth); }
+            if (!moved.equals(line)) { reached.put(line, moved); }
         }
         return pulled;
     }
@@ -243,11 +221,9 @@ public final class ContentCityStructureSite {
         if (!plan.mapped()) { return new int[] {plan.spanStart(line), plan.spanStart(line) + plan.spanLength(line) - 1}; }
         int least = Integer.MAX_VALUE;
         int most = Integer.MIN_VALUE;
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line other : lines) {
-                least = Math.min(least, other.alongX() == line.alongX() ? other.from() : other.at());
-                most = Math.max(most, other.alongX() == line.alongX() ? other.to() : other.last());
-            }
+        for (CityPlan.Line other : CityLines.of(plan)) {
+            least = Math.min(least, other.alongX() == line.alongX() ? other.from() : other.at());
+            most = Math.max(most, other.alongX() == line.alongX() ? other.to() : other.last());
         }
         boolean alongX = line.alongX();
         return new int[] {CityPlan.windowOf(CityPlan.districtOf(least, alongX), alongX), CityPlan.windowOf(CityPlan.districtOf(most, alongX) + 1, alongX) - 1};
@@ -256,7 +232,7 @@ public final class ContentCityStructureSite {
     private static boolean blocked(CityPlan.Line line, int near, int far, List<BoundingBox> standing) {
         BoundingBox strip = line.alongX() ? new BoundingBox(near, 0, line.at() - 1, far, 0, line.last() + 1) : new BoundingBox(line.at() - 1, 0, near, line.last() + 1, 0, far);
         for (BoundingBox box : standing) {
-            if (box.maxX() >= strip.minX() && box.minX() <= strip.maxX() && box.maxZ() >= strip.minZ() && box.minZ() <= strip.maxZ()) { return true; }
+            if (box.intersects(strip)) { return true; }
         }
         return false;
     }
@@ -313,8 +289,8 @@ public final class ContentCityStructureSite {
         int rows = 0;
         for (BoundingBox box : standing) {
             if ((line.alongX() ? box.maxZ() : box.maxX()) < line.at() - PULL_BESIDE || (line.alongX() ? box.minZ() : box.minX()) > line.last() + PULL_BESIDE) { continue; }
-            int least = line.alongX() ? box.minX() : box.minZ();
-            int most = line.alongX() ? box.maxX() : box.maxZ();
+            int least = CityLines.least(line, box);
+            int most = CityLines.most(line, box);
             if (most < line.from() || least > line.to()) { continue; }
             rows = Math.max(rows, growsUp ? most - line.from() + 1 : line.to() - least + 1);
         }
@@ -323,20 +299,16 @@ public final class ContentCityStructureSite {
 
     private static int[] kept(GenerationContext context, CityGround ground, CityPlan plan) {
         CityPlan own = settled(context, ground, plan);
-        int[] held = KEPT.get(own);
-        if (held != null) { return held; }
-        int[] made = ContentLog.LOGGER.quietly(() -> {
+        return cached(KEPT, own, () -> {
             ContentCityStructure.District district = district(context, ground, own);
             IntList boxes = new IntArrayList();
             for (CityPlan.Plot plot : own.plots()) {
                 if (ContentCityStructureStations.claimed(district.claims(), plot)) { continue; }
                 CityPlan.Plot placed = ContentCityStructureSeat.placed(context, ground, own, district, plot);
-                if (placed != null) { boxes.addAll(IntList.of(placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ())); }
+                if (placed != null) { CityBoxes.add(boxes, placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ()); }
             }
             return boxes.toIntArray();
         });
-        int[] raced = KEPT.putIfAbsent(own, made);
-        return raced == null ? made : raced;
     }
 
     static boolean buried(GenerationContext context, CityGround ground, CityPlan plan, ContentCityStructure.Seated found, List<ContentCityStructure.Seated> offered, List<ContentCityStructure.Well> wells, List<ContentCityStructure.Bulb> bulbs) {
@@ -354,7 +326,7 @@ public final class ContentCityStructureSite {
         IntList boxes = new IntArrayList();
         for (ContentCityStructure.Seated other : offered) {
             CityPlan.Plot plot = other.plot();
-            if (other != found && near(placed, plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())) { boxes.addAll(IntList.of(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())); }
+            if (other != found && near(placed, plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())) { CityBoxes.add(boxes, plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ()); }
         }
         List<CityPlan> plans = around(ground, plan, placed);
         List<ContentCityStructure.Well> plazas = new ArrayList<>(wells);
@@ -362,29 +334,25 @@ public final class ContentCityStructureSite {
             for (CityPlan.Rail rail : other.rails()) {
                 if (rail.subway()) { continue; }
                 int[] box = rail.alongX() ? new int[] {rail.from(), rail.at(), rail.to(), rail.last()} : new int[] {rail.at(), rail.from(), rail.last(), rail.to()};
-                if (near(placed, box[0], box[1], box[2], box[3])) { for (int value : box) { boxes.add(value); } }
+                if (near(placed, box[0], box[1], box[2], box[3])) { CityBoxes.add(boxes, box); }
             }
             if (other == plan) { continue; }
             int[] kept = kept(context, ground, other);
             for (int at = 0; at + 3 < kept.length; at += 4) {
-                if (near(placed, kept[at], kept[at + 1], kept[at + 2], kept[at + 3])) { boxes.addAll(IntList.of(kept[at], kept[at + 1], kept[at + 2], kept[at + 3])); }
+                if (near(placed, kept[at], kept[at + 1], kept[at + 2], kept[at + 3])) { CityBoxes.add(boxes, kept[at], kept[at + 1], kept[at + 2], kept[at + 3]); }
             }
             plazas.addAll(district(context, ground, other).wells());
         }
-        int reach = CityPlan.plazaReach();
-        for (ContentCityStructure.Well well : plazas) {
-            BoundingBox box = well.box();
-            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(IntList.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
-        }
+        keepWells(placed, plazas, boxes);
         for (ContentCityStructure.Bulb bulb : bulbs) {
             ContentCityBulbPiece.Court court = bulb.court();
             int fromX = court.centerX() - court.reach();
             int fromZ = court.centerZ() - court.reach();
             int toX = court.centerX() + court.reach();
             int toZ = court.centerZ() + court.reach();
-            if (near(placed, fromX, fromZ, toX, toZ)) { boxes.addAll(IntList.of(fromX, fromZ, toX, toZ)); }
+            if (near(placed, fromX, fromZ, toX, toZ)) { CityBoxes.add(boxes, fromX, fromZ, toX, toZ); }
         }
-        for (int value : roadsAround(plans, placed)) { boxes.add(value); }
+        CityBoxes.add(boxes, roadsAround(plans, placed));
         return boxes.toIntArray();
     }
 
@@ -399,9 +367,7 @@ public final class ContentCityStructureSite {
             count = ringGround(ground, keep, ring, count, placed.fromX() - HILL_RING, z);
             count = ringGround(ground, keep, ring, count, placed.toX() + HILL_RING, z);
         }
-        if (count == 0) { return Integer.MIN_VALUE; }
-        Arrays.sort(ring, 0, count);
-        return ring[count / 2];
+        return Medians.of(ring, count);
     }
 
     private static int ringGround(CityGround ground, int[] keep, int[] ring, int count, int x, int z) {
@@ -429,43 +395,45 @@ public final class ContentCityStructureSite {
     static int[] keepAround(List<CityPlan> plans, CityPlan.Plot placed, List<ContentCityStructure.Well> wells) {
         IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) { keepFrom(plan, placed, boxes); }
-        for (ContentCityStructure.Well well : wells) {
-            int reach = CityPlan.plazaReach();
-            BoundingBox box = well.box();
-            if (near(placed, box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)) { boxes.addAll(IntList.of(box.minX() - reach, box.minZ() - reach, box.maxX() + reach, box.maxZ() + reach)); }
-        }
-        for (int value : roadsAround(plans, placed)) { boxes.add(value); }
+        keepWells(placed, wells, boxes);
+        CityBoxes.add(boxes, roadsAround(plans, placed));
         return boxes.toIntArray();
+    }
+
+    private static void keepWells(CityPlan.Plot placed, List<ContentCityStructure.Well> wells, IntList boxes) {
+        int reach = CityPlan.plazaReach();
+        for (ContentCityStructure.Well well : wells) {
+            BoundingBox box = well.box().inflatedBy(reach, 0, reach);
+            if (near(placed, box.minX(), box.minZ(), box.maxX(), box.maxZ())) { CityBoxes.add(boxes, box); }
+        }
     }
 
     private static void keepFrom(CityPlan plan, CityPlan.Plot placed, IntList boxes) {
         for (CityPlan.Plot other : plan.plots()) {
             if (other.fromX() == placed.fromX() && other.fromZ() == placed.fromZ() && other.def() == placed.def()) { continue; }
-            if (near(placed, other.fromX(), other.fromZ(), other.toX(), other.toZ())) { boxes.addAll(IntList.of(other.fromX(), other.fromZ(), other.toX(), other.toZ())); }
+            if (near(placed, other.fromX(), other.fromZ(), other.toX(), other.toZ())) { CityBoxes.add(boxes, other.fromX(), other.fromZ(), other.toX(), other.toZ()); }
         }
         for (CityPlan.Rail rail : plan.rails()) {
             if (rail.subway()) { continue; }
             int from = rail.from();
             int to = rail.to();
             int[] box = rail.alongX() ? new int[] {from, rail.at(), to, rail.last()} : new int[] {rail.at(), from, rail.last(), to};
-            if (near(placed, box[0], box[1], box[2], box[3])) { for (int value : box) { boxes.add(value); } }
+            if (near(placed, box[0], box[1], box[2], box[3])) { CityBoxes.add(boxes, box); }
         }
     }
 
     static int[] roadsAround(List<CityPlan> plans, CityPlan.Plot placed) {
         IntList boxes = new IntArrayList();
         for (CityPlan plan : plans) {
-            for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-                for (CityPlan.Line line : lines) {
-                    int[] box = line.alongX() ? new int[] {line.from(), line.at(), line.to(), line.last()} : new int[] {line.at(), line.from(), line.last(), line.to()};
-                    if (near(placed, box[0], box[1], box[2], box[3])) { for (int value : box) { boxes.add(value); } }
-                }
+            for (CityPlan.Line line : CityLines.of(plan)) {
+                int[] box = line.alongX() ? new int[] {line.from(), line.at(), line.to(), line.last()} : new int[] {line.at(), line.from(), line.last(), line.to()};
+                if (near(placed, box[0], box[1], box[2], box[3])) { CityBoxes.add(boxes, box); }
             }
             for (CityPlan.Court court : CityPlan.plannedCourts(plan)) {
                 if (court.room() <= 0) { continue; }
                 CityPlan.Line way = court.line();
                 int[] box = way.alongX() ? new int[] {way.from(), way.at(), way.to(), way.last()} : new int[] {way.at(), way.from(), way.last(), way.to()};
-                if (near(placed, box[0], box[1], box[2], box[3])) { for (int value : box) { boxes.add(value); } }
+                if (near(placed, box[0], box[1], box[2], box[3])) { CityBoxes.add(boxes, box); }
             }
         }
         return boxes.toIntArray();

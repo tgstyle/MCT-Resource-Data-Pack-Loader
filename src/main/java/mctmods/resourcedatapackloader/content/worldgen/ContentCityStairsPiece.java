@@ -7,9 +7,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
@@ -84,9 +84,9 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
         tag.putInt(EDGE, edge);
     }
 
-    private static int stepX(boolean alongX, int row, int along, int near, int lane) { return alongX ? row + along : near + lane; }
+    private static int stepX(boolean alongX, int along, int across) { return alongX ? along : across; }
 
-    private static int stepZ(boolean alongX, int row, int along, int near, int lane) { return alongX ? near + lane : row + along; }
+    private static int stepZ(boolean alongX, int along, int across) { return alongX ? across : along; }
 
     static BoundingBox well(int level, int top, int row, int near, boolean alongX) {
         int leastAlong = row - 1;
@@ -110,21 +110,21 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
         int graded = 0;
         for (int along = 0; along <= RUN; along++) {
             for (int lane = 0; lane < WIDE; lane++) {
-                int x = stepX(alongX, row, along, near, lane);
-                int z = stepZ(alongX, row, along, near, lane);
+                int x = stepX(alongX, row + along, near + lane);
+                int z = stepZ(alongX, row + along, near + lane);
                 graded += CityPlotGround.cutBank(level, box, x, z, top + 1, top + LANDING_HEADROOM);
             }
         }
         for (int along = 0; along <= RUN; along++) {
             for (int across = edge; way > 0 ? across < wall : across > wall; across += way) {
-                int x = alongX ? row + along : across;
-                int z = alongX ? across : row + along;
+                int x = stepX(alongX, row + along, across);
+                int z = stepZ(alongX, row + along, across);
                 if (!box.isInside(at.set(x, top, z))) { continue; }
                 graded += CityPlotGround.cutBank(level, box, x, z, top + 1, top + LANDING_HEADROOM);
                 if (CityPlotGround.solid(level.getBlockState(at.set(x, top, z)))) { continue; }
                 int filled = (deck >> along & 1) != 0 ? 0 : CityPlotGround.fillBank(level, box, x, z, top, top - APPROACH_FILL);
                 if (filled == 0) {
-                    level.setBlock(at.set(x, top, z), linings.pick(seed, x, top, z), 2);
+                    level.setBlock(at.set(x, top, z), linings.pick(seed, x, top, z), Block.UPDATE_CLIENTS);
                     filled = 1;
                 }
                 graded += filled;
@@ -144,19 +144,19 @@ public final class ContentCityStairsPiece extends StructurePiece implements Cont
         int span = ContentCity.benchLength();
         BlockState seat = CityPalette.state(ContentCity.benchBlock());
         if (span < 2 || seat == null) { return 0; }
-        if (seat.hasProperty(BlockStateProperties.HORIZONTAL_FACING)) { seat = seat.setValue(BlockStateProperties.HORIZONTAL_FACING, facing); }
+        seat = CityPalette.faced(seat, facing);
         CityPalette arms = CityPalette.mixed(ContentCity.benchEndBlock());
         long seed = level.getSeed();
         int laid = 0;
         for (int step = 0; step < span; step++) {
-            int x = alongX ? from + step : across;
-            int z = alongX ? across : from + step;
+            int x = stepX(alongX, from + step, across);
+            int z = stepZ(alongX, from + step, across);
             BlockState put = step == 0 || step == span - 1 ? arms == null ? null : arms.pick(seed, x, y, z) : seat;
             if (put == null) { continue; }
             if (!box.isInside(at.set(x, y, z))) { continue; }
             if (CityPlotGround.solid(level.getBlockState(at))) { continue; }
             if (!CityPlotGround.solid(level.getBlockState(at.set(x, y - 1, z)))) { continue; }
-            level.setBlock(at.set(x, y, z), put, 2);
+            level.setBlock(at.set(x, y, z), put, Block.UPDATE_CLIENTS);
             laid++;
         }
         return laid;

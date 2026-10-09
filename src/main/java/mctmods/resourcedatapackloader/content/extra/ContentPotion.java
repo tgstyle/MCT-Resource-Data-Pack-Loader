@@ -11,6 +11,7 @@ import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import java.util.Locale;
 import javax.annotation.Nonnull;
 
 public final class ContentPotion extends MobEffect {
@@ -33,7 +34,7 @@ public final class ContentPotion extends MobEffect {
     }
 
     private static ResourceLocation modifierId(PotionDef def, AttributeDef modifier) {
-        String path = def.key().getPath() + "/" + modifier.attribute().toLowerCase(java.util.Locale.ROOT).replace(':', '.');
+        String path = def.key().getPath() + "/" + modifier.attribute().toLowerCase(Locale.ROOT).replace(':', '.');
         ResourceLocation id = ResourceLocation.tryBuild(def.key().getNamespace(), path);
         if (id == null) { ContentLog.LOGGER.error("Attribute modifier for {} on '{}' cannot be named, skipping it", def.key(), modifier.attribute()); }
         return id;

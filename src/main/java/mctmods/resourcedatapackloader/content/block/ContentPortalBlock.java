@@ -3,13 +3,13 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.ContentTeleporter;
 import mctmods.resourcedatapackloader.content.gate.PortalStorage;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -71,17 +71,11 @@ public final class ContentPortalBlock extends ContentBlock {
         };
     }
 
-    @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return portal.walkIn() ? Shapes.empty() : getShape(state, level, pos, context);
-    }
+    @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return portal.walkIn() ? Shapes.empty() : getShape(state, level, pos, context); }
 
-    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) {
-        if (level instanceof ServerLevel server && !old.is(this)) { PortalStorage.add(server, pos, null); }
-    }
+    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) { if (level instanceof ServerLevel server && !old.is(this)) { PortalStorage.add(server, pos, null); } }
 
-    @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
-        if (level instanceof ServerLevel server) { PortalStorage.add(server, pos, placer instanceof Player ? placer.getUUID() : null); }
-    }
+    @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) { if (level instanceof ServerLevel server) { PortalStorage.add(server, pos, placer instanceof Player ? placer.getUUID() : null); } }
 
     @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
         if (level instanceof ServerLevel server && !replaced.is(this)) { PortalStorage.remove(server, pos); }
@@ -152,7 +146,7 @@ public final class ContentPortalBlock extends ContentBlock {
 
     @Nullable private PortalFit returning(Level level, BlockPos pos) {
         ContentPortals.Binding binding = ContentPortals.forBlock(this);
-        if (binding == null || !binding.portal().buildsReturn()) { return null; }
+        if (binding == null || binding.portal().noReturn()) { return null; }
         return ContentPortals.fitAt(level, pos, binding);
     }
 

@@ -1,6 +1,10 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,14 +20,13 @@ import javax.annotation.Nullable;
 
 final class CrossIds {
     static final int DATA_1_20 = 3465;
-    static final String MINECRAFT = "minecraft:";
     static final String FORGE = "forge";
     static final String NEOFORGE = "neoforge";
     static final String COMMON = "c";
     static final String BOTH = "+";
     static final String ITEM_REGISTRY = "item";
     private static final String TABLE = "/assets/resourcedatapackloader/port/forge_tags.txt";
-    private static final List<String> REGISTRIES = List.of("worldgen/biome", "entity_type", "block", "item", "fluid");
+    private static final List<String> REGISTRIES = List.of(WorldgenFiles.BIOME, "entity_type", "block", "item", "fluid");
     private static final Map<String, String> RENAMED = Map.ofEntries(
             Map.entry("minecraft:grass", "minecraft:short_grass"), Map.entry("minecraft:scute", "minecraft:turtle_scute"), Map.entry("minecraft:sweeping", "minecraft:sweeping_edge"),
             Map.entry("minecraft:horse.jump_strength", "minecraft:generic.jump_strength"), Map.entry("forge:block_reach", "minecraft:player.block_interaction_range"),
@@ -75,7 +78,7 @@ final class CrossIds {
     static boolean missing(String id, Port.Line to) { return to == Port.Line.V1_20 && id.startsWith(MINECRAFT) && ONLY_1_21.contains(id.substring(MINECRAFT.length())); }
 
     static boolean missingStructure(String name, Port.Line to) {
-        String bare = name.startsWith(MINECRAFT) ? name.substring(MINECRAFT.length()) : name;
+        String bare = IdNames.bare(name);
         return to == Port.Line.V1_20 && "trial_chambers".equals(bare);
     }
 
@@ -127,7 +130,7 @@ final class CrossIds {
         UP.putIfAbsent(registry + "|" + forge, target);
         UP.putIfAbsent("|" + forge, target);
         if (target.contains(BOTH)) { return; }
-        int rank = (known ? 2 : 0) + (target.substring(target.indexOf(':') + 1).equals(forge.substring(forge.indexOf(':') + 1)) ? 1 : 0);
+        int rank = (known ? 2 : 0) + (IdNames.path(target).equals(IdNames.path(forge)) ? 1 : 0);
         for (String key : new String[] {registry + "|" + target, "|" + target}) {
             if (DOWN_RANK.getOrDefault(key, -1) >= rank) { continue; }
             DOWN.put(key, forge);

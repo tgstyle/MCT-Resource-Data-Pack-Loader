@@ -9,9 +9,7 @@ import java.util.Collection;
 import java.util.List;
 
 @Mixin(ChatComponent.class) public abstract class MixinChatComponent {
-    @Redirect(method = "addRecentChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V"))
-    private void rdpl$keepOwnHistory(CommandHistory history, String command) {}
+    @Redirect(method = "addRecentChat", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;addCommand(Ljava/lang/String;)V")) private void rdpl$keepOwnHistory(CommandHistory history, String command) {}
 
-    @Redirect(method = {"<init>", "clearMessages"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;history()Ljava/util/Collection;"))
-    private Collection<String> rdpl$seedFromKeeper(CommandHistory history) { return List.of(); }
+    @Redirect(method = {"<init>", "clearMessages"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CommandHistory;history()Ljava/util/Collection;")) private Collection<String> rdpl$seedFromKeeper(CommandHistory history) { return List.of(); }
 }

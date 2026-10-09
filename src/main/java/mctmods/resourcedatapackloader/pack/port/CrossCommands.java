@@ -1,11 +1,19 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Brackets;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Snbt;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,37 +28,17 @@ final class CrossCommands {
     private CrossCommands() {}
 
     static String function(String contents, String file, Crossed pack) {
-        String[] lines = contents.split("\r?\n", -1);
-        StringBuilder out = new StringBuilder();
-        int changed = 0;
-        int kept = 0;
-        for (int i = 0; i < lines.length; i++) {
-            if (i > 0) { out.append('\n'); }
-            String line = lines[i].trim();
-            if (line.isEmpty() || line.startsWith("#")) {
-                out.append(lines[i]);
-                continue;
-            }
-            try {
-                if (line.startsWith("$") && pack.to() == Port.Line.V1_20) { throw new Commands.Kept("function macros are new in 1.20.2"); }
-                String converted = command(line, file, pack);
-                out.append(converted);
-                if (!converted.equals(line)) { changed++; }
-            }
-            catch (Commands.Kept why) {
-                kept++;
-                out.append(lines[i]);
-                pack.note("'" + file + "' line " + (i + 1) + " is kept as written, since " + why.getMessage() + ": " + line);
-            }
-        }
-        if (changed > 0 || kept > 0) { pack.note("'" + file + "' is a " + pack.origin() + " function: " + changed + " command(s) rewritten for " + pack.to().title() + ", " + kept + " kept as written"); }
-        return changed == 0 ? contents : out.toString();
+        FunctionLines.Result result = pack.function(contents, file, pack.to().title(), line -> {
+            if (line.startsWith("$") && pack.to() == Port.Line.V1_20) { throw new Commands.Kept("function macros are new in 1.20.2"); }
+            return command(line, file, pack);
+        });
+        return result.changed() == 0 ? contents : result.text();
     }
 
     private static String command(String line, String file, Crossed pack) {
         boolean down = pack.to() == Port.Line.V1_20;
         String converted = selectors(line, pack);
-        List<String> args = split(converted, ' ');
+        List<String> args = Snbt.split(converted, ' ');
         String head = converted.split(" ", 2)[0];
         if (down && NEW_COMMANDS.contains(head)) { throw new Commands.Kept(head + " is new after 1.20.1"); }
         if ("execute".equals(head)) {
@@ -72,45 +60,10 @@ final class CrossCommands {
         return ids(String.join(" ", args), file, pack);
     }
 
-    static List<String> split(String text, char separator) {
-        List<String> out = new ArrayList<>();
-        int depth = 0;
-        char quote = 0;
-        int start = 0;
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (quote != 0) {
-                if (c == '\\') { i++; }
-                else if (c == quote) { quote = 0; }
-                continue;
-            }
-            if (c == '"' || c == '\'') { quote = c; }
-            else if (c == '[' || c == '{' || c == '(') { depth++; }
-            else if (c == ']' || c == '}' || c == ')') { depth--; }
-            else if (c == separator && depth == 0) {
-                out.add(text.substring(start, i));
-                start = i + 1;
-            }
-        }
-        out.add(text.substring(start));
-        return out;
-    }
-
     private static int close(String text, int open) {
-        int depth = 0;
-        char quote = 0;
-        for (int i = open; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if (quote != 0) {
-                if (c == '\\') { i++; }
-                else if (c == quote) { quote = 0; }
-                continue;
-            }
-            if (c == '"' || c == '\'') { quote = c; }
-            else if (c == '{' || c == '[') { depth++; }
-            else if ((c == '}' || c == ']') && --depth == 0) { return i; }
-        }
-        throw new Commands.Kept("a bracket in it is not closed");
+        int end = Brackets.close(text, open);
+        if (end < 0) { throw new Commands.Kept("a bracket in it is not closed"); }
+        return end;
     }
 
     private static String selectors(String line, Crossed pack) {
@@ -177,14 +130,12 @@ final class CrossCommands {
         args.set(index, token.substring(0, brace) + nbt(token.substring(brace), pack));
     }
 
-    private static String namespaced(String id) { return id.indexOf(':') < 0 ? CrossIds.MINECRAFT + id : id; }
-
     private static void particle(List<String> args, Crossed pack) {
         if (args.size() < 2) { return; }
         String token = args.get(1);
         if (pack.to() == Port.Line.V1_21) {
             String name = namespaced(token);
-            String bare = name.substring(name.indexOf(':') + 1);
+            String bare = IdNames.path(name);
             switch (bare) {
                 case "dust" -> options(args, name, 4, values -> "{color:[" + values[0] + "f," + values[1] + "f," + values[2] + "f],scale:" + values[3] + "f}");
                 case "dust_color_transition" -> options(args, name, 7, values -> "{from_color:[" + values[0] + "f," + values[1] + "f," + values[2] + "f],scale:" + values[3] + "f,to_color:[" + values[4] + "f," + values[5] + "f," + values[6] + "f]}");
@@ -202,7 +153,7 @@ final class CrossCommands {
         if (brace < 0) { return; }
         String name = token.substring(0, brace);
         CompoundTag options = CrossStacks.parse(token.substring(brace));
-        String bare = name.substring(name.indexOf(':') + 1);
+        String bare = IdNames.path(name);
         List<String> out = switch (bare) {
             case "dust" -> join(floats(options.get("color")), List.of(number(options.get("scale"))));
             case "dust_color_transition" -> join(join(floats(options.get("from_color")), List.of(number(options.get("scale")))), floats(options.get("to_color")));
@@ -217,13 +168,11 @@ final class CrossCommands {
         args.addAll(2, out);
     }
 
-    private interface IOptions { String of(String[] values); }
-
-    private static void options(List<String> args, String name, int count, IOptions made) {
+    private static void options(List<String> args, String name, int count, Function<String[], String> made) {
         if (args.size() < 2 + count) { throw new Commands.Kept("its particle has fewer options than it needs"); }
         String[] values = args.subList(2, 2 + count).toArray(new String[0]);
         args.subList(2, 2 + count).clear();
-        args.set(1, name + made.of(values));
+        args.set(1, name + made.apply(values));
     }
 
     private static String blockState(String written) {
@@ -232,8 +181,8 @@ final class CrossCommands {
         if (open < 0) { return "{Name:\"" + name + "\"}"; }
         List<String> properties = new ArrayList<>();
         for (String pair : written.substring(open + 1, written.length() - 1).split(",")) {
-            String[] parts = pair.split("=", 2);
-            if (parts.length == 2) { properties.add(parts[0].trim() + ":\"" + parts[1].trim() + "\""); }
+            String[] parts = Settings.split(pair);
+            if (parts != null) { properties.add(parts[0] + ":\"" + parts[1] + "\""); }
         }
         return "{Name:\"" + name + "\",Properties:{" + String.join(",", properties) + "}}";
     }

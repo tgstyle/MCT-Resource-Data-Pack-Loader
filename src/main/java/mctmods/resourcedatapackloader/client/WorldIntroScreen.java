@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.IntroPageDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.extra.ContentWorldIntro;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -13,7 +14,6 @@ import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
@@ -61,16 +61,14 @@ public final class WorldIntroScreen extends Screen {
         Minecraft.getInstance().setScreen(new WorldIntroScreen(pages, track(), landBeingMade));
     }
 
-    public static void landMade() {
-        if (Minecraft.getInstance().screen instanceof WorldIntroScreen screen) { screen.landBeingMade = false; }
-    }
+    public static void landMade() { if (Minecraft.getInstance().screen instanceof WorldIntroScreen screen) { screen.landBeingMade = false; } }
 
     @Override public boolean isPauseScreen() { return !landBeingMade; }
 
     @Nullable private static SoundInstance track() {
         ResourceLocation key = ContentWorldIntro.music();
         if (key == null) { return null; }
-        SoundEvent event = BuiltInRegistries.SOUND_EVENT.getOptional(key).orElse(null);
+        SoundEvent event = ContentSounds.find(key);
         if (event == null) {
             ContentLog.LOGGER.error("World intro names music {}, which nothing registers, so it plays silently", key);
             return null;
@@ -79,8 +77,8 @@ public final class WorldIntroScreen extends Screen {
     }
 
     @Override protected void init() {
-        width = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledWidth());
-        height = Crisp.fit(Minecraft.getInstance().getWindow().getGuiScaledHeight());
+        width = Crisp.width();
+        height = Crisp.height();
         clearWidgets();
         if (page >= pages.size() - 1) { addRenderableWidget(Button.builder(Component.translatable("rdpl.intro.continue"), button -> advance()).bounds(width / 2 - 100, height - 28, 200, 20).build()); }
         else {
@@ -136,9 +134,7 @@ public final class WorldIntroScreen extends Screen {
         init();
     }
 
-    @Override public void removed() {
-        if (music != null) { Minecraft.getInstance().getSoundManager().stop(music); }
-    }
+    @Override public void removed() { if (music != null) { Minecraft.getInstance().getSoundManager().stop(music); } }
 
     private void finish() {
         RDPLNetwork.introDone();

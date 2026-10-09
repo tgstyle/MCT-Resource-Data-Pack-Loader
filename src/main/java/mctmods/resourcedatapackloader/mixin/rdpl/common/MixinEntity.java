@@ -23,8 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Entity.class) public abstract class MixinEntity {
-    @Inject(method = "getGravity", at = @At("RETURN"), cancellable = true)
-    private void rdpl$worldGravity(CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getGravity", at = @At("RETURN"), cancellable = true) private void rdpl$worldGravity(CallbackInfoReturnable<Double> cir) {
         double base = cir.getReturnValueD();
         Entity self = (Entity) (Object) this;
         if (base != 0.0D && rdpl$scaled(self)) {
@@ -39,8 +38,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         return self instanceof ItemEntity || self instanceof ExperienceOrb || self instanceof PrimedTnt || self instanceof FallingBlockEntity || self instanceof AbstractArrow || self instanceof ThrowableProjectile;
     }
 
-    @Inject(method = "load", at = @At("TAIL"))
-    private void rdpl$legacyForgeData(CompoundTag compound, CallbackInfo ci) {
+    @Inject(method = "load", at = @At("TAIL")) private void rdpl$legacyForgeData(CompoundTag compound, CallbackInfo ci) {
         CompoundTag forge = compound.getCompound("ForgeData");
         if (forge.isEmpty()) { return; }
         CompoundTag data = ((Entity) (Object) this).getPersistentData();

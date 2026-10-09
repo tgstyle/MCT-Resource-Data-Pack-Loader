@@ -12,8 +12,5 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import java.util.List;
 
 @Mixin(WorldLoader.PackConfig.class) public abstract class MixinWorldLoaderPackConfig {
-    @Definition(id = "openAllSelected", method = "Lnet/minecraft/server/packs/repository/PackRepository;openAllSelected()Ljava/util/List;")
-    @Expression("? = ?.openAllSelected()")
-    @ModifyVariable(method = "createResourceManager", at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER))
-    private List<PackResources> rdpl$beforeOwn(List<PackResources> list) { return PackFinder.beforeOwn(list); }
+    @Definition(id = "openAllSelected", method = "Lnet/minecraft/server/packs/repository/PackRepository;openAllSelected()Ljava/util/List;") @Expression("? = ?.openAllSelected()") @ModifyVariable(method = "createResourceManager", at = @At(value = "MIXINEXTRAS:EXPRESSION", shift = At.Shift.AFTER)) private List<PackResources> rdpl$beforeOwn(List<PackResources> list) { return PackFinder.beforeOwn(list); }
 }

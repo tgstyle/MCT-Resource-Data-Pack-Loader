@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentChunkShape;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Noise3D;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -46,7 +47,7 @@ public final class ContentOreVein implements IContentChunkShape {
         this.minHeight = minHeight;
         this.maxHeight = maxHeight;
         this.key = key;
-        this.salt = key.toString().hashCode() * 0x9E3779B97F4A7C15L;
+        this.salt = key.toString().hashCode() * Hashes.GOLDEN;
         this.noise = new Noise3D(salt);
         this.warp = new Noise3D(salt - 1);
         this.wobble = new Noise3D(salt + 1000);
@@ -65,7 +66,7 @@ public final class ContentOreVein implements IContentChunkShape {
         int lowest = Math.max(floor, minHeight);
         int highest = Math.min(ceiling - 1, maxHeight);
         if (highest < lowest) { return found; }
-        RandomSource roll = RandomSource.create(worldSeed ^ salt ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
+        RandomSource roll = SeededRandom.at(worldSeed ^ salt, chunkX, chunkZ);
         if (shape.rarity() > 0 && !shape.perChunk() && roll.nextInt(shape.rarity()) != 0) { return found; }
         int tries = shape.rarity() > 0 && shape.perChunk() ? shape.rarity() : attempts.pick(roll);
         int band = highest - lowest + 1;
@@ -94,7 +95,7 @@ public final class ContentOreVein implements IContentChunkShape {
         int highest = Math.min(ceiling - 1, maxHeight);
         if (highest < lowest) { return; }
         long seed = placer.level().getSeed() ^ salt;
-        RandomSource random = RandomSource.create(seed ^ (chunk.x * 341873128712L + chunk.z * 132897987541L));
+        RandomSource random = SeededRandom.at(seed, chunk.x, chunk.z);
         int placed = 0;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.util;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.PlayerScoreEntry;
@@ -29,7 +30,18 @@ public final class Scores {
 
     @Nullable public static PlayerTeam teamOf(Scoreboard board, String member) { return board.getPlayersTeam(member); }
 
+    @Nullable public static PlayerTeam teamOf(Entity entity) { return teamOf(entity.level().getScoreboard(), entity.getScoreboardName()); }
+
+    public static boolean memberOf(Scoreboard board, String member, String team) {
+        PlayerTeam held = board.getPlayersTeam(member);
+        return held != null && held.getName().equals(team);
+    }
+
+    public static boolean isPlayerName(String member) { return member.length() != 36 || member.indexOf('-') != 8; }
+
     public static void join(Scoreboard board, String member, PlayerTeam team) { board.addPlayerToTeam(member, team); }
+
+    public static void join(Entity entity, PlayerTeam team) { join(entity.level().getScoreboard(), entity.getScoreboardName(), team); }
 
     public static boolean leave(Scoreboard board, String member) { return board.removePlayerFromTeam(member); }
 
@@ -37,9 +49,7 @@ public final class Scores {
 
     @Nullable public static Objective objective(Scoreboard board, String name) { return board.getObjective(name); }
 
-    public static Objective addObjective(Scoreboard board, String name, ObjectiveCriteria criteria, Component display, ObjectiveCriteria.RenderType render) {
-        return board.addObjective(name, criteria, display, render, true, null);
-    }
+    public static Objective addObjective(Scoreboard board, String name, ObjectiveCriteria criteria, Component display, ObjectiveCriteria.RenderType render) { return board.addObjective(name, criteria, display, render, true, null); }
 
     public static void removeObjective(Scoreboard board, Objective objective) { board.removeObjective(objective); }
 
@@ -49,7 +59,7 @@ public final class Scores {
         board.setDisplayObjective(at, objective);
     }
 
-    public static boolean has(Scoreboard board, String owner, Objective objective) { return board.getPlayerScoreInfo(ScoreHolder.forNameOnly(owner), objective) != null; }
+    public static boolean lacks(Scoreboard board, String owner, Objective objective) { return board.getPlayerScoreInfo(ScoreHolder.forNameOnly(owner), objective) == null; }
 
     public static int score(Scoreboard board, String owner, Objective objective) { return board.getOrCreatePlayerScore(ScoreHolder.forNameOnly(owner), objective).get(); }
 

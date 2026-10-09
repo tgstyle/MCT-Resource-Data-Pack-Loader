@@ -15,12 +15,12 @@ public final class ContentRoughGround {
     private static final int TOLERANCE = 6;
     private static final int MANSION_OFFSET = 40;
     private static final int MANSION_REACH = 32;
-    private static final ResourceLocation MANSION = ResourceLocation.fromNamespaceAndPath("minecraft", "mansion");
+    private static final ResourceLocation MANSION = ResourceLocation.withDefaultNamespace("mansion");
     private static final Map<ResourceLocation, Integer> TEMPLE_REACH = Map.of(
-            ResourceLocation.fromNamespaceAndPath("minecraft", "desert_pyramid"), 10,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "jungle_pyramid"), 7,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "swamp_hut"), 4,
-            ResourceLocation.fromNamespaceAndPath("minecraft", "igloo"), 4);
+            ResourceLocation.withDefaultNamespace("desert_pyramid"), 10,
+            ResourceLocation.withDefaultNamespace("jungle_pyramid"), 7,
+            ResourceLocation.withDefaultNamespace("swamp_hut"), 4,
+            ResourceLocation.withDefaultNamespace("igloo"), 4);
 
     private ContentRoughGround() {}
 
@@ -32,7 +32,7 @@ public final class ContentRoughGround {
         Integer reach = TEMPLE_REACH.get(id);
         if (!mansion && reach == null) { return false; }
         ChunkPos chunk = start.getChunkPos();
-        if (ContentStructureSpread.pinned(chunk) || !ContentCity.wanted()) { return false; }
+        if (ContentStructurePins.pinned(chunk) || !ContentCity.wanted()) { return false; }
         CityGround ground = CityGround.of(seed, generator, random, registries);
         boolean rough = mansion ? rough(ground, chunk.getMinBlockX() + MANSION_OFFSET, chunk.getMinBlockZ() + MANSION_OFFSET, MANSION_REACH) : rough(ground, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), reach);
         if (rough) { ContentLog.LOGGER.debug("Structure {} at chunk {} stands on ground more than {} blocks uneven, so it is not founded", id, chunk, TOLERANCE); }

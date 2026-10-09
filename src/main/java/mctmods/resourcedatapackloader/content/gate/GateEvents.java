@@ -56,14 +56,13 @@ public final class GateEvents {
         for (GateDef def : ContentGates.all()) {
             if (def.killed().isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!fallen.equals(ResourceLocation.tryParse(def.killed()))) { continue; }
-            int slain = def.global() ? GateStorage.tallyGlobally(player.server, def.id()) : GateStorage.tallyFor(player, def.id());
+            int slain = GateStorage.tally(player, def);
             if (slain < def.killedCount()) { continue; }
             if (def.killedDrops().isEmpty()) {
                 ContentGates.unlock(player, def, true);
                 continue;
             }
-            if (def.global()) { GateStorage.clearTallyGlobally(player.server, def.id()); }
-            else { GateStorage.clearTallyFor(player, def.id()); }
+            GateStorage.clearTally(player, def);
             reward(player, def);
         }
     }

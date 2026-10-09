@@ -4,17 +4,15 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
-
 import javax.annotation.Nonnull;
 
-public class ContentContainerScreen extends AbstractContainerScreen<ContentContainerMenu> {
-    private static final ResourceLocation SHEET = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/gui/container/generic_54.png");
+public final class ContentContainerScreen extends BackdropContainerScreen<ContentContainerMenu> {
+    private static final ResourceLocation SHEET = ResourceLocation.withDefaultNamespace("textures/gui/container/generic_54.png");
     static final int EDGE = 7;
-    private static final int HEADER = 17;
+    static final int HEADER = 17;
     private static final int CELL = ContentContainerMenu.SLOT;
     private static final int FOOT = 96;
     private static final int FOOT_SOURCE = 126;
@@ -36,12 +34,6 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
         this.inventoryLabelY = this.imageHeight - 94;
     }
 
-    @Override public void render(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partial) {
-        renderBackground(graphics, mouseX, mouseY, partial);
-        super.render(graphics, mouseX, mouseY, partial);
-        renderTooltip(graphics, mouseX, mouseY);
-    }
-
     @Override protected void renderBg(@Nonnull GuiGraphics graphics, float partial, int mouseX, int mouseY) {
         ResourceLocation own = def.guiTexture();
         if (own != null) {
@@ -61,9 +53,7 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
 
     private static void head(GuiGraphics graphics, int left, int y, int wide) {
         graphics.blit(SHEET, left, y, 0, 0, EDGE, HEADER);
-        for (int across = EDGE; across < wide - EDGE; across += CELL) {
-            graphics.blit(SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER);
-        }
+        for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(SHEET, left + across, y, EDGE, 0, Math.min(CELL, wide - EDGE - across), HEADER); }
         graphics.blit(SHEET, left + wide - EDGE, y, RIGHT_SOURCE, 0, EDGE, HEADER);
     }
 
@@ -85,18 +75,12 @@ public class ContentContainerScreen extends AbstractContainerScreen<ContentConta
         graphics.blit(SHEET, left + (wide - PLAYER_WIDE) / 2, y, EDGE, FOOT_SOURCE, PLAYER_WIDE, FOOT);
     }
 
-    private static void sill(GuiGraphics graphics, int left, int y, int wide) {
-        for (int across = EDGE; across < wide - EDGE; across += CELL) {
-            graphics.blit(SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL);
-        }
-    }
+    private static void sill(GuiGraphics graphics, int left, int y, int wide) { for (int across = EDGE; across < wide - EDGE; across += CELL) { graphics.blit(SHEET, left + across, y, EDGE, SILL_SOURCE, Math.min(CELL, wide - EDGE - across), SILL); } }
 
     private static void plain(GuiGraphics graphics, int x, int y, int wide, int tall) {
         for (int down = 0; down < tall; down += PLAIN_TALL) {
             int high = Math.min(PLAIN_TALL, tall - down);
-            for (int across = 0; across < wide; across += PLAIN_WIDE) {
-                graphics.blit(SHEET, x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_WIDE, wide - across), high);
-            }
+            for (int across = 0; across < wide; across += PLAIN_WIDE) { graphics.blit(SHEET, x + across, y + down, PLAIN_X, PLAIN_Y, Math.min(PLAIN_WIDE, wide - across), high); }
         }
     }
 }

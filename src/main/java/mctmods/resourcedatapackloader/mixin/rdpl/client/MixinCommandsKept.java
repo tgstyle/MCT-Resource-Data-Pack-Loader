@@ -11,9 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Commands.class) public abstract class MixinCommandsKept {
-    @Inject(method = "performCommand", at = @At("HEAD"))
-    private void rdpl$watchTypedCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfo ci) { ChatHistoryKeeper.watch(parseResults.getContext().getSource()); }
+    @Inject(method = "performCommand", at = @At("HEAD")) private void rdpl$watchTypedCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfo ci) { ChatHistoryKeeper.watch(parseResults.getContext().getSource()); }
 
-    @Inject(method = "performCommand", at = @At("RETURN"))
-    private void rdpl$keepRanCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfo ci) { ChatHistoryKeeper.finished(command); }
+    @Inject(method = "performCommand", at = @At("RETURN")) private void rdpl$keepRanCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfo ci) { ChatHistoryKeeper.finished(command); }
 }

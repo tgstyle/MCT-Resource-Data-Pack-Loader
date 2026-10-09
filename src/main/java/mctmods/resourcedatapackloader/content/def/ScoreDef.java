@@ -19,7 +19,7 @@ public record ScoreDef(String name, String displayName, ObjectiveCriteria criter
 
     public boolean ends() { return endsAtScore > 0 || endsAfterMinutes > 0 || endsAfterRounds > 0 || endsLastStanding || turns != null && turns.ends(); }
 
-    public boolean fed() { return !killPoints.isEmpty() || deathPoints != 0; }
+    public boolean unfed() { return killPoints.isEmpty() && deathPoints == 0; }
 
     public boolean shown() { return !slot.isEmpty(); }
 }

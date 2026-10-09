@@ -3,34 +3,39 @@ package mctmods.resourcedatapackloader.command;
 import mctmods.resourcedatapackloader.content.ContentRoundReset;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.RoundSay;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
+import mctmods.resourcedatapackloader.util.Lang;
 
 import com.mojang.brigadier.context.CommandContext;
 import javax.annotation.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
 final class CommandTeams {
     private CommandTeams() {}
 
+    private static MutableComponent text(CommandSourceStack source, String key, Object... args) { return Component.literal(Lang.tr(source.getPlayer(), key, args)); }
+
     static int teamList(CommandContext<CommandSourceStack> context, String name) {
         CommandSourceStack source = context.getSource();
         CommandShared.ran(source, name, "team");
         if (!ContentTeams.any()) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("No pack has fielded any team"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.none"));
             return 0;
         }
         ServerPlayer asking = source.getPlayer();
         for (TeamDef def : ContentTeams.all().values()) {
-            String standing = def.joinable() ? "" : " (closed)";
+            String standing = def.joinable() ? "" : Lang.tr(asking, "rdpl.team.closed");
             String lead = ContentTeams.leadOf(source.getLevel(), def);
-            if (lead != null) { standing = standing + " - lead " + lead; }
+            if (lead != null) { standing = standing + Lang.tr(asking, "rdpl.team.leadnote", lead); }
             CommandShared.send(source, def.color(), Component.literal(def.name() + " - " + def.displayName() + standing));
         }
         String on = asking == null ? null : ContentTeams.standingOf(asking);
-        CommandShared.send(source, ChatFormatting.GRAY, Component.literal(on == null ? "You are on no team" : "You are on " + on));
+        CommandShared.send(source, ChatFormatting.GRAY, on == null ? text(source, "rdpl.team.onnone") : text(source, "rdpl.team.on", on));
         return 1;
     }
 
@@ -42,11 +47,11 @@ final class CommandTeams {
     @Nullable private static ServerPlayer teamPlayer(CommandSourceStack source, String name, String action) {
         CommandShared.ran(source, name, "team " + action);
         if (!ContentTeams.any()) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("No pack has fielded any team"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.none"));
             return null;
         }
         ServerPlayer player = source.getPlayer();
-        if (player == null) { CommandShared.send(source, ChatFormatting.RED, Component.literal("Only a player can join or leave a team")); }
+        if (player == null) { CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.playeronly")); }
         return player;
     }
 
@@ -56,18 +61,18 @@ final class CommandTeams {
         if (player == null) { return 0; }
         TeamDef mine = mine(player);
         if (mine == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("You are on no team, so there is nobody to vote for"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.vote.noteam"));
             return 0;
         }
         if (!TeamDef.VOTE.equals(mine.lead())) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not choose its lead by a vote"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.vote.novote", mine.displayName()));
             return 0;
         }
         boolean stood = ContentTeams.standsFor(player.serverLevel(), player.getGameProfile().getName(), choice, mine);
-        CommandShared.send(source, stood ? mine.color() : ChatFormatting.RED, Component.literal(stood ? "You voted for " + choice : choice + " is not on your team"));
+        CommandShared.send(source, stood ? mine.color() : ChatFormatting.RED, stood ? text(source, "rdpl.team.vote.cast", choice) : text(source, "rdpl.team.vote.notmember", choice));
         if (stood) {
             String lead = ContentTeams.leadOf(player.serverLevel(), mine);
-            CommandShared.send(source, ChatFormatting.GRAY, Component.literal(lead == null ? "The vote is tied, so nobody leads" : lead + " leads " + mine.displayName()));
+            CommandShared.send(source, ChatFormatting.GRAY, lead == null ? text(source, "rdpl.team.vote.tied") : text(source, "rdpl.team.vote.leads", lead, mine.displayName()));
         }
         return stood ? 1 : 0;
     }
@@ -78,15 +83,15 @@ final class CommandTeams {
         if (player == null) { return 0; }
         TeamDef mine = mine(player);
         if (mine == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("You are on no team, so there is nothing to claim"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.claim.noteam"));
             return 0;
         }
         if (!TeamDef.CLAIM.equals(mine.lead())) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal(mine.displayName() + " does not let its lead be claimed"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.claim.noclaim", mine.displayName()));
             return 0;
         }
         boolean took = ContentTeams.claim(player.serverLevel(), player.getGameProfile().getName(), mine);
-        CommandShared.send(source, took ? mine.color() : ChatFormatting.RED, Component.literal(took ? mine.leadSays().replace("{side}", mine.displayName()) : ContentTeams.holding(mine) + " already leads " + mine.displayName()));
+        CommandShared.send(source, took ? mine.color() : ChatFormatting.RED, took ? Component.literal(mine.leadSays().replace("{side}", mine.displayName())) : text(source, "rdpl.team.claim.held", ContentTeams.holding(mine), mine.displayName()));
         return took ? 1 : 0;
     }
 
@@ -95,19 +100,20 @@ final class CommandTeams {
         CommandShared.ran(source, name, "round start");
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("Only a player starts a round"));
+            CommandShared.send(source, ChatFormatting.RED, Component.literal(Lang.tr("rdpl.round.start.playeronly")));
             return 0;
         }
-        String said = ContentScoring.start(source.getServer(), player, player.getGameProfile().getName(), source.hasPermission(CommandShared.OPERATOR));
-        CommandShared.send(source, "The round starts".equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        say(source, player, ContentScoring.start(source.getServer(), player, player.getGameProfile().getName(), source.hasPermission(CommandShared.OPERATOR)));
         return 1;
     }
+
+    private static void say(CommandSourceStack source, @Nullable ServerPlayer player, RoundSay said) { CommandShared.send(source, said.good ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(Lang.tr(player, said.key, said.args))); }
 
     static int roundReset(CommandContext<CommandSourceStack> context, String name) {
         CommandSourceStack source = context.getSource();
         CommandShared.ran(source, name, "round reset");
-        String said = ContentRoundReset.call(source.getServer(), source.getTextName(), source.getPlayer(), source.hasPermission(CommandShared.OPERATOR));
-        CommandShared.send(source, ContentRoundReset.DONE.equals(said) || ContentRoundReset.CALLED.equals(said) ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        ServerPlayer player = source.getPlayer();
+        say(source, player, ContentRoundReset.call(source.getServer(), source.getTextName(), player, source.hasPermission(CommandShared.OPERATOR)));
         return 1;
     }
 
@@ -116,11 +122,10 @@ final class CommandTeams {
         CommandShared.ran(source, name, "round vote " + (yes ? "yes" : "no"));
         ServerPlayer player = source.getPlayer();
         if (player == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("Only a player votes"));
+            CommandShared.send(source, ChatFormatting.RED, Component.literal(Lang.tr("rdpl.round.vote.playeronly")));
             return 0;
         }
-        String said = ContentRoundReset.vote(source.getServer(), player, yes);
-        CommandShared.send(source, said.startsWith("You voted") ? ChatFormatting.GREEN : ChatFormatting.RED, Component.literal(said));
+        say(source, player, ContentRoundReset.vote(source.getServer(), player, yes));
         return 1;
     }
 
@@ -129,10 +134,10 @@ final class CommandTeams {
         ServerPlayer player = teamPlayer(source, name, "leave");
         if (player == null) { return 0; }
         if (ContentScoring.roundRunning()) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("A round is running, so you cannot leave your team until it ends"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.leave.running"));
             return 0;
         }
-        CommandShared.send(source, ChatFormatting.GREEN, Component.literal(ContentTeams.stand(player) ? "You left your team" : "You were on no team"));
+        CommandShared.send(source, ChatFormatting.GREEN, text(source, ContentTeams.stand(player) ? "rdpl.team.leave.ok" : "rdpl.team.leave.none"));
         return 1;
     }
 
@@ -142,24 +147,24 @@ final class CommandTeams {
         if (player == null) { return 0; }
         TeamDef wanted = asked != null ? ContentTeams.named(asked) : ContentTeams.smallest(player.serverLevel());
         if (asked == null && wanted == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("No team takes players by balance, so name the one you want"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.join.balance"));
             return 0;
         }
         if (wanted == null) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal("There is no team called " + asked));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.join.unknown", asked));
             return 0;
         }
         if (!wanted.joinable()) {
-            CommandShared.send(source, ChatFormatting.RED, Component.literal(wanted.name() + " is not a team you can join"));
+            CommandShared.send(source, ChatFormatting.RED, text(source, "rdpl.team.join.closed", wanted.name()));
             return 0;
         }
         if (ContentScoring.roundRunning()) {
             ContentTeams.waitFor(player, wanted);
-            CommandShared.send(source, ChatFormatting.GRAY, Component.literal("A round is running, so you join " + wanted.displayName() + " when it ends"));
+            CommandShared.send(source, ChatFormatting.GRAY, text(source, "rdpl.team.join.waiting", wanted.displayName()));
             return 1;
         }
         ContentTeams.take(player, wanted);
-        CommandShared.send(source, wanted.color(), Component.literal("You joined " + wanted.displayName()));
+        CommandShared.send(source, wanted.color(), text(source, "rdpl.team.join.ok", wanted.displayName()));
         return 1;
     }
 }

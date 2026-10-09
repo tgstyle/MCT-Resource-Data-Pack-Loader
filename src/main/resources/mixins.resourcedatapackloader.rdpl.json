@@ -16,8 +16,7 @@
         "common.IFireBlock",
         "common.IItem",
         "common.IPotion",
-        "common.ISmithingTransformRecipe",
-        "common.ISmithingTrimRecipe",
+        "common.ISmithingRecipe",
         "common.MixinAbstractVillager",
         "common.MixinBlock",
         "common.MixinBreeze",
@@ -89,6 +88,7 @@
         "common.MixinPlacedFeature",
         "common.MixinHeightRangePlacement",
         "common.MixinNearestAttackableTargetGoal",
+        "common.MixinNodeEvaluator",
         "common.INearestAttackableTargetGoal",
         "common.ILookAtPlayerGoal",
         "common.IRandomStrollGoal",
@@ -170,7 +170,6 @@
     ],
     "server": [
         "server.ISettings",
-        "server.MixinDedicatedServerGameMode",
         "server.MixinDedicatedServerProperties"
     ],
     "injectors": {

@@ -19,7 +19,7 @@ import java.io.IOException;
 import javax.annotation.Nullable;
 
 public final class ContentHeatShimmer {
-    private static final ResourceLocation SHADER = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "shaders/post/heat.json");
+    private static final ResourceLocation SHADER = ResourceDataPackLoader.id("shaders/post/heat.json");
     private static final float EASE = 0.05F;
     private static final float GONE = 0.002F;
     private static final float NIGHT = 0.2F;
@@ -88,9 +88,7 @@ public final class ContentHeatShimmer {
         return chain;
     }
 
-    private static void set(PostChain own, String name, float value) {
-        for (PostPass pass : ((IPostChain) own).getPasses()) { pass.getEffect().safeGetUniform(name).set(value); }
-    }
+    private static void set(PostChain own, String name, float value) { for (PostPass pass : ((IPostChain) own).rdpl$getPasses()) { pass.getEffect().safeGetUniform(name).set(value); } }
 
     private static void close() {
         heat = null;
@@ -102,9 +100,9 @@ public final class ContentHeatShimmer {
     private static float target(Minecraft mc, @Nullable SkyLookDef look) {
         Entity camera = mc.getCameraEntity();
         if (look == null || look.heat() == null || camera == null || mc.level == null || camera.isInWater()) { return 0.0F; }
-        SkyLookDef.Heat heat = look.heat();
-        if (mc.level.getBiome(camera.blockPosition()).value().getBaseTemperature() < heat.minTemperature()) { return 0.0F; }
-        if (!heat.dayOnly()) { return heat.strength(); }
-        return heat.strength() * Math.max(0.0F, (mc.level.getSkyDarken(1.0F) - NIGHT) / (1.0F - NIGHT));
+        SkyLookDef.Heat current = look.heat();
+        if (mc.level.getBiome(camera.blockPosition()).value().getBaseTemperature() < current.minTemperature()) { return 0.0F; }
+        if (!current.dayOnly()) { return current.strength(); }
+        return current.strength() * Math.max(0.0F, (mc.level.getSkyDarken(1.0F) - NIGHT) / (1.0F - NIGHT));
     }
 }

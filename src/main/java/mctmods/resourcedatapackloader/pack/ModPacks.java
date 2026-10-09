@@ -1,12 +1,12 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.util.GsonHelper;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModFileInfo;
 import net.neoforged.neoforgespi.language.IModInfo;
@@ -30,7 +30,6 @@ public final class ModPacks {
     private static final String MODS_TOML = "META-INF/neoforge.mods.toml";
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
-    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private ModPacks() {}
 
@@ -90,14 +89,16 @@ public final class ModPacks {
     private static JsonObject settingsFor(JsonObject control, String modId) {
         JsonElement held = control.get(modId);
         JsonObject settings = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
-        if (!settings.has(ENABLED) || !settings.get(ENABLED).isJsonPrimitive()) { settings.addProperty(ENABLED, true); }
-        if (!settings.has(PRIORITY) || !settings.get(PRIORITY).isJsonPrimitive()) { settings.addProperty(PRIORITY, -1); }
+        if (!GsonHelper.isBooleanValue(settings, ENABLED)) { settings.addProperty(ENABLED, true); }
+        if (!GsonHelper.isNumberValue(settings, PRIORITY)) { settings.addProperty(PRIORITY, -1); }
         control.add(modId, settings);
         return settings;
     }
 
+    private static Path controlFile(Path packRoot) { return packRoot.resolve(PackManager.CONFIG).resolve(CONTROL_FILE); }
+
     private static JsonObject readControl(Path packRoot) {
-        Path file = packRoot.resolve(PackManager.CONFIG).resolve(CONTROL_FILE);
+        Path file = controlFile(packRoot);
         if (!Files.isRegularFile(file)) { return new JsonObject(); }
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             JsonElement parsed = JsonParser.parseReader(reader);
@@ -110,8 +111,8 @@ public final class ModPacks {
     }
 
     private static void writeControl(Path packRoot, JsonObject control) {
-        Path file = packRoot.resolve(PackManager.CONFIG).resolve(CONTROL_FILE);
-        String text = GSON.toJson(control) + System.lineSeparator();
+        Path file = controlFile(packRoot);
+        String text = Json.PRETTY.toJson(control) + System.lineSeparator();
         try {
             if (Files.isRegularFile(file) && text.equals(Files.readString(file))) { return; }
             Files.createDirectories(file.getParent());

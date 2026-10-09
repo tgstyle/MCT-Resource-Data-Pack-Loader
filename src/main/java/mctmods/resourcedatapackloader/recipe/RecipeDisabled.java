@@ -1,8 +1,7 @@
 package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.util.ContentDisabled;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISmithingTransformRecipe;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.ISmithingTrimRecipe;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.ISmithingRecipe;
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -13,7 +12,7 @@ public final class RecipeDisabled {
     private RecipeDisabled() {}
 
     public static boolean uses(Recipe<?> recipe, ItemStack result) {
-        if (!ContentDisabled.any()) { return false; }
+        if (ContentDisabled.none()) { return false; }
         if (ContentDisabled.disabled(result)) { return true; }
         for (Ingredient ingredient : ingredients(recipe)) {
             if (onlyDisabled(ingredient)) { return true; }
@@ -22,8 +21,7 @@ public final class RecipeDisabled {
     }
 
     private static List<Ingredient> ingredients(Recipe<?> recipe) {
-        if (recipe instanceof ISmithingTransformRecipe smithing) { return List.of(smithing.rdpl$getTemplate(), smithing.rdpl$getBase(), smithing.rdpl$getAddition()); }
-        if (recipe instanceof ISmithingTrimRecipe smithing) { return List.of(smithing.rdpl$getTemplate(), smithing.rdpl$getBase(), smithing.rdpl$getAddition()); }
+        if (recipe instanceof ISmithingRecipe smithing) { return List.of(smithing.rdpl$getTemplate(), smithing.rdpl$getBase(), smithing.rdpl$getAddition()); }
         return recipe.getIngredients();
     }
 

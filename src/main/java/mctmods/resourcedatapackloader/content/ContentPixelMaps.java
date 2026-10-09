@@ -3,8 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.util.TintFactory;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -50,7 +50,6 @@ public final class ContentPixelMaps {
     private static final char OVERRIDING = 'o';
     private static final Map<String, byte[]> MADE = new ConcurrentHashMap<>();
     private static final Set<String> FAILED = ConcurrentHashMap.newKeySet();
-    private static final Gson GSON = new Gson();
 
     private ContentPixelMaps() {}
 
@@ -78,7 +77,12 @@ public final class ContentPixelMaps {
     }
 
     @Nullable private static byte[] build(String namespace, String path, boolean overriding) {
-        Resolved resolved = resolve(namespace, path, overriding);
+        Resolved resolved;
+        try { resolved = resolve(namespace, path, overriding); }
+        catch (RuntimeException ex) {
+            ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", namespace, path, ex);
+            return null;
+        }
         if (resolved == null) { return null; }
         String stamp = hash(resolved.sources());
         byte[] cached = fromCache(namespace, path, overriding, stamp);
@@ -116,7 +120,7 @@ public final class ContentPixelMaps {
             sources.append(where).append(':').append(at).append('\n').append(contents).append('\n');
             chain.add(where + ":" + at);
             JsonObject json;
-            try { json = GSON.fromJson(contents, JsonObject.class); }
+            try { json = Json.GSON.fromJson(contents, JsonObject.class); }
             catch (JsonParseException ex) {
                 ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", where, at, ex);
                 return null;
@@ -127,17 +131,27 @@ public final class ContentPixelMaps {
             }
             for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
                 if (palette.containsKey(entry.getKey())) { continue; }
+                if (!entry.getValue().isJsonPrimitive()) {
+                    ContentLog.LOGGER.error("Pixel map {}:{} gives the palette key '{}' something other than a color, so nothing is drawn", where, at, entry.getKey());
+                    return null;
+                }
                 palette.put(entry.getKey(), entry.getValue().getAsString());
                 from.put(entry.getKey(), where + ":" + at);
             }
             for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, NOTES, new JsonObject()).entrySet()) {
-                if (!notes.containsKey(entry.getKey())) { notes.put(entry.getKey(), entry.getValue().getAsString()); }
+                if (!notes.containsKey(entry.getKey()) && entry.getValue().isJsonPrimitive()) { notes.put(entry.getKey(), entry.getValue().getAsString()); }
             }
             if (rows == null && json.has(ROWS)) {
                 rowsFrom = where + ":" + at;
                 JsonArray listed = GsonHelper.getAsJsonArray(json, ROWS);
                 rows = new ArrayList<>(listed.size());
-                for (JsonElement row : listed) { rows.add(row.getAsString()); }
+                for (JsonElement row : listed) {
+                    if (!row.isJsonPrimitive()) {
+                        ContentLog.LOGGER.error("Pixel map {}:{} has a row that is not text, so nothing is drawn", where, at);
+                        return null;
+                    }
+                    rows.add(row.getAsString());
+                }
             }
             if (tint == null && json.has(TINT)) {
                 JsonObject asked = GsonHelper.getAsJsonObject(json, TINT);
@@ -305,7 +319,6 @@ public final class ContentPixelMaps {
 
     @Nullable private static int[][] image(String namespace, String path) {
         if (FMLEnvironment.dist != Dist.CLIENT) { return null; }
-        if (!ContentPixelImages.exists(namespace, path)) { return null; }
         return ContentPixelImages.read(namespace, path);
     }
 
@@ -348,7 +361,7 @@ public final class ContentPixelMaps {
     }
 
     private static void sweep(Path folder, String name, boolean overriding, String keep) throws IOException {
-        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder, name + "-" + (overriding ? OVERRIDING : PLAIN) + "*" + PNG)) {
+        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder, name + "-" + (overriding ? OVERRIDING : PLAIN) + "[0-9a-f]".repeat(HASH_LENGTH) + PNG)) {
             for (Path entry : entries) {
                 if (entry.getFileName().toString().equals(keep)) { continue; }
                 try { Files.deleteIfExists(entry); }
@@ -426,7 +439,7 @@ public final class ContentPixelMaps {
 
     private static String hash(int[] pixels) {
         StringBuilder text = new StringBuilder();
-        for (int pixel : pixels) { text.append(Integer.toHexString(pixel)); }
+        for (int pixel : pixels) { text.append(Integer.toHexString(pixel)).append(','); }
         return hash(text.toString());
     }
 }

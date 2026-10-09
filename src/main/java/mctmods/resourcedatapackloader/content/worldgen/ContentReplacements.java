@@ -6,24 +6,19 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.neoforged.neoforge.event.level.ChunkEvent;
-import net.neoforged.neoforge.event.level.LevelEvent;
-import net.neoforged.neoforge.event.tick.LevelTickEvent;
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
@@ -31,16 +26,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 public final class ContentReplacements {
-    private static final int FLAGS = 2 | 16;
     private static final Map<BlockState, BlockState> EXACT = new HashMap<>();
     private static final Map<Block, BlockState> WHOLE = new LinkedHashMap<>();
     private static final Map<BlockState, String> KEYS = new IdentityHashMap<>();
     private static final Map<String, Long> REPLACED = new LinkedHashMap<>();
     private static final Set<String> REPORTED = new HashSet<>();
-    private static final Map<ResourceKey<Level>, Deque<ChunkPos>> QUEUES = new HashMap<>();
     private static Set<String> dimensions;
     private static boolean blacklist;
     private static boolean logging;
@@ -75,38 +69,9 @@ public final class ContentReplacements {
         chunks = 0L;
     }
 
-    public static void onChunkLoad(ChunkEvent.Load event) {
-        if (!(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
-        if (!wanted() || !appliesTo(level)) { return; }
-        if (ContentChunkTokens.get(chunk).contains(token)) { return; }
-        QUEUES.computeIfAbsent(level.dimension(), key -> new ArrayDeque<>()).add(chunk.getPos());
-    }
+    public static String token() { return token; }
 
-    public static void onLevelUnload(LevelEvent.Unload event) {
-        if (event.getLevel() instanceof ServerLevel level) { QUEUES.remove(level.dimension()); }
-    }
-
-    public static void onLevelTick(LevelTickEvent.Post event) {
-        if (!(event.getLevel() instanceof ServerLevel level)) { return; }
-        Deque<ChunkPos> queue = QUEUES.get(level.dimension());
-        if (queue == null || queue.isEmpty()) { return; }
-        boolean worked = false;
-        while (!queue.isEmpty() && ContentRetrogen.canCatchUp(level, queue.peekFirst())) {
-            ChunkPos pos = queue.removeFirst();
-            LevelChunk chunk = level.getChunk(pos.x, pos.z);
-            Set<String> already = ContentChunkTokens.get(chunk);
-            if (already.contains(token)) { continue; }
-            replace(level, chunk);
-            Set<String> tokens = new HashSet<>(already);
-            tokens.add(token);
-            ContentChunkTokens.put(chunk, tokens);
-            worked = true;
-            ContentRetrogen.caughtUp(level, pos);
-        }
-        if (worked && queue.isEmpty()) { report(); }
-    }
-
-    private static void replace(ServerLevel level, LevelChunk chunk) {
+    public static void replace(ServerLevel level, LevelChunk chunk) {
         int baseX = chunk.getPos().getMinBlockX();
         int baseZ = chunk.getPos().getMinBlockZ();
         int replaced = 0;
@@ -126,7 +91,7 @@ public final class ContentReplacements {
                         BlockState swap = replacementFor(found);
                         if (swap == null) { continue; }
                         pos.set(baseX + x, worldY, baseZ + z);
-                        level.setBlock(pos, swap, FLAGS);
+                        level.setBlock(pos, swap, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
                         count(found, swap);
                         replaced++;
                     }
@@ -144,9 +109,7 @@ public final class ContentReplacements {
         for (long held : REPLACED.values()) { total += held; }
         if (total == 0L) { return; }
         Summary.info("replacements", "Replaced " + total + " block(s) in " + chunks + " chunk(s) that already existed");
-        if (logging) {
-            for (Map.Entry<String, Long> entry : REPLACED.entrySet()) { ContentLog.LOGGER.debug("  replaced {} {}", entry.getValue(), entry.getKey()); }
-        }
+        if (logging) { for (Map.Entry<String, Long> entry : REPLACED.entrySet()) { ContentLog.LOGGER.debug("  replaced {} {}", entry.getValue(), entry.getKey()); } }
     }
 
     @Nullable private static BlockState replacementFor(BlockState found) {
@@ -177,25 +140,27 @@ public final class ContentReplacements {
         EXACT.clear();
         WHOLE.clear();
         for (String entry : ContentControl.list(ContentControl.REPLACEMENTS, "blockReplacements", Config.worldgen.blockReplacements())) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length != 2) {
-                ContentLog.LOGGER.error("blockReplacements entry '{}' needs the form block=block, ignoring it", entry);
-                continue;
-            }
+            String[] parts = Settings.pair(entry, "blockReplacements", "block=block");
+            if (parts == null) { continue; }
             List<BlockState> from = states(parts[0].trim(), entry);
             List<BlockState> to = states(parts[1].trim(), entry);
             if (from.isEmpty() || to.isEmpty()) { continue; }
             BlockState swap = to.getFirst();
             if (!parts[0].contains("[")) { WHOLE.put(from.getFirst().getBlock(), swap); }
-            else {
-                for (BlockState state : from) { EXACT.put(state, swap); }
-            }
+            else { for (BlockState state : from) { EXACT.put(state, swap); } }
         }
         blacklist = ContentControl.flag(ContentControl.REPLACEMENTS, "blockReplacementDimensionsAreBlacklist", Config.worldgen.blockReplacementDimensionsAreBlacklist());
         logging = ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements());
         wanted = !EXACT.isEmpty() || !WHOLE.isEmpty();
-        token = "replace:" + Integer.toHexString(EXACT.keySet().hashCode() * 31 + WHOLE.keySet().hashCode()) + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey()).trim();
+        token = "replace:" + Integer.toHexString(sources().hashCode()) + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey()).trim();
         if (wanted) { Summary.info("replacements.setup", "Replacing " + (EXACT.size() + WHOLE.size()) + " kind(s) of block in chunks that already exist, between y" + minHeight + " and y" + maxHeight); }
+    }
+
+    private static Set<String> sources() {
+        Set<String> names = new TreeSet<>();
+        for (BlockState state : EXACT.keySet()) { names.add("exact " + name(state)); }
+        for (Block block : WHOLE.keySet()) { names.add("whole " + BuiltInRegistries.BLOCK.getKey(block)); }
+        return names;
     }
 
     private static List<BlockState> states(String written, String entry) {
@@ -206,8 +171,8 @@ public final class ContentReplacements {
             name = written.substring(0, open).trim();
             String inside = written.substring(open + 1, written.endsWith("]") ? written.length() - 1 : written.length());
             for (String pair : inside.split(",")) {
-                String[] halves = pair.split("=", 2);
-                if (halves.length == 2) { properties.put(halves[0].trim(), halves[1].trim()); }
+                String[] halves = Settings.split(pair);
+                if (halves != null) { properties.put(halves[0], halves[1]); }
             }
         }
         ResourceLocation id = ResourceLocation.tryParse(name);

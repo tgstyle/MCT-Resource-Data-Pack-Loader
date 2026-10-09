@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IChunkMap;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ILevel;
 import mctmods.resourcedatapackloader.util.Config;
@@ -132,7 +133,7 @@ public final class ContentPregen {
             String id = dimension.location().toString();
             CompoundTag spot = memory.madeIn(id);
             long from;
-            if (spot == null) { from = worker.order.skipMadeBefore(memory.madeAt(id)); }
+            if (spot == null) { from = 0L; }
             else if (spot.getInt("size") == worker.order.tileSize()) { from = worker.order.skipTo(spot.getLong("tile"), spot.getLong("within")); }
             else {
                 from = 0L;
@@ -181,7 +182,7 @@ public final class ContentPregen {
 
     private static void sweepEmpty(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) {
-            if (level.players().isEmpty()) { ((ILevel) level).rdpl$blockEntityTickers().removeIf(TickingBlockEntity::isRemoved); }
+            if (level.players().isEmpty()) { ((ILevel) level).rdpl$getBlockEntityTickers().removeIf(TickingBlockEntity::isRemoved); }
         }
     }
 
@@ -395,7 +396,7 @@ public final class ContentPregen {
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
-            Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_ENDED, ending, ChatFormatting.GREEN);
+            Says.tellAll(server, CardIds.PREGEN_ENDED, ChatFormatting.GREEN, ending);
             if (!stopping) { keepPristine(server); }
             ContentPregenHold.releaseEveryone(server, !stopping);
         }

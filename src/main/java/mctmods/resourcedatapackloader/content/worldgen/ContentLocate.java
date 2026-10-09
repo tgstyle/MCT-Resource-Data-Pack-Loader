@@ -13,9 +13,8 @@ import javax.annotation.Nullable;
 public final class ContentLocate extends SavedData {
     private static final String NAME = "rdpl_locate";
     private static final String PLACED = "Placed";
-    private CompoundTag placed = new CompoundTag();
-
     private static final Factory<ContentLocate> FACTORY = new Factory<>(ContentLocate::new, (tag, lookup) -> read(tag));
+    private CompoundTag placed = new CompoundTag();
 
     private static ContentLocate of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(FACTORY, NAME); }
 

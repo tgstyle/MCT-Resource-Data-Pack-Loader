@@ -17,6 +17,12 @@ public final class ContentChunkTokens {
 
     public static Set<String> get(LevelChunk chunk) { return chunk.getData(TOKENS); }
 
+    public static void add(LevelChunk chunk, String token) {
+        Set<String> tokens = new LinkedHashSet<>(get(chunk));
+        tokens.add(token);
+        put(chunk, tokens);
+    }
+
     public static void put(LevelChunk chunk, Set<String> tokens) {
         chunk.setData(TOKENS, Set.copyOf(tokens));
         chunk.setUnsaved(true);

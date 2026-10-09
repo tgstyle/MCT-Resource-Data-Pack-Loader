@@ -1,12 +1,14 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.block.ContentBellBlock;
+import mctmods.resourcedatapackloader.content.block.ContentBellBlockEntity;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.entity.goal.RaidBreakDoorGoal;
 import mctmods.resourcedatapackloader.content.entity.goal.RaidMarchGoal;
 import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
 import mctmods.resourcedatapackloader.content.raid.RaidStorage;
 import mctmods.resourcedatapackloader.content.raid.RaidVillage;
+import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -15,7 +17,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -55,7 +56,6 @@ import javax.annotation.Nullable;
 public final class ContentRaids {
     private static final int LOOK_EVERY = 20;
     private static final int VILLAGE_SEARCH = 32;
-    private static final int BELL_REACH = 48;
     private static final int GLOW_TICKS = 60;
     private static final Set<Block> BELLS = new HashSet<>();
     private static final Map<ResourceLocation, RaidDef> DEFS = new LinkedHashMap<>();
@@ -74,7 +74,7 @@ public final class ContentRaids {
         if (DEFS.isEmpty()) { return; }
         for (RaidDef def : DEFS.values()) {
             for (String name : def.bells()) {
-                Block bell = Registered.find(BuiltInRegistries.BLOCK, ResourceLocation.tryParse(name.trim()));
+                Block bell = Registered.block(name);
                 if (bell == null || bell == Blocks.AIR) { ContentLog.LOGGER.error("Raid {} names the bell {}, which nothing registers, so no block rings for it", def.key(), name); }
                 else if (!(bell instanceof ContentBellBlock)) { BELLS.add(bell); }
             }
@@ -109,9 +109,9 @@ public final class ContentRaids {
             return;
         }
         level.playSound(null, bell, SoundEvents.NOTE_BLOCK_BELL.value(), SoundSource.BLOCKS, 2.0F, 1.0F);
-        int hiding = hide(level, bell, BELL_REACH);
+        int hiding = hide(level, bell, ContentBellBlockEntity.GLOW_RADIUS);
         int glowing = 0;
-        for (LivingEntity raider : level.getEntitiesOfClass(LivingEntity.class, new AABB(bell).inflate(BELL_REACH))) {
+        for (LivingEntity raider : level.getEntitiesOfClass(LivingEntity.class, new AABB(bell).inflate(ContentBellBlockEntity.GLOW_RADIUS))) {
             if (!answersBell(raider)) { continue; }
             glow(raider);
             glowing++;
@@ -132,7 +132,7 @@ public final class ContentRaids {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || !(player.level() instanceof ServerLevel level) || player.tickCount % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
         for (RaidDef def : DEFS.values()) {
-            Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(name)))).orElse(null);
+            Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(ContentEffects.find(name))).orElse(null);
             if (omen == null || !player.hasEffect(omen)) { continue; }
             RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
             if (village == null) { return; }
@@ -145,9 +145,7 @@ public final class ContentRaids {
         }
     }
 
-    public static void onRaiderHit(LivingIncomingDamageEvent event) {
-        if (raider(event.getEntity()) && raider(event.getSource().getEntity())) { event.setCanceled(true); }
-    }
+    public static void onRaiderHit(LivingIncomingDamageEvent event) { if (raider(event.getEntity()) && raider(event.getSource().getEntity())) { event.setCanceled(true); } }
 
     public static void onRaiderTarget(LivingChangeTargetEvent event) {
         if (!raider(event.getNewAboutToBeSetTarget()) || !raider(event.getEntity())) { return; }

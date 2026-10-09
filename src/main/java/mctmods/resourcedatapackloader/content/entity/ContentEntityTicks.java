@@ -62,7 +62,7 @@ public final class ContentEntityTicks {
         double distance = Math.max(64, ContentControl.number(ContentControl.ENTITIES, "slowDistance", Config.entities.slowDistance()));
         Set<String> kinds = new HashSet<>();
         for (String kind : ContentControl.list(ContentControl.ENTITIES, "slowedKinds", Config.entities.slowedKinds())) {
-            String lowered = kind.trim().toLowerCase(Locale.ROOT);
+            String lowered = Settings.lower(kind);
             if (KINDS.contains(lowered)) { kinds.add(lowered); }
             else { ContentLog.LOGGER.error("slowedKinds names '{}', which is not one of {}, so nothing is slowed for it. Anything that thinks for itself is already given a slower pace without being named, and machines are never slowed", kind, KINDS); }
         }
@@ -98,18 +98,6 @@ public final class ContentEntityTicks {
 
     public static boolean frozen(Entity entity) { return !(entity instanceof Player) && ContentPregen.holdsStill(entity.level()); }
 
-    public static boolean thinksSlower(Mob mob) {
-        if (mob.level().isClientSide()) { return false; }
-        if (frozen(mob)) { return true; }
-        Slowing slowing = slowing();
-        if (!slowing.on() || slowing.rate() <= 1 || spared(mob, slowing)) { return false; }
-        considered++;
-        if (near(mob.level(), mob.chunkPosition(), slowing)) { return false; }
-        boolean skip = Math.floorMod(mob.getId() + mob.level().getGameTime(), slowing.rate()) != 0L;
-        if (skip) { slowed++; }
-        return skip;
-    }
-
     public static boolean slowedNow(Entity entity) {
         if (entity.level().isClientSide()) { return false; }
         if (frozen(entity)) { return true; }
@@ -133,25 +121,26 @@ public final class ContentEntityTicks {
         }
         long key = chunk.toLong();
         if (known.containsKey(key)) { return known.get(key); }
-        boolean answer = !measure(level, chunk, slowing);
+        boolean answer = reached(level, chunk, slowing);
         known.put(key, answer);
         return answer;
     }
 
-    private static boolean measure(Level level, ChunkPos chunk, Slowing slowing) {
-        if (level instanceof ServerLevel server && server.getForcedChunks().contains(chunk.toLong())) { return false; }
-        if (level.players().isEmpty()) { return true; }
+    private static boolean reached(Level level, ChunkPos chunk, Slowing slowing) {
+        if (level instanceof ServerLevel server && server.getForcedChunks().contains(chunk.toLong())) { return true; }
+        if (level.players().isEmpty()) { return false; }
         double middleX = chunk.getMiddleBlockX() + 0.5D;
         double middleZ = chunk.getMiddleBlockZ() + 0.5D;
         for (Player player : level.players()) {
             double awayX = player.getX() - middleX;
             double awayZ = player.getZ() - middleZ;
-            if (awayX * awayX + awayZ * awayZ <= slowing.reach()) { return false; }
+            if (awayX * awayX + awayZ * awayZ <= slowing.reach()) { return true; }
         }
-        return true;
+        return false;
     }
 
     private static boolean kindSlowed(Entity entity, Slowing slowing) {
+        if (entity instanceof Mob) { return true; }
         if (entity instanceof ItemEntity) { return slowing.kinds().contains("items"); }
         if (entity instanceof ExperienceOrb) { return slowing.kinds().contains("experience"); }
         if (entity instanceof AbstractArrow || entity instanceof ThrowableProjectile || entity instanceof LlamaSpit) { return slowing.kinds().contains("projectiles"); }

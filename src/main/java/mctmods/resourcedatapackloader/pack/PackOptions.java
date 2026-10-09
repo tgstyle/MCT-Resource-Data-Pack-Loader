@@ -1,10 +1,13 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import net.minecraft.util.GsonHelper;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -90,8 +93,8 @@ public final class PackOptions {
         try (Stream<Path> files = Files.list(held)) {
             files.filter(Files::isRegularFile)
                     .map(one -> one.getFileName().toString())
-                    .filter(one -> one.endsWith(".json"))
-                    .map(one -> one.substring(0, one.length() - 5))
+                    .filter(one -> one.endsWith(PackManager.JSON_SUFFIX))
+                    .map(one -> PackManager.stripJson(one, 0))
                     .filter(one -> !VALUES.containsKey(one) && !ModPacks.CONTROL_STEM.equals(one))
                     .sorted()
                     .forEach(stale::add);
@@ -124,7 +127,7 @@ public final class PackOptions {
             for (Map.Entry<String, JsonElement> entry : read.entrySet()) {
                 JsonElement held = entry.getValue();
                 if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isBoolean()) { defaults.add(entry.getKey(), held); }
-                else if (held.isJsonObject() && held.getAsJsonObject().has("default") && held.getAsJsonObject().get("default").isJsonPrimitive() && held.getAsJsonObject().get("default").getAsJsonPrimitive().isBoolean()) {
+                else if (held.isJsonObject() && GsonHelper.isBooleanValue(held.getAsJsonObject(), "default")) {
                     defaults.add(entry.getKey(), held.getAsJsonObject().get("default"));
                     if (held.getAsJsonObject().has("description")) { about.put(entry.getKey(), held.getAsJsonObject().get("description").getAsString()); }
                     if (held.getAsJsonObject().has("hide") && held.getAsJsonObject().get("hide").getAsBoolean()) { shy.add(entry.getKey()); }
@@ -166,7 +169,7 @@ public final class PackOptions {
         return merged;
     }
 
-    private static String gsonPretty(JsonObject held) { return ModPacks.GSON.toJson(held); }
+    private static String gsonPretty(JsonObject held) { return Json.PRETTY.toJson(held); }
 
     @Nullable public static Boolean option(String fileKey, String name) {
         Map<String, Boolean> options = VALUES.get(fileKey);
@@ -223,7 +226,7 @@ public final class PackOptions {
 
     public static void worldTold() { WORLD_CHANGED.clear(); }
 
-    public static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
+    private static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
 
     public static void save(String fileKey, Map<String, Boolean> options) {
         Map<String, Boolean> held = VALUES.get(fileKey);
@@ -245,13 +248,7 @@ public final class PackOptions {
 
     @Nullable public static Boolean anywhere(String name) {
         Boolean found = null;
-        for (Map<String, Boolean> options : VALUES.values()) {
-            Boolean held = options.get(name);
-            if (held == null) { continue; }
-            if (!held) { return false; }
-            found = true;
-        }
-        for (Map<String, Boolean> options : HIDDEN.values()) {
+        for (Map<String, Boolean> options : Iterables.concat(VALUES.values(), HIDDEN.values())) {
             Boolean held = options.get(name);
             if (held == null) { continue; }
             if (!held) { return false; }

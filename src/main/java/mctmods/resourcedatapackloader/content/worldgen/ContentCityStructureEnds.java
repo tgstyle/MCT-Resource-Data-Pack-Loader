@@ -2,26 +2,25 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure.GenerationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class ContentCityStructureEnds {
-    private static final int[] COURT_STEMS = { 1, 4, 7 };
-
     private ContentCityStructureEnds() {}
 
     private record Room(int radius, BoundingBox box) {}
 
     static void ends(GenerationContext context, CityPlan plan, CityPlan.Line line, int start, int[] profile, String paving, String walk, boolean[] bridged, List<ContentCityStructure.Well> wells, List<ContentCityStructure.Bulb> bulbs, StructurePiecesBuilder builder) {
         if (line.endsLow() == CityPlan.End.MET && line.endsHigh() == CityPlan.End.MET) { return; }
-        RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ (line.at() * 132897987541L + (line.alongX() ? 3L : 5L)));
+        RandomSource roll = RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ (line.at() * SeededRandom.ALONG + (line.alongX() ? 3L : 5L)));
         String rail = ContentControl.onRoad(line.keys(), ContentCity::bridgeBarrierBlock);
         boolean paved = !line.alley() && !walk.isEmpty();
         for (int side = 0; side < 2; side++) {
@@ -43,7 +42,6 @@ public final class ContentCityStructureEnds {
                 continue;
             }
             int level = profile[at];
-
             if (!line.alley() && bridged[at]) {
                 String style = ContentCity.pierStyle(roll);
                 if (style != null) {
@@ -68,7 +66,6 @@ public final class ContentCityStructureEnds {
                 laid = "a cul-de-sac";
             }
             else if (closed != null) { builder.addPiece(cap(line, along, level, closed, walk, rail)); }
-
             else { laid = "nothing"; }
             ContentLog.LOGGER.debug("The {} dead end at {}, {} y {} of the street along {} closes with {}", low ? "low" : "high", x, z, level, line.alongX() ? "x" : "z", laid);
         }
@@ -96,13 +93,12 @@ public final class ContentCityStructureEnds {
         int end = low ? line.from() : line.to();
         int dir = low ? -1 : 1;
         int most = (line.width() + 7) / 2;
-        int least = (line.width() + 1) / 2 + 1;
         int endX = line.alongX() ? end : line.middle();
         int endZ = line.alongX() ? line.middle() : end;
         List<BoundingBox> standing = new ArrayList<>();
         List<BoundingBox> ways = new ArrayList<>();
         stand(plan, line, standing, ways);
-        int far = end + dir * (2 * most + 1 + COURT_STEMS[COURT_STEMS.length - 1]);
+        int far = end + dir * (2 * most + 1 + CityCourtSearch.STEMS[CityCourtSearch.STEMS.length - 1]);
         CityPlan beyond = CityPlan.of(ground, CityPlan.districtOf(line.alongX() ? far : line.middle(), true), CityPlan.districtOf(line.alongX() ? line.middle() : far, false));
         if (beyond != null && (beyond.windowX() != plan.windowX() || beyond.windowZ() != plan.windowZ())) { stand(beyond, line, standing, ways); }
         for (ContentCityStructure.Bulb bulb : bulbs) {
@@ -113,55 +109,31 @@ public final class ContentCityStructureEnds {
             standing.add(well.box());
             ways.add(well.box());
         }
-        boolean cut = false;
-        for (int radius = most; radius >= least; radius--) {
-            int heart = end + dir * (radius + 1);
-            if (crowded(standing, line.alongX() ? heart : line.middle(), line.alongX() ? line.middle() : heart, radius)) { continue; }
-            for (int stem : COURT_STEMS) {
-                int spot = heart + dir * stem;
-                int discX = line.alongX() ? spot : line.middle();
-                int discZ = line.alongX() ? line.middle() : spot;
-                BoundingBox box = court(line, end, dir, radius, stem);
-                if (crowded(standing, discX, discZ, radius) || crossed(ways, box)) { continue; }
-                if (ContentCityStructure.steep(ground, discX, discZ, radius, level)) {
-                    cut = true;
-                    continue;
-                }
-                if (ContentCityStructure.dry(ground, box.minX(), box.minZ(), discX, discZ, radius)) { return new Room(radius, box); }
-                ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but water stands under the court it would take, so it stays a plain end", endX, endZ);
-                return null;
-            }
-        }
-        if (cut) { ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but every court it could seat would cut the ground beside it, so it stays a plain end", endX, endZ); }
+        CityCourtSearch.Seat seat = CityCourtSearch.seat(ground, line, low, level, (x, z, radius) -> crowded(standing, x, z, radius), (x, z, radius, box) -> crowded(standing, x, z, radius) || crossed(ways, box));
+        if (seat.verdict() == CityCourtSearch.Verdict.SEATED) { return new Room(seat.radius(), seat.box()); }
+        if (seat.verdict() == CityCourtSearch.Verdict.WET) { ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but water stands under the court it would take, so it stays a plain end", endX, endZ); }
+        else if (seat.verdict() == CityCourtSearch.Verdict.CUT) { ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but every court it could seat would cut the ground beside it, so it stays a plain end", endX, endZ); }
         else { ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, but a plot, street, railway, well or cul-de-sac stands within its reach at every size it could take, so it stays a plain end", endX, endZ); }
         return null;
     }
 
     static void stand(CityPlan plan, CityPlan.Line line, List<BoundingBox> standing, List<BoundingBox> ways) {
-        for (CityPlan.Plot plot : plan.plots()) { standing.add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line other : lines) {
-                if (other.equals(line)) { continue; }
-                BoundingBox held = other.alongX() ? new BoundingBox(other.from(), 0, other.at(), other.to(), 0, other.last()) : new BoundingBox(other.at(), 0, other.from(), other.last(), 0, other.to());
-                standing.add(held);
-                if (!other.alley()) { ways.add(held); }
-            }
+        for (CityPlan.Plot plot : plan.plots()) { standing.add(plot.box()); }
+        for (CityPlan.Line other : CityLines.of(plan)) {
+            if (other.equals(line)) { continue; }
+            BoundingBox held = other.box();
+            standing.add(held);
+            if (!other.alley()) { ways.add(held); }
         }
         for (CityPlan.Rail rail : plan.rails()) {
             if (rail.subway()) { continue; }
-            BoundingBox held = rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to());
+            BoundingBox held = rail.box();
             standing.add(held);
             ways.add(held);
         }
     }
 
-    static BoundingBox court(CityPlan.Line line, int end, int dir, int radius, int stem) {
-        int near = end + dir;
-        int far = end + dir * (stem + 2 * radius + 1);
-        int least = Math.min(near, far);
-        int most = Math.max(near, far);
-        return line.alongX() ? new BoundingBox(least, 0, line.middle() - radius, most, 0, line.middle() + radius) : new BoundingBox(line.middle() - radius, 0, least, line.middle() + radius, 0, most);
-    }
+    static BoundingBox court(CityPlan.Line line, int end, int dir, int radius, int stem) { return CityCulDeSacs.courtLine(line, end, dir, radius, stem).box(); }
 
     private static boolean crossed(List<BoundingBox> ways, BoundingBox court) {
         for (BoundingBox way : ways) {
@@ -171,11 +143,7 @@ public final class ContentCityStructureEnds {
     }
 
     private static boolean crowded(List<BoundingBox> standing, int x, int z, int radius) {
-        for (BoundingBox box : standing) {
-            int nearX = Mth.clamp(x, box.minX(), box.maxX()) - x;
-            int nearZ = Mth.clamp(z, box.minZ(), box.maxZ()) - z;
-            if (nearX * nearX + nearZ * nearZ <= (radius + 1) * (radius + 1)) { return true; }
-        }
+        for (BoundingBox box : standing) { if (CityCourtSearch.crowds(box.minX(), box.minZ(), box.maxX(), box.maxZ(), x, z, radius)) { return true; } }
         return false;
     }
 

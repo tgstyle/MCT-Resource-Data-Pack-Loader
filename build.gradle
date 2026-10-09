@@ -43,7 +43,6 @@ def newVersion = "${baseVersion}-b${nextBuild}-${stage}"
 
 version = newVersion
 ext.version_buildnumber = nextBuild
-ext.stage = stage
 
 println "-> build.gradle applying version: $version (build ${nextBuild})"
 
@@ -110,13 +109,6 @@ processResources {
             }
         }
     }
-}
-
-tasks.register('copyModsTomlForIntelliJ', Copy) {
-    from processResources.destinationDir
-    into "$projectDir/out/production/resources"
-    include "META-INF/neoforge.mods.toml"
-    dependsOn processResources
 }
 
 neoForge {
@@ -211,28 +203,8 @@ tasks.register('bumpVersion') {
     }
 }
 
-tasks.register('optimizePng') {
-    def pngPatterns = ["**/*.png"]
-    def resourceDirs = sourceSets.main.resources.srcDirs
-    def pngFiles = resourceDirs.collectMany { dir -> fileTree(dir: dir, includes: pngPatterns).files as List }
-    def execOps = project.services.get(ExecOperations)
-    doLast {
-        pngFiles.each { File file ->
-            long size = file.length()
-            execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
-            long newSize = file.length()
-            if (newSize < size) {
-                System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
-                        file, size, newSize, ((double) (size - newSize)) / ((double) size) * 100.0)
-            }
-        }
-    }
-}
-
 processResources.dependsOn bumpVersion
 jar.dependsOn bumpVersion
-
-tasks.register('genIntellijRunsDummy') {}
 
 jar {
     archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")

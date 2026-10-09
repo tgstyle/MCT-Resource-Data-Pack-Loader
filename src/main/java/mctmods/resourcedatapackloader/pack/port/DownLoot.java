@@ -1,9 +1,15 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +17,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 final class DownLoot {
-    private static final String COMPONENTS = "components";
     private static final String TYPE_SPECIFIC = "type_specific";
     private static final String VARIANT = "/variant";
     private static final Map<String, String> TARGETS = Map.of("attacker", "killer", "direct_attacker", "direct_killer", "attacking_player", "killer_player");
@@ -51,17 +56,17 @@ final class DownLoot {
         if (!element.isJsonObject()) { return; }
         JsonObject json = element.getAsJsonObject();
         for (String key : TARGET_KEYS) {
-            if (json.has(key) && json.get(key).isJsonPrimitive() && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
+            if (GsonHelper.isValidPrimitive(json, key) && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
-        String condition = DownFixes.namespaced(DownFixes.string(json, "condition"));
+        String condition = namespaced(Json.text(json, "condition"));
         if ("minecraft:time_check".equals(condition)) { json.remove("clock"); }
-        if (json.has("recipe") && json.get("recipe").isJsonPrimitive()) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
-        String function = DownFixes.string(json, "function");
-        if (!function.isEmpty()) { function(json, DownFixes.namespaced(function), file, note); }
-        else if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) {
+        if (GsonHelper.isValidPrimitive(json, "recipe")) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
+        String function = Json.text(json, "function");
+        if (!function.isEmpty()) { function(json, namespaced(function), file, note); }
+        else if (json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) {
             variant(json);
-            DownFixes.components(json.getAsJsonObject(COMPONENTS), file, note);
-            if (json.getAsJsonObject(COMPONENTS).isEmpty()) { json.remove(COMPONENTS); }
+            DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), file, note);
+            if (json.getAsJsonObject(CrossJson.COMPONENTS).isEmpty()) { json.remove(CrossJson.COMPONENTS); }
         }
         json.entrySet().forEach(entry -> walk(entry.getValue(), file, note));
     }
@@ -69,7 +74,7 @@ final class DownLoot {
     private static void function(JsonObject json, String function, String file, Consumer<String> note) {
         switch (function) {
             case "minecraft:set_components" -> {
-                if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) { DownFixes.components(json.getAsJsonObject(COMPONENTS), file, note); }
+                if (json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) { DownFixes.components(json.getAsJsonObject(CrossJson.COMPONENTS), file, note); }
             }
             case "minecraft:set_custom_model_data" -> modelData(json, file, note);
             case "minecraft:set_name" -> {
@@ -100,16 +105,16 @@ final class DownLoot {
     }
 
     private static void variant(JsonObject json) {
-        JsonObject components = json.getAsJsonObject(COMPONENTS);
+        JsonObject components = json.getAsJsonObject(CrossJson.COMPONENTS);
         for (String key : new ArrayList<>(components.keySet())) {
-            String named = DownFixes.namespaced(key);
-            if (!named.startsWith(DownFixes.MINECRAFT)) { continue; }
-            String bare = named.substring(DownFixes.MINECRAFT.length());
+            String named = namespaced(key);
+            if (!named.startsWith(MINECRAFT)) { continue; }
+            String bare = named.substring(MINECRAFT.length());
             String owner = bare.endsWith(VARIANT) ? bare.substring(0, bare.length() - VARIANT.length()) : "";
             String entity = VARIANTS.contains(owner) ? owner : "tropical_fish/pattern".equals(bare) ? "tropical_fish" : null;
             if (entity == null || json.has(TYPE_SPECIFIC)) { continue; }
             JsonObject specific = new JsonObject();
-            specific.addProperty("type", DownFixes.MINECRAFT + entity);
+            specific.addProperty("type", MINECRAFT + entity);
             specific.add("variant", components.remove(key));
             json.add(TYPE_SPECIFIC, specific);
         }

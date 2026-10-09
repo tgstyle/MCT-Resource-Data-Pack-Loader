@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
+import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -47,7 +48,7 @@ import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentBlock extends Block {
+public class ContentBlock extends Block implements IContentBlock {
     public static final String BUSH = "bush";
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
@@ -67,11 +68,9 @@ public class ContentBlock extends Block {
 
     public static AmountDef expRange(BlockDef def) { return def.expDropMax() <= def.expDropMin() ? AmountDef.of(def.expDropMin()) : new AmountDef(def.expDropMin(), def.expDropMax()); }
 
-    public BlockDef getDef() { return def; }
+    @Override public BlockDef getDef() { return def; }
 
-    @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return shape == null ? super.getShape(state, level, pos, context) : shape;
-    }
+    @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
     @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelAccessor level, @Nonnull BlockPos pos, @Nullable BlockEntity blockEntity, @Nullable Entity breaker, @Nonnull ItemStack tool) { return experience(def, expDrop, level, breaker); }
 
@@ -84,7 +83,7 @@ public class ContentBlock extends Block {
 
     private static int rolled(BlockDef def, AmountDef range, LevelAccessor level) { return def.dropsExperience() ? Math.max(0, range.pick(level.getRandom())) : 0; }
 
-    @Nullable private static BlockDef defOf(BlockState state) { return state.getBlock() instanceof ContentBlock block ? block.getDef() : state.getBlock() instanceof ContentContainerBlock held ? held.getDef() : null; }
+    @Nullable private static BlockDef defOf(BlockState state) { return state.getBlock() instanceof IContentBlock block ? block.getDef() : null; }
 
     public static void onDrops(BlockDropsEvent event) {
         BlockDef def = defOf(event.getState());
@@ -101,12 +100,6 @@ public class ContentBlock extends Block {
 
     @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.behavesAs().contains(BUSH); }
 
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
-
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
-
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
-
     @Override @Nonnull public TriState canSustainPlant(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos soilPosition, @Nonnull Direction facing, @Nonnull BlockState plant) { return sustains(def, facing, plant); }
 
     public static TriState sustains(BlockDef def, Direction facing, BlockState plant) {
@@ -121,13 +114,13 @@ public class ContentBlock extends Block {
         Item key = ContentStacks.item(def.opensWith());
         if (key == null || !held.is(key)) { return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION; }
         if (level instanceof ServerLevel server) { open(server, pos, state, player, held); }
-        return ItemInteractionResult.sidedSuccess(level.isClientSide);
+        return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }
 
     @Override @Nonnull protected InteractionResult useWithoutItem(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull BlockHitResult hit) {
         if (def.opensWith() == null) { return super.useWithoutItem(state, level, pos, player, hit); }
-        if (!level.isClientSide) { player.displayClientMessage(Component.translatable(getDescriptionId() + ".locked"), true); }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        if (!level.isClientSide()) { player.displayClientMessage(Component.translatable(getDescriptionId() + ".locked"), true); }
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     private void open(ServerLevel level, BlockPos pos, BlockState state, Player player, ItemStack held) {

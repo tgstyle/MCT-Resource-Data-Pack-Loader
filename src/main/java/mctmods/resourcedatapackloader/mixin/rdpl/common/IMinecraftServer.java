@@ -6,5 +6,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(MinecraftServer.class) public interface IMinecraftServer {
-    @Accessor("storageSource") LevelStorageSource.LevelStorageAccess rdpl$storageSource();
+    @Accessor("storageSource") LevelStorageSource.LevelStorageAccess rdpl$getStorageSource();
 }

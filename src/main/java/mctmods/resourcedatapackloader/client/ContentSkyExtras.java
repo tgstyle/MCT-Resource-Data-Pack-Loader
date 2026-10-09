@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.client;
 
+import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
+
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,7 +19,6 @@ import org.joml.Matrix4f;
 import javax.annotation.Nullable;
 
 public final class ContentSkyExtras {
-    private static final float SIZE = 100.0F;
     private static final float[][][] FACES = {
             {{-1, 1, 1}, {1, 1, 1}, {1, 1, -1}, {-1, 1, -1}},
             {{-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, {-1, -1, 1}},
@@ -154,7 +156,7 @@ public final class ContentSkyExtras {
         float flat = Mth.cos(up) * SIZE;
         int color = top ? aurora.topColor() : aurora.color();
         float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * (0.6F + 0.4F * Mth.sin(time * 0.11F + step * 0.9F + band * 0.7F));
-        buffer.addVertex(pose, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat).setColor((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha);
+        buffer.addVertex(pose, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat).setColor(Rgb.red(color), Rgb.green(color), Rgb.blue(color), alpha);
     }
 
     private static void bow(Matrix4f pose, float sunAngle, float strength) {
@@ -180,6 +182,6 @@ public final class ContentSkyExtras {
         float along = Mth.sin(turn) * out;
         int color = BOW_COLORS[ring];
         float alpha = ring == 0 || ring == BOW_RADII.length - 1 ? 0.0F : strength * 0.35F;
-        buffer.addVertex(pose, (away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, Mth.cos(turn) * out * SIZE).setColor((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha);
+        buffer.addVertex(pose, (away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, Mth.cos(turn) * out * SIZE).setColor(Rgb.red(color), Rgb.green(color), Rgb.blue(color), alpha);
     }
 }

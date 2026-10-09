@@ -176,12 +176,7 @@ public final class ContentGeode implements IContentShape {
     }
 
     private static boolean touches(boolean[] body, int x, int z, int y, int width, int height) {
-        return (x + 1 < width && body[index(x + 1, z, y, width, height)])
-                || (x > 0 && body[index(x - 1, z, y, width, height)])
-                || (z + 1 < width && body[index(x, z + 1, y, width, height)])
-                || (z > 0 && body[index(x, z - 1, y, width, height)])
-                || (y + 1 < height && body[index(x, z, y + 1, width, height)])
-                || (y > 0 && body[index(x, z, y - 1, width, height)]);
+        return (x + 1 < width && body[index(x + 1, z, y, width, height)]) || (x > 0 && body[index(x - 1, z, y, width, height)]) || (z + 1 < width && body[index(x, z + 1, y, width, height)]) || (z > 0 && body[index(x, z - 1, y, width, height)]) || (y + 1 < height && body[index(x, z, y + 1, width, height)]) || (y > 0 && body[index(x, z, y - 1, width, height)]);
     }
 
     private static double away(int block, double center, double span) {

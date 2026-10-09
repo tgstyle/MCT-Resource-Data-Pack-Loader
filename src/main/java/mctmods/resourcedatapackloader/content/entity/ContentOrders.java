@@ -5,11 +5,13 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TileScan;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -40,7 +42,6 @@ import net.minecraft.world.level.block.entity.SignBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Team;
-import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
@@ -55,7 +56,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentOrders {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final String BOSS = "rdplBoss";
     private static final String TEAM = "team:";
     private static final String TAG = "tag:";
@@ -84,19 +84,9 @@ public final class ContentOrders {
         return !DEFS.isEmpty();
     }
 
-    public static void listen() {
-        NeoForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
-        NeoForge.EVENT_BUS.addListener(ContentOrders::onPlace);
-        NeoForge.EVENT_BUS.addListener(ContentOrders::onBreak);
-        NeoForge.EVENT_BUS.addListener(ContentOrders::onInteract);
-    }
-
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Order file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "order file");
+        if (json == null) { return; }
         if (json.has("stockName")) { stockName = GsonHelper.getAsString(json, "stockName").trim(); }
         if (json.has("hire")) { hire = GsonHelper.getAsString(json, "hire").trim(); }
         if (json.has("spawnCap")) { spawnCap = Math.max(0, GsonHelper.getAsInt(json, "spawnCap")); }
@@ -112,11 +102,8 @@ public final class ContentOrders {
     }
 
     @Nullable private static OrderDef order(String name, JsonObject json) {
-        OrderDef.Job job = null;
         String named = GsonHelper.getAsString(json, "job", "");
-        for (OrderDef.Job one : OrderDef.Job.values()) {
-            if (one.name().equalsIgnoreCase(named)) { job = one; }
-        }
+        OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
         if (job == null) {
             ContentLog.LOGGER.error("Order {} asks for the job '{}', which is not gather, mine, farm or haul, ignoring it", name, named);
             return null;
@@ -126,7 +113,7 @@ public final class ContentOrders {
             ContentLog.LOGGER.error("Order {} names no item tag under blocks, and only a farm order works without one, ignoring it", name);
             return null;
         }
-        ResourceLocation tag = blocks.isEmpty() ? null : ResourceLocation.tryParse(blocks.startsWith("#") ? blocks.substring(1) : blocks);
+        ResourceLocation tag = blocks.isEmpty() ? null : Registered.tagId(blocks);
         if (!blocks.isEmpty() && tag == null) {
             ContentLog.LOGGER.error("Order {} names '{}' under blocks, which is not an item tag id, ignoring it", name, blocks);
             return null;
@@ -230,8 +217,8 @@ public final class ContentOrders {
             return;
         }
         BlockEntity tile = level.getBlockEntity(pos);
-        if (stockName.isEmpty() || !isChest(level, tile) || !(tile instanceof RandomizableContainerBlockEntity chest)) { return; }
-        Component custom = chest.getCustomName();
+        if (stockName.isEmpty() || !isChest(level, tile)) { return; }
+        Component custom = ((RandomizableContainerBlockEntity) tile).getCustomName();
         if (custom == null || !stockName.equalsIgnoreCase(custom.getString().trim())) { return; }
         OrderDef haul = null;
         for (OrderDef def : DEFS.values()) {
@@ -247,9 +234,7 @@ public final class ContentOrders {
         OrderBoard.of(level).open(level, haul, pos, null, player, true);
     }
 
-    public static void onBreak(BlockEvent.BreakEvent event) {
-        if (event.getLevel() instanceof ServerLevel level) { OrderBoard.of(level).cancelAt(event.getPos()); }
-    }
+    public static void onBreak(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof ServerLevel level) { OrderBoard.of(level).cancelAt(event.getPos()); } }
 
     private static void signs(ServerLevel level) {
         Map<BlockPos, Pending> waiting = PENDING.get(level.dimension());
@@ -324,11 +309,11 @@ public final class ContentOrders {
 
     private static void enlist(Player player, Mob mob) {
         PlayerTeam side = teamOf(player);
-        if (side != null) { mob.level().getScoreboard().addPlayerToTeam(mob.getScoreboardName(), side); }
+        if (side != null) { Scores.join(mob, side); }
         else { bind(mob, player.getUUID()); }
     }
 
-    @Nullable private static PlayerTeam teamOf(Player player) { return player.level().getScoreboard().getPlayersTeam(player.getScoreboardName()); }
+    @Nullable static PlayerTeam teamOf(Player player) { return Scores.teamOf(player); }
 
     private static boolean handedTool(ServerLevel level, Player player, Mob mob, ItemStack held) {
         OrderDef def = null;
@@ -361,20 +346,16 @@ public final class ContentOrders {
     }
 
     @Nullable private static BlockPos nearestChest(ServerLevel level, BlockPos from, int radius) {
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (int cx = from.getX() - radius >> 4; cx <= from.getX() + radius >> 4; cx++) {
-            for (int cz = from.getZ() - radius >> 4; cz <= from.getZ() + radius >> 4; cz++) {
-                if (!level.hasChunk(cx, cz)) { continue; }
-                for (BlockEntity tile : level.getChunk(cx, cz).getBlockEntities().values()) {
-                    double distance = tile.getBlockPos().distSqr(from);
-                    if (distance > (double) radius * radius || distance >= bestDistance || !isChest(level, tile)) { continue; }
-                    best = tile.getBlockPos();
-                    bestDistance = distance;
-                }
-            }
-        }
-        return best;
+        BlockPos[] best = {null};
+        double[] bestDistance = {Double.MAX_VALUE};
+        TileScan.within(level, from, radius, tile -> {
+            double distance = tile.getBlockPos().distSqr(from);
+            if (distance > (double) radius * radius || distance >= bestDistance[0] || !isChest(level, tile)) { return true; }
+            best[0] = tile.getBlockPos();
+            bestDistance[0] = distance;
+            return true;
+        });
+        return best[0];
     }
 
     private record Pending(UUID player, long until) {}

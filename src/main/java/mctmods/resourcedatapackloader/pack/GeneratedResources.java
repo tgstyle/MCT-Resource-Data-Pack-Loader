@@ -20,13 +20,9 @@ public final class GeneratedResources {
 
     private GeneratedResources() {}
 
-    public static void put(PackType type, String namespace, String path, String contents) {
-        HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.getBytes(StandardCharsets.UTF_8));
-    }
+    public static void put(PackType type, String namespace, String path, String contents) { HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.getBytes(StandardCharsets.UTF_8)); }
 
-    public static void put(PackType type, String namespace, String path, byte[] contents) {
-        HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.clone());
-    }
+    public static void put(PackType type, String namespace, String path, byte[] contents) { HELD.get(type).computeIfAbsent(namespace, k -> new ConcurrentHashMap<>()).put(path, contents.clone()); }
 
     @Nullable public static byte[] get(PackType type, String namespace, String path) {
         Map<String, byte[]> paths = HELD.get(type).get(namespace);
@@ -37,24 +33,22 @@ public final class GeneratedResources {
 
     public static Set<String> namespaces(PackType type) { return Collections.unmodifiableSet(new LinkedHashSet<>(HELD.get(type).keySet())); }
 
+    static String head(String prefix) { return prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/"; }
+
     public static void list(PackType type, String namespace, String prefix, Consumer<String> out) {
         Map<String, byte[]> paths = HELD.get(type).get(namespace);
         if (paths == null) { return; }
-        String head = prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/";
+        String head = head(prefix);
         for (String path : paths.keySet()) {
             if (path.startsWith(head)) { out.accept(path); }
         }
     }
 
-    public static void remove(PackType type, String prefix) {
-        for (Map<String, byte[]> paths : HELD.get(type).values()) { paths.keySet().removeIf(path -> path.startsWith(prefix)); }
-    }
+    public static void remove(PackType type, String prefix) { for (Map<String, byte[]> paths : HELD.get(type).values()) { paths.keySet().removeIf(path -> path.startsWith(prefix)); } }
 
-    public static boolean isEmpty() {
-        for (Map<String, Map<String, byte[]>> held : HELD.values()) {
-            if (!held.isEmpty()) { return false; }
-        }
-        return true;
+    public static boolean holds() {
+        for (Map<String, Map<String, byte[]>> held : HELD.values()) { if (!held.isEmpty()) { return true; } }
+        return false;
     }
 
     public static int count() {
@@ -65,7 +59,5 @@ public final class GeneratedResources {
         return total;
     }
 
-    public static void clear() {
-        for (Map<String, Map<String, byte[]>> held : HELD.values()) { held.clear(); }
-    }
+    public static void clear() { for (Map<String, Map<String, byte[]>> held : HELD.values()) { held.clear(); } }
 }

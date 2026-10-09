@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
+import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.serialization.MapCodec;
@@ -27,19 +28,17 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import javax.annotation.Nonnull;
 
-public final class ContentSaplingBlock extends BushBlock implements BonemealableBlock {
+public final class ContentSaplingBlock extends BushBlock implements BonemealableBlock, IContentSoil {
     private static final ThreadLocal<IntegerProperty> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
     private final IntegerProperty stage;
     private final TreeGrower grower;
-    private Set<Block> soil = Collections.emptySet();
+    private final ContentSoil soil;
 
     public static ContentSaplingBlock create(BlockDef def, ResourceLocation id, Properties properties) {
         SaplingDef sapling = def.sapling() == null ? new SaplingDef(List.of(), 2, 7, 9, "", List.of(), "minecraft:oak_log", "minecraft:oak_leaves", 4, false) : def.sapling();
@@ -53,6 +52,7 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
         this.def = def;
         this.sapling = sapling;
         this.stage = stage;
+        this.soil = new ContentSoil(def.key());
         this.grower = new TreeGrower(id.toString(), Optional.empty(), Optional.of(ResourceKey.create(Registries.CONFIGURED_FEATURE, ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_tree"))), Optional.empty());
         registerDefaultState(stateDefinition.any().setValue(stage, 0));
     }
@@ -61,11 +61,11 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
 
     @Override protected void createBlockStateDefinition(@Nonnull StateDefinition.Builder<Block, BlockState> builder) { builder.add(PENDING.get()); }
 
-    public void resolveSoil() { soil = ContentRegistry.resolveSoil(sapling.soil(), def.key()); }
+    @Override public void resolveSoil(@Nonnull ContentRegistry.BlockEntry entry) { soil.resolve(sapling.soil()); }
 
     @Override @Nonnull protected VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return ContentBushBlock.SHAPE; }
 
-    @Override protected boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return ContentRegistry.sustains(soil, level, pos.below(), state); }
+    @Override protected boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return soil.sustains(level, pos.below(), state); }
 
     @Override protected void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
         if (!level.isAreaLoaded(pos, 1)) { return; }
@@ -87,7 +87,7 @@ public final class ContentSaplingBlock extends BushBlock implements Bonemealable
             return;
         }
         if (!sapling.growsVanilla()) { placeStructure(level, pos, random); }
-        else if (ContentRegistry.sustains(soil, level, pos.below(), state)) { grower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random); }
+        else if (soil.sustains(level, pos.below(), state)) { grower.growTree(level, level.getChunkSource().getGenerator(), pos, state, random); }
     }
 
     private void placeStructure(ServerLevel level, BlockPos pos, RandomSource random) {

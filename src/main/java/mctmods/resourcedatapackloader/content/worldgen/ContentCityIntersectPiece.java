@@ -1,14 +1,16 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityCross.ALL_ARMS;
+
 import mctmods.resourcedatapackloader.content.def.PathIntersectDef;
 
-import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -17,9 +19,8 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
+import net.neoforged.neoforge.common.world.PieceBeardifierModifier;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public final class ContentCityIntersectPiece extends StructurePiece implements PieceBeardifierModifier {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityIntersectPiece::new;
@@ -32,7 +33,6 @@ public final class ContentCityIntersectPiece extends StructurePiece implements P
     private static final String ARMS = "Arms";
     private static final String CORE_X = "CoreX";
     private static final String CORE_Z = "CoreZ";
-    private static final int ALL_ARMS = CityCross.WEST | CityCross.EAST | CityCross.NORTH | CityCross.SOUTH;
     private final int level;
     private final String design;
     private final int rowLow;
@@ -132,22 +132,16 @@ public final class ContentCityIntersectPiece extends StructurePiece implements P
 
     private static void paint(WorldGenLevel level, BoundingBox box, PathIntersectDef def, char mark, BlockPos at) {
         if (mark == PathIntersectDef.KEEP || !box.isInside(at)) { return; }
-        BlockState laid = resolve(def, mark);
-        if (laid != null) { level.setBlock(at, laid, 2); }
+        level.setBlock(at, resolve(def, mark), Block.UPDATE_CLIENTS);
     }
 
-    @Nullable private static BlockState resolve(PathIntersectDef def, char mark) {
-        BlockState road = state(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
+    private static BlockState resolve(PathIntersectDef def, char mark) {
+        BlockState road = CityPalette.stateOr(ContentCity.paving(), Blocks.DIRT_PATH.defaultBlockState());
         if (mark == PathIntersectDef.ROAD || mark == PathIntersectDef.CORE) { return road; }
-        if (mark == PathIntersectDef.LINE) { return state(ContentCity.lineBlock(), road); }
-        if (mark == PathIntersectDef.WALK) { return state(ContentCity.sidewalkBlock(), road); }
+        if (mark == PathIntersectDef.LINE) { return CityPalette.stateOr(ContentCity.lineBlock(), road); }
+        if (mark == PathIntersectDef.WALK) { return CityPalette.stateOr(ContentCity.sidewalkBlock(), road); }
         String named = def.legend().get(mark);
-        return named == null ? road : state(named, road);
-    }
-
-    @Nullable private static BlockState state(String named, @Nullable BlockState fallback) {
-        BlockState found = CityPalette.state(named);
-        return found == null ? fallback : found;
+        return named == null ? road : CityPalette.stateOr(named, road);
     }
 
     @Override @Nonnull public BoundingBox getBeardifierBox() { return CityPlotGround.layer(getBoundingBox(), level); }

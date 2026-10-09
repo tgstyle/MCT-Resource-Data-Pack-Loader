@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.card;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -59,7 +60,7 @@ public final class CardRules {
         CardRule exact = BY_KEY.get(asked);
         if (exact != null) { return exact; }
         for (CardRule rule : BY_KEY.values()) {
-            if (rule.key.substring(rule.key.indexOf(':') + 1).equals(asked)) { return rule; }
+            if (IdNames.path(rule.key).equals(asked)) { return rule; }
         }
         return null;
     }

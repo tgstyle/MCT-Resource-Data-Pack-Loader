@@ -11,6 +11,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -38,8 +39,7 @@ public final class CityPlotSeams {
             IntList streets = new IntArrayList();
             for (StructurePiece piece : start.getPieces()) {
                 if (!CityCrown.street(piece)) { continue; }
-                BoundingBox box = piece.getBoundingBox();
-                streets.addAll(IntList.of(box.minX(), box.minZ(), box.maxX(), box.maxZ()));
+                CityBoxes.add(streets, piece.getBoundingBox());
             }
             int[] roadways = streets.toIntArray();
             int[] filled = {0};
@@ -56,8 +56,9 @@ public final class CityPlotSeams {
         List<CityRails.Laid> bores = CityRails.subways(CityGround.of(level), held.minX(), held.minZ(), held.maxX(), held.maxZ());
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int filled = 0;
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (CityPlotGround.nearRoad(roadways, x, z, 0)) { continue; }
                 filled += fillPit(level, held, box, bores, at, x, z);
             }
@@ -89,7 +90,7 @@ public final class CityPlotSeams {
         for (int y = here + 1; y <= low; y++) {
             at.set(x, y, z);
             if (!box.isInside(at) || doorBeside(level, x, y, z) || laid(level, x, y, z) || CityRails.insideBore(bores, x, y, z) || CityPlotGround.solid(level.getBlockState(at))) { break; }
-            level.setBlock(at, y == low ? top : ground, 2);
+            level.setBlock(at, y == low ? top : ground, Block.UPDATE_CLIENTS);
             filled++;
         }
         return filled;
@@ -128,15 +129,16 @@ public final class CityPlotSeams {
         List<BoundingBox> covered = new ArrayList<>();
         for (StructurePiece piece : pieces.pieces()) {
             BoundingBox held = piece.getBoundingBox();
-            if (buried(piece) || held.maxX() < box.minX() || held.minX() > box.maxX() || held.maxZ() < box.minZ() || held.minZ() > box.maxZ()) { continue; }
+            if (buried(piece) || !held.intersects(box.minX(), box.minZ(), box.maxX(), box.maxZ())) { continue; }
             covered.add(held);
         }
         List<CityRails.Laid> bores = CityRails.subways(CityGround.of(level), box.minX(), box.minZ(), box.maxX(), box.maxZ());
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int filled = 0;
-        for (int x = Math.max(city.minX() - SEAM_REACH, box.minX()); x <= Math.min(city.maxX() + SEAM_REACH, box.maxX()); x++) {
-            for (int z = Math.max(city.minZ() - SEAM_REACH, box.minZ()); z <= Math.min(city.maxZ() + SEAM_REACH, box.maxZ()); z++) {
-                if (!coveredAt(covered, x, z) && seam(level, box, bores, at, x, z, city.minY())) { filled++; }
+        CityClip clip = CityClip.of(box, city, SEAM_REACH);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                if (uncoveredAt(covered, x, z) && seam(level, box, bores, at, x, z, city.minY())) { filled++; }
             }
         }
         if (filled > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the pieces of the city at {}, {} in the chunk at {}, {}", filled, city.minX(), city.minZ(), box.minX(), box.minZ()); }
@@ -144,11 +146,11 @@ public final class CityPlotSeams {
 
     private static boolean buried(StructurePiece piece) { return piece instanceof ContentCityStationPiece || (piece instanceof ContentCityRailPiece rail && rail.subway()); }
 
-    private static boolean coveredAt(List<BoundingBox> covered, int x, int z) {
+    private static boolean uncoveredAt(List<BoundingBox> covered, int x, int z) {
         for (BoundingBox held : covered) {
-            if (CityPlotGround.inside(held, x, z)) { return true; }
+            if (CityPlotGround.inside(held, x, z)) { return false; }
         }
-        return false;
+        return true;
     }
 
     private static boolean seam(WorldGenLevel level, BoundingBox box, List<CityRails.Laid> bores, BlockPos.MutableBlockPos at, int x, int z, int seat) {
@@ -166,7 +168,7 @@ public final class CityPlotSeams {
         if (!box.isInside(at) || CityPlotGround.solid(level.getBlockState(at))) { return false; }
         if (level.getBlockState(at.set(x - 1, upTo, z)).is(BlockTags.DOORS) || level.getBlockState(at.set(x + 1, upTo, z)).is(BlockTags.DOORS) || level.getBlockState(at.set(x, upTo, z - 1)).is(BlockTags.DOORS) || level.getBlockState(at.set(x, upTo, z + 1)).is(BlockTags.DOORS)) { return false; }
         boolean wet = !level.getBlockState(at.set(x, upTo - 1, z)).getFluidState().isEmpty();
-        level.setBlock(at.set(x, upTo, z), CityPlotGround.verge(level, at, wet, x, upTo, z), 2);
+        level.setBlock(at.set(x, upTo, z), CityPlotGround.verge(level, at, wet, x, upTo, z), Block.UPDATE_CLIENTS);
         return true;
     }
 

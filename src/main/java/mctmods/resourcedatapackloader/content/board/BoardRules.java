@@ -1,13 +1,19 @@
 package mctmods.resourcedatapackloader.content.board;
 
+import static mctmods.resourcedatapackloader.util.Json.flag;
+import static mctmods.resourcedatapackloader.util.Json.number;
+import static mctmods.resourcedatapackloader.util.Json.object;
+import static mctmods.resourcedatapackloader.util.Json.text;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.SharedConstants;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -17,7 +23,7 @@ import javax.annotation.Nullable;
 public final class BoardRules {
     public static final int MOST_SQUARES = 16;
     public static final int MOST_LEVEL = 4;
-    private static final List<String> MODES = java.util.Arrays.asList("both", "never", "only", "hop");
+    private static final List<String> MODES = Arrays.asList("both", "never", "only", "hop");
     public final String id;
     public final String name;
     public final int files;
@@ -67,8 +73,8 @@ public final class BoardRules {
         quietDraw = Math.max(0, number(rules, "quietDraw", 0));
         repeatDraw = Math.max(0, number(rules, "repeatDraw", 0));
         JsonObject clock = object(json, "clock");
-        clockTicks = Math.max(0, number(clock, "minutes", 0)) * 1200;
-        addTicks = Math.max(0, number(clock, "addSeconds", 0)) * 20;
+        clockTicks = Math.max(0, number(clock, "minutes", 0)) * SharedConstants.TICKS_PER_MINUTE;
+        addTicks = Math.max(0, number(clock, "addSeconds", 0)) * SharedConstants.TICKS_PER_SECOND;
         ai = Mth.clamp(number(json, "ai", 2), 1, MOST_LEVEL);
         JsonObject result = object(json, "result");
         objective = text(result, "objective", "");
@@ -151,6 +157,10 @@ public final class BoardRules {
             ContentLog.LOGGER.error("Game file {} gives the piece {} no object, so it is left out", id, name);
             return null;
         }
+        if (name.isEmpty()) {
+            ContentLog.LOGGER.error("Game file {} has a piece with no name, so it is left out", id);
+            return null;
+        }
         JsonObject json = element.getAsJsonObject();
         String letter = text(json, "letter", name.substring(0, 1)).toLowerCase(Locale.ROOT);
         if (letter.length() != 1 || !Character.isLetter(letter.charAt(0))) {
@@ -184,7 +194,7 @@ public final class BoardRules {
         int[][] steps = new int[list.size()][];
         for (int at = 0; at < steps.length; at++) {
             JsonElement step = list.get(at);
-            if (!step.isJsonArray() || step.getAsJsonArray().size() != 2) {
+            if (!step.isJsonArray() || step.getAsJsonArray().size() != 2 || !step.getAsJsonArray().get(0).isJsonPrimitive() || !step.getAsJsonArray().get(1).isJsonPrimitive()) {
                 ContentLog.LOGGER.error("Game file {} gives {} a step that is not [files, ranks], so it is left out", id, name);
                 return null;
             }
@@ -238,15 +248,4 @@ public final class BoardRules {
         }
         catch (NumberFormatException notSquare) { return -1; }
     }
-
-    private static JsonObject object(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonObject() ? json.getAsJsonObject(key) : new JsonObject(); }
-
-    private static String text(JsonObject json, String key, String fallback) { return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsString().trim() : fallback; }
-
-    private static int number(JsonObject json, String key, int fallback) {
-        try { return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsInt() : fallback; }
-        catch (NumberFormatException notNumber) { return fallback; }
-    }
-
-    private static boolean flag(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() && json.get(key).getAsBoolean(); }
 }

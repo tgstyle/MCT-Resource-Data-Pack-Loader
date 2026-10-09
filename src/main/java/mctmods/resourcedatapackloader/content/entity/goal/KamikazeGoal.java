@@ -55,7 +55,7 @@ public final class KamikazeGoal extends Goal {
             return;
         }
         lit++;
-        if (lit < fuse || mob.level().isClientSide) { return; }
+        if (lit < fuse || mob.level().isClientSide()) { return; }
         mob.level().explode(mob, mob.getX(), mob.getY(), mob.getZ(), power, fire, Level.ExplosionInteraction.MOB);
         mob.discard();
     }

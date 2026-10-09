@@ -1,9 +1,15 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import java.util.ArrayList;
@@ -15,8 +21,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 final class DownFixes {
-    static final String MINECRAFT = "minecraft:";
-    private static final String COMPONENTS = "components";
     private static final String SHOWN = "show_in_tooltip";
     private static final String LUCK = "minecraft:luck";
     private static final Map<String, String> NAMES = Map.of("minecraft:iron_chain", "minecraft:chain");
@@ -50,17 +54,14 @@ final class DownFixes {
         return out;
     }
 
-    static boolean known(String component) {
-        ResourceLocation id = ResourceLocation.tryParse(component);
-        return id == null || !"minecraft".equals(id.getNamespace()) || BuiltInRegistries.DATA_COMPONENT_TYPE.containsKey(id);
-    }
+    static boolean unknownComponent(String component) { return unregistered(BuiltInRegistries.DATA_COMPONENT_TYPE, component); }
 
-    static boolean knownRecipe(String type) {
-        ResourceLocation id = ResourceLocation.tryParse(type);
-        return id == null || !"minecraft".equals(id.getNamespace()) || BuiltInRegistries.RECIPE_SERIALIZER.containsKey(id);
-    }
+    static boolean unknownRecipe(String type) { return unregistered(BuiltInRegistries.RECIPE_SERIALIZER, type); }
 
-    static String namespaced(String id) { return id.indexOf(':') < 0 ? MINECRAFT + id : id; }
+    private static boolean unregistered(Registry<?> registry, String text) {
+        ResourceLocation id = ResourceLocation.tryParse(text);
+        return id != null && "minecraft".equals(id.getNamespace()) && !registry.containsKey(id);
+    }
 
     static String name(String id) { return NAMES.getOrDefault(namespaced(id), id); }
 
@@ -123,7 +124,7 @@ final class DownFixes {
     private static JsonObject click(JsonElement held) {
         if (!held.isJsonObject()) { return null; }
         JsonObject event = held.getAsJsonObject();
-        String action = string(event, "action");
+        String action = Json.text(event, "action");
         String field = CLICKS.get(action);
         if (field == null || !event.has(field)) { return null; }
         JsonObject out = new JsonObject();
@@ -135,7 +136,7 @@ final class DownFixes {
     private static JsonObject hover(JsonElement held) {
         if (!held.isJsonObject()) { return null; }
         JsonObject event = held.getAsJsonObject();
-        String action = string(event, "action");
+        String action = Json.text(event, "action");
         JsonObject out = new JsonObject();
         out.addProperty("action", action);
         switch (action) {
@@ -147,7 +148,7 @@ final class DownFixes {
                 JsonObject item = new JsonObject();
                 if (event.has("id")) { item.add("id", event.get("id")); }
                 if (event.has("count")) { item.add("count", event.get("count")); }
-                if (event.has(COMPONENTS) && event.get(COMPONENTS).isJsonObject()) { item.add(COMPONENTS, event.get(COMPONENTS)); }
+                if (event.has(CrossJson.COMPONENTS) && event.get(CrossJson.COMPONENTS).isJsonObject()) { item.add(CrossJson.COMPONENTS, event.get(CrossJson.COMPONENTS)); }
                 out.add("contents", item);
             }
             case "show_entity" -> {
@@ -162,11 +163,7 @@ final class DownFixes {
         return out;
     }
 
-    static String string(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsString() : ""; }
-
-    static void stack(JsonObject stack, String file, Consumer<String> note) {
-        if (stack.has(COMPONENTS) && stack.get(COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(COMPONENTS), file, note); }
-    }
+    static void stack(JsonObject stack, String file, Consumer<String> note) { if (stack.has(CrossJson.COMPONENTS) && stack.get(CrossJson.COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(CrossJson.COMPONENTS), file, note); } }
 
     static void components(JsonObject components, String file, Consumer<String> note) {
         List<String> lost = new ArrayList<>();
@@ -182,7 +179,7 @@ final class DownFixes {
             String named = namespaced(key);
             JsonElement value = components.remove(key);
             JsonElement out = component(named, value);
-            if (out == null || !known(named)) {
+            if (out == null || unknownComponent(named)) {
                 lost.add(named);
                 continue;
             }
@@ -210,7 +207,7 @@ final class DownFixes {
                 return floats == null || floats.isEmpty() ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
             }
             case "minecraft:damage_resistant" -> {
-                boolean fire = value.isJsonObject() && "#minecraft:is_fire".equals(string(value.getAsJsonObject(), "types"));
+                boolean fire = value.isJsonObject() && "#minecraft:is_fire".equals(Json.text(value.getAsJsonObject(), "types"));
                 return fire ? new JsonObject() : null;
             }
             case "minecraft:lock" -> { return lock(value); }
@@ -224,7 +221,7 @@ final class DownFixes {
         if (value.isJsonObject() && (value.getAsJsonObject().has(field) || named.endsWith("can_break") || named.endsWith("can_place_on"))) { return value; }
         JsonElement inner = value;
         if ("modifiers".equals(field) && value.isJsonArray()) { inner = names(value); }
-        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(Integer.parseInt(value.getAsString().replace("#", ""), 16) & 0xFFFFFF); }
+        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(color(value, 0)); }
         JsonObject out = new JsonObject();
         out.add(field, inner);
         return out;
@@ -233,7 +230,7 @@ final class DownFixes {
     private static JsonElement lock(JsonElement value) {
         if (value.isJsonPrimitive()) { return value; }
         JsonObject predicate = value.getAsJsonObject();
-        JsonObject held = predicate.has(COMPONENTS) && predicate.get(COMPONENTS).isJsonObject() ? predicate.getAsJsonObject(COMPONENTS) : new JsonObject();
+        JsonObject held = predicate.has(CrossJson.COMPONENTS) && predicate.get(CrossJson.COMPONENTS).isJsonObject() ? predicate.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
         JsonElement name = held.get(MINECRAFT + "custom_name");
         if (name == null) { return null; }
         if (name.isJsonPrimitive()) { return name; }
@@ -258,8 +255,8 @@ final class DownFixes {
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();
-            if (!"minecraft:apply_effects".equals(namespaced(string(applied, "type"))) || !applied.has("effects")) {
-                lost.add(MINECRAFT + "consumable/" + string(applied, "type"));
+            if (!"minecraft:apply_effects".equals(namespaced(Json.text(applied, "type"))) || !applied.has("effects")) {
+                lost.add(MINECRAFT + "consumable/" + Json.text(applied, "type"));
                 continue;
             }
             for (JsonElement instance : applied.getAsJsonArray("effects")) {

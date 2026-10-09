@@ -5,8 +5,8 @@ import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
@@ -20,8 +20,7 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBiomeParser {
-    public static final ResourceLocation PLAINS = ResourceLocation.fromNamespaceAndPath("minecraft", "plains");
-    private static final Gson GSON = new Gson();
+    public static final ResourceLocation PLAINS = ResourceLocation.withDefaultNamespace("plains");
     private static final List<String> RATE_KEYS = List.of("surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight");
     private static final Set<String> RUBIC_KEYS = Set.of("id", "baseHeight", "heightVariation", "skyStone", "skyIslands", "skyThickness");
     private static final Set<String> CATEGORIES = Set.of("monster", "creature", "ambient", "water_creature", "water_ambient", "underground_water_creature", "axolotls", "misc");
@@ -29,11 +28,8 @@ public final class ContentBiomeParser {
     private ContentBiomeParser() {}
 
     @Nullable public static BiomeDef parse(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Biome file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "biome file");
+        if (json == null) { return null; }
         for (String rubic : RUBIC_KEYS) {
             if (json.has(rubic)) { ContentLog.LOGGER.info("Biome {} sets '{}', which this line does not read: terrain height is the noise settings' and the sky keys were the rubic world's", key, rubic); }
         }
@@ -59,11 +55,11 @@ public final class ContentBiomeParser {
                 GsonHelper.getAsString(json, "fillerBlock", "").trim(),
                 GsonHelper.getAsString(json, "stoneBlock", "").trim(),
                 Json.strings(json, "types"),
-                GsonHelper.getAsString(placement, "climate", "").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(placement, "climate", "")),
                 Math.max(0, GsonHelper.getAsInt(placement, "weight", 10)),
                 GsonHelper.getAsBoolean(placement, "playerSpawn", false),
                 GsonHelper.getAsBoolean(placement, "villages", false),
-                GsonHelper.getAsString(json, "villageType", "").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "villageType", "")),
                 GsonHelper.getAsBoolean(placement, "strongholds", false),
                 Map.copyOf(decoration),
                 spawnChance(key, GsonHelper.getAsFloat(json, "spawnChance", 0.1F)),

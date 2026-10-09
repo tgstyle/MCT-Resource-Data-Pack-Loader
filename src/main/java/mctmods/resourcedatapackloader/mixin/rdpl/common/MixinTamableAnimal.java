@@ -11,6 +11,5 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(TamableAnimal.class) public abstract class MixinTamableAnimal {
     @Shadow protected abstract boolean canFlyToOwner();
 
-    @Redirect(method = "canTeleportTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/TamableAnimal;canFlyToOwner()Z"))
-    private boolean rdpl$leavesByTask(TamableAnimal tamable) { return ContentTasks.landsOnLeaves(tamable, canFlyToOwner()); }
+    @Redirect(method = "canTeleportTo", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/TamableAnimal;canFlyToOwner()Z")) private boolean rdpl$leavesByTask(TamableAnimal tamable) { return ContentTasks.landsOnLeaves(tamable, canFlyToOwner()); }
 }

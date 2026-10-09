@@ -37,6 +37,7 @@ import net.neoforged.neoforge.common.util.TriState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -45,25 +46,15 @@ public final class ContentDisabledEvents {
 
     private ContentDisabledEvents() {}
 
-    public static void onUse(PlayerInteractEvent.RightClickItem event) {
-        if (held(event.getEntity(), event.getHand())) { event.setCanceled(true); }
-    }
+    public static void onUse(PlayerInteractEvent.RightClickItem event) { ItemUseGate.cancel(event, held(event.getEntity(), event.getHand())); }
 
-    public static void onUseOn(PlayerInteractEvent.RightClickBlock event) {
-        if (held(event.getEntity(), event.getHand())) { event.setUseItem(TriState.FALSE); }
-    }
+    public static void onUseOn(PlayerInteractEvent.RightClickBlock event) { ItemUseGate.denyUse(event, held(event.getEntity(), event.getHand())); }
 
-    public static void onDig(PlayerInteractEvent.LeftClickBlock event) {
-        if (held(event.getEntity(), event.getHand())) { event.setCanceled(true); }
-    }
+    public static void onDig(PlayerInteractEvent.LeftClickBlock event) { ItemUseGate.cancel(event, held(event.getEntity(), event.getHand())); }
 
-    public static void onAttack(AttackEntityEvent event) {
-        if (held(event.getEntity(), InteractionHand.MAIN_HAND)) { event.setCanceled(true); }
-    }
+    public static void onAttack(AttackEntityEvent event) { ItemUseGate.cancel(event, held(event.getEntity(), InteractionHand.MAIN_HAND)); }
 
-    public static void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (ContentDisabled.disabled(event.getPlacedBlock())) { event.setCanceled(true); }
-    }
+    public static void onPlace(BlockEvent.EntityPlaceEvent event) { if (ContentDisabled.disabled(event.getPlacedBlock())) { event.setCanceled(true); } }
 
     public static void onPickup(ItemEntityPickupEvent.Pre event) {
         if (!ContentDisabled.disabled(event.getItemEntity().getItem())) { return; }
@@ -71,9 +62,7 @@ public final class ContentDisabledEvents {
         event.getItemEntity().discard();
     }
 
-    public static void onJoin(EntityJoinLevelEvent event) {
-        if (event.getEntity() instanceof ItemEntity item && ContentDisabled.disabled(item.getItem())) { event.setCanceled(true); }
-    }
+    public static void onJoin(EntityJoinLevelEvent event) { if (event.getEntity() instanceof ItemEntity item && ContentDisabled.disabled(item.getItem())) { event.setCanceled(true); } }
 
     public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         sweep(event.getEntity().getInventory());
@@ -81,7 +70,7 @@ public final class ContentDisabledEvents {
     }
 
     public static void onOpen(PlayerContainerEvent.Open event) {
-        if (!ContentDisabled.any()) { return; }
+        if (ContentDisabled.none()) { return; }
         AbstractContainerMenu menu = event.getContainer();
         boolean changed = false;
         for (Slot slot : menu.slots) {
@@ -100,7 +89,7 @@ public final class ContentDisabledEvents {
     }
 
     public static void onChunk(ChunkEvent.Load event) {
-        if (!ContentDisabled.any() || !(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
+        if (ContentDisabled.none() || !(event.getLevel() instanceof ServerLevel level) || !(event.getChunk() instanceof LevelChunk chunk)) { return; }
         int[] placed = placed(chunk);
         if (placed.length == 0 && chunk.getBlockEntities().isEmpty()) { return; }
         List<BlockEntity> entities = List.copyOf(chunk.getBlockEntities().values());
@@ -154,12 +143,7 @@ public final class ContentDisabledEvents {
         return true;
     }
 
-    private static void sweep(Container container) {
-        if (!ContentDisabled.any()) { return; }
-        for (int slot = 0; slot < container.getContainerSize(); slot++) {
-            if (ContentDisabled.disabled(container.getItem(slot))) { container.setItem(slot, ItemStack.EMPTY); }
-        }
-    }
+    private static void sweep(Container container) { sweep(new InvWrapper(container)); }
 
     private static void sweep(BlockEntity entity) {
         if (entity instanceof RandomizableContainer loot && loot.getLootTable() != null) { return; }
@@ -172,6 +156,7 @@ public final class ContentDisabledEvents {
     }
 
     private static void sweep(IItemHandler handler) {
+        if (ContentDisabled.none()) { return; }
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack stack = handler.getStackInSlot(slot);
             if (!ContentDisabled.disabled(stack)) { continue; }

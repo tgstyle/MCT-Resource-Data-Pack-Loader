@@ -20,10 +20,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = "net.minecraft.server.dedicated.DedicatedServerProperties$WorldDimensionData") public abstract class MixinWorldDimensionData {
     @Shadow @Final private String levelType;
 
-    @Inject(method = "create", at = @At("HEAD"), cancellable = true) private void rdpl$packPreset(RegistryAccess access, CallbackInfoReturnable<WorldDimensions> cir) {
+    @Inject(method = "create", at = @At("HEAD"), cancellable = true) private void rdpl$packPreset(RegistryAccess registryAccess, CallbackInfoReturnable<WorldDimensions> cir) {
         ResourceLocation wanted = ContentWorldShape.serverPreset(levelType);
         if (wanted == null) { return; }
-        Registry<WorldPreset> registry = access.registryOrThrow(Registries.WORLD_PRESET);
+        Registry<WorldPreset> registry = registryAccess.registryOrThrow(Registries.WORLD_PRESET);
         Holder<WorldPreset> holder = registry.getHolder(ResourceKey.create(Registries.WORLD_PRESET, wanted)).orElse(null);
         if (holder == null) { return; }
         cir.setReturnValue(holder.value().createWorldDimensions());

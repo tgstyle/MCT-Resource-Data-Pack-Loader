@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.client;
 
+import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
+
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -9,11 +12,13 @@ import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.SharedConstants;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;
@@ -38,9 +43,9 @@ public final class ContentStars {
         this.vanilla = vanilla;
     }
 
-    public static boolean replacesVanilla(@Nullable ClientLevel level) {
+    public static boolean keepsVanilla(@Nullable ClientLevel level) {
         SkyLookDef look = ContentFogSampler.look(level);
-        return look != null && look.tintsStars();
+        return look == null || !look.tintsStars();
     }
 
     public void draw(ClientLevel level, float brightness, Matrix4f pose, Matrix4f projection, float partialTick) {
@@ -50,10 +55,10 @@ public final class ContentStars {
         SkyLookDef look = ContentFogSampler.look(level);
         int color = look == null || look.starColor() == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor();
         float twinkle = look == null ? 0.0F : look.starTwinkle();
-        float red = (color >> 16 & 255) / 255.0F;
-        float green = (color >> 8 & 255) / 255.0F;
-        float blue = (color & 255) / 255.0F;
-        float time = (level.getGameTime() % 24000L + partialTick) / 20.0F;
+        float red = Rgb.red(color);
+        float green = Rgb.green(color);
+        float blue = Rgb.blue(color);
+        float time = (level.getGameTime() % Level.TICKS_PER_DAY + partialTick) / SharedConstants.TICKS_PER_SECOND;
         for (int group = 0; group < GROUPS; ++group) {
             if (groups[group] == null) { continue; }
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
@@ -93,7 +98,7 @@ public final class ContentStars {
         float scale = 0.15F + random.nextFloat() * 0.1F;
         float length = Mth.lengthSquared(x, y, z);
         if (length <= 0.010000001F || length >= 1.0F) { return null; }
-        Vector3f center = new Vector3f(x, y, z).normalize(100.0F);
+        Vector3f center = new Vector3f(x, y, z).normalize(SIZE);
         float spin = (float) (random.nextDouble() * (float) Math.PI * 2.0D);
         Quaternionf rotation = new Quaternionf().rotateTo(new Vector3f(0.0F, 0.0F, -1.0F), center).rotateZ(spin);
         float[] quad = new float[12];
@@ -135,9 +140,9 @@ public final class ContentStars {
             double d = b * spinCos + a * spinSin;
             double e = c * pitchSin;
             double f = -c * pitchCos;
-            quad[corner * 3] = (float) (x * 100.0D + f * yawSin - d * yawCos);
-            quad[corner * 3 + 1] = (float) (y * 100.0D + e);
-            quad[corner * 3 + 2] = (float) (z * 100.0D + d * yawSin + f * yawCos);
+            quad[corner * 3] = (float) (x * SIZE + f * yawSin - d * yawCos);
+            quad[corner * 3 + 1] = (float) (y * SIZE + e);
+            quad[corner * 3 + 2] = (float) (z * SIZE + d * yawSin + f * yawCos);
         }
         return quad;
     }

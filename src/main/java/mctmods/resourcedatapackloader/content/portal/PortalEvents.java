@@ -19,9 +19,7 @@ public final class PortalEvents {
 
     public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentPortalBlock.forget(event.getEntity().getUUID()); }
 
-    public static void onBroken(BlockEvent.BreakEvent event) {
-        if (event.getLevel() instanceof Level level) { ContentPortals.shaken(level, event.getPos(), event.getState()); }
-    }
+    public static void onBroken(BlockEvent.BreakEvent event) { if (event.getLevel() instanceof Level level) { ContentPortals.shaken(level, event.getPos(), event.getState()); } }
 
     public static void onLit(PlayerInteractEvent.RightClickBlock event) {
         Level level = event.getLevel();
@@ -34,7 +32,7 @@ public final class PortalEvents {
             event.setCancellationResult(InteractionResult.SUCCESS);
             return;
         }
-        if (!ContentPortals.light(level, clicked, event.getFace(), held)) { return; }
+        if (ContentPortals.lightFailed(level, clicked, event.getFace(), held)) { return; }
         Player player = event.getEntity();
         level.playSound(null, clicked, SoundEvents.FLINTANDSTEEL_USE, SoundSource.BLOCKS, 1.0F, level.random.nextFloat() * 0.4F + 0.8F);
         if (held.isDamageableItem()) { held.hurtAndBreak(1, player, LivingEntity.getSlotForHand(event.getHand())); }

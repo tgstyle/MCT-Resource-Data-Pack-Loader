@@ -2,19 +2,18 @@ package mctmods.resourcedatapackloader.content.raid;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
-import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.PosTags;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -59,8 +58,8 @@ public final class ActiveRaid {
     private int celebration;
     private float waveHealth;
     private Status status = Status.ONGOING;
-    @Nullable private List<BlockPos> bells;
     @Nullable private RaidVillage village;
+    @Nullable private List<BlockPos> bells;
 
     enum Status { ONGOING, VICTORY, LOSS, STOPPED }
 
@@ -173,7 +172,7 @@ public final class ActiveRaid {
                     EventHooks.finalizeMobSpawn(mob, level, level.getCurrentDifficultyAt(at), MobSpawnType.EVENT, null);
                     mob.setPersistenceRequired();
                 }
-                entity.getPersistentData().put(RAIDER, position(center));
+                entity.getPersistentData().put(RAIDER, PosTags.write(center));
                 level.addFreshEntity(entity);
                 raiders.add(entity.getUUID());
                 if (entity instanceof LivingEntity living) { waveHealth += living.getMaxHealth(); }
@@ -186,16 +185,6 @@ public final class ActiveRaid {
         ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} sends wave {} of {}: {} raider(s) at {}, {}, {}", def.key(), center.getX(), center.getY(), center.getZ(), wave, def.waves().size(), made, at.getX(), at.getY(), at.getZ());
         return true;
     }
-
-    public static CompoundTag position(BlockPos pos) {
-        CompoundTag tag = new CompoundTag();
-        tag.putInt("X", pos.getX());
-        tag.putInt("Y", pos.getY());
-        tag.putInt("Z", pos.getZ());
-        return tag;
-    }
-
-    public static BlockPos position(CompoundTag tag) { return new BlockPos(tag.getInt("X"), tag.getInt("Y"), tag.getInt("Z")); }
 
     private List<BlockPos> bells(ServerLevel level, RaidVillage around) {
         if (bells != null) { return bells; }
@@ -235,7 +224,7 @@ public final class ActiveRaid {
 
     private void horn(ServerLevel level, BlockPos at) {
         if (def.sound().isEmpty()) { return; }
-        SoundEvent sound = Registered.find(BuiltInRegistries.SOUND_EVENT, ResourceLocation.tryParse(def.sound()));
+        SoundEvent sound = ContentSounds.find(def.sound());
         if (sound == null) {
             ContentLog.LOGGER.error("Raid {} names the sound {}, which nothing registers, so the waves come quietly", def.key(), def.sound());
             return;
@@ -294,7 +283,7 @@ public final class ActiveRaid {
     CompoundTag write() {
         CompoundTag tag = new CompoundTag();
         tag.putString("Raid", def.key().toString());
-        tag.put("Center", position(center));
+        tag.put("Center", PosTags.write(center));
         tag.putInt("Wave", wave);
         tag.putInt("Cooldown", cooldown);
         tag.putLong("Ticks", ticksActive);
@@ -313,7 +302,7 @@ public final class ActiveRaid {
             ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
             return null;
         }
-        ActiveRaid raid = new ActiveRaid(def, position(tag.getCompound("Center")));
+        ActiveRaid raid = new ActiveRaid(def, PosTags.read(tag.getCompound("Center")));
         raid.wave = tag.getInt("Wave");
         raid.cooldown = tag.getInt("Cooldown");
         raid.ticksActive = tag.getLong("Ticks");

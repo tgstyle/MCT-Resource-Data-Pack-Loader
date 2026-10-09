@@ -31,9 +31,7 @@ public final class ContentMaterials {
 
     private ContentMaterials() {}
 
-    public static Tier tier(MaterialDef def) {
-        return TIERS.computeIfAbsent(def.key(), key -> new SimpleTier(incorrect(def.harvestLevel()), def.durability(), def.efficiency(), def.damage(), def.enchantability(), () -> repair(def)));
-    }
+    public static Tier tier(MaterialDef def) { return TIERS.computeIfAbsent(def.key(), key -> new SimpleTier(incorrect(def.harvestLevel()), def.durability(), def.efficiency(), def.damage(), def.enchantability(), () -> repair(def))); }
 
     public static void registerArmor(BiConsumer<ResourceLocation, ArmorMaterial> out) {
         for (MaterialDef def : ContentRegistry.materialDefs()) {
@@ -42,9 +40,7 @@ public final class ContentMaterials {
         }
     }
 
-    public static Holder<ArmorMaterial> armor(MaterialDef def) {
-        return ARMORS.computeIfAbsent(def.key(), key -> BuiltInRegistries.ARMOR_MATERIAL.getHolder(key).map(held -> (Holder<ArmorMaterial>) held).orElseGet(() -> Holder.direct(armorMaterial(def))));
-    }
+    public static Holder<ArmorMaterial> armor(MaterialDef def) { return ARMORS.computeIfAbsent(def.key(), key -> BuiltInRegistries.ARMOR_MATERIAL.getHolder(key).map(held -> (Holder<ArmorMaterial>) held).orElseGet(() -> Holder.direct(armorMaterial(def)))); }
 
     private static ArmorMaterial armorMaterial(MaterialDef def) {
         Map<ArmorItem.Type, Integer> defense = new EnumMap<>(ArmorItem.Type.class);
@@ -55,7 +51,7 @@ public final class ContentMaterials {
         defense.put(ArmorItem.Type.BODY, def.reduction()[2]);
         ResourceLocation texture = ResourceLocation.tryParse(def.armorTexture());
         List<ArmorMaterial.Layer> layers = List.of(new ArmorMaterial.Layer(texture == null ? def.key() : texture));
-        return new ArmorMaterial(defense, def.enchantability(), sound(def.equipSound()), () -> Ingredient.EMPTY, layers, def.toughness(), 0.0F);
+        return new ArmorMaterial(defense, def.enchantability(), sound(def.equipSound()), () -> repair(def), layers, def.toughness(), 0.0F);
     }
 
     private static TagKey<Block> incorrect(int level) {

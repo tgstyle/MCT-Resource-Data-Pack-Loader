@@ -8,10 +8,10 @@ import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure.GenerationContext;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class ContentCityStructurePaving {
     private ContentCityStructurePaving() {}
@@ -20,33 +20,24 @@ public final class ContentCityStructurePaving {
         ContentCityStructure.Graded graded = ContentCityStructureGrade.joined(context, plan, line, levels, run, rails, wells);
         int start = graded.start();
         int[] profile = graded.profile();
-        boolean[] held = graded.held();
-        boolean[] pinned = graded.pinned();
         boolean[] mine = graded.mine();
         boolean[] sewered = mine.clone();
         boolean[] bridged = graded.bridged();
-        boolean[] bored = graded.bored();
-        CityGrade.rampSteps(profile, held, pinned);
-        int[] grade = profile.clone();
-        boolean[] decked = new boolean[profile.length];
+        boolean[] pinned = graded.pinned();
+        ContentCityStructureGrade.Shaped shaped = ContentCityStructureGrade.shaped(plan, line, graded, decks);
+        int[] grade = shaped.grade();
         seats.put(line, grade);
-        ContentCityStructureGrade.lift(plan, line, start, profile, decked, bridged, bored, decks);
-        for (int at = 0; at < decked.length; at++) { held[at] |= decked[at]; }
-        CityGrade.rampSteps(profile, held, pinned);
+        ContentCityStructureGrade.settle(graded, shaped.decked());
         boolean[] roofed = CityGrade.roofed(profile, CityGradeBore.openEnds(graded.ground(), start, line), bridged, ContentCity.tunnelDepth());
         String paving = ContentControl.onRoad(line.keys(), () -> ContentCity.paving(line.alley()));
         String walk = ContentControl.onRoad(line.keys(), ContentCity::sidewalkBlock);
         boolean[] framed = ContentControl.onRoad(line.keys(), () -> framed(plan, line, start, bridged));
         boolean[] paved = mine.clone();
         for (ContentCityStructure.Well well : wells) {
-            if (!well.middle().alongX().equals(line) && !well.middle().alongZ().equals(line)) { continue; }
+            if (!well.middle().on(line)) { continue; }
             BoundingBox square = well.box();
             int reach = CityPlan.plazaPaved();
-            int low = (line.alongX() ? square.minX() : square.minZ()) - reach;
-            int high = (line.alongX() ? square.maxX() : square.maxZ()) + reach;
-            for (int row = low; row <= high; row++) {
-                if (row >= start && row < start + paved.length) { paved[row - start] = false; }
-            }
+            ContentCityStructureGrade.clearRows(paved, start, CityLines.least(line, square) - reach, CityLines.most(line, square) + reach);
         }
         boolean[] tunnels = tunnels(plan, line, start, roofed, paved);
         int[] lamps = tunnelLamps(tunnels, start, ContentCity.tunnelLightRun());
@@ -67,7 +58,7 @@ public final class ContentCityStructurePaving {
         }
         if (line.alley()) { ContentLog.LOGGER.debug("The alley at {} running {} to {} is laid in {} piece(s) at y {} to {}", line.at(), line.from(), line.to(), pieces, profile[Mth.clamp(line.from() - start, 0, profile.length - 1)], profile[Mth.clamp(line.to() - start, 0, profile.length - 1)]); }
         if (ContentCity.sewers()) { ContentCityStructureSewers.sewers(plan, line, context.heightAccessor().getMinBuildHeight(), start, profile, sewered, bridged, wells, hatches, builder); }
-        laid.put(line, new ContentCityStructure.Laid(start, profile, grade, decked, paved, bridged, tunnels, roofed, sewered));
+        laid.put(line, new ContentCityStructure.Laid(start, profile, grade, paved, bridged, tunnels, roofed, sewered));
         ContentCityStructureEnds.ends(context, plan, line, start, profile, paving, walk, bridged, wells, bulbs, builder);
         return profile;
     }
@@ -101,10 +92,7 @@ public final class ContentCityStructurePaving {
     private static boolean[] tunnels(CityPlan plan, CityPlan.Line line, int start, boolean[] roofed, boolean[] paved) {
         boolean[] tunnels = new boolean[roofed.length];
         for (int at = 0; at < tunnels.length; at++) { tunnels[at] = roofed[at] && paved[at]; }
-        for (CityPlan.Line other : plan.crossing(line)) {
-            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
-            for (int row = Math.max(start, other.at() - 1); row <= Math.min(start + tunnels.length - 1, other.last() + 1); row++) { tunnels[row - start] = false; }
-        }
+        CityLines.clearBeside(plan, line, start, tunnels);
         CityGrade.dropShortRuns(tunnels);
         return tunnels;
     }
@@ -118,8 +106,7 @@ public final class ContentCityStructurePaving {
                 from++;
                 continue;
             }
-            int to = from;
-            while (to + 1 < tunnels.length && tunnels[to + 1]) { to++; }
+            int to = CityRuns.end(tunnels, from);
             boolean any = false;
             for (int at = from; at <= to && !any; at++) { any = Math.floorMod(start + at, run) == 0; }
             if (!any) { Arrays.fill(lamps, from, to + 1, start + (from + to) / 2); }
@@ -132,16 +119,12 @@ public final class ContentCityStructurePaving {
         String keys = line.keys() == null ? "" : line.keys().toString();
         if (line.alongX()) { return new ContentCityPiece(from, line.at(), to, line.last(), level, paving, line.middle(), true, line.alley(), line.width(), bridged, bored, frames, lamp, keys, held); }
         return new ContentCityPiece(line.at(), from, line.last(), to, level, paving, line.middle(), false, line.alley(), line.width(), bridged, bored, frames, lamp, keys, held);
-
     }
 
     private static boolean[] framed(CityPlan plan, CityPlan.Line line, int start, boolean[] bridged) {
         if (ContentCity.frameBlock().isEmpty()) { return new boolean[bridged.length]; }
         boolean[] framed = CityGrade.frameRows(bridged, ContentCity.frameLeast(), ContentCity.frameRun());
-        for (CityPlan.Line other : plan.crossing(line)) {
-            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
-            for (int row = Math.max(start, other.at() - 1); row <= Math.min(start + framed.length - 1, other.last() + 1); row++) { framed[row - start] = false; }
-        }
+        CityLines.clearBeside(plan, line, start, framed);
         return framed;
     }
 

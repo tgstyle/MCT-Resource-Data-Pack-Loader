@@ -9,6 +9,8 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Plot;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
+import mctmods.resourcedatapackloader.util.Longs;
+import mctmods.resourcedatapackloader.util.Raced;
 
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
@@ -97,8 +99,8 @@ final class CitySeams {
 
     static void madeWay(List<Reach> reaches, List<Plot> plots) {
         for (Reach reach : reaches) {
-            BoundingBox way = CityMapDistricts.box(reach.line());
-            plots.removeIf(plot -> plot.fromX() <= way.maxX() && plot.toX() >= way.minX() && plot.fromZ() <= way.maxZ() && plot.toZ() >= way.minZ());
+            BoundingBox way = reach.line().box();
+            plots.removeIf(plot -> plot.meets(way.minX(), way.minZ(), way.maxX(), way.maxZ()));
         }
     }
 
@@ -106,11 +108,7 @@ final class CitySeams {
         Town low = one.hash() < two.hash() ? one : two;
         Town high = low == one ? two : one;
         List<Long> held = List.of(low.key(), high.key());
-        Seam known = TIES.get(held);
-        if (known != null) { return known; }
-        Seam made = ContentLog.LOGGER.aloud(() -> tie(ground, low, high));
-        Seam raced = TIES.putIfAbsent(held, made);
-        return raced == null ? made : raced;
+        return Raced.held(TIES, held, () -> ContentLog.LOGGER.aloud(() -> tie(ground, low, high)));
     }
 
     private static int reach() { return CityGrowth.march() * 2 + 64; }
@@ -241,15 +239,15 @@ final class CitySeams {
         if (w.across() == e.across()) {
             int from = Math.min(westRow.at(), eastRow.at());
             int to = Math.max(westRow.last(), eastRow.last());
-            legs.add(leg(alongX, column, w.across(), new Line(at, full, false, !alongX, from, to, End.MET, End.MET)));
+            legs.add(leg(alongX, column, w.across(), Line.met(at, full, !alongX, from, to)));
         }
         else {
             int dir = e.across() > w.across() ? 1 : -1;
             int start = CityPlan.windowOf(w.across(), !alongX);
-            legs.add(leg(alongX, column, w.across(), new Line(at, full, false, !alongX, dir > 0 ? westRow.at() : start, dir > 0 ? start + size - 1 : westRow.last(), End.MET, End.MET)));
-            for (int across = w.across() + dir; across != e.across(); across += dir) { legs.add(leg(alongX, column, across, new Line(at, full, false, !alongX, CityPlan.windowOf(across, !alongX), CityPlan.windowOf(across, !alongX) + size - 1, End.MET, End.MET))); }
+            legs.add(leg(alongX, column, w.across(), Line.met(at, full, !alongX, dir > 0 ? westRow.at() : start, dir > 0 ? start + size - 1 : westRow.last())));
+            for (int across = w.across() + dir; across != e.across(); across += dir) { legs.add(leg(alongX, column, across, Line.met(at, full, !alongX, CityPlan.windowOf(across, !alongX), CityPlan.windowOf(across, !alongX) + size - 1))); }
             int end = CityPlan.windowOf(e.across(), !alongX);
-            legs.add(leg(alongX, column, e.across(), new Line(at, full, false, !alongX, dir > 0 ? end : eastRow.at(), dir > 0 ? eastRow.last() : end + size - 1, End.MET, End.MET)));
+            legs.add(leg(alongX, column, e.across(), Line.met(at, full, !alongX, dir > 0 ? end : eastRow.at(), dir > 0 ? eastRow.last() : end + size - 1)));
         }
         legs.add(leg(alongX, column, e.across(), reach(eastRow, at, CityPlan.windowOf(column, alongX) + size - 1)));
         for (int along = column + 1; along < e.along(); along++) { legs.add(leg(alongX, along, e.across(), row(eastRow, along))); }
@@ -295,8 +293,8 @@ final class CitySeams {
         Growth growth = ContentCity.layout() == null ? null : growth(ground, town);
         List<Arrival> found = new ArrayList<>();
         for (long packed : held) {
-            int districtX = (int) (packed >> 32);
-            int districtZ = (int) packed;
+            int districtX = Longs.high(packed);
+            int districtZ = Longs.low(packed);
             int along = alongX ? districtX : districtZ;
             int across = alongX ? districtZ : districtX;
             int next = along + (onward ? 1 : -1);
@@ -340,8 +338,8 @@ final class CitySeams {
 
     private static boolean meets(Set<Long> mine, Set<Long> theirs) {
         for (long packed : mine) {
-            int x = (int) (packed >> 32);
-            int z = (int) packed;
+            int x = Longs.high(packed);
+            int z = Longs.low(packed);
             if (theirs.contains(packed) || theirs.contains(CityPlan.packed(x + 1, z)) || theirs.contains(CityPlan.packed(x - 1, z)) || theirs.contains(CityPlan.packed(x, z + 1)) || theirs.contains(CityPlan.packed(x, z - 1))) { return true; }
         }
         return false;
@@ -405,10 +403,10 @@ final class CitySeams {
     private static boolean streetsMeet(List<Line> own, List<Line> theirs) {
         for (Line mine : own) {
             if (mine.alley()) { continue; }
-            BoundingBox a = CityMapDistricts.box(mine);
+            BoundingBox a = mine.box();
             for (Line other : theirs) {
                 if (other.alley()) { continue; }
-                BoundingBox b = CityMapDistricts.box(other);
+                BoundingBox b = other.box();
                 boolean overX = b.maxX() >= a.minX() && b.minX() <= a.maxX();
                 boolean overZ = b.maxZ() >= a.minZ() && b.minZ() <= a.maxZ();
                 boolean nearX = b.maxX() >= a.minX() - 1 && b.minX() <= a.maxX() + 1;
@@ -444,7 +442,7 @@ final class CitySeams {
                 }
                 if (best == null) { continue; }
                 Line stub = reach(line, dir > 0 ? end + 1 : best.last() + 1, dir > 0 ? best.at() - 1 : end - 1);
-                BoundingBox strip = CityMapDistricts.box(stub);
+                BoundingBox strip = stub.box();
                 int bestX = best.alongX() ? best.from() : best.at();
                 int bestZ = best.alongX() ? best.at() : best.from();
                 if (CityEnds.stubHeld(ground, town, neighbor, line, strip)) {
@@ -453,7 +451,7 @@ final class CitySeams {
                 }
                 if (growth != null) {
                     for (Plot plot : growth.plots()) {
-                        if (plot.fromX() <= strip.maxX() && plot.toX() >= strip.minX() && plot.fromZ() <= strip.maxZ() && plot.toZ() >= strip.minZ()) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the stub reaching a neighboring village's dead end", plot.def().key(), plot.fromX(), plot.fromZ()); }
+                        if (plot.meets(strip.minX(), strip.minZ(), strip.maxX(), strip.maxZ())) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the stub reaching a neighboring village's dead end", plot.def().key(), plot.fromX(), plot.fromZ()); }
                     }
                 }
                 found.add(new Reach(neighbor.key(), stub, end));
@@ -476,22 +474,12 @@ final class CitySeams {
     }
 
     private static List<int[]> centers(CityGround ground, Town town) {
-        List<int[]> found = new ArrayList<>();
         int spacing = CityPlan.spacing();
-        int regionX = Math.floorDiv(CityPlan.districtOf(town.wellX(), true), spacing);
-        int regionZ = Math.floorDiv(CityPlan.districtOf(town.wellZ(), false), spacing);
-        for (int aroundX = -1; aroundX <= 1; aroundX++) {
-            for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
-                int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
-                if (center != null) { found.add(center); }
-            }
-        }
-        return found;
+        return CityDistricts.around(ground, Math.floorDiv(CityPlan.districtOf(town.wellX(), true), spacing), Math.floorDiv(CityPlan.districtOf(town.wellZ(), false), spacing), spacing);
     }
 
     @Nullable private static Town site(CityGround ground, @Nullable CityMapDef map, int[] center, int spacing) {
         if (map != null) { return CityLayout.mapTown(ground, map, center[0], center[1], true); }
-        City city = CityGrowth.city(ground, center, spacing);
-        return city.districts().isEmpty() ? null : CityPlanTowns.town(ground, city);
+        return CityPlanTowns.townAt(ground, center, spacing);
     }
 }

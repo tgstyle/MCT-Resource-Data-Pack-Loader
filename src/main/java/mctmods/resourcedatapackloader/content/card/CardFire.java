@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.card;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.server.level.ServerPlayer;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -11,7 +12,6 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class CardFire {
-    private static final int TICKS_PER_SECOND = 20;
     private static final Map<UUID, Set<String>> SESSION = new HashMap<>();
 
     private CardFire() {}
@@ -41,23 +41,21 @@ public final class CardFire {
     }
 
     private static boolean blocked(CardRule rule, ServerPlayer subject) {
-        if (!CardPlace.inDimension(rule.dimension, subject)) { return true; }
-        if (rule.when != null && !rule.when.passes(subject)) { return true; }
+        if (CardPlace.elsewhere(rule.dimension, subject)) { return true; }
+        if (rule.when != null && rule.when.fails(subject)) { return true; }
         long now = subject.server.overworld().getGameTime();
         String key = rule.key;
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }
         if (CardRule.ONCE_PER_WORLD.equals(rule.repeat) && CardStorage.firedInWorld(subject.server, key)) { return true; }
         if (CardRule.ONCE_PER_SESSION.equals(rule.repeat) && SESSION.getOrDefault(subject.getUUID(), Set.of()).contains(key)) { return true; }
-        if (rule.cooldown > 0 && CardStorage.firedFor(subject, key) && now - CardStorage.lastFor(subject, key) < (long) rule.cooldown * TICKS_PER_SECOND) { return true; }
+        if (rule.cooldown > 0 && CardStorage.firedFor(subject, key) && now - CardStorage.lastFor(subject, key) < (long) rule.cooldown * SharedConstants.TICKS_PER_SECOND) { return true; }
         if (CardRule.ONCE_PER_WORLD.equals(rule.repeat)) { CardStorage.stampWorld(subject.server, key, now); }
         if (CardRule.ONCE_PER_SESSION.equals(rule.repeat)) { SESSION.computeIfAbsent(subject.getUUID(), k -> new HashSet<>()).add(key); }
         if (rule.cooldown > 0 || CardRule.ONCE_PER_PLAYER.equals(rule.repeat)) { CardStorage.stampFor(subject, key, now); }
         return false;
     }
 
-    private static void runs(CardRule rule, ServerPlayer subject) {
-        if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); }
-    }
+    private static void runs(CardRule rule, ServerPlayer subject) { if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); } }
 
     public static void afterIntro(ServerPlayer player) {
         CardScan.startClock(player);

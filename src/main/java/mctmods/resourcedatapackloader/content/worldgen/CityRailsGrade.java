@@ -32,7 +32,7 @@ public final class CityRailsGrade {
         List<CityRails.Station> stations = sub && ContentCity.stations() ? CityRails.claim(rail, town, lines, wells, rising) : List.of();
         boolean[] lowered = new boolean[rows];
         if (sub) { for (int at = 0; at < rows; at++) { lowered[at] = !CityRails.surfaced(rising, start + at); } }
-        double[] base = CityGrade.railBase(floor, sea, lowered, ContentCity.subwayDepth(), ground.bottom() + ContentCitySewerPiece.FLOOR_LEAST);
+        double[] base = CityGrade.railBase(floor, sea, lowered, ContentCity.subwayDepth(), ground.lined());
         double[] wanted = sub ? CityGrade.sinking(base, climb) : null;
         int[] profile = wanted != null ? CityGrade.stepped(wanted, climb) : CityGrade.smoothed(base, climb);
         boolean[] fixed = new boolean[rows];
@@ -42,7 +42,7 @@ public final class CityRailsGrade {
             int from = Math.max(0, line.at() - 1 - start);
             int to = Math.min(rows - 1, line.last() + 1 - start);
             if (from > to) { continue; }
-            int middle = Mth.clamp(line.at() + (line.width() - 1) / 2 - start, 0, rows - 1);
+            int middle = Mth.clamp(line.middle() - start, 0, rows - 1);
             int level = profile[middle];
             if (sub && (floor[middle] == Integer.MIN_VALUE || floor[middle] - level > CityRails.FILL)) {
                 if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line at {} runs {} block(s) under the street crossing it at row {}, so its grade is not held level there and climbs on at its own pace", center, floor[middle] == Integer.MIN_VALUE ? "an unread number of" : String.valueOf(floor[middle] - level), start + middle); }
@@ -85,8 +85,7 @@ public final class CityRailsGrade {
             int ramped = CityGrade.eased(profile, wanted, fixed, start, center, climb);
             if (ramped > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line at {} eased {} row(s) into the cone its held rows leave, one block every {} row(s) from each of them, so it ramps down to its depth instead of stepping", center, ramped, climb); }
         }
-        boolean[] bridged = new boolean[rows];
-        for (int at = 0; at < rows; at++) { bridged[at] = !sub && (floor[at] == Integer.MIN_VALUE || profile[at] > floor[at] + CityRails.FILL); }
+        boolean[] bridged = sub ? new boolean[rows] : CityRails.bridgedRows(profile, floor);
         int[] undecked = profile.clone();
         CityGrade.levelDecks(profile, bridged, fixed, climb);
         int leveled = 0;
@@ -117,7 +116,7 @@ public final class CityRailsGrade {
             }
             ContentLog.LOGGER.debug("{} line at {} grades {} row(s) from y {} to y {}, climbing a block every {} row(s) at most, {} on trestle and {} in cut, {} crossing(s), {} station(s){}", sub ? "Subway" : "Railway", center, rows, profile[0], profile[rows - 1], climb, trestle, cut, crossings, stations.size(), rising == null ? "" : ", climbing out past row " + rising[0]);
         }
-        return new CityRails.Laid(rail, start, profile, floor, bridged, tunnel, bored, crossed, frames, rising, List.copyOf(stations), List.copyOf(claimed));
+        return new CityRails.Laid(rail, start, profile, bridged, tunnel, bored, crossed, frames, rising, List.copyOf(stations), List.copyOf(claimed));
     }
 
     private static int[] bedFloor(CityGround ground, CityPlan.Rail rail, List<CityPlan.Rail> mates) {
@@ -143,7 +142,6 @@ public final class CityRailsGrade {
             }
         }
         if (acrossLeast != rail.middle() - CityRails.halfOf(rail) || acrossMost != rail.middle() + CityRails.halfOf(rail)) { ContentLog.LOGGER.debug("Railway line at {} grades with the {} block(s) of formation it stands in, {} to {} across, so every line of it lies at one level", rail.middle(), acrossMost - acrossLeast + 1, acrossLeast, acrossMost); }
-
         return CityRails.floorRows(ground, alongX, rail.from(), rail.to(), acrossLeast, acrossMost);
     }
 
@@ -163,8 +161,6 @@ public final class CityRailsGrade {
         boolean[] fixed = new boolean[base.length];
         CityLinks.pin(ground, rail, rail.from(), pinned, fixed, climb);
         for (int at = 0; at < base.length; at++) { pinned[at] = fixed[at] ? pinned[at] : base[at]; }
-        boolean[] bridged = new boolean[base.length];
-        for (int at = 0; at < base.length; at++) { bridged[at] = floor[at] == Integer.MIN_VALUE || base[at] > floor[at] + CityRails.FILL; }
-        return new CityRails.Bed(rail.from(), pinned, CityGrade.roofed(base, floor, bridged, ContentCity.railTunnelDepth()));
+        return new CityRails.Bed(rail.from(), pinned, CityGrade.roofed(base, floor, CityRails.bridgedRows(base, floor), ContentCity.railTunnelDepth()));
     }
 }

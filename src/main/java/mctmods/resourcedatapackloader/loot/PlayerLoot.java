@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
@@ -33,32 +31,26 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class PlayerLoot {
-    public static final String TABLE = "table";
-    public static final String MODE = "mode";
-    public static final String KEEP_INVENTORY = "rollOnKeepInventory";
-    public static final String DROP_LOOSE = "dropLoose";
+    private static final String TABLE = "table";
+    private static final String MODE = "mode";
+    private static final String KEEP_INVENTORY = "rollOnKeepInventory";
+    private static final String DROP_LOOSE = "dropLoose";
     private static final String ADD = "add";
     private static final String REPLACE = "replace";
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private PlayerLoot() {}
 
-    public static void reload() {
+    private static void reload() {
         ENTRIES.clear();
         GENERATION.stale();
         if (Config.data.playerLootOff()) { return; }
-        Json.eachFile(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
+        Json.eachObject(PackManager.PLAYER_LOOT, "player loot", PlayerLoot::read);
         if (!ENTRIES.isEmpty()) { Summary.info("loot.player", "Loaded " + ENTRIES.size() + " player loot table(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Player loot {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(ResourceLocation key, JsonObject json) {
         String table = GsonHelper.getAsString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);

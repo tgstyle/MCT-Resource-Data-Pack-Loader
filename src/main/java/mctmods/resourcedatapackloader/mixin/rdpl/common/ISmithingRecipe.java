@@ -2,10 +2,11 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.SmithingTransformRecipe;
+import net.minecraft.world.item.crafting.SmithingTrimRecipe;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(SmithingTransformRecipe.class) public interface ISmithingTransformRecipe {
+@Mixin({SmithingTransformRecipe.class, SmithingTrimRecipe.class}) public interface ISmithingRecipe {
     @Accessor("template") Ingredient rdpl$getTemplate();
 
     @Accessor("base") Ingredient rdpl$getBase();

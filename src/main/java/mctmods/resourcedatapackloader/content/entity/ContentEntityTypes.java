@@ -40,12 +40,15 @@ import net.neoforged.neoforge.event.entity.EntityAttributeModificationEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class ContentEntityTypes {
-    private static final ResourceLocation RETURNING_THROW = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "returning_throw");
+    private static final ResourceLocation RETURNING_THROW = ResourceDataPackLoader.id("returning_throw");
     private static final String SPAWN_EGG_MODEL = "{\"parent\":\"minecraft:item/template_spawn_egg\"}";
+    private static final Map<String, Set<String>> TAGS = new LinkedHashMap<>();
 
     private ContentEntityTypes() {}
 
@@ -57,7 +60,7 @@ public final class ContentEntityTypes {
                 ContentLog.LOGGER.error("Entity variant {} is based on {}, which nothing registers, leaving it out", def.key(), def.base());
                 continue;
             }
-            EntityType.EntityFactory<?> baseFactory = ((IEntityType) base).rdpl$factory();
+            EntityType.EntityFactory<?> baseFactory = ((IEntityType) base).rdpl$getFactory();
             EntityType.EntityFactory<Entity> factory = (type, level) -> EntityClassMaker.make(baseFactory, type, level, def);
             EntityDimensions dims = base.getDimensions();
             float width = def.width() > 0.0F ? def.width() : dims.width();
@@ -119,7 +122,8 @@ public final class ContentEntityTypes {
     public static void extraAttributes(EntityAttributeModificationEvent event) {
         for (EntityType<?> type : ContentEntities.TYPES.values()) {
             if (!alive(type)) { continue; }
-            EntityVariantDef def = ContentEntities.BY_TYPE.get(type);
+            EntityVariantDef def = ContentEntities.def(type);
+            if (def == null) { continue; }
             for (String name : def.attributes().keySet()) {
                 Holder<Attribute> attribute = ContentAttributes.find(name, def.key());
                 if (attribute != null) { grant(event, type, attribute); }
@@ -128,12 +132,13 @@ public final class ContentEntityTypes {
         }
     }
 
-    private static void grant(EntityAttributeModificationEvent event, EntityType<?> type, Holder<Attribute> attribute) {
-        if (!event.has(living(type), attribute)) { event.add(living(type), attribute); }
-    }
+    private static void grant(EntityAttributeModificationEvent event, EntityType<?> type, Holder<Attribute> attribute) { if (!event.has(living(type), attribute)) { event.add(living(type), attribute); } }
 
     public static void placements(RegisterSpawnPlacementsEvent event) {
-        for (EntityType<?> type : ContentEntities.TYPES.values()) { place(event, type, ContentEntities.BASES.get(type), ContentEntities.BY_TYPE.get(type).flags().ignoresSpawnRules()); }
+        for (EntityType<?> type : ContentEntities.TYPES.values()) {
+            EntityVariantDef def = ContentEntities.def(type);
+            if (def != null) { place(event, type, ContentEntities.BASES.get(type), def.flags().ignoresSpawnRules()); }
+        }
     }
 
     private static <T extends Entity> void place(RegisterSpawnPlacementsEvent event, EntityType<T> type, EntityType<?> base, boolean free) { event.register(type, SpawnPlacements.getPlacementType(base), SpawnPlacements.getHeightmapType(base), (kind, level, reason, pos, random) -> free || rules(base, level, reason, pos, random), RegisterSpawnPlacementsEvent.Operation.REPLACE); }
@@ -152,13 +157,11 @@ public final class ContentEntityTypes {
                 yield List.of();
             }
         };
-        for (String tag : tags) { TAGS.computeIfAbsent(tag, k -> new java.util.LinkedHashSet<>()).add(def.key().toString()); }
+        for (String tag : tags) { TAGS.computeIfAbsent(tag, k -> new LinkedHashSet<>()).add(def.key().toString()); }
     }
 
-    private static final Map<String, java.util.Set<String>> TAGS = new LinkedHashMap<>();
-
     private static void writeTags() {
-        for (Map.Entry<String, java.util.Set<String>> entry : TAGS.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : TAGS.entrySet()) {
             ResourceLocation tag = ResourceLocation.tryParse(entry.getKey());
             if (tag == null) { continue; }
             JsonObject json = new JsonObject();

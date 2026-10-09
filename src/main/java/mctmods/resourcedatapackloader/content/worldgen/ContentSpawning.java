@@ -46,23 +46,19 @@ public final class ContentSpawning {
 
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
         ServerLevel level = event.getLevel().getLevel();
-        if (ContentVoidWorld.voidApplies(level)) {
-            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
-            return;
-        }
-        if (!ContentDimensions.spawns(level)) {
-            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        if (ContentVoidWorld.voidApplies(level) || ContentDimensions.spawnsOff(level)) {
+            fail(event);
             return;
         }
         boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
         if (!spawner && placed(event.getSpawnType())) { return; }
         Mob mob = event.getEntity();
         if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
-            if (ContentThreat.deniedAtGeneration(mob)) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
+            if (ContentThreat.deniedAtGeneration(mob)) { fail(event); }
             return;
         }
-        if (!spawner && !ContentThreat.allowed(mob)) {
-            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+        if (!spawner && ContentThreat.barred(mob)) {
+            fail(event);
             return;
         }
         BlockPos pos = mob.blockPosition();
@@ -73,22 +69,24 @@ public final class ContentSpawning {
         if (!spawner) {
             int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight()));
             if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
-                event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+                fail(event);
                 return;
             }
         }
         float rate = rateFor(level, pos) * ContentThreat.spawnRate(level, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
-            event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL);
+            fail(event);
             return;
         }
         if (rate < 1.0F) {
-            if (level.random.nextFloat() >= rate) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
+            if (level.random.nextFloat() >= rate) { fail(event); }
             return;
         }
         if (level.random.nextFloat() < rate - 1.0F) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
     }
+
+    private static void fail(MobSpawnEvent.PositionCheck event) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }
 
     public static void onPlacementCheck(MobSpawnEvent.SpawnPlacementCheck event) {
         if (event.getDefaultResult() || event.getResult() != MobSpawnEvent.SpawnPlacementCheck.Result.DEFAULT || placed(event.getSpawnType()) || event.getEntityType().getCategory() != MobCategory.CREATURE) { return; }

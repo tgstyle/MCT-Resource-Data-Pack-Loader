@@ -16,19 +16,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
-
 import java.util.List;
 import javax.annotation.Nullable;
 
-public class ContentBellBlockEntity extends BlockEntity {
+public final class ContentBellBlockEntity extends BlockEntity {
     private static final int SHAKE_TICKS = 50;
     private static final int RESONATE_AFTER = 5;
     private static final int RESONATE_TICKS = 40;
     private static final int SEARCH_EVERY = 60;
-    private static final int SEARCH_RADIUS = 48;
-    private static final int HEAR_RADIUS = 32;
-    private static final int RESONATE_RADIUS = 32;
-    private static final int GLOW_RADIUS = 48;
+    public static final int HEAR_RADIUS = 32;
+    public static final int GLOW_RADIUS = 48;
     private static final int PARTICLE_COLOR = 16700985;
     private static final int PARTICLE_STEP = 5;
     private static final int CROWD_OFFSET = 21;
@@ -42,7 +39,7 @@ public class ContentBellBlockEntity extends BlockEntity {
     private boolean resonating;
     private int resonateTicks;
 
-    public ContentBellBlockEntity(BlockPos pos, BlockState state) { super(ContentBells.type(), pos, state); }
+    public ContentBellBlockEntity(BlockPos pos, BlockState state) { super(ContentBells.TYPE.get(), pos, state); }
 
     public int ticks() { return ticks; }
 
@@ -72,16 +69,14 @@ public class ContentBellBlockEntity extends BlockEntity {
         long now = level.getGameTime();
         if (now > lastSearch + SEARCH_EVERY || nearby == null) {
             lastSearch = now;
-            nearby = level.getEntitiesOfClass(LivingEntity.class, new AABB(worldPosition).inflate(SEARCH_RADIUS));
+            nearby = level.getEntitiesOfClass(LivingEntity.class, new AABB(worldPosition).inflate(GLOW_RADIUS));
         }
         for (LivingEntity living : nearby) {
             if (living instanceof Villager villager && within(living, HEAR_RADIUS)) { ContentRaids.hear(villager, now); }
         }
     }
 
-    private boolean within(LivingEntity living, int radius) {
-        return living.isAlive() && worldPosition.distToCenterSqr(living.position()) < (double) radius * radius;
-    }
+    private boolean within(LivingEntity living, int radius) { return living.isAlive() && worldPosition.distToCenterSqr(living.position()) < (double) radius * radius; }
 
     private boolean raiderWithin(LivingEntity living, int radius) { return within(living, radius) && ContentRaids.answersBell(living); }
 
@@ -108,7 +103,7 @@ public class ContentBellBlockEntity extends BlockEntity {
 
     private boolean raidersNear(List<LivingEntity> around) {
         for (LivingEntity living : around) {
-            if (raiderWithin(living, RESONATE_RADIUS)) { return true; }
+            if (raiderWithin(living, HEAR_RADIUS)) { return true; }
         }
         return false;
     }

@@ -6,11 +6,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nonnull;
 
-public class ContentVineBlock extends VineBlock {
+public final class ContentVineBlock extends VineBlock {
     private final GrowthDef growth;
 
     public ContentVineBlock(GrowthDef growth, Properties properties) {
@@ -18,7 +19,7 @@ public class ContentVineBlock extends VineBlock {
         this.growth = growth;
     }
 
-    @Override protected boolean isRandomlyTicking(@Nonnull BlockState state) { return growth.maxHeight() > 1; }
+    @Override protected boolean isRandomlyTicking(@Nonnull BlockState state) { return growth.maxHeight() > 1 || growth.spread() > 0; }
 
     @Override protected void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
         if (random.nextInt(Math.max(1, growth.stages())) != 0) { return; }
@@ -29,7 +30,7 @@ public class ContentVineBlock extends VineBlock {
         int hanging = 1;
         while (level.getBlockState(pos.above(hanging)).is(this)) { hanging++; }
         if (hanging >= growth.maxHeight()) { return; }
-        level.setBlock(below, state, 2);
+        level.setBlock(below, state, Block.UPDATE_CLIENTS);
     }
 
     private boolean spread(ServerLevel level, BlockPos pos, RandomSource random) {
@@ -44,7 +45,7 @@ public class ContentVineBlock extends VineBlock {
             anchored = true;
         }
         if (!anchored) { return false; }
-        level.setBlock(beside, carried, 2);
+        level.setBlock(beside, carried, Block.UPDATE_CLIENTS);
         return true;
     }
 

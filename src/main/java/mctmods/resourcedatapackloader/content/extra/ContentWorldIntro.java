@@ -8,9 +8,10 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
@@ -19,20 +20,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentWorldIntro {
-    private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, WorldIntroDef> DEFS = new LinkedHashMap<>();
-    private static boolean loaded;
+    private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentWorldIntro() {}
 
     public static void load() {
-        if (loaded) { return; }
-        loaded = true;
+        if (!GENERATION.stale()) { return; }
+        DEFS.clear();
         if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.WORLDINTRO, "world intro", (key, contents) -> {
             WorldIntroDef def = parse(key, contents);
@@ -43,7 +42,7 @@ public final class ContentWorldIntro {
     }
 
     @Nullable private static WorldIntroDef parse(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "world intro file");
         if (json == null) { return null; }
         List<IntroPageDef> pages = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "pages", new com.google.gson.JsonArray())) {
@@ -66,12 +65,12 @@ public final class ContentWorldIntro {
         String single = GsonHelper.getAsString(json, "background", "").trim();
         if (!single.isEmpty()) { location(key, single, backgrounds); }
         for (String name : Json.strings(json, "backgrounds")) { location(key, name, backgrounds); }
-        String mode = GsonHelper.getAsString(json, "mode", IntroPageDef.SCROLL).trim().toLowerCase(Locale.ROOT);
+        String mode = Settings.lower(GsonHelper.getAsString(json, "mode", IntroPageDef.SCROLL));
         if (!IntroPageDef.SCROLL.equals(mode) && !IntroPageDef.STATIC.equals(mode)) {
             ContentLog.LOGGER.error("World intro {} has a page with mode '{}', which is neither '{}' nor '{}', ignoring the page", key, mode, IntroPageDef.SCROLL, IntroPageDef.STATIC);
             return null;
         }
-        String direction = GsonHelper.getAsString(json, "direction", IntroPageDef.UP).trim().toLowerCase(Locale.ROOT);
+        String direction = Settings.lower(GsonHelper.getAsString(json, "direction", IntroPageDef.UP));
         if (!IntroPageDef.UP.equals(direction) && !IntroPageDef.DOWN.equals(direction)) {
             ContentLog.LOGGER.error("World intro {} has a page with direction '{}', which is neither '{}' nor '{}', taking '{}'", key, direction, IntroPageDef.UP, IntroPageDef.DOWN, IntroPageDef.UP);
             direction = IntroPageDef.UP;

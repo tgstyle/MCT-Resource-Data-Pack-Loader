@@ -11,8 +11,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(EntityRenderer.class) public abstract class MixinEntityRenderer {
-    @Inject(method = "getBlockLightLevel", at = @At("RETURN"), cancellable = true)
-    private void rdpl$litRight(Entity entity, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
-        if (ContentEntities.bright(entity)) { cir.setReturnValue(15); }
-    }
+    @Inject(method = "getBlockLightLevel", at = @At("RETURN"), cancellable = true) private void rdpl$litRight(Entity entity, BlockPos pos, CallbackInfoReturnable<Integer> cir) { if (ContentEntities.bright(entity)) { cir.setReturnValue(15); } }
 }

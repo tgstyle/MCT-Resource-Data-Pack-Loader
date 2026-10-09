@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.util.Rgb;
 import mctmods.resourcedatapackloader.util.WindGust;
 
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -50,12 +51,12 @@ public final class ContentWeatherRenderer {
                 sizeZ[row << 5 | column] = dx / length;
             }
         }
-        red = (rain.color() >> 16 & 255) / 255.0F;
-        green = (rain.color() >> 8 & 255) / 255.0F;
-        blue = (rain.color() & 255) / 255.0F;
-        snowRed = (rain.snowColor() >> 16 & 255) / 255.0F;
-        snowGreen = (rain.snowColor() >> 8 & 255) / 255.0F;
-        snowBlue = (rain.snowColor() & 255) / 255.0F;
+        red = Rgb.red(rain.color());
+        green = Rgb.green(rain.color());
+        blue = Rgb.blue(rain.color());
+        snowRed = Rgb.red(rain.snowColor());
+        snowGreen = Rgb.green(rain.snowColor());
+        snowBlue = Rgb.blue(rain.snowColor());
         this.rain = rain;
         upward = rain.upward();
     }
@@ -82,9 +83,7 @@ public final class ContentWeatherRenderer {
         buffer = null;
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
         for (int z = blockZ - radius; z <= blockZ + radius; z++) {
-            for (int x = blockX - radius; x <= blockX + radius; x++) {
-                column(level, pos, x, z, blockX, blockY, blockZ, radius, ticks, partialTick, strength, camX, camY, camZ);
-            }
+            for (int x = blockX - radius; x <= blockX + radius; x++) { column(level, pos, x, z, blockX, blockY, blockZ, radius, ticks, partialTick, strength, camX, camY, camZ); }
         }
         if (buffer != null) { BufferUploader.drawWithShader(buffer.buildOrThrow()); }
         buffer = null;

@@ -7,9 +7,9 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public final class VoidMemory extends SavedData {
     private static final String NAME = "rdpl_void_world";
@@ -20,7 +20,6 @@ public final class VoidMemory extends SavedData {
     private boolean enabled;
     private List<String> dimensions = List.of();
     private boolean areBlacklist;
-
     private static final Factory<VoidMemory> FACTORY = new Factory<>(VoidMemory::new, (tag, lookup) -> read(tag));
 
     public static VoidMemory of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME); }

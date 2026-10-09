@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.types;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -14,10 +15,8 @@ import mctmods.resourcedatapackloader.content.item.ContentRollItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -118,9 +117,7 @@ public final class ContentItemTypes {
     private static Item.Properties lasting(Item.Properties properties, int uses) { return uses > 0 ? properties : properties.component(DataComponents.UNBREAKABLE, new Unbreakable(false)); }
 
     @Nullable private static Item seed(ItemDef def, ItemVariant variant, Item.Properties properties) {
-        ResourceLocation named = ResourceLocation.tryParse(def.crop());
-        ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
-        Block crop = made != null ? made.block() : Registered.find(BuiltInRegistries.BLOCK, named);
+        Block crop = ContentStates.registered(def.crop());
         if (crop == null) {
             ContentLog.LOGGER.error("Seed {} plants '{}', which is not a registered block, the item is skipped", variant.id(), def.crop());
             return null;

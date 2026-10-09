@@ -55,9 +55,7 @@ public final class ChatHistoryKeeper {
         failed = false;
     }
 
-    public static void failed(CommandSourceStack source) {
-        if (watching != null && source.getEntity() == watching) { failed = true; }
-    }
+    public static void failed(CommandSourceStack source) { if (watching != null && source.getEntity() == watching) { failed = true; } }
 
     public static void finished(String command) {
         boolean ran = watching != null && !failed;

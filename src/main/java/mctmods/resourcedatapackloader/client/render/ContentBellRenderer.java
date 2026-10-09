@@ -21,10 +21,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.client.model.data.ModelData;
-
 import javax.annotation.Nonnull;
 
-public class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlockEntity> {
+public final class ContentBellRenderer implements BlockEntityRenderer<ContentBellBlockEntity> {
     private static final float PIVOT_Y = 0.75F;
     private final BlockRenderDispatcher blocks;
 

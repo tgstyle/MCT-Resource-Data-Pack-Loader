@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.util;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.RomanNumerals;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -12,11 +13,21 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentEffects {
     private ContentEffects() {}
+
+    public static void cooldown(LivingEntity entity, Item item, int ticks) { if (ticks > 0 && entity instanceof Player player) { player.getCooldowns().addCooldown(item, ticks); } }
+
+    @Nullable public static Holder<MobEffect> find(@Nullable String name) {
+        if (name == null) { return null; }
+        return Registered.holder(BuiltInRegistries.MOB_EFFECT, ResourceLocation.tryParse(Settings.lower(name)));
+    }
 
     @Nullable public static MobEffectInstance parse(Object context, @Nullable String value) {
         if (value == null || value.trim().isEmpty()) { return null; }
@@ -25,8 +36,7 @@ public final class ContentEffects {
             ContentLog.LOGGER.error("Potion '{}' for {} needs id, duration and amplifier", value, context);
             return null;
         }
-        ResourceLocation key = ResourceLocation.tryParse(parts[0].trim());
-        Holder<MobEffect> effect = Registered.holder(BuiltInRegistries.MOB_EFFECT, key);
+        Holder<MobEffect> effect = find(parts[0]);
         if (effect == null) {
             ContentLog.LOGGER.error("Unknown potion '{}' for {}", parts[0].trim(), context);
             return null;

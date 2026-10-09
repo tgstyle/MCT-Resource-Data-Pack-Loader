@@ -16,9 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Optional;
 
 @Mixin(ClientLevel.class) public abstract class MixinClientLevelAmbience {
-    @Redirect(method = "doAnimateTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientParticle()Ljava/util/Optional;"))
-    private Optional<AmbientParticleSettings> rdpl$dimensionParticle(Biome biome) { return ContentDimensionAmbience.particle(biome, (ClientLevel) (Object) this); }
+    @Redirect(method = "doAnimateTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientParticle()Ljava/util/Optional;")) private Optional<AmbientParticleSettings> rdpl$dimensionParticle(Biome biome) { return ContentDimensionAmbience.particle(biome, (ClientLevel) (Object) this); }
 
-    @Inject(method = "doAnimateTick", at = @At("TAIL"))
-    private void rdpl$dimensionParticles(int posX, int posY, int posZ, int range, RandomSource random, Block block, BlockPos.MutableBlockPos blockPos, CallbackInfo ci) { ContentDimensionAmbience.particles((ClientLevel) (Object) this, blockPos); }
+    @Inject(method = "doAnimateTick", at = @At("TAIL")) private void rdpl$dimensionParticles(int posX, int posY, int posZ, int range, RandomSource random, Block block, BlockPos.MutableBlockPos blockPos, CallbackInfo ci) { ContentDimensionAmbience.particles((ClientLevel) (Object) this, blockPos); }
 }

@@ -13,19 +13,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class) public abstract class MixinServerLevelHold {
-    @Inject(method = "tickNonPassenger", at = @At("HEAD"), cancellable = true)
-    private void rdpl$standStillWhileLandIsMade(Entity p_entity, CallbackInfo ci) {
-        if (ContentPregen.busy() || ContentEntityTicks.frozen(p_entity)) { ci.cancel(); }
-    }
+    @Inject(method = "tickNonPassenger", at = @At("HEAD"), cancellable = true) private void rdpl$standStillWhileLandIsMade(Entity p_entity, CallbackInfo ci) { if (ContentPregen.busy() || ContentEntityTicks.frozen(p_entity)) { ci.cancel(); } }
 
-    @Redirect(method = "tickNonPassenger", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;tick()V"))
-    private void rdpl$slowDistantProjectile(Entity entity) {
+    @Redirect(method = "tickNonPassenger", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;tick()V")) private void rdpl$slowDistantProjectile(Entity entity) {
         if (entity instanceof Projectile && ContentEntityTicks.slowedNow(entity)) { return; }
         entity.tick();
     }
 
-    @Inject(method = "advanceWeatherCycle", at = @At("HEAD"), cancellable = true)
-    private void rdpl$holdWeatherWhileLandIsMade(CallbackInfo ci) {
-        if (ContentPregen.busyIn(ServerLevel.class.cast(this))) { ci.cancel(); }
-    }
+    @Inject(method = "advanceWeatherCycle", at = @At("HEAD"), cancellable = true) private void rdpl$holdWeatherWhileLandIsMade(CallbackInfo ci) { if (ContentPregen.busyIn((ServerLevel) (Object) this)) { ci.cancel(); } }
 }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -47,13 +48,12 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class EntityStorage {
-    public static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "storage");
+    public static final ResourceLocation KEY = ResourceDataPackLoader.id("storage");
     public static final AttachmentType<EntityStorage> TYPE = AttachmentType.builder(holder -> new EntityStorage(holder instanceof Entity entity ? def(entity) : null)).serialize(new Saved()).build();
     private static final String ITEMS = "Items";
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
-    private static final ResourceLocation SLOWED = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "dry");
-    private static final int SECOND = 20;
+    private static final ResourceLocation SLOWED = ResourceDataPackLoader.id("dry");
     @Nullable private final Items items;
     @Nullable private final Tank tank;
     @Nullable private final Energy energy;
@@ -95,7 +95,7 @@ public final class EntityStorage {
     }
 
     public static void tick(LivingEntity living) {
-        if (living.level().isClientSide() || living.tickCount % SECOND != 0) { return; }
+        if (living.level().isClientSide() || living.tickCount % SharedConstants.TICKS_PER_SECOND != 0) { return; }
         EntityStorage storage = of(living);
         if (storage == null || !storage.spends()) { return; }
         boolean paid = !storage.dry();
@@ -179,9 +179,7 @@ public final class EntityStorage {
             }
             return;
         }
-        if (event.getEntity() instanceof ServerPlayer player) {
-            player.openMenu(new SimpleMenuProvider((id, inventory, opener) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def));
-        }
+        if (event.getEntity() instanceof ServerPlayer player) { player.openMenu(new SimpleMenuProvider((id, inventory, opener) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def)); }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }

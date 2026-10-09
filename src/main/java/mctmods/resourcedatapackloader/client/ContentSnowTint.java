@@ -42,21 +42,15 @@ public final class ContentSnowTint {
     private ContentSnowTint() {}
 
     private static boolean wanted() {
-        for (DimensionDef def : ContentDimensions.all()) {
-            if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; }
-        }
+        for (DimensionDef def : ContentDimensions.all()) { if (def.look() != null && def.look().snowColor() != SkyLookDef.UNSET) { return true; } }
         return ContentBiomes.tintsSnow();
     }
 
     private static Block[] blocks() { return new Block[] {Blocks.SNOW, Blocks.SNOW_BLOCK}; }
 
-    public static void resolvers(RegisterColorHandlersEvent.ColorResolvers event) {
-        if (wanted()) { event.register(SNOW); }
-    }
+    public static void resolvers(RegisterColorHandlersEvent.ColorResolvers event) { if (wanted()) { event.register(SNOW); } }
 
-    public static void colors(RegisterColorHandlersEvent.Block event) {
-        if (wanted()) { event.register((state, level, pos, index) -> level == null || pos == null ? WHITE : level.getBlockTint(pos, SNOW), blocks()); }
-    }
+    public static void colors(RegisterColorHandlersEvent.Block event) { if (wanted()) { event.register((state, level, pos, index) -> level == null || pos == null ? WHITE : level.getBlockTint(pos, SNOW), blocks()); } }
 
     public static void models(ModelEvent.ModifyBakingResult event) {
         if (!wanted()) { return; }

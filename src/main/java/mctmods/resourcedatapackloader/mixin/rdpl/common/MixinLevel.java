@@ -24,33 +24,27 @@ import javax.annotation.Nonnull;
 
 @Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class MixinLevel {
     @Nonnull public Difficulty level$getDifficulty() {
-        Level self = Level.class.cast(this);
+        Level self = (Level) (Object) this;
         Difficulty asked = ContentServer.difficultyFor(self.dimension().location().toString());
         return asked != null ? asked : self.getLevelData().getDifficulty();
     }
 
-    public long level$dayTime() { return Level.class.cast(this).getDayTime(); }
+    public long level$dayTime() { return ((Level) (Object) this).getDayTime(); }
 
-    @Inject(method = "getDayTime", at = @At("HEAD"), cancellable = true)
-    private void rdpl$lockedTime(CallbackInfoReturnable<Long> cir) {
-        long locked = ContentTerrain.lockedTime(Level.class.cast(this));
+    @Inject(method = "getDayTime", at = @At("HEAD"), cancellable = true) private void rdpl$lockedTime(CallbackInfoReturnable<Long> cir) {
+        long locked = ContentTerrain.lockedTime((Level) (Object) this);
         if (locked >= 0) { cir.setReturnValue(locked); }
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;Ljava/util/function/Supplier;ZZJI)V", at = @At("RETURN"))
-    private void rdpl$dayLength(CallbackInfo ci) {
-        Level self = Level.class.cast(this);
+    @Inject(method = "<init>(Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;Ljava/util/function/Supplier;ZZJI)V", at = @At("RETURN")) private void rdpl$dayLength(CallbackInfo ci) {
+        Level self = (Level) (Object) this;
         ((IDayLength) (Object) self.dimensionType()).rdpl$dayLength(ContentWeather.traits(self).dayLength());
     }
 
-    @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true)
-    private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {
-        GameRules held = ContentGameRules.forLevel(Level.class.cast(this));
+    @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {
+        GameRules held = ContentGameRules.forLevel((Level) (Object) this);
         if (held != null) { cir.setReturnValue(held); }
     }
 
-    @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V"))
-    private void rdpl$standStillWhileLandIsMade(TickingBlockEntity ticker) {
-        if (Level.class.cast(this).isClientSide() || !ContentPregen.busy()) { ticker.tick(); }
-    }
+    @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/entity/TickingBlockEntity;tick()V")) private void rdpl$standStillWhileLandIsMade(TickingBlockEntity ticker) { if (((Level) (Object) this).isClientSide() || !ContentPregen.busy()) { ticker.tick(); } }
 }

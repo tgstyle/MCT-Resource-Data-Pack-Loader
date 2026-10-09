@@ -18,9 +18,7 @@ import java.util.Optional;
 @Mixin(BiomeAmbientSoundsHandler.class) public abstract class MixinBiomeAmbientSoundsHandler {
     @Shadow @Final private LocalPlayer player;
 
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientLoop()Ljava/util/Optional;"))
-    private Optional<Holder<SoundEvent>> rdpl$dimensionLoop(Biome biome) { return ContentDimensionAmbience.loop(biome, player.level()); }
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientLoop()Ljava/util/Optional;")) private Optional<Holder<SoundEvent>> rdpl$dimensionLoop(Biome biome) { return ContentDimensionAmbience.loop(biome, player.level()); }
 
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientAdditions()Ljava/util/Optional;"))
-    private Optional<AmbientAdditionsSettings> rdpl$dimensionAdditions(Biome biome) { return ContentDimensionAmbience.additions(biome, player.level()); }
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/biome/Biome;getAmbientAdditions()Ljava/util/Optional;")) private Optional<AmbientAdditionsSettings> rdpl$dimensionAdditions(Biome biome) { return ContentDimensionAmbience.additions(biome, player.level()); }
 }

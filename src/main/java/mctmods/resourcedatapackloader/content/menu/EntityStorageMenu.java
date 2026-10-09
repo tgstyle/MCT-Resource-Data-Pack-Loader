@@ -50,7 +50,7 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
     public EntityStorageMenu(int id, Inventory inventory, Entity entity, StorageDef def) { this(id, inventory, entity, def, true); }
 
     private EntityStorageMenu(int id, Inventory inventory, @Nullable Entity entity, StorageDef def, boolean serves) {
-        super(ContentContainers.storageMenu(), id);
+        super(ContentContainers.STORAGE_MENU.get(), id);
         this.def = def;
         this.entity = entity;
         EntityStorage held = EntityStorage.of(entity);
@@ -64,13 +64,7 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
         for (int slot = 0; slot < def.slots(); slot++) {
             addSlot(new SlotItemHandler(items, slot, left + slot % StorageDef.PER_ROW * ContentContainerMenu.SLOT, TOP + slot / StorageDef.PER_ROW * ContentContainerMenu.SLOT));
         }
-        int playerLeft = (wide - 9 * ContentContainerMenu.SLOT) / 2 + 1;
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlot(new Slot(inventory, column + row * 9 + 9, playerLeft + column * ContentContainerMenu.SLOT, tall - 83 + row * ContentContainerMenu.SLOT));
-            }
-        }
-        for (int hotbar = 0; hotbar < 9; hotbar++) { addSlot(new Slot(inventory, hotbar, playerLeft + hotbar * ContentContainerMenu.SLOT, tall - 25)); }
+        for (Slot slot : ContentContainerMenu.playerSlots(inventory, wide, tall, Slot::new)) { addSlot(slot); }
         addDataSlots(shown);
         read();
     }
@@ -123,13 +117,13 @@ public final class EntityStorageMenu extends AbstractContainerMenu {
     @Override public boolean stillValid(@Nonnull Player player) { return entity == null || entity.isAlive() && player.distanceToSqr(entity) <= REACH; }
 
     @Override @Nonnull public ItemStack quickMoveStack(@Nonnull Player player, int index) {
-        Slot slot = slots.get(index);
-        if (!slot.hasItem()) { return ItemStack.EMPTY; }
-        ItemStack stack = slot.getItem();
-        if (index < def.slots()) { moveItemStackTo(stack, def.slots(), slots.size(), true); }
-        else { stack.setCount(ItemHandlerHelper.insertItemStacked(items, stack.copy(), false).getCount()); }
-        if (stack.isEmpty()) { slot.set(ItemStack.EMPTY); }
-        else { slot.setChanged(); }
-        return ItemStack.EMPTY;
+        return ContentContainerMenu.transfer(this, player, index, def.slots(), this::moveItemStackTo, this::store);
+    }
+
+    private boolean store(ItemStack stack) {
+        int before = stack.getCount();
+        int left = ItemHandlerHelper.insertItemStacked(items, stack.copy(), false).getCount();
+        stack.setCount(left);
+        return left < before;
     }
 }
