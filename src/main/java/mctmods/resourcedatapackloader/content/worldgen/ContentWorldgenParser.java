@@ -122,7 +122,7 @@ public final class ContentWorldgenParser {
     }
 
     private static List<FollowDef> followers(Identifier key, JsonObject json) {
-        if (!json.has("then") || !json.get("then").isJsonArray()) { return List.of(); }
+        if (!GsonHelper.isArrayNode(json, "then")) { return List.of(); }
         List<FollowDef> followers = new ArrayList<>();
         for (JsonElement element : json.getAsJsonArray("then")) {
             String name;

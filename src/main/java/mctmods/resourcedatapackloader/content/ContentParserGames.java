@@ -244,12 +244,12 @@ public final class ContentParserGames {
     }
 
     private static String standIn(JsonObject json) {
-        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return ""; }
+        if (!GsonHelper.isObjectNode(json, "standIn")) { return ""; }
         return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "entity", "").trim();
     }
 
     @Nullable private static int[] standInAt(Identifier key, JsonObject json) {
-        if (!json.has("standIn") || !json.get("standIn").isJsonObject()) { return null; }
+        if (!GsonHelper.isObjectNode(json, "standIn")) { return null; }
         String at = GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "standIn"), "at", "");
         int[] found = point(key, at, "Team file {} gives standIn an 'at' of '{}', which is not three whole numbers x,y,z, so no stand-in is kept");
         if (found == null && at.trim().isEmpty()) { ContentLog.LOGGER.error("Team file {} gives standIn no 'at', so no stand-in is kept", key); }

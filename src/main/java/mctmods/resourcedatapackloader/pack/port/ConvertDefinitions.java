@@ -33,7 +33,7 @@ final class ConvertDefinitions {
     private ConvertDefinitions() {}
 
     static void villagePieces(JsonObject settings, Ported pack) {
-        if (!settings.has(PIECES) || !settings.get(PIECES).isJsonArray()) { return; }
+        if (!GsonHelper.isArrayNode(settings, PIECES)) { return; }
         if (GsonHelper.isValidPrimitive(settings, PIECES_BLACKLIST) && !settings.get(PIECES_BLACKLIST).getAsBoolean()) { return; }
         Set<String> named = new HashSet<>();
         for (JsonElement element : settings.getAsJsonArray(PIECES)) {
@@ -118,7 +118,7 @@ final class ConvertDefinitions {
     static void modernStructuresOff(JsonObject template, Ported pack) {
         JsonObject structures = template.getAsJsonObject("structures");
         List<String> dimensions = new ArrayList<>();
-        if (template.has("dimensions") && template.get("dimensions").isJsonArray()) {
+        if (GsonHelper.isArrayNode(template, "dimensions")) {
             for (JsonElement named : template.getAsJsonArray("dimensions")) { dimensions.add(ContentFormats.dimensionId(named.getAsString())); }
         }
         if (dimensions.isEmpty()) { dimensions.addAll(VANILLA_DIMENSIONS); }
@@ -185,8 +185,8 @@ final class ConvertDefinitions {
     static void teamPositions(JsonObject json, String team, Ported pack) {
         int shift = pack.overworldShift();
         movedPoint(json, "spawn", shift, pack, "Team file " + team);
-        if (json.has("standIn") && json.get("standIn").isJsonObject()) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, "Team file " + team + " standIn"); }
-        if (shift == 0 || !json.has("spawnBox") || !json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) { return; }
+        if (GsonHelper.isObjectNode(json, "standIn")) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, "Team file " + team + " standIn"); }
+        if (shift == 0 || !GsonHelper.isArrayNode(json, "spawnBox") || json.getAsJsonArray("spawnBox").size() != 6) { return; }
         JsonArray box = json.getAsJsonArray("spawnBox");
         boolean changed = false;
         for (int corner : new int[] {1, 4}) {
@@ -200,7 +200,7 @@ final class ConvertDefinitions {
 
     static void groundLevel(JsonObject json, String dimension, Ported pack) {
         int shift = pack.shiftIn(dimension);
-        JsonObject sky = json.has("sky") && json.get("sky").isJsonObject() ? json.getAsJsonObject("sky") : new JsonObject();
+        JsonObject sky = GsonHelper.isObjectNode(json, "sky") ? json.getAsJsonObject("sky") : new JsonObject();
         if (shift == 0 || !GsonHelper.isNumberValue(sky, "groundLevel")) { return; }
         int written = sky.get("groundLevel").getAsInt();
         sky.addProperty("groundLevel", written + shift);
@@ -214,14 +214,14 @@ final class ConvertDefinitions {
 
     static void anvil(JsonObject json, Ported pack) {
         for (String key : ANVIL_INPUTS) {
-            JsonObject holder = json.has(key) && json.get(key).isJsonObject() ? json.getAsJsonObject(key) : json;
+            JsonObject holder = GsonHelper.isObjectNode(json, key) ? json.getAsJsonObject(key) : json;
             String field = holder == json ? key : "item";
             if (!GsonHelper.isValidPrimitive(holder, field) || !holder.get(field).getAsString().trim().endsWith(Convert.WILDCARD)) { continue; }
             JsonArray names = new JsonArray();
             for (String name : Convert.itemNames(holder.get(field).getAsString(), pack)) { names.add(name); }
             holder.add(field, names);
         }
-        if (!json.has("enchantments") || !json.get("enchantments").isJsonObject()) { return; }
+        if (!GsonHelper.isObjectNode(json, "enchantments")) { return; }
         JsonObject levels = json.getAsJsonObject("enchantments");
         for (Map.Entry<String, JsonElement> entry : new ArrayList<>(levels.entrySet())) {
             String mapped = Ids.enchantment(entry.getKey());
@@ -233,7 +233,7 @@ final class ConvertDefinitions {
     }
 
     static void oreDictTags(JsonObject json, String list, Ported pack) {
-        if (!json.has(list) || !json.get(list).isJsonArray()) { return; }
+        if (!GsonHelper.isArrayNode(json, list)) { return; }
         for (JsonElement element : json.getAsJsonArray(list)) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();
@@ -244,7 +244,7 @@ final class ConvertDefinitions {
     }
 
     static void orderTags(JsonObject json, Ported pack) {
-        if (!json.has("orders") || !json.get("orders").isJsonArray()) { return; }
+        if (!GsonHelper.isArrayNode(json, "orders")) { return; }
         for (JsonElement element : json.getAsJsonArray("orders")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();

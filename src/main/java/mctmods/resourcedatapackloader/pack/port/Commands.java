@@ -426,7 +426,7 @@ public final class Commands {
             JsonObject score = held.getAsJsonObject("score");
             score.addProperty("name", CommandSelectors.target(score.get("name").getAsString(), pack));
         }
-        if (held.has("clickEvent") && held.get("clickEvent").isJsonObject()) {
+        if (GsonHelper.isObjectNode(held, "clickEvent")) {
             JsonObject click = held.getAsJsonObject("clickEvent");
             String action = Json.text(click, "action");
             String value = Json.text(click, "value");

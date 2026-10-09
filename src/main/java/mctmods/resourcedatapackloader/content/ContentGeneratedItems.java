@@ -19,6 +19,7 @@ import com.google.gson.JsonParser;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.GsonHelper;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -69,16 +70,16 @@ final class ContentGeneratedItems {
             JsonObject json = modelJson(at);
             if (json == null) { break; }
             layers = Math.max(layers, tintLayers(json));
-            at = json.has("parent") && json.get("parent").isJsonPrimitive() ? Identifier.tryParse(json.get("parent").getAsString()) : null;
+            at = GsonHelper.isValidPrimitive(json, "parent") ? Identifier.tryParse(json.get("parent").getAsString()) : null;
         }
         return layers;
     }
 
     private static int tintLayers(JsonObject json) {
         int layers = 0;
-        if (json.has("elements") && json.get("elements").isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, "elements")) {
             for (JsonElement element : json.getAsJsonArray("elements")) {
-                if (!element.isJsonObject() || !element.getAsJsonObject().has("faces") || !element.getAsJsonObject().get("faces").isJsonObject()) { continue; }
+                if (!element.isJsonObject() || !GsonHelper.isObjectNode(element.getAsJsonObject(), "faces")) { continue; }
                 for (Map.Entry<String, JsonElement> face : element.getAsJsonObject().getAsJsonObject("faces").entrySet()) {
                     if (!face.getValue().isJsonObject()) { continue; }
                     JsonElement index = face.getValue().getAsJsonObject().get("tintindex");
@@ -86,7 +87,7 @@ final class ContentGeneratedItems {
                 }
             }
         }
-        if (json.has("textures") && json.get("textures").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "textures")) {
             for (String key : json.getAsJsonObject("textures").keySet()) {
                 if (key.startsWith(LAYER_TEXTURE) && key.length() > LAYER_TEXTURE.length() && key.substring(LAYER_TEXTURE.length()).chars().allMatch(Character::isDigit)) {
                     layers = Math.max(layers, Integer.parseInt(key.substring(LAYER_TEXTURE.length())) + 1);
@@ -97,7 +98,7 @@ final class ContentGeneratedItems {
     }
 
     static int blockTintLayers(Identifier block) {
-        JsonObject states = assetJson(block.getNamespace(), "blockstates/" + block.getPath() + ".json");
+        JsonObject states = assetJson(block.getNamespace(), "blockstates/" + block.getPath() + PackManager.JSON_SUFFIX);
         if (states == null) { return tintLayers(block.withPrefix("block/")); }
         Set<Identifier> models = new HashSet<>();
         stateModels(states, models);
@@ -121,7 +122,7 @@ final class ContentGeneratedItems {
         }
     }
 
-    @Nullable private static JsonObject modelJson(Identifier model) { return assetJson(model.getNamespace(), "models/" + model.getPath() + ".json"); }
+    @Nullable private static JsonObject modelJson(Identifier model) { return assetJson(model.getNamespace(), "models/" + model.getPath() + PackManager.JSON_SUFFIX); }
 
     @Nullable private static JsonObject assetJson(String namespace, String path) {
         byte[] bytes = PackManager.get().bytes(PackType.CLIENT_RESOURCES, namespace, path);
@@ -136,7 +137,7 @@ final class ContentGeneratedItems {
 
     static void bucket(ContentFluids.Made made) {
         Identifier id = made.bucketId();
-        if (ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), "models/item/" + id.getPath() + ".json")) {
+        if (ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), "models/item/" + id.getPath() + PackManager.JSON_SUFFIX)) {
             JsonObject model = model(id);
             model.add("tints", ContentGenerated.arr(ContentGenerated.obj("type", "minecraft:constant", "value", -1), ContentGenerated.obj("type", "neoforge:fluid_contents_tint")));
             definition(id, model);
@@ -158,7 +159,7 @@ final class ContentGeneratedItems {
 
     private static void equipment(Identifier asset) {
         String namespace = asset.getNamespace();
-        String path = "equipment/" + asset.getPath() + ".json";
+        String path = "equipment/" + asset.getPath() + PackManager.JSON_SUFFIX;
         if (ContentGenerated.provided(PackType.CLIENT_RESOURCES, namespace, path)) { return; }
         JsonObject layers = new JsonObject();
         for (String[] layer : ARMOR_LAYERS) {
@@ -197,7 +198,7 @@ final class ContentGeneratedItems {
     private static JsonObject model(Identifier id) { return ContentGenerated.obj("type", "minecraft:model", "model", itemModel(id)); }
 
     private static void definition(Identifier id, JsonObject model) {
-        String path = "items/" + id.getPath() + ".json";
+        String path = "items/" + id.getPath() + PackManager.JSON_SUFFIX;
         if (!ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), path)) { ContentGenerated.asset(id.getNamespace(), path, ContentGenerated.obj("model", model)); }
     }
 }

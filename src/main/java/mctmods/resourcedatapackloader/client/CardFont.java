@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.client.Minecraft;
@@ -45,7 +46,7 @@ final class CardFont {
 
     @Nullable private static Identifier find(String name) {
         Identifier id = ContentParser.location(name);
-        if (id != null && Minecraft.getInstance().getResourceManager().getResource(id.withPath(path -> "font/" + path + ".json")).isPresent()) { return id; }
+        if (id != null && Minecraft.getInstance().getResourceManager().getResource(id.withPath(path -> "font/" + path + PackManager.JSON_SUFFIX)).isPresent()) { return id; }
         return null;
     }
 }

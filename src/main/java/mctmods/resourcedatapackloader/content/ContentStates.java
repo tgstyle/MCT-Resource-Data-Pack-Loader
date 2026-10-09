@@ -24,6 +24,16 @@ public final class ContentStates {
 
     private ContentStates() {}
 
+    public static boolean alike(BlockState wanted, BlockState found) {
+        if (wanted.getBlock() != found.getBlock()) { return false; }
+        for (Property<?> property : wanted.getProperties()) {
+            String name = property.getName();
+            if (name.equals("axis") || name.equals("distance") || name.equals("persistent") || name.equals("waterlogged")) { continue; }
+            if (!wanted.getValue(property).equals(found.getValue(property))) { return false; }
+        }
+        return true;
+    }
+
     public record Spec(BlockState state, @Nullable CompoundTag tag, boolean exact) {}
 
     public static List<BlockState> matching(Block block, Map<String, String> properties, Object context) {

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentGeneratedModels;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.IdNames;
 
 import com.google.gson.JsonArray;
@@ -14,10 +15,10 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import net.minecraft.util.GsonHelper;
 
 final class ModernAssets {
     private static final String ITEM_MODELS = "models/item/";
-    private static final String JSON = ".json";
     private static final String MCMETA = ".mcmeta";
     private static final String TYPE = "type";
     private static final String MODEL = "model";
@@ -36,21 +37,21 @@ final class ModernAssets {
 
     static void model(JsonObject json) {
         JsonElement layer = json.remove("render_type");
-        if (layer != null && layer.isJsonPrimitive() && TRANSLUCENT.contains(layer.getAsString()) && json.has("textures") && json.get("textures").isJsonObject()) { ContentGeneratedModels.forceTranslucent(json.getAsJsonObject("textures")); }
+        if (layer != null && layer.isJsonPrimitive() && TRANSLUCENT.contains(layer.getAsString()) && GsonHelper.isObjectNode(json, "textures")) { ContentGeneratedModels.forceTranslucent(json.getAsJsonObject("textures")); }
     }
 
     @Nullable static String definitionPath(String path) {
-        if (!path.startsWith(ITEM_MODELS) || !path.endsWith(JSON)) { return null; }
-        String rest = path.substring(ITEM_MODELS.length(), path.length() - JSON.length());
-        return rest.isEmpty() || rest.indexOf('/') >= 0 ? null : "items/" + rest + JSON;
+        if (!path.startsWith(ITEM_MODELS) || !path.endsWith(PackManager.JSON_SUFFIX)) { return null; }
+        String rest = path.substring(ITEM_MODELS.length(), path.length() - PackManager.JSON_SUFFIX.length());
+        return rest.isEmpty() || rest.indexOf('/') >= 0 ? null : "items/" + rest + PackManager.JSON_SUFFIX;
     }
 
     @Nullable static JsonObject definition(String namespace, String path, @Nullable JsonObject model, String file, Consumer<String> note) {
         if (model == null || !model.has("overrides") || !model.get("overrides").isJsonArray() || model.getAsJsonArray("overrides").isEmpty()) { return null; }
-        JsonObject base = plain(namespace + ":item/" + path.substring(ITEM_MODELS.length(), path.length() - JSON.length()));
+        JsonObject base = plain(namespace + ":item/" + path.substring(ITEM_MODELS.length(), path.length() - PackManager.JSON_SUFFIX.length()));
         JsonObject current = base;
         for (JsonElement override : model.getAsJsonArray("overrides")) {
-            if (!override.isJsonObject() || !override.getAsJsonObject().has(MODEL) || !override.getAsJsonObject().has("predicate") || !override.getAsJsonObject().get("predicate").isJsonObject()) { continue; }
+            if (!override.isJsonObject() || !override.getAsJsonObject().has(MODEL) || !GsonHelper.isObjectNode(override.getAsJsonObject(), "predicate")) { continue; }
             List<Map.Entry<String, JsonElement>> tests = new ArrayList<>(override.getAsJsonObject().getAsJsonObject("predicate").entrySet());
             JsonObject inner = plain(IdNames.namespaced(override.getAsJsonObject().get(MODEL).getAsString()));
             boolean kept = true;

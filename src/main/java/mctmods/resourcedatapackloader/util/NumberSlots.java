@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.List;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
+import net.minecraft.util.GsonHelper;
 
 public final class NumberSlots {
     private static final String TYPE = "type";
@@ -53,7 +54,7 @@ public final class NumberSlots {
             }
             case "set_custom_model_data|floats" -> {
                 if (value.isJsonArray()) { return listed(value.getAsJsonArray(), fit); }
-                if (!value.isJsonObject() || !value.getAsJsonObject().has("values") || !value.getAsJsonObject().get("values").isJsonArray()) { return walk(value, fit); }
+                if (!value.isJsonObject() || !GsonHelper.isArrayNode(value.getAsJsonObject(), "values")) { return walk(value, fit); }
                 JsonObject out = value.getAsJsonObject().deepCopy();
                 out.add("values", listed(out.getAsJsonArray("values"), fit));
                 return out;

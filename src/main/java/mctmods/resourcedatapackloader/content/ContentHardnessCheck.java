@@ -98,7 +98,7 @@ public final class ContentHardnessCheck {
 
     private static void shipped(BlockState state) {
         Identifier name = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        String path = "blockstates/" + name.getPath() + ".json";
+        String path = "blockstates/" + name.getPath() + PackManager.JSON_SUFFIX;
         chain(Identifier.fromNamespaceAndPath(name.getNamespace(), path));
         boolean overriding = PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, name.getNamespace(), path, true);
         boolean normal = PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, name.getNamespace(), path, false);
@@ -152,7 +152,7 @@ public final class ContentHardnessCheck {
                     if (!one.isJsonObject() || !one.getAsJsonObject().has("model")) { continue; }
                     Identifier named = Identifier.tryParse(one.getAsJsonObject().get("model").getAsString());
                     if (named == null) { continue; }
-                    String model = "models/" + named.getPath() + ".json";
+                    String model = "models/" + named.getPath() + PackManager.JSON_SUFFIX;
                     ContentLog.LOGGER.debug("    it points at {}:{}, which the pack ships at the overriding tier={} and the normal tier={}", named.getNamespace(), model,
                             PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, named.getNamespace(), model, true), PackManager.get().existsRaw(PackType.CLIENT_RESOURCES, named.getNamespace(), model, false));
                 }

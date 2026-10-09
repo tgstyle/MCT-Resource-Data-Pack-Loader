@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
+
 import net.minecraft.resources.Identifier;
 
 public final class WorldgenFiles {
@@ -10,7 +12,7 @@ public final class WorldgenFiles {
 
     private WorldgenFiles() {}
 
-    public static String file(String folder, String path) { return folder + "/" + path + ".json"; }
+    public static String file(String folder, String path) { return folder + "/" + path + PackManager.JSON_SUFFIX; }
 
     public static Identifier id(String folder, Identifier name) { return Identifier.fromNamespaceAndPath(name.getNamespace(), file(folder, name.getPath())); }
 }

@@ -11,6 +11,7 @@ import com.mojang.datafixers.DSL;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.SharedConstants;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.datafix.DataFixers;
 import net.minecraft.util.datafix.fixes.References;
 import java.util.List;
@@ -42,7 +43,7 @@ final class ModernFixes {
         stack.addProperty("count", 1);
         stack.add(CrossJson.COMPONENTS, components);
         JsonObject fixed = stack(stack);
-        return fixed.has(CrossJson.COMPONENTS) && fixed.get(CrossJson.COMPONENTS).isJsonObject() ? fixed.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
+        return GsonHelper.isObjectNode(fixed, CrossJson.COMPONENTS) ? fixed.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
     }
 
     static JsonElement text(JsonElement text) { return fix(References.TEXT_COMPONENT, new JsonPrimitive(text.toString())); }

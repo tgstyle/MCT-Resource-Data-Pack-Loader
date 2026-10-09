@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.pack.port;
 import static mctmods.resourcedatapackloader.util.Json.flag;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Json;
@@ -14,6 +15,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.SharedConstants;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +45,10 @@ final class ModernWorld {
     static void dimensionType(JsonObject json, String file, Consumer<String> note) {
         if (!json.has(DRAGON_FIGHT)) { json.addProperty(DRAGON_FIGHT, END_TYPE.equals(file)); }
         if (json.has(ATTRIBUTES) || OLD_TYPE_FIELDS.stream().noneMatch(json::has)) { return; }
-        String effects = json.has(EFFECTS) && json.get(EFFECTS).isJsonPrimitive() ? json.get(EFFECTS).getAsString() : "minecraft:overworld";
+        String effects = GsonHelper.isValidPrimitive(json, EFFECTS) ? json.get(EFFECTS).getAsString() : "minecraft:overworld";
         String base = "minecraft:the_nether".equals(effects) ? "the_nether" : "minecraft:the_end".equals(effects) ? "the_end" : "overworld";
         JsonObject attributes = new JsonObject();
-        JsonObject template = GameData.json(Identifier.withDefaultNamespace("dimension_type/" + base + ".json"));
+        JsonObject template = GameData.json(Identifier.withDefaultNamespace("dimension_type/" + base + PackManager.JSON_SUFFIX));
         if (template != null && template.has(ATTRIBUTES) && template.get(ATTRIBUTES).isJsonObject()) {
             for (Map.Entry<String, JsonElement> entry : template.getAsJsonObject(ATTRIBUTES).entrySet()) {
                 if (entry.getKey().startsWith(VISUAL) || entry.getKey().startsWith(AUDIO)) { attributes.add(entry.getKey(), entry.getValue().deepCopy()); }
@@ -59,7 +61,7 @@ final class ModernWorld {
         else { note.accept("'" + file + "' uses the " + effects + " sky, whose look could not be read from the game, so it keeps the default look"); }
         boolean warm = flag(json, "ultrawarm");
         boolean natural = flag(json, "natural");
-        long fixed = json.has(FIXED_TIME) && json.get(FIXED_TIME).isJsonPrimitive() ? json.get(FIXED_TIME).getAsLong() : -1L;
+        long fixed = GsonHelper.isValidPrimitive(json, FIXED_TIME) ? json.get(FIXED_TIME).getAsLong() : -1L;
         attributes.addProperty(GAMEPLAY + "water_evaporates", warm);
         attributes.addProperty(GAMEPLAY + "fast_lava", warm);
         if (warm) {
@@ -100,10 +102,10 @@ final class ModernWorld {
     }
 
     static void biome(JsonObject json, String file, Consumer<String> note) {
-        if (json.has("carvers") && json.get("carvers").isJsonObject()) { json.add("carvers", carvers(json.getAsJsonObject("carvers"), file, note)); }
-        JsonObject effects = json.has(EFFECTS) && json.get(EFFECTS).isJsonObject() ? json.getAsJsonObject(EFFECTS) : null;
+        if (GsonHelper.isObjectNode(json, "carvers")) { json.add("carvers", carvers(json.getAsJsonObject("carvers"), file, note)); }
+        JsonObject effects = GsonHelper.isObjectNode(json, EFFECTS) ? json.getAsJsonObject(EFFECTS) : null;
         if (effects == null) { return; }
-        JsonObject attributes = json.has(ATTRIBUTES) && json.get(ATTRIBUTES).isJsonObject() ? json.getAsJsonObject(ATTRIBUTES) : new JsonObject();
+        JsonObject attributes = GsonHelper.isObjectNode(json, ATTRIBUTES) ? json.getAsJsonObject(ATTRIBUTES) : new JsonObject();
         for (String named : BIOME_COLORS) {
             JsonElement held = effects.remove(named);
             if (held != null) { attributes.add(VISUAL + named, color(held)); }
@@ -141,7 +143,7 @@ final class ModernWorld {
     @Nullable private static JsonObject data(JsonElement weighted) {
         if (!weighted.isJsonObject()) { return null; }
         JsonObject held = weighted.getAsJsonObject();
-        return held.has("data") && held.get("data").isJsonObject() ? held.getAsJsonObject("data") : held;
+        return GsonHelper.isObjectNode(held, "data") ? held.getAsJsonObject("data") : held;
     }
 
     private static void move(JsonObject from, String key, JsonObject to, String named) {
@@ -173,7 +175,7 @@ final class ModernWorld {
 
     static void feature(JsonObject json, String file, Consumer<String> note) {
         String type = Json.text(json, "type");
-        JsonObject config = json.has(CONFIG) && json.get(CONFIG).isJsonObject() ? json.getAsJsonObject(CONFIG) : null;
+        JsonObject config = GsonHelper.isObjectNode(json, CONFIG) ? json.getAsJsonObject(CONFIG) : null;
         if (config == null) { return; }
         if ("minecraft:ice_spike".equals(type) || "minecraft:forest_rock".equals(type)) {
             replaced(json, config, type.substring(IdNames.MINECRAFT.length()), file, note);
@@ -206,7 +208,7 @@ final class ModernWorld {
         offset.add("xz_spread", spread(config.has("xz_spread") ? config.get("xz_spread").getAsInt() : 7));
         offset.add("y_spread", spread(config.has("y_spread") ? config.get("y_spread").getAsInt() : 3));
         placement.add(offset);
-        if (placed.has("placement") && placed.get("placement").isJsonArray()) { placed.getAsJsonArray("placement").forEach(placement::add); }
+        if (GsonHelper.isArrayNode(placed, "placement")) { placed.getAsJsonArray("placement").forEach(placement::add); }
         placed.add("placement", placement);
         JsonObject selector = new JsonObject();
         selector.add("features", new JsonArray());
@@ -237,8 +239,8 @@ final class ModernWorld {
     }
 
     @Nullable private static JsonObject vanillaFeature(String name) {
-        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("worldgen/configured_feature/" + name + ".json"));
-        return vanilla != null && vanilla.has("type") && vanilla.has(CONFIG) && vanilla.get(CONFIG).isJsonObject() ? vanilla : null;
+        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("worldgen/configured_feature/" + name + PackManager.JSON_SUFFIX));
+        return vanilla != null && vanilla.has("type") && GsonHelper.isObjectNode(vanilla, CONFIG) ? vanilla : null;
     }
 
     static void wolf(JsonObject json, String file, Consumer<String> note) {

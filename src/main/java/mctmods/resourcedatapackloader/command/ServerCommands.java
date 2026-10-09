@@ -25,7 +25,7 @@ public final class ServerCommands {
                 .then(Commands.literal("pregen").requires(source -> CommandShared.allowed(source, CommandShared.OPERATOR))
                         .then(Commands.literal("status").executes(context -> {
                             CommandShared.ran(context.getSource(), NAME, "pregen status");
-                            CommandShared.send(context.getSource(), ChatFormatting.GREEN, Component.literal(ContentPregen.state()));
+                            CommandShared.send(context.getSource(), ChatFormatting.GREEN, Component.literal(ContentPregen.state(context.getSource().getPlayer())));
                             return 1;
                         }))
                         .then(Commands.literal("stop").executes(context -> {

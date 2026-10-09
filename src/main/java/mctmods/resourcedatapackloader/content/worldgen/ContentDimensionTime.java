@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.GameData;
 
 import com.google.gson.JsonArray;
@@ -63,7 +64,7 @@ final class ContentDimensionTime {
         values.add("minecraft:early_game");
         if (moon != null) {
             GeneratedResources.put(PackType.SERVER_DATA, namespace, "timeline/" + path + "/moon.json", moon.toString());
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "world_clock/" + path + ".json", "{}");
+            GeneratedResources.put(PackType.SERVER_DATA, namespace, "world_clock/" + path + PackManager.JSON_SUFFIX, "{}");
             FIXED.put(key, def.fixedTime());
             values.add(namespace + ":" + path + "/moon");
         }
@@ -76,7 +77,7 @@ final class ContentDimensionTime {
         values.add(namespace + ":" + path + "/day");
         JsonObject tag = new JsonObject();
         tag.add("values", values);
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, "tags/timeline/" + path + ".json", tag.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, "tags/timeline/" + path + PackManager.JSON_SUFFIX, tag.toString());
         type.addProperty("timelines", "#" + key);
     }
 
@@ -122,7 +123,7 @@ final class ContentDimensionTime {
     }
 
     @Nullable private static JsonObject timeline(String name, String clock) {
-        JsonObject timeline = GameData.json(Identifier.withDefaultNamespace("timeline/" + name + ".json"));
+        JsonObject timeline = GameData.json(Identifier.withDefaultNamespace("timeline/" + name + PackManager.JSON_SUFFIX));
         if (timeline == null) { return null; }
         timeline.addProperty("clock", clock);
         timeline.remove("time_markers");

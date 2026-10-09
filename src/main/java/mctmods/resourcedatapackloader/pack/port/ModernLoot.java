@@ -31,14 +31,14 @@ final class ModernLoot {
     }
 
     static void advancement(JsonObject json, String file, boolean stacks, Consumer<String> note) {
-        JsonObject display = json.has("display") && json.get("display").isJsonObject() ? json.getAsJsonObject("display") : null;
+        JsonObject display = GsonHelper.isObjectNode(json, "display") ? json.getAsJsonObject("display") : null;
         if (display != null) {
-            if (stacks && display.has("icon") && display.get("icon").isJsonObject()) { display.add("icon", ModernFixes.stack(display.getAsJsonObject("icon"))); }
+            if (stacks && GsonHelper.isObjectNode(display, "icon")) { display.add("icon", ModernFixes.stack(display.getAsJsonObject("icon"))); }
             for (String key : TEXTS) {
                 if (display.has(key)) { display.add(key, ModernFixes.text(display.get(key))); }
             }
         }
-        JsonObject rewards = json.has("rewards") && json.get("rewards").isJsonObject() ? json.getAsJsonObject("rewards") : null;
+        JsonObject rewards = GsonHelper.isObjectNode(json, "rewards") ? json.getAsJsonObject("rewards") : null;
         if (rewards != null && rewards.has("recipes") && rewards.get("recipes").isJsonArray()) {
             JsonArray recipes = new JsonArray();
             for (JsonElement recipe : rewards.getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? new JsonPrimitive(ModernFixes.recipe(recipe.getAsString())) : recipe); }
@@ -62,15 +62,15 @@ final class ModernLoot {
         if (GsonHelper.isValidPrimitive(json, "recipe")) { json.addProperty("recipe", ModernFixes.recipe(json.get("recipe").getAsString())); }
         String function = Json.text(json, "function");
         if (!function.isEmpty()) { function(json, function, stacks); }
-        else if (stacks && json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) { json.add(CrossJson.COMPONENTS, ModernFixes.components(ModernFixes.firstItem(json.get("items")), json.getAsJsonObject(CrossJson.COMPONENTS))); }
-        if (json.has(TYPE_SPECIFIC) && json.get(TYPE_SPECIFIC).isJsonObject()) { variant(json, file, note); }
+        else if (stacks && GsonHelper.isObjectNode(json, CrossJson.COMPONENTS)) { json.add(CrossJson.COMPONENTS, ModernFixes.components(ModernFixes.firstItem(json.get("items")), json.getAsJsonObject(CrossJson.COMPONENTS))); }
+        if (GsonHelper.isObjectNode(json, TYPE_SPECIFIC)) { variant(json, file, note); }
         json.entrySet().forEach(entry -> walk(entry.getValue(), file, stacks, note));
     }
 
     private static void function(JsonObject json, String function, boolean stacks) {
         switch (bare(function)) {
             case "set_components" -> {
-                if (stacks && json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject()) { json.add(CrossJson.COMPONENTS, ModernFixes.components("minecraft:stone", json.getAsJsonObject(CrossJson.COMPONENTS))); }
+                if (stacks && GsonHelper.isObjectNode(json, CrossJson.COMPONENTS)) { json.add(CrossJson.COMPONENTS, ModernFixes.components("minecraft:stone", json.getAsJsonObject(CrossJson.COMPONENTS))); }
             }
             case "set_custom_model_data" -> {
                 if (!json.has("value")) { return; }
@@ -85,7 +85,7 @@ final class ModernLoot {
                 if (json.has("name")) { json.add("name", ModernFixes.text(json.get("name"))); }
             }
             case "set_lore" -> {
-                if (!json.has("lore") || !json.get("lore").isJsonArray()) { return; }
+                if (!GsonHelper.isArrayNode(json, "lore")) { return; }
                 JsonArray lore = new JsonArray();
                 json.getAsJsonArray("lore").forEach(line -> lore.add(ModernFixes.text(line)));
                 json.add("lore", lore);
@@ -110,7 +110,7 @@ final class ModernLoot {
             return;
         }
         json.remove(TYPE_SPECIFIC);
-        JsonObject components = json.has(CrossJson.COMPONENTS) && json.get(CrossJson.COMPONENTS).isJsonObject() ? json.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
+        JsonObject components = GsonHelper.isObjectNode(json, CrossJson.COMPONENTS) ? json.getAsJsonObject(CrossJson.COMPONENTS) : new JsonObject();
         components.add(MINECRAFT + component, variant);
         json.add(CrossJson.COMPONENTS, components);
     }

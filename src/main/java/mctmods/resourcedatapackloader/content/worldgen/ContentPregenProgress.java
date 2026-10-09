@@ -57,9 +57,11 @@ public final class ContentPregenProgress {
         return Lang.tr("rdpl.pregen.eta", left / 3600L, left / 60L % 60L, left % 60L);
     }
 
-    static String report(ContentPregen worker) {
+    static String report(ContentPregen worker) { return report(worker, null); }
+
+    static String report(ContentPregen worker, @Nullable ServerPlayer reader) {
         long seconds = Math.max(1L, (System.currentTimeMillis() - worker.started) / 1000L);
         long rate = (worker.done - worker.resumedFrom) / seconds;
-        return Lang.tr("rdpl.pregen.report", worker.done, worker.order.total(), worker.dimension.identifier(), worker.made, worker.failed, rate, worker.inFlight);
+        return Lang.tr(reader, "rdpl.pregen.report", worker.done, worker.order.total(), worker.dimension.identifier(), worker.made, worker.failed, rate, worker.inFlight);
     }
 }

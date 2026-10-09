@@ -264,7 +264,7 @@ public final class ContentVillagers {
                 JsonObject json = new JsonObject();
                 json.addProperty("amount", OFFERS_PER_LEVEL);
                 json.addProperty("trades", "#" + set);
-                GeneratedResources.put(PackType.SERVER_DATA, set.getNamespace(), TRADE_SETS + "/" + set.getPath() + ".json", json.toString());
+                GeneratedResources.put(PackType.SERVER_DATA, set.getNamespace(), TRADE_SETS + "/" + set.getPath() + PackManager.JSON_SUFFIX, json.toString());
                 tags.put(set, new ArrayList<>());
             }
         }
@@ -288,7 +288,7 @@ public final class ContentVillagers {
             }
             int number = numbered.merge(def.key(), 1, Integer::sum);
             Identifier trade = def.key().withSuffix("/" + number);
-            GeneratedResources.put(PackType.SERVER_DATA, trade.getNamespace(), VILLAGER_TRADES + "/" + trade.getPath() + ".json", ContentTrade.json(def, buy, buySecondary, sell).toString());
+            GeneratedResources.put(PackType.SERVER_DATA, trade.getNamespace(), VILLAGER_TRADES + "/" + trade.getPath() + PackManager.JSON_SUFFIX, ContentTrade.json(def, buy, buySecondary, sell).toString());
             tags.computeIfAbsent(set.identifier(), _ -> new ArrayList<>()).add(trade.toString());
             made.merge(named, 1, Integer::sum);
         }
@@ -298,7 +298,7 @@ public final class ContentVillagers {
             JsonArray values = new JsonArray();
             for (String value : tag.getValue()) { values.add(value); }
             json.add("values", values);
-            GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), TRADE_TAGS + "/" + tag.getKey().getPath() + ".json", json.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, tag.getKey().getNamespace(), TRADE_TAGS + "/" + tag.getKey().getPath() + PackManager.JSON_SUFFIX, json.toString());
         }
         for (Map.Entry<Identifier, Integer> added : made.entrySet()) { Summary.info("content_trades." + added.getKey(), "Added " + added.getValue() + " villager trade(s) from packs to " + added.getKey()); }
     }

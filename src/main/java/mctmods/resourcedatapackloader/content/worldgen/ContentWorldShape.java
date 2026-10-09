@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IDedicatedServer;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISettings;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
@@ -143,7 +144,7 @@ public final class ContentWorldShape {
         JsonObject preset = new JsonObject();
         preset.add("dimensions", dimensions);
         String namespace = shape.id().getNamespace();
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/world_preset/" + shape.id().getPath() + ".json", preset.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/world_preset/" + shape.id().getPath() + PackManager.JSON_SUFFIX, preset.toString());
         JsonObject tag = new JsonObject();
         tag.addProperty("replace", false);
         JsonArray values = new JsonArray();
@@ -310,7 +311,7 @@ public final class ContentWorldShape {
         surface.add("sequence", new JsonArray());
         settings.add("surface_rule", surface);
         GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
-        String settingsPath = "worldgen/noise_settings/" + id.getPath() + ".json";
+        String settingsPath = "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX;
         GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());
         generator.addProperty("type", "minecraft:noise");
         generator.add("biome_source", source);
@@ -359,7 +360,7 @@ public final class ContentWorldShape {
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
         Identifier id = ownId(shape, suffix);
-        String path = folder + "/" + id.getPath() + ".json";
+        String path = folder + "/" + id.getPath() + PackManager.JSON_SUFFIX;
         GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), path, LineCompat.worldgenOut(path, json).toString());
         MADE.add(id);
         return id.toString();

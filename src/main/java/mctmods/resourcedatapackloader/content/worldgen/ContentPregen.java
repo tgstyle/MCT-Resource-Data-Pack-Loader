@@ -157,9 +157,9 @@ public final class ContentPregen {
         return true;
     }
 
-    public static String state() {
+    public static String state(@Nullable ServerPlayer reader) {
         ContentPregen worker = running;
-        return worker == null ? Lang.tr("rdpl.pregen.idle") : ContentPregenProgress.report(worker);
+        return worker == null ? Lang.tr(reader, "rdpl.pregen.idle") : ContentPregenProgress.report(worker, reader);
     }
 
     public static void onServerTick(ServerTickEvent.Post event) {

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.Json;
 
@@ -10,6 +11,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.Identifier;
+import net.minecraft.util.GsonHelper;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,21 +40,21 @@ final class ModernRecipes {
         for (String key : SINGLE) {
             if (json.has(key)) { json.add(key, ingredient(json.get(key), file, stacks, note)); }
         }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, "ingredients")) {
             JsonArray out = new JsonArray();
             for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, file, stacks, note)); }
             json.add("ingredients", out);
         }
-        if (json.has("key") && json.get("key").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "key")) {
             for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), file, stacks, note)); }
         }
-        if (stacks && json.has("result") && json.get("result").isJsonObject()) { json.add("result", ModernFixes.stack(json.getAsJsonObject("result"))); }
+        if (stacks && GsonHelper.isObjectNode(json, "result")) { json.add("result", ModernFixes.stack(json.getAsJsonObject("result"))); }
         if ("minecraft:smithing_trim".equals(type) && !json.has("pattern")) { pattern(json, file, note); }
         ModernFixes.replace(json, ModernFixes.names(json).getAsJsonObject());
     }
 
     private static void special(JsonObject json, String type, String file, Consumer<String> note) {
-        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("recipe/" + SPECIAL.get(type) + ".json"));
+        JsonObject vanilla = GameData.json(Identifier.withDefaultNamespace("recipe/" + SPECIAL.get(type) + PackManager.JSON_SUFFIX));
         if (vanilla == null || !vanilla.has(TYPE) || !type.equals(vanilla.get(TYPE).getAsString())) {
             note.accept("'" + file + "' is a " + type + " recipe, which now names its ingredients, and the game's own could not be read; it is served as written");
             return;
@@ -78,8 +80,8 @@ final class ModernRecipes {
         JsonObject object = held.getAsJsonObject();
         String type = Json.text(object, TYPE);
         if (type.startsWith(NEOFORGE)) { return custom(object, type, file, stacks, note); }
-        if (object.has("item") && object.get("item").isJsonPrimitive()) { return new JsonPrimitive(object.get("item").getAsString()); }
-        if (object.has("tag") && object.get("tag").isJsonPrimitive()) { return new JsonPrimitive("#" + object.get("tag").getAsString()); }
+        if (GsonHelper.isValidPrimitive(object, "item")) { return new JsonPrimitive(object.get("item").getAsString()); }
+        if (GsonHelper.isValidPrimitive(object, "tag")) { return new JsonPrimitive("#" + object.get("tag").getAsString()); }
         return held;
     }
 

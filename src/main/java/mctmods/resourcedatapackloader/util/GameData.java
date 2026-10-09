@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
+import mctmods.resourcedatapackloader.pack.PackManager;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -31,7 +32,7 @@ public final class GameData {
         return found;
     }
 
-    @Nullable public static JsonObject noiseSettings(String name) { return LineCompat.worldgenIn("worldgen/noise_settings/" + name + ".json"); }
+    @Nullable public static JsonObject noiseSettings(String name) { return LineCompat.worldgenIn("worldgen/noise_settings/" + name + PackManager.JSON_SUFFIX); }
 
     public static boolean has(Identifier at) { return read(at) != null; }
 

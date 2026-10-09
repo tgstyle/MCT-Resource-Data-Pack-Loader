@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
@@ -19,14 +20,21 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.templatesystem.BlockRotProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentImprint implements IContentShape {
+    private static final int CHUNK = 16;
+    private static final Map<Held, Boolean> HOLDS = new ConcurrentHashMap<>();
     private final ShapeDef shape;
     private final Identifier key;
     private final boolean filtered;
@@ -43,17 +51,74 @@ public final class ContentImprint implements IContentShape {
 
     public boolean pinned() { return shape.pinnedAt() != null; }
 
+    static void forget() { HOLDS.clear(); }
+
+    private List<Identifier> templates() {
+        List<String> names = new ArrayList<>();
+        if (shape.structures().isEmpty()) { names.add(shape.structure()); }
+        else {
+            for (PickDef pick : shape.structures()) { names.add(pick.name()); }
+        }
+        List<Identifier> found = new ArrayList<>();
+        for (String named : names) {
+            Identifier template = named == null || named.isEmpty() ? null : Identifier.tryParse(named);
+            if (template != null) { found.add(template); }
+        }
+        return found;
+    }
+
+    @Override public int reach(WorldGenLevel level) {
+        int reach = 0;
+        for (Identifier template : templates()) {
+            Optional<StructureTemplate> loaded = LineCompat.templates(level.getLevel().getServer()).get(template);
+            if (loaded.isEmpty()) { continue; }
+            int widest = Math.max(loaded.get().getSize().getX(), loaded.get().getSize().getZ());
+            reach = Math.max(reach, widest >= CHUNK ? widest / 2 : CHUNK - 1);
+        }
+        return reach;
+    }
+
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) {
+        for (Identifier template : templates()) {
+            if (!holds(level, template, wood)) { continue; }
+            if (canopies.isEmpty()) { return true; }
+            for (BlockState canopy : canopies) {
+                if (holds(level, template, canopy)) { return true; }
+            }
+        }
+        return false;
+    }
+
+    private static boolean holds(WorldGenLevel level, Identifier template, BlockState wanted) {
+        Held key = new Held(template, wanted);
+        Boolean known = HOLDS.get(key);
+        if (known != null) { return known; }
+        Optional<StructureTemplate> loaded = LineCompat.templates(level.getLevel().getServer()).get(template);
+        if (loaded.isEmpty()) { return false; }
+        boolean found = has(loaded.get(), wanted);
+        HOLDS.put(key, found);
+        return found;
+    }
+
+    private static boolean has(StructureTemplate loaded, BlockState wanted) {
+        for (StructureTemplate.StructureBlockInfo info : loaded.filterBlocks(BlockPos.ZERO, new StructurePlaceSettings(), wanted.getBlock())) {
+            if (ContentStates.alike(info.state(), wanted)) { return true; }
+        }
+        return false;
+    }
+
     @Nullable public Pin pin(WorldGenLevel level, boolean report) {
         int[] at = shape.pinnedAt();
         if (at == null) { return null; }
         RandomSource random = RandomSource.create(level.getSeed() ^ ChunkPos.pack(at[0], at[1]) ^ key.hashCode());
-        StructureTemplate loaded = load(level, random, report);
-        if (loaded == null) { return null; }
-        Rotation rotation = turn(random);
-        Mirror mirror = mirror(random);
-        Vec3i span = loaded.getSize(rotation);
-        int cornerX = within(at[0], span.getX());
-        int cornerZ = within(at[1], span.getZ());
+        Seat seat = seat(level, random, at[0], at[1], report);
+        if (seat == null) { return null; }
+        StructureTemplate loaded = seat.loaded();
+        Rotation rotation = seat.rotation();
+        Mirror mirror = seat.mirror();
+        Vec3i span = seat.span();
+        int cornerX = seat.cornerX();
+        int cornerZ = seat.cornerZ();
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, 0, cornerZ), mirror, rotation);
         ChunkPos home = new ChunkPos(SectionPos.blockToSectionCoord(at[0]), SectionPos.blockToSectionCoord(at[1]));
         boolean split = beyond(cornerX, cornerZ, home) || beyond(cornerX + span.getX() - 1, cornerZ + span.getZ() - 1, home);
@@ -91,21 +156,36 @@ public final class ContentImprint implements IContentShape {
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
         WorldGenLevel level = placer.level();
-        StructureTemplate loaded = load(level, random, true);
-        if (loaded == null) { return false; }
-        Rotation rotation = turn(random);
-        Mirror mirror = mirror(random);
+        Seat seat = seat(level, random, origin.getX(), origin.getZ(), true);
+        if (seat == null) { return false; }
+        StructureTemplate loaded = seat.loaded();
+        Rotation rotation = seat.rotation();
+        Mirror mirror = seat.mirror();
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(mirror).setRandom(random);
         process(settings, placer);
-        Vec3i span = loaded.getSize(rotation);
-        int cornerX = within(origin.getX(), span.getX());
-        int cornerZ = within(origin.getZ(), span.getZ());
+        Vec3i span = seat.span();
+        int cornerX = seat.cornerX();
+        int cornerZ = seat.cornerZ();
         if (blocked(placer, cornerX, cornerZ, span)) { return false; }
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
         if (!loaded.placeInWorld(level, fitted, fitted, settings, random, Block.UPDATE_CLIENTS)) { return false; }
         stock(placer, random, cornerX, origin.getY(), cornerZ, span);
         if (!shape.locateAs().isEmpty()) { ContentLocate.record(level.getLevel(), shape.locateAs(), fitted); }
         return true;
+    }
+
+    @Override @Nullable public BoundingBox footprint(WorldGenLevel level, RandomSource random, int originX, int originZ) {
+        Seat seat = seat(level, random, originX, originZ, false);
+        return seat == null ? null : new BoundingBox(seat.cornerX(), 0, seat.cornerZ(), seat.cornerX() + seat.span().getX() - 1, 0, seat.cornerZ() + seat.span().getZ() - 1);
+    }
+
+    @Nullable private Seat seat(WorldGenLevel level, RandomSource random, int originX, int originZ, boolean report) {
+        StructureTemplate loaded = load(level, random, report);
+        if (loaded == null) { return null; }
+        Rotation rotation = turn(random);
+        Mirror mirror = mirror(random);
+        Vec3i span = loaded.getSize(rotation);
+        return new Seat(loaded, rotation, mirror, span, within(originX, span.getX()), within(originZ, span.getZ()));
     }
 
     @Nullable private StructureTemplate load(WorldGenLevel level, RandomSource random, boolean report) {
@@ -171,10 +251,14 @@ public final class ContentImprint implements IContentShape {
 
     private static int within(int origin, int span) {
         int start = origin - span / 2;
-        if (span >= 16) { return start; }
-        int corner = (origin >> 4) * 16;
-        return Mth.clamp(start, corner, corner + 16 - span);
+        if (span >= CHUNK) { return start; }
+        int corner = (origin >> 4) * CHUNK;
+        return Mth.clamp(start, corner, corner + CHUNK - span);
     }
+
+    private record Held(Identifier template, BlockState state) {}
+
+    private record Seat(StructureTemplate loaded, Rotation rotation, Mirror mirror, Vec3i span, int cornerX, int cornerZ) {}
 
     public record Pin(StructureTemplate loaded, Rotation rotation, Mirror mirror, int cornerX, int cornerZ, Vec3i span, BlockPos fitted, ChunkPos home, boolean split, BoundingBox box) {
         public boolean covers(ChunkPos chunk) { return box.intersects(chunk.getMinBlockX(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), chunk.getMaxBlockZ()); }

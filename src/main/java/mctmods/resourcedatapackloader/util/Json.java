@@ -26,7 +26,7 @@ public final class Json {
 
     private Json() {}
 
-    public static JsonObject object(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : new JsonObject(); }
+    public static JsonObject object(JsonObject parent, String key) { return GsonHelper.isObjectNode(parent, key) ? parent.getAsJsonObject(key) : new JsonObject(); }
 
     @Nullable public static JsonObject object(Identifier key, String contents, String kind) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);
@@ -50,16 +50,16 @@ public final class Json {
 
     private static String label(String kind) { return Character.toUpperCase(kind.charAt(0)) + kind.substring(1); }
 
-    public static String text(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : ""; }
+    public static String text(JsonObject object, String key) { return GsonHelper.isValidPrimitive(object, key) ? object.get(key).getAsString() : ""; }
 
-    public static String text(JsonObject object, String key, String fallback) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString().trim() : fallback; }
+    public static String text(JsonObject object, String key, String fallback) { return GsonHelper.isValidPrimitive(object, key) ? object.get(key).getAsString().trim() : fallback; }
 
     public static int number(JsonObject object, String key, int fallback) {
-        try { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsInt() : fallback; }
+        try { return GsonHelper.isValidPrimitive(object, key) ? object.get(key).getAsInt() : fallback; }
         catch (NumberFormatException notNumber) { return fallback; }
     }
 
-    public static boolean flag(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() && object.get(key).getAsBoolean(); }
+    public static boolean flag(JsonObject object, String key) { return GsonHelper.isValidPrimitive(object, key) && object.get(key).getAsBoolean(); }
 
     public static float ranged(JsonObject json, String member, float fallback, float low, float high, Object owner) {
         if (!json.has(member)) { return fallback; }
@@ -91,7 +91,7 @@ public final class Json {
         if (!held.isJsonArray()) { throw new JsonSyntaxException("Expected " + member + " to be a JsonArray, was " + GsonHelper.getType(held)); }
         for (JsonElement element : held.getAsJsonArray()) {
             if (element.isJsonPrimitive()) { out.add(element.getAsString()); }
-            else if (element.isJsonObject() && element.getAsJsonObject().has("block") && element.getAsJsonObject().get("block").isJsonPrimitive()) { out.add(element.getAsJsonObject().get("block").getAsString()); }
+            else if (element.isJsonObject() && GsonHelper.isValidPrimitive(element.getAsJsonObject(), "block")) { out.add(element.getAsJsonObject().get("block").getAsString()); }
         }
         out.removeIf(String::isEmpty);
         return out;

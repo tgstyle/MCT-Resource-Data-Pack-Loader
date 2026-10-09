@@ -221,7 +221,7 @@ public final class FeatureForms {
     }
 
     @Nullable private static JsonObject corals(JsonObject selector) {
-        if (!selector.has(FEATURES) || !selector.get(FEATURES).isJsonArray()) { return null; }
+        if (!GsonHelper.isArrayNode(selector, FEATURES)) { return null; }
         List<JsonElement> left = new ArrayList<>(selector.getAsJsonArray(FEATURES).asList());
         JsonArray kept = new JsonArray();
         for (String coral : CORALS) {
@@ -261,7 +261,7 @@ public final class FeatureForms {
     }
 
     @Nullable private static String referenced(JsonObject placed) {
-        if (!placed.has(PLACEMENT) || !placed.get(PLACEMENT).isJsonArray()) { return null; }
+        if (!GsonHelper.isArrayNode(placed, PLACEMENT)) { return null; }
         String feature = Json.text(placed, FEATURE);
         return feature.isEmpty() || feature.startsWith("#") ? null : id(feature);
     }

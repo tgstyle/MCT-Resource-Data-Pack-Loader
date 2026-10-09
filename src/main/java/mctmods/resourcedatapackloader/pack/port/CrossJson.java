@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
@@ -11,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.GsonHelper;
 
 final class CrossJson {
     static final String ITEM = "item";
@@ -90,8 +92,8 @@ final class CrossJson {
         JsonObject out = new JsonObject();
         element.getAsJsonObject().entrySet().forEach(entry -> out.add(entry.getKey(), providers(entry.getValue(), down)));
         String type = Json.text(out, TYPE);
-        if (!PROVIDERS.contains(type.indexOf(':') < 0 ? "minecraft:" + type : type)) { return out; }
-        JsonObject inner = down ? out : out.size() == 2 && out.has(VALUE) && out.get(VALUE).isJsonObject() ? out.getAsJsonObject(VALUE) : null;
+        if (!PROVIDERS.contains(IdNames.namespaced(type))) { return out; }
+        JsonObject inner = down ? out : out.size() == 2 && GsonHelper.isObjectNode(out, VALUE) ? out.getAsJsonObject(VALUE) : null;
         if (inner == null || !bounded(inner)) { return out; }
         JsonObject moved = new JsonObject();
         moved.add(TYPE, out.get(TYPE));
@@ -172,7 +174,7 @@ final class CrossJson {
 
     static void stackDown(JsonObject stack, String file, Crossed pack) {
         if (stack.has(ID) && !stack.has(ITEM)) { stack.add(ITEM, stack.remove(ID)); }
-        if (!stack.has(COMPONENTS) || !stack.get(COMPONENTS).isJsonObject()) { return; }
+        if (!GsonHelper.isObjectNode(stack, COMPONENTS)) { return; }
         String nbt = downNbt(stack.remove(COMPONENTS).getAsJsonObject(), file, pack);
         if (nbt != null) { stack.addProperty(NBT, nbt); }
     }
@@ -206,7 +208,7 @@ final class CrossJson {
             JsonElement items = held.remove("items");
             if (items != null && items.isJsonPrimitive()) { held.add(ITEM, items); }
             else { pack.note("'" + file + "' tests components on a list or tag of items, which a 1.20.1 NBT ingredient cannot, so fix its item by hand"); }
-            String nbt = held.has(COMPONENTS) && held.get(COMPONENTS).isJsonObject() ? downNbt(held.remove(COMPONENTS).getAsJsonObject(), file, pack) : null;
+            String nbt = GsonHelper.isObjectNode(held, COMPONENTS) ? downNbt(held.remove(COMPONENTS).getAsJsonObject(), file, pack) : null;
             held.addProperty(NBT, nbt == null ? "{}" : nbt);
             return;
         }
@@ -214,7 +216,7 @@ final class CrossJson {
     }
 
     static void advancement(JsonObject json, String file, Crossed pack) {
-        JsonObject display = json.has("display") && json.get("display").isJsonObject() ? json.getAsJsonObject("display") : null;
+        JsonObject display = GsonHelper.isObjectNode(json, "display") ? json.getAsJsonObject("display") : null;
         if (display != null && display.has("icon") && display.get("icon").isJsonObject()) {
             if (pack.to() == Port.Line.V1_21) { stackUp(display.getAsJsonObject("icon")); }
             else { stackDown(display.getAsJsonObject("icon"), file, pack); }

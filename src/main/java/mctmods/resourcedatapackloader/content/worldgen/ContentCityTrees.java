@@ -17,13 +17,17 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.VineBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.IntSupplier;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -42,6 +46,7 @@ public final class ContentCityTrees {
     private static final int SWEEP_OVER = 44;
     private static final int WRITTEN = 16;
     private static final byte UNREACHED = 127;
+    private static final ThreadLocal<Map<Planting, Boolean>> PASS = new ThreadLocal<>();
 
     private ContentCityTrees() {}
 
@@ -62,6 +67,8 @@ public final class ContentCityTrees {
 
     private record Stood(IFelling piece, BoundingBox box) {}
 
+    private record Planting(long column, BlockState wood, @Nullable BlockState leaf) {}
+
     public static BoundingBox bridge(BoundingBox held, int level, int frame) { return new BoundingBox(held.minX(), level - TRESTLE, held.minZ(), held.maxX(), Math.max(held.maxY(), level + frame + 1), held.maxZ()); }
 
     public static int fellAround(WorldGenLevel level, StructureManager manager, ChunkPos chunk, IFelling piece, BoundingBox box) {
@@ -73,8 +80,13 @@ public final class ContentCityTrees {
         }
         List<BlockPos> seeds = new ArrayList<>();
         List<BlockPos> canopy = new ArrayList<>();
-        int cut = gather(level, felled, piece.crowned(), piece.stood() != null, box, kept, seeds, canopy);
-        return cut + fell(level, seeds, canopy, at -> box.isInside(at) && free(level, kept, at), kept);
+        return pass(() -> gather(level, felled, piece.crowned(), piece.stood() != null, box, kept, seeds, canopy) + fell(level, seeds, canopy, at -> box.isInside(at) && free(level, kept, at), kept));
+    }
+
+    private static int pass(IntSupplier work) {
+        PASS.set(new HashMap<>());
+        try { return work.getAsInt(); }
+        finally { PASS.remove(); }
     }
 
     public static int fellOver(WorldGenLevel level, StructureManager manager, ChunkPos chunk, BoundingBox box, List<BlockPos> columns, int floor, int top) {
@@ -82,15 +94,17 @@ public final class ContentCityTrees {
         for (Stood other : standing(manager, chunk, box)) { keep(kept, other); }
         List<BlockPos> seeds = new ArrayList<>();
         List<BlockPos> canopy = new ArrayList<>();
-        int felled = 0;
-        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (BlockPos column : columns) {
-            for (int y = floor; y <= top + UP; y++) {
-                at.set(column.getX(), y, column.getZ());
-                if (box.isInside(at)) { felled += sorted(level, at, inside(kept, at), true, seeds, canopy); }
+        return pass(() -> {
+            int felled = 0;
+            BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+            for (BlockPos column : columns) {
+                for (int y = floor; y <= top + UP; y++) {
+                    at.set(column.getX(), y, column.getZ());
+                    if (box.isInside(at)) { felled += sorted(level, at, inside(kept, at), true, seeds, canopy); }
+                }
             }
-        }
-        return felled + fell(level, seeds, canopy, spot -> box.isInside(spot) && free(level, kept, spot), kept);
+            return felled + fell(level, seeds, canopy, spot -> box.isInside(spot) && free(level, kept, spot), kept);
+        });
     }
 
     public static void dressed(WorldGenLevel level, ChunkPos chunk, StructureManager manager) {
@@ -108,10 +122,11 @@ public final class ContentCityTrees {
         List<BlockPos> seeds = new ArrayList<>();
         List<BlockPos> canopy = new ArrayList<>();
         int[] felled = {0};
-        CityBiome.within(level, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), () -> {
-            for (Stood piece : pieces) { felled[0] += gather(level, piece.box(), piece.piece().crowned(), piece.piece().stood() != null, scan, kept, seeds, canopy); }
-            felled[0] += fell(level, seeds, canopy, at -> area.isInside(at) && free(level, kept, at), kept);
-        });
+        CityBiome.within(level, chunk.getMiddleBlockX(), chunk.getMiddleBlockZ(), () -> felled[0] += pass(() -> {
+            int cut = 0;
+            for (Stood piece : pieces) { cut += gather(level, piece.box(), piece.piece().crowned(), piece.piece().stood() != null, scan, kept, seeds, canopy); }
+            return cut + fell(level, seeds, canopy, at -> area.isInside(at) && free(level, kept, at), kept);
+        }));
         if (felled[0] > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) that grew around the city's pieces in chunk {}, {} after they were laid", felled[0], chunk.x(), chunk.z()); }
     }
 
@@ -125,7 +140,8 @@ public final class ContentCityTrees {
             int minY = Math.max(level.getMinY() + 1, city.minY() - SWEEP_UNDER);
             int maxY = Math.min(city.minY() + SWEEP_OVER, level.getMaxY());
             if (minX > maxX || minZ > maxZ || minY > maxY) { continue; }
-            int swept = sweep(level, new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ), chunk);
+            BoundingBox zone = new BoundingBox(minX, minY, minZ, maxX, maxY, maxZ);
+            int swept = pass(() -> sweep(level, zone, chunk));
             if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the city at {}, {} in chunk {}, {}, left behind where a felled tree crossed a chunk edge", swept, city.minX(), city.minZ(), chunk.x(), chunk.z()); }
         }
     }
@@ -136,6 +152,11 @@ public final class ContentCityTrees {
         int spanY = read.getYSpan();
         int spanZ = read.getZSpan();
         byte[] reach = new byte[spanX * spanY * spanZ];
+        byte[] kind = new byte[reach.length];
+        List<Block> species = new ArrayList<>();
+        Map<Block, BlockState> shown = new HashMap<>();
+        Map<Block, IntArrayList> crowned = new HashMap<>();
+        Map<Integer, BlockPos> bearing = new HashMap<>();
         IntArrayList frontier = new IntArrayList();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int x = 0; x < spanX; x++) {
@@ -149,28 +170,28 @@ public final class ContentCityTrees {
                         continue;
                     }
                     BlockState state = level.getBlockState(at.set(blockX, read.minY() + y, blockZ));
-                    if (BlastPlasterUtil.isTreeWood(state)) { frontier.add(cell); }
-                    else if (state.getBlock() instanceof LeavesBlock) { reach[cell] = UNREACHED; }
+                    if (BlastPlasterUtil.isTreeWood(state)) { seed(level, chunk, at, cell, frontier, bearing); }
+                    else if (state.getBlock() instanceof LeavesBlock) {
+                        reach[cell] = UNREACHED;
+                        if (shown.putIfAbsent(state.getBlock(), state) == null) { species.add(state.getBlock()); }
+                        kind[cell] = (byte) (species.indexOf(state.getBlock()) + 1);
+                    }
                 }
             }
         }
-        int[] steps = {spanZ * spanY, -spanZ * spanY, spanY, -spanY, 1, -1};
-        for (int step = 1; step <= SUSTAIN && !frontier.isEmpty(); step++) {
-            IntArrayList next = new IntArrayList();
-            for (int i = 0; i < frontier.size(); i++) {
-                int cell = frontier.getInt(i);
-                int x = cell / (spanZ * spanY);
-                int z = cell / spanY % spanZ;
-                int y = cell % spanY;
-                for (int side = 0; side < steps.length; side++) {
-                    if (side == 0 && x == spanX - 1 || side == 1 && x == 0 || side == 2 && z == spanZ - 1 || side == 3 && z == 0 || side == 4 && y == spanY - 1 || side == 5 && y == 0) { continue; }
-                    int near = cell + steps[side];
-                    if (reach[near] != UNREACHED) { continue; }
-                    reach[near] = (byte) step;
-                    next.add(near);
-                }
+        for (Map.Entry<Integer, BlockPos> plant : bearing.entrySet()) {
+            for (Block leaf : species) {
+                if (!bears(level, plant.getValue(), shown.get(leaf))) { continue; }
+                crowned.merge(leaf, IntArrayList.of(plant.getKey()), (held, added) -> {
+                    held.addAll(added);
+                    return held;
+                });
             }
-            frontier = next;
+        }
+        spread(reach, kind, (byte) 0, frontier, spanX, spanY, spanZ);
+        for (int id = 1; id <= species.size(); id++) {
+            IntArrayList own = crowned.get(species.get(id - 1));
+            if (own != null) { spread(reach, kind, (byte) id, own, spanX, spanY, spanZ); }
         }
         int swept = 0;
         int probed = WRITTEN - PLANTED_REACH;
@@ -182,6 +203,37 @@ public final class ContentCityTrees {
             }
         }
         return swept;
+    }
+
+    private static void seed(WorldGenLevel level, ChunkPos chunk, BlockPos wood, int cell, IntArrayList anywhere, Map<Integer, BlockPos> bearing) {
+        boolean read = wood.getX() > chunk.getMinBlockX() - WRITTEN && wood.getX() < chunk.getMaxBlockX() + WRITTEN && wood.getZ() > chunk.getMinBlockZ() - WRITTEN && wood.getZ() < chunk.getMaxBlockZ() + WRITTEN;
+        if (read && planted(level, wood)) { bearing.put(cell, wood.immutable()); }
+        else { anywhere.add(cell); }
+    }
+
+    private static void spread(byte[] reach, byte[] kind, byte id, IntArrayList start, int spanX, int spanY, int spanZ) {
+        int[] steps = {spanZ * spanY, -spanZ * spanY, spanY, -spanY, 1, -1};
+        boolean[] seen = new boolean[reach.length];
+        for (int i = 0; i < start.size(); i++) { seen[start.getInt(i)] = true; }
+        IntArrayList frontier = start;
+        for (int step = 1; step <= SUSTAIN && !frontier.isEmpty(); step++) {
+            IntArrayList next = new IntArrayList();
+            for (int i = 0; i < frontier.size(); i++) {
+                int cell = frontier.getInt(i);
+                int x = cell / (spanZ * spanY);
+                int z = cell / spanY % spanZ;
+                int y = cell % spanY;
+                for (int side = 0; side < steps.length; side++) {
+                    if (side == 0 && x == spanX - 1 || side == 1 && x == 0 || side == 2 && z == spanZ - 1 || side == 3 && z == 0 || side == 4 && y == spanY - 1 || side == 5 && y == 0) { continue; }
+                    int near = cell + steps[side];
+                    if (seen[near] || kind[near] == 0) { continue; }
+                    seen[near] = true;
+                    if ((id == 0 || kind[near] == id) && reach[near] == UNREACHED) { reach[near] = (byte) step; }
+                    next.add(near);
+                }
+            }
+            frontier = next;
+        }
     }
 
     private static int orphan(WorldGenLevel level, BlockPos.MutableBlockPos at) {
@@ -390,19 +442,81 @@ public final class ContentCityTrees {
     }
 
     private static boolean sustained(WorldGenLevel level, BlockPos leaf, List<BoundingBox> kept) {
-        for (BlockPos probe : BlockPos.betweenClosed(leaf.offset(-SUSTAIN, -SUSTAIN, -SUSTAIN), leaf.offset(SUSTAIN, SUSTAIN, SUSTAIN))) {
-            if (BlastPlasterUtil.isTreeWood(level.getBlockState(probe)) && !inside(kept, probe)) { return true; }
+        BlockState hung = level.getBlockState(leaf);
+        Set<BlockPos> chain = new HashSet<>();
+        chain.add(leaf);
+        List<BlockPos> front = new ArrayList<>();
+        front.add(leaf);
+        for (int step = 1; step <= SUSTAIN && !front.isEmpty(); step++) {
+            List<BlockPos> next = new ArrayList<>();
+            for (BlockPos cell : front) {
+                for (Direction side : Direction.values()) {
+                    BlockPos near = cell.relative(side);
+                    if (!chain.add(near)) { continue; }
+                    BlockState state = level.getBlockState(near);
+                    if (BlastPlasterUtil.isTreeWood(state)) {
+                        if (!inside(kept, near) && (!planted(level, near) || bears(level, near, hung))) { return true; }
+                    }
+                    else if (state.getBlock() instanceof LeavesBlock) { next.add(near); }
+                }
+            }
+            front = next;
         }
         return false;
     }
 
-    private static boolean planted(WorldGenLevel level, BlockPos wood) { return ContentCityStructure.plantedAt(CityGround.of(level), wood.getX(), wood.getZ()); }
+    private static boolean bears(WorldGenLevel level, BlockPos wood, BlockState leaf) {
+        Map<Planting, Boolean> column = PASS.get();
+        Planting key = new Planting(BlockPos.asLong(wood.getX(), 0, wood.getZ()), level.getBlockState(wood), bare(leaf));
+        Boolean known = column == null ? null : column.get(key);
+        if (known == null) {
+            known = ContentCityStructure.plantedAt(level, CityGround.of(level), wood.getX(), wood.getZ(), key.wood(), List.of(leaf));
+            if (column != null) { column.put(key, known); }
+        }
+        return known;
+    }
+
+    private static boolean planted(WorldGenLevel level, BlockPos wood) {
+        Map<Planting, Boolean> column = PASS.get();
+        if (column == null) { return plantedNow(level, wood); }
+        Planting key = new Planting(BlockPos.asLong(wood.getX(), 0, wood.getZ()), level.getBlockState(wood), null);
+        Boolean known = column.get(key);
+        if (known == null) {
+            known = plantedNow(level, wood);
+            column.put(key, known);
+        }
+        return known;
+    }
+
+    private static BlockState bare(BlockState leaf) {
+        BlockState fixed = leaf;
+        if (fixed.hasProperty(LeavesBlock.DISTANCE)) { fixed = fixed.setValue(LeavesBlock.DISTANCE, 7); }
+        if (fixed.hasProperty(LeavesBlock.PERSISTENT)) { fixed = fixed.setValue(LeavesBlock.PERSISTENT, false); }
+        if (fixed.hasProperty(BlockStateProperties.WATERLOGGED)) { fixed = fixed.setValue(BlockStateProperties.WATERLOGGED, false); }
+        return fixed;
+    }
+
+    private static boolean plantedNow(WorldGenLevel level, BlockPos wood) { return ContentCityStructure.plantedAt(level, CityGround.of(level), wood.getX(), wood.getZ(), level.getBlockState(wood), canopiesOver(level, wood)); }
+
+    private static List<BlockState> canopiesOver(WorldGenLevel level, BlockPos wood) {
+        BlockPos.MutableBlockPos at = wood.mutable();
+        for (int climbed = 0; climbed < 64 && BlastPlasterUtil.isTreeWood(level.getBlockState(at)); climbed++) { at.move(Direction.UP); }
+        List<BlockState> crowns = new ArrayList<>();
+        BlockState over = level.getBlockState(at);
+        if (over.getBlock() instanceof LeavesBlock) { crowns.add(over); }
+        at.move(Direction.DOWN);
+        for (Direction side : Direction.Plane.HORIZONTAL) {
+            BlockState beside = level.getBlockState(at.relative(side));
+            if (beside.getBlock() instanceof LeavesBlock) { crowns.add(beside); }
+        }
+        return crowns;
+    }
 
     public static boolean clears(WorldGenLevel level, BlockPos at, BlockState state) {
         if (state.isAir()) { return false; }
         if (!(state.getBlock() instanceof LeavesBlock)) { return true; }
         for (BlockPos probe : BlockPos.betweenClosed(at.offset(-PLANTED_REACH, -SUSTAIN, -PLANTED_REACH), at.offset(PLANTED_REACH, 0, PLANTED_REACH))) {
-            if (BlastPlasterUtil.isTreeWood(level.getBlockState(probe)) && planted(level, probe)) { return false; }
+            if (BlastPlasterUtil.isTreeWood(level.getBlockState(probe)) && planted(level, probe) && bears(level, probe, state)) { return false; }
         }
         return true;
     }

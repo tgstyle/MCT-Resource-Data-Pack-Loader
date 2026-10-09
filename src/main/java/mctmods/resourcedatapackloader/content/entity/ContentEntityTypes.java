@@ -167,7 +167,7 @@ public final class ContentEntityTypes {
             JsonArray values = new JsonArray();
             for (String id : entry.getValue()) { values.add(id); }
             json.add("values", values);
-            GeneratedResources.put(PackType.SERVER_DATA, tag.getNamespace(), ContentFormats.ENTITY_TYPE_TAGS + "/" + tag.getPath() + ".json", json.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, tag.getNamespace(), ContentFormats.ENTITY_TYPE_TAGS + "/" + tag.getPath() + PackManager.JSON_SUFFIX, json.toString());
         }
         TAGS.clear();
     }
@@ -191,7 +191,7 @@ public final class ContentEntityTypes {
         String name = def.key().getPath() + "_spawn_egg";
         Identifier baseEgg = def.base().withSuffix("_spawn_egg");
         boolean colored = def.egg().primary() >= 0 || def.egg().secondary() >= 0 || !BuiltInRegistries.ITEM.containsKey(baseEgg);
-        String definition = "items/" + name + ".json";
+        String definition = "items/" + name + PackManager.JSON_SUFFIX;
         if (!PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, definition)) {
             JsonObject model = new JsonObject();
             model.addProperty("type", "minecraft:model");
@@ -206,7 +206,7 @@ public final class ContentEntityTypes {
             item.add("model", model);
             GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, definition, item.toString());
         }
-        String path = "models/item/" + name + ".json";
+        String path = "models/item/" + name + PackManager.JSON_SUFFIX;
         if (PackManager.get().provides(PackType.CLIENT_RESOURCES, namespace, path)) { return false; }
         JsonObject model = new JsonObject();
         model.addProperty("parent", colored ? EGG_TEMPLATE : baseEgg.withPrefix("item/").toString());

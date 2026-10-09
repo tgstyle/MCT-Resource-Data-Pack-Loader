@@ -8,10 +8,15 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.state.BlockState;
+import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class ContentBelt implements IContentChunkShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     private final int radius;
     private final int rarity;
     private final boolean perChunk;

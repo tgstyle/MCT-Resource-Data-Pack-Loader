@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
 
@@ -80,7 +81,7 @@ public final class ContentDeepCaves {
 
     private static String put(Identifier owner, String suffix, JsonObject json) {
         Identifier id = Identifier.fromNamespaceAndPath(owner.getNamespace(), owner.getPath() + "_" + suffix);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), FOLDER + "/" + id.getPath() + ".json", json.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), FOLDER + "/" + id.getPath() + PackManager.JSON_SUFFIX, json.toString());
         return id.toString();
     }
 

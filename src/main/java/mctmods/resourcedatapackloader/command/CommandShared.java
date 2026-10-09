@@ -449,7 +449,7 @@ public final class CommandShared {
         }
         if (!prune) {
             send(source, ChatFormatting.YELLOW, tr("rdpl.command.config.unused", stale.size()));
-            for (String one : stale) { send(source, ChatFormatting.GRAY, Component.literal("  " + one + ".json")); }
+            for (String one : stale) { send(source, ChatFormatting.GRAY, Component.literal("  " + one + PackManager.JSON_SUFFIX)); }
             send(source, ChatFormatting.GRAY, tr(note));
             return;
         }
