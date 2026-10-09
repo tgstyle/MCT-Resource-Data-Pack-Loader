@@ -6151,14 +6151,16 @@ Um tronco de via única não tem segunda via para dar ao outro ramal, de modo qu
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
 | Configuração | Tipo | Padrão | O que faz |
 | --- | --- | --- | --- |
-| `villageDecor` | list | vazio   | Decoração espalhada ao longo das ruas da cidade, como pares nome=peso que nomeiam worldgen de um pacote, mypack:street_flowers=2. O nome empty é a parcela de pontos deixados nus, e uma entrada que não esteja escrita nome=peso é deixada de fora. A cada terceiro bloco de margem de cada lado de uma rua sorteia-se a lista, no solo ali por mais alto que esteja, mas não em um túnel, sob um terreno, em uma praça ou a menos de dois blocos de uma porta. Vazio não espalha nada |
+| `villageDecor` | list | vazio   | Decoração espalhada ao longo das ruas da cidade, como pares nome=peso que nomeiam worldgen de um pacote, mypack:street_flowers=2. O nome empty é a parcela de pontos deixados nus, e uma entrada que não esteja escrita nome=peso é deixada de fora. A cada villageDecorSpacing blocos de margem de cada lado de uma rua, três por padrão, sorteia-se a lista, no solo ali por mais alto que esteja, mas não em um túnel, sob um terreno, em uma praça ou a menos de dois blocos de uma porta. Vazio não espalha nada |
+| `villageDecorSpacing` | int, 1 a 16 | `3` | O intervalo entre os pontos de decoração ao longo de cada lado de uma rua, em blocos. Limitado de 1 a 16. Um modelo mais largo que o espaçamento pode invadir o ponto vizinho |
 
 ### Estruturas
 

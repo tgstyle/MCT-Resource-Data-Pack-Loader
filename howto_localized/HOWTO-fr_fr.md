@@ -6151,14 +6151,16 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
 | Réglage | Type | Défaut | Ce que ça fait |
 | --- | --- | --- | --- |
-| `villageDecor` | liste | vide | Décoration semée le long des rues de la ville, sous forme de paires nom=poids nommant du worldgen d'un pack, mypack:street_flowers=2. Le nom empty est la part des emplacements laissés nus, et une entrée qui n'est pas écrite nom=poids est omise. Un bloc de bas-côté sur trois de chaque côté d'une rue tire la liste, sur le sol à cet endroit quelle que soit sa hauteur, mais pas dans un tunnel, ni sous une parcelle, ni sur une place, ni à moins de deux blocs d'une porte. Vide : ne sème rien |
+| `villageDecor` | liste | vide | Décoration semée le long des rues de la ville, sous forme de paires nom=poids nommant du worldgen d'un pack, mypack:street_flowers=2. Le nom empty est la part des emplacements laissés nus, et une entrée qui n'est pas écrite nom=poids est omise. Le bas-côté de chaque côté d'une rue tire la liste tous les villageDecorSpacing blocs, trois par défaut, sur le sol à cet endroit quelle que soit sa hauteur, mais pas dans un tunnel, ni sous une parcelle, ni sur une place, ni à moins de deux blocs d'une porte. Vide : ne sème rien |
+| `villageDecorSpacing` | entier, 1 à 16 | `3` | Le pas entre les emplacements de décoration le long de chaque côté d'une rue, en blocs. Borné de 1 à 16. Un modèle plus large que l'espacement peut empiéter sur son voisin |
 
 ### Structures
 

@@ -38,7 +38,6 @@ public final class ContentCityStructure extends Structure {
     public static final Codec<ContentCityStructure> CODEC = RecordCodecBuilder.create(instance -> instance.group(settingsCodec(instance)).apply(instance, ContentCityStructure::new));
     public static final StructureType<ContentCityStructure> TYPE = () -> CODEC;
     static final long SALT = 0x51A3C7E9B1D0F42BL;
-    static final int VERGE_RUN = 3;
     private static final int COURT_DIG = 4;
     private static final int COURT_FILL = 2;
     static final int FRONT_REACH = 3;
@@ -201,6 +200,7 @@ public final class ContentCityStructure extends Structure {
         CityPlan plan = CityPlan.of(ground, CityPlan.districtOf(x, true), CityPlan.districtOf(z, false));
         if (plan == null) { return false; }
         int shift = ContentCity.decorReach(level);
+        int run = ContentCity.decorSpacing();
         for (CityPlan.Line line : CityLines.of(plan)) {
             int along = line.alongX() ? x : z;
             int across = line.alongX() ? z : x;
@@ -208,7 +208,7 @@ public final class ContentCityStructure extends Structure {
             for (int side = -curb; side <= curb; side += 2 * curb) {
                 int verge = line.middle() + side;
                 if (Math.abs(verge - across) > shift) { continue; }
-                for (int spot = Math.floorDiv(along - shift, VERGE_RUN) * VERGE_RUN; spot <= along + shift; spot += VERGE_RUN) {
+                for (int spot = Math.floorDiv(along - shift, run) * run; spot <= along + shift; spot += run) {
                     if (!line.covers(spot) || !plan.emitsAlong(line, spot)) { continue; }
                     if (plantedFrom(level, ground, line.alongX() ? spot : verge, line.alongX() ? verge : spot, x, z, wood, canopies)) { return true; }
                 }
