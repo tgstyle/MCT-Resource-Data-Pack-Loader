@@ -440,7 +440,9 @@ public final class ContentCity {
         return 1;
     }
 
-    public static List<String> decorNames() { return ContentControl.list(ContentControl.VILLAGES, "villageDecor", Config.worldgen.villageDecor()); }
+    public static List<String> decorNames() { return ContentControl.onRoad(null, () -> ContentControl.list(ContentControl.VILLAGES, "villageDecor", Config.worldgen.villageDecor())); }
+
+    public static int decorSpacing() { return ContentControl.onRoad(null, () -> Mth.clamp(ContentControl.number(ContentControl.VILLAGES, "villageDecorSpacing", 3), 1, 16)); }
 
     public static int decorReach(WorldGenLevel level) {
         int reach = 0;

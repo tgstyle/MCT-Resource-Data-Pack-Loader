@@ -6151,14 +6151,16 @@ A single-track trunk has no second track to give the other spur, so a link whose
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
-| Setting        | Type | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| -------------- | ---- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `villageDecor` | list | empty   | Decoration scattered along city streets, as name=weight pairs naming worldgen from a pack, mypack:street_flowers=2. The name empty is the share of spots left bare, and an entry not written name=weight is left out. Every third block of verge on each side of a street rolls the list, on the ground there however high it stands, but not in a tunnel, under a plot, on a plaza or within two blocks of a door. Empty scatters nothing |
+| Setting               | Type | Default | What it does                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------- | ---- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor`        | list | empty   | Decoration scattered along city streets, as name=weight pairs naming worldgen from a pack, mypack:street_flowers=2. The name empty is the share of spots left bare, and an entry not written name=weight is left out. Every villageDecorSpacing blocks of verge on each side of a street, three by default, rolls the list, on the ground there however high it stands, but not in a tunnel, under a plot, on a plaza or within two blocks of a door. Empty scatters nothing |
+| `villageDecorSpacing` | int, 1 to 16 | `3`     | The step between decoration spots along each side of a street, in blocks. Clamped to 1 through 16. A template wider than the spacing can crowd its neighbor                                                                                                                                                                                                                                                                                                                  |
 
 ### Structures
 

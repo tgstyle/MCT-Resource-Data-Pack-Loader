@@ -6151,14 +6151,16 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 ```json
 {
   "settings": {
-    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"]
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
   }
 }
 ```
 
 | Ajuste | Tipo | Predeterminado | Qué hace |
 | --- | --- | --- | --- |
-| `villageDecor` | lista | vacío   | Decoración esparcida a lo largo de las calles de la ciudad, como pares nombre=peso que nombran worldgen de un pack, mypack:street_flowers=2. El nombre empty es la parte de puntos que se deja desnuda, y una entrada que no está escrita nombre=peso se omite. Cada tercer bloque de arcén a cada lado de una calle sortea la lista, sobre el suelo que haya allí a la altura que esté, pero no en un túnel, ni bajo una parcela, ni en una plaza, ni a menos de dos bloques de una puerta. Vacío no esparce nada |
+| `villageDecor` | lista | vacío   | Decoración esparcida a lo largo de las calles de la ciudad, como pares nombre=peso que nombran worldgen de un pack, mypack:street_flowers=2. El nombre empty es la parte de puntos que se deja desnuda, y una entrada que no está escrita nombre=peso se omite. El arcén de cada lado de una calle sortea la lista cada villageDecorSpacing bloques, tres por defecto, sobre el suelo que haya allí a la altura que esté, pero no en un túnel, ni bajo una parcela, ni en una plaza, ni a menos de dos bloques de una puerta. Vacío no esparce nada |
+| `villageDecorSpacing` | entero, de 1 a 16 | `3` | El intervalo entre lugares de decoración a lo largo de cada lado de una calle, en bloques. Se limita de 1 a 16. Una plantilla más ancha que el espaciado puede invadir el lugar vecino |
 
 ### Estructuras
 
