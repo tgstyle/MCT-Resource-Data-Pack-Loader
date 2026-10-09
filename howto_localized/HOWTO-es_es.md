@@ -3106,6 +3106,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3119,6 +3120,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3139,6 +3141,23 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno | El archivo se omite a menos que estén presentes todos |
 
 Una dimensión es una entrada de data pack en esta versión: el tipo de dimensión y los ajustes de ruido se escriben por ti bajo el espacio de nombres del pack, de modo que a un cliente vanilla se le informa de ella al unirse y viaja allí como a cualquier otra. La dimensión conserva su propia carpeta de guardado dentro del mundo, con el nombre de su id, y se carga mientras alguien está en ella, o mientras un `forceload` mantiene un chunk.
+
+### Dimensiones existentes
+
+*dimensiones*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+Un archivo en `minecraft/dimensions/overworld.json`, `the_nether.json` o `the_end.json`, o en el id de una dimensión que añade otro mod o un datapack, como `othermod/dimensions/caverns.json`, cambia esa dimensión en lugar de añadir una nueva. Cada clave que escribe el archivo se aplica allí, y cada clave que omite mantiene el comportamiento propio de la dimensión, así que sus datos de nivel y sus chunks quedan como están y una partida existente sigue cargando.
+
+`terrain.type` cambia el generador: los chunks generados a partir de entonces salen de él, y `generatorOptions`, `structures` y el bloque `biomes` se aplican junto con él; sin `terrain.type` esas claves se omiten y el registro lo indica, ya que en esta versión los biomas de una dimensión forman parte de su generador. Las claves que guarda el tipo de dimensión, como `hasSkyLight` o `ambientLight`, se escriben en el tipo propio de la dimensión. Una dimensión de un mod que usa uno de los tipos compartidos del juego, o que escribe su tipo en línea, conserva su tipo tal cual, y el registro lo indica. La línea `dimensions.existing` del resumen lista cada archivo aplicado de esta forma.
+
+Cualquier `sun`, `moon`, `bodies` o `stars` dibuja el cielo con [el renderizador propio de RDPL](#el-renderizador-del-cielo), que mantiene las fases de la luna. En esta versión todas las dimensiones comparten un mismo tiempo, así que `alwaysRain` en el overworld mantiene ese tiempo lloviendo, y en cualquier otra dimensión llueve solo allí.
 
 ### El bloque `terrain`
 
@@ -3205,7 +3224,7 @@ Una dimensión es una entrada de data pack en esta versión: el tipo de dimensi�
 
 *dimensiones*
 
-Establecer cualquiera de `sun`, `bodies` o `stars` cambia el cielo de vanilla por el propio de RDPL, que dibuja la misma bóveda, el mismo resplandor del amanecer y el mismo vacío que vanilla pero toma el sol, los demás cuerpos y las estrellas del pack. Se dibuja solo en el cliente, y un servidor dedicado nunca lo carga. `renderSky: false` sigue imponiéndose y no dibuja nada, y `renderClouds: false` es como se consigue un cielo sin nubes.
+Establecer cualquiera de `sun`, `moon`, `bodies` o `stars` cambia el cielo de vanilla por el propio de RDPL, que dibuja la misma bóveda, el mismo resplandor del amanecer y el mismo vacío que vanilla pero toma el sol, los demás cuerpos y las estrellas del pack. Se dibuja solo en el cliente, y un servidor dedicado nunca lo carga. `renderSky: false` sigue imponiéndose y no dibuja nada, y `renderClouds: false` es como se consigue un cielo sin nubes.
 
 Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista es todo lo que hay además del sol, así que una lista vacía es un cielo sin luna.
 
@@ -3213,6 +3232,8 @@ Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista
 | ---------------------- | ----------- | ------------------ | ----------------- | -------- |
 | `sun.texture`          | no          | ruta de textura    | el sol de vanilla | La imagen del sol |
 | `sun.size`             | no          | float              | `30`              | La mitad del ancho del sol a una distancia de 100. `0` lo oculta |
+| `moon.texture`         | no          | ruta de textura    | la luna de vanilla | Una hoja con las ocho fases de la luna, cuatro a lo ancho y dos a lo alto. Sin ella se dibuja la luna de vanilla |
+| `moon.size`            | no          | float              | `20`              | La mitad del ancho de la luna a una distancia de 100. `0` la oculta. Con `bodies` no se usa |
 | `bodies[].texture`     | sí          | ruta de textura    |                   | La imagen del cuerpo |
 | `bodies[].size`        | no          | float              | `20`              | La mitad de su ancho a una distancia de 100. La luna de vanilla es `20` |
 | `bodies[].angle`       | no          | float, grados      | `180`             | Cuánto se adelanta a lo largo de la trayectoria del sol, por detrás de este. `180` es donde está la luna de vanilla. Con `followsTime` desactivado se mide desde justo encima, así que `0` es el cenit y `90` el horizonte |
@@ -3381,6 +3402,7 @@ Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravit
 | `lightning`             | no          | boolean                | `true`                   | Desactivada, la lluvia y las tormentas llegan sin rayos                                                                       |
 | `snow`                  | no          | boolean                | `true`                   | Desactivada, la nieve nunca se acumula                                                                                        |
 | `freeze`                | no          | boolean                | `true`                   | Desactivada, el agua nunca se congela                                                                                         |
+| `alwaysRain`            | no          | booleano               | `false`                  | Activado, aquí llueve todo el tiempo sin claros, antes que cualquier `cycle`. Con `precipitation` desactivado no se usa       |
 | `cycle.rainTicks`       | no          | int o `[min, max]`     | `[1000, 4600]`           | Cuánto dura un chubasco                                                                                                       |
 | `cycle.clearTicks`      | no          | int o `[min, max]`     | `[1000, 3000]`           | Cuánto dura el periodo seco entre chubascos                                                                                   |
 | `cycle.maxStrength`     | no          | float, mayor que 0 hasta 1 | `0.6`                | La mayor intensidad que alcanza un chubasco. Cada chubasco oscila entre una cuarta parte de este valor y su totalidad         |

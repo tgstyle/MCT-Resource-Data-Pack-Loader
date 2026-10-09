@@ -3106,6 +3106,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3119,6 +3120,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3139,6 +3141,23 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `requires` | non | liste d'ids de mods ou de namespaces de packs | aucun | Le fichier est ignoré à moins que tous ne soient présents |
 
 Sur cette version, une dimension est une entrée de data pack : le type de dimension et les réglages de bruit sont écrits pour vous sous le namespace du pack, de sorte qu'un client vanilla en est informé en se connectant et s'y rend comme dans n'importe quelle autre. La dimension garde son propre dossier de sauvegarde sous le monde, nommé d'après son id, et elle est chargée tant que quelqu'un s'y trouve, ou tant qu'un `forceload` retient un chunk.
+
+### Dimensions existantes
+
+*dimensions*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+Un fichier placé en `minecraft/dimensions/overworld.json`, `the_nether.json` ou `the_end.json`, ou à l'id d'une dimension qu'ajoute un autre mod ou un datapack, comme `othermod/dimensions/caverns.json`, modifie cette dimension au lieu d'en ajouter une. Chaque clé que le fichier écrit s'y applique, et chaque clé qu'il omet garde le comportement propre de la dimension : ses données de niveau et ses chunks restent tels quels, et une sauvegarde existante continue de se charger.
+
+`terrain.type` remplace le générateur : les chunks générés à partir de là en sortent, et `generatorOptions`, `structures` et le bloc `biomes` s'appliquent avec lui ; sans `terrain.type`, ces clés sont ignorées et le journal le signale, car sur cette version les biomes d'une dimension font partie de son générateur. Les clés que porte le type de dimension, comme `hasSkyLight` ou `ambientLight`, sont écrites dans le type propre de la dimension. Une dimension de mod qui utilise l'un des types partagés du jeu, ou qui écrit son type en ligne, garde son type tel quel, et le journal le signale. La ligne `dimensions.existing` du résumé liste chaque fichier appliqué de cette façon.
+
+Tout `sun`, `moon`, `bodies` ou `stars` dessine le ciel avec [le moteur de rendu de RDPL](#le-moteur-de-rendu-du-ciel), qui garde les phases de la lune. Sur cette version toutes les dimensions partagent une même météo, donc `alwaysRain` dans l'overworld maintient cette météo à la pluie, et dans toute autre dimension il ne pleut que là.
 
 ### Le bloc `terrain`
 
@@ -3205,7 +3224,7 @@ Sur cette version, une dimension est une entrée de data pack : le type de dimen
 
 *dimensions*
 
-Définir l'un de `sun`, `bodies` ou `stars` remplace le ciel vanilla par celui de RDPL, qui dessine le même dôme, la même lueur de l'aube et le même vide que vanilla, mais prend le soleil, les autres corps et les étoiles dans le pack. Il n'est dessiné que côté client, et un serveur dédié ne le charge jamais. `renderSky: false` l'emporte toujours et ne dessine rien, et `renderClouds: false` est la façon d'obtenir un ciel sans nuages.
+Définir l'un de `sun`, `moon`, `bodies` ou `stars` remplace le ciel vanilla par celui de RDPL, qui dessine le même dôme, la même lueur de l'aube et le même vide que vanilla, mais prend le soleil, les autres corps et les étoiles dans le pack. Il n'est dessiné que côté client, et un serveur dédié ne le charge jamais. `renderSky: false` l'emporte toujours et ne dessine rien, et `renderClouds: false` est la façon d'obtenir un ciel sans nuages.
 
 Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste contient tout ce qui n'est pas le soleil : une liste vide donne donc un ciel sans lune.
 
@@ -3213,6 +3232,8 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
 | --- | --- | --- | --- | --- |
 | `sun.texture` | non | chemin de texture | le soleil vanilla | L'image du soleil |
 | `sun.size` | non | flottant | `30` | La moitié de la largeur du soleil à une distance de 100. `0` le cache |
+| `moon.texture` | non | chemin de texture | la lune vanilla | Une planche des huit phases de la lune, quatre en largeur et deux en hauteur. Sans elle, la lune vanilla est dessinée |
+| `moon.size` | non | flottant | `20` | La moitié de la largeur de la lune à une distance de 100. `0` la masque. Ignoré avec `bodies` |
 | `bodies[].texture` | oui | chemin de texture | | L'image du corps |
 | `bodies[].size` | non | flottant | `20` | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20` |
 | `bodies[].angle` | non | flottant, degrés | `180` | À quelle distance, le long de la trajectoire du soleil, il se trouve derrière lui. `180` est l'emplacement de la lune vanilla. Avec `followsTime` désactivé, il se mesure depuis la verticale, de sorte que `0` est le zénith et `90` l'horizon |
@@ -3381,6 +3402,7 @@ Ce sont les mêmes multiplicateurs que les clés de modèle de monde `worldGravi
 | `lightning` | non | booléen | `true` | Désactivé, la pluie et les orages arrivent sans foudre |
 | `snow` | non | booléen | `true` | Désactivé, la neige ne se dépose jamais |
 | `freeze` | non | booléen | `true` | Désactivé, l'eau ne gèle jamais |
+| `alwaysRain` | non | booléen | `false` | Activé, il pleut ici sans arrêt, sans éclaircie, avant tout `cycle`. Ignoré avec `precipitation` désactivé |
 | `cycle.rainTicks` | non | entier ou `[min, max]` | `[1000, 4600]` | Durée d'une averse |
 | `cycle.clearTicks` | non | entier ou `[min, max]` | `[1000, 3000]` | Durée de l'accalmie entre deux averses |
 | `cycle.maxStrength` | non | flottant, de plus de 0 à 1 | `0.6` | L'intensité maximale d'une averse. Chaque averse oscille entre le quart de cette valeur et sa totalité |

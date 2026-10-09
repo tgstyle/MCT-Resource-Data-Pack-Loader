@@ -31,32 +31,40 @@ import javax.annotation.Nullable;
 
 public final class ContentSkyRenderer {
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> RENDERERS = new IdentityHashMap<>();
+    private static final int PHASES = 8;
     @Nullable private static GpuBuffer quadBuffer;
+    @Nullable private static GpuBuffer phaseBuffer;
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
     private final DimensionTraitsDef.Sky sky;
     private final ContentStars stars;
+    @Nullable private final Identifier moonTexture;
+    private final float moonSize;
 
-    private ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+    private ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
         this.stars = new ContentStars(sky.starCount(), sky.starSize());
+        this.moonTexture = moon == null ? null : moon.texture();
+        this.moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
     }
 
     @Nullable public static ContentSkyRenderer of(@Nullable ClientLevel level) {
         DimensionDef def = level == null ? null : ContentDimensions.def(level);
         DimensionTraitsDef.Sky sky = def == null ? null : def.traits().sky();
-        return sky == null ? null : RENDERERS.computeIfAbsent(sky, ContentSkyRenderer::new);
+        return sky == null ? null : RENDERERS.computeIfAbsent(sky, held -> new ContentSkyRenderer(held, def.traits().moon()));
     }
 
     public void prepare() {
         if (quadBuffer == null) { quadBuffer = corners(); }
+        if (phaseBuffer == null) { phaseBuffer = phases(); }
         stars.prepare();
         TextureManager textures = Minecraft.getInstance().getTextureManager();
         if (sky.sunSize() > 0.0F) { textures.getTexture(sky.sunTexture()); }
+        if (moonTexture != null) { textures.getTexture(moonTexture); }
         if (sky.bodies() == null) { return; }
         for (DimensionTraitsDef.Body body : sky.bodies()) { textures.getTexture(body.texture()); }
     }
 
-    public void render(RenderPass renderPass, PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, float rainBrightness, float starBrightness, Consumer<PoseStack> moon) {
+    public void render(RenderPass renderPass, PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, int phase, float rainBrightness, float starBrightness, Consumer<PoseStack> moon) {
         poseStack.pushPose();
         poseStack.rotateDegrees(Axis.YP, -90.0F);
         poseStack.pushPose();
@@ -64,10 +72,16 @@ public final class ContentSkyRenderer {
         if (sky.sunSize() > 0.0F) { quad(renderPass, poseStack, sky.sunTexture(), sky.sunSize(), rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
         poseStack.popPose();
         if (sky.bodies() == null) {
-            poseStack.pushPose();
-            poseStack.rotate(Axis.XP, moonAngle);
-            moon.accept(poseStack);
-            poseStack.popPose();
+            if (moonSize > 0.0F) {
+                poseStack.pushPose();
+                poseStack.rotate(Axis.XP, moonAngle);
+                if (moonTexture != null) { draw(renderPass, poseStack, moonTexture, moonSize, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4); }
+                else {
+                    poseStack.scale(moonSize / DimensionTraitsDef.VANILLA_MOON, 1.0F, moonSize / DimensionTraitsDef.VANILLA_MOON);
+                    moon.accept(poseStack);
+                }
+                poseStack.popPose();
+            }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
@@ -88,8 +102,10 @@ public final class ContentSkyRenderer {
         poseStack.popPose();
     }
 
-    private void quad(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float rainBrightness) {
-        if (quadBuffer == null) { return; }
+    private void quad(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float rainBrightness) { draw(renderPass, poseStack, texture, size, rainBrightness, quadBuffer, 0); }
+
+    private void draw(RenderPass renderPass, PoseStack poseStack, Identifier texture, float size, float rainBrightness, @Nullable GpuBuffer vertices, int baseVertex) {
+        if (vertices == null) { return; }
         AbstractTexture image = Minecraft.getInstance().getTextureManager().getTexture(texture);
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
@@ -103,10 +119,25 @@ public final class ContentSkyRenderer {
         RenderSystem.bindDefaultUniforms(renderPass);
         renderPass.setUniform("DynamicTransforms", transforms);
         renderPass.setUniform("Sampler0", image.getTextureView(), image.getSampler());
-        renderPass.setVertexBuffer(0, quadBuffer.slice());
+        renderPass.setVertexBuffer(0, vertices.slice());
         renderPass.setIndexBuffer(quadIndices.getBuffer(6), quadIndices.type());
-        renderPass.drawIndexed(6, 1, 0, 0, 0);
+        renderPass.drawIndexed(6, 1, 0, baseVertex, 0);
         renderPass.popDebugGroup();
+    }
+
+    private static GpuBuffer phases() {
+        try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(PHASES * 4 * DefaultVertexFormat.POSITION_TEX.getVertexSize())) {
+            BufferBuilder buffer = new BufferBuilder(bytes, PrimitiveTopology.QUADS, DefaultVertexFormat.POSITION_TEX);
+            for (int phase = 0; phase < PHASES; phase++) {
+                float u0 = (phase % 4) * 0.25F;
+                float v0 = phase < 4 ? 0.0F : 0.5F;
+                buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(u0 + 0.25F, v0 + 0.5F);
+                buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(u0, v0 + 0.5F);
+                buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(u0, v0);
+                buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(u0 + 0.25F, v0);
+            }
+            try (MeshData mesh = buffer.buildOrThrow()) { return RenderSystem.getDevice().createBuffer(() -> "RDPL moon phases", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer()); }
+        }
     }
 
     private static GpuBuffer corners() {

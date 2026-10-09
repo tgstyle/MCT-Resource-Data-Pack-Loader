@@ -35,23 +35,29 @@ import javax.annotation.Nullable;
 
 public final class ContentSkyRenderer {
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> RENDERERS = new IdentityHashMap<>();
+    private static final int PHASES = 8;
     @Nullable private static GpuBuffer quadBuffer;
+    @Nullable private static GpuBuffer phaseBuffer;
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
     private final DimensionTraitsDef.Sky sky;
     private final ContentStars stars;
+    @Nullable private final Identifier moonTexture;
+    private final float moonSize;
 
-    private ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+    private ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
         this.stars = new ContentStars(sky.starCount(), sky.starSize());
+        this.moonTexture = moon == null ? null : moon.texture();
+        this.moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
     }
 
     @Nullable public static ContentSkyRenderer of(@Nullable ClientLevel level) {
         DimensionDef def = level == null ? null : ContentDimensions.def(level);
         DimensionTraitsDef.Sky sky = def == null ? null : def.traits().sky();
-        return sky == null ? null : RENDERERS.computeIfAbsent(sky, ContentSkyRenderer::new);
+        return sky == null ? null : RENDERERS.computeIfAbsent(sky, held -> new ContentSkyRenderer(held, def.traits().moon()));
     }
 
-    public void render(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, float rainBrightness, float starBrightness, Consumer<PoseStack> moon) {
+    public void render(PoseStack poseStack, float sunAngle, float moonAngle, float starAngle, int phase, float rainBrightness, float starBrightness, Consumer<PoseStack> moon) {
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         poseStack.pushPose();
@@ -59,10 +65,16 @@ public final class ContentSkyRenderer {
         if (sky.sunSize() > 0.0F) { quad(poseStack, sky.sunTexture(), sky.sunSize(), rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
         poseStack.popPose();
         if (sky.bodies() == null) {
-            poseStack.pushPose();
-            poseStack.mulPose(Axis.XP.rotation(moonAngle));
-            moon.accept(poseStack);
-            poseStack.popPose();
+            if (moonSize > 0.0F) {
+                poseStack.pushPose();
+                poseStack.mulPose(Axis.XP.rotation(moonAngle));
+                if (moonTexture != null) { phase(poseStack, moonTexture, phase, rainBrightness); }
+                else {
+                    poseStack.scale(moonSize / DimensionTraitsDef.VANILLA_MOON, 1.0F, moonSize / DimensionTraitsDef.VANILLA_MOON);
+                    moon.accept(poseStack);
+                }
+                poseStack.popPose();
+            }
         }
         else {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
@@ -84,10 +96,19 @@ public final class ContentSkyRenderer {
     }
 
     private void quad(PoseStack poseStack, Identifier texture, float size, float rainBrightness) {
+        if (quadBuffer == null) { quadBuffer = corners(); }
+        draw(poseStack, texture, size, rainBrightness, quadBuffer, 0);
+    }
+
+    private void phase(PoseStack poseStack, Identifier texture, int phase, float rainBrightness) {
+        if (phaseBuffer == null) { phaseBuffer = phases(); }
+        draw(poseStack, texture, moonSize, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4);
+    }
+
+    private void draw(PoseStack poseStack, Identifier texture, float size, float rainBrightness, GpuBuffer vertices, int baseVertex) {
         RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
         GpuTextureView color = target.getColorTextureView();
         if (color == null) { return; }
-        if (quadBuffer == null) { quadBuffer = corners(); }
         AbstractTexture image = Minecraft.getInstance().getTextureManager().getTexture(texture);
         Matrix4fStack modelView = RenderSystem.getModelViewStack();
         modelView.pushMatrix();
@@ -100,11 +121,26 @@ public final class ContentSkyRenderer {
             RenderSystem.bindDefaultUniforms(pass);
             pass.setUniform("DynamicTransforms", transforms);
             pass.bindTexture("Sampler0", image.getTextureView(), image.getSampler());
-            pass.setVertexBuffer(0, quadBuffer);
+            pass.setVertexBuffer(0, vertices);
             pass.setIndexBuffer(quadIndices.getBuffer(6), quadIndices.type());
-            pass.drawIndexed(0, 0, 6, 1);
+            pass.drawIndexed(baseVertex, 0, 6, 1);
         }
         modelView.popMatrix();
+    }
+
+    private static GpuBuffer phases() {
+        try (ByteBufferBuilder bytes = ByteBufferBuilder.exactlySized(PHASES * 4 * DefaultVertexFormat.POSITION_TEX.getVertexSize())) {
+            BufferBuilder buffer = new BufferBuilder(bytes, VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+            for (int phase = 0; phase < PHASES; phase++) {
+                float u0 = (phase % 4) * 0.25F;
+                float v0 = phase < 4 ? 0.0F : 0.5F;
+                buffer.addVertex(-1.0F, 0.0F, -1.0F).setUv(u0 + 0.25F, v0 + 0.5F);
+                buffer.addVertex(1.0F, 0.0F, -1.0F).setUv(u0, v0 + 0.5F);
+                buffer.addVertex(1.0F, 0.0F, 1.0F).setUv(u0, v0);
+                buffer.addVertex(-1.0F, 0.0F, 1.0F).setUv(u0 + 0.25F, v0);
+            }
+            try (MeshData mesh = buffer.buildOrThrow()) { return RenderSystem.getDevice().createBuffer(() -> "RDPL moon phases", GpuBuffer.USAGE_VERTEX, mesh.vertexBuffer()); }
+        }
     }
 
     private static GpuBuffer corners() {

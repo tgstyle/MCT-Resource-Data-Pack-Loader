@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +48,10 @@ import javax.annotation.Nullable;
 
 public final class ContentDimensions {
     private static final Identifier OVERWORLD = Level.OVERWORLD.identifier();
+    private static final Set<Identifier> VANILLA = Set.of(OVERWORLD, Level.NETHER.identifier(), Level.END.identifier());
+    private static final String TERRAIN_TYPE = "terrain.type";
     private static final Map<Identifier, DimensionDef> DEFS = new LinkedHashMap<>();
+    private static final Set<Identifier> EXISTING = new HashSet<>();
     private static final Map<UUID, Identifier> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
     private static final String VISUAL = "minecraft:visual/";
@@ -67,12 +71,20 @@ public final class ContentDimensions {
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             DimensionDef def = ContentDimensionParser.parse(key, contents);
-            if (def != null) { DEFS.put(key, def); }
+            if (def == null) { return; }
+            DEFS.put(key, def);
+            if (VANILLA.contains(key) || GameData.has(Identifier.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + ".json"))) { EXISTING.add(key); }
         });
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
     }
 
     public static Collection<DimensionDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
+
+    public static boolean existing(Identifier dimension) { return EXISTING.contains(dimension); }
+
+    public static boolean sets(DimensionDef def, String option) { return !EXISTING.contains(def.key()) || def.gives(option); }
+
+    public static boolean shapes(DimensionDef def) { return sets(def, TERRAIN_TYPE); }
 
     @Nullable public static DimensionDef def(Identifier dimension) { return DEFS.get(dimension); }
 
@@ -80,7 +92,7 @@ public final class ContentDimensions {
 
     public static boolean bedsWork(Level level) {
         DimensionDef def = def(level);
-        return def != null && def.beds();
+        return def != null && sets(def, "sky.beds") && def.beds();
     }
 
     public static boolean spawnsOff(Level level) {
@@ -90,36 +102,73 @@ public final class ContentDimensions {
 
     public static void generate() {
         List<String> made = new ArrayList<>();
+        List<String> applied = new ArrayList<>();
         List<String> natural = new ArrayList<>();
         ContentDimensionTime.reset();
         for (DimensionDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
+            if (EXISTING.contains(def.key())) {
+                existing(def);
+                applied.add(def.key().toString());
+                if (def.gives("sky.surfaceWorld") && def.surfaceWorld()) { natural.add(def.key().toString()); }
+                continue;
+            }
             JsonObject type = GameData.json(Identifier.withDefaultNamespace("dimension_type/" + def.base() + ".json"));
             if (type == null) { continue; }
-            String namespace = def.key().getNamespace();
-            String path = def.key().getPath();
-            type.addProperty("has_skylight", def.hasSkyLight());
-            type.addProperty("coordinate_scale", def.movementFactor());
-            type.addProperty("ambient_light", def.ambientLight());
-            type.addProperty("has_ender_dragon_fight", false);
-            if (def.shapesHeight()) {
-                type.addProperty("min_y", def.minHeight());
-                type.addProperty("height", def.maxHeight() - def.minHeight());
-                type.addProperty("logical_height", def.maxHeight() - def.minHeight());
-            }
-            rules(def, type);
-            effects(def, type);
-            ContentDimensionTime.time(def, type);
             if (def.surfaceWorld()) { natural.add(def.key().toString()); }
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension_type/" + path + ".json", type.toString());
-            JsonObject dimension = new JsonObject();
-            dimension.addProperty("type", def.key().toString());
-            dimension.add("generator", generator(def));
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension/" + path + ".json", dimension.toString());
+            type.addProperty("has_ender_dragon_fight", false);
+            retype(def, type);
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + ".json", type.toString());
+            stem(def, def.key());
             made.add(def.key().toString());
         }
         ContentDimensionTime.clockItem(natural);
         if (!made.isEmpty()) { Summary.info("dimensions.generated", "Generated " + made.size() + " dimension(s) with their types: " + String.join(", ", made)); }
+        if (!applied.isEmpty()) { Summary.info("dimensions.existing", "Applied " + applied.size() + " dimension file(s) to existing dimensions: " + String.join(", ", applied)); }
+    }
+
+    private static void existing(DimensionDef def) {
+        if (!def.gives(TERRAIN_TYPE) && (def.gives("terrain") || def.gives("biomes"))) { ContentLog.LOGGER.error("Dimension {} already exists and sets terrain or biome options without terrain.type, so its terrain is left as it is", def.key()); }
+        Identifier typeId = typeOf(def.key());
+        if (typeId == null) { return; }
+        JsonObject type = GameData.json(Identifier.fromNamespaceAndPath(typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json"));
+        if (type != null) {
+            String before = type.toString();
+            retype(def, type);
+            if (before.equals(type.toString())) { ContentLog.LOGGER.debug("Dimension {} sets nothing its type {} holds, so the type is left as it is", def.key(), typeId); }
+            else if (!VANILLA.contains(def.key()) && Identifier.DEFAULT_NAMESPACE.equals(typeId.getNamespace())) { ContentLog.LOGGER.error("Dimension {} uses the game's own type {}, which other dimensions share, so its type options are left out", def.key(), typeId); }
+            else { GeneratedResources.put(PackType.SERVER_DATA, typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json", type.toString()); }
+        }
+        if (def.gives(TERRAIN_TYPE)) { stem(def, typeId); }
+    }
+
+    @Nullable private static Identifier typeOf(Identifier dimension) {
+        if (VANILLA.contains(dimension)) { return dimension; }
+        JsonObject stem = GameData.json(Identifier.fromNamespaceAndPath(dimension.getNamespace(), "dimension/" + dimension.getPath() + ".json"));
+        Identifier type = stem == null ? null : Identifier.tryParse(Json.text(stem, "type"));
+        if (stem != null && type == null) { ContentLog.LOGGER.error("Dimension {} names its type inline or not at all, so the file's type options are left out", dimension); }
+        return type;
+    }
+
+    private static void retype(DimensionDef def, JsonObject type) {
+        if (sets(def, "sky.hasSkyLight")) { type.addProperty("has_skylight", def.hasSkyLight()); }
+        if (sets(def, "sky.movementFactor")) { type.addProperty("coordinate_scale", def.movementFactor()); }
+        if (sets(def, "sky.ambientLight")) { type.addProperty("ambient_light", def.ambientLight()); }
+        if (shapes(def) && def.shapesHeight()) {
+            type.addProperty("min_y", def.minHeight());
+            type.addProperty("height", def.maxHeight() - def.minHeight());
+            type.addProperty("logical_height", def.maxHeight() - def.minHeight());
+        }
+        rules(def, type);
+        effects(def, type);
+        if (sets(def, "time.dayLength") || sets(def, "sky.fixedTime")) { ContentDimensionTime.time(def, type); }
+    }
+
+    private static void stem(DimensionDef def, Identifier type) {
+        JsonObject dimension = new JsonObject();
+        dimension.addProperty("type", type.toString());
+        dimension.add("generator", generator(def));
+        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension/" + def.key().getPath() + ".json", dimension.toString());
     }
 
     private static JsonObject attributes(JsonObject type) {
@@ -131,18 +180,22 @@ public final class ContentDimensions {
     private static void rules(DimensionDef def, JsonObject type) {
         JsonObject attributes = attributes(type);
         boolean warm = def.nether() || def.waterVaporizes();
-        attributes.addProperty(GAMEPLAY + "water_evaporates", warm);
-        attributes.addProperty(GAMEPLAY + "fast_lava", warm);
-        if (warm) {
-            JsonObject drip = new JsonObject();
-            drip.addProperty("type", "minecraft:dripping_dripstone_lava");
-            attributes.add(VISUAL + "default_dripstone_particle", drip);
+        if (sets(def, "sky.nether") || sets(def, "sky.waterVaporizes")) {
+            attributes.addProperty(GAMEPLAY + "water_evaporates", warm);
+            attributes.addProperty(GAMEPLAY + "fast_lava", warm);
+            if (warm) {
+                JsonObject drip = new JsonObject();
+                drip.addProperty("type", "minecraft:dripping_dripstone_lava");
+                attributes.add(VISUAL + "default_dripstone_particle", drip);
+            }
+            else { attributes.remove(VISUAL + "default_dripstone_particle"); }
         }
-        else { attributes.remove(VISUAL + "default_dripstone_particle"); }
-        attributes.addProperty(GAMEPLAY + "nether_portal_spawns_piglin", def.surfaceWorld());
-        attributes.addProperty(GAMEPLAY + "respawn_anchor_works", !def.beds());
-        attributes.add(GAMEPLAY + "bed_rule", bedRule(def.beds(), def.surfaceWorld(), def.fixedTime() >= 0));
-        attributes.remove(GAMEPLAY + "snow_golem_melts");
+        if (sets(def, "sky.surfaceWorld")) { attributes.addProperty(GAMEPLAY + "nether_portal_spawns_piglin", def.surfaceWorld()); }
+        if (sets(def, "sky.beds")) {
+            attributes.addProperty(GAMEPLAY + "respawn_anchor_works", !def.beds());
+            attributes.add(GAMEPLAY + "bed_rule", bedRule(def.beds(), def.surfaceWorld(), def.fixedTime() >= 0));
+        }
+        if (!EXISTING.contains(def.key())) { attributes.remove(GAMEPLAY + "snow_golem_melts"); }
     }
 
     public static JsonObject bedRule(boolean beds, boolean surface, boolean fixed) {
@@ -183,7 +236,8 @@ public final class ContentDimensions {
 
     private static void effects(DimensionDef def, JsonObject type) {
         JsonObject attributes = attributes(type);
-        overworldVisualsAndMusic(type, attributes);
+        if (!EXISTING.contains(def.key())) { overworldVisualsAndMusic(type, attributes); }
+        else if (def.skyColor() >= 0) { attributes.addProperty(VISUAL + "sky_color", String.format("#%06x", def.skyColor() & 0xFFFFFF)); }
         if (def.fogColor() >= 0) { attributes.addProperty(VISUAL + "fog_color", String.format("#%06x", def.fogColor() & 0xFFFFFF)); }
         if (def.look() != null) { light(def.look(), attributes); }
         if (!def.surfaceWorld()) {
@@ -191,7 +245,7 @@ public final class ContentDimensions {
             attributes.remove(VISUAL + "cloud_color");
             attributes.remove(VISUAL + "cloud_height");
         }
-        else if (def.cloudHeight() >= 0) { attributes.addProperty(VISUAL + "cloud_height", (float) def.cloudHeight()); }
+        else if (sets(def, "sky.cloudHeight") && def.cloudHeight() >= 0) { attributes.addProperty(VISUAL + "cloud_height", (float) def.cloudHeight()); }
         if (!def.sunriseColors()) { attributes.addProperty(VISUAL + "sunrise_sunset_color", "#00000000"); }
         if (def.showFog()) {
             attributes.addProperty(VISUAL + "fog_start_distance", FOG_START);
@@ -351,11 +405,11 @@ public final class ContentDimensions {
 
     public static boolean structuresOff(ServerLevel level) {
         DimensionDef def = def(level);
-        return def != null && !def.structures();
+        return def != null && shapes(def) && !def.structures();
     }
 
     public static boolean allStructuresOn() {
-        for (DimensionDef def : DEFS.values()) { if (!def.structures()) { return false; } }
+        for (DimensionDef def : DEFS.values()) { if (shapes(def) && !def.structures()) { return false; } }
         return true;
     }
 
@@ -363,7 +417,7 @@ public final class ContentDimensions {
         BlockPos top = top(level, column, type);
         if (top.getY() > level.getMinY() + 1) { return top; }
         DimensionDef def = def(level);
-        if (def == null) { return top; }
+        if (def == null || !sets(def, "sky.groundLevel")) { return top; }
         return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinY() + 1, level.getMaxY() - 1), column.getZ());
     }
 

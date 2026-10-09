@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
@@ -32,6 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
             ContentWeatherCycle.clear(level);
             return false;
         }
+        if (traits.alwaysRain()) { return ContentWeatherCycle.pour(level, original.call(level)); }
         if (cycle != null) {
             rdpl$weatherCycle.tick(level, cycle);
             return false;
@@ -39,7 +41,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return original.call(level);
     }
 
-    @ModifyExpressionValue(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Ljava/lang/Boolean;booleanValue()Z")) private boolean rdpl$followServerWeather(boolean advance) { return advance && ContentDimensions.def((ServerLevel) (Object) this) == null; }
+    @ModifyExpressionValue(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Ljava/lang/Boolean;booleanValue()Z")) private boolean rdpl$followServerWeather(boolean advance) {
+        DimensionDef def = ContentDimensions.def((ServerLevel) (Object) this);
+        return advance && (def == null || ContentDimensions.existing(def.key()));
+    }
 
     @Inject(method = "tickThunder(Lnet/minecraft/world/level/chunk/LevelChunk;)V", at = @At("HEAD"), cancellable = true) private void rdpl$noLightning(LevelChunk chunk, CallbackInfo ci) {
         DimensionTraitsDef traits = ContentWeather.traits((ServerLevel) (Object) this);

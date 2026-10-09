@@ -21,6 +21,6 @@ import javax.annotation.Nullable;
     @ModifyExpressionValue(method = "calculate(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/client/multiplayer/ClientLevel;ILnet/minecraft/world/entity/ItemOwner;)F", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/item/properties/numeric/CompassAngleState$CompassTarget;get(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/ItemOwner;)Lnet/minecraft/core/GlobalPos;")) @Nullable private GlobalPos rdpl$naturalSpawn(@Nullable GlobalPos target, ItemStack itemStack, ClientLevel level, int seed, ItemOwner owner) {
         if (target == null || compassTarget != CompassAngleState.CompassTarget.SPAWN) { return target; }
         DimensionDef def = ContentDimensions.def(level);
-        return def != null && def.surfaceWorld() ? GlobalPos.of(level.dimension(), target.pos()) : target;
+        return def != null && ContentDimensions.sets(def, "sky.surfaceWorld") && def.surfaceWorld() ? GlobalPos.of(level.dimension(), target.pos()) : target;
     }
 }

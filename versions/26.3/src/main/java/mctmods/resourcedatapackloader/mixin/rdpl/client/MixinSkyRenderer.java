@@ -41,7 +41,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ContentSkyExtras.overlay(renderPass, poseStack);
         ContentSkyRenderer sky = ContentSkyRenderer.of(Minecraft.getInstance().level);
         if (sky == null) { return; }
-        sky.render(renderPass, poseStack, sunAngle, moonAngle, starAngle, rainBrightness, starBrightness, turned -> renderMoon(renderPass, moonPhase, rainBrightness, turned));
+        sky.render(renderPass, poseStack, sunAngle, moonAngle, starAngle, moonPhase.index(), rainBrightness, starBrightness, turned -> renderMoon(renderPass, moonPhase, rainBrightness, turned));
         ci.cancel();
     }
 }

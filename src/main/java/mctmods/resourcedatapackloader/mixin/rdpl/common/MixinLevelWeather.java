@@ -22,6 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "canHaveWeather()Z", at = @At("HEAD"), cancellable = true) private void rdpl$cycleHasWeather(CallbackInfoReturnable<Boolean> cir) {
         DimensionTraitsDef traits = ContentWeather.traits((Level) (Object) this);
-        if (traits.precipitation() && traits.cycle() != null) { cir.setReturnValue(true); }
+        if (traits.precipitation() && (traits.cycle() != null || traits.alwaysRain())) { cir.setReturnValue(true); }
     }
 }
