@@ -50,6 +50,7 @@ public final class ContentDimensionParser {
     private static final float SOUND_CHANCE = 0.0111F;
     private static final float PARTICLE_CHANCE = 0.00625F;
     private static final String SUN = "minecraft:textures/environment/sun.png";
+    private static final String MOON = "minecraft:textures/environment/moon_phases.png";
     private static final int STARS = 1500;
     private static final float STAR_SIZE = 0.15F;
     private static final Set<String> KNOWN_TERRAIN = Set.of(DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END);
@@ -112,7 +113,7 @@ public final class ContentDimensionParser {
                 GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
                 GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
                 GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json),
-                ContentParserSkyLook.look(key, sky, cloudHeight, clouds));
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), Json.paths(json));
     }
 
     private static DimensionTraitsDef traits(ResourceLocation key, JsonObject json) {
@@ -124,11 +125,23 @@ public final class ContentDimensionParser {
             ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
             day = DimensionTraitsDef.VANILLA_DAY;
         }
+        boolean precipitation = GsonHelper.getAsBoolean(weather, "precipitation", true);
+        boolean alwaysRain = GsonHelper.getAsBoolean(weather, "alwaysRain", false);
+        if (alwaysRain && !precipitation) {
+            ContentLog.LOGGER.error("Dimension {} asks for alwaysRain with precipitation off, so it stays dry", key);
+            alwaysRain = false;
+        }
+        JsonObject sky = GsonHelper.getAsJsonObject(json, "sky", new JsonObject());
         return new DimensionTraitsDef(factor(key, physics, "gravity"), factor(key, physics, "fallDamage"), factor(key, physics, "arrowGravity"), day,
-                GsonHelper.getAsBoolean(weather, "precipitation", true), GsonHelper.getAsBoolean(weather, "lightning", true), GsonHelper.getAsBoolean(weather, "snow", true),
-                GsonHelper.getAsBoolean(weather, "freeze", true), weather.has("cycle") ? cycle(key, GsonHelper.getAsJsonObject(weather, "cycle")) : null,
-                weather.has("rain") || weather.has("wind") ? rain(key, GsonHelper.getAsJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, GsonHelper.getAsJsonObject(weather, "wind")) : null) : null, sky(key, GsonHelper.getAsJsonObject(json, "sky", new JsonObject())),
-                json.has("ambience") ? ambience(key, GsonHelper.getAsJsonObject(json, "ambience")) : null);
+                precipitation, GsonHelper.getAsBoolean(weather, "lightning", true), GsonHelper.getAsBoolean(weather, "snow", true),
+                GsonHelper.getAsBoolean(weather, "freeze", true), alwaysRain, weather.has("cycle") ? cycle(key, GsonHelper.getAsJsonObject(weather, "cycle")) : null,
+                weather.has("rain") || weather.has("wind") ? rain(key, GsonHelper.getAsJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, GsonHelper.getAsJsonObject(weather, "wind")) : null) : null, sky(key, sky),
+                sky.has("moon") ? moon(key, GsonHelper.getAsJsonObject(sky, "moon")) : null, json.has("ambience") ? ambience(key, GsonHelper.getAsJsonObject(json, "ambience")) : null);
+    }
+
+    private static DimensionTraitsDef.Moon moon(ResourceLocation key, JsonObject moon) {
+        ResourceLocation texture = texture(key, GsonHelper.getAsString(moon, "texture", MOON));
+        return new DimensionTraitsDef.Moon(texture == null ? ResourceLocation.parse(MOON) : texture, Math.max(0.0F, GsonHelper.getAsFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
     }
 
     private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
@@ -154,7 +167,7 @@ public final class ContentDimensionParser {
     }
 
     @Nullable private static DimensionTraitsDef.Sky sky(ResourceLocation key, JsonObject sky) {
-        if (!sky.has("sun") && !sky.has("bodies") && !sky.has("stars")) { return null; }
+        if (!sky.has("sun") && !sky.has("moon") && !sky.has("bodies") && !sky.has("stars")) { return null; }
         JsonObject sun = GsonHelper.getAsJsonObject(sky, "sun", new JsonObject());
         JsonObject stars = GsonHelper.getAsJsonObject(sky, "stars", new JsonObject());
         List<DimensionTraitsDef.Body> bodies = null;

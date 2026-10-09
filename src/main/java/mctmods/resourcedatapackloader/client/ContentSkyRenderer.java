@@ -32,12 +32,16 @@ import javax.annotation.Nullable;
 final class ContentSkyRenderer {
     private static final ResourceLocation MOON_PHASES = ResourceLocation.withDefaultNamespace("textures/environment/moon_phases.png");
     private final DimensionTraitsDef.Sky sky;
+    private final ResourceLocation moonTexture;
+    private final float moonSize;
     @Nullable private VertexBuffer skyBuffer;
     @Nullable private VertexBuffer darkBuffer;
     private final ContentStars stars;
 
-    ContentSkyRenderer(DimensionTraitsDef.Sky sky) {
+    ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
+        moonTexture = moon == null ? MOON_PHASES : moon.texture();
+        moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size();
         stars = new ContentStars(sky.starCount(), sky.starSize());
     }
 
@@ -70,7 +74,7 @@ final class ContentSkyRenderer {
         poseStack.mulPose(Axis.XP.rotationDegrees(turn));
         if (sky.sunSize() > 0.0F) { quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize()); }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
-        if (sky.bodies() == null) { moon(poseStack.last().pose(), level.getMoonPhase()); }
+        if (sky.bodies() == null && moonSize > 0.0F) { moon(poseStack.last().pose(), level.getMoonPhase()); }
         poseStack.popPose();
         if (sky.bodies() != null) {
             for (DimensionTraitsDef.Body body : sky.bodies()) {
@@ -135,15 +139,15 @@ final class ContentSkyRenderer {
         poseStack.popPose();
     }
 
-    private static void moon(Matrix4f pose, int phase) {
-        float size = 20.0F;
+    private void moon(Matrix4f pose, int phase) {
+        float size = moonSize;
         int column = phase % 4;
         int row = phase / 4 % 2;
         float left = column / 4.0F;
         float top = row / 2.0F;
         float right = (column + 1) / 4.0F;
         float bottom = (row + 1) / 2.0F;
-        RenderSystem.setShaderTexture(0, MOON_PHASES);
+        RenderSystem.setShaderTexture(0, moonTexture);
         BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.addVertex(pose, -size, -SIZE, size).setUv(right, bottom);
         buffer.addVertex(pose, size, -SIZE, size).setUv(left, bottom);

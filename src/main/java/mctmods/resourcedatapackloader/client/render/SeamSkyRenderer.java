@@ -67,7 +67,7 @@ public final class SeamSkyRenderer {
 
     private static Vec3 skyOf(ResourceLocation dimension, float partialTicks) {
         DimensionDef def = ContentDimensions.def(dimension);
-        String base = def == null ? dimension.toString() : "minecraft:" + def.base();
+        String base = def == null || !ContentDimensions.shapes(def) ? dimension.toString() : "minecraft:" + def.base();
         MinecraftServer server = Minecraft.getInstance().getSingleplayerServer();
         ServerLevel target = server == null ? null : server.getLevel(ResourceKey.create(Registries.DIMENSION, dimension));
         if (target != null) {

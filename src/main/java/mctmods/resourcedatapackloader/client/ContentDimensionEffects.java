@@ -14,6 +14,7 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RegisterDimensionSpecialEffectsEvent;
@@ -29,6 +30,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     private static final float GRAY_PULL = 0.04F;
     private static final Vector3f BOSS_SHADE = new Vector3f(0.7F, 0.6F, 0.6F);
     private static final Vector3f GRAY = new Vector3f(0.75F, 0.75F, 0.75F);
+    private static final DimensionSpecialEffects DAYLIT = new OverworldEffects();
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
     @Nullable private final ContentSkyRenderer sky;
@@ -40,14 +42,36 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
         super(cloudHeight, base.hasGround(), skyType, base.forceBrightLightmap(), base.constantAmbientLight());
         this.def = def;
         this.base = base;
-        this.sky = def == null || def.traits().sky() == null ? null : new ContentSkyRenderer(def.traits().sky());
+        this.sky = def == null || def.traits().sky() == null || !drawsWholeSky(def) ? null : new ContentSkyRenderer(def.traits().sky(), def.traits().moon());
         this.rain = def == null ? null : def.traits().rain();
         this.weather = rain == null ? null : new ContentWeatherRenderer(rain);
     }
 
+    private static boolean drawsWholeSky(DimensionDef def) {
+        if (!ContentDimensions.existing(def.key())) { return true; }
+        return def.gives("sky.bodies") || def.gives("sky.stars") || def.gives("sky.sun.size") || def.gives("sky.moon.size");
+    }
+
+    public static DimensionSpecialEffects existing(DimensionSpecialEffects base, @Nullable DimensionDef def) {
+        if (def == null || !def.hasEffects() || !ContentDimensions.existing(def.key())) { return base; }
+        if (def.gives("sky.surfaceWorld") && !def.surfaceWorld()) { return new ContentDimensionEffects(def, base, Float.NaN, SkyType.NONE); }
+        SkyType skyType = def.gives("sky.surfaceWorld") && base.skyType() == SkyType.NONE ? SkyType.NORMAL : base.skyType();
+        return new ContentDimensionEffects(def, base, def.gives("sky.cloudHeight") ? def.cloudHeight() : base.getCloudHeight(), skyType);
+    }
+
+    public static ResourceLocation sunTexture(@Nullable ClientLevel level, ResourceLocation vanilla) {
+        DimensionDef def = ContentDimensions.def(level);
+        return def == null || def.traits().sky() == null ? vanilla : def.traits().sky().sunTexture();
+    }
+
+    public static ResourceLocation moonTexture(@Nullable ClientLevel level, ResourceLocation vanilla) {
+        DimensionDef def = ContentDimensions.def(level);
+        return def == null || def.traits().moon() == null ? vanilla : def.traits().moon().texture();
+    }
+
     public static void register(RegisterDimensionSpecialEffectsEvent event) {
         for (DimensionDef def : ContentDimensions.all()) {
-            if (!def.hasEffects()) { continue; }
+            if (!def.hasEffects() || ContentDimensions.existing(def.key())) { continue; }
             DimensionSpecialEffects base = new OverworldEffects();
             if (def.surfaceWorld()) { event.register(def.key(), new ContentDimensionEffects(def, base, def.cloudHeight() >= 0 ? def.cloudHeight() : base.getCloudHeight(), SkyType.NORMAL)); }
             else { event.register(def.key(), new ContentDimensionEffects(def, base, Float.NaN, SkyType.NONE)); }
@@ -72,7 +96,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     @Override @Nonnull public Vec3 getBrightnessDependentFogColor(@Nonnull Vec3 color, float brightness) {
         SkyLookDef look = look();
-        Vec3 own = base.getBrightnessDependentFogColor(def == null || def.fogColor() < 0 ? color : Vec3.fromRGB24(def.fogColor()), brightness);
+        Vec3 own = def == null || def.fogColor() < 0 ? base.getBrightnessDependentFogColor(color, brightness) : DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(def.fogColor()), brightness);
         return look != null && look.sampleFog() ? ContentFogSampler.color(own) : own;
     }
 
@@ -82,6 +106,7 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     @Override public void adjustLightmapColors(@Nonnull ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, int pixelY, @Nonnull Vector3f colors) {
+        base.adjustLightmapColors(level, partialTicks, skyDarken, blockLightRedFlicker, skyLight, pixelX, pixelY, colors);
         SkyLookDef look = look();
         if (look == null || look.plainLight() || forceBrightLightmap()) { return; }
         float block = LightTexture.getBrightness(level.dimensionType(), pixelX) * blockLightRedFlicker;
@@ -107,16 +132,15 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     @Override public boolean renderSky(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull Matrix4f modelViewMatrix, @Nonnull Camera camera, @Nonnull Matrix4f projectionMatrix, boolean isFoggy, @Nonnull Runnable setupFog) {
         if (def != null && !def.renderSky()) { return true; }
-        if (sky == null) { return false; }
+        if (sky == null) { return base.renderSky(level, ticks, partialTick, modelViewMatrix, camera, projectionMatrix, isFoggy, setupFog); }
         sky.render(level, partialTick, modelViewMatrix, camera, projectionMatrix, isFoggy, setupFog);
         return true;
     }
 
     @Override public boolean renderClouds(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull PoseStack poseStack, double camX, double camY, double camZ, @Nonnull Matrix4f modelViewMatrix, @Nonnull Matrix4f projectionMatrix) {
-        if (def == null) { return false; }
-        if (!def.renderClouds()) { return true; }
-        SkyLookDef look = def.look();
-        if (drawing != null || look == null || !look.movesClouds()) { return false; }
+        if (def != null && !def.renderClouds()) { return true; }
+        SkyLookDef look = look();
+        if (drawing != null || look == null || !look.movesClouds()) { return base.renderClouds(level, ticks, partialTick, poseStack, camX, camY, camZ, modelViewMatrix, projectionMatrix); }
         LevelRenderer renderer = Minecraft.getInstance().levelRenderer;
         double drift = (ticks + partialTick) * DRIFT;
         List<SkyLookDef.CloudLayer> layers = look.cloudLayers().isEmpty() ? List.of(new SkyLookDef.CloudLayer(Float.NaN, look.cloudSpeed(), SkyLookDef.UNSET)) : look.cloudLayers();
@@ -131,15 +155,14 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     }
 
     @Override public boolean renderSnowAndRain(@Nonnull ClientLevel level, int ticks, float partialTick, @Nonnull LightTexture lightTexture, double camX, double camY, double camZ) {
-        if (def == null) { return false; }
-        if (!def.renderWeather()) { return true; }
-        if (weather == null) { return false; }
+        if (def != null && !def.renderWeather()) { return true; }
+        if (weather == null) { return base.renderSnowAndRain(level, ticks, partialTick, lightTexture, camX, camY, camZ); }
         weather.render(level, ticks, partialTick, lightTexture, camX, camY, camZ);
         return true;
     }
 
     @Override public boolean tickRain(@Nonnull ClientLevel level, int ticks, @Nonnull Camera camera) {
-        if (rain == null) { return false; }
+        if (rain == null) { return base.tickRain(level, ticks, camera); }
         RainSplash.tick(level, rain, ticks, camera);
         return true;
     }

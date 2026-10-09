@@ -33,15 +33,20 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentDimensions {
     private static final ResourceLocation OVERWORLD = Level.OVERWORLD.location();
+    private static final Set<ResourceLocation> VANILLA = Set.of(OVERWORLD, Level.NETHER.location(), Level.END.location());
+    private static final String TERRAIN_TYPE = "terrain.type";
     private static final Map<ResourceLocation, DimensionDef> DEFS = new LinkedHashMap<>();
+    private static final Set<ResourceLocation> EXISTING = new HashSet<>();
     private static final Map<UUID, ResourceLocation> DIED_IN = new HashMap<>();
     private static final DimensionValues<Integer> CLOUDS = new DimensionValues<>("cloudHeight", ContentDimensions::height, "which is not a whole number");
     private static boolean loaded;
@@ -55,12 +60,20 @@ public final class ContentDimensions {
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
             DimensionDef def = ContentDimensionParser.parse(key, contents);
-            if (def != null) { DEFS.put(key, def); }
+            if (def == null) { return; }
+            DEFS.put(key, def);
+            if (VANILLA.contains(key) || GameData.has(ResourceLocation.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + ".json"))) { EXISTING.add(key); }
         });
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
     }
 
     public static Collection<DimensionDef> all() { return Collections.unmodifiableCollection(DEFS.values()); }
+
+    public static boolean existing(ResourceLocation dimension) { return EXISTING.contains(dimension); }
+
+    public static boolean sets(DimensionDef def, String option) { return !EXISTING.contains(def.key()) || def.gives(option); }
+
+    public static boolean shapes(DimensionDef def) { return sets(def, TERRAIN_TYPE); }
 
     @Nullable public static DimensionDef def(ResourceLocation dimension) { return DEFS.get(dimension); }
 
@@ -73,35 +86,73 @@ public final class ContentDimensions {
 
     public static void generate() {
         List<String> made = new ArrayList<>();
+        List<String> applied = new ArrayList<>();
         for (DimensionDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
+            if (EXISTING.contains(def.key())) {
+                existing(def);
+                applied.add(def.key().toString());
+                continue;
+            }
             JsonObject type = GameData.json(ResourceLocation.withDefaultNamespace("dimension_type/" + def.base() + ".json"));
             if (type == null) { continue; }
-            String namespace = def.key().getNamespace();
-            String path = def.key().getPath();
-            type.addProperty("has_skylight", def.hasSkyLight());
-            type.addProperty("natural", def.surfaceWorld());
-            type.addProperty("ultrawarm", def.nether() || def.waterVaporizes());
-            type.addProperty("coordinate_scale", def.movementFactor());
-            type.addProperty("bed_works", def.beds());
-            type.addProperty("respawn_anchor_works", !def.beds());
-            type.addProperty("ambient_light", def.ambientLight());
-            if (def.fixedTime() >= 0) { type.addProperty("fixed_time", def.fixedTime()); }
-            else { type.remove("fixed_time"); }
-            if (def.shapesHeight()) {
-                type.addProperty("min_y", def.minHeight());
-                type.addProperty("height", def.maxHeight() - def.minHeight());
-                type.addProperty("logical_height", def.maxHeight() - def.minHeight());
-            }
+            retype(def, type);
             type.addProperty("effects", def.hasEffects() ? def.key().toString() : OVERWORLD.toString());
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension_type/" + path + ".json", type.toString());
-            JsonObject dimension = new JsonObject();
-            dimension.addProperty("type", def.key().toString());
-            dimension.add("generator", generator(def));
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "dimension/" + path + ".json", dimension.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension_type/" + def.key().getPath() + ".json", type.toString());
+            stem(def, def.key());
             made.add(def.key().toString());
         }
         if (!made.isEmpty()) { Summary.info("dimensions.generated", "Generated " + made.size() + " dimension(s) with their types: " + String.join(", ", made)); }
+        if (!applied.isEmpty()) { Summary.info("dimensions.existing", "Applied " + applied.size() + " dimension file(s) to existing dimensions: " + String.join(", ", applied)); }
+    }
+
+    private static void existing(DimensionDef def) {
+        if (!def.gives(TERRAIN_TYPE) && (def.gives("terrain") || def.gives("biomes"))) { ContentLog.LOGGER.error("Dimension {} already exists and sets terrain or biome options without terrain.type, so its terrain is left as it is", def.key()); }
+        ResourceLocation typeId = typeOf(def.key());
+        if (typeId == null) { return; }
+        JsonObject type = GameData.json(ResourceLocation.fromNamespaceAndPath(typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json"));
+        if (type != null) {
+            String before = type.toString();
+            retype(def, type);
+            if (before.equals(type.toString())) { ContentLog.LOGGER.debug("Dimension {} sets nothing its type {} holds, so the type is left as it is", def.key(), typeId); }
+            else if (!VANILLA.contains(def.key()) && ResourceLocation.DEFAULT_NAMESPACE.equals(typeId.getNamespace())) { ContentLog.LOGGER.error("Dimension {} uses the game's own type {}, which other dimensions share, so its type options are left out", def.key(), typeId); }
+            else { GeneratedResources.put(PackType.SERVER_DATA, typeId.getNamespace(), "dimension_type/" + typeId.getPath() + ".json", type.toString()); }
+        }
+        if (def.gives(TERRAIN_TYPE)) { stem(def, typeId); }
+    }
+
+    @Nullable private static ResourceLocation typeOf(ResourceLocation dimension) {
+        if (VANILLA.contains(dimension)) { return dimension; }
+        JsonObject stem = GameData.json(ResourceLocation.fromNamespaceAndPath(dimension.getNamespace(), "dimension/" + dimension.getPath() + ".json"));
+        ResourceLocation type = stem == null ? null : ResourceLocation.tryParse(Json.text(stem, "type"));
+        if (stem != null && type == null) { ContentLog.LOGGER.error("Dimension {} names its type inline or not at all, so the file's type options are left out", dimension); }
+        return type;
+    }
+
+    private static void retype(DimensionDef def, JsonObject type) {
+        if (sets(def, "sky.hasSkyLight")) { type.addProperty("has_skylight", def.hasSkyLight()); }
+        if (sets(def, "sky.surfaceWorld")) { type.addProperty("natural", def.surfaceWorld()); }
+        if (sets(def, "sky.nether") || sets(def, "sky.waterVaporizes")) { type.addProperty("ultrawarm", def.nether() || def.waterVaporizes()); }
+        if (sets(def, "sky.movementFactor")) { type.addProperty("coordinate_scale", def.movementFactor()); }
+        if (sets(def, "sky.beds")) {
+            type.addProperty("bed_works", def.beds());
+            type.addProperty("respawn_anchor_works", !def.beds());
+        }
+        if (sets(def, "sky.ambientLight")) { type.addProperty("ambient_light", def.ambientLight()); }
+        if (sets(def, "sky.fixedTime") && def.fixedTime() >= 0) { type.addProperty("fixed_time", def.fixedTime()); }
+        else if (sets(def, "sky.fixedTime")) { type.remove("fixed_time"); }
+        if (shapes(def) && def.shapesHeight()) {
+            type.addProperty("min_y", def.minHeight());
+            type.addProperty("height", def.maxHeight() - def.minHeight());
+            type.addProperty("logical_height", def.maxHeight() - def.minHeight());
+        }
+    }
+
+    private static void stem(DimensionDef def, ResourceLocation type) {
+        JsonObject dimension = new JsonObject();
+        dimension.addProperty("type", type.toString());
+        dimension.add("generator", generator(def));
+        GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "dimension/" + def.key().getPath() + ".json", dimension.toString());
     }
 
     private static JsonObject generator(DimensionDef def) {
@@ -249,11 +300,11 @@ public final class ContentDimensions {
 
     public static boolean structuresOff(ServerLevel level) {
         DimensionDef def = def(level);
-        return def != null && !def.structures();
+        return def != null && shapes(def) && !def.structures();
     }
 
     public static boolean allStructuresOn() {
-        for (DimensionDef def : DEFS.values()) { if (!def.structures()) { return false; } }
+        for (DimensionDef def : DEFS.values()) { if (shapes(def) && !def.structures()) { return false; } }
         return true;
     }
 
@@ -261,7 +312,7 @@ public final class ContentDimensions {
         BlockPos top = top(level, column, type);
         if (top.getY() > level.getMinBuildHeight() + 1) { return top; }
         DimensionDef def = def(level);
-        if (def == null) { return top; }
+        if (def == null || !sets(def, "sky.groundLevel")) { return top; }
         return new BlockPos(column.getX(), Mth.clamp(def.groundLevel(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - 2), column.getZ());
     }
 

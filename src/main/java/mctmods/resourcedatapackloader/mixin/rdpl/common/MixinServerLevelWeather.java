@@ -13,7 +13,10 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
+import net.minecraft.world.level.storage.ServerLevelData;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,6 +24,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerLevel.class) public abstract class MixinServerLevelWeather {
+    @Shadow @Final private ServerLevelData serverLevelData;
     @Unique private final ContentWeatherCycle rdpl$weatherCycle = new ContentWeatherCycle();
 
     @WrapOperation(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;hasSkyLight()Z")) private boolean rdpl$ownWeather(DimensionType type, Operation<Boolean> original) {
@@ -31,6 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
             ContentWeatherCycle.clear(level);
             return false;
         }
+        if (traits.alwaysRain()) { return ContentWeatherCycle.pour(level, serverLevelData, original.call(type)); }
         if (cycle != null) {
             rdpl$weatherCycle.tick(level, cycle);
             return false;

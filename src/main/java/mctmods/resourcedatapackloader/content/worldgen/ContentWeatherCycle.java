@@ -5,10 +5,13 @@ import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.DerivedLevelData;
+import net.minecraft.world.level.storage.ServerLevelData;
 
 public final class ContentWeatherCycle {
     private static final float STEP = 0.004F;
     private static final float THUNDER_STEP = 0.01F;
+    private static final int RAIN_HOLD = 12000;
     private boolean started;
     private boolean raining;
     private boolean thundering;
@@ -22,6 +25,20 @@ public final class ContentWeatherCycle {
         level.rainLevel = 0.0F;
         level.oThunderLevel = 0.0F;
         level.thunderLevel = 0.0F;
+    }
+
+    public static boolean pour(Level level, ServerLevelData data, boolean skyLit) {
+        if (skyLit && !(data instanceof DerivedLevelData)) {
+            data.setClearWeatherTime(0);
+            data.setRaining(true);
+            if (data.getRainTime() < 2) { data.setRainTime(RAIN_HOLD); }
+            return true;
+        }
+        level.oRainLevel = level.rainLevel;
+        level.rainLevel = Mth.clamp(level.rainLevel + THUNDER_STEP, 0.0F, 1.0F);
+        level.oThunderLevel = level.thunderLevel;
+        level.thunderLevel = Mth.clamp(level.thunderLevel + (level.getLevelData().isThundering() ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+        return false;
     }
 
     public void tick(Level level, DimensionTraitsDef.Cycle cycle) {

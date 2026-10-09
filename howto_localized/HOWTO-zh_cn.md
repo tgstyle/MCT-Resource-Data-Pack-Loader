@@ -3104,6 +3104,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3117,6 +3118,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3137,6 +3139,23 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
 
 在此版本中，维度是数据包条目：维度类型和噪声设置会替你写入资源包的命名空间下，因此原版客户端在加入时会被告知它的存在，并像前往其他任何维度一样前往那里。维度在世界下保有它自己的存档文件夹，以其 id 命名，在有人处于其中，或有 `forceload` 保持着某个区块时加载。
+
+### 已有维度
+
+*维度*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+位于 `minecraft/dimensions/overworld.json`、`the_nether.json` 或 `the_end.json` 的文件，或位于另一个模组或数据包所添加维度的 id 处的文件（例如 `othermod/dimensions/caverns.json`），会修改那个维度，而不是新增一个。文件写下的每个键都在那里生效，省略的每个键都保持该维度自身的行为，因此它的关卡数据和区块保持原样，现有存档照常加载。
+
+`terrain.type` 会更换生成器：此后生成的区块都由它生成，`generatorOptions`、`structures` 和 `biomes` 块也随之生效；没有 `terrain.type` 时，这些键会被忽略，日志中会说明，因为在此版本中维度的生物群系属于其生成器。维度类型所含的键，例如 `hasSkyLight` 或 `ambientLight`，会写入该维度自己的类型。使用游戏共享类型之一、或在文件中内联写出类型的模组维度会保持其类型不变，日志中会说明。摘要中的 `dimensions.existing` 一行列出以这种方式应用的每个文件。
+
+只设置了 `texture` 的 `sun` 或 `moon` 会替换该维度自身天空中的图像，月亮保留其月相。设置 `bodies`、`stars`、`sun.size` 或 `moon.size` 会用 [RDPL 自己的天空](#天空渲染器)取代整个天空。
 
 ### `terrain` 块
 
@@ -3205,7 +3224,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *维度*
 
-设置 `sun`、`bodies` 或 `stars` 中的任何一个，都会把原版天空换成 RDPL 自己的，它绘制与原版相同的穹顶、日出光辉和虚空，但太阳、其他天体和星星取自资源包。它只在客户端绘制，专用服务器绝不会加载它。`renderSky: false` 仍然优先，什么都不绘制，而 `renderClouds: false` 是制作无云天空的方法。
+设置 `sun`、`moon`、`bodies` 或 `stars` 中的任何一个，都会把原版天空换成 RDPL 自己的，它绘制与原版相同的穹顶、日出光辉和虚空，但太阳、其他天体和星星取自资源包。它只在客户端绘制，专用服务器绝不会加载它。`renderSky: false` 仍然优先，什么都不绘制，而 `renderClouds: false` 是制作无云天空的方法。
 
 没有 `bodies` 时，原版的月亮及其月相保持不变。有了 `bodies`，该列表就是太阳之外的一切，因此空列表就是没有月亮的天空。
 
@@ -3213,6 +3232,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | --- | --- | --- | --- | --- |
 | `sun.texture` | 否 | 纹理路径 | 原版太阳 | 太阳的图片 |
 | `sun.size` | 否 | 浮点数 | `30` | 在距离 100 处太阳宽度的一半。`0` 将其隐藏 |
+| `moon.texture` | 否 | 纹理路径 | 原版月亮 | 月亮的图像：八个月相排成一张图，横四竖二，与原版的 `moon_phases.png` 相同 |
+| `moon.size` | 否 | 浮点数 | `20` | 在距离 100 处月亮宽度的一半。`0` 将其隐藏。有 `bodies` 时不起作用 |
 | `bodies[].texture` | 是 | 纹理路径 | | 天体的图片 |
 | `bodies[].size` | 否 | 浮点数 | `20` | 在距离 100 处其宽度的一半。原版月亮为 `20` |
 | `bodies[].angle` | 否 | 浮点数，度 | `180` | 它在太阳轨迹上落后于太阳多远。`180` 是原版月亮所在的位置。关闭 `followsTime` 时，从正上方起量，因此 `0` 是天顶，`90` 是地平线 |
@@ -3381,6 +3402,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `lightning` | 否 | boolean | `true` | 关闭后，降雨和雷暴不会伴有闪电 |
 | `snow` | 否 | boolean | `true` | 关闭后，雪不会积起来 |
 | `freeze` | 否 | boolean | `true` | 关闭后，水永远不会结冰 |
+| `alwaysRain` | 否 | 布尔值 | `false` | 开启后，这里一直下雨，没有放晴的时候，优先于任何 `cycle`。`precipitation` 关闭时不起作用 |
 | `cycle.rainTicks` | 否 | int 或 `[min, max]` | `[1000, 4600]` | 一场阵雨持续多久 |
 | `cycle.clearTicks` | 否 | int 或 `[min, max]` | `[1000, 3000]` | 两场阵雨之间的晴朗间隔持续多久 |
 | `cycle.maxStrength` | 否 | float，大于 0 且至多为 1 | `0.6` | 阵雨最大能达到的强度。每场阵雨的强度在此值的四分之一到全部之间浮动 |
