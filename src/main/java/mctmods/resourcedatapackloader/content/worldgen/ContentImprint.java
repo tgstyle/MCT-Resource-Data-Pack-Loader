@@ -165,7 +165,7 @@ public final class ContentImprint implements IContentShape {
         Vec3i span = seat.span();
         int cornerX = seat.cornerX();
         int cornerZ = seat.cornerZ();
-        if (blocked(placer, cornerX, cornerZ, span)) { return false; }
+        if (blocked(placer, cornerX, cornerZ, span) || placer.keepsAny(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
         if (!loaded.placeInWorld(level, fitted, fitted, settings, random, Block.UPDATE_CLIENTS)) { return false; }
         stock(placer, random, cornerX, origin.getY(), cornerZ, span);

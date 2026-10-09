@@ -10,21 +10,27 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
+import java.util.List;
 
 public final class ContentPlacer {
-    private static final int WRITE_REACH = 1;
+    public static final int WRITE_REACH = 1;
     public static final int CHUNK_ONLY = 0;
     private final WorldGenLevel level;
     private final ContentPalette palette;
     private final int centerX;
     private final int centerZ;
     private final int reach;
+    private final List<BoundingBox> keepOut;
     private final BlockPos.MutableBlockPos scratch = new BlockPos.MutableBlockPos();
     private final BlockPos.MutableBlockPos beside = new BlockPos.MutableBlockPos();
 
     public ContentPlacer(WorldGenLevel level, ContentPalette palette, ChunkPos center) { this(level, palette, center, WRITE_REACH); }
 
-    public ContentPlacer(WorldGenLevel level, ContentPalette palette, ChunkPos center, int reach) {
+    public ContentPlacer(WorldGenLevel level, ContentPalette palette, ChunkPos center, int reach) { this(level, palette, center, reach, List.of()); }
+
+    private ContentPlacer(WorldGenLevel level, ContentPalette palette, ChunkPos center, int reach, List<BoundingBox> keepOut) {
+        this.keepOut = keepOut;
         this.level = level;
         this.palette = palette;
         this.centerX = center.x;
@@ -39,7 +45,25 @@ public final class ContentPlacer {
 
     public WorldGenLevel level() { return level; }
 
-    public ContentPlacer rebound(ContentPalette other) { return new ContentPlacer(level, other, new ChunkPos(centerX, centerZ), reach); }
+    public ContentPlacer rebound(ContentPalette other) { return new ContentPlacer(level, other, new ChunkPos(centerX, centerZ), reach, keepOut); }
+
+    public ContentPlacer keeping(List<BoundingBox> footprints) { return new ContentPlacer(level, palette, new ChunkPos(centerX, centerZ), reach, footprints); }
+
+    public boolean keepsAny(int minX, int minZ, int maxX, int maxZ) {
+        for (BoundingBox footprint : keepOut) {
+            if (footprint.intersects(minX, minZ, maxX, maxZ)) { return true; }
+        }
+        return false;
+    }
+
+    public boolean keeps(int x, int z) { return keeps(keepOut, x, z); }
+
+    public static boolean keeps(List<BoundingBox> footprints, int x, int z) {
+        for (BoundingBox footprint : footprints) {
+            if (footprint.intersects(x, z, x, z)) { return true; }
+        }
+        return false;
+    }
 
     public int lowX() { return (centerX - reach) << 4; }
 
@@ -88,12 +112,12 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(BlockState state, int x, int y, int z) {
-        if (y < floorY() || y >= ceilingY() || unwritable(x, z)) { return false; }
+        if (y < floorY() || y >= ceilingY() || unwritable(x, z) || keeps(x, z)) { return false; }
         return level.setBlock(scratch.set(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     public boolean occupied(int x, int y, int z) {
-        if (!replaces(x, y, z)) { return true; }
+        if (keeps(x, z) || !replaces(x, y, z)) { return true; }
         return palette.wantsNearby() && !beside(x, y, z);
     }
 

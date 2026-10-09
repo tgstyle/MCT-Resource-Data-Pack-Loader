@@ -94,6 +94,7 @@ public final class ContentTree implements IContentShape {
         WorldGenLevel level = placer.level();
         int tall = random.nextInt(3) + least;
         if (position.getY() < placer.floorY() || position.getY() >= placer.ceilingY() - tall - 1) { return false; }
+        if (placer.keepsAny(position.getX() - 2, position.getZ() - 2, position.getX() + 2, position.getZ() + 2)) { return false; }
         if (!rooted(level, position.below(), surface)) { return false; }
         if (!clear(placer, position, tall)) { return false; }
         BlockPos below = position.below();
