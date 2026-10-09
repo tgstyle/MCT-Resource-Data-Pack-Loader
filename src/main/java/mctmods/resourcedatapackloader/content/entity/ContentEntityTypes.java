@@ -58,7 +58,7 @@ public final class ContentEntityTypes {
 
     private static void register(IForgeRegistry<EntityEntry> registry, ResourceLocation key, EntityVariantDef def, EntityEntry base) {
         boolean rocket = def.rocket != null && EntityClassMaker.rocket(base.getEntityClass());
-        if (def.rocket != null && !rocket) { ContentLog.LOGGER.error("Entity variant {} has a galacticraft block but {} is not a Galacticraft rocket that carries a rider, so the block is ignored", key, def.base); }
+        if (def.rocket != null && !rocket) { ContentLog.LOGGER.error("Entity variant {} has a galacticraft block but {} is not a rocket built on Galacticraft's EntitySpaceshipBase or ExtraPlanets' EntityElectricSpaceshipBase, so the block is ignored", key, def.base); }
         Class<? extends Entity> made$class = EntityClassMaker.make(base.getEntityClass(), key.getNamespace() + "_" + key.getPath(), def.ignoresSpawnRules, def.hostile, rocket, def.storage != null);
         if (made$class == null) { return; }
         EntityEntryBuilder<Entity> builder = EntityEntryBuilder.create();

@@ -8,7 +8,7 @@ import mctmods.resourcedatapackloader.content.item.ContentItemRocket;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import micdoodle8.mods.galacticraft.api.entity.IRocketType.EnumRocketType;
-import micdoodle8.mods.galacticraft.api.prefab.entity.EntityTieredRocket;
+import micdoodle8.mods.galacticraft.api.prefab.entity.EntitySpaceshipBase;
 import micdoodle8.mods.galacticraft.core.GCBlocks;
 import micdoodle8.mods.galacticraft.core.GCFluids;
 import micdoodle8.mods.galacticraft.core.entities.player.GCPlayerStats;
@@ -18,6 +18,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -56,17 +57,19 @@ public final class GcRockets {
     }
 
     public static List<ItemStack> dropped(Entity rocket, List<ItemStack> drops) {
-        EntityTieredRocket flown = (EntityTieredRocket) rocket;
-        for (int slot = 0; slot < flown.getSizeInventory(); slot++) {
-            ItemStack stack = flown.getStackInSlot(slot);
-            if (!stack.isEmpty()) { drops.add(stack); }
+        if (rocket instanceof IInventory) {
+            IInventory flown = (IInventory) rocket;
+            for (int slot = 0; slot < flown.getSizeInventory(); slot++) {
+                ItemStack stack = flown.getStackInSlot(slot);
+                if (!stack.isEmpty()) { drops.add(stack); }
+            }
         }
         drops.addAll(EntityStorage.taken(rocket));
         Item item = item(rocket);
         if (item == null) { return drops; }
         ItemStack packed = carrying(item, NonNullList.create());
         NBTTagCompound tag = packed.getTagCompound();
-        if (tag != null) { tag.setInteger(FUEL, flown.fuelTank.getFluidAmount()); }
+        if (tag != null) { tag.setInteger(FUEL, rocket instanceof EntitySpaceshipBase ? ((EntitySpaceshipBase) rocket).fuelTank.getFluidAmount() : EpRockets.charge(rocket)); }
         drops.add(packed);
         return drops;
     }
@@ -84,12 +87,13 @@ public final class GcRockets {
     }
 
     public static EnumActionResult place(ItemStack stack, World world, BlockPos pos, boolean keeps, ResourceLocation variant) {
+        Class<? extends Entity> type = EntityList.getClass(variant);
+        boolean electric = type != null && IPackRocket.class.isAssignableFrom(type) && !EntitySpaceshipBase.class.isAssignableFrom(type);
         for (int x = -1; x < 2; x++) {
             for (int z = -1; z < 2; z++) {
                 BlockPos pad = pos.add(x, 0, z);
-                IBlockState state = world.getBlockState(pad);
-                if (state.getBlock() != GCBlocks.landingPadFull || state.getBlock().getMetaFromState(state) != 0) { continue; }
-                if (!placed(stack, world, pad, variant)) { return EnumActionResult.FAIL; }
+                if (!pad(world.getBlockState(pad), electric)) { continue; }
+                if (!placed(stack, world, pad, variant, electric)) { return EnumActionResult.FAIL; }
                 if (!keeps) { stack.shrink(1); }
                 return EnumActionResult.SUCCESS;
             }
@@ -97,28 +101,39 @@ public final class GcRockets {
         return EnumActionResult.PASS;
     }
 
-    private static boolean placed(ItemStack stack, World world, BlockPos pad, ResourceLocation variant) {
-        TileEntity tile = world.getTileEntity(pad);
-        if (!(tile instanceof TileEntityLandingPad) || ((TileEntityLandingPad) tile).getDockedEntity() != null) { return false; }
+    private static boolean pad(IBlockState state, boolean electric) {
+        if (electric) { return EpRockets.pad(state); }
+        return state.getBlock() == GCBlocks.landingPadFull && state.getBlock().getMetaFromState(state) == 0;
+    }
+
+    private static boolean free(@Nullable TileEntity tile, boolean electric) {
+        if (electric) { return EpRockets.free(tile); }
+        return tile instanceof TileEntityLandingPad && ((TileEntityLandingPad) tile).getDockedEntity() == null;
+    }
+
+    private static boolean placed(ItemStack stack, World world, BlockPos pad, ResourceLocation variant, boolean electric) {
+        if (!free(world.getTileEntity(pad), electric)) { return false; }
         Entity made = EntityList.createEntityByIDFromName(variant, world);
         RocketDef def = made == null ? null : RocketCargo.def(made);
-        if (def == null || !(made instanceof EntityTieredRocket) || !(made instanceof IPackRocket)) {
-            ContentLog.LOGGER.error("Rocket item {} places {}, which is not an entity variant of a Galacticraft rocket with a galacticraft block", stack.getItem().getRegistryName(), variant);
+        if (def == null || !(made instanceof IPackRocket)) {
+            ContentLog.LOGGER.error("Rocket item {} places {}, which is not an entity variant of a Galacticraft or ExtraPlanets rocket with a galacticraft block", stack.getItem().getRegistryName(), variant);
             return false;
         }
-        EntityTieredRocket rocket = (EntityTieredRocket) made;
-        rocket.rocketType = def.cargoSlots == 27 ? EnumRocketType.INVENTORY27 : def.cargoSlots == 36 ? EnumRocketType.INVENTORY36 : def.cargoSlots == 54 ? EnumRocketType.INVENTORY54 : EnumRocketType.DEFAULT;
-        NonNullList<ItemStack> cargo = NonNullList.withSize(rocket.getSizeInventory(), ItemStack.EMPTY);
+        IPackRocket rocket = (IPackRocket) made;
+        rocket.packType(def.cargoSlots == 27 ? EnumRocketType.INVENTORY27 : def.cargoSlots == 36 ? EnumRocketType.INVENTORY36 : def.cargoSlots == 54 ? EnumRocketType.INVENTORY54 : EnumRocketType.DEFAULT);
+        NonNullList<ItemStack> cargo = NonNullList.withSize(made instanceof IInventory ? ((IInventory) made).getSizeInventory() : 0, ItemStack.EMPTY);
         NBTTagCompound tag = stack.getTagCompound();
         if (tag != null && tag.hasKey(CARGO, CARGO_LIST)) { ItemStackHelper.loadAllItems(tag, cargo); }
         else { RocketCargo.preload(def, cargo); }
-        ((IPackRocket) rocket).packCargo(cargo);
-        rocket.setPosition(pad.getX() + 0.5D, pad.getY() + ON_PAD + rocket.getOnPadYOffset(), pad.getZ() + 0.5D);
-        rocket.prevPosX = rocket.posX;
-        rocket.prevPosY = rocket.posY;
-        rocket.prevPosZ = rocket.posZ;
-        world.spawnEntity(rocket);
-        if (tag != null && tag.hasKey(FUEL)) { rocket.fuelTank.fill(new FluidStack(GCFluids.fluidFuel, tag.getInteger(FUEL)), true); }
+        rocket.packCargo(cargo);
+        made.setPosition(pad.getX() + 0.5D, pad.getY() + ON_PAD + (electric ? EpRockets.offset(made) : ((EntitySpaceshipBase) made).getOnPadYOffset()), pad.getZ() + 0.5D);
+        made.prevPosX = made.posX;
+        made.prevPosY = made.posY;
+        made.prevPosZ = made.posZ;
+        world.spawnEntity(made);
+        if (tag == null || !tag.hasKey(FUEL)) { return true; }
+        if (electric) { EpRockets.charge(made, tag.getInteger(FUEL)); }
+        else { ((EntitySpaceshipBase) made).fuelTank.fill(new FluidStack(GCFluids.fluidFuel, tag.getInteger(FUEL)), true); }
         return true;
     }
 

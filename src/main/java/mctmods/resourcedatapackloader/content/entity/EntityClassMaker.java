@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.entity;
 import mctmods.resourcedatapackloader.content.interfaces.IPackRocket;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import com.google.common.collect.ImmutableSet;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.monster.IMob;
@@ -17,16 +18,19 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class EntityClassMaker {
     private static final String PACKAGE = "mctmods.resourcedatapackloader.generated.";
     private static final String[] SPAWN_CHECK = {"func_70601_bi", "getCanSpawnHere"};
     private static final String[] REMOVAL = {"func_70106_y", "setDead"};
-    private static final String TIERED_ROCKET = "micdoodle8.mods.galacticraft.api.prefab.entity.EntityTieredRocket";
-    private static final String AUTO_ROCKET = "micdoodle8/mods/galacticraft/api/prefab/entity/EntityAutoRocket";
+    private static final Set<String> SPACESHIPS = ImmutableSet.of("micdoodle8.mods.galacticraft.api.prefab.entity.EntitySpaceshipBase", "com.mjr.extraplanets.api.prefabs.entity.EntityElectricSpaceshipBase");
+    private static final String ROCKET_TYPE = "Lmicdoodle8/mods/galacticraft/api/entity/IRocketType$EnumRocketType;";
     private static final String ROCKETS = "mctmods/resourcedatapackloader/util/compat/GcRockets";
     private static final String STORAGE = "mctmods/resourcedatapackloader/content/entity/EntityStorage";
     private static Method define;
@@ -89,7 +93,7 @@ public final class EntityClassMaker {
             spawn.visitInsn(Opcodes.ICONST_1);
             close(spawn, Opcodes.IRETURN, 1, 1);
         }
-        if (rocket) { rocket(writer, parent); }
+        if (rocket) { rocket(writer, base, parent); }
         if (storage) { storage(writer, parent); }
         String dies = storage && !rocket(base) && !EntityLivingBase.class.isAssignableFrom(base) ? named(base, REMOVAL) : null;
         if (dies != null) {
@@ -139,23 +143,65 @@ public final class EntityClassMaker {
 
     static boolean rocket(Class<?> base) {
         for (Class<?> type = base; type != null; type = type.getSuperclass()) {
-            if (type.getName().equals(TIERED_ROCKET)) { return true; }
+            if (SPACESHIPS.contains(type.getName())) { return true; }
         }
         return false;
     }
 
-    private static void rocket(ClassWriter writer, String parent) {
+    private static boolean has(Class<?> base, String name, Class<?>... parameters) {
+        try {
+            base.getMethod(name, parameters);
+            return true;
+        }
+        catch (NoSuchMethodException absent) { return false; }
+    }
+
+    @Nullable private static Field field(Class<?> base, String name, String descriptor) {
+        for (Class<?> type = base; type != null; type = type.getSuperclass()) {
+            try {
+                Field found = type.getDeclaredField(name);
+                return Modifier.isPrivate(found.getModifiers()) || !Type.getDescriptor(found.getType()).equals(descriptor) ? null : found;
+            }
+            catch (NoSuchFieldException ignored) {
+            }
+        }
+        return null;
+    }
+
+    private static void setter(ClassWriter writer, Class<?> base, String method, String name, String descriptor) {
+        Field field = field(base, name, descriptor);
+        MethodVisitor set = open(writer, method, "(" + descriptor + ")V");
+        if (field == null) {
+            close(set, Opcodes.RETURN, 0, 2);
+            return;
+        }
+        load(set, 0, 1);
+        set.visitFieldInsn(Opcodes.PUTFIELD, Type.getInternalName(field.getDeclaringClass()), name, descriptor);
+        close(set, Opcodes.RETURN, 2, 2);
+    }
+
+    private static void rocket(ClassWriter writer, Class<?> base, String parent) {
         String entity = "L" + Type.getInternalName(Entity.class) + ";";
         String stack = "L" + Type.getInternalName(ItemStack.class) + ";";
         String player = "L" + Type.getInternalName(EntityPlayerMP.class) + ";";
-        String cargo = "L" + Type.getInternalName(NonNullList.class) + ";";
         String list = "L" + Type.getInternalName(List.class) + ";";
         for (String[] capped : new String[][] { { "getRocketTier", "tier" }, { "getFuelTankCapacity", "fuelTank" } }) {
+            if (!has(base, capped[0])) { continue; }
             MethodVisitor size = open(writer, capped[0], "()I");
             load(size, 0, 0);
             size.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, capped[0], "()I", false);
             size.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, capped[1], "(" + entity + "I)I", false);
             close(size, Opcodes.IRETURN, 2, 1);
+        }
+        if (has(base, "setPowerMaxCapacity", float.class)) {
+            MethodVisitor charge = open(writer, "setPowerMaxCapacity", "(F)V");
+            load(charge, 0, 0);
+            charge.visitVarInsn(Opcodes.FLOAD, 1);
+            charge.visitInsn(Opcodes.F2I);
+            charge.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "fuelTank", "(" + entity + "I)I", false);
+            charge.visitInsn(Opcodes.I2F);
+            charge.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "setPowerMaxCapacity", "(F)V", false);
+            close(charge, Opcodes.RETURN, 3, 2);
         }
         MethodVisitor drops = open(writer, "getItemsDropped", "(" + list + ")" + list);
         load(drops, 0, 1);
@@ -165,15 +211,15 @@ public final class EntityClassMaker {
         load(picked, 0);
         picked.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "picked", "(" + entity + ")" + stack, false);
         close(picked, Opcodes.ARETURN, 1, 2);
-        MethodVisitor flown = open(writer, "onTeleport", "(" + player + ")V");
-        load(flown, 0, 1);
-        flown.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "onTeleport", "(" + player + ")V", false);
-        load(flown, 0, 1);
-        flown.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "teleported", "(" + entity + player + ")V", false);
-        close(flown, Opcodes.RETURN, 2, 2);
-        MethodVisitor loads = open(writer, "packCargo", "(" + cargo + ")V");
-        load(loads, 0, 1);
-        loads.visitFieldInsn(Opcodes.PUTFIELD, AUTO_ROCKET, "stacks", cargo);
-        close(loads, Opcodes.RETURN, 2, 2);
+        if (has(base, "onTeleport", EntityPlayerMP.class)) {
+            MethodVisitor flown = open(writer, "onTeleport", "(" + player + ")V");
+            load(flown, 0, 1);
+            flown.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "onTeleport", "(" + player + ")V", false);
+            load(flown, 0, 1);
+            flown.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "teleported", "(" + entity + player + ")V", false);
+            close(flown, Opcodes.RETURN, 2, 2);
+        }
+        setter(writer, base, "packCargo", "stacks", "L" + Type.getInternalName(NonNullList.class) + ";");
+        setter(writer, base, "packType", "rocketType", ROCKET_TYPE);
     }
 }

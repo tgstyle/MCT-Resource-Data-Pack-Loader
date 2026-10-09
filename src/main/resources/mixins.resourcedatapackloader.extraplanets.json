@@ -5,6 +5,8 @@
   "refmap": "mixins.resourcedatapackloader.refmap.json",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
+    "MixinContainerElectricRocketInventory",
+    "MixinEntityElectricAutoRocket",
     "MixinMainHandlerServer"
   ],
   "client": [
