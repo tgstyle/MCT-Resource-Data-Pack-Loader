@@ -3342,7 +3342,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Sem `bodies`, a lua do vanilla e as suas fases permanecem. Com `bodies`, a lista
 | `bodies[].size` | não | float | `20` | Metade da sua largura a uma distância de 100. A lua do vanilla é `20` |
 | `bodies[].angle` | não | float, graus | `180` | Quão adiante na trajetória do sol ele fica, atrás do sol. `180` é onde está a lua do vanilla. Com `followsTime` desativado, é medido a partir do ponto diretamente acima, então `0` é o zênite e `90` o horizonte |
 | `bodies[].tilt` | não | float, graus | `0` | Quão afastado da trajetória do sol ele fica, para o norte ou o sul |
+| `bodies[].body` | não | nome | nenhum | Um corpo celeste do pacote, pelo nome ou pelo nome do arquivo. Se definir um `ring`, o mesmo anel é desenhado ao redor deste corpo, por trás e pela frente |
 | `bodies[].followsTime` | não | booleano | `true` | Desativado, ele fica parado no céu em vez de girar com o sol |
 | `stars.count` | não | int | `1500` | Quantas estrelas |
 | `stars.size` | não | float | `0.15` | A menor estrela; a maior é dois terços maior ainda |
@@ -3697,6 +3698,8 @@ Um arquivo aqui é um sistema estelar ou um planeta ou lua que fica no mapa sem 
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Todo corpo, seja um arquivo de `celestial/`, a `star` de um sistema ou o bloco `
 | `scaledDistance` | não | float | `distance` | A distância usada no mapa ampliado |
 | `orbitTime` | não | float, anos | `1.0`, uma lua `100`, uma estação `20` | Quanto tempo leva uma órbita no mapa. Negativo corre para trás |
 | `phaseShift` | não | float, radianos | `0`, uma estação espaçada | Onde na órbita ele começa. Uma estação sem esse valor começa 2.4 radianos depois da última estação ao redor do mesmo planeta, incluindo as estações das suas luas, para que duas nunca dividam o mesmo ponto |
+| `ring` | não | caminho de textura | nenhum | Apenas planetas e luas. Uma imagem só do anel, visto de viés e mais larga que alta, desenhada no mapa ao redor do corpo, por trás e pela frente, como o GalaxySpace faz com Saturno. Um anel embutido em `icon` espremeria o planeta no quadrado do ícone. Um [corpo do céu](#o-bloco-sky) que cite este corpo mostra o mesmo anel |
+| `ringSize` | não | float | `2.5` | A largura do anel como múltiplo da largura do corpo no mapa |
 | `ringColor` | não | cor hexadecimal | `19E599` | A linha da órbita, onde o mapa desenha uma |
 | `tier` | não | int | `1` para uma dimensão, o do seu pai para uma estação, `0` nos demais casos | O nível de foguete que o mapa mostra que ele exige. Com o GalaxySpace, o mapa do AsmodeusCore calcula o nível pela distância, e um corpo ao redor de outra estrela exige o nível máximo, a menos que `enableNewTierSystem` esteja desativado em `config/AsmodeusCore/core.conf` |
 

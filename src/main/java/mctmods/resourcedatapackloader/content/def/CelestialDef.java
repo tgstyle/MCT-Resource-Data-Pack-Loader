@@ -22,6 +22,8 @@ public final class CelestialDef {
     public final float orbitTime;
     public final float phaseShift;
     public final int ringColor;
+    @Nullable public final ResourceLocation ring;
+    public final float ringSize;
     public final int tier;
     public final String galaxy;
     public final float mapX;
@@ -31,7 +33,7 @@ public final class CelestialDef {
     public final List<String> requires;
     @Nullable public final GalaxySpaceDef galaxySpace;
 
-    public CelestialDef(ResourceLocation key, String kind, String name, String parent, ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, int tier, String galaxy, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
+    public CelestialDef(ResourceLocation key, String kind, String name, String parent, ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, @Nullable ResourceLocation ring, float ringSize, int tier, String galaxy, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
         this.key = key;
         this.kind = kind;
         this.name = name;
@@ -43,6 +45,8 @@ public final class CelestialDef {
         this.orbitTime = orbitTime;
         this.phaseShift = phaseShift;
         this.ringColor = ringColor;
+        this.ring = ring;
+        this.ringSize = ringSize;
         this.tier = tier;
         this.galaxy = galaxy;
         this.mapX = mapX;

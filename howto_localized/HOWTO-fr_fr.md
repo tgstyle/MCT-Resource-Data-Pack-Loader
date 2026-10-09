@@ -3342,7 +3342,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste co
 | `bodies[].size` | non | flottant | `20` | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20` |
 | `bodies[].angle` | non | flottant, degrés | `180` | Sa distance le long de la trajectoire du soleil, derrière celui-ci. `180` est l'endroit où se trouve la lune vanilla. Avec `followsTime` désactivé, elle se mesure depuis le point juste au-dessus de la tête, donc `0` est le zénith et `90` l'horizon |
 | `bodies[].tilt` | non | flottant, degrés | `0` | De combien il s'écarte de la trajectoire du soleil, vers le nord ou le sud |
+| `bodies[].body` | non | nom | aucun | Un corps céleste du pack, par son nom ou le nom de son fichier. S'il définit un `ring`, le même anneau est dessiné autour de ce corps, derrière et devant |
 | `bodies[].followsTime` | non | booléen | `true` | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil |
 | `stars.count` | non | entier | `1500` | Le nombre d'étoiles |
 | `stars.size` | non | flottant | `0.15` | La plus petite étoile ; la plus grande est encore deux tiers plus grosse |
@@ -3697,6 +3698,8 @@ Un fichier ici est soit un système stellaire, soit une planète ou une lune qui
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Chaque corps, qu'il s'agisse d'un fichier `celestial/`, de l'`star` d'un systèm
 | `scaledDistance` | non | flottant | `distance` | La distance utilisée sur la carte agrandie |
 | `orbitTime` | non | flottant, années | `1.0`, une lune `100`, une station `20` | Durée d'une orbite sur la carte. Une valeur négative tourne à l'envers |
 | `phaseShift` | non | flottant, radians | `0`, une station espacée | Où il commence sur son orbite. Une station sans cette clé commence 2.4 radians après la dernière station autour de la même planète, stations de ses lunes comprises, de sorte que deux stations ne partagent jamais le même point |
+| `ring` | non | chemin de texture | aucun | Planètes et lunes seulement. Une image de l'anneau seul, vu en biais et plus large que haut, dessinée sur la carte autour du corps, derrière et devant, comme GalaxySpace le fait pour Saturne. Un anneau intégré à `icon` écraserait la planète dans le carré de l'icône. Un [corps du ciel](#le-bloc-sky) qui nomme ce corps affiche le même anneau |
+| `ringSize` | non | float | `2.5` | La largeur de l'anneau en multiple de la largeur du corps sur la carte |
 | `ringColor` | non | couleur hexadécimale | `19E599` | La ligne d'orbite, là où la carte en dessine une |
 | `tier` | non | entier | `1` pour une dimension, celui de son parent pour une station, `0` sinon | Le niveau de fusée dont la carte indique qu'il est nécessaire. Avec GalaxySpace, la carte d'AsmodeusCore calcule plutôt le niveau d'après la distance, et un corps autour d'une autre étoile exige le niveau maximal, sauf si `enableNewTierSystem` est désactivé dans `config/AsmodeusCore/core.conf` |
 

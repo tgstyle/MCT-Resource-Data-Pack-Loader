@@ -190,11 +190,13 @@ public final class ContentParserDimensionTraits {
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
+                String ringBody = JsonUtils.getString(body, "body", "").trim();
                 found.add(new DimensionTraitsDef.Body(new ResourceLocation(JsonUtils.getString(body, "texture").trim()),
                         Math.max(0.0F, JsonUtils.getFloat(body, "size", 20.0F)),
                         JsonUtils.getFloat(body, "angle", 180.0F),
                         JsonUtils.getFloat(body, "tilt", 0.0F),
-                        JsonUtils.getBoolean(body, "followsTime", true)));
+                        JsonUtils.getBoolean(body, "followsTime", true),
+                        ringBody.isEmpty() ? null : ringBody));
             }
             bodies = Collections.unmodifiableList(found);
         }

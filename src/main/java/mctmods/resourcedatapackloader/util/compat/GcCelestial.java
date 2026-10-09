@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.util.BodyRings;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -24,7 +25,9 @@ import micdoodle8.mods.galacticraft.core.util.WorldUtil;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.DimensionManager;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Loader;
+import net.minecraftforge.fml.relauncher.Side;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -86,6 +89,7 @@ public final class GcCelestial {
             }
             else { ContentLog.LOGGER.error("Dimension {} could not be put on the Galacticraft map, so it is not registered", dimension.registryName); }
         }
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { GcRings.hook(); }
         if (!made.isEmpty()) { Summary.info("galacticraft", "Put " + made.size() + " pack body(ies) on the Galacticraft map: " + made); }
     }
 
@@ -171,6 +175,7 @@ public final class GcCelestial {
         body.setRingColorRGB(((def.ringColor >> 16) & 255) / 255.0F, ((def.ringColor >> 8) & 255) / 255.0F, (def.ringColor & 255) / 255.0F);
         body.setTierRequired(def.tier);
         body.setBodyIcon(def.icon);
+        BodyRings.register(def);
     }
 
     private static boolean dimension(DimensionDef dimension, GalacticraftDef gc) {

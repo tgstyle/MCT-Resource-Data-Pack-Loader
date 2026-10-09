@@ -85,8 +85,10 @@ public final class DimensionTraitsDef {
         public final float angle;
         public final float tilt;
         public final boolean followsTime;
+        @Nullable public final String ringBody;
 
-        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime) {
+        public Body(ResourceLocation texture, float size, float angle, float tilt, boolean followsTime, @Nullable String ringBody) {
+            this.ringBody = ringBody;
             this.texture = texture;
             this.size = size;
             this.angle = angle;

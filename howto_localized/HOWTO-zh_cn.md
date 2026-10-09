@@ -3342,7 +3342,7 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `bodies[].size` | 否 | 浮点数 | `20` | 在距离 100 处其宽度的一半。原版月亮为 `20` |
 | `bodies[].angle` | 否 | 浮点数，度 | `180` | 它在太阳之后沿太阳轨迹落后多远。`180` 是原版月亮所在的位置。关闭 `followsTime` 时，从正上方起算，所以 `0` 是天顶，`90` 是地平线 |
 | `bodies[].tilt` | 否 | 浮点数，度 | `0` | 它偏离太阳轨迹多远，向北或向南 |
+| `bodies[].body` | 否 | 名称 | 无 | 包中的天体，用名称或文件名指定。若它设置了 `ring`，则在这个天体周围绘制同样的光环，分别位于其后方和前方 |
 | `bodies[].followsTime` | 否 | 布尔值 | `true` | 关闭后，它静止悬挂在天空中，而不是随太阳转动 |
 | `stars.count` | 否 | 整数 | `1500` | 星星的数量 |
 | `stars.size` | 否 | 浮点数 | `0.15` | 最小的星星；最大的星星比它再大三分之二 |
@@ -3697,6 +3698,8 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Galacticraft 火箭（`galacticraftcore:rocket_t1`、`galacticraftplanets:rocket
 | `scaledDistance` | 否 | 浮点数 | `distance` | 放大地图上使用的距离 |
 | `orbitTime` | 否 | 浮点数，年 | `1.0`，卫星为 `100`，空间站为 `20` | 在地图上绕轨道一圈需要多久。负值为逆向运行 |
 | `phaseShift` | 否 | 浮点数，弧度 | `0`，空间站错开分布 | 它在轨道上的起点。未设置的空间站，起点比围绕同一行星的上一个空间站（包括其卫星的空间站）晚 2.4 弧度，这样没有两个空间站会占同一位置 |
+| `ring` | 否 | 纹理路径 | 无 | 仅限行星或卫星。只含光环的图片，倾斜视角、宽大于高，由地图绘制在天体周围，分别位于其后方和前方，与 GalaxySpace 绘制土星的方式相同。烘焙进 `icon` 的光环会把行星挤压进图标的方形里。名称指向该天体的[天空天体](#sky-块)会显示同样的光环 |
+| `ringSize` | 否 | float | `2.5` | 光环宽度，为该天体在地图上宽度的倍数 |
 | `ringColor` | 否 | 十六进制颜色 | `19E599` | 地图上绘制轨道线时使用的颜色 |
 | `tier` | 否 | 整数 | 维度为 `1`，空间站取其父天体的等级，其他为 `0` | 地图显示它所需的火箭等级。安装 GalaxySpace 时，AsmodeusCore 的地图改为根据距离推算等级，围绕另一颗恒星的天体需要最高等级，除非 `config/AsmodeusCore/core.conf` 中关闭了 `enableNewTierSystem` |
 

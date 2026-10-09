@@ -3342,7 +3342,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | `bodies[].size`        | nein    | float       | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
 | `bodies[].angle`       | nein    | float, Grad | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
 | `bodies[].tilt`        | nein    | float, Grad | `0`               | Wie weit er nördlich oder südlich neben der Sonnenbahn steht                                                                                                                                       |
+| `bodies[].body` | nein | Name | keiner | Ein Himmelskörper des Packs, mit Namen oder Dateinamen. Setzt er einen `ring`, wird derselbe Ring hinter und vor diesem Körper gezeichnet |
 | `bodies[].followsTime` | nein    | boolean     | `true`            | Aus steht er still am Himmel, statt mit der Sonne umzulaufen                                                                                                                                       |
 | `stars.count`          | nein    | int         | `1500`            | Wie viele Sterne                                                                                                                                                                                   |
 | `stars.size`           | nein    | float       | `0.15`            | Der kleinste Stern; der größte ist noch zwei Drittel größer                                                                                                                                        |
@@ -3697,6 +3698,8 @@ Eine Datei hier ist entweder ein Sternsystem oder ein Planet oder Mond, der auf 
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Jeder Körper, ob Datei unter `celestial/`, `star` eines Systems oder `galacticr
 | `scaledDistance` | nein                  | float          | `distance`                                                               | Der Abstand auf der vergrößerten Karte                                                                                                                                                                                                                                                    |
 | `orbitTime`      | nein                  | float, Jahre   | `1.0`, ein Mond `100`, eine Station `20`                                 | Wie lange ein Umlauf auf der Karte dauert. Negativ läuft rückwärts                                                                                                                                                                                                                        |
 | `phaseShift`     | nein                  | float, Radiant | `0`, eine Station versetzt                                               | Wo auf seiner Bahn er beginnt. Eine Station ohne Angabe beginnt 2,4 Radiant hinter der letzten Station um denselben Planeten, die Stationen seiner Monde eingeschlossen, sodass keine zwei auf demselben Punkt liegen                                                                     |
+| `ring` | nein | Texturpfad | keiner | Nur für Planeten und Monde. Ein Bild nur des Rings, schräg gesehen und breiter als hoch, das auf der Karte hinter und vor dem Körper gezeichnet wird, wie GalaxySpace es beim Saturn macht. Ein in `icon` eingebackener Ring würde den Planeten in das Quadrat des Symbols quetschen. Ein [Himmelskörper](#der-block-sky), der diesen Körper nennt, zeigt denselben Ring |
+| `ringSize` | nein | float | `2.5` | Die Breite des Rings als Vielfaches der Breite des Körpers auf der Karte |
 | `ringColor`      | nein                  | Hex-Farbe      | `19E599`                                                                 | Die Bahnlinie, wo die Karte eine zeichnet                                                                                                                                                                                                                                                 |
 | `tier`           | nein                  | int            | `1` bei einer Dimension, bei einer Station die ihres `parent`, sonst `0` | Die Raketenstufe, die die Karte als nötig anzeigt. Mit GalaxySpace berechnet die Karte von AsmodeusCore die Stufe stattdessen aus der Entfernung, und ein Körper um einen anderen Stern braucht die höchste Stufe, außer `enableNewTierSystem` ist in `config/AsmodeusCore/core.conf` aus |
 

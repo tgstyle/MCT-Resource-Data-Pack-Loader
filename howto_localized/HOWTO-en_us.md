@@ -3342,7 +3342,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 | `bodies[].size`        | no       | float          | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
 | `bodies[].angle`       | no       | float, degrees | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
 | `bodies[].tilt`        | no       | float, degrees | `0`             | How far it sits off the sun's path, north or south                                                                                                                                               |
+| `bodies[].body`        | no       | name           | none            | A pack celestial body, by name or file name. If it sets a `ring`, the same ring is drawn around this body, behind and in front of it |
 | `bodies[].followsTime` | no       | boolean        | `true`          | Off, it hangs still in the sky instead of wheeling round with the sun                                                                                                                            |
 | `stars.count`          | no       | int            | `1500`          | How many stars                                                                                                                                                                                   |
 | `stars.size`           | no       | float          | `0.15`          | The smallest star; the largest is two thirds bigger again                                                                                                                                        |
@@ -3697,6 +3698,8 @@ A file here is either a star system or a planet or moon that sits on the map wit
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Every body, whether a `celestial/` file, a system's `star` or a dimension's `gal
 | `scaledDistance` | no                    | float          | `distance`                                                     | The distance used on the zoomed map                                                                                                                                                                                                              |
 | `orbitTime`      | no                    | float, years   | `1.0`, a moon `100`, a station `20`                            | How long one orbit takes on the map. Negative runs backward                                                                                                                                                                                      |
 | `phaseShift`     | no                    | float, radians | `0`, a station spaced apart                                    | Where along its orbit it starts. A station without one starts 2.4 radians past the last station around the same planet, its moons' stations included, so no two share a spot                                                                     |
+| `ring`           | no                    | texture path   | none                                                           | A planet or moon only. A picture of the ring alone, seen at a slant and wider than tall, drawn around the body on the map behind and in front of it, as GalaxySpace does Saturn's. A ring baked into `icon` would squeeze the planet into the icon's square. A [sky body](#the-sky-block) that names this body shows the same ring |
+| `ringSize`       | no                    | float          | `2.5`                                                          | The ring's width as a multiple of the body's width on the map                                                                        |
 | `ringColor`      | no                    | hex color      | `19E599`                                                       | The orbit line, where the map draws one                                                                                                                                                                                                          |
 | `tier`           | no                    | int            | `1` for a dimension, its parent's for a station, `0` otherwise | The rocket tier the map shows it needs. With GalaxySpace, AsmodeusCore's map works the tier out from distance instead, and a body around another star needs the top tier, unless `enableNewTierSystem` is off in `config/AsmodeusCore/core.conf` |
 

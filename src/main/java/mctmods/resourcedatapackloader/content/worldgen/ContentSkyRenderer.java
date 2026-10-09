@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.client.render.Blends;
+import mctmods.resourcedatapackloader.client.render.RingQuads;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.util.BodyRings;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -77,8 +79,17 @@ import org.lwjgl.opengl.GL11;
                 if (body.followsTime) { GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F); }
                 GlStateManager.rotate(body.angle, 1.0F, 0.0F, 0.0F);
                 GlStateManager.rotate(body.tilt, 0.0F, 0.0F, 1.0F);
+                BodyRings.Ring ring = body.ringBody == null ? null : BodyRings.find(body.ringBody);
+                if (ring != null) {
+                    Blends.translucent();
+                    RingQuads.sky(ring, body.size, false);
+                }
                 mc.renderEngine.bindTexture(body.texture);
                 quad(buffer, tessellator, body.size);
+                if (ring != null) {
+                    RingQuads.sky(ring, body.size, true);
+                    GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+                }
                 GlStateManager.popMatrix();
             }
         }

@@ -3342,7 +3342,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
     "bodies": [
-      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20, "body": "ash" },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
     ],
     "stars": { "count": 6000, "size": 0.12 }
@@ -3452,6 +3452,7 @@ Sin `bodies` se mantienen la luna de vanilla y sus fases. Con `bodies`, la lista
 | `bodies[].size`        | no       | float          | `20`            | La mitad de su ancho a una distancia de 100. La luna de vanilla es `20`                                                                                                                          |
 | `bodies[].angle`       | no       | float, grados  | `180`           | Cuánto avanza por el recorrido del sol por detrás de este. `180` es donde está la luna de vanilla. Con `followsTime` desactivado se mide desde justo encima, así que `0` es el cénit y `90` el horizonte |
 | `bodies[].tilt`        | no       | float, grados  | `0`             | Cuánto se aparta del recorrido del sol, hacia el norte o el sur                                                                                                                                  |
+| `bodies[].body` | no | nombre | ninguno | Un cuerpo celeste del pack, por su nombre o el nombre de su archivo. Si define un `ring`, el mismo anillo se dibuja alrededor de este cuerpo, por detrás y por delante |
 | `bodies[].followsTime` | no       | booleano       | `true`          | Desactivado, permanece inmóvil en el cielo en lugar de girar con el sol                                                                                                                          |
 | `stars.count`          | no       | int            | `1500`          | Cuántas estrellas                                                                                                                                                                                |
 | `stars.size`           | no       | float          | `0.15`          | La estrella más pequeña; la mayor es dos tercios más grande                                                                                                                                      |
@@ -3697,6 +3698,8 @@ Un archivo aquí es un sistema estelar o un planeta o una luna que figura en el 
   "relativeSize": 0.5,
   "distance": 1.4,
   "orbitTime": 2.5,
+  "ring": "mypack:textures/gui/ash_ring.png",
+  "ringSize": 2.5,
   "tier": 3
 }
 ```
@@ -3727,6 +3730,8 @@ Todo cuerpo, ya sea un archivo de `celestial/`, la `star` de un sistema o el blo
 | `scaledDistance` | no                    | float          | `distance`                                                     | La distancia usada en el mapa ampliado                                                                                                                                                                                                           |
 | `orbitTime`      | no                    | float, años    | `1.0`, una luna `100`, una estación `20`                       | Cuánto tarda una órbita en el mapa. Un valor negativo va hacia atrás                                                                                                                                                                             |
 | `phaseShift`     | no                    | float, radianes | `0`, una estación separada de las demás                       | Dónde empieza a lo largo de su órbita. Una estación sin ella empieza 2.4 radianes después de la última estación alrededor del mismo planeta, incluidas las de sus lunas, de modo que no haya dos en el mismo punto                               |
+| `ring` | no | ruta de textura | ninguno | Solo planetas y lunas. Una imagen del anillo solo, visto en ángulo y más ancho que alto, que el mapa dibuja alrededor del cuerpo, por detrás y por delante, como GalaxySpace hace con Saturno. Un anillo incluido en `icon` aplastaría el planeta dentro del cuadrado del icono. Un [cuerpo del cielo](#el-bloque-sky) que nombre este cuerpo muestra el mismo anillo |
+| `ringSize` | no | float | `2.5` | El ancho del anillo como múltiplo del ancho del cuerpo en el mapa |
 | `ringColor`      | no                    | color hex      | `19E599`                                                       | La línea de la órbita, donde el mapa dibuja una                                                                                                                                                                                                  |
 | `tier`           | no                    | int            | `1` para una dimensión, el de su padre para una estación, `0` en los demás casos | El nivel de cohete que el mapa muestra como necesario. Con GalaxySpace, el mapa de AsmodeusCore calcula el nivel a partir de la distancia, y un cuerpo alrededor de otra estrella necesita el nivel más alto, salvo que `enableNewTierSystem` esté desactivado en `config/AsmodeusCore/core.conf` |
 

@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.CelestialDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.util.BodyRings;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -114,7 +115,7 @@ public final class ContentParserCelestial {
         JsonObject starJson = JsonUtils.getJsonObject(json, "star", new JsonObject());
         CelestialDef star = body(key, starJson, CelestialDef.STAR, name, -1, Collections.emptyList());
         if (star == null) { return null; }
-        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, -1,
+        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, -1,
                 JsonUtils.getString(json, "galaxy", "milky_way").trim(),
                 at.get(0).getAsFloat(), at.get(1).getAsFloat(), at.size() > 2 ? at.get(2).getAsFloat() : 0.0F,
                 star, strings(json, "requires"), null);
@@ -134,6 +135,12 @@ public final class ContentParserCelestial {
             return null;
         }
         float distance = JsonUtils.getFloat(json, "distance", station ? 9.0F : moon ? 13.0F : 1.0F);
+        String ringPath = JsonUtils.getString(json, "ring", "").trim();
+        ResourceLocation ring = ringPath.isEmpty() ? null : new ResourceLocation(ringPath);
+        if (ring != null && !moon && !CelestialDef.PLANET.equals(kind)) {
+            ContentLog.LOGGER.error("Celestial body {} is a {} and sets a ring, which only a planet or moon can have, ignoring it", key, kind);
+            ring = null;
+        }
         return new CelestialDef(key, kind, name, parent,
                 new ResourceLocation(JsonUtils.getString(json, "icon", ICONS + icon(kind) + ".png").trim()),
                 JsonUtils.getFloat(json, "relativeSize", moon || station ? 0.2667F : 1.0F),
@@ -142,6 +149,8 @@ public final class ContentParserCelestial {
                 JsonUtils.getFloat(json, "orbitTime", station ? 20.0F : moon ? 100.0F : 1.0F),
                 JsonUtils.getFloat(json, "phaseShift", station ? Float.NaN : 0.0F),
                 ContentTypes.color(JsonUtils.getString(json, "ringColor", RING), key + " ringColor"),
+                ring,
+                Math.max(0.1F, JsonUtils.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
                 CelestialDef.STAR.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
                 "", 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
     }
