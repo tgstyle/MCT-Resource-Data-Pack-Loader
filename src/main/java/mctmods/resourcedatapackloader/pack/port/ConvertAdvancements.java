@@ -11,12 +11,12 @@ final class ConvertAdvancements {
     private ConvertAdvancements() {}
 
     static String advancement(JsonObject json, Ported pack) {
-        if (json.has("display") && json.get("display").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "display")) {
             JsonObject display = json.getAsJsonObject("display");
-            if (display.has("icon") && display.get("icon").isJsonObject()) { ConvertRecipes.stack(display.getAsJsonObject("icon"), pack); }
+            if (GsonHelper.isObjectNode(display, "icon")) { ConvertRecipes.stack(display.getAsJsonObject("icon"), pack); }
             Convert.renamed(display, "background", ConvertAssets::texturePath, pack);
         }
-        if (json.has("criteria") && json.get("criteria").isJsonObject()) { predicates(json.get("criteria"), pack); }
+        if (GsonHelper.isObjectNode(json, "criteria")) { predicates(json.get("criteria"), pack); }
         return Ported.GSON.toJson(json);
     }
 

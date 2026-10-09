@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.pack.PackManager;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -343,7 +344,7 @@ final class ContentGeneratedModels {
             }
             default -> ContentGenerated.obj("parent", main);
         };
-        ContentGenerated.asset(namespace, "models/item/" + name + ".json", model);
+        ContentGenerated.asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, model);
     }
 
     @Nullable private static String texture(String namespace, String name) { return ContentGenerated.provided(PackType.CLIENT_RESOURCES, namespace, "textures/block/" + name + ".png") ? namespace + ":block/" + name : null; }
@@ -353,11 +354,11 @@ final class ContentGeneratedModels {
         return found == null ? fallback : found;
     }
 
-    static void blockstate(String namespace, String name, JsonObject json) { ContentGenerated.asset(namespace, "blockstates/" + name + ".json", json); }
+    static void blockstate(String namespace, String name, JsonObject json) { ContentGenerated.asset(namespace, "blockstates/" + name + PackManager.JSON_SUFFIX, json); }
 
     private static void model(BlockDef def, String namespace, String name, JsonObject json) {
         String layer = ContentBlockTypes.renderType(def);
         if (layer != null && !json.has("render_type")) { json.addProperty("render_type", layer); }
-        ContentGenerated.asset(namespace, "models/block/" + name + ".json", json);
+        ContentGenerated.asset(namespace, "models/block/" + name + PackManager.JSON_SUFFIX, json);
     }
 }

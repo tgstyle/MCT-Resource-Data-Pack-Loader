@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.recipe;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.util.ContentDisabled;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLResourcePack;
 import mctmods.resourcedatapackloader.recipe.interfaces.IRecipeFilter;
 import mctmods.resourcedatapackloader.util.Config;
@@ -85,7 +86,7 @@ public final class RecipeLoading {
     }
 
     @SuppressWarnings("resource") private static void keepOriginals(Map<ResourceLocation, JsonElement> recipes, ResourceManager manager, Predicate<JsonElement> conditions, BiConsumer<ResourceLocation, JsonElement> parse) {
-        for (Map.Entry<ResourceLocation, List<Resource>> stack : manager.listResourceStacks("recipes", path -> path.getPath().endsWith(".json")).entrySet()) {
+        for (Map.Entry<ResourceLocation, List<Resource>> stack : manager.listResourceStacks("recipes", path -> path.getPath().endsWith(PackManager.JSON_SUFFIX)).entrySet()) {
             List<Resource> layers = stack.getValue();
             if (layers.size() < 2 || !(layers.get(layers.size() - 1).source() instanceof RDPLResourcePack)) { continue; }
             ResourceLocation id = FILES.fileToId(stack.getKey());

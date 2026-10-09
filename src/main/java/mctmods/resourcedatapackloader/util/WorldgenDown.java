@@ -67,7 +67,7 @@ public final class WorldgenDown {
         JsonObject out = carver.deepCopy();
         boolean nether = out.has(START) && !out.get(START).equals(new JsonPrimitive(1.0));
         if ("minecraft:canyon".equals(type)) {
-            JsonElement scale = out.has("shape") && out.get("shape").isJsonObject() ? out.getAsJsonObject("shape").remove("y_scale") : null;
+            JsonElement scale = GsonHelper.isObjectNode(out, "shape") ? out.getAsJsonObject("shape").remove("y_scale") : null;
             if (scale != null) { out.add("yScale", scale); }
         }
         else if ("minecraft:cave".equals(type)) {
@@ -92,7 +92,7 @@ public final class WorldgenDown {
 
     public static JsonObject biome(JsonObject biome, Consumer<String> note) {
         JsonObject out = ported(biome, note);
-        JsonObject attributes = out.has(ATTRIBUTES) && out.get(ATTRIBUTES).isJsonObject() ? out.getAsJsonObject(ATTRIBUTES) : new JsonObject();
+        JsonObject attributes = GsonHelper.isObjectNode(out, ATTRIBUTES) ? out.getAsJsonObject(ATTRIBUTES) : new JsonObject();
         JsonElement spawns = attributes.remove("minecraft:gameplay/natural_mob_spawns");
         JsonObject settings = spawns != null && spawns.isJsonObject() && spawns.getAsJsonObject().has("argument") ? object(spawns.getAsJsonObject(), "argument") : spawns != null && spawns.isJsonObject() ? spawns.getAsJsonObject() : new JsonObject();
         JsonObject categories = object(settings, "spawns_by_category");
@@ -218,7 +218,7 @@ public final class WorldgenDown {
     public static JsonObject noiseSettings(JsonObject settings, Consumer<String> note) {
         JsonObject out = new JsonObject();
         JsonObject router = object(settings, ROUTER);
-        JsonObject aquifers = settings.has("aquifers") && settings.get("aquifers").isJsonObject() ? settings.getAsJsonObject("aquifers") : null;
+        JsonObject aquifers = GsonHelper.isObjectNode(settings, "aquifers") ? settings.getAsJsonObject("aquifers") : null;
         for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
             switch (entry.getKey()) {
                 case "material_rule" -> out.add("surface_rule", surfaceRule(entry.getValue(), note));
@@ -356,7 +356,7 @@ public final class WorldgenDown {
     private static JsonElement withoutVeins(JsonElement element, Consumer<String> note) {
         if (!element.isJsonObject()) { return element; }
         JsonObject rule = element.getAsJsonObject();
-        if (rule.has(SEQUENCE) && rule.get(SEQUENCE).isJsonArray()) {
+        if (GsonHelper.isArrayNode(rule, SEQUENCE)) {
             JsonArray kept = new JsonArray();
             for (JsonElement step : rule.getAsJsonArray(SEQUENCE)) {
                 if (step.isJsonObject() && "ore_vein".equals(IdNames.bare(type(step.getAsJsonObject())))) {

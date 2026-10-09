@@ -37,8 +37,8 @@ final class ConvertLoot {
         }
         String condition = Json.text(held, "condition");
         if (KILLED_BY_PLAYER.equals(condition) && held.has("inverse")) { inverse(held, pack); }
-        if (ENTITY_PROPERTIES.equals(condition) && held.has("properties") && held.get("properties").isJsonObject()) { entityProperties(held, pack); }
-        if (held.has("function") && SET_ATTRIBUTES.equals(held.get("function").getAsString()) && held.has("modifiers") && held.get("modifiers").isJsonArray()) {
+        if (ENTITY_PROPERTIES.equals(condition) && GsonHelper.isObjectNode(held, "properties")) { entityProperties(held, pack); }
+        if (held.has("function") && SET_ATTRIBUTES.equals(held.get("function").getAsString()) && GsonHelper.isArrayNode(held, "modifiers")) {
             for (JsonElement modifier : held.getAsJsonArray("modifiers")) {
                 if (modifier.isJsonObject()) { attributeModifier(modifier.getAsJsonObject(), pack); }
             }
@@ -47,7 +47,7 @@ final class ConvertLoot {
         if (held.has("name") && held.has("type") && "minecraft:item".equals(held.get("type").getAsString())) {
             int data = 0;
             boolean chosen = false;
-            if (held.has("functions") && held.get("functions").isJsonArray()) {
+            if (GsonHelper.isArrayNode(held, "functions")) {
                 JsonArray functions = held.getAsJsonArray("functions");
                 for (int i = functions.size() - 1; i >= 0; i--) {
                     JsonElement function = functions.get(i);
@@ -90,7 +90,7 @@ final class ConvertLoot {
             if ("on_fire".equals(property.getKey())) { flags.addProperty("is_on_fire", property.getValue().getAsBoolean()); }
             else { pack.note("An entity_properties condition asks for the 1.12.2 property '" + property.getKey() + "', which has no twin here and is left out"); }
         }
-        JsonObject predicate = held.has("predicate") && held.get("predicate").isJsonObject() ? held.getAsJsonObject("predicate") : new JsonObject();
+        JsonObject predicate = GsonHelper.isObjectNode(held, "predicate") ? held.getAsJsonObject("predicate") : new JsonObject();
         if (flags.size() > 0) { predicate.add("flags", flags); }
         held.add("predicate", predicate);
         pack.rewrote();

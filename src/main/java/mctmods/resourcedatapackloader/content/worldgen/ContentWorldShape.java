@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IDedicatedServer;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISettings;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
@@ -141,7 +142,7 @@ public final class ContentWorldShape {
         JsonObject preset = new JsonObject();
         preset.add("dimensions", dimensions);
         String namespace = shape.id().getNamespace();
-        GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/world_preset/" + shape.id().getPath() + ".json", preset.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, namespace, "worldgen/world_preset/" + shape.id().getPath() + PackManager.JSON_SUFFIX, preset.toString());
         JsonObject tag = new JsonObject();
         tag.addProperty("replace", false);
         JsonArray values = new JsonArray();
@@ -308,7 +309,7 @@ public final class ContentWorldShape {
         surface.add("sequence", new JsonArray());
         settings.add("surface_rule", surface);
         GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + ".json", settings.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX, settings.toString());
         generator.addProperty("type", "minecraft:noise");
         generator.add("biome_source", source);
         generator.addProperty("settings", id.toString());
@@ -356,7 +357,7 @@ public final class ContentWorldShape {
 
     private static String made(Shape shape, String suffix, String folder, JsonObject json) {
         ResourceLocation id = ownId(shape, suffix);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), folder + "/" + id.getPath() + ".json", json.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), folder + "/" + id.getPath() + PackManager.JSON_SUFFIX, json.toString());
         MADE.add(id);
         return id.toString();
     }

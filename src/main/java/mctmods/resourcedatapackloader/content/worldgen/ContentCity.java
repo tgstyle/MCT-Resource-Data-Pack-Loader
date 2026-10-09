@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
@@ -454,6 +455,15 @@ public final class ContentCity {
 
     public static List<String> decorNames() { return ContentControl.list(ContentControl.VILLAGES, "villageDecor", Config.worldgen.villageDecor()); }
 
+    public static int decorReach(WorldGenLevel level) {
+        int reach = 0;
+        for (PickDef pick : weighted("villageDecor", decorNames())) {
+            ContentWorldgen.Entry entry = ContentWorldgen.byName(pick.name());
+            if (entry != null) { reach = Math.max(reach, entry.shape().reach(level)); }
+        }
+        return reach;
+    }
+
     @Nullable public static String decor(RandomSource roll) {
         String picked = PickDef.pick(weighted("villageDecor", decorNames()), roll);
         return picked == null || picked.isEmpty() || EMPTY.equals(picked) ? null : picked;
@@ -545,9 +555,9 @@ public final class ContentCity {
         structure.addProperty("step", "surface_structures");
         structure.add("spawn_overrides", new JsonObject());
         structure.addProperty("terrain_adaptation", "beard_thin");
-        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, "worldgen/structure/" + STRUCTURE + ".json", structure.toString());
+        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, "worldgen/structure/" + STRUCTURE + PackManager.JSON_SUFFIX, structure.toString());
 
-        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, "worldgen/structure_set/" + STRUCTURE + ".json", set().toString());
+        GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, "worldgen/structure_set/" + STRUCTURE + PackManager.JSON_SUFFIX, set().toString());
     }
 
     private static JsonObject set() {

@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.GsonHelper;
 
 public final class FormatDown {
     private static final String TYPE = "type";
@@ -70,7 +71,7 @@ public final class FormatDown {
 
     private static JsonObject bed(JsonObject rule, LineNote note) {
         JsonObject out = rule.deepCopy();
-        JsonObject target = out.has("argument") && out.get("argument").isJsonObject() ? out.getAsJsonObject("argument") : out;
+        JsonObject target = GsonHelper.isObjectNode(out, "argument") ? out.getAsJsonObject("argument") : out;
         JsonElement destroyed = target.remove("destroy_on_use");
         if (destroyed != null) { target.add("explodes", destroyed); }
         if (target.remove("destroy_on_leave") != null) { note.accept("destroys a bed when its sleeper leaves, which 26.2 cannot, so that is dropped"); }
@@ -98,7 +99,7 @@ public final class FormatDown {
     public static JsonElement asset(JsonElement json, String path, LineNote note) {
         if (!json.isJsonObject()) { return json; }
         JsonObject out = json.getAsJsonObject().deepCopy();
-        if (path.startsWith("models/") && out.has("elements") && out.get("elements").isJsonArray()) {
+        if (path.startsWith("models/") && GsonHelper.isArrayNode(out, "elements")) {
             for (JsonElement element : out.getAsJsonArray("elements")) {
                 if (!element.isJsonObject()) { continue; }
                 JsonElement shade = element.getAsJsonObject().remove("shade_direction_override");
@@ -108,12 +109,12 @@ public final class FormatDown {
             }
         }
         else if (path.startsWith("equipment/") && out.remove("trim_overrides") != null) { note.accept("colors trims per equipment with trim_overrides, which 26.2 reads from the trim material's override_armor_assets, so those palettes are dropped"); }
-        else if (path.startsWith("atlases/") && out.has("sources") && out.get("sources").isJsonArray()) {
+        else if (path.startsWith("atlases/") && GsonHelper.isArrayNode(out, "sources")) {
             for (JsonElement source : out.getAsJsonArray("sources")) {
                 if (!source.isJsonObject() || !"paletted_permutations".equals(IdNames.bare(Json.text(source.getAsJsonObject(), TYPE)))) { continue; }
                 JsonObject permuted = source.getAsJsonObject();
                 if (permuted.has("palette_key")) { permuted.addProperty("palette_key", palette(Json.text(permuted, "palette_key"))); }
-                if (permuted.has("permutations") && permuted.get("permutations").isJsonObject()) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new JsonPrimitive(palette(entry.getValue().getAsString())))); }
+                if (GsonHelper.isObjectNode(permuted, "permutations")) { permuted.getAsJsonObject("permutations").entrySet().forEach(entry -> entry.setValue(new JsonPrimitive(palette(entry.getValue().getAsString())))); }
             }
         }
         else if (path.startsWith("post_effect/") || path.startsWith("shaders/")) { note.accept("carries shader programs, which 26.2 compiles differently, so they are served as written"); }

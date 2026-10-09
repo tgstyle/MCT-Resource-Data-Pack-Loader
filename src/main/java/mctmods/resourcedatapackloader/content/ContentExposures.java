@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.ExposureSpread;
 import mctmods.resourcedatapackloader.util.Registered;
@@ -279,14 +280,14 @@ public final class ContentExposures {
             type.addProperty("message_id", "rdpl." + def.name());
             type.addProperty("exhaustion", 0.0F);
             type.addProperty("scaling", "never");
-            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "damage_type/" + def.key().getPath() + ".json", type.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "damage_type/" + def.key().getPath() + PackManager.JSON_SUFFIX, type.toString());
             names.add(def.key().toString());
         }
         for (String tag : BYPASSES) {
             JsonObject values = new JsonObject();
             values.addProperty("replace", false);
             values.add("values", names);
-            GeneratedResources.put(PackType.SERVER_DATA, "minecraft", "tags/damage_type/" + tag + ".json", values.toString());
+            GeneratedResources.put(PackType.SERVER_DATA, "minecraft", "tags/damage_type/" + tag + PackManager.JSON_SUFFIX, values.toString());
         }
         Summary.info("exposures.generated", "Generated " + names.size() + " damage type(s) from exposures");
     }

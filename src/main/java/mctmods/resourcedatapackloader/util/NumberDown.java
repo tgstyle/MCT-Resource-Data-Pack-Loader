@@ -7,6 +7,7 @@ import com.google.gson.JsonPrimitive;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.GsonHelper;
 
 public final class NumberDown {
     private static final String INPUT = "input";
@@ -52,7 +53,7 @@ public final class NumberDown {
                 return out;
             }
             case "add" -> {
-                if (out.has(INPUTS) && out.get(INPUTS).isJsonArray()) { out.add(INPUTS, listed(out.getAsJsonArray(INPUTS), whole, note, depth)); }
+                if (GsonHelper.isArrayNode(out, INPUTS)) { out.add(INPUTS, listed(out.getAsJsonArray(INPUTS), whole, note, depth)); }
                 return out;
             }
             case "binomial" -> {
@@ -129,7 +130,7 @@ public final class NumberDown {
                 default -> null;
             };
         }
-        if (!held.has(INPUTS) || !held.get(INPUTS).isJsonArray() || held.getAsJsonArray(INPUTS).isEmpty()) { return null; }
+        if (!GsonHelper.isArrayNode(held, INPUTS) || held.getAsJsonArray(INPUTS).isEmpty()) { return null; }
         double sum = 0.0;
         double least = Double.MAX_VALUE;
         double most = -Double.MAX_VALUE;

@@ -13,6 +13,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -195,22 +196,37 @@ public final class ContentCityStructure extends Structure {
         return true;
     }
 
-    public static boolean plantedAt(CityGround ground, int x, int z) {
+    public static boolean plantedAt(WorldGenLevel level, CityGround ground, int x, int z, BlockState wood, List<BlockState> canopies) {
         if (ContentCity.decorNames().isEmpty()) { return false; }
         CityPlan plan = CityPlan.of(ground, CityPlan.districtOf(x, true), CityPlan.districtOf(z, false));
         if (plan == null) { return false; }
-        boolean spot = false;
+        int shift = ContentCity.decorReach(level);
         for (CityPlan.Line line : CityLines.of(plan)) {
             int along = line.alongX() ? x : z;
             int across = line.alongX() ? z : x;
-            if (Math.abs(across - line.middle()) != CityCross.of(line).curb() + 1) { continue; }
-            if (Math.floorMod(along, VERGE_RUN) != 0 || !line.covers(along) || !plan.emitsAlong(line, along)) { continue; }
-            spot = true;
-            break;
+            int curb = CityCross.of(line).curb() + 1;
+            for (int side = -curb; side <= curb; side += 2 * curb) {
+                int verge = line.middle() + side;
+                if (Math.abs(verge - across) > shift) { continue; }
+                for (int spot = Math.floorDiv(along - shift, VERGE_RUN) * VERGE_RUN; spot <= along + shift; spot += VERGE_RUN) {
+                    if (!line.covers(spot) || !plan.emitsAlong(line, spot)) { continue; }
+                    if (plantedFrom(level, ground, line.alongX() ? spot : verge, line.alongX() ? verge : spot, x, z, wood, canopies)) { return true; }
+                }
+            }
         }
-        if (!spot) { return false; }
-        String named = ContentCity.decor(RandomSource.create(SeededRandom.spot(ground.seed(), x, z)));
-        return named != null && ContentWorldgen.byName(named) != null;
+        return false;
+    }
+
+    private static boolean plantedFrom(WorldGenLevel level, CityGround ground, int spotX, int spotZ, int x, int z, BlockState wood, List<BlockState> canopies) {
+        RandomSource roll = RandomSource.create(SeededRandom.spot(ground.seed(), spotX, spotZ));
+        String named = ContentCity.decor(roll);
+        ContentWorldgen.Entry entry = named == null ? null : ContentWorldgen.byName(named);
+        if (entry == null) { return false; }
+        if (spotX != x || spotZ != z) {
+            BoundingBox seat = entry.shape().footprint(level, roll, spotX, spotZ);
+            if (seat == null || !seat.intersects(x, z, x, z)) { return false; }
+        }
+        return entry.shape().places(level, entry.palette(), wood, canopies);
     }
 
     @Override public void afterPlace(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull PiecesContainer pieces) {

@@ -6,10 +6,14 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentGeode implements IContentShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     private static final int LEAST_BUBBLES = 4;
     private static final int MOST_EXTRA_BUBBLES = 4;
     private static final double CRACK_REACH = 1.5D;

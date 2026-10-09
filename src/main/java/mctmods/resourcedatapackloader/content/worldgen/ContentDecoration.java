@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
+import java.util.List;
 
 public final class ContentDecoration implements IContentShape {
     private final AmountDef size;
@@ -27,6 +28,8 @@ public final class ContentDecoration implements IContentShape {
         this.scatterY = shape.scatterY();
         this.scatterZ = shape.scatterZ();
     }
+
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
         WorldGenLevel level = placer.level();

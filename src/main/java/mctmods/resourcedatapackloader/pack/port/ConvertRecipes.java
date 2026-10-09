@@ -35,19 +35,19 @@ final class ConvertRecipes {
                 pack.rewrote();
             }
         }
-        if (json.has(LEGACY_CONDITIONS) && json.get(LEGACY_CONDITIONS).isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, LEGACY_CONDITIONS)) {
             JsonArray conditions = json.remove(LEGACY_CONDITIONS).getAsJsonArray();
             for (JsonElement condition : conditions) { condition(condition, namespace, pack); }
             json.add(CONDITIONS, conditions);
         }
-        if (json.has("key") && json.get("key").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "key")) {
             for (Map.Entry<String, JsonElement> entry : json.getAsJsonObject("key").entrySet()) { entry.setValue(ingredient(entry.getValue(), namespace, pack)); }
         }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
+        if (GsonHelper.isArrayNode(json, "ingredients")) {
             JsonArray ingredients = json.getAsJsonArray("ingredients");
             for (int i = 0; i < ingredients.size(); i++) { ingredients.set(i, ingredient(ingredients.get(i), namespace, pack)); }
         }
-        if (json.has("result") && json.get("result").isJsonObject()) {
+        if (GsonHelper.isObjectNode(json, "result")) {
             JsonObject result = json.getAsJsonObject("result");
             qualify(result, namespace, pack);
             stack(result, pack);
@@ -69,7 +69,7 @@ final class ConvertRecipes {
             held.addProperty("item", Convert.itemName(held.get("item").getAsString(), pack));
         }
         if (held.has("value")) { condition(held.get("value"), namespace, pack); }
-        if (held.has("values") && held.get("values").isJsonArray()) {
+        if (GsonHelper.isArrayNode(held, "values")) {
             for (JsonElement inner : held.getAsJsonArray("values")) { condition(inner, namespace, pack); }
         }
     }

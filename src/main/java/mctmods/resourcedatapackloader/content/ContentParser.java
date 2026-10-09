@@ -123,7 +123,7 @@ public final class ContentParser {
     }
 
     @Nullable private static BellDef bell(JsonObject json) {
-        if (!json.has("bell") || !json.get("bell").isJsonObject()) { return null; }
+        if (!GsonHelper.isObjectNode(json, "bell")) { return null; }
         JsonObject held = GsonHelper.getAsJsonObject(json, "bell");
         return new BellDef(GsonHelper.getAsBoolean(held, "swing", BellDef.PLAIN.swing()),
                 GsonHelper.getAsString(held, "sound", BellDef.PLAIN.sound()).trim(),

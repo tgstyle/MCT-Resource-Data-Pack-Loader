@@ -92,8 +92,8 @@ public final class ContentGenerated {
         String name = entry.id().getPath();
         String type = def.type();
         boolean hasItem = ContentRegistry.items().stream().anyMatch(item -> item.block() == entry);
-        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { ContentGeneratedModels.models(entry, namespace, name, type); }
-        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { ContentGeneratedModels.itemModel(def, namespace, name, type); }
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + PackManager.JSON_SUFFIX)) { ContentGeneratedModels.models(entry, namespace, name, type); }
+        if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + PackManager.JSON_SUFFIX)) { ContentGeneratedModels.itemModel(def, namespace, name, type); }
         if (!provided(PackType.SERVER_DATA, namespace, lootPath(name))) { data(namespace, lootPath(name), loot(entry, type)); }
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
@@ -106,7 +106,7 @@ public final class ContentGenerated {
     private static void fluidBucket(ContentFluids.Made made) {
         if (made.bucket == null) { return; }
         String namespace = made.bucketId().getNamespace();
-        String path = "models/item/" + made.bucketId().getPath() + ".json";
+        String path = "models/item/" + made.bucketId().getPath() + PackManager.JSON_SUFFIX;
         if (provided(PackType.CLIENT_RESOURCES, namespace, path)) { return; }
         asset(namespace, path, obj("parent", "forge:item/bucket", "loader", "forge:fluid_container", "fluid", made.def.id().toString()));
     }
@@ -115,11 +115,11 @@ public final class ContentGenerated {
         if (made.block == null) { return; }
         String namespace = made.def.key().getNamespace();
         String name = made.def.key().getPath();
-        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) {
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + PackManager.JSON_SUFFIX)) {
             ContentGeneratedModels.blockstate(namespace, name, obj("variants", obj("", obj("model", namespace + ":block/" + name))));
         }
-        if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/block/" + name + ".json")) {
-            asset(namespace, "models/block/" + name + ".json", obj("textures", obj("particle", made.def.still().toString())));
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/block/" + name + PackManager.JSON_SUFFIX)) {
+            asset(namespace, "models/block/" + name + PackManager.JSON_SUFFIX, obj("textures", obj("particle", made.def.still().toString())));
         }
     }
 
@@ -136,8 +136,8 @@ public final class ContentGenerated {
         JsonArray named = arr();
         for (String slot : slots) {
             named.add(slot);
-            if (ContainerDef.RING_SLOT.equals(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("size", 2)); }
-            else if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + ".json", obj("validators", arr("curios:tag"))); }
+            if (ContainerDef.RING_SLOT.equals(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, obj("size", 2)); }
+            else if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, obj("validators", arr("curios:tag"))); }
         }
         data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", obj("entities", arr("minecraft:player"), "slots", named));
     }
@@ -146,9 +146,9 @@ public final class ContentGenerated {
         String namespace = entry.id().getNamespace();
         String name = entry.id().getPath();
         ItemDef def = entry.def();
-        if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) {
+        if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + PackManager.JSON_SUFFIX)) {
             String parent = def != null && "tool".equals(def.type()) ? ITEM_HANDHELD : ITEM_GENERATED;
-            asset(namespace, "models/item/" + name + ".json", obj("parent", parent, "textures", obj("layer0", namespace + ":item/" + name)));
+            asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, obj("parent", parent, "textures", obj("layer0", namespace + ":item/" + name)));
         }
         if (entry.variant() != null) {
             for (String tag : entry.variant().tags()) { tag(itemTags, tag, entry.id()); }
@@ -255,7 +255,7 @@ public final class ContentGenerated {
         return entry;
     }
 
-    private static String lootPath(String name) { return ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json"; }
+    private static String lootPath(String name) { return ContentFormats.LOOT_FOLDER + "/blocks/" + name + PackManager.JSON_SUFFIX; }
 
     private static JsonObject stateCondition(ContentRegistry.BlockEntry entry, String property, String value) { return obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj(property, value)); }
 
@@ -374,7 +374,7 @@ public final class ContentGenerated {
                 for (String value : gone) { remove.add(value); }
                 file.add("remove", remove);
             }
-            data(tag.getNamespace(), folder + "/" + tag.getPath() + ".json", file);
+            data(tag.getNamespace(), folder + "/" + tag.getPath() + PackManager.JSON_SUFFIX, file);
         }
     }
 

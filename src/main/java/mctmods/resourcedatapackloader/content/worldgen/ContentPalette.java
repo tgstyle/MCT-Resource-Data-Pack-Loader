@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 
 import net.minecraft.util.RandomSource;
@@ -40,6 +41,8 @@ public final class ContentPalette {
     }
 
     public boolean places(BlockState state) { return states.contains(state); }
+
+    public boolean offers(BlockState found) { return states.stream().anyMatch(state -> ContentStates.alike(state, found)); }
 
     public boolean replaceable(BlockState state) { return targets.contains(state.getBlock()) || exact.contains(state); }
 

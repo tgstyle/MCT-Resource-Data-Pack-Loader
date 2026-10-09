@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.util.GsonHelper;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -381,7 +382,7 @@ public final class PackManager {
             if (!held.getKey().startsWith(head)) { continue; }
             served.add(key(type, namespace, held.getValue().actual()));
             out.accept(held.getKey());
-            if (type == PackType.CLIENT_RESOURCES && held.getKey().endsWith(ContentPixelMaps.PNG + ContentPixelMaps.SUFFIX)) { out.accept(held.getKey().substring(0, held.getKey().length() - ContentPixelMaps.SUFFIX.length())); }
+            if (type == PackType.CLIENT_RESOURCES && held.getKey().endsWith(ContentPixelMaps.PNG + JSON_SUFFIX)) { out.accept(held.getKey().substring(0, held.getKey().length() - JSON_SUFFIX.length())); }
         }
     }
 
@@ -401,7 +402,7 @@ public final class PackManager {
 
     public boolean provides(PackType type, String namespace, String path) {
         if (lookup(type, namespace, path) != null) { return true; }
-        return drawable(type, path) && lookup(type, namespace, path + ContentPixelMaps.SUFFIX) != null;
+        return drawable(type, path) && lookup(type, namespace, path + JSON_SUFFIX) != null;
     }
 
     public List<RDPLPack> holders(PackType type, String namespace, String path) {
@@ -472,7 +473,7 @@ public final class PackManager {
     @Nullable private static JsonObject validMeta(String contents) {
         try {
             JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
-            return json != null && json.has("pack") && json.get("pack").isJsonObject() ? json : null;
+            return GsonHelper.isObjectNode(json, "pack") ? json : null;
         }
         catch (RuntimeException malformed) { return null; }
     }

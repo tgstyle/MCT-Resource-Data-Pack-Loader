@@ -5,10 +5,14 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
+import java.util.List;
 
 public final class ContentSpring implements IContentShape {
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) { return palette.offers(wood); }
+
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
         int x = origin.getX();
         int y = origin.getY();

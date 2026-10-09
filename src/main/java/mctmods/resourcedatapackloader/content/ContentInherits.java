@@ -7,6 +7,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -115,7 +116,7 @@ public final class ContentInherits {
         return made;
     }
 
-    @Nullable private static JsonObject variantsOf(JsonObject file) { return file.has(ContentParser.VARIANTS) && file.get(ContentParser.VARIANTS).isJsonObject() ? file.getAsJsonObject(ContentParser.VARIANTS) : null; }
+    @Nullable private static JsonObject variantsOf(JsonObject file) { return GsonHelper.isObjectNode(file, ContentParser.VARIANTS) ? file.getAsJsonObject(ContentParser.VARIANTS) : null; }
 
     @Nullable private static String baseVariant(JsonObject file, ResourceLocation name) {
         JsonObject variants = variantsOf(file);

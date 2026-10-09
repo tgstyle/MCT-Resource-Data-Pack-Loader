@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
@@ -19,9 +20,11 @@ import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.SaplingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -48,6 +51,24 @@ public final class ContentTree implements IContentShape {
         this.templated = !shape.structures().isEmpty() || !shape.structure().isEmpty();
         this.imprint = imprint;
         if (!templated && (log == null || leaves == null)) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log(), shape.leaves()); }
+    }
+
+    @Override public boolean places(WorldGenLevel level, ContentPalette palette, BlockState wood, List<BlockState> canopies) {
+        if (templated) { return imprint.places(level, palette, wood, canopies); }
+        if (log == null || leaves == null || !ContentStates.alike(log, wood)) { return false; }
+        for (BlockState canopy : canopies) {
+            if (ContentStates.alike(leaves, canopy)) { return true; }
+        }
+        return canopies.isEmpty();
+    }
+
+    @Override public int reach(WorldGenLevel level) { return (templated ? imprint.reach(level) : 0) + Math.max(scatterX, scatterZ); }
+
+    @Override @Nullable public BoundingBox footprint(WorldGenLevel level, RandomSource random, int originX, int originZ) {
+        if (count.pick(random) < 1) { return null; }
+        int x = originX + ContentPlacer.scatter(random, scatterX);
+        int z = originZ + ContentPlacer.scatter(random, scatterZ);
+        return templated ? imprint.footprint(level, random, x, z) : new BoundingBox(x, 0, z, x, 0, z);
     }
 
     @Override public boolean generate(ContentPlacer placer, RandomSource random, BlockPos origin) {
