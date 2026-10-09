@@ -19,6 +19,7 @@ import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
 import net.minecraftforge.common.world.PieceBeardifierModifier;
+import java.util.List;
 import javax.annotation.Nonnull;
 
 public final class ContentCityDecorPiece extends StructurePiece implements PieceBeardifierModifier {
@@ -62,7 +63,9 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
         return laid.is(Blocks.DIRT_PATH);
     }
 
-    @SuppressWarnings("deprecation") private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk) {
+    @SuppressWarnings("deprecation") private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk) {
+        BoundingBox near = new BoundingBox(chunk.getMinBlockX(), box.minY(), chunk.getMinBlockZ(), chunk.getMaxBlockX(), box.maxY(), chunk.getMaxBlockZ()).inflatedBy(ContentPlacer.WRITE_REACH << 4);
+        List<BoundingBox> keep = ContentCityTrees.kin(manager, chunk, this, near, piece -> piece instanceof ContentCityTrees.IFelling && !(piece instanceof ContentCityPiece) && !(piece instanceof ContentCityBulbPiece) || piece instanceof ContentCityWellPiece || piece instanceof ContentCityLampPiece);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int outside = 0;
         int bare = 0;
@@ -87,7 +90,7 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
                 continue;
             }
             at.set(x, ground + 1, z);
-            if (!level.getBlockState(at).isAir()) {
+            if (!level.getBlockState(at).isAir() || ContentPlacer.keeps(keep, x, z)) {
                 blocked++;
                 continue;
             }
@@ -100,7 +103,7 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
                 ContentCity.missingDecor(named);
                 continue;
             }
-            entry.shape().generate(new ContentPlacer(level, entry.palette(), chunk), roll, at.immutable());
+            entry.shape().generate(new ContentPlacer(level, entry.palette(), chunk).keeping(keep), roll, at.immutable());
         }
         ContentLog.LOGGER.debug("A verge of {} spot(s) scattered {}: {} outside the chunk, {} over air, {} over paving, {} blocked above", spots.length, laid, outside, bare, paved, blocked);
     }
@@ -112,6 +115,6 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
     @Override public int getGroundLevelDelta() { return 0; }
 
     @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.within(level, box, () -> laid(level, box, chunk));
+        CityBiome.within(level, box, () -> laid(level, manager, box, chunk));
     }
 }
