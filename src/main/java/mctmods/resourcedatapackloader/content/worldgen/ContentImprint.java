@@ -21,6 +21,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.gen.structure.template.BlockRotationProcessor;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
@@ -110,19 +111,20 @@ public final class ContentImprint implements IContentShape {
         BlockPos span = loaded.transformedSize(rotation);
         int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
         int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
+        if (ContentPlacer.keepsAny(cornerX, cornerZ, cornerX + span.getX() - 1, cornerZ + span.getZ() - 1)) { return false; }
         BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
         if (span.getX() > 16 || span.getZ() > 16) {
             int reach = Math.max(span.getX(), span.getZ());
             if (!ContentPlacer.areaLoaded(world, fitted.getX() - reach, fitted.getZ() - reach, fitted.getX() + reach, fitted.getZ() + reach)) { return false; }
         }
-        if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(), settings, WORLDGEN_FLAGS); }
+        if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(new BlockRotationProcessor(fitted, settings)), settings, WORLDGEN_FLAGS); }
         else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
         StructureLoot.stock(world, cornerX, origin.getY(), cornerZ, cornerX + span.getX() - 1, origin.getY() + span.getY() - 1, cornerZ + span.getZ() - 1, shape.lootTable, random);
         if (shape.locateAs != null && !shape.locateAs.isEmpty()) { ContentLocate.record(world, shape.locateAs, fitted); }
         return true;
     }
 
-    private ITemplateProcessor onlyOverReplaceable() { return (holder, at, info) -> placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : info; }
+    private ITemplateProcessor onlyOverReplaceable(BlockRotationProcessor rotating) { return (holder, at, info) -> { Template.BlockInfo processed = rotating.processBlock(holder, at, info); return placer.occupied(holder, at.getX(), at.getY(), at.getZ()) ? null : processed; }; }
 
     private Rotation turn(Random random) {
         String named = PickDef.pick(shape.turns, random, "");

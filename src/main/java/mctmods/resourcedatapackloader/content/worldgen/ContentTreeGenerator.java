@@ -31,6 +31,7 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
     @Override public boolean generate(@Nonnull World world, @Nonnull Random random, @Nonnull BlockPos position) {
         int height = random.nextInt(3) + minHeight;
         if (position.getY() < 1 || position.getY() >= world.getHeight() - height - 1) { return false; }
+        if (ContentPlacer.keepsAny(position.getX() - 2, position.getZ() - 2, position.getX() + 2, position.getZ() + 2)) { return false; }
         if (!rooted(world, position.down())) { return false; }
         if (!clear(world, position, height)) { return false; }
         IBlockState under = world.getBlockState(position.down());

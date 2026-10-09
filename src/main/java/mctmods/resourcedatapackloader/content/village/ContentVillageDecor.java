@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeardLamps;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPlacer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
@@ -41,7 +42,7 @@ public final class ContentVillageDecor {
     private static final int SPREAD = 8;
     private static final int RISE = 16;
     private static final WeightedPicks CHOICES = new WeightedPicks(NAME);
-    private static final String[] REASONS = { "outside the clip", "inside a piece or plaza", "without ground", "not open air on solid ground", "beside cubes not loaded", "before a door", "rolled bare", "without a shape", "planted" };
+    private static final String[] REASONS = { "outside the clip", "inside a piece or plaza", "without ground", "not open air on solid ground", "beside cubes not loaded", "before a door", "rolled bare", "without a shape", "planted", "against a keep-out", "refused by its shape" };
 
     private ContentVillageDecor() {}
 
@@ -110,14 +111,17 @@ public final class ContentVillageDecor {
         IContentShape figure = ContentWorldgen.shapeFor(chosen.name);
         if (figure == null) { return 7; }
         StructureBoundingBox area = new StructureBoundingBox(x - SPREAD, bed - 1, z - SPREAD, x + SPREAD, bed + RISE, z + SPREAD);
-        if (!ContentBeard.wanted()) {
-            figure.generate(world, random, origin);
-            return 8;
+        ContentPlacer.keepOutOf(villages);
+        try {
+            if (!ContentBeard.wanted()) {
+                return figure.generate(world, random, origin) ? 8 : 9;
+            }
+            BeardKeep.watchArea(world, area, NAME);
+            boolean made = figure.generate(world, random, origin);
+            BeardKeep.learn(world);
+            return made ? 8 : ContentPlacer.keptOut() ? 9 : 10;
         }
-        BeardKeep.watchArea(world, area, NAME);
-        figure.generate(world, random, origin);
-        BeardKeep.learn(world);
-        return 8;
+        finally { ContentPlacer.releaseKeepOut(); }
     }
 
     public static boolean plantedAt(World world, BlockPos wood) {

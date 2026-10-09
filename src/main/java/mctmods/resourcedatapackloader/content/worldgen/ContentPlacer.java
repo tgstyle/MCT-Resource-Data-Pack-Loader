@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
@@ -10,12 +12,16 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.gen.structure.StructureStart;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
 public final class ContentPlacer {
+    private static Collection<StructureStart> keepOut = Collections.emptyList();
+    private static boolean keptOut;
     private final List<IBlockState> states;
     private final int[] ladder;
     private final int weight;
@@ -46,6 +52,37 @@ public final class ContentPlacer {
         return random.nextInt(bound) - random.nextInt(bound);
     }
 
+    public static void keepOutOf(Collection<StructureStart> villages) {
+        keepOut = villages;
+        keptOut = false;
+    }
+
+    public static boolean keptOut() { return keptOut; }
+
+    public static void releaseKeepOut() { keepOut = Collections.emptyList(); }
+
+    public static boolean keeps(int x, int z) {
+        if (keepOut.isEmpty()) { return false; }
+        if (BeardKeep.lampNear(x, z)) { return true; }
+        for (StructureStart village : keepOut) {
+            if (village != null && BeardPlots.underBuilding(village, null, x, z)) { return true; }
+        }
+        return false;
+    }
+
+    public static boolean keepsAny(int minX, int minZ, int maxX, int maxZ) {
+        if (keepOut.isEmpty()) { return false; }
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                if (keeps(x, z)) {
+                    keptOut = true;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean place(World world, Random random, int x, int y, int z) {
         if (occupied(world, x, y, z)) { return false; }
         return world.setBlockState(new BlockPos(x, y, z), choose(random), BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
@@ -64,12 +101,12 @@ public final class ContentPlacer {
     }
 
     public boolean placeExactly(World world, IBlockState state, int x, int y, int z) {
-        if (y < floorY(world) || y >= ceilingY(world)) { return false; }
+        if (y < floorY(world) || y >= ceilingY(world) || keeps(x, z)) { return false; }
         return world.setBlockState(new BlockPos(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     public boolean occupied(World world, int x, int y, int z) {
-        if (!replaces(world, x, y, z)) { return true; }
+        if (keeps(x, z) || !replaces(world, x, y, z)) { return true; }
         return wantsNearby && !beside(world, x, y, z);
     }
 

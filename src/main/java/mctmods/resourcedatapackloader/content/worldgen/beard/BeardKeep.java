@@ -173,6 +173,16 @@ public final class BeardKeep {
         for (long cell : cells) { LAMPS.put(column(cell), cells); }
     }
 
+    public static boolean lampNear(int x, int z) {
+        if (LAMPS.isEmpty()) { return false; }
+        for (int offX = -1; offX <= 1; offX++) {
+            for (int offZ = -1; offZ <= 1; offZ++) {
+                if (LAMPS.containsKey(packed(x + offX, 0, z + offZ))) { return true; }
+            }
+        }
+        return false;
+    }
+
     @Nullable public static Set<Long> takeLamp(int x, int z) {
         Set<Long> cells = LAMPS.remove(packed(x, 0, z));
         if (cells == null) { return null; }
