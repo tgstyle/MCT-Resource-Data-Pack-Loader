@@ -6,6 +6,12 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class TeamDef {
+    public static final String LEAD_NONE = "none";
+    public static final String LEAD_FIRST = "first";
+    public static final String LEAD_TOP_SCORE = "topScore";
+    public static final String LEAD_APPOINTED = "appointed";
+    public static final String LEAD_VOTE = "vote";
+    public static final String LEAD_CLAIM = "claim";
     public final String name;
     public final String displayName;
     public final TextFormatting color;
@@ -72,7 +78,7 @@ public final class TeamDef {
 
     public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
 
-    public boolean leaderless() { return "none".equals(lead); }
+    public boolean leaderless() { return LEAD_NONE.equals(lead); }
 
     public boolean holds(double x, double y, double z) {
         return spawnBox != null

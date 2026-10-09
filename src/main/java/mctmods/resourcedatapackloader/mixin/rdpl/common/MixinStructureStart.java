@@ -19,18 +19,16 @@ import java.util.Random;
 import net.minecraft.nbt.NBTTagCompound;
 
 @Mixin(StructureStart.class) public abstract class MixinStructureStart {
-    @Redirect(method = "generateStructure(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;getBoundingBox()Lnet/minecraft/world/gen/structure/StructureBoundingBox;"))
-    private StructureBoundingBox rdpl$dressedBox(StructureComponent piece) { return BeardRails.dressed(piece); }
+    @Redirect(method = "generateStructure(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;getBoundingBox()Lnet/minecraft/world/gen/structure/StructureBoundingBox;")) private StructureBoundingBox rdpl$dressedBox(StructureComponent piece) { return BeardRails.dressed(piece); }
 
-    @Inject(method = "updateBoundingBox", at = @At("RETURN")) private void rdpl$dressedStart(CallbackInfo ci) { BeardRails.dress(StructureStart.class.cast(this)); }
+    @Inject(method = "updateBoundingBox", at = @At("RETURN")) private void rdpl$dressedStart(CallbackInfo ci) { BeardRails.dress((StructureStart) (Object) this); }
 
     @Inject(method = "readStructureComponentsFromNBT", at = @At("RETURN")) private void rdpl$dressedOnLoad(World worldIn, NBTTagCompound tagCompound, CallbackInfo ci) {
-        if (tagCompound.hasKey("BB")) { BeardRails.dress(StructureStart.class.cast(this)); }
+        if (tagCompound.hasKey("BB")) { BeardRails.dress((StructureStart) (Object) this); }
     }
 
-    @Redirect(method = "generateStructure", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;addComponentParts(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Z"))
-    private boolean rdpl$openFrontage(StructureComponent piece, World world, Random rand, StructureBoundingBox clip) {
-        StructureStart self = StructureStart.class.cast(this);
+    @Redirect(method = "generateStructure", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;addComponentParts(Lnet/minecraft/world/World;Ljava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Z")) private boolean rdpl$openFrontage(StructureComponent piece, World world, Random rand, StructureBoundingBox clip) {
+        StructureStart self = (StructureStart) (Object) this;
         ContentBeard.building(self);
         boolean built;
         try {
@@ -48,7 +46,7 @@ import net.minecraft.nbt.NBTTagCompound;
     }
 
     @Inject(method = "generateStructure", at = @At("RETURN")) private void rdpl$plaza(World worldIn, Random rand, StructureBoundingBox structurebb, CallbackInfo ci) {
-        StructureStart self = StructureStart.class.cast(this);
+        StructureStart self = (StructureStart) (Object) this;
         if (!ContentBeard.wanted() || self.getComponents().isEmpty()) { return; }
         if (!(self.getComponents().get(0) instanceof StructureVillagePieces.Start)) { return; }
         ContentBeard.building(self);

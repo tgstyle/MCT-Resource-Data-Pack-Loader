@@ -5,9 +5,8 @@ import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -21,9 +20,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -96,7 +97,10 @@ public final class PackManager {
     public static final String HARDNESS = "hardness";
     public static final String OVERRIDES = "overrides";
     public static final String JSON = "json";
+    public static final String JSON_SUFFIX = "." + JSON;
     public static final String MCFUNCTION = "mcfunction";
+    public static final Set<String> DATA_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(BLOCKS, ITEMS, FLUIDS, MATERIALS, TABS, BIOMES, WORLDGEN, DIMENSIONS, WORLDTEMPLATES, GATES, GAMERULES, ENTITIES, POTIONS, POTION_TYPES, VILLAGERS, TRADES, VILLAGES, STRUCTUREMAPS, CITYMAPS, CAVEREGIONS, HARDNESS, ANVILS, ORDERS, EXPOSURES, OVERRIDES, TEAMS, SCORING, RAIDS, DICE, GAMES, WORLDINTRO, PORTALFRAMES, BLASTPLASTER, PATHINTERSECTS, PLAYER_LOOT, REGISTRY_REMAP, OREDICT, BLOCK_DROPS, BREWING, FUELS, FURNACE, RECIPE_REMOVALS, LOOT_INJECTIONS, CARDS, CELESTIAL, DISABLED)));
+    private static final Set<String> SHARED_FOLDERS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(ADVANCEMENTS, LOOT_TABLES, RECIPES, FUNCTIONS, STRUCTURES, SOUNDS)));
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
     private final List<RDPLPack> packs = new CopyOnWriteArrayList<>();
@@ -108,7 +112,6 @@ public final class PackManager {
     @Nullable private volatile Set<String> namespacesNormal;
     @Nullable private volatile Set<String> namespacesOverride;
     private final AtomicInteger generation = new AtomicInteger();
-    private static final Gson GSON = new GsonBuilder().create();
     @Nullable private volatile String packMeta;
 
     private PackManager() {}
@@ -181,13 +184,15 @@ public final class PackManager {
         ContentPixelMaps.tidy();
     }
 
+    private Map<String, Map<String, Entry>> merged(boolean overriding) { return overriding ? mergedOverride : mergedNormal; }
+
     private void buildIndex() {
         for (RDPLPack pack : packs) {
-            Map<String, Map<String, Entry>> target = pack.isOverriding() ? mergedOverride : mergedNormal;
+            Map<String, Map<String, Entry>> target = merged(pack.isOverriding());
             for (String namespace : pack.getNamespaces()) {
                 Map<String, Entry> paths = target.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
                 for (String path : pack.getPaths(namespace)) {
-                    String lowered = isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT);
+                    String lowered = lowered(path);
                     Entry prev = paths.get(lowered);
                     if (prev == null) {
                         paths.put(lowered, new Entry(pack, path, null));
@@ -233,7 +238,7 @@ public final class PackManager {
 
     @Nullable private RDPLPack load(Path entry) {
         String fileName = entry.getFileName().toString();
-        if (!fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) { return null; }
+        if (!fileName.toLowerCase(Locale.ROOT).endsWith(StrayPacks.ZIP)) { return null; }
         FileSystem zip = null;
         try {
             zip = FileSystems.newFileSystem(entry, null);
@@ -247,7 +252,7 @@ public final class PackManager {
             Path written = PackVersions.write(entry, pack.ported());
             if (written == null) { return pack; }
             IOUtils.closeQuietly(pack::close);
-            if (!PackVersions.swap(written, entry)) { return null; }
+            if (PackVersions.swapFailed(written, entry)) { return null; }
             ContentLog.LOGGER.info("Pack '{}': what 1.12.2 reads differently was written into its '{}' folder, and the modern files at the root are left as they were, so the same zip still loads on 1.20.1 and 1.21.1. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, PackVersions.PREFIX);
             return load(entry);
         }
@@ -287,6 +292,8 @@ public final class PackManager {
         return dot < 0 ? fileName : fileName.substring(0, dot);
     }
 
+    public static String stripJson(String path, int from) { return path.substring(from, path.length() - JSON_SUFFIX.length()); }
+
     public void warnAboutDisabledFeatures() { PackReport.warnAboutDisabledFeatures(packs); }
 
     public void report() { PackReport.report(packs, root); }
@@ -298,9 +305,9 @@ public final class PackManager {
     }
 
     @Nullable private Entry lookup(String namespace, String path, boolean overriding) {
-        Map<String, Entry> paths = (overriding ? mergedOverride : mergedNormal).get(namespace);
+        Map<String, Entry> paths = merged(overriding).get(namespace);
         if (paths == null) { return null; }
-        Entry entry = paths.get(isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT));
+        Entry entry = paths.get(lowered(path));
         if (entry == null) { return null; }
         if (entry.actual.equals(path)) { return entry; }
         if (entry.variants != null && entry.variants.get(path) == entry.pack) { return new Entry(entry.pack, path, null); }
@@ -355,7 +362,7 @@ public final class PackManager {
 
     public List<String> rawPaths(boolean overriding) {
         List<String> paths = new ArrayList<>();
-        for (Map.Entry<String, Map<String, Entry>> namespace : (overriding ? mergedOverride : mergedNormal).entrySet()) {
+        for (Map.Entry<String, Map<String, Entry>> namespace : merged(overriding).entrySet()) {
             for (Entry entry : namespace.getValue().values()) {
                 String path = "assets/" + namespace.getKey() + "/" + entry.actual;
                 paths.add(path);
@@ -390,12 +397,14 @@ public final class PackManager {
     }
 
     private static boolean isData(String path) {
-        return extraData(path) || path.startsWith(ADVANCEMENTS + "/") || path.startsWith(LOOT_TABLES + "/") || path.startsWith(RECIPES + "/")
-                || path.startsWith(FUNCTIONS + "/") || path.startsWith(REGISTRY_REMAP + "/") || path.startsWith(STRUCTURES + "/")
-                || path.startsWith(GATES + "/") || path.startsWith(CARDS + "/") || path.startsWith(WORLDTEMPLATES + "/") || path.startsWith(PATHINTERSECTS + "/") || path.startsWith(STRUCTUREMAPS + "/") || path.startsWith(CITYMAPS + "/") || path.startsWith(PORTALFRAMES + "/")
-                || path.startsWith(BLASTPLASTER + "/") || path.startsWith(WORLDINTRO + "/") || path.startsWith(DIMENSIONS + "/") || path.startsWith(CELESTIAL + "/") || path.startsWith(GAMERULES + "/")
-                || path.startsWith(BLOCKS + "/") || path.startsWith(ITEMS + "/") || path.startsWith(FLUIDS + "/") || path.startsWith(FURNACE + "/") || path.startsWith(WORLDGEN + "/") || path.startsWith(FUELS + "/") || path.startsWith(OREDICT + "/") || path.startsWith(SOUNDS + "/") || path.startsWith(RECIPE_REMOVALS + "/") || path.startsWith(DISABLED + "/") || path.startsWith(MATERIALS + "/") || path.startsWith(LOOT_INJECTIONS + "/") || path.startsWith(BLOCK_DROPS + "/") || path.startsWith(ANVILS + "/") || path.startsWith(PLAYER_LOOT + "/") || path.startsWith(TABS + "/") || path.startsWith(POTIONS + "/") || path.startsWith(POTION_TYPES + "/") || path.startsWith(BREWING + "/") || path.startsWith(VILLAGERS + "/") || path.startsWith(TRADES + "/") || path.startsWith(BIOMES + "/") || path.startsWith(VILLAGES + "/") || path.startsWith(ENTITIES + "/") || path.startsWith(HARDNESS + "/");
+        if (extraData(path)) { return true; }
+        int slash = path.indexOf('/');
+        if (slash < 0) { return false; }
+        String folder = path.substring(0, slash);
+        return DATA_FOLDERS.contains(folder) || SHARED_FOLDERS.contains(folder);
     }
+
+    private static String lowered(String path) { return isLowerCase(path) ? path : path.toLowerCase(Locale.ROOT); }
 
     @Nullable public String getPackName(String namespace, String path) {
         Entry entry = lookup(namespace, path);
@@ -406,10 +415,10 @@ public final class PackManager {
         List<RDPLPack> result = new ArrayList<>();
         Entry entry = lookup(namespace, path);
         if (entry == null) { return result; }
-        String lowered = isLowerCase(entry.actual) ? entry.actual : entry.actual.toLowerCase(Locale.ROOT);
+        String lowered = lowered(entry.actual);
         for (RDPLPack pack : packs) {
             for (String held : pack.getPaths(namespace)) {
-                if (!lowered.equals(isLowerCase(held) ? held : held.toLowerCase(Locale.ROOT))) { continue; }
+                if (!lowered.equals(lowered(held))) { continue; }
                 result.add(pack);
                 break;
             }
@@ -472,7 +481,7 @@ public final class PackManager {
 
     private static boolean validMeta(String contents) {
         try {
-            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
             return json != null && json.has("pack") && json.get("pack").isJsonObject();
         }
         catch (RuntimeException malformed) { return false; }

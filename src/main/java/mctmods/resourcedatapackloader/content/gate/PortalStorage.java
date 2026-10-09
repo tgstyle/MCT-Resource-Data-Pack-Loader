@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
+import net.minecraftforge.common.util.Constants;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -76,7 +77,7 @@ public final class PortalStorage extends WorldSavedData {
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
         positions.clear();
-        NBTTagList list = compound.getTagList(TAG, 10);
+        NBTTagList list = compound.getTagList(TAG, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound entry = list.getCompoundTagAt(i);
             BlockPos at = new BlockPos(entry.getInteger("x"), entry.getInteger("y"), entry.getInteger("z"));

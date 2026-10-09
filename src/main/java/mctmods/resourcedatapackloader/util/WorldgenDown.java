@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.Json.object;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,7 +27,6 @@ public final class WorldgenDown {
     private static final String SEQUENCE = "sequence";
     private static final String SPAWN_TARGET = "spawn_target";
     private static final String ARGUMENT = "argument";
-    private static final String MINECRAFT = "minecraft:";
     private static final String ATTRIBUTES = "attributes";
     private static final String COUNT = "count";
     private static final String START = "start_vertical_radius_multiplier";
@@ -122,7 +124,7 @@ public final class WorldgenDown {
         else if (probability != null) { note.accept("changes its creature spawn chance by a modifier, which 26.2 cannot, so the default is kept"); }
         for (Map.Entry<String, JsonElement> entry : attributes.entrySet()) {
             JsonElement value = entry.getValue();
-            if (value.isJsonObject() && value.getAsJsonObject().has("argument") && "append".equals(text(value.getAsJsonObject(), "modifier"))) {
+            if (value.isJsonObject() && value.getAsJsonObject().has("argument") && "append".equals(Json.text(value.getAsJsonObject(), "modifier"))) {
                 note.accept("appends to its dimension's " + entry.getKey() + ", which 26.2 cannot, so the biome's own replace them");
                 entry.setValue(value.getAsJsonObject().get("argument"));
             }
@@ -133,9 +135,7 @@ public final class WorldgenDown {
 
     private static JsonElement placed(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(placed(item, note)); }
-            return out;
+            return JsonTree.map(element.getAsJsonArray(), item -> placed(item, note));
         }
         if (!element.isJsonObject()) { return element; }
         JsonObject in = element.getAsJsonObject();
@@ -176,7 +176,7 @@ public final class WorldgenDown {
     }
 
     private static void counts(JsonObject out, JsonElement count) {
-        if (count.isJsonObject() && "uniform".equals(bare(type(count.getAsJsonObject())))) {
+        if (count.isJsonObject() && "uniform".equals(IdNames.bare(type(count.getAsJsonObject())))) {
             out.add("minCount", count.getAsJsonObject().get("min_inclusive"));
             out.add("maxCount", count.getAsJsonObject().get("max_inclusive"));
         }
@@ -188,9 +188,7 @@ public final class WorldgenDown {
 
     public static JsonElement states(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(states(item, note)); }
-            return out;
+            return JsonTree.map(element.getAsJsonArray(), item -> states(item, note));
         }
         if (!element.isJsonObject()) { return JsonTree.copy(element); }
         JsonObject in = element.getAsJsonObject();
@@ -276,9 +274,7 @@ public final class WorldgenDown {
 
     public static JsonElement density(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(density(item, note)); }
-            return out;
+            return JsonTree.map(element.getAsJsonArray(), item -> density(item, note));
         }
         if (NoiseParity.isEndIslands(element)) {
             JsonObject islands = new JsonObject();
@@ -287,7 +283,7 @@ public final class WorldgenDown {
         }
         if (!element.isJsonObject()) { return JsonTree.copy(element); }
         JsonObject in = element.getAsJsonObject();
-        String type = bare(type(in));
+        String type = IdNames.bare(type(in));
         JsonObject out = new JsonObject();
         for (Map.Entry<String, JsonElement> entry : in.entrySet()) { out.add(type.isEmpty() ? entry.getKey() : densityKey(entry.getKey(), type), density(entry.getValue(), note)); }
         if (type.isEmpty()) { return noise(out, note); }
@@ -329,7 +325,7 @@ public final class WorldgenDown {
                 return raised;
             }
             case "slice": {
-                if (!"y".equals(text(out, "axis")) || !"0".equals(text(out, "coordinate"))) { return dropped("slices a density function at a fixed x, z or y other than 0", note); }
+                if (!"y".equals(Json.text(out, "axis")) || !"0".equals(Json.text(out, "coordinate"))) { return dropped("slices a density function at a fixed x, z or y other than 0", note); }
                 note.accept("slices a density function at y 0, which 26.2 writes as a flat cache sampled every 4 blocks");
                 JsonObject flat = new JsonObject();
                 flat.addProperty(TYPE, MINECRAFT + "flat_cache");
@@ -380,7 +376,7 @@ public final class WorldgenDown {
     private static JsonElement uninterpolated(JsonElement surface) {
         if (!surface.isJsonObject()) { return surface; }
         JsonObject held = surface.getAsJsonObject();
-        return "interpolated".equals(bare(type(held))) && held.has("input") ? held.get("input") : surface;
+        return "interpolated".equals(IdNames.bare(type(held))) && held.has("input") ? held.get("input") : surface;
     }
 
     private static JsonElement surfaceRule(JsonElement rule, Consumer<String> note) {
@@ -397,7 +393,7 @@ public final class WorldgenDown {
         if (rule.has(SEQUENCE) && rule.get(SEQUENCE).isJsonArray()) {
             JsonArray kept = new JsonArray();
             for (JsonElement step : rule.getAsJsonArray(SEQUENCE)) {
-                if (step.isJsonObject() && "ore_vein".equals(bare(type(step.getAsJsonObject())))) {
+                if (step.isJsonObject() && "ore_vein".equals(IdNames.bare(type(step.getAsJsonObject())))) {
                     note.accept("places ore veins through its material rule, which 26.2 cannot, so they are dropped");
                     continue;
                 }
@@ -463,11 +459,5 @@ public final class WorldgenDown {
         return true;
     }
 
-    private static JsonObject object(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : new JsonObject(); }
-
-    private static String type(JsonObject object) { return text(object, TYPE); }
-
-    private static String text(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : ""; }
-
-    private static String bare(String id) { return id.startsWith(MINECRAFT) ? id.substring(MINECRAFT.length()) : id; }
+    private static String type(JsonObject object) { return Json.text(object, TYPE); }
 }

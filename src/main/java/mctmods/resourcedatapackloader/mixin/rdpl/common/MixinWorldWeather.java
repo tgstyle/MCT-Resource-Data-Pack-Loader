@@ -10,13 +10,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(World.class) public abstract class MixinWorldWeather {
-    @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true)
-    private void rdpl$rainBelowCeiling(BlockPos position, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "isRainingAt", at = @At("HEAD"), cancellable = true) private void rdpl$rainBelowCeiling(BlockPos position, CallbackInfoReturnable<Boolean> cir) {
         if (ContentWeather.above((World) (Object) this, position.getY())) { cir.setReturnValue(false); }
     }
 
-    @Inject(method = "canSnowAt", at = @At("HEAD"), cancellable = true)
-    private void rdpl$snowBelowCeiling(BlockPos pos, boolean checkLight, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "canSnowAt", at = @At("HEAD"), cancellable = true) private void rdpl$snowBelowCeiling(BlockPos pos, boolean checkLight, CallbackInfoReturnable<Boolean> cir) {
         if (ContentWeather.above((World) (Object) this, pos.getY())) { cir.setReturnValue(false); }
     }
 }

@@ -3,11 +3,13 @@ package mctmods.resourcedatapackloader.content.village;
 import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.state.IBlockState;
@@ -20,7 +22,7 @@ import java.util.Random;
 public final class ContentPierCargo {
     private static final String NAME = "villagePathPierCargo";
     private static final String LOOT = "villagePathPierLoot";
-    public static final ResourceLocation LOOT_TABLE = new ResourceLocation("resourcedatapackloader", "chests/pier_cargo");
+    public static final ResourceLocation LOOT_TABLE = new ResourceLocation(Rubic.MODID, "chests/pier_cargo");
     private static final int MOST_HIGH = 8;
     private static final WeightedPicks CHOICES = new WeightedPicks(NAME);
 
@@ -47,7 +49,7 @@ public final class ContentPierCargo {
         IBlockState stood = ContentBeard.faced(state, facing);
         for (int step = 0; step < high; step++) {
             BlockPos at = new BlockPos(x, y + step, z);
-            world.setBlockState(at, stood, 2);
+            world.setBlockState(at, stood, BlockFlags.UPDATE_CLIENTS);
             BeardKeep.holdSpot(x, y + step, z);
             stock(world, at, random);
         }

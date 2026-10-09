@@ -18,7 +18,6 @@ public class MessageRubicWorldData implements IMessage {
     private boolean isRubicWorld;
     private int minHeight;
     private int maxHeight;
-    private int minGenerationHeight;
     private int maxGenerationHeight;
 
     public MessageRubicWorldData() {}
@@ -30,7 +29,6 @@ public class MessageRubicWorldData implements IMessage {
             this.isRubicWorld = true;
             this.minHeight = ((IRubicWorld) world).rdpl$getMinHeight();
             this.maxHeight = ((IRubicWorld) world).rdpl$getMaxHeight();
-            this.minGenerationHeight = 0;
             this.maxGenerationHeight = ((IRubicWorld) world).rdpl$getMaxGenerationHeight();
         }
     }
@@ -39,7 +37,6 @@ public class MessageRubicWorldData implements IMessage {
         this.isRubicWorld = buf.readBoolean();
         this.minHeight = buf.readInt();
         this.maxHeight = buf.readInt();
-        this.minGenerationHeight = buf.readInt();
         this.maxGenerationHeight = buf.readInt();
     }
 
@@ -47,7 +44,6 @@ public class MessageRubicWorldData implements IMessage {
         buf.writeBoolean(this.isRubicWorld);
         buf.writeInt(this.minHeight);
         buf.writeInt(this.maxHeight);
-        buf.writeInt(this.minGenerationHeight);
         buf.writeInt(this.maxGenerationHeight);
     }
 
@@ -57,8 +53,6 @@ public class MessageRubicWorldData implements IMessage {
 
     public int rdpl$getMaxHeight() { return this.maxHeight; }
 
-    public int getMinGenerationHeight() { return minGenerationHeight; }
-
     public int rdpl$getMaxGenerationHeight() { return maxGenerationHeight; }
 
     public static class Handler extends AbstractClientMessageHandler<MessageRubicWorldData> {
@@ -66,7 +60,7 @@ public class MessageRubicWorldData implements IMessage {
             if (message.rdpl$isRubicWorld() && !GenHeights.rubic(world)) {
                 ((IRubicWorldInternal.IClient) world).rdpl$initRubicWorldClient(
                         new IntRange(message.rdpl$getMinHeight(), message.rdpl$getMaxHeight()),
-                        new IntRange(message.getMinGenerationHeight(), message.rdpl$getMaxGenerationHeight())
+                        new IntRange(0,message.rdpl$getMaxGenerationHeight())
                 );
                 Minecraft.getMinecraft().renderGlobal.setWorldAndLoadRenderers((WorldClient) world);
             }

@@ -16,10 +16,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
     public MixinEntitySquid(World worldIn) { super(worldIn); }
 
     @ModifyConstant(method = "getCanSpawnHere", constant = @Constant(doubleValue = 45)) private double rdpl$spawnFloor(double orig) {
-        return GenHeights.rubic(this.world) ? orig + (RubicWorldControl.terrainOffsetCubes() << 4) : orig;
+        return GenHeights.rubic(this.world) ? orig + RubicWorldControl.terrainOffsetBlocks() : orig;
     }
 
     @Redirect(method = "getCanSpawnHere", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getSeaLevel()I")) private int rdpl$spawnCeiling(World world) {
-        return GenHeights.rubic(world) ? world.getSeaLevel() + (RubicWorldControl.terrainOffsetCubes() << 4) : world.getSeaLevel();
+        return GenHeights.rubic(world) ? world.getSeaLevel() + RubicWorldControl.terrainOffsetBlocks() : world.getSeaLevel();
     }
 }

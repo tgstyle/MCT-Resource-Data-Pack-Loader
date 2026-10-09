@@ -32,7 +32,6 @@ public class ContentBlockCrop extends BlockCrops implements IContentBlock {
         ContentSetup.properties(this, def);
         setTranslationKey(def.registryName + "." + variant.name);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(variant.hardness);
     }
 
     public void resolve(ItemStack seedStack, ItemStack cropStack) {

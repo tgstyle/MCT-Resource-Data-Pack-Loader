@@ -2,10 +2,10 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
+import mctmods.resourcedatapackloader.content.village.ContentVillagePiece;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -13,6 +13,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -58,7 +59,7 @@ public final class BeardRailsFit {
             int base = alongX ? wellZ : wellX;
             int rolled = side * (clear + (line / 2) * apart + roll.nextInt(Math.max(1, BeardRails.spacing(sub) / 2)));
             int candidate = BeardRails.offWell(wellBox, alongX, base + rolled, side, sub) - base;
-            if (candidate != rolled) { ContentLog.LOGGER.debug("Subway line {} of the village at {}, {} rolled onto the well at {} {}, so it is laid {} block(s) further out, at {}, and its corridor leaves the well alone", line, wellX, wellZ, alongX ? "z" : "x", base + rolled, Math.abs(candidate - rolled), base + candidate); }
+            if (candidate != rolled) { ContentLog.LOGGER.debug("{} line {} of the village at {}, {} rolled onto the well at {} {}, so it is laid {} block(s) further out, at {}, and its corridor leaves the well alone", sub ? "Subway" : "Railway", line, wellX, wellZ, alongX ? "z" : "x", base + rolled, Math.abs(candidate - rolled), base + candidate); }
             boolean moved = true;
             while (moved) {
                 moved = false;
@@ -87,7 +88,7 @@ public final class BeardRailsFit {
         for (StructureComponent other : components) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
-            boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            boolean roadAlongX = BeardPlots.longerAlongX(road);
             if (roadAlongX != alongX) { continue; }
             if (BeardRoads.roadNarrow(road, roadAlongX)) { continue; }
             int center = roadAlongX ? (road.minZ + road.maxZ) / 2 : (road.minX + road.maxX) / 2;
@@ -115,7 +116,7 @@ public final class BeardRailsFit {
     }
 
     private static int shallowRow(World world, RailPiece rail) {
-        int least = GenHeights.floor(world, BeardRails.FLOOR_LEAST) + BeardRails.subwayDepth();
+        int least = BeardRails.lined(world) + BeardRails.subwayDepth();
         boolean alongX = rail.alongX();
         StructureBoundingBox box = rail.getBoundingBox();
         int center = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
@@ -201,23 +202,21 @@ public final class BeardRailsFit {
                 box.minZ = from;
                 box.maxZ = to;
             }
+            BeardPlots.resized();
             rail.regrade();
             if (sub) {
-                List<StructureComponent> held = ContentBeard.laid();
-                ContentBeard.laying(components);
-                int shallow;
-                try {
-                    shallow = shallowRow(world, rail);
-                    if (shallow == Integer.MIN_VALUE) { rail.rising(world); }
-                }
-                finally { ContentBeard.laying(held); }
+                int shallow = ContentBeard.layingOf(components, () -> {
+                    int row = shallowRow(world, rail);
+                    if (row == Integer.MIN_VALUE) { rail.rising(world); }
+                    return row;
+                });
                 if (shallow != Integer.MIN_VALUE) {
                     components.remove(piece);
-                    ContentLog.LOGGER.debug("Subway line {} of the village at {}, {} has no room under the ground at row {}: {} block(s) of depth would reach below y {}, the world floor plus its lining, so it is not laid", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, shallow, BeardRails.subwayDepth(), GenHeights.floor(world, BeardRails.FLOOR_LEAST));
+                    ContentLog.LOGGER.debug("Subway line {} of the village at {}, {} has no room under the ground at row {}: {} block(s) of depth would reach below y {}, the world floor plus its lining, so it is not laid", rail.line(), start.getBoundingBox().minX, start.getBoundingBox().minZ, shallow, BeardRails.subwayDepth(), BeardRails.lined(world));
                     continue;
                 }
                 for (StructureComponent plot : components.toArray(new StructureComponent[0])) {
-                    if (!(plot instanceof mctmods.resourcedatapackloader.content.village.ContentVillagePiece)) { continue; }
+                    if (!(plot instanceof ContentVillagePiece)) { continue; }
                     StructureBoundingBox met = plot.getBoundingBox();
                     if (!met.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ) || BeardRails.buriedUnder(rail, met)) { continue; }
                     components.remove(plot);
@@ -228,10 +227,7 @@ public final class BeardRailsFit {
             if (sub) {
                 int wellAlong = alongX ? (wellBox.minX + wellBox.maxX) / 2 : (wellBox.minZ + wellBox.maxZ) / 2;
                 int acrossMid = alongX ? (box.minZ + box.maxZ) / 2 : (box.minX + box.maxX) / 2;
-                List<StructureComponent> held = ContentBeard.laid();
-                ContentBeard.laying(components);
-                try { BeardStations.claim(start, rail, alongX, acrossMid, wellAlong); }
-                finally { ContentBeard.laying(held); }
+                ContentBeard.layingWith(components, () -> BeardStations.claim(start, rail, alongX, acrossMid, wellAlong));
             }
         }
     }
@@ -241,7 +237,7 @@ public final class BeardRailsFit {
         for (StructureComponent other : components) {
             if (!(other instanceof StructureVillagePieces.Path)) { continue; }
             StructureBoundingBox road = other.getBoundingBox();
-            boolean roadAlongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            boolean roadAlongX = BeardPlots.longerAlongX(road);
             if (roadAlongX == alongX || (!narrow && BeardRoads.roadNarrow(road, roadAlongX))) { continue; }
             if (center < (alongX ? road.minZ : road.minX) || center > (alongX ? road.maxZ : road.maxX)) { continue; }
             boxes.add(alongX ? new int[] {road.minX, road.maxX} : new int[] {road.minZ, road.maxZ});
@@ -260,10 +256,7 @@ public final class BeardRailsFit {
         List<StructureComponent> components = start.getComponents();
         for (StructureComponent piece : components.toArray(new StructureComponent[0])) {
             if (!BeardRails.buried(piece) || ((RailPiece) piece).trunk() != null) { continue; }
-            List<StructureComponent> held = ContentBeard.laid();
-            ContentBeard.laying(components);
-            try { standOff(world, (RailPiece) piece, components); }
-            finally { ContentBeard.laying(held); }
+            ContentBeard.layingWith(components, () -> standOff(world, (RailPiece) piece, components));
         }
     }
 
@@ -288,7 +281,7 @@ public final class BeardRailsFit {
         boolean alongX = rail.alongX();
         int center = (rail.acrossLeast() + rail.acrossMost()) / 2;
         int[] rising = rail.risingKnown();
-        List<RailPiece> only = java.util.Collections.singletonList(rail);
+        List<RailPiece> only = Collections.singletonList(rail);
         int from = Math.max(alongX ? met.minX : met.minZ, rail.rowLeast());
         int to = Math.min(alongX ? met.maxX : met.maxZ, rail.rowMost());
         int roof = Integer.MIN_VALUE;

@@ -13,8 +13,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
@@ -31,7 +29,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentVillagers {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final int MAX_CAREERS = 32;
     private static final Map<ResourceLocation, VillagerDef> VILLAGERS = new LinkedHashMap<>();
     private static final List<TradeDef> TRADES = new ArrayList<>();
@@ -59,11 +56,8 @@ public final class ContentVillagers {
     public static boolean wanted() { return !VILLAGERS.isEmpty() || !TRADES.isEmpty(); }
 
     private static void readVillager(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Villager file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "villager file");
+        if (json == null) { return; }
         List<String> careers = strings(json, "careers");
         if (careers.isEmpty()) {
             ContentLog.LOGGER.error("Villager profession {} lists no careers, ignoring it. A profession with no career cannot be assigned to a villager", key);
@@ -77,11 +71,8 @@ public final class ContentVillagers {
     }
 
     private static void readTrades(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Trade file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "trade file");
+        if (json == null) { return; }
         for (JsonElement element : JsonUtils.getJsonArray(json, "trades")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);

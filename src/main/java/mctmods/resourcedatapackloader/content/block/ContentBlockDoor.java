@@ -34,9 +34,6 @@ public class ContentBlockDoor extends BlockDoor implements IContentBlock {
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(variant.hardness);
-        setResistance(variant.resistance / def.explosionResistanceDivisor);
-        setLightLevel(variant.light / 15.0F);
     }
 
     @Override public BlockDef getDef() { return def; }
@@ -56,9 +53,7 @@ public class ContentBlockDoor extends BlockDoor implements IContentBlock {
         return door;
     }
 
-    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        return door == null ? ItemStack.EMPTY : new ItemStack(door);
-    }
+    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return door == null ? ItemStack.EMPTY : new ItemStack(door); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 }

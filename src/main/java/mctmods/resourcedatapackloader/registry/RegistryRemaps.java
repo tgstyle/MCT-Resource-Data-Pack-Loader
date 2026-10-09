@@ -7,8 +7,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.JsonUtils;
@@ -23,7 +21,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class RegistryRemaps {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final String REGISTRY = "registry";
     private static final String MAPPING = "mapping";
     private static final Map<ResourceLocation, Map<ResourceLocation, ResourceLocation>> REMAPS = new HashMap<>();
@@ -36,16 +33,11 @@ public final class RegistryRemaps {
         GENERATION.stale();
         if (!Config.data.registryRemaps) { return; }
         int[] count = new int[1];
-        Json.eachFile(PackManager.REGISTRY_REMAP, "registry remap", (key, contents) -> count[0] += read(key, contents));
+        Json.eachObject(PackManager.REGISTRY_REMAP, "registry remap", (key, json) -> count[0] += read(json));
         if (count[0] > 0) { Summary.info("remaps", "Loaded " + count[0] + " registry rename(s) across " + REMAPS.size() + " registry/registries"); }
     }
 
-    private static int read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Registry remap {} is empty, ignoring it", key);
-            return 0;
-        }
+    private static int read(JsonObject json) {
         ResourceLocation registry = new ResourceLocation(JsonUtils.getString(json, REGISTRY));
         JsonObject mapping = JsonUtils.getJsonObject(json, MAPPING);
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());

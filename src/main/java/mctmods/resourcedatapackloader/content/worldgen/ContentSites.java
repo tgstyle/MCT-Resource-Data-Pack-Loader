@@ -54,23 +54,19 @@ public class ContentSites extends WorldSavedData {
     @Override public void readFromNBT(NBTTagCompound nbt) {
         chosen.clear();
         spacing = nbt.getInteger("Spacing");
-        int[] packed = nbt.getIntArray("Sites");
-        for (int i = 0; i + 3 < packed.length; i += 4) { chosen.put(Longs.pack(packed[i], packed[i + 1]), Longs.pack(packed[i + 2], packed[i + 3])); }
+        long[] pairs = Longs.fromInts(nbt.getIntArray("Sites"));
+        for (int i = 0; i + 1 < pairs.length; i += 2) { chosen.put(pairs[i], pairs[i + 1]); }
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
-        int[] packed = new int[chosen.size() * 4];
+        long[] pairs = new long[chosen.size() * 2];
         int at = 0;
         for (Map.Entry<Long, Long> entry : chosen.entrySet()) {
-            long cell = entry.getKey();
-            long site = entry.getValue();
-            packed[at++] = Longs.high(cell);
-            packed[at++] = Longs.low(cell);
-            packed[at++] = Longs.high(site);
-            packed[at++] = Longs.low(site);
+            pairs[at++] = entry.getKey();
+            pairs[at++] = entry.getValue();
         }
         nbt.setInteger("Spacing", spacing);
-        nbt.setIntArray("Sites", packed);
+        nbt.setIntArray("Sites", Longs.toInts(pairs));
         return nbt;
     }
 }

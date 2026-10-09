@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.util.Marks;
 
 import net.minecraft.client.gui.FontRenderer;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ import java.util.List;
     static List<Piece> pieces(String font, String said) { return pieces(font, said, 0); }
 
     static List<Piece> pieces(String font, String said, int marks) {
-        if (marks == 0 && Marks.plain(said)) { return Collections.singletonList(new Piece(CardFont.of(font), "", said, false)); }
+        if (marks == 0 && Marks.plain(said)) { return literal(font, said); }
         List<Piece> pieces = new ArrayList<>();
         for (Marks.Run run : Marks.runs(said)) { pieces.add(piece(font, run.text, run.marks | marks)); }
         return pieces;
@@ -51,12 +52,12 @@ import java.util.List;
         boolean italic = (marks & Marks.ITALIC) != 0;
         if (bold) {
             FontRenderer heavy = CardFont.bold(used);
-            if (heavy == null) { codes.append("§l"); }
+            if (heavy == null) { codes.append(TextFormatting.BOLD); }
             else { face = heavy; }
         }
-        if (italic) { codes.append("§o"); }
-        if ((marks & Marks.STRIKE) != 0) { codes.append("§m"); }
-        if ((marks & Marks.LINK) != 0) { codes.append("§n"); }
+        if (italic) { codes.append(TextFormatting.ITALIC); }
+        if ((marks & Marks.STRIKE) != 0) { codes.append(TextFormatting.STRIKETHROUGH); }
+        if ((marks & Marks.LINK) != 0) { codes.append(TextFormatting.UNDERLINE); }
         return new Piece(face, codes.toString(), text, (marks & Marks.CODE) != 0);
     }
 

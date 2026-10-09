@@ -24,6 +24,7 @@ import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -59,7 +60,7 @@ public final class ContentEntityTicks {
         CHECKED.clear();
     }
 
-    @SubscribeEvent public static void onWorldUnload(net.minecraftforge.event.world.WorldEvent.Unload event) {
+    @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
         FAR.remove(event.getWorld());
         CHECKED.remove(event.getWorld());
         PredictedChunk.forget();
@@ -72,6 +73,11 @@ public final class ContentEntityTicks {
         TICKS++;
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || server.getTickCounter() % SNAPSHOT != 0) { return; }
+        long asked = considered;
+        long paced = slowed;
+        considered = 0L;
+        slowed = 0L;
+        if (!ContentLog.LOGGER.debugEnabled()) { return; }
         double mean = MathHelper.average(server.tickTimeArray) * 1.0E-6D;
         double rate = Math.min(20.0D, 1000.0D / Math.max(50.0D, mean));
         int entities = 0;
@@ -81,9 +87,7 @@ public final class ContentEntityTicks {
             chunks += world.getChunkProvider().getLoadedChunkCount();
         }
         ContentLog.LOGGER.debug(String.format("Every second the server manages %.1f rounds of %.1f ms, holding %d chunk(s) and %d entity/entities. Of %d asked about since the last look, %d were given a slower pace",
-                rate, mean, chunks, entities, considered, slowed));
-        considered = 0L;
-        slowed = 0L;
+                rate, mean, chunks, entities, asked, paced));
     }
 
     private static final TemplateMemo<Slowing> SLOWING = new TemplateMemo<>();

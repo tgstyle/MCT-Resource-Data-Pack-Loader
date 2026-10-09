@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IShaderGroup;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -29,7 +30,7 @@ import java.nio.FloatBuffer;
 import javax.annotation.Nullable;
 
 @SideOnly(Side.CLIENT) public final class ContentHeatShimmer {
-    private static final ResourceLocation SHADER = new ResourceLocation("resourcedatapackloader", "shaders/post/heat.json");
+    private static final ResourceLocation SHADER = new ResourceLocation(Rubic.MODID, "shaders/post/heat.json");
     private static final String DEPTH = "DepthSampler";
     private static final float EASE = 0.05F;
     private static final float GONE = 0.002F;

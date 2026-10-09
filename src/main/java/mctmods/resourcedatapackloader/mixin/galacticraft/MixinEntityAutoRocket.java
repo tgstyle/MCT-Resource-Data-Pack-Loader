@@ -12,13 +12,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = EntityAutoRocket.class, remap = false) public class MixinEntityAutoRocket {
-    @Inject(method = "addCargo(Lnet/minecraft/item/ItemStack;Z)Lmicdoodle8/mods/galacticraft/api/entity/ICargoEntity$EnumCargoLoadingState;", at = @At("HEAD"), cancellable = true)
-    private void rdpl$packCargoFilter(ItemStack stack, boolean doAdd, CallbackInfoReturnable<EnumCargoLoadingState> cir) {
+    @Inject(method = "addCargo(Lnet/minecraft/item/ItemStack;Z)Lmicdoodle8/mods/galacticraft/api/entity/ICargoEntity$EnumCargoLoadingState;", at = @At("HEAD"), cancellable = true) private void rdpl$packCargoFilter(ItemStack stack, boolean doAdd, CallbackInfoReturnable<EnumCargoLoadingState> cir) {
         if (RocketCargo.refuses(this, stack)) { cir.setReturnValue(EnumCargoLoadingState.FULL); }
     }
 
-    @Inject(method = "igniteWithResult()Z", at = @At("HEAD"), cancellable = true)
-    private void rdpl$packRequiredPayload(CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "igniteWithResult()Z", at = @At("HEAD"), cancellable = true) private void rdpl$packRequiredPayload(CallbackInfoReturnable<Boolean> cir) {
         if (RocketCargo.grounded((Entity) (Object) this)) { cir.setReturnValue(false); }
     }
 }

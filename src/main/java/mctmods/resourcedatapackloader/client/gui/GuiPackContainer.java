@@ -1,21 +1,28 @@
 package mctmods.resourcedatapackloader.client.gui;
 
+import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.gui.ContainerPack;
+import mctmods.resourcedatapackloader.content.gui.ContainerPouch;
 import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
+import mctmods.resourcedatapackloader.network.RDPLNetwork;
 
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.input.Keyboard;
 import javax.annotation.Nullable;
+import java.io.IOException;
 
 public class GuiPackContainer extends GuiContainer {
     private static final ResourceLocation VANILLA = new ResourceLocation("textures/gui/container/generic_54.png");
     protected static final int EDGE = 7;
-    private static final int HEADER = 17;
-    private static final int SLOT = 18;
+    private static final int HEADER = ContainerPack.HEADER;
+    private static final int SLOT = ContainerPack.SLOT;
     private static final int FOOT = 96;
     private static final int FOOT_SOURCE = 126;
     private static final int RIGHT_SOURCE = 169;
@@ -36,31 +43,31 @@ public class GuiPackContainer extends GuiContainer {
         this(new ContainerPack(player, tile), tile, Math.max(1, tile.rows()), Math.max(1, tile.columns()), def);
     }
 
-    @Override protected void keyTyped(char typed, int code) throws java.io.IOException {
-        if (code != org.lwjgl.input.Keyboard.KEY_NONE && code == mctmods.resourcedatapackloader.client.PouchKey.code()
-                && inventorySlots instanceof mctmods.resourcedatapackloader.content.gui.ContainerPouch
-                && ((mctmods.resourcedatapackloader.content.gui.ContainerPouch) inventorySlots).worn() >= 0) {
-            mctmods.resourcedatapackloader.network.RDPLNetwork.openWornPouch();
+    @Override protected void keyTyped(char typed, int code) throws IOException {
+        if (code != Keyboard.KEY_NONE && code == PouchKey.code()
+                && inventorySlots instanceof ContainerPouch
+                && ((ContainerPouch) inventorySlots).worn() >= 0) {
+            RDPLNetwork.openWornPouch();
             return;
         }
         super.keyTyped(typed, code);
     }
 
-    public GuiPackContainer(net.minecraft.inventory.Container container, IInventory inventory, int rows, int columns, @Nullable ContainerDef def) {
+    public GuiPackContainer(Container container, IInventory inventory, int rows, int columns, @Nullable ContainerDef def) {
         super(container);
         this.held = inventory;
         this.rows = Math.max(1, rows);
         this.columns = Math.max(1, columns);
         this.texture = def == null ? null : def.guiTexture;
-        this.xSize = def != null && def.guiTexture != null && def.guiWidth > 0 ? def.guiWidth : ContainerPack.width(columns);
-        this.ySize = def != null && def.guiTexture != null && def.guiHeight > 0 ? def.guiHeight : ContainerPack.height(rows);
+        this.xSize = def != null && def.guiTexture != null && def.guiWidth > 0 ? def.guiWidth : ContainerPack.width(this.columns);
+        this.ySize = def != null && def.guiTexture != null && def.guiHeight > 0 ? def.guiHeight : ContainerPack.height(this.rows);
         this.allowUserInput = false;
     }
 
     @Override protected void drawGuiContainerForegroundLayer(int mouseX, int mouseY) {
         String title = held.getDisplayName().getUnformattedText();
         fontRenderer.drawString(title, 8, 6, 0x404040);
-        fontRenderer.drawString(net.minecraft.client.resources.I18n.format("container.inventory"), 8, ySize - 94, 0x404040);
+        fontRenderer.drawString(I18n.format("container.inventory"), 8, ySize - 94, 0x404040);
     }
 
     @Override protected void drawGuiContainerBackgroundLayer(float partial, int mouseX, int mouseY) {

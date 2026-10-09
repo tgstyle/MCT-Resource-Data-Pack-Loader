@@ -52,7 +52,7 @@ public final class SkyLookDef {
 
     public boolean tintsStars() { return starColor != UNSET || starTwinkle > 0.0F; }
 
-    public boolean tintsLight() { return lightSkyColor != UNSET || lightBlockColor != UNSET || skyFactor < 1.0F; }
+    public boolean plainLight() { return lightSkyColor == UNSET && lightBlockColor == UNSET && skyFactor >= 1.0F; }
 
     public boolean movesClouds() { return cloudSpeed != 1.0F || !cloudLayers.isEmpty(); }
 

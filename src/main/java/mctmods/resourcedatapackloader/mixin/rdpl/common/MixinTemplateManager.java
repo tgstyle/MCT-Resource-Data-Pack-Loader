@@ -48,8 +48,6 @@ import java.io.InputStream;
             ContentLog.LOGGER.debug("Serving structure {} from pack '{}'", id, manager.getPackName(id.getNamespace(), path));
             cir.setReturnValue(Boolean.TRUE);
         }
-        catch (IOException ex) {
-            ContentLog.LOGGER.error("Could not read structure {} from pack, falling back to the jar", id, ex);
-        }
+        catch (IOException ex) { ContentLog.LOGGER.error("Could not read structure {} from pack, falling back to the jar", id, ex); }
     }
 }

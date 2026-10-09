@@ -8,9 +8,9 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.math.MathHelper;
@@ -25,28 +25,25 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;import java.util.Map;
 import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class BlockDrops {
-    public static final String BLOCK = "block";
-    public static final String META = "meta";
-    public static final String REPLACE = "replace";
-    public static final String DROPS = "drops";
-    public static final String ITEM = "item";
-    public static final String COUNT = "count";
-    public static final String CHANCE = "chance";
-    public static final String FORTUNE = "fortune";
-    public static final String SILK_TOUCH = "silkTouch";
-    public static final String EXPERIENCE = "experience";
-    public static final String ADVANCEMENT = "advancement";
+    private static final String BLOCK = "block";
+    private static final String META = "meta";
+    private static final String REPLACE = "replace";
+    private static final String DROPS = "drops";
+    private static final String ITEM = "item";
+    private static final String COUNT = "count";
+    private static final String CHANCE = "chance";
+    private static final String FORTUNE = "fortune";
+    private static final String SILK_TOUCH = "silkTouch";
+    private static final String EXPERIENCE = "experience";
+    private static final String ADVANCEMENT = "advancement";
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
-    private static final Gson GSON = new Gson();
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -84,21 +81,16 @@ public final class BlockDrops {
         }
     }
 
-    public static void reload() {
+    private static void reload() {
         BY_BLOCK.clear();
         GENERATION.stale();
         if (!Config.data.blockDrops) { return; }
         int[] count = new int[1];
-        Json.eachFile(PackManager.BLOCK_DROPS, "block drops", (key, contents) -> read(key, contents, count));
+        Json.eachObject(PackManager.BLOCK_DROPS, "block drops", (key, json) -> read(key, json, count));
         if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Block drops {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(ResourceLocation key, JsonObject json, int[] count) {
         String name = JsonUtils.getString(json, BLOCK, "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
@@ -136,7 +128,7 @@ public final class BlockDrops {
         if (!experience && item.isEmpty()) { return null; }
         AmountDef count = amount(key, json, experience ? EXPERIENCE : COUNT);
         if (count == null) { return null; }
-        String silkTouch = JsonUtils.getString(json, SILK_TOUCH, EITHER).trim().toLowerCase(Locale.ROOT);
+        String silkTouch = Settings.lower(JsonUtils.getString(json, SILK_TOUCH, EITHER));
         if (!EITHER.equals(silkTouch) && !ONLY.equals(silkTouch) && !NEVER.equals(silkTouch)) {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
@@ -185,7 +177,7 @@ public final class BlockDrops {
                 if (drop.fortune > 0 && event.getFortuneLevel() > 0) { count += random.nextInt(drop.fortune * event.getFortuneLevel() + 1); }
                 if (count <= 0) { continue; }
                 if (drop.experience) {
-                    if (!event.getWorld().isRemote) { event.getWorld().spawnEntity(new EntityXPOrb(event.getWorld(), event.getPos().getX() + 0.5D, event.getPos().getY() + 0.5D, event.getPos().getZ() + 0.5D, count)); }
+                    if (!event.getWorld().isRemote && event.getDropChance() > 0.0F) { event.getWorld().spawnEntity(new EntityXPOrb(event.getWorld(), event.getPos().getX() + 0.5D, event.getPos().getY() + 0.5D, event.getPos().getZ() + 0.5D, count)); }
                     continue;
                 }
                 ItemStack stack = drop.item.copy();

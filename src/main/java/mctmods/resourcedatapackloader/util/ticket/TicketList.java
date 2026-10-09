@@ -2,13 +2,13 @@ package mctmods.resourcedatapackloader.util.ticket;
 
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
-
-import com.google.common.collect.Lists;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
 
+import com.google.common.collect.Lists;
+
+import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.List;
 
 public class TicketList {
     private final Cube cube;

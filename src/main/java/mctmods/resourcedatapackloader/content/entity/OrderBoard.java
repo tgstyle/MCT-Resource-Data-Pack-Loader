@@ -34,7 +34,6 @@ public final class OrderBoard extends WorldSavedData {
     private static final String ORDERS = "Orders";
     private static final String NEXT = "NextId";
     static final String ORDER = "rdplOrder";
-    static final String LEASE = "rdplOrderLease";
     private static final String PAUSED = "rdplOrderPaused";
     private static final int PAUSE = 1200;
     private static final int BUDGET = 2048;
@@ -73,7 +72,7 @@ public final class OrderBoard extends WorldSavedData {
         for (WorkOrder order : orders) {
             if (order.def == def && order.chest.equals(chest) && order.stock == stock) { return order; }
         }
-        ScorePlayerTeam side = world.getScoreboard().getPlayersTeam(by.getName());
+        ScorePlayerTeam side = ContentOrders.teamOf(by);
         WorkOrder order = new WorkOrder(nextId++, def, chest.toImmutable(), sign == null ? null : sign.toImmutable(), side == null ? "" : side.getName(), by.getUniqueID(), stock, def.limit);
         order.idleSince = world.getTotalWorldTime();
         orders.add(order);
@@ -215,7 +214,6 @@ public final class OrderBoard extends WorldSavedData {
         order.idleSince = now;
         NBTTagCompound kept = mob.getEntityData();
         kept.setInteger(ORDER, order.id);
-        kept.setLong(LEASE, now + LEASE_TICKS);
         if (order.team.isEmpty() && order.owner != null && ContentOrders.boss(mob) == null) { ContentOrders.bind(mob, order.owner); }
     }
 
@@ -223,7 +221,6 @@ public final class OrderBoard extends WorldSavedData {
         if (order != null) { order.leases.remove(mob.getUniqueID()); }
         if (order != null && mob.getEntityData().getInteger(ORDER) != order.id) { return; }
         mob.getEntityData().removeTag(ORDER);
-        mob.getEntityData().removeTag(LEASE);
     }
 
     private void spawn(World world, WorkOrder order) {

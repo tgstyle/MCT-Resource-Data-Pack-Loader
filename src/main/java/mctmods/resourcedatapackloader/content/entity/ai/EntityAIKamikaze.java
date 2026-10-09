@@ -4,13 +4,14 @@ import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.init.SoundEvents;
+import javax.annotation.Nullable;
 
 public final class EntityAIKamikaze extends EntityAIBase {
     private final EntityCreature mob;
     private final float power;
     private final int fuse;
     private final boolean fire;
-    private EntityLivingBase target;
+    @Nullable private EntityLivingBase target;
     private int lit;
 
     public EntityAIKamikaze(EntityCreature mob, float power, int fuse, boolean fire) {
@@ -49,7 +50,7 @@ public final class EntityAIKamikaze extends EntityAIBase {
         lit++;
         if (lit < fuse) { return; }
         if (mob.world.isRemote) { return; }
-        mob.world.newExplosion(mob, mob.posX, mob.posY, mob.posZ, power, fire, mob.world.getGameRules().getBoolean("mobGriefing"));
+        mob.world.newExplosion(mob, mob.posX, mob.posY, mob.posZ, power, fire, MobGriefing.allowed(mob));
         mob.setDead();
     }
 }

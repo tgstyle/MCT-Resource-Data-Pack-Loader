@@ -22,9 +22,9 @@ public class GuiPackShapesWorld extends GuiScreen {
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
-        drawCenteredString(fontRenderer, "Pack overrides are active", width / 2, height / 4, 0xFFFFFF);
-        drawCenteredString(fontRenderer, owner + " shapes this world, so these settings are not available", width / 2, height / 4 + 30, 0xA0A0A0);
-        drawCenteredString(fontRenderer, "Remove the pack, or the settings it carries, to choose them yourself", width / 2, height / 4 + 45, 0xA0A0A0);
+        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.title"), width / 2, height / 4, 0xFFFFFF);
+        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.owner", owner), width / 2, height / 4 + 30, 0xA0A0A0);
+        drawCenteredString(fontRenderer, I18n.format("rdpl.gui.shapesWorld.hint"), width / 2, height / 4 + 45, 0xA0A0A0);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 }

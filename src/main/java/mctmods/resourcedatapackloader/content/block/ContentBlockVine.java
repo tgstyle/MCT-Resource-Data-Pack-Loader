@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.BlockVine;
 import net.minecraft.block.state.BlockFaceShape;
@@ -23,11 +24,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentBlockVine extends BlockVine implements IContentBlock {
-    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
-
     public static final int MAX_VARIANTS = 1;
     private final BlockDef def;
     private final GrowthDef growth;
+
+    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public ContentBlockVine(BlockDef def, GrowthDef growth) {
         this.def = def;
@@ -35,8 +36,7 @@ import javax.annotation.Nullable;
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + def.at(0).name);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(def.at(0).hardness);
-        setTickRandomly(growth.maxHeight > 1);
+        setTickRandomly(growth.maxHeight > 1 || growth.spread > 0);
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
     }
@@ -60,12 +60,7 @@ import javax.annotation.Nullable;
         int hanging = 1;
         while (world.getBlockState(pos.up(hanging)).getBlock() == this) { hanging++; }
         if (hanging >= growth.maxHeight) { return; }
-        IBlockState copy = state;
-        for (EnumFacing facing : EnumFacing.Plane.HORIZONTAL) {
-            if (!state.getValue(getPropertyFor(facing))) { continue; }
-            copy = copy.withProperty(getPropertyFor(facing), Boolean.TRUE);
-        }
-        world.setBlockState(below, copy, 2);
+        world.setBlockState(below, state, BlockFlags.UPDATE_CLIENTS);
     }
 
     private boolean spread(World world, BlockPos pos, Random random) {
@@ -81,7 +76,7 @@ import javax.annotation.Nullable;
             anchored = true;
         }
         if (!anchored) { return false; }
-        world.setBlockState(beside, carried, 2);
+        world.setBlockState(beside, carried, BlockFlags.UPDATE_CLIENTS);
         return true;
     }
 

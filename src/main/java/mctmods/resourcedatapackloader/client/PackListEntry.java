@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 
 @SideOnly(Side.CLIENT) public final class PackListEntry extends ResourcePackListEntry {
-    private static final ResourceLocation FALLBACK_ICON = new ResourceLocation(ResourceDataPackLoader.MOD_ID, ResourceDataPackLoader.ICON);
+    private static final ResourceLocation FALLBACK_ICON = ResourceDataPackLoader.id(ResourceDataPackLoader.ICON);
     private static ResourceLocation normalIcon;
     private static ResourceLocation overrideIcon;
     private final RDPLResourcePack pack;

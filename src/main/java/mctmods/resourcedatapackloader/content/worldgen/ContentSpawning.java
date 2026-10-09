@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEnumCreatureType;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
@@ -28,6 +29,7 @@ import net.minecraftforge.event.entity.living.LivingSpawnEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,8 +43,9 @@ public final class ContentSpawning {
     private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
     private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
     private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
-    public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(java.util.Arrays.asList(
-            "animals", "bush", "path", "till")));
+    public static final String ANIMALS = "animals";
+    public static final Set<String> BEHAVIORS = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+            ANIMALS, "bush", "path", "till")));
     private static final Map<String, Set<Block>> BY_BEHAVIOR = new HashMap<>();
 
     private ContentSpawning() {}
@@ -89,44 +92,46 @@ public final class ContentSpawning {
         World world = event.getWorld();
         DimensionDef dimension = ContentDimensions.byId(world.provider.getDimension());
         if (dimension != null && !dimension.spawning) {
-            event.setResult(Event.Result.DENY);
+            deny(event);
             return;
         }
-        if (event.getSpawner() == null && !ContentThreat.allowed(event.getEntity())) {
-            event.setResult(Event.Result.DENY);
+        if (event.getSpawner() == null && ContentThreat.barred(event.getEntity())) {
+            deny(event);
             return;
         }
         BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
         if (!(event.getEntity() instanceof IMob)) {
             if (event.getSpawner() != null) { return; }
-            if (deniedAboveWindow(world, event.getY())) { event.setResult(Event.Result.DENY); }
+            if (deniedAboveWindow(world, event.getY())) { deny(event); }
             else if (animalGround(world, event.getEntityLiving(), pos)) { event.setResult(Event.Result.ALLOW); }
             return;
         }
         if (event.getSpawner() == null) {
             int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight));
             if (lightCap >= 0 && world.getLightFor(EnumSkyBlock.BLOCK, pos) > lightCap) {
-                event.setResult(Event.Result.DENY);
+                deny(event);
                 return;
             }
         }
         float rate = rateFor(world, pos) * ContentThreat.spawnRate(world, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
-            event.setResult(Event.Result.DENY);
+            deny(event);
             return;
         }
         if (rate < 1.0F) {
-            if (world.rand.nextFloat() >= rate) { event.setResult(Event.Result.DENY); }
+            if (world.rand.nextFloat() >= rate) { deny(event); }
             return;
         }
         if (world.rand.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
     }
 
+    private static void deny(LivingSpawnEvent.CheckSpawn event) { event.setResult(Event.Result.DENY); }
+
     private static boolean animalGround(World world, EntityLivingBase entity, BlockPos pos) {
         if (!(entity instanceof EntityAnimal)) { return false; }
         IBlockState below = world.getBlockState(pos.down());
-        if (lacks("animals", below.getBlock())) { return false; }
+        if (lacks(ANIMALS, below.getBlock())) { return false; }
         return world.getLight(pos) > 8 && below.canEntitySpawn(entity);
     }
 
@@ -159,11 +164,11 @@ public final class ContentSpawning {
         return blocks == null || !blocks.contains(block);
     }
 
-    public static boolean known(String behavior) { return BEHAVIORS.contains(behavior); }
+    public static boolean unknown(String behavior) { return !BEHAVIORS.contains(behavior); }
 
     public static String describe() { return String.join(", ", BEHAVIORS); }
 
-    public static String normalize(String behavior) { return behavior.trim().toLowerCase(Locale.ROOT); }
+    public static String normalize(String behavior) { return Settings.lower(behavior); }
 
     private static void add(String behavior, Block block) { BY_BEHAVIOR.computeIfAbsent(behavior, key -> new HashSet<>()).add(block); }
 }

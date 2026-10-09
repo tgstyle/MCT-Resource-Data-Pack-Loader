@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -142,7 +145,7 @@ final class Convert {
     }
 
     static int flatShift(JsonObject settings) {
-        if (!settings.has("worldType") || !settings.get("worldType").isJsonPrimitive() || !FLAT_TYPES.contains(settings.get("worldType").getAsString().trim().toLowerCase(Locale.ROOT))) { return 0; }
+        if (!settings.has("worldType") || !settings.get("worldType").isJsonPrimitive() || !FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString()))) { return 0; }
         int floor = settings.has("worldMinHeight") && settings.get("worldMinHeight").isJsonPrimitive() && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : Ported.MODERN_FLAT_FLOOR;
         return -floor;
     }
@@ -184,11 +187,11 @@ final class Convert {
                 ConvertDefinitions.dimension(json, namespace + ":" + file, pack);
                 break;
             case "caveregions":
-                renamed(json, "ambientSound", Ids.sound(text(json, "ambientSound")));
+                renamed(json, "ambientSound", Ids.sound(Json.text(json,"ambientSound")));
                 particle(json);
                 break;
             case "raids":
-                renamed(json, "sound", Ids.sound(text(json, "sound")));
+                renamed(json, "sound", Ids.sound(Json.text(json,"sound")));
                 break;
             case "anvils":
                 ConvertDefinitions.anvil(json, pack, where);
@@ -227,14 +230,12 @@ final class Convert {
         return Ported.GSON.toJson(json);
     }
 
-    static String text(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsString() : ""; }
-
     private static void renamed(JsonObject json, String key, String mapped) {
         if (json.has(key) && json.get(key).isJsonPrimitive() && !mapped.isEmpty()) { json.addProperty(key, mapped); }
     }
 
     private static void particle(JsonObject json) {
-        String held = text(json, "particle");
+        String held = Json.text(json, "particle");
         String mapped = held.isEmpty() ? null : Ids.particle(held);
         if (mapped != null) { json.addProperty("particle", mapped); }
     }
@@ -268,7 +269,7 @@ final class Convert {
         JsonArray kept = new JsonArray();
         for (JsonElement held : json.getAsJsonArray("behavesAs")) {
             if (!held.isJsonPrimitive()) { continue; }
-            String name = held.getAsString().trim().toLowerCase(Locale.ROOT);
+            String name = Settings.lower(held.getAsString());
             if (BEHAVIORS.contains(name)) { kept.add(name); }
             else { pack.note("A block behaves as '" + name + "', which 1.12.2 does not have, so it is left out"); }
         }
@@ -498,5 +499,4 @@ final class Convert {
             if (held.has(key) && held.get(key).isJsonPrimitive() && held.getAsJsonPrimitive(key).isString()) { held.addProperty(key, ConvertAssets.textureRef(held.get(key).getAsString())); }
         }
     }
-
 }

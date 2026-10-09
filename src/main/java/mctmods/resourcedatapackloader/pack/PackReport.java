@@ -47,9 +47,7 @@ final class PackReport {
         }
     }
 
-    private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... types) {
-        because(off, enabled, setting + " is off in the config", ext, types);
-    }
+    private static void collect(List<String[]> off, boolean enabled, String setting, String ext, String... types) { because(off, enabled, setting + " is off in the config", ext, types); }
 
     private static void clientSide(List<String[]> off, boolean enabled, String setting, String... types) {
         if (Config.content.vanillaClients) {

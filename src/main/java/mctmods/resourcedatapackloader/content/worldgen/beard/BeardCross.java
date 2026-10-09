@@ -43,9 +43,7 @@ public final class BeardCross {
         return new BeardCross(box, alongX, bands[0], bands[1], bands[2]);
     }
 
-    public boolean covers(int x, int z) {
-        return x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ;
-    }
+    public boolean covers(int x, int z) { return x >= box.minX && x <= box.maxX && z >= box.minZ && z <= box.maxZ; }
 
     public int offset(int x, int z) { return Math.abs((alongX ? z : x) - center); }
 

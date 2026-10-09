@@ -21,11 +21,7 @@ public final class NumberDown {
 
     public static JsonElement fitted(JsonElement element, LineNote note) { return NumberSlots.walk(element, (value, whole) -> number(value, whole, note, 0)); }
 
-    private static JsonArray listed(JsonArray values, boolean whole, LineNote note, int depth) {
-        JsonArray out = new JsonArray();
-        for (JsonElement item : values) { out.add(number(item, whole, note, depth)); }
-        return out;
-    }
+    private static JsonArray listed(JsonArray values, boolean whole, LineNote note, int depth) { return JsonTree.map(values, item -> number(item, whole, note, depth)); }
 
     private static JsonElement number(JsonElement value, boolean whole, LineNote note, int depth) {
         if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {

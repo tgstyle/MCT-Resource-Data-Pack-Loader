@@ -16,8 +16,7 @@ import java.util.List;
 @Mixin(MapGenNetherBridge.class) public abstract class MixinMapGenNetherBridge {
     @Shadow @Final private List<Biome.SpawnListEntry> spawnList;
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$spawns(CallbackInfo ci) { ContentStructurePlacement.spawns(ContentStructurePlacement.FORTRESSES, spawnList); }
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$spawns(CallbackInfo ci) { ContentStructurePlacement.spawns(ContentStructurePlacement.FORTRESSES, spawnList); }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true) private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.FORTRESSES, chunkX, chunkZ)) { cir.setReturnValue(true); }

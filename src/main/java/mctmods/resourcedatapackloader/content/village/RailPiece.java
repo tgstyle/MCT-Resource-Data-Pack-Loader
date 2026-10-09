@@ -117,7 +117,11 @@ public class RailPiece extends StructureVillagePieces.Road {
 
     @Nullable public int[] risingKnown() { return risingKnown ? rising : null; }
 
-    public void regrade() { grade = null; risingKnown = false; rising = null; }
+    public void regrade() {
+        grade = null;
+        risingKnown = false;
+        rising = null;
+    }
 
     @Override protected void writeStructureToNBT(@Nonnull NBTTagCompound tag) {
         super.writeStructureToNBT(tag);

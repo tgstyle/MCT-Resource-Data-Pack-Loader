@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.gate;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.util.Stacks;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
@@ -55,14 +56,13 @@ public final class GateEvents {
         for (GateDef def : ContentGates.all().values()) {
             if (def.killed.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!fallen.equals(new ResourceLocation(def.killed))) { continue; }
-            int slain = def.global ? GateStorage.tallyGlobally(player.world, def.getKey()) : GateStorage.tallyFor(player, def.getKey());
+            int slain = GateStorage.tally(player, def);
             if (slain < def.killedCount) { continue; }
             if (def.killedDrops.isEmpty()) {
                 ContentGates.unlock(player, def, true);
                 continue;
             }
-            if (def.global) { GateStorage.clearTallyGlobally(player.world, def.getKey()); }
-            else { GateStorage.clearTallyFor(player, def.getKey()); }
+            GateStorage.clearTally(player, def);
             reward(player, def);
         }
     }
@@ -80,7 +80,7 @@ public final class GateEvents {
         if (!(player instanceof EntityPlayerMP)) { return; }
         for (GateDef def : ContentGates.all().values()) {
             if (def.craft.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
-            if (!ContentGates.matches(event.crafting, ContentGates.stack(def.craft))) { continue; }
+            if (!Stacks.matches(ContentGates.stack(def.craft), event.crafting)) { continue; }
             ContentGates.unlock(player, def, true);
         }
     }
@@ -97,7 +97,7 @@ public final class GateEvents {
         for (GateDef def : ContentGates.all().values()) {
             if (def.consume.isEmpty() || ContentGates.unlocked(player, def)) { continue; }
             if (!def.portalBlocks.isEmpty() && !def.portalBlocks.contains(name.toString())) { continue; }
-            if (!ContentGates.matches(held, ContentGates.stack(def.consume))) { continue; }
+            if (!Stacks.matches(ContentGates.stack(def.consume), held)) { continue; }
             if (held.getCount() < def.consumeCount) { continue; }
             if (!player.capabilities.isCreativeMode) { held.shrink(def.consumeCount); }
             ContentGates.unlock(player, def, true);

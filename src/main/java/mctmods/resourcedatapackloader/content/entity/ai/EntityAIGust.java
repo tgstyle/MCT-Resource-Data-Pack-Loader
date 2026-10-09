@@ -7,8 +7,8 @@ import net.minecraft.init.SoundEvents;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.EnumParticleTypes;
 import net.minecraft.world.WorldServer;
-
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class EntityAIGust extends EntityAIBase {
     private static final int WIND = 20;
@@ -16,7 +16,7 @@ public final class EntityAIGust extends EntityAIBase {
     private static final double SPREAD = 3.0D;
     private final EntityCreature mob;
     private final float power;
-    private EntityLivingBase target;
+    @Nullable private EntityLivingBase target;
     private int winding;
     private int resting;
 
@@ -51,6 +51,7 @@ public final class EntityAIGust extends EntityAIBase {
     }
 
     @Override public void updateTask() {
+        if (target == null) { return; }
         mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
         winding++;
         if (winding < WIND) { return; }

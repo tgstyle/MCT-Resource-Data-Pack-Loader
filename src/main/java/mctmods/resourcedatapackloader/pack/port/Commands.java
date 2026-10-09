@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.CommandWords;
+import mctmods.resourcedatapackloader.util.IdNames;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -21,7 +24,7 @@ import java.util.regex.Matcher;
 final class Commands {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     private static final String SELF = "@s";
-    private static final Set<String> SIMPLE = new HashSet<>(Arrays.asList("say", "me", "msg", "tell", "w", "kill", "time", "seed", "list", "help", "stop", "save-all", "save-on", "save-off", "op", "deop", "ban", "ban-ip", "pardon", "pardon-ip", "whitelist", "kick", "worldborder", "setidletimeout", "publish", "debug", "reload", "trigger", "defaultgamemode", "difficulty", "gamemode", "spawnpoint", "setworldspawn", "advancement", "recipe"));
+    private static final Set<String> SIMPLE = new HashSet<>(Arrays.asList("say", "me", "msg", "tell", "w", "time", "seed", "list", "help", "stop", "save-all", "save-on", "save-off", "op", "deop", "ban", "ban-ip", "pardon", "pardon-ip", "whitelist", "kick", "worldborder", "setidletimeout", "publish", "debug", "reload", "trigger", "defaultgamemode", "difficulty", "gamemode", "spawnpoint", "setworldspawn", "advancement", "recipe"));
     private static final Set<String> NO_TWIN = new HashSet<>(Arrays.asList("attribute", "bossbar", "datapack", "forceload", "item", "jfr", "loot", "perf", "place", "random", "return", "ride", "schedule", "spectate", "teammsg", "tm", "fillbiome", "damage", "tick", "transfer", "rotate", "dialog", "waypoint", "test", "stopwatch", "version"));
     private static final Set<String> RULES = new HashSet<>(Arrays.asList("announceAdvancements", "commandBlockOutput", "disableElytraMovementCheck", "doDaylightCycle", "doEntityDrops", "doFireTick", "doLimitedCrafting", "doMobLoot", "doMobSpawning", "doTileDrops", "doWeatherCycle", "gameLoopFunction", "keepInventory", "logAdminCommands", "maxCommandChainLength", "maxEntityCramming", "mobGriefing", "naturalRegeneration", "randomTickSpeed", "reducedDebugInfo", "sendCommandFeedback", "showDeathMessages", "spawnRadius", "spectatorsGenerateChunks"));
     private static final Map<String, String> STRUCTURES = new LinkedHashMap<>();
@@ -78,7 +81,7 @@ final class Commands {
 
     private static String command(String line, Ported pack) {
         if (line.startsWith("$")) { throw new Kept("a macro line has no twin on 1.12.2"); }
-        List<String> args = tokens(line);
+        List<String> args = CommandWords.split(line);
         String head = args.get(0);
         if (NO_TWIN.contains(head)) { throw new Kept("the command " + head + " has no twin on 1.12.2"); }
         switch (head) {
@@ -118,37 +121,6 @@ final class Commands {
                 if (!SIMPLE.contains(head)) { throw new Kept("the command " + head + " is not one the port knows"); }
                 return passed(args, pack);
         }
-    }
-
-    private static List<String> tokens(String line) {
-        List<String> out = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        int depth = 0;
-        boolean quoted = false;
-        char quote = 0;
-        for (int i = 0; i < line.length(); i++) {
-            char c = line.charAt(i);
-            if (quoted) {
-                current.append(c);
-                if (c == '\\' && i + 1 < line.length()) { current.append(line.charAt(++i)); }
-                else if (c == quote) { quoted = false; }
-                continue;
-            }
-            if (c == '"' || c == '\'') {
-                quoted = true;
-                quote = c;
-            }
-            if (c == '[' || c == '{') { depth++; }
-            if (c == ']' || c == '}') { depth--; }
-            if (c == ' ' && depth <= 0) {
-                if (current.length() > 0) { out.add(current.toString()); }
-                current.setLength(0);
-                continue;
-            }
-            current.append(c);
-        }
-        if (current.length() > 0) { out.add(current.toString()); }
-        return out;
     }
 
     static String at(List<String> args, int index) {
@@ -278,7 +250,6 @@ final class Commands {
         return out.toString();
     }
 
-
     static String plainText(String json) {
         try {
             JsonElement parsed = lenient(json);
@@ -294,7 +265,6 @@ final class Commands {
         reader.setLenient(true);
         return new JsonParser().parse(reader);
     }
-
 
     private static String data(List<String> args, Ported pack) {
         if (!"merge".equals(at(args, 1))) { throw new Kept("data " + args.get(1) + " has no twin on 1.12.2"); }
@@ -365,7 +335,7 @@ final class Commands {
     private static String locate(List<String> args) {
         String named = "structure".equals(at(args, 1)) ? at(args, 2) : args.get(1);
         String bare = named.startsWith("#") ? named.substring(1) : named;
-        bare = bare.substring(bare.indexOf(':') + 1).toLowerCase(Locale.ROOT);
+        bare = IdNames.path(bare).toLowerCase(Locale.ROOT);
         for (Map.Entry<String, String> structure : STRUCTURES.entrySet()) {
             if (bare.equals(structure.getKey()) || bare.startsWith(structure.getKey() + "_")) { return "locate " + structure.getValue(); }
         }
@@ -392,8 +362,9 @@ final class Commands {
             switch (step) {
                 case "as":
                 case "at":
-                    if (!SELF.equals(who) && !SELF.equals(at(args, i + 1))) { throw new Kept("several as and at steps have no twin on 1.12.2"); }
-                    if (!SELF.equals(args.get(i + 1))) { who = CommandSelectors.target(args.get(i + 1), pack); }
+                    String named = at(args, i + 1);
+                    if (!SELF.equals(who) && !SELF.equals(named)) { throw new Kept("several as and at steps have no twin on 1.12.2"); }
+                    if (!SELF.equals(named)) { who = CommandSelectors.target(named, pack); }
                     i += 2;
                     break;
                 case "positioned":
@@ -426,6 +397,7 @@ final class Commands {
                     throw new Kept("the execute condition " + kind + " has no twin the port can write on 1.12.2");
                 }
                 case "run": {
+                    if (args.size() <= i + 1) { throw new Kept("execute run has no command after it"); }
                     String inner = command(join(args, i + 1), pack);
                     if (SELF.equals(who) && !moved && detect.isEmpty()) { return inner; }
                     return "execute " + who + " " + x + " " + y + " " + z + detect + " " + inner;

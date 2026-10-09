@@ -13,24 +13,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = TransformerHooks.class, remap = false) public class MixinTransformerHooksGravity {
-    @Inject(method = "getGravityForEntity", at = @At("RETURN"), cancellable = true)
-    private static void rdpl$worldGravity(Entity entity, CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getGravityForEntity", at = @At("RETURN"), cancellable = true) private static void rdpl$worldGravity(Entity entity, CallbackInfoReturnable<Double> cir) {
         if (entity.world.provider instanceof GcWorldProvider) { return; }
         double held = cir.getReturnValueD();
         double scaled = ContentPhysics.gravity(entity.world, held);
         if (scaled != held) { cir.setReturnValue(scaled); }
     }
 
-    @Inject(method = "getItemGravity", at = @At("RETURN"), cancellable = true)
-    private static void rdpl$itemGravity(EntityItem e, CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getItemGravity", at = @At("RETURN"), cancellable = true) private static void rdpl$itemGravity(EntityItem e, CallbackInfoReturnable<Double> cir) {
         if (e.world.provider instanceof GcWorldProvider) { return; }
         double held = cir.getReturnValueD();
         double scaled = ContentPhysics.gravity(e.world, held);
         if (scaled != held) { cir.setReturnValue(scaled); }
     }
 
-    @Inject(method = "getArrowGravity", at = @At("RETURN"), cancellable = true)
-    private static void rdpl$arrowGravity(EntityArrow e, CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getArrowGravity", at = @At("RETURN"), cancellable = true) private static void rdpl$arrowGravity(EntityArrow e, CallbackInfoReturnable<Float> cir) {
         if (e.world.provider instanceof GcWorldProvider) { return; }
         float held = cir.getReturnValueF();
         float scaled = (float) ContentPhysics.arrowGravity(e.world, held);

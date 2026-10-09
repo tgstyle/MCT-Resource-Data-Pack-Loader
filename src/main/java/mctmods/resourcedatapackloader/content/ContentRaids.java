@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.raid.RaidStorage;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.block.Block;
@@ -35,7 +36,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.village.Village;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingSetAttackTargetEvent;
@@ -58,21 +58,19 @@ public final class ContentRaids {
     private static final String HEARD_BELL = "rdplHeardBell";
     private static final Set<Block> BELLS = new HashSet<>();
     private static final Map<ResourceLocation, RaidDef> DEFS = new LinkedHashMap<>();
-    private static boolean armed;
     private static boolean belled;
 
     private ContentRaids() {}
 
-    public static void load() {
+    public static boolean load() {
         DEFS.clear();
         BELLS.clear();
-        PackManager.get().forEach(PackManager.RAIDS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.RAIDS, "raid file", (key, contents) -> {
             RaidDef def = ContentParserGames.raidFile(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
         belled = ContentRegistry.registeredBlocks().stream().anyMatch(entry -> entry.getValue() instanceof ContentBlockBell);
-        if (DEFS.isEmpty() && !belled) { return; }
+        if (DEFS.isEmpty() && !belled) { return false; }
         for (RaidDef def : DEFS.values()) {
             for (String name : def.bells) {
                 Block bell = ForgeRegistries.BLOCKS.getValue(new ResourceLocation(name));
@@ -81,11 +79,10 @@ public final class ContentRaids {
             }
         }
         if (!DEFS.isEmpty()) { Summary.info("raids", "Loaded " + DEFS.size() + " raid(s): " + DEFS.keySet()); }
-        if (!armed) {
-            MinecraftForge.EVENT_BUS.register(ContentRaids.class);
-            armed = true;
-        }
+        return true;
     }
+
+    public static boolean belled() { return belled; }
 
     @Nullable public static RaidDef def(ResourceLocation key) { return DEFS.get(key); }
 
@@ -148,9 +145,7 @@ public final class ContentRaids {
         }
     }
 
-    @SubscribeEvent public static void onRaiderHit(LivingAttackEvent event) {
-        if (raider(event.getEntityLiving()) && raider(event.getSource().getTrueSource())) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onRaiderHit(LivingAttackEvent event) { if (raider(event.getEntityLiving()) && raider(event.getSource().getTrueSource())) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onRaiderTarget(LivingSetAttackTargetEvent event) {
         if (!raider(event.getTarget()) || !raider(event.getEntityLiving()) || !(event.getEntityLiving() instanceof EntityLiving)) { return; }

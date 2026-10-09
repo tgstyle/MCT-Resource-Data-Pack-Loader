@@ -1,15 +1,17 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
-import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -21,14 +23,18 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class ContentCaveRegions {
     private static final int OFFSET = 8;
     private static final int MEMO_LIMIT = 4096;
-    private static final ThreadLocal<Map<Long, Object>> MEMO = ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<Integer, Map<Long, Object>>> MEMO =ThreadLocal.withInitial(HashMap::new);
     private static final Object NONE = new Object();
     private static final Map<Integer, List<CaveRegionDef>> BY_DIMENSION = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
@@ -47,7 +53,7 @@ public final class ContentCaveRegions {
     public static double lowestSkyIslands(double fallback) {
         double lowest = fallback;
         for (CaveRegionDef def : ContentRegistry.caveRegions()) {
-            if (def.weight > 0 && !Float.isNaN(def.skyIslands)) { lowest = Math.min(lowest, def.skyIslands); }
+            if (def.weight > 0 && !Float.isNaN(def.sky.islands)) { lowest = Math.min(lowest, def.sky.islands); }
         }
         return lowest;
     }
@@ -66,9 +72,8 @@ public final class ContentCaveRegions {
         int qx = x >> 2;
         int qy = y >> 2;
         int qz = z >> 2;
-        long memoKey = world.getSeed() * 0x9E3779B97F4A7C15L
-                ^ (((long) world.provider.getDimension() & 0xFF) << 54) ^ (((long) qx & 0x3FFFF) << 36) ^ (((long) qy & 0x3FFFF) << 18) ^ ((long) qz & 0x3FFFF);
-        Map<Long, Object> memo = MEMO.get();
+        long memoKey = ((long) (qx & 0xFFFFFF) << 40) | ((long) (qz & 0xFFFFFF) << 16) | (qy & 0xFFFF);
+        Map<Long, Object> memo = MEMO.get().computeIfAbsent(world.provider.getDimension(), dimension -> new HashMap<>());
         Object held = memo.get(memoKey);
         if (held != null) {
             CaveRegionDef cached = held == NONE ? null : (CaveRegionDef) held;
@@ -101,9 +106,9 @@ public final class ContentCaveRegions {
                     int cy = cellY + dy;
                     int cz = cellZ + dz;
                     long cellHash = MathUtil.mix(seed, cx, cy, cz);
-                    long jx = cx * (long) spanXZ + Math.floorMod(cellHash, spanXZ);
-                    long jy = cy * (long) spanY + Math.floorMod(cellHash >>> 20, spanY);
-                    long jz = cz * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ);
+                    long jx = center(cellHash, 0, cx, spanXZ);
+                    long jy = center(cellHash, 20, cy, spanY);
+                    long jz = center(cellHash, 40, cz, spanXZ);
                     long offX = jx - qx;
                     long offY = (jy - qy) * spanXZ / Math.max(1, spanY);
                     long offZ = jz - qz;
@@ -118,6 +123,8 @@ public final class ContentCaveRegions {
         }
         return regionForCell(bestHash, bestCenterY, defs);
     }
+
+    private static long center(long cellHash, int shift, int cell, int span) { return cell * (long) span + Math.floorMod(cellHash >>> shift, span); }
 
     @Nullable private static CaveRegionDef regionForCell(long cellHash, int centerY, List<CaveRegionDef> defs) {
         int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight));
@@ -155,7 +162,7 @@ public final class ContentCaveRegions {
         int blockX0 = chunkX * 16 + OFFSET;
         int blockZ0 = chunkZ * 16 + OFFSET;
         int floor = GenHeights.floor(world, 0);
-        int ceiling = GenHeights.ceiling(world, 256);
+        int ceiling = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT);
         int cellY0 = Math.floorDiv(Math.floorDiv(floor, 4), spanY);
         int cellY1 = Math.floorDiv(Math.floorDiv(ceiling - 1, 4), spanY);
         int qx0 = blockX0 >> 2;
@@ -164,10 +171,10 @@ public final class ContentCaveRegions {
             for (int cellZ = Math.floorDiv(qz0 + 3 - (spanXZ - 1), spanXZ); cellZ <= Math.floorDiv(qz0 + 3, spanXZ); cellZ++) {
                 for (int cellY = cellY0; cellY <= cellY1; cellY++) {
                     long cellHash = MathUtil.mix(world.getSeed(), cellX, cellY, cellZ);
-                    int wx = (int) ((cellX * (long) spanXZ + Math.floorMod(cellHash, spanXZ)) << 2);
-                    int wz = (int) ((cellZ * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ)) << 2);
+                    int wx = (int) (center(cellHash, 0, cellX, spanXZ) << 2);
+                    int wz = (int) (center(cellHash, 40, cellZ, spanXZ) << 2);
                     if (wx < blockX0 || wx > blockX0 + 15 || wz < blockZ0 || wz > blockZ0 + 15) { continue; }
-                    int centerY = (int) ((cellY * (long) spanY + Math.floorMod(cellHash >>> 20, spanY)) << 2);
+                    int centerY = (int) (center(cellHash, 20, cellY, spanY) << 2);
                     CaveRegionDef region = regionForCell(cellHash, centerY, defs);
                     if (region == null || !region.hasStructures()) { continue; }
                     if (region.structureChance < 1.0F && ((cellHash >>> 24) & 0xFFFFF) / (float) (1 << 20) >= region.structureChance) { continue; }
@@ -278,7 +285,7 @@ public final class ContentCaveRegions {
         if (random.nextFloat() >= region.floorChance) { return; }
         BlockPos pos = new BlockPos(x, y, z);
         if (world.canSeeSky(pos) && y < world.provider.getActualHeight()) { return; }
-        world.setBlockState(pos.down(), cover, 2 | 16);
+        world.setBlockState(pos.down(), cover, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     private static void coverCeiling(World world, Random random, int x, int y, int z, IBlockState ceiling) {
@@ -289,7 +296,7 @@ public final class ContentCaveRegions {
         if (random.nextFloat() >= region.ceilingChance) { return; }
         BlockPos pos = new BlockPos(x, y - 1, z);
         if (world.canSeeSky(pos) && y - 1 < world.provider.getActualHeight()) { return; }
-        world.setBlockState(pos.up(), cover, 2 | 16);
+        world.setBlockState(pos.up(), cover, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     private static List<CaveRegionDef> forDimension(int dimension) {

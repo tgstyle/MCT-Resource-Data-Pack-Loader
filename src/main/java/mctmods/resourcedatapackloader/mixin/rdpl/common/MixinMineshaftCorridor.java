@@ -13,8 +13,5 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 
 @Mixin(StructureMineshaftPieces.Corridor.class) public abstract class MixinMineshaftCorridor {
-    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/tileentity/MobSpawnerBaseLogic;setEntityId(Lnet/minecraft/util/ResourceLocation;)V"))
-    private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id, World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn) {
-        logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.MINESHAFTS, id, randomIn));
-    }
+    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/tileentity/MobSpawnerBaseLogic;setEntityId(Lnet/minecraft/util/ResourceLocation;)V")) private void rdpl$spawner(MobSpawnerBaseLogic logic, ResourceLocation id, World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn) { logic.setEntityId(ContentStructurePlacement.spawner(ContentStructurePlacement.MINESHAFTS, id, randomIn)); }
 }

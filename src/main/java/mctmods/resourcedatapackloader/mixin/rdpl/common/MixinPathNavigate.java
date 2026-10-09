@@ -9,13 +9,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(PathNavigate.class) public abstract class MixinPathNavigate {
-    @Unique private static final double RDPL_REACH = 8.0D;
+    @Unique private static final double rdpl$REACH = 8.0D;
 
     @Shadow protected abstract boolean isDirectPathBetweenPoints(Vec3d from, Vec3d to, int sizeX, int sizeY, int sizeZ);
 
-    @Redirect(method = "pathFollow", at = @At(value = "INVOKE", target = "Lnet/minecraft/pathfinding/PathNavigate;isDirectPathBetweenPoints(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;III)Z"))
-    private boolean rdpl$onlyShortcutNearby(PathNavigate self, Vec3d from, Vec3d to, int sizeX, int sizeY, int sizeZ) {
-        if (to.squareDistanceTo(from) > RDPL_REACH * RDPL_REACH) { return false; }
+    @Redirect(method = "pathFollow", at = @At(value = "INVOKE", target = "Lnet/minecraft/pathfinding/PathNavigate;isDirectPathBetweenPoints(Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;III)Z")) private boolean rdpl$onlyShortcutNearby(PathNavigate self, Vec3d from, Vec3d to, int sizeX, int sizeY, int sizeZ) {
+        if (to.squareDistanceTo(from) > rdpl$REACH * rdpl$REACH) { return false; }
         return isDirectPathBetweenPoints(from, to, sizeX, sizeY, sizeZ);
     }
 }

@@ -285,21 +285,16 @@ public final class ContentFirstLight {
 
     private static int key(int lx, int y, int lz) { return lx << 14 | lz << 8 | y; }
 
-    private void push(int level, int lx, int y, int lz) {
-        int[] queue = buckets[level];
-        if (filled[level] == queue.length) {
-            queue = Arrays.copyOf(queue, queue.length << 1);
-            buckets[level] = queue;
-        }
-        queue[filled[level]++] = key(lx, y, lz);
-    }
+    private void push(int level, int lx, int y, int lz) { enqueue(buckets, filled, level, key(lx, y, lz)); }
 
-    private void darkPush(int level, int lx, int y, int lz) {
-        int[] queue = dark[level];
-        if (darkFilled[level] == queue.length) {
+    private void darkPush(int level, int lx, int y, int lz) { enqueue(dark, darkFilled, level, key(lx, y, lz)); }
+
+    private static void enqueue(int[][] queues, int[] counts, int level, int key) {
+        int[] queue = queues[level];
+        if (counts[level] == queue.length) {
             queue = Arrays.copyOf(queue, queue.length << 1);
-            dark[level] = queue;
+            queues[level] = queue;
         }
-        queue[darkFilled[level]++] = key(lx, y, lz);
+        queue[counts[level]++] = key;
     }
 }

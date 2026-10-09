@@ -12,7 +12,6 @@ public final class ContentLargeVein implements IContentShape {
     private final AmountDef size;
     private final boolean sparse;
     private final boolean spindly;
-    private final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
 
     public ContentLargeVein(ContentPlacer placer, AmountDef size, boolean sparse, boolean spindly) {
         this.placer = placer;
@@ -73,7 +72,7 @@ public final class ContentLargeVein implements IContentShape {
     }
 
     private boolean place(World world, Random random, int x, int y, int z) {
-        if (!world.isBlockLoaded(at.setPos(x, y, z))) { return false; }
+        if (!ContentPlacer.areaLoaded(world, x, z, x, z)) { return false; }
         return placer.place(world, random, x, y, z);
     }
 

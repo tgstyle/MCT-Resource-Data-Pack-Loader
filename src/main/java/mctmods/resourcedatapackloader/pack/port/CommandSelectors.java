@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,21 +35,16 @@ final class CommandSelectors {
             if (equals <= 0) { throw new Commands.Kept("the selector " + token + " holds '" + part + "', which is not an argument"); }
             String key = part.substring(0, equals).trim();
             String value = part.substring(equals + 1).trim();
-            boolean not = value.startsWith("!");
-            String bare = not ? value.substring(1) : value;
             switch (key) {
-                case "type": out.add("type=" + (not ? "!" : "") + Ids.entity(bare)); break;
+                case "type": out.add("type=" + negated(value, Ids::entity)); break;
                 case "name":
                 case "team":
-                case "tag": out.add(key + "=" + (not ? "!" : "") + unquote(bare)); break;
+                case "tag": out.add(key + "=" + negated(value, CommandSelectors::unquote)); break;
                 case "distance": range(out, "rm", "r", value); break;
                 case "level": range(out, "lm", "l", value); break;
                 case "x_rotation": range(out, "rxm", "rx", value); break;
                 case "y_rotation": range(out, "rym", "ry", value); break;
-                case "gamemode":
-                    if (!GAME_MODES.containsKey(bare)) { throw new Commands.Kept("the game mode " + bare + " is not one 1.12.2 knows"); }
-                    out.add("m=" + (not ? "!" : "") + GAME_MODES.get(bare));
-                    break;
+                case "gamemode": out.add("m=" + negated(value, CommandSelectors::mode)); break;
                 case "x":
                 case "z":
                 case "dx":
@@ -64,6 +60,13 @@ final class CommandSelectors {
         if ("random".equals(sort)) { kind = "r"; }
         if (limit != null && !"s".equals(kind) && !("p".equals(kind) && "1".equals(limit))) { out.add("c=" + ("furthest".equals(sort) ? "-" : "") + limit); }
         return "@" + kind + (out.isEmpty() ? "" : "[" + String.join(",", out) + "]");
+    }
+
+    static String negated(String value, UnaryOperator<String> shape) { return value.startsWith("!") ? "!" + shape.apply(value.substring(1)) : shape.apply(value); }
+
+    private static String mode(String bare) {
+        if (!GAME_MODES.containsKey(bare)) { throw new Commands.Kept("the game mode " + bare + " is not one 1.12.2 knows"); }
+        return GAME_MODES.get(bare);
     }
 
     static List<String> splitTop(String text) {

@@ -1,12 +1,11 @@
 package mctmods.resourcedatapackloader.content.rubic.world.interfaces;
 
-
 public interface IHeightMap {
     void onOpacityChange(int localX, int blockY, int localZ, int opacity);
 
     int getTopBlockY(int localX, int localZ);
 
-    @Deprecated int getTopBlockYBelow(int localX, int localZ, int blockY);
+    int getTopBlockYBelow(int localX, int localZ, int blockY);
 
     final class HeightMap {
         private final int[] data;

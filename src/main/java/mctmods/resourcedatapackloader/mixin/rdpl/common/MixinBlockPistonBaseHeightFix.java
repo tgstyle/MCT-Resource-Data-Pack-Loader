@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.BlockPistonBase;
 import net.minecraft.block.state.IBlockState;
@@ -13,14 +13,9 @@ import org.spongepowered.asm.mixin.injection.Group;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(BlockPistonBase.class) public class MixinBlockPistonBaseHeightFix {
-    @Group(min = 4, max = 4) @Redirect(
-            method = "canPush",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I")
-    )
-    private static int getBlockYRedirect(BlockPos posArg, IBlockState blockStateIn, World worldIn, BlockPos pos, EnumFacing facing,
+    @Group(min = 4, max = 4) @Redirect(method = "canPush", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I")) private static int rdpl$getBlockYRedirect(BlockPos posArg, IBlockState blockStateIn, World worldIn, BlockPos pos, EnumFacing facing,
                                          boolean destroyBlocks, EnumFacing p_185646_5_) {
-        IRubicWorld world = (IRubicWorld) worldIn;
-        if (posArg.getY() < world.rdpl$getMinHeight() || posArg.getY() >= world.rdpl$getMaxHeight()) { return posArg.getY(); }
+        if (posArg.getY() < GenHeights.floor(worldIn, 0) || posArg.getY() >= GenHeights.ceiling(worldIn, 256)) { return posArg.getY(); }
         return 64;
     }
 }

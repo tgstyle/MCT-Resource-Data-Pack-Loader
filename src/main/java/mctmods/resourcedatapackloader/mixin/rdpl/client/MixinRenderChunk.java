@@ -19,14 +19,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(RenderChunk.class) public abstract class MixinRenderChunk {
     @Shadow protected abstract void initModelviewMatrix();
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo ci) {
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo ci) {
         this.initModelviewMatrix();
     }
-    @Redirect(method = "setPosition", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V"))
-    private void noop(RenderChunk instance) {
-    }
 
-    @Inject(method = "createRegionRenderCache", at = @At(value = "HEAD"), remap = false, cancellable = true) private void createRubicChunkCache(World world, BlockPos from, BlockPos _to, int subtract, CallbackInfoReturnable<ChunkCache> cbi) {
+    @Redirect(method = "setPosition", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V")) private void rdpl$noop(RenderChunk instance) {}
+
+    @Inject(method = "createRegionRenderCache", at = @At(value = "HEAD"), remap = false, cancellable = true) private void rdpl$createRubicChunkCache(World world, BlockPos from, BlockPos _to, int subtract, CallbackInfoReturnable<ChunkCache> cbi) {
         if (((IRubicWorld) world).rdpl$isRubicWorld()) { cbi.setReturnValue(new RenderCubeCache(world, from, _to, subtract)); }
     }
 }

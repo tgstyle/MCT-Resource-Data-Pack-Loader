@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
 import net.minecraft.client.Minecraft;
@@ -24,7 +25,6 @@ import javax.annotation.Nullable;
     private static final int FADE_IN = 10;
     private static final int FADE_OUT = 20;
     private static final int PAD = 8;
-    private static final int LINE = 10;
     private static final int TITLE_SCALE = 2;
     private static final int ABOVE_MIDDLE = 24;
     @Nullable private static MessageCard shown;
@@ -79,19 +79,16 @@ import javax.annotation.Nullable;
         int screenHeight = Crisp.fit(resolution.getScaledHeight());
         int widest = MarkText.width(title) * TITLE_SCALE;
         for (List<MarkText.Piece> line : LINES) { widest = Math.max(widest, MarkText.width(line)); }
-        int titleHeight = card.title.isEmpty() ? 0 : LINE * TITLE_SCALE + PAD / 2;
+        int titleHeight = card.title.isEmpty() ? 0 : CardOverlay.LINE * TITLE_SCALE + PAD / 2;
         int width = widest + PAD * 2;
-        int height = titleHeight + card.lines.size() * LINE + PAD * 2;
+        int height = titleHeight + card.lines.size() * CardOverlay.LINE + PAD * 2;
         int left = (screenWidth - width) / 2;
         int top = Math.max(PAD, screenHeight / 2 - ABOVE_MIDDLE - height);
         float alpha = alpha(event.getPartialTicks());
         Crisp.raise();
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        if (card.panel) {
-            Gui.drawRect(left - 1, top - 1, left + width + 1, top + height + 1, CardOverlay.withAlpha(CardOverlay.darker(card.background), alpha));
-            Gui.drawRect(left, top, left + width, top + height, CardOverlay.withAlpha(card.background, 0.85F * alpha));
-        }
+        Blends.translucent();
+        if (card.panel) { CardOverlay.panel(left, top, width, height, card.background, alpha); }
         if (image != null) {
             GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
             mc.getTextureManager().bindTexture(image);
@@ -107,8 +104,8 @@ import javax.annotation.Nullable;
             y += titleHeight;
         }
         for (List<MarkText.Piece> line : LINES) {
-            MarkText.draw(line, (screenWidth - MarkText.width(line)) / 2.0F, y, CardOverlay.withAlpha(0xE8E8E8, alpha));
-            y += LINE;
+            MarkText.draw(line, (screenWidth - MarkText.width(line)) / 2.0F, y, CardOverlay.withAlpha(CardOverlay.LINE_COLOR, alpha));
+            y += CardOverlay.LINE;
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
         GlStateManager.disableBlend();

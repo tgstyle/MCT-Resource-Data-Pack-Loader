@@ -27,29 +27,19 @@ import javax.annotation.Nullable;
 
     @Shadow protected abstract void debugFeedbackTranslated(String untranslatedTemplate, Object... objs);
 
-    @ModifyArg(
-            method = "launchIntegratedServer",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/LoadingScreenRenderer;displayLoadingString(Ljava/lang/String;)V", ordinal = 0),
-            index = 0
-    )
-    private String rdpl$showSpawnPercent(String message) {
+    @ModifyArg(method = "launchIntegratedServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/LoadingScreenRenderer;displayLoadingString(Ljava/lang/String;)V", ordinal = 0), index = 0) private String rdpl$showSpawnPercent(String message) {
         if (!Config.client.loadingScreenPercent || integratedServer == null || message.isEmpty()) { return message; }
         String task = integratedServer.currentTask;
         if (task == null) { return message; }
         return message + " " + integratedServer.percentDone + "%";
     }
 
-    @Inject(method = "processKeyF3", at = @At("HEAD"), cancellable = true)
-    private void rdpl$openGameModeSwitcher(int auxKey, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "processKeyF3", at = @At("HEAD"), cancellable = true) private void rdpl$openGameModeSwitcher(int auxKey, CallbackInfoReturnable<Boolean> cir) {
         if (auxKey != Keyboard.KEY_F4) { return; }
         if (player.canUseCommand(2, "")) { displayGuiScreen(new GuiGameModeSwitcher()); }
         else { debugFeedbackTranslated("rdpl.debug.gamemodes.error"); }
         cir.setReturnValue(true);
     }
 
-    @Inject(
-            method = "processKeyF3",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiNewChat;printChatMessage(Lnet/minecraft/util/text/ITextComponent;)V", ordinal = 9, shift = At.Shift.AFTER)
-    )
-    private void rdpl$listGameModeSwitcher(int auxKey, CallbackInfoReturnable<Boolean> cir) { ingameGUI.getChatGUI().printChatMessage(new TextComponentTranslation("rdpl.debug.gamemodes.help")); }
+    @Inject(method = "processKeyF3", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiNewChat;printChatMessage(Lnet/minecraft/util/text/ITextComponent;)V", ordinal = 9, shift = At.Shift.AFTER)) private void rdpl$listGameModeSwitcher(int auxKey, CallbackInfoReturnable<Boolean> cir) { ingameGUI.getChatGUI().printChatMessage(new TextComponentTranslation("rdpl.debug.gamemodes.help")); }
 }

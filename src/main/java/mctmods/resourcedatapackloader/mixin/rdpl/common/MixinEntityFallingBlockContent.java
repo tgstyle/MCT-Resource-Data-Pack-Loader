@@ -12,6 +12,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(EntityFallingBlock.class) public abstract class MixinEntityFallingBlockContent extends Entity {
     public MixinEntityFallingBlockContent(World worldIn) { super(worldIn); }
 
-    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.03999999910593033D))
-    private double rdpl$worldGravity(double base) { return ContentPhysics.gravity(world, base); }
+    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.03999999910593033D)) private double rdpl$worldGravity(double base) { return ContentPhysics.gravity(world, base); }
 }

@@ -3,11 +3,13 @@ package mctmods.resourcedatapackloader.content.rubic.world;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
+import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import javax.annotation.Nonnull;
 
 public class ServerHeightMap implements IHeightMap {
@@ -94,7 +96,7 @@ public class ServerHeightMap implements IHeightMap {
             this.ymin[xzIndex]--;
             return;
         }
-        else if (blockY == this.ymax.get(xzIndex) + 1) {
+        if (blockY == this.ymax.get(xzIndex) + 1) {
             this.ymax.increment(xzIndex);
             return;
         }
@@ -107,7 +109,7 @@ public class ServerHeightMap implements IHeightMap {
             this.ymax.set(xzIndex, blockY);
             return;
         }
-        else if (blockY < this.ymin[xzIndex] - 1) {
+        if (blockY < this.ymin[xzIndex] - 1) {
             this.segments[xzIndex] = new int[]{
                     blockY,
                     blockY + 1,
@@ -306,7 +308,7 @@ public class ServerHeightMap implements IHeightMap {
         return segments[segmentIndex + 1] - 1;
     }
 
-    private static int getIndex(int localX, int localZ) { return (localZ << 4) | localX; }
+    private static int getIndex(int localX, int localZ) { return AddressTools.getLocalAddress(localX, localZ); }
 
     public byte[] getData() {
         try {
@@ -321,36 +323,16 @@ public class ServerHeightMap implements IHeightMap {
     }
 
     public void readData(byte[] data) {
-        int pos = 0;
+        ByteBuffer buffer = ByteBuffer.wrap(data);
         for (int i = 0; i < this.segments.length; i++) {
-            this.ymin[i] = readIntBigEndian(data, pos);
-            pos += Integer.BYTES;
-            this.ymax.set(i, readIntBigEndian(data, pos));
-            pos += Integer.BYTES;
-            int[] segments = new int[readUShortBigEndian(data, pos)];
-            pos += Short.BYTES;
+            this.ymin[i] = buffer.getInt();
+            this.ymax.set(i, buffer.getInt());
+            int[] segments = new int[buffer.getShort() & 0xFFFF];
             if (segments.length == 0) { continue; }
-            for (int j = 0; j < segments.length; j++) {
-                segments[j] = readIntBigEndian(data, pos);
-                pos += Integer.BYTES;
-            }
+            for (int j = 0; j < segments.length; j++) { segments[j] = buffer.getInt(); }
             this.segments[i] = segments;
             assert parityCheck(i) : "The number of segments was wrong!";
         }
-    }
-
-    private int readIntBigEndian(byte[] arr, int pos) {
-        int ch1 = arr[pos] & 0xFF;
-        int ch2 = arr[pos+1] & 0xFF;
-        int ch3 = arr[pos+2] & 0xFF;
-        int ch4 = arr[pos+3] & 0xFF;
-        return (ch1 << 24) | (ch2 << 16) | (ch3 << 8) | ch4;
-    }
-
-    private int readUShortBigEndian(byte[] arr, int pos) {
-        int ch1 = arr[pos] & 0xFF;
-        int ch2 = arr[pos+1] & 0xFF;
-        return (ch1 << 8) | ch2;
     }
 
     private void writeData(DataOutputStream out) throws IOException {
@@ -376,10 +358,10 @@ public class ServerHeightMap implements IHeightMap {
         buf.append(this.ymax.get(i));
         buf.append("], segments(p,o)=");
         if (this.segments[i] != null) {
-            for (int pos : this.segments[i]) {
-                int opacity = getOpacity(i);
+            for (int j = 0; j < this.segments[i].length; j++) {
+                int opacity = getOpacity(j);
                 buf.append("(");
-                buf.append(pos);
+                buf.append(this.segments[i][j]);
                 buf.append(",");
                 buf.append(opacity);
                 buf.append(")");

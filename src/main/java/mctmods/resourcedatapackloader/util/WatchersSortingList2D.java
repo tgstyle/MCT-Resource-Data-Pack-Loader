@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-
 import mctmods.resourcedatapackloader.util.interfaces.IBucketSorterEntry;
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
+
 import net.minecraft.entity.player.EntityPlayer;
 import java.util.Collection;
 import java.util.function.Supplier;
@@ -22,19 +22,9 @@ public class WatchersSortingList2D<T extends IBucketSorterEntry & IXZAddressable
         playerPositions[index + 1] = Coords.blockToCube(player.posZ);
     }
 
-    @Override protected int computeBucketIdx(T element) {
-        if (playerPositions.length == 0) { return bucketCount - 1; }
-        long x = element.getX();
-        long z = element.getZ();
-        long dx = x - playerPositions[0];
-        long dz = z - playerPositions[1];
-        long distSqMin = dx * dx + dz * dz;
-        for (int i = 2; i < playerPositions.length; i += 2) {
-            dx = x - playerPositions[i];
-            dz = z - playerPositions[i + 1];
-            long distSq = dx * dx + dz * dz;
-            if (distSq < distSqMin) { distSqMin = distSq; }
-        }
-        return bucketFromDistanceSq(distSqMin);
+    @Override protected long distanceSq(T element, int offset) {
+        long dx = element.getX() - playerPositions[offset];
+        long dz = element.getZ() - playerPositions[offset + 1];
+        return dx * dx + dz * dz;
     }
 }

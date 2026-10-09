@@ -7,8 +7,6 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import java.util.Locale;
-
 public final class Toasts {
     public static final int ADVANCEMENTS = 1;
     public static final int RECIPES = 2;
@@ -17,22 +15,28 @@ public final class Toasts {
     public static final int OTHER = 16;
     private static final int ALL = ADVANCEMENTS | RECIPES | TUTORIAL | SYSTEM | OTHER;
     private static final String KEY = "toasts";
-    private static volatile int shown;
+    private static final int OFF_SERVER = -1;
+    private static volatile int shown = OFF_SERVER;
 
     private Toasts() {}
 
-    public static boolean hides(int kind) { return (shown & kind) == 0; }
+    public static boolean hides(int kind) {
+        int kinds = shown == OFF_SERVER ? (Config.chunks.toasts ? ALL : 0) : shown;
+        return (kinds & kind) == 0;
+    }
 
     public static void show(int kinds) { shown = kinds; }
+
+    public static void leave() { shown = OFF_SERVER; }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.player instanceof EntityPlayerMP) { RDPLNetwork.sendToasts((EntityPlayerMP) event.player, allowed()); }
     }
 
-    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { shown = 0; }
+    @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { leave(); }
 
     private static int allowed() {
-        if (!ContentControl.listed(ContentControl.CHUNKS, KEY)) { return ContentControl.flag(ContentControl.CHUNKS, KEY, Config.chunks.toasts) ? ALL : 0; }
+        if (ContentControl.notArray(ContentControl.CHUNKS, KEY)) { return ContentControl.flag(ContentControl.CHUNKS, KEY, Config.chunks.toasts) ? ALL : 0; }
         int kinds = 0;
         for (String name : ContentControl.list(ContentControl.CHUNKS, KEY, new String[0])) {
             int kind = kind(name);
@@ -43,7 +47,7 @@ public final class Toasts {
     }
 
     private static int kind(String name) {
-        switch (name.trim().toLowerCase(Locale.ROOT)) {
+        switch (Settings.lower(name)) {
             case "advancements": return ADVANCEMENTS;
             case "recipes": return RECIPES;
             case "tutorial": return TUTORIAL;

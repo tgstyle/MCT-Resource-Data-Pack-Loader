@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IntRange;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.Json;
 import static mctmods.resourcedatapackloader.util.Json.strings;
@@ -18,7 +20,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -29,29 +30,25 @@ public final class ContentParserWorldgen {
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
             ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING)));
 
+    private static final List<String> SNAPS = Collections.unmodifiableList(Arrays.asList("floor", "ceiling"));
+    private static final List<String> VILLAGE_TYPES = Collections.unmodifiableList(Arrays.asList(VillageDef.FARM, VillageDef.TEMPLATE));
+    private static final List<String> PLANES = Collections.unmodifiableList(Arrays.asList(ShapeDef.CIRCLE, ShapeDef.SQUARE));
+    private static final List<String> PATTERNS = Collections.unmodifiableList(Arrays.asList("default", "banded", "tube"));
+    private static final List<String> TAPERS = Collections.unmodifiableList(Arrays.asList(ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE));
+
     private ContentParserWorldgen() {}
 
     @Nullable public static WorldgenDef worldgen(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Worldgen definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "worldgen definition");
+        if (json == null) { return null; }
         String block = JsonUtils.getString(json, "block", "");
         if (block.isEmpty()) {
             ContentLog.LOGGER.error("Worldgen definition {} has no block, ignoring it", key);
             return null;
         }
-        int minHeight = JsonUtils.getInt(json, "minHeight", 0);
-        int maxHeight = JsonUtils.getInt(json, "maxHeight", 64);
-        if (maxHeight < minHeight) {
-            ContentLog.LOGGER.error("Worldgen definition {} has maxHeight below minHeight, swapping them", key);
-            int swap = minHeight;
-            minHeight = maxHeight;
-            maxHeight = swap;
-        }
-        minHeight = Math.max(-Config.worldgen.rubicHeightLimit, minHeight);
-        maxHeight = Math.max(minHeight, maxHeight);
+        IntRange heights = ContentParser.heights("Worldgen definition", key, json, 0, 64);
+        int minHeight = Math.max(-Config.worldgen.rubicHeightLimit, heights.getMin());
+        int maxHeight = Math.max(minHeight, heights.getMax());
         WorldgenDef made = new WorldgenDef(key, new ResourceLocation(block),
                 JsonUtils.getInt(json, "meta", 0),
                 weights(json),
@@ -88,7 +85,7 @@ public final class ContentParserWorldgen {
         if (json.has("then") && json.get("then").isJsonArray()) {
             for (JsonElement element : json.getAsJsonArray("then")) {
                 String name;
-                int weight = 1;
+                int weight;
                 int spread = -1;
                 AmountDef depth = null;
                 if (element.isJsonObject()) {
@@ -98,14 +95,16 @@ public final class ContentParserWorldgen {
                     spread = follow.has("spread") ? Math.max(0, JsonUtils.getInt(follow, "spread", 0)) : -1;
                     depth = follow.has("depth") ? ContentParser.amount(follow, "depth", 0, Integer.MIN_VALUE) : null;
                 }
-                else {
+                else if (element.isJsonPrimitive()) {
                     String entry = element.getAsString();
-                    int at = entry.indexOf('=');
-                    name = at < 0 ? entry : entry.substring(0, at);
-                    if (at >= 0) {
-                        try { weight = Integer.parseInt(entry.substring(at + 1).trim()); }
-                        catch (NumberFormatException bad) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
-                    }
+                    Settings.Weighted split = Settings.weighted(entry, 1);
+                    name = split.name;
+                    weight = split.weight;
+                    if (split.unreadable) { ContentLog.LOGGER.error("Worldgen definition {} has a then entry '{}' whose weight is not a number, reading it as 1", key, entry); }
+                }
+                else {
+                    ContentLog.LOGGER.error("Worldgen definition {} has a then entry that is neither a name nor an object, ignoring it", key);
+                    continue;
                 }
                 name = name.trim();
                 if (name.isEmpty()) {
@@ -121,56 +120,25 @@ public final class ContentParserWorldgen {
         made.thenSpread = json.has("thenSpread") ? Math.max(0, JsonUtils.getInt(json, "thenSpread", 0)) : -1;
         made.thenDepth = ContentParser.amount(json, "thenDepth", 0, Integer.MIN_VALUE);
         made.prospectAs = JsonUtils.getString(json, "prospectAs", "").trim();
-        String snap = JsonUtils.getString(json, "snap", "").trim().toLowerCase(Locale.ROOT);
-        if (!snap.isEmpty() && !"floor".equals(snap) && !"ceiling".equals(snap)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for snap '{}', which is not floor or ceiling, so it does not snap", key, snap);
-            snap = "";
-        }
-        made.snap = snap;
+        made.snap = Json.choice(json, "snap", "", "Worldgen " + key, SNAPS);
         int depth = JsonUtils.getInt(json, "snapDepth", 0);
         if (depth < 0) {
             ContentLog.LOGGER.error("Worldgen {} asks for snapDepth {}, which is below zero, so it stays at the surface", key, depth);
             depth = 0;
         }
-        made.snapDepth = snap.isEmpty() ? 0 : depth;
+        made.snapDepth = made.snap.isEmpty() ? 0 : depth;
         return made;
     }
 
     @Nullable public static CaveRegionDef caveRegion(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Cave region definition {} is empty, ignoring it", key);
-            return null;
-        }
-        int minHeight = JsonUtils.getInt(json, "minHeight", -Config.worldgen.rubicHeightLimit);
-        int maxHeight = JsonUtils.getInt(json, "maxHeight", 48);
-        if (maxHeight < minHeight) {
-            ContentLog.LOGGER.error("Cave region definition {} has maxHeight below minHeight, swapping them", key);
-            int swap = minHeight;
-            minHeight = maxHeight;
-            maxHeight = swap;
-        }
+        JsonObject json = Json.object(key, contents, "cave region definition");
+        if (json == null) { return null; }
+        IntRange heights = ContentParser.heights("Cave region definition", key, json, -Config.worldgen.rubicHeightLimit, 48);
+        int minHeight = heights.getMin();
+        int maxHeight = heights.getMax();
         int waterLevel = CaveRegionDef.NO_WATER;
         if (json.has("waterLevel")) { waterLevel = JsonUtils.getInt(json, "waterLevel", CaveRegionDef.NO_WATER); }
-        List<SpawnEntryDef> spawns = new ArrayList<>();
-        if (json.has("spawns")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject entry = element.getAsJsonObject();
-                String entity = JsonUtils.getString(entry, "entity", "");
-                if (entity.isEmpty()) {
-                    ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
-                    continue;
-                }
-                int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
-                spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, "type", "creature"), entity,
-                        Math.max(1, JsonUtils.getInt(entry, "weight", 8)),
-                        min, Math.max(min, JsonUtils.getInt(entry, "max", 4))));
-            }
-        }
+        List<SpawnEntryDef> spawns = ContentParser.spawns(key, json, "type", true);
         return new CaveRegionDef(key,
                 Math.max(0, JsonUtils.getInt(json, "weight", 1)),
                 minHeight, maxHeight,
@@ -187,23 +155,19 @@ public final class ContentParserWorldgen {
                 MathHelper.clamp(JsonUtils.getFloat(json, "structureChance", 1.0F), 0.0F, 1.0F),
                 JsonUtils.getString(json, "structureLoot", ""),
                 JsonUtils.getString(json, "biome", ""),
-                JsonUtils.getString(json, "skyStone", ""),
-                Json.bounded(json, "skyIslands", -1.0F, 1.0F, key),
-                Json.bounded(json, "skyThickness", 0.0F, 8.0F, key),
-                JsonUtils.getString(json, "ambientSound", "").trim(),
-                MathHelper.clamp(JsonUtils.getFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
-                JsonUtils.getString(json, "particle", "").trim(),
-                MathHelper.clamp(JsonUtils.getFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F));
+                SkyStone.read(json, key),
+                new AmbienceDef(null, 0, 0, null,
+                        JsonUtils.getString(json, "ambientSound", "").trim(),
+                        MathHelper.clamp(JsonUtils.getFloat(json, "soundChance", ContentParserDimensionTraits.SOUND_CHANCE), 0.0F, 1.0F),
+                        JsonUtils.getString(json, "particle", "").trim(),
+                        MathHelper.clamp(JsonUtils.getFloat(json, "particleChance", ContentParserDimensionTraits.PARTICLE_CHANCE), 0.0F, 1.0F),
+                        AmbienceDef.NO_COLOR));
     }
 
     private static SpreadDef spread(ResourceLocation key, JsonObject json, int minHeight, int maxHeight) {
         if (!json.has("spread")) { return SpreadDef.even(); }
         JsonObject entry = JsonUtils.getJsonObject(json, "spread");
-        String type = JsonUtils.getString(entry, "type", SpreadDef.EVEN).trim().toLowerCase(Locale.ROOT);
-        if (!KNOWN_SPREADS.contains(type)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for spread type '{}', which is not one of {}, using {}", key, type, KNOWN_SPREADS, SpreadDef.EVEN);
-            type = SpreadDef.EVEN;
-        }
+        String type = Json.choice(entry, "type", SpreadDef.EVEN, "Worldgen " + key + " spread", KNOWN_SPREADS);
         int center = JsonUtils.getInt(entry, "center", (minHeight + maxHeight) / 2);
         int offsetMin = JsonUtils.getInt(entry, "offsetMin", 0);
         return new SpreadDef(type,
@@ -220,16 +184,9 @@ public final class ContentParserWorldgen {
     }
 
     @Nullable public static VillageDef village(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Village file {} is empty, ignoring it", key);
-            return null;
-        }
-        String type = JsonUtils.getString(json, "type", VillageDef.FARM).trim().toLowerCase(Locale.ROOT);
-        if (!VillageDef.FARM.equals(type) && !VillageDef.TEMPLATE.equals(type)) {
-            ContentLog.LOGGER.error("Village plot {} asks for type '{}', which is not {} or {}, using {}", key, type, VillageDef.FARM, VillageDef.TEMPLATE, VillageDef.FARM);
-            type = VillageDef.FARM;
-        }
+        JsonObject json = Json.object(key, contents, "village file");
+        if (json == null) { return null; }
+        String type = Json.choice(json, "type", VillageDef.FARM, "Village plot " + key, VILLAGE_TYPES);
         String structure = JsonUtils.getString(json, "structure", "");
         if (VillageDef.TEMPLATE.equals(type) && structure.isEmpty()) {
             ContentLog.LOGGER.error("Village plot {} is a template but names no structure, ignoring it", key);
@@ -263,16 +220,9 @@ public final class ContentParserWorldgen {
     private static ShapeDef shape(ResourceLocation key, JsonObject json) {
         if (!json.has("shape")) { return ShapeDef.cluster(); }
         JsonObject entry = JsonUtils.getJsonObject(json, "shape");
-        String type = JsonUtils.getString(entry, "type", ShapeDef.CLUSTER).trim().toLowerCase(Locale.ROOT);
-        if (!KNOWN_SHAPES.contains(type)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for shape '{}', which is not one of {}, using {}", key, type, KNOWN_SHAPES, ShapeDef.CLUSTER);
-            type = ShapeDef.CLUSTER;
-        }
-        String plane = JsonUtils.getString(entry, "plane", ShapeDef.CIRCLE).trim().toLowerCase(Locale.ROOT);
-        if (!ShapeDef.CIRCLE.equals(plane) && !ShapeDef.SQUARE.equals(plane)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for plane '{}', which is not {} or {}, using {}", key, plane, ShapeDef.CIRCLE, ShapeDef.SQUARE, ShapeDef.CIRCLE);
-            plane = ShapeDef.CIRCLE;
-        }
+        String owner = "Worldgen " + key + " shape";
+        String type = Json.choice(entry, "type", ShapeDef.CLUSTER, owner, KNOWN_SHAPES);
+        String plane = Json.choice(entry, "plane", ShapeDef.CIRCLE, owner, PLANES);
         ShapeDef made = new ShapeDef(type,
                 ContentParser.amount(entry, "radius", ShapeDef.BELT.equals(type) ? 32 : 6, 0),
                 ContentParser.amount(entry, "height", ShapeDef.GEODE.equals(type) ? 8 : ShapeDef.TREE.equals(type) ? 5 : 1, 0),
@@ -304,12 +254,7 @@ public final class ContentParserWorldgen {
                 JsonUtils.getString(entry, "lootTable", ""));
         made.locateAs = JsonUtils.getString(entry, "locateAs", "");
         made.fade = Math.max(0, JsonUtils.getInt(entry, "fade", 0));
-        String pattern = JsonUtils.getString(entry, "pattern", "default").trim().toLowerCase(Locale.ROOT);
-        if (!"default".equals(pattern) && !"banded".equals(pattern) && !"tube".equals(pattern)) {
-            ContentLog.LOGGER.error("Worldgen {} asks for vein pattern '{}', which is not default, banded or tube, using default", key, pattern);
-            pattern = "default";
-        }
-        made.pattern = pattern;
+        made.pattern = Json.choice(entry, "pattern", "default", "Worldgen " + key + " shape", PATTERNS);
         made.density = MathHelper.clamp(JsonUtils.getFloat(entry, "density", 1.0F), 0.0F, 1.0F);
         made.rich = JsonUtils.getString(entry, "rich", "");
         made.poor = JsonUtils.getString(entry, "poor", "");
@@ -330,35 +275,24 @@ public final class ContentParserWorldgen {
     }
 
     private static String taper(ResourceLocation key, JsonObject entry) {
-        String named = JsonUtils.getString(entry, "taper", ShapeDef.STRAIGHT).trim().toLowerCase(Locale.ROOT);
-        if (ShapeDef.STRAIGHT.equals(named) || ShapeDef.BELL.equals(named) || ShapeDef.NEEDLE.equals(named)) { return named; }
-        ContentLog.LOGGER.error("Worldgen {} asks for taper '{}', which is not {}, {} or {}, using {}", key, named, ShapeDef.STRAIGHT, ShapeDef.BELL, ShapeDef.NEEDLE, ShapeDef.STRAIGHT);
-        return ShapeDef.STRAIGHT;
+        return Json.choice(entry, "taper", ShapeDef.STRAIGHT, "Worldgen " + key + " shape", TAPERS);
     }
 
     private static List<String> surface(JsonObject entry) {
         if (!entry.has("surface")) { return Collections.emptyList(); }
         JsonElement element = entry.get("surface");
-        if (!element.isJsonArray()) { return Collections.singletonList(element.getAsString()); }
+        if (element.isJsonPrimitive()) { return Collections.singletonList(element.getAsString()); }
+        if (!element.isJsonArray()) { return Collections.emptyList(); }
         return strings(entry, "surface");
     }
 
     private static List<BlockMatchDef> replaces(ResourceLocation key, JsonObject json) {
-        if (!json.has("replace")) { return Collections.singletonList(ContentParser.match(key, "minecraft:stone")); }
-        JsonElement element = json.get("replace");
-        if (!element.isJsonArray()) { return Collections.singletonList(ContentParser.match(key, element)); }
-        List<BlockMatchDef> values = new ArrayList<>();
-        for (JsonElement name : element.getAsJsonArray()) { values.add(ContentParser.match(key, name)); }
+        List<BlockMatchDef> values = ContentParser.matches(key, json, "replace");
         return values.isEmpty() ? Collections.singletonList(ContentParser.match(key, "minecraft:stone")) : Collections.unmodifiableList(values);
     }
 
     private static List<BlockMatchDef> adjacent(ResourceLocation key, JsonObject json) {
-        if (!json.has("adjacent")) { return Collections.emptyList(); }
-        JsonElement element = json.get("adjacent");
-        if (!element.isJsonArray()) { return Collections.singletonList(ContentParser.match(key, element)); }
-        List<BlockMatchDef> values = new ArrayList<>();
-        for (JsonElement name : element.getAsJsonArray()) { values.add(ContentParser.match(key, name)); }
-        return Collections.unmodifiableList(values);
+        return Collections.unmodifiableList(ContentParser.matches(key, json, "adjacent"));
     }
 
     private static List<BlockWeightDef> weights(JsonObject json) {

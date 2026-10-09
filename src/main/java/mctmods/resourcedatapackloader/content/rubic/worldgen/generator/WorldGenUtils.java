@@ -18,7 +18,7 @@ public class WorldGenUtils {
             }
         }
         if (topBedrock) {
-            int heightBelowTop =  ((IMinMaxHeight) world).rdpl$getMaxHeight() - blockY - 1;
+            int heightBelowTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - blockY - 1;
             if (heightBelowTop < bedrockLevels) {
                 int bedrockChance = Math.max(1, heightBelowTop + 1);
                 if (rand.nextInt(bedrockChance) == 0) { return Blocks.BEDROCK.getDefaultState(); }

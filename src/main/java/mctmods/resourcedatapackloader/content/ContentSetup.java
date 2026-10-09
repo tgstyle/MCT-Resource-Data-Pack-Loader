@@ -15,12 +15,14 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.NonNullList;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockBush;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
+import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.IPlantable;
@@ -35,7 +37,7 @@ import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public final class ContentSetup {
-    private static final Map<Block, BlockDef> FLAMMABLE = new LinkedHashMap<>();
+    private static final Map<Block, int[]> FLAMMABLE = new LinkedHashMap<>();
     private static final Map<String, CreativeTabs> CREATED = new HashMap<>();
 
     private ContentSetup() {}
@@ -73,14 +75,20 @@ public final class ContentSetup {
         block.setDefaultSlipperiness(def.slipperiness);
         block.setLightOpacity(def.lightOpacity);
         block.setHardness(first.hardness);
-        block.setResistance(first.resistance / Math.max(0.01F, def.explosionResistanceDivisor));
+        block.setResistance(resistanceOf(def, first));
         if (first.light > 0) { block.setLightLevel(first.light / 15.0F); }
-        if (def.flammability > 0) { FLAMMABLE.put(block, def); }
+        flammable(block, def.fireSpread, def.flammability);
     }
 
+    public static void flammable(Block block, int fireSpread, int flammability) {
+        if (flammability > 0 || fireSpread > 0) { FLAMMABLE.put(block, new int[] {fireSpread, flammability}); }
+    }
+
+    public static float resistanceOf(BlockDef def, BlockVariant variant) { return variant.resistance / def.explosionResistanceDivisor; }
+
     public static void applyFire() {
-        for (Map.Entry<Block, BlockDef> entry : FLAMMABLE.entrySet()) {
-            Blocks.FIRE.setFireInfo(entry.getKey(), entry.getValue().fireSpread, entry.getValue().flammability);
+        for (Map.Entry<Block, int[]> entry : FLAMMABLE.entrySet()) {
+            Blocks.FIRE.setFireInfo(entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
         }
         FLAMMABLE.clear();
     }
@@ -132,6 +140,13 @@ public final class ContentSetup {
         IBlockState state = world.getBlockState(ground);
         if (soil.isEmpty()) { return state.getBlock().canSustainPlant(state, world, ground, EnumFacing.UP, plant); }
         return soil.contains(state.getBlock());
+    }
+
+    public static boolean placeable(BlockBush block, World world, BlockPos pos) { return world.getBlockState(pos).getBlock().isReplaceable(world, pos) && block.canBlockStay(world, pos, block.getDefaultState()); }
+
+    public static boolean forwardEvent(World world, BlockPos pos, int id, int value) {
+        TileEntity tile = world.getTileEntity(pos);
+        return tile != null && tile.receiveClientEvent(id, value);
     }
 
     public static void growthDrops(Block block, BlockDef def, GrowthDef growth, NonNullList<ItemStack> drops) {

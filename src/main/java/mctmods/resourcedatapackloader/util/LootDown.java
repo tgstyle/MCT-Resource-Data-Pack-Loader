@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -17,7 +19,6 @@ public final class LootDown {
     private static final String FUNCTIONS = "functions";
     private static final String MODIFIER = "modifier";
     private static final String TERMS = "terms";
-    private static final String MINECRAFT = "minecraft:";
     private static final Set<String> PREDICATE_KEYS = new HashSet<>(Arrays.asList("bystander", "cause", "child", "entity", "lightning", "parent", "partner", "player", "projectile", "source", "villager", "zombie", "location"));
     private static final Set<String> SINGLE_BLOCK = new HashSet<>(Arrays.asList("enter_block", "bee_nest_destroyed", "slide_down_block"));
 
@@ -25,9 +26,7 @@ public final class LootDown {
 
     public static JsonElement loot(JsonElement element, Consumer<String> note) {
         if (element.isJsonArray()) {
-            JsonArray out = new JsonArray();
-            for (JsonElement item : element.getAsJsonArray()) { out.add(loot(item, note)); }
-            return out;
+            return JsonTree.map(element.getAsJsonArray(), item -> loot(item, note));
         }
         if (!element.isJsonObject()) { return JsonTree.copy(element); }
         JsonObject out = new JsonObject();
@@ -56,7 +55,7 @@ public final class LootDown {
         for (Map.Entry<String, JsonElement> criterion : criteria.getAsJsonObject().entrySet()) {
             if (!criterion.getValue().isJsonObject()) { continue; }
             JsonObject held = criterion.getValue().getAsJsonObject();
-            String trigger = held.has("trigger") ? bare(held.get("trigger").getAsString()) : "";
+            String trigger = held.has("trigger") ? IdNames.bare(held.get("trigger").getAsString()) : "";
             if (held.has(CONDITIONS) && held.get(CONDITIONS).isJsonObject()) { held.add(CONDITIONS, trigger(held.getAsJsonObject(CONDITIONS), trigger, note)); }
         }
         return out;
@@ -213,7 +212,5 @@ public final class LootDown {
         return out;
     }
 
-    private static String type(JsonObject object) { return object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? bare(object.get(TYPE).getAsString()) : ""; }
-
-    private static String bare(String id) { return id.startsWith(MINECRAFT) ? id.substring(MINECRAFT.length()) : id; }
+    private static String type(JsonObject object) { return object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? IdNames.bare(object.get(TYPE).getAsString()) : ""; }
 }

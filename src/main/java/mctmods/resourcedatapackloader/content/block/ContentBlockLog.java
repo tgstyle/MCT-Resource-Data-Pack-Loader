@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -14,7 +13,6 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
@@ -24,18 +22,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockLog extends BlockLog implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockLog extends BlockLog implements IContentBlock, IVariantBlock {
     public static final int MAX_VARIANTS = 4;
     private static final int VARIANT_MASK = 3;
     private static final int AXIS_MASK = 12;
+    private static final int AXIS_X_BITS = 4;
+    private static final int AXIS_Z_BITS = 8;
+    private static final int AXIS_NONE_BITS = 12;
     private final BlockDef def;
     private final PropertyVariant variant;
 
-    public static ContentBlockLog create(BlockDef def) {
-        BlockVariants.begin(def, new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockLog(def, BlockVariants.property()); }
-        finally { BlockVariants.end(); }
-    }
+    public static ContentBlockLog create(BlockDef def) { return BlockVariants.construct(def, built -> new ContentBlockLog(built, BlockVariants.property())); }
 
     protected ContentBlockLog(BlockDef def, PropertyVariant property) {
         this.def = def;
@@ -54,20 +51,18 @@ import javax.annotation.Nullable;
 
     @Override public BlockDef getDef() { return def; }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
         IBlockState state = getDefaultState().withProperty(variant, def.at(meta & VARIANT_MASK).name);
         switch (meta & AXIS_MASK) {
-            case 4: return state.withProperty(LOG_AXIS, EnumAxis.X);
-            case 8: return state.withProperty(LOG_AXIS, EnumAxis.Z);
-            case 12: return state.withProperty(LOG_AXIS, EnumAxis.NONE);
+            case AXIS_X_BITS: return state.withProperty(LOG_AXIS, EnumAxis.X);
+            case AXIS_Z_BITS: return state.withProperty(LOG_AXIS, EnumAxis.Z);
+            case AXIS_NONE_BITS: return state.withProperty(LOG_AXIS, EnumAxis.NONE);
             default: return state.withProperty(LOG_AXIS, EnumAxis.Y);
         }
     }
@@ -75,9 +70,9 @@ import javax.annotation.Nullable;
     @Override public int getMetaFromState(IBlockState state) {
         int meta = ContentSetup.metaOf(def, state.getValue(variant));
         switch (state.getValue(LOG_AXIS)) {
-            case X: return meta | 4;
-            case Z: return meta | 8;
-            case NONE: return meta | 12;
+            case X: return meta | AXIS_X_BITS;
+            case Z: return meta | AXIS_Z_BITS;
+            case NONE: return meta | AXIS_NONE_BITS;
             default: return meta;
         }
     }
@@ -90,11 +85,17 @@ import javax.annotation.Nullable;
 
     @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).hardness; }
 
-    @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability; }
+    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
 
-    @Override public int getFireSpreadSpeed(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.fireSpread; }
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
+        if (def.at(damageDropped(state)).drops.isEmpty()) { super.getDrops(drops, world, pos, state, fortune); }
+        else { VariantDrops.roll(this, drops, world, state, def.at(damageDropped(state)), fortune); }
+    }
 
-    @Override public boolean isFlammable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability > 0; }
+    @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, def.at(damageDropped(state))); }
+        super.breakBlock(world, pos, state);
+    }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 }

@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(RenderGlobal.class) public class MixinRenderGlobalOptifineE {
     @Shadow private WorldClient world;
 
-    @Dynamic @ModifyConstant(method = "setupTerrain", constant = @Constant(intValue = 256), require = 0, expect = 0) public int getMaxWorldHeight(int _256) {
+    @Dynamic @ModifyConstant(method = "setupTerrain", constant = @Constant(intValue = 256), require = 0, expect = 0) public int rdpl$getMaxWorldHeight(int _256) {
         return ((IMinMaxHeight) world).rdpl$getMaxHeight();
     }
 }

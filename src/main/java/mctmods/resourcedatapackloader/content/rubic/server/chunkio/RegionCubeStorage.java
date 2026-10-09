@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
-
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKey;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IKeyProvider;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IRegionProvider;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation2D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.EntryLocation3D;
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
@@ -33,66 +34,37 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RegionCubeStorage implements IRubicStorage {
-    private static SaveCubeColumns saveForPath(Path world, Path path) throws IOException {
-        Utils.createDirectories(path);
-
-        Path part2d = path.resolve("region2d");
-        Utils.createDirectories(part2d);
-
-        Path part3d = path.resolve("region3d");
-        Utils.createDirectories(part3d);
-
-        OldRegionNames.rename(world, path, part2d, part3d);
-
-        SaveSection2D section2d = new SaveSection2D(Arrays.asList(
-                new CachedRegionProvider<>(
-                        new SimpleRegionProvider<>(new EntryLocation2D.Provider(), part2d, (keyProv, r) ->
-                                ShadowPagingRegion.<EntryLocation2D>builder()
-                                        .setDirectory(part2d)
-                                        .setRegionKey(r)
-                                        .setKeyProvider(keyProv)
-                                        .setSectorSize(512)
-                                        .build(),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName()))
-                        )
-                ),
-                new CachedRegionProvider<>(
-                        new SimpleRegionProvider<>(new EntryLocation2D.Provider(), part2d,
-                                (keyProvider, regionKey) -> new ExtRegion<>(part2d, Collections.emptyList(), keyProvider, regionKey),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + RegionNames.SPILL))
-                        )
-                )));
-        SaveSection3D section3d = new SaveSection3D(Arrays.asList(
-                new CachedRegionProvider<>(
-                        new SimpleRegionProvider<>(new EntryLocation3D.Provider(), part3d, (keyProv, r) ->
-                                ShadowPagingRegion.<EntryLocation3D>builder()
-                                        .setDirectory(part3d)
-                                        .setRegionKey(r)
-                                        .setKeyProvider(keyProv)
-                                        .setSectorSize(512)
-                                        .build(),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName()))
-                        )
-                ),
-                new CachedRegionProvider<>(
-                        new SimpleRegionProvider<>(new EntryLocation3D.Provider(), part3d,
-                                (keyProvider, regionKey) -> new ExtRegion<>(part3d, Collections.emptyList(), keyProvider, regionKey),
-                                (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + RegionNames.SPILL))
-                        )
-                )));
-
-        return new SaveCubeColumns(section2d, section3d);
-    }
-
     private SaveCubeColumns save;
 
     public RegionCubeStorage(Path world, Path path) throws IOException { this.save = saveForPath(Objects.requireNonNull(world, "world"), Objects.requireNonNull(path, "path")); }
+
+    private static SaveCubeColumns saveForPath(Path world, Path path) throws IOException {
+        Utils.createDirectories(path);
+        Path part2d = path.resolve("region2d");
+        Utils.createDirectories(part2d);
+        Path part3d = path.resolve("region3d");
+        Utils.createDirectories(part3d);
+        OldRegionNames.rename(world, path, part2d, part3d);
+        return new SaveCubeColumns(new SaveSection2D(providers(EntryLocation2D.Provider::new, part2d)), new SaveSection3D(providers(EntryLocation3D.Provider::new, part3d)));
+    }
+
+    private static <K extends IKey> List<IRegionProvider<K>> providers(Supplier<IKeyProvider> keys, Path part) {
+        return Arrays.asList(
+                new CachedRegionProvider<>(new SimpleRegionProvider<>(keys.get(), part,
+                        (keyProvider, regionKey) -> ShadowPagingRegion.<K>builder().setDirectory(part).setRegionKey(regionKey).setKeyProvider(keyProvider).setSectorSize(512).build(),
+                        (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName())))),
+                new CachedRegionProvider<>(new SimpleRegionProvider<>(keys.get(), part,
+                        (keyProvider, regionKey) -> new ExtRegion<>(part, Collections.emptyList(), keyProvider, regionKey),
+                        (dir, key) -> Files.exists(dir.resolve(key.getRegionKey().getName() + RegionNames.SPILL)))));
+    }
 
     @Override public boolean columnExists(@Nonnull ChunkPos pos) throws IOException { return this.save.getSaveSection2D().hasEntry(new EntryLocation2D(pos.x, pos.z)); }
 
@@ -121,27 +93,7 @@ public class RegionCubeStorage implements IRubicStorage {
         }
     }
 
-    private static void regenerating(String what, Object pos, Exception corrupt) { Rubic.LOGGER.error("{} is corrupted! The saved data of {} could not be read ({}). {} will be regenerated.", what, pos, corrupt.toString(), what); }
-
-    @Override public void writeColumn(@Nonnull ChunkPos pos, @Nonnull NBTTagCompound nbt) throws IOException {
-        ByteBuf compressedBuf = UnpooledByteBufAllocator.DEFAULT.ioBuffer();
-        try {
-            CompressedStreamTools.writeCompressed(nbt, new ByteBufOutputStream(compressedBuf));
-            this.save.save2d(new EntryLocation2D(pos.x, pos.z), compressedBuf.nioBuffer());
-        } finally {
-            compressedBuf.release();
-        }
-    }
-
-    @Override public void writeCube(@Nonnull CubePos pos, @Nonnull NBTTagCompound nbt) throws IOException {
-        ByteBuf compressedBuf = UnpooledByteBufAllocator.DEFAULT.ioBuffer();
-        try {
-            CompressedStreamTools.writeCompressed(nbt, new ByteBufOutputStream(compressedBuf));
-            this.save.save3d(new EntryLocation3D(pos.getX(), pos.getY(), pos.getZ()), compressedBuf.nioBuffer());
-        } finally {
-            compressedBuf.release();
-        }
-    }
+    private static void regenerating(String what, Object pos, Exception corrupt) { ContentLog.LOGGER.error("{} is corrupted! The saved data of {} could not be read ({}). {} will be regenerated.", what, pos, corrupt.toString(), what); }
 
     @Override public void writeBatch(@Nonnull NBTBatch batch) throws IOException {
         Map<EntryLocation2D, ByteBuf> compressedColumns = Collections.emptyMap();

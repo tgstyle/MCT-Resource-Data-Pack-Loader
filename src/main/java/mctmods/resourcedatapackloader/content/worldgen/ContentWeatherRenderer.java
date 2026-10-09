@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
+import mctmods.resourcedatapackloader.util.Colors;
 import mctmods.resourcedatapackloader.util.WindGust;
 
 import net.minecraft.client.Minecraft;
@@ -18,6 +20,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraftforge.client.IRenderHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import org.lwjgl.opengl.GL11;
 import java.util.Random;
 
 @SideOnly(Side.CLIENT) public final class ContentWeatherRenderer extends IRenderHandler {
@@ -51,12 +54,12 @@ import java.util.Random;
                 sizeZ[row << 5 | column] = dx / length;
             }
         }
-        red = (rain.color >> 16 & 255) / 255.0F;
-        green = (rain.color >> 8 & 255) / 255.0F;
-        blue = (rain.color & 255) / 255.0F;
-        snowRed = (rain.snowColor >> 16 & 255) / 255.0F;
-        snowGreen = (rain.snowColor >> 8 & 255) / 255.0F;
-        snowBlue = (rain.snowColor & 255) / 255.0F;
+        red = Colors.red(rain.color) / 255.0F;
+        green = Colors.green(rain.color) / 255.0F;
+        blue = Colors.blue(rain.color) / 255.0F;
+        snowRed = Colors.red(rain.snowColor) / 255.0F;
+        snowGreen = Colors.green(rain.snowColor) / 255.0F;
+        snowBlue = Colors.blue(rain.snowColor) / 255.0F;
         this.rain = rain;
         upward = rain.upward();
     }
@@ -77,8 +80,8 @@ import java.util.Random;
         GlStateManager.disableCull();
         GlStateManager.glNormal3f(0.0F, 1.0F, 0.0F);
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.alphaFunc(516, 0.1F);
+        Blends.translucent();
+        GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
         double camX = view.lastTickPosX + (view.posX - view.lastTickPosX) * partialTicks;
         double camY = view.lastTickPosY + (view.posY - view.lastTickPosY) * partialTicks;
         double camZ = view.lastTickPosZ + (view.posZ - view.lastTickPosZ) * partialTicks;
@@ -99,7 +102,7 @@ import java.util.Random;
         buffer.setTranslation(0.0D, 0.0D, 0.0D);
         GlStateManager.enableCull();
         GlStateManager.disableBlend();
-        GlStateManager.alphaFunc(516, 0.1F);
+        GlStateManager.alphaFunc(GL11.GL_GREATER, 0.1F);
         mc.entityRenderer.disableLightmap();
     }
 
@@ -165,6 +168,6 @@ import java.util.Random;
         if (drawing != NONE) { Tessellator.getInstance().draw(); }
         drawing = kind;
         mc.getTextureManager().bindTexture(kind == RAINING ? RAIN : SNOW);
-        Tessellator.getInstance().getBuffer().begin(7, DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
+        Tessellator.getInstance().getBuffer().begin(GL11.GL_QUADS,DefaultVertexFormats.PARTICLE_POSITION_TEX_COLOR_LMAP);
     }
 }

@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -31,10 +30,25 @@ public final class BeardPlots {
     private static WeakReference<List<StructureComponent>> wellsFrom = new WeakReference<>(null);
     private static int wellsCount;
     private static final List<StructureBoundingBox> WELLS = new ArrayList<>();
+    private static int resizes;
 
     private BeardPlots() {}
 
+    public static void resized() { resizes++; }
+
+    public static void setEnd(StructureBoundingBox box, boolean alongX, boolean outward, int value) {
+        if (alongX) {
+            if (outward) { box.maxX = value; }
+            else { box.minX = value; }
+        }
+        else {
+            if (outward) { box.maxZ = value; }
+            else { box.minZ = value; }
+        }
+    }
+
     private static final class Index {
+        private final int resized = resizes;
         private final int count;
         @Nullable private final StructureComponent last;
         private final int cellX;
@@ -94,7 +108,7 @@ public final class BeardPlots {
             return cells[cx * deep + cz];
         }
 
-        private boolean stale(List<StructureComponent> components) { return count != components.size() || last != (components.isEmpty() ? null : components.get(components.size() - 1)); }
+        private boolean stale(List<StructureComponent> components) { return resized != resizes || count != components.size() || last != (components.isEmpty() ? null : components.get(components.size() - 1)); }
     }
 
     private static Index index(StructureStart start) {
@@ -129,9 +143,10 @@ public final class BeardPlots {
     public static boolean roadAlongX(StructureComponent piece) {
         EnumFacing facing = piece.getCoordBaseMode();
         if (facing != null) { return facing.getAxis() == EnumFacing.Axis.X; }
-        StructureBoundingBox box = piece.getBoundingBox();
-        return box.maxX - box.minX >= box.maxZ - box.minZ;
+        return longerAlongX(piece.getBoundingBox());
     }
+
+    public static boolean longerAlongX(StructureBoundingBox box) { return box.maxX - box.minX >= box.maxZ - box.minZ; }
 
     public static boolean roadAlongX(StructureBoundingBox box) {
         int spanX = box.maxX - box.minX + 1;
@@ -214,7 +229,7 @@ public final class BeardPlots {
                     int across = alongX ? z : x;
                     if (row < (alongX ? box.minX : box.minZ) || row > (alongX ? box.maxX : box.maxZ) || Math.floorMod(row, step) != 0) { continue; }
                     if (across != (alongX ? box.minZ : box.minX) - 1 && across != (alongX ? box.maxZ : box.maxX) + 1) { continue; }
-                    if (BeardRoadsTunnels.tunnelAt(other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null, row)) { continue; }
+                    if (BeardRoadsTunnels.tunnelAt(BeardRoads.layoutOf(other), row)) { continue; }
                     return true;
                 }
             }

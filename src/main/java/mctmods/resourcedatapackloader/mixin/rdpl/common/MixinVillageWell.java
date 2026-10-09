@@ -1,40 +1,40 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import org.spongepowered.asm.mixin.Unique;
-import mctmods.resourcedatapackloader.util.world.SeededRandom;
+import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
+
 import java.util.Objects;
 import java.util.Random;
 import javax.annotation.Nullable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import org.spongepowered.asm.mixin.injection.Inject;
-import net.minecraft.world.gen.structure.template.Template;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
-import net.minecraft.world.WorldServer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.ResourceLocation;
-import net.minecraft.init.Blocks;
 import net.minecraft.block.state.IBlockState;
-import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
-import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBlocks;
-import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.util.ContentLog;
-
+import net.minecraft.init.Blocks;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
+import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.structure.template.Template;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(StructureVillagePieces.Well.class) public abstract class MixinVillageWell extends StructureVillagePieces.Village {
     @Unique private static final WeightedPicks rdpl$CENTERPIECES = new WeightedPicks("villageWellStructure");
 
-    @Inject(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getBiomeSpecificBlockState(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/state/IBlockState;", ordinal = 0), cancellable = true)
-    private void rdpl$centerpiece(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getBiomeSpecificBlockState(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/state/IBlockState;", ordinal = 0), cancellable = true) private void rdpl$centerpiece(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
         if (!(worldIn instanceof WorldServer)) { return; }
         StructureBoundingBox box = getBoundingBox();
         WeightedPicks.Pick chosen = rdpl$chosen(worldIn, box);
@@ -55,7 +55,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
                 if (!structureBoundingBoxIn.isVecInside(at)) { continue; }
                 BeardBlocks.clearAbove(worldIn, at, x, z, ground + 1, ground + Math.max(4, span.getY()));
                 BeardBlocks.fillUnder(worldIn, at, x, z, ground - 1, ground - 8);
-                worldIn.setBlockState(at.setPos(x, ground, z), floor, 2);
+                worldIn.setBlockState(at.setPos(x, ground, z), floor, BlockFlags.UPDATE_CLIENTS);
             }
         }
         BlockPos origin = new BlockPos(box.minX + (6 - span.getX()) / 2, ground + 1, box.minZ + (6 - span.getZ()) / 2);
@@ -84,8 +84,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
         return found - 1;
     }
 
-    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getAverageGroundLevel(Lnet/minecraft/world/World;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)I"))
-    private int rdpl$lowestGround(StructureVillagePieces.Well well, World worldIn, StructureBoundingBox structurebb) {
+    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureVillagePieces$Well;getAverageGroundLevel(Lnet/minecraft/world/World;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)I")) private int rdpl$lowestGround(StructureVillagePieces.Well well, World worldIn, StructureBoundingBox structurebb) {
         StructureBoundingBox box = getBoundingBox();
         if (ContentBeard.wanted() && ContentBeard.adapts(worldIn)) {
             ContentLog.LOGGER.debug("{} at {}, {} stays at the ground the village was founded on, y {}", getClass().getSimpleName(), box.minX, box.minZ, box.maxY - 3);

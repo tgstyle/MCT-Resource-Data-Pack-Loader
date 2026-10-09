@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.JsonTree;
 
 import com.google.gson.JsonArray;
@@ -16,7 +20,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 final class DownFixes {
-    static final String MINECRAFT = "minecraft:";
     static final String TARGET = "1.12.2";
     private static final String COMPONENTS = "components";
     private static final String SHOWN = "show_in_tooltip";
@@ -57,8 +60,6 @@ final class DownFixes {
         for (String prefixed : PREFIXED) { out.put(MINECRAFT + prefixed.substring(prefixed.indexOf('.') + 1), MINECRAFT + prefixed); }
         return out;
     }
-
-    static String namespaced(String id) { return id.indexOf(':') < 0 ? MINECRAFT + id : id; }
 
     static String name(String id) {
         String renamed = NAMES.get(namespaced(id));
@@ -133,7 +134,7 @@ final class DownFixes {
     private static JsonObject click(JsonElement held) {
         if (!held.isJsonObject()) { return null; }
         JsonObject event = held.getAsJsonObject();
-        String action = string(event, "action");
+        String action = Json.text(event, "action");
         String field = CLICKS.get(action);
         if (field == null || !event.has(field)) { return null; }
         JsonObject out = new JsonObject();
@@ -145,7 +146,7 @@ final class DownFixes {
     private static JsonObject hover(JsonElement held) {
         if (!held.isJsonObject()) { return null; }
         JsonObject event = held.getAsJsonObject();
-        String action = string(event, "action");
+        String action = Json.text(event, "action");
         JsonObject out = new JsonObject();
         out.addProperty("action", action);
         switch (action) {
@@ -174,11 +175,7 @@ final class DownFixes {
         return out;
     }
 
-    static String string(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() ? json.get(key).getAsString() : ""; }
-
-    static void stack(JsonObject stack, String file, Consumer<String> note) {
-        if (stack.has(COMPONENTS) && stack.get(COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(COMPONENTS), file, note); }
-    }
+    static void stack(JsonObject stack, String file, Consumer<String> note) { if (stack.has(COMPONENTS) && stack.get(COMPONENTS).isJsonObject()) { components(stack.getAsJsonObject(COMPONENTS), file, note); } }
 
     static void components(JsonObject components, String file, Consumer<String> note) {
         List<String> lost = new ArrayList<>();
@@ -225,7 +222,7 @@ final class DownFixes {
                 return floats == null || floats.size() == 0 ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
             }
             case "minecraft:damage_resistant": {
-                boolean fire = value.isJsonObject() && "#minecraft:is_fire".equals(string(value.getAsJsonObject(), "types"));
+                boolean fire = value.isJsonObject() && "#minecraft:is_fire".equals(Json.text(value.getAsJsonObject(), "types"));
                 return fire ? new JsonObject() : null;
             }
             case "minecraft:lock": return lock(value);
@@ -240,7 +237,7 @@ final class DownFixes {
         if (value.isJsonObject() && (value.getAsJsonObject().has(field) || named.endsWith("can_break") || named.endsWith("can_place_on"))) { return value; }
         JsonElement inner = value;
         if ("modifiers".equals(field) && value.isJsonArray()) { inner = names(value); }
-        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(Integer.parseInt(value.getAsString().replace("#", ""), 16) & 0xFFFFFF); }
+        if ("rgb".equals(field) && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) { inner = new JsonPrimitive(color(value)); }
         JsonObject out = new JsonObject();
         out.add(field, inner);
         return out;
@@ -274,8 +271,8 @@ final class DownFixes {
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();
-            if (!"minecraft:apply_effects".equals(namespaced(string(applied, "type"))) || !applied.has("effects")) {
-                lost.add(MINECRAFT + "consumable/" + string(applied, "type"));
+            if (!"minecraft:apply_effects".equals(namespaced(Json.text(applied, "type"))) || !applied.has("effects")) {
+                lost.add(MINECRAFT + "consumable/" + Json.text(applied, "type"));
                 continue;
             }
             for (JsonElement instance : applied.getAsJsonArray("effects")) {
@@ -286,5 +283,13 @@ final class DownFixes {
             }
         }
         if (effects.size() > 0) { eaten.add("effects", effects); }
+    }
+
+    private static int color(JsonElement held) {
+        if (held == null || !held.isJsonPrimitive()) { return 0; }
+        if (held.getAsJsonPrimitive().isNumber()) { return held.getAsInt(); }
+        String text = held.getAsString().replace("#", "");
+        try { return (int) (Long.parseLong(text, 16) & 0xFFFFFF); }
+        catch (NumberFormatException unreadable) { return 0; }
     }
 }

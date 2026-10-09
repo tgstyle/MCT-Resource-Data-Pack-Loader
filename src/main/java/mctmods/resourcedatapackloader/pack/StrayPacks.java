@@ -11,21 +11,17 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public final class StrayPacks {
     private static final String RESOURCEPACKS = "resourcepacks";
-    private static final String ZIP = ".zip";
+    static final String ZIP = ".zip";
     private static final String MOVING = ".moving";
-    private static final Set<String> DEFINITIONS = new HashSet<>(Arrays.asList("blocks", "items", "fluids", "materials", "tabs", "biomes", "worldgen", "dimensions", "worldtemplates", "gates", "gamerules", "entities", "potions", "potion_types", "villagers", "trades", "villages", "structuremaps", "citymaps", "caveregions", "hardness", "anvils", "orders", "exposures", "overrides", "teams", "scoring", "raids", "dice", "games", "worldintro", "portalframes", "blastplaster", "pathintersects", "player_loot", "registry_remap", "oredict", "block_drops", "brewing", "fuels", "furnace", "recipe_removals", "loot_injections"));
 
     private StrayPacks() {}
 
@@ -55,10 +51,10 @@ public final class StrayPacks {
         int at = parts.length > 2 && PackVersions.FOLDER.equals(parts[0]) ? 2 : 0;
         if (parts.length < at + 4) { return false; }
         String folder = parts[at + 2];
-        if (RDPLPack.ASSETS.equals(parts[at])) { return DEFINITIONS.contains(folder) && !PackManager.ITEMS.equals(folder); }
+        if (RDPLPack.ASSETS.equals(parts[at])) { return PackManager.DATA_FOLDERS.contains(folder) && !PackManager.ITEMS.equals(folder); }
         if (!Port.DATA.equals(parts[at])) { return false; }
         if (PackManager.WORLDGEN.equals(folder)) { return parts.length == at + 4 && parts[at + 3].endsWith("." + PackManager.JSON); }
-        return DEFINITIONS.contains(folder) || PackManager.SOUNDS.equals(folder);
+        return PackManager.DATA_FOLDERS.contains(folder) || PackManager.SOUNDS.equals(folder);
     }
 
     private static boolean zipPack(Path zip) {

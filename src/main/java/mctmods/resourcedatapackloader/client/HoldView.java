@@ -2,39 +2,41 @@ package mctmods.resourcedatapackloader.client;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.client.render.Blends;
+import mctmods.resourcedatapackloader.network.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.network.MessageHold;
+import mctmods.resourcedatapackloader.network.MessageNote;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.ScaledResolution;
 import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.World;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.network.FMLNetworkEvent;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-
 @SideOnly(Side.CLIENT) public final class HoldView {
     private static final float FOG_REACH = 2.0F;
     private static final float VANILLA_START = 0.25F;
     private static final int SHOW = 60;
     private static final int FADE = 60;
-    private static final ResourceLocation LOGO = new ResourceLocation(ResourceDataPackLoader.MOD_ID, "textures/gui/hold.png");
+    private static final ResourceLocation LOGO = ResourceDataPackLoader.id("textures/gui/hold.png");
     private static final int LOGO_WIDTH = 329;
     private static final int LOGO_HEIGHT = 150;
     private static final int MARGIN = 12;
     private static final int SUBTITLE_TOP = 10;
     private static final String KEY = "pregenLogo";
-    private static String warnedAbout = "";
     private static final int TEXT_ABOVE_MIDDLE = 36;
     private static final float TEXT_SCALE = 1.5F;
     private static final int BACKDROP_PAD = 4;
@@ -44,9 +46,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static final float LEAST_SHOWN = 0.11F;
     private static final int WARNING_COLOR = 0xFF5555;
     private static final int BACKDROP_ALPHA = 0x99;
-    private static String warning = "";
     private static final int NOTE_COLOR = 0x55FF55;
     private static final float NOTE_SCALE = 2.0F;
+    private static String warnedAbout = "";
+    private static String warning = "";
     private static String note = "";
     private static String font = "";
     private static boolean held;
@@ -105,7 +108,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
     private static void welcome(Minecraft mc, int screenWidth, int screenHeight, float strength) {
         if (strength <= 0.0F) { return; }
         greet(mc, screenWidth, screenHeight, strength);
-        double gui = Crisp.factor();
+        double gui = Crisp.gui();
         int pixelsWide = (int) Math.round(screenWidth * gui);
         int times = Math.max(1, pixelsWide / 4 / LOGO_WIDTH);
         int width = LOGO_WIDTH * times;
@@ -115,7 +118,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         int top = Math.max(margin, (int) Math.round((screenHeight / 2.0D + SUBTITLE_TOP - MARGIN) * gui) - height);
         GlStateManager.pushMatrix();
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Blends.translucent();
         GlStateManager.color(1.0F, 1.0F, 1.0F, strength);
         GlStateManager.scale((float) (1.0D / gui), (float) (1.0D / gui), 1.0F);
         mc.getTextureManager().bindTexture(LOGO);
@@ -142,16 +145,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 
     private static void greet(Minecraft mc, int screenWidth, int screenHeight, float strength) {
         if (note.isEmpty() || strength < LEAST_SHOWN) { return; }
-        float scale = Crisp.scale(NOTE_SCALE);
-        int width = MarkText.width(font, note);
+        line(mc, screenWidth, note, NOTE_SCALE, screenHeight / 2.0F + SUBTITLE_TOP, strength, NOTE_COLOR);
+    }
+
+    private static void line(Minecraft mc, int screenWidth, String text, float wanted, float top, float strength, int color) {
+        float scale = Crisp.scale(wanted);
+        int width = MarkText.width(font, text);
         float x = Crisp.snap((screenWidth - width * scale) / 2.0F);
-        float y = Crisp.snap(screenHeight / 2.0F + SUBTITLE_TOP);
+        float y = Crisp.snap(top);
         backdrop(Math.round(x), Math.round(y), Math.round(width * scale), Math.round(mc.fontRenderer.FONT_HEIGHT * scale), Math.round(strength * BACKDROP_ALPHA));
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Blends.translucent();
         GlStateManager.pushMatrix();
         GlStateManager.scale(scale, scale, 1.0F);
-        MarkText.draw(font, note, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | NOTE_COLOR);
+        MarkText.draw(font, text, x / scale, y / scale, Math.round(strength * 0xFF) << 24 | color);
         GlStateManager.popMatrix();
         GlStateManager.disableBlend();
         GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
@@ -166,23 +173,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         if (warning.isEmpty()) { return; }
         float pulse = pulse();
         if (pulse < LEAST_SHOWN) { return; }
-        float scale = Crisp.scale(TEXT_SCALE);
-        int width = MarkText.width(font, warning);
-        float x = Crisp.snap((screenWidth - width * scale) / 2.0F);
-        float y = Crisp.snap(screenHeight / 2.0F - TEXT_ABOVE_MIDDLE);
-        backdrop(Math.round(x), Math.round(y), Math.round(width * scale), Math.round(mc.fontRenderer.FONT_HEIGHT * scale), Math.round(pulse * BACKDROP_ALPHA));
-        GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
-        GlStateManager.pushMatrix();
-        GlStateManager.scale(scale, scale, 1.0F);
-        MarkText.draw(font, warning, x / scale, y / scale, Math.round(pulse * 0xFF) << 24 | WARNING_COLOR);
-        GlStateManager.popMatrix();
-        GlStateManager.disableBlend();
-        GlStateManager.color(1.0F, 1.0F, 1.0F, 1.0F);
+        line(mc, screenWidth, warning, TEXT_SCALE, screenHeight / 2.0F - TEXT_ABOVE_MIDDLE, pulse, WARNING_COLOR);
     }
 
     private static int leftFor(int screenWidth, int width, int margin) {
-        String asked = ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo).trim().toLowerCase(java.util.Locale.ROOT);
+        String asked = Settings.lower(ContentControl.text(ContentControl.CHUNKS, KEY, Config.chunks.pregenLogo));
         if ("left".equals(asked)) { return margin; }
         if ("right".equals(asked)) { return screenWidth - margin - width; }
         if (!"center".equals(asked) && !asked.isEmpty() && !asked.equals(warnedAbout)) {
@@ -210,20 +205,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         note = "";
     }
 
-    public static class NoteHandler implements IMessageHandler<mctmods.resourcedatapackloader.network.MessageNote, IMessage> {
-        @Override public IMessage onMessage(mctmods.resourcedatapackloader.network.MessageNote message, MessageContext ctx) {
-            String said = message.said;
-            Minecraft.getMinecraft().addScheduledTask(() -> note(said, message.backdrop, message.font));
-            return null;
-        }
+    public static class NoteHandler extends AbstractClientMessageHandler<MessageNote> {
+        @Override public void handleClientMessage(World world, EntityPlayer player, MessageNote message, MessageContext ctx) { note(message.said, message.backdrop, message.font); }
     }
 
-    public static class Handler implements IMessageHandler<MessageHold, IMessage> {
-        @Override public IMessage onMessage(MessageHold message, MessageContext ctx) {
-            boolean holding = message.held;
-            String said = message.warning;
-            Minecraft.getMinecraft().addScheduledTask(() -> set(holding, said, message.fog, message.backdrop, message.font));
-            return null;
-        }
+    public static class Handler extends AbstractClientMessageHandler<MessageHold> {
+        @Override public void handleClientMessage(World world, EntityPlayer player, MessageHold message, MessageContext ctx) { set(message.held, message.warning, message.fog, message.backdrop, message.font); }
     }
 }

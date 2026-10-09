@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -17,7 +16,6 @@ import javax.annotation.Nullable;
 import java.util.List;
 
 public final class ContentBeardJoins {
-
     private ContentBeardJoins() {}
 
     public static void attach(StructureStart start, StructureComponent piece) {
@@ -192,7 +190,7 @@ public final class ContentBeardJoins {
             StructureBoundingBox met = ((IStructureComponentBox) other).rdpl$box();
             if (met == null || BeardPlots.roadAlongX(other) == alongX) { continue; }
             square(pieces, null, box, alongX, met);
-            if (square(pieces, other, met, !alongX, box) && other instanceof IRoadLayout) { ((IRoadLayout) other).rdpl$layout(null); }
+            if (square(pieces, other, met, !alongX, box)) { BeardRoads.clearLayout(other); }
         }
         return true;
     }

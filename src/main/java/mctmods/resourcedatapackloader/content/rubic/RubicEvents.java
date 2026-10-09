@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
@@ -10,6 +11,8 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.network.MessageRubicWorldData;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
+import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.IntRange;
 import mctmods.resourcedatapackloader.util.ReflectionUtil;
 
@@ -41,41 +44,41 @@ public class RubicEvents {
         WorldServer world = (WorldServer) evt.getObject();
 
         WorldSavedRubicData savedData =
-                (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
+                (WorldSavedRubicData) evt.getObject().getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
         boolean savedRubic = savedData != null && savedData.isRubicWorld;
-        if (savedRubic && mctmods.resourcedatapackloader.util.Config.content.vanillaClients) {
-            mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.standDownForVanillaClients();
+        if (savedRubic && Config.content.vanillaClients) {
+            RubicWorldControl.standDownForVanillaClients();
         }
-        boolean claimed = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.claims(world.provider.getDimension());
+        boolean claimed = RubicWorldControl.claims(world.provider.getDimension());
         boolean rubicWorldInfo = ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() && claimed && (savedData == null || savedData.isRubicWorld);
         boolean isRubic = savedRubic || rubicWorldInfo;
-        if (claimed && mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.wanted()) { isRubic = true; }
+        if (claimed && RubicWorldControl.wanted()) { isRubic = true; }
 
         boolean recorded = savedData != null || isRubic || ((IRubicWorldSettings) world.getWorldInfo()).rdpl$isRubic() || ContentControl.flag(ContentControl.TERRAIN, "rubicWorld", false);
         if (savedData == null) {
-            int minY = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.minHeight();
-            int maxY = mctmods.resourcedatapackloader.content.rubic.RubicWorldControl.maxHeight();
+            int minY = RubicWorldControl.minHeight();
+            int maxY = RubicWorldControl.maxHeight();
             if (world.provider.getDimension() != 0) {
                 WorldSavedRubicData overworld = (WorldSavedRubicData) DimensionManager
-                        .getWorld(0).getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
+                        .getWorld(0).getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
                 if (overworld != null) {
                     minY = overworld.minHeight;
                     maxY = overworld.maxHeight;
                 }
             }
-            savedData = new WorldSavedRubicData("rdplRubicData", isRubic, minY, maxY);
+            savedData = new WorldSavedRubicData(Rubic.DATA_ID,isRubic, minY, maxY);
         }
         if (recorded) { savedData.markDirty(); }
-        evt.getObject().getPerWorldStorage().setData("rdplRubicData", savedData);
+        evt.getObject().getPerWorldStorage().setData(Rubic.DATA_ID, savedData);
         evt.getObject().getPerWorldStorage().saveAllData();
 
         if (!isRubic) { return; }
 
         if (shouldSkipWorld(world)) {
-            Rubic.LOGGER.info("Skipping world {} with type {} due to potential compatibility issues", evt.getObject(), evt.getObject().getWorldType());
+            ContentLog.LOGGER.info("Skipping world {} with type {} due to potential compatibility issues", evt.getObject(), evt.getObject().getWorldType());
             return;
         }
-        Rubic.LOGGER.info("Initializing world {} with type {}", evt.getObject(), evt.getObject().getWorldType());
+        ContentLog.LOGGER.info("Initializing world {} with type {}", evt.getObject(), evt.getObject().getWorldType());
 
         IntRange generationRange = new IntRange(0, ((IRubicWorldProvider) world.provider).rdpl$getOriginalActualHeight());
 
@@ -107,7 +110,7 @@ public class RubicEvents {
         if (connection == null || connection.netManager == null) { return; }
         NetworkDispatcher dispatcher = connection.netManager.channel().attr(NetworkDispatcher.FML_DISPATCHER).get();
         if (dispatcher == null) { return; }
-        if (!dispatcher.getModList().containsKey(Rubic.MODID)) {
+        if (!dispatcher.getModList().containsKey(ResourceDataPackLoader.MOD_ID)) {
             connection.disconnect(new TextComponentString("This world requires Resource Data Pack Loader on the client."));
         }
     }
@@ -138,7 +141,7 @@ public class RubicEvents {
         try {
             io.close();
         } catch (IOException e) {
-            Rubic.LOGGER.catching(e);
+            ContentLog.LOGGER.catching(e);
         }
     }
 }

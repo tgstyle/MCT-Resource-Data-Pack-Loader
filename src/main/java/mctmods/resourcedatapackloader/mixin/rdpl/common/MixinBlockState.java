@@ -14,8 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @SuppressWarnings("deprecation") @Mixin(BlockStateContainer.StateImplementation.class) public abstract class MixinBlockState {
     @Unique private Material rdpl$material;
 
-    @Redirect(method = "getMaterial", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getMaterial(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/material/Material;"))
-    private Material rdpl$materialOnce(Block block, IBlockState state) {
+    @Redirect(method = "getMaterial", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getMaterial(Lnet/minecraft/block/state/IBlockState;)Lnet/minecraft/block/material/Material;")) private Material rdpl$materialOnce(Block block, IBlockState state) {
         Material had = rdpl$material;
         return had == null ? rdpl$workOutMaterial(block, state) : had;
     }

@@ -25,11 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(NetHandlerPlayServer.class) public abstract class MixinNetHandlerPlayServerBuild {
     @Shadow public EntityPlayerMP player;
 
-    @Redirect(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getBuildLimit()I"))
-    private int rdpl$buildCeiling(MinecraftServer server) { return GenHeights.ceiling(player.world, server.getBuildLimit()); }
+    @Redirect(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getBuildLimit()I")) private int rdpl$buildCeiling(MinecraftServer server) { return GenHeights.ceiling(player.world, server.getBuildLimit()); }
 
-    @Inject(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayerMP;markPlayerActive()V", shift = At.Shift.AFTER), cancellable = true)
-    private void rdpl$buildFloor(CPacketPlayerTryUseItemOnBlock packetIn, CallbackInfo ci) {
+    @Inject(method = "processTryUseItemOnBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/EntityPlayerMP;markPlayerActive()V", shift = At.Shift.AFTER), cancellable = true) private void rdpl$buildFloor(CPacketPlayerTryUseItemOnBlock packetIn, CallbackInfo ci) {
         World world = player.world;
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         int floor = ((IRubicWorld) world).rdpl$getMinHeight();

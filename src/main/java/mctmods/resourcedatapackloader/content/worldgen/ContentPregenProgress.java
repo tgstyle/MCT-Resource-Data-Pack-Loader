@@ -18,7 +18,7 @@ public final class ContentPregenProgress {
     static String defaulted(String key, String fallback, String shipped, String langKey, EntityPlayerMP player) {
         String said = says(key, fallback);
         if (!said.equals(shipped.trim())) { return said; }
-        return player == null ? Lang.tr(langKey) : Lang.tr(player, langKey);
+        return Lang.tr(player, langKey);
     }
 
     static String sofar(ContentPregen worker) {
@@ -39,7 +39,7 @@ public final class ContentPregenProgress {
         return Lang.tr("rdpl.pregen.checking", stepped) + Lang.tr("rdpl.pregen.checked", spent / 3600L, spent / 60L % 60L, spent % 60L);
     }
 
-    static String eta(ContentPregen worker) {
+    static synchronized String eta(ContentPregen worker) {
         long total = worker.order.total();
         if (worker.begun == 0L || worker.done <= worker.resumedFrom || worker.done >= total) { return ""; }
         long metric = worker.lightOnly ? worker.done : worker.made;
@@ -69,9 +69,7 @@ public final class ContentPregenProgress {
         long rate = (worker.done - worker.resumedFrom) / seconds;
         boolean rubic = worker.rubicRun;
         if (worker.lightOnly) {
-            if (rubic) {
-                return String.format("Went over %d of %d column(s) in dimension %d, all of them lit and dressed cube by cube as they were made", worker.done, worker.order.total(), worker.dimension);
-            }
+            if (rubic) { return String.format("Went over %d of %d column(s) in dimension %d, all of them lit and dressed cube by cube as they were made", worker.done, worker.order.total(), worker.dimension); }
             return String.format("Went over %d of %d chunk(s) in dimension %d looking for ones the light never reached, lighting %d and leaving %d, with %d never made in the first place%s",
                     worker.done, worker.order.total(), worker.dimension, worker.brightened, worker.dark + worker.darkAtEdge, worker.missing,
                     worker.undressed == 0L ? "" : ", and " + worker.undressed + " of them had never been dressed, " + worker.dressedLate + " of which were dressed on the spot and the rest left alone to be dressed when somebody comes to them");

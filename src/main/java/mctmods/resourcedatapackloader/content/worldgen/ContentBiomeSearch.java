@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.Longs;
+
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -61,7 +63,7 @@ public final class ContentBiomeSearch implements WorldWorkerManager.IWorker {
                 if (System.nanoTime() >= ending) { return true; }
                 long spot = ContentStructureSearch.ringSpot(middleX, middleZ, ring, step);
                 step++;
-                consider((int) (spot >> 32), (int) spot);
+                consider(Longs.high(spot), Longs.low(spot));
             }
             step = 0;
             ring++;

@@ -10,6 +10,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = WorldUtil.class, remap = false) public class MixinWorldUtilStationHome {
-    @Redirect(method = "bindSpaceStationToNewDimension(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayerMP;I)Lmicdoodle8/mods/galacticraft/core/dimension/SpaceStationWorldData;", at = @At(value = "INVOKE", target = "Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;getParentPlanet()Lmicdoodle8/mods/galacticraft/api/galaxies/Planet;"))
-    private static Planet rdpl$stationHome(Satellite station) { return GcCelestial.stationHome(station); }
+    @Redirect(method = "bindSpaceStationToNewDimension(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayerMP;I)Lmicdoodle8/mods/galacticraft/core/dimension/SpaceStationWorldData;", at = @At(value = "INVOKE", target = "Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;getParentPlanet()Lmicdoodle8/mods/galacticraft/api/galaxies/Planet;")) private static Planet rdpl$stationHome(Satellite station) { return GcCelestial.stationHome(station); }
 }

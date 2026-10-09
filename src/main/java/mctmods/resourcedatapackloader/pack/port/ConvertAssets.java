@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -89,7 +91,7 @@ final class ConvertAssets {
     }
 
     static String modelRef(String held) {
-        String bare = held.startsWith(Ids.MINECRAFT + ":") ? held.substring(Ids.MINECRAFT.length() + 1) : held;
+        String bare = IdNames.bare(held);
         if (bare.startsWith("block/")) {
             String name = bare.substring("block/".length());
             return "block/" + MODELS.getOrDefault(name, name);

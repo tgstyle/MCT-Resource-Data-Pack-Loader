@@ -22,19 +22,19 @@ public final class GcRubicWorldgen {
         ContentLog.LOGGER.info("Galacticraft keeps other mods' worldgen off its planets unless whitelisted, and rubic runs those generators itself, so on rubic worlds the same gate is asked before each one runs");
     }
 
-    public static boolean allows(World world, IWorldGenerator generator) { return handler == null || handler.allowed(world, generator); }
+    public static boolean blocks(World world, IWorldGenerator generator) { return handler != null && handler.blocks(world, generator); }
 
     static final class Handler {
         private List<Class<?>> whitelist;
 
-        boolean allowed(World world, IWorldGenerator generator) {
-            if (world.provider instanceof WorldProviderSpaceStation) { return false; }
-            if (!(world.provider instanceof IGalacticraftWorldProvider) || ConfigManagerCore.enableOtherModsFeatures) { return true; }
+        boolean blocks(World world, IWorldGenerator generator) {
+            if (world.provider instanceof WorldProviderSpaceStation) { return true; }
+            if (!(world.provider instanceof IGalacticraftWorldProvider) || ConfigManagerCore.enableOtherModsFeatures) { return false; }
             if (whitelist == null) { whitelist = gather(); }
             for (Class<?> held : whitelist) {
-                if (held.isInstance(generator)) { return true; }
+                if (held.isInstance(generator)) { return false; }
             }
-            return false;
+            return true;
         }
 
         private static List<Class<?>> gather() {

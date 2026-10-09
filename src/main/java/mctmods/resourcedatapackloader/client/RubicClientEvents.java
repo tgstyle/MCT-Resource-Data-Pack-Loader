@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiOptionsRowList;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiScreen;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IGuiVideoSettings;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
 
 import net.minecraft.client.Minecraft;
@@ -25,9 +26,8 @@ import net.minecraftforge.fml.client.FMLClientHandler;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
-import javax.annotation.Nonnull;
-
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public class RubicClientEvents {
     @SubscribeEvent public void onWorldClientTickEvent(TickEvent.ClientTickEvent evt) {
@@ -41,7 +41,7 @@ public class RubicClientEvents {
         int prevDist = playerList.getVerticalViewDistance();
         int newDist = Config.client.verticalCubeLoadDistance;
         if (prevDist != newDist) {
-            Rubic.LOGGER.info("Changing vertical view distance to {}, from {}", newDist, prevDist);
+            ContentLog.LOGGER.info("Changing vertical view distance to {}, from {}", newDist, prevDist);
             playerList.setVerticalViewDistance(newDist);
         }
     }
@@ -50,7 +50,7 @@ public class RubicClientEvents {
         GuiScreen currentGui = event.getGui();
         if (currentGui instanceof GuiVideoSettings) {
             GuiVideoSettings gvs = (GuiVideoSettings) currentGui;
-            if (!FMLClientHandler.instance().hasOptifine()) {
+            if (!Rubic.hasOptifine()) {
                 IGuiOptionsRowList gowl = (IGuiOptionsRowList) ((IGuiVideoSettings) gvs).getOptionsRowList();
                 GuiOptionsRowList.Row row = this.createRow(gvs.width);
                 gowl.getOptions().add(1, row);
@@ -93,7 +93,7 @@ public class RubicClientEvents {
     }
 
     private static class VertViewDistanceSlider extends GuiButton {
-        private final int MAX_VIEW_DIST = Rubic.hasOptifine() ? 64 : 32;
+        private static final int MAX_VIEW_DIST = Rubic.hasOptifine() ? 64 : 32;
         private float sliderValue;
         public boolean dragging;
 
@@ -128,7 +128,7 @@ public class RubicClientEvents {
                 this.dragging = true;
                 return true;
             }
-            else { return false; }
+            return false;
         }
 
         private String createDisplayString() { return I18n.format("rdpl.gui.verticaldistance", Config.client.verticalCubeLoadDistance); }

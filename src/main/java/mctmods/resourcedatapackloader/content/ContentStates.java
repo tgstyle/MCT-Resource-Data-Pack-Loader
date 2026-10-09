@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import com.google.common.base.Optional;
 import net.minecraft.block.Block;
@@ -16,6 +18,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
 public final class ContentStates {
@@ -61,7 +64,7 @@ public final class ContentStates {
     }
 
     public static void place(World world, BlockPos pos, IBlockState state, @Nullable NBTTagCompound tag) {
-        world.setBlockState(pos, state, 2);
+        world.setBlockState(pos, state, BlockFlags.UPDATE_CLIENTS);
         if (tag == null) { return; }
         TileEntity held = world.getTileEntity(pos);
         if (held == null) { return; }
@@ -112,6 +115,12 @@ public final class ContentStates {
             return state;
         }
         return state.withProperty(property, parsed.get());
+    }
+
+    public static void sort(BlockMatchDef match, Block block, Consumer<Block> whole, Consumer<IBlockState> exact, Object owner) {
+        if (!match.properties.isEmpty()) { exact.accept(of(block, 0, match.properties, owner)); }
+        else if (match.meta >= 0) { exact.accept(of(block, match.meta)); }
+        else { whole.accept(block); }
     }
 
     public static IBlockState of(Block block, int meta) {

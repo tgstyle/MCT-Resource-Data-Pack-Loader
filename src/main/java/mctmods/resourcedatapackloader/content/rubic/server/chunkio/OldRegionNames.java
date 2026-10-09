@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
 import mctmods.resourcedatapackloader.content.rubic.regionlib.impl.RegionNames;
+import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.nbt.CompressedStreamTools;
@@ -67,7 +68,7 @@ final class OldRegionNames {
         return false;
     }
 
-    static boolean cubicChunksMarked(NBTTagCompound data) { return data.getBoolean("isCubicWorld") && !data.getBoolean("isRubicWorld"); }
+    static boolean cubicChunksMarked(NBTTagCompound data) { return data.getBoolean("isCubicWorld") && !data.getBoolean(WorldSavedRubicData.IS_RUBIC_WORLD); }
 
     static NBTTagCompound read(Path file) throws IOException {
         try (InputStream in = Files.newInputStream(file)) { return CompressedStreamTools.readCompressed(in); }

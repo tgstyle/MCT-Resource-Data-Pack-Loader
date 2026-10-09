@@ -6,6 +6,8 @@ import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.JsonArray;
@@ -29,12 +31,17 @@ import javax.annotation.Nullable;
 public final class ContentParserWorlds {
     private static final Set<String> KNOWN_TERRAIN = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
             DimensionDef.OVERWORLD, DimensionDef.FLAT, DimensionDef.VOID, DimensionDef.NETHER, DimensionDef.END)));
+    private static final List<String> AXES = Collections.unmodifiableList(Arrays.asList(PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH));
+    private static final List<String> RETURNS = Collections.unmodifiableList(Arrays.asList(DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE));
+    private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
+    private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT));
+    private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL));
     private static final String ROLES = "rlsc.";
 
     private ContentParserWorlds() {}
 
     @Nullable public static PortalFrameDef portalFrame(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "portal frame file");
         if (json == null) { return null; }
         Map<Character, IBlockState> legend = legend(key, json, "" + PortalFrameDef.HOLE + PortalFrameDef.REPEAT, "Portal frame");
         List<String> rows = strings(json, "rows");
@@ -51,15 +58,20 @@ public final class ContentParserWorlds {
                 return null;
             }
         }
+        boolean repeating = false;
+        for (String row : rows) { repeating |= row.indexOf(PortalFrameDef.REPEAT) >= 0; }
+        if (!repeating) {
+            for (String row : rows) {
+                if (row.length() == rows.get(0).length()) { continue; }
+                ContentLog.LOGGER.error("Portal frame {} has rows of different lengths and no repeat mark, so it is skipped", key);
+                return null;
+            }
+        }
         if (!holed) {
             ContentLog.LOGGER.error("Portal frame {} has no '{}' in it, so nothing would ever stand inside it", key, PortalFrameDef.HOLE);
             return null;
         }
-        String axis = JsonUtils.getString(json, "axis", PortalFrameDef.VERTICAL).trim().toLowerCase(Locale.ROOT);
-        if (!PortalFrameDef.VERTICAL.equals(axis) && !PortalFrameDef.HORIZONTAL.equals(axis) && !PortalFrameDef.BOTH.equals(axis)) {
-            ContentLog.LOGGER.error("Portal frame {} asks for axis '{}', which is none of {}, {} or {}, standing it up instead", key, axis, PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH);
-            axis = PortalFrameDef.VERTICAL;
-        }
+        String axis = Json.choice(json, "axis", PortalFrameDef.VERTICAL, "Portal frame " + key, AXES);
         PortalFrameDef frame = new PortalFrameDef(key, JsonUtils.getString(json, "name", key.getPath()), axis, legend, rows,
                 Math.max(PortalFrameDef.LEAST_WIDE, JsonUtils.getInt(json, "maxWidth", 21)),
                 Math.max(PortalFrameDef.LEAST_TALL, JsonUtils.getInt(json, "maxHeight", 21)));
@@ -79,20 +91,8 @@ public final class ContentParserWorlds {
             return null;
         }
         int color = ContentTypes.color(JsonUtils.getString(entry, "color", "#FFFFFF"), key + " portal color");
-        String back = JsonUtils.getString(entry, "return", DimensionPortalDef.BUILT).trim().toLowerCase(Locale.ROOT);
-        if (!DimensionPortalDef.BUILT.equals(back) && !DimensionPortalDef.PLAYER.equals(back) && !DimensionPortalDef.NONE.equals(back)) {
-            ContentLog.LOGGER.error("Dimension {} asks for a return of '{}', which is none of {}, {} or {}, building one instead", key, back, DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE);
-            back = DimensionPortalDef.BUILT;
-        }
-        PortalDef travel = new PortalDef(JsonUtils.getInt(json, "id"),
-                JsonUtils.getInt(entry, "returnDimension", 0),
-                JsonUtils.getString(entry, "gate", ""),
-                Math.max(0, JsonUtils.getInt(entry, "cooldown", 60)),
-                JsonUtils.getBoolean(entry, "platform", true),
-                JsonUtils.getString(entry, "platformBlock", ""),
-                JsonUtils.getString(entry, "sound", ""),
-                JsonUtils.getBoolean(entry, "owned", false),
-                JsonUtils.getBoolean(entry, "walkIn", true));
+        String back = Json.choice(entry, "return", DimensionPortalDef.BUILT, "Dimension " + key + " portal", RETURNS);
+        PortalDef travel = ContentParser.portal(entry, JsonUtils.getInt(json, "id"), false, true);
         return new DimensionPortalDef(frames, JsonUtils.getString(entry, "ignitedBy", "minecraft:flint_and_steel"), color, back, travel);
     }
 
@@ -121,7 +121,7 @@ public final class ContentParserWorlds {
     }
 
     @Nullable public static PathIntersectDef pathIntersect(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "path intersect design");
         if (json == null) { return null; }
         Map<Character, IBlockState> legend = legend(key, json, ROLES, "Path intersect");
         List<String> mouth = strings(json, "mouth");
@@ -132,7 +132,7 @@ public final class ContentParserWorlds {
     }
 
     @Nullable public static StructureMapDef structureMap(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         if (json == null) { return null; }
         if (!json.has("layers")) {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
@@ -145,15 +145,16 @@ public final class ContentParserWorlds {
         }
         StructureMapDef.Layer[] layers = new StructureMapDef.Layer[held.size()];
         for (int at = 0; at < held.size(); at++) {
+            if (!held.get(at).isJsonObject()) {
+                ContentLog.LOGGER.error("Structure map {} layer {} is not an object, so the map is dropped", key, at);
+                return null;
+            }
             JsonObject entry = held.get(at).getAsJsonObject();
             Map<Character, List<PickDef>> palette = new LinkedHashMap<>();
             if (entry.has("palette")) {
                 for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(entry, "palette").entrySet()) {
                     String symbol = mark.getKey().trim();
-                    if (symbol.length() != 1 || symbol.charAt(0) == '.') {
-                        ContentLog.LOGGER.error("Structure map {} layer {} palette symbol '{}' must be a single character other than '.', so the map is dropped", key, at, mark.getKey());
-                        return null;
-                    }
+                    if (badSymbol("Structure map " + key + " layer " + at, symbol, mark.getKey())) { return null; }
                     List<PickDef> picks = new ArrayList<>();
                     if (mark.getValue().isJsonArray()) {
                         for (JsonElement choice : mark.getValue().getAsJsonArray()) { picks.add(weighted(choice.getAsString())); }
@@ -167,18 +168,7 @@ public final class ContentParserWorlds {
                 ContentLog.LOGGER.error("Structure map {} layer {} holds {} map row(s), the most being {}, so the map is dropped", key, at, rows.size(), StructureMapDef.LIMIT);
                 return null;
             }
-            for (String row : rows) {
-                if (row.length() > StructureMapDef.LIMIT) {
-                    ContentLog.LOGGER.error("Structure map {} layer {} row '{}' is {} cell(s) long, the most being {}, so the map is dropped", key, at, row, row.length(), StructureMapDef.LIMIT);
-                    return null;
-                }
-                for (char cell : row.toCharArray()) {
-                    if (cell != '.' && !palette.containsKey(cell)) {
-                        ContentLog.LOGGER.error("Structure map {} layer {} uses '{}', which is not in that layer's palette, so the map is dropped", key, at, cell);
-                        return null;
-                    }
-                }
-            }
+            if (badRows("Structure map " + key + " layer " + at, rows, StructureMapDef.LIMIT, palette.keySet())) { return null; }
             layers[at] = new StructureMapDef.Layer(palette, rows.toArray(new String[0]));
         }
         int ground = MathHelper.clamp(JsonUtils.getInt(json, "ground", 0), 0, layers.length - 1);
@@ -197,28 +187,21 @@ public final class ContentParserWorlds {
         }
         StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers);
         if (spacing > 0 && spacing * 16 < def.widest) {
-            ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} ContentParser.block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest);
+            ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest);
             return null;
         }
         return def;
     }
 
     @Nullable public static CityMapDef cityMap(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "city map");
         if (json == null) { return null; }
         List<String> rows = strings(json, "map");
-        if (rows.isEmpty() || rows.size() > CityMapDef.LIMIT) {
-            ContentLog.LOGGER.error("City map {} holds {} map row(s), the most being {}, so it is dropped", key, rows.size(), CityMapDef.LIMIT);
-            return null;
-        }
         Map<Character, CityMapDef.Cell> palette = new LinkedHashMap<>();
         if (json.has("palette")) {
             for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(json, "palette").entrySet()) {
                 String symbol = mark.getKey().trim();
-                if (symbol.length() != 1 || symbol.charAt(0) == '.') {
-                    ContentLog.LOGGER.error("City map {} palette symbol '{}' must be a single character other than '.', so the map is dropped", key, mark.getKey());
-                    return null;
-                }
+                if (badSymbol("City map " + key, symbol, mark.getKey())) { return null; }
                 List<String> names = new ArrayList<>();
                 int height = CityMapDef.LIFT;
                 JsonObject roadKeys = null;
@@ -231,9 +214,7 @@ public final class ContentParserWorlds {
                     height = MathHelper.clamp(JsonUtils.getInt(described, "height", CityMapDef.LIFT), 2, 64);
                     if (described.has("settings") && described.get("settings").isJsonObject()) {
                         roadKeys = described.getAsJsonObject("settings");
-                        for (Map.Entry<String, JsonElement> entry : roadKeys.entrySet()) {
-                            if (ContentControl.ignores(entry.getKey())) { ContentLog.LOGGER.error("City map {} mark '{}' sets '{}', which is not a setting anything reads, so it does nothing", key, symbol, entry.getKey()); }
-                        }
+                        ContentControl.warnUnknown("City map " + key + " mark '" + symbol + "'", roadKeys);
                     }
                 }
                 else { names.add(mark.getValue().getAsString().trim()); }
@@ -258,49 +239,54 @@ public final class ContentParserWorlds {
                 palette.put(symbol.charAt(0), new CityMapDef.Cell(kind, picks, height, roadKeys));
             }
         }
-        for (String row : rows) {
-            if (row.length() > CityMapDef.LIMIT) {
-                ContentLog.LOGGER.error("City map {} row '{}' is {} cell(s) long, the most being {}, so the map is dropped", key, row, row.length(), CityMapDef.LIMIT);
-                return null;
-            }
-            for (char cell : row.toCharArray()) {
-                if (cell != '.' && !palette.containsKey(cell)) {
-                    ContentLog.LOGGER.error("City map {} uses '{}', which is not in its palette, so the map is dropped", key, cell);
-                    return null;
-                }
-            }
-        }
+        if (badRows("City map " + key, rows, CityMapDef.LIMIT, palette.keySet())) { return null; }
         int cell = MathHelper.clamp(JsonUtils.getInt(json, "cell", 48), 8, 128);
         JsonObject settings = null;
         if (json.has("settings")) {
             if (json.get("settings").isJsonObject()) {
                 settings = json.getAsJsonObject("settings");
-                for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
-                    if (ContentControl.ignores(entry.getKey())) { ContentLog.LOGGER.error("City map {} sets '{}', which is not a setting anything reads, so it does nothing", key, entry.getKey()); }
-                }
+                ContentControl.warnUnknown("City map " + key, settings);
             }
             else { ContentLog.LOGGER.error("City map {} has settings that are not an object of setting names, so it keeps the world template's", key); }
         }
         return new CityMapDef(key, cell, palette, rows.toArray(new String[0]), settings);
     }
 
+    private static boolean badSymbol(String what, String symbol, String written) {
+        if (symbol.length() == 1 && symbol.charAt(0) != '.') { return false; }
+        ContentLog.LOGGER.error("{} palette symbol '{}' must be a single character other than '.', so the map is dropped", what, written);
+        return true;
+    }
+
+    private static boolean badRows(String what, List<String> rows, int limit, Set<Character> palette) {
+        for (String row : rows) {
+            if (row.length() > limit) {
+                ContentLog.LOGGER.error("{} row '{}' is {} cell(s) long, the most being {}, so the map is dropped", what, row, row.length(), limit);
+                return true;
+            }
+            for (char cell : row.toCharArray()) {
+                if (cell != '.' && !palette.contains(cell)) {
+                    ContentLog.LOGGER.error("{} uses '{}', which is not in its palette, so the map is dropped", what, cell);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static PickDef weighted(String entry) {
-        int split = entry.lastIndexOf('=');
-        if (split < 0) { return new PickDef(entry.trim().toLowerCase(Locale.ROOT), 1); }
-        int weight;
-        try { weight = Integer.parseInt(entry.substring(split + 1).trim()); }
-        catch (NumberFormatException held) { weight = 1; }
-        return new PickDef(entry.substring(0, split).trim().toLowerCase(Locale.ROOT), weight);
+        Settings.Weighted split = Settings.weighted(entry, 1);
+        return new PickDef(split.name.toLowerCase(Locale.ROOT), split.weight);
     }
 
     @Nullable public static WorldTemplateDef worldTemplate(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "world template");
         if (json == null) { return null; }
         Map<String, String> roles = new LinkedHashMap<>();
         if (json.has("roles")) {
             JsonObject entry = JsonUtils.getJsonObject(json, "roles");
             for (Map.Entry<String, JsonElement> role : entry.entrySet()) {
-                String name = role.getKey().trim().toLowerCase(Locale.ROOT);
+                String name = Settings.lower(role.getKey());
                 if (!ContentWorldTemplates.knownRoles().containsKey(name)) {
                     ContentLog.LOGGER.error("World template {} names role '{}', which is not one of {}, ignoring it", key, role.getKey(), ContentWorldTemplates.describeRoles());
                     continue;
@@ -327,7 +313,7 @@ public final class ContentParserWorlds {
     }
 
     @Nullable public static WorldIntroDef worldIntro(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "world intro file");
         if (json == null) { return null; }
         List<IntroPageDef> pages = new ArrayList<>();
         if (json.has("pages")) {
@@ -352,16 +338,12 @@ public final class ContentParserWorlds {
         String single = JsonUtils.getString(json, "background", "").trim();
         if (!single.isEmpty()) { backgrounds.add(new ResourceLocation(single)); }
         for (String name : strings(json, "backgrounds")) { backgrounds.add(new ResourceLocation(name)); }
-        String mode = JsonUtils.getString(json, "mode", IntroPageDef.SCROLL).trim().toLowerCase(Locale.ROOT);
+        String mode = Settings.lower(JsonUtils.getString(json, "mode", IntroPageDef.SCROLL));
         if (!IntroPageDef.SCROLL.equals(mode) && !IntroPageDef.STATIC.equals(mode)) {
             ContentLog.LOGGER.error("World intro {} has a page with mode '{}', which is neither '{}' nor '{}', ignoring the page", key, mode, IntroPageDef.SCROLL, IntroPageDef.STATIC);
             return null;
         }
-        String direction = JsonUtils.getString(json, "direction", IntroPageDef.UP).trim().toLowerCase(Locale.ROOT);
-        if (!IntroPageDef.UP.equals(direction) && !IntroPageDef.DOWN.equals(direction)) {
-            ContentLog.LOGGER.error("World intro {} has a page with direction '{}', which is neither '{}' nor '{}', taking '{}'", key, direction, IntroPageDef.UP, IntroPageDef.DOWN, IntroPageDef.UP);
-            direction = IntroPageDef.UP;
-        }
+        String direction = Json.choice(json, "direction", IntroPageDef.UP, "World intro " + key + " page", DIRECTIONS);
         String text = JsonUtils.getString(json, "text", "").trim();
         return new IntroPageDef(Collections.unmodifiableList(backgrounds),
                 JsonUtils.getFloat(json, "interval", 5.0F),
@@ -375,7 +357,7 @@ public final class ContentParserWorlds {
 
     public static Map<Integer, Map<String, String>> gameRuleFile(ResourceLocation key, String contents) {
         Map<Integer, Map<String, String>> found = new LinkedHashMap<>();
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         if (json == null) { return found; }
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             int dimension;
@@ -388,48 +370,39 @@ public final class ContentParserWorlds {
                 ContentLog.LOGGER.error("Game rule file {} maps dimension {} to something that is not a set of rules, ignoring it", key, dimension);
                 continue;
             }
-            Map<String, String> rules = new LinkedHashMap<>();
-            for (Map.Entry<String, JsonElement> rule : entry.getValue().getAsJsonObject().entrySet()) {
-                if (!rule.getValue().isJsonPrimitive()) { continue; }
-                rules.put(rule.getKey(), rule.getValue().getAsString());
-            }
-            found.put(dimension, rules);
+            found.put(dimension, rules(key, entry.getValue().getAsJsonObject()));
         }
         return found;
     }
 
     private static Map<String, String> gameRules(ResourceLocation key, JsonObject json) {
+        if (!json.has("gameRules")) { return Collections.emptyMap(); }
+        return Collections.unmodifiableMap(rules(key, JsonUtils.getJsonObject(json, "gameRules")));
+    }
+
+    private static Map<String, String> rules(ResourceLocation key, JsonObject object) {
         Map<String, String> found = new LinkedHashMap<>();
-        if (!json.has("gameRules")) { return Collections.unmodifiableMap(found); }
-        JsonObject entry = JsonUtils.getJsonObject(json, "gameRules");
-        for (Map.Entry<String, JsonElement> rule : entry.entrySet()) {
+        for (Map.Entry<String, JsonElement> rule : object.entrySet()) {
             if (!rule.getValue().isJsonPrimitive()) {
-                ContentLog.LOGGER.error("Dimension {} sets game rule '{}' to something that is not a value, ignoring it", key, rule.getKey());
+                ContentLog.LOGGER.error("{} sets game rule '{}' to something that is not a value, ignoring it", key, rule.getKey());
                 continue;
             }
             found.put(rule.getKey(), rule.getValue().getAsString());
         }
-        return Collections.unmodifiableMap(found);
+        return found;
     }
 
     @Nullable public static DimensionDef dimension(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "dimension");
         if (json == null) { return null; }
         JsonObject terrain = JsonUtils.getJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = JsonUtils.getJsonObject(json, "biomes", new JsonObject());
         JsonObject sky = JsonUtils.getJsonObject(json, "sky", new JsonObject());
         String skyColor = JsonUtils.getString(sky, "skyColor", "").trim();
         String cloudColor = JsonUtils.getString(sky, "cloudColor", "").trim();
-        String type = JsonUtils.getString(terrain, "type", DimensionDef.OVERWORLD).trim().toLowerCase(Locale.ROOT);
-        String source = JsonUtils.getString(biomes, "source", DimensionDef.INHERIT).trim().toLowerCase(Locale.ROOT);
-        if (!DimensionDef.SINGLE.equals(source) && !DimensionDef.INHERIT.equals(source)) {
-            ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.INHERIT);
-            source = DimensionDef.INHERIT;
-        }
-        if (!KNOWN_TERRAIN.contains(type)) {
-            ContentLog.LOGGER.error("Dimension {} asks for terrain '{}', which is not one of {}, using {}", key, type, KNOWN_TERRAIN, DimensionDef.OVERWORLD);
-            type = DimensionDef.OVERWORLD;
-        }
+        String owner = "Dimension " + key;
+        String type = Json.choice(terrain, "type", DimensionDef.OVERWORLD, owner + " terrain", KNOWN_TERRAIN);
+        String source = Json.choice(biomes, "source", DimensionDef.INHERIT, owner + " biomes", SOURCES);
         GalacticraftDef galacticraft = ContentParserCelestial.galacticraft(key, json);
         boolean belt = galacticraft != null && CelestialDef.ASTEROIDS.equals(galacticraft.body.kind);
         String fog = ContentParserSkyLook.samples(sky) ? "" : JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
@@ -490,13 +463,9 @@ public final class ContentParserWorlds {
     }
 
     @Nullable public static GateDef gate(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
-        String scope = JsonUtils.getString(json, "scope", GateDef.PLAYER).trim().toLowerCase(Locale.ROOT);
-        if (!GateDef.PLAYER.equals(scope) && !GateDef.GLOBAL.equals(scope)) {
-            ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.PLAYER);
-            scope = GateDef.PLAYER;
-        }
+        String scope = Json.choice(json, "scope", GateDef.PLAYER, "Gate " + key, SCOPES);
         JsonObject unlock = JsonUtils.getJsonObject(json, "unlock", new JsonObject());
         return new GateDef(key,
                 JsonUtils.getInt(json, "dimension"),

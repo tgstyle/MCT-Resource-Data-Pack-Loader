@@ -41,7 +41,7 @@ public final class ContentBoardPlay {
 
     private ContentBoardPlay() {}
 
-    static String say(@Nullable EntityPlayer viewer, String key, Object... pairs) { return ContentDice.words(viewer, "board." + key, pairs); }
+    public static String say(@Nullable EntityPlayer viewer, String key, Object... pairs) { return ContentDice.words(viewer, "board." + key, pairs); }
 
     static void tell(MinecraftServer server, BoardGame game, TextFormatting color, String key, Object... pairs) { tell(server, game, false, color, key, pairs); }
 
@@ -162,7 +162,7 @@ public final class ContentBoardPlay {
 
     private static void pick(EntityPlayerMP player, BoardGame game, BoardRules rules, int square, int side) {
         BoardState state = game.state;
-        if (state == null || barred(player, game, rules, side)) { return; }
+        if (state == null || state.at(square) == 0 || barred(player, game, rules, side)) { return; }
         if (side != state.turn) {
             Says.chat(player, TextFormatting.GRAY, say(player, "notturn", "side", sideName(rules, state.turn)));
             return;

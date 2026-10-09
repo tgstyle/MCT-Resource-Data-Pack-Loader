@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -20,41 +21,48 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
+import net.minecraftforge.common.EnumPlantType;
 import net.minecraftforge.common.ForgeHooks;
+import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.HashSet;
 import java.util.Random;
-import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockCane extends Block implements IContentBlock {
-    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
-
+@SuppressWarnings("deprecation") public class ContentBlockCane extends Block implements IContentBlock, IContentSoil, IPlantable {
     public static final int MAX_VARIANTS = 1;
     public static final PropertyInteger AGE = PropertyInteger.create("age", 0, 15);
     private static final AxisAlignedBB SHAPE = new AxisAlignedBB(0.125D, 0.0D, 0.125D, 0.875D, 1.0D, 0.875D);
     private final BlockDef def;
     private final GrowthDef growth;
-    private Set<Block> soil = new HashSet<>();
+    private final ContentSoil soil;
+
+    @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 
     public ContentBlockCane(BlockDef def, GrowthDef growth) {
         super(def.material, def.mapColor);
         this.def = def;
         this.growth = growth;
+        this.soil = new ContentSoil(growth.soil, def.registryName);
         BlockVariant variant = def.at(0);
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(variant.hardness);
         setTickRandomly(true);
         setDefaultState(blockState.getBaseState().withProperty(AGE, 0));
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
     }
 
-    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(growth.soil, def.registryName); }
+    @Override public ContentSoil soil() { return soil; }
+
+    @Override @Nonnull public EnumPlantType getPlantType(@Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
+        if (growth.needsWater) { return EnumPlantType.Beach; }
+        return growth.damage ? EnumPlantType.Desert : EnumPlantType.Plains;
+    }
+
+    @Override @Nonnull public IBlockState getPlant(@Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return getDefaultState(); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -62,7 +70,7 @@ import javax.annotation.Nullable;
 
     @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, AGE); }
 
-    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(AGE, meta & 15); }
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(AGE, meta); }
 
     @Override public int getMetaFromState(IBlockState state) { return state.getValue(AGE); }
 
@@ -70,9 +78,7 @@ import javax.annotation.Nullable;
 
     @Override public boolean isFullCube(@Nonnull IBlockState state) { return false; }
 
-    @Override @Nullable public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return growth.damage ? SHAPE : NULL_AABB;
-    }
+    @Override @Nullable public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return growth.damage ? SHAPE : NULL_AABB; }
 
     @Override @Nonnull public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return SHAPE; }
 
@@ -126,7 +132,7 @@ import javax.annotation.Nullable;
         BlockPos below = pos.down();
         IBlockState under = world.getBlockState(below);
         if (under.getBlock() == this) { return true; }
-        if (!soil.isEmpty() && !soil.contains(under.getBlock())) { return false; }
+        if (!soil.sustains(world, below, this)) { return false; }
         if (growth.needsSky && !world.canSeeSky(pos)) { return false; }
         if (growth.breaksNeighbors && crowded(world, pos)) { return false; }
         if (!growth.needsWater) { return true; }

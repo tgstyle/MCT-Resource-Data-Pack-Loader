@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -77,7 +79,7 @@ import org.lwjgl.opengl.GL11;
         if (glow > 0.0F) { aurora(buffer, tessellator, look.aurora, glow, world.getTotalWorldTime() + partialTicks); }
         if (bow > 0.0F) { bow(buffer, tessellator, angle * (float) Math.PI * 2.0F, bow); }
         GlStateManager.shadeModel(GL11.GL_FLAT);
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Blends.translucent();
         GlStateManager.disableBlend();
         GlStateManager.enableCull();
         GlStateManager.enableAlpha();
@@ -162,7 +164,7 @@ import org.lwjgl.opengl.GL11;
         float flat = MathHelper.cos(up) * SIZE;
         int color = top ? aurora.topColor : aurora.color;
         float alpha = top ? 0.0F : strength * 0.8F * MathHelper.sin(along * (float) Math.PI) * (0.6F + 0.4F * MathHelper.sin(time * 0.11F + step * 0.9F + band * 0.7F));
-        buffer.pos(MathHelper.sin(around) * flat, MathHelper.sin(up) * SIZE, -MathHelper.cos(around) * flat).color((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha).endVertex();
+        buffer.pos(MathHelper.sin(around) * flat, MathHelper.sin(up) * SIZE, -MathHelper.cos(around) * flat).color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F, alpha).endVertex();
     }
 
     private static void bow(BufferBuilder buffer, Tessellator tessellator, float sunAngle, float strength) {
@@ -189,6 +191,6 @@ import org.lwjgl.opengl.GL11;
         float along = MathHelper.sin(turn) * out;
         int color = BOW_COLORS[ring];
         float alpha = ring == 0 || ring == BOW_RADII.length - 1 ? 0.0F : strength * 0.35F;
-        buffer.pos((away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, across * SIZE).color((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha).endVertex();
+        buffer.pos((away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, across * SIZE).color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F, alpha).endVertex();
     }
 }

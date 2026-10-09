@@ -1,19 +1,17 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.List;import java.util.Set;
 
 public final class PackRequirements {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<String> FOLDERS = Collections.unmodifiableList(Arrays.asList(
             PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
             PackManager.DIMENSIONS, PackManager.CELESTIAL, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.POTIONS,
@@ -43,13 +41,13 @@ public final class PackRequirements {
     private static void collect(String contents, Set<String> found) {
         if (contents == null || !contents.contains("\"requires\"")) { return; }
         try {
-            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
             if (json == null || !json.has("requires")) { return; }
             JsonElement element = json.get("requires");
             if (!element.isJsonArray()) { return; }
             for (JsonElement each : element.getAsJsonArray()) {
                 if (!each.isJsonPrimitive()) { continue; }
-                String modid = each.getAsString().trim().toLowerCase(java.util.Locale.ROOT);
+                String modid = Settings.lower(each.getAsString());
                 if (modid.isEmpty() || modid.startsWith("config:") || modid.startsWith("file:")) { continue; }
                 found.add(modid);
             }

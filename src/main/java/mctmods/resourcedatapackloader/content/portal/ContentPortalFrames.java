@@ -43,7 +43,9 @@ public final class ContentPortalFrames {
         return name.indexOf(':') >= 0 ? null : DEFS.get(new ResourceLocation(name).toString());
     }
 
-    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame) {
+    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame) { return fit(world, candidate, frame, null); }
+
+    @Nullable public static PortalFit fit(World world, BlockPos candidate, PortalFrameDef frame, @Nullable BlockPos broken) {
         int[] budget = { BUDGET };
         for (List<String> shape : PortalShapes.spread(frame)) {
             int rows = shape.size();
@@ -51,8 +53,8 @@ public final class ContentPortalFrames {
             for (int stance = 0; stance < 2; stance++) {
                 boolean flat = stance == 1;
                 if (flat && !frame.liesFlat()) { continue; }
-                if (!flat && !frame.standsUp()) { continue; }
-                if (!PortalShapes.roomy(shape, frame, flat)) { continue; }
+                if (!flat && frame.flatOnly()) { continue; }
+                if (PortalShapes.cramped(shape, frame, flat)) { continue; }
                 for (int turn = 0; turn < 4; turn++) {
                     boolean alongX = turn < 2;
                     boolean mirrored = turn % 2 == 1;
@@ -62,7 +64,7 @@ public final class ContentPortalFrames {
                             if (line.charAt(column) != PortalFrameDef.HOLE) { continue; }
                             BlockPos offset = PortalShapes.at(BlockPos.ORIGIN, column, row, rows, alongX, flat, mirrored);
                             BlockPos origin = candidate.subtract(offset);
-                            PortalFit found = check(world, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget);
+                            PortalFit found = check(world, frame, shape, origin, rows, columns, alongX, flat, mirrored, budget, broken);
                             if (found != null) { return found; }
                             if (budget[0] <= 0) {
                                 ContentLog.LOGGER.debug("Looking for portal frame {} at {} gave up after {} tries, which a smaller limit would avoid", frame.registryName, candidate, BUDGET);
@@ -76,7 +78,7 @@ public final class ContentPortalFrames {
         return null;
     }
 
-    @Nullable private static PortalFit check(World world, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget) {
+    @Nullable private static PortalFit check(World world, PortalFrameDef frame, List<String> shape, BlockPos origin, int rows, int columns, boolean alongX, boolean flat, boolean mirrored, int[] budget, @Nullable BlockPos broken) {
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, IBlockState> edge = new LinkedHashMap<>();
         for (int row = 0; row < rows; row++) {
@@ -88,9 +90,9 @@ public final class ContentPortalFrames {
                 if (budget[0] <= 0) { return null; }
                 BlockPos at = PortalShapes.at(origin, column, row, rows, alongX, flat, mirrored);
                 if (!world.isBlockLoaded(at)) { return null; }
-                IBlockState found = world.getBlockState(at);
+                IBlockState found = at.equals(broken) ? Blocks.AIR.getDefaultState() : world.getBlockState(at);
                 if (held == PortalFrameDef.HOLE) {
-                    if (found.getBlock() != Blocks.AIR && !(found.getBlock() instanceof ContentBlockPortal)) { return null; }
+                    if (!found.getBlock().isAir(found, world, at) && !(found.getBlock() instanceof ContentBlockPortal)) { return null; }
                     holes.add(at);
                     continue;
                 }

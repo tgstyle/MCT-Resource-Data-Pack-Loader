@@ -23,14 +23,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Shadow public abstract int getLight(BlockPos pos, boolean checkNeighbors);
 
-    @Inject(method = "checkLightFor", at = @At("HEAD"), cancellable = true)
-    private void rdpl$checkLightForRubic(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "checkLightFor", at = @At("HEAD"), cancellable = true) private void rdpl$checkLightForRubic(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if (!rdpl$isRubicWorld()) { return; }
         cir.setReturnValue(rdpl$getLightingManager().checkLightFor(lightType, pos));
     }
 
-    @Inject(method = "getLight(Lnet/minecraft/util/math/BlockPos;Z)I", at = @At("HEAD"), cancellable = true)
-    private void rdpl$getLightRubic(BlockPos pos, boolean checkNeighbors, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "getLight(Lnet/minecraft/util/math/BlockPos;Z)I", at = @At("HEAD"), cancellable = true) private void rdpl$getLightRubic(BlockPos pos, boolean checkNeighbors, CallbackInfoReturnable<Integer> cir) {
         if (!rdpl$isRubicWorld()) { return; }
         cir.setReturnValue(rdpl$lightAt(pos, checkNeighbors));
     }

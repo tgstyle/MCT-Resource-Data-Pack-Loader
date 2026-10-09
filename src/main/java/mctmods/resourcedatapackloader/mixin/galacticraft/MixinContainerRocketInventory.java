@@ -22,8 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = ContainerRocketInventory.class, remap = false) public abstract class MixinContainerRocketInventory extends Container {
     @Shadow @Final private IInventory spaceshipInv;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void rdpl$packCargoSlots(IInventory par1IInventory, IInventory par2IInventory, EnumRocketType rocketType, EntityPlayer player, CallbackInfo ci) {
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$packCargoSlots(IInventory par1IInventory, IInventory par2IInventory, EnumRocketType rocketType, EntityPlayer player, CallbackInfo ci) {
         RocketDef def = RocketCargo.def(par2IInventory);
         if (def == null) { return; }
         for (int index = 0; index < inventorySlots.size(); index++) {
@@ -35,8 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         }
     }
 
-    @Inject(method = "transferStackInSlot", at = @At("HEAD"), cancellable = true, remap = true)
-    private void rdpl$packCargoQuickMove(EntityPlayer entityPlayer, int par2, CallbackInfoReturnable<ItemStack> cir) {
+    @Inject(method = "transferStackInSlot", at = @At("HEAD"), cancellable = true, remap = true) private void rdpl$packCargoQuickMove(EntityPlayer entityPlayer, int par2, CallbackInfoReturnable<ItemStack> cir) {
         RocketDef def = RocketCargo.def(spaceshipInv);
         int cargo = inventorySlots.size() - 36;
         if (def == null || par2 < cargo) { return; }

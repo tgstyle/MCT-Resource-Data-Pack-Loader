@@ -20,7 +20,6 @@ public final class BoardState {
     int passVictim = -1;
     int chain = -1;
     int quiet;
-    public int plies;
     public final List<List<Integer>> taken = Arrays.asList(new ArrayList<>(), new ArrayList<>());
     private Seen seen;
 
@@ -38,7 +37,6 @@ public final class BoardState {
         passVictim = from.passVictim;
         chain = from.chain;
         quiet = from.quiet;
-        plies = from.plies;
         seen = from.seen;
         for (int side = 0; side < 2; side++) { taken.get(side).addAll(from.taken.get(side)); }
     }
@@ -224,7 +222,6 @@ public final class BoardState {
         passTarget = doubled ? (from + to) / 2 : -1;
         passVictim = doubled ? to : -1;
         quiet = (flags & CAPTURE) != 0 || piece.promotes.length > 0 ? 0 : quiet + 1;
-        plies++;
         chain = -1;
         if ((flags & HOP) != 0 && rules.chainCaptures && promoted < 0) {
             chain = to;

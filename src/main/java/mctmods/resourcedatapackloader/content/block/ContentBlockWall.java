@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -31,16 +30,12 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockWall extends BlockWall implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockWall extends BlockWall implements IContentBlock, IVariantBlock {
     public static final Set<String> HIDDEN = Collections.singleton(VARIANT.getName());
     private final BlockDef def;
     private final PropertyVariant variant;
 
-    public static ContentBlockWall create(BlockDef def) {
-        BlockVariants.property(new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockWall(def, BlockVariants.property()); }
-        finally { BlockVariants.end(); }
-    }
+    public static ContentBlockWall create(BlockDef def) { return BlockVariants.construct(def, built -> new ContentBlockWall(built, BlockVariants.property())); }
 
     protected ContentBlockWall(BlockDef def, PropertyVariant property) {
         super(model(def));
@@ -70,13 +65,11 @@ import javax.annotation.Nullable;
 
     @Override public BlockDef getDef() { return def; }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
@@ -88,12 +81,20 @@ import javax.annotation.Nullable;
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).hardness;
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
+
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
+
+    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
+
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
+        if (def.at(getMetaFromState(state)).drops.isEmpty()) { super.getDrops(drops, world, pos, state, fortune); }
+        else { VariantDrops.roll(this, drops, world, state, def.at(getMetaFromState(state)), fortune); }
     }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
-        return def.at(getMetaFromState(world.getBlockState(pos))).resistance / def.explosionResistanceDivisor;
+    @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
+        super.breakBlock(world, pos, state);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }

@@ -10,6 +10,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = GuiCelestialSelection.class, remap = false) public class MixinGuiCelestialSelectionStationHome {
-    @Redirect(method = "getSatelliteParentID(Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;)I", at = @At(value = "INVOKE", target = "Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;getParentPlanet()Lmicdoodle8/mods/galacticraft/api/galaxies/Planet;"))
-    private Planet rdpl$stationHome(Satellite station) { return GcCelestial.stationHome(station); }
+    @Redirect(method = "getSatelliteParentID(Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;)I", at = @At(value = "INVOKE", target = "Lmicdoodle8/mods/galacticraft/api/galaxies/Satellite;getParentPlanet()Lmicdoodle8/mods/galacticraft/api/galaxies/Planet;")) private Planet rdpl$stationHome(Satellite station) { return GcCelestial.stationHome(station); }
 }

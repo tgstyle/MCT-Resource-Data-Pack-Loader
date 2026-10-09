@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.ExposureSpread;
@@ -99,12 +100,7 @@ public final class ContentExposures {
         return immune != null && entity.isPotionActive(immune);
     }
 
-    @Nullable private static Potion immunity(ExposureDef def) {
-        if (IMMUNITIES.containsKey(def)) { return IMMUNITIES.get(def); }
-        Potion potion = Potion.getPotionFromResourceLocation(def.immunity);
-        IMMUNITIES.put(def, potion);
-        return potion;
-    }
+    @Nullable private static Potion immunity(ExposureDef def) { return IMMUNITIES.computeIfAbsent(def, held -> Potion.getPotionFromResourceLocation(held.immunity)); }
 
     private static int scanItems(ExposureDef def, EntityPlayer player, int most) {
         Map<Item, Integer> levels = itemLevels(def);
@@ -136,7 +132,7 @@ public final class ContentExposures {
         int centerY = MathHelper.floor(player.posY);
         int centerZ = MathHelper.floor(player.posZ);
         int lowest = Math.max(GenHeights.floor(world, 0), centerY - radius);
-        int highest = Math.min(GenHeights.ceiling(world, 256) - 1, centerY + radius);
+        int highest = Math.min(GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1, centerY + radius);
         int level = 0;
         int sources = 0;
         for (int chunkX = centerX - radius >> 4; chunkX <= centerX + radius >> 4; chunkX++) {
@@ -214,16 +210,9 @@ public final class ContentExposures {
         });
     }
 
-    @Nullable private static Potion extraPotion(PotionEffectDef extra) {
-        if (EXTRAS.containsKey(extra)) { return EXTRAS.get(extra); }
-        Potion potion = Potion.getPotionFromResourceLocation(extra.potion);
-        EXTRAS.put(extra, potion);
-        return potion;
-    }
+    @Nullable private static Potion extraPotion(PotionEffectDef extra) { return EXTRAS.computeIfAbsent(extra, held -> Potion.getPotionFromResourceLocation(held.potion)); }
 
-    private static DamageSource source(ExposureDef def) {
-        return SOURCES.computeIfAbsent(def, held -> new DamageSource("rdpl." + held.name).setDamageBypassesArmor().setDamageIsAbsolute());
-    }
+    private static DamageSource source(ExposureDef def) { return SOURCES.computeIfAbsent(def, held -> new DamageSource("rdpl." + held.name).setDamageBypassesArmor().setDamageIsAbsolute()); }
 
     private static Map<Block, Integer> blockLevels(ExposureDef def) {
         return BLOCK_LEVELS.computeIfAbsent(def, held -> {

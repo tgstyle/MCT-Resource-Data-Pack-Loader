@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -18,16 +18,12 @@ import java.util.Random;
 @Mixin(WorldGenTallGrass.class) public class MixinWorldGenTallGrass {
     @Unique private int rdpl$minY;
 
-    @Inject(method = "generate", at = @At("HEAD")) private void onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
+    @Inject(method = "generate", at = @At("HEAD")) private void rdpl$onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
         this.rdpl$minY = Coords.getMinCubePopulationPos(position.getY());
     }
 
-    @ModifyConstant(method = "generate", constant = @Constant(
-            intValue = 0,
-            ordinal = 0,
-            expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO))
-    private int getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) {
-        if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return rdpl$minY; }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, ordinal = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO)) private int rdpl$getMinGenHeight(int orig, World worldIn, Random rand, BlockPos position) {
+        if (GenHeights.rubic(worldIn)) { return rdpl$minY; }
         return orig;
     }
 }

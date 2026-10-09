@@ -1,10 +1,8 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
-import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
-import mctmods.resourcedatapackloader.content.def.DropDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -14,8 +12,6 @@ import net.minecraft.block.state.BlockStateContainer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
@@ -37,59 +33,38 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlock extends Block implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlock extends Block implements IContentBlock, IVariantBlock {
     private final BlockDef def;
     private final PropertyVariant variant;
-    private final AmountDef expDrop;
 
-    public static ContentBlock create(BlockDef def) {
-        beginConstruction(def);
-        try { return new ContentBlock(def); }
-        finally { endConstruction(); }
-    }
-
-    protected static void beginConstruction(BlockDef def) { BlockVariants.begin(def); }
-
-    protected static void endConstruction() { BlockVariants.end(); }
+    public static ContentBlock create(BlockDef def) { return BlockVariants.construct(def, ContentBlock::new); }
 
     protected ContentBlock(BlockDef def) {
         super(def.material, def.mapColor);
         this.def = def;
         this.variant = BlockVariants.property();
-        this.expDrop = def.expDropMax <= def.expDropMin ? AmountDef.of(def.expDropMin) : new AmountDef(def.expDropMin, def.expDropMax);
         ContentSetup.apply(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
         setDefaultState(this.blockState.getBaseState().withProperty(this.variant, def.at(0).name));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = BlockVariants.fresh();
-        return new BlockStateContainer(this, property);
-    }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return BlockVariants.container(this); }
 
     @Override public BlockDef getDef() { return def; }
 
-    @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) {
-        if (def.sustains(plantable.getPlantType(world, pos.offset(direction)))) { return true; }
-        return super.canSustainPlant(state, world, pos, direction, plantable);
-    }
+    @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) { return BlockVariants.sustains(def, world, pos, direction, plantable) || super.canSustainPlant(state, world, pos, direction, plantable); }
 
     private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
@@ -101,45 +76,17 @@ import javax.annotation.Nullable;
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).hardness;
-    }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
-        IBlockState state = world.getBlockState(pos);
-        return def.at(getMetaFromState(state)).resistance / def.explosionResistanceDivisor;
-    }
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
 
-    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return Math.max(0, expDrop.pick(RANDOM)); }
+    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
 
-    @Override public boolean canSilkHarvest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull net.minecraft.entity.player.EntityPlayer player) {
-        return def.silkHarvest;
-    }
+    @Override public boolean canSilkHarvest(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player) { return def.silkHarvest; }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        BlockVariant value = def.at(getMetaFromState(state));
-        if (value.drops.isEmpty() || def.opensWith != null) {
-            super.getDrops(drops, world, pos, state, fortune);
-            return;
-        }
-        Random rand = world instanceof World ? ((World) world).rand : RANDOM;
-        rollItems(drops, state, value, rand, fortune);
-    }
-
-    private void rollItems(NonNullList<ItemStack> drops, IBlockState state, BlockVariant value, Random rand, int fortune) {
-        int count = quantityDropped(state, fortune, rand);
-        List<DropDef> pool = new ArrayList<>();
-        for (DropDef drop : value.drops) {
-            if (!drop.isEntity() && drop.weight > 0) { pool.add(drop); }
-        }
-        for (int i = 0; i < count; i++) {
-            for (DropDef drop : value.drops) {
-                if (drop.isEntity() || drop.weight > 0) { continue; }
-                give(drops, drop, rand, fortune);
-            }
-            DropDef chosen = pool.isEmpty() ? null : DropDef.pick(pool, rand);
-            if (chosen != null) { give(drops, chosen, rand, fortune); }
-        }
+        if (def.at(getMetaFromState(state)).drops.isEmpty() || def.opensWith != null) { super.getDrops(drops, world, pos, state, fortune); }
+        else { VariantDrops.roll(this, drops, world, state, def.at(getMetaFromState(state)), fortune); }
     }
 
     @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
@@ -156,55 +103,18 @@ import javax.annotation.Nullable;
         if (opening == null) { opening = getSoundType(state, world, pos, player).getBreakSound(); }
         world.playSound(null, pos, opening, SoundCategory.BLOCKS, 1.0F, 0.9F + world.rand.nextFloat() * 0.2F);
         NonNullList<ItemStack> loot = NonNullList.create();
-        rollItems(loot, state, value, world.rand, 0);
+        VariantDrops.roll(this, loot, world, state, value, 0);
         for (ItemStack stack : loot) { spawnAsEntity(world, pos, stack); }
-        spawnDropped(world, pos, value);
+        VariantDrops.spawnEntities(world, pos, value);
         if (!player.capabilities.isCreativeMode) { held.shrink(1); }
         world.playEvent(2001, pos, Block.getStateId(state));
         world.setBlockToAir(pos);
         return true;
     }
 
-    private static void give(NonNullList<ItemStack> drops, DropDef drop, Random rand, int fortune) {
-        if (drop.getResolved() == null) { return; }
-        int roll = 1 + rand.nextInt(100);
-        int amount = drop.amount.pick(rand);
-        if (amount <= 0) { return; }
-        ItemStack stack = new ItemStack(drop.getResolved(), amount, drop.meta);
-        if (stack.isEmpty()) { return; }
-        if (roll <= drop.chance) { drops.add(stack.copy()); }
-        if (roll <= drop.chanceFor(fortune)) { drops.add(stack.copy()); }
-    }
-
     @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        if (!world.isRemote && def.opensWith == null) { spawnDropped(world, pos, def.at(getMetaFromState(state))); }
+        if (!world.isRemote && def.opensWith == null) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
         super.breakBlock(world, pos, state);
-    }
-
-    private static void spawnDropped(World world, BlockPos pos, BlockVariant value) {
-        List<DropDef> pool = new ArrayList<>();
-        for (DropDef drop : value.drops) {
-            if (drop.isEntity() && drop.weight > 0) { pool.add(drop); }
-        }
-        for (DropDef drop : value.drops) {
-            if (!drop.isEntity() || drop.weight > 0) { continue; }
-            release(world, pos, drop);
-        }
-        DropDef chosen = pool.isEmpty() ? null : DropDef.pick(pool, world.rand);
-        if (chosen != null) { release(world, pos, chosen); }
-    }
-
-    private static void release(World world, BlockPos pos, DropDef drop) {
-        ResourceLocation entity = drop.entity;
-        if (entity == null || 1 + world.rand.nextInt(100) > drop.chance) { return; }
-        int amount = drop.amount.pick(world.rand);
-        for (int i = 0; i < amount; i++) {
-            Entity spawned = EntityList.createEntityByIDFromName(entity, world);
-            if (spawned == null) { return; }
-            spawned.setLocationAndAngles(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, world.rand.nextFloat() * 360.0F, 0.0F);
-            if (spawned instanceof EntityLiving) { ((EntityLiving) spawned).onInitialSpawn(world.getDifficultyForLocation(pos), null); }
-            world.spawnEntity(spawned);
-        }
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }
@@ -215,14 +125,5 @@ import javax.annotation.Nullable;
 
     @Override public int getLightOpacity(@Nonnull IBlockState state) { return def().lightOpacity; }
 
-    @Override @Nonnull public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
-        BlockDef current = def();
-        return current.bounds == null ? super.getBoundingBox(state, source, pos) : current.bounds;
-    }
-
-    @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability; }
-
-    @Override public int getFireSpreadSpeed(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().fireSpread; }
-
-    @Override public boolean isFlammable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability > 0; }
+    @Override @Nonnull public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) { return BlockVariants.bounds(def(), super.getBoundingBox(state, source, pos)); }
 }

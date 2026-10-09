@@ -1,13 +1,11 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
-import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
 
@@ -24,23 +22,24 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.BlockStateContainer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import java.util.ArrayList;
 import java.util.List;
-import static net.minecraftforge.common.MinecraftForge.EVENT_BUS;
+import javax.annotation.Nullable;
 
 class IONbtWriter {
     static NBTTagCompound write(Chunk column) {
         NBTTagCompound columnNbt = new NBTTagCompound();
         NBTTagCompound level = new NBTTagCompound();
         columnNbt.setTag("Level", level);
-        columnNbt.setInteger("DataVersion", FMLCommonHandler.instance().getDataFixer().version);
-        FMLCommonHandler.instance().getDataFixer().writeVersionData(columnNbt);
+        stampVersion(columnNbt);
         writeBaseColumn(column, level);
         writeBiomes(column, level);
         writeOpacityIndex(column, level);
-        EVENT_BUS.post(new ChunkDataEvent.Save(column, columnNbt));
+        MinecraftForge.EVENT_BUS.post(new ChunkDataEvent.Save(column, columnNbt));
         return columnNbt;
     }
 
@@ -48,8 +47,7 @@ class IONbtWriter {
         NBTTagCompound cubeNbt = new NBTTagCompound();
         NBTTagCompound level = new NBTTagCompound();
         cubeNbt.setTag("Level", level);
-        cubeNbt.setInteger("DataVersion", FMLCommonHandler.instance().getDataFixer().version);
-        FMLCommonHandler.instance().getDataFixer().writeVersionData(cubeNbt);
+        stampVersion(cubeNbt);
         writeBaseCube(cube, level);
         writeBlocks(cube, level);
         writeEntities(cube, level);
@@ -60,29 +58,29 @@ class IONbtWriter {
         return cubeNbt;
     }
 
+    private static void stampVersion(NBTTagCompound nbt) {
+        nbt.setInteger("DataVersion", FMLCommonHandler.instance().getDataFixer().version);
+        FMLCommonHandler.instance().getDataFixer().writeVersionData(nbt);
+    }
+
+    private static void writeCaps(@Nullable CapabilityDispatcher caps, NBTTagCompound nbt) {
+        if (caps == null) { return; }
+        try { nbt.setTag("ForgeCaps", caps.serializeNBT()); }
+        catch (Exception exception) { ContentLog.LOGGER.error("A capability provider has thrown an exception trying to write state. It will not persist. Report this to the mod author", exception); }
+    }
+
     private static void writeBaseColumn(Chunk column, NBTTagCompound nbt) {
         nbt.setInteger("x", column.x);
         nbt.setInteger("z", column.z);
         nbt.setByte("v", (byte) 1);
         nbt.setLong("InhabitedTime", column.getInhabitedTime());
         if (((IColumnInternal) column).pregenDone()) { nbt.setBoolean("PregenDone", true); }
-        if (column.getCapabilities() != null) {
-            try {
-                nbt.setTag("ForgeCaps", column.getCapabilities().serializeNBT());
-            } catch (Exception exception) {
-                Rubic.LOGGER.error("A capability provider has thrown an exception trying to write state. It will not persist. "
-                        + "Report this to the mod author", exception);
-            }
-        }
+        writeCaps(column.getCapabilities(), nbt);
     }
 
     private static void writeBiomes(Chunk column, NBTTagCompound nbt) { nbt.setByteArray("Biomes", column.getBiomeArray()); }
 
-    private static void writeOpacityIndex(Chunk column, NBTTagCompound nbt) {
-        IHeightMap hmap = ((IColumn) column).getOpacityIndex();
-        if (hmap instanceof ServerHeightMap) { nbt.setByteArray("OpacityIndex", ((ServerHeightMap) hmap).getData()); }
-        else { nbt.setByteArray("OpacityIndexClient", ((ClientHeightMap) hmap).getData()); }
-    }
+    private static void writeOpacityIndex(Chunk column, NBTTagCompound nbt) { nbt.setByteArray("OpacityIndex", ((ServerHeightMap) ((IColumn) column).getOpacityIndex()).getData()); }
 
     private static void writeBaseCube(Cube cube, NBTTagCompound cubeNbt) {
         cubeNbt.setByte("v", (byte) 1);
@@ -93,14 +91,7 @@ class IONbtWriter {
         cubeNbt.setBoolean("isSurfaceTracked", cube.isSurfaceTracked());
         cubeNbt.setBoolean("fullyPopulated", cube.isFullyPopulated());
         cubeNbt.setBoolean("initLightDone", cube.isInitialLightingDone());
-        if (cube.getCapabilities() != null) {
-            try {
-                cubeNbt.setTag("ForgeCaps", cube.getCapabilities().serializeNBT());
-            } catch (Exception exception) {
-                Rubic.LOGGER.error("A capability provider has thrown an exception trying to write state. It will not persist. "
-                        + "Report this to the mod author", exception);
-            }
-        }
+        writeCaps(cube.getCapabilities(), cubeNbt);
     }
 
     private static void writeBlocks(Cube cube, NBTTagCompound cubeNbt) {
@@ -160,7 +151,7 @@ class IONbtWriter {
             int cubeY = Coords.getCubeYForEntity(entity);
             int cubeZ = Coords.getCubeZForEntity(entity);
             if (cubeX != cube.getX() || cubeY != cube.getY() || cubeZ != cube.getZ()) {
-                Rubic.LOGGER.warn("Saved entity {} in cube ({},{},{}) to cube ({},{},{})! Entity thinks its in ({},{},{})", entity.getClass().getName(), cubeX, cubeY, cubeZ, cube.getX(), cube.getY(), cube.getZ(), entity.chunkCoordX, entity.chunkCoordY, entity.chunkCoordZ);
+                ContentLog.LOGGER.warn("Saved entity {} in cube ({},{},{}) to cube ({},{},{})! Entity thinks its in ({},{},{})", entity.getClass().getName(), cubeX, cubeY, cubeZ, cube.getX(), cube.getY(), cube.getZ(), entity.chunkCoordX, entity.chunkCoordY, entity.chunkCoordZ);
             }
         });
     }
@@ -203,8 +194,7 @@ class IONbtWriter {
 
     private static void writeBiomes(Cube cube, NBTTagCompound nbt) {
         byte[] biomes = cube.getBiomeArray();
-        if (biomes != null)
-            nbt.setByteArray("Biomes3D", biomes);
+        if (biomes != null) { nbt.setByteArray("Biomes3D", biomes); }
     }
 
     private static List<NextTickListEntry> rdpl$getScheduledTicks(Cube cube) {

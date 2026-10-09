@@ -80,38 +80,44 @@ public final class EntityClassMaker {
         String world = Type.getInternalName(World.class);
         ClassWriter writer = new ClassWriter(0);
         writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, self, null, parent, rocket ? new String[] { Type.getInternalName(IPackRocket.class) } : monster ? new String[] { Type.getInternalName(IMob.class) } : null);
-        MethodVisitor made = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "(L" + world + ";)V", null, null);
-        made.visitCode();
-        made.visitVarInsn(Opcodes.ALOAD, 0);
-        made.visitVarInsn(Opcodes.ALOAD, 1);
+        MethodVisitor made = open(writer, "<init>", "(L" + world + ";)V");
+        load(made, 0, 1);
         made.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "<init>", "(L" + world + ";)V", false);
-        made.visitInsn(Opcodes.RETURN);
-        made.visitMaxs(2, 2);
-        made.visitEnd();
+        close(made, Opcodes.RETURN, 2, 2);
         if (check != null) {
-            MethodVisitor spawn = writer.visitMethod(Opcodes.ACC_PUBLIC, check, "()Z", null, null);
-            spawn.visitCode();
+            MethodVisitor spawn = open(writer, check, "()Z");
             spawn.visitInsn(Opcodes.ICONST_1);
-            spawn.visitInsn(Opcodes.IRETURN);
-            spawn.visitMaxs(1, 1);
-            spawn.visitEnd();
+            close(spawn, Opcodes.IRETURN, 1, 1);
         }
         if (rocket) { rocket(writer, parent); }
         if (storage) { storage(writer, parent); }
         String dies = storage && !rocket(base) && !EntityLivingBase.class.isAssignableFrom(base) ? named(base, REMOVAL) : null;
         if (dies != null) {
-            MethodVisitor dead = writer.visitMethod(Opcodes.ACC_PUBLIC, dies, "()V", null, null);
-            dead.visitCode();
-            dead.visitVarInsn(Opcodes.ALOAD, 0);
+            MethodVisitor dead = open(writer, dies, "()V");
+            load(dead, 0);
             dead.visitMethodInsn(Opcodes.INVOKESTATIC, STORAGE, "dying", "(L" + Type.getInternalName(Entity.class) + ";)V", false);
-            dead.visitVarInsn(Opcodes.ALOAD, 0);
+            load(dead, 0);
             dead.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, dies, "()V", false);
-            dead.visitInsn(Opcodes.RETURN);
-            dead.visitMaxs(1, 1);
-            dead.visitEnd();
+            close(dead, Opcodes.RETURN, 1, 1);
         }
         writer.visitEnd();
         return writer.toByteArray();
+    }
+
+    private static MethodVisitor open(ClassWriter writer, String name, String descriptor) {
+        MethodVisitor method = writer.visitMethod(Opcodes.ACC_PUBLIC, name, descriptor, null, null);
+        method.visitCode();
+        return method;
+    }
+
+    private static void load(MethodVisitor method, int... slots) {
+        for (int slot : slots) { method.visitVarInsn(Opcodes.ALOAD, slot); }
+    }
+
+    private static void close(MethodVisitor method, int returning, int stack, int locals) {
+        method.visitInsn(returning);
+        method.visitMaxs(stack, locals);
+        method.visitEnd();
     }
 
     private static void storage(ClassWriter writer, String parent) {
@@ -119,30 +125,16 @@ public final class EntityClassMaker {
         String asked = "L" + Type.getInternalName(Capability.class) + ";L" + Type.getInternalName(EnumFacing.class) + ";";
         String capability = "L" + Type.getInternalName(Capability.class) + ";";
         String object = "L" + Type.getInternalName(Object.class) + ";";
-        MethodVisitor gets = writer.visitMethod(Opcodes.ACC_PUBLIC, "getCapability", "(" + asked + ")" + object, null, null);
-        gets.visitCode();
-        gets.visitVarInsn(Opcodes.ALOAD, 0);
-        gets.visitVarInsn(Opcodes.ALOAD, 1);
-        gets.visitVarInsn(Opcodes.ALOAD, 0);
-        gets.visitVarInsn(Opcodes.ALOAD, 1);
-        gets.visitVarInsn(Opcodes.ALOAD, 2);
+        MethodVisitor gets = open(writer, "getCapability", "(" + asked + ")" + object);
+        load(gets, 0, 1, 0, 1, 2);
         gets.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "getCapability", "(" + asked + ")" + object, false);
         gets.visitMethodInsn(Opcodes.INVOKESTATIC, STORAGE, "capability", "(" + entity + capability + object + ")" + object, false);
-        gets.visitInsn(Opcodes.ARETURN);
-        gets.visitMaxs(5, 3);
-        gets.visitEnd();
-        MethodVisitor has = writer.visitMethod(Opcodes.ACC_PUBLIC, "hasCapability", "(" + asked + ")Z", null, null);
-        has.visitCode();
-        has.visitVarInsn(Opcodes.ALOAD, 0);
-        has.visitVarInsn(Opcodes.ALOAD, 1);
-        has.visitVarInsn(Opcodes.ALOAD, 0);
-        has.visitVarInsn(Opcodes.ALOAD, 1);
-        has.visitVarInsn(Opcodes.ALOAD, 2);
+        close(gets, Opcodes.ARETURN, 5, 3);
+        MethodVisitor has = open(writer, "hasCapability", "(" + asked + ")Z");
+        load(has, 0, 1, 0, 1, 2);
         has.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "hasCapability", "(" + asked + ")Z", false);
         has.visitMethodInsn(Opcodes.INVOKESTATIC, STORAGE, "has", "(" + entity + capability + "Z)Z", false);
-        has.visitInsn(Opcodes.IRETURN);
-        has.visitMaxs(5, 3);
-        has.visitEnd();
+        close(has, Opcodes.IRETURN, 5, 3);
     }
 
     static boolean rocket(Class<?> base) {
@@ -159,49 +151,29 @@ public final class EntityClassMaker {
         String cargo = "L" + Type.getInternalName(NonNullList.class) + ";";
         String list = "L" + Type.getInternalName(List.class) + ";";
         for (String[] capped : new String[][] { { "getRocketTier", "tier" }, { "getFuelTankCapacity", "fuelTank" } }) {
-            MethodVisitor size = writer.visitMethod(Opcodes.ACC_PUBLIC, capped[0], "()I", null, null);
-            size.visitCode();
-            size.visitVarInsn(Opcodes.ALOAD, 0);
-            size.visitVarInsn(Opcodes.ALOAD, 0);
+            MethodVisitor size = open(writer, capped[0], "()I");
+            load(size, 0, 0);
             size.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, capped[0], "()I", false);
             size.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, capped[1], "(" + entity + "I)I", false);
-            size.visitInsn(Opcodes.IRETURN);
-            size.visitMaxs(2, 1);
-            size.visitEnd();
+            close(size, Opcodes.IRETURN, 2, 1);
         }
-        MethodVisitor drops = writer.visitMethod(Opcodes.ACC_PUBLIC, "getItemsDropped", "(" + list + ")" + list, null, null);
-        drops.visitCode();
-        drops.visitVarInsn(Opcodes.ALOAD, 0);
-        drops.visitVarInsn(Opcodes.ALOAD, 1);
+        MethodVisitor drops = open(writer, "getItemsDropped", "(" + list + ")" + list);
+        load(drops, 0, 1);
         drops.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "dropped", "(" + entity + list + ")" + list, false);
-        drops.visitInsn(Opcodes.ARETURN);
-        drops.visitMaxs(2, 2);
-        drops.visitEnd();
-        MethodVisitor picked = writer.visitMethod(Opcodes.ACC_PUBLIC, "getPickedResult", "(L" + Type.getInternalName(RayTraceResult.class) + ";)" + stack, null, null);
-        picked.visitCode();
-        picked.visitVarInsn(Opcodes.ALOAD, 0);
+        close(drops, Opcodes.ARETURN, 2, 2);
+        MethodVisitor picked = open(writer, "getPickedResult", "(L" + Type.getInternalName(RayTraceResult.class) + ";)" + stack);
+        load(picked, 0);
         picked.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "picked", "(" + entity + ")" + stack, false);
-        picked.visitInsn(Opcodes.ARETURN);
-        picked.visitMaxs(1, 2);
-        picked.visitEnd();
-        MethodVisitor flown = writer.visitMethod(Opcodes.ACC_PUBLIC, "onTeleport", "(" + player + ")V", null, null);
-        flown.visitCode();
-        flown.visitVarInsn(Opcodes.ALOAD, 0);
-        flown.visitVarInsn(Opcodes.ALOAD, 1);
+        close(picked, Opcodes.ARETURN, 1, 2);
+        MethodVisitor flown = open(writer, "onTeleport", "(" + player + ")V");
+        load(flown, 0, 1);
         flown.visitMethodInsn(Opcodes.INVOKESPECIAL, parent, "onTeleport", "(" + player + ")V", false);
-        flown.visitVarInsn(Opcodes.ALOAD, 0);
-        flown.visitVarInsn(Opcodes.ALOAD, 1);
+        load(flown, 0, 1);
         flown.visitMethodInsn(Opcodes.INVOKESTATIC, ROCKETS, "teleported", "(" + entity + player + ")V", false);
-        flown.visitInsn(Opcodes.RETURN);
-        flown.visitMaxs(2, 2);
-        flown.visitEnd();
-        MethodVisitor loads = writer.visitMethod(Opcodes.ACC_PUBLIC, "packCargo", "(" + cargo + ")V", null, null);
-        loads.visitCode();
-        loads.visitVarInsn(Opcodes.ALOAD, 0);
-        loads.visitVarInsn(Opcodes.ALOAD, 1);
+        close(flown, Opcodes.RETURN, 2, 2);
+        MethodVisitor loads = open(writer, "packCargo", "(" + cargo + ")V");
+        load(loads, 0, 1);
         loads.visitFieldInsn(Opcodes.PUTFIELD, AUTO_ROCKET, "stacks", cargo);
-        loads.visitInsn(Opcodes.RETURN);
-        loads.visitMaxs(2, 2);
-        loads.visitEnd();
+        close(loads, Opcodes.RETURN, 2, 2);
     }
 }

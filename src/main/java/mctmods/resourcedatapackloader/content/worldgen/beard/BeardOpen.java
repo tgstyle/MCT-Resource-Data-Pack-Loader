@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockDoor;
@@ -24,9 +25,7 @@ public final class BeardOpen {
     private BeardOpen() {}
 
     public static void around(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
-        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
-        try { opened(start, piece, world, clip); }
-        finally { BeardBiome.leave(); }
+        BeardBiome.within(world, clip, () -> opened(start, piece, world, clip));
     }
 
     private static void opened(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
@@ -155,7 +154,7 @@ public final class BeardOpen {
                         IBlockState laidAs = ground;
                         if (exposed && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
                         else if (!exposed && ground.getBlock() == Blocks.GRASS) { laidAs = Blocks.DIRT.getDefaultState(); }
-                        world.setBlockState(at, laidAs, 2);
+                        world.setBlockState(at, laidAs, BlockFlags.UPDATE_CLIENTS);
                         stood++;
                     }
                     grounded += stood;
@@ -181,10 +180,10 @@ public final class BeardOpen {
                     at.setPos(x + outX, y - 1, z + outZ);
                     boolean floored = false;
                     if (reach.isVecInside(at) && !BeardPlots.underRoad(start, piece, x + outX, z + outZ) && !BeardPlots.insideAnother(start, piece, at) && !world.getBlockState(at).getMaterial().isSolid() && !world.getBlockState(at).getMaterial().isLiquid()) {
-                        if (BeardKeep.holds(x + outX, y - 1, z + outZ)) { continue; }
+                        if (BeardKeep.holds(x + outX, y - 1, z + outZ)) { break; }
                         IBlockState floor = BeardBlocks.fillGround(world, x + outX, z + outZ);
                         if (floor.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { floor = Blocks.GRASS.getDefaultState(); }
-                        world.setBlockState(at, floor, 2);
+                        world.setBlockState(at, floor, BlockFlags.UPDATE_CLIENTS);
                         doorways++;
                         floored = true;
                     }

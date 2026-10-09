@@ -12,10 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ChunkRenderWorker.class) public abstract class MixinRenderWorker {
-    @Redirect(method = "processTask", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderWorker;isChunkExisting(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;)Z",
-            ordinal = 0))
-    private boolean onIsChunkExisting(ChunkRenderWorker chunkRenderWorker, BlockPos pos, World worldIn) {
+    @Redirect(method = "processTask", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderWorker;isChunkExisting(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/World;)Z", ordinal = 0)) private boolean rdpl$onIsChunkExisting(ChunkRenderWorker chunkRenderWorker, BlockPos pos, World worldIn) {
         BlockPos.MutableBlockPos p = (BlockPos.MutableBlockPos) pos;
         if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) {
             if (!this.isChunkExisting(p.move(EnumFacing.EAST, 16).move(EnumFacing.DOWN, 16), worldIn)) { return false; }

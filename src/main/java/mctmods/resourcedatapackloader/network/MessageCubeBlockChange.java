@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.CubePos;
 
-import static net.minecraftforge.fml.common.network.ByteBufUtils.readVarInt;
 import gnu.trove.TShortCollection;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
@@ -27,6 +26,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
+import static net.minecraftforge.fml.common.network.ByteBufUtils.readVarInt;
 
 public class MessageCubeBlockChange implements IMessage {
     int[] heightValues;
@@ -71,7 +71,7 @@ public class MessageCubeBlockChange implements IMessage {
             localAddresses[i] = in.readShort();
             blockStates[i] = Block.BLOCK_STATE_IDS.getByValue(readVarInt(in, 4));
         }
-        int numHmapChanges = in.readUnsignedByte();
+        int numHmapChanges = in.readUnsignedShort();
         heightValues = new int[numHmapChanges];
         for (int i = 0; i < numHmapChanges; i++) { heightValues[i] = in.readInt(); }
     }
@@ -85,21 +85,21 @@ public class MessageCubeBlockChange implements IMessage {
             out.writeShort(localAddresses[i]);
             ByteBufUtils.writeVarInt(out, Block.BLOCK_STATE_IDS.get(blockStates[i]), 4);
         }
-        out.writeByte(heightValues.length);
+        out.writeShort(heightValues.length);
         for (int v : heightValues) { out.writeInt(v); }
     }
 
     public static class Handler extends AbstractClientMessageHandler<MessageCubeBlockChange> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageCubeBlockChange packet, MessageContext ctx) {
             WorldClient worldClient = (WorldClient) world;
-            if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
-                Rubic.LOGGER.warn("Ignored a cube block change for a world the client no longer sees as rubic");
+            CubeProviderClient cubeCache = cubeCache(world);
+            if (cubeCache == null) {
+                ContentLog.LOGGER.warn("Ignored a cube block change for a world the client no longer sees as rubic");
                 return;
             }
-            CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
             Cube cube = cubeCache.getCube(packet.cubePos);
             if (cube instanceof BlankCube) {
-                Rubic.LOGGER.error("Ignored block update to blank cube {}", packet.cubePos);
+                ContentLog.LOGGER.error("Ignored block update to blank cube {}", packet.cubePos);
                 return;
             }
 

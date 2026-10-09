@@ -10,10 +10,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Entity.class) public abstract class MixinEntity {
-    @Inject(method = "getBrightnessForRender", at = @At("RETURN"), cancellable = true) private void rdpl$fullBright(CallbackInfoReturnable<Integer> cir) {
-        if (!ContentEntities.bright((Entity) (Object) this)) { return; }
-        cir.setReturnValue(FULL_BRIGHT);
-    }
+    @Unique private static final int rdpl$FULL_BRIGHT = 0xF000F0;
 
-    @Unique private static final int FULL_BRIGHT = 0xF000F0;
+    @Inject(method = "getBrightnessForRender", at = @At("RETURN"), cancellable = true) private void rdpl$fullBright(CallbackInfoReturnable<Integer> cir) {
+        if (ContentEntities.bright((Entity) (Object) this)) { cir.setReturnValue(rdpl$FULL_BRIGHT); }
+    }
 }

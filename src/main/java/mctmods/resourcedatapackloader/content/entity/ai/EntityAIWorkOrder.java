@@ -14,7 +14,6 @@ import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.items.IItemHandler;
@@ -24,7 +23,6 @@ import javax.annotation.Nullable;
 
 public final class EntityAIWorkOrder extends EntityAIBase {
     private static final int LOOK = 20;
-    private static final int SWING = 6;
     private static final int GIVE_UP = 300;
     private static final int HOPS = 3;
     private static final double REACH_SQ = 16.0D;
@@ -102,22 +100,19 @@ public final class EntityAIWorkOrder extends EntityAIBase {
             return;
         }
         IBlockState state = mob.world.getBlockState(pos);
-        if (total == 0 && !begin(held, pos, state)) { return; }
-        mob.getLookHelper().setLookPosition(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F);
-        if ((total - left) % SWING == 0) { mob.swingArm(EnumHand.MAIN_HAND); }
-        left--;
-        mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, (int) (9.0F * (total - left) / total));
+        if (total == 0 && blocked(held, pos, state)) { return; }
+        left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
         mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, -1);
         harvest(held, pos, state);
     }
 
-    private boolean begin(WorkOrder held, BlockPos pos, IBlockState state) {
+    private boolean blocked(WorkOrder held, BlockPos pos, IBlockState state) {
         if (!OrderItems.wanted(held.def, mob.world, pos, state)) {
             target = null;
-            return false;
+            return true;
         }
-        if (!OrderItems.harvestable(mob, pos, state)) {
+        if (OrderItems.unharvestable(mob, pos, state)) {
             held.giveBack(pos);
             target = null;
             if (!held.def.tool.isEmpty() && !OrderItems.isKind(mob.getHeldItemMainhand(), held.def.tool)) {
@@ -126,12 +121,12 @@ public final class EntityAIWorkOrder extends EntityAIBase {
                 walked = 0;
             }
             else { stop(); }
-            return false;
+            return true;
         }
         total = OrderItems.digTicks(mob, pos, state, held.def.speed);
         left = total;
         mob.getNavigator().clearPath();
-        return true;
+        return false;
     }
 
     private void harvest(WorkOrder held, BlockPos pos, IBlockState state) {
@@ -246,7 +241,7 @@ public final class EntityAIWorkOrder extends EntityAIBase {
         if (walked % 20 != 1) { return; }
         BlockPos to = approach(pos);
         double pace = Walking.pace(mob);
-        if (mob.getNavigator().tryMoveToXYZ(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, pace)) { return; }
+        if (Walking.toBlock(mob, to, pace)) { return; }
         Vec3d aim = new Vec3d(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D);
         double floor = Math.min(mob.posY, to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {

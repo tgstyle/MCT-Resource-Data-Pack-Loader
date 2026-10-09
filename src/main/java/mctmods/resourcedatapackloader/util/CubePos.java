@@ -28,7 +28,6 @@ public class CubePos {
         this.cubeZ = cubeZ;
     }
 
-
     public int getX() { return this.cubeX; }
 
     public int getY() { return this.cubeY; }
@@ -47,11 +46,7 @@ public class CubePos {
         return false;
     }
 
-    @Override public int hashCode() {
-        return Long.hashCode(Bits.packSignedToLong(cubeX, Y_BITS, Y_BIT_OFFSET)
-                | Bits.packSignedToLong(cubeY, X_BITS, X_BIT_OFFSET)
-                | Bits.packSignedToLong(cubeZ, Z_BITS, Z_BIT_OFFSET));
-    }
+    @Override public int hashCode() { return Long.hashCode(Bits.packSignedToLong(cubeX, Y_BITS, Y_BIT_OFFSET) | Bits.packSignedToLong(cubeY, X_BITS, X_BIT_OFFSET) | Bits.packSignedToLong(cubeZ, Z_BITS, Z_BIT_OFFSET)); }
 
     public int getXCenter() { return cubeX * ICube.SIZE + ICube.SIZE / 2; }
 

@@ -16,9 +16,6 @@ import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableList;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.util.math.MathHelper;
@@ -46,7 +43,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 
 public final class ContentOverrides {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, OverrideDef> DEFS = new LinkedHashMap<>();
     private static final Map<Block, BlockSnapshot> BLOCKS = new IdentityHashMap<>();
     private static final Map<Block, FireSnapshot> FIRE = new IdentityHashMap<>();
@@ -91,11 +87,8 @@ public final class ContentOverrides {
     }
 
     @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Override file {} is empty, ignoring it", source);
-            return null;
-        }
+        JsonObject json = Json.object(source, contents, "override file");
+        if (json == null) { return null; }
         OverrideDef def = new OverrideDef(target, source,
                 floatOrNull(json, "hardness"),
                 floatOrNull(json, "resistance"),
@@ -104,9 +97,9 @@ public final class ContentOverrides {
                 intOrNull(json, "lightOpacity"),
                 stringOrNull(json, "soundType"),
                 stringOrNull(json, "harvestTool"),
-                json.has("harvestTool") ? JsonUtils.getInt(json, "harvestToolLevel", 0) : null,
+                JsonUtils.getInt(json, "harvestToolLevel", 0),
                 intOrNull(json, "flammability"),
-                json.has("flammability") ? JsonUtils.getInt(json, "fireSpread", 5) : null,
+                JsonUtils.getInt(json, "fireSpread", 5),
                 intOrNull(json, "maxStackSize"),
                 intOrNull(json, "maxDamage"),
                 stringOrNull(json, "containerItem"),
@@ -143,10 +136,10 @@ public final class ContentOverrides {
         if (def.light != null) { block.setLightLevel(MathHelper.clamp(def.light, 0, 15) / 15.0F); }
         if (def.lightOpacity != null) { block.setLightOpacity(MathHelper.clamp(def.lightOpacity, 0, 255)); }
         if (def.soundType != null) { inside.rdpl$setSoundType(ContentTypes.soundType(def.soundType, inside.rdpl$getSoundType(), def.source.toString())); }
-        if (def.harvestTool != null) { block.setHarvestLevel(def.harvestTool, def.harvestToolLevel == null ? 0 : def.harvestToolLevel); }
+        if (def.harvestTool != null) { block.setHarvestLevel(def.harvestTool, def.harvestToolLevel); }
         if (def.flammability != null) {
             if (!FIRE.containsKey(block)) { FIRE.put(block, FireSnapshot.of(block)); }
-            fire().setFireInfo(block, def.fireSpread == null ? 5 : def.fireSpread, def.flammability);
+            fire().setFireInfo(block, def.fireSpread, def.flammability);
         }
         return true;
     }
@@ -234,27 +227,8 @@ public final class ContentOverrides {
 
     private static List<PotionEffectDef> readEffects(ResourceLocation source, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
-        List<PotionEffectDef> effects = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", source);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
-            String potion = JsonUtils.getString(entry, "potion", "");
-            if (potion.isEmpty()) {
-                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", source);
-                continue;
-            }
-            effects.add(new PotionEffectDef(potion,
-                    Math.max(1, JsonUtils.getInt(entry, "duration", 3600)),
-                    Math.max(0, JsonUtils.getInt(entry, "amplifier", 0)),
-                    JsonUtils.getBoolean(entry, "ambient", false),
-                    JsonUtils.getBoolean(entry, "showParticles", true)));
-        }
-        return Collections.unmodifiableList(effects);
+        return Collections.unmodifiableList(ContentParser.effects(source, JsonUtils.getJsonArray(json, "effects"), 3600, true));
     }
-
 
     @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? JsonUtils.getFloat(json, key) : null; }
 

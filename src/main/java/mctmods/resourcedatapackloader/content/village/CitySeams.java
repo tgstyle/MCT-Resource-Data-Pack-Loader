@@ -12,9 +12,10 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
+import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.util.EnumFacing;
@@ -75,8 +76,7 @@ public final class CitySeams {
             }
             List<StructureComponent> own = start.getComponents();
             StructureBoundingBox reached = new StructureBoundingBox(box);
-            if (alongX) { if (onward) { reached.maxX = at; } else { reached.minX = at; } }
-            else { if (onward) { reached.maxZ = at; } else { reached.minZ = at; } }
+            BeardPlots.setEnd(reached, alongX, onward, at);
             List<StructureComponent> found = crossable(world, everyone, own, street, alongX, reached);
             if (found == null) { return false; }
             int d = onward ? 1 : -1;
@@ -85,17 +85,19 @@ public final class CitySeams {
                 ContentLog.LOGGER.debug("The street at {}, {} cannot run to {}: it would run beside the road at {}, {}", box.minX, box.minZ, at, beside.minX, beside.minZ);
                 return false;
             }
-            EnumFacing facing = alongX ? (onward ? EnumFacing.EAST : EnumFacing.WEST) : (onward ? EnumFacing.SOUTH : EnumFacing.NORTH);
-            int behind = end - (onward ? 1 : -1) * (BeardRoads.pathFullWidth() - 1) / 2;
+            EnumFacing facing = Facings.along(alongX, onward);
+            int behind = end - (onward ? 1 : -1) * ContentBeard.streetHalf();
             StructureBoundingBox tail = new StructureBoundingBox(reached);
-            if (alongX) { if (onward) { tail.minX = Math.max(tail.minX, behind); } else { tail.maxX = Math.min(tail.maxX, behind); } }
-            else { if (onward) { tail.minZ = Math.max(tail.minZ, behind); } else { tail.maxZ = Math.min(tail.maxZ, behind); } }
+            if (alongX) {
+                if (onward) { tail.minX = Math.max(tail.minX, behind); }
+                else { tail.maxX = Math.min(tail.maxX, behind); }
+            }
+            else {
+                if (onward) { tail.minZ = Math.max(tail.minZ, behind); }
+                else { tail.maxZ = Math.min(tail.maxZ, behind); }
+            }
             int rows = (alongX ? tail.maxX - tail.minX : tail.maxZ - tail.minZ) + 1;
-            List<StructureComponent> held = ContentBeard.laid();
-            ContentBeard.laying(own);
-            int kept;
-            try { kept = BeardRoadsGrade.roadReach(tail, facing); }
-            finally { ContentBeard.laying(held); }
+            int kept = ContentBeard.layingOf(own, () -> BeardRoadsGrade.roadReach(tail, facing));
             if (kept < rows) {
                 ContentLog.LOGGER.debug("The street at {}, {} can run only {} of the {} row(s) to {}, so another is looked for", box.minX, box.minZ, kept, rows, at);
                 return false;
@@ -134,8 +136,8 @@ public final class CitySeams {
             for (int dz = -1; dz <= 1; dz++) {
                 long chosen = BeardSite.siteFor(world, known, cellX + dx, cellZ + dz, grid);
                 if (chosen == ContentBeard.NO_SITE) { continue; }
-                int chunkX = (int) (chosen >> 32);
-                int chunkZ = (int) chosen;
+                int chunkX = Longs.high(chosen);
+                int chunkZ = Longs.low(chosen);
                 if (!ContentStructurePlacement.allows(ContentStructurePlacement.VILLAGES, world, chunkX, chunkZ) || BeardSite.mansionCandidateNear(world, chunkX, chunkZ)) { continue; }
                 consider(found, wx, wz, (chunkX << 4) + 4, (chunkZ << 4) + 4, reach);
             }
@@ -164,7 +166,7 @@ public final class CitySeams {
         int dz = bz - wz;
         boolean alongX = Math.abs(dx) >= Math.abs(dz);
         int span = alongX ? Math.abs(dx) : Math.abs(dz);
-        int half = (BeardRoads.pathFullWidth() - 1) / 2;
+        int half = ContentBeard.streetHalf();
         int keepOff = ContentBeard.plazaReach() + BeardRoads.pathFullWidth() + 8;
         if (span < 2 * keepOff + BeardRoads.pathFullWidth()) { return false; }
         Random roll = SeededRandom.at(world, wx + bx, wz + bz);
@@ -380,9 +382,8 @@ public final class CitySeams {
             if (dismiss(world, at.start.getComponents(), plot)) { ContentLog.LOGGER.debug("{} at {}, {} makes way for the street reaching {}", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ, what); }
         }
         if (at.there(at.target)) { return; }
-        if (alongX) { if (at.onward) { at.box.maxX = at.target; } else { at.box.minX = at.target; } }
-        else { if (at.onward) { at.box.maxZ = at.target; } else { at.box.minZ = at.target; } }
-        if (at.street instanceof IRoadLayout) { ((IRoadLayout) at.street).rdpl$layout(null); }
+        BeardPlots.setEnd(at.box, alongX, at.onward, at.target);
+        BeardRoads.clearLayout(at.street);
     }
 
     @Nullable private static List<StructureComponent> crossable(World world, List<StructureComponent> everyone, List<StructureComponent> own, StructureComponent piece, boolean alongX, StructureBoundingBox strip) {
@@ -390,7 +391,7 @@ public final class CitySeams {
         for (StructureComponent held : everyone) {
             if (held == piece || !held.getBoundingBox().intersectsWith(strip.minX, strip.minZ, strip.maxX, strip.maxZ)) { continue; }
             if (held instanceof StructureVillagePieces.Well || held instanceof MergePiece) { return null; }
-            if (held instanceof RailPiece) {
+            if (BeardRails.isRail(held)) {
                 if (own.contains(held) && BeardRails.crosses(held.getBoundingBox(), strip)) { continue; }
                 return null;
             }
@@ -506,7 +507,7 @@ public final class CitySeams {
             List<StructureComponent> fronting = new ArrayList<>();
             boolean standing = false;
             for (StructureComponent other : theirs) {
-                if (other == piece || other instanceof StructureVillagePieces.Path || other instanceof RailPiece || !other.getBoundingBox().intersectsWith(bulb.minX - 1, bulb.minZ - 1, bulb.maxX + 1, bulb.maxZ + 1)) { continue; }
+                if (other == piece || other instanceof StructureVillagePieces.Path || BeardRails.isRail(other) ||!other.getBoundingBox().intersectsWith(bulb.minX - 1, bulb.minZ - 1, bulb.maxX + 1, bulb.maxZ + 1)) { continue; }
                 if (built(world, other.getBoundingBox())) {
                     standing = true;
                     break;

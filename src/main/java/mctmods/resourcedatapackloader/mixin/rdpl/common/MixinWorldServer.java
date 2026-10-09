@@ -1,21 +1,22 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeGC;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
-import mctmods.resourcedatapackloader.content.rubic.server.TickableChunkContainer;
 import mctmods.resourcedatapackloader.content.rubic.server.SpawnCubes;
+import mctmods.resourcedatapackloader.content.rubic.server.TickableChunkContainer;
 import mctmods.resourcedatapackloader.content.rubic.world.CubeWorldEntitySpawner;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldServer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IWorldEntitySpawner;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldProvider;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.CubePos;
 import mctmods.resourcedatapackloader.util.IntRange;
@@ -29,28 +30,19 @@ import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import java.util.Random;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
-import javax.annotation.Nonnull;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.NextTickListEntry;
-import net.minecraft.world.gen.structure.StructureBoundingBox;
-import org.spongepowered.asm.mixin.Final;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Random;
+import java.util.Set;
 import java.util.TreeSet;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -60,46 +52,56 @@ import net.minecraft.entity.passive.EntitySkeletonHorse;
 import net.minecraft.init.Blocks;
 import net.minecraft.server.management.PlayerChunkMap;
 import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.DifficultyInstance;
+import net.minecraft.world.NextTickListEntry;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldEntitySpawner;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
-import java.util.HashSet;
-import java.util.Objects;
-import javax.annotation.Nullable;
-import java.util.Set;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(WorldServer.class) public abstract class MixinWorldServer extends MixinWorld implements IRubicWorldInternal.IServer, IRubicWorldServer {
     @Shadow @Final private TreeSet<NextTickListEntry> pendingTickListEntriesTreeSet;
     @Shadow @Mutable @Final private List<NextTickListEntry> pendingTickListEntriesThisTick;
+    @Shadow @Mutable @Final private PlayerChunkMap playerChunkMap;
+    @Shadow @Mutable @Final private WorldEntitySpawner entitySpawner;
+    @Shadow @Mutable @Final private Set<NextTickListEntry> pendingTickListEntriesHashSet;
     @Unique private int rdpl$immediateTickDepth;
     @Unique private final Long2ObjectOpenHashMap<List<NextTickListEntry>> rdpl$byChunk = new Long2ObjectOpenHashMap<>();
+    @Unique private int rdpl$builtFromCount = -1;
+    @Unique private long rdpl$builtOnTick = -1L;
+    @Unique private Map<Chunk, Set<ICube>> rdpl$forcedChunksCubes;
+    @Unique private XYZMap<ICube> rdpl$forcedCubes;
+    @Unique private XZMap<IColumn> rdpl$forcedColumns;
+    @Unique private CubeGC rdpl$worldChunkGc;
+    @Unique private SpawnCubes rdpl$spawnArea;
+    @Unique private boolean rdpl$runningCompatibilityGenerator;
 
-    @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V"))
-    private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
+    @SuppressWarnings("UnusedAssignment") @WrapOperation(method = "updateBlockTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;updateTick(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Ljava/util/Random;)V")) private void rdpl$boundImmediateTicks(Block block, World worldIn, BlockPos pos, IBlockState state, Random rand, Operation<Void> original) {
         if (rdpl$isRubicWorld() && rdpl$immediateTickDepth >= 32) {
             scheduledUpdatesAreImmediate = false;
-            try {
-                ((WorldServer) (Object) this).scheduleUpdate(pos, block, 1);
-            } finally {
-                scheduledUpdatesAreImmediate = true;
-            }
+            try { ((WorldServer) (Object) this).scheduleUpdate(pos, block, 1); }
+            finally { scheduledUpdatesAreImmediate = true; }
             return;
         }
         rdpl$immediateTickDepth++;
-        try {
-            original.call(block, worldIn, pos, state, rand);
-        } finally {
-            rdpl$immediateTickDepth--;
-        }
+        try { original.call(block, worldIn, pos, state, rand); }
+        finally { rdpl$immediateTickDepth--; }
     }
-    @Unique private int rdpl$builtFromCount = -1;
-    @Unique private long rdpl$builtOnTick = -1L;
 
-    @Inject(method = "getPendingBlockUpdates(Lnet/minecraft/world/gen/structure/StructureBoundingBox;Z)Ljava/util/List;", at = @At("HEAD"), cancellable = true)
-    private void rdpl$answerFromTheIndex(StructureBoundingBox structureBB, boolean remove, CallbackInfoReturnable<List<NextTickListEntry>> cir) {
+    @Inject(method = "getPendingBlockUpdates(Lnet/minecraft/world/gen/structure/StructureBoundingBox;Z)Ljava/util/List;", at = @At("HEAD"), cancellable = true) private void rdpl$answerFromTheIndex(StructureBoundingBox structureBB, boolean remove, CallbackInfoReturnable<List<NextTickListEntry>> cir) {
         if (remove) {
             rdpl$builtFromCount = -1;
             return;
@@ -157,22 +159,11 @@ import java.util.Set;
 
     @Inject(method = "tickUpdates", at = @At("RETURN")) private void rdpl$forgetAfterTicking(boolean runAllPending, CallbackInfoReturnable<Boolean> cir) { rdpl$builtFromCount = -1; }
 
-    @Shadow @Mutable @Final private PlayerChunkMap playerChunkMap;
-    @Shadow @Mutable @Final private WorldEntitySpawner entitySpawner;
-    @Unique private Map<Chunk, Set<ICube>> rdpl$forcedChunksCubes;
-    @Unique private XYZMap<ICube> rdpl$forcedCubes;
-    @Unique private XZMap<IColumn> rdpl$forcedColumns;
-    @Unique private CubeGC rdpl$worldChunkGc;
-    @Unique private SpawnCubes rdpl$spawnArea;
-    @Unique private boolean rdpl$runningCompatibilityGenerator;
-
     @Shadow protected abstract void playerCheckLight();
 
     @Shadow public abstract boolean addWeatherEffect(Entity entityIn);
 
     @Shadow public abstract boolean spawnEntity(Entity entityIn);
-
-    @Shadow @Mutable @Final private Set<NextTickListEntry> pendingTickListEntriesHashSet;
 
     @Shadow protected abstract boolean canAddEntity(Entity entityIn);
 
@@ -214,19 +205,17 @@ import java.util.Set;
     }
 
     @Override public void rdpl$removeForcedCube(@Nonnull ICube cube) {
-        if (!rdpl$forcedChunksCubes.get(cube.getColumn()).remove(cube)) {
-            Rubic.LOGGER.error("Trying to remove forced cube {}, but it's not forced!", cube.getCoords()); }
+        Set<ICube> forced = rdpl$forcedChunksCubes.get(cube.getColumn());
+        if (forced == null || !forced.remove(cube)) { ContentLog.LOGGER.error("Trying to remove forced cube {}, but it's not forced!", cube.getCoords()); }
         rdpl$forcedCubes.remove(cube);
-        if (rdpl$forcedChunksCubes.get(cube.getColumn()).isEmpty()) {
+        if (forced != null && forced.isEmpty()) {
             rdpl$forcedChunksCubes.remove(cube.getColumn());
             rdpl$forcedColumns.remove(cube.getColumn());
         }
     }
 
     @Override public void rdpl$addForcedCube(@Nonnull ICube cube) {
-        if (!rdpl$forcedChunksCubes.computeIfAbsent(cube.getColumn(), chunk -> new HashSet<>()).add(cube)) {
-            Rubic.LOGGER.error("Trying to add forced cube {}, but it's already forced!", cube.getCoords());
-        }
+        if (!rdpl$forcedChunksCubes.computeIfAbsent(cube.getColumn(), chunk -> new HashSet<>()).add(cube)) { ContentLog.LOGGER.error("Trying to add forced cube {}, but it's already forced!", cube.getCoords()); }
         rdpl$forcedCubes.put(cube);
         rdpl$forcedColumns.put(cube.getColumn());
     }
@@ -244,7 +233,7 @@ import java.util.Set;
 
     @Override public boolean rdpl$isCompatGenerationScope() { return rdpl$runningCompatibilityGenerator; }
 
-    @Inject(method = "updateBlocks", at = @At("HEAD"), cancellable = true) private void updateBlocksRubic(CallbackInfo cbi) {
+    @Inject(method = "updateBlocks", at = @At("HEAD"), cancellable = true) private void rdpl$updateBlocksRubic(CallbackInfo cbi) {
         if (!rdpl$isRubicWorld()) { return; }
         cbi.cancel();
         this.playerCheckLight();
@@ -335,9 +324,7 @@ import java.util.Set;
                 if (this.canBlockFreezeNoWater(blockBelow)) { this.setBlockState(blockBelow, Blocks.ICE.getDefaultState()); }
             }
             if (raining && isBlockLoaded(block) && this.canSnowAt(block, true)) { this.setBlockState(block, Blocks.SNOW_LAYER.getDefaultState()); }
-            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain()) {
-                this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow);
-            }
+            if (raining && isBlockLoaded(blockBelow) && this.getBiome(blockBelow).canRain() && !ContentWeather.above((World) (Object) this, blockBelow.getY())) { this.getBlockState(blockBelow).getBlock().fillWithRain((World) (Object) this, blockBelow); }
         }
         this.profiler.endSection();
     }

@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(MapGenMineshaft.class) public abstract class MixinMapGenMineshaft {
     @Shadow private double chance;
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$chance(CallbackInfo ci) { chance = ContentStructurePlacement.chance(ContentStructurePlacement.MINESHAFTS, chance); }
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$chance(CallbackInfo ci) { chance = ContentStructurePlacement.chance(ContentStructurePlacement.MINESHAFTS, chance); }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true) private void rdpl$pinned(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {
         if (ContentStructurePlacement.pinned(ContentStructurePlacement.MINESHAFTS, chunkX, chunkZ)) { cir.setReturnValue(true); }

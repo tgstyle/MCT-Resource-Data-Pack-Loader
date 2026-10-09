@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.SpawnPlaceFinder;
 import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
@@ -39,7 +40,7 @@ import javax.annotation.Nullable;
 
     @Inject(method = "getActualHeight", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$rubicActualHeight(CallbackInfoReturnable<Integer> cir) {
         IRubicWorld rubic = (IRubicWorld) world;
-        if (rubic.rdpl$isRubicWorld()) { cir.setReturnValue(Math.min(rubic.rdpl$getMaxHeight(), rubic.rdpl$getMaxGenerationHeight() + (RubicWorldControl.terrainOffsetCubes() << 4))); }
+        if (rubic.rdpl$isRubicWorld()) { cir.setReturnValue(Math.min(rubic.rdpl$getMaxHeight(), rubic.rdpl$getMaxGenerationHeight() + RubicWorldControl.terrainOffsetBlocks())); }
     }
 
     @Override public int rdpl$getOriginalActualHeight() {
@@ -50,19 +51,19 @@ import javax.annotation.Nullable;
     @Nullable @Override public ICubeGenerator rdpl$createCubeGenerator() {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { throw new NotRubicWorldException(); }
         WorldSavedRubicData savedData = Objects.requireNonNull(
-                (WorldSavedRubicData) world.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData"),
-                "rdplRubicData missing for rubic world");
+                (WorldSavedRubicData) world.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID),
+                Rubic.DATA_ID + " missing for rubic world");
         return Objects.requireNonNull(
                         VanillaCompatibilityGeneratorProviderBase.REGISTRY.getValue(savedData.compatibilityGeneratorType),
                         "unregistered compatibility generator " + savedData.compatibilityGeneratorType)
                 .provideGenerator(this.createChunkGenerator(), world);
     }
 
-    @Inject(method = "getRandomizedSpawnPoint", at = @At(value = "HEAD"), cancellable = true, remap = false) private void findRandomizedSpawnPoint(CallbackInfoReturnable<BlockPos> cir) {
+    @Inject(method = "getRandomizedSpawnPoint", at = @At(value = "HEAD"), cancellable = true, remap = false) private void rdpl$findRandomizedSpawnPoint(CallbackInfoReturnable<BlockPos> cir) {
         if (((IRubicWorld) world).rdpl$isRubicWorld()) { cir.setReturnValue(SpawnPlaceFinder.getRandomizedSpawnPoint(world)); }
     }
 
-    @Inject(method = "canCoordinateBeSpawn", at = @At("HEAD"), cancellable = true) private void canCoordinateBeSpawnRubic(int x, int z, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "canCoordinateBeSpawn", at = @At("HEAD"), cancellable = true) private void rdpl$canCoordinateBeSpawnRubic(int x, int z, CallbackInfoReturnable<Boolean> cir) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         BlockPos blockpos = new BlockPos(x, 64, z);
         if (this.world.getBiome(blockpos).ignorePlayerSpawnSuitability()) { cir.setReturnValue(true); }

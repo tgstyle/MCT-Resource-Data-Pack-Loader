@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Particle.class) public interface IParticle {
-    @Accessor void setMotionX(double motionX);
+    @Accessor("motionX") void rdpl$setMotionX(double motionX);
 
-    @Accessor void setMotionZ(double motionZ);
+    @Accessor("motionZ") void rdpl$setMotionZ(double motionZ);
 }

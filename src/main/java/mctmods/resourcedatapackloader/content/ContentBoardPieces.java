@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.board.BoardPiece;
 import mctmods.resourcedatapackloader.content.board.BoardRules;
 import mctmods.resourcedatapackloader.content.board.BoardState;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
@@ -42,7 +43,7 @@ final class ContentBoardPieces {
         for (int file = 0; file < rules.files; file++) {
             for (int rank = 0; rank < rules.ranks; rank++) {
                 IBlockState state = (file + rank) % 2 == 0 ? dark : light;
-                if (state != null) { world.setBlockState(new BlockPos(game.x + file, game.y - 1, game.z + rank), state, 2); }
+                if (state != null) { world.setBlockState(new BlockPos(game.x + file, game.y - 1, game.z + rank), state, BlockFlags.UPDATE_CLIENTS); }
             }
         }
     }
@@ -93,7 +94,7 @@ final class ContentBoardPieces {
         List<double[]> wanted = new ArrayList<>();
         for (int square = 0; square < state.size(); square++) {
             int cell = state.at(square);
-            if (cell != 0) { wanted.add(new double[] {square % rules.files, Math.floorDiv(square, rules.files),BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
+            if (cell != 0) { wanted.add(new double[] {square % rules.files, Math.floorDiv(square, rules.files), BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
         }
         for (int side = 0; side < 2; side++) {
             List<Integer> taken = state.taken.get(side);
@@ -150,7 +151,7 @@ final class ContentBoardPieces {
         String mob = piece.mob(side);
         Entity made = EntityList.createEntityByIDFromName(new ResourceLocation(mob), world);
         if (made == null) {
-            if (UNMADE.add(rules.id + mob)) { ContentLog.LOGGER.error("Game {} plays {} as {}, which nothing registers, so that piece is not shown; this is said once", rules.id, piece.name, mob); }
+            ContentLog.LOGGER.errorOnce(UNMADE, rules.id + mob, "Game {} plays {} as {}, which nothing registers, so that piece is not shown; this is said once", rules.id, piece.name, mob);
             return;
         }
         float yaw = side == 0 ? 0.0F : 180.0F;

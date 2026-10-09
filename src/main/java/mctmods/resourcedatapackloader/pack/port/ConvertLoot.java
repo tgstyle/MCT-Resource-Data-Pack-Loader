@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -46,7 +49,7 @@ final class ConvertLoot {
             Set<String> names = new HashSet<>();
             for (JsonElement entry : entries) {
                 JsonObject held = entry.getAsJsonObject();
-                String named = Convert.text(held, "name");
+                String named = Json.text(held, "name");
                 if (!named.isEmpty() && !names.add(named) && !held.has("entryName")) { held.addProperty("entryName", named + "#" + names.size()); }
             }
             pool.add("entries", entries);
@@ -58,8 +61,8 @@ final class ConvertLoot {
         for (JsonElement element : entries) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();
-            String type = Convert.text(entry, "type");
-            String bare = type.startsWith(Ids.MINECRAFT + ":") ? type.substring(Ids.MINECRAFT.length() + 1) : type;
+            String type = Json.text(entry, "type");
+            String bare = IdNames.bare(type);
             if ("alternatives".equals(bare) || "group".equals(bare) || "sequence".equals(bare)) {
                 pack.note("'" + from + "' has a " + bare + " entry, which 1.12.2 does not have, so its children are listed in the pool on their own");
                 if (entry.has("children")) { flattenEntries(entry.getAsJsonArray("children"), out, from, pack); }
@@ -101,8 +104,8 @@ final class ConvertLoot {
         for (JsonElement element : functions) {
             if (!element.isJsonObject()) { continue; }
             JsonObject function = element.getAsJsonObject();
-            String name = Convert.text(function, "function");
-            String bare = name.startsWith(Ids.MINECRAFT + ":") ? name.substring(Ids.MINECRAFT.length() + 1) : name;
+            String name = Json.text(function, "function");
+            String bare = IdNames.bare(name);
             if ("enchanted_count_increase".equals(bare)) { bare = "looting_enchant"; }
             if (!LOOT_FUNCTIONS.contains(bare)) {
                 pack.note("'" + from + "' uses the loot function " + name + ", which has no twin on 1.12.2, so it is left out");
@@ -118,7 +121,7 @@ final class ConvertLoot {
                     if (!modifier.isJsonObject()) { continue; }
                     JsonObject held = modifier.getAsJsonObject();
                     if (held.has("attribute")) { held.addProperty("attribute", Ids.attribute(held.get("attribute").getAsString())); }
-                    String operation = Convert.text(held, "operation");
+                    String operation = Json.text(held, "operation");
                     if (OPERATIONS.containsKey(operation)) { held.addProperty("operation", OPERATIONS.get(operation)); }
                     if (held.has("id") && !held.has("name")) { held.add("name", held.remove("id")); }
                     numberAt(held, "amount", from, pack);
@@ -135,9 +138,9 @@ final class ConvertLoot {
         for (JsonElement element : conditions) {
             if (!element.isJsonObject()) { continue; }
             JsonObject condition = element.getAsJsonObject();
-            String name = Convert.text(condition, "condition");
-            String bare = name.startsWith(Ids.MINECRAFT + ":") ? name.substring(Ids.MINECRAFT.length() + 1) : name;
-            if ("inverted".equals(bare) && condition.has("term") && condition.get("term").isJsonObject() && Convert.text(condition.getAsJsonObject("term"), "condition").endsWith("killed_by_player")) {
+            String name = Json.text(condition, "condition");
+            String bare = IdNames.bare(name);
+            if ("inverted".equals(bare) && condition.has("term") && condition.get("term").isJsonObject() && Json.text(condition.getAsJsonObject("term"), "condition").endsWith("killed_by_player")) {
                 JsonObject inverse = new JsonObject();
                 inverse.addProperty("condition", "killed_by_player");
                 inverse.addProperty("inverse", true);
@@ -165,8 +168,8 @@ final class ConvertLoot {
     private static void numberAt(JsonObject holder, String key, String from, Ported pack) {
         if (!holder.has(key) || !holder.get(key).isJsonObject()) { return; }
         JsonObject provider = holder.getAsJsonObject(key);
-        String type = Convert.text(provider, "type");
-        String bare = type.startsWith(Ids.MINECRAFT + ":") ? type.substring(Ids.MINECRAFT.length() + 1) : type;
+        String type = Json.text(provider, "type");
+        String bare = IdNames.bare(type);
         if ("constant".equals(bare) && provider.has("value")) {
             holder.add(key, provider.get("value"));
             return;

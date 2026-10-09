@@ -6,7 +6,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.math.ChunkPos;
 import java.io.Flushable;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.Objects;
 
@@ -17,30 +16,7 @@ public interface IRubicStorage extends Flushable, AutoCloseable {
 
     NBTTagCompound readCube(CubePos pos) throws IOException;
 
-    void writeColumn(ChunkPos pos, NBTTagCompound nbt) throws IOException;
-
-    void writeCube(CubePos pos, NBTTagCompound nbt) throws IOException;
-
-    default void writeBatch(NBTBatch batch) throws IOException {
-        try {
-            batch.columns.entrySet().parallelStream().forEach(entry -> {
-                try {
-                    this.writeColumn(entry.getKey(), entry.getValue());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-            batch.cubes.entrySet().parallelStream().forEach(entry -> {
-                try {
-                    this.writeCube(entry.getKey(), entry.getValue());
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        } catch (UncheckedIOException e) {
-            throw e.getCause();
-        }
-    }
+    void writeBatch(NBTBatch batch) throws IOException;
 
     @Override void flush() throws IOException;
 

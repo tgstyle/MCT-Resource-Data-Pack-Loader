@@ -34,7 +34,6 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
@@ -64,7 +63,6 @@ import javax.annotation.Nullable;
     private static final List<AxisAlignedBB> TO_NORTH = Arrays.asList(BELL_BOTTOM, BELL_TOP, box(7, 13, 0, 9, 15, 13));
     private static final List<AxisAlignedBB> TO_SOUTH = Arrays.asList(BELL_BOTTOM, BELL_TOP, box(7, 13, 3, 9, 15, 16));
     private static final List<AxisAlignedBB> CEILING = Arrays.asList(BELL_BOTTOM, BELL_TOP, box(7, 13, 7, 9, 16, 9));
-    private static boolean armed;
     private final BlockDef def;
     private final BellDef bell;
 
@@ -86,15 +84,9 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
         setDefaultState(blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(ATTACHMENT, Attachment.FLOOR));
-        if (!armed) {
-            MinecraftForge.EVENT_BUS.register(ContentBlockBell.class);
-            armed = true;
-        }
     }
 
-    private static AxisAlignedBB box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-        return new AxisAlignedBB(minX / 16.0D, minY / 16.0D, minZ / 16.0D, maxX / 16.0D, maxY / 16.0D, maxZ / 16.0D);
-    }
+    private static AxisAlignedBB box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) { return new AxisAlignedBB(minX / 16.0D, minY / 16.0D, minZ / 16.0D, maxX / 16.0D, maxY / 16.0D, maxZ / 16.0D); }
 
     @Override public BlockDef getDef() { return def; }
 
@@ -104,9 +96,7 @@ import javax.annotation.Nullable;
 
     @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, FACING, ATTACHMENT); }
 
-    @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(FACING, EnumFacing.byHorizontalIndex(meta & 3)).withProperty(ATTACHMENT, Attachment.values()[meta >> 2 & 3]);
-    }
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(FACING, EnumFacing.byHorizontalIndex(meta & 3)).withProperty(ATTACHMENT, Attachment.values()[meta >> 2 & 3]); }
 
     @Override public int getMetaFromState(IBlockState state) { return state.getValue(FACING).getHorizontalIndex() | state.getValue(ATTACHMENT).ordinal() << 2; }
 
@@ -118,15 +108,9 @@ import javax.annotation.Nullable;
 
     @Override @Nullable public TileEntity createTileEntity(@Nonnull World world, @Nonnull IBlockState state) { return new TileEntityPackBell(); }
 
-    @Override public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, int id, int value) {
-        super.eventReceived(state, world, pos, id, value);
-        TileEntity tile = world.getTileEntity(pos);
-        return tile != null && tile.receiveClientEvent(id, value);
-    }
+    @Override public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, int id, int value) { return ContentSetup.forwardEvent(world, pos, id, value); }
 
-    @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) {
-        return hit(world, pos, state, facing, hitY);
-    }
+    @Override public boolean onBlockActivated(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull EntityPlayer player, @Nonnull EnumHand hand, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ) { return hit(world, pos, state, facing, hitY); }
 
     @SubscribeEvent public static void onImpact(ProjectileImpactEvent event) {
         RayTraceResult ray = event.getRayTraceResult();
@@ -239,9 +223,7 @@ import javax.annotation.Nullable;
         return stays(world, pos, hung) ? hung : null;
     }
 
-    @Override public boolean canPlaceBlockOnSide(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing side) {
-        return super.canPlaceBlockOnSide(world, pos, side) && placement(world, pos, side, EnumFacing.NORTH) != null;
-    }
+    @Override public boolean canPlaceBlockOnSide(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing side) { return super.canPlaceBlockOnSide(world, pos, side) && placement(world, pos, side, EnumFacing.NORTH) != null; }
 
     @Override @Nonnull public IBlockState getStateForPlacement(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull EnumFacing facing, float hitX, float hitY, float hitZ, int meta, @Nonnull EntityLivingBase placer, @Nonnull EnumHand hand) {
         IBlockState placed = placement(world, pos, facing, placer.getHorizontalFacing());

@@ -420,9 +420,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
         return y > topAt(cube.getColumn(), Coords.blockToLocal(x), Coords.blockToLocal(z));
     }
 
-    private int topAt(Chunk column, int localX, int localZ) {
-        return ((IColumnInternal) column).getTopYWithStaging(localX, localZ);
-    }
+    private int topAt(Chunk column, int localX, int localZ) { return ((IColumnInternal) column).getTopYWithStaging(localX, localZ); }
 
     private IBlockState stateAt(ICube cube, int x, int y, int z) {
         ExtendedBlockStorage storage = cube.getStorage();

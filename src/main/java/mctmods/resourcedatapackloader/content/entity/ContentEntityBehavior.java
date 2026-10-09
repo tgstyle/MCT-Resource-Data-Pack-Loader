@@ -16,6 +16,7 @@ import mctmods.resourcedatapackloader.content.entity.ai.EntityAIKamikaze;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIStrike;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIThrower;
 import mctmods.resourcedatapackloader.content.entity.ai.EntityAIWorkOrder;
+import mctmods.resourcedatapackloader.util.AiTasks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registries;
 
@@ -46,7 +47,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -55,6 +55,18 @@ final class ContentEntityBehavior {
     private static final String HOME_X = "rdplHomeX";
     private static final String HOME_Y = "rdplHomeY";
     private static final String HOME_Z = "rdplHomeZ";
+    private static final String[][] PEACEFUL_ASKS = {
+            { "charge", "it never takes a target to charge at" },
+            { "pounce", "it never takes a target to pounce on" },
+            { "sniff players out", "it never takes a target when it finds one" },
+            { "flee when hurt", "it never has a fight to flee" },
+            { "patrol", "its patrol never converges on anyone" },
+            { "swoop", "it never takes a target to dive on" },
+            { "gust", "it never takes a target to blow away" },
+            { "dig", "it never has a target to dig toward" },
+            { "explode", "it never takes a target to close on" },
+            { "throw what it holds", "it never takes a target to throw at" }
+    };
 
     private ContentEntityBehavior() {}
 
@@ -73,22 +85,16 @@ final class ContentEntityBehavior {
         if (living instanceof EntityCreature && ContentOrders.wants(def)) { living.tasks.addTask(3, new EntityAIWorkOrder((EntityCreature) living)); }
         settled(living, def);
         if (def.passive) {
-            clear(living.targetTasks);
-            removeMelee(living.tasks);
+            AiTasks.clear(living.targetTasks);
+            AiTasks.remove(living.tasks, EntityAIAttackMelee.class::isInstance);
             living.setAttackTarget(null);
             return;
         }
         if (!def.hostile) {
-            if (def.charges) { ContentLog.LOGGER.error("Entity variant {} asks to charge, but is not hostile, so it never takes a target to charge at", def.registryName); }
-            if (def.pounces) { ContentLog.LOGGER.error("Entity variant {} asks to pounce, but is not hostile, so it never takes a target to pounce on", def.registryName); }
-            if (def.sniffs > 0) { ContentLog.LOGGER.error("Entity variant {} asks to sniff players out, but is not hostile, so it never takes a target when it finds one", def.registryName); }
-            if (def.fleesWhenHurt > 0.0F) { ContentLog.LOGGER.error("Entity variant {} asks to flee when hurt, but is not hostile, so it never has a fight to flee", def.registryName); }
-            if (def.patrols) { ContentLog.LOGGER.error("Entity variant {} asks to patrol, but is not hostile, so its patrol never converges on anyone", def.registryName); }
-            if (def.swoops) { ContentLog.LOGGER.error("Entity variant {} asks to swoop, but is not hostile, so it never takes a target to dive on", def.registryName); }
-            if (def.gusts) { ContentLog.LOGGER.error("Entity variant {} asks to gust, but is not hostile, so it never takes a target to blow away", def.registryName); }
-            if (def.digs) { ContentLog.LOGGER.error("Entity variant {} asks to dig, but is not hostile, so it never has a target to dig toward", def.registryName); }
-            if (def.explodes) { ContentLog.LOGGER.error("Entity variant {} asks to explode, but is not hostile, so it never takes a target to close on", def.registryName); }
-            if (def.throwsItems) { ContentLog.LOGGER.error("Entity variant {} asks to throw what it holds, but is not hostile, so it never takes a target to throw at", def.registryName); }
+            boolean[] asked = { def.charges, def.pounces, def.sniffs > 0, def.fleesWhenHurt > 0.0F, def.patrols, def.swoops, def.gusts, def.digs, def.explodes, def.throwsItems };
+            for (int i = 0; i < asked.length; i++) {
+                if (asked[i]) { ContentLog.LOGGER.error("Entity variant {} asks to {}, but is not hostile, so {}", def.registryName, PEACEFUL_ASKS[i][0], PEACEFUL_ASKS[i][1]); }
+            }
             return;
         }
         if (!(living instanceof EntityCreature)) {
@@ -96,13 +102,9 @@ final class ContentEntityBehavior {
             return;
         }
         EntityCreature creature = (EntityCreature) living;
-        for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(living.tasks.taskEntries)) {
-            if (entry.action instanceof EntityAIAvoidEntity || entry.action instanceof EntityAIPanic || tame(entry.action)) { living.tasks.removeTask(entry.action); }
-        }
+        AiTasks.remove(living.tasks, action -> action instanceof EntityAIAvoidEntity || action instanceof EntityAIPanic || tame(action));
         if (ownStrike(living, def)) {
-            for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(living.tasks.taskEntries)) {
-                if (entry.action instanceof EntityAIAttackMelee) { living.tasks.removeTask(entry.action); }
-            }
+            AiTasks.remove(living.tasks, EntityAIAttackMelee.class::isInstance);
             living.tasks.addTask(2, new EntityAIStrike(creature, 1.2D, false));
             ContentLog.LOGGER.debug("Entity variant {} asks for an attack damage of {}, which {} never reads when it strikes, so the blow is dealt by the pack's own reckoning instead",
                     def.registryName, living.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue(), def.base);
@@ -170,15 +172,5 @@ final class ContentEntityBehavior {
         ResourceLocation name = new ResourceLocation(named);
         Item item = Registries.find(ForgeRegistries.ITEMS, name);
         return item == null ? ItemStack.EMPTY : new ItemStack(item);
-    }
-
-    private static void clear(EntityAITasks tasks) {
-        for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(tasks.taskEntries)) { tasks.removeTask(entry.action); }
-    }
-
-    private static void removeMelee(EntityAITasks tasks) {
-        for (EntityAITasks.EntityAITaskEntry entry : new ArrayList<>(tasks.taskEntries)) {
-            if (entry.action instanceof EntityAIAttackMelee) { tasks.removeTask(entry.action); }
-        }
     }
 }

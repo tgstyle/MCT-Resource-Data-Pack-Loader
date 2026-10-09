@@ -1,25 +1,17 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXZAddressable;
+
 import javax.annotation.Nonnull;
-
-import java.util.Iterator;
 import javax.annotation.Nullable;
+import java.util.Iterator;
 
-public class XZMap<T extends IXZAddressable> implements Iterable<T> {
-    private static final int HASH_SEED = 1183822147;
+public class XZMap<T extends IXZAddressable> extends AbstractAddressMap implements Iterable<T> {
     private IXZAddressable[] buckets;
-    private int size;
-    private final float loadFactor;
-    private int loadThreshold;
-    private int mask;
 
     public XZMap(float loadFactor, int capacity) {
-        if (loadFactor > 1.0) { throw new IllegalArgumentException("You really dont want to be using a " + loadFactor + " load loadFactor with this hash table!"); }
-        this.loadFactor = loadFactor;
-        int tCapacity = 1;
-        while (tCapacity < capacity) { tCapacity <<= 1; }
-        this.buckets = new IXZAddressable[tCapacity];
+        super(loadFactor, capacity);
+        this.buckets = new IXZAddressable[this.tableLength];
         this.refreshFields();
     }
 
@@ -33,9 +25,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
     }
 
     private int getIndex(int x, int z) { return hash(x, z) & this.mask; }
-
-    private int getNextIndex(int index) { return (index + 1) & this.mask; }
-
 
     public void put(T value) {
         int x = value.getX();
@@ -55,18 +44,17 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         if (this.size > this.loadThreshold) { grow(); }
     }
 
-    @SuppressWarnings("unchecked") @Nullable public T remove(int x, int z) {
+    public void remove(int x, int z) {
         int index = getIndex(x, z);
         IXZAddressable bucket = this.buckets[index];
         while (bucket != null) {
             if (bucket.getX() == x && bucket.getZ() == z) {
                 this.collapseBucket(index);
-                return (T) bucket;
+                return;
             }
             index = getNextIndex(index);
             bucket = this.buckets[index];
         }
-        return null;
     }
 
     public void remove(T value) { this.remove(value.getX(), value.getZ()); }
@@ -81,7 +69,6 @@ public class XZMap<T extends IXZAddressable> implements Iterable<T> {
         }
         return null;
     }
-
 
     private void grow() {
         IXZAddressable[] oldBuckets = this.buckets;

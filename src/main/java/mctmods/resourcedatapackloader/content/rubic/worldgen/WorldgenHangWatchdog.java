@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 
 import java.util.ArrayList;
@@ -61,53 +61,53 @@ public class WorldgenHangWatchdog {
             try {
                 Thread.sleep(500);
             } catch (InterruptedException e) {
-                Rubic.LOGGER.error("WorldGen hang watchdog interrupted", e);
+                ContentLog.LOGGER.error("WorldGen hang watchdog interrupted", e);
             }
             try { watch(); }
-            catch (Throwable oops) { Rubic.LOGGER.error("WorldGen hang watchdog failed to report a hang and would have died; it keeps watching instead", oops); }
+            catch (Throwable oops) { ContentLog.LOGGER.error("WorldGen hang watchdog failed to report a hang and would have died; it keeps watching instead", oops); }
         }
     }
 
     private void watch() {
-            synchronized (entries) {
-                for (Iterator<Map.Entry<Thread, Entry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
-                    Map.Entry<Thread, Entry> entry = iterator.next();
-                    Thread t = entry.getKey();
-                    Entry e = entry.getValue();
-                    if (e.samples.size() < SAMPLES_KEPT) { e.samples.add(t.getStackTrace()); }
-                    long currentTime = System.nanoTime();
-                    long dt = currentTime - e.startTime;
-                    if (dt > TimeUnit.MILLISECONDS.toNanos(worldgenWatchdogTimeLimit)) {
-                        StringBuilder sb = new StringBuilder();
-                        sb.append("World generation taking ").append(dt / (double) TimeUnit.SECONDS.toNanos(1))
-                                .append(" seconds, should be less than 50ms.\n");
-                        sb.append("Samples collected during world generation:\n");
-                        int i = 1;
-                        for (StackTraceElement[] stacktrace : e.samples) {
-                            sb.append("--------------------------------------------\n");
-                            Set<String> likelyModsInvolved = CompatHandler.getModsForStacktrace(stacktrace);
-                            sb.append("SAMPLE #").append(i).append(", likely mods involved: ").append(String.join(", ", likelyModsInvolved))
-                                    .append('\n');
-                            for (StackTraceElement traceElement : stacktrace) {
-                                String modid = CompatHandler.getModForStacktraceElement(traceElement);
-                                sb.append("\tat ").append(traceElement).append(" [Likely mod: ").append(modid).append("]\n");
-                            }
-                            i++;
+        synchronized (entries) {
+            for (Iterator<Map.Entry<Thread, Entry>> iterator = entries.entrySet().iterator(); iterator.hasNext(); ) {
+                Map.Entry<Thread, Entry> entry = iterator.next();
+                Thread t = entry.getKey();
+                Entry e = entry.getValue();
+                if (e.samples.size() < SAMPLES_KEPT) { e.samples.add(t.getStackTrace()); }
+                long currentTime = System.nanoTime();
+                long dt = currentTime - e.startTime;
+                if (dt > TimeUnit.MILLISECONDS.toNanos(worldgenWatchdogTimeLimit)) {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("World generation taking ").append(dt / (double) TimeUnit.SECONDS.toNanos(1))
+                            .append(" seconds, should be less than 50ms.\n");
+                    sb.append("Samples collected during world generation:\n");
+                    int i = 1;
+                    for (StackTraceElement[] stacktrace : e.samples) {
+                        sb.append("--------------------------------------------\n");
+                        Set<String> likelyModsInvolved = CompatHandler.getModsForStacktrace(stacktrace);
+                        sb.append("SAMPLE #").append(i).append(", likely mods involved: ").append(String.join(", ", likelyModsInvolved))
+                                .append('\n');
+                        for (StackTraceElement traceElement : stacktrace) {
+                            String modid = CompatHandler.getModForStacktraceElement(traceElement);
+                            sb.append("\tat ").append(traceElement).append(" [Likely mod: ").append(modid).append("]\n");
                         }
-                        String msg = sb.toString();
-                        crashInfo = msg;
-                        iterator.remove();
-                        Rubic.LOGGER.fatal(msg);
-                        stop(t);
+                        i++;
                     }
+                    String msg = sb.toString();
+                    crashInfo = msg;
+                    iterator.remove();
+                    ContentLog.LOGGER.fatal(msg);
+                    stop(t);
                 }
             }
+        }
     }
 
     @SuppressWarnings("deprecation") private static void stop(Thread t) {
         try { t.stop(); }
         catch (UnsupportedOperationException | LinkageError gone) {
-            Rubic.LOGGER.fatal("This Java cannot stop a thread, so the hung world generation above is left to run and the watchdog stops watching it. Close the world; the samples are the report");
+            ContentLog.LOGGER.fatal("This Java cannot stop a thread, so the hung world generation above is left to run and the watchdog stops watching it. Close the world; the samples are the report");
         }
     }
 

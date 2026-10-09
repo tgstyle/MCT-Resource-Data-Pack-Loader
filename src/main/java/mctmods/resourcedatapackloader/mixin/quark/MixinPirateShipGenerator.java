@@ -14,16 +14,14 @@ import vazkii.quark.world.world.PirateShipGenerator;
 import java.util.Random;
 
 @Mixin(value = PirateShipGenerator.class, remap = false) public abstract class MixinPirateShipGenerator {
-    @Unique private static final int SAFE_OFFSET = 8;
-    @Unique private static final int SHIP_REACH = 24;
+    @Unique private static final int rdpl$SAFE_OFFSET = 8;
+    @Unique private static final int rdpl$SHIP_REACH = 24;
 
-    @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I", ordinal = 0), remap = false)
-    private int rdpl$offsetX(Random random, int bound) { return random.nextInt(bound) + SAFE_OFFSET; }
+    @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I", ordinal = 0), remap = false) private int rdpl$offsetX(Random random, int bound) { return random.nextInt(bound) + rdpl$SAFE_OFFSET; }
 
-    @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I", ordinal = 1), remap = false)
-    private int rdpl$offsetZ(Random random, int bound) { return random.nextInt(bound) + SAFE_OFFSET; }
+    @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Ljava/util/Random;nextInt(I)I", ordinal = 1), remap = false) private int rdpl$offsetZ(Random random, int bound) { return random.nextInt(bound) + rdpl$SAFE_OFFSET; }
 
     @Inject(method = "generateShipAt", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$requireLoaded(WorldServer world, Random random, BlockPos pos, CallbackInfo ci) {
-        if (!ContentCascade.loaded(world, pos, SHIP_REACH)) { ci.cancel(); }
+        if (!ContentCascade.loaded(world, pos, rdpl$SHIP_REACH)) { ci.cancel(); }
     }
 }

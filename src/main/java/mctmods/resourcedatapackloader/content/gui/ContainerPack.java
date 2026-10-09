@@ -8,6 +8,9 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nonnull;
 
 public class ContainerPack extends Container {
@@ -18,38 +21,49 @@ public class ContainerPack extends Container {
     private final int rows;
     private final int columns;
 
+    public interface PlayerSlot { Slot create(InventoryPlayer player, int index, int x, int y); }
+
+    public interface Merge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
+
     public ContainerPack(InventoryPlayer player, TileEntityPackContainer tile) {
-        this.held = tile;
-        this.rows = Math.max(1, tile.rows());
-        this.columns = Math.max(1, tile.columns());
+        this(player, tile, tile.rows(), tile.columns());
         tile.openInventory(player.player);
-        int wide = width(columns);
-        int tall = height(rows);
-        int left = (wide - columns * SLOT) / 2 + 1;
-        for (int row = 0; row < rows; row++) {
-            for (int column = 0; column < columns; column++) {
-                addSlotToContainer(new Slot(held, column + row * columns, left + column * SLOT, HEADER + 1 + row * SLOT) {
-                    @Override public boolean isItemValid(@Nonnull ItemStack stack) { return !nests(stack); }
+    }
+
+    protected ContainerPack(InventoryPlayer player, IInventory held, int rows, int columns) {
+        this.held = held;
+        this.rows = Math.max(1, rows);
+        this.columns = Math.max(1, columns);
+        int wide = width(this.columns);
+        int left = (wide - this.columns * SLOT) / 2 + 1;
+        for (int row = 0; row < this.rows; row++) {
+            for (int column = 0; column < this.columns; column++) {
+                addSlotToContainer(new Slot(held, column + row * this.columns, left + column * SLOT, HEADER + 1 + row * SLOT) {
+                    @Override public boolean isItemValid(@Nonnull ItemStack stack) { return storable(stack); }
                 });
             }
         }
-        int playerLeft = (wide - 9 * SLOT) / 2 + 1;
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlotToContainer(new Slot(player, column + row * 9 + 9, playerLeft + column * SLOT, tall - 83 + row * SLOT));
-            }
-        }
-        for (int hotbar = 0; hotbar < 9; hotbar++) {
-            addSlotToContainer(new Slot(player, hotbar, playerLeft + hotbar * SLOT, tall - 25));
-        }
+        for (Slot slot : playerSlots(player, wide, height(this.rows), this::playerSlot)) { addSlotToContainer(slot); }
     }
 
-    public static boolean nests(net.minecraft.item.ItemStack stack) {
-        if (stack.isEmpty()) { return false; }
+    protected Slot playerSlot(InventoryPlayer player, int index, int x, int y) { return new Slot(player, index, x, y); }
+
+    public static List<Slot> playerSlots(InventoryPlayer player, int wide, int tall, PlayerSlot factory) {
+        List<Slot> slots = new ArrayList<>();
+        int left = (wide - 9 * SLOT) / 2 + 1;
+        for (int row = 0; row < 3; row++) {
+            for (int column = 0; column < 9; column++) { slots.add(factory.create(player, column + row * 9 + 9, left + column * SLOT, tall - 83 + row * SLOT)); }
+        }
+        for (int hotbar = 0; hotbar < 9; hotbar++) { slots.add(factory.create(player, hotbar, left + hotbar * SLOT, tall - 25)); }
+        return slots;
+    }
+
+    public static boolean storable(net.minecraft.item.ItemStack stack) {
+        if (stack.isEmpty()) { return true; }
         net.minecraft.item.Item item = stack.getItem();
-        if (item instanceof mctmods.resourcedatapackloader.content.item.ContentItemContainer) { return true; }
-        return item instanceof net.minecraft.item.ItemBlock
-                && ((net.minecraft.item.ItemBlock) item).getBlock() instanceof mctmods.resourcedatapackloader.content.block.ContentBlockContainer;
+        if (item instanceof mctmods.resourcedatapackloader.content.item.ContentItemContainer) { return false; }
+        return !(item instanceof net.minecraft.item.ItemBlock)
+                || !(((net.minecraft.item.ItemBlock) item).getBlock() instanceof mctmods.resourcedatapackloader.content.block.ContentBlockContainer);
     }
 
     public static int width(int columns) { return Math.max(VANILLA_WIDE, columns * SLOT + 14); }
@@ -64,16 +78,17 @@ public class ContainerPack extends Container {
     }
 
     @Override @Nonnull public ItemStack transferStackInSlot(@Nonnull EntityPlayer player, int index) {
-        ItemStack moved = ItemStack.EMPTY;
-        Slot slot = inventorySlots.get(index);
-        if (slot == null || !slot.getHasStack()) { return moved; }
-        ItemStack stack = slot.getStack();
-        moved = stack.copy();
         int mine = rows * columns;
-        if (index < mine) {
-            if (!mergeItemStack(stack, mine, inventorySlots.size(), true)) { return ItemStack.EMPTY; }
-        }
-        else if (!mergeItemStack(stack, 0, mine, false)) { return ItemStack.EMPTY; }
+        return transfer(this, index, mine, this::mergeItemStack, stack -> storable(stack) && mergeItemStack(stack, 0, mine, false));
+    }
+
+    @Nonnull public static ItemStack transfer(Container container, int index, int mine, Merge merge, Predicate<ItemStack> store) {
+        Slot slot = container.inventorySlots.get(index);
+        if (slot == null || !slot.getHasStack()) { return ItemStack.EMPTY; }
+        ItemStack stack = slot.getStack();
+        ItemStack moved = stack.copy();
+        boolean done = index < mine ? merge.into(stack, mine, container.inventorySlots.size(), true) : store.test(stack);
+        if (!done) { return ItemStack.EMPTY; }
         if (stack.isEmpty()) { slot.putStack(ItemStack.EMPTY); }
         else { slot.onSlotChanged(); }
         return moved;

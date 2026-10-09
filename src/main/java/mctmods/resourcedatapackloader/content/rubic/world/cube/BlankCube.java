@@ -27,20 +27,15 @@ public class BlankCube extends Cube {
 
     @Nullable @Override public TileEntity getTileEntity(BlockPos pos, Chunk.EnumCreateEntityType creationType) { return null; }
 
-    @Override public void onLoad() {
-    }
+    @Override public void onLoad() {}
 
-    @Override public void onUnload() {
-    }
+    @Override public void onUnload() {}
 
     @Override public boolean needsSaving() { return false; }
 
-    @Override public void markSaved() {
-    }
+    @Override public void markSaved() {}
 
-    @Override public void setLightFor(EnumSkyBlock lightType, BlockPos pos, int light) {
-    }
+    @Override public void setLightFor(EnumSkyBlock lightType, BlockPos pos, int light) {}
 
-    @Override public void markForRenderUpdate() {
-    }
+    @Override public void markForRenderUpdate() {}
 }

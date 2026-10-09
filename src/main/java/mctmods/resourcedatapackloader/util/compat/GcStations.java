@@ -55,7 +55,7 @@ final class GcStations {
         Moon moon = planet == null ? GcCelestial.moon(def.parent) : null;
         CelestialBody home = planet == null ? moon : planet;
         Planet parent = moon == null ? planet : moon.getParentPlanet();
-        if (home == null || parent == null || !GcCelestial.packBody(home) || !home.isReachable()) {
+        if (home == null || parent == null || GcCelestial.notPackBody(home) || !home.isReachable()) {
             ContentLog.LOGGER.error("Station {} orbits '{}', which is no planet or moon a pack dimension makes that a rocket reaches", def.key, def.parent);
             return false;
         }

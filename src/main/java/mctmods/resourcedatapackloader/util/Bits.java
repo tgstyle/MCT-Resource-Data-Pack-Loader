@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-
 public class Bits {
     public static long packSignedToLong(int signed, int size, int offset) {
         long result = signed & getMask(size);

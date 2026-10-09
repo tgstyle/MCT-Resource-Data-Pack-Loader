@@ -4,14 +4,18 @@ import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.def.OverrideDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 
+import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.SoundEvents;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
+import net.minecraft.stats.StatBase;
+import net.minecraft.stats.StatList;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -57,6 +61,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
                 player.addPotionEffect(new PotionEffect(potion, effect.duration, effect.amplifier, effect.ambient, effect.showParticles));
             }
         }
+        StatBase used = StatList.getObjectUseStats(stack.getItem());
+        if (used != null) { player.addStat(used); }
+        if (player instanceof EntityPlayerMP) { CriteriaTriggers.CONSUME_ITEM.trigger((EntityPlayerMP) player, stack); }
         stack.shrink(1);
         cir.setReturnValue(stack);
     }

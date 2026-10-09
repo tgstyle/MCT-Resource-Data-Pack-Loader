@@ -12,10 +12,10 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 
 public final class GcRubicSunlight {
-    private GcRubicSunlight() {}
-
     private static Block brightAir;
     private static boolean unlooked = true;
+
+    private GcRubicSunlight() {}
 
     public static int lightValue(IBlockState state, World world, BlockPos pos) {
         if (unlooked) {

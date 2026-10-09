@@ -6,8 +6,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "MixinChunkGeneratorTFBase",
-    "MixinChunkGeneratorTwilightForest",
-    "MixinChunkGeneratorTwilightVoid"
+    "MixinChunkGeneratorTwilightForest"
   ],
   "client": [],
   "server": []

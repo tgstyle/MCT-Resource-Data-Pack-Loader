@@ -6,11 +6,11 @@ import mctmods.resourcedatapackloader.content.types.ContentItemTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IntRange;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -37,17 +37,13 @@ public final class ContentParser {
     public static final String PLACEHOLDER = "open";
     public static final String DEFAULT_STILL = "minecraft:blocks/water_still";
     public static final String DEFAULT_FLOW = "minecraft:blocks/water_flow";
-    static final Gson GSON = new GsonBuilder().create();
     private static final int[] NO_CHANCE = new int[0];
 
     private ContentParser() {}
 
     @Nullable public static BlockDef block(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Block definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "block definition");
+        if (json == null) { return null; }
         Material material = ContentTypes.material(JsonUtils.getString(json, "material", "rock"), key.toString());
         MapColor mapColor = ContentTypes.mapColor(JsonUtils.getString(json, "mapColor", ""), material.getMaterialMapColor(), key.toString());
         SoundType soundType = ContentTypes.soundType(JsonUtils.getString(json, "soundType", ""), null, key.toString());
@@ -89,7 +85,7 @@ public final class ContentParser {
                 JsonUtils.getInt(json, "harvestToolLevel", 0),
                 JsonUtils.getBoolean(json, "silkHarvest", true),
                 expMin, expMax,
-                JsonUtils.getFloat(json, "explosionResistanceDivisor", 1.0F),
+                Math.max(0.01F, JsonUtils.getFloat(json, "explosionResistanceDivisor", 1.0F)),
                 byMeta, Collections.unmodifiableList(visible), strings(json, "requires"),
                 renderLayer(JsonUtils.getString(json, "renderLayer", ""), key.toString()),
                 opaque,
@@ -133,22 +129,60 @@ public final class ContentParser {
     @Nullable private static PortalDef portal(JsonObject json) {
         if (!json.has("portal")) { return null; }
         JsonObject entry = JsonUtils.getJsonObject(json, "portal");
-        return new PortalDef(JsonUtils.getInt(entry, "dimension"),
+        return portal(entry, JsonUtils.getInt(entry, "dimension"), true, false);
+    }
+
+    static PortalDef portal(JsonObject entry, int dimension, boolean ownedDefault, boolean walkInDefault) {
+        return new PortalDef(dimension,
                 JsonUtils.getInt(entry, "returnDimension", 0),
                 JsonUtils.getString(entry, "gate", ""),
                 Math.max(0, JsonUtils.getInt(entry, "cooldown", 60)),
                 JsonUtils.getBoolean(entry, "platform", true),
                 JsonUtils.getString(entry, "platformBlock", ""),
                 JsonUtils.getString(entry, "sound", ""),
-                JsonUtils.getBoolean(entry, "owned", true),
-                JsonUtils.getBoolean(entry, "walkIn", false));
+                JsonUtils.getBoolean(entry, "owned", ownedDefault),
+                JsonUtils.getBoolean(entry, "walkIn", walkInDefault));
+    }
+
+    public static List<PotionEffectDef> effects(ResourceLocation key, JsonArray array, int durationDefault, boolean particlesDefault) {
+        List<PotionEffectDef> found = new ArrayList<>();
+        for (JsonElement element : array) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String potion = JsonUtils.getString(entry, "potion", "");
+            if (potion.isEmpty()) {
+                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", key);
+                continue;
+            }
+            found.add(new PotionEffectDef(potion,
+                    Math.max(durationDefault > 0 ? 1 : 0,JsonUtils.getInt(entry, "duration", durationDefault)),
+                    Math.max(0, JsonUtils.getInt(entry, "amplifier", 0)),
+                    JsonUtils.getBoolean(entry, "ambient", false),
+                    JsonUtils.getBoolean(entry, "showParticles", particlesDefault)));
+        }
+        return found;
+    }
+
+    public static List<BlockMatchDef> matches(ResourceLocation key, JsonObject json, String member) {
+        List<BlockMatchDef> values = new ArrayList<>();
+        if (!json.has(member)) { return values; }
+        JsonElement element = json.get(member);
+        if (!element.isJsonArray()) {
+            values.add(match(key, element));
+            return values;
+        }
+        for (JsonElement held : element.getAsJsonArray()) { values.add(match(key, held)); }
+        return values;
     }
 
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {
         List<String> found = new ArrayList<>();
         for (String raw : strings(json, "behavesAs")) {
             String name = ContentSpawning.normalize(raw);
-            if (!ContentSpawning.known(name)) {
+            if (ContentSpawning.unknown(name)) {
                 ContentLog.LOGGER.error("Block {} says it behaves as '{}', which is not one of {}, ignoring it", key, raw, ContentSpawning.describe());
                 continue;
             }
@@ -238,11 +272,8 @@ public final class ContentParser {
     }
 
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Item definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "item definition");
+        if (json == null) { return null; }
         JsonObject variants = JsonUtils.getJsonObject(json, "variants", new JsonObject());
         Map<Integer, ItemVariant> byMeta = new LinkedHashMap<>();
         List<ItemVariant> visible = new ArrayList<>();
@@ -296,11 +327,8 @@ public final class ContentParser {
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Fluid definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "fluid definition");
+        if (json == null) { return null; }
         String name = JsonUtils.getString(json, "name", key.getPath());
         JsonObject block = JsonUtils.getJsonObject(json, "block", new JsonObject());
         boolean createBlock = json.has("block");
@@ -324,11 +352,8 @@ public final class ContentParser {
     }
 
     @Nullable public static ExposureDef exposure(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Exposure definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "exposure definition");
+        if (json == null) { return null; }
         List<ExposureLevelDef> levels = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(json, "levels", new JsonArray())) {
             if (!element.isJsonObject()) {
@@ -341,21 +366,7 @@ public final class ContentParser {
                 ContentLog.LOGGER.error("A level in {} names no effect, skipping it", key);
                 continue;
             }
-            List<PotionEffectDef> extras = new ArrayList<>();
-            for (JsonElement extraElement : JsonUtils.getJsonArray(level, "effects", new JsonArray())) {
-                if (!extraElement.isJsonObject()) { continue; }
-                JsonObject extra = extraElement.getAsJsonObject();
-                String potion = JsonUtils.getString(extra, "potion", "");
-                if (potion.isEmpty()) {
-                    ContentLog.LOGGER.error("An extra effect in {} names no potion, skipping it", key);
-                    continue;
-                }
-                extras.add(new PotionEffectDef(potion,
-                        Math.max(0, JsonUtils.getInt(extra, "duration", 0)),
-                        Math.max(0, JsonUtils.getInt(extra, "amplifier", 0)),
-                        JsonUtils.getBoolean(extra, "ambient", false),
-                        JsonUtils.getBoolean(extra, "showParticles", false)));
-            }
+            List<PotionEffectDef> extras = effects(key, JsonUtils.getJsonArray(level, "effects", new JsonArray()), 0, false);
             levels.add(new ExposureLevelDef(effect,
                     Math.max(0.0F, JsonUtils.getFloat(level, "damage", 0.0F)),
                     Math.max(0, JsonUtils.getInt(level, "damageInterval", 160)),
@@ -405,7 +416,8 @@ public final class ContentParser {
     @Nullable private static Integer dimension(ResourceLocation key, String named) {
         try {
             return Integer.parseInt(named);
-        } catch (NumberFormatException bad) {
+        }
+        catch (NumberFormatException bad) {
             ContentLog.LOGGER.error("The dimensions entry '{}' in {} is not a numeric dimension id, so it is ignored", named, key);
             return null;
         }
@@ -414,20 +426,11 @@ public final class ContentParser {
     private static <T> Map<T, Integer> leveled(ResourceLocation key, JsonObject json, String member, Function<String, T> parse) {
         Map<T, Integer> out = new LinkedHashMap<>();
         for (String entry : strings(json, member)) {
-            String named = entry.trim();
-            int level = 1;
-            int split = named.indexOf('=');
-            if (split >= 0) {
-                try {
-                    level = Math.max(1, Integer.parseInt(named.substring(split + 1).trim()));
-                } catch (NumberFormatException bad) {
-                    ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key);
-                }
-                named = named.substring(0, split).trim();
-            }
-            if (named.isEmpty()) { continue; }
-            T parsed = parse.apply(named);
-            if (parsed != null) { out.put(parsed, level); }
+            Settings.Weighted split = Settings.weighted(entry, 1);
+            if (split.unreadable) { ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key); }
+            if (split.name.isEmpty()) { continue; }
+            T parsed = parse.apply(split.name);
+            if (parsed != null) { out.put(parsed, Math.max(1, split.weight)); }
         }
         return out;
     }
@@ -441,14 +444,24 @@ public final class ContentParser {
         return new AmountDef(least, Math.max(least, JsonUtils.getInt(range, "max", least)));
     }
 
+    static IntRange heights(String what, ResourceLocation key, JsonObject json, int minFallback, int maxFallback) {
+        int minHeight = JsonUtils.getInt(json, "minHeight", minFallback);
+        int maxHeight = JsonUtils.getInt(json, "maxHeight", maxFallback);
+        if (maxHeight < minHeight) {
+            ContentLog.LOGGER.error("{} {} has maxHeight below minHeight, swapping them", what, key);
+            return new IntRange(maxHeight, minHeight);
+        }
+        return new IntRange(minHeight, maxHeight);
+    }
+
     static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
         if (!entry.has(listKey)) { return Collections.emptyList(); }
         List<PickDef> picked = new ArrayList<>();
         for (JsonElement element : JsonUtils.getJsonArray(entry, listKey)) {
-            if (element.isJsonPrimitive()) { picked.add(new PickDef(element.getAsString().trim().toLowerCase(Locale.ROOT), 1)); }
+            if (element.isJsonPrimitive()) { picked.add(new PickDef(Settings.lower(element.getAsString()), 1)); }
             else {
                 JsonObject held = element.getAsJsonObject();
-                picked.add(new PickDef(JsonUtils.getString(held, nameKey, "").trim().toLowerCase(Locale.ROOT), JsonUtils.getInt(held, "weight", 1)));
+                picked.add(new PickDef(Settings.lower(JsonUtils.getString(held, nameKey, "")),JsonUtils.getInt(held, "weight", 1)));
             }
         }
         return Collections.unmodifiableList(picked);
@@ -496,6 +509,28 @@ public final class ContentParser {
         if (!json.has("potion") || json.get("potion").isJsonNull()) { return null; }
         String value = JsonUtils.getString(json, "potion");
         return value.trim().isEmpty() ? null : value;
+    }
+
+    static List<SpawnEntryDef> spawns(ResourceLocation key, JsonObject json, String typeKey, boolean needsEntity) {
+        List<SpawnEntryDef> spawns = new ArrayList<>();
+        if (!json.has("spawns")) { return spawns; }
+        for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
+            if (!element.isJsonObject()) {
+                ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
+                continue;
+            }
+            JsonObject entry = element.getAsJsonObject();
+            String entity = needsEntity ? JsonUtils.getString(entry, "entity", "") : "";
+            if (needsEntity && entity.isEmpty()) {
+                ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
+                continue;
+            }
+            int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
+            spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, typeKey, "creature"), entity,
+                    Math.max(1, JsonUtils.getInt(entry, "weight", 8)),
+                    min, Math.max(min, JsonUtils.getInt(entry, "max", 4))));
+        }
+        return spawns;
     }
 
     public static String placeholderName(int meta, int digits) {

@@ -1,10 +1,9 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.ModJars;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -22,6 +21,7 @@ import java.nio.file.Path;
 import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +37,6 @@ public final class ModPacks {
     private static final String CONTROL_FILE = CONTROL_STEM + "." + PackManager.JSON;
     private static final String ENABLED = "enabled";
     private static final String PRIORITY = "priority";
-    static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private ModPacks() {}
 
@@ -76,7 +75,7 @@ public final class ModPacks {
     }
 
     private static boolean carriesPack(ZipFile zip) {
-        java.util.Enumeration<? extends ZipEntry> entries = zip.entries();
+        Enumeration<? extends ZipEntry> entries = zip.entries();
         while (entries.hasMoreElements()) {
             if (entries.nextElement().getName().startsWith(ASSETS_PREFIX)) { return true; }
         }
@@ -127,8 +126,8 @@ public final class ModPacks {
     private static JsonObject settingsFor(JsonObject control, String modId) {
         JsonElement held = control.get(modId);
         JsonObject settings = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
-        if (!settings.has(ENABLED) || !settings.get(ENABLED).isJsonPrimitive()) { settings.addProperty(ENABLED, true); }
-        if (!settings.has(PRIORITY) || !settings.get(PRIORITY).isJsonPrimitive()) { settings.addProperty(PRIORITY, -1); }
+        if (!settings.has(ENABLED) || !settings.get(ENABLED).isJsonPrimitive() || !settings.get(ENABLED).getAsJsonPrimitive().isBoolean()) { settings.addProperty(ENABLED, true); }
+        if (!settings.has(PRIORITY) || !settings.get(PRIORITY).isJsonPrimitive() || !settings.get(PRIORITY).getAsJsonPrimitive().isNumber()) { settings.addProperty(PRIORITY, -1); }
         control.add(modId, settings);
         return settings;
     }
@@ -148,7 +147,7 @@ public final class ModPacks {
 
     private static void writeControl(Path packRoot, JsonObject control) {
         Path file = packRoot.resolve("config").resolve(CONTROL_FILE);
-        String text = GSON.toJson(control) + System.lineSeparator();
+        String text = Json.PRETTY.toJson(control) + System.lineSeparator();
         try {
             if (Files.isRegularFile(file) && text.equals(new String(Files.readAllBytes(file), StandardCharsets.UTF_8))) { return; }
             Files.createDirectories(file.getParent());

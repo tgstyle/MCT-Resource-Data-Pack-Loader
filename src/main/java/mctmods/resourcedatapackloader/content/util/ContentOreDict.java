@@ -8,14 +8,11 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.oredict.OreDictionary;
 import java.lang.reflect.Field;
@@ -26,7 +23,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 public final class ContentOreDict {
-    private static final Gson GSON = new GsonBuilder().create();
     private static boolean applied;
 
     private ContentOreDict() {}
@@ -42,11 +38,8 @@ public final class ContentOreDict {
     }
 
     private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Ore dictionary file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "ore dictionary file");
+        if (json == null) { return; }
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String name = entry.getKey();
             if (name.startsWith("_")) { continue; }

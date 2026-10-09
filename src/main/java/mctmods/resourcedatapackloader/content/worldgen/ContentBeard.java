@@ -51,6 +51,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public final class ContentBeard {
     public static final int BAND = 6;
@@ -58,11 +59,6 @@ public final class ContentBeard {
     private static int peeks;
     private static final TemplateMemo<Boolean> WANTED = new TemplateMemo<>();
     private static Boolean recurrent;
-
-    private static boolean recurrent() {
-        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
-        return recurrent;
-    }
     public static final int SITE_REACH = 2;
     public static final int SITE_TOLERANCE = 10;
     public static final int BESIDE_WELL = 4;
@@ -72,6 +68,14 @@ public final class ContentBeard {
     public static final int FOOTING_COURSE = 1;
     public static final long NO_SITE = Long.MIN_VALUE;
     public static World samplerWorld;
+    private static final Map<Long, BeardCrown.Born> WINDOWS = new HashMap<>();
+    private static StructureStart CURRENT;
+    private static List<StructureComponent> LAYING;
+
+    private static boolean recurrent() {
+        if (recurrent == null) { recurrent = Loader.isModLoaded("reccomplex"); }
+        return recurrent;
+    }
 
     private ContentBeard() {}
 
@@ -118,8 +122,6 @@ public final class ContentBeard {
     }
 
     public static long siteIn(World world, ContentSites known, int cellX, int cellZ, int spacing) { return BeardSite.siteFor(world, known, cellX, cellZ, spacing); }
-
-    private static final Map<Long, BeardCrown.Born> WINDOWS = new HashMap<>();
 
     private static StructureBoundingBox window(int chunkX, int chunkZ) {
         int blockX = (chunkX << 4) + 8;
@@ -253,15 +255,11 @@ public final class ContentBeard {
         return recurrent() ? RecurrentPlots.groundCourse(piece) : 0;
     }
 
-    public static int plotSeat(StructureComponent piece) {
-        return recurrent() ? RecurrentPlots.seat(piece) : -1;
-    }
+    public static int plotSeat(StructureComponent piece) { return recurrent() ? RecurrentPlots.seat(piece) : -1; }
 
     public static void foundAtBirth(World world, StructureStart start) { BeardSite.foundAtBirth(world, start); }
 
-    public static boolean settling(StructureComponent piece) {
-        return piece instanceof StructureVillagePieces.Village && !(piece instanceof StructureVillagePieces.Path) && !BeardRails.isRail(piece);
-    }
+    public static boolean settling(StructureComponent piece) { return piece instanceof StructureVillagePieces.Village && !(piece instanceof StructureVillagePieces.Path) && !BeardRails.isRail(piece); }
 
     public static void openAround(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (piece.getClass().getEnclosingClass() == ComponentScatteredFeaturePieces.class) {
@@ -286,9 +284,6 @@ public final class ContentBeard {
         if (worked + freed > 0) { ContentLog.LOGGER.debug("Settled {} at {}, {} into its ground, {} block(s) banked or cut around it and {} opened over it", piece.getClass().getSimpleName(), box.minX, box.minZ, worked, freed); }
     }
 
-    private static StructureStart CURRENT;
-    private static List<StructureComponent> LAYING;
-
     public static void building(@Nullable StructureStart start) { CURRENT = start; }
 
     public static StructureStart current() { return CURRENT; }
@@ -296,6 +291,20 @@ public final class ContentBeard {
     public static void laying(@Nullable List<StructureComponent> pieces) { LAYING = pieces; }
 
     @Nullable public static List<StructureComponent> laid() { return LAYING; }
+
+    public static void layingWith(@Nullable List<StructureComponent> pieces, Runnable body) {
+        List<StructureComponent> held = LAYING;
+        LAYING = pieces;
+        try { body.run(); }
+        finally { LAYING = held; }
+    }
+
+    public static <T> T layingOf(@Nullable List<StructureComponent> pieces, Supplier<T> body) {
+        List<StructureComponent> held = LAYING;
+        LAYING = pieces;
+        try { return body.get(); }
+        finally { LAYING = held; }
+    }
 
     @Nullable public static List<StructureComponent> components() { return CURRENT != null ? CURRENT.getComponents() : LAYING; }
 
@@ -353,18 +362,7 @@ public final class ContentBeard {
 
     public static List<StructureComponent> everyone(List<StructureComponent> own) {
         World world = samplerWorld;
-        if (world == null) { return own; }
-        List<StructureComponent> all = null;
-        for (StructureStart other : ContentStructureSearch.villageStarts(world)) {
-            if (other.getComponents() == own) { continue; }
-            if (all == null) { all = new ArrayList<>(own); }
-            all.addAll(other.getComponents());
-        }
-        List<RailPiece> planned = BeardLinks.planned(world, own);
-        if (planned.isEmpty()) { return all == null ? own : all; }
-        if (all == null) { all = new ArrayList<>(own); }
-        all.addAll(planned);
-        return all;
+        return world == null ? own : everyone(world, own);
     }
 
     public static List<StructureComponent> everyone(World world, @Nullable List<StructureComponent> own) {
@@ -441,9 +439,7 @@ public final class ContentBeard {
 
     @SuppressWarnings("unchecked") public static IBlockState axised(IBlockState state, boolean alongX) {
         for (net.minecraft.block.properties.IProperty<?> property : state.getPropertyKeys()) {
-            if ("axis".equals(property.getName()) && property.getValueClass() == net.minecraft.util.EnumFacing.Axis.class) {
-                return state.withProperty((net.minecraft.block.properties.IProperty<net.minecraft.util.EnumFacing.Axis>) property, alongX ? net.minecraft.util.EnumFacing.Axis.X : net.minecraft.util.EnumFacing.Axis.Z);
-            }
+            if ("axis".equals(property.getName()) && property.getValueClass() == net.minecraft.util.EnumFacing.Axis.class) { return state.withProperty((net.minecraft.block.properties.IProperty<net.minecraft.util.EnumFacing.Axis>) property, alongX ? net.minecraft.util.EnumFacing.Axis.X : net.minecraft.util.EnumFacing.Axis.Z); }
         }
         return state;
     }
@@ -458,6 +454,8 @@ public final class ContentBeard {
     }
 
     public static int plazaReach() { return 3 + (BeardRoads.pathFullWidth() - 3) / 2; }
+
+    public static int streetHalf() { return (BeardRoads.pathFullWidth() - 1) / 2; }
 
     public static boolean wanted() { return WANTED.get(() -> ContentControl.flag(ContentControl.STRUCTURES, "terrainAdaptation", Config.worldgen.terrainAdaptation)); }
 }

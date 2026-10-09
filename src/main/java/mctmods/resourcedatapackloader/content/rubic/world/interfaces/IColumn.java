@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 
 public interface IColumn extends IXZAddressable {
-
     @Deprecated int getHeightValue(int localX, int localZ);
 
     int getHeightValue(int localX, int blockY, int localZ);

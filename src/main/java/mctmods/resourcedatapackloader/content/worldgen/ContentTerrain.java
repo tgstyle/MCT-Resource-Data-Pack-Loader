@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
@@ -132,7 +133,7 @@ public final class ContentTerrain {
                 break;
             }
         }
-        return listed == ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist);
+        return Listing.blocks(listed, ContentControl.flag(ContentControl.TERRAIN, "terrainWorldTypesAreBlacklist", Config.worldgen.terrainWorldTypesAreBlacklist));
     }
 
     public static String merge(String existing, String worldType) {

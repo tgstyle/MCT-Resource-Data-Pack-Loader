@@ -51,6 +51,8 @@ Classes derived from Cubic Chunks and Tall Worlds (Cubic Chunks)
   mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap
   mctmods.resourcedatapackloader.content.rubic.world.column.ColumnTileEntityMap
   mctmods.resourcedatapackloader.content.rubic.world.column.CubeMap
+  mctmods.resourcedatapackloader.content.rubic.world.ColumnState
+  mctmods.resourcedatapackloader.content.rubic.world.CommandHeights
   mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube
   mctmods.resourcedatapackloader.content.rubic.world.cube.Cube
   mctmods.resourcedatapackloader.content.rubic.world.CubeWatchEvent
@@ -207,16 +209,18 @@ Classes derived from Cubic Chunks and Tall Worlds (Cubic Chunks)
   mctmods.resourcedatapackloader.mixin.rubiclight.common.MixinWorldLightRubic
   mctmods.resourcedatapackloader.network.AbstractClientMessageHandler
   mctmods.resourcedatapackloader.network.AbstractMessageHandler
+  mctmods.resourcedatapackloader.network.AbstractServerMessageHandler
+  mctmods.resourcedatapackloader.network.IdleHandler
   mctmods.resourcedatapackloader.network.MessageColumn
   mctmods.resourcedatapackloader.network.MessageCubeBlockChange
   mctmods.resourcedatapackloader.network.MessageCubes
-  mctmods.resourcedatapackloader.network.MessageCubeSkyLightUpdates
   mctmods.resourcedatapackloader.network.MessageHeightMapUpdate
   mctmods.resourcedatapackloader.network.MessageRubicWorldData
   mctmods.resourcedatapackloader.network.MessageUnloadColumn
   mctmods.resourcedatapackloader.network.MessageUnloadCube
   mctmods.resourcedatapackloader.network.RDPLNetwork
   mctmods.resourcedatapackloader.network.WorldEncoder
+  mctmods.resourcedatapackloader.util.AbstractAddressMap
   mctmods.resourcedatapackloader.util.AddressTools
   mctmods.resourcedatapackloader.util.Bits
   mctmods.resourcedatapackloader.util.Box
@@ -237,6 +241,7 @@ Classes derived from Cubic Chunks and Tall Worlds (Cubic Chunks)
   mctmods.resourcedatapackloader.util.world.CubeSplitIterator
   mctmods.resourcedatapackloader.util.world.CubeSplitTickList
   mctmods.resourcedatapackloader.util.world.CubeSplitTickSet
+  mctmods.resourcedatapackloader.util.world.CubeTickIndex
   mctmods.resourcedatapackloader.util.XYZMap
   mctmods.resourcedatapackloader.util.XZMap
 

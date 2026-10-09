@@ -7,13 +7,13 @@ import mctmods.resourcedatapackloader.util.Coords;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import javax.annotation.Nonnull;
-
 import java.util.AbstractCollection;
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 import javax.annotation.Nullable;
@@ -73,7 +73,7 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
         BlockPos pos = ((TileEntity) o).getPos();
         int y = Coords.blockToCube(pos.getY());
         ICube cube = column.getLoadedCube(y);
-        assert cube != null : "Cube is null but tile entity in it exists!";
+        if (cube == null) { return false; }
         return cube.getTileEntityMap().containsValue(o);
     }
 
@@ -134,9 +134,18 @@ public class ColumnTileEntityMap implements Map<BlockPos, TileEntity> {
         return new AbstractSet<Entry<BlockPos, TileEntity>>() {
             @Override public int size() { return ColumnTileEntityMap.this.size(); }
             @Override public boolean isEmpty() { return ColumnTileEntityMap.this.isEmpty(); }
-            @Override public boolean contains(Object o) { return ColumnTileEntityMap.this.containsKey(o); }
+            @Override public boolean contains(Object o) {
+                if (!(o instanceof Entry)) { return false; }
+                Entry<?, ?> entry = (Entry<?, ?>) o;
+                Object key = entry.getKey();
+                return ColumnTileEntityMap.this.containsKey(key) && Objects.equals(ColumnTileEntityMap.this.get(key), entry.getValue());
+            }
             @Override @Nonnull public Iterator<Entry<BlockPos, TileEntity>> iterator() { return concat(map -> map.entrySet().iterator()); }
-            @Override public boolean remove(Object o) { return ColumnTileEntityMap.this.remove(o) != null; }
+            @Override public boolean remove(Object o) {
+                if (!(o instanceof Entry)) { return false; }
+                Entry<?, ?> entry = (Entry<?, ?>) o;
+                return ColumnTileEntityMap.this.remove(entry.getKey(), entry.getValue());
+            }
             @Override public void clear() { throw new UnsupportedOperationException(); }
         };
     }

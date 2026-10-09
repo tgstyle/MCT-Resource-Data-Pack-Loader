@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.util.compat;
 
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import farseek.util.ImplicitConversions$;
 import net.minecraft.block.state.IBlockState;
@@ -109,7 +110,7 @@ public final class StreamsRubicValleys {
 
         @Override public void setBlockState(int x, int y, int z, @Nonnull IBlockState state) {
             if (column.getBlockState(x, y, z).getBlock() instanceof FixedFlowBlock) { return; }
-            world.setBlockState(new BlockPos((column.x << 4) + x, y, (column.z << 4) + z), state, 2 | 16);
+            world.setBlockState(new BlockPos((column.x << 4) + x, y, (column.z << 4) + z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
         }
     }
 }

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 
@@ -8,7 +9,6 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraft.world.storage.MapStorage;
 import net.minecraft.world.storage.WorldSavedData;
-import net.minecraftforge.common.DimensionManager;
 import javax.annotation.Nonnull;
 
 public final class GateStorage extends WorldSavedData {
@@ -19,6 +19,25 @@ public final class GateStorage extends WorldSavedData {
     private NBTTagCompound kills = new NBTTagCompound();
 
     public GateStorage(String name) { super(name); }
+
+    public static int tally(EntityPlayer player, GateDef def) { return def.global ? tallyGlobally(player.world, def.getKey()) : tallyFor(player, def.getKey()); }
+
+    public static void clearTally(EntityPlayer player, GateDef def) {
+        if (def.global) { clearTallyGlobally(player.world, def.getKey()); }
+        else { clearTallyFor(player, def.getKey()); }
+    }
+
+    public static boolean unlocked(EntityPlayer player, GateDef def) { return def.global ? unlockedGlobally(player.world, def.getKey()) : unlockedFor(player, def.getKey()); }
+
+    public static void unlock(EntityPlayer player, GateDef def) {
+        if (def.global) { unlockGlobally(player.world, def.getKey()); }
+        else { unlockFor(player, def.getKey()); }
+    }
+
+    public static void lock(EntityPlayer player, GateDef def) {
+        if (def.global) { lockGlobally(player.world, def.getKey()); }
+        else { lockFor(player, def.getKey()); }
+    }
 
     public static boolean unlockedFor(EntityPlayer player, String key) { return PlayerPersisted.read(player, TAG).getBoolean(key); }
 
@@ -75,8 +94,7 @@ public final class GateStorage extends WorldSavedData {
     }
 
     private static GateStorage get(World world) {
-        World overworld = DimensionManager.getWorld(0);
-        MapStorage storage = overworld == null ? world.getMapStorage() : overworld.getMapStorage();
+        MapStorage storage = world.getMapStorage();
         if (storage == null) { return null; }
         return SavedData.get(storage, GateStorage.class, NAME, GateStorage::new);
     }

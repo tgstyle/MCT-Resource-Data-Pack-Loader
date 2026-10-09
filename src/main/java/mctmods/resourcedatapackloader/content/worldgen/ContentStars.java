@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GLAllocation;
@@ -29,9 +31,9 @@ import javax.annotation.Nullable;
         this.size = size;
     }
 
-    public static boolean replacesVanilla(World world) {
+    public static boolean keepsVanilla(World world) {
         SkyLookDef look = ContentFogSampler.look(world);
-        return look != null && look.tintsStars();
+        return look == null || !look.tintsStars();
     }
 
     public void draw(World world, float brightness, float partialTicks) {
@@ -39,15 +41,21 @@ import javax.annotation.Nullable;
         SkyLookDef look = ContentFogSampler.look(world);
         int color = look == null || look.starColor == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor;
         float twinkle = look == null ? 0.0F : look.starTwinkle;
-        float red = (color >> 16 & 255) / 255.0F;
-        float green = (color >> 8 & 255) / 255.0F;
-        float blue = (color & 255) / 255.0F;
-        float time = (world.getTotalWorldTime() % 24000L + partialTicks) / 20.0F;
+        float red = Colors.red(color) / 255.0F;
+        float green = Colors.green(color) / 255.0F;
+        float blue = Colors.blue(color) / 255.0F;
+        float time = (world.getTotalWorldTime() % DimensionTraitsDef.VANILLA_DAY + partialTicks) / 20.0F;
         for (int group = 0; group < GROUPS; ++group) {
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * MathHelper.sin(time * SPEED[group] + group * PHASE)));
             GlStateManager.color(red * shown, green * shown, blue * shown, shown);
             GlStateManager.callList(lists + group);
         }
+    }
+
+    void release() {
+        if (lists < 0) { return; }
+        GLAllocation.deleteDisplayLists(lists, GROUPS);
+        lists = -1;
     }
 
     private void build() {

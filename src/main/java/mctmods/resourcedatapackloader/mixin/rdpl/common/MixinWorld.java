@@ -19,53 +19,72 @@ import static mctmods.resourcedatapackloader.util.Coords.blockToCube;
 import static mctmods.resourcedatapackloader.util.Coords.cubeToMinBlock;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.Entity;
+import net.minecraft.init.Blocks;
+import net.minecraft.profiler.Profiler;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
-import net.minecraft.world.GameRules;
-import net.minecraft.profiler.Profiler;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.init.Blocks;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.IBlockAccess;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.border.WorldBorder;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunkProvider;
 import net.minecraft.world.storage.WorldInfo;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.GetCollisionBoxesEvent;
 import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
+import org.spongepowered.asm.mixin.injection.Group;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
-import net.minecraft.util.math.MathHelper;
-import org.spongepowered.asm.mixin.injection.Group;
-import org.spongepowered.asm.mixin.injection.Constant;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
-import java.util.Objects;
 import javax.annotation.Nonnull;
-import net.minecraft.world.border.WorldBorder;
-import java.util.List;
-import net.minecraft.util.math.AxisAlignedBB;
+import javax.annotation.Nullable;
 
 @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) @Mixin(World.class) public abstract class MixinWorld implements IRubicWorldInternal, IRubicWorld {
-    @Unique private static boolean rdpl$told;
+    @Shadow protected IChunkProvider chunkProvider;
+    @Shadow protected boolean scheduledUpdatesAreImmediate;
+    @Shadow @Final @Mutable public WorldProvider provider;
+    @Shadow @Final public Random rand;
+    @Shadow @Final public boolean isRemote;
+    @Shadow protected WorldInfo worldInfo;
+    @Shadow @Final public Profiler profiler;
+    @Shadow protected int updateLCG;
     @Unique private ChunkPos rdpl$during;
     @Unique private int rdpl$lastX = Integer.MIN_VALUE;
     @Unique @Nullable private Chunk rdpl$lastChunk;
     @Unique private int rdpl$lastZ = Integer.MIN_VALUE;
+    @Unique @Nullable protected LightingManager rdpl$lightingManager;
+    @Unique protected boolean rdpl$isRubicWorld;
+    @Unique protected int rdpl$minHeight = 0;
+    @Unique protected int rdpl$maxHeight = 256;
+    @Unique protected int rdpl$fakedMaxHeight = 0;
+    @Unique private int rdpl$maxGenerationHeight = 256;
+    @Unique private int rdpl$updateEntity_entityPosY;
+    @Unique private int rdpl$updateEntity_entityPosX;
+    @Unique private int rdpl$updateEntity_entityPosZ;
+    @Unique private int rdpl$updateEntities_entityChunkBlockY;
 
     @Unique private Chunk rdpl$leaveLandAlone(World self, BlockPos pos) {
         if (isRemote) { return self.getChunk(pos); }
@@ -93,21 +112,9 @@ import net.minecraft.util.math.AxisAlignedBB;
             rdpl$lastChunk = loaded;
             return loaded;
         }
-        if (!rdpl$told) {
-            rdpl$told = true;
-            ContentLog.LOGGER.info("Something read land that has not been made yet while another chunk was being filled in. Making it there and then would have made everything around it in turn, so it is answered from the shape the land will take instead");
-        }
+        ContentLog.LOGGER.once("Something read land that has not been made yet while another chunk was being filled in. Making it there and then would have made everything around it in turn, so it is answered from the shape the land will take instead");
         return PredictedChunk.of(self);
     }
-
-    @Shadow protected IChunkProvider chunkProvider;
-    @Shadow protected boolean scheduledUpdatesAreImmediate;
-    @Shadow @Final @Mutable public WorldProvider provider;
-    @Shadow @Final public Random rand;
-    @Shadow @Final public boolean isRemote;
-    @Shadow protected WorldInfo worldInfo;
-    @Shadow @Final public Profiler profiler;
-    @Shadow protected int updateLCG;
 
     @Shadow public abstract GameRules getGameRules();
 
@@ -126,13 +133,6 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Shadow public abstract boolean canSnowAt(BlockPos pos, boolean checkLight);
 
     @Shadow protected abstract boolean isChunkLoaded(int i, int i1, boolean allowEmpty);
-
-    @Unique @Nullable protected LightingManager rdpl$lightingManager;
-    @Unique protected boolean rdpl$isRubicWorld;
-    @Unique protected int rdpl$minHeight = 0;
-    @Unique protected int rdpl$maxHeight = 256;
-    @Unique protected int rdpl$fakedMaxHeight = 0;
-    @Unique private int rdpl$maxGenerationHeight = 256;
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted") @Shadow public abstract boolean isValid(BlockPos pos);
 
@@ -212,7 +212,7 @@ import net.minecraft.util.math.AxisAlignedBB;
         return this.provider.getHeight();
     }
 
-    @Inject(method = "markChunkDirty", at = @At("HEAD"), cancellable = true) private void onMarkChunkDirty(BlockPos pos, TileEntity unusedTileEntity, CallbackInfo ci) {
+    @Inject(method = "markChunkDirty", at = @At("HEAD"), cancellable = true) private void rdpl$onMarkChunkDirty(BlockPos pos, TileEntity unusedTileEntity, CallbackInfo ci) {
         if (this.rdpl$isRubicWorld()) {
             Cube cube = this.rdpl$getCubeCache().getLoadedCube(CubePos.fromBlockCoords(pos));
             if (cube != null) { cube.markDirty(); }
@@ -223,14 +223,13 @@ import net.minecraft.util.math.AxisAlignedBB;
     @Inject(method = "getBlockState", at = @At("HEAD"), cancellable = true) private void rdpl$blockState(BlockPos pos, CallbackInfoReturnable<IBlockState> cir) {
         if (rdpl$outsideBuildHeight(pos)) { cir.setReturnValue(Objects.requireNonNull(Blocks.AIR).getDefaultState()); }
         else if (this.rdpl$isRubicWorld) {
-            ICube cube = ((ICubeProviderInternal) this.chunkProvider)
-                    .getCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
+            ICube cube = ((ICubeProviderInternal) this.chunkProvider).getCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
             cir.setReturnValue(cube.getBlockState(pos));
         }
-        else { cir.setReturnValue(rdpl$leaveLandAlone(World.class.cast(this), pos).getBlockState(pos)); }
+        else { cir.setReturnValue(rdpl$leaveLandAlone((World) (Object) this, pos).getBlockState(pos)); }
     }
 
-    @Inject(method = "getTopSolidOrLiquidBlock", at = @At("HEAD"), cancellable = true) private void getTopSolidOrLiquidBlockRubic(BlockPos pos, CallbackInfoReturnable<BlockPos> cir) {
+    @Inject(method = "getTopSolidOrLiquidBlock", at = @At("HEAD"), cancellable = true) private void rdpl$getTopSolidOrLiquidBlockRubic(BlockPos pos, CallbackInfoReturnable<BlockPos> cir) {
         if (!rdpl$isRubicWorld()) { return; }
         Chunk chunk = this.getChunk(pos);
         BlockPos currentPos = getPrecipitationHeight(pos);
@@ -238,46 +237,28 @@ import net.minecraft.util.math.AxisAlignedBB;
         while (currentPos.getY() >= minY) {
             BlockPos nextPos = currentPos.down();
             IBlockState state = chunk.getBlockState(nextPos);
-            if (state.getMaterial().blocksMovement()
-                    && !state.getBlock().isLeaves(state, (IBlockAccess) this, nextPos)
-                    && !state.getBlock().isFoliage((IBlockAccess) this, nextPos)) { break; }
+            if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, (IBlockAccess) this, nextPos) && !state.getBlock().isFoliage((IBlockAccess) this, nextPos)) { break; }
             currentPos = nextPos;
         }
         cir.setReturnValue(currentPos);
     }
 
-    @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos) { return rdpl$isBlockColumnLoaded(pos, true); }
-
-    @Unique public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos, boolean allowEmpty) {
-        return this.isChunkLoaded(blockToCube(pos.getX()), blockToCube(pos.getZ()), allowEmpty);
-    }
-
-    @Unique private int updateEntity_entityPosY;
-    @Unique private int updateEntity_entityPosX;
-    @Unique private int updateEntity_entityPosZ;
+    @Override public boolean rdpl$isBlockColumnLoaded(@Nonnull BlockPos pos) { return this.isChunkLoaded(blockToCube(pos.getX()), blockToCube(pos.getZ()), true); }
 
     @Shadow private boolean isAreaLoaded(int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd, boolean allowEmpty) { throw new Error(); }
 
-    @Group(name = "updateEntity", max = 2, min = 2) @Redirect(method = "updateEntityWithOptionalForce",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(IIIIIIZ)Z"),
-            require = 1)
-    private boolean canUpdateEntity(World _this, int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd,
-                                    boolean allowEmpty) {
+    @Group(name = "updateEntity", max = 2, min = 2) @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(IIIIIIZ)Z"), require = 1) private boolean rdpl$canUpdateEntity(World _this, int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd, boolean allowEmpty) {
         if (!this.rdpl$isRubicWorld()) { return isAreaLoaded(xStart, yStart, zStart, xEnd, yEnd, zEnd, allowEmpty); }
-        BlockPos entityPos = new BlockPos(updateEntity_entityPosX, updateEntity_entityPosY, updateEntity_entityPosZ);
+        BlockPos entityPos = new BlockPos(rdpl$updateEntity_entityPosX, rdpl$updateEntity_entityPosY, rdpl$updateEntity_entityPosZ);
         if (!isValid(entityPos)) { return true; }
         int r = (xEnd - xStart) >> 1;
-        return isAreaLoaded(updateEntity_entityPosX - r, updateEntity_entityPosY - r, updateEntity_entityPosZ - r,
-                updateEntity_entityPosX + r, updateEntity_entityPosY + r, updateEntity_entityPosZ + r, true);
+        return isAreaLoaded(rdpl$updateEntity_entityPosX - r, rdpl$updateEntity_entityPosY - r, rdpl$updateEntity_entityPosZ - r, rdpl$updateEntity_entityPosX + r, rdpl$updateEntity_entityPosY + r, rdpl$updateEntity_entityPosZ + r, true);
     }
 
-    @Group(name = "updateEntity") @Inject(method = "updateEntityWithOptionalForce",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getPersistentChunks()Lcom/google/common/collect/ImmutableSetMultimap;", remap = false),
-            require = 1)
-    private void onIsAreaLoadedForUpdateEntityWithOptionalForce(Entity entityIn, boolean forceUpdate, CallbackInfo ci) {
-        updateEntity_entityPosY = MathHelper.floor(entityIn.posY);
-        updateEntity_entityPosX = MathHelper.floor(entityIn.posX);
-        updateEntity_entityPosZ = MathHelper.floor(entityIn.posZ);
+    @Group(name = "updateEntity") @Inject(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getPersistentChunks()Lcom/google/common/collect/ImmutableSetMultimap;", remap = false), require = 1) private void rdpl$onIsAreaLoadedForUpdateEntityWithOptionalForce(Entity entityIn, boolean forceUpdate, CallbackInfo ci) {
+        rdpl$updateEntity_entityPosY = MathHelper.floor(entityIn.posY);
+        rdpl$updateEntity_entityPosX = MathHelper.floor(entityIn.posX);
+        rdpl$updateEntity_entityPosZ = MathHelper.floor(entityIn.posZ);
     }
 
     @Inject(method = "isOutsideBuildHeight", at = @At("HEAD"), cancellable = true) private void rdpl$buildHeight(BlockPos pos, CallbackInfoReturnable<Boolean> cir) { cir.setReturnValue(rdpl$outsideBuildHeight(pos)); }
@@ -290,8 +271,8 @@ import net.minecraft.util.math.AxisAlignedBB;
      */
     @Overwrite public int getLight(BlockPos pos) {
         if (pos.getY() < this.rdpl$getMinHeight()) { return 0; }
-        if (pos.getY() >= this.rdpl$getMaxHeight()) { return EnumSkyBlock.SKY.defaultLightValue; }
-        return this.getChunk(pos).getLightSubtracted(pos, 0);
+        BlockPos at = pos.getY() >= this.rdpl$getMaxHeight() ? new BlockPos(pos.getX(), this.rdpl$getMaxHeight() - 1, pos.getZ()) : pos;
+        return this.getChunk(at).getLightSubtracted(at, 0);
     }
 
     @Inject(method = "getLightFor", at = @At("HEAD"), cancellable = true) private void rdpl$lightFor(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
@@ -301,20 +282,13 @@ import net.minecraft.util.math.AxisAlignedBB;
         else { cir.setReturnValue(getChunk(at).getLightFor(type, at)); }
     }
 
-    @Group(name = "isLoaded", max = 1) @Inject(method = "isAreaLoaded(IIIIIIZ)Z", at = @At(value = "HEAD"), cancellable = true, require = 1)
-    private void isAreaLoadedInject(int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd, boolean allowEmpty,
-                                    @Nonnull CallbackInfoReturnable<Boolean> cbi) {
+    @Group(name = "isLoaded", max = 1) @Inject(method = "isAreaLoaded(IIIIIIZ)Z", at = @At(value = "HEAD"), cancellable = true, require = 1) private void rdpl$isAreaLoadedInject(int xStart, int yStart, int zStart, int xEnd, int yEnd, int zEnd, boolean allowEmpty, @Nonnull CallbackInfoReturnable<Boolean> cbi) {
         if (!this.rdpl$isRubicWorld()) { return; }
-        boolean ret = (this.isRemote && allowEmpty) ||
-                this.rdpl$testForCubes(
-                        xStart, yStart, zStart,
-                        xEnd, yEnd, zEnd,
-                        Objects::nonNull);
+        boolean ret = (this.isRemote && allowEmpty) || this.rdpl$testForCubes(xStart, yStart, zStart, xEnd, yEnd, zEnd, Objects::nonNull);
         cbi.setReturnValue(ret);
     }
 
-    @Inject(method = "isBlockLoaded(Lnet/minecraft/util/math/BlockPos;Z)Z", cancellable = true, at = @At(value = "HEAD"))
-    private void isBlockLoaded(BlockPos pos, boolean allowEmpty, CallbackInfoReturnable<Boolean> cbi) {
+    @Inject(method = "isBlockLoaded(Lnet/minecraft/util/math/BlockPos;Z)Z", cancellable = true, at = @At(value = "HEAD")) private void rdpl$isBlockLoaded(BlockPos pos, boolean allowEmpty, CallbackInfoReturnable<Boolean> cbi) {
         if (!rdpl$isRubicWorld()) { return; }
         ICube cube = this.rdpl$getCubeCache().getLoadedCube(blockToCube(pos.getX()), blockToCube(pos.getY()), blockToCube(pos.getZ()));
         if (allowEmpty) { cbi.setReturnValue(cube != null); }
@@ -328,56 +302,36 @@ import net.minecraft.util.math.AxisAlignedBB;
         return cube != null && !(cube instanceof BlankCube);
     }
 
-    @Redirect(method = "updateEntityWithOptionalForce",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 0))
-    private boolean updateEntityWithOptionalForce_isChunkLoaded0(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
+    @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 0)) private boolean rdpl$updateEntityWithOptionalForce_isChunkLoaded0(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
         assert this == (Object) world;
         return rdpl$columnOrCubeLoaded(chunkX, cubeToMinBlock(entityIn.chunkCoordY), chunkZ, allowEmpty);
     }
 
-    @Redirect(method = "updateEntityWithOptionalForce",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1))
-    private boolean updateEntityWithOptionalForce_isChunkLoaded1(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
+    @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1)) private boolean rdpl$updateEntityWithOptionalForce_isChunkLoaded1(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn, boolean forceUpdate) {
         assert this == (Object) world;
         return rdpl$columnOrCubeLoaded(chunkX, MathHelper.floor(entityIn.posY), chunkZ, allowEmpty);
     }
 
-    @Unique private int updateEntities_entityChunkBlockY;
+    @Inject(method = "updateEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1), require = 1) private void rdpl$updateEntities_isChunkLoaded1_getLocals(CallbackInfo cbi, @Local(name = "entity2") Entity entity2) { rdpl$updateEntities_entityChunkBlockY = cubeToMinBlock(entity2.chunkCoordY); }
 
-    @Inject(method = "updateEntities",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1),
-            require = 1)
-    private void updateEntities_isChunkLoaded1_getLocals(CallbackInfo cbi, @Local(name = "entity2") Entity entity2) {
-        updateEntities_entityChunkBlockY = cubeToMinBlock(entity2.chunkCoordY);
-    }
-
-    @Redirect(method = "updateEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1))
-    private boolean updateEntities_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty) {
+    @Redirect(method = "updateEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z", ordinal = 1)) private boolean rdpl$updateEntities_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty) {
         assert this == (Object) world;
-        return rdpl$columnOrCubeLoaded(chunkX, updateEntities_entityChunkBlockY, chunkZ, allowEmpty);
+        return rdpl$columnOrCubeLoaded(chunkX, rdpl$updateEntities_entityChunkBlockY, chunkZ, allowEmpty);
     }
 
-    @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void getBiome(BlockPos pos, CallbackInfoReturnable<Biome> ci) {
-        if (!this.rdpl$isRubicWorld())
-            return;
-        ICube cube = this.rdpl$getCubeCache().getLoadedCube(Coords.blockToCube(pos.getX()),Coords.blockToCube(pos.getY()),Coords.blockToCube(pos.getZ()));
-        if (cube == null)
-            return;
+    @Inject(method = "getBiome", at = @At("HEAD"), cancellable = true) private void rdpl$getBiome(BlockPos pos, CallbackInfoReturnable<Biome> ci) {
+        if (!this.rdpl$isRubicWorld()) { return; }
+        ICube cube = this.rdpl$getCubeCache().getLoadedCube(Coords.blockToCube(pos.getX()), Coords.blockToCube(pos.getY()), Coords.blockToCube(pos.getZ()));
+        if (cube == null) { return; }
         Biome biome = cube.getBiome(pos);
         ci.setReturnValue(biome);
     }
 
-    @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"}, constant = @Constant(intValue = 256), remap = false) private int canSnowAt_getMaxHeight(int _256) {
-        return rdpl$getMaxHeight();
-    }
+    @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"}, constant = @Constant(intValue = 256), remap = false) private int rdpl$canSnowAt_getMaxHeight(int _256) { return rdpl$getMaxHeight(); }
 
-    @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"},
-            constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO),
-            remap = false)
-    private int canSnowAt_getMinHeight(int zero) { return rdpl$getMinHeight(); }
+    @ModifyConstant(method = {"canSnowAtBody", "canBlockFreezeBody"}, constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO), remap = false) private int rdpl$canSnowAt_getMinHeight(int zero) { return rdpl$getMinHeight(); }
 
-    @Redirect(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z"))
-    private boolean spawnEntity_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn) {
+    @Redirect(method = "spawnEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isChunkLoaded(IIZ)Z")) private boolean rdpl$spawnEntity_isChunkLoaded(World world, int chunkX, int chunkZ, boolean allowEmpty, Entity entityIn) {
         assert this == (Object) world;
         return rdpl$columnOrCubeLoaded(chunkX, MathHelper.floor(entityIn.posY), chunkZ, allowEmpty);
     }
@@ -386,10 +340,7 @@ import net.minecraft.util.math.AxisAlignedBB;
 
     @Shadow public abstract boolean isInsideWorldBorder(Entity entityToCheck);
 
-    @Redirect(method = "markAndNotifyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;isPopulated()Z"))
-    private boolean markNotifyBlock_CubeCheck(Chunk _this,
-                                              BlockPos pos, Chunk chunk, IBlockState iblockstate,
-                                              IBlockState newState, int flags) {
+    @Redirect(method = "markAndNotifyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;isPopulated()Z")) private boolean rdpl$markNotifyBlock_CubeCheck(Chunk _this, BlockPos pos, Chunk chunk, IBlockState iblockstate, IBlockState newState, int flags) {
         if (!this.rdpl$isRubicWorld()) { return chunk.isPopulated(); }
         IColumn column = (IColumn) chunk;
         ICube cube = column.getCube(Coords.blockToCube(pos.getY()));
@@ -428,19 +379,16 @@ import net.minecraft.util.math.AxisAlignedBB;
                                 IBlockState iblockstate1;
                                 if (!flagArg && !worldborder.contains(pos) && entityInsideOfBorder) { iblockstate1 = iblockstate; }
                                 else { iblockstate1 = this.getBlockState(pos); }
-                                iblockstate1
-                                        .addCollisionBoxToList((World) (Object) this, pos, aabb, aabbList, entity, false);
-                                net.minecraftforge.common.MinecraftForge.EVENT_BUS
-                                        .post(new net.minecraftforge.event.world.GetCollisionBoxesEvent((World) (Object) this, null, aabb, aabbList));
+                                iblockstate1.addCollisionBoxToList((World) (Object) this, pos, aabb, aabbList, entity, false);
+                                MinecraftForge.EVENT_BUS.post(new GetCollisionBoxesEvent((World) (Object) this, null, aabb, aabbList));
                                 if (flagArg && !aabbList.isEmpty()) { return true; }
                             }
                         }
                     }
                 }
             }
-        } finally {
-            pos.release();
         }
+        finally { pos.release(); }
         return !aabbList.isEmpty();
     }
 }

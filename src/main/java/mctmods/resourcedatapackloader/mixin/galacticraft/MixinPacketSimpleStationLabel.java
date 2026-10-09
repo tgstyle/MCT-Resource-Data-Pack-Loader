@@ -11,8 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Map;
 
 @Mixin(value = PacketSimple.class, remap = false) public class MixinPacketSimpleStationLabel {
-    @Redirect(method = "handleClientSide(Lnet/minecraft/entity/player/EntityPlayer;)V", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/core/client/gui/screen/GuiCelestialSelection;spaceStationMap:Ljava/util/Map;", opcode = Opcodes.PUTFIELD))
-    private void rdpl$stationLabels(GuiCelestialSelection gui, Map<Integer, Map<String, GuiCelestialSelection.StationDataGUI>> stations) {
+    @Redirect(method = "handleClientSide(Lnet/minecraft/entity/player/EntityPlayer;)V", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/core/client/gui/screen/GuiCelestialSelection;spaceStationMap:Ljava/util/Map;", opcode = Opcodes.PUTFIELD)) private void rdpl$stationLabels(GuiCelestialSelection gui, Map<Integer, Map<String, GuiCelestialSelection.StationDataGUI>> stations) {
         GcStationLabels.apply(stations);
         gui.spaceStationMap = stations;
     }

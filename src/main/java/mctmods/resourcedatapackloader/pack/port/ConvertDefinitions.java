@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -64,10 +66,14 @@ final class ConvertDefinitions {
         if (json.has("standIn") && json.get("standIn").isJsonObject()) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, where); }
         if (shift == 0 || !json.has("spawnBox") || !json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) { return; }
         JsonArray box = json.getAsJsonArray("spawnBox");
+        boolean changed = false;
         for (int corner : new int[] {1, 4}) {
-            if (box.get(corner).isJsonPrimitive() && box.get(corner).getAsJsonPrimitive().isNumber()) { box.set(corner, new JsonPrimitive(box.get(corner).getAsInt() + shift)); }
+            if (box.get(corner).isJsonPrimitive() && box.get(corner).getAsJsonPrimitive().isNumber()) {
+                box.set(corner, new JsonPrimitive(box.get(corner).getAsInt() + shift));
+                changed = true;
+            }
         }
-        flatNote(where + " gives a spawnBox", box.toString(), pack);
+        if (changed) { flatNote(where + " gives a spawnBox", box.toString(), pack); }
     }
 
     static void movedPoint(JsonObject holder, String key, int shift, Ported pack, String where) {
@@ -146,7 +152,7 @@ final class ConvertDefinitions {
     }
 
     static void remap(JsonObject json, Ported pack, String where) {
-        String registry = Convert.text(json, "registry");
+        String registry = Json.text(json, "registry");
         if ("minecraft:block".equals(registry) || "minecraft:item".equals(registry)) { json.addProperty("registry", registry + "s"); }
         if (!json.has("mapping") || !json.get("mapping").isJsonObject()) { return; }
         boolean blocks = registry.startsWith("minecraft:block");
@@ -162,7 +168,7 @@ final class ConvertDefinitions {
         for (JsonElement element : json.getAsJsonArray("trades")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject trade = element.getAsJsonObject();
-            String profession = Ids.namespaced(Convert.text(trade, "profession"));
+            String profession = Ids.namespaced(Json.text(trade, "profession"));
             if (trade.has("career") || profession.endsWith(":")) { continue; }
             String[] legacy = PROFESSIONS.get(profession);
             if (legacy != null) {

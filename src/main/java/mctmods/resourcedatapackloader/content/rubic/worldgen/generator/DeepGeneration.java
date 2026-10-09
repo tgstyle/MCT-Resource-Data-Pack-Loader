@@ -1,16 +1,17 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.CubePrimer;
+import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -70,7 +71,7 @@ public class DeepGeneration {
         this.extensionBottom = extensionBottom;
         this.deepStone = parseState(scoped("deepStone", Config.worldgen.deepStone), "deepStone");
         this.sky = new DeepSky(this, world, offsetBlocks);
-        this.caveScope = parseScope(scoped("noiseCaves", Config.worldgen.noiseCaves));
+        this.caveScope = choice(scoped("noiseCaves", Config.worldgen.noiseCaves), "noiseCaves", SCOPES, 0);
         int salt = 100;
         for (String spec : Settings.forDimension(ContentControl.lines(ContentControl.TERRAIN, "oreVeins", Config.worldgen.oreVeins), dimension, !voidDimension, "oreVeins")) {
             Vein vein = Vein.parse(spec, seed, salt);
@@ -122,7 +123,7 @@ public class DeepGeneration {
 
     public void populateDeepCube(int cubeX, int cubeY, int cubeZ) {
         if (caveScope == 0) { return; }
-        Random random = new Random(seed ^ (cubeX * 341873128712L + cubeZ * 132897987541L + cubeY * 1052717L));
+        Random random = SeededRandom.at(seed, cubeX, cubeY, cubeZ);
         int x = Coords.cubeToMinBlock(cubeX) + random.nextInt(16) + 8;
         int y = Coords.cubeToMinBlock(cubeY) + 1 + random.nextInt(15);
         int z = Coords.cubeToMinBlock(cubeZ) + random.nextInt(16) + 8;
@@ -130,7 +131,7 @@ public class DeepGeneration {
         new WorldGenDungeons().generate(world, random, new BlockPos(x, y, z));
     }
 
-    private boolean dressesBand() { return deepStone != null || caveScope == 2 || !veins.isEmpty(); }
+    private boolean leavesBandBare() { return deepStone == null && caveScope != 2 && veins.isEmpty(); }
 
     private boolean sealsSeam() { return caveScope == 1 && genFloor < 0; }
 
@@ -162,7 +163,7 @@ public class DeepGeneration {
     }
 
     public void dressBandPrimer(ChunkPrimer primer, int cubeX, int cubeZ) {
-        if (!dressesBand()) {
+        if (leavesBandBare()) {
             if (sealsSeam()) { sealSeamFluids(primer, cubeX, cubeZ); }
             return;
         }
@@ -182,7 +183,7 @@ public class DeepGeneration {
                     if (!carvable(state)) { continue; }
                     double carved = lattice != null ? trilerp(lattice, x, y, z) : 1.0D;
                     if (carved <= CAVE_THRESHOLD) {
-                        boolean carve = tops[(z << 4) | x] - y >= 16 || mouthTerm(worldX, y, worldZ) <= 0.0D;
+                        boolean carve = tops[AddressTools.getLocalAddress(x, z)] - y >= 16 || mouthTerm(worldX, y, worldZ) <= 0.0D;
                         if (carve && y < 255 && primer.getBlockState(x, y + 1, z).getMaterial() == Material.WATER) { carve = false; }
                         if (carve) {
                             primer.setBlockState(x, y, z, fluidOrAir(worldX, y, worldZ, carved));
@@ -240,7 +241,7 @@ public class DeepGeneration {
     private void restoreEmptiedColumns(ChunkPrimer primer, int[] tops) {
         for (int z = 0; z < 16; z++) {
             for (int x = 0; x < 16; x++) {
-                int top = tops[(z << 4) | x];
+                int top = tops[AddressTools.getLocalAddress(x, z)];
                 if (top <= 0) { continue; }
                 boolean solid = false;
                 for (int y = top; y >= 0; y--) {
@@ -262,7 +263,7 @@ public class DeepGeneration {
                 for (int y = 255; y >= 0; y--) {
                     if (primer.getBlockState(x, y, z).getMaterial() != Material.AIR) { top = y; break; }
                 }
-                tops[(z << 4) | x] = top;
+                tops[AddressTools.getLocalAddress(x, z)] = top;
             }
         }
         return tops;
@@ -277,11 +278,15 @@ public class DeepGeneration {
 
     private double[][][] sampleLattice(int worldX, int genY, int worldZ) { return sampleLattice(worldX, genY, worldZ, Cube.SIZE / 8 + 1); }
 
-    double[][][] sampleLattice(int worldX, int genY, int worldZ, int ySteps) {
+    double[][][] sampleLattice(int worldX, int genY, int worldZ, int ySteps) { return lattice(worldX, genY, worldZ, ySteps, (x, y, z) -> density(x, y, z, 0.0D)); }
+
+    interface Sampler { double at(int x, int y, int z); }
+
+    static double[][][] lattice(int worldX, int genY, int worldZ, int ySteps, Sampler sampler) {
         double[][][] lattice = new double[5][ySteps][5];
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < ySteps; y++) {
-                for (int z = 0; z < 5; z++) { lattice[x][y][z] = density(worldX + (x << 2), genY + (y << 3), worldZ + (z << 2), 0.0D); }
+                for (int z = 0; z < 5; z++) { lattice[x][y][z] = sampler.at(worldX + (x << 2), genY + (y << 3), worldZ + (z << 2)); }
             }
         }
         return lattice;
@@ -292,7 +297,7 @@ public class DeepGeneration {
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < 33; y++) {
                 for (int z = 0; z < 5; z++) {
-                    int top = tops[(Math.min(z << 2, 15) << 4) | Math.min(x << 2, 15)];
+                    int top = tops[AddressTools.getLocalAddress(Math.min(x << 2, 15), Math.min(z << 2, 15))];
                     double fade = MathHelper.clamp(0.5D - 0.01D * (top - (y << 3)), 0.0D, 0.5D);
                     lattice[x][y][z] = density(worldX + (x << 2), y << 3, worldZ + (z << 2), fade);
                 }
@@ -371,10 +376,9 @@ public class DeepGeneration {
         return base;
     }
 
-    private float hash01(int x, int y, int z, int salt) { return (MathUtil.scramble(seed ^ (salt * 0x9E3779B97F4A7C15L), x, y, z) >>> 40) / (float) (1 << 24); }
+    private float hash01(int x, int y, int z, int salt) { return (MathUtil.scramble(seed ^ (salt * MathUtil.GOLDEN_GAMMA), x, y, z) >>> 40) / (float) (1 << 24); }
 
     private static double lerp(double t, double a, double b) { return a + t * (b - a); }
-
 
     public static IBlockState parseState(String name, String key) {
         if (name == null || name.trim().isEmpty()) { return null; }
@@ -385,25 +389,26 @@ public class DeepGeneration {
             try {
                 meta = Integer.parseInt(trimmed.substring(at + 1));
             } catch (NumberFormatException bad) {
-                Rubic.LOGGER.error("The {} block {} has a meta that is not a number, so it is not used", key, name);
+                ContentLog.LOGGER.error("The {} block {} has a meta that is not a number, so it is not used", key, name);
                 return null;
             }
             trimmed = trimmed.substring(0, at);
         }
         Block block = Block.getBlockFromName(trimmed);
         if (block == null) {
-            Rubic.LOGGER.error("The {} block {} is not a known block, so it is not used", key, name);
+            ContentLog.LOGGER.error("The {} block {} is not a known block, so it is not used", key, name);
             return null;
         }
         return meta == 0 ? block.getDefaultState() : Block.getStateById(Block.getIdFromBlock(block) + (meta << 12));
     }
 
-    private static int parseScope(String value) {
-        if (value == null || value.trim().isEmpty() || value.trim().equalsIgnoreCase("off")) { return 0; }
-        if (value.trim().equalsIgnoreCase("deep")) { return 1; }
-        if (value.trim().equalsIgnoreCase("world")) { return 2; }
-        Rubic.LOGGER.error("noiseCaves is {}, which is not off, deep or world, so the caves stay off", value);
-        return 0;
+    static int choice(String value, String key, String[] names, int fallback) {
+        if (value == null || value.trim().isEmpty()) { return fallback; }
+        for (int i = 0; i < names.length; i++) {
+            if (value.trim().equalsIgnoreCase(names[i])) { return i; }
+        }
+        ContentLog.LOGGER.error("{} is {}, which is not one of {}, so {} is used", key, value, String.join(", ", names), names[fallback]);
+        return fallback;
     }
 
     private static class Vein {
@@ -432,7 +437,7 @@ public class DeepGeneration {
         static Vein parse(String spec, long seed, int salt) {
             String[] parts = spec.split(",");
             if (parts.length != 5) {
-                Rubic.LOGGER.error("An oreVeins entry needs ore,extra,filler,lowest,highest but {} has {} part(s), so it is skipped", spec, parts.length);
+                ContentLog.LOGGER.error("An oreVeins entry needs ore,extra,filler,lowest,highest but {} has {} part(s), so it is skipped", spec, parts.length);
                 return null;
             }
             IBlockState ore = parseState(parts[0], "oreVeins ore");
@@ -442,7 +447,7 @@ public class DeepGeneration {
             try {
                 return new Vein(ore, extra, filler, Integer.parseInt(parts[3].trim()), Integer.parseInt(parts[4].trim()), seed, salt);
             } catch (NumberFormatException bad) {
-                Rubic.LOGGER.error("An oreVeins entry has heights {} and {}, which are not numbers, so it is skipped", parts[3], parts[4]);
+                ContentLog.LOGGER.error("An oreVeins entry has heights {} and {}, which are not numbers, so it is skipped", parts[3], parts[4]);
                 return null;
             }
         }
@@ -460,7 +465,7 @@ public class DeepGeneration {
             this.freqY = 1.0D / waveY;
             this.octaves = octaves;
             this.scale = scale;
-            Random random = new Random(seed ^ (salt * 0x9E3779B97F4A7C15L));
+            Random random = new Random(seed ^ (salt * MathUtil.GOLDEN_GAMMA));
             int[] source = new int[256];
             for (int index = 0; index < 256; index++) { source[index] = index; }
             for (int index = 255; index > 0; index--) {

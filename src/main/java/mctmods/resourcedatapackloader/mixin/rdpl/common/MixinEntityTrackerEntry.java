@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow @Final private Entity trackedEntity;
     @Unique private int rdpl$maxVertRange;
 
-    @Inject(method = "isVisibleTo", cancellable = true, at = @At("RETURN")) private void isVisibleToRubic(EntityPlayerMP playerMP, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "isVisibleTo", cancellable = true, at = @At("RETURN")) private void rdpl$isVisibleToRubic(EntityPlayerMP playerMP, CallbackInfoReturnable<Boolean> cir) {
         boolean ret = cir.getReturnValue();
         if (ret && ((IRubicWorld) playerMP.world).rdpl$isRubicWorld()) {
             int rangeY = Math.min(this.range, this.rdpl$maxVertRange);
@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         }
     }
 
-    @Inject(method = "isPlayerWatchingThisChunk", cancellable = true, at = @At("HEAD")) private void isPlayerWatchingThisChunkRubic(EntityPlayerMP playerMP, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "isPlayerWatchingThisChunk", cancellable = true, at = @At("HEAD")) private void rdpl$isPlayerWatchingThisChunkRubic(EntityPlayerMP playerMP, CallbackInfoReturnable<Boolean> cir) {
         if (!((IRubicWorld) playerMP.world).rdpl$isRubicWorld()) { return; }
         PlayerChunkMap map = playerMP.getServerWorld().getPlayerChunkMap();
         if (!(map instanceof PlayerCubeMap)) { return; }

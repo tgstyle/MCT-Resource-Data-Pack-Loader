@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicTicketInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.chunkloader.RubicChunkManager;
+import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicTicketInternal;
 
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.ArrayListMultimap;
@@ -40,20 +40,14 @@ import java.util.UUID;
 
 @Mixin(ForgeChunkManager.class) public abstract class MixinForgeChunkManager {
     @Shadow(remap = false) private static Map<World, Multimap<String, ForgeChunkManager.Ticket>> tickets;
-
     @Shadow(remap = false) private static Map<World, ImmutableSetMultimap<ChunkPos, ForgeChunkManager.Ticket>> forcedChunks;
-
     @Shadow(remap = false) private static Map<String, ForgeChunkManager.LoadingCallback> callbacks;
-
     @Shadow(remap = false) private static BiMap<UUID, ForgeChunkManager.Ticket> pendingEntities;
+    @Shadow(remap = false) private static int dormantChunkCacheSize;
+    @Shadow(remap = false) private static Map<Object, Object> dormantChunkCache;
+    @Shadow(remap = false) private static SetMultimap<String, ForgeChunkManager.Ticket> playerTickets;
 
     @Shadow(remap = false) public static int getMaxTicketLengthFor(String modId) { throw new Error("WTF!?"); }
-
-    @Shadow(remap = false) private static int dormantChunkCacheSize;
-
-    @Shadow(remap = false) private static Map<Object, Object> dormantChunkCache;
-
-    @Shadow(remap = false) private static SetMultimap<String, ForgeChunkManager.Ticket> playerTickets;
 
     /**
      * @author tgstyle
@@ -72,9 +66,8 @@ import java.util.UUID;
             ArrayListMultimap<String, ForgeChunkManager.Ticket> loadedTickets = ArrayListMultimap.create();
             Map<String, ListMultimap<String, ForgeChunkManager.Ticket>> playerLoadedTickets = Maps.newHashMap();
             NBTTagCompound forcedChunkData;
-            try {
-                forcedChunkData = CompressedStreamTools.read(chunkLoaderData);
-            } catch (IOException e) {
+            try { forcedChunkData = CompressedStreamTools.read(chunkLoaderData); }
+            catch (IOException e) {
                 FMLLog.log.warn("Unable to read forced chunk data at {} - it will be ignored", chunkLoaderData.getAbsolutePath(), e);
                 return;
             }
@@ -153,8 +146,7 @@ import java.util.UUID;
                 if (loadingCallback == null) { continue; }
                 ListMultimap<String, ForgeChunkManager.Ticket> tickets = playerLoadedTickets.get(modId);
                 if (loadingCallback instanceof ForgeChunkManager.PlayerOrderedLoadingCallback) {
-                    ForgeChunkManager.PlayerOrderedLoadingCallback orderedLoadingCallback =
-                            (ForgeChunkManager.PlayerOrderedLoadingCallback) loadingCallback;
+                    ForgeChunkManager.PlayerOrderedLoadingCallback orderedLoadingCallback = (ForgeChunkManager.PlayerOrderedLoadingCallback) loadingCallback;
                     tickets = orderedLoadingCallback.playerTicketsLoaded(ImmutableListMultimap.copyOf(tickets), world);
                     playerTickets.putAll(tickets);
                 }
@@ -164,12 +156,5 @@ import java.util.UUID;
         }
     }
 
-    @Inject(
-            method = "saveWorld",
-            at = @At(value = "CONSTANT", args = "stringValue=ChunkListDepth"),
-            remap = false
-    )
-    private static void onSaveTicket(World world, CallbackInfo ci,
-                                     @Local(name = "tick") ForgeChunkManager.Ticket tick,
-                                     @Local(name = "ticket") NBTTagCompound ticket) { RubicChunkManager.onSerializeTicket(ticket, tick); }
+    @Inject(method = "saveWorld", at = @At(value = "CONSTANT", args = "stringValue=ChunkListDepth"), remap = false) private static void rdpl$onSaveTicket(World world, CallbackInfo ci, @Local(name = "tick") ForgeChunkManager.Ticket tick, @Local(name = "ticket") NBTTagCompound ticket) { RubicChunkManager.onSerializeTicket(ticket, tick); }
 }

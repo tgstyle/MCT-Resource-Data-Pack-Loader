@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = BlurredValueField.class, remap = false) public abstract class MixinBlurredValueField {
     @Unique private Long2DoubleOpenHashMap rdpl$known;
 
-    @Inject(method = "getValue([I)D", at = @At("HEAD"), cancellable = true, remap = false)
-    private void rdpl$remembered(int[] position, CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getValue([I)D", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$remembered(int[] position, CallbackInfoReturnable<Double> cir) {
         if (position.length != 3) { return; }
         if (rdpl$known == null) {
             rdpl$known = new Long2DoubleOpenHashMap();
@@ -24,14 +23,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (!Double.isNaN(held)) { cir.setReturnValue(held); }
     }
 
-    @Inject(method = "getValue([I)D", at = @At("RETURN"), remap = false)
-    private void rdpl$learned(int[] position, CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getValue([I)D", at = @At("RETURN"), remap = false) private void rdpl$learned(int[] position, CallbackInfoReturnable<Double> cir) {
         if (position.length != 3 || rdpl$known == null) { return; }
         rdpl$known.put(rdpl$key(position), cir.getReturnValueD());
     }
 
-    @Inject(method = "addValue(Livorius/ivtoolkit/random/BlurredValueField$Value;)Z", at = @At("HEAD"), remap = false)
-    private void rdpl$forgetOnAdd(BlurredValueField.Value value, CallbackInfoReturnable<Boolean> cir) { rdpl$known = null; }
+    @Inject(method = "addValue(Livorius/ivtoolkit/random/BlurredValueField$Value;)Z", at = @At("HEAD"), remap = false) private void rdpl$forgetOnAdd(BlurredValueField.Value value, CallbackInfoReturnable<Boolean> cir) { rdpl$known = null; }
 
     @Inject(method = "readFromNBT", at = @At("RETURN"), remap = false) private void rdpl$forgetOnRead(NBTTagCompound compound, CallbackInfo ci) { rdpl$known = null; }
 

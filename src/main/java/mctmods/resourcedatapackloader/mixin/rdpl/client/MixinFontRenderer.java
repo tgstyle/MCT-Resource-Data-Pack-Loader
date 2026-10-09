@@ -38,8 +38,7 @@ import javax.annotation.Nullable;
 
     @Shadow(remap = false) protected abstract void bindTexture(ResourceLocation location);
 
-    @Inject(method = "onResourceManagerReload", at = @At("HEAD"))
-    private void rdpl$pickSheets(IResourceManager resourceManager, CallbackInfo info) {
+    @Inject(method = "onResourceManagerReload", at = @At("HEAD")) private void rdpl$pickSheets(IResourceManager resourceManager, CallbackInfo info) {
         rdpl$sheet = GameFont.sheet(resourceManager, locationFontTexture);
         ResourceLocation base = GameFont.base(rdpl$sheet);
         boolean cipher = !base.equals(rdpl$sheet);
@@ -51,19 +50,16 @@ import javax.annotation.Nullable;
         rdpl$fillItalic = cipher ? GameFont.styled(resourceManager, base, "_italic") : null;
     }
 
-    @Redirect(method = {"readFontTexture", "renderDefaultChar"}, at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/FontRenderer;locationFontTexture:Lnet/minecraft/util/ResourceLocation;", opcode = Opcodes.GETFIELD))
-    private ResourceLocation rdpl$drawnSheet(FontRenderer self) { return rdpl$sheet == null ? locationFontTexture : rdpl$sheet; }
+    @Redirect(method = {"readFontTexture", "renderDefaultChar"}, at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/FontRenderer;locationFontTexture:Lnet/minecraft/util/ResourceLocation;", opcode = Opcodes.GETFIELD)) private ResourceLocation rdpl$drawnSheet(FontRenderer self) { return rdpl$sheet == null ? locationFontTexture : rdpl$sheet; }
 
-    @Inject(method = "readFontTexture", at = @At("TAIL"))
-    private void rdpl$fillWidths(CallbackInfo info) {
+    @Inject(method = "readFontTexture", at = @At("TAIL")) private void rdpl$fillWidths(CallbackInfo info) {
         if (rdpl$own == null || rdpl$fill == null) { return; }
         for (int cell = 0; cell < GameFont.CELLS; cell++) {
             if (cell != ' ' && rdpl$own.width(cell) == 0 && rdpl$fill.width(cell) > 0) { charWidth[cell] = rdpl$fill.width(cell); }
         }
     }
 
-    @Inject(method = "renderChar", at = @At("HEAD"), cancellable = true)
-    private void rdpl$drawPage(char ch, boolean italic, CallbackInfoReturnable<Float> info) {
+    @Inject(method = "renderChar", at = @At("HEAD"), cancellable = true) private void rdpl$drawPage(char ch, boolean italic, CallbackInfoReturnable<Float> info) {
         if (rdpl$drewBold) {
             rdpl$drewBold = false;
             info.setReturnValue(0.0F);
@@ -79,8 +75,7 @@ import javax.annotation.Nullable;
         info.setReturnValue((float) width);
     }
 
-    @Inject(method = "renderDefaultChar", at = @At("HEAD"), cancellable = true)
-    private void rdpl$drawStyled(int ch, boolean italic, CallbackInfoReturnable<Float> info) {
+    @Inject(method = "renderDefaultChar", at = @At("HEAD"), cancellable = true) private void rdpl$drawStyled(int ch, boolean italic, CallbackInfoReturnable<Float> info) {
         GameFont.Face face = rdpl$styled(rdpl$bold, rdpl$italic, ch);
         if (face != null) {
             rdpl$quad(face.sheet, ch, face.width(ch), italic && face == rdpl$bold);
@@ -94,14 +89,12 @@ import javax.annotation.Nullable;
         info.setReturnValue((float) charWidth[ch]);
     }
 
-    @Inject(method = "getCharWidth", at = @At("HEAD"), cancellable = true)
-    private void rdpl$pageWidth(char character, CallbackInfoReturnable<Integer> info) {
+    @Inject(method = "getCharWidth", at = @At("HEAD"), cancellable = true) private void rdpl$pageWidth(char character, CallbackInfoReturnable<Integer> info) {
         int width = rdpl$width(character);
         if (width > 0) { info.setReturnValue(width); }
     }
 
-    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE", target = "Ljava/lang/String;indexOf(I)I"))
-    private int rdpl$sheetIndex(String chars, int ch) {
+    @Redirect(method = "renderStringAtPos", at = @At(value = "INVOKE", target = "Ljava/lang/String;indexOf(I)I")) private int rdpl$sheetIndex(String chars, int ch) {
         int at = chars.indexOf(ch);
         return at < 0 && chars.length() > GameFont.CELLS / 2 && !randomStyle && rdpl$width(ch) > 0 ? 0 : at;
     }

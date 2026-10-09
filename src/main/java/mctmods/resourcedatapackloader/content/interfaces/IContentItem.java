@@ -11,7 +11,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public interface IContentItem {
-
     static void potionTooltip(@Nullable ItemVariant value, List<String> tooltip) {
         if (value == null) { return; }
         PotionEffect effect = value.getResolvedPotion();

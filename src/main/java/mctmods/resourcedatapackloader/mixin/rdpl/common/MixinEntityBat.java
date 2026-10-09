@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.entity.passive.EntityAmbientCreature;
 import net.minecraft.entity.passive.EntityBat;
@@ -12,7 +12,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(EntityBat.class) public class MixinEntityBat extends EntityAmbientCreature {
     public MixinEntityBat(World worldIn) { super(worldIn); }
 
-    @ModifyConstant(method = "updateAITasks", constant = @Constant(intValue = 1, ordinal = 0)) private int updateAITasks_getMinSpawnPositionY(int originalY) {
-        return ((IRubicWorld) this.world).rdpl$getMinHeight() + originalY;
-    }
+    @ModifyConstant(method = "updateAITasks", constant = @Constant(intValue = 1, ordinal = 0)) private int rdpl$updateAITasks_getMinSpawnPositionY(int originalY) { return GenHeights.floor(this.world, originalY); }
 }

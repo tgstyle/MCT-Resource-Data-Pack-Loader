@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.util.EnumFacing;
@@ -63,10 +64,10 @@ public final class CityCulDeSacs {
                         int spot = end + dir * (out + r + 1);
                         int discX = alongX ? spot : center;
                         int discZ = alongX ? center : spot;
-                        if (!clearFor(world, held, piece, discX, discZ, r)) { continue; }
+                        if (blocked(world, held, piece, discX, discZ, r)) { continue; }
                         yielding = yielding(world, held, piece, court(box, alongX, end, dir, outward, center, r, out));
                         if (yielding == null) { continue; }
-                        if (!seated(world, piece, alongX, end, discX, discZ, r)) {
+                        if (steep(world, piece, alongX, end, discX, discZ, r)) {
                             steep = true;
                             continue;
                         }
@@ -97,21 +98,15 @@ public final class CityCulDeSacs {
                 }
                 if (!dry) { continue; }
                 for (StructureComponent plot : yielding) { makeWay(world, held, plot, bulb); }
-                EnumFacing facing = alongX ? (outward ? EnumFacing.EAST : EnumFacing.WEST) : (outward ? EnumFacing.SOUTH : EnumFacing.NORTH);
+                EnumFacing facing = Facings.along(alongX, outward);
                 StructureVillagePieces.Path bulbPiece = new StructureVillagePieces.Path(startPiece, 0, rand, bulb, facing);
                 components.add(bulbPiece);
-                CityGrowth.laying = true;
-                CityGrowth.bulbLaying = true;
-                try {
+                CityGrowth.laying(true, () -> {
                     if (!CityLayout.drawn()) {
                         bulbPiece.buildComponent(startPiece, components, rand);
                         CityGrowth.drain(startPiece, components, rand);
                     }
-                }
-                finally {
-                    CityGrowth.laying = false;
-                    CityGrowth.bulbLaying = false;
-                }
+                });
                 bulbs++;
                 ContentLog.LOGGER.debug("The dead end at {}, {} rolled a cul-de-sac, {} across at {}, {}", endX, endZ, wide, bulb.minX, bulb.minZ);
             }
@@ -169,7 +164,7 @@ public final class CityCulDeSacs {
         for (int[] push : pushes) {
             StructureBoundingBox tried = new StructureBoundingBox(box);
             tried.offset(push[0], 0, push[1]);
-            if (!standsFree(world, held, plot, tried)) { continue; }
+            if (overlaps(world, held, plot, tried)) { continue; }
             box.offset(push[0], 0, push[1]);
             ContentLog.LOGGER.debug("{} at {}, {} slides {}, {} out of the cul-de-sac at {}, {}", plot.getClass().getSimpleName(), box.minX, box.minZ, push[0], push[1], bulb.minX, bulb.minZ);
             return;
@@ -178,14 +173,14 @@ public final class CityCulDeSacs {
         ContentLog.LOGGER.debug("{} at {}, {} makes way for the cul-de-sac at {}, {}, having no room to slide out of it", plot.getClass().getSimpleName(), box.minX, box.minZ, bulb.minX, bulb.minZ);
     }
 
-    private static boolean standsFree(World world, StructureStart held, StructureComponent plot, StructureBoundingBox tried) {
+    private static boolean overlaps(World world, StructureStart held, StructureComponent plot, StructureBoundingBox tried) {
         for (StructureComponent other : held.getComponents()) {
-            if (other != plot && !BeardRails.buriedUnder(other, tried) && other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return false; }
+            if (other != plot && !BeardRails.buriedUnder(other, tried) && other.getBoundingBox().intersectsWith(tried.minX, tried.minZ, tried.maxX, tried.maxZ)) { return true; }
         }
-        return !ContentStructureSearch.anyOtherOver(world, held.getComponents(), tried);
+        return ContentStructureSearch.anyOtherOver(world, held.getComponents(), tried);
     }
 
-    private static boolean seated(World world, StructureComponent road, boolean alongX, int end, int discX, int discZ, int radius) {
+    private static boolean steep(World world, StructureComponent road, boolean alongX, int end, int discX, int discZ, int radius) {
         BeardRoads.Grade grade = BeardRoadsGrade.chainGrade(world, road, alongX);
         int level = grade == null ? Integer.MIN_VALUE : grade.at(end);
         if (level == Integer.MIN_VALUE) { level = BeardSurface.surfaceAt(world, discX, discZ); }
@@ -194,13 +189,13 @@ public final class CityCulDeSacs {
             for (int x = discX - reach; x <= discX + reach; x += 2) {
                 if ((x - discX) * (x - discX) + (z - discZ) * (z - discZ) > reach * reach + reach) { continue; }
                 int ground = BeardSurface.surfaceAt(world, x, z);
-                if (level - ground > BeardGrade.CAP || ground - level > DIG) { return false; }
+                if (level - ground > BeardGrade.CAP || ground - level > DIG) { return true; }
             }
         }
-        return true;
+        return false;
     }
 
-    private static boolean clearFor(World world, StructureStart held, StructureComponent piece, int discX, int discZ, int radius) { return !ContentStructureSearch.anyVillage(world, held, village -> nearDisc(village, piece, discX, discZ, radius)); }
+    private static boolean blocked(World world, StructureStart held, StructureComponent piece, int discX, int discZ, int radius) { return ContentStructureSearch.anyVillage(world, held, village -> nearDisc(village, piece, discX, discZ, radius)); }
 
     private static boolean nearDisc(StructureStart village, StructureComponent piece, int discX, int discZ, int radius) {
         for (StructureComponent other : village.getComponents()) {

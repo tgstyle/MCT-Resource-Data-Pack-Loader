@@ -12,11 +12,17 @@ import static mctmods.resourcedatapackloader.command.CommandShared.biomeHere;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeList;
 import static mctmods.resourcedatapackloader.command.CommandShared.biomeFind;
 import static mctmods.resourcedatapackloader.command.CommandShared.findBiome;
-import net.minecraft.entity.player.EntityPlayer;
-import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentDice;
+import mctmods.resourcedatapackloader.content.ContentRoundReset;
+import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.RoundSay;
+import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GateDef;
+import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
@@ -28,6 +34,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreVein;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentReset;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -41,6 +48,7 @@ import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.rcon.RConConsoleSource;
 import net.minecraft.server.MinecraftServer;
@@ -49,6 +57,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.DimensionManager;
 import java.util.ArrayList;
@@ -101,10 +110,16 @@ public class ServerCommands extends CommandBase {
             String[] parts = Settings.pair(entry, key, "name=level");
             if (parts == null) { continue; }
             if (!parts[0].trim().equalsIgnoreCase(name)) { continue; }
-            try { return clamp(Integer.parseInt(parts[1].trim())); }
-            catch (NumberFormatException ex) { ContentLog.LOGGER.error("{} entry '{}' has no number after the =, ignoring it", key, entry); }
+            int parsed = parsedLevel(key, entry, parts);
+            if (parsed >= 0) { return parsed; }
         }
         return fallback;
+    }
+
+    private static int parsedLevel(String key, String entry, String[] parts) {
+        Integer parsed = Settings.clamped(parts[1], 0, OPERATOR + 1);
+        if (parsed == null) { ContentLog.LOGGER.error("{} entry '{}' has no number after the =, ignoring it", key, entry); }
+        return parsed == null ? -1 : parsed;
     }
 
     private static int neededFor(String place, String key, int fallback) { return listedLevel("gotoPlaceLevels", Config.commands.gotoPlaceLevels, place, level(key, fallback)); }
@@ -117,8 +132,8 @@ public class ServerCommands extends CommandBase {
         for (String entry : ContentControl.list(ContentControl.COMMANDS, "gotoPlaceLevels", Config.commands.gotoPlaceLevels)) {
             String[] parts = Settings.pair(entry, "gotoPlaceLevels", "name=level");
             if (parts == null) { continue; }
-            try { lowest = Math.min(lowest, clamp(Integer.parseInt(parts[1]))); }
-            catch (NumberFormatException ignored) { }
+            int parsed = parsedLevel("gotoPlaceLevels", entry, parts);
+            if (parsed >= 0) { lowest = Math.min(lowest, parsed); }
         }
         return lowest;
     }
@@ -134,7 +149,7 @@ public class ServerCommands extends CommandBase {
         List<String> open = new ArrayList<>();
         open.add("intro");
         if (ContentTeams.any()) { open.add("team"); }
-        if (mctmods.resourcedatapackloader.content.ContentScoring.any()) { open.add("round"); }
+        if (ContentScoring.any()) { open.add("round"); }
         if (sender.canUseCommand(lowestGotoLevel(), getName())) { open.add("goto"); }
         if (sender.canUseCommand(GameCommand.lowest(), getName())) { open.add("game"); }
         return open;
@@ -148,7 +163,7 @@ public class ServerCommands extends CommandBase {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
         if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
-        if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, mctmods.resourcedatapackloader.content.card.CardRules.keys()); }
+        if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 3 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 3 && "gate".equals(args[0]) && !"list".equals(args[1])) { return getListOfStringsMatchingLastWord(args, server.getOnlinePlayerNames()); }
         if (args.length == 2 && "pregen".equals(args[0])) { return getListOfStringsMatchingLastWord(args, PREGEN_ACTIONS); }
@@ -180,10 +195,12 @@ public class ServerCommands extends CommandBase {
         ContentLog.LOGGER.debug("{} ran /{} {}", sender.getName(), getName(), String.join(" ", args));
         if (args.length == 0) { throw new WrongUsageException(getUsage(sender)); }
         if ("goto".equals(args[0])) {
-            if (args.length == 2) { allowGoto(sender, neededFor(args[1], "gotoLevel", Config.commands.gotoLevel)); }
-            else if (args.length == 3 && "next".equals(args[2])) { allowGoto(sender, neededFor(args[1], "gotoNextLevel", Config.commands.gotoNextLevel)); }
-            else if (args.length == 3 && "back".equals(args[2])) { allowGoto(sender, neededFor(args[1], "gotoBackLevel", Config.commands.gotoBackLevel)); }
-            else { throw new WrongUsageException(getUsage(sender)); }
+            if (args.length < 2) { throw new WrongUsageException(getUsage(sender)); }
+            String place = placeOf(args);
+            String direction = directionOf(args);
+            if ("next".equals(direction)) { allowGoto(sender, neededFor(place, "gotoNextLevel", Config.commands.gotoNextLevel)); }
+            else if ("back".equals(direction)) { allowGoto(sender, neededFor(place, "gotoBackLevel", Config.commands.gotoBackLevel)); }
+            else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
         }
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
@@ -208,13 +225,25 @@ public class ServerCommands extends CommandBase {
         else if ("pregen".equals(args[0])) { pregen(sender, args); }
         else if (args.length == 1 && "intro".equals(args[0])) { intro(sender); }
         else if (args.length == 2 && "config".equals(args[0])) { config(sender, args[1], getUsage(sender), "rdpl.command.config.servernote"); }
-        else if (args.length == 2 && "goto".equals(args[0])) { goTo(sender, args[1], false); }
+        else if ("goto".equals(args[0])) { goWhere(sender, args); }
         else if ((args.length == 2 || args.length == 3) && "vein".equals(args[0])) { vein(sender, args[1], args.length == 3 ? parseInt(args[2], 1, 64) : 8); }
-        else if (args.length == 3 && "goto".equals(args[0]) && "next".equals(args[2])) { goTo(sender, args[1], true); }
-        else if (args.length == 3 && "goto".equals(args[0]) && "back".equals(args[2])) { goBack(sender, args[1]); }
         else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else { throw new WrongUsageException(getUsage(sender)); }
+    }
+
+    private static String directionOf(String[] args) {
+        String last = args[args.length - 1];
+        return args.length > 2 && ("next".equals(last) || "back".equals(last)) ? last : "";
+    }
+
+    private static String placeOf(String[] args) { return String.join(" ", Arrays.copyOfRange(args, 1, args.length - (directionOf(args).isEmpty() ? 0 : 1))); }
+
+    private void goWhere(ICommandSender sender, String[] args) throws CommandException {
+        String place = placeOf(args);
+        String direction = directionOf(args);
+        if ("back".equals(direction)) { goBack(sender, place); }
+        else { goTo(sender, place, "next".equals(direction)); }
     }
 
     private void goTo(ICommandSender sender, String asked, boolean next) throws CommandException {
@@ -274,109 +303,108 @@ public class ServerCommands extends CommandBase {
     }
 
     private void reset(MinecraftServer server, ICommandSender sender) {
-        int swept = mctmods.resourcedatapackloader.content.worldgen.ContentReset.run(server);
-        send(sender, TextFormatting.GREEN, "The map was reset, " + swept + " entity(s) swept");
+        int swept = ContentReset.run(server);
+        send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.reset", swept));
     }
 
     private void round(MinecraftServer server, ICommandSender sender) {
         if (!(sender instanceof EntityPlayer)) {
-            send(sender, TextFormatting.RED, "Only a player starts a round");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.round.start.playeronly"));
             return;
         }
-        String said = mctmods.resourcedatapackloader.content.ContentScoring.start(server, (EntityPlayer) sender, sender.canUseCommand(OPERATOR, getName()));
-        send(sender, "The round starts".equals(said) ? TextFormatting.GREEN : TextFormatting.RED, said);
+        say(sender, ContentScoring.start(server, (EntityPlayer) sender, sender.canUseCommand(OPERATOR, getName())));
     }
 
     private void roundReset(MinecraftServer server, ICommandSender sender) {
-        EntityPlayer who = sender instanceof EntityPlayer ? (EntityPlayer) sender : null;
-        String said = mctmods.resourcedatapackloader.content.ContentRoundReset.call(server, sender.getName(), who, sender.canUseCommand(OPERATOR, getName()));
-        send(sender, "The round is reset".equals(said) || "Your vote to reset the round is called".equals(said) ? TextFormatting.GREEN : TextFormatting.RED, said);
+        EntityPlayer who = CommandShared.viewer(sender);
+        say(sender, ContentRoundReset.call(server, sender.getName(), who, sender.canUseCommand(OPERATOR, getName())));
     }
 
     private void roundVote(MinecraftServer server, ICommandSender sender, boolean yes) {
         if (!(sender instanceof EntityPlayer)) {
-            send(sender, TextFormatting.RED, "Only a player votes");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.round.vote.playeronly"));
             return;
         }
-        String said = mctmods.resourcedatapackloader.content.ContentRoundReset.vote(server, (EntityPlayer) sender, yes);
-        send(sender, said.startsWith("You voted") ? TextFormatting.GREEN : TextFormatting.RED, said);
+        say(sender, ContentRoundReset.vote(server, (EntityPlayer) sender, yes));
     }
+
+    private static void say(ICommandSender sender, RoundSay said) { send(sender, said.good ? TextFormatting.GREEN : TextFormatting.RED, Lang.tr(sender, said.key, said.args)); }
 
     private void team(ICommandSender sender, String[] args) throws CommandException {
         if (!ContentTeams.any()) {
-            send(sender, TextFormatting.RED, "No pack has fielded any team");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.none"));
             return;
         }
         if (args.length == 1 || "list".equals(args[1])) {
-            for (mctmods.resourcedatapackloader.content.def.TeamDef def : ContentTeams.all().values()) {
-                String standing = def.joinable ? "" : " (closed)";
+            for (TeamDef def : ContentTeams.all().values()) {
+                String standing = def.joinable ? "" : Lang.tr(sender, "rdpl.team.closed");
                 String lead = ContentTeams.leadOf(sender.getEntityWorld(), def);
-                if (lead != null) { standing = standing + " - lead " + lead; }
+                if (lead != null) { standing = standing + Lang.tr(sender, "rdpl.team.leadnote", lead); }
                 send(sender, def.color, def.name + " - " + def.displayName + standing);
             }
-            EntityPlayer asking = sender instanceof EntityPlayer ? (EntityPlayer) sender : null;
+            EntityPlayer asking = CommandShared.viewer(sender);
             String on = asking == null ? null : ContentTeams.standingOf(asking);
-            send(sender, TextFormatting.GRAY, on == null ? "You are on no team" : "You are on " + on);
+            send(sender, TextFormatting.GRAY, on == null ? Lang.tr(sender, "rdpl.team.onnone") : Lang.tr(sender, "rdpl.team.on", on));
             return;
         }
-        EntityPlayer player = sender instanceof EntityPlayer ? (EntityPlayer) sender : null;
+        EntityPlayer player = CommandShared.viewer(sender);
         if (player == null) {
-            send(sender, TextFormatting.RED, "Only a player can join or leave a team");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.playeronly"));
             return;
         }
-        mctmods.resourcedatapackloader.content.def.TeamDef mine = null;
+        TeamDef mine = null;
         String standing = ContentTeams.standingOf(player);
         if (standing != null) { mine = ContentTeams.named(standing); }
         if ("vote".equals(args[1])) {
-            if (mine == null) { send(sender, TextFormatting.RED, "You are on no team, so there is nobody to vote for"); return; }
+            if (mine == null) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.vote.noteam")); return; }
             if (args.length < 3) { throw new WrongUsageException(getUsage(sender)); }
-            if (!"vote".equals(mine.lead)) { send(sender, TextFormatting.RED, mine.displayName + " does not choose its lead by a vote"); return; }
+            if (!"vote".equals(mine.lead)) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.vote.novote", mine.displayName)); return; }
             boolean stood = ContentTeams.standsFor(player.world, player.getName(), args[2], mine);
             send(sender, stood ? mine.color : TextFormatting.RED,
-                    stood ? "You voted for " + args[2] : args[2] + " is not on your team");
+                    stood ? Lang.tr(sender, "rdpl.team.vote.cast", args[2]) : Lang.tr(sender, "rdpl.team.vote.notmember", args[2]));
             if (stood) {
                 String lead = ContentTeams.leadOf(player.world, mine);
-                send(sender, TextFormatting.GRAY, lead == null ? "The vote is tied, so nobody leads" : lead + " leads " + mine.displayName);
+                send(sender, TextFormatting.GRAY, lead == null ? Lang.tr(sender, "rdpl.team.vote.tied") : Lang.tr(sender, "rdpl.team.vote.leads", lead, mine.displayName));
             }
             return;
         }
         if ("claim".equals(args[1])) {
-            if (mine == null) { send(sender, TextFormatting.RED, "You are on no team, so there is nothing to claim"); return; }
-            if (!"claim".equals(mine.lead)) { send(sender, TextFormatting.RED, mine.displayName + " does not let its lead be claimed"); return; }
+            if (mine == null) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.claim.noteam")); return; }
+            if (!"claim".equals(mine.lead)) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.claim.noclaim", mine.displayName)); return; }
             boolean took = ContentTeams.claim(player.world, player.getName(), mine);
             send(sender, took ? mine.color : TextFormatting.RED,
-                    took ? mine.leadSays.replace("{side}", mine.displayName) : ContentTeams.holding(mine) + " already leads " + mine.displayName);
+                    took ? mine.leadSays.replace("{side}", mine.displayName) : Lang.tr(sender, "rdpl.team.claim.held", ContentTeams.holding(mine), mine.displayName));
             return;
         }
-        boolean locked = mctmods.resourcedatapackloader.content.ContentScoring.roundRunning();
+        boolean locked = ContentScoring.roundRunning();
         if ("leave".equals(args[1])) {
-            if (locked) { send(sender, TextFormatting.RED, "A round is running, so you cannot leave your team until it ends"); return; }
-            send(sender, TextFormatting.GREEN, ContentTeams.stand(player) ? "You left your team" : "You were on no team");
+            if (locked) { send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.leave.running")); return; }
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, ContentTeams.stand(player) ? "rdpl.team.leave.ok" : "rdpl.team.leave.none"));
             return;
         }
         if (!"join".equals(args[1])) { throw new WrongUsageException(getUsage(sender)); }
-        mctmods.resourcedatapackloader.content.def.TeamDef wanted = args.length >= 3
+        TeamDef wanted = args.length >= 3
                 ? ContentTeams.named(args[2])
                 : ContentTeams.smallest(player.world);
         if (args.length < 3 && wanted == null) {
-            send(sender, TextFormatting.RED, "No team takes players by balance, so name the one you want");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.join.balance"));
             return;
         }
         if (wanted == null) {
-            send(sender, TextFormatting.RED, "There is no team called " + args[2]);
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.join.unknown", args[2]));
             return;
         }
         if (!wanted.joinable) {
-            send(sender, TextFormatting.RED, wanted.name + " is not a team you can join");
+            send(sender, TextFormatting.RED, Lang.tr(sender, "rdpl.team.join.closed", wanted.name));
             return;
         }
         if (locked) {
             ContentTeams.waitFor(player, wanted);
-            send(sender, TextFormatting.GRAY, "A round is running, so you join " + wanted.displayName + " when it ends");
+            send(sender, TextFormatting.GRAY, Lang.tr(sender, "rdpl.team.join.waiting", wanted.displayName));
             return;
         }
         ContentTeams.take(player, wanted);
-        send(sender, wanted.color, "You joined " + wanted.displayName);
+        send(sender, wanted.color, Lang.tr(sender, "rdpl.team.join.ok", wanted.displayName));
     }
 
     private void pregen(ICommandSender sender, String[] args) throws CommandException {
@@ -405,14 +433,14 @@ public class ServerCommands extends CommandBase {
         rescan(sender);
         server.reload();
         ContentTeams.load();
-        mctmods.resourcedatapackloader.content.ContentScoring.load();
-        mctmods.resourcedatapackloader.content.ContentDice.load();
-        mctmods.resourcedatapackloader.content.ContentBoards.load();
-        mctmods.resourcedatapackloader.content.ContentBoards.rebuild(server);
-        mctmods.resourcedatapackloader.content.card.CardRules.load();
-        for (net.minecraft.world.WorldServer world : server.worlds) {
+        ContentScoring.load();
+        ContentDice.load();
+        ContentBoards.load();
+        ContentBoards.rebuild(server);
+        CardRules.load();
+        for (WorldServer world : server.worlds) {
             ContentTeams.field(world);
-            mctmods.resourcedatapackloader.content.ContentScoring.keep(world);
+            ContentScoring.keep(world);
         }
         int packs = PackManager.get().getPacks().size();
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.serverreloaded", packs, elapsed(start)));
@@ -545,5 +573,4 @@ public class ServerCommands extends CommandBase {
         ContentIntroPlay.replay((EntityPlayerMP) sender);
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.introagain"));
     }
-
 }

@@ -18,15 +18,12 @@ import javax.annotation.Nullable;
 @Mixin(WalkNodeProcessor.class) public abstract class MixinWalkNodeProcessorRaw {
     @Unique private BlockPos.MutableBlockPos rdpl$looking;
 
-    @Redirect(method = "getPathNodeTypeRaw", at = @At(value = "NEW", target = "(III)Lnet/minecraft/util/math/BlockPos;"))
-    private BlockPos rdpl$whereItLooks(int x, int y, int z) {
+    @Redirect(method = "getPathNodeTypeRaw", at = @At(value = "NEW", target = "(III)Lnet/minecraft/util/math/BlockPos;")) private BlockPos rdpl$whereItLooks(int x, int y, int z) {
         if (rdpl$looking == null) { rdpl$looking = new BlockPos.MutableBlockPos(); }
         return rdpl$looking.setPos(x, y, z);
     }
 
-    @Redirect(method = {"getPathNodeTypeRaw", "checkNeighborBlocks"},
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getAiPathNodeType(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/EntityLiving;)Lnet/minecraft/pathfinding/PathNodeType;", remap = false))
-    @Nullable private PathNodeType rdpl$askBlock(Block block, IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EntityLiving entity) {
+    @Redirect(method = {"getPathNodeTypeRaw", "checkNeighborBlocks"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getAiPathNodeType(Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/EntityLiving;)Lnet/minecraft/pathfinding/PathNodeType;", remap = false)) @Nullable private PathNodeType rdpl$askBlock(Block block, IBlockState state, IBlockAccess world, BlockPos pos, @Nullable EntityLiving entity) {
         return block.getAiPathNodeType(state, world, rdpl$asks(block) ? new BlockPos(pos) : pos, entity);
     }
 

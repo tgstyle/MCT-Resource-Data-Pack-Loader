@@ -65,7 +65,7 @@ public final class BeardRoadsSurface {
 
     private static StructureBoundingBox through(StructureBoundingBox road, boolean roadAlongX, StructureBoundingBox box) {
         StructureBoundingBox held = new StructureBoundingBox(road);
-        int coreHalf = (BeardRoads.pathFullWidth() - 1) / 2 - BeardRoads.pathLineColumns() - BeardRoads.pathSidewalkWidth();
+        int coreHalf = ContentBeard.streetHalf() - BeardRoads.pathLineColumns() - BeardRoads.pathSidewalkWidth();
         if (roadAlongX) {
             int center = (box.minX + box.maxX) / 2;
             if (held.maxX >= box.minX - 1 && held.maxX < center + coreHalf) { held.maxX = center + coreHalf; }
@@ -80,18 +80,21 @@ public final class BeardRoadsSurface {
     }
 
     static IBlockState mergeSurface(boolean alongX, int x, int z, int row, int center, IBlockState path) {
-        int half = (BeardRoads.pathFullWidth() - 1) / 2;
+        int half = ContentBeard.streetHalf();
         StructureBoundingBox band = alongX ? new StructureBoundingBox(row, 0, center - half, row, 0, center + half) : new StructureBoundingBox(center - half, 0, row, center + half, 0, row);
-        BeardCross shape = BeardCross.of(band, alongX);
+        return paint(BeardCross.of(band, alongX), x, z, row, path, path, false);
+    }
+
+    private static IBlockState paint(BeardCross shape, int x, int z, int row, IBlockState path, IBlockState surface, boolean plain) {
         int role = shape.role(x, z);
-        if (role == BeardCross.WALK) { return BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path); }
-        if (role == BeardCross.LINE) { return ContentBeard.axised(BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path), alongX); }
-        if (shape.offMiddle(x, z)) { return path; }
-        IBlockState middle = BeardRoads.pathBlock("villagePathCenterBlock", Config.worldgen.villagePathCenterBlock, path);
-        if (middle == path) { return path; }
+        if (role == BeardCross.WALK) { return BeardRoads.sidewalkBlock(path); }
+        if (role == BeardCross.LINE) { return ContentBeard.axised(BeardRoads.lineBlock(path), shape.alongX); }
+        if (plain || shape.offMiddle(x, z)) { return surface; }
+        IBlockState center = BeardRoads.centerBlock(surface);
+        if (center == surface) { return surface; }
         int dash = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathCenterDash", Config.worldgen.villagePathCenterDash));
-        if (dash > 0 && Math.floorMod(row, dash + 1) == dash) { return path; }
-        return ContentBeard.axised(middle, alongX);
+        if (dash > 0 && Math.floorMod(row, dash + 1) == dash) { return surface; }
+        return ContentBeard.axised(center, shape.alongX);
     }
 
     @Nullable public static IBlockState dressSurface(World world, StructureComponent piece, boolean alongX, int row, int across, int acrossCenter, IBlockState path, IBlockState planks, List<StructureBoundingBox> crossed) {
@@ -109,16 +112,8 @@ public final class BeardRoadsSurface {
         List<BeardCross> shapes = shapesAt(box, alongX, crossed);
         BeardCross top = BeardCross.winner(shapes, x, z);
         if (top == null) { return null; }
-        int role = top.role(x, z);
-        if (role == BeardCross.WALK) { return BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path); }
-        if (role == BeardCross.LINE) { return ContentBeard.axised(BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path), top.alongX); }
         IBlockState surface = top.alley ? BeardRoads.alleyBlock(path) : path;
-        if (top.alley || top.offMiddle(x, z) || BeardCross.crossedOver(shapes, top.alongX, x, z)) { return surface; }
-        IBlockState center = BeardRoads.pathBlock("villagePathCenterBlock", Config.worldgen.villagePathCenterBlock, surface);
-        if (center == surface) { return surface; }
-        int dash = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathCenterDash", Config.worldgen.villagePathCenterDash));
-        if (dash > 0 && Math.floorMod(top.row(x, z), dash + 1) == dash) { return surface; }
-        return ContentBeard.axised(center, top.alongX);
+        return paint(top, x, z, top.row(x, z), path, surface, top.alley || BeardCross.crossedOver(shapes, top.alongX, x, z));
     }
 
     @Nullable public static IBlockState stampAt(World world, StructureBoundingBox box, boolean alongX, int row, int across, int acrossCenter, int core, IBlockState path, List<StructureBoundingBox> crossed) {
@@ -219,9 +214,9 @@ public final class BeardRoadsSurface {
                 lined = (bandX && offZ <= core + lines) || (bandZ && offX <= core + lines);
                 upright = bandX;
             }
-            if (lined) { return ContentBeard.axised(BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path), !upright); }
-            IBlockState walk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path);
-            return decked ? BeardRoads.pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk) : walk;
+            if (lined) { return ContentBeard.axised(BeardRoads.lineBlock(path), !upright); }
+            IBlockState walk = BeardRoads.sidewalkBlock(path);
+            return decked ? BeardRoads.bridgeSidewalkBlock(walk) : walk;
         }
         return null;
     }
@@ -292,8 +287,8 @@ public final class BeardRoadsSurface {
     @Nullable public static IBlockState cellState(PathIntersectDef def, char cell, IBlockState path) {
         if (cell == '.') { return null; }
         if (cell == 'r' || cell == 'c') { return path; }
-        if (cell == 'l') { return BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path); }
-        if (cell == 's') { return BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path); }
+        if (cell == 'l') { return BeardRoads.lineBlock(path); }
+        if (cell == 's') { return BeardRoads.sidewalkBlock(path); }
         return def.legend.getOrDefault(cell, path);
     }
 }

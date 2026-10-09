@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.util.Colors;
 import mctmods.resourcedatapackloader.util.WindGust;
 
 import net.minecraft.block.state.IBlockState;
@@ -91,9 +92,9 @@ import javax.annotation.Nullable;
         double green = 0.0D;
         double blue = 0.0D;
         if (ambience.particleColor != AmbienceDef.NO_COLOR && colored(type)) {
-            red = Math.max((ambience.particleColor >> 16 & 255) / 255.0F, NO_RED);
-            green = (ambience.particleColor >> 8 & 255) / 255.0F;
-            blue = (ambience.particleColor & 255) / 255.0F;
+            red = Math.max(Colors.red(ambience.particleColor) / 255.0F, NO_RED);
+            green = Colors.green(ambience.particleColor) / 255.0F;
+            blue = Colors.blue(ambience.particleColor) / 255.0F;
         }
         int x = MathHelper.floor(view.posX);
         int y = MathHelper.floor(view.posY);

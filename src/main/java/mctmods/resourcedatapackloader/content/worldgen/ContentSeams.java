@@ -3,8 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.util.Config;
-import mctmods.resourcedatapackloader.util.DimensionValues;
-import mctmods.resourcedatapackloader.util.TemplateMemo;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.material.Material;
@@ -28,8 +26,6 @@ import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentSeams {
-    private ContentSeams() {}
-
     private static final int INSET_DOWN = 3;
     private static final int INSET_UP = 1;
     private static final int SETTLE_REACH = 32;
@@ -39,18 +35,20 @@ public final class ContentSeams {
     private static final int RESCUE_BAND = 16;
     private static final int RESCUE_REACH = 2;
     private static final Map<World, Map<UUID, BlockPos>> STOOD = new WeakHashMap<>();
-    private static final Target BELOW = new Target("worldBelow");
-    private static final Target ABOVE = new Target("worldAbove");
+    private static final ContentDimensionSetting<Integer> BELOW = new ContentDimensionSetting<>("worldBelow", () -> Config.worldgen.worldBelow, ContentSeams::dimension, "which is not a dimension id");
+    private static final ContentDimensionSetting<Integer> ABOVE = new ContentDimensionSetting<>("worldAbove", () -> Config.worldgen.worldAbove, ContentSeams::dimension, "which is not a dimension id");
+
+    private ContentSeams() {}
 
     public static boolean enabled() { return BELOW.asked().length > 0 || ABOVE.asked().length > 0; }
 
-    @Nullable public static Integer below(int dimension) { return BELOW.targetFor(dimension); }
+    @Nullable public static Integer below(int dimension) { return BELOW.at(dimension, null); }
 
-    @Nullable public static Integer above(int dimension) { return ABOVE.targetFor(dimension); }
+    @Nullable public static Integer above(int dimension) { return ABOVE.at(dimension, null); }
 
-    public static boolean opensFloor(int dimension) { return BELOW.targetFor(dimension) != null && opensBedrock(); }
+    public static boolean opensFloor(int dimension) { return below(dimension) != null && opensBedrock(); }
 
-    public static boolean opensCeiling(int dimension) { return ABOVE.targetFor(dimension) != null && opensBedrock(); }
+    public static boolean opensCeiling(int dimension) { return above(dimension) != null && opensBedrock(); }
 
     private static boolean opensBedrock() { return !ContentControl.flag(ContentControl.TERRAIN, "worldSeamBedrock", Config.worldgen.worldSeamBedrock); }
 
@@ -58,8 +56,8 @@ public final class ContentSeams {
         if (event.phase != TickEvent.Phase.END || !(event.world instanceof WorldServer)) { return; }
         WorldServer world = (WorldServer) event.world;
         int dimension = world.provider.getDimension();
-        Integer below = BELOW.targetFor(dimension);
-        Integer above = ABOVE.targetFor(dimension);
+        Integer below = below(dimension);
+        Integer above = above(dimension);
         if (below == null && above == null) { return; }
         int floor = GenHeights.floor(world, 0);
         int ceiling = RubicWorldControl.generatedCeiling(world);
@@ -72,9 +70,7 @@ public final class ContentSeams {
             boolean player = entity instanceof EntityPlayerMP;
             if (player && ((EntityPlayerMP) entity).connection == null) { continue; }
             if (!player && !carryEntities) { continue; }
-            if (player && entity.onGround && entity.posY >= floor && entity.posY <= ceiling) {
-                STOOD.computeIfAbsent(world, key -> new HashMap<>()).put(entity.getUniqueID(), entity.getPosition());
-            }
+            if (player && entity.onGround && entity.posY >= floor && entity.posY <= ceiling) { STOOD.computeIfAbsent(world, key -> new HashMap<>()).put(entity.getUniqueID(), entity.getPosition()); }
             if (below != null && entity.posY < floor + 1) {
                 if (falling == null) { falling = new ArrayList<>(); }
                 falling.add(entity);
@@ -84,12 +80,8 @@ public final class ContentSeams {
                 rising.add(entity);
             }
         }
-        if (falling != null) {
-            for (Entity entity : falling) { carry(world, entity, below, true, floor, ceiling); }
-        }
-        if (rising != null) {
-            for (Entity entity : rising) { carry(world, entity, above, false, floor, ceiling); }
-        }
+        if (falling != null) { for (Entity entity : falling) { carry(world, entity, below, true, floor, ceiling); } }
+        if (rising != null) { for (Entity entity : rising) { carry(world, entity, above, false, floor, ceiling); } }
     }
 
     private static void carry(WorldServer world, Entity entity, int target, boolean down, int sourceFloor, int sourceCeiling) {
@@ -147,18 +139,31 @@ public final class ContentSeams {
         int x = (int) Math.floor(player.posX);
         int z = (int) Math.floor(player.posZ);
         for (int y = floor + 1; y <= highest; y++) {
-            for (int reach = 0; reach <= RESCUE_REACH; reach++) {
-                for (int dx = -reach; dx <= reach; dx++) {
-                    for (int dz = -reach; dz <= reach; dz++) {
-                        if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
-                        IBlockState below = world.getBlockState(at.setPos(x + dx, y - 1, z + dz));
-                        if (below.getMaterial() == Material.AIR || below.getMaterial().isLiquid()) { continue; }
-                        if (world.isAirBlock(at.setPos(x + dx, y, z + dz)) && world.isAirBlock(at.setPos(x + dx, y + 1, z + dz))) { return new BlockPos(x + dx, y, z + dz); }
-                    }
+            int level = y;
+            BlockPos found = ring(x, level, z, 0, RESCUE_REACH, (atX, atZ) -> {
+                IBlockState below = world.getBlockState(at.setPos(atX, level - 1, atZ));
+                if (below.getMaterial() == Material.AIR || below.getMaterial().isLiquid()) { return false; }
+                return world.isAirBlock(at.setPos(atX, level, atZ)) && world.isAirBlock(at.setPos(atX, level + 1, atZ));
+            });
+            if (found != null) { return found; }
+        }
+        return null;
+    }
+
+    @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, Spot spot) {
+        for (int reach = least; reach <= most; reach++) {
+            for (int dx = -reach; dx <= reach; dx++) {
+                for (int dz = -reach; dz <= reach; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
+                    if (spot.fits(x + dx, z + dz)) { return new BlockPos(x + dx, y, z + dz); }
                 }
             }
         }
         return null;
+    }
+
+    private interface Spot {
+        boolean fits(int x, int z);
     }
 
     @Nullable private static BlockPos stood(EntityPlayerMP player) {
@@ -251,16 +256,7 @@ public final class ContentSeams {
 
         @Nullable private BlockPos nearest(World world, BlockPos.MutableBlockPos at, int blockX, int feet, int blockZ, int offset, boolean open) {
             if (offset > 0 && (open ? standable(world, at, blockX, feet, blockZ) : grounded(world, at, blockX, feet, blockZ))) { return new BlockPos(blockX, feet, blockZ); }
-            for (int reach = 1; reach <= LEDGE_REACH; reach++) {
-                for (int dx = -reach; dx <= reach; dx++) {
-                    for (int dz = -reach; dz <= reach; dz++) {
-                        if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
-                        boolean fits = open ? standable(world, at, blockX + dx, feet, blockZ + dz) : grounded(world, at, blockX + dx, feet, blockZ + dz);
-                        if (fits) { return new BlockPos(blockX + dx, feet, blockZ + dz); }
-                    }
-                }
-            }
-            return null;
+            return ring(blockX, feet, blockZ, 1, LEDGE_REACH, (atX, atZ) -> open ? standable(world, at, atX, feet, atZ) : grounded(world, at, atX, feet, atZ));
         }
 
         private BlockPos surface(World world, int blockX, int blockZ) {
@@ -282,26 +278,8 @@ public final class ContentSeams {
         }
     }
 
-    private static final class Target {
-        private final String key;
-        private final DimensionValues<Integer> values;
-        private final TemplateMemo<String[]> asked = new TemplateMemo<>();
-
-        Target(String key) {
-            this.key = key;
-            this.values = new DimensionValues<>(key, Target::dimension, "which is not a dimension id");
-        }
-
-        String[] asked() { return asked.get(() -> ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow : Config.worldgen.worldAbove)); }
-
-        @Nullable Integer targetFor(int dimension) {
-            if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-            return values.at(dimension, asked());
-        }
-
-        @Nullable private static Integer dimension(String value) {
-            try { return Integer.parseInt(value); }
-            catch (NumberFormatException wrong) { return null; }
-        }
+    @Nullable private static Integer dimension(String value) {
+        try { return Integer.parseInt(value); }
+        catch (NumberFormatException wrong) { return null; }
     }
 }

@@ -12,21 +12,19 @@ import mctmods.resourcedatapackloader.content.item.ContentItemRocket;
 import mctmods.resourcedatapackloader.content.item.ContentItemSeed;
 import mctmods.resourcedatapackloader.content.item.ContentItemTool;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
+import mctmods.resourcedatapackloader.content.util.NamedRegistry;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraftforge.fml.common.Loader;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentItemTypes {
     public static final String DEFAULT = "basic";
-    private static final Map<String, IItemType> TYPES = new LinkedHashMap<>();
+    private static final NamedRegistry<IItemType> TYPES = new NamedRegistry<>("Item", DEFAULT);
 
     private ContentItemTypes() {}
 
@@ -68,19 +66,11 @@ public final class ContentItemTypes {
         });
     }
 
-    public static void register(String name, IItemType type) {
-        IItemType previous = TYPES.put(name.toLowerCase(Locale.ROOT), type);
-        if (previous != null) { ContentLog.LOGGER.warn("Item type '{}' was registered twice, the later one wins", name); }
-    }
+    public static void register(String name, IItemType type) { TYPES.register(name, type); }
 
-    @Nullable public static IItemType find(String name) { return TYPES.get(name == null ? "" : name.toLowerCase(Locale.ROOT)); }
+    @Nullable public static IItemType find(String name) { return TYPES.find(name); }
 
-    public static IItemType get(String name, Object context) {
-        IItemType type = find(name);
-        if (type != null) { return type; }
-        ContentLog.LOGGER.error("Unknown item type '{}' in {}, treating it as '{}'. Known types are {}", name, context, DEFAULT, names());
-        return TYPES.get(DEFAULT);
-    }
+    public static IItemType get(String name, Object context) { return TYPES.get(name, context); }
 
-    public static Set<String> names() { return Collections.unmodifiableSet(TYPES.keySet()); }
+    public static Set<String> names() { return TYPES.names(); }
 }

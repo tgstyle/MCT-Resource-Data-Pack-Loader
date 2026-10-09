@@ -4,9 +4,11 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.world.BiomeNames;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.block.state.IBlockState;
@@ -24,13 +26,11 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBedrock {
     public static final int MAX_LAYERS = 5;
-    private static final int FLAGS = 2 | 16;
     private static final TemplateMemo<Rules> RULES = new TemplateMemo<>();
 
     private static final class Rules {
@@ -83,7 +83,7 @@ public final class ContentBedrock {
     public static boolean appliesTo(int dimension) {
         Set<Integer> dimensions = rules().dimensions;
         if (dimensions.isEmpty()) { return true; }
-        return dimensions.contains(dimension) != ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist);
+        return Listing.allows(dimensions.contains(dimension), ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist));
     }
 
     public static void flatten(World world, int chunkX, int chunkZ, int dimension) {
@@ -94,22 +94,7 @@ public final class ContentBedrock {
         IBlockState filler = filler(dimension);
         IBlockState bedrock = Blocks.BEDROCK.getDefaultState();
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
-        Rules rules = rules();
-        boolean filtered = filtered(rules);
-        boolean blacklist = ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist);
-        for (int x = 0; x < 16; x++) {
-            for (int z = 0; z < 16; z++) {
-                if (filtered && biomeSkipped(world, pos, baseX + x, baseZ + z, rules, blacklist)) { continue; }
-                for (int y = MAX_LAYERS - 1; y >= layers; y--) {
-                    pos.setPos(baseX + x, y, baseZ + z);
-                    if (world.getBlockState(pos).getBlock() == Blocks.BEDROCK) { world.setBlockState(pos, filler, FLAGS); }
-                }
-                for (int y = layers - 1; y >= 0; y--) {
-                    pos.setPos(baseX + x, y, baseZ + z);
-                    if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { world.setBlockState(pos, bedrock, FLAGS); }
-                }
-            }
-        }
+        pass(world, baseX, baseZ, pos, filler, bedrock, layers, MAX_LAYERS - 1, 0, layers - 1);
         if (roofWanted()) { roof(world, baseX, baseZ, layers, filler, bedrock, pos); }
     }
 
@@ -117,27 +102,32 @@ public final class ContentBedrock {
         int top = world.getActualHeight() - 1;
         pos.setPos(baseX, top, baseZ);
         if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { return; }
+        pass(world, baseX, baseZ, pos, filler, bedrock, top - MAX_LAYERS + 1, top - layers, top - layers + 1, top);
+    }
+
+    private static void pass(World world, int baseX, int baseZ, BlockPos.MutableBlockPos pos, IBlockState filler, IBlockState bedrock, int fillerFrom, int fillerTo, int bedrockFrom, int bedrockTo) {
         Rules rules = rules();
         boolean filtered = filtered(rules);
         boolean blacklist = ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist);
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 if (filtered && biomeSkipped(world, pos, baseX + x, baseZ + z, rules, blacklist)) { continue; }
-                for (int y = top - MAX_LAYERS + 1; y <= top - layers; y++) {
-                    pos.setPos(baseX + x, y, baseZ + z);
-                    if (world.getBlockState(pos).getBlock() == Blocks.BEDROCK) { world.setBlockState(pos, filler, FLAGS); }
-                }
-                for (int y = top - layers + 1; y <= top; y++) {
-                    pos.setPos(baseX + x, y, baseZ + z);
-                    if (world.getBlockState(pos).getBlock() != Blocks.BEDROCK) { world.setBlockState(pos, bedrock, FLAGS); }
-                }
+                band(world, pos, baseX + x, baseZ + z, fillerFrom, fillerTo, filler, true);
+                band(world, pos, baseX + x, baseZ + z, bedrockFrom, bedrockTo, bedrock, false);
             }
+        }
+    }
+
+    private static void band(World world, BlockPos.MutableBlockPos pos, int x, int z, int from, int to, IBlockState state, boolean replacesBedrock) {
+        for (int y = from; y <= to; y++) {
+            pos.setPos(x, y, z);
+            if ((world.getBlockState(pos).getBlock() == Blocks.BEDROCK) == replacesBedrock) { world.setBlockState(pos, state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE); }
         }
     }
 
     private static boolean filtered(Rules rules) { return !rules.biomeNames.isEmpty() || !rules.biomeTypes.isEmpty(); }
 
-    private static boolean biomeSkipped(World world, BlockPos.MutableBlockPos pos, int x, int z, Rules rules, boolean blacklist) { return matches(rules, world.getBiome(pos.setPos(x, 0, z))) == blacklist; }
+    private static boolean biomeSkipped(World world, BlockPos.MutableBlockPos pos, int x, int z, Rules rules, boolean blacklist) { return Listing.blocks(matches(rules, world.getBiome(pos.setPos(x, 0, z))), blacklist); }
 
     private static boolean matches(Rules rules, Biome biome) {
         if (BiomeNames.named(biome, rules.biomeNames)) { return true; }
@@ -162,9 +152,9 @@ public final class ContentBedrock {
         if (perDimension != null) { return perDimension; }
         if (rules.configured != null) { return rules.configured; }
         switch (dimension) {
-            case -1: return Objects.requireNonNull(Blocks.NETHERRACK).getDefaultState();
-            case 1: return Objects.requireNonNull(Blocks.END_STONE).getDefaultState();
-            default: return Objects.requireNonNull(Blocks.STONE).getDefaultState();
+            case -1: return Blocks.NETHERRACK.getDefaultState();
+            case 1: return Blocks.END_STONE.getDefaultState();
+            default: return Blocks.STONE.getDefaultState();
         }
     }
 
@@ -174,5 +164,4 @@ public final class ContentBedrock {
         if (parsed == null) { ContentLog.LOGGER.error("Unknown bedrock filler {}, falling back to the block that suits each dimension", name); }
         return parsed;
     }
-
 }

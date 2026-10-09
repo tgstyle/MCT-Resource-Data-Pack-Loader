@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStatePaletteHashMa
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBlockStatePaletteLinear;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ITileEntityLockableLoot;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.item.EntityItem;
@@ -33,7 +34,6 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -41,6 +41,7 @@ import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.SlotItemHandler;
+import net.minecraftforge.items.wrapper.InvWrapper;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.IntStream;
@@ -53,19 +54,19 @@ import java.util.stream.IntStream;
     private ContentDisabledEvents() {}
 
     @SubscribeEvent public static void onUse(PlayerInteractEvent.RightClickItem event) {
-        if (held(event.getEntityPlayer(), event.getHand())) { event.setCanceled(true); }
+        ItemUseGate.cancel(event, held(event.getEntityPlayer(), event.getHand()));
     }
 
     @SubscribeEvent public static void onUseOn(PlayerInteractEvent.RightClickBlock event) {
-        if (held(event.getEntityPlayer(), event.getHand())) { event.setUseItem(Event.Result.DENY); }
+        ItemUseGate.denyUse(event, held(event.getEntityPlayer(), event.getHand()));
     }
 
     @SubscribeEvent public static void onDig(PlayerInteractEvent.LeftClickBlock event) {
-        if (held(event.getEntityPlayer(), event.getHand())) { event.setCanceled(true); }
+        ItemUseGate.cancel(event, held(event.getEntityPlayer(), event.getHand()));
     }
 
     @SubscribeEvent public static void onAttack(AttackEntityEvent event) {
-        if (held(event.getEntityPlayer(), EnumHand.MAIN_HAND)) { event.setCanceled(true); }
+        ItemUseGate.cancel(event, held(event.getEntityPlayer(), EnumHand.MAIN_HAND));
     }
 
     @SubscribeEvent public static void onPlace(BlockEvent.EntityPlaceEvent event) {
@@ -163,7 +164,7 @@ import java.util.stream.IntStream;
                         if (!ContentDisabled.disabled(state.getBlock()) || ContentReplacements.replaces(world, state, bottom + y)) { continue; }
                         pos.setPos((chunk.x << 4) + x, bottom + y, (chunk.z << 4) + z);
                         world.removeTileEntity(pos);
-                        world.setBlockState(pos, Blocks.AIR.getDefaultState(), 2);
+                        world.setBlockState(pos, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                         removed++;
                     }
                 }
@@ -178,12 +179,7 @@ import java.util.stream.IntStream;
         return true;
     }
 
-    private static void sweep(IInventory inventory) {
-        if (!ContentDisabled.any()) { return; }
-        for (int slot = 0; slot < inventory.getSizeInventory(); slot++) {
-            if (ContentDisabled.disabled(inventory.getStackInSlot(slot))) { inventory.setInventorySlotContents(slot, ItemStack.EMPTY); }
-        }
-    }
+    private static void sweep(IInventory inventory) { sweep(new InvWrapper(inventory)); }
 
     private static void sweep(TileEntity tile) {
         if (tile instanceof TileEntityLockableLoot && ((ITileEntityLockableLoot) tile).rdpl$lootTable() != null) { return; }
@@ -193,7 +189,11 @@ import java.util.stream.IntStream;
         }
         if (!tile.hasCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null)) { return; }
         IItemHandler handler = tile.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, null);
-        if (handler == null) { return; }
+        if (handler != null) { sweep(handler); }
+    }
+
+    private static void sweep(IItemHandler handler) {
+        if (!ContentDisabled.any()) { return; }
         for (int slot = 0; slot < handler.getSlots(); slot++) {
             ItemStack stack = handler.getStackInSlot(slot);
             if (!ContentDisabled.disabled(stack)) { continue; }

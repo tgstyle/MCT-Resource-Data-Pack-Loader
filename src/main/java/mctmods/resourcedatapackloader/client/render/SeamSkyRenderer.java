@@ -39,10 +39,10 @@ import javax.annotation.Nullable;
         if (over != null) { plane(mc, over, RubicWorldControl.generatedCeiling(world) + 1 - eyeY, partialTicks); }
     }
 
-    private static boolean near(double height) { return Math.abs(height) <= NEAR; }
+    private static boolean far(double height) { return Math.abs(height) > NEAR; }
 
     private static void plane(Minecraft mc, int dimension, double height, float partialTicks) {
-        if (!near(height)) { return; }
+        if (far(height)) { return; }
         Vec3d tint = skyOf(dimension, partialTicks);
         double extent = Math.max(64, mc.gameSettings.renderDistanceChunks * 16);
         Tessellator tessellator = Tessellator.getInstance();

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGenerator;
 
 import net.minecraft.util.ResourceLocation;
@@ -10,14 +11,14 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraftforge.registries.RegistryBuilder;
 
 public abstract class VanillaCompatibilityGeneratorProviderBase implements IForgeRegistryEntry<VanillaCompatibilityGeneratorProviderBase> {
-    public static final ResourceLocation DEFAULT = new ResourceLocation("resourcedatapackloader", "default");
+    public static final ResourceLocation DEFAULT = ResourceDataPackLoader.id("default");
     public static IForgeRegistry<VanillaCompatibilityGeneratorProviderBase> REGISTRY;
 
     public static void init() {
         REGISTRY = new RegistryBuilder<VanillaCompatibilityGeneratorProviderBase>()
                 .setType(VanillaCompatibilityGeneratorProviderBase.class)
                 .setIDRange(0, 256)
-                .setName(new ResourceLocation("resourcedatapackloader", "vanilla_compatibility_generators_registry"))
+                .setName(ResourceDataPackLoader.id("vanilla_compatibility_generators_registry"))
                 .setDefaultKey(DEFAULT)
                 .addCallback(VanillaCompatibilityGeneratorCallbacks.INSTANCE)
                 .create();

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.util.MathUtil;
+
 import net.minecraft.pathfinding.PathNodeType;
 
 public final class PathNodeMemo {
@@ -7,7 +9,7 @@ public final class PathNodeMemo {
     private static final int BITS = 14;
     private static final int SLOTS = 1 << BITS;
     private static final int MASK = SLOTS - 1;
-    private static final long SPREAD = 0x9E3779B97F4A7C15L;
+    private static final long SPREAD = MathUtil.GOLDEN_GAMMA;
     private static final ThreadLocal<PathNodeMemo> HELD = ThreadLocal.withInitial(PathNodeMemo::new);
     private final long[] where = new long[SLOTS];
     private final int[] when = new int[SLOTS];

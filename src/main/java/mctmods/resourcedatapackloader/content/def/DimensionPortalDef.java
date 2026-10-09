@@ -20,7 +20,7 @@ public final class DimensionPortalDef {
         this.travel = travel;
     }
 
-    public boolean buildsReturn() { return BUILT.equals(back); }
+    public boolean noReturn() { return !BUILT.equals(back); }
 
-    public boolean lightsBack() { return !NONE.equals(back); }
+    public boolean noLightBack() { return NONE.equals(back); }
 }

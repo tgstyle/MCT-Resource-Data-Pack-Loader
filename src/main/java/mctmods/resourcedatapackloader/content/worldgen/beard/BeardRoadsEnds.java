@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
@@ -36,6 +37,7 @@ public final class BeardRoadsEnds {
         public final int cz;
         public final int r;
         final List<int[]> mouths = new ArrayList<>();
+
         Bulb(StructureBoundingBox box, boolean alongX, int level, int cx, int cz, int r) {
             this.box = box;
             this.alongX = alongX;
@@ -48,7 +50,7 @@ public final class BeardRoadsEnds {
         public int away(int x, int z) { return (x - cx) * (x - cx) + (z - cz) * (z - cz); }
 
         public int mouthOffset(int x, int z) {
-            int half = (BeardRoads.pathFullWidth() - 1) / 2;
+            int half = ContentBeard.streetHalf();
             for (int[] mouth : mouths) {
                 boolean mouthX = mouth[0] == 1;
                 boolean high = mouth[1] == 1;
@@ -132,8 +134,8 @@ public final class BeardRoadsEnds {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int paved = 0;
         int lane = 1 + BeardRoads.pathExtraWidth();
-        IBlockState lineBlock = ContentBeard.axised(BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path), alongX);
-        IBlockState walkBlock = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path);
+        IBlockState lineBlock = ContentBeard.axised(BeardRoads.lineBlock(path), alongX);
+        IBlockState walkBlock = BeardRoads.sidewalkBlock(path);
         for (int z = Math.max(box.minZ, clip.minZ); z <= Math.min(box.maxZ, clip.maxZ); z++) {
             for (int x = Math.max(box.minX, clip.minX); x <= Math.min(box.maxX, clip.maxX); x++) {
                 int dx = x - cx;
@@ -168,13 +170,13 @@ public final class BeardRoadsEnds {
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     if (above.getMaterial().isLiquid()) { break; }
                     if (BeardBlocks.terrainBlock(above.getBlock()) || above.getBlock() == Blocks.GRASS_PATH || above.getBlock() == Blocks.SANDSTONE || above.getBlock() == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
-                        world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                        world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                         continue;
                     }
                     break;
                 }
                 at.setPos(x, level, z);
-                world.setBlockState(at, chosen, 2);
+                world.setBlockState(at, chosen, BlockFlags.UPDATE_CLIENTS);
                 BeardBlocks.fillUnder(world, at, x, z, level - 1, level - BeardRoadsPaving.FILL_UNDER);
                 paved++;
             }
@@ -205,11 +207,11 @@ public final class BeardRoadsEnds {
         return filled;
     }
 
-    private static boolean deadEnd(List<StructureComponent> nearby, StructureComponent piece, boolean alongX, int row) {
+    private static boolean continues(List<StructureComponent> nearby, StructureComponent piece, boolean alongX, int row) {
         StructureBoundingBox box = piece.getBoundingBox();
         int least = alongX ? box.minX : box.minZ;
         int most = alongX ? box.maxX : box.maxZ;
-        if (row != least && row != most) { return false; }
+        if (row != least && row != most) { return true; }
         int beyond = row == least ? row - 1 : row + 1;
         for (StructureComponent other : nearby) {
             if (other == piece || !(other instanceof StructureVillagePieces.Path || other instanceof MergePiece)) { continue; }
@@ -221,9 +223,9 @@ public final class BeardRoadsEnds {
             int acrossHi = alongX ? met.maxZ : met.maxX;
             if (acrossHi < (alongX ? box.minZ : box.minX) || acrossLo > (alongX ? box.maxZ : box.maxX)) { continue; }
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The end row {} of the road at {}, {} is no dead end: {} at {} sits beyond it", row, box.minX, box.minZ, other.getClass().getSimpleName(), met); }
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     static final class DeadEndCap {
@@ -247,8 +249,8 @@ public final class BeardRoadsEnds {
     @Nullable static DeadEndCap deadEndCap(World world, List<StructureComponent> nearby, StructureComponent piece, boolean alongX) {
         String[] wanted = ContentControl.list(ContentControl.VILLAGES, "villagePathDeadEnds", Config.worldgen.villagePathDeadEnds);
         if (wanted.length == 0) { return null; }
-        IBlockState walk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, Blocks.AIR.getDefaultState());
-        IBlockState rail = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, Blocks.AIR.getDefaultState());
+        IBlockState walk = BeardRoads.sidewalkBlock(Blocks.AIR.getDefaultState());
+        IBlockState rail = BeardRoads.bridgeBarrierBlock(Blocks.AIR.getDefaultState());
         List<String> usable = new ArrayList<>(wanted.length);
         for (String asked : wanted) {
             if ("sidewalk".equals(asked) && walk.getBlock() != Blocks.AIR && !BeardRoads.roadNarrow(piece.getBoundingBox(), alongX)) { usable.add(asked); }
@@ -269,7 +271,7 @@ public final class BeardRoadsEnds {
     }
 
     static int deadEndCap(@Nullable DeadEndCap cap, World world, StructureComponent piece, boolean alongX, int row, int across, int acrossLeast, int level, BlockPos.MutableBlockPos at) {
-        if (cap == null || !deadEnd(cap.nearby, piece, alongX, row)) { return 0; }
+        if (cap == null || continues(cap.nearby, piece, alongX, row)) { return 0; }
         StructureBoundingBox box = piece.getBoundingBox();
         if (row == (alongX ? box.minX : box.minZ) ? cap.seamLow : cap.seamHigh) { return 0; }
         IBlockState walk = cap.walk;
@@ -281,7 +283,7 @@ public final class BeardRoadsEnds {
         if (across == acrossLeast && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The end row {} of the road at {}, {} closes as {}", row, box.minX, box.minZ, style); }
         if ("sidewalk".equals(style)) {
             at.setPos(x, level, z);
-            world.setBlockState(at, walk, 2);
+            world.setBlockState(at, walk, BlockFlags.UPDATE_CLIENTS);
             BeardKeep.holdSpot(x, level, z);
             return 1;
         }
@@ -291,7 +293,7 @@ public final class BeardRoadsEnds {
             at.setPos(x, level + step, z);
             if (BeardKeep.holds(x, level + step, z)) { break; }
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-            world.setBlockState(at, rail, 2);
+            world.setBlockState(at, rail, BlockFlags.UPDATE_CLIENTS);
             BeardKeep.holdSpot(x, level + step, z);
             laid++;
         }

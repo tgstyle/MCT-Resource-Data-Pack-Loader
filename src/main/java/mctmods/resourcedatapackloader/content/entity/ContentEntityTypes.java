@@ -12,8 +12,10 @@ import mctmods.resourcedatapackloader.util.Summary;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
+import net.minecraft.entity.EnumCreatureType;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.biome.Biome;
+import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.EntityEntryBuilder;
 import net.minecraftforge.fml.common.registry.EntityRegistry;
@@ -39,7 +41,7 @@ public final class ContentEntityTypes {
             if (base == null) { LATE.put(entry.getKey(), entry.getValue()); }
             else { register(registry, entry.getKey(), entry.getValue(), base); }
         }
-        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(EntityReturningThrow.class).id(new ResourceLocation(ResourceDataPackLoader.MOD_ID, "returning_throw"), network++).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
+        if (throwsReturning()) { registry.register(EntityEntryBuilder.create().entity(EntityReturningThrow.class).id(ResourceDataPackLoader.id("returning_throw"), network++).name(ResourceDataPackLoader.MOD_ID + ".returning_throw").tracker(64, 1, true).build()); }
         if (made > 0) { Summary.info("entities.registered", "Registered " + made + " entity variant(s) from packs"); }
     }
 
@@ -83,7 +85,7 @@ public final class ContentEntityTypes {
         List<Biome> biomes = biomes(def);
         if (biomes.isEmpty()) { return; }
         for (SpawnEntryDef entry : def.spawns) {
-            net.minecraft.entity.EnumCreatureType creature = creatureType(entry.creatureType);
+            EnumCreatureType creature = creatureType(entry.creatureType);
             if (creature == null) {
                 ContentLog.LOGGER.error("Entity variant {} has spawn type '{}', which is not one of monster, creature, ambient or water", def.registryName, entry.creatureType);
                 continue;
@@ -109,7 +111,7 @@ public final class ContentEntityTypes {
             if (wanted.equalsIgnoreCase(ContentBiomeControl.shownName(biome))) { return true; }
         }
         for (String wanted : def.biomeTypes) {
-            for (net.minecraftforge.common.BiomeDictionary.Type type : net.minecraftforge.common.BiomeDictionary.getTypes(biome)) {
+            for (BiomeDictionary.Type type : BiomeDictionary.getTypes(biome)) {
                 if (type.getName().equalsIgnoreCase(wanted)) { return true; }
             }
         }
@@ -124,5 +126,5 @@ public final class ContentEntityTypes {
         return primary ? info.primaryColor : info.secondaryColor;
     }
 
-    @Nullable private static net.minecraft.entity.EnumCreatureType creatureType(String name) { return Enums.byName(net.minecraft.entity.EnumCreatureType.class, name); }
+    @Nullable private static EnumCreatureType creatureType(String name) { return Enums.byName(EnumCreatureType.class, name); }
 }

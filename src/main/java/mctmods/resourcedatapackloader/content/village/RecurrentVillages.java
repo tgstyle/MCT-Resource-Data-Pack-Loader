@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.util.WeightedPicks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
@@ -29,7 +28,7 @@ public final class RecurrentVillages {
     public static void register() {
         if (registered || !Loader.isModLoaded("reccomplex")) { return; }
         registered = true;
-        MapGenStructureIO.registerStructureComponent(RecurrentVillagePiece.class, "RdplRcVillage");
+        VillagePieces.recurrent();
         VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
         ContentLog.LOGGER.info("Recurrent Complex village buildings are placed by the loader whenever terrain adaptation is on: its own placement stands down then, and its structures are laid through the same village pipeline as everything else");
     }
@@ -90,7 +89,7 @@ public final class RecurrentVillages {
             int deep = quarter ? size[0] : size[2];
             EnumFacing road = facing.getOpposite();
             StructureBoundingBox box = StructureBoundingBox.getComponentToAddBoundingBox(x + road.getXOffset(), y, z + road.getZOffset(), 0, 0, 0, wide, size[1], deep, facing);
-            if (!RecurrentVillagePiece.deepEnough(box)) { return null; }
+            if (RecurrentVillagePiece.tooShallow(box)) { return null; }
             if (StructureComponent.findIntersecting(placed, box) != null) { return null; }
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The Recurrent Complex plot {} is laid by the loader at {}, {} facing {}", chosen.structure, box.minX, box.minZ, facing); }
             return new RecurrentVillagePiece(start, type, box, facing, chosen, turned);

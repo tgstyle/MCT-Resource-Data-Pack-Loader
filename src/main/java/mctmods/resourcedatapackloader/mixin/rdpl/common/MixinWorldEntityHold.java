@@ -13,6 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(World.class) public abstract class MixinWorldEntityHold {
     @Inject(method = "updateEntityWithOptionalForce", at = @At("HEAD"), cancellable = true) private void rdpl$holdStillWhileLandIsMade(Entity entityIn, boolean forceUpdate, CallbackInfo ci) {
         if (entityIn instanceof EntityPlayer) { return; }
-        if (ContentPregen.holdsStill(World.class.cast(this))) { ci.cancel(); }
+        if (ContentPregen.holdsStill((World) (Object) this)) { ci.cancel(); }
     }
 }

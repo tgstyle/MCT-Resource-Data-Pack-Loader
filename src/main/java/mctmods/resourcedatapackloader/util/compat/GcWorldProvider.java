@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.content.def.CelestialDef;
+import mctmods.resourcedatapackloader.content.ContentParserModPlanets;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
@@ -17,7 +17,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.gen.IChunkGenerator;
-import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.Loader;
 import java.util.Collections;
 import java.util.List;
@@ -27,16 +26,12 @@ import javax.annotation.Nullable;
 public class GcWorldProvider extends ContentWorldProvider implements IGalacticraftWorldProvider, ISolarLevel {
     private static final double VANILLA_GRAVITY = 0.08D;
     private static final double VANILLA_ARROW = 0.05D;
-
-    private static final boolean EXTRA_PLANETS = Loader.isModLoaded("extraplanets");
+    private static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
     @Nullable private WorldProvider asteroids;
 
     @Nullable private GalacticraftDef gc() { return def == null ? null : def.galacticraft; }
 
-    private boolean belt() {
-        GalacticraftDef gc = gc();
-        return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind);
-    }
+    private boolean belt() { return GcCelestial.isBelt(gc()); }
 
     @Override protected void init() {
         super.init();
@@ -63,10 +58,7 @@ public class GcWorldProvider extends ContentWorldProvider implements IGalacticra
 
     static float gravity(int dimension) { return (float) (VANILLA_GRAVITY * (1.0D - ContentPhysics.gravityFactor(dimension))); }
 
-    @Override @Nonnull public DimensionType getDimensionType() {
-        if (!DimensionManager.isDimensionRegistered(getDimension())) { return super.getDimensionType(); }
-        return DimensionManager.getProviderType(getDimension());
-    }
+    @Override @Nonnull public DimensionType getDimensionType() { return GcDimensionTypes.of(getDimension(), super.getDimensionType()); }
 
     @Override public boolean galacticraftPhysics() { return true; }
 

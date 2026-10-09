@@ -26,8 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Shadow public abstract int getLightFor(EnumSkyBlock type, BlockPos pos);
 
-    @Inject(method = "getLightForExt", at = @At("HEAD"), cancellable = true)
-    private void rdpl$lightForExtRubic(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "getLightForExt", at = @At("HEAD"), cancellable = true) private void rdpl$lightForExtRubic(EnumSkyBlock type, BlockPos pos, CallbackInfoReturnable<Integer> cir) {
         IRubicWorld rubic = (IRubicWorld) world;
         if (!rubic.rdpl$isRubicWorld()) { return; }
         cir.setReturnValue(rdpl$lightForExt(rubic, type, pos));

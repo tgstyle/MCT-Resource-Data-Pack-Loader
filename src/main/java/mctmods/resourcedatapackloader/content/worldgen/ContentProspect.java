@@ -3,11 +3,15 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -16,7 +20,6 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerEvent;
@@ -26,13 +29,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentProspect {
     private static final String KEY = "prospectItems";
-    private static final ResourceLocation ITEMS = new ResourceLocation(ResourceDataPackLoader.MOD_ID, "prospectitems");
+    private static final ResourceLocation ITEMS = ResourceDataPackLoader.id("prospectitems");
     private static final int RADIUS = 8;
     private static final int LEVEL = 6;
     private static final int WEAR = 2;
@@ -61,7 +63,7 @@ public final class ContentProspect {
             if (names.isEmpty()) { return !blacklist; }
             String full = def.registryName.toString();
             boolean listed = names.contains(full) || names.contains(def.registryName.getPath());
-            return listed != blacklist;
+            return Listing.allows(listed, blacklist);
         }
     }
 
@@ -84,7 +86,7 @@ public final class ContentProspect {
         List<String> labels = new ArrayList<>();
         for (String name : entry.names) {
             WorldgenDef def = ContentWorldgen.byName(name);
-            labels.add(def != null && !def.prospectAs.isEmpty() ? def.prospectAs : name.substring(name.indexOf(':') + 1));
+            labels.add(def != null && !def.prospectAs.isEmpty() ? def.prospectAs : IdNames.path(name));
         }
         Collections.sort(labels);
         if (labels.isEmpty() && blacklist) { return null; }
@@ -104,16 +106,17 @@ public final class ContentProspect {
     }
 
     private static void parse(String entry) {
-        String[] sides = entry.split("=", 2);
-        if (sides.length < 2) {
+        String[] sides = Settings.split(entry);
+        if (sides == null) {
             ContentLog.LOGGER.error("{} entry '{}' needs the form item=entry|entry[,radius] or item=*[,radius], skipping it", KEY, entry);
             return;
         }
         String[] parts = sides[1].split(",");
         int radius = RADIUS;
         if (parts.length > 1) {
-            try { radius = MathHelper.clamp(Integer.parseInt(parts[1].trim()), 1, 64); }
-            catch (NumberFormatException bad) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
+            Integer asked = Settings.clamped(parts[1], 1, 64);
+            if (asked == null) { ContentLog.LOGGER.error("{} entry '{}' has a radius that is not a number, using {}", KEY, entry, RADIUS); }
+            else { radius = asked; }
         }
         Set<String> names = new HashSet<>();
         for (String name : parts[0].split("\\|")) {
@@ -121,7 +124,7 @@ public final class ContentProspect {
             if (trimmed.isEmpty() || "*".equals(trimmed)) { continue; }
             names.add(trimmed);
         }
-        ItemStack stack = ContentStacks.parse(ITEMS, sides[0].trim(), 1);
+        ItemStack stack = ContentStacks.parse(ITEMS, sides[0], 1);
         if (stack.isEmpty()) { return; }
         ENTRIES.add(new Entry(stack.getItem(), stack.getMetadata(), Collections.unmodifiableSet(names), radius));
     }
@@ -183,15 +186,15 @@ public final class ContentProspect {
             String line = dx * dx + dz * dz <= ContentOreVein.REACH * ContentOreVein.REACH
                     ? Lang.tr(player, "rdpl.prospect.here", ore, height)
                     : Lang.tr(player, "rdpl.prospect.hit", ore, Lang.tr(player, "rdpl.dir." + point(dx, dz)), height);
-            Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT, line, TextFormatting.YELLOW);
+            Says.tell(player, CardIds.PROSPECT, TextFormatting.YELLOW, line);
             said++;
         }
-        if (said == 0) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.PROSPECT_NONE, Lang.tr(player, "rdpl.prospect.none"), TextFormatting.GRAY); }
+        if (said == 0) { Says.tell(player, CardIds.PROSPECT_NONE, TextFormatting.GRAY, Lang.tr(player, "rdpl.prospect.none")); }
     }
 
     private static String point(int dx, int dz) {
         double angle = Math.toDegrees(Math.atan2(dx, -dz));
         int slice = (int) Math.floor(((angle + 360.0 + 22.5) % 360.0) / 45.0);
-        return POINTS[slice].toLowerCase(Locale.ROOT);
+        return POINTS[slice];
     }
 }

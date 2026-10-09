@@ -1,11 +1,10 @@
 package mctmods.resourcedatapackloader.content.util;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
@@ -14,7 +13,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentTabs {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<String, String> ICONS = new LinkedHashMap<>();
     private static final Map<String, ResourceLocation> SOURCES = new LinkedHashMap<>();
     private static boolean loaded;
@@ -28,11 +26,8 @@ public final class ContentTabs {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "creative tab");
+        if (json == null) { return; }
         String label = JsonUtils.getString(json, "label", key.getPath());
         String icon = JsonUtils.getString(json, "icon", "");
         if (icon.isEmpty()) {
@@ -50,6 +45,6 @@ public final class ContentTabs {
 
     public static ResourceLocation source(String label) {
         ResourceLocation key = SOURCES.get(label);
-        return key == null ? new ResourceLocation("resourcedatapackloader", label) : key;
+        return key == null ? ResourceDataPackLoader.id(label) : key;
     }
 }

@@ -6,66 +6,56 @@ import mctmods.resourcedatapackloader.core.util.ConfigLate;
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.Loader;
 import zone.rong.mixinbooter.ILateMixinLoader;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.BooleanSupplier;
 
 @SuppressWarnings("unused") public class MCTLateMixin implements ILateMixinLoader {
     private static Boolean tinkersFix;
     private static Boolean pulsar;
 
+    private static final String PREFIX = "mixins.resourcedatapackloader.";
+    private static final Map<String, BooleanSupplier> QUEUED = new LinkedHashMap<>();
+
+    static {
+        QUEUED.put("jei", () -> Loader.isModLoaded("jei"));
+        QUEUED.put("tconstruct", () -> tinkersFixEnabled() && Loader.isModLoaded("tconstruct"));
+        QUEUED.put("conarm", () -> tinkersFixEnabled() && Loader.isModLoaded("conarm"));
+        QUEUED.put("bop", () -> Loader.isModLoaded("biomesoplenty"));
+        QUEUED.put("crafttweaker", () -> Loader.isModLoaded("crafttweaker"));
+        QUEUED.put("dungeons2", () -> Loader.isModLoaded("dungeons2"));
+        QUEUED.put("quark", () -> Loader.isModLoaded("quark"));
+        QUEUED.put("aether", () -> Loader.isModLoaded("aether_legacy"));
+        QUEUED.put("betweenlands", () -> Loader.isModLoaded("thebetweenlands"));
+        QUEUED.put("lostcities", () -> Loader.isModLoaded("lostcities"));
+        QUEUED.put("neoterra", () -> Loader.isModLoaded("neoterra"));
+        QUEUED.put("otg", () -> Loader.isModLoaded("openterraingenerator"));
+        QUEUED.put("rtg", () -> Loader.isModLoaded("rtg"));
+        QUEUED.put("twilightforest", () -> Loader.isModLoaded("twilightforest"));
+        QUEUED.put("reccomplex", () -> Loader.isModLoaded("reccomplex"));
+        QUEUED.put("mca", () -> Loader.isModLoaded("mca"));
+        QUEUED.put("waystones", () -> Loader.isModLoaded("waystones"));
+        QUEUED.put("paperfixes", () -> Loader.isModLoaded("paperfixes"));
+        QUEUED.put("vanillaportals", () -> !Loader.isModLoaded("universaltweaks"));
+        QUEUED.put("betterf3", () -> Loader.isModLoaded("betterf3reborn"));
+        QUEUED.put("galacticraft", () -> Loader.isModLoaded("galacticraftcore"));
+        QUEUED.put("asmodeuscore", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("asmodeuscore"));
+        QUEUED.put("extraplanets", () -> Loader.isModLoaded("extraplanets"));
+        QUEUED.put("pulsar", MCTLateMixin::pulsarPresent);
+    }
+
     @Override public List<String> getMixinConfigs() {
-        return Arrays.asList(
-                "mixins.resourcedatapackloader.jei.json",
-                "mixins.resourcedatapackloader.tconstruct.json",
-                "mixins.resourcedatapackloader.conarm.json",
-                "mixins.resourcedatapackloader.bop.json",
-                "mixins.resourcedatapackloader.crafttweaker.json",
-                "mixins.resourcedatapackloader.dungeons2.json",
-                "mixins.resourcedatapackloader.quark.json",
-                "mixins.resourcedatapackloader.aether.json",
-                "mixins.resourcedatapackloader.betweenlands.json",
-                "mixins.resourcedatapackloader.lostcities.json",
-                "mixins.resourcedatapackloader.neoterra.json",
-                "mixins.resourcedatapackloader.otg.json",
-                "mixins.resourcedatapackloader.rtg.json",
-                "mixins.resourcedatapackloader.twilightforest.json",
-                "mixins.resourcedatapackloader.reccomplex.json",
-                "mixins.resourcedatapackloader.mca.json",
-                "mixins.resourcedatapackloader.waystones.json",
-                "mixins.resourcedatapackloader.paperfixes.json",
-                "mixins.resourcedatapackloader.vanillaportals.json",
-                "mixins.resourcedatapackloader.betterf3.json",
-                "mixins.resourcedatapackloader.galacticraft.json",
-                "mixins.resourcedatapackloader.asmodeuscore.json",
-                "mixins.resourcedatapackloader.extraplanets.json",
-                "mixins.resourcedatapackloader.pulsar.json");
+        List<String> configs = new ArrayList<>(QUEUED.size());
+        for (String name : QUEUED.keySet()) { configs.add(PREFIX + name + ".json"); }
+        return configs;
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
-        if (mixinConfig.endsWith(".jei.json")) { return Loader.isModLoaded("jei"); }
-        if (mixinConfig.endsWith(".tconstruct.json")) { return tinkersFixEnabled() && Loader.isModLoaded("tconstruct"); }
-        if (mixinConfig.endsWith(".conarm.json")) { return tinkersFixEnabled() && Loader.isModLoaded("conarm"); }
-        if (mixinConfig.endsWith(".bop.json")) { return Loader.isModLoaded("biomesoplenty"); }
-        if (mixinConfig.endsWith(".crafttweaker.json")) { return Loader.isModLoaded("crafttweaker"); }
-        if (mixinConfig.endsWith(".dungeons2.json")) { return Loader.isModLoaded("dungeons2"); }
-        if (mixinConfig.endsWith(".quark.json")) { return Loader.isModLoaded("quark"); }
-        if (mixinConfig.endsWith(".aether.json")) { return Loader.isModLoaded("aether_legacy"); }
-        if (mixinConfig.endsWith(".betweenlands.json")) { return Loader.isModLoaded("thebetweenlands"); }
-        if (mixinConfig.endsWith(".lostcities.json")) { return Loader.isModLoaded("lostcities"); }
-        if (mixinConfig.endsWith(".neoterra.json")) { return Loader.isModLoaded("neoterra"); }
-        if (mixinConfig.endsWith(".otg.json")) { return Loader.isModLoaded("openterraingenerator"); }
-        if (mixinConfig.endsWith(".rtg.json")) { return Loader.isModLoaded("rtg"); }
-        if (mixinConfig.endsWith(".twilightforest.json")) { return Loader.isModLoaded("twilightforest"); }
-        if (mixinConfig.endsWith(".reccomplex.json")) { return Loader.isModLoaded("reccomplex"); }
-        if (mixinConfig.endsWith(".mca.json")) { return Loader.isModLoaded("mca"); }
-        if (mixinConfig.endsWith(".waystones.json")) { return Loader.isModLoaded("waystones"); }
-        if (mixinConfig.endsWith(".paperfixes.json")) { return Loader.isModLoaded("paperfixes"); }
-        if (mixinConfig.endsWith(".vanillaportals.json")) { return !Loader.isModLoaded("universaltweaks"); }
-        if (mixinConfig.endsWith(".betterf3.json")) { return Loader.isModLoaded("betterf3reborn"); }
-        if (mixinConfig.endsWith(".galacticraft.json")) { return Loader.isModLoaded("galacticraftcore"); }
-        if (mixinConfig.endsWith(".asmodeuscore.json")) { return Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("asmodeuscore"); }
-        if (mixinConfig.endsWith(".extraplanets.json")) { return Loader.isModLoaded("extraplanets"); }
-        if (mixinConfig.endsWith(".pulsar.json")) { return pulsarPresent(); }
+        for (Map.Entry<String, BooleanSupplier> entry : QUEUED.entrySet()) {
+            if (mixinConfig.endsWith("." + entry.getKey() + ".json")) { return entry.getValue().getAsBoolean(); }
+        }
         return true;
     }
 

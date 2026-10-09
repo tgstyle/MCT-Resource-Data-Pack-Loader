@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.BlockPortal;
 import net.minecraft.block.state.IBlockState;
@@ -27,26 +28,13 @@ import java.util.Random;
     @Shadow @Final protected WorldServer world;
     @Shadow @Final protected Random random;
 
-    @Redirect(method = "placeInExistingPortal",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;"),
-            slice = @Slice(
-                    from = @At(value = "NEW", target = "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/math/BlockPos;"),
-                    to = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;down()Lnet/minecraft/util/math/BlockPos;")
-            ))
-    private BlockPos makeTopStartPos(BlockPos orig, int x, int y, int z, Entity entityIn, float rotationYaw) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld())
-            return orig.add(x, 128, z);
+    @Redirect(method = "placeInExistingPortal", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;"), slice = @Slice(from = @At(value = "NEW", target = "(Lnet/minecraft/entity/Entity;)Lnet/minecraft/util/math/BlockPos;"), to = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;down()Lnet/minecraft/util/math/BlockPos;"))) private BlockPos rdpl$makeTopStartPos(BlockPos orig, int x, int y, int z, Entity entityIn, float rotationYaw) {
+        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return orig.add(x, 128, z); }
         return orig.add(x, y, z);
     }
 
-    @ModifyConstant(method = "placeInExistingPortal",
-            constant = @Constant(
-                    intValue = 0,
-                    expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO,
-                    ordinal = 1))
-    private int getScanBottomY(int zero, Entity entityIn, float rotationYaw) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld())
-            return MathHelper.floor(entityIn.posY - 128);
+    @ModifyConstant(method = "placeInExistingPortal", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO, ordinal = 1)) private int rdpl$getScanBottomY(int zero, Entity entityIn, float rotationYaw) {
+        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return MathHelper.floor(entityIn.posY - 128); }
         return zero;
     }
 
@@ -80,8 +68,7 @@ import java.util.Random;
                         if (this.world.isAirBlock(pos.setPos(ix, iy, iz))) {
                             while (this.world.isAirBlock(pos)) {
                                 pos.setPos(ix, --iy - 1, iz);
-                                if (world.isOutsideBuildHeight(pos))
-                                    break;
+                                if (world.isOutsideBuildHeight(pos)) { break; }
                             }
                             for (int verticalPlaneSelector = random; verticalPlaneSelector < random + 4; ++verticalPlaneSelector) {
                                 int xPlane = verticalPlaneSelector % 2;
@@ -97,8 +84,7 @@ import java.util.Random;
                                             int iy1 = iy + height;
                                             int iz1 = iz + (width - 1) * zPlane - depth * xPlane;
                                             pos.setPos(ix1, iy1, iz1);
-                                            if (height < 0 && !this.world.getBlockState(pos).getMaterial().isSolid()
-                                                    || height >= 0 && !this.world.isAirBlock(pos)) { continue nextY; }
+                                            if (height < 0 && !this.world.getBlockState(pos).getMaterial().isSolid() || height >= 0 && !this.world.isAirBlock(pos)) { continue nextY; }
                                         }
                                     }
                                 }
@@ -143,7 +129,7 @@ import java.util.Random;
                 int iy = y1 + height;
                 int iz = z1 + (width - 1) * zPlane;
                 boolean isFrame = width == 0 || width == 3 || height == -1 || height == 3;
-                this.world.setBlockState(new BlockPos(ix, iy, iz), isFrame ? Objects.requireNonNull(Blocks.OBSIDIAN).getDefaultState() : portal, 2);
+                this.world.setBlockState(new BlockPos(ix, iy, iz), isFrame ? Objects.requireNonNull(Blocks.OBSIDIAN).getDefaultState() : portal, BlockFlags.UPDATE_CLIENTS);
             }
         }
         for (int width = 0; width < 4; ++width) {

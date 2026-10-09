@@ -26,18 +26,11 @@ import javax.annotation.Nullable;
     @Unique @Nullable private GameType rdpl$previousGameType;
     @Unique private boolean rdpl$gameTypeReceived;
 
-    @Redirect(method = "clickBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;canDestroy(Lnet/minecraft/block/Block;)Z"))
-    private boolean rdpl$mayClick(ItemStack stack, Block blockIn, BlockPos loc, EnumFacing face) {
-        return stack.canDestroy(blockIn) || ContentHardness.mayBreak(mc.player, mc.world.getBlockState(loc), stack);
-    }
+    @Redirect(method = "clickBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;canDestroy(Lnet/minecraft/block/Block;)Z")) private boolean rdpl$mayClick(ItemStack stack, Block blockIn, BlockPos loc, EnumFacing face) { return stack.canDestroy(blockIn) || ContentHardness.mayBreak(mc.player, mc.world.getBlockState(loc), stack); }
 
-    @Redirect(method = "onPlayerDestroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;canDestroy(Lnet/minecraft/block/Block;)Z"))
-    private boolean rdpl$mayDestroy(ItemStack stack, Block blockIn, BlockPos pos) {
-        return stack.canDestroy(blockIn) || ContentHardness.mayBreak(mc.player, mc.world.getBlockState(pos), stack);
-    }
+    @Redirect(method = "onPlayerDestroyBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/item/ItemStack;canDestroy(Lnet/minecraft/block/Block;)Z")) private boolean rdpl$mayDestroy(ItemStack stack, Block blockIn, BlockPos pos) { return stack.canDestroy(blockIn) || ContentHardness.mayBreak(mc.player, mc.world.getBlockState(pos), stack); }
 
-    @Inject(method = "setGameType", at = @At("HEAD"))
-    private void rdpl$rememberPreviousGameType(GameType type, CallbackInfo ci) {
+    @Inject(method = "setGameType", at = @At("HEAD")) private void rdpl$rememberPreviousGameType(GameType type, CallbackInfo ci) {
         if (rdpl$gameTypeReceived && type != currentGameType) { rdpl$previousGameType = currentGameType; }
         rdpl$gameTypeReceived = true;
     }

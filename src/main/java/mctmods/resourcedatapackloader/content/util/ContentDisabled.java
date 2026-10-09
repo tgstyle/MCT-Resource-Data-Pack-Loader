@@ -5,10 +5,9 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
@@ -16,7 +15,6 @@ import net.minecraft.init.Items;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
@@ -24,14 +22,11 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
+import java.util.LinkedHashSet;import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
 public final class ContentDisabled {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> NAMES = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
     private static final Map<String, Set<Integer>> NAMED_METAS = new LinkedHashMap<>();
@@ -78,14 +73,11 @@ public final class ContentDisabled {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Disabled file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "disabled file");
+        if (json == null) { return; }
         if (!ContentRegistry.available(Json.strings(json, "requires"), key)) { return; }
-        for (String name : Json.strings(json, "names")) { name(key, name.trim().toLowerCase(Locale.ROOT)); }
-        for (String namespace : Json.strings(json, "namespaces")) { PREFIXES.add(namespace.trim().toLowerCase(Locale.ROOT) + ":"); }
+        for (String name : Json.strings(json, "names")) { name(key, Settings.lower(name)); }
+        for (String namespace : Json.strings(json, "namespaces")) { PREFIXES.add(Settings.lower(namespace) + ":"); }
         ORE_NAMES.addAll(Json.strings(json, "oreDict"));
     }
 

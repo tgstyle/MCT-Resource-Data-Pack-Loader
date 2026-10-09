@@ -23,8 +23,7 @@ import java.util.List;
     @Mutable @Shadow @Final public static List<Biome> SPAWN_BIOMES;
     @Unique private static List<Biome> rdpl$vanillaBiomes;
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$spacing(CallbackInfo ci) {
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$spacing(CallbackInfo ci) {
         spacing = ContentStructurePlacement.spacing(ContentStructurePlacement.MONUMENTS, spacing);
         separation = ContentStructurePlacement.separation(ContentStructurePlacement.MONUMENTS, separation);
         if (spacing <= separation) {

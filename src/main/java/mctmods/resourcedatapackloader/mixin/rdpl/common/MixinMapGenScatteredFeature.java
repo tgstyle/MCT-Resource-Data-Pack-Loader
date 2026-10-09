@@ -23,8 +23,7 @@ import java.util.List;
     @Shadow private int maxDistanceBetweenScatteredFeatures;
     @Shadow @Final private List<Biome.SpawnListEntry> monsters;
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$spacing(CallbackInfo ci) {
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$spacing(CallbackInfo ci) {
         int asked = ContentStructurePlacement.spacing(ContentStructurePlacement.TEMPLES, maxDistanceBetweenScatteredFeatures);
         if (asked < 9) {
             ContentLog.LOGGER.warn("structureSpacing asks for temples every {} chunk(s), but the game works out where a temple stands by counting back eight chunks, so anything under nine leaves it nothing to count. Nine is used instead", asked);

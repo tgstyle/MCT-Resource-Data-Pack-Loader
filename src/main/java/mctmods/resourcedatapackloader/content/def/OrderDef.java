@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import net.minecraft.util.math.MathHelper;
 import java.util.List;
 
 public final class OrderDef {
@@ -43,7 +44,7 @@ public final class OrderDef {
 
     public int reach(int tier) {
         if (areaByTier.length == 0) { return area; }
-        return areaByTier[Math.max(0, Math.min(tier, areaByTier.length - 1))];
+        return areaByTier[MathHelper.clamp(tier, 0, areaByTier.length - 1)];
     }
 
     public enum Job { GATHER, MINE, FARM, HAUL }

@@ -1,6 +1,4 @@
 package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
-
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
@@ -35,7 +33,6 @@ import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraftforge.fml.common.IWorldGenerator;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -51,9 +48,9 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private Chunk lastChunk;
     private boolean optimizationHack;
     private Biome[] biomes;
-    @Nonnull private IBlockState extensionBlockBottom = Objects.requireNonNull(Blocks.STONE).getDefaultState();
-    @Nonnull private IBlockState extensionBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
-    @Nonnull private IBlockState fillBlockTop = Objects.requireNonNull(Blocks.AIR).getDefaultState();
+    @Nonnull private IBlockState extensionBlockBottom = Blocks.STONE.getDefaultState();
+    @Nonnull private IBlockState extensionBlockTop = Blocks.AIR.getDefaultState();
+    @Nonnull private IBlockState fillBlockTop = Blocks.AIR.getDefaultState();
     private boolean hasTopBedrock = false, hasBottomBedrock = true;
     private static final int SKY_GROWTH_CUBES = 2;
     private DeepGeneration deep;
@@ -71,12 +68,25 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     private static IBlockState probed(Chunk probe, @Nullable ChunkPrimer probed, int x, int y, int z) {
         if (probed != null) { return probed.getBlockState(x, y, z); }
         ExtendedBlockStorage storage = probe.getBlockStorageArray()[Coords.blockToCube(y)];
-        return storage == null ? Objects.requireNonNull(Blocks.AIR).getDefaultState() : storage.get(x, Coords.blockToLocal(y), z);
+        return storage == null ? Blocks.AIR.getDefaultState() : storage.get(x, Coords.blockToLocal(y), z);
+    }
+
+    private static void tally(Map<IBlockState, Integer> histogram, IBlockState state) { histogram.merge(state, 1, Integer::sum); }
+
+    private static IBlockState mostCommon(Map<IBlockState, Integer> histogram, IBlockState fallback) {
+        IBlockState best = fallback;
+        int topcount = 0;
+        for (Map.Entry<IBlockState, Integer> entry : histogram.entrySet()) {
+            if (entry.getValue() > topcount && entry.getKey().getBlock() != Blocks.BEDROCK) {
+                best = entry.getKey();
+                topcount = entry.getValue();
+            }
+        }
+        return best;
     }
 
     private void tryInit(IChunkGenerator vanilla, World world) {
         if (isInit) { return; }
-        isInit = true;
         Chunk probe;
         ChunkPrimer probed;
         IRubicWorldInternal.ICompatGenerationScope scope = ((IRubicWorldInternal.IServer) world).rdpl$doCompatibilityGeneration();
@@ -87,8 +97,8 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         } finally {
             scope.close();
         }
-        IBlockState airState = Objects.requireNonNull(Blocks.AIR).getDefaultState();
-        IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
+        IBlockState airState = Blocks.AIR.getDefaultState();
+        IBlockState bedrockState = Blocks.BEDROCK.getDefaultState();
         int worldHeightBlocks = ((IRubicWorld) world).rdpl$getMaxGenerationHeight();
         worldHeightCubes = worldHeightBlocks / Cube.SIZE;
         Map<IBlockState, Integer> blockHistogramBottom = new HashMap<>();
@@ -96,47 +106,32 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         for (int x = 0; x < Cube.SIZE; x++) {
             for (int z = 0; z < Cube.SIZE; z++) {
                 for (int y = 0; y < 3; y++) {
-                    IBlockState blockState = probed(probe, probed, x, y, z);
-                    int count = blockHistogramBottom.getOrDefault(blockState, 0);
-                    blockHistogramBottom.put(blockState, count + 1);
+                    tally(blockHistogramBottom, probed(probe, probed, x, y, z));
                 }
                 for (int y = worldHeightBlocks - 1; y > worldHeightBlocks - 4; y--) {
-                    IBlockState blockState = probed(probe, probed, x, y, z);
-                    int count = blockHistogramTop.getOrDefault(blockState, 0);
-                    blockHistogramTop.put(blockState, count + 1);
+                    tally(blockHistogramTop, probed(probe, probed, x, y, z));
                 }
             }
         }
         ContentLog.LOGGER.debug("Block histograms: \nTop: {}\nBottom: {}", blockHistogramTop, blockHistogramBottom);
-        int topcount = 0;
-        for (Map.Entry<IBlockState, Integer> entry : blockHistogramBottom.entrySet()) {
-            if (entry.getValue() > topcount && entry.getKey().getBlock() != Blocks.BEDROCK) {
-                extensionBlockBottom = entry.getKey();
-                topcount = entry.getValue();
-            }
-        }
+        extensionBlockBottom = mostCommon(blockHistogramBottom, extensionBlockBottom);
         hasBottomBedrock = blockHistogramBottom.getOrDefault(bedrockState, 0) > 0;
-        Rubic.LOGGER.info("Detected filler block {} from layers [0, 2], bedrock={}", extensionBlockBottom.getBlock().getTranslationKey(), hasBottomBedrock);
-        topcount = 0;
-        for (Map.Entry<IBlockState, Integer> entry : blockHistogramTop.entrySet()) {
-            if (entry.getValue() > topcount && entry.getKey().getBlock() != Blocks.BEDROCK) {
-                extensionBlockTop = entry.getKey();
-                topcount = entry.getValue();
-            }
-        }
+        ContentLog.LOGGER.info("Detected filler block {} from layers [0, 2], bedrock={}", extensionBlockBottom.getBlock().getTranslationKey(), hasBottomBedrock);
+        extensionBlockTop = mostCommon(blockHistogramTop, extensionBlockTop);
         hasTopBedrock = blockHistogramTop.getOrDefault(bedrockState, 0) > 0;
         fillBlockTop = hasTopBedrock ? airState : extensionBlockTop;
-        Rubic.LOGGER.info("Detected filler block {} from layers [{}, {}], bedrock={}", extensionBlockTop.getBlock().getTranslationKey(), worldHeightBlocks - 3, worldHeightBlocks - 1, hasTopBedrock);
-        if (hasTopBedrock) { Rubic.LOGGER.info("Dimension {} is capped with bedrock at {}, so the world above it is left empty instead of being filled with {}", world.provider.getDimension(), worldHeightBlocks, extensionBlockTop.getBlock().getTranslationKey()); }
+        ContentLog.LOGGER.info("Detected filler block {} from layers [{}, {}], bedrock={}", extensionBlockTop.getBlock().getTranslationKey(), worldHeightBlocks - 3, worldHeightBlocks - 1, hasTopBedrock);
+        if (hasTopBedrock) { ContentLog.LOGGER.info("Dimension {} is capped with bedrock at {}, so the world above it is left empty instead of being filled with {}", world.provider.getDimension(), worldHeightBlocks, extensionBlockTop.getBlock().getTranslationKey()); }
         if (hasBottomBedrock && ContentSeams.opensFloor(world.provider.getDimension())) {
             hasBottomBedrock = false;
-            Rubic.LOGGER.info("A world seam opens the floor of dimension {}, so its bedrock is not generated", world.provider.getDimension());
+            ContentLog.LOGGER.info("A world seam opens the floor of dimension {}, so its bedrock is not generated", world.provider.getDimension());
         }
         if (hasTopBedrock && ContentSeams.opensCeiling(world.provider.getDimension())) {
             hasTopBedrock = false;
-            Rubic.LOGGER.info("A world seam opens the ceiling of dimension {}, so its bedrock is not generated", world.provider.getDimension());
+            ContentLog.LOGGER.info("A world seam opens the ceiling of dimension {}, so its bedrock is not generated", world.provider.getDimension());
         }
         deep = new DeepGeneration(world, offsetCubes << 4, extensionBlockBottom);
+        isInit = true;
         deepPopulation = ContentWorldgen.deepestMinHeight() < 0;
         skyPopulation = ContentWorldgen.highestMaxHeight() >= worldHeightBlocks;
     }
@@ -187,7 +182,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                     try {
                         lastChunk = vanilla.generateChunk(cubeX, cubeZ);
                         ChunkPrimer chunkPrimer = ((IColumnInternal) lastChunk).getCompatGenerationPrimer();
-                        if (chunkPrimer == null) { Rubic.LOGGER.error("Optimized compatibility generation failed for chunk at {}, {}", cubeX, cubeZ); }
+                        if (chunkPrimer == null) { ContentLog.LOGGER.error("Optimized compatibility generation failed for chunk at {}, {}", cubeX, cubeZ); }
                         else {
                             ((IColumnInternal) lastChunk).syncCompatGenerationWrites();
                             replaceBedrock(chunkPrimer, rand);
@@ -213,7 +208,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
                     else { storage = lastChunk.getBlockStorageArray()[4]; }
                 }
                 if (storage != null && !storage.isEmpty()) {
-                    IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
+                    IBlockState bedrockState = Blocks.BEDROCK.getDefaultState();
                     for (int y = 0; y < Cube.SIZE; y++) {
                         int blockY = Coords.localToBlock(vanillaY, y);
                         for (int z = 0; z < Cube.SIZE; z++) {
@@ -245,7 +240,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     }
 
     private void replaceBedrockAtLayer(ChunkPrimer chunkPrimer, Random rand, int y) {
-        IBlockState bedrockState = Objects.requireNonNull(Blocks.BEDROCK).getDefaultState();
+        IBlockState bedrockState = Blocks.BEDROCK.getDefaultState();
         for (int z = 0; z < Cube.SIZE; z++) {
             for (int x = 0; x < Cube.SIZE; x++) {
                 IBlockState state = chunkPrimer.getBlockState(x, y, z);
@@ -301,7 +296,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
         long zSeed = fmlRandom.nextLong() >> 2 + 1L;
         long chunkSeed = (xSeed * x + zSeed * z) ^ worldSeed;
         for (IWorldGenerator generator : generators) {
-            if (!GcRubicWorldgen.allows(world, generator)) { continue; }
+            if (GcRubicWorldgen.blocks(world, generator)) { continue; }
             fmlRandom.setSeed(chunkSeed);
             try {
                 CompatHandler.beforeGenerate(world);
@@ -358,9 +353,7 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
 
     @Override public List<SpawnListEntry> getPossibleCreatures(EnumCreatureType creatureType, BlockPos pos) { return vanilla.getPossibleCreatures(creatureType, pos); }
 
-    @Override @Nullable public BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) {
-        return vanilla.getNearestStructurePos(world, name, pos, findUnexplored);
-    }
+    @Override @Nullable public BlockPos getClosestStructure(String name, BlockPos pos, boolean findUnexplored) { return vanilla.getNearestStructurePos(world, name, pos, findUnexplored); }
 
     private static class CubePrimerWrapper extends CubePrimer {
         private final ChunkPrimer chunkPrimer;

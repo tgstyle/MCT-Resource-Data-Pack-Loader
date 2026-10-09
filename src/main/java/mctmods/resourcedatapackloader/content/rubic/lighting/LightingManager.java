@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.CubePos;
 
@@ -84,9 +83,8 @@ public class LightingManager implements ILightingManager {
 
     private void tryScheduleOnLoadHeightChangeRelight(ICube cube) {
         CubeLightData data = (CubeLightData) ((Cube) cube).getCubeLightData();
-        if(data.lastHeightMap == null || !cube.isSurfaceTracked()) { return; }
+        if (data.lastHeightMap == null || !cube.isSurfaceTracked()) { return; }
         IColumnInternal column = cube.getColumn();
-        LightingManager lightManager = (LightingManager) ((IRubicWorldInternal) cube.getWorld()).rdpl$getLightingManager();
         int minOwn = Coords.cubeToMinBlock(cube.getY());
         int maxOwn = minOwn + 15;
         for (int i = 0; i < data.lastHeightMap.length; i++) {
@@ -100,7 +98,7 @@ public class LightingManager implements ILightingManager {
             minUpdateY = Math.max(minUpdateY, minOwn);
             maxUpdateY = Math.min(maxUpdateY, maxOwn);
             if (minUpdateY > maxUpdateY) { continue; }
-            lightManager.updateLightBetween(cube.getColumn(), localX, minUpdateY, maxUpdateY, localZ);
+            updateLightBetween(cube.getColumn(), localX, minUpdateY, maxUpdateY, localZ);
         }
         data.lastHeightMap = null;
     }

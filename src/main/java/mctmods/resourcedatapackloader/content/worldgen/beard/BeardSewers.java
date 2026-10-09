@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.world.GenHeights;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 import java.util.function.IntUnaryOperator;
 import javax.annotation.Nullable;
@@ -31,7 +31,6 @@ import java.util.List;
 public final class BeardSewers {
     private static boolean warned = false;
     private static boolean toldPower = false;
-    private static final int FLOOR_LEAST = 6;
     private static final int CLEAR_UNDER = 2;
     private static final EnumFacing MANHOLE_BACK = EnumFacing.SOUTH;
 
@@ -75,7 +74,7 @@ public final class BeardSewers {
     private static int vineChance() { return MathHelper.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerVineChance", Config.worldgen.villageSewerVineChance), 0, 100); }
 
     private static IBlockState clinging(IBlockState vine, EnumFacing wall) {
-        PropertyBool side = wall == EnumFacing.NORTH ? BlockVine.NORTH : wall == EnumFacing.SOUTH ? BlockVine.SOUTH : wall == EnumFacing.WEST ? BlockVine.WEST : BlockVine.EAST;
+        PropertyBool side = BlockVine.getPropertyFor(wall);
         if (!vine.getPropertyKeys().contains(side)) { return vine; }
         return vine.withProperty(side, Boolean.TRUE);
     }
@@ -118,32 +117,67 @@ public final class BeardSewers {
         return false;
     }
 
-    private static boolean walledOffBore(World world, List<RailPiece> subways, BlockPos.MutableBlockPos at, int x, int z, int floor, int roof, IBlockState lining, BeardRoads.Palette moss, int mossChance) {
+    private static boolean walledOffBore(World world, List<RailPiece> subways, BlockPos.MutableBlockPos at, int x, int z, int floor, int roof, Kit kit) {
         boolean fouled = false;
         for (int y = floor; y <= roof && !fouled; y++) { fouled = BeardRails.insideBore(world, subways, x, y, z); }
         if (!fouled) { return false; }
         for (int y = floor; y <= roof; y++) {
             if (BeardRails.insideBore(world, subways, x, y, z)) { continue; }
             if (onTrack(world, at, x, y, z)) { continue; }
-            put(world, at.setPos(x, y, z), lining, lining, moss, mossChance);
+            put(world, at.setPos(x, y, z), kit.lining, kit);
         }
         return true;
+    }
+
+    private static final class Kit {
+        IBlockState lining;
+        IBlockState walk;
+        IBlockState water;
+        IBlockState light;
+        IBlockState vine;
+        BeardRoads.Palette moss;
+        final int mossChance = mossChance();
+        final int vineChance = vineChance();
+
+        Kit() { reload(); }
+
+        void reload() {
+            lining = lining();
+            walk = walk();
+            water = water();
+            light = light();
+            moss = moss();
+            vine = vine();
+        }
+    }
+
+    private static void column(World world, BlockPos.MutableBlockPos at, Kit kit, int x, int z, int floor, int height, boolean edge, boolean channel, boolean lamp, @Nullable EnumFacing wall) {
+        put(world, at.setPos(x, floor, z), kit.lining, kit);
+        put(world, at.setPos(x, floor + 1, z), edge ? kit.lining : channel ? kit.water : kit.walk, kit);
+        IBlockState air = Blocks.AIR.getDefaultState();
+        for (int y = floor + 2; y <= floor + 1 + height; y++) {
+            boolean hung = !edge && wall != null && kit.vineChance > 0 && kit.vine.getBlock() != Blocks.AIR
+                    && SeededRandom.at(world, x, y, z).nextInt(100) < kit.vineChance;
+            if (hung) { if (!BeardKeep.holds(x, y, z)) { world.setBlockState(at.setPos(x, y, z), clinging(kit.vine, wall), BlockFlags.UPDATE_CLIENTS); } }
+            else { put(world, at.setPos(x, y, z), edge ? kit.lining : air, kit); }
+        }
+        put(world, at.setPos(x, floor + 2 + height, z), lamp ? kit.light : kit.lining, kit);
     }
 
     private static BeardRoads.Palette moss() { return BeardRoads.pathPalette("villageSewerMossBlock", Config.worldgen.villageSewerMossBlock, Blocks.AIR.getDefaultState()); }
 
     private static int mossChance() { return MathHelper.clamp(ContentControl.number(ContentControl.VILLAGES, "villageSewerMossChance", Config.worldgen.villageSewerMossChance), 0, 100); }
 
-    private static void put(World world, BlockPos.MutableBlockPos at, IBlockState laid, IBlockState lining, BeardRoads.Palette moss, int chance) {
+    private static void put(World world, BlockPos.MutableBlockPos at, IBlockState laid, Kit kit) {
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return; }
-        boolean mossy = chance > 0 && moss.first().getBlock() != Blocks.AIR && laid == lining
-                && SeededRandom.at(world, at.getX(), at.getY(), at.getZ()).nextInt(100) < chance;
-        world.setBlockState(at, mossy ? moss.pick(world, at.getX(), at.getY(), at.getZ()) : laid, 2);
+        boolean mossy = kit.mossChance > 0 && kit.moss.first().getBlock() != Blocks.AIR && laid == kit.lining
+                && SeededRandom.at(world, at.getX(), at.getY(), at.getZ()).nextInt(100) < kit.mossChance;
+        world.setBlockState(at, mossy ? kit.moss.pick(world, at.getX(), at.getY(), at.getZ()) : laid, BlockFlags.UPDATE_CLIENTS);
     }
 
     private static void shaftCell(World world, StructureBoundingBox clip, List<RailPiece> subways, BlockPos.MutableBlockPos at, IBlockState laid) {
         if (!clip.isVecInside(at) || BeardRails.insideBore(world, subways, at.getX(), at.getY(), at.getZ())) { return; }
-        world.setBlockState(at, laid, 2);
+        world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
     }
 
     private static boolean manhole(World world, StructureBoundingBox clip, List<RailPiece> subways, int x, int z, int level, int floor, int roof, IBlockState lining, IBlockState ladder, IBlockState cover, BlockPos.MutableBlockPos at) {
@@ -240,7 +274,7 @@ public final class BeardSewers {
         if (off() || wellEntranceOff()) { return found; }
         boolean alongX = BeardPlots.roadAlongX(road);
         int full = BeardRoads.pathFullWidth();
-        int back = (full - 1) / 2;
+        int back = ContentBeard.streetHalf();
         int ahead = full / 2;
         int pad = Math.max(1, (full + 3 - ((alongX ? road.maxZ - road.minZ : road.maxX - road.minX) + 1)) / 2);
         for (StructureComponent piece : nearby) {
@@ -270,20 +304,14 @@ public final class BeardSewers {
         int height = height();
         int half = width() / 2;
         int floor = ground - depth;
-        if (floor < GenHeights.floor(world, FLOOR_LEAST) || floor + height + CLEAR_UNDER >= ground) {
-            ContentLog.LOGGER.debug("The plaza at {}, {} gets no sewer loop: {} block(s) of depth put its floor at y {}, under y {}, the world floor plus its lining, or its roof into the paving at y {}", box.minX, box.minZ, depth, floor, GenHeights.floor(world, FLOOR_LEAST), ground);
+        if (floor < BeardRails.lined(world) || floor + height + CLEAR_UNDER >= ground) {
+            ContentLog.LOGGER.debug("The plaza at {}, {} gets no sewer loop: {} block(s) of depth put its floor at y {}, under y {}, the world floor plus its lining, or its roof into the paving at y {}", box.minX, box.minZ, depth, floor, BeardRails.lined(world), ground);
             return;
         }
         int roof = floor + 2 + height;
         List<StructureComponent> radials = radials(start, box);
-        IBlockState lining = lining();
-        IBlockState walk = walk();
-        IBlockState water = water();
-        IBlockState light = light();
-        BeardRoads.Palette moss = moss();
-        int mossChance = mossChance();
+        Kit kit = new Kit();
         int run = lightRun();
-        IBlockState air = Blocks.AIR.getDefaultState();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         List<RailPiece> subways = BeardRails.subways(world, new StructureBoundingBox(box.minX - LOOP - half, floor, box.minZ - LOOP - half, box.maxX + LOOP + half, roof, box.maxZ + LOOP + half));
         int dug = 0;
@@ -293,17 +321,14 @@ public final class BeardSewers {
                 int ring = band(box, x, z);
                 if (ring < LOOP - half || ring > LOOP + half) { continue; }
                 if (!clip.isVecInside(at.setPos(x, floor, z))) { continue; }
-                if (walledOffBore(world, subways, at, x, z, floor, roof, lining, moss, mossChance)) {
+                if (walledOffBore(world, subways, at, x, z, floor, roof, kit)) {
                     walled++;
                     continue;
                 }
                 boolean edge = (ring == LOOP - half || ring == LOOP + half) && !insideRadial(radials, x, z, half);
                 boolean channel = ring == LOOP;
-                put(world, at.setPos(x, floor, z), lining, lining, moss, mossChance);
-                put(world, at.setPos(x, floor + 1, z), edge ? lining : channel ? water : walk, lining, moss, mossChance);
-                for (int y = floor + 2; y <= floor + 1 + height; y++) { put(world, at.setPos(x, y, z), edge ? lining : air, lining, moss, mossChance); }
-                boolean lamp = channel && light.getBlock() != Blocks.AIR && Math.floorMod(x + z, run) == 0;
-                put(world, at.setPos(x, roof, z), lamp ? light : lining, lining, moss, mossChance);
+                boolean lamp = channel && kit.light.getBlock() != Blocks.AIR && Math.floorMod(x + z, run) == 0;
+                column(world, at, kit, x, z, floor, height, edge, channel, lamp, null);
                 dug++;
             }
         }
@@ -325,7 +350,7 @@ public final class BeardSewers {
             int along = alongX ? (road.minX > box.maxX ? box.maxX + LOOP : box.minX - LOOP) : (road.minZ > box.maxZ ? box.maxZ + LOOP : box.minZ - LOOP);
             shaftX = alongX ? along : center + 1;
             shaftZ = alongX ? center + 1 : along;
-            cut = manhole(world, clip, subways, shaftX, shaftZ, ground, floor, roof, lining, ladder(), cover(), at);
+            cut = manhole(world, clip, subways, shaftX, shaftZ, ground, floor, roof, kit.lining, ladder(), cover(), at);
         }
         if ((dug > 0 || walled > 0 || cut) && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The plaza at {}, {} gets a sewer loop of {} column(s) around the well, {} column(s) walled solid where a subway passes through its depth, {} street(s) passing through it{}", box.minX, box.minZ, dug, walled, radials.size(), cut ? ", and a manhole at " + shaftX + ", " + shaftZ + " down to y " + floor : ""); }
     }
@@ -338,7 +363,7 @@ public final class BeardSewers {
         if (off() || graded == null) { return; }
         int depth = depth();
         int height = height();
-        int floorLeast = GenHeights.floor(world, FLOOR_LEAST);
+        int floorLeast = BeardRails.lined(world);
         int middle = (acrossLeast + acrossMost) / 2;
         StructureBoundingBox road = piece.getBoundingBox();
         List<RailPiece> subways = BeardRails.subways(world, road);
@@ -416,61 +441,38 @@ public final class BeardSewers {
     }
 
     private static void run(World world, StructureBoundingBox clip, boolean alongX, List<int[]> laying, int middle, @Nullable IntUnaryOperator centers, List<StructureBoundingBox> crossed, int acrossLeast, int acrossMost, List<RailPiece> subways, int[] counts) {
-        IBlockState lining = lining();
-        IBlockState walk = walk();
-        IBlockState water = water();
-        IBlockState light = light();
-        BeardRoads.Palette moss = moss();
-        int mossChance = mossChance();
-        IBlockState vine = vine();
-        int vineChance = vineChance();
-        IBlockState air = Blocks.AIR.getDefaultState();
+        Kit kit = new Kit();
         int depth = depth();
         int height = height();
         int half = width() / 2;
         int lightRun = lightRun();
-        int floorLeast = GenHeights.floor(world, FLOOR_LEAST);
+        int floorLeast = BeardRails.lined(world);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int cramped = 0;
         for (int[] step : laying) {
             int row = step[0];
             int level = step[1];
             int center = centers == null ? middle : centers.applyAsInt(row);
-            if (BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
-                lining = lining();
-                walk = walk();
-                water = water();
-                light = light();
-                moss = moss();
-                vine = vine();
-            }
+            if (BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) { kit.reload(); }
             int floor = level - depth;
             if (floor < floorLeast || floor + height + CLEAR_UNDER >= level) {
                 cramped++;
                 continue;
             }
-            boolean lightRow = light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
+            boolean lightRow = kit.light.getBlock() != Blocks.AIR && Math.floorMod(row, lightRun) == 0;
             for (int across = center - half; across <= center + half; across++) {
                 int x = alongX ? row : across;
                 int z = alongX ? across : row;
                 if (!clip.isVecInside(at.setPos(x, floor, z)) || withinLoop(x, z, half)) { continue; }
-                if (walledOffBore(world, subways, at, x, z, floor, floor + height + 2, lining, moss, mossChance)) {
+                if (walledOffBore(world, subways, at, x, z, floor, floor + height + 2, kit)) {
                     counts[2]++;
                     continue;
                 }
                 boolean edge = (across == center - half || across == center + half) && uncrossedSewer(crossed, alongX, x, z, half, acrossLeast, acrossMost);
-                put(world, at.setPos(x, floor, z), lining, lining, moss, mossChance);
-                put(world, at.setPos(x, floor + 1, z), edge ? lining : across == center ? water : walk, lining, moss, mossChance);
                 EnumFacing wall = across == center - half + 1 ? (alongX ? EnumFacing.NORTH : EnumFacing.WEST) : across == center + half - 1 ? (alongX ? EnumFacing.SOUTH : EnumFacing.EAST) : null;
                 if (wall != null && !walled(clip, crossed, alongX, x + wall.getXOffset(), z + wall.getZOffset(), half, center, acrossLeast, acrossMost)) { wall = null; }
-                for (int y = floor + 2; y <= floor + 1 + height; y++) {
-                    boolean hung = !edge && wall != null && vineChance > 0 && vine.getBlock() != Blocks.AIR
-                            && SeededRandom.at(world, x, y, z).nextInt(100) < vineChance;
-                    if (hung) { if (!BeardKeep.holds(x, y, z)) { world.setBlockState(at.setPos(x, y, z), clinging(vine, wall), 2); } }
-                    else { put(world, at.setPos(x, y, z), edge ? lining : air, lining, moss, mossChance); }
-                }
                 boolean lamp = lightRow && across == center;
-                put(world, at.setPos(x, floor + 2 + height, z), lamp ? light : lining, lining, moss, mossChance);
+                column(world, at, kit, x, z, floor, height, edge, across == center, lamp, wall);
                 if (lamp) { counts[1]++; }
                 counts[0]++;
             }

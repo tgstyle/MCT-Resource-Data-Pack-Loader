@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.types;
 
-import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBanner;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBannerWall;
@@ -28,21 +27,19 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GrowthDef;
 import mctmods.resourcedatapackloader.content.interfaces.IBlockType;
+import mctmods.resourcedatapackloader.content.util.NamedRegistry;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.LinkedHashMap;
-import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentBlockTypes {
     public static final String DEFAULT = "basic";
-    private static final Map<String, IBlockType> TYPES = new LinkedHashMap<>();
+    private static final NamedRegistry<IBlockType> TYPES = new NamedRegistry<>("Block", DEFAULT);
 
     private ContentBlockTypes() {}
 
@@ -53,9 +50,8 @@ public final class ContentBlockTypes {
         register("falling", def -> Collections.singletonList(ContentBlockFalling.create(def)));
         register("slab", new IBlockType() {
             @Override public List<Block> create(BlockDef def) {
-                PropertyVariant property = new PropertyVariant(ContentSetup.names(def));
-                ContentBlockSlab single = ContentBlockSlab.create(def, false, property);
-                ContentBlockSlab twin = ContentBlockSlab.create(def, true, property);
+                ContentBlockSlab single = ContentBlockSlab.create(def, false);
+                ContentBlockSlab twin = ContentBlockSlab.create(def, true);
                 single.pair(twin);
                 twin.pair(single);
                 return Arrays.asList(single, twin);
@@ -86,15 +82,13 @@ public final class ContentBlockTypes {
         });
         register("flower", new IBlockType() {
             @Override public List<Block> create(BlockDef def) {
-                GrowthDef growth = def.growth == null ? GrowthDef.bush() : def.growth;
-                return Collections.singletonList(ContentBlockFlower.create(def, growth));
+                return Collections.singletonList(ContentBlockFlower.create(def, GrowthDef.orBush(def)));
             }
             @Override public int maxVariants() { return ContentBlockFlower.MAX_VARIANTS; }
         });
         register("vine", new IBlockType() {
             @Override public List<Block> create(BlockDef def) {
-                GrowthDef growth = def.growth == null ? GrowthDef.bush() : def.growth;
-                return Collections.singletonList(new ContentBlockVine(def, growth));
+                return Collections.singletonList(new ContentBlockVine(def, GrowthDef.orBush(def)));
             }
             @Override public int maxVariants() { return ContentBlockVine.MAX_VARIANTS; }
         });
@@ -162,19 +156,11 @@ public final class ContentBlockTypes {
         });
     }
 
-    public static void register(String name, IBlockType type) {
-        IBlockType previous = TYPES.put(name.toLowerCase(Locale.ROOT), type);
-        if (previous != null) { ContentLog.LOGGER.warn("Block type '{}' was registered twice, the later one wins", name); }
-    }
+    public static void register(String name, IBlockType type) { TYPES.register(name, type); }
 
-    @Nullable public static IBlockType find(String name) { return TYPES.get(name == null ? "" : name.toLowerCase(Locale.ROOT)); }
+    @Nullable public static IBlockType find(String name) { return TYPES.find(name); }
 
-    public static IBlockType get(String name, Object context) {
-        IBlockType type = find(name);
-        if (type != null) { return type; }
-        ContentLog.LOGGER.error("Unknown block type '{}' in {}, treating it as '{}'. Known types are {}", name, context, DEFAULT, names());
-        return TYPES.get(DEFAULT);
-    }
+    public static IBlockType get(String name, Object context) { return TYPES.get(name, context); }
 
-    public static Set<String> names() { return Collections.unmodifiableSet(TYPES.keySet()); }
+    public static Set<String> names() { return TYPES.names(); }
 }

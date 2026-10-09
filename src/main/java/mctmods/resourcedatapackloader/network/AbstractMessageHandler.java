@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.INetHandlerPlayClient;
 import mctmods.resourcedatapackloader.util.SideUtils;
 
@@ -34,7 +34,7 @@ public abstract class AbstractMessageHandler<T extends IMessage> implements IMes
                     () -> () -> FMLCommonHandler.instance().getMinecraftServerInstance().getWorld(0)
             );
             if (mainWorld == null) {
-                Rubic.LOGGER.warn("Received packet when world doesn't exist!");
+                ContentLog.LOGGER.warn("Received packet when world doesn't exist!");
                 return null;
             }
             EntityPlayer player = SideUtils.getForSide(ctx,
@@ -45,11 +45,11 @@ public abstract class AbstractMessageHandler<T extends IMessage> implements IMes
             else { handleServerMessage(player, message, ctx); }
             return null;
         } catch (Error error) {
-            Rubic.LOGGER.catching(error);
+            ContentLog.LOGGER.catching(error);
             FMLCommonHandler.instance().exitJava(-1, false);
             throw error;
         } catch (RuntimeException ex) {
-            Rubic.LOGGER.error("A {} packet could not be handled and was dropped", message.getClass().getSimpleName(), ex);
+            ContentLog.LOGGER.error("A {} packet could not be handled and was dropped", message.getClass().getSimpleName(), ex);
             return null;
         }
     }

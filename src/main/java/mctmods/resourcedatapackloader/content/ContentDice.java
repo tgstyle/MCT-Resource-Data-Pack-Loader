@@ -4,9 +4,11 @@ import mctmods.resourcedatapackloader.content.def.DiceDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.WeightedPicks;
 
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
@@ -36,6 +38,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class ContentDice {
+    public static final String COIN = "coin";
     public static final String SILENT = "silent";
     public static final String SELF = "self";
     public static final String TEAM = "team";
@@ -64,8 +67,7 @@ public final class ContentDice {
         SAYS.clear();
         heard = new Audience(ALL, 0);
         heardFrom = null;
-        PackManager.get().forEach(PackManager.DICE, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.DICE, "dice file", (key, contents) -> {
             DiceDef def = ContentParserGames.diceFile(key, contents);
             if (def == null) { return; }
             take(key, def);
@@ -97,7 +99,7 @@ public final class ContentDice {
         for (Map.Entry<String, String> said : def.says.entrySet()) { SAYS.putIfAbsent(said.getKey(), said.getValue()); }
     }
 
-    private static boolean taken(String name) { return DICE.containsKey(name) || DECKS.containsKey(name) || "coin".equals(name); }
+    private static boolean taken(String name) { return DICE.containsKey(name) || DECKS.containsKey(name) || COIN.equals(name); }
 
     public static List<String> dieNames() { return new ArrayList<>(DICE.keySet()); }
 
@@ -123,16 +125,9 @@ public final class ContentDice {
     public static Result packDie(Random random, String name) {
         Map<String, Integer> faces = DICE.get(name);
         if (faces == null) { return Result.refused("nodie", "name", name); }
-        int total = 0;
-        for (int weight : faces.values()) { total += weight; }
-        int landed = random.nextInt(total);
-        int at = 0;
-        for (Map.Entry<String, Integer> face : faces.entrySet()) {
-            at++;
-            landed -= face.getValue();
-            if (landed < 0) { return new Result(at).say("packdie", "die", name, "result", face.getKey()); }
-        }
-        return Result.refused("nodie", "name", name);
+        Map.Entry<String, Integer> face = WeightedPicks.pick(faces.entrySet(), Map.Entry::getValue, random);
+        if (face == null) { return Result.refused("nodie", "name", name); }
+        return new Result(new ArrayList<>(faces.keySet()).indexOf(face.getKey()) + 1).say("packdie", "die", name, "result", face.getKey());
     }
 
     @Nullable private static int[] parse(String roll) {
@@ -181,7 +176,7 @@ public final class ContentDice {
 
     public static Result named(MinecraftServer server, String rolls) {
         World world = server.getWorld(0);
-        if ("coin".equals(rolls)) { return coin(world.rand); }
+        if (COIN.equals(rolls)) { return coin(world.rand); }
         if (DICE.containsKey(rolls)) { return packDie(world.rand, rolls); }
         if (DECKS.containsKey(rolls)) { return draw(world, rolls); }
         return dice(world.rand, rolls);
@@ -222,7 +217,7 @@ public final class ContentDice {
     }
 
     public static Result pickTeam(MinecraftServer server, @Nullable String team) {
-        Scoreboard board = server.getWorld(0).getScoreboard();
+        Scoreboard board = ContentTeams.board(server);
         List<String> names = new ArrayList<>();
         if (team == null) { names.addAll(board.getTeamNames()); }
         else if (!board.getTeamNames().contains(team)) { return Result.refused("noteam", "team", team); }
@@ -258,7 +253,7 @@ public final class ContentDice {
     }
 
     public static Result tiebreak(MinecraftServer server, @Nullable String objective) {
-        Scoreboard board = server.getWorld(0).getScoreboard();
+        Scoreboard board = ContentTeams.board(server);
         String name = objective == null ? tieObjective() : objective;
         ScoreObjective held = name == null ? null : board.getObjective(name);
         if (held == null) { return Result.refused("noobjective", "objective", name == null ? "-" : name); }
@@ -285,7 +280,7 @@ public final class ContentDice {
         return mates;
     }
 
-    public static boolean keeps(MinecraftServer server, String objective) { return server.getWorld(0).getScoreboard().getObjective(objective) != null; }
+    public static boolean lacks(MinecraftServer server, String objective) { return ContentTeams.board(server).getObjective(objective) == null; }
 
     public static void announce(MinecraftServer server, ICommandSender sender, String command, Result result, Audience audience, @Nullable String store) {
         String who = sender.getName();
@@ -294,7 +289,7 @@ public final class ContentDice {
         RECENT.addFirst(new SimpleDateFormat("HH:mm:ss").format(new Date()) + " " + english);
         while (RECENT.size() > KEPT) { RECENT.removeLast(); }
         if (store != null) {
-            Scoreboard board = server.getWorld(0).getScoreboard();
+            Scoreboard board = ContentTeams.board(server);
             ScoreObjective objective = board.getObjective(store);
             if (objective != null) { board.getOrCreateScore(who, objective).setScorePoints(result.value); }
         }
@@ -337,7 +332,7 @@ public final class ContentDice {
     private static String said(@Nullable EntityPlayer viewer, Line line, String who) { return words(viewer, line.key, line.pairs).replace("{player}", who); }
 
     public static String words(@Nullable EntityPlayer viewer, String key, Object... pairs) {
-        String text = SAYS.containsKey(key) ? SAYS.get(key) : viewer == null ? Lang.tr("rdpl.game." + key) : Lang.tr(viewer, "rdpl.game." + key);
+        String text = SAYS.containsKey(key) ? SAYS.get(key) : Lang.tr(viewer, "rdpl.game." + key);
         for (int at = 0; at + 1 < pairs.length; at += 2) {
             Object value = pairs[at + 1];
             text = text.replace("{" + pairs[at] + "}", value instanceof Term ? words(viewer, ((Term) value).key) : value instanceof Spell ? spelled(viewer, (Spell) value) : String.valueOf(value));

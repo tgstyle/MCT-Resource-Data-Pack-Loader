@@ -10,8 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = EntityTieredRocket.class, remap = false) public class MixinEntityTieredRocket {
-    @Inject(method = "igniteCheckingCooldown()V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$packRequiredPayload(CallbackInfo ci) {
+    @Inject(method = "igniteCheckingCooldown()V", at = @At("HEAD"), cancellable = true) private void rdpl$packRequiredPayload(CallbackInfo ci) {
         if (RocketCargo.grounded((Entity) (Object) this)) { ci.cancel(); }
     }
 }

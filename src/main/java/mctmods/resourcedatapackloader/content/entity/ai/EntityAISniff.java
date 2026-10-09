@@ -1,17 +1,21 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.util.Walking;
+
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.math.BlockPos;
+import javax.annotation.Nullable;
 
 public final class EntityAISniff extends EntityAIBase {
     private static final int LISTEN = 20;
     private static final int GIVE_UP = 300;
+    private static final double SPEED = 1.0D;
     private final EntityCreature mob;
     private final int radius;
-    private EntityPlayer heard;
-    private BlockPos heardAt;
+    @Nullable private EntityPlayer heard;
+    @Nullable private BlockPos heardAt;
     private int listening;
     private int walked;
 
@@ -33,7 +37,7 @@ public final class EntityAISniff extends EntityAIBase {
         return true;
     }
 
-    private EntityPlayer loudest() {
+    @Nullable private EntityPlayer loudest() {
         EntityPlayer best = null;
         double nearest = Double.MAX_VALUE;
         for (EntityPlayer player : mob.world.playerEntities) {
@@ -49,7 +53,11 @@ public final class EntityAISniff extends EntityAIBase {
 
     @Override public boolean shouldContinueExecuting() { return heardAt != null && mob.getAttackTarget() == null && walked < GIVE_UP && !mob.getNavigator().noPath(); }
 
-    @Override public void startExecuting() { mob.getNavigator().tryMoveToXYZ(heardAt.getX() + 0.5D, heardAt.getY(), heardAt.getZ() + 0.5D, 1.0D); }
+    @Override public void startExecuting() {
+        if (heardAt != null) { walkTo(heardAt); }
+    }
+
+    private void walkTo(BlockPos at) { Walking.toBlock(mob, at, SPEED); }
 
     @Override public void resetTask() {
         heard = null;
@@ -68,6 +76,6 @@ public final class EntityAISniff extends EntityAIBase {
         if (again == null) { return; }
         heard = again;
         heardAt = new BlockPos(again);
-        mob.getNavigator().tryMoveToXYZ(heardAt.getX() + 0.5D, heardAt.getY(), heardAt.getZ() + 0.5D, 1.0D);
+        walkTo(heardAt);
     }
 }

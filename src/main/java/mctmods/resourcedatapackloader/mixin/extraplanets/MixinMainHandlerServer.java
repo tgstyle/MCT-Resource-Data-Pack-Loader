@@ -19,8 +19,7 @@ import java.util.List;
 @Mixin(value = MainHandlerServer.class, remap = false) public abstract class MixinMainHandlerServer {
     @Shadow protected abstract void checkPressure(LivingUpdateEvent event, EntityPlayerMP playerMP, int amount, List<String> list);
 
-    @Inject(method = "runChecks", at = @At(value = "FIELD", target = "Lcom/mjr/extraplanets/Config;OTHER_ADDON_PLANET_MOON_RAD_VALUES_LIST:Ljava/util/HashMap;", opcode = Opcodes.GETSTATIC, ordinal = 0))
-    private void rdpl$packPressure(LivingUpdateEvent event, EntityLivingBase entityLiving, CallbackInfo ci) {
+    @Inject(method = "runChecks", at = @At(value = "FIELD", target = "Lcom/mjr/extraplanets/Config;OTHER_ADDON_PLANET_MOON_RAD_VALUES_LIST:Ljava/util/HashMap;", opcode = Opcodes.GETSTATIC, ordinal = 0)) private void rdpl$packPressure(LivingUpdateEvent event, EntityLivingBase entityLiving, CallbackInfo ci) {
         if (!Config.PRESSURE || !(entityLiving.world.provider instanceof GcWorldProvider)) { return; }
         int pressure = ((GcWorldProvider) entityLiving.world.provider).extraPlanetsPressure();
         if (pressure > 0) { checkPressure(event, (EntityPlayerMP) entityLiving, pressure, Lists.newArrayList(Config.SPACE_SUIT_SUPPORTED_ARMOUR)); }

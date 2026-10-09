@@ -36,6 +36,7 @@ public final class BeardGrade {
         }
         return profile;
     }
+
     public static void flatRuns(World world, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile) {
         int run = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathFlatRun", Config.worldgen.villagePathFlatRun));
         if (run <= 1) { return; }
@@ -56,16 +57,12 @@ public final class BeardGrade {
             }
         }
     }
+
     public static boolean[] smooth(int[] profile) {
         int rows = profile.length;
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] > profile[i - 1] + 1) { profile[i] = profile[i - 1] + 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] > profile[i + 1] + 1) { profile[i] = profile[i + 1] + 1; } }
-        for (int i = 1; i < rows; i++) { if (joined(profile, i) && profile[i] < profile[i - 1] - 1) { profile[i] = profile[i - 1] - 1; } }
-        for (int i = rows - 2; i >= 0; i--) { if (joined(profile, i + 1) && profile[i] < profile[i + 1] - 1) { profile[i] = profile[i + 1] - 1; } }
-        for (int i = 1; i < rows - 1; i++) {
-            if (!joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
-        }
+        boolean[] none = new boolean[rows];
+        slope(profile, none);
+        nick(profile, none);
         boolean[] bridged = new boolean[rows];
         for (int i = 0; i < rows; i++) {
             if (profile[i] != Integer.MIN_VALUE) { continue; }
@@ -83,6 +80,7 @@ public final class BeardGrade {
         }
         return bridged;
     }
+
     private static boolean joined(int[] profile, int i) { return profile[i] != Integer.MIN_VALUE && profile[i - 1] != Integer.MIN_VALUE; }
 
     public static int capEmbankment(int[] profile, int[] ground, boolean[] bridged, boolean[] held) {
@@ -96,6 +94,7 @@ public final class BeardGrade {
         }
         return capped;
     }
+
     public static void sag(int[] profile, boolean[] bridged, int seaLevel) {
         int rows = profile.length;
         for (int i = 0; i < rows; i++) {
@@ -117,6 +116,7 @@ public final class BeardGrade {
             i = gapEnd;
         }
     }
+
     public static int holdCauseway(int[] profile, boolean[] bridged, int seaLevel) {
         int lifted = 0;
         int rows = profile.length;
@@ -137,11 +137,16 @@ public final class BeardGrade {
         }
         return lifted;
     }
-    public static int ramp(int[] profile, boolean[] pinned, boolean[] keep) {
+
+    public static int ramp(int[] profile, boolean[] pinned, boolean[] keep) { return ramp(profile, pinned, keep, true); }
+
+    public static int rampSteps(int[] profile, boolean[] held, boolean[] keep) { return ramp(profile, held, keep, false); }
+
+    private static int ramp(int[] profile, boolean[] pinned, boolean[] keep, boolean pinnedOnly) {
         int rows = profile.length;
         int freed = 0;
         for (int i = 1; i < rows; i++) {
-            if (!pinned[i] || !pinned[i - 1] || !joined(profile, i) || Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
+            if ((pinnedOnly && (!pinned[i] || !pinned[i - 1])) || !joined(profile, i) || Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
             int lo = i;
             int hi = i - 1;
             boolean leftTurn = true;
@@ -163,39 +168,6 @@ public final class BeardGrade {
             for (int k = lo; k <= hi; k++) {
                 profile[k] = a + step * Math.min(k - lo + 1, Math.abs(b - a));
                 pinned[k] = false;
-                freed++;
-            }
-            i = hi + 1;
-        }
-        return freed;
-    }
-
-    public static int rampSteps(int[] profile, boolean[] held, boolean[] keep) {
-        int rows = profile.length;
-        int freed = 0;
-        for (int i = 1; i < rows; i++) {
-            if (!joined(profile, i) || Math.abs(profile[i] - profile[i - 1]) <= 1) { continue; }
-            int lo = i;
-            int hi = i - 1;
-            boolean leftTurn = true;
-            while (true) {
-                int a = profile[lo - 1];
-                int b = profile[hi + 1];
-                if (Math.abs(b - a) <= hi - lo + 2) { break; }
-                boolean leftOpen = lo - 2 >= 0 && !keep[lo - 1] && profile[lo - 2] != Integer.MIN_VALUE;
-                boolean rightOpen = hi + 2 < rows && !keep[hi + 1] && profile[hi + 2] != Integer.MIN_VALUE;
-                if (!leftOpen && !rightOpen) { break; }
-                if ((leftTurn && leftOpen) || !rightOpen) { lo--; }
-                else { hi++; }
-                leftTurn = !leftTurn;
-            }
-            int a = profile[lo - 1];
-            int b = profile[hi + 1];
-            if (Math.abs(b - a) > hi - lo + 2) { continue; }
-            int step = b > a ? 1 : -1;
-            for (int k = lo; k <= hi; k++) {
-                profile[k] = a + step * Math.min(k - lo + 1, Math.abs(b - a));
-                held[k] = false;
                 freed++;
             }
             i = hi + 1;
@@ -385,18 +357,8 @@ public final class BeardGrade {
             }
             int end = i;
             while (end + 1 < rows && profile[end + 1] != Integer.MIN_VALUE) { end++; }
-            int[] leftMax = new int[end - i + 1];
-            int running = Integer.MIN_VALUE;
-            for (int k = i; k <= end; k++) {
-                running = keep[k] ? profile[k] : Math.max(running, profile[k]);
-                leftMax[k - i] = running;
-            }
-            int[] rightMax = new int[end - i + 1];
-            running = Integer.MIN_VALUE;
-            for (int k = end; k >= i; k--) {
-                running = keep[k] ? profile[k] : Math.max(running, profile[k]);
-                rightMax[k - i] = running;
-            }
+            int[] leftMax = runMax(profile, i, end, keep, true);
+            int[] rightMax = runMax(profile, i, end, keep, false);
             for (int k = i; k <= end; k++) {
                 if (keep[k]) { continue; }
                 int fill = Math.min(leftMax[k - i], rightMax[k - i]);
@@ -412,10 +374,7 @@ public final class BeardGrade {
 
     public static void settle(int[] profile, boolean[] held) {
         int rows = profile.length;
-        for (int i = 1; i < rows - 1; i++) {
-            if (held[i] || !joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
-        }
+        nick(profile, held);
         int i = 0;
         while (i < rows) {
             if (profile[i] == Integer.MIN_VALUE) {
@@ -424,18 +383,8 @@ public final class BeardGrade {
             }
             int end = i;
             while (end + 1 < rows && profile[end + 1] != Integer.MIN_VALUE) { end++; }
-            int[] leftMax = new int[end - i + 1];
-            int running = Integer.MIN_VALUE;
-            for (int k = i; k <= end; k++) {
-                running = Math.max(running, profile[k]);
-                leftMax[k - i] = running;
-            }
-            running = Integer.MIN_VALUE;
-            int[] rightMax = new int[end - i + 1];
-            for (int k = end; k >= i; k--) {
-                running = Math.max(running, profile[k]);
-                rightMax[k - i] = running;
-            }
+            int[] leftMax = runMax(profile, i, end, null, true);
+            int[] rightMax = runMax(profile, i, end, null, false);
             int low = -1;
             for (int k = i; k <= end + 1; k++) {
                 boolean sunken = k <= end && Math.min(leftMax[k - i], rightMax[k - i]) > profile[k];
@@ -450,18 +399,8 @@ public final class BeardGrade {
                     low = -1;
                 }
             }
-            int[] leftFloor = new int[end - i + 1];
-            running = Integer.MAX_VALUE;
-            for (int k = i; k <= end; k++) {
-                running = Math.min(running, profile[k]);
-                leftFloor[k - i] = running;
-            }
-            running = Integer.MAX_VALUE;
-            int[] rightFloor = new int[end - i + 1];
-            for (int k = end; k >= i; k--) {
-                running = Math.min(running, profile[k]);
-                rightFloor[k - i] = running;
-            }
+            int[] leftFloor = runMin(profile, i, end, true, Integer.MAX_VALUE);
+            int[] rightFloor = runMin(profile, i, end, false, Integer.MAX_VALUE);
             int high = -1;
             for (int k = i; k <= end + 1; k++) {
                 boolean raised = k <= end && Math.max(leftFloor[k - i], rightFloor[k - i]) < profile[k];
@@ -478,15 +417,49 @@ public final class BeardGrade {
             }
             i = end + 1;
         }
-        for (int i2 = 1; i2 < rows; i2++) { if (!held[i2] && joined(profile, i2) && profile[i2] > profile[i2 - 1] + 1) { profile[i2] = profile[i2 - 1] + 1; } }
-        for (int i2 = rows - 2; i2 >= 0; i2--) { if (!held[i2] && joined(profile, i2 + 1) && profile[i2] > profile[i2 + 1] + 1) { profile[i2] = profile[i2 + 1] + 1; } }
-        for (int i2 = 1; i2 < rows; i2++) { if (!held[i2] && joined(profile, i2) && profile[i2] < profile[i2 - 1] - 1) { profile[i2] = profile[i2 - 1] - 1; } }
-        for (int i2 = rows - 2; i2 >= 0; i2--) { if (!held[i2] && joined(profile, i2 + 1) && profile[i2] < profile[i2 + 1] - 1) { profile[i2] = profile[i2 + 1] - 1; } }
-        for (int i2 = 1; i2 < rows - 1; i2++) {
-            if (held[i2] || !joined(profile, i2) || profile[i2 + 1] == Integer.MIN_VALUE) { continue; }
-            if (profile[i2 - 1] == profile[i2 + 1] && Math.abs(profile[i2] - profile[i2 - 1]) == 1) { profile[i2] = profile[i2 - 1]; }
+        slope(profile, held);
+        nick(profile, held);
+    }
+
+    private static void slope(int[] profile, boolean[] held) {
+        rein(profile, held, 1);
+        rein(profile, held, -1);
+    }
+
+    private static void rein(int[] profile, boolean[] held, int sign) {
+        for (int i = 1; i < profile.length; i++) { if (!held[i] && joined(profile, i) && sign * (profile[i] - profile[i - 1]) > 1) { profile[i] = profile[i - 1] + sign; } }
+        for (int i = profile.length - 2; i >= 0; i--) { if (!held[i] && joined(profile, i + 1) && sign * (profile[i] - profile[i + 1]) > 1) { profile[i] = profile[i + 1] + sign; } }
+    }
+
+    private static void nick(int[] profile, boolean[] held) {
+        for (int i = 1; i < profile.length - 1; i++) {
+            if (held[i] || !joined(profile, i) || profile[i + 1] == Integer.MIN_VALUE) { continue; }
+            if (profile[i - 1] == profile[i + 1] && Math.abs(profile[i] - profile[i - 1]) == 1) { profile[i] = profile[i - 1]; }
         }
     }
+
+    private static int[] runMax(int[] profile, int from, int to, @Nullable boolean[] keep, boolean forward) {
+        int[] out = new int[to - from + 1];
+        int running = Integer.MIN_VALUE;
+        for (int n = 0; n < out.length; n++) {
+            int k = forward ? from + n : to - n;
+            running = keep != null && keep[k] ? profile[k] : Math.max(running, profile[k]);
+            out[k - from] = running;
+        }
+        return out;
+    }
+
+    private static int[] runMin(int[] profile, int from, int to, boolean forward, int start) {
+        int[] out = new int[to - from + 1];
+        int running = start;
+        for (int n = 0; n < out.length; n++) {
+            int k = forward ? from + n : to - n;
+            running = Math.min(running, profile[k]);
+            out[k - from] = running;
+        }
+        return out;
+    }
+
     public static boolean[] bore(int[] profile, int[] ground, boolean[] held, boolean[] bridged, int depth, boolean openLow, boolean openHigh) {
         int rows = profile.length;
         boolean[] bored = new boolean[rows];
@@ -520,18 +493,8 @@ public final class BeardGrade {
     }
 
     private static int[] cutLine(int[] profile, int from, int to, boolean openLow, boolean openHigh) {
-        int[] leftFloor = new int[to - from + 1];
-        int running = from > 0 && profile[from - 1] != Integer.MIN_VALUE ? profile[from - 1] : Integer.MAX_VALUE;
-        for (int k = from; k <= to; k++) {
-            running = Math.min(running, profile[k]);
-            leftFloor[k - from] = running;
-        }
-        int[] rightFloor = new int[to - from + 1];
-        running = to + 1 < profile.length && profile[to + 1] != Integer.MIN_VALUE ? profile[to + 1] : Integer.MAX_VALUE;
-        for (int k = to; k >= from; k--) {
-            running = Math.min(running, profile[k]);
-            rightFloor[k - from] = running;
-        }
+        int[] leftFloor = runMin(profile, from, to, true, from > 0 && profile[from - 1] != Integer.MIN_VALUE ? profile[from - 1] : Integer.MAX_VALUE);
+        int[] rightFloor = runMin(profile, from, to, false, to + 1 < profile.length && profile[to + 1] != Integer.MIN_VALUE ? profile[to + 1] : Integer.MAX_VALUE);
         int[] cut = new int[to - from + 1];
         for (int k = 0; k < cut.length; k++) {
             if (openHigh && !openLow) { cut[k] = leftFloor[k]; }

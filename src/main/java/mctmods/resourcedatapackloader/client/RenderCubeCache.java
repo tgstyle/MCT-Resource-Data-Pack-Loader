@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 import mctmods.resourcedatapackloader.util.Coords;
-import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -14,20 +13,18 @@ import net.minecraft.world.ChunkCache;
 import net.minecraft.world.EnumSkyBlock;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
-
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
 
 public class RenderCubeCache extends ChunkCache {
     protected int cubeY;
     @Nonnull private final ExtendedBlockStorage[][][] cubeArrays;
     @Nonnull private final Map<BlockPos, TileEntity>[][][] tileEntities;
-    @Nonnull private final World world;
 
     public RenderCubeCache(@Nonnull World world, BlockPos from, BlockPos to, int subtract) {
         super(world, from, to, subtract);
-        this.world = world;
         this.cubeY = Coords.blockToCube(from.getY() - subtract);
         int cubeXEnd = Coords.blockToCube(to.getX() + subtract);
         int cubeYEnd = Coords.blockToCube(to.getY() + subtract);
@@ -53,10 +50,10 @@ public class RenderCubeCache extends ChunkCache {
     }
 
     @Override public int getCombinedLight(@Nonnull BlockPos pos, int lightValue) {
-        int blockLight = this.getLightForExt(EnumSkyBlock.SKY, pos);
-        int skyLight = this.getLightForExt(EnumSkyBlock.BLOCK, pos);
-        if (skyLight < lightValue) { skyLight = lightValue; }
-        return blockLight << 20 | skyLight << 4;
+        int skyLight = this.getLightForExt(EnumSkyBlock.SKY, pos);
+        int blockLight = this.getLightForExt(EnumSkyBlock.BLOCK, pos);
+        if (blockLight < lightValue) { blockLight = lightValue; }
+        return skyLight << 20 | blockLight << 4;
     }
 
     @Override @Nullable public TileEntity getTileEntity(BlockPos pos) {
@@ -109,7 +106,7 @@ public class RenderCubeCache extends ChunkCache {
 
     private int getRawLight(ExtendedBlockStorage ebs, EnumSkyBlock type, BlockPos pos) {
         if (type == EnumSkyBlock.BLOCK) { return ebs.getBlockLight(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ())); }
-        else { return ebs.getSkyLight(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ())); }
+        return ebs.getSkyLight(blockToLocal(pos.getX()), blockToLocal(pos.getY()), blockToLocal(pos.getZ()));
     }
 
     @SuppressWarnings("deprecation") @Override public boolean isSideSolid(@Nonnull BlockPos pos, @Nonnull EnumFacing side, boolean defaultValue) {

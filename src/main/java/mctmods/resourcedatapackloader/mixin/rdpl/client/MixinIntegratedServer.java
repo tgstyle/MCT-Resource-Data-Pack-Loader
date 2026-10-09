@@ -15,7 +15,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "init", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/FMLCommonHandler;handleServerStarting(Lnet/minecraft/server/MinecraftServer;)Z", remap = false)) private void rdpl$packServerRules(CallbackInfoReturnable<Boolean> cir) { ContentServer.applyTo((MinecraftServer) (Object) this); }
 
-    @Inject(method = "isCommandBlockEnabled", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) {
-        if (Boolean.FALSE.equals(ContentServer.commandBlocks())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "isCommandBlockEnabled", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) { if (ContentServer.off(ContentServer.commandBlocks())) { cir.setReturnValue(false); } }
 }

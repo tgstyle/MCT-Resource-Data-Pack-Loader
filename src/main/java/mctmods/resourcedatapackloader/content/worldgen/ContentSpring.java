@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
@@ -28,7 +29,7 @@ public final class ContentSpring implements IContentShape {
         }
         if (rock != 3 || open != 1) { return false; }
         IBlockState fluid = placer.choose(random);
-        world.setBlockState(origin, fluid, 2);
+        world.setBlockState(origin, fluid, BlockFlags.UPDATE_CLIENTS);
         world.immediateBlockTick(origin, fluid, random);
         return true;
     }

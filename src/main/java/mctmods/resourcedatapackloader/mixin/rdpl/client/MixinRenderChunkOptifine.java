@@ -34,25 +34,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private ICube rdpl$cube;
     @Unique private boolean rdpl$isRubic;
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo cbi) {
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$onConstruct(World worldIn, RenderGlobal renderGlobalIn, int indexIn, CallbackInfo cbi) {
         this.rdpl$isRubic = ((IRubicWorld) worldIn).rdpl$isRubicWorld();
     }
 
-    @Dynamic @Inject(method = "setPosition",
-            at = @At(
-                    value = "FIELD",
-                    target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;chunk:Lnet/minecraft/world/chunk/Chunk;",
-                    opcode = Opcodes.PUTFIELD,
-                    remap = false)
-    )
-    private void onSetChunk(int x, int y, int z, CallbackInfo cbi) {
+    @Dynamic @Inject(method = "setPosition", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;chunk:Lnet/minecraft/world/chunk/Chunk;", opcode = Opcodes.PUTFIELD, remap = false)) private void rdpl$onSetChunk(int x, int y, int z, CallbackInfo cbi) {
         this.rdpl$cube = null;
         this.rdpl$isRubic = ((IRubicWorld) world).rdpl$isRubicWorld();
         this.rdpl$regionY = y & ~255;
     }
 
-    @Dynamic @Inject(method = "updateRenderChunkNeighboursValid()V", at = @At("HEAD"), remap = false)
-    private void onUpdateNeighbors(CallbackInfo cbi) {
+    @Dynamic @Inject(method = "updateRenderChunkNeighboursValid()V", at = @At("HEAD"), remap = false) private void rdpl$onUpdateNeighbors(CallbackInfo cbi) {
         if (!rdpl$isRubic) { return; }
         int y = this.getPosition().getY();
         int up = EnumFacing.UP.ordinal();

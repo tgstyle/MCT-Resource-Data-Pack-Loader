@@ -19,6 +19,12 @@ public final class ContentCityMaps {
 
     private ContentCityMaps() {}
 
+    public static void reload() {
+        loaded = false;
+        DEFS.clear();
+        load();
+    }
+
     public static void load() {
         if (loaded) { return; }
         loaded = true;

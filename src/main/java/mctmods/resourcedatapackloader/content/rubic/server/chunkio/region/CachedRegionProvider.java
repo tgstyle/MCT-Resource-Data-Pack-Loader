@@ -27,21 +27,9 @@ public class CachedRegionProvider<K extends IKey> implements IRegionProvider<K> 
 
     @Override public void forRegion(K key, ICheckedConsumer<? super IRegion<K>, IOException> work) throws IOException { work.accept(getRegion(key)); }
 
-    @Override public IRegion<K> getRegion(K key) throws IOException {
-        awake();
-        Held held = new Held(key.getRegionKey(), reader);
-        IRegion<K> region = RegionCache.held(held);
-        if (region != null) { return region; }
-        region = reader.getRegion(key);
-        RegionCache.hold(held, region);
-        return region;
-    }
+    @Override public IRegion<K> getRegion(K key) throws IOException { return cached(key, reader::getRegion); }
 
-    @Override public Optional<IRegion<K>> getExistingRegion(K key) throws IOException {
-        IRegion<K> region = openIfThere(key);
-        return Optional.ofNullable(region);
-    }
-
+    @Override public Optional<IRegion<K>> getExistingRegion(K key) throws IOException { return Optional.ofNullable(openIfThere(key)); }
 
     @Override public void flush() throws IOException {
         awake();
@@ -56,14 +44,11 @@ public class CachedRegionProvider<K extends IKey> implements IRegionProvider<K> 
         closed = true;
     }
 
-    @Nullable private IRegion<K> openIfThere(K key) throws IOException {
+    @Nullable private IRegion<K> openIfThere(K key) throws IOException { return cached(key, wanted -> reader.getExistingRegion(wanted).orElse(null)); }
+
+    private IRegion<K> cached(K key, ICheckedFunction<K, IRegion<K>, IOException> opener) throws IOException {
         awake();
-        Held held = new Held(key.getRegionKey(), reader);
-        IRegion<K> region = RegionCache.held(held);
-        if (region != null) { return region; }
-        region = reader.getExistingRegion(key).orElse(null);
-        if (region != null) { RegionCache.hold(held, region); }
-        return region;
+        return RegionCache.computeIfAbsent(new Held(key.getRegionKey(), reader), held -> opener.apply(key));
     }
 
     private void awake() {

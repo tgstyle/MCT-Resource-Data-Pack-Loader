@@ -29,6 +29,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (ContentVoidWorld.appliesTo(world)) { ci.cancel(); }
     }
 
-    @Redirect(method = "populate", slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraftforge/event/terraingen/PopulateChunkEvent$Populate$EventType;NETHER_LAVA2:Lnet/minecraftforge/event/terraingen/PopulateChunkEvent$Populate$EventType;", opcode = Opcodes.GETSTATIC, remap = false)), at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;", remap = false), remap = false)
-    private BlockPos rdpl$keepLavaTrapsInside(BlockPos pos, int x, int y, int z) { return pos.add(x + 8, y, z + 8); }
+    @Redirect(method = "populate", slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraftforge/event/terraingen/PopulateChunkEvent$Populate$EventType;NETHER_LAVA2:Lnet/minecraftforge/event/terraingen/PopulateChunkEvent$Populate$EventType;", opcode = Opcodes.GETSTATIC, remap = false)), at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;", remap = false), remap = false) private BlockPos rdpl$keepLavaTrapsInside(BlockPos pos, int x, int y, int z) { return pos.add(x + 8, y, z + 8); }
 }

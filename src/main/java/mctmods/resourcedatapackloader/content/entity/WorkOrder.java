@@ -1,16 +1,14 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.util.TileScan;
 
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import java.util.ArrayDeque;
@@ -169,18 +167,14 @@ public final class WorkOrder {
         List<ItemStack> wants = stock ? stockWants(own) : null;
         if (wants != null && wants.isEmpty()) { return; }
         int radius = def.widest();
-        for (int cx = chest.getX() - radius >> 4; cx <= chest.getX() + radius >> 4; cx++) {
-            for (int cz = chest.getZ() - radius >> 4; cz <= chest.getZ() + radius >> 4; cz++) {
-                if (!world.isBlockLoaded(new ChunkPos(cx, cz).getBlock(8, 0, 8))) { continue; }
-                Chunk chunk = world.getChunk(cx, cz);
-                for (TileEntity tile : chunk.getTileEntityMap().values()) {
-                    BlockPos pos = tile.getPos();
-                    if (beyond(pos, radius) || ContentOrders.isOrderChest(world, pos) || queue.contains(pos)) { continue; }
-                    IItemHandler items = OrderItems.handler(world, pos);
-                    if (items != null && holds(items, wants)) { queue.addLast(pos); }
-                }
-            }
-        }
+        TileScan.within(world, chest, radius, tile -> {
+            if (queue.size() >= QUEUE) { return false; }
+            BlockPos pos = tile.getPos();
+            if (beyond(pos, radius) || ContentOrders.isOrderChest(world, pos) || queue.contains(pos)) { return true; }
+            IItemHandler items = OrderItems.handler(world, pos);
+            if (items != null && holds(items, wants)) { queue.addLast(pos); }
+            return true;
+        });
     }
 
     private boolean holds(IItemHandler items, @Nullable List<ItemStack> wants) {

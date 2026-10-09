@@ -28,8 +28,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         Summary.info("terrain.spawn", "Spawning every new world at " + asked.getX() + ", " + asked.getY() + ", " + asked.getZ() + ", which is what a pack asks for");
     }
 
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldServer;setWorldTime(J)V"))
-    private void rdpl$holdTimeWhileMaking(WorldServer world, long time) {
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldServer;setWorldTime(J)V")) private void rdpl$holdTimeWhileMaking(WorldServer world, long time) {
         if (ContentPregen.busyIn(world)) { return; }
         world.setWorldTime(time);
     }

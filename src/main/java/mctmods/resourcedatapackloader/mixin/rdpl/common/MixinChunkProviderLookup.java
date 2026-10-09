@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import net.minecraft.util.math.ChunkPos;
@@ -15,12 +16,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.Arrays;
 
 @Mixin(ChunkProviderServer.class) public abstract class MixinChunkProviderLookup {
-    @Unique private static final int RDPL_SLOTS = 64;
-    @Unique private final long[] rdpl$keys = new long[RDPL_SLOTS];
-    @Unique private final Chunk[] rdpl$chunks = new Chunk[RDPL_SLOTS];
+    @Unique private static final int rdpl$SLOTS = 64;
+    @Unique private final long[] rdpl$keys = new long[rdpl$SLOTS];
+    @Unique private final Chunk[] rdpl$chunks = new Chunk[rdpl$SLOTS];
     @Unique private boolean rdpl$ready;
 
-    @Unique private int rdpl$slotOf(long key) { return ((int) key & 7) | ((int) (key >>> 32) & 7) << 3; }
+    @Unique private int rdpl$slotOf(long key) { return (Longs.low(key) & 7) | (Longs.high(key) & 7) << 3; }
 
     @Unique private Chunk rdpl$remembered(long key) {
         if (!rdpl$ready) { return null; }
@@ -41,8 +42,7 @@ import java.util.Arrays;
         rdpl$chunks[slot] = chunk;
     }
 
-    @Redirect(method = "getLoadedChunk", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;get(J)Ljava/lang/Object;", remap = false))
-    private Object rdpl$rememberLoaded(Long2ObjectMap<Chunk> loaded, long key) {
+    @Redirect(method = "getLoadedChunk", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;get(J)Ljava/lang/Object;", remap = false)) private Object rdpl$rememberLoaded(Long2ObjectMap<Chunk> loaded, long key) {
         Chunk known = rdpl$remembered(key);
         if (known != null) { return known; }
         if (ContentChunkWatch.watching()) { ContentChunkWatch.chunkLookup(); }
@@ -51,18 +51,15 @@ import java.util.Arrays;
         return found;
     }
 
-    @Redirect(method = "chunkExists", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;containsKey(J)Z", remap = false))
-    private boolean rdpl$rememberExists(Long2ObjectMap<Chunk> loaded, long key) {
+    @Redirect(method = "chunkExists", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;containsKey(J)Z", remap = false)) private boolean rdpl$rememberExists(Long2ObjectMap<Chunk> loaded, long key) {
         if (rdpl$remembered(key) != null) { return true; }
         if (ContentChunkWatch.watching()) { ContentChunkWatch.chunkLookup(); }
         return loaded.containsKey(key);
     }
 
-    @Redirect(method = "provideChunk", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;", remap = false))
-    private Object rdpl$rememberWhenMade(Long2ObjectMap<Chunk> loaded, long key, Object chunk) { return rdpl$putAndRemember(loaded, key, chunk); }
+    @Redirect(method = "provideChunk", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;", remap = false)) private Object rdpl$rememberWhenMade(Long2ObjectMap<Chunk> loaded, long key, Object chunk) { return rdpl$putAndRemember(loaded, key, chunk); }
 
-    @Redirect(method = "loadChunk(IILjava/lang/Runnable;)Lnet/minecraft/world/chunk/Chunk;", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;", remap = false), remap = false)
-    private Object rdpl$rememberWhenRead(Long2ObjectMap<Chunk> loaded, long key, Object chunk) { return rdpl$putAndRemember(loaded, key, chunk); }
+    @Redirect(method = "loadChunk(IILjava/lang/Runnable;)Lnet/minecraft/world/chunk/Chunk;", at = @At(value = "INVOKE", target = "Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;put(JLjava/lang/Object;)Ljava/lang/Object;", remap = false), remap = false) private Object rdpl$rememberWhenRead(Long2ObjectMap<Chunk> loaded, long key, Object chunk) { return rdpl$putAndRemember(loaded, key, chunk); }
 
     @Unique private Object rdpl$putAndRemember(Long2ObjectMap<Chunk> loaded, long key, Object chunk) {
         rdpl$remember(key, (Chunk) chunk);

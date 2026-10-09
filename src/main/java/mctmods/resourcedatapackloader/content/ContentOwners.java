@@ -26,19 +26,15 @@ public final class ContentOwners {
 
     public static boolean reserved(ResourceLocation key) {
         if (!RESERVED.contains(key.getNamespace())) { return false; }
-        if (WARNED.add(key.getNamespace())) {
-            ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
-        }
+        ContentLog.LOGGER.errorOnce(WARNED, key.getNamespace(), "A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
         return true;
     }
 
     public static void as(String namespace, Runnable body) {
-        ModContainer previous = Loader.instance().activeModContainer();
-        try {
-            Loader.instance().setActiveModContainer(of(namespace));
+        as(namespace, () -> {
             body.run();
-        }
-        finally { Loader.instance().setActiveModContainer(previous); }
+            return null;
+        });
     }
 
     public static <T> T as(String namespace, Supplier<T> body) {

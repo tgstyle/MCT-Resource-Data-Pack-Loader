@@ -20,15 +20,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
     @Shadow public int x;
     @Shadow public int z;
 
-    @ModifyConstant(method = "getBlockStateSafe_noChunkLoad", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.LESS_THAN_ZERO))
-    private int rdpl$floor(int zero, World world) { return GenHeights.floor(world, zero); }
+    @ModifyConstant(method = "getBlockStateSafe_noChunkLoad", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.LESS_THAN_ZERO)) private int rdpl$floor(int zero, World world) { return GenHeights.floor(world, zero); }
 
-    @ModifyConstant(method = "getBlockStateSafe_noChunkLoad", constant = @Constant(intValue = 256))
-    private int rdpl$ceiling(int limit, World world) { return GenHeights.ceiling(world, limit); }
+    @ModifyConstant(method = "getBlockStateSafe_noChunkLoad", constant = @Constant(intValue = 256)) private int rdpl$ceiling(int limit, World world) { return GenHeights.ceiling(world, limit); }
 
-    @Redirect(method = "getBlockStateSafe_noChunkLoad",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;getBlockState(III)Lnet/minecraft/block/state/IBlockState;", remap = true))
-    private IBlockState rdpl$loadedCubesOnly(Chunk chunk, int x, int y, int z, World world) {
+    @Redirect(method = "getBlockStateSafe_noChunkLoad", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;getBlockState(III)Lnet/minecraft/block/state/IBlockState;", remap = true)) private IBlockState rdpl$loadedCubesOnly(Chunk chunk, int x, int y, int z, World world) {
         if (!GenHeights.rubic(world)) { return chunk.getBlockState(x, y, z); }
         ICube cube = ((IRubicWorld) world).rdpl$getCubeCache().getLoadedCube(Coords.blockToCube(this.x), Coords.blockToCube(y), Coords.blockToCube(this.z));
         if (cube == null || cube.getStorage() == null) { return null; }

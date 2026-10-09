@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = GenericVillagePiece.class, remap = false) public abstract class MixinGenericVillagePiece {
-    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;offset(III)V"))
-    private void rdpl$notBelowItsPlot(StructureBoundingBox box, int x, int y, int z) {
+    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureBoundingBox;offset(III)V")) private void rdpl$notBelowItsPlot(StructureBoundingBox box, int x, int y, int z) {
         box.offset(x, y, z);
         if (!ContentBeard.wanted()) { return; }
         int floor = ((IVillagePiece) this).rdpl$averageGround() + ContentBeard.plotSeat((StructureComponent) (Object) this);

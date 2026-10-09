@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.def;
 
-
 public final class AttributeDef {
     public final String attribute;
     public final String uuid;

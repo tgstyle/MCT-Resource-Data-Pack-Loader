@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.def;
 
-
 public final class SpreadDef {
     public static final String EVEN = "even";
     public static final String CENTERED = "centered";

@@ -10,7 +10,6 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.Locale;
 import javax.annotation.Nullable;
 
-
 public final class SpawnEntryDef {
     public final String creatureType;
     public final String entity;

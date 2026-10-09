@@ -19,16 +19,7 @@ public final class ContentCascade {
     }
 
     public static boolean loaded(World world, BlockPos pos, int reach) {
-        int lowX = (pos.getX() - reach) >> 4;
-        int highX = (pos.getX() + reach) >> 4;
-        int lowZ = (pos.getZ() - reach) >> 4;
-        int highZ = (pos.getZ() + reach) >> 4;
-        for (int x = lowX; x <= highX; x++) {
-            for (int z = lowZ; z <= highZ; z++) {
-                if (!world.isBlockLoaded(new BlockPos(x << 4, 64, z << 4))) { return false; }
-            }
-        }
-        return true;
+        return ContentPlacer.areaLoaded(world, pos.getX() - reach, pos.getZ() - reach, pos.getX() + reach, pos.getZ() + reach);
     }
 
     public static void report(ChunkPos parent, ChunkPos provided) {

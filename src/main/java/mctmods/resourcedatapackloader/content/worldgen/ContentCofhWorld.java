@@ -2,9 +2,9 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -28,7 +29,6 @@ import java.util.zip.ZipFile;
 import javax.annotation.Nullable;
 
 public final class ContentCofhWorld {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final String WORLD = "world";
     private static final Map<String, String> SHAPES = shapes();
     private static final Map<ResourceLocation, File> TEMPLATE_JARS = new LinkedHashMap<>();
@@ -42,9 +42,9 @@ public final class ContentCofhWorld {
     public static Map<ResourceLocation, String> collect() {
         Map<ResourceLocation, String> found = new LinkedHashMap<>();
         for (ModContainer container : Loader.instance().getModList()) {
-            File source = container.getSource();
-            if (source == null || !source.isFile()) { continue; }
-            readJar(source, container.getModId(), found);
+            File jar = container.getSource();
+            if (jar == null || !jar.isFile()) { continue; }
+            readJar(jar, container.getModId(), found);
         }
         if (found.isEmpty()) { return found; }
         ContentLog.LOGGER.warn("Converted {} CoFH World entry/entries from mod jars. Anything with no equivalent here is named in the lines above and was left out. Translating them into a pack is still the supported way, and the only way to change what they generate", found.size());
@@ -54,7 +54,7 @@ public final class ContentCofhWorld {
     private static void readJar(File jar, String modid, Map<ResourceLocation, String> found) {
         try (ZipFile zip = new ZipFile(jar)) {
             String prefix = "assets/" + modid + "/" + WORLD + "/";
-            java.util.Enumeration<? extends ZipEntry> entries = zip.entries();
+            Enumeration<? extends ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (entry.isDirectory() || !entry.getName().startsWith(prefix) || !entry.getName().endsWith(".json")) { continue; }
@@ -97,7 +97,7 @@ public final class ContentCofhWorld {
     }
 
     private static void convert(String modid, String path, String contents, Map<ResourceLocation, String> found) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         if (json == null || !json.has("populate")) { return; }
         JsonObject populate = JsonUtils.getJsonObject(json, "populate");
         for (Map.Entry<String, JsonElement> entry : populate.entrySet()) {
@@ -106,9 +106,9 @@ public final class ContentCofhWorld {
         }
     }
 
-    private static void expand(String modid, String path, String name, JsonObject source, Map<ResourceLocation, String> found) {
-        if ("sequential".equals(JsonUtils.getString(source, "distribution", "uniform").trim().toLowerCase(Locale.ROOT))) {
-            JsonElement features = source.get("features");
+    private static void expand(String modid, String path, String name, JsonObject config, Map<ResourceLocation, String> found) {
+        if ("sequential".equals(Settings.lower(JsonUtils.getString(config, "distribution", "uniform")))) {
+            JsonElement features = config.get("features");
             if (features == null || !features.isJsonArray()) {
                 ContentLog.LOGGER.warn("CoFH World entry '{}' is a sequential distribution with no features, leaving it out", name);
                 return;
@@ -121,14 +121,14 @@ public final class ContentCofhWorld {
             return;
         }
         List<JsonObject> generators = new ArrayList<>();
-        flatten(JsonUtils.getJsonObject(source, "generator", new JsonObject()), generators);
+        flatten(JsonUtils.getJsonObject(config, "generator", new JsonObject()), generators);
         int index = 0;
         for (JsonObject generator : generators) {
-            JsonObject translated = translate(name, source, generator);
+            JsonObject translated = translate(name, config, generator);
             index++;
             if (translated == null) { continue; }
             String suffix = generators.size() > 1 ? "_" + index : "";
-            found.put(new ResourceLocation(modid, name(path, name + suffix)), GSON.toJson(translated));
+            found.put(new ResourceLocation(modid, name(path, name + suffix)), Json.GSON.toJson(translated));
         }
     }
 
@@ -167,9 +167,9 @@ public final class ContentCofhWorld {
         return Collections.unmodifiableMap(values);
     }
 
-    private static String type(JsonObject generator) { return JsonUtils.getString(generator, "type", "").trim().toLowerCase(Locale.ROOT); }
+    private static String type(JsonObject generator) { return Settings.lower(JsonUtils.getString(generator, "type", "")); }
 
-    @Nullable private static JsonObject translate(String name, JsonObject source, JsonObject generator) {
+    @Nullable private static JsonObject translate(String name, JsonObject config, JsonObject generator) {
         String type = type(generator);
         String shape = SHAPES.get(type);
         if (shape == null) {
@@ -187,14 +187,14 @@ public final class ContentCofhWorld {
         out.addProperty("block", first.get("block").getAsString());
         out.addProperty("meta", first.get("meta").getAsInt());
         if (weighted.size() > 1 || first.has("properties")) { out.add("blocks", weighted); }
-        ContentCofhFields.amount(source, "cluster-count", out, "attempts", 1);
+        ContentCofhFields.amount(config, "cluster-count", out, "attempts", 1);
         out.add("replace", ShapeDef.IMPRINT.equals(shape) && generator.has("ignored-block") ? ContentCofhFields.ignored(generator) : ContentCofhFields.material(generator));
-        out.addProperty("retrogen", "true".equalsIgnoreCase(JsonUtils.getString(source, "retrogen", "false")));
+        out.addProperty("retrogen", "true".equalsIgnoreCase(JsonUtils.getString(config, "retrogen", "false")));
         if ("sparse-cluster".equals(type) || sparse(generator, type)) { out.addProperty("sparse", true); }
         if (!shaped(name, generator, type, shape, out)) { return null; }
-        ContentCofhFields.spread(name, source, out);
-        ContentCofhFields.dimensions(source, out);
-        ContentCofhFields.biomes(source, out);
+        ContentCofhFields.spread(name, config, out);
+        ContentCofhFields.dimensions(config, out);
+        ContentCofhFields.biomes(config, out);
         return out;
     }
 
@@ -287,7 +287,7 @@ public final class ContentCofhWorld {
         return true;
     }
 
-    private static void addStructures(JsonObject shape, JsonObject generator, String owner, String folder, File source) {
+    private static void addStructures(JsonObject shape, JsonObject generator, String modid, String prefix, File jar) {
         JsonElement held = generator.get("structure");
         if (held == null || !held.isJsonArray() || held.getAsJsonArray().size() < 2) { return; }
         JsonArray out = new JsonArray();
@@ -295,9 +295,9 @@ public final class ContentCofhWorld {
             boolean object = element.isJsonObject();
             String file = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
             if (file.isEmpty()) { continue; }
-            ResourceLocation id = new ResourceLocation(owner, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
-            TEMPLATE_JARS.put(id, source);
-            TEMPLATE_ENTRIES.put(id, folder + file);
+            ResourceLocation id = new ResourceLocation(modid, file.toLowerCase(Locale.ROOT).replace(".nbt", "").replaceAll("[^a-z0-9_]", "_"));
+            TEMPLATE_JARS.put(id, jar);
+            TEMPLATE_ENTRIES.put(id, prefix + file);
             JsonObject pick = new JsonObject();
             pick.addProperty("structure", id.toString());
             if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }

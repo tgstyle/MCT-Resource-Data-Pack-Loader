@@ -1,12 +1,11 @@
 package mctmods.resourcedatapackloader.content.gui;
 
 import mctmods.resourcedatapackloader.content.block.ContentBlockContainer;
-import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
-
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;

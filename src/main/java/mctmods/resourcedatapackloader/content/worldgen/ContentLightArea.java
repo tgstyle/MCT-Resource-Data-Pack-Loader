@@ -77,28 +77,28 @@ public final class ContentLightArea {
         return area.nearby[(dx + 2) * 5 + dz + 2];
     }
 
-    public static boolean skySettled(World world, BlockPos pos) {
+    public static boolean skyUnsettled(World world, BlockPos pos) {
         int y = pos.getY();
-        if (y < 1 || y > 254) { return false; }
+        if (y < 1 || y > 254) { return true; }
         Chunk here = at(world, pos);
-        if (here == null) { return false; }
+        if (here == null) { return true; }
         int stored = here.getLightFor(EnumSkyBlock.SKY, pos);
-        if (here.canSeeSky(pos)) { return stored == 15; }
+        if (here.canSeeSky(pos)) { return stored != 15; }
         IBlockState state = here.getBlockState(pos);
         int opacity = state.getBlock().getLightOpacity(state, world, pos);
         if (opacity < 1) { opacity = 1; }
-        if (opacity >= 15) { return stored == 0; }
+        if (opacity >= 15) { return stored != 0; }
         int raw = 0;
         BlockPos.MutableBlockPos beside = new BlockPos.MutableBlockPos();
         for (EnumFacing facing : EnumFacing.VALUES) {
             beside.setPos(pos.getX() + facing.getXOffset(), y + facing.getYOffset(), pos.getZ() + facing.getZOffset());
             Chunk next = at(world, beside);
-            if (next == null) { return false; }
+            if (next == null) { return true; }
             int reaching = next.getLightFor(EnumSkyBlock.SKY, beside) - opacity;
             if (reaching > raw) { raw = reaching; }
             if (raw >= 14) { break; }
         }
-        return raw == stored;
+        return raw != stored;
     }
 
     private static boolean square(World world, int x, int z, int reach) {

@@ -42,7 +42,7 @@ public final class ContentDecoration implements IContentShape {
             int z = origin.getZ() + ContentPlacer.scatter(random, scatterZ);
             int y = origin.getY() + ContentPlacer.scatter(random, scatterY);
             BlockPos pos = new BlockPos(x, y, z);
-            if (!world.isAreaLoaded(pos, 3)) { continue; }
+            if (!ContentPlacer.areaLoaded(world, x - 3, z - 3, x + 3, z + 3)) { continue; }
             if (seeSky && !world.canSeeSky(pos)) { continue; }
             if (!surface.isEmpty() && !surface.contains(world.getBlockState(pos.down()).getBlock())) { continue; }
             if (placer.occupied(world, x, y, z)) { continue; }

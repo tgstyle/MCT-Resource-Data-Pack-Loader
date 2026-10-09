@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.content.village.RailPiece;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.BlockDoor;
 import net.minecraft.block.material.Material;
@@ -52,7 +53,7 @@ public final class BeardSeams {
                     if (doorBeside(world, at, x, y, z)) { break; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getMaterial().isSolid()) { break; }
-                    world.setBlockState(at, BeardBlocks.fillAt(world, x, y, upTo, z, world.getBlockState(at.down()).getMaterial().isLiquid()), 2);
+                    world.setBlockState(at, BeardBlocks.fillAt(world, x, y, upTo, z, world.getBlockState(at.down()).getMaterial().isLiquid()), BlockFlags.UPDATE_CLIENTS);
                     filled++;
                 }
             }
@@ -99,7 +100,7 @@ public final class BeardSeams {
             at.setPos(x, y, z);
             IBlockState laid = BeardBlocks.fillGround(world, x, z);
             if (y == low && laid.getBlock() == Blocks.DIRT) { laid = Blocks.GRASS.getDefaultState(); }
-            world.setBlockState(at, laid, 2);
+            world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;

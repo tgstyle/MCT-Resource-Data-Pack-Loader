@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMapGenStructure;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -26,6 +27,10 @@ public final class ContentBeardSeat {
     private static final int SIZE = 24;
     private static final double SCALE = 8.0D;
     private static final float[] KERNEL = new float[SIZE * SIZE * SIZE];
+    static final Map<String, Mode> MODES = new LinkedHashMap<>();
+    private static boolean modesLoaded;
+    private static boolean applying;
+    private static final ChunkPrimer UNUSED = new ChunkPrimer();
     static {
         for (int z = 0; z < SIZE; z++) {
             for (int x = 0; x < SIZE; x++) {
@@ -35,11 +40,6 @@ public final class ContentBeardSeat {
     }
 
     public enum Mode { NONE, BURY, BEARD_THIN, BEARD_BOX, ENCAPSULATE }
-
-    static final Map<String, Mode> MODES = new LinkedHashMap<>();
-    private static boolean modesLoaded;
-    private static boolean applying;
-    private static final ChunkPrimer UNUSED = new ChunkPrimer();
 
     private ContentBeardSeat() {}
 
@@ -124,19 +124,24 @@ public final class ContentBeardSeat {
         return 1.0D - length / 6.0D;
     }
 
+    public static void reload() {
+        modesLoaded = false;
+        MODES.clear();
+    }
+
     static void loadModes() {
         if (modesLoaded) { return; }
         modesLoaded = true;
         MODES.put("villages", Mode.BEARD_THIN);
         MODES.put("mansions", Mode.BEARD_THIN);
         for (String entry : ContentControl.list(ContentControl.STRUCTURES, "structureAdaptation", Config.worldgen.structureAdaptation)) {
-            String[] parts = entry.split("=", 2);
-            if (parts.length != 2) {
+            String[] parts = Settings.split(entry);
+            if (parts == null) {
                 ContentLog.LOGGER.error("structureAdaptation entry '{}' is not structure=mode, ignoring it", entry);
                 continue;
             }
-            String name = parts[0].trim().toLowerCase(Locale.ROOT);
-            String asked = parts[1].trim().toUpperCase(Locale.ROOT);
+            String name = Settings.lower(parts[0]);
+            String asked = parts[1].toUpperCase(Locale.ROOT);
             if (("temples".equals(name) || "mansions".equals(name)) && !"NONE".equals(asked) && !"BEARD_THIN".equals(asked)) {
                 ContentLog.LOGGER.error("structureAdaptation asks for {}={}, but that structure settles itself only as it is built, so the terrain cannot be shaped for it beforehand. Only beard_thin is offered there, which banks the ground around it once it stands", name, parts[1].trim());
                 continue;

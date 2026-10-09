@@ -12,5 +12,4 @@ public interface ICubeProvider {
     ICube getCube(int cubeX, int cubeY, int cubeZ);
 
     default ICube getCube(CubePos coords) { return getCube(coords.getX(), coords.getY(), coords.getZ()); }
-
 }

@@ -33,8 +33,6 @@ public class ContentBlockTorch extends BlockTorch implements IContentBlock {
         setTranslationKey(def.registryName + "." + variant.name);
         ContentSetup.harvest(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(variant.hardness);
-        setLightLevel(variant.light / 15.0F);
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
     }

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.Facings;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -71,15 +72,13 @@ public final class CityAlleys {
                         row += 7;
                         continue;
                     }
-                    EnumFacing facing = alongX ? (outward ? EnumFacing.SOUTH : EnumFacing.NORTH) : (outward ? EnumFacing.EAST : EnumFacing.WEST);
+                    EnumFacing facing = Facings.across(alongX, outward);
                     StructureVillagePieces.Path lane = new StructureVillagePieces.Path(startPiece, 0, rand, alley, facing);
                     components.add(lane);
-                    CityGrowth.laying = true;
-                    try {
+                    CityGrowth.laying(false, () -> {
                         lane.buildComponent(startPiece, components, rand);
                         CityGrowth.drain(startPiece, components, rand);
-                    }
-                    finally { CityGrowth.laying = false; }
+                    });
                     laid++;
                     ContentLog.LOGGER.debug("An alley {} long fills the block beside the road at {}, {}, running from {}, {}", length, box.minX, box.minZ, alley.minX, alley.minZ);
                     row += spacing;

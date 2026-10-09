@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
@@ -20,7 +21,6 @@ import java.util.UUID;
 
 public final class CardScan {
     private static final int EVERY = 20;
-    private static final long DAY_TICKS = 24000L;
     private static final long MINUTE_TICKS = 1200L;
     private static final String PLAY_FROM = "rdplPlayFrom";
     private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
@@ -81,8 +81,8 @@ public final class CardScan {
                 if (one instanceof EntityPlayerMP) { here.add((EntityPlayerMP) one); }
             }
             if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, before, now); }
-            long day = now / DAY_TICKS;
-            if (day == before / DAY_TICKS) { continue; }
+            long day = now / DimensionTraitsDef.VANILLA_DAY;
+            if (day == before / DimensionTraitsDef.VANILLA_DAY) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
                 if (rule.day < 0L || rule.day == day) { fireAll(rule, here); }
             }
@@ -91,8 +91,8 @@ public final class CardScan {
 
     private static void crossings(List<CardRule> rules, List<EntityPlayerMP> here, long before, long now) {
         for (CardRule rule : rules) {
-            long next = before - before % DAY_TICKS + rule.time;
-            if (next <= before) { next += DAY_TICKS; }
+            long next = before - before % DimensionTraitsDef.VANILLA_DAY + rule.time;
+            if (next <= before) { next += DimensionTraitsDef.VANILLA_DAY; }
             if (next <= now) { fireAll(rule, here); }
         }
     }

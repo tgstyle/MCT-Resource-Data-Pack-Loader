@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 
 import net.minecraft.block.Block;
@@ -27,11 +26,6 @@ public class ContentBlockStairs extends BlockStairs implements IContentBlock {
         setTranslationKey(def.registryName + "." + def.at(0).name);
         ContentSetup.harvest(this, def);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        BlockVariant variant = def.at(0);
-        setHardness(variant.hardness);
-        setResistance(variant.resistance / def.explosionResistanceDivisor);
-        setLightLevel(variant.light / 15.0F);
-        setDefaultSlipperiness(def.slipperiness);
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
     }

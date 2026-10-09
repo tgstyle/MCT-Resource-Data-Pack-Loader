@@ -59,12 +59,12 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private static final long BEEN_NEAR = 128L * 128L;
     private static final Map<String, Deque<BlockPos>> VISITED = new ConcurrentHashMap<>();
     private static ContentStructureSearch running;
+    private static boolean reporting;
     private final EntityPlayerMP player;
     private final World world;
     private final String name;
     private final MapGenStructure generator;
     private final boolean report;
-    private static boolean reporting;
     private final boolean cells;
     private final int spacing;
     private final int middleX;
@@ -150,8 +150,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         while (ring <= 100 && ring <= (foundOn == Integer.MAX_VALUE ? 100 : foundOn + 1)) {
             while (step < onRing(ring)) {
                 long cell = ringSpot(step);
-                int atX = (int) (cell >> 32);
-                int atZ = (int) cell;
+                int atX = Longs.high(cell);
+                int atZ = Longs.low(cell);
                 if (known.get(Longs.pack(atX, atZ)) == null && System.nanoTime() >= ending) { return true; }
                 step++;
                 considerCell(known, atX, atZ);
@@ -169,8 +169,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
                 if (System.nanoTime() >= ending) { return true; }
                 long spot = ringSpot(step);
                 step++;
-                int atX = (int) (spot >> 32);
-                int atZ = (int) spot;
+                int atX = Longs.high(spot);
+                int atZ = Longs.low(spot);
                 if (skipHere && Math.abs(atX - middleX) <= 8 && Math.abs(atZ - middleZ) <= 8) { continue; }
                 if (beenNear(atX * 16 + 8, atZ * 16 + 8)) { continue; }
                 if (findUnexplored && world.isChunkGeneratedAt(atX, atZ)) { continue; }
@@ -195,8 +195,8 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     private void considerCell(ContentSites known, int atX, int atZ) {
         long chosen = ContentBeard.siteIn(world, known, atX, atZ, spacing);
         if (chosen == ContentBeard.NO_SITE) { return; }
-        int chunkX = (int) (chosen >> 32);
-        int chunkZ = (int) chosen;
+        int chunkX = Longs.high(chosen);
+        int chunkZ = Longs.low(chosen);
         if (skipHere && Math.floorDiv(chunkX, spacing) == middleX && Math.floorDiv(chunkZ, spacing) == middleZ) { return; }
         if (beenNear(chunkX * 16 + 8, chunkZ * 16 + 8)) { return; }
         if (findUnexplored && world.isChunkGeneratedAt(chunkX, chunkZ)) { return; }
@@ -351,7 +351,7 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
         }
         IChunkGenerator cubic = CubicChunksWorlds.maker(world);
         if (cubic != null) { return cubic; }
-        return((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
+        return ((ChunkProviderServer) world.getChunkProvider()).chunkGenerator;
     }
 
     public static boolean anyOtherOver(World world, @Nullable List<StructureComponent> own, StructureBoundingBox box) {

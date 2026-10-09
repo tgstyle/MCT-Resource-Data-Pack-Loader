@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -56,7 +57,7 @@ public final class ContentBiomes3D {
         Biome[] cells = new Biome[CELLS * CELLS * CELLS];
         Biome[] unders = new Biome[CELLS * CELLS];
         boolean any = false;
-        int top = GenHeights.ceiling(world, 256) - 1;
+        int top = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1;
         int baseX = cube.getX() << 4;
         int baseY = cube.getY() << 4;
         int baseZ = cube.getZ() << 4;

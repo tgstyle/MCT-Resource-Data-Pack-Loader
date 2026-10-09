@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.JsonTree;
 
 import com.google.gson.JsonArray;
@@ -56,11 +60,11 @@ final class DownLoot {
         for (String key : TARGET_KEYS) {
             if (json.has(key) && json.get(key).isJsonPrimitive() && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
-        String condition = DownFixes.namespaced(DownFixes.string(json, "condition"));
+        String condition = namespaced(Json.text(json, "condition"));
         if ("minecraft:time_check".equals(condition)) { json.remove("clock"); }
         if (json.has("recipe") && json.get("recipe").isJsonPrimitive()) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
-        String function = DownFixes.string(json, "function");
-        if (!function.isEmpty()) { function(json, DownFixes.namespaced(function), file, note); }
+        String function = Json.text(json, "function");
+        if (!function.isEmpty()) { function(json, namespaced(function), file, note); }
         else if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) {
             variant(json);
             DownFixes.components(json.getAsJsonObject(COMPONENTS), file, note);
@@ -108,14 +112,14 @@ final class DownLoot {
     private static void variant(JsonObject json) {
         JsonObject components = json.getAsJsonObject(COMPONENTS);
         for (String key : JsonTree.keys(components)) {
-            String named = DownFixes.namespaced(key);
-            if (!named.startsWith(DownFixes.MINECRAFT)) { continue; }
-            String bare = named.substring(DownFixes.MINECRAFT.length());
+            String named = namespaced(key);
+            if (!named.startsWith(MINECRAFT)) { continue; }
+            String bare = named.substring(MINECRAFT.length());
             String owner = bare.endsWith(VARIANT) ? bare.substring(0, bare.length() - VARIANT.length()) : "";
             String entity = VARIANTS.contains(owner) ? owner : "tropical_fish/pattern".equals(bare) ? "tropical_fish" : null;
             if (entity == null || json.has(TYPE_SPECIFIC)) { continue; }
             JsonObject specific = new JsonObject();
-            specific.addProperty("type", DownFixes.MINECRAFT + entity);
+            specific.addProperty("type", MINECRAFT + entity);
             specific.add("variant", components.remove(key));
             json.add(TYPE_SPECIFIC, specific);
         }

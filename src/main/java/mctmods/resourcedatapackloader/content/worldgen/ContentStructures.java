@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.WorldTemplateDef;
+import mctmods.resourcedatapackloader.util.Longs;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IForgettingStarts;
 
@@ -14,13 +16,12 @@ import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
@@ -31,6 +32,7 @@ public final class ContentStructures {
     public static final Map<String, PopulateChunkEvent.Populate.EventType> POPULATES = populates();
     private static final Map<PopulateChunkEvent.Populate.EventType, String> POPULATE_KEYS = populateKeys();
     private static final Map<Integer, Map<String, Boolean>> BY_DIMENSION = new LinkedHashMap<>();
+    private static final Map<World, Set<MapGenStructure>> STARTS_WATCHED = new WeakHashMap<>();
 
     private ContentStructures() {}
 
@@ -63,12 +65,10 @@ public final class ContentStructures {
 
     public static boolean near(long at, long[] centers, int keep) {
         for (long center : centers) {
-            if (Math.abs((int) at - (int) center) <= keep && Math.abs((int) (at >>> 32) - (int) (center >>> 32)) <= keep) { return true; }
+            if (Math.abs(Longs.low(at) - Longs.low(center)) <= keep && Math.abs(Longs.high(at) - Longs.high(center)) <= keep) { return true; }
         }
         return false;
     }
-
-    private static final Map<World, Set<MapGenStructure>> STARTS_WATCHED = new WeakHashMap<>();
 
     public static boolean blocks(World world, MapGenBase generator) {
         if (BY_DIMENSION.isEmpty() || world == null || world.provider == null) { return false; }
@@ -117,13 +117,12 @@ public final class ContentStructures {
     public static boolean unknown(String key) { return !MAP_GENS.contains(key) && !POPULATES.containsKey(key); }
 
     public static String describe() {
-        StringBuilder text = new StringBuilder();
-        for (String key : MAP_GENS) { text.append(text.length() == 0 ? "" : ", ").append(key); }
-        for (String key : POPULATES.keySet()) { text.append(", ").append(key); }
-        return text.toString();
+        List<String> keys = new ArrayList<>(MAP_GENS);
+        keys.addAll(POPULATES.keySet());
+        return String.join(", ", keys);
     }
 
-    public static String normalize(String key) { return key.trim().toLowerCase(Locale.ROOT); }
+    public static String normalize(String key) { return Settings.lower(key); }
 
     private static Map<String, String> structureNames() {
         Map<String, String> map = new LinkedHashMap<>();
@@ -164,7 +163,7 @@ public final class ContentStructures {
         map.put("fire", PopulateChunkEvent.Populate.EventType.FIRE);
         map.put("glowstone", PopulateChunkEvent.Populate.EventType.GLOWSTONE);
         map.put("ice", PopulateChunkEvent.Populate.EventType.ICE);
-        map.put("animals", PopulateChunkEvent.Populate.EventType.ANIMALS);
+        map.put(ContentSpawning.ANIMALS, PopulateChunkEvent.Populate.EventType.ANIMALS);
         return Collections.unmodifiableMap(map);
     }
 }

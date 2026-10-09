@@ -23,7 +23,6 @@ import static mctmods.resourcedatapackloader.util.Coords.blockToCube;
 import static mctmods.resourcedatapackloader.util.Coords.blockToLocal;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import static net.minecraft.util.math.MathHelper.clamp;
 import com.google.common.base.Predicate;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableSetMultimap;
@@ -54,9 +53,12 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import static net.minecraft.util.math.MathHelper.clamp;
 
 public class PlayerCubeMap extends PlayerChunkMap {
+    private static final int TICKABLE_RANGE = 128;
     private static final Predicate<EntityPlayerMP> NOT_SPECTATOR = player -> player != null && !player.isSpectator();
     private final CubeSelector cubeSelector = new CuboidalCubeSelector();
     private final TIntObjectMap<PlayerWrapper> players = new TIntObjectHashMap<>();
@@ -64,15 +66,17 @@ public class PlayerCubeMap extends PlayerChunkMap {
     final XZMap<ColumnWatcher> columnWatchers = new XZMap<>(0.7f, 25 * 25);
     private final Set<CubeWatcher> cubeWatchersToUpdate = new HashSet<>();
     private final Set<ColumnWatcher> columnWatchersToUpdate = new HashSet<>();
-
-    private final Supplier<Collection<EntityPlayer>> everyone = () -> players.valueCollection().stream().map(p -> p.playerEntity).collect(Collectors.toList());
+    private final Supplier<Collection<EntityPlayer>> everyone = () -> playerStream().collect(Collectors.toList());
     private final WatchersSortingList3D<CubeWatcher> watchersToAddPlayersTo = new WatchersSortingList3D<>(0, everyone);
     private final WatchersSortingList3D<CubeWatcher> cubesToSendToClients = new WatchersSortingList3D<>(1, everyone);
     private final WatchersSortingList3D<CubeWatcher> cubesToGenerate = new WatchersSortingList3D<>(2, everyone);
     private final WatchersSortingList2D<ColumnWatcher> columnsToSendToClients = new WatchersSortingList2D<>(3, everyone);
     private final WatchersSortingList2D<ColumnWatcher> columnsToGenerate = new WatchersSortingList2D<>(4, everyone);
     private final WatchersSortingList3D<CubeWatcher> tickableCubeTracker = new WatchersSortingList3D<>(5, () ->
-            players.valueCollection().stream().map(p -> p.playerEntity).filter(NOT_SPECTATOR).collect(Collectors.toList()));
+            playerStream().filter(NOT_SPECTATOR).collect(Collectors.toList()));
+    private Stream<EntityPlayerMP> playerStream() { return players.valueCollection().stream().map(p -> p.playerEntity); }
+
+    private static int cubesSentPerTick() { return ContentControl.number(ContentControl.CHUNKS, "cubesSentPerTick", 649); }
 
     private int horizontalViewDistance;
     private int verticalViewDistance;
@@ -125,7 +129,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
     private void addTickableCubes(TickableChunkContainer tickableChunksCubes) {
         for (CubeWatcher watcher : (Iterable<CubeWatcher>) () -> tickableCubeTracker.iteratorUpToDistance(9)) {
             ICube cube = watcher.getCube();
-            if (cube == null || watcher.hasNoPlayerMatchingInRange(NOT_SPECTATOR, 128)) { continue; }
+            if (cube == null || watcher.hasNoPlayerMatchingInRange(NOT_SPECTATOR, TICKABLE_RANGE)) { continue; }
             tickableChunksCubes.addCube(cube);
         }
     }
@@ -133,7 +137,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
     private void addTickableColumns(TickableChunkContainer tickableChunksCubes) {
         for (ColumnWatcher watcher : columnWatchers) {
             Chunk chunk = watcher.getChunk();
-            if (chunk == null || !watcher.hasPlayerMatchingInRange(128.0D, NOT_SPECTATOR)) { continue; }
+            if (chunk == null || !watcher.hasPlayerMatchingInRange(TICKABLE_RANGE, NOT_SPECTATOR)) { continue; }
             tickableChunksCubes.addColumn(chunk);
         }
     }
@@ -210,8 +214,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
                 }
                 if (success) {
                     CubeWatcher.SendToPlayersResult state = watcher.sendToPlayers();
-                    if (state == CubeWatcher.SendToPlayersResult.WAITING || state == CubeWatcher.SendToPlayersResult.CUBE_SENT
-                            || state == CubeWatcher.SendToPlayersResult.ALREADY_DONE) {
+                    if (state == CubeWatcher.SendToPlayersResult.CUBE_SENT || state == CubeWatcher.SendToPlayersResult.ALREADY_DONE) {
                         iterator.remove();
                         this.cubesToSendToClients.remove(watcher);
                     }
@@ -232,7 +235,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         }
         if (this.cubesToSendToClients.occupied()) {
             getWorldServer().profiler.startSection("cubes");
-            int toSend = ContentControl.number(ContentControl.CHUNKS, "cubesSentPerTick", 649);
+            int toSend = cubesSentPerTick();
             Iterator<CubeWatcher> it = this.cubesToSendToClients.iterator();
             while (it.hasNext() && toSend > 0) {
                 CubeWatcher playerInstance = it.next();
@@ -245,7 +248,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             getWorldServer().profiler.endSection();
         }
         if (watchersToAddPlayersTo.occupied()) {
-            int toSend = ContentControl.number(ContentControl.CHUNKS, "cubesSentPerTick", 649);
+            int toSend = cubesSentPerTick();
             for (Iterator<CubeWatcher> iter = watchersToAddPlayersTo.iterator(); toSend > 0 && iter.hasNext(); ) {
                 CubeWatcher watcher = iter.next();
                 watcher.addScheduledPlayers();
@@ -267,15 +270,13 @@ public class PlayerCubeMap extends PlayerChunkMap {
             for (EntityPlayerMP player : cubesToSend.keySet()) {
                 Collection<Cube> cubes = cubesToSend.get(player);
                 if (!players.containsKey(player.getEntityId())) {
-                    Rubic.LOGGER.info("Skipping sending {} chunks to player {} that is no longer in this world!", cubes.size(), player.getName());
+                    ContentLog.LOGGER.info("Skipping sending {} chunks to player {} that is no longer in this world!", cubes.size(), player.getName());
                     continue;
                 }
                 ((IRubicWorldInternal) getWorldServer()).rdpl$getLightingManager().onSendCubes();
                 for (MessageCubes packet : MessageCubes.batched(cubes)) { RDPLNetwork.sendTo(packet, player); }
                 for (Cube cube : cubes) {
                     ((IRubicEntityTracker) getWorldServer().getEntityTracker()).sendLeashedEntitiesInCube(player, cube);
-                    CubeWatcher watcher = getCubeWatcher(cube.getCoords());
-                    assert watcher != null;
                     MinecraftForge.EVENT_BUS.post(new CubeWatchEvent(cube, player));
                 }
             }
@@ -361,7 +362,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
         ObjectSet<ColumnWatcher> toSendUnload = new ObjectOpenHashSet<>((horizontalViewDistance*2+1) * (horizontalViewDistance*2+1) * 6);
         this.cubeSelector.forAllVisibleFrom(playerCubePos, horizontalViewDistance, verticalViewDistance, (cubePos) -> {
             CubeWatcher watcher = getCubeWatcher(cubePos);
-            if (watcher != null) { removePlayerFromCubeWatcher(watcher, player); }
+            if (watcher != null) { watcher.removePlayer(player); }
             ColumnWatcher columnWatcher = getColumnWatcher(cubePos.chunkPos());
             if (columnWatcher == null) { return; }
             toSendUnload.add(columnWatcher);
@@ -407,7 +408,7 @@ public class PlayerCubeMap extends PlayerChunkMap {
             CubeWatcher cubeWatcher = this.getCubeWatcher(pos);
             if (cubeWatcher != null) {
                 assert cubeWatcher.getCubePos().equals(pos);
-                removePlayerFromCubeWatcher(cubeWatcher, entry.playerEntity);
+                cubeWatcher.removePlayer(entry.playerEntity);
             }
         });
         getWorldServer().profiler.endStartSection("removeColumns");
@@ -421,8 +422,6 @@ public class PlayerCubeMap extends PlayerChunkMap {
         getWorldServer().profiler.endSection();
         getWorldServer().profiler.endSection();
     }
-
-    private void removePlayerFromCubeWatcher(CubeWatcher cubeWatcher, EntityPlayerMP playerEntity) { cubeWatcher.removePlayer(playerEntity); }
 
     private void scheduleAddPlayerToWatcher(CubeWatcher cubeWatcher, EntityPlayerMP playerEntity) {
         watchersToAddPlayersTo.add(cubeWatcher);
@@ -479,13 +478,13 @@ public class PlayerCubeMap extends PlayerChunkMap {
                         oldVerticalViewDistance, newVerticalViewDistance, cubesToUnload, columnsToUnload);
                 cubesToUnload.forEach(pos -> {
                     CubeWatcher cubeWatcher = this.getCubeWatcher(pos);
-                    if (cubeWatcher != null) { removePlayerFromCubeWatcher(cubeWatcher, player); }
-                    else { Rubic.LOGGER.warn("cubeWatcher null on render distance change"); }
+                    if (cubeWatcher != null) { cubeWatcher.removePlayer(player); }
+                    else { ContentLog.LOGGER.warn("cubeWatcher null on render distance change"); }
                 });
                 columnsToUnload.forEach(pos -> {
                     ColumnWatcher columnWatcher = this.getColumnWatcher(pos);
                     if (columnWatcher != null && columnWatcher.containsPlayer(player)) { columnWatcher.removePlayer(player); }
-                    else { Rubic.LOGGER.warn("cubeWatcher null or doesn't contain player on render distance change"); }
+                    else { ContentLog.LOGGER.warn("cubeWatcher null or doesn't contain player on render distance change"); }
                 });
             }
         }
@@ -555,26 +554,23 @@ public class PlayerCubeMap extends PlayerChunkMap {
         world.profiler.endSection();
         return new AbstractIterator<Cube>() {
             Iterator<Cube> persistentCubes = persistentCubesIterator;
-            boolean shouldSkip(@Nullable Cube cube){
-                if (cube == null)
-                    return true;
-                if (cube.isEmpty())
-                    return true;
+            boolean shouldSkip(@Nullable Cube cube) {
+                if (cube == null) { return true; }
+                if (cube.isEmpty()) { return true; }
                 return !cube.isFullyPopulated();
             }
             @Override protected Cube computeNext() {
-                while(persistentCubes != null && persistentCubes.hasNext()){
+                while (persistentCubes != null && persistentCubes.hasNext()) {
                     Cube cube = persistentCubes.next();
                     if (!persistentCubes.hasNext()) { persistentCubes = null; }
-                    if(shouldSkip(cube))
-                        continue;
+                    if (shouldSkip(cube)) { continue; }
                     return cube;
                 }
                 while (iterator.hasNext()) {
                     CubeWatcher watcher = iterator.next();
                     Cube cube = watcher.getCube();
                     if (shouldSkip(cube)) { continue; }
-                    if (watcher.hasNoPlayerMatchingInRange(NOT_SPECTATOR, 128)) { continue; }
+                    if (watcher.hasNoPlayerMatchingInRange(NOT_SPECTATOR, TICKABLE_RANGE)) { continue; }
                     return cube;
                 }
                 return this.endOfData();

@@ -24,8 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashSet;
 import java.util.Set;
 
-@Mixin(value = Chunk.class, priority = 999)
-public abstract class MixinChunkDressing {
+@Mixin(value = Chunk.class, priority = 999) public abstract class MixinChunkDressing {
     @Shadow @Final private World world;
     @Shadow @Final public int x;
     @Shadow @Final public int z;
@@ -33,8 +32,7 @@ public abstract class MixinChunkDressing {
     @Unique private static final Set<String> rdpl$told = new HashSet<>();
     @Shadow public abstract ChunkPos getPos();
 
-    @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD"))
-    private void rdpl$traceCascade(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
+    @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD")) private void rdpl$traceCascade(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
         ChunkPos parent = IChunk.rdpl$getPopulating();
         if (parent != null) { ContentCascade.report(parent, getPos()); }
     }
@@ -55,15 +53,13 @@ public abstract class MixinChunkDressing {
         ContentLog.LOGGER.debug("Land was made in the middle of making other land, by a caller not seen before. This is number {} of the different ones", rdpl$told.size(), trace);
     }
 
-    @SuppressWarnings("ConstantValue") @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$dressNothingWhileLighting(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
+    @SuppressWarnings("ConstantValue") @Inject(method = "populate(Lnet/minecraft/world/chunk/IChunkProvider;Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("HEAD"), cancellable = true) private void rdpl$dressNothingWhileLighting(IChunkProvider chunkProvider, IChunkGenerator chunkGenrator, CallbackInfo ci) {
         if (isTerrainPopulated || !ContentPregen.dressLater((Chunk) (Object) this)) { return; }
         ContentChunkWatch.dressingHeldOff();
         ci.cancel();
     }
 
-    @Inject(method = "onTick", at = @At("HEAD"))
-    private void rdpl$dressWhenStranded(boolean skipRecheckGaps, CallbackInfo ci) {
+    @Inject(method = "onTick", at = @At("HEAD")) private void rdpl$dressWhenStranded(boolean skipRecheckGaps, CallbackInfo ci) {
         if (isTerrainPopulated || world.isRemote || ContentPregen.lightingOnly()) { return; }
         if (((x + z) & 15) != (int) (world.getTotalWorldTime() & 15L)) { return; }
         IChunkProvider provider = world.getChunkProvider();
@@ -75,14 +71,12 @@ public abstract class MixinChunkDressing {
         if (isTerrainPopulated) { ContentLog.LOGGER.debug("Chunk {}, {} sat undressed in a player's view and is dressed on its tick", x, z); }
     }
 
-    @Redirect(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V"))
-    private void rdpl$lightAfterDressing(Chunk chunk) {
+    @Redirect(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V")) private void rdpl$lightAfterDressing(Chunk chunk) {
         isTerrainPopulated = true;
         ContentChunkWatch.lightDeferred();
     }
 
-    @Redirect(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/IChunkGenerator;populate(II)V"))
-    private void rdpl$timeDecoration(IChunkGenerator generator, int x, int z) {
+    @Redirect(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/IChunkGenerator;populate(II)V")) private void rdpl$timeDecoration(IChunkGenerator generator, int x, int z) {
         if (!ContentChunkWatch.watching()) {
             generator.populate(x, z);
             return;

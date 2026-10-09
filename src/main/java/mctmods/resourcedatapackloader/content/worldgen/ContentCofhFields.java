@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.SpreadDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -43,7 +44,7 @@ final class ContentCofhFields {
     }
 
     static void spread(String name, JsonObject source, JsonObject out) {
-        String distribution = JsonUtils.getString(source, "distribution", "uniform").trim().toLowerCase(Locale.ROOT);
+        String distribution = Settings.lower(JsonUtils.getString(source, "distribution", "uniform"));
         JsonObject spread = new JsonObject();
         switch (distribution) {
             case "gaussian":
@@ -83,9 +84,7 @@ final class ContentCofhFields {
             out.add("spread", spread);
             return;
         }
-        if (!"uniform".equals(distribution)) {
-            ContentLog.LOGGER.warn("CoFH World entry '{}' uses the '{}' distribution, which has nothing to convert to, spreading it evenly instead", name, distribution);
-        }
+        if (!"uniform".equals(distribution)) { ContentLog.LOGGER.warn("CoFH World entry '{}' uses the '{}' distribution, which has nothing to convert to, spreading it evenly instead", name, distribution); }
         out.addProperty("minHeight", bound(source, "min-height", 0, true));
         out.addProperty("maxHeight", bound(source, "max-height", 64, false) - 1);
     }

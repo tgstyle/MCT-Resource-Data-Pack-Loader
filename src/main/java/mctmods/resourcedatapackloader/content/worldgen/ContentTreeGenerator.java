@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockSapling;
+import net.minecraft.init.Blocks;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -38,7 +40,7 @@ public class ContentTreeGenerator extends WorldGenAbstractTree {
         return true;
     }
 
-    private boolean rooted(World world, BlockPos below) { return ContentSetup.sustains(soil, world, below, (net.minecraft.block.BlockSapling) net.minecraft.init.Blocks.SAPLING); }
+    private boolean rooted(World world, BlockPos below) { return ContentSetup.sustains(soil, world, below, (BlockSapling) Blocks.SAPLING); }
 
     private boolean clear(World world, BlockPos position, int height) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();

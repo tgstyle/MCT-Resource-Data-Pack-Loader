@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.DeepGeneration;
-
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.Block;
@@ -39,28 +38,19 @@ public final class CaveRegionDef {
     public final float structureChance;
     public final String structureLoot;
     public final String biome;
-    public final String skyStone;
-    public final float skyIslands;
-    public final float skyThickness;
-    public final String ambientSound;
-    public final float soundChance;
-    public final String particle;
-    public final float particleChance;
+    public final SkyStone sky;
+    public final AmbienceDef ambience;
     private boolean resolved;
-    private boolean skyResolved;
-    @Nullable private IBlockState skyState;
     @Nullable private IBlockState floorState;
     @Nullable private IBlockState ceilingState;
     @Nullable private Set<Block> replaceBlocks;
-
     @Nullable private Map<EnumCreatureType, List<Biome.SpawnListEntry>> spawnLists;
 
     public CaveRegionDef(ResourceLocation key, int weight, int minHeight, int maxHeight, List<Integer> dimensions,
                          String floorCover, float floorChance, String ceilingCover, float ceilingChance,
                          List<String> coverReplace, int waterLevel, List<SpawnEntryDef> spawns, boolean keepDefaultSpawns,
                          List<PickDef> structures, float structureChance, String structureLoot, String biome,
-                         String skyStone, float skyIslands, float skyThickness,
-                         String ambientSound, float soundChance, String particle, float particleChance) {
+                         SkyStone sky, AmbienceDef ambience) {
         this.key = key;
         this.weight = weight;
         this.minHeight = minHeight;
@@ -78,24 +68,11 @@ public final class CaveRegionDef {
         this.structureChance = structureChance;
         this.structureLoot = structureLoot;
         this.biome = biome;
-        this.skyStone = skyStone;
-        this.skyIslands = skyIslands;
-        this.skyThickness = skyThickness;
-        this.ambientSound = ambientSound;
-        this.soundChance = soundChance;
-        this.particle = particle;
-        this.particleChance = particleChance;
+        this.sky = sky;
+        this.ambience = ambience;
     }
 
-    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness) || hasBiome(); }
-
-    @Nullable public IBlockState skyState() {
-        if (!skyResolved) {
-            skyResolved = true;
-            skyState = DeepGeneration.parseState(skyStone, key + " skyStone");
-        }
-        return skyState;
-    }
+    public boolean shapesSky() { return sky.shapes() || hasBiome(); }
 
     public boolean hasWater() { return waterLevel != NO_WATER; }
 
@@ -105,7 +82,7 @@ public final class CaveRegionDef {
 
     public boolean hasStructures() { return !structures.isEmpty(); }
 
-    public boolean hasAmbience() { return !ambientSound.isEmpty() && soundChance > 0.0F || !particle.isEmpty() && particleChance > 0.0F; }
+    public boolean hasAmbience() { return ambience.sounds() || ambience.shows(); }
 
     public List<Biome.SpawnListEntry> spawnsFor(EnumCreatureType type) {
         if (spawnLists == null) {

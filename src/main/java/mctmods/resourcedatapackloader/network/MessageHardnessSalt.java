@@ -3,10 +3,10 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 
 import io.netty.buffer.ByteBuf;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.world.World;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
-import net.minecraftforge.fml.relauncher.Side;
 
 public class MessageHardnessSalt implements IMessage {
     private long salt;
@@ -19,12 +19,7 @@ public class MessageHardnessSalt implements IMessage {
 
     @Override public void toBytes(ByteBuf buf) { buf.writeLong(salt); }
 
-    public static class Handler implements IMessageHandler<MessageHardnessSalt, IMessage> {
-        @Override public IMessage onMessage(MessageHardnessSalt message, MessageContext ctx) {
-            if (ctx.side != Side.CLIENT) { return null; }
-
-            ContentHardness.salt(message.salt);
-            return null;
-        }
+    public static class Handler extends AbstractClientMessageHandler<MessageHardnessSalt> {
+        @Override public void handleClientMessage(World world, EntityPlayer player, MessageHardnessSalt message, MessageContext ctx) { ContentHardness.salt(message.salt); }
     }
 }

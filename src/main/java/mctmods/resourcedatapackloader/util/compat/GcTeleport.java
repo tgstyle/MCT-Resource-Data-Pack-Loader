@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
-import mctmods.resourcedatapackloader.content.def.CelestialDef;
+import mctmods.resourcedatapackloader.content.ContentParserModPlanets;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -25,8 +25,6 @@ public final class GcTeleport implements ITeleportType {
     private static final double LANDER_HEIGHT = 900.0D;
     private static final double PARACHUTE_HEIGHT = 250.0D;
     private static final double CHEST_HEIGHT = 220.0D;
-    private static final String PLANETS = "galacticraftplanets";
-    private static final String EXTRA_PLANETS = "extraplanets";
     private int landingDimension;
 
     @Nullable private static GalacticraftDef gc(int dimension) {
@@ -47,13 +45,10 @@ public final class GcTeleport implements ITeleportType {
 
     private static boolean balloons(int dimension) {
         GalacticraftDef gc = gc(dimension);
-        return gc != null && GalacticraftDef.BALLOONS.equals(gc.landing) && Loader.isModLoaded(PLANETS);
+        return gc != null && GalacticraftDef.BALLOONS.equals(gc.landing) && Loader.isModLoaded(GcCelestial.PLANETS);
     }
 
-    private static boolean belt(int dimension) {
-        GalacticraftDef gc = gc(dimension);
-        return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind);
-    }
+    private static boolean belt(int dimension) { return GcCelestial.isBelt(gc(dimension)); }
 
     @Override public boolean useParachute() { return !belt(landingDimension) && parachutes(landingDimension); }
 
@@ -119,7 +114,7 @@ public final class GcTeleport implements ITeleportType {
             return;
         }
         GalacticraftDef gc = gc(newWorld.provider.getDimension());
-        EntityLanderBase lander = gc != null && gc.extraPlanets != null && gc.extraPlanets.lander != null && Loader.isModLoaded(EXTRA_PLANETS) ? EpPlanets.lander(gc.extraPlanets.lander, player) : new EntityLander(player);
+        EntityLanderBase lander = gc != null && gc.extraPlanets != null && gc.extraPlanets.lander != null && Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS) ? EpPlanets.lander(gc.extraPlanets.lander, player) : new EntityLander(player);
         lander.setPosition(player.posX, player.posY, player.posZ);
         if (!newWorld.isRemote) {
             boolean previous = CompatibilityManager.forceLoadChunks((WorldServer) newWorld);

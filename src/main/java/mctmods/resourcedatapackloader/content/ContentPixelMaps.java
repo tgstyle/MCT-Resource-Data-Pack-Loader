@@ -3,8 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.util.TintFactory;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,11 +47,11 @@ public final class ContentPixelMaps {
     private static final String TINT = "tint";
     private static final int MAX_SIDE = 4096;
     private static final int HASH_LENGTH = 16;
+    private static final String HASH_GLOB = String.join("", Collections.nCopies(HASH_LENGTH, "[0-9a-f]"));
     private static final char PLAIN = 'n';
     private static final char OVERRIDING = 'o';
     private static final Map<String, byte[]> MADE = new ConcurrentHashMap<>();
     private static final Set<String> FAILED = ConcurrentHashMap.newKeySet();
-    private static final Gson GSON = new Gson();
 
     private ContentPixelMaps() {}
 
@@ -78,7 +79,12 @@ public final class ContentPixelMaps {
     }
 
     @Nullable private static byte[] build(String namespace, String path, boolean overriding) {
-        Resolved resolved = resolve(namespace, path, overriding);
+        Resolved resolved;
+        try { resolved = resolve(namespace, path, overriding); }
+        catch (RuntimeException ex) {
+            ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", namespace, path, ex);
+            return null;
+        }
         if (resolved == null) { return null; }
         String stamp = hash(resolved.sources);
         byte[] cached = fromCache(namespace, path, overriding, stamp);
@@ -116,7 +122,7 @@ public final class ContentPixelMaps {
             sources.append(where).append(':').append(at).append('\n').append(contents).append('\n');
             chain.add(where + ":" + at);
             JsonObject json;
-            try { json = GSON.fromJson(contents, JsonObject.class); }
+            try { json = Json.GSON.fromJson(contents, JsonObject.class); }
             catch (JsonParseException ex) {
                 ContentLog.LOGGER.error("Pixel map {}:{} could not be read, so nothing is drawn", where, at, ex);
                 return null;
@@ -127,17 +133,27 @@ public final class ContentPixelMaps {
             }
             for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
                 if (palette.containsKey(entry.getKey())) { continue; }
+                if (!entry.getValue().isJsonPrimitive()) {
+                    ContentLog.LOGGER.error("Pixel map {}:{} gives the palette key '{}' something other than a color, so nothing is drawn", where, at, entry.getKey());
+                    return null;
+                }
                 palette.put(entry.getKey(), entry.getValue().getAsString());
                 from.put(entry.getKey(), where + ":" + at);
             }
             for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, NOTES, new JsonObject()).entrySet()) {
-                if (!notes.containsKey(entry.getKey())) { notes.put(entry.getKey(), entry.getValue().getAsString()); }
+                if (!notes.containsKey(entry.getKey()) && entry.getValue().isJsonPrimitive()) { notes.put(entry.getKey(), entry.getValue().getAsString()); }
             }
             if (rows == null && json.has(ROWS)) {
                 rowsFrom = where + ":" + at;
                 JsonArray listed = JsonUtils.getJsonArray(json, ROWS);
                 rows = new ArrayList<>(listed.size());
-                for (JsonElement row : listed) { rows.add(row.getAsString()); }
+                for (JsonElement row : listed) {
+                    if (!row.isJsonPrimitive()) {
+                        ContentLog.LOGGER.error("Pixel map {}:{} has a row that is not text, so nothing is drawn", where, at);
+                        return null;
+                    }
+                    rows.add(row.getAsString());
+                }
             }
             if (tint == null && json.has(TINT)) {
                 JsonObject asked = JsonUtils.getJsonObject(json, TINT);
@@ -272,7 +288,7 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} has the palette key '{}', which is not a single character, ignoring it", namespace, path, entry.getKey());
                 continue;
             }
-            Integer color = color(entry.getValue());
+            Integer color = TintFactory.color(entry.getValue());
             if (color == null) {
                 ContentLog.LOGGER.error("Pixel map {}:{} gives '{}' the color '{}', which is not #RRGGBB or #AARRGGBB, ignoring it", namespace, path, entry.getKey(), entry.getValue());
                 continue;
@@ -341,7 +357,7 @@ public final class ContentPixelMaps {
     }
 
     private static void sweep(Path folder, String name, boolean overriding, String keep) throws IOException {
-        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder, name + "-" + (overriding ? OVERRIDING : PLAIN) + "*" + PNG)) {
+        try (DirectoryStream<Path> entries = Files.newDirectoryStream(folder, name + "-" + (overriding ? OVERRIDING : PLAIN) + HASH_GLOB + PNG)) {
             for (Path entry : entries) {
                 if (entry.getFileName().toString().equals(keep)) { continue; }
                 try { Files.deleteIfExists(entry); }
@@ -421,8 +437,8 @@ public final class ContentPixelMaps {
     @Nullable private static byte[] repaint(String namespace, String path, Resolved resolved, int[] base) {
         Map<Integer, Integer> swaps = new LinkedHashMap<>();
         for (Map.Entry<String, String> entry : resolved.palette.entrySet()) {
-            Integer was = color(entry.getKey());
-            Integer becomes = color(entry.getValue());
+            Integer was = TintFactory.color(entry.getKey());
+            Integer becomes = TintFactory.color(entry.getValue());
             if (was == null || becomes == null) {
                 ContentLog.LOGGER.error("Pixel map {}:{} builds on an image, so its palette must go from one color to another, and '{}' to '{}' does not, ignoring it", namespace, path, entry.getKey(), entry.getValue());
                 continue;
@@ -444,15 +460,12 @@ public final class ContentPixelMaps {
 
     @Nullable private static int[][] image(String namespace, String path) {
         if (FMLCommonHandler.instance().getSide() != Side.CLIENT) { return null; }
-        if (!ContentPixelImages.exists(namespace, path)) { return null; }
         return ContentPixelImages.read(namespace, path);
     }
 
     private static String hash(int[] pixels) {
         StringBuilder text = new StringBuilder();
-        for (int pixel : pixels) { text.append(Integer.toHexString(pixel)); }
+        for (int pixel : pixels) { text.append(Integer.toHexString(pixel)).append(','); }
         return hash(text.toString());
     }
-
-    @Nullable private static Integer color(String written) { return TintFactory.color(written); }
 }

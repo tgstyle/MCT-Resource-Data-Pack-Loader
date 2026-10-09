@@ -28,11 +28,11 @@ import java.util.Deque;
 import java.util.List;
 
 public final class ContentPregenDimensions {
-    static final Deque<Integer> PENDING = new ArrayDeque<>();
     public static final int VANILLA_SPAWN_REACH = 12;
+    static final Deque<Integer> PENDING = new ArrayDeque<>();
+    private static final double NO_BORDER = 6.0E7D;
     static int wantedRadius;
     static boolean chaining;
-    private static final double NO_BORDER = 6.0E7D;
 
     public static int[] wantedDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensions", Config.chunks.pregenDimensions); }
 
@@ -51,9 +51,7 @@ public final class ContentPregenDimensions {
         return chosen;
     }
 
-    public static int[] enteredDimensions() {
-        return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensionsWhenEntered", Config.chunks.pregenDimensionsWhenEntered);
-    }
+    public static int[] enteredDimensions() { return ContentControl.numbers(ContentControl.CHUNKS, "pregenDimensionsWhenEntered", Config.chunks.pregenDimensionsWhenEntered); }
 
     private static boolean madeUpFront(int dimension) {
         for (int later : enteredDimensions()) {
@@ -169,8 +167,9 @@ public final class ContentPregenDimensions {
                     continue;
                 }
                 reach = (int) Math.ceil(border.getDiameter() / 2.0D / 16.0D);
-                if (reach > Config.chunks.pregenBorderLimit) {
-                    ContentLog.LOGGER.error("The border of dimension {} stands {} block(s) across, which is {} chunk(s) either way and past the {} allowed by pregenBorderLimit, so no land is made out to it", dimension, (long) border.getDiameter(), reach, Config.chunks.pregenBorderLimit);
+                int limit = ContentControl.number(ContentControl.CHUNKS, "pregenBorderLimit", Config.chunks.pregenBorderLimit);
+                if (reach > limit) {
+                    ContentLog.LOGGER.error("The border of dimension {} stands {} block(s) across, which is {} chunk(s) either way and past the {} allowed by pregenBorderLimit, so no land is made out to it", dimension, (long) border.getDiameter(), reach, limit);
                     continue;
                 }
                 centreX = (int) Math.floor(border.getCenterX()) >> 4;

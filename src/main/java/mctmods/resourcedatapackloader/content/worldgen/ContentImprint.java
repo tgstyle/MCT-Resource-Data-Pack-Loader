@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.util.world.StructureLoot;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Turns;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Mirror;
@@ -20,19 +22,12 @@ import net.minecraft.world.gen.structure.template.Template;
 import java.util.Random;
 
 public final class ContentImprint implements IContentShape {
-    private static final int WORLDGEN_FLAGS = 2;
+    private static final int WORLDGEN_FLAGS = BlockFlags.UPDATE_CLIENTS;
     private static final int OFFSET = 8;
-    private static final Rotation[] TURNS = Rotation.values();
-
-    public static int backX(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0; }
-
-    public static int backZ(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0; }
     private final ContentPlacer placer;
     private final ShapeDef shape;
     private final ResourceLocation key;
     private final boolean filtered;
-
-    public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
 
     public ContentImprint(ContentPlacer placer, ShapeDef shape, ResourceLocation key, boolean filtered) {
         this.placer = placer;
@@ -40,6 +35,12 @@ public final class ContentImprint implements IContentShape {
         this.key = key;
         this.filtered = filtered;
     }
+
+    public static int backX(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.CLOCKWISE_180 ? span.getX() - 1 : 0; }
+
+    public static int backZ(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0; }
+
+    public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         String named = PickDef.pick(shape.structures, random, shape.structure);
@@ -55,17 +56,17 @@ public final class ContentImprint implements IContentShape {
         Rotation rotation = turn(random);
         PlacementSettings settings = new PlacementSettings();
         settings.setRotation(rotation);
-        settings.setMirror(mirror(random));
-        settings.setIntegrity(shape.integrity / 100.0F);
+        Mirror mirror = mirror(random);
+        settings.setMirror(mirror);
+        settings.setIntegrity(shape.integrity / (float) ShapeDef.FULL_INTEGRITY);
         settings.setRandom(random);
         BlockPos span = loaded.transformedSize(rotation);
-        int backX = backX(rotation, span);
-        int backZ = backZ(rotation, span);
         int cornerX = within(origin.getX(), origin.getX() - span.getX() / 2, span.getX());
         int cornerZ = within(origin.getZ(), origin.getZ() - span.getZ() / 2, span.getZ());
-        BlockPos fitted = new BlockPos(cornerX + backX, origin.getY(), cornerZ + backZ);
+        BlockPos fitted = loaded.getZeroPositionWithTransform(new BlockPos(cornerX, origin.getY(), cornerZ), mirror, rotation);
         if (span.getX() > 16 || span.getZ() > 16) {
-            if (!ContentCascade.loaded(world, fitted, Math.max(span.getX(), span.getZ()))) { return false; }
+            int reach = Math.max(span.getX(), span.getZ());
+            if (!ContentPlacer.areaLoaded(world, fitted.getX() - reach, fitted.getZ() - reach, fitted.getX() + reach, fitted.getZ() + reach)) { return false; }
         }
         if (filtered) { loaded.addBlocksToWorld(world, fitted, onlyOverReplaceable(), settings, WORLDGEN_FLAGS); }
         else { loaded.addBlocksToWorld(world, fitted, settings, WORLDGEN_FLAGS); }
@@ -82,7 +83,7 @@ public final class ContentImprint implements IContentShape {
         if (ShapeDef.QUARTER.equals(named)) { return Rotation.CLOCKWISE_90; }
         if (ShapeDef.HALF.equals(named)) { return Rotation.CLOCKWISE_180; }
         if (ShapeDef.THREEQUARTER.equals(named)) { return Rotation.COUNTERCLOCKWISE_90; }
-        return TURNS[random.nextInt(TURNS.length)];
+        return Turns.ALL[random.nextInt(Turns.ALL.length)];
     }
 
     private Mirror mirror(Random random) {

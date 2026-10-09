@@ -18,11 +18,11 @@ import java.util.Random;
 @Mixin(WorldGenDeadBush.class) public class MixinWorldGenDeadBush {
     @Unique private int rdpl$minPos;
 
-    @Inject(method = "generate", at = @At("HEAD")) private void onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
+    @Inject(method = "generate", at = @At("HEAD")) private void rdpl$onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
         this.rdpl$minPos = Coords.getMinCubePopulationPos(position.getY());
     }
 
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO, ordinal = 0)) private int getReplaceMaterial_HeightCheckHack(int orig, World worldIn, Random rand, BlockPos position) {
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_ZERO, ordinal = 0)) private int rdpl$getReplaceMaterial_HeightCheckHack(int orig, World worldIn, Random rand, BlockPos position) {
         if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return rdpl$minPos; }
         return orig;
     }

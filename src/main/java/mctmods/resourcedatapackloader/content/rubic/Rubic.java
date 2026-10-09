@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.client.RubicClientEvents;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.RegionCubeStorage;
@@ -22,14 +23,12 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.io.IOException;
 import java.nio.file.Path;
-import javax.annotation.Nonnull;
-
-@Mod.EventBusSubscriber(modid = Rubic.MODID) public class Rubic {
+@Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public class Rubic {
     public static final int MAX_RENDER_DISTANCE = 64;
     public static final int MIN_SUPPORTED_BLOCK_Y = Integer.MIN_VALUE + 4096;
     public static final int MAX_SUPPORTED_BLOCK_Y = Integer.MAX_VALUE - 4095;
-    public static final String MODID = "resourcedatapackloader";
-    @Nonnull public static final ContentLog LOGGER = ContentLog.LOGGER;
+    public static final String MODID = ResourceDataPackLoader.MOD_ID;
+    public static final String DATA_ID = "rdplRubicData";
 
     public static void preInit() {
         FMLCommonHandler.instance().registerCrashCallable(new ICrashCallable() {
@@ -58,9 +57,7 @@ import javax.annotation.Nonnull;
 
     @SubscribeEvent public static void registerVanillaCompatibilityGeneratorProvider(RegistryEvent.Register<VanillaCompatibilityGeneratorProviderBase> event) {
         event.getRegistry().register(new VanillaCompatibilityGeneratorProviderBase() {
-            @Override public VanillaCompatibilityGenerator provideGenerator(IChunkGenerator vanillaChunkGenerator, World world) {
-                return new VanillaCompatibilityGenerator(vanillaChunkGenerator, world);
-            }
+            @Override public VanillaCompatibilityGenerator provideGenerator(IChunkGenerator vanillaChunkGenerator, World world) { return new VanillaCompatibilityGenerator(vanillaChunkGenerator, world); }
         }.setRegistryName(VanillaCompatibilityGeneratorProviderBase.DEFAULT));
     }
 
@@ -70,22 +67,15 @@ import javax.annotation.Nonnull;
         }.setRegistryName(StorageFormatProviderBase.DEFAULT));
     }
 
-    public static void bigWarning(String format, Object... data)
-    {
+    public static void bigWarning(String format, Object... data) {
         StackTraceElement[] trace = Thread.currentThread().getStackTrace();
-        LOGGER.warn("****************************************");
-        LOGGER.warn("* {}", String.format(format, data));
-        for (int i = 2; i < 10 && i < trace.length; i++)
-        {
-            LOGGER.warn("*  at {}{}", trace[i].toString(), i == 9 ? "..." : "");
+        ContentLog.LOGGER.warn("****************************************");
+        ContentLog.LOGGER.warn("* {}", String.format(format, data));
+        for (int i = 2; i < 10 && i < trace.length; i++) {
+            ContentLog.LOGGER.warn("*  at {}{}", trace[i].toString(), i == 9 ? "..." : "");
         }
-        LOGGER.warn("****************************************");
+        ContentLog.LOGGER.warn("****************************************");
     }
 
-    public static boolean hasOptifine() {
-        return SideUtils.getForSide(
-                () -> () -> FMLClientHandler.instance().hasOptifine(),
-                () -> () -> false
-        );
-    }
+    public static boolean hasOptifine() { return SideUtils.getForSide(() -> () -> FMLClientHandler.instance().hasOptifine(), () -> () -> false); }
 }

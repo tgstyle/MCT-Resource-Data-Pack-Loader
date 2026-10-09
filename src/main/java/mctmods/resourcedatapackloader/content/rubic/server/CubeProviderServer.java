@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.AsyncBatchingCubeIO;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
@@ -25,7 +26,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
-import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.common.StartupQuery;
@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.annotation.Detainted;
@@ -67,8 +66,8 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             if (worldServer.provider.getSaveFolder() != null) { path = path.resolve(worldServer.provider.getSaveFolder()); }
             World overworld = Objects.requireNonNull(worldServer.getMinecraftServer(), "server").getEntityWorld();
             WorldSavedRubicData savedData = Objects.requireNonNull(
-                    (WorldSavedRubicData) overworld.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData"),
-                    "rdplRubicData missing for rubic world");
+                    (WorldSavedRubicData) overworld.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID),
+                    Rubic.DATA_ID + " missing for rubic world");
             StorageFormatProviderBase format = StorageFormatProviderBase.REGISTRY.getValue(savedData.storageFormat);
             if (format == null) {
                 StartupQuery.notify("unsupported storage format \"" + savedData.storageFormat + '"');
@@ -83,11 +82,9 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         this.emptyCube = new BlankCube(emptyColumn);
     }
 
-    @Override @Detainted public void queueUnload(@Nonnull Chunk chunk) {
-    }
+    @Override @Detainted public void queueUnload(@Nonnull Chunk chunk) {}
 
-    @Override @Detainted public void queueUnloadAll() {
-    }
+    @Override @Detainted public void queueUnloadAll() {}
 
     @Nullable public Chunk getLoadedColumn(int columnX, int columnZ) {
         Chunk chunk = this.loadedChunks.get(ChunkPos.asLong(columnX, columnZ));
@@ -139,9 +136,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
 
     @Override @Nonnull public List<Biome.SpawnListEntry> getPossibleCreatures(@Nonnull final EnumCreatureType type, @Nonnull final BlockPos pos) { return cubeGen.getPossibleCreatures(type, pos); }
 
-    @Nullable @Override public BlockPos getNearestStructurePos(@Nonnull World worldIn, @Nonnull String name, @Nonnull BlockPos pos, boolean findUnexplored) {
-        return cubeGen.getClosestStructure(name, pos, findUnexplored);
-    }
+    @Nullable @Override public BlockPos getNearestStructurePos(@Nonnull World worldIn, @Nonnull String name, @Nonnull BlockPos pos, boolean findUnexplored) { return cubeGen.getClosestStructure(name, pos, findUnexplored); }
 
     @Override public boolean chunkExists(int cubeX, int cubeZ) { return this.loadedChunks.get(ChunkPos.asLong(cubeX, cubeZ)) != null; }
 
@@ -164,29 +159,25 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             CubeIoQueue.queueCubeLoad(worldServer, cubeIO, this, cubeX, cubeY, cubeZ, loaded -> {
                 Cube resident = getLoadedCube(cubeX, cubeY, cubeZ);
                 if (resident != null) {
-                    callback.accept(postCubeLoadAttempt(cubeX, cubeY, cubeZ, resident, resident.getColumn(), req, false));
+                    callback.accept(postCubeLoadAttempt(cubeX, cubeY, cubeZ, resident, resident.getColumn(), req));
                     return;
                 }
                 Chunk col = getLoadedColumn(cubeX, cubeZ);
                 if (col != null) {
                     assert !col.isEmpty();
                     onCubeLoaded(loaded, col);
-                    loaded = postCubeLoadAttempt(cubeX, cubeY, cubeZ, loaded, col, req, false);
+                    loaded = postCubeLoadAttempt(cubeX, cubeY, cubeZ, loaded, col, req);
                 }
                 callback.accept(loaded);
             });
         }
     }
 
-    @Nullable @Override public Cube getCube(int cubeX, int cubeY, int cubeZ, Requirement req) { return getCube(cubeX, cubeY, cubeZ, req, false); }
-
-    @Nullable @Override public Cube getCubeNow(int cubeX, int cubeY, int cubeZ, Requirement req) { return getCube(cubeX, cubeY, cubeZ, req, true); }
-
-    @Nullable private Cube getCube(int cubeX, int cubeY, int cubeZ, Requirement req, boolean forceNow) {
+    @Nullable @Override public Cube getCube(int cubeX, int cubeY, int cubeZ, Requirement req) {
         Cube cube = getLoadedCube(cubeX, cubeY, cubeZ);
         if (req == Requirement.GET_CACHED ||
                 (cube != null && req.compareTo(Requirement.GENERATE) <= 0)) { return cube; }
-        Chunk column = getColumn(cubeX, cubeZ, req, forceNow);
+        Chunk column = getColumn(cubeX, cubeZ, req);
         if (column == null) { return cube; }
         if (column.isEmpty()) { return emptyCube; }
         if (cube == null) { cube = getLoadedCube(cubeX, cubeY, cubeZ); }
@@ -194,7 +185,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             cube = CubeIoQueue.syncCubeLoad(worldServer, cubeIO, this, cubeX, cubeY, cubeZ);
             onCubeLoaded(cube, column);
         }
-        return postCubeLoadAttempt(cubeX, cubeY, cubeZ, cube, column, req, forceNow);
+        return postCubeLoadAttempt(cubeX, cubeY, cubeZ, cube, column, req);
     }
 
     private void onCubeLoaded(@Nullable Cube cube, Chunk column) {
@@ -207,17 +198,16 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         }
     }
 
-    @Nullable private Cube postCubeLoadAttempt(int cubeX, int cubeY, int cubeZ, @Nullable Cube cube, Chunk column, Requirement req, boolean forceNow) {
+    @Nullable private Cube postCubeLoadAttempt(int cubeX, int cubeY, int cubeZ, @Nullable Cube cube, Chunk column, Requirement req) {
         if (cube == null) { cube = getLoadedCube(cubeX, cubeY, cubeZ); }
         if (req == Requirement.LOAD) { return cube; }
         if (req == Requirement.GENERATE && cube != null) { return cube; }
         if (cube == null) {
-            cube = generateCube(cubeX, cubeY, cubeZ, column, forceNow).orElse(null);
-            if (cube == null) { return emptyCube; }
+            cube = generateCube(cubeX, cubeY, cubeZ, column);
             if (req == Requirement.GENERATE) { return cube; }
         }
         if (!cube.isFullyPopulated()) {
-            if (!populateCube(cube, forceNow)) { return cube; }
+            if (!populateCube(cube)) { return cube; }
             if (req == Requirement.POPULATE) { return cube; }
         }
         if (!cube.isInitialLightingDone() || !cube.isSurfaceTracked()) { calculateDiffuseSkylight(cube); }
@@ -229,26 +219,24 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         int highest = (((IMinMaxHeight) worldServer).rdpl$getMaxHeight() >> 4) - 1;
         for (int above = highest; above > cubeY; above--) {
             if (getLoadedCube(cubeX, above, cubeZ) != null) { continue; }
-            generateCube(cubeX, above, cubeZ, column, true);
+            generateCube(cubeX, above, cubeZ, column);
         }
     }
 
-    private Optional<Cube> generateCube(int cubeX, int cubeY, int cubeZ, Chunk column, boolean forceGenerate) {
-        return cubeGen.tryGenerateCube(cubeX, cubeY, cubeZ, this.cubePrimer, forceGenerate)
-                .map(primer -> {
-                    Cube already = getLoadedCube(cubeX, cubeY, cubeZ);
-                    if (already != null) {
-                        if (primer == this.cubePrimer) { primer.reset(); }
-                        return already;
-                    }
-                    Cube cube = new Cube(column, cubeY, primer);
-                    onCubeLoaded(cube, column);
-                    if (primer == this.cubePrimer) { primer.reset(); }
-                    return cube;
-                });
+    private Cube generateCube(int cubeX, int cubeY, int cubeZ, Chunk column) {
+        CubePrimer primer = cubeGen.generateCube(cubeX, cubeY, cubeZ, this.cubePrimer);
+        Cube already = getLoadedCube(cubeX, cubeY, cubeZ);
+        if (already != null) {
+            if (primer == this.cubePrimer) { primer.reset(); }
+            return already;
+        }
+        Cube cube = new Cube(column, cubeY, primer);
+        onCubeLoaded(cube, column);
+        if (primer == this.cubePrimer) { primer.reset(); }
+        return cube;
     }
 
-    private boolean populateCube(Cube cube, boolean forceNow) {
+    private boolean populateCube(Cube cube) {
         int cubeX = cube.getX();
         int cubeY = cube.getY();
         int cubeZ = cube.getZ();
@@ -261,7 +249,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
                 int genX = cubeX + x + nx;
                 int genY = cubeY + y + ny;
                 int genZ = cubeZ + z + nz;
-                return !(getCube(genX, genY, genZ, Requirement.GENERATE, forceNow) instanceof BlankCube);
+                return !(getCube(genX, genY, genZ, Requirement.GENERATE) instanceof BlankCube);
             });
             if (!generated) { return false; }
             if (!fullPopulationCube.isPopulated()) {
@@ -300,22 +288,20 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             return;
         }
         CubeIoQueue.queueColumnLoad(worldServer, cubeIO, columnX, columnZ, col -> {
-            col = postProcessColumn(columnX, columnZ, col, req, false);
+            col = postProcessColumn(columnX, columnZ, col, req);
             callback.accept(col);
         }, col -> currentlyLoadingColumn = col);
     }
 
-    @Nullable public Chunk getColumn(int columnX, int columnZ, Requirement req) { return getColumn(columnX, columnZ, req, false); }
-
-    @Nullable private Chunk getColumn(int columnX, int columnZ, Requirement req, boolean forceNow) {
+    @Nullable public Chunk getColumn(int columnX, int columnZ, Requirement req) {
         Chunk column = getLoadedColumn(columnX, columnZ);
         if (column != null || req == Requirement.GET_CACHED) { return column; }
         column = CubeIoQueue.syncColumnLoad(worldServer, cubeIO, columnX, columnZ, col -> currentlyLoadingColumn = col);
-        column = postProcessColumn(columnX, columnZ, column, req, forceNow);
+        column = postProcessColumn(columnX, columnZ, column, req);
         return column;
     }
 
-    @Nullable private Chunk postProcessColumn(int columnX, int columnZ, @Nullable Chunk column, Requirement req, boolean force) {
+    @Nullable private Chunk postProcessColumn(int columnX, int columnZ, @Nullable Chunk column, Requirement req) {
         Chunk loaded = getLoadedColumn(columnX, columnZ);
         if (loaded != null) {
             if (column != null && loaded != column) { throw new IllegalStateException("Duplicate column at " + columnX + ", " + columnZ + "!"); }
@@ -328,8 +314,8 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
             return column;
         }
         else if (req == Requirement.LOAD) { return null; }
-        column = cubeGen.tryGenerateColumn(world, columnX, columnZ, new ChunkPrimer(), force).orElse(null);
-        if (column == null) { return emptyColumn; }
+        column = new Chunk(world, columnX, columnZ);
+        cubeGen.generateColumn(column);
         loadedChunks.put(ChunkPos.asLong(columnX, columnZ), column);
         column.setLastSaveTime(this.worldServer.getTotalWorldTime());
         column.onLoad();
@@ -362,7 +348,7 @@ public class CubeProviderServer extends ChunkProviderServer implements ICubeProv
         if (ForgeChunkManager.getPersistentChunksFor(world).containsKey(column.getPos())) { return false; }
         if (((IColumn) column).hasLoadedCubes()) { return false; }
         if (world.getPlayerChunkMap().contains(column.x, column.z)) { return false; }
-        if (!CubeIoQueue.canDropColumn(worldServer, column.x, column.z)) { return false; }
+        if (CubeIoQueue.holdsReads(worldServer, column.x, column.z)) { return false; }
         column.unloadQueued = true;
         column.onUnload();
         if (column.needsSaving(true)) { this.cubeIO.saveColumn(column); }

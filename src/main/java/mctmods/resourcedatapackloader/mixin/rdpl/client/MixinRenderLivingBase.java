@@ -16,17 +16,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(RenderLivingBase.class) public abstract class MixinRenderLivingBase {
     @Unique private int rdpl$tint;
 
-    @Inject(method = "prepareScale", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/RenderLivingBase;preRenderCallback(Lnet/minecraft/entity/EntityLivingBase;F)V", shift = At.Shift.AFTER))
-    private void rdpl$scale(EntityLivingBase entitylivingbaseIn, float partialTicks, CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "prepareScale", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/RenderLivingBase;preRenderCallback(Lnet/minecraft/entity/EntityLivingBase;F)V", shift = At.Shift.AFTER)) private void rdpl$scale(EntityLivingBase entitylivingbaseIn, float partialTicks, CallbackInfoReturnable<Float> cir) {
         float scale = ContentEntities.scale(entitylivingbaseIn);
         if (scale == 1.0F) { return; }
         GlStateManager.scale(scale, scale, scale);
     }
 
     @Inject(method = "applyRotations", at = @At("TAIL")) private void rdpl$lying(EntityLivingBase entityLiving, float ageInTicks, float rotationYaw, float partialTicks, CallbackInfo ci) {
-        if (entityLiving.deathTime > 0 || !ContentEntities.lyingAsleep(entityLiving)) { return; }
-        GlStateManager.translate(0.0F, entityLiving.width / 2.0F, 0.0F);
-        GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
+        if (entityLiving.deathTime == 0 && ContentEntities.lyingAsleep(entityLiving)) {
+            GlStateManager.translate(0.0F, entityLiving.width / 2.0F, 0.0F);
+            GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
+        }
     }
 
     @Inject(method = "renderModel", at = @At("HEAD")) private void rdpl$tintBody(EntityLivingBase entitylivingbaseIn, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scaleFactor, CallbackInfo ci) {

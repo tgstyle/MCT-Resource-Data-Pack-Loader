@@ -26,8 +26,9 @@ public final class ContentInherits {
             try {
                 JsonObject held = new JsonParser().parse(entry.getValue()).getAsJsonObject();
                 parsed.put(entry.getKey(), held);
-                if (held.has("variants") && held.get("variants").isJsonObject()) {
-                    for (Map.Entry<String, JsonElement> variant : held.getAsJsonObject("variants").entrySet()) {
+                JsonObject heldVariants = variantsOf(held);
+                if (heldVariants != null) {
+                    for (Map.Entry<String, JsonElement> variant : heldVariants.entrySet()) {
                         owners.put(new ResourceLocation(entry.getKey().getNamespace(), variant.getKey()), entry.getKey());
                     }
                 }
@@ -58,7 +59,13 @@ public final class ContentInherits {
             resolved.put(key, held);
             return held;
         }
-        String asked = held.get("inherits").getAsString();
+        JsonElement named = held.get("inherits");
+        if (!named.isJsonPrimitive()) {
+            ContentLog.LOGGER.error("Definition {} has an inherits that is not a name, ignoring its inherits", key);
+            resolved.put(key, held);
+            return held;
+        }
+        String asked = named.getAsString();
         ResourceLocation parentName = asked.contains(":") ? new ResourceLocation(asked) : new ResourceLocation(key.getNamespace(), asked);
         ResourceLocation parentFile = owners.get(parentName);
         String parentVariantName = parentName.getPath();
@@ -68,6 +75,8 @@ public final class ContentInherits {
             if (parentVariantName == null) { ContentLog.LOGGER.warn("Definition {} inherits file '{}', which holds several variants and none named '{}', so only its shared stats are inherited. Name a variant instead", key, asked, tail(parentName)); }
         }
         JsonObject parent = parentFile == null ? null : resolve(parentFile, parsed, owners, resolved, walking);
+        JsonObject settled = resolved.get(key);
+        if (settled != null) { return settled; }
         if (parent == null) {
             ContentLog.LOGGER.error("Definition {} inherits '{}', which is not a definition of the same kind, ignoring its inherits", key, asked);
             resolved.put(key, held);
@@ -79,11 +88,12 @@ public final class ContentInherits {
         for (Map.Entry<String, JsonElement> entry : held.entrySet()) {
             if (!"variants".equals(entry.getKey()) && !"inherits".equals(entry.getKey())) { made.add(entry.getKey(), entry.getValue()); }
         }
-        JsonObject parentVariant = parentVariantName != null && parent.has("variants") && parent.get("variants").isJsonObject() && parent.getAsJsonObject("variants").has(parentVariantName)
-                ? parent.getAsJsonObject("variants").getAsJsonObject(parentVariantName) : new JsonObject();
+        JsonObject parentVariants = variantsOf(parent);
+        JsonObject parentVariant = parentVariantName != null && parentVariants != null && parentVariants.has(parentVariantName) ? parentVariants.getAsJsonObject(parentVariantName) : new JsonObject();
         JsonObject variants = new JsonObject();
-        if (held.has("variants") && held.get("variants").isJsonObject()) {
-            for (Map.Entry<String, JsonElement> entry : held.getAsJsonObject("variants").entrySet()) {
+        JsonObject ownVariants = variantsOf(held);
+        if (ownVariants != null) {
+            for (Map.Entry<String, JsonElement> entry : ownVariants.entrySet()) {
                 JsonObject base = copy(parentVariant);
                 if (entry.getValue().isJsonObject()) {
                     for (Map.Entry<String, JsonElement> field : entry.getValue().getAsJsonObject().entrySet()) { base.add(field.getKey(), field.getValue()); }
@@ -96,9 +106,11 @@ public final class ContentInherits {
         return made;
     }
 
+    @Nullable private static JsonObject variantsOf(JsonObject file) { return file.has("variants") && file.get("variants").isJsonObject() ? file.getAsJsonObject("variants") : null; }
+
     @Nullable private static String baseVariant(JsonObject file, ResourceLocation name) {
-        if (!file.has("variants") || !file.get("variants").isJsonObject()) { return null; }
-        JsonObject variants = file.getAsJsonObject("variants");
+        JsonObject variants = variantsOf(file);
+        if (variants == null) { return null; }
         String tail = tail(name);
         if (variants.has(tail)) { return tail; }
         if (variants.entrySet().size() == 1) { return variants.entrySet().iterator().next().getKey(); }

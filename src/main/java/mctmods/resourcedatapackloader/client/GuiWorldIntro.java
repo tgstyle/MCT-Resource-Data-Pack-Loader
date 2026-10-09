@@ -44,7 +44,7 @@ import javax.annotation.Nullable;
     private boolean landBeingMade;
     private int page;
     private boolean sounding;
-    private MarkPage layout = new MarkPage("", new ArrayList<>(), TEXT_WIDTH);
+    private MarkPage layout = new MarkPage(new ArrayList<>(), TEXT_WIDTH);
     private float scale = 1.0F;
     private float totalScrollLength;
     private float ticks;
@@ -105,7 +105,7 @@ import javax.annotation.Nullable;
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         Crisp.raise();
         drawPageBackground(partialTicks);
-        int footer = (int) Math.round(BUTTONS * Crisp.factor());
+        int footer = (int) Math.round(BUTTONS * Crisp.gui());
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(0, footer, mc.displayWidth, Math.max(0, mc.displayHeight - footer));
         layout.draw(width, height, offset(partialTicks), scale, pages.get(page).still());
@@ -214,7 +214,7 @@ import javax.annotation.Nullable;
     }
 
     private void wrap(int widest) {
-        layout = new MarkPage("", written, widest);
+        layout = new MarkPage(written, widest);
         totalScrollLength = layout.height() * scale;
     }
 }

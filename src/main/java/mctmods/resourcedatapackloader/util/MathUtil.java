@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.util;
 
-
 public class MathUtil {
+    public static final long GOLDEN_GAMMA = 0x9E3779B97F4A7C15L;
+    public static final float DEG_TO_RAD = 0.017453292F;
+
     public static float unlerp(final long v, final long min, final long max) { return (v - min) / (float) (max - min); }
 
     public static float lerp(final float a, final float min, final float max) { return min + a * (max - min); }
@@ -19,5 +21,4 @@ public class MathUtil {
     }
 
     public static int max(int a, int b, int c, int d) { return Math.max(Math.max(a, b), Math.max(c, d)); }
-
 }

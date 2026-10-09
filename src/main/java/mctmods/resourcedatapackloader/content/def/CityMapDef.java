@@ -72,11 +72,12 @@ public final class CityMapDef {
     }
 
     public Kind[][] turned(Rotation turn) {
-        Kind[][] grid = new Kind[cellsDeep][cellsWide];
-        for (int z = 0; z < cellsDeep; z++) {
-            for (int x = 0; x < cellsWide; x++) { grid[z][x] = x < rows[z].length() ? kindOf(rows[z].charAt(x)) : Kind.OPEN; }
+        char[][] marks = turnedMarks(turn);
+        Kind[][] grid = new Kind[marks.length][];
+        for (int z = 0; z < marks.length; z++) {
+            grid[z] = new Kind[marks[z].length];
+            for (int x = 0; x < marks[z].length; x++) { grid[z][x] = kindOf(marks[z][x]); }
         }
-        for (int i = quarters(turn); i > 0; i--) { grid = clockwise(grid); }
         return grid;
     }
 
@@ -90,16 +91,6 @@ public final class CityMapDef {
     }
 
     private static int quarters(Rotation turn) { return turn == Rotation.CLOCKWISE_90 ? 1 : turn == Rotation.CLOCKWISE_180 ? 2 : turn == Rotation.COUNTERCLOCKWISE_90 ? 3 : 0; }
-
-    private static Kind[][] clockwise(Kind[][] grid) {
-        int deep = grid.length;
-        int wide = grid[0].length;
-        Kind[][] turned = new Kind[wide][deep];
-        for (int z = 0; z < wide; z++) {
-            for (int x = 0; x < deep; x++) { turned[z][x] = grid[deep - 1 - x][z]; }
-        }
-        return turned;
-    }
 
     private static char[][] clockwise(char[][] grid) {
         int deep = grid.length;

@@ -3,9 +3,9 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
-import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
@@ -47,7 +47,7 @@ public final class BeardPlaza {
                     IBlockState laidAs = ground;
                     if (y == rim && ground.getBlock() == Blocks.DIRT) { laidAs = Blocks.GRASS.getDefaultState(); }
                     else if (y != rim && ground.getBlock() == Blocks.GRASS) { laidAs = Blocks.DIRT.getDefaultState(); }
-                    world.setBlockState(at, laidAs, 2);
+                    world.setBlockState(at, laidAs, BlockFlags.UPDATE_CLIENTS);
                     banked++;
                 }
                 opened += sweep(start, piece, world, clip, at, x, z, rim + 1, rim + 4);
@@ -72,7 +72,7 @@ public final class BeardPlaza {
                     at.setPos(x, y, z);
                     if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { continue; }
                     if (world.getBlockState(at).getMaterial().isSolid() || BeardRails.insideBore(world, bores, x, y, z)) { break; }
-                    world.setBlockState(at, ground.getBlock() == Blocks.GRASS ? Blocks.DIRT.getDefaultState() : ground, 2);
+                    world.setBlockState(at, ground.getBlock() == Blocks.GRASS ? Blocks.DIRT.getDefaultState() : ground, BlockFlags.UPDATE_CLIENTS);
                     shored++;
                 }
             }
@@ -94,9 +94,7 @@ public final class BeardPlaza {
     }
 
     public static void wellPlaza(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
-        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
-        try { plazaLaid(start, piece, world, clip); }
-        finally { BeardBiome.leave(); }
+        BeardBiome.within(world, clip, () -> plazaLaid(start, piece, world, clip));
     }
 
     private static void plazaLaid(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
@@ -108,9 +106,9 @@ public final class BeardPlaza {
         int walk = BeardRoads.pathSidewalkWidth();
         int lines = BeardRoads.pathLineColumns();
         boolean chosen = BeardRoads.pathChosen();
-        IBlockState surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
-        IBlockState line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
-        IBlockState sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
+        IBlockState surface = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+        IBlockState line = BeardRoads.lineBlock(surface);
+        IBlockState sidewalk = BeardRoads.sidewalkBlock(surface);
         int paved = 0;
         int offClip = 0;
         int builtOn = 0;
@@ -120,9 +118,9 @@ public final class BeardPlaza {
         for (int x = box.minX - reach; x <= box.maxX + reach; x++) {
             for (int z = box.minZ - reach; z <= box.maxZ + reach; z++) {
                 if (BeardBiome.moved(world, x, z)) {
-                    surface = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
-                    line = BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, surface);
-                    sidewalk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, surface);
+                    surface = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+                    line = BeardRoads.lineBlock(surface);
+                    sidewalk = BeardRoads.sidewalkBlock(surface);
                 }
                 int band = MathUtil.max(box.minX - x, x - box.maxX, box.minZ - z, z - box.maxZ);
                 if (band < 1) { continue; }
@@ -142,7 +140,7 @@ public final class BeardPlaza {
                 if (held != natural && BeardPlots.roadCore(start, piece, x, z)) { held = natural; }
                 else if (held != natural && lines > 0 && BeardPlots.roadLine(start, piece, x, z)) { held = line; }
                 if (!chosen) { held = natural; }
-                world.setBlockState(at, held, 2);
+                world.setBlockState(at, held, BlockFlags.UPDATE_CLIENTS);
                 paved++;
             }
         }
@@ -185,7 +183,7 @@ public final class BeardPlaza {
             Material material = world.getBlockState(at).getMaterial();
             if (BeardBlocks.loose(material)) {
                 BeardBlocks.note(world, at, "The plaza");
-                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                 cleared++;
             }
         }

@@ -33,8 +33,6 @@ final class BeardStationShaft {
     private static final int APPROACH_FILL = 8;
     private static final int CLIMB_LEAST = 3;
     private static final int PASSAGE_MOST = 32;
-    private static final int BOX_X = 0;
-    private static final int BOX_Z = 0;
     private static final int DOOR = 7;
     private static final int HEAD_CLEARANCE = 8;
 
@@ -67,13 +65,13 @@ final class BeardStationShaft {
         for (int along = 0; along <= BeardStations.RUN; along++) {
             boolean deck = deckAt(street, row + along);
             for (int lane = 0; lane < BeardStations.WIDE; lane++) {
-                int x = stepX(alongX, row, along, near, lane);
-                int z = stepZ(alongX, row, along, near, lane);
+                int x = stepX(alongX, row + along, near + lane);
+                int z = stepZ(alongX, row + along, near + lane);
                 if (clip.isVecInside(at.setPos(x, surface + 1, z))) { freed += BeardBlocks.cutBank(world, at, x, z, surface + 1, surface + LANDING_HEADROOM); }
             }
             for (int across = edge; way > 0 ? across < wall : across > wall; across += way) {
-                int x = alongX ? row + along : across;
-                int z = alongX ? across : row + along;
+                int x = stepX(alongX, row + along, across);
+                int z = stepZ(alongX, row + along, across);
                 if (!clip.isVecInside(at.setPos(x, surface, z))) { continue; }
                 graded += BeardBlocks.cutBank(world, at, x, z, surface + 1, surface + LANDING_HEADROOM);
                 if (world.getBlockState(at.setPos(x, surface, z)).getMaterial().isSolid()) { continue; }
@@ -147,7 +145,7 @@ final class BeardStationShaft {
         return false;
     }
 
-    static int stamp(World world, StructureBoundingBox clip, Template held, boolean alongX, int way, int center, int bedHalf, int boxLeastX, int boxLeastZ, int level, int surface, BeardRoads.Palette linings, BlockPos.MutableBlockPos at) {
+    static void stamp(World world, StructureBoundingBox clip, Template held, boolean alongX, int way, int center, int bedHalf, int boxLeastX, int boxLeastZ, int level, int surface, BeardRoads.Palette linings, BlockPos.MutableBlockPos at) {
         IBlockState lining = linings.first();
         String named = BeardStations.stationNamed();
         BlockPos size = held.getSize();
@@ -203,7 +201,6 @@ final class BeardStationShaft {
         if ((railed + seated) > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The station head is railed with {} block(s) and {} bench block(s) stand beside it", railed, seated); }
         if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("A subway station is laid from the build '{}' at {}, {}, {} turn, floor y {} to street y {}, {} block(s) of packing under it, {} of corridor to the platform and {} lamp(s) up the shaft", named, origin.getX(), origin.getZ(), how.getRotation(), base, surface, Math.max(0, base - level), bored, lit); }
         if (copies > 1 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The build '{}' is {} tall and the climb is {}, so its {} block band is laid {} times: the shaft stands {} block(s) tall", named, tall, surface - level, repeat, copies, grown); }
-        return 1;
     }
 
     private static final class Shaft {
@@ -244,7 +241,7 @@ final class BeardStationShaft {
     }
 
     private static BlockPos origin(BlockPos size, PlacementSettings how, int boxLeastX, int boxLeastZ, int base) {
-        BlockPos near = Template.transformedBlockPos(how, new BlockPos(BOX_X, 0, BOX_Z));
+        BlockPos near = Template.transformedBlockPos(how, BlockPos.ORIGIN);
         BlockPos far = Template.transformedBlockPos(how, new BlockPos(size.getX() - 1, 0, size.getZ() - 1));
         return new BlockPos(boxLeastX - Math.min(near.getX(), far.getX()), base, boxLeastZ - Math.min(near.getZ(), far.getZ()));
     }
@@ -398,7 +395,7 @@ final class BeardStationShaft {
 
     private static long packed(int row, int across) { return ((long) row << 32) ^ (across & 0xFFFFFFFFL); }
 
-    private static int stepX(boolean alongX, int row, int along, int near, int lane) { return alongX ? row + along : near + lane; }
+    private static int stepX(boolean alongX, int run, int across) { return alongX ? run : across; }
 
-    private static int stepZ(boolean alongX, int row, int along, int near, int lane) { return alongX ? near + lane : row + along; }
+    private static int stepZ(boolean alongX, int run, int across) { return alongX ? across : run; }
 }

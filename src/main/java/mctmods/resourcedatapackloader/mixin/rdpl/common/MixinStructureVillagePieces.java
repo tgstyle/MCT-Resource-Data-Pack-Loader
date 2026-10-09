@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -29,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         if (list == null || !ContentVillages.filtering()) { return; }
 
         list.removeIf(weight -> {
-            if (!ContentVillages.blocked(weight.villagePieceClass)) { return false; }
+            if (ContentVillages.allowed(weight.villagePieceClass)) { return false; }
             ContentLog.LOGGER.debug("Village piece {} is left out of the layout by the pack's piece list", weight.villagePieceClass.getSimpleName());
             return true;
         });
@@ -70,7 +71,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
             if (!BeardPlots.nearWell(box, well, reach)) { continue; }
             ContentLog.LOGGER.debug("{} at {}, {} stands within {} of the well at {}, {}, closer than the plaza paving plus its verge, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ, reach, well.minX, well.minZ);
             structureComponents.remove(placed);
-            cir.setReturnValue(null);
+            rdpl$refuse(cir);
             return;
         }
     }
@@ -82,19 +83,19 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         if (!BeardRoadsTunnels.crossesHill(structureComponents, box)) { return; }
         ContentLog.LOGGER.debug("{} at {}, {} would front a tunnel through a hill, so it is not built", placed.getClass().getSimpleName(), box.minX, box.minZ);
         structureComponents.remove(placed);
-        cir.setReturnValue(null);
+        rdpl$refuse(cir);
     }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$flatterFooting(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
         if (placed == null || placed instanceof StructureVillagePieces.Path) { return; }
         if (!ContentBeard.wanted() || start == null || facing == null) { return; }
-        if (!BeardLayout.flatterFooting(placed, start, structureComponents, facing)) { cir.setReturnValue(null); }
+        if (!BeardLayout.flatterFooting(placed, start, structureComponents, facing)) { rdpl$refuse(cir); }
     }
 
     @Inject(method = "generateAndAddComponent", at = @At("RETURN"), cancellable = true) private static void rdpl$plotInDistrict(StructureVillagePieces.Start start, List<StructureComponent> structureComponents, Random rand, int structureMinX, int structureMinY, int structureMinZ, EnumFacing facing, int componentType, CallbackInfoReturnable<StructureComponent> cir) {
         StructureComponent placed = cir.getReturnValue();
-        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, structureComponents, placed)) { cir.setReturnValue(null); }
+        if (placed != null && start != null && CityGrid.alone() && CityGrid.clipped(start, structureComponents, placed)) { rdpl$refuse(cir); }
     }
 
     @Inject(method = "generateAndAddRoadPiece", at = @At("RETURN"), cancellable = true) private static void rdpl$roadInDistrict(StructureVillagePieces.Start start, List<StructureComponent> p_176069_1_, Random rand, int p_176069_3_, int p_176069_4_, int p_176069_5_, EnumFacing facing, int p_176069_7_, CallbackInfoReturnable<StructureComponent> cir) {
@@ -107,5 +108,11 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
         ContentBeard.laying(null);
         StructureComponent placed = cir.getReturnValue();
         if (placed instanceof IVillageBlock && start instanceof IVillageBlock) { ((IVillageBlock) placed).rdpl$block(((IVillageBlock) start).rdpl$block()); }
+    }
+
+    @Unique private static void rdpl$refuse(CallbackInfoReturnable<StructureComponent> cir) {
+        ContentBeard.layingBuilding(false);
+        ContentBeard.laying(null);
+        cir.setReturnValue(null);
     }
 }

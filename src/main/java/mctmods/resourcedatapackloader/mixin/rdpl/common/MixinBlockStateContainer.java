@@ -14,8 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(BlockStateContainer.class) public abstract class MixinBlockStateContainer {
     @Unique private final StateIdCache rdpl$ids = new StateIdCache();
 
-    @Redirect(method = "getDataForNBT", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ObjectIntIdentityMap;get(Ljava/lang/Object;)I"))
-    private int rdpl$idOfRun(ObjectIntIdentityMap<IBlockState> ids, Object key) {
+    @Redirect(method = "getDataForNBT", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/ObjectIntIdentityMap;get(Ljava/lang/Object;)I")) private int rdpl$idOfRun(ObjectIntIdentityMap<IBlockState> ids, Object key) {
         IBlockState state = (IBlockState) key;
         int id = rdpl$ids.held(state);
         if (id != StateIdCache.MISS) { return id; }

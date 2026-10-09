@@ -95,7 +95,7 @@ public final class RecurrentPlots {
         if (held == null) { return SKIPPED; }
         IBlockState state = held.getBlockState(new BlockPos(x, y, z));
         if (state.getBlock() == RCBlocks.genericSolid) { return GROUND; }
-        if (state.getBlock().getRegistryName() != null && "reccomplex".equals(state.getBlock().getRegistryName().getNamespace())) { return SKIPPED; }
+        if (marker(state)) { return SKIPPED; }
         if (state.getMaterial() == Material.AIR) { return OPEN; }
         return BUILT;
     }
@@ -144,6 +144,8 @@ public final class RecurrentPlots {
         return seated;
     }
 
+    private static boolean marker(IBlockState state) { return state.getBlock().getRegistryName() != null && "reccomplex".equals(state.getBlock().getRegistryName().getNamespace()); }
+
     private static int standLayer(String structureId) {
         int courses = courseFor(structureId);
         if (courses <= 0) { return 1; }
@@ -155,7 +157,7 @@ public final class RecurrentPlots {
             for (int z = 0; z < held.length; z++) {
                 IBlockState state = held.getBlockState(new BlockPos(x, courses, z));
                 if (state.getBlock() == RCBlocks.genericSolid) { built++; }
-                else if (state.getBlock().getRegistryName() != null && "reccomplex".equals(state.getBlock().getRegistryName().getNamespace())) { space++; }
+                else if (marker(state)) { space++; }
                 else if (state.getMaterial().isSolid()) { built++; }
                 else { space++; }
             }

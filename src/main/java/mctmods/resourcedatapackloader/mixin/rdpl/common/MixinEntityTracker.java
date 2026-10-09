@@ -29,13 +29,11 @@ import java.util.Set;
     @Shadow @Final private Set<EntityTrackerEntry> entries;
     @Unique private int rdpl$maxVertTrackingDistanceThreshold;
 
-    @Inject(method = "<init>", at = @At("RETURN")) private void onConstruct(WorldServer theWorldIn, CallbackInfo ci) {
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$onConstruct(WorldServer theWorldIn, CallbackInfo ci) {
         tracker$setVertViewDistance(((IRubicPlayerList) Objects.requireNonNull(theWorldIn.getMinecraftServer()).getPlayerList()).getVerticalViewDistance());
     }
 
-    @Redirect(method = "track(Lnet/minecraft/entity/Entity;IIZ)V", at = @At(value = "NEW",
-            target = "net/minecraft/entity/EntityTrackerEntry"))
-    @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private EntityTrackerEntry onCreateEntry(Entity entityIn, int rangeIn, int maxRangeIn, int updateFrequencyIn, boolean sendVelocityUpdatesIn) {
+    @Redirect(method = "track(Lnet/minecraft/entity/Entity;IIZ)V", at = @At(value = "NEW", target = "net/minecraft/entity/EntityTrackerEntry")) @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private EntityTrackerEntry rdpl$onCreateEntry(Entity entityIn, int rangeIn, int maxRangeIn, int updateFrequencyIn, boolean sendVelocityUpdatesIn) {
         EntityTrackerEntry e = new EntityTrackerEntry(entityIn, rangeIn, maxRangeIn, updateFrequencyIn, sendVelocityUpdatesIn);
         ((IRubicEntityTracker.IEntry) e).setMaxVertRange(rdpl$maxVertTrackingDistanceThreshold);
         return e;

@@ -13,7 +13,6 @@ import net.minecraft.item.ItemTool;
 import java.util.Collections;
 import java.util.Set;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentItemTool extends ItemTool implements IContentItem {
     private final ItemDef def;
@@ -26,15 +25,10 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Nullable private ItemVariant single() { return def.visible.isEmpty() ? null : def.visible.get(0); }
-
-    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {
-        ItemVariant value = single();
-        return value == null ? super.getTranslationKey() : super.getTranslationKey() + "." + value.name;
-    }
+    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.singleKey(this, def); }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
-        ItemVariant value = single();
+        ItemVariant value = ItemVariants.single(def);
         return value == null ? EnumRarity.COMMON : value.rarity;
     }
 }

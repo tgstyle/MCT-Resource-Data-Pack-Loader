@@ -21,8 +21,8 @@ public class CubeGC {
         if (tick > ContentControl.number(ContentControl.CHUNKS, "cubeGCInterval", 200)) {
             tick = 0;
             chunkGc();
+            if (ContentLog.LOGGER.debugEnabled()) { verifyColumnConsistency(); }
         }
-        if (ContentLog.LOGGER.debugEnabled()) { verifyColumnConsistency(); }
         cubeCache.world.profiler.endSection();
     }
 
@@ -32,8 +32,8 @@ public class CubeGC {
             Cube cube = cubeIt.next();
             IColumn cubeCol = cube.getColumn();
             Chunk storedCol = cubeCache.getLoadedColumn(cube.getX(), cube.getZ());
-            if (storedCol == null) { throw new RuntimeException("Cube with no stored column!"); }
-            if (storedCol != cubeCol) { throw new RuntimeException("CubeColumn and StoredColumn are different!"); }
+            if (storedCol == null) { ContentLog.LOGGER.error("Cube {} has no stored column!", cube.getCoords()); }
+            else if (storedCol != cubeCol) { ContentLog.LOGGER.error("The column of cube {} and its stored column are different!", cube.getCoords()); }
         }
         Iterator<Chunk> columnIt = cubeCache.columnsIterator();
         int totalCubes = 0;
@@ -41,12 +41,12 @@ public class CubeGC {
             Chunk storedCol = columnIt.next();
             @SuppressWarnings("unchecked") Collection<Cube> storedColumnCubes = (Collection<Cube>) ((IColumn) storedCol).getLoadedCubes();
             for (Cube c : storedColumnCubes) {
-                if (cubeCache.getLoadedCube(c.getCoords()) != c) { throw new RuntimeException("Cube in column not the same as stored cube!"); }
+                if (cubeCache.getLoadedCube(c.getCoords()) != c) { ContentLog.LOGGER.error("Cube {} in its column is not the same as the stored cube!", c.getCoords()); }
             }
             totalCubes += storedColumnCubes.size();
         }
         if (totalCubes != cubeCache.getLoadedCubeCount()) {
-            throw new RuntimeException("Counted " + totalCubes + " cubes in columns, but there are total of " + cubeCache.getLoadedCubeCount() + " cubes!");
+            ContentLog.LOGGER.error("Counted {} cubes in columns, but there are total of {} cubes!", totalCubes, cubeCache.getLoadedCubeCount());
         }
     }
 

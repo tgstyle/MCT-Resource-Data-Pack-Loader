@@ -4,6 +4,9 @@ import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentTasks;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.JsonElement;
@@ -13,37 +16,24 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentParserEntities {
     private ContentParserEntities() {}
 
     @Nullable public static EntityVariantDef entityVariant(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Entity file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "entity file");
+        if (json == null) { return null; }
         String base = JsonUtils.getString(json, "entity", "");
         if (base.isEmpty()) {
             ContentLog.LOGGER.error("Entity variant {} names no entity to copy, ignoring it", key);
             return null;
         }
-        Map<String, Double> attributes = new LinkedHashMap<>();
-        if (json.has("attributes")) {
-            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "attributes").entrySet()) {
-                if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
-                    ContentLog.LOGGER.error("Entity variant {} sets attribute '{}' to something that is not a number, ignoring it", key, entry.getKey());
-                    continue;
-                }
-                attributes.put(entry.getKey(), entry.getValue().getAsDouble());
-            }
-        }
+        Map<String, Double> attributes = numbers(key, json, "attributes", "attribute", JsonElement::getAsDouble);
         List<String> tintParts = new ArrayList<>();
-        for (String part : strings(json, "tintParts")) { tintParts.add(part.trim().toLowerCase(Locale.ROOT)); }
+        for (String part : strings(json, "tintParts")) { tintParts.add(Settings.lower(part)); }
         if (tintParts.isEmpty()) { tintParts.add(EntityVariantDef.BODY); }
         Map<String, String> equipment = new LinkedHashMap<>();
         if (json.has("equipment")) {
@@ -55,20 +45,7 @@ public final class ContentParserEntities {
                 equipment.put(entry.getKey(), entry.getValue().getAsString());
             }
         }
-        List<SpawnEntryDef> spawns = new ArrayList<>();
-        if (json.has("spawns")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
-                if (!element.isJsonObject()) {
-                    ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
-                    continue;
-                }
-                JsonObject entry = element.getAsJsonObject();
-                spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, "creatureType", "creature"), "",
-                        Math.max(1, JsonUtils.getInt(entry, "weight", 8)),
-                        Math.max(1, JsonUtils.getInt(entry, "min", 1)),
-                        Math.max(1, JsonUtils.getInt(entry, "max", 4))));
-            }
-        }
+        List<SpawnEntryDef> spawns = ContentParser.spawns(key, json, "creatureType", false);
         JsonObject sounds = JsonUtils.getJsonObject(json, "sounds", new JsonObject());
         Map<String, Integer> effects = new LinkedHashMap<>();
         if (json.has("effects")) {
@@ -81,16 +58,7 @@ public final class ContentParserEntities {
                 effects.put(JsonUtils.getString(effect, "potion", ""), Math.max(0, JsonUtils.getInt(effect, "amplifier", 0)));
             }
         }
-        Map<String, Float> priorities = new LinkedHashMap<>();
-        if (json.has("pathPriorities")) {
-            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "pathPriorities").entrySet()) {
-                if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
-                    ContentLog.LOGGER.error("Entity variant {} sets path priority '{}' to something that is not a number, ignoring it", key, entry.getKey());
-                    continue;
-                }
-                priorities.put(entry.getKey(), entry.getValue().getAsFloat());
-            }
-        }
+        Map<String, Float> priorities = numbers(key, json, "pathPriorities", "path priority", JsonElement::getAsFloat);
         JsonObject egg = json.has("egg") && json.get("egg").isJsonObject() ? JsonUtils.getJsonObject(json, "egg") : null;
         boolean wantsEgg = !json.has("egg") || egg != null || JsonUtils.getBoolean(json, "egg", true);
         return new EntityVariantDef(key, new ResourceLocation(base),
@@ -200,6 +168,19 @@ public final class ContentParserEntities {
                 rocket(key, json), storage(key, json));
     }
 
+    private static <T> Map<String, T> numbers(ResourceLocation key, JsonObject json, String member, String what, Function<JsonElement, T> read) {
+        Map<String, T> found = new LinkedHashMap<>();
+        if (!json.has(member)) { return found; }
+        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, member).entrySet()) {
+            if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
+                ContentLog.LOGGER.error("Entity variant {} sets {} '{}' to something that is not a number, ignoring it", key, what, entry.getKey());
+                continue;
+            }
+            found.put(entry.getKey(), read.apply(entry.getValue()));
+        }
+        return found;
+    }
+
     @Nullable private static RocketDef rocket(ResourceLocation key, JsonObject json) {
         if (!json.has("galacticraft")) { return null; }
         JsonObject rocket = JsonUtils.getJsonObject(json, "galacticraft");
@@ -234,9 +215,8 @@ public final class ContentParserEntities {
 
     private static StorageDef.Dry runsDry(ResourceLocation key, JsonObject storage) {
         String named = JsonUtils.getString(storage, "runsDry", "stops");
-        for (StorageDef.Dry dry : StorageDef.Dry.values()) {
-            if (dry.name().equalsIgnoreCase(named)) { return dry; }
-        }
+        StorageDef.Dry dry = Enums.byName(StorageDef.Dry.class, named);
+        if (dry != null) { return dry; }
         ContentLog.LOGGER.error("The storage on entity variant {} sets runsDry to '{}', which is not stops, slows or hurts, so it stops", key, named);
         return StorageDef.Dry.STOPS;
     }

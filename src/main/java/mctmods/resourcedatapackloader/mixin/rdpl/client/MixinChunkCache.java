@@ -3,16 +3,17 @@ package mctmods.resourcedatapackloader.mixin.rdpl.client;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.injection.At;
 import net.minecraft.init.Biomes;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.ChunkCache;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
@@ -35,11 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         cir.setReturnValue(cube != null ? cube.getBiome(pos) : chunk.getBiome(pos, this.world.getBiomeProvider()));
     }
 
-    @ModifyConstant(method = "getLightFor",
-            constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO))
-    private int getLightFor_getMinHeight(int orig) { return ((IRubicWorld) world).rdpl$getMinHeight(); }
+    @ModifyConstant(method = "getLightFor", constant = @Constant(intValue = 0, expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO)) private int rdpl$getLightFor_getMinHeight(int orig) { return GenHeights.floor(world, orig); }
 
-    @ModifyConstant(method = "getLightFor", constant = @Constant(intValue = 256)) private int getLightFor_getMaxHeight(int orig) {
-        return ((IRubicWorld) world).rdpl$getMaxHeight();
-    }
+    @ModifyConstant(method = "getLightFor", constant = @Constant(intValue = 256)) private int rdpl$getLightFor_getMaxHeight(int orig) { return GenHeights.ceiling(world, orig); }
 }

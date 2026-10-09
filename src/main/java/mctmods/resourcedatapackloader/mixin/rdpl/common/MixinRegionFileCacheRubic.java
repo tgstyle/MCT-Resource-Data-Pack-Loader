@@ -10,5 +10,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.io.IOException;
 
 @Mixin(RegionFileCache.class) public class MixinRegionFileCacheRubic {
-    @Inject(method = "clearRegionFileReferences", at = @At("HEAD")) private static void onClearRefs(CallbackInfo cbi) throws IOException { RegionCache.closeAll(); }
+    @Inject(method = "clearRegionFileReferences", at = @At("HEAD")) private static void rdpl$onClearRefs(CallbackInfo cbi) throws IOException { RegionCache.closeAll(); }
 }

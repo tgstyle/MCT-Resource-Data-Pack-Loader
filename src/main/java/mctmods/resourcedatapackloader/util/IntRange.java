@@ -1,8 +1,6 @@
 package mctmods.resourcedatapackloader.util;
 
-
-public class
-IntRange {
+public class IntRange {
     private final int min, max;
 
     public IntRange(int min, int max) {
@@ -14,12 +12,7 @@ IntRange {
 
     public int getMax() { return max; }
 
-    @Override public String toString() {
-        return "IntRange{" +
-                "min=" + min +
-                ", max=" + max +
-                '}';
-    }
+    @Override public String toString() { return "IntRange{min=" + min + ", max=" + max + '}'; }
 
     @Override public boolean equals(Object o) {
         if (this == o) { return true; }

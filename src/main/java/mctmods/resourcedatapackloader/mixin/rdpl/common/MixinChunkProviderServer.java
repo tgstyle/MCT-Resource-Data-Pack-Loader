@@ -22,14 +22,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow protected abstract void saveChunkData(Chunk chunkIn);
     @Shadow @Final public WorldServer world;
 
-    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/ChunkProviderServer;saveChunkData(Lnet/minecraft/world/chunk/Chunk;)V"))
-    private void rdpl$skipCleanWhileLighting(ChunkProviderServer provider, Chunk chunkIn) {
+    @Redirect(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/ChunkProviderServer;saveChunkData(Lnet/minecraft/world/chunk/Chunk;)V")) private void rdpl$skipCleanWhileLighting(ChunkProviderServer provider, Chunk chunkIn) {
         if (ContentPregen.lightingOnly() && !chunkIn.needsSaving(false)) { return; }
         saveChunkData(chunkIn);
     }
 
-    @Redirect(method = "provideChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/IChunkGenerator;generateChunk(II)Lnet/minecraft/world/chunk/Chunk;"))
-    private Chunk rdpl$countMade(IChunkGenerator generator, int x, int z) {
+    @Redirect(method = "provideChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/IChunkGenerator;generateChunk(II)Lnet/minecraft/world/chunk/Chunk;")) private Chunk rdpl$countMade(IChunkGenerator generator, int x, int z) {
         if (!ContentChunkWatch.watching()) { return generator.generateChunk(x, z); }
         ContentChunkWatch.made();
         long start = System.nanoTime();
@@ -38,8 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return chunk;
     }
 
-    @Redirect(method = "tick", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;unloadQueued:Z", opcode = Opcodes.GETFIELD, remap = false))
-    private boolean rdpl$keepWatched(Chunk chunk) {
+    @Redirect(method = "tick", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;unloadQueued:Z", opcode = Opcodes.GETFIELD, remap = false)) private boolean rdpl$keepWatched(Chunk chunk) {
         if (!chunk.unloadQueued) { return false; }
         PlayerChunkMapEntry entry = world.getPlayerChunkMap().getEntry(chunk.x, chunk.z);
         if (entry == null || entry.getChunk() != chunk) { return true; }

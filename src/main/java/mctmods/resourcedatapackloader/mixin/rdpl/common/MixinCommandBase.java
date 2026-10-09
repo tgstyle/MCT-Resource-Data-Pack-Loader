@@ -17,24 +17,18 @@ import javax.annotation.Nonnull;
 @Mixin(CommandBase.class) public class MixinCommandBase {
     @Unique @Nonnull private static WeakReference<IRubicWorld> rdpl$commandWorld = new WeakReference<>(null);
 
-    @Inject(method = "parseBlockPos", at = @At(value = "HEAD")) private static void parseBlockPosPre(ICommandSender sender, String[] args, int startIndex, boolean centerBlock, CallbackInfoReturnable<?> cbi) {
+    @Inject(method = "parseBlockPos", at = @At(value = "HEAD")) private static void rdpl$parseBlockPosPre(ICommandSender sender, String[] args, int startIndex, boolean centerBlock, CallbackInfoReturnable<?> cbi) {
         World world = sender.getEntityWorld();
         rdpl$commandWorld = new WeakReference<>(world instanceof IRubicWorld ? (IRubicWorld) world : null);
     }
 
-    @ModifyArg(method = "parseBlockPos",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1),
-            index = 2)
-    private static int getMinY(int original) {
+    @ModifyArg(method = "parseBlockPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1), index = 2) private static int rdpl$getMinY(int original) {
         IRubicWorld world = rdpl$commandWorld.get();
         if (world == null) { return original; }
         return world.rdpl$getMinHeight();
     }
 
-    @ModifyArg(method = "parseBlockPos",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1),
-            index = 3)
-    private static int getMaxY(int original) {
+    @ModifyArg(method = "parseBlockPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/command/CommandBase;parseDouble(DLjava/lang/String;IIZ)D", ordinal = 1), index = 3) private static int rdpl$getMaxY(int original) {
         IRubicWorld world = rdpl$commandWorld.get();
         if (world == null) { return original; }
         return world.rdpl$getMaxHeight();

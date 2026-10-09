@@ -8,8 +8,7 @@ import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldSavedData;
-import org.jetbrains.annotations.NotNull;
-
+import net.minecraftforge.common.util.Constants;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -59,16 +58,16 @@ public final class SeamMemory extends WorldSavedData {
     @Override public void readFromNBT(NBTTagCompound nbt) {
         entries.clear();
         landings.clear();
-        NBTTagList holes = nbt.getTagList("entries", 10);
+        NBTTagList holes = nbt.getTagList("entries", Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < holes.tagCount(); index++) { entries.add(holes.getCompoundTagAt(index).getLong("column")); }
-        NBTTagList stored = nbt.getTagList("landings", 10);
+        NBTTagList stored = nbt.getTagList("landings", Constants.NBT.TAG_COMPOUND);
         for (int index = 0; index < stored.tagCount(); index++) {
             NBTTagCompound entry = stored.getCompoundTagAt(index);
             landings.put(entry.getLong("column"), BlockPos.fromLong(entry.getLong("spot")));
         }
     }
 
-    @Override @Nonnull public NBTTagCompound writeToNBT(@NotNull NBTTagCompound nbt) {
+    @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound nbt) {
         NBTTagList holes = new NBTTagList();
         for (long key : entries) {
             NBTTagCompound entry = new NBTTagCompound();

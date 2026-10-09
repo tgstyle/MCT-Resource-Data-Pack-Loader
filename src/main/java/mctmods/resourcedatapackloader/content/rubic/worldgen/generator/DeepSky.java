@@ -3,7 +3,8 @@ package mctmods.resourcedatapackloader.content.rubic.worldgen.generator;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.content.def.SkyStone;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IMinMaxHeight;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
@@ -13,6 +14,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBiome;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes3D;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCaveRegions;
+import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Coords;
 
@@ -28,11 +30,13 @@ import net.minecraft.world.biome.BiomeMesa;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.ToDoubleFunction;
 import javax.annotation.Nullable;
 
 final class DeepSky {
     private static final int SKY_ISLAND_SHAPE = 0;
     static final int SKY_CAVES = 1;
+    private static final String[] SKY_SHAPES = {"islands", "caves"};
     private static final int SKY_FILLER = 4;
     private static final int SKY_HEADROOM = 8;
     private static final int SKY_TAPER = 24;
@@ -59,7 +63,7 @@ final class DeepSky {
         this.world = world;
         this.offsetBlocks = offsetBlocks;
         this.skyStone = DeepGeneration.parseState(deep.scoped("skyStone", Config.worldgen.skyStone), "skyStone");
-        this.skyShape = parseShape(deep.scoped("skyShape", Config.worldgen.skyShape));
+        this.skyShape = DeepGeneration.choice(deep.scoped("skyShape", Config.worldgen.skyShape), "skyShape", SKY_SHAPES, SKY_ISLAND_SHAPE);
         this.skyIslands = parseIslands(ContentControl.decimal(ContentControl.TERRAIN, "skyIslands", Config.worldgen.skyIslands));
         this.skyThickness = parseThickness(ContentControl.decimal(ContentControl.TERRAIN, "skyThickness", Config.worldgen.skyThickness));
         int[] band = parseHeights(ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights));
@@ -77,23 +81,23 @@ final class DeepSky {
     void fillSkyCube(CubePrimer primer, int cubeX, int cubeY, int cubeZ, Random rand, boolean topBedrock, boolean bottomBedrock) {
         int worldTop = ((IMinMaxHeight) world).rdpl$getMaxHeight() - 1 - (skyShape == SKY_CAVES ? 0 : SKY_HEADROOM);
         int worldBase = Coords.cubeToMinBlock(cubeY);
-        boolean tracing = Rubic.LOGGER.debugEnabled();
+        boolean tracing = ContentLog.LOGGER.debugEnabled();
         if (worldBase >= worldTop) {
-            if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: its floor y {} is at or above the sky ceiling y {}", cubeX, cubeY, cubeZ, worldBase, worldTop); }
+            if (tracing) { ContentLog.LOGGER.debug("Sky cube {},{},{} left empty: its floor y {} is at or above the sky ceiling y {}", cubeX, cubeY, cubeZ, worldBase, worldTop); }
             return;
         }
         int genBase = worldBase - offsetBlocks;
         if (genBase + Cube.SIZE - 1 < skyLowest || genBase > skyHighest) {
-            if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: gen y {}..{} falls outside skyHeights {}..{}", cubeX, cubeY, cubeZ, genBase, genBase + Cube.SIZE - 1, skyLowest, skyHighest); }
+            if (tracing) { ContentLog.LOGGER.debug("Sky cube {},{},{} left empty: gen y {}..{} falls outside skyHeights {}..{}", cubeX, cubeY, cubeZ, genBase, genBase + Cube.SIZE - 1, skyLowest, skyHighest); }
             return;
         }
         int steps = (Cube.SIZE + SKY_LOOKUP) / 8 + 1;
         double[][][] regions = null;
         if (skyShape != SKY_CAVES) {
-            regions = sampleRegionLattice(cubeX << 4, genBase, cubeZ << 4, steps);
+            regions = DeepGeneration.lattice(cubeX << 4, genBase, cubeZ << 4, steps, deep.cheeseWide::sample);
             double[] ends = span(regions);
             if (ends[1] <= skyMaskIslands) {
-                if (tracing) { Rubic.LOGGER.debug("Sky cube {},{},{} left empty: mask {} to {} never clears {}, corners {} and {}", cubeX, cubeY, cubeZ, fixed(ends[0]), fixed(ends[1]), fixed(skyMaskIslands), fixed(regions[0][0][0]), fixed(regions[4][0][4])); }
+                if (tracing) { ContentLog.LOGGER.debug("Sky cube {},{},{} left empty: mask {} to {} never clears {}, corners {} and {}", cubeX, cubeY, cubeZ, fixed(ends[0]), fixed(ends[1]), fixed(skyMaskIslands), fixed(regions[0][0][0]), fixed(regions[4][0][4])); }
                 return;
             }
         }
@@ -103,7 +107,7 @@ final class DeepSky {
         int placed = 0;
         for (int z = 0; z < Cube.SIZE; z++) {
             for (int x = 0; x < Cube.SIZE; x++) {
-                Biome biome = column[(z << 4) | x];
+                Biome biome = column[AddressTools.getLocalAddress(x, z)];
                 CaveRegionDef region = skyRegions ? ContentCaveRegions.regionAt(world, (cubeX << 4) + x, worldBase + 8, (cubeZ << 4) + z) : null;
                 BiomeDef band = skyBands ? ContentBiomes3D.shapesSkyAt(biome, worldBase + 8) : null;
                 Biome surface = skySurfaceBiome(biome, region, band);
@@ -134,7 +138,7 @@ final class DeepSky {
         }
         if (tracing) {
             double[] ends = regions == null ? new double[] {Double.NaN, Double.NaN} : span(regions);
-            Rubic.LOGGER.debug("Sky cube {},{},{} laid {} of 4096, mask {} to {}, corners {} and {}, islands {} thickness {}",
+            ContentLog.LOGGER.debug("Sky cube {},{},{} laid {} of 4096, mask {} to {}, corners {} and {}, islands {} thickness {}",
                     cubeX, cubeY, cubeZ, placed, fixed(ends[0]), fixed(ends[1]),
                     fixed(regions == null ? Double.NaN : regions[0][0][0]), fixed(regions == null ? Double.NaN : regions[4][0][4]),
                     fixed(skyIslands), fixed(skyThickness));
@@ -156,37 +160,26 @@ final class DeepSky {
     }
 
     private IBlockState skyStoneFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
-        if (region != null && !region.skyStone.isEmpty()) {
-            IBlockState named = region.skyState();
-            if (named != null) { return named; }
-        }
-        if (band != null && !band.skyStone.isEmpty()) {
-            IBlockState named = band.skyState();
-            if (named != null) { return named; }
-        }
         BiomeDef def = defOf(biome);
-        if (def != null && !def.skyStone.isEmpty()) {
-            IBlockState named = def.skyState();
-            if (named != null) { return named; }
-        }
-        return skyStone;
+        IBlockState named = named(region == null ? null : region.sky);
+        if (named == null) { named = named(band == null ? null : band.sky); }
+        if (named == null) { named = named(def == null ? null : def.sky); }
+        return named != null ? named : skyStone;
     }
 
-    private double skyIslandsFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
-        if (region != null && !Float.isNaN(region.skyIslands)) { return region.skyIslands; }
-        if (band != null && !Float.isNaN(band.skyIslands)) { return band.skyIslands; }
+    @Nullable private static IBlockState named(@Nullable SkyStone sky) { return sky == null || sky.stone.isEmpty() ? null : sky.state(); }
+
+    private static double cascade(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band, ToDoubleFunction<CaveRegionDef> regionValue, ToDoubleFunction<BiomeDef> defValue, double fallback) {
+        if (region != null && !Double.isNaN(regionValue.applyAsDouble(region))) { return regionValue.applyAsDouble(region); }
+        if (band != null && !Double.isNaN(defValue.applyAsDouble(band))) { return defValue.applyAsDouble(band); }
         BiomeDef def = defOf(biome);
-        if (def != null && !Float.isNaN(def.skyIslands)) { return def.skyIslands; }
-        return skyIslands;
+        if (def != null && !Double.isNaN(defValue.applyAsDouble(def))) { return defValue.applyAsDouble(def); }
+        return fallback;
     }
 
-    private double skyThicknessFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) {
-        if (region != null && !Float.isNaN(region.skyThickness)) { return region.skyThickness; }
-        if (band != null && !Float.isNaN(band.skyThickness)) { return band.skyThickness; }
-        BiomeDef def = defOf(biome);
-        if (def != null && !Float.isNaN(def.skyThickness)) { return def.skyThickness; }
-        return skyThickness;
-    }
+    private double skyIslandsFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) { return cascade(biome, region, band, r -> r.sky.islands, b -> b.sky.islands, skyIslands); }
+
+    private double skyThicknessFor(Biome biome, @Nullable CaveRegionDef region, @Nullable BiomeDef band) { return cascade(biome, region, band, r -> r.sky.thickness, b -> b.sky.thickness, skyThickness); }
 
     @Nullable private static BiomeDef defOf(Biome biome) { return biome instanceof ContentBiome ? ((ContentBiome) biome).getDef() : null; }
 
@@ -198,7 +191,7 @@ final class DeepSky {
 
     private IBlockState mesaState(BiomeMesa mesa, IBlockState top, IBlockState stone, int under, int depth, int worldX, int worldY, int worldZ, int genY) {
         IBiomeMesa access = (IBiomeMesa) mesa;
-        if (under == 0) { return access.rdpl$hasForest() ? top : Objects.requireNonNull(Blocks.HARDENED_CLAY).getDefaultState(); }
+        if (under == 0) { return access.rdpl$hasForest() ? top : Blocks.HARDENED_CLAY.getDefaultState(); }
         if (under <= depth) { return access.rdpl$getBand(worldX, worldY, worldZ); }
         return deep.veinState(worldX, genY, worldZ, stone);
     }
@@ -291,32 +284,15 @@ final class DeepSky {
         return ends;
     }
 
-    private double[][][] sampleRegionLattice(int worldX, int genY, int worldZ, int ySteps) {
-        double[][][] lattice = new double[5][ySteps][5];
-        for (int x = 0; x < 5; x++) {
-            for (int y = 0; y < ySteps; y++) {
-                for (int z = 0; z < 5; z++) { lattice[x][y][z] = deep.cheeseWide.sample(worldX + (x << 2), genY + (y << 3), worldZ + (z << 2)); }
-            }
-        }
-        return lattice;
-    }
-
-    private static int parseShape(String value) {
-        if (value == null || value.trim().isEmpty() || value.trim().equalsIgnoreCase("islands")) { return SKY_ISLAND_SHAPE; }
-        if (value.trim().equalsIgnoreCase("caves")) { return SKY_CAVES; }
-        Rubic.LOGGER.error("skyShape is {}, which is not islands or caves, so the sky is made of islands", value);
-        return SKY_ISLAND_SHAPE;
-    }
-
     private static double parseIslands(float value) {
         if (value >= -1.0F && value <= 1.0F) { return value; }
-        Rubic.LOGGER.error("skyIslands is {}, which is outside -1 to 1, so the islands keep their usual reach", value);
+        ContentLog.LOGGER.error("skyIslands is {}, which is outside -1 to 1, so the islands keep their usual reach", value);
         return 0.5D;
     }
 
     private static double parseThickness(float value) {
         if (value >= 0.0F) { return value; }
-        Rubic.LOGGER.error("skyThickness is {}, which is below zero, so the islands keep their usual thickness", value);
+        ContentLog.LOGGER.error("skyThickness is {}, which is below zero, so the islands keep their usual thickness", value);
         return 2.0D;
     }
 
@@ -324,7 +300,7 @@ final class DeepSky {
         int[] whole = {Integer.MIN_VALUE, Integer.MAX_VALUE};
         if (values.length == 0) { return whole; }
         if (values.length != 2 || values[0] >= values[1]) {
-            Rubic.LOGGER.error("skyHeights is {}, which is not a lowest and a highest with the lowest below it, so the islands fill the whole world above the window", Arrays.toString(values));
+            ContentLog.LOGGER.error("skyHeights is {}, which is not a lowest and a highest with the lowest below it, so the islands fill the whole world above the window", Arrays.toString(values));
             return whole;
         }
         return values;

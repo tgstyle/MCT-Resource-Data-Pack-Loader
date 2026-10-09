@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
@@ -14,7 +14,8 @@ import net.minecraft.client.multiplayer.ChunkProviderClient;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
-
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.world.ChunkEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -33,14 +34,10 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
 
     public Chunk provideColumn(int x, int z) { return provideChunk(x, z); }
 
-    @Override @Nonnull public Chunk provideChunk(int x, int z) { return super.provideChunk(x, z); }
-
-    @Nullable @Override public Chunk getLoadedChunk(int x, int z) { return super.getLoadedChunk(x, z); }
-
     @Override @Nonnull public Chunk loadChunk(int cubeX, int cubeZ) {
         Chunk column = new Chunk((World) this.world, cubeX, cubeZ);
         ((IChunkProviderClient) this).getLoadedChunks().put(ChunkPos.asLong(cubeX, cubeZ), column);
-        net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(new net.minecraftforge.event.world.ChunkEvent.Load(column));
+        MinecraftForge.EVENT_BUS.post(new ChunkEvent.Load(column));
         column.markLoaded(true);
         return column;
     }
@@ -48,7 +45,7 @@ public class CubeProviderClient extends ChunkProviderClient implements ICubeProv
     @Override public boolean tick() {
         long i = System.currentTimeMillis();
         for (Cube cube : cubeMap) { cube.tickCubeCommon(); }
-        if (System.currentTimeMillis() - i > 100L) { Rubic.LOGGER.info("Warning: Clientside chunk ticking took {} ms", System.currentTimeMillis() - i); }
+        if (System.currentTimeMillis() - i > 100L) { ContentLog.LOGGER.info("Warning: Clientside chunk ticking took {} ms", System.currentTimeMillis() - i); }
         return false;
     }
 

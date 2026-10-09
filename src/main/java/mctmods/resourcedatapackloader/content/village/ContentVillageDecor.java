@@ -10,7 +10,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardKeep;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
@@ -35,6 +34,7 @@ public final class ContentVillageDecor {
     private static final int SPREAD = 8;
     private static final int RISE = 16;
     private static final WeightedPicks CHOICES = new WeightedPicks(NAME);
+    private static final String[] REASONS = { "outside the clip", "inside a piece or plaza", "without ground", "not open air on solid ground", "beside cubes not loaded", "before a door", "rolled bare", "without a shape", "planted" };
 
     private ContentVillageDecor() {}
 
@@ -66,8 +66,6 @@ public final class ContentVillageDecor {
         }
     }
 
-    private static final String[] REASONS = { "outside the clip", "inside a piece or plaza", "without ground", "not open air on solid ground", "beside cubes not loaded", "before a door", "rolled bare", "without a shape", "planted" };
-
     private static void alongRoad(World world, StructureComponent piece, StructureBoundingBox clip, int[] tally) {
         StructureBoundingBox box = piece.getBoundingBox();
         if (box.minX - 2 > clip.maxX || box.maxX + 2 < clip.minX || box.minZ - 2 > clip.maxZ || box.maxZ + 2 < clip.minZ) { return; }
@@ -79,7 +77,7 @@ public final class ContentVillageDecor {
         int to = alongX ? box.maxX : box.maxZ;
         int near = (alongX ? box.minZ : box.minX) - 1;
         int far = (alongX ? box.maxZ : box.maxX) + 1;
-        BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
+        BeardRoads.Grade grade = BeardRoads.layoutOf(piece);
         for (int row = from; row <= to; row++) {
             if (Math.floorMod(row, STEP) != 0 || BeardRoadsTunnels.tunnelAt(grade, row)) { continue; }
             tally[place(world, villages, wanted, clip, at, alongX ? row : near, alongX ? near : row)]++;

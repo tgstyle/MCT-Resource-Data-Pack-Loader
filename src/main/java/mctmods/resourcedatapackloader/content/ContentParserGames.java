@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import net.minecraft.scoreboard.IScoreCriteria;
@@ -16,6 +18,7 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.BossInfo;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -26,10 +29,15 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentParserGames {
+    private static final List<String> RESET_LEADS = Collections.unmodifiableList(Arrays.asList(RoundResetDef.NONE, RoundResetDef.NOW, RoundResetDef.VOTE));
+    private static final List<String> RESET_PLAYERS = Collections.unmodifiableList(Arrays.asList(RoundResetDef.NONE, RoundResetDef.VOTE));
+    private static final List<String> OPENS = Collections.unmodifiableList(Arrays.asList("auto", "leader"));
+    private static final List<String> LEADS = Collections.unmodifiableList(Arrays.asList(TeamDef.LEAD_NONE, TeamDef.LEAD_FIRST, TeamDef.LEAD_TOP_SCORE, TeamDef.LEAD_APPOINTED, TeamDef.LEAD_VOTE, TeamDef.LEAD_CLAIM));
+
     private ContentParserGames() {}
 
     @Nullable public static ScoreDef scoreFile(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "score file");
         if (json == null) { return null; }
         String name = JsonUtils.getString(json, "name", key.getPath()).trim();
         if (name.isEmpty() || name.length() > 16) {
@@ -53,6 +61,8 @@ public final class ContentParserGames {
         }
         JsonObject results = JsonUtils.getJsonObject(json, "results", new JsonObject());
         JsonObject points = JsonUtils.getJsonObject(json, "points", new JsonObject());
+        JsonObject ends = JsonUtils.getJsonObject(json, "ends", new JsonObject());
+        JsonObject opens = JsonUtils.getJsonObject(json, "opens", new JsonObject());
         Map<String, Integer> kills = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(points, "kill", new JsonObject()).entrySet()) {
             kills.put(entry.getKey().trim(), entry.getValue().getAsInt());
@@ -62,9 +72,9 @@ public final class ContentParserGames {
                 JsonUtils.getBoolean(json, "individuals", false),
                 kills,
                 JsonUtils.getInt(points, "death", 0),
-                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "atScore", 0),
-                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "afterMinutes", 0),
-                JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "afterRounds", 0),
+                JsonUtils.getInt(ends, "atScore", 0),
+                JsonUtils.getInt(ends, "afterMinutes", 0),
+                JsonUtils.getInt(ends, "afterRounds", 0),
                 JsonUtils.getBoolean(results, "card", false),
                 JsonUtils.getString(results, "title", name + " results"),
                 JsonUtils.getString(results, "icon", "").trim(),
@@ -72,21 +82,21 @@ public final class ContentParserGames {
                 cardColor(results, name),
                 Math.max(20, JsonUtils.getInt(results, "seconds", 8) * 20),
                 JsonUtils.getBoolean(json, "carries", false),
-                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "resets", false),
-                Math.max(0, JsonUtils.getInt(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSeconds", 10)),
+                JsonUtils.getBoolean(ends, "resets", false),
+                Math.max(0, JsonUtils.getInt(ends, "intermissionSeconds", 10)),
                 JsonUtils.getString(json, "awardsTo", "").trim(),
-                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "locksTeams", true),
+                JsonUtils.getBoolean(ends, "locksTeams", true),
                 JsonUtils.getInt(points, "ownKill", 0),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "intermissionSays", "Round cooldown {seconds}"),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "startsSays", "Round starting in {seconds}"),
+                JsonUtils.getString(ends, "intermissionSays", "Round cooldown {seconds}"),
+                JsonUtils.getString(ends, "startsSays", "Round starting in {seconds}"),
                 opensBy(json, key),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "says", "Waiting for {leader} to start the round"),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "leaderSays", "Type /rdpl round start"),
-                lobbyAt(key, JsonUtils.getJsonObject(json, "opens", new JsonObject())),
-                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "lobbyJoins", false),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "joinsSays", "Round is in progress, you can join after it ends"),
-                JsonUtils.getBoolean(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "lastStanding", false),
-                JsonUtils.getString(JsonUtils.getJsonObject(json, "ends", new JsonObject()), "outSays", "You are out until the round ends"),
+                JsonUtils.getString(opens, "says", "Waiting for {leader} to start the round"),
+                JsonUtils.getString(opens, "leaderSays", "Type /rdpl round start"),
+                lobbyAt(key, opens),
+                JsonUtils.getBoolean(opens, "lobbyJoins", false),
+                JsonUtils.getString(opens, "joinsSays", "Round is in progress, you can join after it ends"),
+                JsonUtils.getBoolean(ends, "lastStanding", false),
+                JsonUtils.getString(ends, "outSays", "You are out until the round ends"),
                 roundReset(key, JsonUtils.getJsonObject(json, "reset", new JsonObject())),
                 JsonUtils.getBoolean(json, "tiebreak", false),
                 turns(key, json));
@@ -95,32 +105,17 @@ public final class ContentParserGames {
     @Nullable private static TurnsDef turns(ResourceLocation key, JsonObject json) {
         if (!json.has("turns")) { return null; }
         JsonObject turns = JsonUtils.getJsonObject(json, "turns");
-        String order = JsonUtils.getString(turns, "order", TurnsDef.FIXED).trim();
-        if (!TurnsDef.ORDERS.contains(order)) {
-            ContentLog.LOGGER.error("Score file {} takes turns in '{}' order, which is not fixed, random, lowestFirst or lastWinner, so they go in fixed order", key, order);
-            order = TurnsDef.FIXED;
-        }
-        String held = JsonUtils.getString(turns, "held", TurnsDef.FROZEN).trim();
-        if (!TurnsDef.HOLDS.contains(held)) {
-            ContentLog.LOGGER.error("Score file {} holds the sides waiting their turn as '{}', which is not frozen, spectator or adventure, so they are frozen", key, held);
-            held = TurnsDef.FROZEN;
-        }
+        String order = Json.choice(turns, "order", TurnsDef.FIXED, "Score file " + key + " turns", TurnsDef.ORDERS);
+        String held = Json.choice(turns, "held", TurnsDef.FROZEN, "Score file " + key + " turns", TurnsDef.HOLDS);
         return new TurnsDef(order, Math.max(1, JsonUtils.getInt(turns, "seconds", 60)), Math.max(0, JsonUtils.getInt(turns, "gapSeconds", 3)), held,
-                Math.max(0, JsonUtils.getInt(turns, "endsAtScore", 0)), Math.max(0, JsonUtils.getInt(turns, "cycles", 0)), names(turns, "mobTags"), names(turns, "mobTypes"));
+                Math.max(0, JsonUtils.getInt(turns, "endsAtScore", 0)), Math.max(0, JsonUtils.getInt(turns, "cycles", 0)), Json.names(turns, "mobTags"), Json.names(turns, "mobTypes"));
     }
 
     private static RoundResetDef roundReset(ResourceLocation key, JsonObject reset) {
-        String lead = JsonUtils.getString(reset, "lead", "none").trim();
-        if (!"none".equals(lead) && !"now".equals(lead) && !"vote".equals(lead)) {
-            ContentLog.LOGGER.error("Score file {} lets the lead reset the round by '{}', which is not none, now or vote, so the lead cannot", key, lead);
-            lead = "none";
-        }
-        String players = JsonUtils.getString(reset, "players", "none").trim();
-        if (!"none".equals(players) && !"vote".equals(players)) {
-            ContentLog.LOGGER.error("Score file {} lets players reset the round by '{}', which is not none or vote, so they cannot", key, players);
-            players = "none";
-        }
-        return new RoundResetDef(lead, "vote".equals(players), names(reset, "teams"),
+        String owner = "Score file " + key + " reset";
+        String lead = Json.choice(reset, "lead", RoundResetDef.NONE, owner, RESET_LEADS);
+        String players = Json.choice(reset, "players", RoundResetDef.NONE, owner, RESET_PLAYERS);
+        return new RoundResetDef(lead, RoundResetDef.VOTE.equals(players), Json.names(reset, "teams"),
                 MathHelper.clamp(JsonUtils.getInt(reset, "passPercent", 51), 1, 100),
                 Math.max(5, JsonUtils.getInt(reset, "voteSeconds", 30)),
                 Math.max(0, JsonUtils.getInt(reset, "cooldownSeconds", 60)),
@@ -132,10 +127,7 @@ public final class ContentParserGames {
     }
 
     private static String opensBy(JsonObject json, ResourceLocation key) {
-        String asked = JsonUtils.getString(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "by", "auto").trim();
-        if ("auto".equals(asked) || "leader".equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Score file {} opens its round by '{}', which is not auto or leader, so it opens on its own", key, asked);
-        return "auto";
+        return Json.choice(JsonUtils.getJsonObject(json, "opens", new JsonObject()), "by", "auto", "Score file " + key + " opens", OPENS);
     }
 
     private static int cardColor(JsonObject results, String name) {
@@ -144,11 +136,8 @@ public final class ContentParserGames {
     }
 
     @Nullable public static RaidDef raidFile(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Raid file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "raid file");
+        if (json == null) { return null; }
         String omen = JsonUtils.getString(json, "omen", "").trim();
         if (omen.isEmpty()) {
             ContentLog.LOGGER.error("Raid {} names no omen effect, and nothing else starts a raid, so it is left out", key);
@@ -201,14 +190,14 @@ public final class ContentParserGames {
     }
 
     @Nullable public static TeamDef teamFile(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "team file");
         if (json == null) { return null; }
         String name = JsonUtils.getString(json, "name", key.getPath()).trim();
         if (name.isEmpty() || name.length() > 16) {
             ContentLog.LOGGER.error("Team file {} names the team '{}', and a team name is 1 to 16 characters, so the team is left out", key, name);
             return null;
         }
-        TextFormatting color = TextFormatting.getValueByName(JsonUtils.getString(json, "color", "white").trim().toLowerCase(Locale.ROOT));
+        TextFormatting color = TextFormatting.getValueByName(Settings.lower(JsonUtils.getString(json, "color", "white")));
         if (color == null || !color.isColor()) {
             ContentLog.LOGGER.error("Team {} asks for the color '{}', which is not one of the sixteen text colors, so it is white", name, JsonUtils.getString(json, "color", ""));
             color = TextFormatting.WHITE;
@@ -224,8 +213,8 @@ public final class ContentParserGames {
                 visible(json, "nameTags", key),
                 visible(json, "deathMessages", key),
                 collision(json, key),
-                names(json, "entities"),
-                names(json, "players"),
+                Json.names(json, "entities"),
+                Json.names(json, "players"),
                 box(json, key),
                 JsonUtils.getBoolean(json, "joinable", true),
                 leadWay(json, name),
@@ -236,7 +225,7 @@ public final class ContentParserGames {
                 JsonUtils.getBoolean(json, "balance", false),
                 JsonUtils.getBoolean(json, "scoreboard", true),
                 Math.max(0, JsonUtils.getInt(json, "picks", 0)),
-                names(json, "picksFrom"),
+                Json.names(json, "picksFrom"),
                 gives(key, json),
                 standIn(json), standInAt(key, json), spawnAt(key, json));
     }
@@ -257,9 +246,7 @@ public final class ContentParserGames {
         return at == null ? null : new int[] { dimension, at[0], at[1], at[2] };
     }
 
-    @Nullable private static int[] spawnAt(ResourceLocation key, JsonObject json) {
-        return point(key, JsonUtils.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own");
-    }
+    @Nullable private static int[] spawnAt(ResourceLocation key, JsonObject json) { return point(key, JsonUtils.getString(json, "spawn", ""), "Team file {} gives spawn '{}', which is not three whole numbers x,y,z, so the side has no spawn of its own"); }
 
     @Nullable private static int[] point(ResourceLocation key, String asked, String refused) {
         String at = asked.trim();
@@ -298,11 +285,7 @@ public final class ContentParserGames {
     }
 
     private static String leadWay(JsonObject json, String team) {
-        String asked = JsonUtils.getString(json, "lead", "none").trim();
-        if ("none".equals(asked) || "first".equals(asked) || "topScore".equals(asked) || "appointed".equals(asked)
-                || "vote".equals(asked) || "claim".equals(asked)) { return asked; }
-        ContentLog.LOGGER.error("Team {} chooses its lead by '{}', which is not none, first, topScore, appointed, vote or claim, so it has no lead", team, asked);
-        return "none";
+        return Json.choice(json, "lead", TeamDef.LEAD_NONE, "Team " + team, LEADS);
     }
 
     private static Team.EnumVisible visible(JsonObject json, String field, ResourceLocation key) {
@@ -321,16 +304,6 @@ public final class ContentParserGames {
         }
         ContentLog.LOGGER.error("Team file {} sets collision to '{}', which is not always, never, pushOtherTeams or pushOwnTeam, so it is always", key, asked);
         return Team.CollisionRule.ALWAYS;
-    }
-
-    private static List<String> names(JsonObject json, String field) {
-        List<String> found = new ArrayList<>();
-        if (!json.has(field) || !json.get(field).isJsonArray()) { return found; }
-        for (JsonElement entry : json.getAsJsonArray(field)) {
-            String named = entry.getAsString().trim();
-            if (!named.isEmpty()) { found.add(named); }
-        }
-        return found;
     }
 
     @Nullable private static int[] box(JsonObject json, ResourceLocation key) {
@@ -353,7 +326,7 @@ public final class ContentParserGames {
     }
 
     @Nullable public static DiceDef diceFile(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = Json.object(key, contents, "dice file");
         if (json == null) { return null; }
         Map<String, String> says = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "says", new JsonObject()).entrySet()) {
@@ -380,7 +353,7 @@ public final class ContentParserGames {
         Set<String> fixed = new HashSet<>();
         for (Map.Entry<String, JsonElement> deck : held.entrySet()) {
             boolean object = deck.getValue().isJsonObject();
-            List<String> cards = object ? names(deck.getValue().getAsJsonObject(), "cards") : names(held, deck.getKey());
+            List<String> cards = object ? Json.names(deck.getValue().getAsJsonObject(), "cards") : Json.names(held, deck.getKey());
             if (cards.isEmpty()) { ContentLog.LOGGER.error("Dice file {} gives the deck '{}' no cards, so it is left out", key, deck.getKey()); }
             else {
                 decks.put(deck.getKey().trim(), cards);

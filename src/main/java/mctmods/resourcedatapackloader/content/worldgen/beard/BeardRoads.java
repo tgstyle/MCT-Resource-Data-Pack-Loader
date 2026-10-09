@@ -37,8 +37,14 @@ import javax.annotation.Nullable;
 public final class BeardRoads {
     private BeardRoads() {}
 
+    @Nullable public static Grade layoutOf(StructureComponent piece) { return piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null; }
+
+    public static void clearLayout(StructureComponent piece) {
+        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
+    }
+
     @Nullable public static Grade fittedLayout(StructureComponent piece) {
-        Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
+        Grade grade = layoutOf(piece);
         if (grade == null) { return null; }
         StructureBoundingBox box = piece.getBoundingBox();
         boolean alongX = BeardPlots.roadAlongX(piece);
@@ -62,6 +68,7 @@ public final class BeardRoads {
         final boolean[] covered;
         final int start;
         final int capped;
+
         Grade(int[] profile, int[] ground, boolean[] bridged, boolean[] held, int start, int capped) {
             this.profile = profile;
             this.ground = ground;
@@ -190,7 +197,7 @@ public final class BeardRoads {
         for (StructureComponent other : nearby) {
             if (other == piece || other instanceof RailPiece || !(other instanceof StructureVillagePieces.Road)) { continue; }
             StructureBoundingBox held = other.getBoundingBox();
-            if (held.maxX >= box.minX - reach && held.minX <= box.maxX + reach && held.maxZ >= box.minZ - reach && held.minZ <= box.maxZ + reach) { found.add(held); }
+            if (held.intersectsWith(box.minX - reach, box.minZ - reach, box.maxX + reach, box.maxZ + reach)) { found.add(held); }
         }
         return found;
     }
@@ -269,6 +276,24 @@ public final class BeardRoads {
 
     public static IBlockState alleyBlock(IBlockState path) { return pathBlock("villagePathAlleyBlock", Config.worldgen.villagePathAlleyBlock, path); }
 
+    public static IBlockState surfaceBlock(IBlockState vanilla) { return pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, vanilla); }
+
+    public static IBlockState lineBlock(IBlockState path) { return pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, path); }
+
+    public static IBlockState sidewalkBlock(IBlockState path) { return pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, path); }
+
+    public static IBlockState centerBlock(IBlockState path) { return pathBlock("villagePathCenterBlock", Config.worldgen.villagePathCenterBlock, path); }
+
+    public static IBlockState supportBlock(IBlockState vanilla) { return pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, vanilla); }
+
+    public static IBlockState bridgeBlock() { return pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState()); }
+
+    public static IBlockState bridgeSidewalkBlock(IBlockState walk) { return pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk); }
+
+    public static IBlockState bridgeBarrierBlock(IBlockState vanilla) { return pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, vanilla); }
+
+    public static IBlockState tunnelLightBlock() { return pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState()); }
+
     public static int alleyChance() { return widths().alley; }
 
     public static boolean roadNarrow(StructureBoundingBox box, boolean alongX) {
@@ -290,7 +315,7 @@ public final class BeardRoads {
         return spec;
     }
 
-    private static final java.util.Map<String, IBlockState> PATH_BLOCKS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, IBlockState> PATH_BLOCKS = new ConcurrentHashMap<>();
     private static final PackGeneration PATH_GENERATION = new PackGeneration();
 
     public static final class Palette {

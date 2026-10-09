@@ -3,12 +3,16 @@ package mctmods.resourcedatapackloader.util.world;
 import mctmods.resourcedatapackloader.util.CubePos;
 
 import net.minecraft.world.NextTickListEntry;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import javax.annotation.Nonnull;
-
-import java.util.*;
-
 public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
-    private final Map<CubePos, List<NextTickListEntry>> byCube = new HashMap<>();
+    private final CubeTickIndex<List<NextTickListEntry>> byCube = new CubeTickIndex<>(ArrayList::new);
     private final List<NextTickListEntry> all = new ArrayList<>();
 
     public List<NextTickListEntry> getForCube(CubePos pos) {
@@ -22,16 +26,7 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @Nonnull @Override public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), this::removeByCube); }
-
-    private void removeByCube(NextTickListEntry e) {
-        CubePos pos = CubePos.fromBlockCoords(e.position);
-        List<NextTickListEntry> list = byCube.get(pos);
-        list.remove(e);
-        if (list.isEmpty()) { byCube.remove(pos); }
-    }
-
-    private void addByCube(NextTickListEntry e) { byCube.computeIfAbsent(CubePos.fromBlockCoords(e.position), x -> new ArrayList<>()).add(e); }
+    @Nonnull @Override public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), byCube::remove); }
 
     @Override @Nonnull public Object[] toArray() { return all.toArray(); }
 
@@ -39,13 +34,13 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     @Override public boolean add(NextTickListEntry e) {
         all.add(e);
-        addByCube(e);
+        byCube.add(e);
         return true;
     }
 
     @Override public boolean remove(Object o) {
         boolean ret = all.remove(o);
-        if (ret) { removeByCube((NextTickListEntry) o); }
+        if (ret) { byCube.remove((NextTickListEntry) o); }
         return ret;
     }
 
@@ -60,19 +55,19 @@ public class CubeSplitTickList extends AbstractList<NextTickListEntry> {
 
     @Override public NextTickListEntry set(int index, NextTickListEntry e) {
         NextTickListEntry old = all.set(index, e);
-        removeByCube(old);
-        addByCube(e);
+        byCube.remove(old);
+        byCube.add(e);
         return old;
     }
 
     @Override public void add(int index, NextTickListEntry element) {
         all.add(index, element);
-        addByCube(element);
+        byCube.add(element);
     }
 
     @Override public NextTickListEntry remove(int index) {
         NextTickListEntry old = all.remove(index);
-        removeByCube(old);
+        byCube.remove(old);
         return old;
     }
 

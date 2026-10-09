@@ -38,7 +38,7 @@ public final class ContentScoringTie {
     }
 
     static void match(MinecraftServer server, ScoreDef def, List<String> lines) {
-        Scoreboard board = server.getWorld(0).getScoreboard();
+        Scoreboard board = ContentTeams.board(server);
         ScoreObjective objective = board.getObjective(def.name);
         List<Score> top = objective == null ? new ArrayList<>() : top(board.getSortedScores(objective));
         if (top.size() > 1) { lines.add(0, ContentTurns.shown(draw(server, def, top).getPlayerName()) + " won the tiebreak"); }

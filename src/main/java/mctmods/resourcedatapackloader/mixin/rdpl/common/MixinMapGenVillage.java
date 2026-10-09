@@ -42,7 +42,6 @@ import java.util.List;
     @Shadow private int size;
     @Unique private int rdpl$asked;
     @Unique private boolean rdpl$stated;
-    @Unique private boolean rdpl$told;
     @Unique private static List<Biome> rdpl$vanillaBiomes;
 
     @Inject(method = "getStructureStart", at = @At("HEAD")) private void rdpl$districtAlone(int chunkX, int chunkZ, CallbackInfoReturnable<StructureStart> cir) { CityGrid.alone(CityGrid.on()); }
@@ -88,8 +87,7 @@ import java.util.List;
         ((IMapGenVillageStart) grown).rdpl$setSizeable(sizeable);
     }
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$placement(CallbackInfo ci) {
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$placement(CallbackInfo ci) {
         int stated = ContentStructurePlacement.spacing(ContentStructurePlacement.VILLAGES, distance);
         rdpl$stated = stated != distance;
         rdpl$asked = Math.max(9, stated);
@@ -112,24 +110,18 @@ import java.util.List;
         if (data == null) { return false; }
         IPackingStructureData known = (IPackingStructureData) data;
         if (most > 0 && known.rdpl$startCount() >= most) {
-            if (!rdpl$cappedTold) {
-                rdpl$cappedTold = true;
-                ContentLog.LOGGER.info("The world holds its {} village(s), the most the pack allows, so no further village is founded", most);
-            }
+            ContentLog.LOGGER.once("The world holds its {} village(s), the most the pack allows, so no further village is founded", most);
             return true;
         }
         return apart > 0 && known.rdpl$startWithin(chunkX, chunkZ, apart);
     }
 
-    @Unique private boolean rdpl$cappedTold;
 
     @Unique private void rdpl$hold() {
         if (!rdpl$stated || distance == rdpl$asked) { return; }
         int found = distance;
         distance = rdpl$asked;
-        if (rdpl$told) { return; }
-        rdpl$told = true;
-        ContentLog.LOGGER.warn("The pack asks for villages every {} chunk(s). Another mod set {} after this mod had already asked, Mo' Villages does this from its own villageDistance setting, so the pack's number is put back and is what generates", rdpl$asked, found);
+        ContentLog.LOGGER.onceWarn("The pack asks for villages every {} chunk(s). Another mod set {} after this mod had already asked, Mo' Villages does this from its own villageDistance setting, so the pack's number is put back and is what generates", rdpl$asked, found);
     }
 
     @Inject(method = "canSpawnStructureAtCoords", at = @At("HEAD"), cancellable = true) private void rdpl$flatSite(int chunkX, int chunkZ, CallbackInfoReturnable<Boolean> cir) {

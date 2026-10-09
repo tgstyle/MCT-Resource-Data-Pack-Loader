@@ -11,6 +11,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = { BlockQuery.BlockQueryBase.class, BlockQuery.BlockPosQuerySustainsPlantType.class }, remap = false) public abstract class MixinBlockQueryBase {
-    @Redirect(method = "matches(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;", remap = true))
-    private IBlockState rdpl$readLoaded(World world, BlockPos pos) { return ContentCascade.stateOrUnloaded(world, pos); }
+    @Redirect(method = "matches(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;", remap = true)) private IBlockState rdpl$readLoaded(World world, BlockPos pos) { return ContentCascade.stateOrUnloaded(world, pos); }
 }

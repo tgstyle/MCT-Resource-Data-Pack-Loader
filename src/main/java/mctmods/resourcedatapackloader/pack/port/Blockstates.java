@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,7 +26,7 @@ final class Blockstates {
     static void generate(Ported pack) {
         for (Map.Entry<String, JsonObject> entry : pack.blockDefs().entrySet()) {
             String namespace = entry.getKey().substring(0, entry.getKey().indexOf(':'));
-            String file = entry.getKey().substring(entry.getKey().indexOf(':') + 1);
+            String file = IdNames.path(entry.getKey());
             JsonObject def = entry.getValue();
             if (pack.exposes(namespace, "blockstates/" + file + ".json")) { continue; }
             List<String> variants = new ArrayList<>();
@@ -37,7 +39,7 @@ final class Blockstates {
         }
         for (Map.Entry<String, JsonObject> entry : pack.itemDefs().entrySet()) {
             String namespace = entry.getKey().substring(0, entry.getKey().indexOf(':'));
-            String file = entry.getKey().substring(entry.getKey().indexOf(':') + 1);
+            String file = IdNames.path(entry.getKey());
             JsonObject def = entry.getValue();
             if (!def.has("variants") || !def.get("variants").isJsonObject()) { continue; }
             String type = def.has("type") && def.get("type").isJsonPrimitive() ? def.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
@@ -176,8 +178,8 @@ final class Blockstates {
             JsonObject blocks = new JsonObject();
             for (String variant : variants) {
                 String side = face(variant);
-                String top = texture(pack, namespace, "blocks", variant + "_top", " ");
-                String bottom = texture(pack, namespace, "blocks", variant + "_bottom", " ");
+                String top = texture(pack, namespace, "blocks", variant + "_top", "\0");
+                String bottom = texture(pack, namespace, "blocks", variant + "_bottom", "\0");
                 if (top == null && bottom == null) { blocks.add(variant, obj("textures", obj("all", side))); }
                 else { blocks.add(variant, obj("model", "cube_bottom_top", "textures", obj("top", top == null ? side : top, "bottom", bottom == null ? side : bottom, "side", side))); }
             }

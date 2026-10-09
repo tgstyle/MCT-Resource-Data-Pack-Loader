@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
+import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.storage.StorageFormatProviderBase;
 import mctmods.resourcedatapackloader.content.rubic.worldgen.VanillaCompatibilityGeneratorProviderBase;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -9,6 +11,7 @@ import net.minecraft.nbt.CompressedStreamTools;
 import net.minecraft.nbt.NBTBase;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.StartupQuery;
 import net.minecraftforge.fml.common.ZipperUtil;
@@ -33,7 +36,7 @@ public final class CubicChunksWorld {
             + "Convert to a rubic world \"Yes\"\n"
             + "To return to the menu \"No\"";
     private static final String THEIR_DATA = "cubicChunksData.dat";
-    private static final String OUR_DATA = "rdplRubicData.dat";
+    private static final String OUR_DATA = Rubic.DATA_ID + ".dat";
 
     private CubicChunksWorld() {}
 
@@ -89,7 +92,7 @@ public final class CubicChunksWorld {
             NBTTagCompound data = root.getCompoundTag("Data");
             if (!OldRegionNames.cubicChunksMarked(data)) { continue; }
             data.removeTag("isCubicWorld");
-            data.setBoolean("isRubicWorld", true);
+            data.setBoolean(WorldSavedRubicData.IS_RUBIC_WORLD, true);
             levels.put(file, root);
         }
         for (Path[] move : moves) { Files.move(move[0], move[1]); }
@@ -104,15 +107,15 @@ public final class CubicChunksWorld {
 
     private static NBTTagCompound rubicData(Path world, Path file) throws IOException {
         NBTTagCompound root = OldRegionNames.read(file);
-        if (!root.hasKey("data", 10)) { throw new IOException(world.relativize(file) + " cannot be read: no data compound"); }
+        if (!root.hasKey("data", Constants.NBT.TAG_COMPOUND)) { throw new IOException(world.relativize(file) + " cannot be read: no data compound"); }
         NBTTagCompound data = root.getCompoundTag("data");
         if (data.hasKey("isCubicChunks")) {
             NBTBase flag = data.getTag("isCubicChunks");
             data.removeTag("isCubicChunks");
-            data.setTag("isRubicWorld", flag);
+            data.setTag(WorldSavedRubicData.IS_RUBIC_WORLD, flag);
         }
-        rename(world, file, data, "storageFormat", "cubicchunks:anvil3d", StorageFormatProviderBase.DEFAULT.toString());
-        rename(world, file, data, "compatibilityGeneratorType", "cubicchunks:default", VanillaCompatibilityGeneratorProviderBase.DEFAULT.toString());
+        rename(world, file, data, WorldSavedRubicData.STORAGE_FORMAT, "cubicchunks:anvil3d", StorageFormatProviderBase.DEFAULT.toString());
+        rename(world, file, data, WorldSavedRubicData.GENERATOR_TYPE, "cubicchunks:default", VanillaCompatibilityGeneratorProviderBase.DEFAULT.toString());
         return root;
     }
 

@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.JsonTree;
 
 import com.google.gson.JsonArray;
@@ -60,8 +63,10 @@ final class DownAssets {
         return rest.length() == JSON.length() || rest.indexOf('/') >= 0 ? null : ITEM_MODELS + rest;
     }
 
+    private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - JSON.length()); }
+
     @Nullable static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
-        String self = namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - JSON.length());
+        String self = selfModel(namespace, modelPath);
         List<Case> cases = cases(definition, self, file, note);
         if (cases.isEmpty() || cases.get(0).model.equals(self)) { return null; }
         JsonObject model = new JsonObject();
@@ -72,7 +77,7 @@ final class DownAssets {
 
     static void attach(JsonObject model, String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
         if (model.has("overrides")) { return; }
-        String self = namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - JSON.length());
+        String self = selfModel(namespace, modelPath);
         overrides(model, cases(definition, self, file, note));
     }
 
@@ -95,13 +100,13 @@ final class DownAssets {
     }
 
     private static void collect(JsonElement node, JsonObject predicate, String self, List<Case> out, String file, Consumer<String> note) {
-        if (!node.isJsonObject()) { return; }
+        if (node == null || !node.isJsonObject()) { return; }
         JsonObject held = node.getAsJsonObject();
-        String type = DownFixes.namespaced(DownFixes.string(held, TYPE));
-        String property = DownFixes.namespaced(DownFixes.string(held, PROPERTY));
+        String type = namespaced(Json.text(held, TYPE));
+        String property = namespaced(Json.text(held, PROPERTY));
         switch (type) {
             case "minecraft:model":
-                out.add(new Case(predicate, DownFixes.string(held, MODEL)));
+                out.add(new Case(predicate, Json.text(held, MODEL)));
                 break;
             case "minecraft:condition": {
                 String named = "minecraft:using_item".equals(property) ? using(self) : CONDITIONS.get(property);
@@ -115,12 +120,12 @@ final class DownAssets {
                 break;
             case "minecraft:select":
                 if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, file, note); }
-                if (!"minecraft:main_hand".equals(property) || !held.has("cases")) {
+                if (!"minecraft:main_hand".equals(property) || !held.has("cases") || !held.get("cases").isJsonArray()) {
                     lost(file, property, note);
                     return;
                 }
                 for (JsonElement one : held.getAsJsonArray("cases")) {
-                    if (one.isJsonObject() && "left".equals(DownFixes.string(one.getAsJsonObject(), "when"))) { collect(one.getAsJsonObject().get(MODEL), with(predicate, "lefthanded", 1.0F), self, out, file, note); }
+                    if (one.isJsonObject() && "left".equals(Json.text(one.getAsJsonObject(), "when"))) { collect(one.getAsJsonObject().get(MODEL), with(predicate, "lefthanded", 1.0F), self, out, file, note); }
                 }
                 break;
             default: lost(file, type, note);

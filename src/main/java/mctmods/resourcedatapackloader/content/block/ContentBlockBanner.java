@@ -15,7 +15,6 @@ import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumBlockRenderType;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraft.world.Explosion;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
@@ -58,27 +57,19 @@ import javax.annotation.Nullable;
         return item;
     }
 
-    @Override @Nonnull public String getLocalizedName() { return I18n.translateToLocal(getTranslationKey() + ".name"); }
+    @Override @Nonnull public String getLocalizedName() { return BannerParts.name(this); }
 
     @Override public boolean hasTileEntity(@Nonnull IBlockState state) { return false; }
 
     @Override @Nonnull public EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return EnumBlockRenderType.MODEL; }
 
-    @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) {
-        return banner == null ? Item.getItemFromBlock(this) : banner;
-    }
+    @Override @Nonnull public Item getItemDropped(@Nonnull IBlockState state, @Nonnull Random rand, int fortune) { return BannerParts.dropped(this, banner); }
 
-    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
-        return banner == null ? ItemStack.EMPTY : new ItemStack(banner);
-    }
+    @Override @Nonnull public ItemStack getItem(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return BannerParts.stack(banner); }
 
-    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
-        if (banner != null) { drops.add(new ItemStack(banner)); }
-    }
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) { BannerParts.drops(drops, banner); }
 
-    @Override public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
-        return def.at(0).resistance / def.explosionResistanceDivisor;
-    }
+    @Override public float getExplosionResistance(@Nonnull World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return BannerParts.resistance(def); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 }

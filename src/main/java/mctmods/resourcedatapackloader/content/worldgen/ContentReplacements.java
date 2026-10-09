@@ -5,8 +5,10 @@ import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -21,10 +23,10 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Nullable;
 
 public final class ContentReplacements {
-    private static final int FLAGS = 2 | 16;
     private static final Blocked REPLACED = new Blocked();
     private static final Set<String> REPORTED = new HashSet<>();
     private static final Map<IBlockState, IBlockState> EXACT = new HashMap<>();
@@ -54,7 +56,7 @@ public final class ContentReplacements {
     public static boolean appliesTo(int dimension) {
         if (dimensions == null) { load(); }
         if (dimensions.isEmpty()) { return true; }
-        return dimensions.contains(dimension) != blacklist;
+        return Listing.allows(dimensions.contains(dimension), blacklist);
     }
 
     public static void replace(World world, int chunkX, int chunkZ) {
@@ -78,7 +80,7 @@ public final class ContentReplacements {
                         IBlockState swap = replacementFor(found);
                         if (swap == null) { continue; }
                         pos.setPos(baseX + x, worldY, baseZ + z);
-                        world.setBlockState(pos, swap, FLAGS);
+                        world.setBlockState(pos, swap, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
                         count(found, swap);
                         replaced++;
                     }
@@ -116,8 +118,8 @@ public final class ContentReplacements {
         return swap;
     }
 
-    private static void count(IBlockState found, IBlockState wanted) {
-        String key = KEYS.computeIfAbsent(found, held -> name(held) + " to " + name(wanted));
+    private static void count(IBlockState found, IBlockState target) {
+        String key = KEYS.computeIfAbsent(found, held -> name(held) + " to " + name(target));
         REPLACED.count(key);
         if (!logging) { return; }
         if (REPORTED.add(key)) { ContentLog.LOGGER.info("Replacing {} in chunks that already exist", key); }
@@ -126,6 +128,13 @@ public final class ContentReplacements {
     private static String name(IBlockState state) {
         ResourceLocation registry = state.getBlock().getRegistryName();
         return (registry == null ? "unknown" : registry.toString()) + ":" + state.getBlock().getMetaFromState(state);
+    }
+
+    private static Set<String> sources() {
+        Set<String> names = new TreeSet<>();
+        for (IBlockState state : EXACT.keySet()) { names.add("exact " + name(state)); }
+        for (Block block : WHOLE.keySet()) { names.add("whole " + block.getRegistryName()); }
+        return names;
     }
 
     private static void load() {
@@ -146,17 +155,17 @@ public final class ContentReplacements {
             String[] parts = Settings.pair(entry, "blockReplacements", "block=block");
             if (parts == null) { continue; }
             String from = parts[0];
-            IBlockState wanted = ContentStates.parse(parts[1], "blockReplacements entry '" + entry + "'");
-            if (wanted == null) { continue; }
+            IBlockState target = ContentStates.parse(parts[1], "blockReplacements entry '" + entry + "'");
+            if (target == null) { continue; }
             IBlockState found = ContentStates.parse(from, "blockReplacements entry '" + entry + "'");
             if (found == null) { continue; }
-            if (from.split(":").length < 3) { WHOLE.put(found.getBlock(), wanted); }
-            else { EXACT.put(found, wanted); }
+            if (from.split(":").length < 3) { WHOLE.put(found.getBlock(), target); }
+            else { EXACT.put(found, target); }
         }
         blacklist = ContentControl.flag(ContentControl.REPLACEMENTS, "blockReplacementDimensionsAreBlacklist", Config.worldgen.blockReplacementDimensionsAreBlacklist);
         logging = ContentControl.flag(ContentControl.REPLACEMENTS, "logBlockReplacements", Config.worldgen.logBlockReplacements);
         wanted = !EXACT.isEmpty() || !WHOLE.isEmpty();
-        token = "replace:" + EXACT.keySet().hashCode() + ":" + WHOLE.keySet().hashCode() + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey).trim();
+        token = "replace:" + sources().hashCode() + "#" + ContentControl.text(ContentControl.REPLACEMENTS, "blockReplacementKey", Config.worldgen.blockReplacementKey).trim();
         if (wanted) { Summary.info("replacements.setup", "Replacing " + (EXACT.size() + WHOLE.size()) + " kind(s) of block in chunks that already exist, between y" + minHeight + " and y" + maxHeight); }
     }
 }

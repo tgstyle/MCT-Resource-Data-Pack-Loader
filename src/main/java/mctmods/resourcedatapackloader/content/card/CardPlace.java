@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.scoreboard.ScoreObjective;
@@ -19,15 +21,14 @@ import java.util.Locale;
 import javax.annotation.Nullable;
 
 final class CardPlace {
-    private static final long DAY_TICKS = 24000L;
     private static final List<String> VANILLA_STRUCTURES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
 
     private CardPlace() {}
 
-    static boolean inDimension(String wanted, int dimension) {
-        if (wanted.isEmpty()) { return true; }
-        try { return Integer.parseInt(wanted) == dimension; }
-        catch (NumberFormatException ignored) { return bare(wanted).equals(bare(dimensionName(dimension))); }
+    static boolean elsewhere(String wanted, int dimension) {
+        if (wanted.isEmpty()) { return false; }
+        try { return Integer.parseInt(wanted) != dimension; }
+        catch (NumberFormatException ignored) { return !bare(wanted).equals(bare(dimensionName(dimension))); }
     }
 
     static String dimensionName(int dimension) {
@@ -37,7 +38,7 @@ final class CardPlace {
     }
 
     private static String bare(String name) {
-        String lowered = name.trim().toLowerCase(Locale.ROOT);
+        String lowered = Settings.lower(name);
         int colon = lowered.indexOf(':');
         return colon < 0 ? lowered : lowered.substring(colon + 1);
     }
@@ -81,7 +82,7 @@ final class CardPlace {
         return board.getOrCreateScore(player.getName(), found).getScorePoints();
     }
 
-    static long day(World world) { return world.getWorldTime() / DAY_TICKS; }
+    static long day(World world) { return world.getWorldTime() / DimensionTraitsDef.VANILLA_DAY; }
 
-    static int timeOfDay(World world) { return (int) (world.getWorldTime() % DAY_TICKS); }
+    static int timeOfDay(World world) { return (int) (world.getWorldTime() % DimensionTraitsDef.VANILLA_DAY); }
 }

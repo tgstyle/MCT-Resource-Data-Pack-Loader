@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.util;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import mctmods.resourcedatapackloader.util.interfaces.IBucketSorterEntry;
+
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.entity.player.EntityPlayer;
 import java.util.Collection;
 import java.util.Iterator;
@@ -31,7 +32,14 @@ import javax.annotation.Nonnull;
 
     protected abstract void storePlayerPosition(int index, EntityPlayer player);
 
-    protected abstract int computeBucketIdx(T element);
+    protected abstract long distanceSq(T element, int offset);
+
+    protected int computeBucketIdx(T element) {
+        if (playerPositions.length == 0) { return bucketCount - 1; }
+        long distSqMin = distanceSq(element, 0);
+        for (int i = coordinatesPerPlayer(); i < playerPositions.length; i += coordinatesPerPlayer()) { distSqMin = Math.min(distSqMin, distanceSq(element, i)); }
+        return bucketFromDistanceSq(distSqMin);
+    }
 
     public void tick() {
         updatePlayerPositions();
@@ -140,9 +148,9 @@ import javax.annotation.Nonnull;
         long sorterStorage = entry.getSorterStorage(intrusiveCollectionId);
         if (sorterStorage == 0) { return; }
         entry.setSorterStorage(intrusiveCollectionId, 0);
-        int bucket = ((int) sorterStorage) >> 1;
+        int bucket = Longs.low(sorterStorage) >> 1;
         bucketSizes[bucket]--;
-        int index = (int) (sorterStorage >>> 32);
+        int index = Longs.high(sorterStorage);
         ObjectArrayList<T> list = buckets[bucket];
         if (index == list.size() - 1) {
             list.pop();

@@ -33,9 +33,11 @@ import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.living.PotionEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
@@ -43,9 +45,15 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.EntityEntry;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
 
 public final class ContentEntities {
@@ -59,6 +67,12 @@ public final class ContentEntities {
     private static long struckAt;
     private static boolean struckEffects;
     private static boolean struckFire;
+    private static final Map<Integer, Long> WAS_AT = new HashMap<>();
+    private static final Map<Integer, Float> FACED = new HashMap<>();
+    private static final Map<Integer, Float> HEALTHS = new HashMap<>();
+    private static final Map<String, Integer> FELL_TO = new LinkedHashMap<>();
+    private static final int ENGAGE_EVERY = 100;
+    private static int engageWatch;
 
     private ContentEntities() {}
 
@@ -109,6 +123,11 @@ public final class ContentEntities {
         return event;
     }
 
+    public static SoundEvent soundEvent(Entity entity, int which, Supplier<SoundEvent> vanilla) {
+        SoundEvent own = soundEvent(entity, which);
+        return own != null ? own : vanilla.get();
+    }
+
     public static int attackInterval(EntityLivingBase attacker) {
         IAttributeInstance speed = attacker.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_SPEED.getName());
         if (speed == null || speed.getAttributeValue() <= 0.0D) { return 20; }
@@ -150,12 +169,6 @@ public final class ContentEntities {
         return def != null && def.steerable;
     }
 
-    private static final java.util.Map<Integer, Long> WAS_AT = new java.util.HashMap<>();
-    private static final java.util.Map<Integer, Float> FACED = new java.util.HashMap<>();
-    private static final java.util.Map<Integer, Float> HEALTHS = new java.util.HashMap<>();
-    private static final int ENGAGE_EVERY = 100;
-    private static int engageWatch;
-
     @SubscribeEvent public static void onEngagement(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || BY_CLASS.isEmpty() || !ContentLog.LOGGER.debugEnabled()) { return; }
         if (++engageWatch % ENGAGE_EVERY != 0) { return; }
@@ -168,9 +181,9 @@ public final class ContentEntities {
         int walked = 0;
         int spun = 0;
         int hurt = 0;
-        java.util.List<EntityLiving> here = new java.util.ArrayList<>();
+        List<EntityLiving> here = new ArrayList<>();
         long away = 0L;
-        java.util.Set<Integer> seen = new java.util.HashSet<>();
+        Set<Integer> seen = new HashSet<>();
         for (WorldServer world : server.worlds) {
             if (world == null) { continue; }
             for (Entity entity : world.loadedEntityList) {
@@ -185,7 +198,7 @@ public final class ContentEntities {
                 Long was = WAS_AT.put(mob.getEntityId(), at);
                 Float faced = FACED.put(mob.getEntityId(), mob.rotationYaw);
                 if (was != null && was != at) { walked++; }
-                if (was != null && was == at && faced != null && Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(mob.rotationYaw - faced)) >= 90.0F) { spun++; }
+                if (was != null && was == at && faced != null && Math.abs(MathHelper.wrapDegrees(mob.rotationYaw - faced)) >= 90.0F) { spun++; }
                 EntityLivingBase aim = mob.getAttackTarget();
                 if (aim == null) { continue; }
                 aimed++;
@@ -196,7 +209,7 @@ public final class ContentEntities {
             }
         }
         int gone = 0;
-        for (java.util.Iterator<Integer> held = WAS_AT.keySet().iterator(); held.hasNext();) {
+        for (Iterator<Integer> held = WAS_AT.keySet().iterator(); held.hasNext();) {
             Integer id = held.next();
             if (seen.contains(id)) { continue; }
             held.remove();
@@ -252,12 +265,10 @@ public final class ContentEntities {
         }
         if (mobs == 0) { return; }
         ContentLog.LOGGER.debug("Of {} pack mob(s), {} hold a target, {} of those have no path to walk to it, {} stand close enough to strike, and a target is {} block(s) off on average; {} moved since the last look, {} are gone since the last look and {} turned 90 degrees or more without leaving their block, {} lost health since the last look, the thickest crowd holds {} within 8 blocks and a mob stands {} block(s) from the middle of them all on average",
-                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, gone, spun, hurt, thickest, String.format(java.util.Locale.ROOT, "%.1f", spread));
+                mobs, aimed, pathless, reaching, aimed == 0 ? 0L : away / aimed, walked, gone, spun, hurt, thickest, String.format(Locale.ROOT, "%.1f", spread));
     }
 
-    private static final java.util.Map<String, Integer> FELL_TO = new java.util.LinkedHashMap<>();
-
-    @SubscribeEvent public static void onDeathWatch(net.minecraftforge.event.entity.living.LivingDeathEvent event) {
+    @SubscribeEvent public static void onDeathWatch(LivingDeathEvent event) {
         if (!ContentLog.LOGGER.debugEnabled() || BY_CLASS.get(event.getEntityLiving().getClass()) == null) { return; }
         FELL_TO.merge(event.getSource().damageType, 1, Integer::sum);
     }

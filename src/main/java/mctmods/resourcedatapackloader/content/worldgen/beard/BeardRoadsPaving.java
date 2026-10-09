@@ -4,10 +4,12 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.MergePiece;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
+import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
@@ -28,10 +30,10 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class BeardRoadsPaving {
-    private BeardRoadsPaving() {}
-
     private static final int VERGE_WET = 8;
     static final int FILL_UNDER = 8;
+
+    private BeardRoadsPaving() {}
 
     public static void pave(StructureComponent piece, World world, StructureBoundingBox clip, IBlockState path, IBlockState gravel, IBlockState planks, boolean chosenSurface) {
         StructureBoundingBox box = piece.getBoundingBox();
@@ -71,7 +73,7 @@ public final class BeardRoadsPaving {
 
     @Nullable private static BeardRoads.Grade storedGrade(StructureComponent piece, StructureBoundingBox box) {
         BeardRoads.Grade graded = BeardRoads.fittedLayout(piece);
-        if (graded == null && piece instanceof IRoadLayout && ((IRoadLayout) piece).rdpl$layout() != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
+        if (graded == null && BeardRoads.layoutOf(piece) != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The stored profile of the road at {}, {} no longer matches its box, so it is set aside and recomputed", box.minX, box.minZ); }
         return graded;
     }
 
@@ -175,12 +177,12 @@ public final class BeardRoadsPaving {
             this.acrossMost = alongX ? box.maxZ : box.maxX;
             int depth = BeardRoadsTunnels.tunnelDepth();
             this.linings = BeardRoadsTunnels.tunnelPalette();
-            this.light = BeardRoads.pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
+            this.light = BeardRoads.tunnelLightBlock();
             int lightRun = Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathTunnelLightRun", Config.worldgen.villagePathTunnelLightRun));
             this.dock = BeardRoadsDecks.pierFor(world, piece, alongX, box, graded);
             this.crossed = BeardRoads.crossings(nearby, piece, box);
             for (StructureBoundingBox other : crossed) {
-                if (other.maxX >= box.minX - 1 && other.minX <= box.maxX + 1 && other.maxZ >= box.minZ - 1 && other.minZ <= box.maxZ + 1) { touching.add(other); }
+                if (other.intersectsWith(box.minX - 1, box.minZ - 1, box.maxX + 1, box.maxZ + 1)) { touching.add(other); }
             }
             this.tunnels = new boolean[profile.length];
             this.bores = BeardRails.subways(world, box);
@@ -208,11 +210,11 @@ public final class BeardRoadsPaving {
 
         private void row(int i) {
             int row = start + i;
-            if (piece instanceof mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece && BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
-                path = BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
-                gravel = BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, ((mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()));
+            if (piece instanceof IVillagePiece && BeardBiome.moved(world, alongX ? row : center, alongX ? center : row)) {
+                path = BeardRoads.surfaceBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRASS_PATH.getDefaultState()));
+                gravel = BeardRoads.supportBlock(((IVillagePiece) piece).rdpl$biomeBlock(Blocks.GRAVEL.getDefaultState()));
                 linings = BeardRoadsTunnels.tunnelPalette();
-                light = BeardRoads.pathBlock("villagePathTunnelLightBlock", Config.worldgen.villagePathTunnelLightBlock, Blocks.AIR.getDefaultState());
+                light = BeardRoads.tunnelLightBlock();
             }
             for (int across = acrossLeast; across <= acrossMost; across++) { cell(i, across); }
             if (frames[i] && BeardRoadsTunnels.uncrossedRow(touching, alongX, row) && (dock == null || !dock.covers(row))) {
@@ -319,7 +321,7 @@ public final class BeardRoadsPaving {
                     IBlockState piered = chosenSurface ? path : BeardRoads.pathForGround(world, x, z, path, gravel, true);
                     boolean joint = BeardRoadsSurface.squareAt(box, alongX, crossed, x, z);
                     IBlockState dressed = BeardRoadsSurface.dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, center, piered, planks, crossed);
-                    world.setBlockState(at, dressed != null ? dressed : piered, 2);
+                    world.setBlockState(at, dressed != null ? dressed : piered, BlockFlags.UPDATE_CLIENTS);
                     paved++;
                     if (joint) { paved += BeardRoadsDecks.deckRail(world, box, alongX, start + i, across, acrossLeast, acrossMost, profile[i], planks, gravel, at, dock, crossed, false, false); }
                 }
@@ -355,7 +357,7 @@ public final class BeardRoadsPaving {
             }
             boolean joint = BeardRoadsSurface.squareAt(box, alongX, crossed, x, z);
             IBlockState dressed = BeardRoadsSurface.dressSurface(world, piece, alongX, alongX ? x : z, alongX ? z : x, center, natural, planks, crossed);
-            world.setBlockState(at, dressed != null ? dressed : natural, 2);
+            world.setBlockState(at, dressed != null ? dressed : natural, BlockFlags.UPDATE_CLIENTS);
             paved++;
             roofOver(i, across, x, z, target);
             paved += BeardRoadsEnds.deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at);
@@ -382,7 +384,7 @@ public final class BeardRoadsPaving {
                 if (above.getMaterial().isLiquid()) { break; }
                 if (BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || above.getMaterial() == Material.WOOD || above.getMaterial() == Material.LEAVES || !above.getMaterial().isSolid()) {
                     BeardBlocks.note(world, at, "Paving the road");
-                    world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                    world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                     cut++;
                     continue;
                 }
@@ -399,7 +401,7 @@ public final class BeardRoadsPaving {
                 at.setPos(x, target, z);
             }
             if (!BeardKeep.holds(at.getX(), at.getY(), at.getZ())) {
-                world.setBlockState(at, decked, 2);
+                world.setBlockState(at, decked, BlockFlags.UPDATE_CLIENTS);
                 paved++;
             }
             if (dock == null) { paved += BeardRoadsEnds.deadEndCap(cap, world, piece, alongX, start + i, across, acrossLeast, target, at); }
@@ -407,7 +409,7 @@ public final class BeardRoadsPaving {
 
         private void mergeCell(int i, int across, int x, int z, int target, IBlockState natural) {
             int merged = ((MergePiece) piece).centerAt(start + i);
-            if (Math.abs(across - merged) > (BeardRoads.pathFullWidth() - 1) / 2) {
+            if (Math.abs(across - merged) > ContentBeard.streetHalf()) {
                 filled += vergeFill(world, piece, bores, x, z, target, at);
                 at.setPos(x, target, z);
                 if (world.getBlockState(at).getMaterial().isReplaceable() && !BeardKeep.holds(x, target, z)) {
@@ -416,13 +418,13 @@ public final class BeardRoadsPaving {
                     if (footing.getMaterial().isSolid() && !footing.getMaterial().isLiquid()) {
                         at.setPos(x, target, z);
                         IBlockState turf = BeardBlocks.fillGround(world, x, z);
-                        world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, 2);
+                        world.setBlockState(at, turf.getBlock() == Blocks.DIRT ? Blocks.GRASS.getDefaultState() : turf, BlockFlags.UPDATE_CLIENTS);
                         filled++;
                     }
                 }
                 return;
             }
-            world.setBlockState(at, BeardRoadsSurface.mergeSurface(alongX, x, z, start + i, merged, natural), 2);
+            world.setBlockState(at, BeardRoadsSurface.mergeSurface(alongX, x, z, start + i, merged, natural), BlockFlags.UPDATE_CLIENTS);
             paved++;
         }
     }
@@ -510,15 +512,11 @@ public final class BeardRoadsPaving {
     }
 
     public static void paveMerge(MergePiece piece, World world, StructureBoundingBox clip) {
-        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
-        try {
-            pave(piece, world, clip,
-                    BeardRoads.pathBlock("villagePathBlock", Config.worldgen.villagePathBlock, Blocks.GRASS_PATH.getDefaultState()),
-                    BeardRoads.pathBlock("villagePathSupportBlock", Config.worldgen.villagePathSupportBlock, Blocks.GRAVEL.getDefaultState()),
-                    BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState()),
-                    BeardRoads.pathChosen());
-        }
-        finally { BeardBiome.leave(); }
+        BeardBiome.within(world, clip, () -> pave(piece, world, clip,
+                BeardRoads.surfaceBlock(Blocks.GRASS_PATH.getDefaultState()),
+                BeardRoads.supportBlock(Blocks.GRAVEL.getDefaultState()),
+                BeardRoads.bridgeBlock(),
+                BeardRoads.pathChosen()));
     }
 
     public static int roadAnchor(World world, boolean alongX, int row, int acrossLeast, int acrossMost, IBlockState path, IBlockState gravel) {

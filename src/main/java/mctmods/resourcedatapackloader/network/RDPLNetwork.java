@@ -8,12 +8,15 @@ import mctmods.resourcedatapackloader.client.IntroPlayHandler;
 import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
+import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 public final class RDPLNetwork {
     public static final String CHANNEL = "rdpl";
@@ -25,19 +28,14 @@ public final class RDPLNetwork {
     public static void register() {
         if (channel != null) { return; }
         channel = NetworkRegistry.INSTANCE.newSimpleChannel(CHANNEL);
-        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroPlayHandler.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
-        else { channel.registerMessage(MessageIntroPlay.Idle.class, MessageIntroPlay.class, packetId++, Side.CLIENT); }
-        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(IntroLandMadeHandler.class, MessageIntroLandMade.class, packetId++, Side.CLIENT); }
-        else { channel.registerMessage(MessageIntroLandMade.Idle.class, MessageIntroLandMade.class, packetId++, Side.CLIENT); }
-        channel.registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class, packetId++, Side.SERVER);
-        channel.registerMessage(MessagePouchKey.Handler.class, MessagePouchKey.class, packetId++, Side.SERVER);
-        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(CardOverlay.Handler.class, MessageCard.class, packetId++, Side.CLIENT); }
-        else { channel.registerMessage(MessageCard.Idle.class, MessageCard.class, packetId++, Side.CLIENT); }
-        channel.registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class, packetId++, Side.CLIENT);
-        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(HoldView.Handler.class, MessageHold.class, packetId++, Side.CLIENT); }
-        else { channel.registerMessage(MessageHold.Idle.class, MessageHold.class, packetId++, Side.CLIENT); }
-        if (FMLCommonHandler.instance().getSide().isClient()) { channel.registerMessage(HoldView.NoteHandler.class, MessageNote.class, packetId++, Side.CLIENT); }
-        else { channel.registerMessage(MessageNote.Idle.class, MessageNote.class, packetId++, Side.CLIENT); }
+        registerClient(() -> IntroPlayHandler.class, MessageIntroPlay.class);
+        registerClient(() -> IntroLandMadeHandler.class, MessageIntroLandMade.class);
+        registerMessage(MessageIntroDone.Handler.class, MessageIntroDone.class);
+        registerMessage(MessagePouchKey.Handler.class, MessagePouchKey.class);
+        registerClient(() -> CardOverlay.Handler.class, MessageCard.class);
+        registerMessage(MessageHardnessSalt.Handler.class, MessageHardnessSalt.class);
+        registerClient(() -> HoldView.Handler.class, MessageHold.class);
+        registerClient(() -> HoldView.NoteHandler.class, MessageNote.class);
         registerMessage(MessageCubes.Handler.class, MessageCubes.class);
         registerMessage(MessageColumn.Handler.class, MessageColumn.class);
         registerMessage(MessageUnloadColumn.Handler.class, MessageUnloadColumn.class);
@@ -45,9 +43,20 @@ public final class RDPLNetwork {
         registerMessage(MessageCubeBlockChange.Handler.class, MessageCubeBlockChange.class);
         registerMessage(MessageRubicWorldData.Handler.class, MessageRubicWorldData.class);
         registerMessage(MessageHeightMapUpdate.Handler.class, MessageHeightMapUpdate.class);
-        registerMessage(MessageCubeSkyLightUpdates.Handler.class, MessageCubeSkyLightUpdates.class);
-        channel.registerMessage(MessageToasts.Handler.class, MessageToasts.class, packetId++, Side.CLIENT);
+        registerMessage(MessageToasts.Handler.class, MessageToasts.class);
     }
+
+    private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
+        Class<? extends IMessageHandler<REQ, IMessage>> handlerClass = FMLCommonHandler.instance().getSide().isClient() ? client.get() : idle();
+        channel.registerMessage(handlerClass, messageClass, packetId++, Side.CLIENT);
+    }
+
+    @SuppressWarnings("unchecked") private static <REQ extends IMessage> Class<? extends IMessageHandler<REQ, IMessage>> idle() {
+        Class<?> idle = IdleHandler.class;
+        return (Class<? extends IMessageHandler<REQ, IMessage>>) idle;
+    }
+
+    private static boolean unreachable(EntityPlayerMP player) { return channel == null || vanilla(player); }
 
     private static <REQ extends IMessage, REPLY extends IMessage> void registerMessage(Class<? extends IMessageHandler<REQ, REPLY>> handlerClass, Class<REQ> messageClass) {
         Side side = AbstractClientMessageHandler.class.isAssignableFrom(handlerClass) ? Side.CLIENT : Side.SERVER;
@@ -56,47 +65,32 @@ public final class RDPLNetwork {
 
     public static boolean vanilla(EntityPlayerMP player) { return vanilla(player.connection); }
 
-    public static boolean vanilla(@javax.annotation.Nullable net.minecraft.network.NetHandlerPlayServer connection) {
+    public static boolean vanilla(@Nullable NetHandlerPlayServer connection) {
         if (connection == null) { return true; }
         Boolean marked = connection.netManager.channel().attr(NetworkRegistry.FML_MARKER).get();
         return marked == null || !marked;
     }
 
     public static void sendTo(IMessage message, EntityPlayerMP player) {
-        if (channel == null || vanilla(player)) { return; }
+        if (unreachable(player)) { return; }
         channel.sendTo(message, player);
     }
 
-    public static void playIntro(EntityPlayerMP player) {
-        if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageIntroPlay(ContentPregen.busy()), player);
-    }
+    public static void playIntro(EntityPlayerMP player) { sendTo(new MessageIntroPlay(ContentPregen.busy()), player); }
 
-    public static void introLandMade(EntityPlayerMP player) {
-        if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageIntroLandMade(), player);
-    }
+    public static void introLandMade(EntityPlayerMP player) { sendTo(new MessageIntroLandMade(), player); }
 
     public static boolean sendNote(EntityPlayerMP player, String said) {
-        if (channel == null || vanilla(player)) { return false; }
+        if (unreachable(player)) { return false; }
         channel.sendTo(new MessageNote(said, Says.panel(), Says.font()), player);
         return true;
     }
 
-    public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) {
-        if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageHold(held, warning, fog, Says.panel(), Says.font()), player);
-    }
+    public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) { sendTo(new MessageHold(held, warning, fog, Says.panel(), Says.font()), player); }
 
-    public static void sendHardnessSalt(EntityPlayerMP player, long salt) {
-        if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageHardnessSalt(salt), player);
-    }
+    public static void sendHardnessSalt(EntityPlayerMP player, long salt) { sendTo(new MessageHardnessSalt(salt), player); }
 
-    public static void sendToasts(EntityPlayerMP player, int kinds) {
-        if (channel == null || vanilla(player)) { return; }
-        channel.sendTo(new MessageToasts(kinds), player);
-    }
+    public static void sendToasts(EntityPlayerMP player, int kinds) { sendTo(new MessageToasts(kinds), player); }
 
     public static void introDone() {
         if (channel == null) { return; }

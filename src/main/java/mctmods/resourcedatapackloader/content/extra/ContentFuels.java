@@ -9,8 +9,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
@@ -26,7 +24,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class ContentFuels {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -42,11 +39,8 @@ public final class ContentFuels {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Fuel file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "fuel file");
+        if (json == null) { return; }
         for (JsonElement element : JsonUtils.getJsonArray(json, "fuels")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);

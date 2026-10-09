@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
+import com.google.common.collect.Iterables;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
+import javax.annotation.Nullable;
 
 public final class PackOptions {
     private static final Map<String, Map<String, Boolean>> VALUES = new LinkedHashMap<>();
@@ -71,7 +74,7 @@ public final class PackOptions {
                 JsonObject merged = merge(shown, held, key);
                 Map<String, Boolean> options = new HashMap<>();
                 for (Map.Entry<String, JsonElement> entry : merged.entrySet()) {
-                    if (entry.getValue().isJsonPrimitive() && entry.getValue().getAsJsonPrimitive().isBoolean()) { options.put(entry.getKey(), entry.getValue().getAsBoolean()); }
+                    if (isBoolean(entry.getValue())) { options.put(entry.getKey(), entry.getValue().getAsBoolean()); }
                 }
                 VALUES.put(key, options);
                 ABOUT.put(key, about);
@@ -90,8 +93,8 @@ public final class PackOptions {
         try (Stream<Path> held = Files.list(HOME)) {
             held.filter(Files::isRegularFile)
                     .map(one -> one.getFileName().toString())
-                    .filter(one -> one.endsWith(".json"))
-                    .map(one -> one.substring(0, one.length() - 5))
+                    .filter(one -> one.endsWith(PackManager.JSON_SUFFIX))
+                    .map(one -> PackManager.stripJson(one, 0))
                     .filter(one -> !VALUES.containsKey(one) && !ModPacks.CONTROL_STEM.equals(one))
                     .sorted()
                     .forEach(stale::add);
@@ -122,8 +125,8 @@ public final class PackOptions {
             JsonObject defaults = new JsonObject();
             for (Map.Entry<String, JsonElement> entry : read.entrySet()) {
                 JsonElement held = entry.getValue();
-                if (held.isJsonPrimitive() && held.getAsJsonPrimitive().isBoolean()) { defaults.add(entry.getKey(), held); }
-                else if (held.isJsonObject() && held.getAsJsonObject().has("default") && held.getAsJsonObject().get("default").isJsonPrimitive() && held.getAsJsonObject().get("default").getAsJsonPrimitive().isBoolean()) {
+                if (isBoolean(held)) { defaults.add(entry.getKey(), held); }
+                else if (held.isJsonObject() && isBoolean(held.getAsJsonObject().get("default"))) {
                     defaults.add(entry.getKey(), held.getAsJsonObject().get("default"));
                     if (held.getAsJsonObject().has("description")) { about.put(entry.getKey(), held.getAsJsonObject().get("description").getAsString()); }
                     if (held.getAsJsonObject().has("hide") && held.getAsJsonObject().get("hide").getAsBoolean()) { shy.add(entry.getKey()); }
@@ -149,7 +152,7 @@ public final class PackOptions {
         boolean differs = false;
         for (Map.Entry<String, JsonElement> entry : defaults.entrySet()) {
             JsonElement mine = kept.get(entry.getKey());
-            if (mine != null && mine.isJsonPrimitive() && mine.getAsJsonPrimitive().isBoolean()) { merged.add(entry.getKey(), mine); }
+            if (isBoolean(mine)) { merged.add(entry.getKey(), mine); }
             else {
                 merged.add(entry.getKey(), entry.getValue());
                 differs = true;
@@ -165,7 +168,9 @@ public final class PackOptions {
         return merged;
     }
 
-    private static String gsonPretty(JsonObject held) { return ModPacks.GSON.toJson(held); }
+    private static boolean isBoolean(@Nullable JsonElement element) { return element != null && element.isJsonPrimitive() && element.getAsJsonPrimitive().isBoolean(); }
+
+    private static String gsonPretty(JsonObject held) { return Json.PRETTY.toJson(held); }
 
     public static Boolean option(String fileKey, String name) {
         Map<String, Boolean> options = VALUES.get(fileKey);
@@ -222,7 +227,7 @@ public final class PackOptions {
 
     public static void worldTold() { WORLD_CHANGED.clear(); }
 
-    public static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
+    private static boolean gates(String fileKey, String name) { return GATING.contains(name) || GATING.contains(fileKey + ":" + name); }
 
     public static void save(String fileKey, Map<String, Boolean> options) {
         Map<String, Boolean> held = VALUES.get(fileKey);
@@ -243,13 +248,7 @@ public final class PackOptions {
 
     public static Boolean anywhere(String name) {
         Boolean found = null;
-        for (Map<String, Boolean> options : VALUES.values()) {
-            Boolean held = options.get(name);
-            if (held == null) { continue; }
-            if (!held) { return false; }
-            found = true;
-        }
-        for (Map<String, Boolean> options : HIDDEN.values()) {
+        for (Map<String, Boolean> options : Iterables.concat(VALUES.values(), HIDDEN.values())) {
             Boolean held = options.get(name);
             if (held == null) { continue; }
             if (!held) { return false; }

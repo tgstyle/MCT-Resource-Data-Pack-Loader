@@ -6,6 +6,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Runs;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
@@ -29,6 +31,8 @@ public final class BeardRoadsTunnels {
 
     static final int BORE = 4;
     private static final Map<World, Map<StructureBoundingBox, boolean[]>> HILLS = new WeakHashMap<>();
+
+    static void forget(World world) { HILLS.remove(world); }
 
     public static boolean crossesHill(@Nullable List<StructureComponent> own, StructureBoundingBox box) {
         if (tunnelDepth() <= 0 || ContentBeard.samplerWorld == null) { return false; }
@@ -164,8 +168,7 @@ public final class BeardRoadsTunnels {
                 i++;
                 continue;
             }
-            int end = i;
-            while (end + 1 < tunnels.length && tunnels[end + 1]) { end++; }
+            int end = Runs.end(k -> tunnels[k], i, tunnels.length);
             if (end - i + 1 < BeardGrade.TUNNEL_LEAST) { Arrays.fill(tunnels, i, end + 1, false); }
             i = end + 1;
         }
@@ -179,8 +182,7 @@ public final class BeardRoadsTunnels {
                 i++;
                 continue;
             }
-            int end = i;
-            while (end + 1 < tunnels.length && tunnels[end + 1]) { end++; }
+            int end = Runs.end(k -> tunnels[k], i, tunnels.length);
             boolean any = false;
             for (int k = i; k <= end; k++) {
                 if (Math.floorMod(start + k, run) != 0) { continue; }
@@ -200,7 +202,7 @@ public final class BeardRoadsTunnels {
 
     static int boreCell(World world, BlockPos.MutableBlockPos at, int x, int z, int y, IBlockState block) {
         at.setPos(x, y, z);
-        world.setBlockState(at, block, 2);
+        world.setBlockState(at, block, BlockFlags.UPDATE_CLIENTS);
         return 1;
     }
 
@@ -228,7 +230,7 @@ public final class BeardRoadsTunnels {
         for (StructureComponent piece : BeardRoads.villagePieces(world)) {
             if (!(piece instanceof StructureVillagePieces.Path) || !(piece instanceof IRoadLayout) || ((IRoadLayout) piece).rdpl$layout() == null) { continue; }
             StructureBoundingBox box = piece.getBoundingBox();
-            if (box.maxX < near.minX || box.minX > near.maxX || box.maxZ < near.minZ || box.minZ > near.maxZ) { continue; }
+            if (!box.intersectsWith(near)) { continue; }
             found.add(piece);
         }
         return found;

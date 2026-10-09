@@ -46,9 +46,7 @@ import javax.annotation.Nullable;
             ContentLog.LOGGER.error("Block {} is a portal but has no 'portal' section, so it has nowhere to lead", def.registryName);
             return null;
         }
-        beginConstruction(def);
-        try { return new ContentBlockPortal(def); }
-        finally { endConstruction(); }
+        return BlockVariants.construct(def, ContentBlockPortal::new);
     }
 
     protected ContentBlockPortal(BlockDef def) {
@@ -111,9 +109,7 @@ import javax.annotation.Nullable;
         travel(world, (EntityPlayer) entity, held, state, pos);
     }
 
-    @Nullable @Override public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) {
-        return portalFor(state).walkIn ? NULL_AABB : super.getCollisionBoundingBox(state, world, pos);
-    }
+    @Nullable @Override public AxisAlignedBB getCollisionBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return portalFor(state).walkIn ? NULL_AABB : super.getCollisionBoundingBox(state, world, pos); }
 
     @Override public void neighborChanged(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Block block, @Nonnull BlockPos from) {
         super.neighborChanged(state, world, pos, block, from);
@@ -130,40 +126,40 @@ import javax.annotation.Nullable;
         return true;
     }
 
-    private void travel(World world, EntityPlayer player, PortalDef portal, IBlockState state, BlockPos pos) {
+    private void travel(World world, EntityPlayer player, PortalDef shown, IBlockState state, BlockPos pos) {
         if (!(player instanceof EntityPlayerMP)) { return; }
-        if (recently(player, portal)) { return; }
-        GateDef gate = portal.gate.isEmpty() ? null : ContentGates.find(portal.gate);
+        if (recently(player, shown)) { return; }
+        GateDef gate = shown.gate.isEmpty() ? null : ContentGates.find(shown.gate);
         if (gate != null && !ContentGates.unlocked(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }
-        int target = player.dimension == portal.dimension ? portal.returnDimension : portal.dimension;
+        int target = player.dimension == shown.dimension ? shown.returnDimension : shown.dimension;
         if (target == player.dimension) { return; }
-        sound(world, player, portal);
+        sound(world, player, shown);
         RECENT.put(player.getUniqueID(), world.getTotalWorldTime());
         ContentTeleporter.remember(player, player.dimension, pos);
-        player.changeDimension(target, new ContentTeleporter(portal, state, returning(world, state, pos)));
+        player.changeDimension(target, new ContentTeleporter(shown, state, returning(world, state, pos)));
     }
 
     @Nullable private PortalFit returning(World world, IBlockState state, BlockPos pos) {
         ContentPortals.Binding binding = ContentPortals.forBlock(state.getBlock());
-        if (binding == null || !binding.portal.buildsReturn()) { return null; }
+        if (binding == null || binding.portal.noReturn()) { return null; }
         return ContentPortals.fitAt(world, pos, binding);
     }
 
     public static void forget(UUID player) { RECENT.remove(player); }
 
-    private boolean recently(EntityPlayer player, PortalDef portal) {
+    private boolean recently(EntityPlayer player, PortalDef shown) {
         Long last = RECENT.get(player.getUniqueID());
         if (last == null) { return false; }
         long since = player.world.getTotalWorldTime() - last;
-        return since >= 0L && since < portal.cooldown;
+        return since >= 0L && since < shown.cooldown;
     }
 
-    private void sound(World world, EntityPlayer player, PortalDef portal) {
-        if (portal.sound.isEmpty()) { return; }
-        SoundEvent event = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(portal.sound));
+    private void sound(World world, EntityPlayer player, PortalDef shown) {
+        if (shown.sound.isEmpty()) { return; }
+        SoundEvent event = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(shown.sound));
         if (event == null) { return; }
         world.playSound(null, player.getPosition(), event, SoundCategory.BLOCKS, 1.0F, 1.0F);
     }

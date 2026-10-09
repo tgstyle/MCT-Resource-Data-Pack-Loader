@@ -16,11 +16,7 @@ import java.util.List;
         ContentBiomeControl.substitute((BiomeProvider) (Object) this, cir.getReturnValue(), width * height);
     }
 
-    @Inject(method = "getBiomes([Lnet/minecraft/world/biome/Biome;IIIIZ)[Lnet/minecraft/world/biome/Biome;", at = @At("RETURN"))
-    private void rdpl$substitute(Biome[] listToReuse, int x, int z, int width, int length, boolean cacheFlag, CallbackInfoReturnable<Biome[]> cir) {
-        ContentBiomeControl.substitute((BiomeProvider) (Object) this, cir.getReturnValue(), width * length);
-    }
+    @Inject(method = "getBiomes([Lnet/minecraft/world/biome/Biome;IIIIZ)[Lnet/minecraft/world/biome/Biome;", at = @At("RETURN")) private void rdpl$substitute(Biome[] listToReuse, int x, int z, int width, int length, boolean cacheFlag, CallbackInfoReturnable<Biome[]> cir) { ContentBiomeControl.substitute((BiomeProvider) (Object) this, cir.getReturnValue(), width * length); }
 
-    @Redirect(method = "areBiomesViable", at = @At(value = "INVOKE", target = "Ljava/util/List;contains(Ljava/lang/Object;)Z"))
-    private boolean rdpl$viableAfterSubstitution(List<Biome> allowed, Object held) { return ContentBiomeControl.viable((BiomeProvider) (Object) this, (Biome) held, allowed); }
+    @Redirect(method = "areBiomesViable", at = @At(value = "INVOKE", target = "Ljava/util/List;contains(Ljava/lang/Object;)Z")) private boolean rdpl$viableAfterSubstitution(List<Biome> allowed, Object held) { return ContentBiomeControl.viable((BiomeProvider) (Object) this, (Biome) held, allowed); }
 }

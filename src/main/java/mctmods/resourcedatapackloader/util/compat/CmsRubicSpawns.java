@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
 import mctmods.resourcedatapackloader.util.world.GenHeights;
-import mctmods.resourcedatapackloader.util.ContentLog;
 
 import drzhark.customspawner.CustomSpawner;
 import net.minecraft.entity.EnumCreatureType;
@@ -9,7 +8,6 @@ import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -22,12 +20,12 @@ public final class CmsRubicSpawns {
     private CmsRubicSpawns() {}
 
     public static void register() {
-        if (!Loader.isModLoaded("customspawner")) { return; }
-        MinecraftForge.EVENT_BUS.register(new Handler());
-        ContentLog.LOGGER.info("Custom Mob Spawner strips the biome spawn lists and its own spawner keeps within the vanilla heights, so on rubic worlds the mobs it remembered are handed back for everything above 255 or below 0");
+        if (CompatHooks.present("customspawner", "Custom Mob Spawner strips the biome spawn lists and its own spawner keeps within the vanilla heights, so on rubic worlds the mobs it remembered are handed back for everything above 255 or below 0")) { MinecraftForge.EVENT_BUS.register(new Handler()); }
     }
 
     public static final class Handler {
+        private static final Map<Biome, EnumMap<EnumCreatureType, List<Biome.SpawnListEntry>>> REMEMBERED = new IdentityHashMap<>();
+
         @SubscribeEvent public void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
             int y = event.getPos().getY();
             if (y >= 0 && y < 256) { return; }
@@ -35,8 +33,6 @@ public final class CmsRubicSpawns {
             if (world.isRemote || !GenHeights.rubic(world) || !event.getList().isEmpty()) { return; }
             event.getList().addAll(rememberedFor(world.getBiome(event.getPos()), event.getType()));
         }
-
-        private static final Map<Biome, EnumMap<EnumCreatureType, List<Biome.SpawnListEntry>>> REMEMBERED = new IdentityHashMap<>();
 
         private static List<Biome.SpawnListEntry> rememberedFor(Biome biome, EnumCreatureType type) {
             List<Biome.SpawnListEntry> found = REMEMBERED.computeIfAbsent(biome, Handler::gather).get(type);

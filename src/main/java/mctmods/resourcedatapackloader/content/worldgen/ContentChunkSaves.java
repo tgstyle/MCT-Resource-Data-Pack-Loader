@@ -18,6 +18,8 @@ public final class ContentChunkSaves {
 
     private ContentChunkSaves() {}
 
+    public static void reload() { mark = -1; }
+
     public static boolean hurry() {
         int limit = mark;
         return limit > 0 && waiting >= limit;

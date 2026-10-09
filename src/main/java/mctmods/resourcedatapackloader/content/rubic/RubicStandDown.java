@@ -11,8 +11,8 @@ public class RubicStandDown {
     @SubscribeEvent public void onWorldAttachCapabilities(AttachCapabilitiesEvent<World> evt) {
         World world = evt.getObject();
         if (world.isRemote || !(world instanceof WorldServer)) { return; }
-        WorldSavedRubicData saved = (WorldSavedRubicData) world.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, "rdplRubicData");
+        WorldSavedRubicData saved = (WorldSavedRubicData) world.getPerWorldStorage().getOrLoadData(WorldSavedRubicData.class, Rubic.DATA_ID);
         if (saved != null && saved.isRubicWorld) { RubicWorldControl.standDownForSavedWorld(); }
-        if (RubicWorldControl.claims(world.provider.getDimension())) { RubicWorldControl.wanted(); }
+        if (RubicWorldControl.claims(world.provider.getDimension())) { RubicWorldControl.standDownIfWanted(); }
     }
 }

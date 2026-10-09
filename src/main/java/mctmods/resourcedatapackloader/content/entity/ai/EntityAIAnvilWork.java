@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.entity.ai;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
-import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.entity.EntityCreature;
@@ -19,8 +18,8 @@ public final class EntityAIAnvilWork extends EntityAIBase {
     private static final double USE_DISTANCE_SQ = 9.0D;
     private static final int GIVE_UP = 600;
     private final EntityCreature mob;
-    private BlockPos anvil;
-    private AnvilDef work;
+    @Nullable private BlockPos anvil;
+    @Nullable private AnvilDef work;
     private int walked;
 
     public EntityAIAnvilWork(EntityCreature mob) {
@@ -55,9 +54,12 @@ public final class EntityAIAnvilWork extends EntityAIBase {
 
     @Override public void startExecuting() {
         walked = 0;
-        ContentLog.LOGGER.debug("{} at {}, {}, {} can pay for {} and heads for the anvil at {}, {}, {}", mob.getName(), (int) mob.posX, (int) mob.posY, (int) mob.posZ, work.registryName, anvil.getX(), anvil.getY(), anvil.getZ());
-        mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob));
+        if (anvil == null || work == null) { return; }
+        GoalLog.debug(mob, "can pay for {} and heads for the anvil at {}, {}, {}", work.registryName, anvil.getX(), anvil.getY(), anvil.getZ());
+        walkTo(anvil);
     }
+
+    private void walkTo(BlockPos at) { Walking.toBlock(mob, at, Walking.pace(mob)); }
 
     @Override public void resetTask() {
         anvil = null;
@@ -66,13 +68,16 @@ public final class EntityAIAnvilWork extends EntityAIBase {
     }
 
     @Override public void updateTask() {
+        BlockPos at = anvil;
+        AnvilDef task = work;
+        if (at == null || task == null) { return; }
         walked++;
-        mob.getLookHelper().setLookPosition(anvil.getX() + 0.5D, anvil.getY() + 0.5D, anvil.getZ() + 0.5D, 30.0F, 30.0F);
-        if (mob.getDistanceSq(anvil.getX() + 0.5D, anvil.getY() + 0.5D, anvil.getZ() + 0.5D) <= USE_DISTANCE_SQ) {
-            ContentAnvils.work(mob, work, anvil);
+        BlockBreak.look(mob, at);
+        if (mob.getDistanceSq(at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D) <= USE_DISTANCE_SQ) {
+            ContentAnvils.work(mob, task, at);
             anvil = null;
             return;
         }
-        if (mob.getNavigator().noPath() && walked % 20 == 0) { mob.getNavigator().tryMoveToXYZ(anvil.getX() + 0.5D, anvil.getY(), anvil.getZ() + 0.5D, Walking.pace(mob)); }
+        if (mob.getNavigator().noPath() && walked % 20 == 0) { walkTo(at); }
     }
 }

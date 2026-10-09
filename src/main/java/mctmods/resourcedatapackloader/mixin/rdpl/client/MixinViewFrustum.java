@@ -26,11 +26,11 @@ import java.util.function.BooleanSupplier;
     @Shadow protected int countChunksX;
     @Shadow protected int countChunksY;
     @Shadow protected int countChunksZ;
-    @Unique private int rubic_oldViewX = Integer.MAX_VALUE;
-    @Unique private int rubic_oldViewY = Integer.MAX_VALUE;
-    @Unique private int rubic_oldViewZ = Integer.MAX_VALUE;
+    @Unique private int rdpl$oldViewX = Integer.MAX_VALUE;
+    @Unique private int rdpl$oldViewY = Integer.MAX_VALUE;
+    @Unique private int rdpl$oldViewZ = Integer.MAX_VALUE;
 
-    @Inject(method = "updateChunkPositions", at = @At(value = "HEAD"), cancellable = true, require = 1) private void updateChunkPositionsInject(double viewEntityX, double viewEntityZ, CallbackInfo cbi) {
+    @Inject(method = "updateChunkPositions", at = @At(value = "HEAD"), cancellable = true, require = 1) private void rdpl$updateChunkPositionsInject(double viewEntityX, double viewEntityZ, CallbackInfo cbi) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         Entity view = Minecraft.getMinecraft().getRenderViewEntity();
         if (view == null) {
@@ -50,21 +50,21 @@ import java.util.function.BooleanSupplier;
         int px = MathHelper.intFloorDiv(minX, dx) * dx;
         int py = MathHelper.intFloorDiv(minY, dy) * dy;
         int pz = MathHelper.intFloorDiv(minZ, dz) * dz;
-        long changeX = (long) viewX - this.rubic_oldViewX;
-        long changeY = (long) viewY - this.rubic_oldViewY;
-        long changeZ = (long) viewZ - this.rubic_oldViewZ;
-        this.rubic_oldViewX = viewX;
-        this.rubic_oldViewY = viewY;
-        this.rubic_oldViewZ = viewZ;
+        long changeX = (long) viewX - this.rdpl$oldViewX;
+        long changeY = (long) viewY - this.rdpl$oldViewY;
+        long changeZ = (long) viewZ - this.rdpl$oldViewZ;
+        this.rdpl$oldViewX = viewX;
+        this.rdpl$oldViewY = viewY;
+        this.rdpl$oldViewZ = viewZ;
         if (Math.abs(changeX) <= 1 && Math.abs(changeY) <= 1 && Math.abs(changeZ) <= 1) {
             if (changeX != 0) {
                 int xIndex = Math.floorMod(changeX < 0 ? minX - px : minX - px - 1, dx);
-                int blockX = rubic_getBlockCoord(xIndex, dx, px, minX);
+                int blockX = rdpl$getBlockCoord(xIndex, dx, px, minX);
                 for (int zIndex = 0; zIndex < dz; zIndex++) {
-                    int blockZ = rubic_getBlockCoord(zIndex, dz, pz, minZ);
+                    int blockZ = rdpl$getBlockCoord(zIndex, dz, pz, minZ);
                     int idxZ = zIndex * dy * dx;
                     for (int yIndex = 0; yIndex < dy; yIndex++) {
-                        int blockY = rubic_getBlockCoord(yIndex, dy, py, minY);
+                        int blockY = rdpl$getBlockCoord(yIndex, dy, py, minY);
                         int idxYZ = idxZ + yIndex * dx;
                         chunks[idxYZ + xIndex].setPosition(blockX, blockY, blockZ);
                     }
@@ -72,39 +72,39 @@ import java.util.function.BooleanSupplier;
             }
             if (changeY != 0) {
                 int yIndex = Math.floorMod(changeY < 0 ? minY - py : minY - py - 1, dy);
-                int blockY = rubic_getBlockCoord(yIndex, dy, py, minY);
+                int blockY = rdpl$getBlockCoord(yIndex, dy, py, minY);
                 for (int zIndex = 0; zIndex < dz; zIndex++) {
-                    int blockZ = rubic_getBlockCoord(zIndex, dz, pz, minZ);
+                    int blockZ = rdpl$getBlockCoord(zIndex, dz, pz, minZ);
                     int idxZ = zIndex * dy * dx;
                     int idxYZ = idxZ + yIndex * dx;
                     for (int xIndex = 0; xIndex < dx; xIndex++) {
-                        int blockX = rubic_getBlockCoord(xIndex, dx, px, minX);
+                        int blockX = rdpl$getBlockCoord(xIndex, dx, px, minX);
                         chunks[idxYZ + xIndex].setPosition(blockX, blockY, blockZ);
                     }
                 }
             }
             if (changeZ != 0) {
                 int zIndex = Math.floorMod(changeZ < 0 ? minZ - pz : minZ - pz - 1, dz);
-                int blockZ = rubic_getBlockCoord(zIndex, dz, pz, minZ);
+                int blockZ = rdpl$getBlockCoord(zIndex, dz, pz, minZ);
                 int idxZ = zIndex * dy * dx;
                 for (int yIndex = 0; yIndex < dy; yIndex++) {
-                    int blockY = rubic_getBlockCoord(yIndex, dy, py, minY);
+                    int blockY = rdpl$getBlockCoord(yIndex, dy, py, minY);
                     int idxYZ = idxZ + yIndex * dx;
                     for (int xIndex = 0; xIndex < dx; xIndex++) {
-                        int blockX = rubic_getBlockCoord(xIndex, dx, px, minX);
+                        int blockX = rdpl$getBlockCoord(xIndex, dx, px, minX);
                         chunks[idxYZ + xIndex].setPosition(blockX, blockY, blockZ);
                     }
                 }
             }
             assert ((BooleanSupplier) () -> {
                 for (int zIndex = 0; zIndex < dz; zIndex++) {
-                    int blockZ = rubic_getBlockCoord(zIndex, dz, pz, minZ);
+                    int blockZ = rdpl$getBlockCoord(zIndex, dz, pz, minZ);
                     int idxZ = zIndex * dy * dx;
                     for (int yIndex = 0; yIndex < dy; yIndex++) {
-                        int blockY = rubic_getBlockCoord(yIndex, dy, py, minY);
+                        int blockY = rdpl$getBlockCoord(yIndex, dy, py, minY);
                         int idxYZ = idxZ + yIndex * dx;
                         for (int xIndex = 0; xIndex < dx; xIndex++) {
-                            int blockX = rubic_getBlockCoord(xIndex, dx, px, minX);
+                            int blockX = rdpl$getBlockCoord(xIndex, dx, px, minX);
                             BlockPos pos = chunks[idxYZ + xIndex].getPosition();
                             if (pos.getX() != blockX || pos.getY() != blockY || pos.getZ() != blockZ) { return false; }
                         }
@@ -115,13 +115,13 @@ import java.util.function.BooleanSupplier;
         }
         else {
             for (int zIndex = 0; zIndex < dz; zIndex++) {
-                int blockZ = rubic_getBlockCoord(zIndex, dz, pz, minZ);
+                int blockZ = rdpl$getBlockCoord(zIndex, dz, pz, minZ);
                 int idxZ = zIndex * dy * dx;
                 for (int yIndex = 0; yIndex < dy; yIndex++) {
-                    int blockY = rubic_getBlockCoord(yIndex, dy, py, minY);
+                    int blockY = rdpl$getBlockCoord(yIndex, dy, py, minY);
                     int idxYZ = idxZ + yIndex * dx;
                     for (int xIndex = 0; xIndex < dx; xIndex++) {
-                        int blockX = rubic_getBlockCoord(xIndex, dx, px, minX);
+                        int blockX = rdpl$getBlockCoord(xIndex, dx, px, minX);
                         chunks[idxYZ + xIndex].setPosition(blockX, blockY, blockZ);
                     }
                 }
@@ -130,13 +130,13 @@ import java.util.function.BooleanSupplier;
         cbi.cancel();
     }
 
-    @Unique private static int rubic_getBlockCoord(int index, int d, int p, int min) {
+    @Unique private static int rdpl$getBlockCoord(int index, int d, int p, int min) {
         int coord = p + index;
         if (coord < min) { coord += d; }
         return coord << 4;
     }
 
-    @Inject(method = "getRenderChunk", at = @At(value = "HEAD"), cancellable = true, require = 1) private void getRenderChunkInject(BlockPos pos, CallbackInfoReturnable<RenderChunk> cbi) {
+    @Inject(method = "getRenderChunk", at = @At(value = "HEAD"), cancellable = true, require = 1) private void rdpl$getRenderChunkInject(BlockPos pos, CallbackInfoReturnable<RenderChunk> cbi) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         int x = Coords.blockToCube(pos.getX());
         int y = Coords.blockToCube(pos.getY());

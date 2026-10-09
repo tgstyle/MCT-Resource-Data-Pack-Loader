@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -11,9 +13,7 @@ import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import javax.annotation.Nullable;
+import java.util.List;import javax.annotation.Nullable;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
@@ -27,10 +27,11 @@ public final class ContentParserSkyLook {
     private static final float HEAT_START = 32.0F;
     private static final String SCREEN = "screen";
     private static final String WORLD = "world";
+    private static final List<String> MODES = Arrays.asList(SCREEN, WORLD);
 
     private ContentParserSkyLook() {}
 
-    public static boolean samples(JsonObject sky) { return SAMPLE.equals(JsonUtils.getString(sky, "fogColor", "").trim().toLowerCase(Locale.ROOT)); }
+    public static boolean samples(JsonObject sky) { return SAMPLE.equals(Settings.lower(JsonUtils.getString(sky, "fogColor", ""))); }
 
     @Nullable public static SkyLookDef look(ResourceLocation key, JsonObject sky, int cloudHeight, int cloudColor) {
         boolean sample = samples(sky);
@@ -79,12 +80,7 @@ public final class ContentParserSkyLook {
         return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top);
     }
 
-    private static float unit(ResourceLocation key, JsonObject json, String member, float fallback) {
-        float value = JsonUtils.getFloat(json, member, fallback);
-        if (value >= 0.0F && value <= 1.0F) { return value; }
-        ContentLog.LOGGER.error("Dimension {} gives sky.{} {}, which is not from 0 to 1, using {}", key, member, value, fallback);
-        return fallback;
-    }
+    private static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
 
     private static int color(ResourceLocation key, JsonObject json, String member) {
         String value = JsonUtils.getString(json, member, "").trim();
@@ -102,15 +98,10 @@ public final class ContentParserSkyLook {
         return Collections.unmodifiableList(layers);
     }
 
-    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) {
-        return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), JsonUtils.getFloat(heat, "minTemperature", HOT), JsonUtils.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat));
-    }
+    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) { return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), JsonUtils.getFloat(heat, "minTemperature", HOT), JsonUtils.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat)); }
 
     private static boolean followsWorld(ResourceLocation key, JsonObject heat) {
-        String mode = JsonUtils.getString(heat, "mode", SCREEN).trim().toLowerCase(Locale.ROOT);
-        if (WORLD.equals(mode)) { return true; }
-        if (!SCREEN.equals(mode)) { ContentLog.LOGGER.error("Dimension {} gives sky.heat.mode {}, which is neither {} nor {}, using {}", key, mode, SCREEN, WORLD, SCREEN); }
-        return false;
+        return WORLD.equals(Json.choice(heat, "mode", SCREEN, "Dimension " + key + " sky.heat", MODES));
     }
 
     private static float startDistance(ResourceLocation key, JsonObject heat) {

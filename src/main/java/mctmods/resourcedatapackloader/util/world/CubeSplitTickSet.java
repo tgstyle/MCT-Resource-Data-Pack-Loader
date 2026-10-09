@@ -3,19 +3,16 @@ package mctmods.resourcedatapackloader.util.world;
 import mctmods.resourcedatapackloader.util.CubePos;
 
 import net.minecraft.world.NextTickListEntry;
-import javax.annotation.Nonnull;
-
 import java.util.AbstractSet;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nonnull;
 
 public class CubeSplitTickSet implements Set<NextTickListEntry> {
-    private final Map<CubePos, NextTickListEntryHashSet> byCube = new HashMap<>();
+    private final CubeTickIndex<NextTickListEntryHashSet> byCube = new CubeTickIndex<>(NextTickListEntryHashSet::new);
     private final NextTickListEntryHashSet all = new NextTickListEntryHashSet();
 
     public Set<NextTickListEntry> getForCube(CubePos pos) {
@@ -29,14 +26,7 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
 
     @Override public boolean contains(Object o) { return all.contains(o); }
 
-    @Override @Nonnull public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), this::removeByCube); }
-
-    private void removeByCube(NextTickListEntry e) {
-        CubePos pos = CubePos.fromBlockCoords(e.position);
-        Set<NextTickListEntry> set = byCube.get(pos);
-        set.remove(e);
-        if (set.isEmpty()) { byCube.remove(pos); }
-    }
+    @Override @Nonnull public Iterator<NextTickListEntry> iterator() { return new CubeSplitIterator(all.iterator(), byCube::remove); }
 
     @Override @Nonnull public Object[] toArray() { return all.toArray(); }
 
@@ -44,13 +34,13 @@ public class CubeSplitTickSet implements Set<NextTickListEntry> {
 
     @Override public boolean add(NextTickListEntry e) {
         boolean ret = all.add(e);
-        byCube.computeIfAbsent(CubePos.fromBlockCoords(e.position), x -> new NextTickListEntryHashSet()).add(e);
+        byCube.add(e);
         return ret;
     }
 
     @Override public boolean remove(Object o) {
         boolean ret = all.remove(o);
-        if (ret) { removeByCube((NextTickListEntry) o); }
+        if (ret) { byCube.remove((NextTickListEntry) o); }
         return ret;
     }
 

@@ -20,7 +20,7 @@ import javax.annotation.Nullable;
     private static final int CYRILLIC = 0x400;
     private static final int RUNES = 0x1600;
     private static final ResourceLocation ASCII = new ResourceLocation("textures/font/ascii.png");
-    private static final ResourceLocation RDPL = new ResourceLocation(ResourceDataPackLoader.MOD_ID, "textures/font/rdpl.png");
+    private static final ResourceLocation RDPL = ResourceDataPackLoader.id("textures/font/rdpl.png");
     private static final String CIPHER = "textures/font/rdpl_runic";
     private static final String RDPL_PATH = "textures/font/rdpl";
     private static final List<String> VANILLA = Arrays.asList("Default", "FMLFileResourcePack:Minecraft Forge");

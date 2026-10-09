@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.item;
 
 import mctmods.resourcedatapackloader.content.ContentDice;
-import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
@@ -34,17 +33,13 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Nullable protected ItemVariant variant(ItemStack stack) { return def.byMeta.get(stack.getMetadata()); }
+    @Nullable protected ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        if (!isInCreativeTab(tab)) { return; }
-        for (ItemVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
+        if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); }
     }
 
-    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return super.getTranslationKey() + "." + (value == null ? ContentParser.PLACEHOLDER : value.name);
-    }
+    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
         ItemVariant value = variant(stack);

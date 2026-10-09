@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -68,13 +69,7 @@ public final class ContentStructurePlacement {
     public static boolean allows(String key, World world, int chunkX, int chunkZ) {
         load();
         if (ContentControl.off(ContentControl.STRUCTURES) || world == null) { return true; }
-        List<long[]> pinned = AT.get(key);
-        if (pinned != null) {
-            for (long[] at : pinned) {
-                if ((int) at[0] >> 4 == chunkX && (int) at[1] >> 4 == chunkZ) { return true; }
-            }
-            return false;
-        }
+        if (AT.containsKey(key)) { return pinned(key, chunkX, chunkZ); }
         int least = SPAWN_DISTANCE.getOrDefault(key, 0);
         if (least > 0) {
             BlockPos spawn = world.getSpawnPoint();
@@ -85,7 +80,7 @@ public final class ContentStructurePlacement {
         Set<String> wanted = BIOMES.get(key);
         if (wanted == null || wanted.isEmpty()) { return true; }
         Biome biome = world.getBiomeProvider().getBiome(new BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
-        return matches(biome, wanted) != BLACKLISTS.getOrDefault(key, Boolean.FALSE);
+        return Listing.allows(matches(biome, wanted), BLACKLISTS.getOrDefault(key, Boolean.FALSE));
     }
 
     public static void spawns(String key, List<Biome.SpawnListEntry> entries) {
@@ -128,7 +123,7 @@ public final class ContentStructurePlacement {
                 empty++;
                 continue;
             }
-            if (matches(biome, wanted) != blacklist) { kept.add(biome); }
+            if (Listing.allows(matches(biome, wanted), blacklist)) { kept.add(biome); }
         }
         if (empty > 0) { ContentLog.LOGGER.warn("Something put {} empty biome slot(s) in the list of biomes {} may generate in. They are left out, since nothing can be built in a biome that is not there", empty, key); }
         if (!blacklist) {
@@ -151,8 +146,8 @@ public final class ContentStructurePlacement {
         load();
         if (ContentControl.off(ContentControl.STRUCTURES)) { return fallback; }
         Integer wanted = from.get(key);
-        if (wanted == null || wanted <= 0) { return fallback; }
-        return Math.max(least, wanted);
+        if (wanted == null || wanted < least) { return fallback; }
+        return wanted;
     }
 
     private static boolean matches(Biome biome, Set<String> wanted) {
@@ -221,7 +216,7 @@ public final class ContentStructurePlacement {
                 ContentLog.LOGGER.error("structureAt entry '{}' does not end in x,z, ignoring it", entry);
                 continue;
             }
-            try { AT.computeIfAbsent(parts[0], held -> new java.util.ArrayList<>()).add(new long[] {Long.parseLong(coords[0].trim()), Long.parseLong(coords[1].trim())}); }
+            try { AT.computeIfAbsent(parts[0], held -> new ArrayList<>()).add(new long[] {Long.parseLong(coords[0].trim()), Long.parseLong(coords[1].trim())}); }
             catch (NumberFormatException ex) { ContentLog.LOGGER.error("structureAt entry '{}' does not end in x,z, ignoring it", entry); }
         }
     }
@@ -242,7 +237,7 @@ public final class ContentStructurePlacement {
             if (parts == null) { continue; }
             Set<String> names = new LinkedHashSet<>(BIOMES.getOrDefault(parts[0], Collections.emptySet()));
             for (String name : parts[1].split(",")) {
-                String plain = name.trim().toLowerCase(Locale.ROOT);
+                String plain = Settings.lower(name);
                 if (!plain.isEmpty()) { names.add(plain); }
             }
             BIOMES.put(parts[0], Collections.unmodifiableSet(names));

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.entity.ai;
 
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
+import mctmods.resourcedatapackloader.content.entity.OrderItems;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
@@ -10,14 +11,12 @@ import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import javax.annotation.Nullable;
 
 public final class EntityAIDig extends EntityAIBase {
     private static final int LOOK = 10;
-    private static final int SWING = 6;
     private static final double SPEED = 1.0D;
     private final EntityCreature mob;
     @Nullable private EntityLivingBase target;
@@ -64,10 +63,7 @@ public final class EntityAIDig extends EntityAIBase {
             advance(aim);
             return;
         }
-        mob.getLookHelper().setLookPosition(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F);
-        if ((total - left) % SWING == 0) { mob.swingArm(EnumHand.MAIN_HAND); }
-        left--;
-        mob.world.sendBlockBreakProgress(mob.getEntityId(), pos, (int) (9.0F * (total - left) / total));
+        left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
         ContentHardness.dig(mob, pos);
         mob.getHeldItemMainhand().damageItem(1, mob);
@@ -92,15 +88,14 @@ public final class EntityAIDig extends EntityAIBase {
         if (pos == null) { return; }
         IBlockState state = mob.world.getBlockState(pos);
         ItemStack tool = mob.getHeldItemMainhand();
-        float speed = Math.max(1.0F, tool.getItem().getDestroySpeed(tool, state));
-        total = Math.max(1, MathHelper.ceil(state.getBlockHardness(mob.world, pos) * 30.0F / speed * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ())));
+        total = OrderItems.breakTicks(mob, pos, state, Math.max(1.0F, tool.getItem().getDestroySpeed(tool, state)), 1.0F);
         left = total;
         mob.getNavigator().clearPath();
     }
 
     private boolean unwanted(@Nullable EntityLivingBase aim) {
         if (aim == null || !aim.isEntityAlive() || mob.getHeldItemMainhand().isEmpty()) { return true; }
-        if (!mob.world.getGameRules().getBoolean("mobGriefing")) { return true; }
+        if (!MobGriefing.allowed(mob)) { return true; }
         double vanilla = (double) mob.width * 2.0F * mob.width * 2.0F + aim.width;
         return mob.getDistanceSq(aim) <= ContentEntities.attackReachSqr(mob, aim, vanilla);
     }

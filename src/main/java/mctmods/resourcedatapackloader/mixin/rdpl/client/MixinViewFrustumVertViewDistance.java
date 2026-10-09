@@ -1,8 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.client.renderer.ViewFrustum;
 import net.minecraft.util.math.BlockPos;
@@ -24,33 +25,27 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow @Final protected World world;
     @Unique private int rdpl$renderDistance = 16;
 
-    @Inject(method = "setCountChunksXYZ", at = @At(value = "HEAD")) private void onSetCountChunks(int renderDistanceChunks, CallbackInfo cbi) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) { this.rdpl$renderDistance = Config.client.verticalCubeLoadDistance * 2 + 1; }
-        else {
-            IRubicWorld world = (IRubicWorld) this.world;
-            this.rdpl$renderDistance = Coords.blockToCube(world.rdpl$getMaxHeight()) - Coords.blockToCube(world.rdpl$getMinHeight());
-        }
+    @Inject(method = "setCountChunksXYZ", at = @At(value = "HEAD")) private void rdpl$onSetCountChunks(int renderDistanceChunks, CallbackInfo cbi) {
+        if (GenHeights.rubic(world)) { this.rdpl$renderDistance = Config.client.verticalCubeLoadDistance * 2 + 1; }
+        else { this.rdpl$renderDistance = Coords.blockToCube(GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT)) - Coords.blockToCube(GenHeights.floor(world, 0)); }
     }
 
-    @ModifyArg(method = "updateChunkPositions", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;setPosition"
-            + "(III)V"), index = 1)
-    private int modifyRenderChunkPosWhenUpdatingPositions(int y) { return y + ((IRubicWorld) world).rdpl$getMinHeight(); }
+    @ModifyArg(method = "updateChunkPositions", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;setPosition(III)V"), index = 1) private int rdpl$modifyRenderChunkPosWhenUpdatingPositions(int y) { return y + GenHeights.floor(world, 0); }
 
     @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 2) private int modifyMinYForUpdate(int minY) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return minY; }
-        return minY - ((IRubicWorld) world).rdpl$getMinHeight();
+        if (GenHeights.rubic(world)) { return minY; }
+        return minY - GenHeights.floor(world, 0);
     }
 
-    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 5) private int modifyMaxYForUpdate(int maxY) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return maxY; }
-        return maxY - ((IRubicWorld) world).rdpl$getMinHeight();
+    @ModifyVariable(method = "markBlocksForUpdate", at = @At("HEAD"), argsOnly = true, index = 5) private int rdpl$modifyMaxYForUpdate(int maxY) {
+        if (GenHeights.rubic(world)) { return maxY; }
+        return maxY - GenHeights.floor(world, 0);
     }
 
-    @Redirect(method = "getRenderChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I"))
-    private int modifyMaxYForUpdate(BlockPos instance) {
-        if (((IRubicWorld) world).rdpl$isRubicWorld()) { return instance.getY(); }
-        return instance.getY() - ((IRubicWorld) world).rdpl$getMinHeight();
+    @Redirect(method = "getRenderChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;getY()I")) private int rdpl$modifyMaxYForUpdate(BlockPos instance) {
+        if (GenHeights.rubic(world)) { return instance.getY(); }
+        return instance.getY() - GenHeights.floor(world, 0);
     }
 
-    @ModifyConstant(method = "setCountChunksXYZ", constant = @Constant(intValue = 16)) private int getYViewDistance(int oldDistance) { return rdpl$renderDistance; }
+    @ModifyConstant(method = "setCountChunksXYZ", constant = @Constant(intValue = 16)) private int rdpl$getYViewDistance(int oldDistance) { return rdpl$renderDistance; }
 }

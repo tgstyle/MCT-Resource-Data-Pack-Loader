@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.lib.RegionEntryLoc
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,8 +31,13 @@ public class Utils {
         Files.createDirectory(dir);
     }
 
-    public static void readFully(ByteChannel src, ByteBuffer data) throws IOException {
-        while (data.hasRemaining()) { src.read(data); }
+    public static void readFully(FileChannel src, ByteBuffer data, long position) throws IOException {
+        long at = position;
+        while (data.hasRemaining()) {
+            int read = src.read(data, at);
+            if (read < 0) { throw new ICorruptedDataException("Expected " + data.remaining() + " more byte(s) at " + at + " but the file ends there"); }
+            at += read;
+        }
     }
 
     public static void writeFully(ByteChannel dst, ByteBuffer data) throws IOException {

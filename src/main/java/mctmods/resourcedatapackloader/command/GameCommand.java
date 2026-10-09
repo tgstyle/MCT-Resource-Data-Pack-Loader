@@ -1,14 +1,16 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.viewer;
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentScoring;
+import mctmods.resourcedatapackloader.content.ContentTeams;
 import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.util.Config;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.scoreboard.ScoreObjective;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.TextFormatting;
@@ -24,7 +26,7 @@ final class GameCommand {
     private static final String NAME = "rdplserver";
     private static final String DEFAULT_ROLL = "1d20";
     private static final int MOST_SHOWN = 50;
-    private static final List<String> ROLLS = Arrays.asList("coin", "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
+    private static final List<String> ROLLS = Arrays.asList(ContentDice.COIN, "die", "dice", "advantage", "disadvantage", "pick", "deck", "teamroll", "tiebreak", "last", "pass", "board");
     private static final List<String> DECK_ACTIONS = Arrays.asList("draw", "shuffle", "left");
     private static final List<String> PICKS = Arrays.asList("player", "team");
     private static final List<String> OPTIONS = Arrays.asList("store", "audience");
@@ -47,15 +49,15 @@ final class GameCommand {
 
     private static int level(String sub) { return ServerCommands.listedLevel("gameLevels", Config.commands.gameLevels, sub, LEVELS.getOrDefault(sub, 0)); }
 
-    static int lowest() {
+    static int lowest() { return lowest(LEVELS.keySet()); }
+
+    private static int lowest(Iterable<String> subs) {
         int lowest = ServerCommands.OPERATOR;
-        for (String sub : LEVELS.keySet()) { lowest = Math.min(lowest, level(sub)); }
+        for (String sub : subs) { lowest = Math.min(lowest, level(sub)); }
         return lowest;
     }
 
     private static String sub(String[] args) { return args.length > 2 && ("deck".equals(args[1]) || "board".equals(args[1])) ? args[1] + " " + args[2] : args[1]; }
-
-    @Nullable private static EntityPlayer viewer(ICommandSender sender) { return sender instanceof EntityPlayer ? (EntityPlayer) sender : null; }
 
     private static CommandException refused(ICommandSender sender, String key, Object... pairs) { return new CommandException(ContentDice.words(viewer(sender), key, pairs)); }
 
@@ -92,7 +94,7 @@ final class GameCommand {
             last(sender, plain);
             return;
         }
-        if (store != null && !ContentDice.keeps(server, store)) { throw refused(sender, "noobjective", "objective", store); }
+        if (store != null && ContentDice.lacks(server, store)) { throw refused(sender, "noobjective", "objective", store); }
         ContentDice.Result result = roll(server, sender, args[1], plain);
         if (result == null) { throw refused(sender, "usage"); }
         if (result.refused()) { throw new CommandException(ContentDice.text(viewer(sender), result, sender.getName())); }
@@ -103,7 +105,7 @@ final class GameCommand {
         Random random = ContentDice.random(server);
         String first = plain.isEmpty() ? null : plain.get(0);
         switch (kind) {
-            case "coin": return ContentDice.coin(random);
+            case ContentDice.COIN: return ContentDice.coin(random);
             case "die": return first == null ? null : first.matches("\\d{1,9}") ? ContentDice.die(random, Integer.parseInt(first)) : ContentDice.packDie(random, first);
             case "dice": return first == null ? null : ContentDice.dice(random, first);
             case "advantage": return ContentDice.edge(random, first == null ? DEFAULT_ROLL : first, true);
@@ -134,8 +136,9 @@ final class GameCommand {
     private static void last(ICommandSender sender, List<String> plain) throws CommandException {
         int count = 10;
         if (!plain.isEmpty()) {
-            try { count = Math.max(1, Math.min(MOST_SHOWN, Integer.parseInt(plain.get(0)))); }
-            catch (NumberFormatException notNumber) { throw refused(sender, "usage"); }
+            Integer asked = Settings.clamped(plain.get(0), 1, MOST_SHOWN);
+            if (asked == null) { throw refused(sender, "usage"); }
+            count = asked;
         }
         List<String> recent = ContentDice.recent(count);
         if (recent.isEmpty()) { CommandShared.send(sender, TextFormatting.GRAY, ContentDice.words(viewer(sender), "lastnone")); }
@@ -154,7 +157,7 @@ final class GameCommand {
         String before = args[args.length - 2];
         if ("store".equals(before)) {
             List<String> names = new ArrayList<>();
-            for (ScoreObjective objective : server.getWorld(0).getScoreboard().getScoreObjectives()) { names.add(objective.getName()); }
+            for (ScoreObjective objective : ContentTeams.board(server).getScoreObjectives()) { names.add(objective.getName()); }
             return CommandBase.getListOfStringsMatchingLastWord(args, names);
         }
         if ("audience".equals(before)) { return CommandBase.getListOfStringsMatchingLastWord(args, ContentDice.AUDIENCES); }
@@ -172,14 +175,14 @@ final class GameCommand {
             }
         }
         if (args.length == 4 && "deck".equals(args[1])) { return CommandBase.getListOfStringsMatchingLastWord(args, ContentDice.deckNames()); }
-        if (args.length == 4 && "pick".equals(args[1]) && "team".equals(args[2])) { return CommandBase.getListOfStringsMatchingLastWord(args, new ArrayList<>(server.getWorld(0).getScoreboard().getTeamNames())); }
+        if (args.length == 4 && "pick".equals(args[1]) && "team".equals(args[2])) { return CommandBase.getListOfStringsMatchingLastWord(args, new ArrayList<>(ContentTeams.board(server).getTeamNames())); }
         return CommandBase.getListOfStringsMatchingLastWord(args, OPTIONS);
     }
 
     private static int lowestOf(String roll) {
         if (!"deck".equals(roll) && !"board".equals(roll)) { return level(roll); }
-        int lowest = ServerCommands.OPERATOR;
-        for (String action : "deck".equals(roll) ? DECK_ACTIONS : BoardCommand.ACTIONS) { lowest = Math.min(lowest, level(roll + " " + action)); }
-        return lowest;
+        List<String> subs = new ArrayList<>();
+        for (String action : "deck".equals(roll) ? DECK_ACTIONS : BoardCommand.ACTIONS) { subs.add(roll + " " + action); }
+        return lowest(subs);
     }
 }

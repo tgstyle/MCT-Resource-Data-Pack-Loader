@@ -3,14 +3,11 @@ package mctmods.resourcedatapackloader.content.rubic.world;
 import mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
+import mctmods.resourcedatapackloader.util.AddressTools;
 
-import com.google.common.base.Throwables;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 
 public class ClientHeightMap implements IHeightMap {
     private final Chunk column;
@@ -33,9 +30,7 @@ public class ClientHeightMap implements IHeightMap {
         if (!changedTopToTransparent(changeY, newOpacity, oldTopY)) { return; }
         assert !(newOpacity == 0 && oldTopY < changeY) : "Changed transparent block into transparent!";
         int newTop = oldTopY - 1;
-        while (column.getBlockLightOpacity(new BlockPos(localX, newTop, localZ)) == 0 && newTop > oldTopY - LightingManager.MAX_CLIENT_LIGHT_SCAN_DEPTH){
-            newTop--;
-        }
+        while (column.getBlockLightOpacity(new BlockPos(localX, newTop, localZ)) == 0 && newTop > oldTopY - LightingManager.MAX_CLIENT_LIGHT_SCAN_DEPTH) { newTop--; }
         this.setHeight(localX, localZ, newTop);
     }
 
@@ -49,22 +44,9 @@ public class ClientHeightMap implements IHeightMap {
 
     public void setHeight(int localX, int localZ, int height) { hmap.set(getIndex(localX, localZ), height); }
 
-    public byte[] getData() {
-        try {
-            ByteArrayOutputStream buf = new ByteArrayOutputStream();
-            DataOutputStream out = new DataOutputStream(buf);
-            for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { out.writeInt(hmap.get(i)); }
-            out.close();
-            return buf.toByteArray();
-        } catch (IOException e) {
-            Throwables.throwIfUnchecked(e);
-            throw new AssertionError();
-        }
-    }
-
     public void loadData(PacketBuffer in) {
         for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { hmap.set(i, in.readInt()); }
     }
 
-    private static int getIndex(int localX, int localZ) { return (localZ << 4) | localX; }
+    private static int getIndex(int localX, int localZ) { return AddressTools.getLocalAddress(localX, localZ); }
 }

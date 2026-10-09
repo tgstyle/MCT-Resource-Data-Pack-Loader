@@ -20,13 +20,11 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 @Mixin(value = WorldGenStructures.class, remap = false) public abstract class MixinWorldGenStructures {
-    @Inject(method = "decorate", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void rdpl$holdTheStructures(WorldServer world, Random random, ChunkPos chunkPos, @Nullable Predicate<Structure<?>> structurePredicate, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "decorate", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$holdTheStructures(WorldServer world, Random random, ChunkPos chunkPos, @Nullable Predicate<Structure<?>> structurePredicate, CallbackInfoReturnable<Boolean> cir) {
         if (ContentStructures.blocks(world, "reccomplex")) { cir.setReturnValue(Boolean.FALSE); }
     }
 
-    @Inject(method = "complementStructuresInChunk", at = @At("RETURN"), remap = false)
-    private static void rdpl$shedComplementedStructures(ChunkPos chunkPos, WorldServer world, List<WorldStructureGenerationData.StructureEntry> complement, CallbackInfo cbi) {
+    @Inject(method = "complementStructuresInChunk", at = @At("RETURN"), remap = false) private static void rdpl$shedComplementedStructures(ChunkPos chunkPos, WorldServer world, List<WorldStructureGenerationData.StructureEntry> complement, CallbackInfo cbi) {
         Object data = WorldStructureGenerationData.get(world);
         if (!(data instanceof ISheddingData)) { return; }
         for (WorldStructureGenerationData.StructureEntry entry : complement) { ((ISheddingData) data).rdpl$shedIfComplete(entry); }

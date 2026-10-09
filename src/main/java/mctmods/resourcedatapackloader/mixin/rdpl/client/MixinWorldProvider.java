@@ -16,21 +16,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(WorldProvider.class) public abstract class MixinWorldProvider {
     @Shadow protected World world;
 
-    @Inject(method = "getVoidFogYFactor", at = @At(value = "HEAD"), cancellable = true) private void getVoidFogYFactor_injectReplace(CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getVoidFogYFactor", at = @At(value = "HEAD"), cancellable = true) private void rdpl$getVoidFogYFactor_injectReplace(CallbackInfoReturnable<Double> cir) {
         if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue(Double.NaN); }
     }
 
-    @Inject(method = "getHorizon", at = @At(value = "HEAD"), cancellable = true, remap = false) private void getHorizon_injectReplace(CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getHorizon", at = @At(value = "HEAD"), cancellable = true, remap = false) private void rdpl$getHorizon_injectReplace(CallbackInfoReturnable<Double> cir) {
         if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue((double) rdpl$rubicWorld().rdpl$getMinHeight()); }
     }
 
-    @Inject(method = "getCloudHeight", at = @At("RETURN"), cancellable = true) private void getCloudHeight_fromPackOrTerrainOffset(CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getCloudHeight", at = @At("RETURN"), cancellable = true) private void rdpl$getCloudHeight_fromPackOrTerrainOffset(CallbackInfoReturnable<Float> cir) {
         Integer asked = ContentClouds.heightFor(this.world.provider.getDimension());
         if (asked != null) {
             cir.setReturnValue((float) asked);
             return;
         }
-        if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue(cir.getReturnValue() + (RubicWorldControl.terrainOffsetCubes() << 4)); }
+        if (rdpl$rubicWorld().rdpl$isRubicWorld()) { cir.setReturnValue(cir.getReturnValue() + RubicWorldControl.terrainOffsetBlocks()); }
     }
 
     @Unique private IRubicWorld rdpl$rubicWorld() { return (IRubicWorld) this.world; }

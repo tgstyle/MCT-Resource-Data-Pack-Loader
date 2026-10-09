@@ -3,17 +3,15 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentOwners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
+import mctmods.resourcedatapackloader.content.def.SkyStone;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
-import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.block.state.IBlockState;
@@ -45,6 +43,9 @@ import javax.annotation.Nullable;
 public final class ContentBiomes {
     private static final List<String> RATE_KEYS = Collections.unmodifiableList(Arrays.asList(
             "surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight"));
+    private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
+    private static final List<ContentBiome> REGISTERED = new ArrayList<>();
+    private static boolean loaded;
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void onCreateDecorator(BiomeEvent.CreateDecorator event) {
         if (!(event.getBiome() instanceof ContentBiome)) { return; }
@@ -66,20 +67,15 @@ public final class ContentBiomes {
         }
     }
 
-    private static final Gson GSON = new GsonBuilder().create();
-    private static final Map<ResourceLocation, BiomeDef> DEFS = new LinkedHashMap<>();
-
     static Collection<BiomeDef> defs() { return DEFS.values(); }
 
     public static double lowestSkyIslands(double fallback) {
         double lowest = fallback;
         for (BiomeDef def : DEFS.values()) {
-            if (!Float.isNaN(def.skyIslands)) { lowest = Math.min(lowest, def.skyIslands); }
+            if (!Float.isNaN(def.sky.islands)) { lowest = Math.min(lowest, def.sky.islands); }
         }
         return lowest;
     }
-    private static final List<ContentBiome> REGISTERED = new ArrayList<>();
-    private static boolean loaded;
 
     private ContentBiomes() {}
 
@@ -96,11 +92,8 @@ public final class ContentBiomes {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Biome file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "biome file");
+        if (json == null) { return; }
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (json.has("spawns")) {
             for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
@@ -144,7 +137,7 @@ public final class ContentBiomes {
                 JsonUtils.getString(json, "topBlock", ""),
                 JsonUtils.getString(json, "fillerBlock", ""),
                 JsonUtils.getString(json, "stoneBlock", ""),
-                strings(json, "types"),
+                Json.strings(json, "types"),
                 JsonUtils.getString(placement, "climate", ""),
                 Math.max(0, JsonUtils.getInt(placement, "weight", 10)),
                 JsonUtils.getBoolean(placement, "playerSpawn", false),
@@ -164,13 +157,11 @@ public final class ContentBiomes {
                 json.has("minHeight") || json.has("maxHeight"),
                 JsonUtils.getInt(json, "minHeight", Integer.MIN_VALUE),
                 JsonUtils.getInt(json, "maxHeight", Integer.MAX_VALUE),
-                strings(json, "replaces"),
+                Json.strings(json, "replaces"),
                 JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
-                strings(json, "requires"),
-                JsonUtils.getString(json, "skyStone", ""),
-                Json.bounded(json, "skyIslands", -1.0F, 1.0F, key),
-                Json.bounded(json, "skyThickness", 0.0F, 8.0F, key)));
+                Json.strings(json, "requires"),
+                SkyStone.read(json, key)));
     }
 
     private static int villageKind(String written, ResourceLocation key) {

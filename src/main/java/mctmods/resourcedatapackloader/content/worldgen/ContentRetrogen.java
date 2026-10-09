@@ -130,7 +130,9 @@ public final class ContentRetrogen {
 
     @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
         if (event.getWorld().isRemote) { return; }
+        DONE.remove(event.getWorld().provider.getDimension());
         Deque<Pending> queue = QUEUES.remove(event.getWorld().provider.getDimension());
+        DONE.remove(event.getWorld().provider.getDimension());
         if (queue != null) { queued -= queue.size(); }
         if (QUEUES.isEmpty()) { queued = 0; }
     }
@@ -154,10 +156,10 @@ public final class ContentRetrogen {
         }
     }
 
-    private static void run(World world, Pending queued) {
-        if (!world.isChunkGeneratedAt(queued.pos.x, queued.pos.z)) { return; }
-        world.getChunk(queued.pos.x, queued.pos.z);
-        Pending pending = queued.remaining(done(world.provider.getDimension()).computeIfAbsent(queued.pos, k -> new HashSet<>()));
+    private static void run(World world, Pending asked) {
+        if (!world.isChunkGeneratedAt(asked.pos.x, asked.pos.z)) { return; }
+        world.getChunk(asked.pos.x, asked.pos.z);
+        Pending pending = asked.remaining(done(world.provider.getDimension()).computeIfAbsent(asked.pos, k -> new HashSet<>()));
         if (pending == null) { return; }
         boolean falling = BlockFalling.fallInstantly;
         BlockFalling.fallInstantly = true;

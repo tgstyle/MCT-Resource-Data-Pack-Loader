@@ -5,27 +5,38 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
-
 import java.util.*;
 import javax.annotation.Nullable;
 
 public final class CityGrowth {
     public static final int MARCH = 112;
+    private static final int RANGE_PAD = 112;
     private static final int TRIES = 32;
     static final int VERGE = 6;
     private static final int PER_MARCH = 96;
-    static boolean laying;
-    static boolean bulbLaying;
+    private static boolean laying;
+    private static boolean bulbLaying;
     private static boolean alleyLaying;
     private static int give;
 
     private CityGrowth() {}
+
+    static void laying(boolean bulb, Runnable body) {
+        laying = true;
+        bulbLaying = bulb;
+        try { body.run(); }
+        finally {
+            laying = false;
+            bulbLaying = false;
+        }
+    }
 
     public static boolean laying() { return laying; }
 
@@ -45,7 +56,7 @@ public final class CityGrowth {
         return (int) (MARCH * Math.sqrt(filled));
     }
 
-    public static int chunkRange() { return (march() + 112 + 16) >> 4; }
+    public static int chunkRange() { return (march() + RANGE_PAD + 16) >> 4; }
 
     public static void grow(StructureStart held, World world, Random rand, int size) {
         int least = ContentVillages.plotsLeast();
@@ -68,7 +79,7 @@ public final class CityGrowth {
             if (site == Long.MIN_VALUE) { break; }
             attempts++;
             tried.add(site);
-            if (CityDistricts.settle(world, rand, components, (int) (site >> 32), (int) site, sizeFor)) {
+            if (CityDistricts.settle(world, rand, components, Longs.high(site), Longs.low(site), sizeFor)) {
                 districts++;
                 built = ContentVillages.plots(components);
                 tried.clear();
@@ -106,7 +117,6 @@ public final class CityGrowth {
         }
         return seated;
     }
-
 
     public static void roadsFirst(StructureStart held) {
         List<StructureComponent> components = held.getComponents();

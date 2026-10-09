@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.content.ContentParserWorlds;
 import mctmods.resourcedatapackloader.content.def.PickDef;
@@ -9,6 +10,8 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.MathUtil;
+import mctmods.resourcedatapackloader.util.Turns;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
@@ -21,6 +24,7 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -29,9 +33,8 @@ import javax.annotation.Nullable;
 public class ContentStructureMaps {
     private static final Map<String, StructureMapDef> DEFS = new LinkedHashMap<>();
     private static final Set<String> MISSING = new HashSet<>();
-    private static final Rotation[] TURNS = Rotation.values();
     private static final int OFFSET = 8;
-    private static final int FLAGS = 2;
+    private static final int FLAGS = BlockFlags.UPDATE_CLIENTS;
     private static boolean loaded = false;
 
     public static void load() {
@@ -44,14 +47,14 @@ public class ContentStructureMaps {
         if (!DEFS.isEmpty()) { ContentLog.LOGGER.debug("Loaded {} structure map(s): {}", DEFS.size(), DEFS.keySet()); }
     }
 
-    public static boolean any() { return !DEFS.isEmpty(); }
+    public static boolean none() { return DEFS.isEmpty(); }
 
-    @Nullable public static StructureMapDef byName(String name) { return name == null || name.isEmpty() ? null : DEFS.get(name.toLowerCase(java.util.Locale.ROOT)); }
+    @Nullable public static StructureMapDef byName(String name) { return name == null || name.isEmpty() ? null : DEFS.get(name.toLowerCase(Locale.ROOT)); }
 
     public static void place(World world, int chunkX, int chunkZ) {
         if (DEFS.isEmpty() || !(world instanceof WorldServer)) { return; }
         int dimension = world.provider.getDimension();
-        StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + OFFSET, GenHeights.floor(world, 0), chunkZ * 16 + OFFSET, chunkX * 16 + OFFSET + 15, GenHeights.ceiling(world, 256) - 1, chunkZ * 16 + OFFSET + 15);
+        StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + OFFSET, GenHeights.floor(world, 0), chunkZ * 16 + OFFSET, chunkX * 16 + OFFSET + 15, GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1, chunkZ * 16 + OFFSET + 15);
         for (StructureMapDef def : DEFS.values()) {
             if (!def.allowsDimension(dimension)) { continue; }
             if (def.at != null) {
@@ -74,7 +77,7 @@ public class ContentStructureMaps {
     }
 
     private static void slices(World world, StructureMapDef def, long seed, int originX, int originZ, StructureBoundingBox window) {
-        Rotation turn = TURNS[(int) Math.floorMod(seed >>> 8, TURNS.length)];
+        Rotation turn = Turns.ALL[(int) Math.floorMod(seed >>> 8, Turns.ALL.length)];
         boolean swapped = turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90;
         int wide = def.cellsWide * def.cell;
         int deep = def.cellsDeep * def.cell;
@@ -86,7 +89,7 @@ public class ContentStructureMaps {
         int base = anchor + 1 - def.ground * def.cell;
         int placedCells = cells(world, def, seed, turn, originX, base, originZ, window);
         if (placedCells > 0 && window.isVecInside(new BlockPos(originX, 64, originZ)) && ContentLog.LOGGER.debugEnabled()) {
-            ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key, originX, base + def.ground * def.cell, originZ, turn, base + def.ground * def.cell);
+            ContentLog.LOGGER.debug("Structure map {} builds at {}, {}, {}, turned {}, its ground layer floored at y {}", def.key, originX, base, originZ, turn, base + def.ground * def.cell);
         }
     }
 
@@ -97,7 +100,7 @@ public class ContentStructureMaps {
         MinecraftServer host = server.getMinecraftServer();
         int placedCells = 0;
         int floor = GenHeights.floor(world, 0);
-        int ceiling = GenHeights.ceiling(world, 256) - 1;
+        int ceiling = GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1;
         for (int layer = 0; layer < def.layers.length; layer++) {
             StructureMapDef.Layer held = def.layers[layer];
             int layerY = base + layer * def.cell;
@@ -135,7 +138,7 @@ public class ContentStructureMaps {
                     if (named == null || named.isEmpty()) { continue; }
                     Template piece = server.getStructureTemplateManager().get(host, new ResourceLocation(named));
                     if (piece == null) {
-                        if (MISSING.add(named)) { ContentLog.LOGGER.error("Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key, named); }
+                        ContentLog.LOGGER.errorOnce(MISSING, named, "Structure map {} places structure '{}', which could not be loaded, so its cells stay empty", def.key, named);
                         continue;
                     }
                     BlockPos span = piece.transformedSize(turn);

@@ -4,9 +4,10 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
+import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockStairs;
@@ -25,10 +26,10 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class BeardRoadsDecks {
-    private BeardRoadsDecks() {}
-
     private static final int PILING_REACH = 24;
     private static final int CORNER_REACH = 3;
+
+    private BeardRoadsDecks() {}
 
     public static final class Pier {
         static final String[] NAMES = { "railed", "pilings", "boardwalk" };
@@ -130,8 +131,14 @@ public final class BeardRoadsDecks {
                 grown = row;
             }
             if (grown == end || Math.abs(grown - shore) < 8) { continue; }
-            if (alongX) { if (outward) { box.maxX = grown; } else { box.minX = grown; } }
-            else { if (outward) { box.maxZ = grown; } else { box.minZ = grown; } }
+            if (alongX) {
+                if (outward) { box.maxX = grown; }
+                else { box.minX = grown; }
+            }
+            else {
+                if (outward) { box.maxZ = grown; }
+                else { box.minZ = grown; }
+            }
             if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("The road at {}, {} runs its end out {} row(s) over open water for a pier", box.minX, box.minZ, Math.abs(grown - end)); }
         }
     }
@@ -231,13 +238,13 @@ public final class BeardRoadsDecks {
                 for (int y = deckY + 1; y <= deckY + height; y++) {
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     at.setPos(x, y, z);
-                    world.setBlockState(at, posts.pick(world, x, y, z), 2);
+                    world.setBlockState(at, posts.pick(world, x, y, z), BlockFlags.UPDATE_CLIENTS);
                     laid++;
                 }
             }
             if (BeardKeep.holds(x, deckY + height + 1, z)) { continue; }
             at.setPos(x, deckY + height + 1, z);
-            world.setBlockState(at, beams.pick(world, x, deckY + height + 1, z), 2);
+            world.setBlockState(at, beams.pick(world, x, deckY + height + 1, z), BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         return laid;
@@ -275,7 +282,7 @@ public final class BeardRoadsDecks {
             at.setPos(alongX ? row : across, y, alongX ? across : row);
             IBlockState held = world.getBlockState(at);
             if (held.getMaterial().isSolid()) { break; }
-            world.setBlockState(at, support, 2);
+            world.setBlockState(at, support, BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         return laid;
@@ -288,7 +295,7 @@ public final class BeardRoadsDecks {
             IBlockState held = world.getBlockState(at);
             if (held.getMaterial().isSolid() && !held.getMaterial().isLiquid()) { break; }
             if (BeardKeep.holds(x, y, z)) { break; }
-            world.setBlockState(at, BeardBlocks.fillAt(world, x, y, level, z, false), 2);
+            world.setBlockState(at, BeardBlocks.fillAt(world, x, y, level, z, false), BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         at.setPos(x, level, z);
@@ -296,7 +303,7 @@ public final class BeardRoadsDecks {
     }
 
     private static void openRail(World world, boolean alongX, StructureBoundingBox roadBox, StructureBoundingBox plotBox, int x, int z, int level, BlockPos.MutableBlockPos at) {
-        IBlockState barrier = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, Blocks.AIR.getDefaultState());
+        IBlockState barrier = BeardRoads.bridgeBarrierBlock(Blocks.AIR.getDefaultState());
         if (barrier.getBlock() == Blocks.AIR) { return; }
         int edge = alongX ? (roadBox.maxZ < plotBox.minZ ? roadBox.maxZ : roadBox.minZ) : (roadBox.maxX < plotBox.minX ? roadBox.maxX : roadBox.minX);
         int height = BeardRoads.barrierHeight();
@@ -304,7 +311,7 @@ public final class BeardRoadsDecks {
             at.setPos(alongX ? x : edge, level + up, alongX ? edge : z);
             if (world.getBlockState(at) != barrier) { continue; }
             BeardKeep.letGo(at.getX(), at.getY(), at.getZ());
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
         }
     }
 
@@ -313,10 +320,10 @@ public final class BeardRoadsDecks {
         int[] strip = ContentBeard.facingStrip(plotBox, roadBox, 6);
         if (strip == null) { return 0; }
         boolean alongX = BeardPlots.roadAlongX(roadBox);
-        BeardRoads.Grade grade = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
+        BeardRoads.Grade grade = BeardRoads.layoutOf(road);
         if (grade == null) { grade = BeardRoadsGrade.chainGrade(world, road, alongX); }
         if (grade == null) { return 0; }
-        IBlockState planks = BeardRoads.pathBlock("villagePathBridgeBlock", Config.worldgen.villagePathBridgeBlock, Blocks.PLANKS.getDefaultState());
+        IBlockState planks = BeardRoads.bridgeBlock();
         int minX = alongX ? strip[0] - CORNER_REACH : strip[0];
         int maxX = alongX ? strip[1] + CORNER_REACH : strip[1];
         int minZ = alongX ? strip[2] : strip[2] - CORNER_REACH;
@@ -346,7 +353,7 @@ public final class BeardRoadsDecks {
                     decked += groundToPlot(world, at, x, z, level, floor);
                     continue;
                 }
-                world.setBlockState(at, planks, 2);
+                world.setBlockState(at, planks, BlockFlags.UPDATE_CLIENTS);
                 BeardKeep.holdSpot(x, level, z);
                 decked++;
                 openRail(world, alongX, roadBox, plotBox, x, z, level, at);
@@ -354,7 +361,7 @@ public final class BeardRoadsDecks {
                     at.setPos(x, level + up, z);
                     if (!clip.isVecInside(at) || BeardKeep.holds(x, level + up, z)) { break; }
                     if (!world.getBlockState(at).getMaterial().isLiquid()) { break; }
-                    world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                    world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                 }
             }
         }
@@ -404,7 +411,7 @@ public final class BeardRoadsDecks {
             if (!above.getMaterial().isSolid() || BeardKeep.holds(x, y, z)) { continue; }
             if (!BeardRoads.clearable(above)) { break; }
             BeardBlocks.note(world, at, "Decking the road");
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
         }
         at.setPos(x, deckY, z);
         if (world.getBlockState(at).getMaterial().isSolid()) { return 0; }
@@ -417,7 +424,7 @@ public final class BeardRoadsDecks {
             at.setPos(x, deckY, z);
         }
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return laid; }
-        world.setBlockState(at, decked, 2);
+        world.setBlockState(at, decked, BlockFlags.UPDATE_CLIENTS);
         if (dock != null && cargoOn(world, alongX, row, across, acrossLeast, acrossMost, deckY, dock)) { laid++; }
         return laid + 1;
     }
@@ -428,7 +435,7 @@ public final class BeardRoadsDecks {
         int edge = dock.edgeIn(acrossMost - acrossLeast + 1);
         if (edge < 2 || Math.abs(across - middle) != edge - 1) { return false; }
         boolean near = across < middle;
-        EnumFacing facing = alongX ? (near ? EnumFacing.SOUTH : EnumFacing.NORTH) : (near ? EnumFacing.EAST : EnumFacing.WEST);
+        EnumFacing facing = Facings.across(alongX, near);
         return ContentPierCargo.place(world, alongX ? row : across, deckY + 1, alongX ? across : row, facing);
     }
 
@@ -456,12 +463,12 @@ public final class BeardRoadsDecks {
         if (top == null) { return planks; }
         int role = top.role(x, z);
         if (role == BeardCross.WALK) {
-            IBlockState walk = BeardRoads.pathBlock("villagePathSidewalkBlock", Config.worldgen.villagePathSidewalkBlock, planks);
-            return BeardRoads.pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, walk);
+            IBlockState walk = BeardRoads.sidewalkBlock(planks);
+            return BeardRoads.bridgeSidewalkBlock(walk);
         }
-        if (role == BeardCross.LINE) { return ContentBeard.axised(BeardRoads.pathBlock("villagePathLineBlock", Config.worldgen.villagePathLineBlock, planks), top.alongX); }
+        if (role == BeardCross.LINE) { return ContentBeard.axised(BeardRoads.lineBlock(planks), top.alongX); }
         if (top.alley || top.offMiddle(x, z) || BeardCross.crossedOver(shapes, top.alongX, x, z)) { return planks; }
-        IBlockState center = BeardRoads.pathBlock("villagePathCenterBlock", Config.worldgen.villagePathCenterBlock, planks);
+        IBlockState center = BeardRoads.centerBlock(planks);
         if (center == planks) { return planks; }
         int dash = Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathCenterDash", Config.worldgen.villagePathCenterDash));
         if (dash > 0 && Math.floorMod(top.row(x, z), dash + 1) == dash) { return planks; }
@@ -469,7 +476,7 @@ public final class BeardRoadsDecks {
     }
 
     static boolean bridgeDress(IBlockState decked, IBlockState planks) {
-        return decked == planks || decked == BeardRoads.pathBlock("villagePathBridgeSidewalkBlock", Config.worldgen.villagePathBridgeSidewalkBlock, planks);
+        return decked == planks || decked == BeardRoads.bridgeSidewalkBlock(planks);
     }
 
     private static boolean grounded(World world, BlockPos.MutableBlockPos at, int x, int y, int z) {
@@ -480,13 +487,13 @@ public final class BeardRoadsDecks {
     }
 
     static void unrail(World world, BlockPos.MutableBlockPos at, int x, int y, int z, IBlockState planks) {
-        IBlockState barrier = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+        IBlockState barrier = BeardRoads.bridgeBarrierBlock(planks);
         if (barrier == planks || BeardKeep.holds(x, y, z)) { return; }
         int railing = BeardRoads.barrierHeight();
         int high = 0;
         while (high <= railing && world.getBlockState(at.setPos(x, y + high, z)) == barrier) { high++; }
         if (high > railing) { return; }
-        for (int up = 0; up < high; up++) { world.setBlockState(at.setPos(x, y + up, z), Blocks.AIR.getDefaultState(), 2); }
+        for (int up = 0; up < high; up++) { world.setBlockState(at.setPos(x, y + up, z), Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
     }
 
     static int deckRail(World world, StructureBoundingBox box, boolean alongX, int row, int across, int acrossLeast, int acrossMost, int deckY, IBlockState planks, IBlockState support, BlockPos.MutableBlockPos at, @Nullable Pier dock, List<StructureBoundingBox> crossed, boolean leg, boolean toGround) {
@@ -528,7 +535,7 @@ public final class BeardRoadsDecks {
                 at.setPos(cellX, deckY, cellZ);
                 return 0;
             }
-            IBlockState barrier = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+            IBlockState barrier = BeardRoads.bridgeBarrierBlock(planks);
             if (barrier == planks) {
                 at.setPos(cellX, deckY, cellZ);
                 return 0;
@@ -545,7 +552,7 @@ public final class BeardRoadsDecks {
             if (dock.endRow(row)) { rail = true; }
             else if (offset != edge) { rail = false; }
             else { rail = dock.style != 1 || dock.postRow(row); }
-            IBlockState barrier = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+            IBlockState barrier = BeardRoads.bridgeBarrierBlock(planks);
             if (rail && barrier != planks) { laid += raise(world, barrier, alongX ? row : across, deckY, alongX ? across : row, at); }
             if (offset == edge && dock.postRow(row)) { laid += piling(world, alongX, row, across, deckY - 1, support, at); }
             at.setPos(alongX ? row : across, deckY, alongX ? across : row);
@@ -554,7 +561,7 @@ public final class BeardRoadsDecks {
         if (span <= 3 || offset != (span - 1) / 2) { return 0; }
         int laid = 0;
         if (toGround || (leg && overDryDrop(world, at, alongX ? row : across, deckY, alongX ? across : row))) { laid += piling(world, alongX, row, across, deckY - 1, support, at); }
-        IBlockState barrier = BeardRoads.pathBlock("villagePathBridgeBarrierBlock", Config.worldgen.villagePathBridgeBarrierBlock, planks);
+        IBlockState barrier = BeardRoads.bridgeBarrierBlock(planks);
         if (barrier != planks && BeardStations.edgeRailed(box, alongX, row, across > (acrossLeast + acrossMost) / 2)) { laid += raise(world, barrier, alongX ? row : across, deckY, alongX ? across : row, at); }
         at.setPos(alongX ? row : across, deckY, alongX ? across : row);
         return laid;
@@ -567,7 +574,7 @@ public final class BeardRoadsDecks {
         for (int y = deckY + 1; y <= deckY + BeardRoads.barrierHeight(); y++) {
             at.setPos(x, y, z);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-            world.setBlockState(at, barrier, 2);
+            world.setBlockState(at, barrier, BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         return laid;

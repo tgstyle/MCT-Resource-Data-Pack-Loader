@@ -15,12 +15,12 @@ import vazkii.quark.world.feature.Archaeologist;
 import vazkii.quark.world.world.ArchaeologistHouseGenerator;
 
 @Mixin(value = ArchaeologistHouseGenerator.class, remap = false) public abstract class MixinArchaeologistHouseGenerator {
-    @Unique private static final int PLACE_OFFSET = 7;
+    @Unique private static final int rdpl$PLACE_OFFSET = 7;
 
     @Inject(method = "generateHouse", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$requireLoaded(WorldServer world, BlockPos pos, EnumFacing face, CallbackInfo ci) {
         Template template = world.getStructureTemplateManager().getTemplate(world.getMinecraftServer(), Archaeologist.HOUSE_STRUCTURE);
         BlockPos size = template.getSize();
-        int reach = PLACE_OFFSET + Math.max(size.getX(), size.getZ());
+        int reach = rdpl$PLACE_OFFSET + Math.max(size.getX(), size.getZ());
         if (!ContentCascade.loaded(world, pos, reach)) { ci.cancel(); }
     }
 }

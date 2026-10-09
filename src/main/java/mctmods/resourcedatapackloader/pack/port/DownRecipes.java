@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.JsonTree;
 
 import com.google.gson.JsonArray;
@@ -21,7 +24,7 @@ final class DownRecipes {
 
     static void recipe(JsonObject json, String file, Consumer<String> note) {
         if (!json.has(TYPE)) { return; }
-        if ("minecraft:smithing_trim".equals(DownFixes.namespaced(DownFixes.string(json, TYPE)))) { json.remove("pattern"); }
+        if ("minecraft:smithing_trim".equals(namespaced(Json.text(json, TYPE)))) { json.remove("pattern"); }
         for (String key : SINGLE) {
             if (json.has(key)) { json.add(key, ingredient(json.get(key), file, note)); }
         }

@@ -82,10 +82,7 @@ repositories {
         url = "https://cursemaven.com"
         content { includeGroup "curse.maven" }
     }
-    maven { url = 'https://jitpack.io' }
     maven { url = 'https://maven.blamejared.com' }
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-    maven { url = 'https://maven.minecraftforge.net' }
     maven { url = 'https://maven.cleanroommc.com' }
     mavenCentral()
 }
@@ -121,12 +118,8 @@ dependencies {
     compileOnly deobf("${common.mjei_version}")
     runtimeOnly deobf("curse.maven:${common.heit_version}")
 
-    //implementation deobf("curse.maven:${common.drtr_version}")
-
     compileOnly deobf("curse.maven:${common.bopl_version}")
     compileOnly deobf("${common.ctwk_version}")
-    //runtimeOnly deobf("${common.ctwk_version}")
-    //runtimeOnly deobf("curse.maven:${common.kbjs_version}")
     compileOnly("${common.gscr_version}") { transitive = false }
     compileOnly deobf("curse.maven:${common.tcon_version}")
     compileOnly deobf("curse.maven:${common.mant_version}")
@@ -143,64 +136,27 @@ dependencies {
     compileOnly deobf("curse.maven:${common.lstc_version}")
     compileOnly deobf("curse.maven:${common.aeth_version}")
     compileOnly deobf("curse.maven:${common.vfix_version}")
-    //runtimeOnly deobf("curse.maven:${common.alfh_version}")
-    //runtimeOnly deobf("curse.maven:${common.rdcr_version}")
     compileOnly deobf("curse.maven:${common.baub_version}")
     runtimeOnly deobf("curse.maven:${common.baub_version}")
     compileOnly deobf("curse.maven:${common.btwl_version}")
     compileOnly deobf("curse.maven:${common.ntra_version}")
     compileOnly deobf("curse.maven:${common.otgn_version}")
     compileOnly deobf("curse.maven:${common.rtgn_version}")
-    //runtimeOnly deobf("curse.maven:${common.rtgn_version}")
     compileOnly deobf("curse.maven:${common.twfo_version}")
 
-    compileOnly deobf("curse.maven:${common.tekt_version}")
-    compileOnly deobf("curse.maven:${common.movl_version}")
     compileOnly deobf("curse.maven:${common.ivtk_version}")
     compileOnly deobf("curse.maven:${common.rcmp_version}")
     compileOnly deobf("curse.maven:${common.mcal_version}")
-    //runtimeOnly deobf("curse.maven:${common.cstd_version}")
-    //runtimeOnly deobf("curse.maven:${common.thfo_version}")
-    //runtimeOnly deobf("curse.maven:${common.cfga_version}")
-    //runtimeOnly deobf("curse.maven:${common.pfix_version}")
-    //runtimeOnly deobf("curse.maven:${common.cwor_version}")
-    //runtimeOnly deobf("curse.maven:${common.cucm_version}")
-    //runtimeOnly deobf("curse.maven:${common.mace_version}")
-
-    //runtimeOnly deobf("curse.maven:${common.zcor_version}")
-    //runtimeOnly deobf("curse.maven:${common.exre_version}")
-    //runtimeOnly deobf("curse.maven:${common.rbcr_version}")
-    //runtimeOnly deobf("curse.maven:${common.rsto_version}")
-    //runtimeOnly deobf("curse.maven:${common.rbst_version}")
     compileOnly deobf("curse.maven:${common.cmsp_version}")
-    //runtimeOnly deobf("curse.maven:${common.cmsp_version}")
-    //runtimeOnly deobf("curse.maven:${common.mocr_version}")
-    //runtimeOnly deobf("curse.maven:${common.rndt_version}")
-    //runtimeOnly deobf("curse.maven:${common.indc_version}")
     runtimeOnly deobf("curse.maven:${common.thcr_version}")
     runtimeOnly deobf("curse.maven:${common.thel_version}")
-    //runtimeOnly deobf("curse.maven:${common.rhdn_version}")
-    //runtimeOnly deobf("curse.maven:${common.opcm_version}")
-    //runtimeOnly deobf("curse.maven:${common.woed_version}")
 
-    //runtimeOnly deobf("curse.maven:${common.moui_version}")
-    //runtimeOnly deobf("curse.maven:${common.rlib_version}")
-    //runtimeOnly deobf("curse.maven:${common.vfix_version}")
     compileOnly deobf("curse.maven:${common.fsek_version}")
-    //runtimeOnly deobf("curse.maven:${common.fsek_version}")
     compileOnly deobf("curse.maven:${common.strm_version}")
-    //runtimeOnly deobf("curse.maven:${common.strm_version}")
     compileOnly deobf("curse.maven:${common.ccli_version}")
-    //runtimeOnly deobf("curse.maven:${common.ccli_version}")
     compileOnly deobf("curse.maven:${common.cbmp_version}")
-    //runtimeOnly deobf("curse.maven:${common.cbmp_version}")
-    //runtimeOnly deobf("curse.maven:${common.mtjp_version}")
-    //runtimeOnly deobf("curse.maven:${common.prbs_version}")
-    //runtimeOnly deobf("curse.maven:${common.prin_version}")
 
-    // gclc dev RUNTIME needs a repaired jar (deobf duplicates miccore/IntCache methods); compileOnly is safe, javac never reads IntCache
     compileOnly deobf("curse.maven:${common.gclc_version}")
-    //runtimeOnly deobf("curse.maven:${common.gclc_version}")
     compileOnly deobf("curse.maven:${common.gspc_version}")
     compileOnly deobf("curse.maven:${common.asmc_version}")
     compileOnly deobf("curse.maven:${common.expl_version}")

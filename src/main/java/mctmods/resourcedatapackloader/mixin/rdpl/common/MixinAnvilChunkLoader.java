@@ -17,32 +17,31 @@ import java.io.DataInputStream;
 import java.io.File;
 
 @Mixin(AnvilChunkLoader.class) public abstract class MixinAnvilChunkLoader {
-    @Unique private static final ThreadLocal<long[]> rdpl$readyStart = ThreadLocal.withInitial(() -> new long[1]);
-    @Unique private static final ThreadLocal<long[]> rdpl$writeStart = ThreadLocal.withInitial(() -> new long[1]);
+    @Unique private static final ContentChunkWatch.Timer rdpl$readyStart = new ContentChunkWatch.Timer();
+    @Unique private static final ContentChunkWatch.Timer rdpl$writeStart = new ContentChunkWatch.Timer();
 
     @Inject(method = "loadChunk__Async", at = @At("HEAD"), remap = false) private void rdpl$countRead(World worldIn, int x, int z, CallbackInfoReturnable<Object[]> cir) {
         if (ContentChunkWatch.watching()) { ContentChunkWatch.read(); }
     }
 
     @Inject(method = "saveChunk", at = @At("HEAD")) private void rdpl$startReady(World worldIn, Chunk chunkIn, CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { rdpl$readyStart.get()[0] = System.nanoTime(); }
+        if (ContentChunkWatch.watching()) { rdpl$readyStart.start(); }
     }
 
     @Inject(method = "saveChunk", at = @At("RETURN")) private void rdpl$endReady(World worldIn, Chunk chunkIn, CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.readied(System.nanoTime() - rdpl$readyStart.get()[0]); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.readied(rdpl$readyStart.stop()); }
     }
 
     @Inject(method = "writeNextIO", at = @At("HEAD")) private void rdpl$startWrite(CallbackInfoReturnable<Boolean> cir) {
-        if (ContentChunkWatch.watching()) { rdpl$writeStart.get()[0] = System.nanoTime(); }
+        if (ContentChunkWatch.watching()) { rdpl$writeStart.start(); }
     }
 
     @Inject(method = "writeNextIO", at = @At("RETURN")) private void rdpl$endWrite(CallbackInfoReturnable<Boolean> cir) {
         if (!ContentChunkWatch.watching() || !cir.getReturnValueZ()) { return; }
-        ContentChunkWatch.written(System.nanoTime() - rdpl$writeStart.get()[0]);
+        ContentChunkWatch.written(rdpl$writeStart.stop());
     }
 
-    @Redirect(method = "loadChunk__Async", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/storage/RegionFileCache;getChunkInputStream(Ljava/io/File;II)Ljava/io/DataInputStream;", remap = true))
-    private DataInputStream rdpl$countDisk(File worldDir, int chunkX, int chunkZ) {
+    @Redirect(method = "loadChunk__Async", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/storage/RegionFileCache;getChunkInputStream(Ljava/io/File;II)Ljava/io/DataInputStream;", remap = true)) private DataInputStream rdpl$countDisk(File worldDir, int chunkX, int chunkZ) {
         if (ContentChunkWatch.watching()) { ContentChunkWatch.readFromDisk(); }
         return RegionFileCache.getChunkInputStream(worldDir, chunkX, chunkZ);
     }

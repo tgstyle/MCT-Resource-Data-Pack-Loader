@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.WeightedPicks;
+
 import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
@@ -22,14 +24,6 @@ public final class FollowDef {
     public int depthOr(AmountDef fallback, Random random) { return (depth != null ? depth : fallback).pick(random); }
 
     @Nullable public static FollowDef pick(List<FollowDef> choices, Random random) {
-        int total = 0;
-        for (FollowDef choice : choices) { total += choice.weight; }
-        if (total <= 0) { return null; }
-        int roll = random.nextInt(total);
-        for (FollowDef choice : choices) {
-            roll -= choice.weight;
-            if (roll < 0) { return choice; }
-        }
-        return null;
+        return WeightedPicks.pick(choices, choice -> choice.weight, random);
     }
 }

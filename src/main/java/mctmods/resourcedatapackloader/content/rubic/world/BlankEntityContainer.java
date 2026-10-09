@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
@@ -15,30 +15,25 @@ import java.util.function.Consumer;
 public class BlankEntityContainer extends EntityContainer {
     public BlankEntityContainer() { this.entities = EntityContainer.EMPTY_ARR[0]; }
 
-    @Override public void addEntity(@Nonnull Entity entity) {
-    }
+    @Override public void addEntity(@Nonnull Entity entity) {}
 
-    @Override public void remove(@Nonnull Entity entity) {
-    }
+    @Override public void remove(@Nonnull Entity entity) {}
 
     @Override @Nonnull public Collection<Entity> getEntities() { return Collections.emptyList(); }
 
     @Override public boolean needsSaving(boolean flag, long time, boolean isModified) { return false; }
 
-    @Override public void markSaved(long time) {
-    }
+    @Override public void markSaved(long time) {}
 
-    @Override public void writeToNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull Consumer<Entity> listener) {
-    }
+    @Override public void writeToNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull Consumer<Entity> listener) {}
 
-    @Override public void readFromNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull World world, @Nonnull Consumer<Entity> listener) {
-    }
+    @Override public void readFromNbt(@Nonnull NBTTagCompound nbt, @Nonnull String name, @Nonnull World world, @Nonnull Consumer<Entity> listener) {}
 
     public static final class BlankEntityMap extends ClassInheritanceMultiMap<Entity> {
         public BlankEntityMap() { super(Entity.class); }
 
         @Override public boolean add(Entity e) {
-            Rubic.LOGGER.error("Attempted to add entity {} to a blank entity map", e, new Throwable());
+            ContentLog.LOGGER.error("Attempted to add entity {} to a blank entity map", e, new Throwable());
             return false;
         }
 

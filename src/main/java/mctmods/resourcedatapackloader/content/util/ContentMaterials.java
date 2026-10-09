@@ -10,12 +10,11 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
+import net.minecraft.init.SoundEvents;
 import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
@@ -26,7 +25,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentMaterials {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<String, MaterialDef> DEFS = new LinkedHashMap<>();
     private static boolean loaded;
 
@@ -41,11 +39,8 @@ public final class ContentMaterials {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Material file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "material file");
+        if (json == null) { return; }
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
             JsonArray array = JsonUtils.getJsonArray(json, "reduction");
@@ -84,6 +79,7 @@ public final class ContentMaterials {
             if (def.repairItem.isEmpty() || def.getTool() == null) { continue; }
             def.resolve(def.getTool(), def.getArmor(), ContentStacks.parse(def.registryName, def.repairItem, 1));
             def.getTool().setRepairItem(def.getRepair());
+            if (def.getArmor() != null) { def.getArmor().setRepairItem(def.getRepair()); }
         }
     }
 
@@ -95,8 +91,10 @@ public final class ContentMaterials {
         return null;
     }
 
-    @Nullable private static SoundEvent sound(String name) {
-        ResourceLocation location = new ResourceLocation(name);
-        return Registries.find(ForgeRegistries.SOUND_EVENTS, location);
+    private static SoundEvent sound(String name) {
+        SoundEvent found = Registries.find(ForgeRegistries.SOUND_EVENTS, new ResourceLocation(name));
+        if (found != null) { return found; }
+        ContentLog.LOGGER.error("Unknown equip sound '{}', using item.armor.equip_iron", name);
+        return SoundEvents.ITEM_ARMOR_EQUIP_IRON;
     }
 }

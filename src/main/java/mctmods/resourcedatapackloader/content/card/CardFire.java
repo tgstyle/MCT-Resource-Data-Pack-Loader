@@ -44,8 +44,8 @@ public final class CardFire {
     }
 
     private static boolean blocked(CardRule rule, EntityPlayerMP subject) {
-        if (!CardPlace.inDimension(rule.dimension, subject.dimension)) { return true; }
-        if (rule.when != null && !rule.when.passes(subject)) { return true; }
+        if (CardPlace.elsewhere(rule.dimension, subject.dimension)) { return true; }
+        if (rule.when != null && rule.when.fails(subject)) { return true; }
         long now = clock(subject.world);
         String key = rule.key;
         if (CardRule.ONCE_PER_PLAYER.equals(rule.repeat) && CardStorage.firedFor(subject, key)) { return true; }

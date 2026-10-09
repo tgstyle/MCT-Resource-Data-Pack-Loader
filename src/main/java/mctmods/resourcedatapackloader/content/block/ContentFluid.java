@@ -6,11 +6,11 @@ import mctmods.resourcedatapackloader.content.util.TintFactory;
 import net.minecraftforge.fluids.Fluid;
 
 public class ContentFluid extends Fluid {
-    private final int color;
+    private final int tint;
 
     public ContentFluid(FluidDef def) {
         super(def.name, def.still, def.flowing);
-        this.color = TintFactory.opaque(def.color);
+        this.tint = TintFactory.opaque(def.color);
         setTemperature(def.temperature);
         setDensity(def.density);
         setViscosity(def.viscosity);
@@ -18,5 +18,5 @@ public class ContentFluid extends Fluid {
         setGaseous(def.gaseous);
     }
 
-    @Override public int getColor() { return color; }
+    @Override public int getColor() { return tint; }
 }

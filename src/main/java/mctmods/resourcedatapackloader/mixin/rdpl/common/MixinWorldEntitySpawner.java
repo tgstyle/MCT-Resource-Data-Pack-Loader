@@ -16,7 +16,7 @@ import javax.annotation.Nullable;
 
     @Override public void rdpl$setEntitySpawner(@Nullable IWorldEntitySpawner spawner) { this.rdpl$customSpawner = spawner; }
 
-    @Inject(method = "findChunksForSpawning", cancellable = true, at = @At("HEAD")) private void onSpawnMobs(WorldServer worldServerIn, boolean spawnHostileMobs, boolean spawnPeacefulMobs, boolean spawnOnSetTickRate, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "findChunksForSpawning", cancellable = true, at = @At("HEAD")) private void rdpl$onSpawnMobs(WorldServer worldServerIn, boolean spawnHostileMobs, boolean spawnPeacefulMobs, boolean spawnOnSetTickRate, CallbackInfoReturnable<Integer> cir) {
         if (this.rdpl$customSpawner != null) {
             int ret = this.rdpl$customSpawner.findChunksForSpawning(worldServerIn, spawnHostileMobs, spawnPeacefulMobs, spawnOnSetTickRate);
             cir.setReturnValue(ret);

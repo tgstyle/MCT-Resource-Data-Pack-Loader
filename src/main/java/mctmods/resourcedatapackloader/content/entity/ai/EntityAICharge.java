@@ -1,18 +1,19 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
+import mctmods.resourcedatapackloader.util.MathUtil;
+
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.ai.EntityAIBase;
-import net.minecraft.util.DamageSource;
 import net.minecraft.util.math.MathHelper;
+import javax.annotation.Nullable;
 
 public final class EntityAICharge extends EntityAIBase {
     private static final int RUN = 40;
     private static final int REST = 60;
     private final EntityCreature mob;
     private final double speed;
-    private EntityLivingBase target;
+    @Nullable private EntityLivingBase target;
     private int running;
     private int resting;
 
@@ -48,13 +49,13 @@ public final class EntityAICharge extends EntityAIBase {
     }
 
     @Override public void updateTask() {
+        if (target == null) { return; }
         running--;
         mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
         mob.getNavigator().tryMoveToEntityLiving(target, speed);
         if (mob.getDistanceSq(target) > 6.25D) { return; }
-        float damage = (float) mob.getEntityAttribute(SharedMonsterAttributes.ATTACK_DAMAGE).getAttributeValue();
-        target.attackEntityFrom(DamageSource.causeMobDamage(mob), damage);
-        target.knockBack(mob, 2.0F, MathHelper.sin(mob.rotationYaw * 0.017453292F), -MathHelper.cos(mob.rotationYaw * 0.017453292F));
+        EntityAIStrike.hit(mob, target);
+        target.knockBack(mob, 2.0F, MathHelper.sin(mob.rotationYaw * MathUtil.DEG_TO_RAD), -MathHelper.cos(mob.rotationYaw * MathUtil.DEG_TO_RAD));
         running = 0;
     }
 }

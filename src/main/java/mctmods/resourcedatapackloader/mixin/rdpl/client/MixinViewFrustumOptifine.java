@@ -11,7 +11,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @SuppressWarnings("target") @Mixin(ViewFrustum.class) public class MixinViewFrustumOptifine {
-    @Dynamic @Redirect(method = "updateVboRegion(Lnet/minecraft/client/renderer/chunk/RenderChunk;)V",
-            at = @At(value = "NEW", target = "net/minecraft/util/math/ChunkPos"))
-    private ChunkPos getChunkPos(int x, int z, RenderChunk renderChunk) { return new ChunkPos3(x, renderChunk.getPosition().getY() & ~255, z); }
+    @Dynamic @Redirect(method = "updateVboRegion(Lnet/minecraft/client/renderer/chunk/RenderChunk;)V", at = @At(value = "NEW", target = "net/minecraft/util/math/ChunkPos")) private ChunkPos rdpl$getChunkPos(int x, int z, RenderChunk renderChunk) { return new ChunkPos3(x, renderChunk.getPosition().getY() & ~255, z); }
 }

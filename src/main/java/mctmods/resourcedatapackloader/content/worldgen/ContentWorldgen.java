@@ -171,7 +171,7 @@ public final class ContentWorldgen implements IWorldGenerator {
                 continue;
             }
             if (chain.contains(next)) {
-                if (CHAIN_WARNED.add(def.registryName + ">" + chosen.name)) { ContentLog.LOGGER.error("Worldgen entry {} queues {}, which already generated earlier in this chain, so the chain stops here rather than running forever", def.registryName, chosen.name); }
+                ContentLog.LOGGER.errorOnce(CHAIN_WARNED, def.registryName + ">" + chosen.name, "Worldgen entry {} queues {}, which already generated earlier in this chain, so the chain stops here rather than running forever", def.registryName, chosen.name);
                 continue;
             }
             IContentShape figure = next.getShape();

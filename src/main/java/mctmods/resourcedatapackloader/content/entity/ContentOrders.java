@@ -5,11 +5,11 @@ import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.TileScan;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.block.BlockWallSign;
@@ -32,7 +32,6 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -48,7 +47,6 @@ import java.util.UUID;
 import javax.annotation.Nullable;
 
 public final class ContentOrders {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final String BOSS = "rdplBoss";
     private static final String TEAM = "team:";
     private static final String TAG = "tag:";
@@ -79,11 +77,8 @@ public final class ContentOrders {
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Order file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "order file");
+        if (json == null) { return; }
         if (json.has("stockName")) { stockName = JsonUtils.getString(json, "stockName").trim(); }
         if (json.has("hire")) { hire = JsonUtils.getString(json, "hire").trim(); }
         if (json.has("spawnCap")) { spawnCap = Math.max(0, JsonUtils.getInt(json, "spawnCap")); }
@@ -99,11 +94,8 @@ public final class ContentOrders {
     }
 
     @Nullable private static OrderDef order(String name, JsonObject json) {
-        OrderDef.Job job = null;
         String named = JsonUtils.getString(json, "job", "");
-        for (OrderDef.Job one : OrderDef.Job.values()) {
-            if (one.name().equalsIgnoreCase(named)) { job = one; }
-        }
+        OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
         if (job == null) {
             ContentLog.LOGGER.error("Order {} asks for the job '{}', which is not gather, mine, farm or haul, ignoring it", name, named);
             return null;
@@ -306,7 +298,7 @@ public final class ContentOrders {
         else { bind(mob, player.getUniqueID()); }
     }
 
-    @Nullable private static ScorePlayerTeam teamOf(EntityPlayer player) { return player.world.getScoreboard().getPlayersTeam(player.getName()); }
+    @Nullable static ScorePlayerTeam teamOf(EntityPlayer player) { return player.world.getScoreboard().getPlayersTeam(player.getName()); }
 
     private static boolean handedTool(EntityPlayer player, EntityLiving mob, ItemStack held) {
         OrderDef def = null;
@@ -339,21 +331,16 @@ public final class ContentOrders {
     }
 
     @Nullable private static BlockPos nearestChest(World world, BlockPos from, int radius) {
-        BlockPos best = null;
-        double bestDistance = Double.MAX_VALUE;
-        for (int cx = from.getX() - radius >> 4; cx <= from.getX() + radius >> 4; cx++) {
-            for (int cz = from.getZ() - radius >> 4; cz <= from.getZ() + radius >> 4; cz++) {
-                if (!world.isBlockLoaded(new BlockPos(cx << 4, 0, cz << 4))) { continue; }
-                Chunk chunk = world.getChunk(cx, cz);
-                for (TileEntity tile : chunk.getTileEntityMap().values()) {
-                    double distance = tile.getPos().distanceSq(from);
-                    if (distance > (double) radius * radius || distance >= bestDistance || !isChest(tile)) { continue; }
-                    best = tile.getPos();
-                    bestDistance = distance;
-                }
-            }
-        }
-        return best;
+        BlockPos[] best = {null};
+        double[] bestDistance = {Double.MAX_VALUE};
+        TileScan.within(world, from, radius, tile -> {
+            double distance = tile.getPos().distanceSq(from);
+            if (distance > (double) radius * radius || distance >= bestDistance[0] || !isChest(tile)) { return true; }
+            best[0] = tile.getPos();
+            bestDistance[0] = distance;
+            return true;
+        });
+        return best[0];
     }
 
     private static final class Pending {

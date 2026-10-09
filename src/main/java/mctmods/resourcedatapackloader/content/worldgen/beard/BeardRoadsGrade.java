@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
@@ -261,7 +260,7 @@ public final class BeardRoadsGrade {
     }
 
     @Nullable public static BeardRoads.Grade chainGrade(World world, StructureComponent road, boolean alongX) {
-        BeardRoads.Grade laid = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
+        BeardRoads.Grade laid = BeardRoads.layoutOf(road);
         if (ContentLog.LOGGER.debugEnabled()) {
             String source = laid != null ? "its built layout" : chaining ? "a plain profile" : "a profile with its own junctions";
             if (BeardRoadsHolds.untold("grade " + road.getBoundingBox().minX + "," + road.getBoundingBox().minZ + " " + source)) { ContentLog.LOGGER.debug("The grade of the road at {}, {} comes from {}", road.getBoundingBox().minX, road.getBoundingBox().minZ, source); }
@@ -295,7 +294,7 @@ public final class BeardRoadsGrade {
             }
             boolean alongX = BeardPlots.roadAlongX(other);
             int start = alongX ? road.minX : road.minZ;
-            BeardRoads.Grade grade = other instanceof IRoadLayout ? ((IRoadLayout) other).rdpl$layout() : null;
+            BeardRoads.Grade grade = BeardRoads.layoutOf(other);
             if (grade == null) { grade = roadProfile(world, other, alongX, start, alongX ? road.maxX : road.maxZ, alongX ? road.minZ : road.minX, alongX ? road.maxZ : road.maxX, true); }
             if (grade == null) { return Integer.MIN_VALUE; }
             int center = alongX ? (box.minX + box.maxX) / 2 : (box.minZ + box.maxZ) / 2;

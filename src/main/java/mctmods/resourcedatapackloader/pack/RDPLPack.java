@@ -5,15 +5,16 @@ import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -195,12 +196,7 @@ public final class RDPLPack {
     }
 
     public String read(String namespace, String path) throws IOException {
-        try (InputStream stream = open(namespace, path)) {
-            ByteArrayOutputStream held = new ByteArrayOutputStream();
-            byte[] buffer = new byte[8192];
-            for (int read = stream.read(buffer); read > 0; read = stream.read(buffer)) { held.write(buffer, 0, read); }
-            return new String(held.toByteArray(), StandardCharsets.UTF_8);
-        }
+        try (InputStream stream = open(namespace, path)) { return new String(IOUtils.toByteArray(stream), StandardCharsets.UTF_8); }
     }
 
     @Nullable private synchronized ZipFile archive() {
@@ -211,12 +207,12 @@ public final class RDPLPack {
         return archive;
     }
 
-    public java.util.List<String> packFiles(String folder, String ext) {
+    public List<String> packFiles(String folder, String ext) {
         Set<String> out = new LinkedHashSet<>();
         for (Path base : own == null ? Collections.singletonList(root) : Arrays.asList(own, root)) {
             Path home = base.resolve(folder);
             if (!Files.isDirectory(home)) { continue; }
-            try (java.nio.file.DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
+            try (DirectoryStream<Path> entries = Files.newDirectoryStream(home)) {
                 for (Path entry : entries) {
                     String name = entry.getFileName().toString();
                     if (name.endsWith("/")) { name = name.substring(0, name.length() - 1); }
@@ -273,11 +269,10 @@ public final class RDPLPack {
 
     public synchronized void close() throws IOException {
         if (ported != null) { ported.closing(); }
-        if (archive != null) {
-            archive.close();
-            archive = null;
-        }
+        ZipFile closing = archive;
+        archive = null;
         archiveTried = false;
-        if (owned != null) { owned.close(); }
+        try { if (closing != null) { closing.close(); } }
+        finally { if (owned != null) { owned.close(); } }
     }
 }

@@ -125,7 +125,7 @@ public final class DeepRavines {
                     double awayY = away(cubeY, localY, y, vertSize);
                     double narrowing = widths[(localY + cubeY * Cube.SIZE) & 0xFF];
                     if ((awayX * awayX + awayZ * awayZ) * narrowing + awayY * awayY / STRETCH_Y >= 1.0D) { continue; }
-                    if (!replaceable(primer.getBlockState(localX, localY, localZ))) { continue; }
+                    if (blocked(primer.getBlockState(localX, localY, localZ))) { continue; }
                     primer.setBlockState(localX, localY, localZ, deep.ravineFill(Coords.localToBlock(cubeX, localX),
                             Coords.localToBlock(cubeY, localY), Coords.localToBlock(cubeZ, localZ)));
                 }
@@ -166,10 +166,10 @@ public final class DeepRavines {
 
     private static boolean water(IBlockState state) { return state.getMaterial() == Material.WATER; }
 
-    private static boolean replaceable(IBlockState state) {
-        if (state.getBlock() == Blocks.BEDROCK) { return false; }
+    private static boolean blocked(IBlockState state) {
+        if (state.getBlock() == Blocks.BEDROCK) { return true; }
         Material material = state.getMaterial();
-        return material == Material.ROCK || material == Material.GROUND || material == Material.GRASS || material == Material.SAND;
+        return material != Material.ROCK && material != Material.GROUND && material != Material.GRASS && material != Material.SAND;
     }
 
     private static int bound(int value) { return MathHelper.clamp(value, 0, Cube.SIZE); }

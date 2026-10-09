@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -32,7 +31,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockLeaves extends BlockLeaves implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockLeaves extends BlockLeaves implements IContentBlock, IVariantBlock {
     public static final int MAX_VARIANTS = 4;
     public static final Set<String> HIDDEN = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(CHECK_DECAY.getName(), DECAYABLE.getName())));
     private static final int VARIANT_MASK = 3;
@@ -43,11 +42,7 @@ import javax.annotation.Nullable;
     private final PropertyVariant variant;
     private ItemStack saplingDrop;
 
-    public static ContentBlockLeaves create(BlockDef def) {
-        BlockVariants.begin(def, new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockLeaves(def, BlockVariants.property()); }
-        finally { BlockVariants.end(); }
-    }
+    public static ContentBlockLeaves create(BlockDef def) { return BlockVariants.construct(def, built -> new ContentBlockLeaves(built, BlockVariants.property())); }
 
     protected ContentBlockLeaves(BlockDef def, PropertyVariant property) {
         this.def = def;
@@ -69,15 +64,13 @@ import javax.annotation.Nullable;
 
     @Override public BlockDef getDef() { return def; }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
     @Override @Nonnull public BlockPlanks.EnumType getWoodType(int meta) { return BlockPlanks.EnumType.OAK; }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
         return getDefaultState()
@@ -95,9 +88,7 @@ import javax.annotation.Nullable;
 
     @Override public int damageDropped(@Nonnull IBlockState state) { return ContentSetup.metaOf(def, state.getValue(variant)); }
 
-    @Override @Nonnull public List<ItemStack> onSheared(@Nonnull ItemStack item, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) {
-        return Collections.singletonList(new ItemStack(this, 1, damageDropped(world.getBlockState(pos))));
-    }
+    @Override @Nonnull public List<ItemStack> onSheared(@Nonnull ItemStack item, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return Collections.singletonList(new ItemStack(this, 1, damageDropped(world.getBlockState(pos)))); }
 
     @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
         if (saplingDrop == null) { saplingDrop = ContentStacks.parse(def.registryName, def.leafSapling, 1); }
@@ -110,12 +101,6 @@ import javax.annotation.Nullable;
     @Override public int getLightValue(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).light; }
 
     @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos) { return def.at(damageDropped(state)).hardness; }
-
-    @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability; }
-
-    @Override public int getFireSpreadSpeed(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.fireSpread; }
-
-    @Override public boolean isFlammable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def.flammability > 0; }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def.renderLayer; }
 

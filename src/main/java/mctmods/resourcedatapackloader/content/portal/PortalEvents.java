@@ -11,6 +11,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.BlockEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
@@ -19,7 +20,7 @@ public final class PortalEvents {
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) { ContentBlockPortal.forget(event.player.getUniqueID()); }
 
-    @SubscribeEvent public static void onBroken(BlockEvent.BreakEvent event) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); }
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onBroken(BlockEvent.BreakEvent event) { ContentPortals.shaken(event.getWorld(), event.getPos(), event.getState()); }
 
     @SubscribeEvent public static void onLit(PlayerInteractEvent.RightClickBlock event) {
         World world = event.getWorld();
@@ -32,7 +33,7 @@ public final class PortalEvents {
             event.setCancellationResult(EnumActionResult.SUCCESS);
             return;
         }
-        if (!ContentPortals.light(world, clicked, event.getFace(), held)) { return; }
+        if (ContentPortals.lightFailed(world, clicked, event.getFace(), held)) { return; }
         EntityPlayer player = event.getEntityPlayer();
         world.playSound(null, clicked, SoundEvents.ITEM_FLINTANDSTEEL_USE, SoundCategory.BLOCKS, 1.0F, world.rand.nextFloat() * 0.4F + 0.8F);
         if (held.isItemStackDamageable()) { held.damageItem(1, player); }

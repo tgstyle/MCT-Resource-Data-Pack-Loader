@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderInternal;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICubeProviderServer;
@@ -27,20 +27,18 @@ public class SpawnCubes implements ITicket {
     private int radiusXZForce = spawnLoadDistanceXZ;
     private int radiusYForce = spawnLoadDistanceY;
 
-    public void update(World world) { update(world, spawnGenerateDistanceXZ, spawnGenerateDistanceY, spawnLoadDistanceXZ, spawnLoadDistanceY); }
-
-    public void update(World world, int newRadiusXZGenerate, int newRadiusYGenerate, int newRadiusXZForce, int newRadiusYForce) {
+    public void update(World world) {
         if (!world.getSpawnPoint().equals(spawnPoint) ||
-                radiusXZGenerate != newRadiusXZGenerate ||
-                radiusYGenerate != newRadiusYGenerate ||
-                radiusXZForce != newRadiusXZForce ||
-                radiusYForce != newRadiusYForce) {
+                radiusXZGenerate != spawnGenerateDistanceXZ ||
+                radiusYGenerate != spawnGenerateDistanceY ||
+                radiusXZForce != spawnLoadDistanceXZ ||
+                radiusYForce != spawnLoadDistanceY) {
             removeTickets(world);
             spawnPoint = world.getSpawnPoint();
-            radiusXZGenerate = newRadiusXZGenerate;
-            radiusYGenerate = newRadiusYGenerate;
-            radiusXZForce = newRadiusXZForce;
-            radiusYForce = newRadiusYForce;
+            radiusXZGenerate = spawnGenerateDistanceXZ;
+            radiusYGenerate = spawnGenerateDistanceY;
+            radiusXZForce = spawnLoadDistanceXZ;
+            radiusYForce = spawnLoadDistanceY;
             addTickets(world);
         }
     }
@@ -51,19 +49,13 @@ public class SpawnCubes implements ITicket {
         int spawnCubeX = Coords.blockToCube(spawnPoint.getX());
         int spawnCubeY = Coords.blockToCube(spawnPoint.getY());
         int spawnCubeZ = Coords.blockToCube(spawnPoint.getZ());
-        for (int cubeX = spawnCubeX - radiusXZForce; cubeX <= spawnCubeX + radiusXZForce; cubeX++) {
-            for (int cubeZ = spawnCubeZ - radiusXZForce; cubeZ <= spawnCubeZ + radiusXZForce; cubeZ++) {
-                for (int cubeY = spawnCubeY + radiusYForce; cubeY >= spawnCubeY - radiusYForce; cubeY--) {
-                    serverCubeCache.getCube(cubeX, cubeY, cubeZ).getTickets().remove(this);
-                }
-            }
-        }
+        forEachCube(spawnCubeX, spawnCubeY, spawnCubeZ, radiusXZForce, radiusYForce, (cubeX, cubeY, cubeZ) -> serverCubeCache.getCube(cubeX, cubeY, cubeZ).getTickets().remove(this));
     }
 
     private void addTickets(World world) {
         if (radiusXZGenerate < 0 || radiusYGenerate < 0) { return; }
         CubeProviderServer serverCubeCache = (CubeProviderServer) world.getChunkProvider();
-        Rubic.LOGGER.info("Loading cubes for spawn...");
+        ContentLog.LOGGER.info("Loading cubes for spawn...");
         BlockPos spawnPoint = Objects.requireNonNull(this.spawnPoint);
         int spawnCubeX = Coords.blockToCube(spawnPoint.getX());
         int spawnCubeY = Coords.blockToCube(spawnPoint.getY());
@@ -82,18 +74,18 @@ public class SpawnCubes implements ITicket {
             int dz = Math.abs(cubeZ - spawnCubeZ);
             if (dx >= radiusXZGenerate || dz >= radiusXZGenerate || dy >= radiusYGenerate) { req = ICubeProviderServer.Requirement.GENERATE; }
             else { req = ICubeProviderServer.Requirement.LIGHT; }
-            Cube cube = serverCubeCache.getCubeNow(cubeX, cubeY, cubeZ, req);
+            Cube cube = serverCubeCache.getCube(cubeX, cubeY, cubeZ, req);
             assert cube != null;
             if (dx <= radiusXZForce && dz <= radiusXZForce) { cube.getTickets().add(this); }
             generated.incrementAndGet();
             tellScreen(world, generated.get() * 100 / totalToGenerate);
             if (System.currentTimeMillis() >= lastTime.get() + progressReportInterval) {
                 lastTime.set(System.currentTimeMillis());
-                Rubic.LOGGER.info("Preparing spawn area: {}%", generated.get() * 100 / totalToGenerate);
+                ContentLog.LOGGER.info("Preparing spawn area: {}%", generated.get() * 100 / totalToGenerate);
             }
         });
         tellScreen(world, 100);
-        Rubic.LOGGER.info("Preparing spawn area: 100%");
+        ContentLog.LOGGER.info("Preparing spawn area: 100%");
     }
 
     private static void tellScreen(World world, int percent) {

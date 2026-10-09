@@ -1,7 +1,8 @@
 package mctmods.resourcedatapackloader.content.rubic.world.chunkloader;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicTicketInternal;
@@ -10,7 +11,6 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.util.Coords;
 import mctmods.resourcedatapackloader.util.ReflectionUtil;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
-import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -30,8 +30,9 @@ import java.lang.invoke.MethodHandle;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import static mctmods.resourcedatapackloader.util.ReflectionUtil.cast;
 
-@Mod.EventBusSubscriber(modid = Rubic.MODID) public class RubicChunkManager {
+@Mod.EventBusSubscriber(modid = ResourceDataPackLoader.MOD_ID) public class RubicChunkManager {
     private static final MethodHandle ticketConstructor = ReflectionUtil.constructHandle(ForgeChunkManager.Ticket.class, String.class, ForgeChunkManager.Type.class, World.class);
     private static final int MAX_FORCED_CUBES_PER_TICKET = 400;
 
@@ -127,7 +128,7 @@ import java.util.Map;
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         IntSet forcedCubes = ((IRubicTicketInternal) ticket).rdpl$getAllForcedChunkCubes().get(event.getLocation());
         if (forcedCubes == null) {
-            Rubic.LOGGER.warn("RubicChunkManager: Unforcing chunk with no information about forced cubes at {}", event.getLocation());
+            ContentLog.LOGGER.warn("RubicChunkManager: Unforcing chunk with no information about forced cubes at {}", event.getLocation());
             return;
         }
         for (int cubeY : forcedCubes) {

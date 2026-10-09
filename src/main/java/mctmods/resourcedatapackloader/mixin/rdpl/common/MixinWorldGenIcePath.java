@@ -18,11 +18,11 @@ import java.util.Random;
 @Mixin(WorldGenIcePath.class) public class MixinWorldGenIcePath {
     @Unique private int rdpl$minY;
 
-    @Inject(method = "generate", at = @At("HEAD")) private void onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
+    @Inject(method = "generate", at = @At("HEAD")) private void rdpl$onGenerate(World worldIn, Random rand, BlockPos position, CallbackInfoReturnable<Boolean> cbi) {
         this.rdpl$minY = Coords.getMinCubePopulationPos(position.getY());
     }
 
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 2, ordinal = 0)) private int getMinGenHeight0(int orig, World worldIn, Random rand, BlockPos position) {
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 2, ordinal = 0)) private int rdpl$getMinGenHeight0(int orig, World worldIn, Random rand, BlockPos position) {
         if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { return rdpl$minY; }
         return orig;
     }

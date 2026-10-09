@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.item;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -14,7 +13,6 @@ import net.minecraft.item.EnumAction;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumHand;
@@ -36,17 +34,13 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Nullable private ItemVariant variant(ItemStack stack) { return def.byMeta.get(stack.getMetadata()); }
+    @Nullable private ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        if (!isInCreativeTab(tab)) { return; }
-        for (ItemVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
+        if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); }
     }
 
-    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return super.getTranslationKey() + "." + (value == null ? ContentParser.PLACEHOLDER : value.name);
-    }
+    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
         ItemVariant value = variant(stack);
@@ -70,11 +64,7 @@ import javax.annotation.Nullable;
     }
 
     @Override @Nonnull public ItemStack onItemUseFinish(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityLivingBase entity) {
-        ItemVariant value = variant(stack);
-        if (!world.isRemote && value != null) {
-            PotionEffect effect = value.getResolvedPotion();
-            if (effect != null) { entity.addPotionEffect(new PotionEffect(effect.getPotion(), effect.getDuration(), effect.getAmplifier(), effect.getIsAmbient(), false)); }
-        }
+        if (!world.isRemote) { ItemVariants.applyPotion(variant(stack), entity); }
         if (entity instanceof EntityPlayer && def.cooldown > 0) { ((EntityPlayer) entity).getCooldownTracker().setCooldown(this, def.cooldown); }
         if (entity instanceof EntityPlayer && ((EntityPlayer) entity).capabilities.isCreativeMode) { return stack; }
         stack.shrink(1);

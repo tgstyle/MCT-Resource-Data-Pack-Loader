@@ -22,6 +22,7 @@ public final class BeardCrown {
         private final int deep;
         private final IBlockState[] tops;
         private final int[] ys;
+
         private Born(StructureBoundingBox window) {
             minX = window.minX;
             minZ = window.minZ;
@@ -29,12 +30,15 @@ public final class BeardCrown {
             tops = new IBlockState[(window.maxX - window.minX + 1) * deep];
             ys = new int[tops.length];
         }
+
         private void saw(int x, int z, int y, IBlockState held) {
             int spot = (x - minX) * deep + (z - minZ);
             tops[spot] = held;
             ys[spot] = y;
         }
+
         @Nullable public IBlockState top(int x, int z) { return tops[(x - minX) * deep + (z - minZ)]; }
+
         public int topY(int x, int z) { return ys[(x - minX) * deep + (z - minZ)]; }
     }
 
@@ -76,11 +80,14 @@ public final class BeardCrown {
     public static final class Crowning {
         private final int[] tally = new int[BeardBlocks.Crowned.values().length];
         private final int[][] first = new int[BeardBlocks.Crowned.values().length][];
+
         private void took(BeardBlocks.Crowned why, int x, int y, int z) {
             tally[why.ordinal()]++;
             if (first[why.ordinal()] == null) { first[why.ordinal()] = new int[] {x, y, z}; }
         }
+
         public int crowned() { return tally[BeardBlocks.Crowned.WRITTEN.ordinal()]; }
+
         public int passed() {
             int passed = 0;
             for (BeardBlocks.Crowned why : BeardBlocks.Crowned.values()) {
@@ -89,6 +96,7 @@ public final class BeardCrown {
             }
             return passed;
         }
+
         public String skips() {
             StringBuilder said = new StringBuilder();
             for (BeardBlocks.Crowned why : BeardBlocks.Crowned.values()) {

@@ -3,8 +3,6 @@ package mctmods.resourcedatapackloader.content.rubic.worldgen;
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
-import net.minecraft.world.biome.Biome;
-import javax.annotation.Nullable;
 import java.util.Arrays;
 
 public class CubePrimer {
@@ -13,29 +11,10 @@ public class CubePrimer {
     private IBlockState lastState;
     private int lastId;
     private byte[] extData = null;
-    private Biome[] biomes3d = null;
-
-    public boolean hasBiomes() { return biomes3d != null; }
 
     public CubePrimer() { this(new char[4096]); }
 
     protected CubePrimer(char[] data) { this.data = data; }
-
-    @SuppressWarnings("unused") @Nullable public Biome getBiome(int localBiomeX, int localBiomeY, int localBiomeZ) {
-        if (biomes3d == null) { return null; }
-        int biomeX = localBiomeX * 2;
-        int biomeZ = localBiomeZ * 2;
-        return this.biomes3d[biomeX << 3 | biomeZ];
-    }
-
-    @SuppressWarnings("unused") public void setBiome(int localBiomeX, int localBiomeY, int localBiomeZ, Biome biome) {
-        if (this.biomes3d == null) { this.biomes3d = new Biome[8 * 8]; }
-        int biomeX = localBiomeX * 2;
-        int biomeZ = localBiomeZ * 2;
-        for (int dx = 0; dx < 2; dx++) {
-            for (int dz = 0; dz < 2; dz++) { this.biomes3d[(biomeX + dx) << 3 | (biomeZ + dz)] = biome; }
-        }
-    }
 
     public IBlockState getBlockState(int x, int y, int z) {
         int idx = getBlockIndex(x, y, z);
@@ -58,6 +37,7 @@ public class CubePrimer {
             if (extData == null) { extData = new byte[4096]; }
             extData[idx] = (byte) (value >>> 16);
         }
+        else if (extData != null) { extData[idx] = 0; }
     }
 
     @SuppressWarnings("deprecation") private static int rdpl$idOf(IBlockState state) { return Block.BLOCK_STATE_IDS.get(state); }
@@ -65,7 +45,6 @@ public class CubePrimer {
     public void reset() {
         Arrays.fill(this.data, '\0');
         this.extData = null;
-        this.biomes3d = null;
     }
 
     private static int getBlockIndex(int x, int y, int z) { return y << 8 | z << 4 | x; }

@@ -1,5 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.Json.object;
+import static mctmods.resourcedatapackloader.util.Json.text;
+
 import mctmods.resourcedatapackloader.util.FeatureForms;
 import mctmods.resourcedatapackloader.util.FormatDown;
 import mctmods.resourcedatapackloader.util.LineNote;
@@ -86,8 +89,4 @@ public final class LinePort {
         out.add("brewing", brewing);
         return out;
     }
-
-    private static JsonObject object(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonObject() ? parent.getAsJsonObject(key) : new JsonObject(); }
-
-    private static String text(JsonObject parent, String key) { return parent.has(key) && parent.get(key).isJsonPrimitive() ? parent.get(key).getAsString() : ""; }
 }

@@ -179,5 +179,4 @@ import javax.annotation.Nullable;
         else if (args.length >= 3 && "find".equals(args[1])) { forward(args); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
-
 }

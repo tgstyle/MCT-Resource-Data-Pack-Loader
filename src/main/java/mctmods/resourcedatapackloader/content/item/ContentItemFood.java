@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.item;
 
-import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -12,7 +11,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemFood;
 import net.minecraft.item.ItemStack;
-import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.NonNullList;
 import net.minecraft.world.World;
 import java.util.List;
@@ -33,17 +31,13 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Nullable private ItemVariant variant(ItemStack stack) { return def.byMeta.get(stack.getMetadata()); }
+    @Nullable private ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
     @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        if (!isInCreativeTab(tab)) { return; }
-        for (ItemVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
+        if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); }
     }
 
-    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {
-        ItemVariant value = variant(stack);
-        return super.getTranslationKey() + "." + (value == null ? ContentParser.PLACEHOLDER : value.name);
-    }
+    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
         ItemVariant value = variant(stack);
@@ -72,10 +66,6 @@ import javax.annotation.Nullable;
     @Override protected void onFoodEaten(@Nonnull ItemStack stack, @Nonnull World world, @Nonnull EntityPlayer player) {
         if (world.isRemote) { return; }
         if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
-        ItemVariant value = variant(stack);
-        if (value == null) { return; }
-        PotionEffect effect = value.getResolvedPotion();
-        if (effect == null) { return; }
-        player.addPotionEffect(new PotionEffect(effect.getPotion(), effect.getDuration(), effect.getAmplifier(), effect.getIsAmbient(), false));
+        ItemVariants.applyPotion(variant(stack), player);
     }
 }

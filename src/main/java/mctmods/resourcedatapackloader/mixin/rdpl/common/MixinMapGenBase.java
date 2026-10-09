@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.ChunkPrimer;
@@ -51,7 +52,7 @@ import java.util.Random;
             for (int cellX = CityGrid.cellOf(x - range); cellX <= CityGrid.cellOf(x + range); cellX++) {
                 for (int cellZ = CityGrid.cellOf(z - range); cellZ <= CityGrid.cellOf(z + range); cellZ++) {
                     long start = CityGrid.startIn(cellX, cellZ);
-                    rdpl$visit(worldIn, (int) (start >> 32), (int) start, x, z, primer, saltX, saltZ);
+                    rdpl$visit(worldIn, Longs.high(start), Longs.low(start), x, z, primer, saltX, saltZ);
                 }
             }
             return;
@@ -62,7 +63,7 @@ import java.util.Random;
             for (int cellZ = Math.floorDiv(z - range, grid); cellZ <= Math.floorDiv(z + range, grid); cellZ++) {
                 long chosen = BeardSite.siteFor(worldIn, known, cellX, cellZ, grid);
                 if (chosen == ContentBeard.NO_SITE) { continue; }
-                rdpl$visit(worldIn, (int) (chosen >> 32), (int) chosen, x, z, primer, saltX, saltZ);
+                rdpl$visit(worldIn, Longs.high(chosen), Longs.low(chosen), x, z, primer, saltX, saltZ);
             }
         }
     }

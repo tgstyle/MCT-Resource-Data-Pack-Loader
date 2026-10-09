@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.card.CardFire;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.card.CardLook;
 import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
@@ -28,11 +29,11 @@ import java.util.Map;
 public final class Says {
     public static final int CARD_TICKS = 160;
     private static final int CARD_BACKGROUND = 0x1E2630;
-    private static final ResourceLocation KEY = new ResourceLocation("resourcedatapackloader", "saysicon");
+    private static final ResourceLocation KEY = new ResourceLocation(Rubic.MODID, "saysicon");
 
     private Says() {}
 
-    public static void tell(EntityPlayerMP player, String said, TextFormatting color) {
+    public static void tell(EntityPlayerMP player, TextFormatting color, String said) {
         if (said.isEmpty()) { return; }
         if (!card() || RDPLNetwork.vanilla(player)) {
             player.sendMessage(marked(said, color));
@@ -41,9 +42,9 @@ public final class Says {
         RDPLNetwork.sendTo(new MessageCard("", Collections.singletonList(said), icon(), image(), background(), rgb(color), CARD_TICKS, false, panel(), font()), player);
     }
 
-    public static void tell(EntityPlayerMP player, String rule, String said, TextFormatting color) {
+    public static void tell(EntityPlayerMP player, String rule, TextFormatting color, String said) {
         if (said.isEmpty()) { return; }
-        if (CardRules.unset(rule)) { tell(player, said, color); }
+        if (CardRules.unset(rule)) { tell(player, color, said); }
         else { CardFire.builtin(rule, player, CardLook.says(said, color, CardLook.CORNER)); }
     }
 
@@ -83,16 +84,16 @@ public final class Says {
         player.connection.sendPacket(new SPacketTitle(SPacketTitle.Type.TITLE, title.isEmpty() ? new TextComponentString("") : marked(title, style)));
     }
 
-    public static void tellAll(String said, TextFormatting color) {
+    public static void tellAll(TextFormatting color, String said) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || said.isEmpty()) { return; }
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, said, color); }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, color, said); }
     }
 
-    public static void tellAll(String rule, String said, TextFormatting color) {
+    public static void tellAll(String rule, TextFormatting color, String said) {
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null || said.isEmpty()) { return; }
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, rule, said, color); }
+        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { tell(player, rule, color, said); }
     }
 
     public static ITextComponent marked(String said, TextFormatting color) {
@@ -112,20 +113,22 @@ public final class Says {
     public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard); }
 
     public static ItemStack icon() {
-        String iconName = ContentControl.text(ContentControl.CHUNKS, "saysIcon", Config.chunks.saysIcon).trim();
+        String iconName = text("saysIcon", Config.chunks.saysIcon);
         return iconName.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(KEY, iconName, 1);
     }
 
     public static int background() {
-        String colorName = ContentControl.text(ContentControl.CHUNKS, "saysColor", Config.chunks.saysColor).trim();
+        String colorName = text("saysColor", Config.chunks.saysColor);
         return colorName.isEmpty() ? CARD_BACKGROUND : ContentTypes.color(colorName, "saysColor") & 0xFFFFFF;
     }
 
-    public static String image() { return ContentControl.text(ContentControl.CHUNKS, "saysImage", Config.chunks.saysImage).trim(); }
+    public static String image() { return text("saysImage", Config.chunks.saysImage); }
 
     public static boolean panel() { return ContentControl.flag(ContentControl.CHUNKS, "saysBackground", Config.chunks.saysBackground); }
 
-    public static String font() { return ContentControl.text(ContentControl.CHUNKS, "saysFont", Config.chunks.saysFont).trim(); }
+    public static String font() { return text("saysFont", Config.chunks.saysFont); }
+
+    private static String text(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
 
     public static int rgb(TextFormatting color) {
         switch (color) {

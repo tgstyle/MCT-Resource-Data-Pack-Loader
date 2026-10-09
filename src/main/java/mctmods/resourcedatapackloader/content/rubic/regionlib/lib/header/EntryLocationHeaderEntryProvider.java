@@ -7,24 +7,16 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.lib.RegionEntryLoc
 
 import java.util.function.ToIntFunction;
 
-public class EntryLocationHeaderEntryProvider<K extends IKey>
-	implements IHeaderDataEntryProvider<IntHeaderEntry, K> {
-	private final IKeyIdToSectorMap<K> sectorMap;
-	private final ToIntFunction<RegionEntryLocation> pack;
+public class EntryLocationHeaderEntryProvider<K extends IKey> implements IHeaderDataEntryProvider<IntHeaderEntry, K> {
+    private final IKeyIdToSectorMap<K> sectorMap;
+    private final ToIntFunction<RegionEntryLocation> pack;
 
-	public EntryLocationHeaderEntryProvider(
-		IKeyIdToSectorMap<K> sectorMap, ToIntFunction<RegionEntryLocation> pack) {
-		this.sectorMap = sectorMap;
-		this.pack = pack;
-	}
+    public EntryLocationHeaderEntryProvider(IKeyIdToSectorMap<K> sectorMap, ToIntFunction<RegionEntryLocation> pack) {
+        this.sectorMap = sectorMap;
+        this.pack = pack;
+    }
 
-	@Override public int getEntryByteCount() { return Integer.BYTES; }
+    @Override public int getEntryByteCount() { return Integer.BYTES; }
 
-	@Override public IntHeaderEntry apply(K key) {
-		return new IntHeaderEntry(
-			sectorMap.getEntryLocation(key)
-				.map(pack::applyAsInt)
-				.orElse(0)
-		);
-	}
+    @Override public IntHeaderEntry apply(K key) { return new IntHeaderEntry(sectorMap.getEntryLocation(key).map(pack::applyAsInt).orElse(0)); }
 }

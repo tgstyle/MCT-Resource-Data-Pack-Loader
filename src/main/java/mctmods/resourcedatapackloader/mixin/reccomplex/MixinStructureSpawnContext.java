@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = StructureSpawnContext.class, remap = false) public abstract class MixinStructureSpawnContext {
-    @Unique private static boolean rdpl$told;
     @Unique private static int rdpl$dropped;
     @Unique private static int rdpl$named;
 
@@ -20,10 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         StructureSpawnContext self = (StructureSpawnContext) (Object) this;
         if (self.environment == null) { return; }
         if (self.environment.world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4) != null) { return; }
-        if (!rdpl$told) {
-            rdpl$told = true;
-            ContentLog.LOGGER.info("A structure reached into land that has not been made yet, which would have made it and everything around it in turn. That part is left for Recurrent Complex to fill in when the chunk comes, which is what its own complementing is for");
-        }
+        ContentLog.LOGGER.once("A structure reached into land that has not been made yet, which would have made it and everything around it in turn. That part is left for Recurrent Complex to fill in when the chunk comes, which is what its own complementing is for");
         rdpl$dropped++;
         if (self.generationBB != null && self.generationBB.isVecInside(pos) && rdpl$named < 60) {
             rdpl$named++;

@@ -116,11 +116,7 @@ public final class BeardRoadsHolds {
                 }
                 continue;
             }
-            boolean overX = road.maxX >= own.minX && road.minX <= own.maxX;
-            boolean overZ = road.maxZ >= own.minZ && road.minZ <= own.maxZ;
-            boolean nearX = road.maxX >= own.minX - 1 && road.minX <= own.maxX + 1;
-            boolean nearZ = road.maxZ >= own.minZ - 1 && road.minZ <= own.maxZ + 1;
-            if (!(overX && nearZ) && !(overZ && nearX)) { continue; }
+            if (!own.intersectsWith(road.minX, road.minZ - 1, road.maxX, road.maxZ + 1) && !own.intersectsWith(road.minX - 1, road.minZ, road.maxX + 1, road.maxZ)) { continue; }
             int otherLeast = alongX ? road.minX : road.minZ;
             int otherMost = alongX ? road.maxX : road.maxZ;
             int center = MathHelper.clamp((otherLeast + otherMost) / 2, start, rowMost);
@@ -162,10 +158,10 @@ public final class BeardRoadsHolds {
             else {
                 int grade = profile[center - start];
                 if (grade == Integer.MIN_VALUE) { grade = BeardRoads.Grade.carried(profile, center - start); }
-                boolean overlapped = road.maxX >= own.minX && road.minX <= own.maxX && road.maxZ >= own.minZ && road.minZ <= own.maxZ;
+                boolean overlapped = own.intersectsWith(road);
                 int crossRow = otherAlongX ? (own.minX + own.maxX) / 2 : (own.minZ + own.maxZ) / 2;
                 boolean owned = false;
-                if (overlapped && !owns(own, road)) {
+                if (overlapped && yields(own, road)) {
                     BeardRoads.Grade crossing = BeardRoadsGrade.chainGrade(world, other, otherAlongX);
                     int crossed = crossing == null ? Integer.MIN_VALUE : crossing.at(crossRow);
                     if (crossed != Integer.MIN_VALUE) {
@@ -266,7 +262,7 @@ public final class BeardRoadsHolds {
         int minZ = alongX ? acrossLeast : rowLeast;
         int maxZ = alongX ? acrossMost : rowMost;
         for (StructureBoundingBox well : BeardPlots.wellBoxes(ContentBeard.components())) {
-            if (well.maxX + reach >= minX && well.minX - reach <= maxX && well.maxZ + reach >= minZ && well.minZ - reach <= maxZ) { return BeardSite.wellGround(world, well); }
+            if (well.intersectsWith(minX - reach, minZ - reach, maxX + reach, maxZ + reach)) { return BeardSite.wellGround(world, well); }
         }
         return Integer.MIN_VALUE;
     }
@@ -286,17 +282,16 @@ public final class BeardRoadsHolds {
         int maxZ = alongX ? acrossMost : hi;
         for (StructureComponent met : pieces) {
             if (met == piece || met == other) { continue; }
-            StructureBoundingBox held = met.getBoundingBox();
-            if (held.maxX >= minX && held.minX <= maxX && held.maxZ >= minZ && held.minZ <= maxZ) { return true; }
+            if (met.getBoundingBox().intersectsWith(minX, minZ, maxX, maxZ)) { return true; }
         }
         return false;
     }
 
-    private static boolean owns(StructureBoundingBox own, StructureBoundingBox met) {
-        if (own.minX != met.minX) { return own.minX < met.minX; }
-        if (own.minZ != met.minZ) { return own.minZ < met.minZ; }
-        if (own.maxX != met.maxX) { return own.maxX < met.maxX; }
-        return own.maxZ <= met.maxZ;
+    private static boolean yields(StructureBoundingBox own, StructureBoundingBox met) {
+        if (own.minX != met.minX) { return own.minX > met.minX; }
+        if (own.minZ != met.minZ) { return own.minZ > met.minZ; }
+        if (own.maxX != met.maxX) { return own.maxX > met.maxX; }
+        return own.maxZ > met.maxZ;
     }
 
     public static void frontHold(@Nullable StructureComponent piece, boolean alongX, int start, int acrossLeast, int acrossMost, int[] profile, boolean[] held) {

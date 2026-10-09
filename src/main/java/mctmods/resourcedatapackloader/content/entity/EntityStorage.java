@@ -48,7 +48,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class EntityStorage implements ICapabilitySerializable<NBTTagCompound> {
-    private static final ResourceLocation KEY = new ResourceLocation(ResourceDataPackLoader.MOD_ID, "storage");
+    private static final ResourceLocation KEY = ResourceDataPackLoader.id("storage");
     private static final String ITEMS = "Items";
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
@@ -198,9 +198,7 @@ public final class EntityStorage implements ICapabilitySerializable<NBTTagCompou
         return null;
     }
 
-    @Nullable private Object held(Capability<?> capability) {
-        return capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY ? items : capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY ? tank : capability == CapabilityEnergy.ENERGY ? energy : null;
-    }
+    @Nullable private Object held(Capability<?> capability) { return capability == CapabilityItemHandler.ITEM_HANDLER_CAPABILITY ? items : capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY ? tank : capability == CapabilityEnergy.ENERGY ? energy : null; }
 
     @Override public NBTTagCompound serializeNBT() {
         NBTTagCompound tag = new NBTTagCompound();

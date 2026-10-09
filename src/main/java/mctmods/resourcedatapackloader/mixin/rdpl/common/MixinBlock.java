@@ -14,9 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import javax.annotation.Nullable;
 
 @Mixin(Block.class) public abstract class MixinBlock {
-    @Inject(method = "getExplosionResistance(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/Entity;Lnet/minecraft/world/Explosion;)F", at = @At("RETURN"), cancellable = true, remap = false)
-    private void rdpl$blastByGroup(World world, BlockPos pos, @Nullable Entity exploder, Explosion explosion, CallbackInfoReturnable<Float> cir) {
-        if (!ContentHardness.wanted()) { return; }
+    @Inject(method = "getExplosionResistance(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/entity/Entity;Lnet/minecraft/world/Explosion;)F", at = @At("RETURN"), cancellable = true, remap = false) private void rdpl$blastByGroup(World world, BlockPos pos, @Nullable Entity exploder, Explosion explosion, CallbackInfoReturnable<Float> cir) {
+        if (ContentHardness.idle()) { return; }
         float multiplier = ContentHardness.blastAt(world.getBlockState(pos), pos.getX(), pos.getY(), pos.getZ());
         if (multiplier == 1.0F) { return; }
         cir.setReturnValue(cir.getReturnValue() * multiplier);

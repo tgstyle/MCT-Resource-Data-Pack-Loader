@@ -13,9 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo @Mixin(targets = "net.optifine.util.RenderChunkUtils") public class MixinRenderChunkUtils {
-    @Dynamic @Inject(method = "getCountBlocks(Lnet/minecraft/client/renderer/chunk/RenderChunk;)I", at = @At("HEAD"),
-            cancellable = true, remap = false)
-    private static void getCountBlocks(RenderChunk renderChunk, CallbackInfoReturnable<Integer> cbi) {
+    @Dynamic @Inject(method = "getCountBlocks(Lnet/minecraft/client/renderer/chunk/RenderChunk;)I", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$getCountBlocks(RenderChunk renderChunk, CallbackInfoReturnable<Integer> cbi) {
         if (((IOptifineRenderChunk) renderChunk).isRubic()) {
             ExtendedBlockStorage ebs = ((IOptifineRenderChunk) renderChunk).getCube().getStorage();
             int ret = ebs == null ? 0 : ((IOptifineExtendedBlockStorage) ebs).getBlockRefCount();

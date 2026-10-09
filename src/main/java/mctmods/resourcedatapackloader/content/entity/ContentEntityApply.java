@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityGhast;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLiving;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingNavigator;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityVillager;
+import mctmods.resourcedatapackloader.util.AiTasks;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Registries;
@@ -27,7 +28,6 @@ import net.minecraft.entity.ai.EntityFlyHelper;
 import net.minecraft.pathfinding.PathNavigateFlying;
 import net.minecraft.entity.ai.EntityAISwimming;
 import net.minecraft.entity.ai.EntityMoveHelper;
-import net.minecraft.entity.ai.EntityAITasks;
 import net.minecraft.entity.ai.attributes.AbstractAttributeMap;
 import net.minecraft.entity.ai.attributes.IAttribute;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
@@ -45,14 +45,16 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.common.registry.VillagerRegistry;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 final class ContentEntityApply {
     private static final Map<Class<?>, float[]> SIZES = new LinkedHashMap<>();
+    private static final Set<String> MISSING = new HashSet<>();
     private static final String ROLLED = "rdplBabyRolled";
     static final String YOUNG = "rdplBabyYoung";
 
@@ -83,9 +85,7 @@ final class ContentEntityApply {
         if (def.climbs != null) { climber(living, def.climbs); }
         if (def.amphibious && living.getNavigator() instanceof PathNavigateGround) { ((PathNavigateGround) living.getNavigator()).setCanSwim(true); }
         if (def.breathesUnderwater || def.swims) {
-            for (EntityAITasks.EntityAITaskEntry task : new ArrayList<>(living.tasks.taskEntries)) {
-                if (task.action instanceof EntityAISwimming) { living.tasks.removeTask(task.action); }
-            }
+            AiTasks.remove(living.tasks, EntityAISwimming.class::isInstance);
         }
         ResourceLocation table = ContentEntities.lootTable(living);
         if (table != null) { ((IEntityLiving) living).rdpl$setDeathLootTable(table); }
@@ -228,7 +228,7 @@ final class ContentEntityApply {
             ResourceLocation name = new ResourceLocation(entry.getKey());
             Potion potion = Registries.find(ForgeRegistries.POTIONS, name);
             if (potion == null) {
-                ContentLog.LOGGER.error("Entity variant {} wants effect {}, which nothing registers", def.registryName, name);
+                ContentLog.LOGGER.errorOnce(MISSING, def.registryName + " " + name, "Entity variant {} wants effect {}, which nothing registers", def.registryName, name);
                 continue;
             }
             living.addPotionEffect(new PotionEffect(potion, Integer.MAX_VALUE, entry.getValue(), false, false));
@@ -237,10 +237,7 @@ final class ContentEntityApply {
 
     private static void priorities(EntityLiving living, EntityVariantDef def) {
         for (Map.Entry<String, Float> entry : def.pathPriorities.entrySet()) {
-            PathNodeType type = null;
-            for (PathNodeType value : PathNodeType.values()) {
-                if (value.name().equalsIgnoreCase(entry.getKey())) { type = value; }
-            }
+            PathNodeType type = Enums.byName(PathNodeType.class, entry.getKey());
             if (type == null) {
                 ContentLog.LOGGER.error("Entity variant {} names path type '{}', which is not one of {}", def.registryName, entry.getKey(), Arrays.toString(PathNodeType.values()));
                 continue;

@@ -6,7 +6,9 @@ import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IDragonFightManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Summary;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.player.EntityPlayer;
@@ -56,7 +58,7 @@ public final class ContentVoidWorld {
                 break;
             }
         }
-        return listed != ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist);
+        return Listing.allows(listed, ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist));
     }
 
     public static void record(IVoidMemory memory) {
@@ -89,7 +91,7 @@ public final class ContentVoidWorld {
         }
         int reach = Math.max(0, (ContentControl.number(ContentControl.VOID, "voidPlatformSize", Config.worldgen.voidPlatformSize) - 1) / 2);
         for (int x = -reach; x <= reach; x++) {
-            for (int z = -reach; z <= reach; z++) { world.setBlockState(center.add(x, 0, z), state, 2); }
+            for (int z = -reach; z <= reach; z++) { world.setBlockState(center.add(x, 0, z), state, BlockFlags.UPDATE_CLIENTS); }
         }
     }
 

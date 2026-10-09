@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.types;
 
+import mctmods.resourcedatapackloader.util.Colors;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.block.SoundType;
@@ -106,11 +107,11 @@ public final class ContentTypes {
         SOUND_TYPES.put("slime", SoundType.SLIME);
     }
 
-    public static double red(int color) { return (color >> 16 & 0xFF) / 255.0; }
+    public static double red(int color) { return Colors.red(color) / 255.0; }
 
-    public static double green(int color) { return (color >> 8 & 0xFF) / 255.0; }
+    public static double green(int color) { return Colors.green(color) / 255.0; }
 
-    public static double blue(int color) { return (color & 0xFF) / 255.0; }
+    public static double blue(int color) { return Colors.blue(color) / 255.0; }
 
     public static Material material(String name, String context) {
         Material material = MATERIALS.get(key(name));
@@ -144,7 +145,12 @@ public final class ContentTypes {
     }
 
     @Nullable public static Long hex(String value) {
-        try { return Long.parseLong(digits(value), 16); }
+        String digits = digits(value);
+        if (digits.isEmpty()) { return null; }
+        for (int at = 0; at < digits.length(); at++) {
+            if (Character.digit(digits.charAt(at), 16) < 0) { return null; }
+        }
+        try { return Long.parseLong(digits, 16); }
         catch (NumberFormatException ex) { return null; }
     }
 

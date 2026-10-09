@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.ItemChorusFruit;
@@ -13,10 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ItemChorusFruit.class) public abstract class MixinItemChorusFruit {
-    @ModifyConstant(method = "onItemUseFinish", constant = @Constant(doubleValue = 0.0)) private double rdpl$getMinHeight(double orig, ItemStack stack, World worldIn, EntityLivingBase entityLiving) {
-        return ((IRubicWorld) worldIn).rdpl$getMinHeight();
-    }
+    @ModifyConstant(method = "onItemUseFinish", constant = @Constant(doubleValue = 0.0)) private double rdpl$getMinHeight(double orig, ItemStack stack, World worldIn, EntityLivingBase entityLiving) { return GenHeights.floor(worldIn, 0); }
 
-    @Redirect(method = "onItemUseFinish", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getActualHeight()I"))
-    private int rdpl$getMaxHeight(World world) { return ((IRubicWorld)world).rdpl$isRubicWorld() ? world.getHeight() : world.getActualHeight(); }
+    @Redirect(method = "onItemUseFinish", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getActualHeight()I")) private int rdpl$getMaxHeight(World world) { return GenHeights.rubic(world) ? world.getHeight() : world.getActualHeight(); }
 }

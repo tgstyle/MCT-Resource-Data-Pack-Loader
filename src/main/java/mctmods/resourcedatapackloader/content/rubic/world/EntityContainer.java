@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 
 public class EntityContainer {
     @SuppressWarnings("unchecked") public static final ClassInheritanceMultiMap<Entity>[] EMPTY_ARR = new ClassInheritanceMultiMap[]{new BlankEntityContainer.BlankEntityMap()};
-
     @Nonnull protected ClassInheritanceMultiMap<Entity> entities;
     protected boolean hasActiveEntities;
     protected long lastSaveTime;
@@ -65,7 +64,7 @@ public class EntityContainer {
     }
 
     public void readFromNbt(NBTTagCompound nbt, String name, World world, Consumer<Entity> listener) {
-        NBTTagList nbtEntities = nbt.getTagList(name, 10);
+        NBTTagList nbtEntities = nbt.getTagList(name, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < nbtEntities.tagCount(); i++) {
             NBTTagCompound nbtEntity = nbtEntities.getCompoundTagAt(i);
             readEntity(nbtEntity, world, listener);
@@ -76,13 +75,13 @@ public class EntityContainer {
         Entity entity = EntityList.createEntityFromNBT(nbtEntity, world);
         if (entity == null) { return null; }
         if (entity instanceof EntityPlayerMP) {
-            Rubic.LOGGER.error("EntityPlayerMP is serialized in save file! Reading the entity would break world ticking, skipping");
+            ContentLog.LOGGER.error("EntityPlayerMP is serialized in save file! Reading the entity would break world ticking, skipping");
             return null;
         }
         addEntity(entity);
         listener.accept(entity);
         if (nbtEntity.hasKey("Passengers", Constants.NBT.TAG_LIST)) {
-            NBTTagList nbttaglist = nbtEntity.getTagList("Passengers", 10);
+            NBTTagList nbttaglist = nbtEntity.getTagList("Passengers", Constants.NBT.TAG_COMPOUND);
             for (int i = 0; i < nbttaglist.tagCount(); ++i) {
                 Entity entity1 = readEntity(nbttaglist.getCompoundTagAt(i), world, listener);
                 if (entity1 != null) { entity1.startRiding(entity, true); }

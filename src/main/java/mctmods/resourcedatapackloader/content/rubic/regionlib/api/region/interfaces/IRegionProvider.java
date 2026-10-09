@@ -18,5 +18,4 @@ public interface IRegionProvider<K extends IKey> extends Flushable, Closeable {
     IRegion<K> getRegion(K key) throws IOException;
 
     Optional<IRegion<K>> getExistingRegion(K key) throws IOException;
-
 }

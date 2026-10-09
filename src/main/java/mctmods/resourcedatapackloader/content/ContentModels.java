@@ -1,19 +1,13 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.client.render.PackBellRenderer;
-import mctmods.resourcedatapackloader.content.block.ContentBlock;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.block.ContentBlockDoor;
-import mctmods.resourcedatapackloader.content.block.ContentBlockFalling;
-import mctmods.resourcedatapackloader.content.block.ContentBlockFence;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFenceGate;
-import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLeaves;
-import mctmods.resourcedatapackloader.content.block.ContentBlockLog;
-import mctmods.resourcedatapackloader.content.block.ContentBlockPane;
-import mctmods.resourcedatapackloader.content.block.ContentBlockSlab;
 import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
+import mctmods.resourcedatapackloader.content.block.IVariantBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
@@ -178,15 +172,6 @@ import javax.annotation.Nullable;
     }
 
     @Nullable private static PropertyVariant property(Block block) {
-        if (block instanceof ContentBlockLog) { return ((ContentBlockLog) block).getVariantProperty(); }
-        if (block instanceof ContentBlockLeaves) { return ((ContentBlockLeaves) block).getVariantProperty(); }
-        if (block instanceof ContentBlock) { return ((ContentBlock) block).getVariantProperty(); }
-        if (block instanceof ContentBlockFlower) { return ((ContentBlockFlower) block).getVariantProperty(); }
-        if (block instanceof ContentBlockFalling) { return ((ContentBlockFalling) block).getVariantProperty(); }
-        if (block instanceof ContentBlockSlab) { return (PropertyVariant) ((ContentBlockSlab) block).getVariantProperty(); }
-        if (block instanceof ContentBlockFence) { return ((ContentBlockFence) block).getVariantProperty(); }
-        if (block instanceof ContentBlockPane) { return ((ContentBlockPane) block).getVariantProperty(); }
-        if (block instanceof ContentBlockWall) { return ((ContentBlockWall) block).getVariantProperty(); }
-        return null;
+        return block instanceof IVariantBlock ? ((IVariantBlock) block).getVariantProperty() : null;
     }
 }

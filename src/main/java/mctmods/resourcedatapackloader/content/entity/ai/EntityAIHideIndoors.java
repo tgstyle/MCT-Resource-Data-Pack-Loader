@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
-import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
@@ -19,7 +18,7 @@ public final class EntityAIHideIndoors extends EntityAIBase {
     private static final double SPEED = 0.7D;
     private static final double FAR_SQ = 256.0D;
     private final EntityCreature mob;
-    private BlockPos inside;
+    @Nullable private BlockPos inside;
 
     public EntityAIHideIndoors(EntityCreature mob) {
         this.mob = mob;
@@ -52,13 +51,15 @@ public final class EntityAIHideIndoors extends EntityAIBase {
     @Override public boolean shouldContinueExecuting() { return inside != null && ContentRaids.hiding(mob); }
 
     @Override public void startExecuting() {
-        ContentLog.LOGGER.debug("{} at {}, {}, {} hides indoors at {}, {}, {}", mob.getName(), (int) mob.posX, (int) mob.posY, (int) mob.posZ, inside.getX(), inside.getY(), inside.getZ());
-        walkIn();
+        BlockPos place = inside;
+        if (place == null) { return; }
+        GoalLog.debug(mob, "hides indoors at {}, {}, {}", place.getX(), place.getY(), place.getZ());
+        walkIn(place);
     }
 
-    private void walkIn() {
-        Vec3d door = new Vec3d(inside.getX() + 0.5D, inside.getY(), inside.getZ() + 0.5D);
-        if (mob.getDistanceSq(inside) > FAR_SQ) {
+    private void walkIn(BlockPos place) {
+        Vec3d door = new Vec3d(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D);
+        if (mob.getDistanceSq(place) > FAR_SQ) {
             Vec3d toward = RandomPositionGenerator.findRandomTargetBlockTowards(mob, 14, 3, door);
             if (toward != null) { mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, SPEED); }
             return;
@@ -72,10 +73,12 @@ public final class EntityAIHideIndoors extends EntityAIBase {
     }
 
     @Override public void updateTask() {
-        if (mob.getDistanceSq(inside.getX() + 0.5D, inside.getY(), inside.getZ() + 0.5D) <= ARRIVED_SQ) {
+        BlockPos place = inside;
+        if (place == null) { return; }
+        if (mob.getDistanceSq(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D) <= ARRIVED_SQ) {
             mob.getNavigator().clearPath();
             return;
         }
-        if (mob.getNavigator().noPath() && mob.ticksExisted % LOOK_EVERY == 0) { walkIn(); }
+        if (mob.getNavigator().noPath() && mob.ticksExisted % LOOK_EVERY == 0) { walkIn(place); }
     }
 }

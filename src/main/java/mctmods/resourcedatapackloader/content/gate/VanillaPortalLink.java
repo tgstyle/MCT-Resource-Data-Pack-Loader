@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.gate;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityTravelToDimensionEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 
@@ -39,7 +40,7 @@ public final class VanillaPortalLink {
 
     private static double[] read(Entity entity) {
         NBTTagCompound data = entity.getEntityData();
-        if (!data.hasKey(TAG, 10)) { return new double[0]; }
+        if (!data.hasKey(TAG, Constants.NBT.TAG_COMPOUND)) { return new double[0]; }
         NBTTagCompound portal = data.getCompoundTag(TAG);
         if (!portal.hasKey(X) || !portal.hasKey(Y) || !portal.hasKey(Z)) { return new double[0]; }
         return new double[] { portal.getDouble(X), portal.getDouble(Y), portal.getDouble(Z) };

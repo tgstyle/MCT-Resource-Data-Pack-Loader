@@ -24,13 +24,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return view != null && ContentWeather.above(view.world, MathHelper.floor(view.posY));
     }
 
-    @Inject(method = "renderRainSnow", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipWeatherRender(float partialTicks, CallbackInfo ci) {
+    @Inject(method = "renderRainSnow", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(float partialTicks, CallbackInfo ci) {
         if (rdpl$aboveCeiling()) { ci.cancel(); }
     }
 
-    @Inject(method = "addRainParticles", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipWeatherParticles(CallbackInfo ci) {
+    @Inject(method = "addRainParticles", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) {
         Minecraft mc = Minecraft.getMinecraft();
         ContentWorldProvider provider = mc.world.provider instanceof ContentWorldProvider ? (ContentWorldProvider) mc.world.provider : null;
         RainDef rain = provider == null ? null : provider.rain();

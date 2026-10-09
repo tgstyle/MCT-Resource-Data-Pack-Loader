@@ -12,7 +12,7 @@ public final class NoiseParity {
 
     private NoiseParity() {}
 
-    public static JsonObject endIslands() { return new JsonParser().parse(END_ISLANDS).getAsJsonObject(); }
+    private static JsonObject endIslands() { return new JsonParser().parse(END_ISLANDS).getAsJsonObject(); }
 
     public static boolean isEndIslands(JsonElement element) {
         JsonObject form = endIslands();

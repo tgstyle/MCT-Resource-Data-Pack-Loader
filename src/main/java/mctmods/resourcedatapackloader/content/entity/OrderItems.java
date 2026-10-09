@@ -77,10 +77,10 @@ public final class OrderItems {
         return new ItemStack(item, 1, state.getBlock().damageDropped(state));
     }
 
-    public static boolean harvestable(EntityLiving mob, BlockPos pos, IBlockState state) {
+    public static boolean unharvestable(EntityLiving mob, BlockPos pos, IBlockState state) {
         ItemStack tool = mob.getHeldItemMainhand();
-        if (ContentHardness.digBarred(mob, state, tool)) { return false; }
-        return state.getMaterial().isToolNotRequired() || ForgeHooks.canToolHarvestBlock(mob.world, pos, tool);
+        if (ContentHardness.digBarred(mob, state, tool)) { return true; }
+        return !state.getMaterial().isToolNotRequired() && !ForgeHooks.canToolHarvestBlock(mob.world, pos, tool);
     }
 
     public static int digTicks(EntityLiving mob, BlockPos pos, IBlockState state, float speed) {
@@ -88,6 +88,10 @@ public final class OrderItems {
         float dig = tool.isEmpty() ? 1.0F : tool.getDestroySpeed(state);
         int efficiency = level(Enchantments.EFFICIENCY, tool);
         if (dig > 1.0F && efficiency > 0) { dig += efficiency * efficiency + 1; }
+        return breakTicks(mob, pos, state, dig, speed);
+    }
+
+    public static int breakTicks(EntityLiving mob, BlockPos pos, IBlockState state, float dig, float speed) {
         float hardness = state.getBlockHardness(mob.world, pos);
         float ticks = hardness * 30.0F / dig * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ()) / Math.max(0.01F, speed);
         return Math.max(1, MathHelper.ceil(ticks));

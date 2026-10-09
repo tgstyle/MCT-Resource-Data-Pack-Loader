@@ -9,6 +9,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldSavedData;
+import net.minecraftforge.common.util.Constants;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -50,7 +51,7 @@ public final class RaidStorage extends WorldSavedData {
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound tag) {
         raids.clear();
-        NBTTagList list = tag.getTagList("Raids", 10);
+        NBTTagList list = tag.getTagList("Raids", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < list.tagCount(); i++) {
             NBTTagCompound one = list.getCompoundTagAt(i);
             ActiveRaid raid = ActiveRaid.read(one, ContentRaids.def(new ResourceLocation(one.getString("Raid"))));

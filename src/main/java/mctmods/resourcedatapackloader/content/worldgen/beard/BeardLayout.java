@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IVillagePieces;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.Facings;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -105,16 +106,22 @@ public final class BeardLayout {
         return true;
     }
 
-    public static boolean tooNear(StructureVillagePieces.Start start, List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
+    public static boolean clearAhead(StructureVillagePieces.Start start, List<StructureComponent> own, StructureBoundingBox wide, EnumFacing facing) {
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         StructureBoundingBox ahead = new StructureBoundingBox(wide);
         int reach = fromWell(own, wide, facing) ? ContentBeard.attachGap() * 2 : 0;
-        if (alongX) { if (facing.getXOffset() > 0) { ahead.maxX += reach; } else { ahead.minX -= reach; } }
-        else { if (facing.getZOffset() > 0) { ahead.maxZ += reach; } else { ahead.minZ -= reach; } }
+        if (alongX) {
+            if (facing.getXOffset() > 0) { ahead.maxX += reach; }
+            else { ahead.minX -= reach; }
+        }
+        else {
+            if (facing.getZOffset() > 0) { ahead.maxZ += reach; }
+            else { ahead.minZ -= reach; }
+        }
         StructureBoundingBox held = ContentBeard.beside(own, ahead, alongX, start);
-        if (held == null) { return false; }
+        if (held == null) { return true; }
         ContentLog.LOGGER.debug("A road attempt {} facing {} would run beside the road at {}, {}, under the {} block spacing the plots on both sides need, so it may only be an alley", wide, facing, held.minX, held.minZ, ContentVillages.blockOf(start) + ContentVillages.blockOf(ContentBeard.roadAt(own, held)));
-        return true;
+        return false;
     }
 
     public static boolean widensPast(List<StructureComponent> pieces, StructureBoundingBox wide, EnumFacing facing) {
@@ -178,7 +185,7 @@ public final class BeardLayout {
         int reach = BeardRoads.pathFullWidth();
         for (StructureBoundingBox well : BeardPlots.wellBoxes(components)) {
             if (!BeardPlots.nearWell(road, well, reach)) { continue; }
-            boolean alongX = road.maxX - road.minX >= road.maxZ - road.minZ;
+            boolean alongX = BeardPlots.longerAlongX(road);
             boolean radial = alongX ? road.maxZ >= well.minZ && road.minZ <= well.maxZ : road.maxX >= well.minX && road.minX <= well.maxX;
             if (!radial) { return true; }
         }
@@ -200,7 +207,7 @@ public final class BeardLayout {
                 boolean outward = side == 1;
                 int x = alongX ? at : (outward ? box.maxX + 1 : box.minX - 1);
                 int z = alongX ? (outward ? box.maxZ + 1 : box.minZ - 1) : at;
-                EnumFacing facing = alongX ? (outward ? EnumFacing.SOUTH : EnumFacing.NORTH) : (outward ? EnumFacing.EAST : EnumFacing.WEST);
+                EnumFacing facing = Facings.across(alongX, outward);
                 if (IVillagePieces.rdpl$roadPiece(start, listIn, rand, x, box.minY, z, facing, road.getComponentType()) != null) { branched++; }
             }
         }

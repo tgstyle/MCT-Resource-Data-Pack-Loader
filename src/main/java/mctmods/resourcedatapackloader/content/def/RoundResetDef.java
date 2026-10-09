@@ -4,6 +4,9 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 public final class RoundResetDef {
+    public static final String NONE = "none";
+    public static final String NOW = "now";
+    public static final String VOTE = "vote";
     public final String lead;
     public final boolean playersVote;
     public final List<String> teams;
@@ -31,7 +34,7 @@ public final class RoundResetDef {
         this.failSays = failSays;
     }
 
-    public boolean offered() { return playersVote || !"none".equals(lead); }
+    public boolean offered() { return playersVote || !NONE.equals(lead); }
 
     public boolean callableFrom(@Nullable String side) { return playersVote && (teams.isEmpty() || side != null && teams.contains(side)); }
 }

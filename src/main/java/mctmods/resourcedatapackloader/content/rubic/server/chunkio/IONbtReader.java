@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -23,6 +23,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.NibbleArray;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
+import net.minecraftforge.common.capabilities.CapabilityDispatcher;
 import net.minecraftforge.common.util.Constants;
 import java.util.Arrays;
 import javax.annotation.Nullable;
@@ -37,7 +38,7 @@ public class IONbtReader {
             readOpacityIndex(level, column);
         }
         catch (IndexOutOfBoundsException corrupt) {
-            Rubic.LOGGER.error("Column is corrupted! The biomes or the height map of ({},{}) are missing or cut short ({}). Column will be regenerated.", x, z, corrupt.toString());
+            ContentLog.LOGGER.error("Column is corrupted! The biomes or the height map of ({},{}) are missing or cut short ({}). Column will be regenerated.", x, z, corrupt.toString());
             return null;
         }
         readPregenDone(level, column);
@@ -56,14 +57,18 @@ public class IONbtReader {
         int xCheck = nbt.getInteger("x");
         int zCheck = nbt.getInteger("z");
         if (xCheck != x || zCheck != z) {
-            Rubic.LOGGER
+            ContentLog.LOGGER
                     .warn("Column is corrupted! Expected ({},{}) but got ({},{}). Column will be regenerated.", x, z, xCheck, zCheck);
             return null;
         }
         Chunk column = new Chunk(world, x, z);
         column.setInhabitedTime(nbt.getLong("InhabitedTime"));
-        if (column.getCapabilities() != null && nbt.hasKey("ForgeCaps")) { column.getCapabilities().deserializeNBT(nbt.getCompoundTag("ForgeCaps")); }
+        readCaps(column.getCapabilities(), nbt);
         return column;
+    }
+
+    private static void readCaps(@Nullable CapabilityDispatcher caps, NBTTagCompound nbt) {
+        if (caps != null && nbt.hasKey("ForgeCaps")) { caps.deserializeNBT(nbt.getCompoundTag("ForgeCaps")); }
     }
 
     private static void readBiomes(NBTTagCompound nbt, Chunk column) {
@@ -106,7 +111,7 @@ public class IONbtReader {
         int yCheck = nbt.getInteger("y");
         int zCheck = nbt.getInteger("z");
         if (xCheck != cubeX || yCheck != cubeY || zCheck != cubeZ) {
-            Rubic.LOGGER.error("Cube is corrupted! Expected ({},{},{}) but got ({},{},{}). Cube will be regenerated.", cubeX, cubeY, cubeZ, xCheck, yCheck, zCheck);
+            ContentLog.LOGGER.error("Cube is corrupted! Expected ({},{},{}) but got ({},{},{}). Cube will be regenerated.", cubeX, cubeY, cubeZ, xCheck, yCheck, zCheck);
             return null;
         }
         assert cubeX == column.x && cubeZ == column.z :
@@ -117,14 +122,14 @@ public class IONbtReader {
         cube.setSurfaceTracked(nbt.getBoolean("isSurfaceTracked"));
         cube.setFullyPopulated(nbt.getBoolean("fullyPopulated"));
         cube.setInitialLightingDone(nbt.getBoolean("initLightDone"));
-        if (cube.getCapabilities() != null && nbt.hasKey("ForgeCaps")) { cube.getCapabilities().deserializeNBT(nbt.getCompoundTag("ForgeCaps")); }
+        readCaps(cube.getCapabilities(), nbt);
         return cube;
     }
 
     @SuppressWarnings("deprecation") private static void readBlocks(NBTTagCompound nbt, World world, Cube cube) {
         boolean isEmpty = !nbt.hasKey("Sections");
         if (!isEmpty) {
-            NBTTagList sectionList = nbt.getTagList("Sections", 10);
+            NBTTagList sectionList = nbt.getTagList("Sections", Constants.NBT.TAG_COMPOUND);
             nbt = sectionList.getCompoundTagAt(0);
             ExtendedBlockStorage ebs = new ExtendedBlockStorage(Coords.cubeToMinBlock(cube.getY()), cube.getWorld().provider.hasSkyLight());
             byte[] abyte = nbt.getByteArray("Blocks");
@@ -154,7 +159,7 @@ public class IONbtReader {
             int entityCubeY = Coords.getCubeYForEntity(entity);
             int entityCubeZ = Coords.getCubeZForEntity(entity);
             if (entityCubeX != cube.getX() || entityCubeY != cube.getY() || entityCubeZ != cube.getZ()) {
-                Rubic.LOGGER.warn("Loaded entity {} in cube ({},{},{}) to cube ({},{},{})!", entity.getClass()
+                ContentLog.LOGGER.warn("Loaded entity {} in cube ({},{},{}) to cube ({},{},{})!", entity.getClass()
                         .getName(), entityCubeX, entityCubeY, entityCubeZ, cube.getX(), cube.getY(), cube.getZ());
             }
             entity.addedToChunk = true;
@@ -171,7 +176,7 @@ public class IONbtReader {
             TileEntity blockEntity = TileEntity.create(world, nbtTileEntity);
             if (blockEntity != null) {
                 if (!cube.getCoords().containsBlock(blockEntity.getPos())) {
-                    Rubic.LOGGER.warn("TileEntity {} is not in cube at {}, tile entity will be skipped", blockEntity, cube.getCoords());
+                    ContentLog.LOGGER.warn("TileEntity {} is not in cube at {}, tile entity will be skipped", blockEntity, cube.getCoords());
                     continue;
                 }
                 cube.addTileEntity(blockEntity);
@@ -181,7 +186,7 @@ public class IONbtReader {
 
     private static void readScheduledBlockTicks(NBTTagCompound nbt, World world) {
         if (!(world instanceof WorldServer)) { return; }
-        NBTTagList nbtScheduledTicks = nbt.getTagList("TileTicks", 10);
+        NBTTagList nbtScheduledTicks = nbt.getTagList("TileTicks", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < nbtScheduledTicks.tagCount(); i++) {
             NBTTagCompound nbtScheduledTick = nbtScheduledTicks.getCompoundTagAt(i);
             Block block;

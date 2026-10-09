@@ -27,66 +27,53 @@ import net.minecraftforge.fml.relauncher.SideOnly;
         bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
         for (int i = -16; i <= 32; i += 16) {
             for (int j = -16; j <= 32; j += 16) {
-                bufferbuilder.pos(chunkX + (double) i, minY, chunkZ + (double) j).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
-                bufferbuilder.pos(chunkX + (double) i, minY, chunkZ + (double) j).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-                bufferbuilder.pos(chunkX + (double) i, maxY, chunkZ + (double) j).color(1.0F, 0.0F, 0.0F, 0.5F).endVertex();
-                bufferbuilder.pos(chunkX + (double) i, maxY, chunkZ + (double) j).color(1.0F, 0.0F, 0.0F, 0.0F).endVertex();
+                column(bufferbuilder, chunkX + (double) i, minY, maxY, chunkZ + (double) j, 1.0F, 0.0F, 0.0F, 0.5F);
             }
         }
         for (int k = 2; k < 16; k += 2) {
-            bufferbuilder.pos(chunkX + (double) k, minY, chunkZ).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, minY, chunkZ).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, maxY, chunkZ).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, maxY, chunkZ).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, minY, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, minY, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, maxY, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + (double) k, maxY, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
+            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ, 1.0F, 1.0F, 0.0F, 1.0F);
+            column(bufferbuilder, chunkX + (double) k, minY, maxY, chunkZ + 16.0D, 1.0F, 1.0F, 0.0F, 1.0F);
         }
         for (int l = 2; l < 16; l += 2) {
-            bufferbuilder.pos(chunkX, minY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX, minY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, maxY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, maxY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, minY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, minY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, maxY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, maxY, chunkZ + (double) l).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
+            column(bufferbuilder, chunkX, minY, maxY, chunkZ + (double) l, 1.0F, 1.0F, 0.0F, 1.0F);
+            column(bufferbuilder, chunkX + 16.0D, minY, maxY, chunkZ + (double) l, 1.0F, 1.0F, 0.0F, 1.0F);
         }
         for (int i1 = (int) yOffset; i1 <= 256 + (int) yOffset; i1 += 2) {
-            double d7 = (double) i1 - playerY;
-            bufferbuilder.pos(chunkX, d7, chunkZ).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX, d7, chunkZ).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d7, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, d7, chunkZ + 16.0D).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, d7, chunkZ).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d7, chunkZ).color(1.0F, 1.0F, 0.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d7, chunkZ).color(1.0F, 1.0F, 0.0F, 0.0F).endVertex();
+            ring(bufferbuilder, chunkX, (double) i1 - playerY, chunkZ, 1.0F, 1.0F, 0.0F);
         }
         tessellator.draw();
         GlStateManager.glLineWidth(2.0F);
         bufferbuilder.begin(3, DefaultVertexFormats.POSITION_COLOR);
         for (int j1 = 0; j1 <= 16; j1 += 16) {
             for (int l1 = 0; l1 <= 16; l1 += 16) {
-                bufferbuilder.pos(chunkX + (double) j1, minY, chunkZ + (double) l1).color(0.25F, 0.25F, 1.0F, 0.0F).endVertex();
-                bufferbuilder.pos(chunkX + (double) j1, minY, chunkZ + (double) l1).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-                bufferbuilder.pos(chunkX + (double) j1, maxY, chunkZ + (double) l1).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-                bufferbuilder.pos(chunkX + (double) j1, maxY, chunkZ + (double) l1).color(0.25F, 0.25F, 1.0F, 0.0F).endVertex();
+                column(bufferbuilder, chunkX + (double) j1, minY, maxY, chunkZ + (double) l1, 0.25F, 0.25F, 1.0F, 1.0F);
             }
         }
         for (int k1 = (int) yOffset; k1 <= 256 + (int) yOffset; k1 += 16) {
-            double d8 = (double) k1 - playerY;
-            bufferbuilder.pos(chunkX, d8, chunkZ).color(0.25F, 0.25F, 1.0F, 0.0F).endVertex();
-            bufferbuilder.pos(chunkX, d8, chunkZ).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d8, chunkZ + 16.0D).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, d8, chunkZ + 16.0D).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX + 16.0D, d8, chunkZ).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d8, chunkZ).color(0.25F, 0.25F, 1.0F, 1.0F).endVertex();
-            bufferbuilder.pos(chunkX, d8, chunkZ).color(0.25F, 0.25F, 1.0F, 0.0F).endVertex();
+            ring(bufferbuilder, chunkX, (double) k1 - playerY, chunkZ, 0.25F, 0.25F, 1.0F);
         }
         tessellator.draw();
         GlStateManager.glLineWidth(1.0F);
         GlStateManager.enableBlend();
         GlStateManager.enableTexture2D();
+    }
+
+    private static void vertex(BufferBuilder buffer, double x, double y, double z, float red, float green, float blue, float alpha) { buffer.pos(x, y, z).color(red, green, blue, alpha).endVertex(); }
+
+    private static void column(BufferBuilder buffer, double x, double minY, double maxY, double z, float red, float green, float blue, float alpha) {
+        vertex(buffer, x, minY, z, red, green, blue, 0.0F);
+        vertex(buffer, x, minY, z, red, green, blue, alpha);
+        vertex(buffer, x, maxY, z, red, green, blue, alpha);
+        vertex(buffer, x, maxY, z, red, green, blue, 0.0F);
+    }
+
+    private static void ring(BufferBuilder buffer, double chunkX, double y, double chunkZ, float red, float green, float blue) {
+        vertex(buffer, chunkX, y, chunkZ, red, green, blue, 0.0F);
+        vertex(buffer, chunkX, y, chunkZ, red, green, blue, 1.0F);
+        vertex(buffer, chunkX, y, chunkZ + 16.0D, red, green, blue, 1.0F);
+        vertex(buffer, chunkX + 16.0D, y, chunkZ + 16.0D, red, green, blue, 1.0F);
+        vertex(buffer, chunkX + 16.0D, y, chunkZ, red, green, blue, 1.0F);
+        vertex(buffer, chunkX, y, chunkZ, red, green, blue, 1.0F);
+        vertex(buffer, chunkX, y, chunkZ, red, green, blue, 0.0F);
     }
 }

@@ -1,21 +1,20 @@
 package mctmods.resourcedatapackloader.command;
 
-import mctmods.resourcedatapackloader.util.Says;
-import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
+import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.world.Biomes;
 
-import java.util.Map;
-import java.nio.file.Path;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.command.PlayerNotFoundException;
 import net.minecraft.command.WrongUsageException;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -26,7 +25,10 @@ import net.minecraft.world.biome.Biome;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Random;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
@@ -40,6 +42,8 @@ public final class CommandShared {
         Says.line(sender, color, message);
         ContentLog.LOGGER.debug("  {}", message);
     }
+
+    @Nullable static EntityPlayer viewer(ICommandSender sender) { return sender instanceof EntityPlayer ? (EntityPlayer) sender : null; }
 
     static EntityPlayerMP goer(ICommandSender sender) throws CommandException {
         if (sender.getCommandSenderEntity() instanceof EntityPlayerMP) { return (EntityPlayerMP) sender.getCommandSenderEntity(); }
@@ -102,7 +106,7 @@ public final class CommandShared {
 
     static String elapsed(long start) {
         long time = System.currentTimeMillis() - start;
-        return time < 1000L ? (time + "ms") : String.format("%.02fs", time / 1000D);
+        return time < 1000L ? (time + "ms") : String.format(Locale.ROOT, "%.02fs",time / 1000D);
     }
 
     @Nullable static Biome findBiome(String name) {

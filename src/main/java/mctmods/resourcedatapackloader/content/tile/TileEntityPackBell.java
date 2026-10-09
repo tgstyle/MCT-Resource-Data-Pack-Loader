@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.tile;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -134,7 +135,7 @@ public class TileEntityPackBell extends TileEntity implements ITickable {
             double z = pos.getZ() + 0.5D + dz / distance;
             for (int i = 0; i < per; i++) {
                 color += 5;
-                server.spawnParticle(EnumParticleTypes.SPELL_MOB, x, pos.getY() + 0.5D, z, 0, (color >> 16 & 255) / 255.0D, (color >> 8 & 255) / 255.0D, (color & 255) / 255.0D, 1.0D);
+                server.spawnParticle(EnumParticleTypes.SPELL_MOB, x, pos.getY() + 0.5D, z, 0, Colors.red(color) / 255.0D, Colors.green(color) / 255.0D, Colors.blue(color) / 255.0D, 1.0D);
             }
         }
     }

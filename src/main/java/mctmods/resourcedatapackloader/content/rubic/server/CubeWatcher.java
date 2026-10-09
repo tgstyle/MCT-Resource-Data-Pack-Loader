@@ -42,6 +42,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     private boolean sentToPlayers = false;
     private boolean loading = true;
     private boolean invalid = false;
+    private long[] bucketDataEntry = null;
 
     CubeWatcher(PlayerCubeMap playerCubeMap, CubePos cubePos) {
         this.cubePos = cubePos;
@@ -132,9 +133,13 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
             assert this.cube != null;
             if (this.cube instanceof BlankCube) {
                 this.cube = null;
+                playerCubeMap.getWorldServer().profiler.endSection();
                 return false;
             }
-            if (!this.cube.isFullyPopulated()) { return false; }
+            if (!this.cube.isFullyPopulated()) {
+                playerCubeMap.getWorldServer().profiler.endSection();
+                return false;
+            }
         }
         else { this.cube = this.cubeCache.getCube(cubeX, cubeY, cubeZ, ICubeProviderServer.Requirement.LOAD); }
         if (this.cube != null) { this.cube.getTickets().add(this); }
@@ -265,8 +270,6 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
     @Override public int getZ() { return this.cubePos.getZ(); }
 
     @Override public boolean shouldTick() { return false; }
-
-    private long[] bucketDataEntry = null;
 
     @Override public long[] getBucketEntryData() { return bucketDataEntry; }
 

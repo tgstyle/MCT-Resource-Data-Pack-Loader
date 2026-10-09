@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Registries;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -55,9 +56,9 @@ public final class ContentTeleporter implements ITeleporter {
         else {
             portalPos = landing(world, mapped);
             boolean adrift = def.platform && !occupied(world, portalPos.down());
-            if (!rebuild(world, portalPos, adrift)) {
+            if (unbuilt(world, portalPos, adrift)) {
                 if (adrift) { support(world, portalPos); }
-                world.setBlockState(portalPos, arriving(), 2);
+                world.setBlockState(portalPos, portalState, BlockFlags.UPDATE_CLIENTS);
                 clearAbove(world, portalPos);
             }
         }
@@ -110,25 +111,24 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static int clamp(World world, int y) { return MathHelper.clamp(y, SEARCH_LOW, world.getHeight() - 4); }
 
-    private IBlockState arriving() { return portalState; }
-
     private static void hold(World world, BlockPos at) { world.getChunk(at); }
 
-    private boolean rebuild(World world, BlockPos landing, boolean adrift) {
-        if (fit == null || fit.holes.isEmpty()) { return false; }
+    private boolean unbuilt(World world, BlockPos landing, boolean adrift) {
+        if (fit == null || fit.holes.isEmpty()) { return true; }
         BlockPos anchor = lowest(fit.holes);
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, IBlockState> edges = new LinkedHashMap<>();
         for (BlockPos hole : fit.holes) { holes.add(shift(hole, anchor, landing)); }
         for (Map.Entry<BlockPos, IBlockState> edge : fit.edge.entrySet()) { edges.put(shift(edge.getKey(), anchor, landing), edge.getValue()); }
-        for (BlockPos at : holes) { hold(world, at); }
-        for (BlockPos at : edges.keySet()) { hold(world, at); }
-        if (adrift) { footing(world, edges.keySet(), holes); }
+        List<BlockPos> under = new ArrayList<>(edges.keySet());
+        under.addAll(holes);
+        for (BlockPos at : under) { hold(world, at); }
+        if (adrift) { footing(world, under); }
         for (BlockPos at : holes) { world.setBlockToAir(at); }
-        for (Map.Entry<BlockPos, IBlockState> edge : edges.entrySet()) { world.setBlockState(edge.getKey(), edge.getValue(), 2); }
-        for (BlockPos at : holes) { world.setBlockState(at, arriving(), 2); }
+        for (Map.Entry<BlockPos, IBlockState> edge : edges.entrySet()) { world.setBlockState(edge.getKey(), edge.getValue(), BlockFlags.UPDATE_CLIENTS); }
+        for (BlockPos at : holes) { world.setBlockState(at, portalState, BlockFlags.UPDATE_CLIENTS); }
         ContentLog.LOGGER.debug("Built a frame of {} on arrival at {}, {} edge block(s) around {} of portal", fit.frame.name, landing, edges.size(), holes.size());
-        return true;
+        return false;
     }
 
     private static BlockPos shift(BlockPos from, BlockPos anchor, BlockPos landing) {
@@ -143,15 +143,11 @@ public final class ContentTeleporter implements ITeleporter {
         return found;
     }
 
-    private void footing(World world, Iterable<BlockPos> edges, Iterable<BlockPos> holes) {
+    private void footing(World world, List<BlockPos> under) {
         Block floor = block(def.platformBlock);
         int bed = Integer.MAX_VALUE;
         Set<BlockPos> columns = new LinkedHashSet<>();
-        for (BlockPos at : edges) {
-            bed = Math.min(bed, at.getY());
-            columns.add(new BlockPos(at.getX(), 0, at.getZ()));
-        }
-        for (BlockPos at : holes) {
+        for (BlockPos at : under) {
             bed = Math.min(bed, at.getY());
             columns.add(new BlockPos(at.getX(), 0, at.getZ()));
         }
@@ -167,7 +163,7 @@ public final class ContentTeleporter implements ITeleporter {
                 BlockPos at = above.add(dx, -1, dz);
                 hold(world, at);
                 if (occupied(world, at)) { continue; }
-                world.setBlockState(at, floor.getDefaultState(), 2);
+                world.setBlockState(at, floor.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
             }
         }
     }
@@ -183,9 +179,8 @@ public final class ContentTeleporter implements ITeleporter {
     }
 
     private void clear(World world, BlockPos pos) {
-        IBlockState found = world.getBlockState(pos);
-        if (found.getBlock() == Blocks.AIR) { return; }
-        if (found.getBlock() instanceof ContentBlockPortal) { return; }
+        if (world.isAirBlock(pos)) { return; }
+        if (world.getBlockState(pos).getBlock() instanceof ContentBlockPortal) { return; }
         world.setBlockToAir(pos);
     }
 

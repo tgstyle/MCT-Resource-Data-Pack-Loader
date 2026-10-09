@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client.gui;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.content.gui.ContainerEntityStorage;
 import mctmods.resourcedatapackloader.content.gui.ContainerPack;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -77,7 +78,7 @@ public class GuiEntityStorage extends GuiPackContainer {
         int color = held.getFluid().getColor(held);
         mc.getTextureManager().bindTexture(TextureMap.LOCATION_BLOCKS_TEXTURE);
         GlStateManager.enableBlend();
-        GlStateManager.color((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, (color >>> 24) / 255.0F);
+        GlStateManager.color(Colors.red(color) / 255.0F, Colors.green(color) / 255.0F, Colors.blue(color) / 255.0F,(color >>> 24) / 255.0F);
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);

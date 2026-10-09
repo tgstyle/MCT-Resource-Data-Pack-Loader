@@ -40,9 +40,8 @@ public class KilledName extends LootFunction {
             held.setString(tag, name);
         }
         if (!format.isEmpty()) {
-            try {
-                stack.setStackDisplayName(String.format(format, name));
-            } catch (IllegalFormatException bad) {
+            try { stack.setStackDisplayName(String.format(format, name)); }
+            catch (IllegalFormatException bad) {
                 ContentLog.LOGGER.error("A killed_name format '{}' is not a valid format, using the plain name", format);
                 stack.setStackDisplayName(name);
             }

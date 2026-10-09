@@ -19,7 +19,7 @@ import java.util.Random;
 
     @Inject(method = "generate", at = @At("HEAD"), cancellable = true) private void rdpl$blockEmeralds(World world, Random random, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if (with == null || with.getBlock() != Blocks.EMERALD_ORE) { return; }
-        if (world.isRemote || !ContentOreControl.blocks("EMERALD", "biomesoplenty", world.provider.getDimension())) { return; }
+        if (world.isRemote || ContentOreControl.passes("EMERALD", "biomesoplenty", world.provider.getDimension())) { return; }
         ContentOreControl.denied("EMERALD", "biomesoplenty");
         cir.setReturnValue(false);
     }

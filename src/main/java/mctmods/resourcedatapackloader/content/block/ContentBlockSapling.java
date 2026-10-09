@@ -6,11 +6,11 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTreeGenerator;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockBush;
 import net.minecraft.block.IGrowable;
 import net.minecraft.block.properties.PropertyInteger;
@@ -27,60 +27,55 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.Objects;
 import java.util.Random;
-import java.util.Set;
-import java.util.HashSet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockSapling extends BlockBush implements IGrowable, IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockSapling extends BlockBush implements IGrowable, IContentBlock, IContentSoil {
     public static final int MAX_VARIANTS = 1;
     private static final int GROWTH_FLAGS = 3;
-    private static final ThreadLocal<PropertyInteger> PENDING = new ThreadLocal<>();
     private final BlockDef def;
     private final SaplingDef sapling;
-    private Set<Block> soil = new HashSet<>();
+    private final ContentSoil soil;
     private final PropertyInteger stage;
 
-    public static ContentBlockSapling create(BlockDef def, SaplingDef sapling) {
-        PENDING.set(PropertyInteger.create("stage", 0, Math.max(1, sapling.stages) - 1));
-        try { return new ContentBlockSapling(def, sapling, PENDING.get()); }
-        finally { PENDING.remove(); }
-    }
+    public static ContentBlockSapling create(BlockDef def, SaplingDef sapling) { return BlockVariants.construct(def, built -> new ContentBlockSapling(built, sapling)); }
 
-    protected ContentBlockSapling(BlockDef def, SaplingDef sapling, PropertyInteger stage) {
+    protected ContentBlockSapling(BlockDef def, SaplingDef sapling) {
         super(def.material);
         this.def = def;
         this.sapling = sapling;
-        this.stage = stage;
+        this.soil = new ContentSoil(sapling.soil, def.registryName);
+        this.stage = (PropertyInteger) Objects.requireNonNull(this.blockState.getProperty("stage"));
         BlockVariant variant = def.at(0);
         setRegistryName(def.registryName);
         setTranslationKey(def.registryName + "." + variant.name);
         if (def.soundType != null) { setSoundType(def.soundType); }
-        setHardness(variant.hardness);
         setTickRandomly(true);
         ContentSetup.apply(this, def.creativeTab);
         ContentSetup.properties(this, def);
         setDefaultState(this.blockState.getBaseState().withProperty(stage, 0));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() { return new BlockStateContainer(this, PENDING.get()); }
+    @Override @Nonnull protected BlockStateContainer createBlockState() {
+        SaplingDef growing = Objects.requireNonNull(Objects.requireNonNull(BlockVariants.def()).sapling);
+        return new BlockStateContainer(this, PropertyInteger.create("stage", 0, Math.max(1, growing.stages) - 1));
+    }
 
     @Override public BlockDef getDef() { return def; }
 
     @Override @Nullable public ItemBlock createItem() { return new ItemBlock(this); }
 
-    @Override @Nonnull public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(stage, MathHelper.clamp(meta, 0, stage.getAllowedValues().size() - 1));
-    }
+    @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(stage, MathHelper.clamp(meta, 0, stage.getAllowedValues().size() - 1)); }
 
     @Override public int getMetaFromState(IBlockState state) { return state.getValue(stage); }
 
-    public void resolveSoil() { this.soil = ContentSetup.resolveSoil(sapling.soil, def.registryName); }
+    @Override public ContentSoil soil() { return soil; }
 
-    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return world.getBlockState(pos).getBlock().isReplaceable(world, pos) && canBlockStay(world, pos, getDefaultState()); }
+    @Override public boolean canPlaceBlockAt(@Nonnull World world, @Nonnull BlockPos pos) { return ContentSetup.placeable(this, world, pos); }
 
-    @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return ContentSetup.sustains(soil, world, pos.down(), this); }
+    @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return soil.sustains(world, pos.down(), this); }
 
     @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand) {
         if (world.isRemote) { return; }
@@ -115,7 +110,7 @@ import javax.annotation.Nullable;
         IBlockState leaves = ContentStates.parse(sapling.leaves, def.registryName);
         if (log == null || leaves == null) { return; }
         world.setBlockToAir(pos);
-        ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, sapling.height), log, leaves, soil);
+        ContentTreeGenerator tree = new ContentTreeGenerator(true, Math.max(1, sapling.height), log, leaves, soil.blocks());
         if (!tree.generate(world, rand, pos)) { world.setBlockState(pos, getDefaultState(), 4); }
     }
 

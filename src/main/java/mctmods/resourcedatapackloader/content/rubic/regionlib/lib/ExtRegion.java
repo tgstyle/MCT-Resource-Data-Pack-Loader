@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.GatheringByteChannel;
-import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -32,8 +31,7 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
     private final BitSet exists;
     private boolean initialized = false;
 
-    public ExtRegion(Path saveDirectory, List<IHeaderDataEntryProvider<?, K>> headerData, IKeyProvider keyProvider, RegionKey regionKey)
-            throws IOException {
+    public ExtRegion(Path saveDirectory, List<IHeaderDataEntryProvider<?, K>> headerData, IKeyProvider keyProvider, RegionKey regionKey) throws IOException {
         this.directory = saveDirectory.resolve(regionKey.getName() + RegionNames.SPILL);
         this.headerData = headerData;
         int headerSize = 0;
@@ -42,12 +40,10 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
         this.exists = new BitSet(keyProvider.getKeyCount(regionKey));
         if (!Files.exists(this.directory)) { return; }
         this.initialized = true;
-        try(Stream<Path> stream = Files.list(this.directory)) {
+        try (Stream<Path> stream = Files.list(this.directory)) {
             stream.forEach(p -> {
                 String name = p.getFileName().toString();
-                if (!name.matches("\\d{1,9}")) {
-                    return;
-                }
+                if (!name.matches("\\d{1,9}")) { return; }
                 int i = Integer.parseInt(name);
                 if (i < keyProvider.getKeyCount(regionKey)) { exists.set(i); }
             });
@@ -97,11 +93,11 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
             exists.set(key.getId(), false);
             return Optional.empty();
         }
-        try (SeekableByteChannel channel = Files.newByteChannel(file)) {
+        try (FileChannel channel = FileChannel.open(file, READ)) {
             long size = channel.size();
             if (size > Integer.MAX_VALUE) { throw new UnsupportedDataException("Size " + size + " is too big"); }
             ByteBuffer buf = ByteBuffer.wrap(new byte[(int) (size - totalHeaderSize)]);
-            Utils.readFully(channel.position(totalHeaderSize), buf);
+            Utils.readFully(channel, buf, totalHeaderSize);
             buf.rewind();
             return Optional.of(buf);
         }
@@ -109,9 +105,7 @@ public class ExtRegion<K extends IKey> implements IRegion<K> {
 
     @Override public boolean hasValue(K key) { return exists.get(key.getId()); }
 
-    @Override public void flush() throws IOException {
-    }
+    @Override public void flush() throws IOException {}
 
-    @Override public void close() throws IOException {
-    }
+    @Override public void close() throws IOException {}
 }

@@ -24,7 +24,6 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
     private int courses;
     private int seat;
     private Rotation turned = Rotation.NONE;
-
     private final BlockPos.MutableBlockPos scratch = new BlockPos.MutableBlockPos();
 
     @SuppressWarnings("unused") public RecurrentVillagePiece() {}
@@ -64,7 +63,7 @@ public class RecurrentVillagePiece extends StructureVillagePieces.Village {
 
     public int footingSink() { return -seat; }
 
-    public static boolean deepEnough(StructureBoundingBox box) { return canVillageGoDeeper(box); }
+    public static boolean tooShallow(StructureBoundingBox box) { return !canVillageGoDeeper(box); }
 
     @Override public boolean addComponentParts(@Nonnull World world, @Nonnull Random random, @Nonnull StructureBoundingBox clip) {
         if (structure.isEmpty()) { return true; }

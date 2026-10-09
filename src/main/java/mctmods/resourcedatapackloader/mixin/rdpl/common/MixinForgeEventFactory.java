@@ -15,11 +15,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 
 @Mixin(ForgeEventFactory.class) public class MixinForgeEventFactory {
-    @Redirect(method = "onChunkPopulate", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = false)
-    private static boolean rdpl$postWithFakeWorldHeight(EventBus bus, Event event, boolean pre, IChunkGenerator gen, World world, Random rand, int x, int z, boolean hasVillageGenerated) {
+    @Redirect(method = "onChunkPopulate", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/fml/common/eventhandler/EventBus;post(Lnet/minecraftforge/fml/common/eventhandler/Event;)Z", remap = false), remap = false) private static boolean rdpl$postWithFakeWorldHeight(EventBus bus, Event event, boolean pre, IChunkGenerator gen, World world, Random rand, int x, int z, boolean hasVillageGenerated) {
         if (!(event instanceof PopulateChunkEvent.Pre)) { return bus.post(event); }
         StreamsRubicValleys.carveAhead(world, x, z);
-        CompatHandler.postChunkPopulatePreWithFakeWorldHeight((PopulateChunkEvent.Pre) event);
+        CompatHandler.postChunkPopulatePreWithFakeWorldHeight(bus, (PopulateChunkEvent.Pre) event);
         return false;
     }
 }

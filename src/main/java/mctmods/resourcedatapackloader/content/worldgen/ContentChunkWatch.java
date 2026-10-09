@@ -70,9 +70,15 @@ public final class ContentChunkWatch {
 
     public static boolean watching() { return ContentLog.LOGGER.debugEnabled(); }
 
-    public static void made() { made++; seen = true; }
+    public static void made() {
+        made++;
+        seen = true;
+    }
 
-    public static void read() { read++; seen = true; }
+    public static void read() {
+        read++;
+        seen = true;
+    }
 
     public static void readFromDisk() { readFromDisk++; }
 
@@ -82,11 +88,19 @@ public final class ContentChunkWatch {
 
     public static void released() { released++; }
 
-    public static void written(long nanos) { written++; writeNanos += nanos; seen = true; }
+    public static void written(long nanos) {
+        written++;
+        writeNanos += nanos;
+        seen = true;
+    }
 
     public static void toFile(long nanos) { fileNanos += nanos; }
 
-    public static void readied(long nanos) { readied++; readyNanos += nanos; seen = true; }
+    public static void readied(long nanos) {
+        readied++;
+        readyNanos += nanos;
+        seen = true;
+    }
 
     public static void lit(long nanos, boolean finished) {
         lit++;
@@ -115,16 +129,31 @@ public final class ContentChunkWatch {
 
     public static void primerLookup() { primerLookups++; }
 
-    public static void relit(long nanos) { relit++; relitNanos += nanos; }
+    public static void relit(long nanos) {
+        relit++;
+        relitNanos += nanos;
+    }
 
     public static boolean timingThisOne() { return watching() && (spread & SAMPLE) == 0L; }
 
-    public static void spread(long began, boolean sky) {
+    public static final class Timer {
+        private final ThreadLocal<long[]> began = ThreadLocal.withInitial(() -> new long[1]);
+
+        public void start() { began.get()[0] = System.nanoTime(); }
+
+        public void skip() { began.get()[0] = 0L; }
+
+        public long stop() {
+            long from = began.get()[0];
+            return from == 0L ? 0L : Math.max(1L, System.nanoTime() - from);
+        }
+    }
+
+    public static void spread(long took, boolean sky) {
         if (!watching()) { return; }
         spread++;
         if (sky) { spreadSky++; }
-        if (began == 0L) { return; }
-        long took = System.nanoTime() - began;
+        if (took == 0L) { return; }
         sampled++;
         spreadNanos += took;
         if (!sky) { return; }

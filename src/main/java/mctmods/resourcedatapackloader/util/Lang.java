@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import javax.annotation.Nullable;
 
 public final class Lang {
     private static final String HOME = "assets/resourcedatapackloader/lang/";
@@ -76,7 +77,7 @@ public final class Lang {
         return tr(key, args);
     }
 
-    public static String tr(EntityPlayer player, String key, Object... args) {
+    public static String tr(@Nullable EntityPlayer player, String key, Object... args) {
         if (!(player instanceof EntityPlayerMP)) { return tr(key, args); }
         String locale = ((IPlayerLanguage) player).rdpl$language();
         Map<String, String> table = locale == null ? null : TABLES.get(locale.toLowerCase(Locale.ROOT));

@@ -22,6 +22,7 @@ import micdoodle8.mods.galacticraft.api.world.AtmosphereInfo;
 import micdoodle8.mods.galacticraft.api.world.EnumAtmosphericGas;
 import micdoodle8.mods.galacticraft.core.util.WorldUtil;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.world.DimensionType;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.Loader;
 import java.util.ArrayList;
@@ -43,7 +44,12 @@ public final class GcCelestial {
 
     private GcCelestial() {}
 
+    static boolean isBelt(@Nullable GalacticraftDef gc) { return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind); }
+
     @Nullable public static CelestialBody body(int dimension) { return BODIES.get(dimension); }
+
+    @Nullable static DimensionType registeredType(int dimension) { return DimensionManager.isDimensionRegistered(dimension) ? DimensionManager.getProviderType(dimension) : null; }
+
 
     public static void register(List<CelestialDef> files, List<DimensionDef> dimensions) {
         GcTeleport teleport = new GcTeleport();
@@ -89,7 +95,7 @@ public final class GcCelestial {
 
     public static Planet stationHome(Satellite station) { return stations ? GcStations.home(station) : station.getParentPlanet(); }
 
-    static boolean packBody(CelestialBody body) { return BODIES.containsValue(body); }
+    static boolean notPackBody(CelestialBody body) { return !BODIES.containsValue(body); }
 
     public static void nameDimensions() {
         for (Integer id : ROCKET_DIMENSIONS) {
@@ -169,7 +175,7 @@ public final class GcCelestial {
 
     private static boolean dimension(DimensionDef dimension, GalacticraftDef gc) {
         missingMods(gc.body, gc);
-        if (CelestialDef.ASTEROIDS.equals(gc.body.kind) && beltless(dimension)) { return false; }
+        if (isBelt(gc) && beltless(dimension)) { return false; }
         CelestialBody body = body(gc.body, dimension.traits.dayLength, GcWorldProvider.gravity(dimension.id));
         if (body == null) {
             ContentLog.LOGGER.error("Dimension {} could not be put on the Galacticraft map, so it is not registered", dimension.registryName);
@@ -187,7 +193,7 @@ public final class GcCelestial {
         body.setDimensionSuffix(dimension.suffix);
         body.setForceStaticLoad(dimension.keepLoaded);
         body.setAtmosphere(atmosphere(dimension, gc));
-        if (CelestialDef.ASTEROIDS.equals(gc.body.kind)) { body.setBiomeInfo(GcAsteroids.biome()); }
+        if (isBelt(gc)) { body.setBiomeInfo(GcAsteroids.biome()); }
         if (!gc.checklist.isEmpty()) { body.addChecklistKeys(gc.checklist.toArray(new String[0])); }
         if (gc.reachable) {
             ContentDimensions.claim(dimension);

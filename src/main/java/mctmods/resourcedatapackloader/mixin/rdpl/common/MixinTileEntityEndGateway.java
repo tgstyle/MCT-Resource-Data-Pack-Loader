@@ -17,13 +17,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(TileEntityEndGateway.class) public class MixinTileEntityEndGateway {
-    @Redirect(method = "findExitPortal", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I"))
-    private int getChunkTopFilledSegmentExitFromPortal(Chunk chunk) { return rdpl$topFilled(chunk); }
+    @Redirect(method = "findExitPortal", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I")) private int rdpl$getChunkTopFilledSegmentExitFromPortal(Chunk chunk) { return rdpl$topFilled(chunk); }
 
-    @Redirect(method = "findSpawnpointInChunk", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I"))
-    private static int getChunkTopFilledSegmentFindSpawnpoint(Chunk chunk) { return rdpl$topFilled(chunk); }
+    @Redirect(method = "findSpawnpointInChunk", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;getTopFilledSegment()I")) private static int rdpl$getChunkTopFilledSegmentFindSpawnpoint(Chunk chunk) { return rdpl$topFilled(chunk); }
 
     @Unique private static int rdpl$topFilled(Chunk chunk) {
         int top = chunk.getTopFilledSegment();
@@ -40,7 +36,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
      */
     @Overwrite private static Chunk getChunk(World world, Vec3d pos) {
         Chunk chunk = world.getChunk(MathHelper.floor(pos.x / Cube.SIZE_D), MathHelper.floor(pos.z / Cube.SIZE_D));
-        if (((IRubicWorld) chunk.getWorld()).rdpl$isRubicWorld()){
+        if (((IRubicWorld) chunk.getWorld()).rdpl$isRubicWorld()) {
             for (int cubeY = 0; cubeY < 16; cubeY++) { ((IColumn) chunk).getCube(cubeY); }
         }
         return chunk;

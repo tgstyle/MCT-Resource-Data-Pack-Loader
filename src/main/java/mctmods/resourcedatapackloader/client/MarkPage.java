@@ -28,7 +28,6 @@ import javax.annotation.Nullable;
     private static final int RULE = 0xFF888888;
     private static final float[] HEADINGS = {2.0F, 1.5F, 1.25F};
     private final List<Row> rows = new ArrayList<>();
-    private final String font;
     private final int widest;
     private float height;
 
@@ -57,8 +56,7 @@ import javax.annotation.Nullable;
         }
     }
 
-    MarkPage(String font, List<String> written, int widest) {
-        this.font = font;
+    MarkPage(List<String> written, int widest) {
         this.widest = widest;
         for (MarkLines.Line line : MarkLines.parse(written)) { lay(line); }
         for (Row row : rows) { height += row.height; }
@@ -71,35 +69,37 @@ import javax.annotation.Nullable;
     private void lay(MarkLines.Line line) {
         switch (line.kind) {
             case MarkLines.PLAIN:
-                block(MarkText.literal(font, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
+                block(MarkText.literal(CardFont.RDPL, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
                 return;
             case MarkLines.HEADING:
-                block(MarkText.pieces(font, line.text, Marks.BOLD), Collections.emptyList(), 0, Crisp.scale(HEADINGS[line.level - 1]), TEXT);
+                block(MarkText.pieces(CardFont.RDPL, line.text, Marks.BOLD), Collections.emptyList(), 0, Crisp.scale(HEADINGS[line.level - 1]), TEXT);
                 return;
             case MarkLines.ITEM:
-                block(MarkText.pieces(font, line.text), MarkText.literal(font, line.lead + " "), (line.level + 1) * INDENT, 1.0F, TEXT);
+                block(MarkText.pieces(CardFont.RDPL, line.text), MarkText.literal(CardFont.RDPL, line.lead + " "), (line.level + 1) * INDENT, 1.0F, TEXT);
                 return;
             case MarkLines.QUOTE:
-                block(MarkText.pieces(font, line.text), Collections.emptyList(), INDENT, 1.0F, DIM);
+                block(MarkText.pieces(CardFont.RDPL, line.text), Collections.emptyList(), INDENT, 1.0F, DIM);
                 return;
             case MarkLines.RULE:
-                Row rule = new Row(Collections.emptyList(), Collections.emptyList(), 0, 0, 1.0F, TEXT, LINE);
+                Row rule = blank(TEXT, LINE);
                 rule.rule = true;
                 rule.span = widest;
                 rows.add(rule);
                 return;
             case MarkLines.IMAGE:
                 if (image(line)) { return; }
-                block(MarkText.literal(font, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
+                block(MarkText.literal(CardFont.RDPL, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
                 return;
             default:
-                block(MarkText.pieces(font, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
+                block(MarkText.pieces(CardFont.RDPL, line.text), Collections.emptyList(), 0, 1.0F, TEXT);
         }
     }
 
+    private static Row blank(int color, float tall) { return new Row(Collections.emptyList(), Collections.emptyList(), 0, 0, 1.0F, color, tall); }
+
     private void block(List<MarkText.Piece> pieces, List<MarkText.Piece> lead, int indent, float size, int color) {
         if (pieces.size() == 1 && pieces.get(0).text.isEmpty()) {
-            rows.add(new Row(Collections.emptyList(), Collections.emptyList(), 0, 0, 1.0F, color, LINE));
+            rows.add(blank(color, LINE));
             return;
         }
         int shift = MarkText.width(lead);
@@ -130,7 +130,7 @@ import javax.annotation.Nullable;
             return false;
         }
         int shown = Math.min(width, widest);
-        Row row = new Row(Collections.emptyList(), Collections.emptyList(), 0, 0, 1.0F, TEXT, Math.max(1, Math.round(tall * shown / (float) width)) + GAP);
+        Row row = blank(TEXT, Math.max(1, Math.round(tall * shown / (float) width)) + GAP);
         row.image = where;
         row.imageWidth = shown;
         row.span = shown;

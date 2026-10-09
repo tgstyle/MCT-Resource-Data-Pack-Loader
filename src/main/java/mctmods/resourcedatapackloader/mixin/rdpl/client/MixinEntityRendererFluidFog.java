@@ -14,6 +14,5 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(EntityRenderer.class) public abstract class MixinEntityRendererFluidFog {
-    @Redirect(method = "updateFogColor(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getFogColor(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;F)Lnet/minecraft/util/math/Vec3d;", remap = false))
-    private Vec3d rdpl$fluidFog(Block block, World world, BlockPos pos, IBlockState state, Entity entity, Vec3d originalColor, float partialTicks) { return ContentFogSampler.fluidFog(state, block.getFogColor(world, pos, state, entity, originalColor, partialTicks)); }
+    @Redirect(method = "updateFogColor(F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;getFogColor(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;F)Lnet/minecraft/util/math/Vec3d;", remap = false)) private Vec3d rdpl$fluidFog(Block block, World world, BlockPos pos, IBlockState state, Entity entity, Vec3d originalColor, float partialTicks) { return ContentFogSampler.fluidFog(state, block.getFogColor(world, pos, state, entity, originalColor, partialTicks)); }
 }

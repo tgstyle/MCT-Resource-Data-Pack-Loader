@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.world.World;
@@ -38,6 +39,8 @@ public final class RubicWorldControl {
 
     private static final AtomicBoolean VANILLA_CLIENTS_WARNED = new AtomicBoolean();
 
+    public static void standDownIfWanted() { wanted(); }
+
     public static void standDownForVanillaClients() {
         stop("This is a rubic world,\nwhich vanilla clients cannot join.\n\nIt was not loaded and nothing was changed.\n\nTurn content.vanillaClients off,\nor use a different world.");
     }
@@ -58,14 +61,12 @@ public final class RubicWorldControl {
                 break;
             }
         }
-        return found != ContentControl.flag(ContentControl.TERRAIN, "rubicWorldDimensionsAreBlacklist", Config.worldgen.rubicWorldDimensionsAreBlacklist);
+        return Listing.allows(found, ContentControl.flag(ContentControl.TERRAIN, "rubicWorldDimensionsAreBlacklist", Config.worldgen.rubicWorldDimensionsAreBlacklist));
     }
 
     public static void standDownForSavedWorld() { standDown("This world is a rubic world"); }
 
-    private static void standDown(String what) {
-        stop(what + ",\nwhich cannot run with CubicChunks installed.\n\nRemove CubicChunks,\nor remove rubicWorld from the pack.");
-    }
+    private static void standDown(String what) { stop(what + ",\nwhich cannot run with CubicChunks installed.\n\nRemove CubicChunks,\nor remove rubicWorld from the pack."); }
 
     private static final int DEFAULT_MIN_HEIGHT = -64;
     private static final int DEFAULT_MAX_HEIGHT = 320;
@@ -103,6 +104,8 @@ public final class RubicWorldControl {
         return offset >> 4;
     }
 
+    public static int terrainOffsetBlocks() { return terrainOffsetCubes() << 4; }
+
     private static final AtomicBoolean OFFSET_WARNED = new AtomicBoolean();
 
     public static int generatedCeiling(World world) {
@@ -111,7 +114,7 @@ public final class RubicWorldControl {
         if (ContentControl.text(ContentControl.TERRAIN, "skyStone", Config.worldgen.skyStone).trim().isEmpty()) { return actual; }
         int top = ((IMinMaxHeight) world).rdpl$getMaxHeight();
         int[] band = ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", Config.worldgen.skyHeights);
-        if (band.length == 2 && band[0] < band[1]) { top = Math.min(top, band[1] + (terrainOffsetCubes() << 4) + 1); }
+        if (band.length == 2 && band[0] < band[1]) { top = Math.min(top, band[1] + terrainOffsetBlocks() + 1); }
         return Math.max(actual, top);
     }
 

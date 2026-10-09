@@ -90,12 +90,10 @@ import java.util.Map;
             "mctmods.resourcedatapackloader.core.transformer.RubicWorldEditTransformer"}; }
 
     @Override public String getModContainerClass() {
-        if (cofhWorldPresent()) { return null; }
+        if (inModJars()) { return null; }
         LOGGER.info("CoFH World is not installed, providing an emulated container so mods that require it can load");
         return "mctmods.resourcedatapackloader.core.CofhWorldContainer";
     }
-
-    private static boolean cofhWorldPresent() { return inModJars(); }
 
     private static boolean inModJars() {
         if (MCTMixin.class.getClassLoader().getResource("cofh/cofhworld/CoFHWorld.class") != null) { return true; }
@@ -124,7 +122,7 @@ import java.util.Map;
         }
         File mcDir = (File) location;
         ConfigCore.at(mcDir);
-        if (FMLLaunchHandler.side().isClient()) { SplashDark.apply(mcDir, EarlyConfig.flag(mcDir, "mct_resourcedatapackloader_mixin.cfg", "B:darkSplash=", true), LOGGER); }
+        if (FMLLaunchHandler.side().isClient()) { SplashDark.apply(mcDir, EarlyConfig.flag(mcDir, ConfigLate.FILE, "B:darkSplash=", true), LOGGER); }
         Path root = mcDir.toPath().resolve(rootDirectory());
         LOGGER.info("Pack root: {}", root);
         StrayPacks.collect(mcDir.toPath(), root);
@@ -142,14 +140,14 @@ import java.util.Map;
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
-        if (mixinConfig.endsWith(".fml.json")) { return !cleanroom(); }
+        if (mixinConfig.endsWith(".fml.json")) { return vanillaFml(); }
         if (mixinConfig.endsWith(".vintagefix.json")) { return Launch.classLoader.getResource("org/embeddedt/vintagefix/dynamicresources/ResourcePackHelper.class") != null; }
         return true;
     }
 
     private static Boolean cleanroomLoader;
 
-    private static boolean cleanroom() {
+    private static boolean vanillaFml() {
         if (cleanroomLoader == null) {
             try {
                 Class.forName("top.outlands.foundation.boot.Foundation", false, MCTMixin.class.getClassLoader());
@@ -158,6 +156,6 @@ import java.util.Map;
             }
             catch (ClassNotFoundException absent) { cleanroomLoader = Boolean.FALSE; }
         }
-        return cleanroomLoader;
+        return !cleanroomLoader;
     }
 }

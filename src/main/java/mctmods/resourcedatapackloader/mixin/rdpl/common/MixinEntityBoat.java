@@ -10,7 +10,7 @@ import net.minecraft.world.World;
 @Mixin(EntityBoat.class) public abstract class MixinEntityBoat extends Entity {
     public MixinEntityBoat(World worldIn) { super(worldIn); }
 
-    @ModifyConstant(method = "checkInWater", constant = @Constant(doubleValue = Double.MIN_VALUE)) private double waterLevelMinValue(double orig) {
+    @ModifyConstant(method = "checkInWater", constant = @Constant(doubleValue = Double.MIN_VALUE)) private double rdpl$waterLevelMinValue(double orig) {
         return Double.NEGATIVE_INFINITY;
     }
 }

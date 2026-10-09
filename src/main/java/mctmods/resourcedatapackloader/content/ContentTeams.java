@@ -1,10 +1,13 @@
 package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.ItemGiveDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.scoreboard.ScorePlayerTeam;
@@ -19,9 +22,11 @@ import net.minecraft.entity.EntityList;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
@@ -33,6 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
 public final class ContentTeams {
@@ -51,8 +57,12 @@ public final class ContentTeams {
 
     public static void load() {
         BY_NAME.clear();
-        PackManager.get().forEach(PackManager.TEAMS, PackManager.JSON, (namespace, path, contents) -> {
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        BALLOTS.clear();
+        CLAIMED.clear();
+        DECIDED.clear();
+        UNMADE.clear();
+        ContentTeamsPicks.clear();
+        Json.eachFile(PackManager.TEAMS, "team file", (key, contents) -> {
             TeamDef def = ContentParserGames.teamFile(key, contents);
             if (def == null) { return; }
             if (BY_NAME.containsKey(def.name)) {
@@ -108,8 +118,7 @@ public final class ContentTeams {
 
     @SubscribeEvent public static void onWorldLoad(WorldEvent.Load event) { field(event.getWorld()); }
 
-    @SubscribeEvent(priority = net.minecraftforge.fml.common.eventhandler.EventPriority.LOWEST)
-    public static void onNamed(EntityJoinWorldEvent event) {
+    @SubscribeEvent(priority = EventPriority.LOWEST) public static void onNamed(EntityJoinWorldEvent event) {
         if (BY_NAME.isEmpty() || event.getWorld().isRemote || event.isCanceled()) { return; }
         Entity entity = event.getEntity();
         if (entity instanceof EntityPlayer) { return; }
@@ -177,7 +186,7 @@ public final class ContentTeams {
     @SuppressWarnings({"ConstantConditions", "ConstantValue"}) private static void join(World world, String member, TeamDef def) {
         Scoreboard board = world.getScoreboard();
         if (board.getTeam(def.name) == null) { field(world); }
-        ScorePlayerTeam held = board.getPlayersTeam(member);
+        ScorePlayerTeam held = teamOf(world, member);
         if (held != null && def.name.equals(held.getName())) { return; }
         Set<String> gone = ContentTeamsPicks.LEFT.get(def.name);
         if (gone != null) { gone.remove(member); }
@@ -191,7 +200,7 @@ public final class ContentTeams {
     }
 
     static void seated(String member, TeamDef def) {
-        if (!"first".equals(def.lead)) { return; }
+        if (!TeamDef.LEAD_FIRST.equals(def.lead)) { return; }
         List<String> arrivals = ARRIVALS.computeIfAbsent(def.name, team -> new ArrayList<>());
         if (!arrivals.contains(member)) { arrivals.add(member); }
     }
@@ -199,20 +208,19 @@ public final class ContentTeams {
     static void tellLead(World world, TeamDef def, String member) {
         MinecraftServer server = net.minecraftforge.fml.common.FMLCommonHandler.instance().getMinecraftServerInstance();
         EntityPlayerMP player = server == null ? null : server.getPlayerList().getPlayerByUsername(member);
-        if (player == null || !"first".equals(def.lead) || !member.equals(leadOf(world, def))) { return; }
+        if (player == null || !TeamDef.LEAD_FIRST.equals(def.lead) || !member.equals(leadOf(world, def))) { return; }
         if (mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.arrived(player)) { leadTold(player, def, ""); }
     }
 
     private static void leadTold(EntityPlayerMP player, TeamDef def, String how) {
-        if (!def.leadSays.isEmpty()) { mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_LEAD, def.leadSays.replace("{side}", def.displayName) + how, def.color); }
+        if (!def.leadSays.isEmpty()) { Says.tell(player, CardIds.TEAM_LEAD, def.color, def.leadSays.replace("{side}", def.displayName) + how); }
         ContentLog.LOGGER.info("{} leads {}{}", player.getName(), def.displayName, how);
     }
 
     public static void greet(EntityPlayerMP player) {
-        ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
-        TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+        TeamDef def = defOf(player);
         if (def == null) { return; }
-        mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_JOINED, "You are on " + def.displayName, def.color);
+        Says.tell(player, CardIds.TEAM_JOINED, def.color, "You are on " + def.displayName);
         if (player.getName().equals(leadOf(player.world, def))) { leadTold(player, def, ""); }
     }
 
@@ -222,7 +230,7 @@ public final class ContentTeams {
         MinecraftServer server = event.player.getServer();
         if (server == null) { return; }
         for (TeamDef def : BY_NAME.values()) {
-            if (!"first".equals(def.lead) || !leaving.equals(firstHere(event.player.world, def, null))) { continue; }
+            if (!TeamDef.LEAD_FIRST.equals(def.lead) || !leaving.equals(firstHere(event.player.world, def, null))) { continue; }
             String next = firstHere(event.player.world, def, leaving);
             EntityPlayerMP player = next == null ? null : server.getPlayerList().getPlayerByUsername(next);
             if (player != null) { leadTold(player, def, " (" + leaving + " left)"); }
@@ -258,8 +266,7 @@ public final class ContentTeams {
 
     public static void placeAtSpawns(MinecraftServer server) {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
-            TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+            TeamDef def = defOf(player);
             if (def == null || def.spawnAt == null) { continue; }
             mctmods.resourcedatapackloader.util.world.Travel.to(player, 0, def.spawnAt[0] + 0.5D, def.spawnAt[1], def.spawnAt[2] + 0.5D, player.rotationYaw, player.rotationPitch);
         }
@@ -268,7 +275,7 @@ public final class ContentTeams {
     public static void give(EntityPlayerMP player, TeamDef def) {
         if (def.gives.isEmpty()) { return; }
         for (ItemGiveDef one : def.gives) {
-            ItemStack stack = ContentStacks.parse(new ResourceLocation(ResourceDataPackLoader.MOD_ID, "teams/" + def.name), one.item, one.count);
+            ItemStack stack = ContentStacks.parse(ResourceDataPackLoader.id("teams/" + def.name), one.item, one.count);
             if (stack.isEmpty()) { continue; }
             if (one.unbreakable) { stack.setTagInfo("Unbreakable", new net.minecraft.nbt.NBTTagByte((byte) 1)); }
             if (!player.inventory.addItemStackToInventory(stack)) { player.dropItem(stack, false); }
@@ -278,22 +285,48 @@ public final class ContentTeams {
 
     public static void giveAll(MinecraftServer server) {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
-            ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
-            TeamDef def = held == null ? null : BY_NAME.get(held.getName());
+            TeamDef def = defOf(player);
             if (def != null) { give(player, def); }
         }
     }
 
     @Nullable public static TeamDef named(String name) { return BY_NAME.get(name); }
 
+    public static Scoreboard board(MinecraftServer server) { return server.getWorld(0).getScoreboard(); }
+
+    public static String memberName(Entity who) { return who instanceof EntityPlayer ? who.getName() : who.getCachedUniqueIdString(); }
+
+    static void eachNonPlayer(MinecraftServer server, BiConsumer<WorldServer, Entity> action) {
+        for (WorldServer world : server.worlds) {
+            for (Entity one : world.loadedEntityList) {
+                if (!(one instanceof EntityPlayer) && !one.isDead) { action.accept(world, one); }
+            }
+        }
+    }
+
+    static <T extends EntityLivingBase> void eachAlive(MinecraftServer server, Class<T> kind, BiConsumer<WorldServer, T> action) {
+        eachNonPlayer(server, (world, one) -> {
+            if (kind.isInstance(one) && kind.cast(one).getHealth() > 0.0F) { action.accept(world, kind.cast(one)); }
+        });
+    }
+
+    public static boolean entityMember(String member) { return member.length() == 36 && member.indexOf('-') == 8; }
+
+    @Nullable public static ScorePlayerTeam teamOf(World world, String member) { return world.getScoreboard().getPlayersTeam(member); }
+
+    @Nullable public static TeamDef defOf(EntityPlayer player) {
+        ScorePlayerTeam held = teamOf(player.world, player.getName());
+        return held == null ? null : BY_NAME.get(held.getName());
+    }
+
     public static boolean standsFor(World world, String voter, String choice, TeamDef def) {
-        if (!"vote".equals(def.lead) || !onTeam(world, voter, def) || !onTeam(world, choice, def)) { return false; }
+        if (!TeamDef.LEAD_VOTE.equals(def.lead) || !onTeam(world, voter, def) || !onTeam(world, choice, def)) { return false; }
         BALLOTS.computeIfAbsent(def.name, team -> new LinkedHashMap<>()).put(voter, choice);
         return true;
     }
 
     public static boolean claim(World world, String member, TeamDef def) {
-        if (!"claim".equals(def.lead) || !onTeam(world, member, def)) { return false; }
+        if (!TeamDef.LEAD_CLAIM.equals(def.lead) || !onTeam(world, member, def)) { return false; }
         String held = CLAIMED.get(def.name);
         if (held != null && !held.equals(member) && onTeam(world, held, def)) { return false; }
         CLAIMED.put(def.name, member);
@@ -303,7 +336,7 @@ public final class ContentTeams {
     @Nullable public static String holding(TeamDef def) { return CLAIMED.get(def.name); }
 
     static boolean onTeam(World world, String member, TeamDef def) {
-        ScorePlayerTeam held = world.getScoreboard().getPlayersTeam(member);
+        ScorePlayerTeam held = teamOf(world, member);
         return held != null && held.getName().equals(def.name);
     }
 
@@ -327,10 +360,10 @@ public final class ContentTeams {
 
     @SuppressWarnings({"ConstantConditions", "ConstantValue"}) @Nullable public static String leadOf(World world, TeamDef def) {
         if (def.leaderless() || world == null) { return null; }
-        if ("appointed".equals(def.lead)) { return def.leadIs.isEmpty() ? null : def.leadIs; }
-        if ("vote".equals(def.lead)) { return voted(world, def); }
-        if ("first".equals(def.lead)) { return firstHere(world, def, null); }
-        if ("claim".equals(def.lead)) {
+        if (TeamDef.LEAD_APPOINTED.equals(def.lead)) { return def.leadIs.isEmpty() ? null : def.leadIs; }
+        if (TeamDef.LEAD_VOTE.equals(def.lead)) { return voted(world, def); }
+        if (TeamDef.LEAD_FIRST.equals(def.lead)) { return firstHere(world, def, null); }
+        if (TeamDef.LEAD_CLAIM.equals(def.lead)) {
             String held = CLAIMED.get(def.name);
             return held != null && onTeam(world, held, def) ? held : null;
         }
@@ -357,7 +390,7 @@ public final class ContentTeams {
     }
 
     @Nullable public static String standingOf(EntityPlayer player) {
-        ScorePlayerTeam held = player.world.getScoreboard().getPlayersTeam(player.getName());
+        ScorePlayerTeam held = teamOf(player.world, player.getName());
         return held == null ? null : held.getName();
     }
 
@@ -374,7 +407,7 @@ public final class ContentTeams {
             EntityPlayerMP player = server.getPlayerList().getPlayerByUsername(one.getKey());
             if (def == null || player == null) { continue; }
             join(player.world, player.getName(), def);
-            mctmods.resourcedatapackloader.util.Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.TEAM_ROUND_ENDED, "The round ended, so you are on " + def.displayName, def.color);
+            Says.tell(player, CardIds.TEAM_ROUND_ENDED, def.color, "The round ended, so you are on " + def.displayName);
         }
         WAITING.clear();
     }
@@ -389,7 +422,7 @@ public final class ContentTeams {
             int players = 0;
             if (team != null) {
                 for (String member : team.getMembershipCollection()) {
-                    if (member.length() <= 16 && !member.contains("-")) { players++; }
+                    if (!entityMember(member)) { players++; }
                 }
             }
             if (players < fewest) { fewest = players; best = def; }
@@ -399,7 +432,7 @@ public final class ContentTeams {
 
     public static boolean stand(EntityPlayer player) {
         Scoreboard board = player.world.getScoreboard();
-        ScorePlayerTeam held = board.getPlayersTeam(player.getName());
+        ScorePlayerTeam held = teamOf(player.world, player.getName());
         if (held == null) { return false; }
         board.removePlayerFromTeam(player.getName(), held);
         TeamDef def = BY_NAME.get(held.getName());
@@ -463,7 +496,7 @@ public final class ContentTeams {
         if (at == null || !world.isBlockLoaded(new net.minecraft.util.math.BlockPos(at[0], at[1], at[2]))) { return; }
         Entity made = EntityList.createEntityByIDFromName(id, world);
         if (made == null) {
-            if (UNMADE.add(def.name)) { ContentLog.LOGGER.error("Team {} names {} as its stand-in, which nothing registers, so the side has none; this is said once", def.name, def.standIn); }
+            ContentLog.LOGGER.errorOnce(UNMADE, def.name, "Team {} names {} as its stand-in, which nothing registers, so the side has none; this is said once", def.name, def.standIn);
             return;
         }
         made.setLocationAndAngles(at[0] + 0.5D, at[1], at[2] + 0.5D, 0.0F, 0.0F);

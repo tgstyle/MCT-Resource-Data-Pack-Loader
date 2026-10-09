@@ -22,6 +22,10 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class TileEntityPackContainer extends TileEntityLockableLoot implements ITickable {
+    private static final String ROWS = "RdplRows";
+    private static final String COLUMNS = "RdplColumns";
+    private static final String NAMED = "RdplNamed";
+    private static final String FACING = "RdplFacing";
     private NonNullList<ItemStack> items = NonNullList.withSize(27, ItemStack.EMPTY);
     private int rows = 3;
     private int columns = 9;
@@ -76,20 +80,14 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     @Override public void readFromNBT(@Nonnull NBTTagCompound tag) {
         super.readFromNBT(tag);
-        rows = Math.max(1, tag.getInteger("RdplRows"));
-        columns = Math.max(1, tag.getInteger("RdplColumns"));
-        named = tag.getString("RdplNamed");
-        facing = EnumFacing.byHorizontalIndex(tag.getInteger("RdplFacing"));
+        readShape(tag);
         items = NonNullList.withSize(rows * columns, ItemStack.EMPTY);
         if (!checkLootAndRead(tag)) { net.minecraft.inventory.ItemStackHelper.loadAllItems(tag, items); }
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound tag) {
         super.writeToNBT(tag);
-        tag.setInteger("RdplRows", rows);
-        tag.setInteger("RdplColumns", columns);
-        tag.setString("RdplNamed", named);
-        tag.setInteger("RdplFacing", facing.getHorizontalIndex());
+        writeShape(tag);
         if (!checkLootAndWrite(tag)) { net.minecraft.inventory.ItemStackHelper.saveAllItems(tag, items); }
         return tag;
     }
@@ -97,35 +95,40 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
     @Override @Nonnull public NBTTagCompound getUpdateTag() {
         NBTTagCompound tag = new NBTTagCompound();
         super.writeToNBT(tag);
-        tag.setInteger("RdplRows", rows);
-        tag.setInteger("RdplColumns", columns);
-        tag.setString("RdplNamed", named);
-        tag.setInteger("RdplFacing", facing.getHorizontalIndex());
+        writeShape(tag);
         return tag;
     }
 
     @Override @Nullable public SPacketUpdateTileEntity getUpdatePacket() { return new SPacketUpdateTileEntity(pos, 0, getUpdateTag()); }
 
     @Override public void onDataPacket(@Nonnull NetworkManager net, @Nonnull SPacketUpdateTileEntity packet) {
-        NBTTagCompound tag = packet.getNbtCompound();
-        rows = Math.max(1, tag.getInteger("RdplRows"));
-        columns = Math.max(1, tag.getInteger("RdplColumns"));
-        named = tag.getString("RdplNamed");
-        facing = EnumFacing.byHorizontalIndex(tag.getInteger("RdplFacing"));
+        readShape(packet.getNbtCompound());
         if (items.size() != rows * columns) { items = NonNullList.withSize(rows * columns, ItemStack.EMPTY); }
+    }
+
+    private void readShape(NBTTagCompound tag) {
+        rows = Math.max(1, tag.getInteger(ROWS));
+        columns = Math.max(1, tag.getInteger(COLUMNS));
+        named = tag.getString(NAMED);
+        facing = EnumFacing.byHorizontalIndex(tag.getInteger(FACING));
+    }
+
+    private void writeShape(NBTTagCompound tag) {
+        tag.setInteger(ROWS, rows);
+        tag.setInteger(COLUMNS, columns);
+        tag.setString(NAMED, named);
+        tag.setInteger(FACING, facing.getHorizontalIndex());
     }
 
     @Override public void openInventory(@Nonnull EntityPlayer player) {
         if (player.isSpectator()) { return; }
         watchers = Math.max(0, watchers) + 1;
-        sound(true);
         tell();
     }
 
     @Override public void closeInventory(@Nonnull EntityPlayer player) {
         if (player.isSpectator()) { return; }
         watchers = Math.max(0, watchers - 1);
-        if (watchers == 0) { sound(false); }
         tell();
     }
 
@@ -137,8 +140,7 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
 
     private void sound(boolean opening) {
         ContainerDef def = def();
-        if (world == null || def == null || !def.chestModel) { return; }
-        if (opening && watchers > 1) { return; }
+        if (world == null || world.isRemote || def == null || !def.chestModel) { return; }
         world.playSound(null, pos, opening ? net.minecraft.init.SoundEvents.BLOCK_CHEST_OPEN : net.minecraft.init.SoundEvents.BLOCK_CHEST_CLOSE,
                 net.minecraft.util.SoundCategory.BLOCKS, 0.5F, world.rand.nextFloat() * 0.1F + 0.9F);
     }
@@ -174,7 +176,5 @@ public class TileEntityPackContainer extends TileEntityLockableLoot implements I
         return player.getDistanceSq((double) pos.getX() + 0.5D, (double) pos.getY() + 0.5D, (double) pos.getZ() + 0.5D) <= 64.0D;
     }
 
-    @Override public boolean shouldRefresh(@Nonnull net.minecraft.world.World world, @Nonnull BlockPos pos, @Nonnull IBlockState was, @Nonnull IBlockState is) {
-        return was.getBlock() != is.getBlock();
-    }
+    @Override public boolean shouldRefresh(@Nonnull net.minecraft.world.World world, @Nonnull BlockPos pos, @Nonnull IBlockState was, @Nonnull IBlockState is) { return was.getBlock() != is.getBlock(); }
 }

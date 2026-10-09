@@ -6,18 +6,18 @@ import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.WorldServer;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
 import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MinecraftServer.class) public abstract class MixinMinecraftServer {
-    @Inject(method = "initialWorldChunkLoad", at = @At("HEAD")) private void onInitialSpawnLoad(CallbackInfo ci) {
+    @Inject(method = "initialWorldChunkLoad", at = @At("HEAD")) private void rdpl$onInitialSpawnLoad(CallbackInfo ci) {
         World world = DimensionManager.getWorld(0);
         if (((IRubicWorld) world).rdpl$isRubicWorld()) {
             ((IRubicWorldInternal.IServer) world).rdpl$setSpawnArea(new SpawnCubes());

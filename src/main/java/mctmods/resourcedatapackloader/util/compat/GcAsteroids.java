@@ -17,6 +17,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.IChunkGenerator;
 import net.minecraft.world.storage.WorldSavedData;
+import net.minecraftforge.common.util.Constants;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nonnull;
@@ -87,7 +88,7 @@ final class GcAsteroids {
 
         @Override public void readFromNBT(NBTTagCompound nbt) {
             landed.clear();
-            NBTTagList list = nbt.getTagList("asteroids", 10);
+            NBTTagList list = nbt.getTagList("asteroids", Constants.NBT.TAG_COMPOUND);
             for (int index = 0; index < list.tagCount(); index++) {
                 NBTTagCompound entry = list.getCompoundTagAt(index);
                 landed.put(BlockPos.fromLong(entry.getLong("pos")), entry.getBoolean("landed"));

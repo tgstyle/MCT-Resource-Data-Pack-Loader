@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.compat.CompatHandler;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import com.google.common.base.Predicate;
@@ -13,7 +15,6 @@ import java.util.Random;
 import java.util.Set;
 
 public final class ContentPlacer {
-    private static final int FLAGS = 2 | 16;
     private final List<IBlockState> states;
     private final int[] ladder;
     private final int weight;
@@ -46,12 +47,24 @@ public final class ContentPlacer {
 
     public boolean place(World world, Random random, int x, int y, int z) {
         if (occupied(world, x, y, z)) { return false; }
-        return world.setBlockState(new BlockPos(x, y, z), choose(random), FLAGS);
+        return world.setBlockState(new BlockPos(x, y, z), choose(random), BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
+    }
+
+    public boolean disc(World world, Random random, BlockPos origin, int radius, boolean round, int lowY, int highY) {
+        int span = radius * radius;
+        boolean placed = false;
+        for (int offX = -radius; offX <= radius; offX++) {
+            for (int offZ = -radius; offZ <= radius; offZ++) {
+                if (round && offX * offX + offZ * offZ > span) { continue; }
+                for (int y = lowY; y <= highY; y++) { placed |= place(world, random, origin.getX() + offX, y, origin.getZ() + offZ); }
+            }
+        }
+        return placed;
     }
 
     public boolean placeExactly(World world, IBlockState state, int x, int y, int z) {
         if (y < floorY(world) || y >= ceilingY(world)) { return false; }
-        return world.setBlockState(new BlockPos(x, y, z), state, FLAGS);
+        return world.setBlockState(new BlockPos(x, y, z), state, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
     }
 
     public boolean occupied(World world, int x, int y, int z) {
@@ -84,9 +97,19 @@ public final class ContentPlacer {
         return false;
     }
 
+    public static boolean areaLoaded(World world, int minX, int minZ, int maxX, int maxZ) {
+        BlockPos.MutableBlockPos corner = new BlockPos.MutableBlockPos();
+        for (int chunkX = minX >> 4; chunkX <= maxX >> 4; chunkX++) {
+            for (int chunkZ = minZ >> 4; chunkZ <= maxZ >> 4; chunkZ++) {
+                if (!world.isBlockLoaded(corner.setPos(chunkX << 4, 64, chunkZ << 4))) { return false; }
+            }
+        }
+        return true;
+    }
+
     public static int floorY(World world) { return GenHeights.floor(world, 1); }
 
-    public static int ceilingY(World world) { return GenHeights.ceiling(world, 256); }
+    public static int ceilingY(World world) { return GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT); }
 
     public IBlockState choose(Random random) {
         if (states.size() < 2) { return states.get(0); }

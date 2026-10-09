@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.content.def.CelestialDef;
 import mctmods.resourcedatapackloader.content.def.GalacticraftDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.JsonArray;
@@ -23,15 +25,17 @@ import javax.annotation.Nullable;
 public final class ContentParserCelestial {
     private static final List<String> GASES = Collections.unmodifiableList(Arrays.asList("NITROGEN", "OXYGEN", "CO2", "WATER", "METHANE", "HYDROGEN", "HELIUM", "ARGON"));
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS, CelestialDef.STATION));
+    private static final List<String> LANDINGS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.LANDER, GalacticraftDef.PARACHUTE, GalacticraftDef.BALLOONS));
+    private static final List<String> ARRIVALS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.DEPARTURE, GalacticraftDef.SPAWN));
     private static final String RING = "#19E599";
     private static final String ICONS = "galacticraftcore:textures/gui/celestialbodies/";
 
     private ContentParserCelestial() {}
 
     @Nullable public static CelestialDef celestial(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         if (json == null) { return null; }
-        String kind = JsonUtils.getString(json, "kind", "").trim().toLowerCase(Locale.ROOT);
+        String kind = Settings.lower(JsonUtils.getString(json, "kind", ""));
         if (CelestialDef.SYSTEM.equals(kind)) { return system(key, json); }
         if (!CelestialDef.PLANET.equals(kind) && !CelestialDef.MOON.equals(kind)) {
             ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.MOON);
@@ -43,15 +47,12 @@ public final class ContentParserCelestial {
     @Nullable public static GalacticraftDef galacticraft(ResourceLocation key, JsonObject dimension) {
         if (!dimension.has("galacticraft")) { return null; }
         JsonObject json = JsonUtils.getJsonObject(dimension, "galacticraft");
-        String kind = JsonUtils.getString(json, "kind", CelestialDef.PLANET).trim().toLowerCase(Locale.ROOT);
-        if (!KINDS.contains(kind)) {
-            ContentLog.LOGGER.error("Dimension {} asks to be a Galacticraft '{}', which is not one of {}, making it a {}", key, kind, KINDS, CelestialDef.PLANET);
-            kind = CelestialDef.PLANET;
-        }
+        String owner = "Dimension " + key + " Galacticraft";
+        String kind = Json.choice(json, "kind", CelestialDef.PLANET, owner, KINDS);
         CelestialDef body = body(key, json, kind, key.getPath(), CelestialDef.STATION.equals(kind) ? -1 : 1, Collections.emptyList());
         if (body == null) { return null; }
-        String landing = choice(key, json, "landing", GalacticraftDef.LANDER, GalacticraftDef.PARACHUTE, GalacticraftDef.BALLOONS);
-        String arrival = choice(key, json, "arrival", GalacticraftDef.DEPARTURE, GalacticraftDef.SPAWN);
+        String landing = Json.choice(json, "landing", GalacticraftDef.LANDER, owner, LANDINGS);
+        String arrival = Json.choice(json, "arrival", GalacticraftDef.DEPARTURE, owner, ARRIVALS);
         String gui = JsonUtils.getString(json, "rocketGui", "").trim();
         JsonObject air = JsonUtils.getJsonObject(json, "atmosphere", new JsonObject());
         Boolean breathable = air.has("breathable") ? JsonUtils.getBoolean(air, "breathable") : null;
@@ -153,13 +154,6 @@ public final class ContentParserCelestial {
             case CelestialDef.STATION: return "space_station";
             default: return "mars";
         }
-    }
-
-    private static String choice(ResourceLocation key, JsonObject json, String member, String... options) {
-        String asked = JsonUtils.getString(json, member, options[0]).trim().toLowerCase(Locale.ROOT);
-        if (Arrays.asList(options).contains(asked)) { return asked; }
-        ContentLog.LOGGER.error("Dimension {} asks for a Galacticraft {} of '{}', which is not one of {}, using {}", key, member, asked, Arrays.toString(options), options[0]);
-        return options[0];
     }
 
     private static List<String> gases(ResourceLocation key, JsonObject air) {

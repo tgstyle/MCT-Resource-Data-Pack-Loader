@@ -11,5 +11,4 @@ public final class PackGeneration {
         seen = now;
         return true;
     }
-
 }

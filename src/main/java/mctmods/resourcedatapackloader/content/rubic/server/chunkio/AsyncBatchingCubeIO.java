@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.interfaces.ICubeIO;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -25,7 +25,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkState;
 
 public class AsyncBatchingCubeIO implements ICubeIO {
     protected final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -44,55 +44,47 @@ public class AsyncBatchingCubeIO implements ICubeIO {
 
     @Override public boolean columnExists(int columnX, int columnZ) {
         ChunkPos pos = new ChunkPos(columnX, columnZ);
-        this.lock.readLock().lock();
         try {
-            this.ensureOpen();
-            return this.pendingColumns.containsKey(pos) || this.storage.columnExists(pos);
-        } catch (IOException e) {
-            Rubic.LOGGER.catching(e);
+            return underReadLock(() -> {
+                this.ensureOpen();
+                return this.pendingColumns.containsKey(pos) || this.storage.columnExists(pos);
+            });
+        }
+        catch (IOException e) {
+            ContentLog.LOGGER.catching(e);
             return false;
-        } finally {
-            this.lock.readLock().unlock();
         }
     }
 
     @Override public PartialData<Chunk> loadColumnNbt(int chunkX, int chunkZ) throws IOException {
         ChunkPos pos = new ChunkPos(chunkX, chunkZ);
-        this.lock.readLock().lock();
-        try {
+        return underReadLock(() -> {
             this.ensureOpen();
             NBTTagCompound nbt = this.pendingColumns.get(pos);
             if (nbt == null) { nbt = this.storage.readColumn(pos); }
             if (nbt != null) { nbt = FMLCommonHandler.instance().getDataFixer().process(FixTypes.CHUNK, nbt); }
             return new PartialData<>(null, nbt);
-        } finally {
-            this.lock.readLock().unlock();
-        }
+        });
     }
 
     @Override public PartialData<ICube> loadCubeNbt(Chunk column, int cubeY) throws IOException {
         CubePos pos = new CubePos(column.x, cubeY, column.z);
-        this.lock.readLock().lock();
-        try {
+        return underReadLock(() -> {
             this.ensureOpen();
             NBTTagCompound nbt = this.pendingCubes.get(pos);
             if (nbt == null) { nbt = this.storage.readCube(pos); }
             return new PartialData<>(null, nbt);
-        } finally {
-            this.lock.readLock().unlock();
-        }
+        });
     }
 
     @Override public void saveColumn(Chunk column) {
-        this.lock.readLock().lock();
-        try {
+        underReadLock(() -> {
             this.ensureOpen();
             this.pendingColumns.put(column.getPos(), IONbtWriter.write(column));
             column.setModified(false);
             ThreadedFileIOBase.getThreadedIOInstance().queueIO(this);
-        } finally {
-            this.lock.readLock().unlock();
-        }
+            return null;
+        });
     }
 
     @Override public void saveCube(Cube cube) {
@@ -101,41 +93,30 @@ public class AsyncBatchingCubeIO implements ICubeIO {
             return;
         }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().processUpdates();
-        this.lock.readLock().lock();
-        try {
+        underReadLock(() -> {
             this.ensureOpen();
             this.pendingCubes.put(cube.getCoords(), IONbtWriter.write(cube));
             cube.markSaved();
             ThreadedFileIOBase.getThreadedIOInstance().queueIO(this);
-        } finally {
-            this.lock.readLock().unlock();
-        }
+            return null;
+        });
     }
 
     private boolean outsideWorld(int cubeY) {
         int base = cubeY * ICube.SIZE;
-        return base + ICube.SIZE <= ((IMinMaxHeight) world).rdpl$getMinHeight()
-                || base >= ((IMinMaxHeight) world).rdpl$getMaxHeight();
+        return base + ICube.SIZE <= ((IMinMaxHeight) world).rdpl$getMinHeight() || base >= ((IMinMaxHeight) world).rdpl$getMaxHeight();
     }
 
-    @Override public int getPendingColumnCount() {
-        this.lock.readLock().lock();
-        try {
-            if (!this.open) { return 0; }
-            return this.pendingColumns.size();
-        } finally {
-            this.lock.readLock().unlock();
-        }
-    }
+    @Override public int getPendingColumnCount() { return pendingIn(this.pendingColumns); }
 
-    @Override public int getPendingCubeCount() {
+    @Override public int getPendingCubeCount() { return pendingIn(this.pendingCubes); }
+
+    private int pendingIn(Map<?, NBTTagCompound> pending) { return underReadLock(() -> this.open ? pending.size() : 0); }
+
+    private <T, E extends Exception> T underReadLock(LockedWork<T, E> work) throws E {
         this.lock.readLock().lock();
-        try {
-            if (!this.open) { return 0; }
-            return this.pendingCubes.size();
-        } finally {
-            this.lock.readLock().unlock();
-        }
+        try { return work.run(); }
+        finally { this.lock.readLock().unlock(); }
     }
 
     @Override public void flush() throws IOException {
@@ -144,26 +125,30 @@ public class AsyncBatchingCubeIO implements ICubeIO {
             this.ensureOpen();
             this.drainQueueBlocking();
             this.storage.flush();
-        } catch (InterruptedException e) {
-            Rubic.LOGGER.catching(e);
-        } finally {
-            this.lock.writeLock().unlock();
         }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            ContentLog.LOGGER.catching(e);
+        }
+        finally { this.lock.writeLock().unlock(); }
     }
 
     @Override public void close() throws IOException {
-        CubeIoQueue.shutdownNowBlocking();
+        CubeIoQueue.dropReads(this.world);
         this.lock.writeLock().lock();
         try {
             this.ensureOpen();
-            this.drainQueueBlocking();
-            this.storage.close();
-            this.open = false;
-        } catch (InterruptedException e) {
-            Rubic.LOGGER.catching(e);
-        } finally {
-            this.lock.writeLock().unlock();
+            try { this.drainQueueBlocking(); }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                ContentLog.LOGGER.catching(e);
+            }
+            finally {
+                this.open = false;
+                this.storage.close();
+            }
         }
+        finally { this.lock.writeLock().unlock(); }
     }
 
     protected void drainQueueBlocking() throws InterruptedException {
@@ -174,16 +159,15 @@ public class AsyncBatchingCubeIO implements ICubeIO {
     }
 
     @Override public boolean writeNextIO() {
-        try {
-            Map<ChunkPos, NBTTagCompound> columnsSnapshot = new Object2ObjectOpenHashMap<>(this.pendingColumns.size());
-            columnsSnapshot.putAll(this.pendingColumns);
-            Map<CubePos, NBTTagCompound> cubesSnapshot = new Object2ObjectOpenHashMap<>(this.pendingCubes.size());
-            cubesSnapshot.putAll(this.pendingCubes);
-            this.storage.writeBatch(new IRubicStorage.NBTBatch(Collections.unmodifiableMap(columnsSnapshot), Collections.unmodifiableMap(cubesSnapshot)));
+        Map<ChunkPos, NBTTagCompound> columnsSnapshot = new Object2ObjectOpenHashMap<>(this.pendingColumns.size());
+        columnsSnapshot.putAll(this.pendingColumns);
+        Map<CubePos, NBTTagCompound> cubesSnapshot = new Object2ObjectOpenHashMap<>(this.pendingCubes.size());
+        cubesSnapshot.putAll(this.pendingCubes);
+        try { this.storage.writeBatch(new IRubicStorage.NBTBatch(Collections.unmodifiableMap(columnsSnapshot), Collections.unmodifiableMap(cubesSnapshot))); }
+        catch (IOException e) { ContentLog.LOGGER.error("Failed to write a batch of {} column(s) and {} cube(s), so they are dropped unsaved", columnsSnapshot.size(), cubesSnapshot.size(), e); }
+        finally {
             columnsSnapshot.forEach(this.pendingColumns::remove);
             cubesSnapshot.forEach(this.pendingCubes::remove);
-        } catch (IOException e) {
-            Rubic.LOGGER.error("Failed to write pending chunk data batch", e);
         }
         return !this.pendingColumns.isEmpty() || !this.pendingCubes.isEmpty();
     }
@@ -194,8 +178,7 @@ public class AsyncBatchingCubeIO implements ICubeIO {
         info.setObject(chunk);
     }
 
-    @Override public void loadColumnSyncPart(PartialData<Chunk> info) {
-    }
+    @Override public void loadColumnSyncPart(PartialData<Chunk> info) {}
 
     @Override public void loadCubeAsyncPart(PartialData<ICube> info, Chunk column, int cubeY) {
         if (info.getNbt() == null) { return; }
@@ -204,4 +187,6 @@ public class AsyncBatchingCubeIO implements ICubeIO {
     }
 
     @Override public void loadCubeSyncPart(PartialData<ICube> info) { IONbtReader.readCubeSyncPart((Cube) info.getObject(), this.world, info.getNbt()); }
+
+    private interface LockedWork<T, E extends Exception> { T run() throws E; }
 }

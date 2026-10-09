@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 
@@ -24,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Inject(method = "isDaytime", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$lockedDaytime(CallbackInfoReturnable<Boolean> cir) {
         int wanted = rdpl$wanted();
         if (wanted < 0) { return; }
-        long time = wanted % 24000L;
+        long time = wanted % DimensionTraitsDef.VANILLA_DAY;
         cir.setReturnValue(time < 12300L || time > 23850L);
     }
 

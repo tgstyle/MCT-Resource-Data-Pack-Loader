@@ -12,6 +12,7 @@ import net.minecraft.util.math.MathHelper;
 
 public final class ContentSpawnChunks {
     private static final int VANILLA = 128;
+    private static final int MOST_BLOCKS = 1024;
     private static final Map<Integer, Integer> BY_DIMENSION = new HashMap<>();
     private static int everywhere = VANILLA;
     private static boolean loaded;
@@ -22,6 +23,12 @@ public final class ContentSpawnChunks {
         load();
         Integer own = BY_DIMENSION.get(dimension);
         return own == null ? everywhere : own;
+    }
+
+    public static void reload() {
+        loaded = false;
+        BY_DIMENSION.clear();
+        everywhere = VANILLA;
     }
 
     public static int chunks(int dimension) { return (radius(dimension) + 8) / 16; }
@@ -37,8 +44,10 @@ public final class ContentSpawnChunks {
         for (String entry : ContentControl.list(ContentControl.CHUNKS, "spawnChunkRadii", Config.chunks.spawnChunkRadii)) {
             String[] parts = Settings.pair(entry, "spawnChunkRadii", "dimension=blocks");
             if (parts == null) { continue; }
-            try { BY_DIMENSION.put(Integer.parseInt(parts[0]), clamp(Integer.parseInt(parts[1]))); }
-            catch (NumberFormatException ex) { ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not two numbers written as dimension=blocks, ignoring it", entry); }
+            Integer dimension = Settings.clamped(parts[0], Integer.MIN_VALUE, Integer.MAX_VALUE);
+            Integer blocks = Settings.clamped(parts[1], 0, MOST_BLOCKS);
+            if (dimension == null || blocks == null) { ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not two numbers written as dimension=blocks, ignoring it", entry); }
+            else { BY_DIMENSION.put(dimension, blocks); }
         }
         if (everywhere == VANILLA && BY_DIMENSION.isEmpty()) { return; }
         Summary.info("chunks.spawn", "Holding " + describe(everywhere) + " around the spawn point"
@@ -47,5 +56,5 @@ public final class ContentSpawnChunks {
 
     private static String describe(int radius) { return radius <= 0 ? "no chunks" : radius + " block(s) of chunks"; }
 
-    private static int clamp(int wanted) { return MathHelper.clamp(wanted, 0, 1024); }
+    private static int clamp(int wanted) { return MathHelper.clamp(wanted, 0, MOST_BLOCKS); }
 }

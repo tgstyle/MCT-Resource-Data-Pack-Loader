@@ -52,15 +52,15 @@ public final class ContentChunkOrder {
         }
     }
 
-    public ContentChunkOrder(int centreChunkX, int centreChunkZ, int radiusChunks) {
-        this.lowX = centreChunkX - radiusChunks;
-        this.lowZ = centreChunkZ - radiusChunks;
-        this.highX = centreChunkX + radiusChunks;
-        this.highZ = centreChunkZ + radiusChunks;
+    public ContentChunkOrder(int centerChunkX, int centerChunkZ, int radiusChunks) {
+        this.lowX = centerChunkX - radiusChunks;
+        this.lowZ = centerChunkZ - radiusChunks;
+        this.highX = centerChunkX + radiusChunks;
+        this.highZ = centerChunkZ + radiusChunks;
         long side = 2L * radiusChunks + 1L;
         this.total = side * side;
-        this.regionX = centreChunkX >> 5;
-        this.regionZ = centreChunkZ >> 5;
+        this.regionX = centerChunkX >> 5;
+        this.regionZ = centerChunkZ >> 5;
         int lowRegion = Math.max(this.regionX - (lowX >> 5), (highX >> 5) - this.regionX);
         int lowRegionZ = Math.max(this.regionZ - (lowZ >> 5), (highZ >> 5) - this.regionZ);
         this.reach = Math.max(lowRegion, lowRegionZ);

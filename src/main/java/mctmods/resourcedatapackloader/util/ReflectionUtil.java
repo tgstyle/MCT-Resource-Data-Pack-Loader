@@ -10,9 +10,8 @@ public class ReflectionUtil {
     public static <T> Class<? extends T> getClassOrDefault(String name, Class<? extends T> cl) {
         try {
             return cast(Class.forName(name));
-        } catch (ClassNotFoundException ex) {
-            return cl;
         }
+        catch (ClassNotFoundException ex) { return cl; }
     }
 
     public static MethodHandle constructHandle(Class<?> owner, Class<?>... args) {
@@ -20,8 +19,7 @@ public class ReflectionUtil {
             Constructor<?> constr = owner.getDeclaredConstructor(args);
             constr.setAccessible(true);
             return MethodHandles.lookup().unreflectConstructor(constr);
-        } catch (IllegalAccessException | NoSuchMethodException e) {
-            throw new Error(e);
         }
+        catch (IllegalAccessException | NoSuchMethodException e) { throw new Error(e); }
     }
 }

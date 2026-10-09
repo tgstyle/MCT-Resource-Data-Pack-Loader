@@ -12,6 +12,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(EntityThrowable.class) public abstract class MixinEntityThrowable extends Entity {
     public MixinEntityThrowable(World worldIn) { super(worldIn); }
 
-    @ModifyConstant(method = "getGravityVelocity", constant = @Constant(floatValue = 0.03F))
-    private float rdpl$worldGravity(float base) { return (float) ContentPhysics.gravity(world, base); }
+    @ModifyConstant(method = "getGravityVelocity", constant = @Constant(floatValue = 0.03F)) private float rdpl$worldGravity(float base) { return (float) ContentPhysics.gravity(world, base); }
 }

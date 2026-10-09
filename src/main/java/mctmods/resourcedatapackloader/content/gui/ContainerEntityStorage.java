@@ -56,15 +56,7 @@ public class ContainerEntityStorage extends Container {
             int left = (wide - Math.min(PER_ROW, def.slots() - row * PER_ROW) * ContainerPack.SLOT) / 2 + 1;
             addSlotToContainer(new SlotItemHandler(items, slot, left + slot % PER_ROW * ContainerPack.SLOT, ContainerPack.HEADER + 1 + row * ContainerPack.SLOT));
         }
-        int playerLeft = (wide - 9 * ContainerPack.SLOT) / 2 + 1;
-        for (int row = 0; row < 3; row++) {
-            for (int column = 0; column < 9; column++) {
-                addSlotToContainer(new Slot(player, column + row * 9 + 9, playerLeft + column * ContainerPack.SLOT, tall - 83 + row * ContainerPack.SLOT));
-            }
-        }
-        for (int hotbar = 0; hotbar < 9; hotbar++) {
-            addSlotToContainer(new Slot(player, hotbar, playerLeft + hotbar * ContainerPack.SLOT, tall - 25));
-        }
+        for (Slot slot : ContainerPack.playerSlots(player, wide, tall, Slot::new)) { addSlotToContainer(slot); }
     }
 
     public int slotRows() { return (def.slots() + PER_ROW - 1) / PER_ROW; }
@@ -115,13 +107,14 @@ public class ContainerEntityStorage extends Container {
     @Override public boolean canInteractWith(@Nonnull EntityPlayer player) { return entity.isEntityAlive() && player.getDistanceSq(entity) <= REACH; }
 
     @Override @Nonnull public ItemStack transferStackInSlot(@Nonnull EntityPlayer player, int index) {
-        Slot slot = inventorySlots.get(index);
-        if (items == null || slot == null || !slot.getHasStack()) { return ItemStack.EMPTY; }
-        ItemStack stack = slot.getStack();
-        if (index < def.slots()) { mergeItemStack(stack, def.slots(), inventorySlots.size(), true); }
-        else { stack.setCount(ItemHandlerHelper.insertItemStacked(items, stack.copy(), false).getCount()); }
-        if (stack.isEmpty()) { slot.putStack(ItemStack.EMPTY); }
-        else { slot.onSlotChanged(); }
-        return ItemStack.EMPTY;
+        if (items == null) { return ItemStack.EMPTY; }
+        return ContainerPack.transfer(this, index, def.slots(), this::mergeItemStack, stack -> store(items, stack));
+    }
+
+    private static boolean store(IItemHandler items, ItemStack stack) {
+        int before = stack.getCount();
+        int left = ItemHandlerHelper.insertItemStacked(items, stack.copy(), false).getCount();
+        stack.setCount(left);
+        return left < before;
     }
 }

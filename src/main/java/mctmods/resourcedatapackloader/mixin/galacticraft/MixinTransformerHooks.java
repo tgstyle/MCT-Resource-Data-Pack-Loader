@@ -10,8 +10,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = TransformerHooks.class, remap = false) public class MixinTransformerHooks {
-    @Inject(method = "getRenderPosY", at = @At("HEAD"), cancellable = true)
-    private static void rdpl$honestCameraHeight(Entity viewEntity, double regular, CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getRenderPosY", at = @At("HEAD"), cancellable = true) private static void rdpl$honestCameraHeight(Entity viewEntity, double regular, CallbackInfoReturnable<Double> cir) {
         if (GenHeights.rubic(viewEntity.world)) { cir.setReturnValue(regular + viewEntity.getEyeHeight()); }
     }
 }

@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSite;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardSurface;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.Facings;
 import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.util.EnumFacing;
@@ -88,7 +89,7 @@ public final class CityDistricts {
         }
         int wellX = cx - 2;
         int wellZ = cz - 2;
-        if (!grounded(world, wellX, wellZ, reach)) {
+        if (ungrounded(world, wellX, wellZ, reach)) {
             settledUngrounded++;
             return false;
         }
@@ -112,12 +113,10 @@ public final class CityDistricts {
         ContentVillages.sizeBlock(world, district);
         int mark = components.size();
         components.add(district);
-        CityGrowth.laying = true;
-        try {
+        CityGrowth.laying(false, () -> {
             district.buildComponent(district, components, rand);
             CityGrowth.drain(district, components, rand);
-        }
-        finally { CityGrowth.laying = false; }
+        });
         int streets = 0;
         for (int i = mark; i < components.size(); i++) { if (components.get(i) instanceof StructureVillagePieces.Path) { streets++; } }
         if (streets == 0) {
@@ -127,19 +126,17 @@ public final class CityDistricts {
         }
         int rounds = 0;
         boolean tied = false;
-        while (!connected(components, mark)) {
+        while (isolated(components, mark)) {
             int before = components.size();
             if (rounds < JOIN) {
                 rounds++;
-                CityGrowth.laying = true;
-                try {
+                CityGrowth.laying(false, () -> {
                     for (StructureComponent piece : components.subList(mark, before).toArray(new StructureComponent[0])) {
                         if (!(piece instanceof StructureVillagePieces.Path)) { continue; }
                         piece.buildComponent(district, components, rand);
                         CityGrowth.drain(district, components, rand);
                     }
-                }
-                finally { CityGrowth.laying = false; }
+                });
             }
             if (components.size() == before && !tied && ContentControl.flag(ContentControl.VILLAGES, "villageTieStreets", Config.worldgen.villageTieStreets)) {
                 tied = true;
@@ -153,7 +150,7 @@ public final class CityDistricts {
             }
         }
         if (rounds > 0) { ContentLog.LOGGER.debug("The district at {}, {} joined the standing village after {} round(s) of street growth", wellX, wellZ, rounds); }
-        if (!connected(components, mark, false)) {
+        if (isolated(components, mark, false)) {
             if (tieStreet(components, mark, district, rand, wellX, wellZ, true)) { ContentLog.LOGGER.debug("The district at {}, {} joined the standing village only across a gap, so that gap is paved as a street", wellX, wellZ); }
             else { ContentLog.LOGGER.debug("The district at {}, {} joined the standing village only across a gap that no tie street can pave, so the gap stands", wellX, wellZ); }
         }
@@ -225,12 +222,8 @@ public final class CityDistricts {
                         refused[3]++;
                         continue;
                     }
-                    EnumFacing facing = alongX ? (dir > 0 ? EnumFacing.EAST : EnumFacing.WEST) : (dir > 0 ? EnumFacing.SOUTH : EnumFacing.NORTH);
-                    List<StructureComponent> held = ContentBeard.laid();
-                    int kept;
-                    ContentBeard.laying(components);
-                    try { kept = BeardRoadsGrade.roadReach(tie, facing); }
-                    finally { ContentBeard.laying(held); }
+                    EnumFacing facing = Facings.along(alongX, dir > 0);
+                    int kept = ContentBeard.layingOf(components, () -> BeardRoadsGrade.roadReach(tie, facing));
                     if (kept < length) {
                         refused[4]++;
                         continue;
@@ -280,16 +273,19 @@ public final class CityDistricts {
                 int dx = Math.max(0, Math.max(met.minX - road.maxX, road.minX - met.maxX));
                 int dz = Math.max(0, Math.max(met.minZ - road.maxZ, road.minZ - met.maxZ));
                 int away = Math.max(dx, dz);
-                if (away < gap) { gap = away; nearest = met; }
+                if (away < gap) {
+                    gap = away;
+                    nearest = met;
+                }
             }
             ContentLog.LOGGER.debug("The district at {}, {} {} and laid a {} road {} whose nearest standing road or well is {} block(s) off at {}", wellX, wellZ, joined ? "joined" : "failed", narrow ? "narrow" : "full", road, gap, nearest);
         }
         if (own == 0) { ContentLog.LOGGER.debug("The district at {}, {} laid no road at all", wellX, wellZ); }
     }
 
-    private static boolean connected(List<StructureComponent> own, int mark) { return connected(own, mark, true); }
+    private static boolean isolated(List<StructureComponent> own, int mark) { return isolated(own, mark, true); }
 
-    private static boolean connected(List<StructureComponent> own, int mark, boolean joins) {
+    private static boolean isolated(List<StructureComponent> own, int mark, boolean joins) {
         List<StructureComponent> components = ContentBeard.everyone(own);
         int count = components.size();
         int standing = own.size();
@@ -317,12 +313,12 @@ public final class CityDistricts {
                 if (seen[i] || boxes[i] == null) { continue; }
                 boolean touching = boxes[at].intersectsWith(boxes[i].minX - 1, boxes[i].minZ - 1, boxes[i].maxX + 1, boxes[i].maxZ + 1);
                 if (!touching && (!joins || !ContentBeardJoins.joins(components, components.get(at), components.get(i)))) { continue; }
-                if (i < mark || i >= standing) { return true; }
+                if (i < mark || i >= standing) { return false; }
                 seen[i] = true;
                 queue.add(i);
             }
         }
-        return false;
+        return true;
     }
 
     private static boolean crowdedAt(List<StructureComponent> components, int cx, int cz, int spacing) {
@@ -334,8 +330,8 @@ public final class CityDistricts {
         return false;
     }
 
-    private static boolean grounded(World world, int wellX, int wellZ, int reach) {
-        if (BeardSurface.unreadable(world)) { return true; }
+    private static boolean ungrounded(World world, int wellX, int wellZ, int reach) {
+        if (BeardSurface.unreadable(world)) { return false; }
         int sea = world.getSeaLevel();
         int lowest = Integer.MAX_VALUE;
         int highest = Integer.MIN_VALUE;
@@ -343,11 +339,11 @@ public final class CityDistricts {
         for (int dx : marks) {
             for (int dz : marks) {
                 int found = BeardSurface.surfaceAt(world, wellX + dx, wellZ + dz);
-                if (found < sea - 1) { return false; }
+                if (found < sea - 1) { return true; }
                 lowest = Math.min(lowest, found);
                 highest = Math.max(highest, found);
             }
         }
-        return highest - lowest <= RELIEF;
+        return highest - lowest > RELIEF;
     }
 }

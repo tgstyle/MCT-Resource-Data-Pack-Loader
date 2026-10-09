@@ -14,9 +14,7 @@ public final class Crisp {
 
     private static int lift() { return real() == 1 ? LIFTED : 1; }
 
-    private static double gui() { return real() * lift(); }
-
-    public static double factor() { return gui(); }
+    public static double gui() { return real() * lift(); }
 
     public static int fit(int scaled) { return scaled / lift(); }
 

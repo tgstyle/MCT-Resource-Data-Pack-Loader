@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ClientHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
@@ -30,8 +30,7 @@ public class MessageHeightMapUpdate implements IMessage {
     private TByteList updates;
     private TIntList heights;
 
-    public MessageHeightMapUpdate() {
-    }
+    public MessageHeightMapUpdate() {}
 
     public MessageHeightMapUpdate(BitSet updates, Chunk chunk) {
         this.chunk = chunk.getPos();
@@ -45,7 +44,7 @@ public class MessageHeightMapUpdate implements IMessage {
 
     @Override public void fromBytes(ByteBuf buf) {
         this.chunk = new ChunkPos(buf.readInt(), buf.readInt());
-        int size = buf.readUnsignedByte();
+        int size = buf.readUnsignedShort();
         this.updates = new TByteArrayList(size);
         this.heights = new TIntArrayList(size);
         for (int i = 0; i < size; i++) {
@@ -57,7 +56,7 @@ public class MessageHeightMapUpdate implements IMessage {
     @Override public void toBytes(ByteBuf buf) {
         buf.writeInt(this.chunk.x);
         buf.writeInt(this.chunk.z);
-        buf.writeByte(this.updates.size());
+        buf.writeShort(this.updates.size());
         for (int i = 0; i < this.updates.size(); i++) {
             buf.writeByte(this.updates.get(i) & 0xFF);
             ByteBufUtils.writeVarInt(buf, this.heights.get(i), 5);
@@ -73,12 +72,13 @@ public class MessageHeightMapUpdate implements IMessage {
     public static class Handler extends AbstractClientMessageHandler<MessageHeightMapUpdate> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageHeightMapUpdate message, MessageContext ctx) {
             IRubicWorldInternal.IClient worldClient = (IRubicWorldInternal.IClient) world;
-            CubeProviderClient cubeCache = worldClient.rdpl$getCubeCache();
+            CubeProviderClient cubeCache = cubeCache(world);
+            if (cubeCache == null) { return; }
             int columnX = message.getColumnPos().x;
             int columnZ = message.getColumnPos().z;
             Chunk column = cubeCache.provideColumn(columnX, columnZ);
             if (column instanceof EmptyChunk) {
-                Rubic.LOGGER.error("Ignored block update to blank column {}", message.getColumnPos());
+                ContentLog.LOGGER.error("Ignored block update to blank column {}", message.getColumnPos());
                 return;
             }
 

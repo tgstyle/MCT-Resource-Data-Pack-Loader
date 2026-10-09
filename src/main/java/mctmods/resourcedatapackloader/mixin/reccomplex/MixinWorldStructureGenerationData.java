@@ -22,8 +22,7 @@ import java.util.UUID;
     @Shadow(remap = false) @Final protected Set<ChunkPos> checkedChunks;
     @Shadow(remap = false) @Final protected Map<UUID, WorldStructureGenerationData.Entry> entryMap;
 
-    @Inject(method = "readFromNBT", at = @At("RETURN"), remap = true)
-    private void rdpl$shedFinishedStructuresOnLoad(NBTTagCompound compound, CallbackInfo cbi) {
+    @Inject(method = "readFromNBT", at = @At("RETURN"), remap = true) private void rdpl$shedFinishedStructuresOnLoad(NBTTagCompound compound, CallbackInfo cbi) {
         for (WorldStructureGenerationData.Entry entry : entryMap.values()) { rdpl$shedIfComplete(entry); }
     }
 

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockVine;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.BlockVine;
 import net.minecraft.block.state.IBlockState;
@@ -14,7 +15,6 @@ import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class ContentVines implements IContentShape {
-    private static final int FLAGS = 2 | 16;
     private final ContentPlacer placer;
     private final AmountDef count;
     private final AmountDef drop;
@@ -46,7 +46,7 @@ public final class ContentVines implements IContentShape {
             BlockPos at = start;
             for (int step = 0; step < length; step++) {
                 if (!world.isAirBlock(at) || !attachable(world, at.offset(wall), wall.getOpposite())) { break; }
-                world.setBlockState(at, attached, FLAGS);
+                world.setBlockState(at, attached, BlockFlags.UPDATE_CLIENTS_KNOWN_SHAPE);
                 placed = true;
                 at = at.down();
             }

@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -15,7 +14,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Explosion;
@@ -26,15 +24,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockPane extends BlockPane implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockPane extends BlockPane implements IContentBlock, IVariantBlock {
     private final BlockDef def;
     private final PropertyVariant variant;
 
-    public static ContentBlockPane create(BlockDef def) {
-        BlockVariants.begin(def, new PropertyVariant(ContentSetup.names(def)));
-        try { return new ContentBlockPane(def, BlockVariants.property()); }
-        finally { BlockVariants.end(); }
-    }
+    public static ContentBlockPane create(BlockDef def) { return BlockVariants.construct(def, built -> new ContentBlockPane(built, BlockVariants.property())); }
 
     protected ContentBlockPane(BlockDef def, PropertyVariant property) {
         super(def.material, true);
@@ -59,13 +53,11 @@ import javax.annotation.Nullable;
 
     @Override public BlockDef getDef() { return def(); }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
@@ -77,19 +69,9 @@ import javax.annotation.Nullable;
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).hardness;
-    }
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
-        return def.at(getMetaFromState(world.getBlockState(pos))).resistance / def.explosionResistanceDivisor;
-    }
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }
-
-    @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability; }
-
-    @Override public int getFireSpreadSpeed(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().fireSpread; }
-
-    @Override public boolean isFlammable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability > 0; }
 }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructures;
+import mctmods.resourcedatapackloader.util.Longs;
 import mctmods.resourcedatapackloader.util.compat.interfaces.IPackingStructureData;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -9,7 +10,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
+import net.minecraftforge.common.util.Constants;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.nbt.CompressedStreamTools;
@@ -52,8 +53,8 @@ import javax.annotation.Nullable;
     @Override public boolean rdpl$startWithin(int chunkX, int chunkZ, int chunks) {
         long reach = (long) chunks * chunks;
         for (long at : rdpl$known) {
-            long dx = (int) at - chunkX;
-            long dz = (int) (at >> 32) - chunkZ;
+            long dx = Longs.low(at) - chunkX;
+            long dz = Longs.high(at) - chunkZ;
             if (dx * dx + dz * dz < reach) { return true; }
         }
         return false;
@@ -84,13 +85,12 @@ import javax.annotation.Nullable;
         try {
             NBTTagCompound entries = CompressedStreamTools.readCompressed(new ByteArrayInputStream(rdpl$packed.get(batch)));
             String key = "[" + chunkX + "," + chunkZ + "]";
-            return entries.hasKey(key, 10) ? entries.getCompoundTag(key) : null;
+            return entries.hasKey(key, Constants.NBT.TAG_COMPOUND) ? entries.getCompoundTag(key) : null;
         }
         catch (IOException impossible) { throw new RuntimeException("Unpacking a structure start that was packed away failed", impossible); }
     }
 
-    @Inject(method = "writeToNBT", at = @At("HEAD"), cancellable = true)
-    private void rdpl$writeThePackedToo(NBTTagCompound compound, CallbackInfoReturnable<NBTTagCompound> cir) {
+    @Inject(method = "writeToNBT", at = @At("HEAD"), cancellable = true) private void rdpl$writeThePackedToo(NBTTagCompound compound, CallbackInfoReturnable<NBTTagCompound> cir) {
         if (rdpl$packed.isEmpty()) { return; }
         NBTTagCompound whole = new NBTTagCompound();
         try {

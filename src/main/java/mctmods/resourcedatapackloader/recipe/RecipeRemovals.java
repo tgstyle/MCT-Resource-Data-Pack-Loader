@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -24,9 +22,9 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import javax.annotation.Nullable;
 
 public final class RecipeRemovals {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Set<String> NAMES = new LinkedHashSet<>();
     private static final Set<String> PREFIXES = new LinkedHashSet<>();
     private static final List<ItemStack> OUTPUTS = new ArrayList<>();
@@ -38,14 +36,15 @@ public final class RecipeRemovals {
         NAMES.clear();
         PREFIXES.clear();
         OUTPUTS.clear();
-        Json.eachFile(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
+        Json.eachObject(PackManager.RECIPE_REMOVALS, "recipe removal file", RecipeRemovals::read);
         if (NAMES.isEmpty() && PREFIXES.isEmpty() && OUTPUTS.isEmpty()) { return; }
         int removed = removeWhere(registry, (key, recipe) -> !RecipeSpared.spares(key) && matches(key, recipe)).size();
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " crafting recipe(s)"); }
     }
 
     public static List<ResourceLocation> removeWhere(IForgeRegistry<IRecipe> registry, BiPredicate<ResourceLocation, IRecipe> doomed) {
-        if (!(registry instanceof IForgeRegistryModifiable)) {
+        IForgeRegistryModifiable<IRecipe> modifiable = modifiable(registry);
+        if (modifiable == null) {
             ContentLog.LOGGER.error("The recipe registry cannot be modified, no recipes were removed");
             return new ArrayList<>();
         }
@@ -53,17 +52,13 @@ public final class RecipeRemovals {
         for (ResourceLocation key : registry.getKeys()) {
             if (doomed.test(key, registry.getValue(key))) { keys.add(key); }
         }
-        IForgeRegistryModifiable<IRecipe> modifiable = (IForgeRegistryModifiable<IRecipe>) registry;
         for (ResourceLocation key : keys) { modifiable.remove(key); }
         return keys;
     }
 
-    private static void read(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Recipe removal file {} is empty, ignoring it", key);
-            return;
-        }
+    @Nullable static IForgeRegistryModifiable<IRecipe> modifiable(IForgeRegistry<IRecipe> registry) { return registry instanceof IForgeRegistryModifiable ? (IForgeRegistryModifiable<IRecipe>) registry : null; }
+
+    private static void read(ResourceLocation key, JsonObject json) {
         for (JsonElement element : array(json, "names")) {
             String name = element.getAsString();
             if (name.endsWith("*")) { PREFIXES.add(name.substring(0, name.length() - 1)); }

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public final class TurnsDef {
@@ -8,9 +9,9 @@ public final class TurnsDef {
     public static final String RANDOM = "random";
     public static final String LOWEST_FIRST = "lowestFirst";
     public static final String LAST_WINNER = "lastWinner";
-    public static final List<String> ORDERS = Arrays.asList(FIXED, RANDOM, LOWEST_FIRST, LAST_WINNER);
+    public static final List<String> ORDERS = Collections.unmodifiableList(Arrays.asList(FIXED, RANDOM, LOWEST_FIRST, LAST_WINNER));
     public static final String FROZEN = "frozen";
-    public static final List<String> HOLDS = Arrays.asList(FROZEN, "spectator", "adventure");
+    public static final List<String> HOLDS = Collections.unmodifiableList(Arrays.asList(FROZEN, "spectator", "adventure"));
     public final String order;
     public final int seconds;
     public final int gapSeconds;

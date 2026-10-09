@@ -1,6 +1,11 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardFire;
+import mctmods.resourcedatapackloader.content.card.CardIds;
+import mctmods.resourcedatapackloader.content.card.CardLook;
+import mctmods.resourcedatapackloader.content.card.CardRules;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.util.TellThrottle;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.world.Travel;
@@ -11,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
@@ -22,8 +28,8 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public final class ContentScoringLobby {
     private static final Map<String, double[]> STILL = new LinkedHashMap<>();
-    private static final Map<String, Long> TOLD = new LinkedHashMap<>();
     static final long NOTE_TICKS = 120L;
+    private static final TellThrottle TOLD = new TellThrottle(NOTE_TICKS);
     static final Map<String, Long> DUE = new LinkedHashMap<>();
     static final Map<String, String> SHOWN = new LinkedHashMap<>();
     private static final Map<java.util.UUID, double[]> ORIGINS = new LinkedHashMap<>();
@@ -38,7 +44,7 @@ public final class ContentScoringLobby {
         ScoreDef lobby = ContentScoring.lobbyDef();
         if (lobby == null || lobby.opensLobby == null || !lobby.opensLobbyJoins) { return; }
         if (ContentScoring.holding() || ContentScoring.OUT.containsKey(player.getName())) { return; }
-        if (player.world.getScoreboard().getPlayersTeam(player.getName()) != null) { return; }
+        if (ContentTeams.teamOf(player.world, player.getName()) != null) { return; }
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
         WorldServer world = server.getWorld(lobby.opensLobby[0]);
@@ -47,7 +53,7 @@ public final class ContentScoringLobby {
         Travel.to(player, lobby.opensLobby[0], x, standing(world, x, lobby.opensLobby[2], z), z, player.rotationYaw, 0.0F);
         ContentScoring.OUT.put(player.getName(), player.interactionManager.getGameType());
         player.setGameType(GameType.SPECTATOR);
-        if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_JOINS, lobby.opensJoinsSays, TextFormatting.GRAY); }
+        if (!lobby.opensJoinsSays.isEmpty()) { Says.tell(player, CardIds.LOBBY_JOINS, TextFormatting.GRAY, lobby.opensJoinsSays); }
     }
 
     static void keepStill(@Nullable MinecraftServer server) {
@@ -80,8 +86,7 @@ public final class ContentScoringLobby {
         ScoreDef lobby = ContentScoring.lobbyDef();
         MinecraftServer server = player.getServer();
         long now = player.world.getTotalWorldTime();
-        Long last = TOLD.get(player.getName());
-        if (lobby != null && server != null && player instanceof EntityPlayerMP && (last == null || now - last >= NOTE_TICKS)) { note(server, (EntityPlayerMP) player, lobby); }
+        if (lobby != null && server != null && player instanceof EntityPlayerMP && TOLD.ready(player.getName(), now)) { note(server, (EntityPlayerMP) player, lobby); }
         return true;
     }
 
@@ -94,12 +99,9 @@ public final class ContentScoringLobby {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             if (!player.isSpectator()) { waiting.add(player); }
         }
-        for (WorldServer each : server.worlds) {
-            for (Entity one : each.loadedEntityList) {
-                if (one instanceof EntityPlayer || one.isDead || !(one instanceof net.minecraft.entity.EntityLiving)) { continue; }
-                if (ContentScoring.sideOf(each, one, one.getCachedUniqueIdString()) != null) { waiting.add(one); }
-            }
-        }
+        ContentTeams.eachAlive(server, EntityLiving.class, (each, one) -> {
+            if (ContentScoring.sideOf(each, one, one.getCachedUniqueIdString()) != null) { waiting.add(one); }
+        });
         waiting.sort((a, b) -> a instanceof EntityPlayer != b instanceof EntityPlayer ? (a instanceof EntityPlayer ? -1 : 1) : a.getCachedUniqueIdString().compareTo(b.getCachedUniqueIdString()));
         List<java.util.UUID> ids = new ArrayList<>();
         for (Entity one : waiting) { ids.add(one.getUniqueID()); }
@@ -170,9 +172,9 @@ public final class ContentScoringLobby {
         String said = noteFor(server, player, lobby);
         DUE.remove(player.getName());
         SHOWN.put(player.getName(), said);
-        TOLD.put(player.getName(), server.getWorld(0).getTotalWorldTime());
-        if (mctmods.resourcedatapackloader.content.card.CardRules.unset(mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_NOTE)) { mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.show(player, said, TextFormatting.GOLD); }
-        else { mctmods.resourcedatapackloader.content.card.CardFire.builtin(mctmods.resourcedatapackloader.content.card.CardIds.LOBBY_NOTE, player, mctmods.resourcedatapackloader.content.card.CardLook.says(said, TextFormatting.GOLD, mctmods.resourcedatapackloader.content.card.CardLook.CENTER)); }
+        TOLD.mark(player.getName(), server.getWorld(0).getTotalWorldTime());
+        if (CardRules.unset(CardIds.LOBBY_NOTE)) { mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold.show(player, said, TextFormatting.GOLD); }
+        else { CardFire.builtin(CardIds.LOBBY_NOTE, player, CardLook.says(said, TextFormatting.GOLD, CardLook.CENTER)); }
     }
 
     private static String waitingLine(MinecraftServer server, ScoreDef lobby) {

@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeForest;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomePlains;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeSnow;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeTaiga;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockDoublePlant;
 import net.minecraft.block.BlockFlower;
@@ -47,7 +48,6 @@ import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import java.util.List;
-import java.util.Objects;
 import java.util.Random;
 import javax.annotation.Nullable;
 
@@ -63,7 +63,7 @@ public final class SkyDecoration {
     private static final WorldGenIceSpike ICE_SPIKE = new WorldGenIceSpike();
     private static final WorldGenIcePath ICE_PATH = new WorldGenIcePath(4);
     private static final WorldGenBigMushroom BIG_MUSHROOM = new WorldGenBigMushroom();
-    private static final WorldGenBlockBlob FOREST_ROCK = new WorldGenBlockBlob(Objects.requireNonNull(Blocks.MOSSY_COBBLESTONE), 0);
+    private static final WorldGenBlockBlob FOREST_ROCK = new WorldGenBlockBlob(Blocks.MOSSY_COBBLESTONE, 0);
     private static final BlockDoublePlant.EnumPlantType[] FOREST_PLANTS = {
             BlockDoublePlant.EnumPlantType.SYRINGA, BlockDoublePlant.EnumPlantType.ROSE, BlockDoublePlant.EnumPlantType.PAEONIA };
     private SkyDecoration() {}
@@ -73,7 +73,7 @@ public final class SkyDecoration {
         int cubeX = cube.getX();
         int cubeY = cube.getY();
         int cubeZ = cube.getZ();
-        Random random = new Random(world.getSeed() ^ (cubeX * 341873128712L + cubeZ * 132897987541L + cubeY * 1052717L));
+        Random random = SeededRandom.at(world, cubeX, cubeY, cubeZ);
         BlockPos middle = new BlockPos((cubeX << 4) + 8, (cubeY << 4) + 8, (cubeZ << 4) + 8);
         ChunkPos column = new ChunkPos(cubeX, cubeZ);
         Biome biome = world.getBiome(middle);
@@ -93,9 +93,9 @@ public final class SkyDecoration {
             flowers = sparse ? 15 : 4;
             grass = sparse ? 5 : 10;
         }
-        patches(world, random, cubeX, cubeY, cubeZ, decorator.sandPatchesPerChunk, decorator.sandGen);
-        patches(world, random, cubeX, cubeY, cubeZ, decorator.clayPerChunk, decorator.clayGen);
-        patches(world, random, cubeX, cubeY, cubeZ, decorator.gravelPatchesPerChunk, decorator.gravelGen);
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.sandPatchesPerChunk, false, decorator.sandGen);
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.clayPerChunk, false, decorator.clayGen);
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.gravelPatchesPerChunk, false, decorator.gravelGen);
         int trees = random.nextFloat() < decorator.extraTreeChance ? decorator.treesPerChunk + 1 : decorator.treesPerChunk;
         for (int attempt = 0; attempt < trees; attempt++) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
@@ -104,10 +104,7 @@ public final class SkyDecoration {
             tree.setDecorationDefaults();
             if (tree.generate(world, random, top)) { tree.generateSaplings(world, random, top); }
         }
-        for (int attempt = 0; attempt < decorator.bigMushroomsPerChunk; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { decorator.bigMushroomGen.generate(world, random, top); }
-        }
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.bigMushroomsPerChunk, true, decorator.bigMushroomGen);
         for (int attempt = 0; attempt < flowers; attempt++) {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
             if (top == null) { continue; }
@@ -121,14 +118,8 @@ public final class SkyDecoration {
             BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
             if (top != null) { biome.getRandomWorldGenForGrass(random).generate(world, random, top); }
         }
-        for (int attempt = 0; attempt < decorator.deadBushPerChunk; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-            if (top != null) { DEAD_BUSH.generate(world, random, top); }
-        }
-        for (int attempt = 0; attempt < decorator.waterlilyPerChunk; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { decorator.waterlilyGen.generate(world, random, top); }
-        }
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.deadBushPerChunk, false, DEAD_BUSH);
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.waterlilyPerChunk, true, decorator.waterlilyGen);
         for (int attempt = 0; attempt < Math.max(decorator.mushroomsPerChunk + 1, 1); attempt++) {
             if (random.nextInt(4) == 0) {
                 BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
@@ -139,32 +130,20 @@ public final class SkyDecoration {
                 if (top != null) { decorator.mushroomRedGen.generate(world, random, top); }
             }
         }
-        for (int attempt = 0; attempt < decorator.reedsPerChunk; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { decorator.reedGen.generate(world, random, top); }
-        }
-        for (int attempt = 0; attempt < decorator.cactiPerChunk; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { decorator.cactusGen.generate(world, random, top); }
-        }
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.reedsPerChunk, true, decorator.reedGen);
+        patches(world, random, cubeX, cubeY, cubeZ, decorator.cactiPerChunk, true, decorator.cactusGen);
     }
 
-    private static void patches(World world, Random random, int cubeX, int cubeY, int cubeZ, int count, WorldGenerator generator) {
+    private static void patches(World world, Random random, int cubeX, int cubeY, int cubeZ, int count, boolean opaque, WorldGenerator generator) {
         for (int attempt = 0; attempt < count; attempt++) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
+            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, opaque);
             if (top != null) { generator.generate(world, random, top); }
         }
     }
 
     private static void extras(World world, Random random, int cubeX, int cubeY, int cubeZ, Biome biome) {
-        if (biome instanceof BiomeDesert && random.nextInt(1000) == 0) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { DESERT_WELL.generate(world, random, top); }
-        }
-        if (biome instanceof BiomeJungle && random.nextInt(10) == 0) {
-            BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, true);
-            if (top != null) { MELON.generate(world, random, top); }
-        }
+        if (biome instanceof BiomeDesert && random.nextInt(1000) == 0) { patches(world, random, cubeX, cubeY, cubeZ, 1, true, DESERT_WELL); }
+        if (biome instanceof BiomeJungle && random.nextInt(10) == 0) { patches(world, random, cubeX, cubeY, cubeZ, 1, true, MELON); }
         if (biome instanceof BiomeForest) {
             BiomeForest.Type kind = ((IBiomeForest) biome).rdpl$type();
             if (kind == BiomeForest.Type.ROOFED) { canopy(world, random, cubeX, cubeY, cubeZ, biome); }
@@ -178,23 +157,13 @@ public final class SkyDecoration {
         if (biome instanceof BiomeTaiga) {
             BiomeTaiga.Type kind = ((IBiomeTaiga) biome).rdpl$type();
             if (kind == BiomeTaiga.Type.MEGA || kind == BiomeTaiga.Type.MEGA_SPRUCE) {
-                int rocks = random.nextInt(3);
-                for (int attempt = 0; attempt < rocks; attempt++) {
-                    BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-                    if (top != null) { FOREST_ROCK.generate(world, random, top); }
-                }
+                patches(world, random, cubeX, cubeY, cubeZ, random.nextInt(3), false, FOREST_ROCK);
             }
             doublePlants(world, random, cubeX, cubeY, cubeZ, BlockDoublePlant.EnumPlantType.FERN, 7);
         }
         if (biome instanceof BiomeSnow && ((IBiomeSnow) biome).rdpl$superIcy()) {
-            for (int attempt = 0; attempt < 3; attempt++) {
-                BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-                if (top != null) { ICE_SPIKE.generate(world, random, top); }
-            }
-            for (int attempt = 0; attempt < 2; attempt++) {
-                BlockPos top = surface(world, random, cubeX, cubeY, cubeZ, false);
-                if (top != null) { ICE_PATH.generate(world, random, top); }
-            }
+            patches(world, random, cubeX, cubeY, cubeZ, 3, false, ICE_SPIKE);
+            patches(world, random, cubeX, cubeY, cubeZ, 2, false, ICE_PATH);
         }
     }
 

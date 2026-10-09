@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.client;
 
+import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.network.AbstractClientMessageHandler;
 import mctmods.resourcedatapackloader.network.MessageCard;
 
@@ -34,8 +35,9 @@ import javax.annotation.Nullable;
     private static final int PAD = 5;
     private static final int STRIPE = 3;
     private static final int ICON = 16;
-    private static final int LINE = 10;
+    static final int LINE = 10;
     private static final int LEAST_WIDTH = 96;
+    static final int LINE_COLOR = 0xE8E8E8;
     private static final List<Card> CARDS = new ArrayList<>();
 
     private CardOverlay() {}
@@ -114,7 +116,7 @@ import javax.annotation.Nullable;
         int bottom = Crisp.fit(resolution.getScaledHeight()) - MARGIN;
         Crisp.raise();
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Blends.translucent();
         for (int i = CARDS.size() - 1; i >= 0; i--) {
             Card card = CARDS.get(i);
             int width = card.width();
@@ -123,10 +125,7 @@ import javax.annotation.Nullable;
             if (top < MARGIN) { break; }
             int left = screenWidth - MARGIN - width + Math.round(card.slide() * (width + MARGIN));
             float alpha = card.alpha();
-            if (card.panel) {
-                Gui.drawRect(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(card.background), alpha));
-                Gui.drawRect(left, top, left + width, top + height, withAlpha(card.background, 0.85F * alpha));
-            }
+            if (card.panel) { panel(left, top, width, height, card.background, alpha); }
             else { GlStateManager.enableBlend(); }
             if (card.image != null) {
                 GlStateManager.color(1.0F, 1.0F, 1.0F, alpha);
@@ -151,7 +150,7 @@ import javax.annotation.Nullable;
                 y += LINE;
             }
             for (List<MarkText.Piece> line : card.lines) {
-                MarkText.draw(line, x, y, withAlpha(0xE8E8E8, alpha));
+                MarkText.draw(line, x, y, withAlpha(LINE_COLOR, alpha));
                 y += LINE;
             }
             bottom = top - GAP;
@@ -160,6 +159,11 @@ import javax.annotation.Nullable;
         GlStateManager.enableDepth();
         GlStateManager.disableBlend();
         Crisp.lower();
+    }
+
+    static void panel(int left, int top, int width, int height, int background, float alpha) {
+        Gui.drawRect(left - 1, top - 1, left + width + 1, top + height + 1, withAlpha(darker(background), alpha));
+        Gui.drawRect(left, top, left + width, top + height, withAlpha(background, 0.85F * alpha));
     }
 
     static int withAlpha(int rgb, float alpha) { return (Math.round(MathHelper.clamp(alpha, 0.05F, 1.0F) * 255.0F) << 24) | (rgb & 0xFFFFFF); }

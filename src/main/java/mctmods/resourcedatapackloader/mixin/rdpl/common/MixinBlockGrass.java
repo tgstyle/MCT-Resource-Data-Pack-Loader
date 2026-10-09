@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.block.BlockGrass;
 import net.minecraft.block.state.IBlockState;
@@ -12,11 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import java.util.Random;
 
 @Mixin(BlockGrass.class) public class MixinBlockGrass {
-    @ModifyConstant(method = "updateTick",
-            constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO))
-    private int rdpl$getMinHeight(int zero, World worldIn, BlockPos pos, IBlockState state, Random rand) { return ((IRubicWorld) worldIn).rdpl$getMinHeight(); }
+    @ModifyConstant(method = "updateTick", constant = @Constant(expandZeroConditions = Constant.Condition.GREATER_THAN_OR_EQUAL_TO_ZERO)) private int rdpl$getMinHeight(int zero, World worldIn, BlockPos pos, IBlockState state, Random rand) { return GenHeights.floor(worldIn, zero); }
 
-    @ModifyConstant(method = "updateTick",
-            constant = @Constant(intValue = 256))
-    private int rdpl$getMaxHeight(int _256, World worldIn, BlockPos pos, IBlockState state, Random rand) { return ((IRubicWorld) worldIn).rdpl$getMaxHeight(); }
+    @ModifyConstant(method = "updateTick", constant = @Constant(intValue = 256)) private int rdpl$getMaxHeight(int _256, World worldIn, BlockPos pos, IBlockState state, Random rand) { return GenHeights.ceiling(worldIn, _256); }
 }

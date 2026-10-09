@@ -12,6 +12,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 @Mixin(EntityArrow.class) public abstract class MixinEntityArrow extends Entity {
     public MixinEntityArrow(World worldIn) { super(worldIn); }
 
-    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.05000000074505806D), require = 0, expect = 0)
-    private double rdpl$worldGravity(double base) { return ContentPhysics.arrowGravity(world, base); }
+    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.05000000074505806D), require = 0, expect = 0) private double rdpl$worldGravity(double base) { return ContentPhysics.arrowGravity(world, base); }
 }

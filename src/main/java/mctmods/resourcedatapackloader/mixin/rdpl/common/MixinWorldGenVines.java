@@ -15,9 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import java.util.Random;
 
 @Mixin(WorldGenVines.class) public class MixinWorldGenVines {
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 128), require = 1) private int rdpl$maxVineY(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.ceiling(worldIn, 256); }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 128), require = 1) private int rdpl$maxVineY(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.ceiling(worldIn, orig); }
 
-    @Redirect(method = "generate", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/block/Block;canPlaceBlockOnSide(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z"), require = 1)
-    private boolean rdpl$vineFacesItsWall(Block vine, World worldIn, BlockPos pos, EnumFacing side) { return vine.canPlaceBlockOnSide(worldIn, pos, side.getOpposite()); }
+    @Redirect(method = "generate", at = @At(value = "INVOKE", target = "Lnet/minecraft/block/Block;canPlaceBlockOnSide(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/util/EnumFacing;)Z"), require = 1) private boolean rdpl$vineFacesItsWall(Block vine, World worldIn, BlockPos pos, EnumFacing side) { return vine.canPlaceBlockOnSide(worldIn, pos, side.getOpposite()); }
 }

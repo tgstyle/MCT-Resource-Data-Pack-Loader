@@ -6,6 +6,8 @@ import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockRailBase;
@@ -20,15 +22,13 @@ import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Random;
+import java.util.List;import java.util.Random;
 import javax.annotation.Nullable;
 
 public final class BeardRails {
     static final int MARGIN = 7;
     static final int OVER = 6;
-    static final int FLOOR_LEAST = 6;
+    private static final int FLOOR_LEAST = 6;
     static final int FILL = 3;
     static final int LEAST_OPEN = 8;
     static final int CLEAR = 4;
@@ -64,11 +64,11 @@ public final class BeardRails {
     static int trackGap(boolean sub) { return Math.max(2, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayTrackGap" : "villageRailTrackGap", sub ? Config.worldgen.villageSubwayTrackGap : Config.worldgen.villageRailTrackGap)); }
 
     static boolean trackInBed(IBlockState track, boolean sub) {
-        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat : Config.worldgen.villageRailTrackSeat).trim().toLowerCase(Locale.ROOT);
+        String named = Settings.lower(ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", sub ? Config.worldgen.villageSubwayTrackSeat : Config.worldgen.villageRailTrackSeat));
         if (named.isEmpty() || "auto".equals(named)) { return !(track.getBlock() instanceof BlockRailBase); }
         if (named.startsWith("i")) { return true; }
         if (named.startsWith("o")) { return false; }
-        ContentLog.LOGGER.error("villageRailTrackSeat '{}' is not auto, on or in, so the track is seated the way its block asks for", named);
+        ContentLog.LOGGER.error("{} '{}' is not auto, on or in, so the track is seated the way its block asks for", sub ? "villageSubwayTrackSeat" : "villageRailTrackSeat", named);
         return !(track.getBlock() instanceof BlockRailBase);
     }
 
@@ -182,6 +182,8 @@ public final class BeardRails {
         return rising[1] > 0 ? row >= rising[0] : row <= rising[0];
     }
 
+    static int lined(World world) { return GenHeights.floor(world, FLOOR_LEAST); }
+
     public static int subwayDepth() { return Math.max(6, ContentControl.number(ContentControl.VILLAGES, "villageSubwayDepth", Config.worldgen.villageSubwayDepth)); }
 
     public static int tunnelDepth(boolean sub) {
@@ -190,11 +192,11 @@ public final class BeardRails {
     }
 
     static boolean direction(Random rand, boolean sub) {
-        String named = ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayDirection" : "villageRailDirection", sub ? Config.worldgen.villageSubwayDirection : Config.worldgen.villageRailDirection).trim().toLowerCase(Locale.ROOT);
+        String named = Settings.lower(ContentControl.text(ContentControl.VILLAGES, sub ? "villageSubwayDirection" : "villageRailDirection", sub ? Config.worldgen.villageSubwayDirection : Config.worldgen.villageRailDirection));
         if (named.isEmpty() || "any".equals(named)) { return rand.nextBoolean(); }
         if (named.startsWith("e") || named.startsWith("w")) { return true; }
         if (named.startsWith("n") || named.startsWith("s")) { return false; }
-        ContentLog.LOGGER.error("villageRailDirection '{}' is not ew, ns or any, so the lines run as they roll", named);
+        ContentLog.LOGGER.error("{} '{}' is not ew, ns or any, so the lines run as they roll", sub ? "villageSubwayDirection" : "villageRailDirection", named);
         return rand.nextBoolean();
     }
 
@@ -234,8 +236,8 @@ public final class BeardRails {
     }
 
     public static boolean crosses(StructureBoundingBox rail, StructureBoundingBox box) {
-        boolean railAlongX = rail.maxX - rail.minX >= rail.maxZ - rail.minZ;
-        boolean boxAlongX = box.maxX - box.minX >= box.maxZ - box.minZ;
+        boolean railAlongX = BeardPlots.longerAlongX(rail);
+        boolean boxAlongX = BeardPlots.longerAlongX(box);
         if (railAlongX == boxAlongX) { return false; }
         int stripLeast = railAlongX ? rail.minZ : rail.minX;
         int stripMost = railAlongX ? rail.maxZ : rail.maxX;
@@ -284,7 +286,7 @@ public final class BeardRails {
         for (StructureComponent piece : ContentBeard.everyone(world, ContentBeard.components())) {
             if (!(piece instanceof RailPiece)) { continue; }
             StructureBoundingBox box = dressed(piece);
-            if (box.maxX < near.minX || box.minX > near.maxX || box.maxZ < near.minZ || box.minZ > near.maxZ) { continue; }
+            if (!box.intersectsWith(near)) { continue; }
             found.add((RailPiece) piece);
         }
         return found;
@@ -345,8 +347,8 @@ public final class BeardRails {
     }
 
     public static boolean meets(StructureBoundingBox rail, StructureBoundingBox box) {
-        boolean railAlongX = rail.maxX - rail.minX >= rail.maxZ - rail.minZ;
-        boolean boxAlongX = box.maxX - box.minX >= box.maxZ - box.minZ;
+        boolean railAlongX = BeardPlots.longerAlongX(rail);
+        boolean boxAlongX = BeardPlots.longerAlongX(box);
         return railAlongX != boxAlongX && rail.intersectsWith(box.minX, box.minZ, box.maxX, box.maxZ);
     }
 
@@ -387,11 +389,7 @@ public final class BeardRails {
     public static boolean cramped(@Nullable List<StructureComponent> pieces, StructureBoundingBox box, EnumFacing facing) {
         boolean alongX = facing.getAxis() == EnumFacing.Axis.X;
         int rows = (alongX ? box.maxX - box.minX : box.maxZ - box.minZ) + 1;
-        List<StructureComponent> held = ContentBeard.laid();
-        ContentBeard.laying(pieces);
-        int kept;
-        try { kept = BeardRoadsGrade.roadReach(box, facing); }
-        finally { ContentBeard.laying(held); }
+        int kept = ContentBeard.layingOf(pieces, () -> BeardRoadsGrade.roadReach(box, facing));
         return kept < rows || ContentBeard.roomFor(pieces, box, facing) < rows;
     }
 

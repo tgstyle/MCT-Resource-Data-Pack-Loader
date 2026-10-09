@@ -7,6 +7,8 @@ import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.content.gate.GateStorage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Functions;
+import mctmods.resourcedatapackloader.util.world.Travel;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -32,17 +34,13 @@ public final class ContentReset {
         ContentPregenHold.holdEveryone(false);
         if (!said.isEmpty()) { ContentPregenHold.tellBar(server, said); }
         int swept = 0;
-        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) {
-            swept = sweep(server);
-        }
-        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores)) {
-            wipe(server);
-        }
+        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsEntities", Config.chunks.resetClearsEntities)) { swept = sweep(server); }
+        if (ContentControl.flag(ContentControl.CHUNKS, "resetClearsScores", Config.chunks.resetClearsScores)) { wipe(server); }
         boolean inventory = ContentControl.flag(ContentControl.CHUNKS, "resetClearsInventory", Config.chunks.resetClearsInventory);
         strip(server, inventory, ContentControl.flag(ContentControl.CHUNKS, "resetClearsExperience", Config.chunks.resetClearsExperience));
         if (inventory) { ContentTeams.giveAll(server); }
         String runs = ContentPregenProgress.says("resetRuns", Config.chunks.resetRuns).trim();
-        if (!runs.isEmpty()) { mctmods.resourcedatapackloader.util.Functions.run(server, runs, "The reset"); }
+        if (!runs.isEmpty()) { Functions.run(server, runs, "The reset"); }
         place(server);
         noted(server);
         ContentPregenHold.releaseEveryone(true);
@@ -64,7 +62,7 @@ public final class ContentReset {
         GateStorage.noteFor(player, RESETS, count);
         Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo).trim(), player);
         if (landing == null) { return; }
-        mctmods.resourcedatapackloader.util.world.Travel.to(player, landing.dimension, landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch);
+        send(player, landing);
         ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getName());
     }
 
@@ -108,9 +106,11 @@ public final class ContentReset {
         for (EntityPlayerMP player : server.getPlayerList().getPlayers()) {
             Landing landing = landingFor(server, asked, player);
             if (landing == null) { continue; }
-            mctmods.resourcedatapackloader.util.world.Travel.to(player, landing.dimension, landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch);
+            send(player, landing);
         }
     }
+
+    private static void send(EntityPlayerMP player, Landing landing) { Travel.to(player, landing.dimension, landing.x + 0.5D, landing.y, landing.z + 0.5D, player.rotationYaw, player.rotationPitch); }
 
     @SuppressWarnings({"ConstantConditions", "ConstantValue"}) @Nullable private static Landing landingFor(MinecraftServer server, String asked, EntityPlayerMP player) {
         if (asked.isEmpty() || "spawn".equalsIgnoreCase(asked)) {

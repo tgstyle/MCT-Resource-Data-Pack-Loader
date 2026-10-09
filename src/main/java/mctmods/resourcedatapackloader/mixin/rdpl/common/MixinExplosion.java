@@ -17,8 +17,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Explosion.class) public abstract class MixinExplosion {
     @Shadow @Final private Entity exploder;
 
-    @Redirect(method = "doExplosionB", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;playSound(Lnet/minecraft/entity/player/EntityPlayer;DDDLnet/minecraft/util/SoundEvent;Lnet/minecraft/util/SoundCategory;FF)V"))
-    private void rdpl$ownBlastSound(World world, EntityPlayer player, double x, double y, double z, SoundEvent soundIn, SoundCategory category, float volume, float pitch) {
+    @Redirect(method = "doExplosionB", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;playSound(Lnet/minecraft/entity/player/EntityPlayer;DDDLnet/minecraft/util/SoundEvent;Lnet/minecraft/util/SoundCategory;FF)V")) private void rdpl$ownBlastSound(World world, EntityPlayer player, double x, double y, double z, SoundEvent soundIn, SoundCategory category, float volume, float pitch) {
         SoundEvent own = ContentEntities.explodeSound(exploder);
         world.playSound(player, x, y, z, own == null ? soundIn : own, category, volume, own == null ? pitch : 1.0F);
     }

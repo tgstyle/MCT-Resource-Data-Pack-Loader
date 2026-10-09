@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldInternal;
-import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 import mctmods.resourcedatapackloader.util.interfaces.ITicket;
@@ -19,9 +18,9 @@ import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
 import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import java.util.HashMap;
@@ -42,9 +41,7 @@ public final class ThutRubicLifts {
     private ThutRubicLifts() {}
 
     public static void register() {
-        if (!Loader.isModLoaded("thuttech")) { return; }
-        MinecraftForge.EVENT_BUS.register(new Handler());
-        ContentLog.LOGGER.info("Thut's Elevators finds its lifts in the loaded entity list, which vanilla fills a whole column at a time, so on rubic worlds a lift's cube is kept loaded while a player watches its column");
+        if (CompatHooks.present("thuttech", "Thut's Elevators finds its lifts in the loaded entity list, which vanilla fills a whole column at a time, so on rubic worlds a lift's cube is kept loaded while a player watches its column")) { MinecraftForge.EVENT_BUS.register(new Handler()); }
     }
 
     public static final class Handler {
@@ -175,7 +172,7 @@ public final class ThutRubicLifts {
 
         @Override public void readFromNBT(NBTTagCompound nbt) {
             positions.clear();
-            NBTTagList list = nbt.getTagList("lifts", 10);
+            NBTTagList list = nbt.getTagList("lifts", Constants.NBT.TAG_COMPOUND);
             for (int index = 0; index < list.tagCount(); index++) {
                 NBTTagCompound entry = list.getCompoundTagAt(index);
                 positions.put(new UUID(entry.getLong("most"), entry.getLong("least")), BlockPos.fromLong(entry.getLong("pos")));

@@ -59,8 +59,8 @@ public final class ContentCaveAmbience {
         String now = region == null ? "" : region.key.toString();
         if (ContentLog.LOGGER.debugEnabled() && !now.equals(WHERE.put(player.getName(), now))) { ContentLog.LOGGER.debug("{} at {}, {}, {} is {}", player.getName(), eyes.getX(), eyes.getY(), eyes.getZ(), now.isEmpty() ? "in no cave region" : "in cave region " + now + (region.hasAmbience() ? " with ambience" : " without ambience")); }
         if (region == null || !region.hasAmbience()) { return; }
-        if (!region.ambientSound.isEmpty() && chance(random, region.soundChance)) { sound((EntityPlayerMP) player, region.ambientSound, "Cave region " + region.key, 0.8F + random.nextFloat() * 0.4F); }
-        if (!region.particle.isEmpty() && region.particleChance > 0.0F) { particles((EntityPlayerMP) player, world, region, random); }
+        if (region.ambience.sounds() && chance(random, region.ambience.soundChance)) { sound((EntityPlayerMP) player, region.ambience.ambientSound, "Cave region " + region.key, 0.8F + random.nextFloat() * 0.4F); }
+        if (region.ambience.shows()) { particles((EntityPlayerMP) player, world, region, random); }
     }
 
     private static boolean chance(Random random, float perTick) { return random.nextFloat() < 1.0F - (float) Math.pow(1.0F - perTick, EVERY); }
@@ -68,19 +68,19 @@ public final class ContentCaveAmbience {
     private static void sound(EntityPlayerMP player, String name, String owner, float pitch) {
         SoundEvent sound = SOUNDS.computeIfAbsent(name, found -> ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(found)));
         if (sound == null) {
-            if (TOLD.add(owner + " sound")) { ContentLog.LOGGER.error("{} names the ambient sound {}, which nothing registers, so it stays quiet", owner, name); }
+            ContentLog.LOGGER.errorOnce(TOLD, owner + " sound", "{} names the ambient sound {}, which nothing registers, so it stays quiet", owner, name);
             return;
         }
         player.connection.sendPacket(new SPacketSoundEffect(sound, SoundCategory.AMBIENT, player.posX, player.posY + player.getEyeHeight(), player.posZ, 1.0F, pitch));
     }
 
     private static void particles(EntityPlayerMP player, WorldServer world, CaveRegionDef region, Random random) {
-        EnumParticleTypes type = PARTICLES.computeIfAbsent(region.particle, EnumParticleTypes::getByName);
+        EnumParticleTypes type = PARTICLES.computeIfAbsent(region.ambience.particle, EnumParticleTypes::getByName);
         if (type == null) {
-            if (TOLD.add(region.key + " particle")) { ContentLog.LOGGER.error("Cave region {} names the particle {}, which is not one of the game's particle names, so the region shows none", region.key, region.particle); }
+            ContentLog.LOGGER.errorOnce(TOLD, region.key + " particle", "Cave region {} names the particle {}, which is not one of the game's particle names, so the region shows none", region.key, region.ambience.particle);
             return;
         }
-        int tries = MathHelper.clamp(Math.round(POSITIONS_PER_TICK * region.particleChance * EVERY), 1, MOST_PARTICLES);
+        int tries = MathHelper.clamp(Math.round(POSITIONS_PER_TICK * region.ambience.particleChance * EVERY), 1, MOST_PARTICLES);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int i = 0; i < tries; i++) {
             at.setPos(player.posX + random.nextInt(REACH) - random.nextInt(REACH), player.posY + random.nextInt(REACH) - random.nextInt(REACH), player.posZ + random.nextInt(REACH) - random.nextInt(REACH));

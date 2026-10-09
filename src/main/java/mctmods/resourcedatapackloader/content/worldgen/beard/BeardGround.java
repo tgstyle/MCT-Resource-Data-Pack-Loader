@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
@@ -25,6 +26,7 @@ public final class BeardGround {
         if (held == Blocks.GRASS_PATH) { return true; }
         return held == Blocks.GRAVEL && BeardPlots.overRoad(start, x, z);
     }
+
     public static int roadTop(World world, StructureStart start, BlockPos.MutableBlockPos at, int x, int z, int from, int to) {
         if (!world.isChunkGeneratedAt(x >> 4, z >> 4)) { return Integer.MIN_VALUE; }
         for (int y = to; y >= from; y--) {
@@ -33,6 +35,7 @@ public final class BeardGround {
         }
         return Integer.MIN_VALUE;
     }
+
     public static int liftOffRoof(StructureStart start, StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         int overhead = 0;
         for (int x = box.minX; x <= box.maxX; x++) {
@@ -52,13 +55,14 @@ public final class BeardGround {
                     if (!BeardBlocks.terrainBlock(world.getBlockState(at).getBlock())) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     BeardBlocks.note(world, at, "Opening over a piece");
-                    world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                    world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                     overhead++;
                 }
             }
         }
         return overhead;
     }
+
     public static void soilField(StructureComponent piece, World world, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         int soiled = 0;
         for (int x = box.minX; x <= box.maxX; x++) {
@@ -68,7 +72,7 @@ public final class BeardGround {
                     if (!clip.isVecInside(at)) { continue; }
                     if (BeardKeep.holds(x, y, z)) { continue; }
                     if (world.getBlockState(at).getMaterial() == Material.SAND) {
-                        world.setBlockState(at, BeardBlocks.footing(world, x, y, z), 2);
+                        world.setBlockState(at, BeardBlocks.footing(world, x, y, z), BlockFlags.UPDATE_CLIENTS);
                         soiled++;
                     }
                 }
@@ -76,6 +80,7 @@ public final class BeardGround {
         }
         if (soiled > 0) { ContentLog.LOGGER.debug("Turned {} sand block(s) to soil under {} at {}, {}", soiled, piece.getClass().getSimpleName(), box.minX, box.minZ); }
     }
+
     public static void waystoneRing(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip, StructureBoundingBox box, BlockPos.MutableBlockPos at) {
         int ringed = 0;
         int lowX = Integer.MAX_VALUE;

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeWatcher;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
@@ -125,7 +125,7 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
                                 World.class
                         }).newInstance(world);
                     } catch (Exception exception) {
-                        Rubic.LOGGER.error("Failed to construct entity {} for spawning", biomeMobs.entityClass, exception);
+                        ContentLog.LOGGER.error("Failed to construct entity {} for spawning", biomeMobs.entityClass, exception);
                         return totalSpawned;
                     }
                     toSpawn.setLocationAndAngles(entityX, blockY, entityZ, rand.nextFloat() * 360.0F, 0.0F);

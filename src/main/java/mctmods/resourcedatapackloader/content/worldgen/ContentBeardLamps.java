@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsEnds;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardStations;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -67,7 +66,7 @@ public final class ContentBeardLamps {
         int span = (alongX ? box.maxZ - box.minZ : box.maxX - box.minX) + 1;
         int[] bands = BeardRoads.bandsOf(box);
         int off = bands[2] > 0 && span == bands[0] ? 0 : 1;
-        BeardRoads.Grade grade = piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null;
+        BeardRoads.Grade grade = BeardRoads.layoutOf(piece);
         if (grade == null) { grade = BeardRoadsGrade.roadProfile(world, piece, alongX, from, to, alongX ? box.minZ : box.minX, alongX ? box.maxZ : box.maxX, true); }
         int raised = 0;
         for (int spot : along) {
@@ -265,7 +264,7 @@ public final class ContentBeardLamps {
             at.setPos(x, y, z);
             if (!clip.isVecInside(at) || BeardPlots.insideAnother(start, piece, at)) { return false; }
             if (BeardKeep.holds(x, y, z)) { return false; }
-            if (!world.getBlockState(at).getMaterial().isReplaceable() && world.getBlockState(at).getMaterial() != Material.AIR) { return false; }
+            if (!world.getBlockState(at).getMaterial().isReplaceable()) { return false; }
         }
         if (beforeADoor(world, clip, at, x, bed, z)) { return false; }
         at.setPos(x, bed, z);

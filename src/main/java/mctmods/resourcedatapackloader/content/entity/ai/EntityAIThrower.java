@@ -20,12 +20,14 @@ import net.minecraft.util.EnumHand;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import javax.annotation.Nullable;
 
 public final class EntityAIThrower extends EntityAIBase {
     private static final String LEFT = "rdplThrowsLeft";
     private static final double REACH = 3.0D;
     private static final double NEAR = 0.4D;
     private static final double FURTHER = 0.03D;
+    private static final double RETREAT_SPEED = 1.4D;
     private static final float TRIDENT_DAMAGE = 8.0F;
     private static final float TRIDENT_SPEED = 1.6F;
     private static final int THROW_SOUND = 5;
@@ -39,7 +41,7 @@ public final class EntityAIThrower extends EntityAIBase {
     private final double range;
     private final ItemStack pack;
     private final boolean returns;
-    private EntityLivingBase target;
+    @Nullable private EntityLivingBase target;
     private int reloading;
     private int retreating;
 
@@ -79,20 +81,20 @@ public final class EntityAIThrower extends EntityAIBase {
             return;
         }
         if (target == null || target.isDead) { return; }
+        ItemStack thrown = held();
         if (spent()) {
-            if (!held().isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY); }
+            if (!thrown.isEmpty()) { mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY); }
             return;
         }
         mob.getLookHelper().setLookPositionWithEntity(target, 30.0F, 30.0F);
         mob.getNavigator().clearPath();
-        ItemStack thrown = held();
         if (thrown.isEmpty() || mob.world.isRemote) { return; }
         Vec3d at = new Vec3d(target.posX - mob.posX, target.posY + target.getEyeHeight() - (mob.posY + mob.getEyeHeight()), target.posZ - mob.posZ);
         double far = Math.max(1.0D, at.length());
         Vec3d push = at.normalize().scale((NEAR + far * FURTHER) * power).add(0.0D, arc, 0.0D);
         if (isTnt(thrown)) { lit(push); }
         else if (returns) {
-            flung(thrown);
+            flung(thrown, target);
             mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
             return;
         }
@@ -104,15 +106,16 @@ public final class EntityAIThrower extends EntityAIBase {
         mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, ItemStack.EMPTY);
         retreating = retreat;
         if (carried > 0) {
-            int left = mob.getEntityData().hasKey(LEFT) ? mob.getEntityData().getInteger(LEFT) : carried;
-            left--;
-            mob.getEntityData().setInteger(LEFT, left);
-            if (left <= 0) { return; }
+            int remaining = left() - 1;
+            mob.getEntityData().setInteger(LEFT, remaining);
+            if (remaining <= 0) { return; }
         }
         reloading = Math.max(1, reload);
     }
 
-    private boolean spent() { return carried > 0 && mob.getEntityData().hasKey(LEFT) && mob.getEntityData().getInteger(LEFT) <= 0; }
+    private int left() { return mob.getEntityData().hasKey(LEFT) ? mob.getEntityData().getInteger(LEFT) : carried; }
+
+    private boolean spent() { return carried > 0 && left() <= 0; }
 
     private void restock() { mob.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, pack.copy()); }
 
@@ -126,12 +129,12 @@ public final class EntityAIThrower extends EntityAIBase {
         thrownWith(SoundEvents.ENTITY_TNT_PRIMED);
     }
 
-    private void flung(ItemStack thrown) {
+    private void flung(ItemStack thrown, EntityLivingBase aimed) {
         IAttributeInstance strength = mob.getAttributeMap().getAttributeInstanceByName(SharedMonsterAttributes.ATTACK_DAMAGE.getName());
         EntityReturningThrow flying = new EntityReturningThrow(mob.world, mob, thrown, strength == null ? TRIDENT_DAMAGE : (float) strength.getAttributeValue());
-        double dx = target.posX - mob.posX;
-        double dy = target.getEntityBoundingBox().minY + target.height / 3.0F - flying.posY;
-        double dz = target.posZ - mob.posZ;
+        double dx = aimed.posX - mob.posX;
+        double dy = aimed.getEntityBoundingBox().minY + aimed.height / 3.0F - flying.posY;
+        double dz = aimed.posZ - mob.posZ;
         flying.shoot(dx, dy + MathHelper.sqrt(dx * dx + dz * dz) * 0.2D, dz, TRIDENT_SPEED * power, 14 - mob.world.getDifficulty().getId() * 4);
         mob.world.spawnEntity(flying);
         thrownWith(SoundEvents.ENTITY_SNOWBALL_THROW);
@@ -155,7 +158,7 @@ public final class EntityAIThrower extends EntityAIBase {
     private void backAway() {
         if (target == null || !mob.getNavigator().noPath()) { return; }
         Vec3d away = RandomPositionGenerator.findRandomTargetBlockAwayFrom(mob, 12, 5, new Vec3d(target.posX, target.posY, target.posZ));
-        if (away != null) { mob.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, 1.4D); }
+        if (away != null) { mob.getNavigator().tryMoveToXYZ(away.x, away.y, away.z, RETREAT_SPEED); }
     }
 
     private ItemStack held() { return mob.getHeldItem(EnumHand.MAIN_HAND); }

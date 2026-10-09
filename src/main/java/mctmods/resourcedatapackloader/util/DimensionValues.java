@@ -10,9 +10,7 @@ public final class DimensionValues<T> {
     private final String key;
     private final Function<String, T> parse;
     private final String wrong;
-    private String[] raw = new String[0];
-    @Nullable private T everywhere;
-    private Map<Integer, T> byDimension = new HashMap<>();
+    private volatile Snapshot<T> held = new Snapshot<>(new String[0], null, new HashMap<>());
 
     public DimensionValues(String key, Function<String, T> parse, String wrong) {
         this.key = key;
@@ -20,30 +18,45 @@ public final class DimensionValues<T> {
         this.wrong = wrong;
     }
 
-    @Nullable public T at(int dimension, String[] asked) {
-        if (asked.length == 0) { return null; }
-        if (!Arrays.equals(asked, raw)) {
+    @Nullable public T at(int dimension, String[] asked) { return at(dimension, asked, null); }
+
+    @Nullable public T at(int dimension, String[] asked, @Nullable T own) {
+        if (asked.length == 0) { return own; }
+        Snapshot<T> now = held;
+        if (!Arrays.equals(asked, now.raw)) {
             T bare = null;
             Map<Integer, T> scoped = new HashMap<>();
             for (String entry : asked) {
                 String line = entry.trim();
-                int split = line.indexOf('=');
-                T found = parse.apply(split < 0 ? line : line.substring(split + 1).trim());
+                String[] sides = Settings.split(line);
+                T found = parse.apply(sides == null ? line : sides[1]);
                 if (found == null) {
                     ContentLog.LOGGER.error("{} names '{}', {}, ignoring it", key, line, wrong);
                     continue;
                 }
-                if (split < 0) { bare = found; }
+                if (sides == null) { bare = found; }
                 else {
-                    try { scoped.put(Integer.parseInt(line.substring(0, split).trim()), found); }
+                    try { scoped.put(Integer.parseInt(sides[0]), found); }
                     catch (NumberFormatException wrongDimension) { ContentLog.LOGGER.error("{} names '{}', whose dimension is not a whole number, ignoring it", key, line); }
                 }
             }
-            everywhere = bare;
-            byDimension = scoped;
-            raw = asked;
+            now = new Snapshot<>(asked.clone(), bare, scoped);
+            held = now;
         }
-        T scoped = byDimension.get(dimension);
-        return scoped != null ? scoped : everywhere;
+        T scoped = now.byDimension.get(dimension);
+        if (scoped != null) { return scoped; }
+        return own != null ? own : now.everywhere;
+    }
+
+    private static final class Snapshot<V> {
+        private final String[] raw;
+        @Nullable private final V everywhere;
+        private final Map<Integer, V> byDimension;
+
+        private Snapshot(String[] raw, @Nullable V everywhere, Map<Integer, V> byDimension) {
+            this.raw = raw;
+            this.everywhere = everywhere;
+            this.byDimension = byDimension;
+        }
     }
 }

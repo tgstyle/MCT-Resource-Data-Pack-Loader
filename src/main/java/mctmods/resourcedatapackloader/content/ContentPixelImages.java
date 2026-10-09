@@ -8,6 +8,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import java.awt.image.BufferedImage;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.annotation.Nullable;
@@ -15,11 +16,6 @@ import javax.imageio.ImageIO;
 
 @SideOnly(Side.CLIENT) public final class ContentPixelImages {
     private ContentPixelImages() {}
-
-    public static boolean exists(String namespace, String path) {
-        try (IResource ignored = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(namespace, path))) { return true; }
-        catch (IOException ex) { return false; }
-    }
 
     @Nullable public static int[][] read(String namespace, String path) {
         try (IResource held = Minecraft.getMinecraft().getResourceManager().getResource(new ResourceLocation(namespace, path))) {
@@ -32,6 +28,7 @@ import javax.imageio.ImageIO;
             image.getRGB(0, 0, wide, tall, pixels, 0, wide);
             return new int[][] { { wide, tall }, pixels };
         }
+        catch (FileNotFoundException ex) { return null; }
         catch (IOException ex) {
             ContentLog.LOGGER.error("The image {}:{} could not be read to build on", namespace, path, ex);
             return null;

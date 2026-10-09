@@ -49,7 +49,7 @@ public final class EntityAIRaidBreakDoor extends EntityAIBase {
     @Override public void resetTask() { mob.world.sendBlockBreakProgress(mob.getEntityId(), door, -1); }
 
     @Override public void updateTask() {
-        mob.getLookHelper().setLookPosition(door.getX() + 0.5D, door.getY() + 0.5D, door.getZ() + 0.5D, 30.0F, 30.0F);
+        BlockBreak.look(mob, door);
         if (mob.getRNG().nextInt(20) == 0) {
             mob.world.playEvent(1019, door, 0);
             mob.swingArm(EnumHand.MAIN_HAND);

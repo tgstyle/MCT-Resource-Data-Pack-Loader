@@ -23,8 +23,7 @@ import java.util.Random;
         rdpl$reachSq = (double) reach * (double) reach;
     }
 
-    @Redirect(method = "lambda$generateChunkPart$0", at = @At(value = "INVOKE", target = "Lvazkii/quark/world/world/StoneInfoBasedGenerator;canPlaceBlock(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Z"))
-    private boolean rdpl$measureBeforeReading(StoneInfoBasedGenerator generator, World world, BlockPos pos) {
+    @Redirect(method = "lambda$generateChunkPart$0", at = @At(value = "INVOKE", target = "Lvazkii/quark/world/world/StoneInfoBasedGenerator;canPlaceBlock(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)Z")) private boolean rdpl$measureBeforeReading(StoneInfoBasedGenerator generator, World world, BlockPos pos) {
         BlockPos middle = rdpl$middle;
         if (middle != null && pos.distanceSq(middle) >= rdpl$reachSq) {
             if (ContentChunkWatch.watching()) { ContentChunkWatch.stoneSpared(); }

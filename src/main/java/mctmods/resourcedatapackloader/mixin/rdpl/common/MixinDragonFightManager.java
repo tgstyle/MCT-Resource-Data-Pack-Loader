@@ -22,8 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ci.cancel();
     }
 
-    @Inject(method = "respawnDragon()V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$noRespawn(CallbackInfo ci) {
+    @Inject(method = "respawnDragon()V", at = @At("HEAD"), cancellable = true) private void rdpl$noRespawn(CallbackInfo ci) {
         if (!ContentEndDragon.wanted(world)) { ci.cancel(); }
     }
 }

@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IMinecraftServerMessage;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.block.BlockFalling;
 import net.minecraft.command.ICommandSender;
@@ -36,9 +37,9 @@ import java.util.Set;
 
 public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static final long STILL_AFTER_MS = 3000L;
+    private static final Set<Long> DRESS_LATER = new LinkedHashSet<>();
     static volatile ContentPregen running;
     private static volatile long stillUntil;
-    private static final Set<Long> DRESS_LATER = new LinkedHashSet<>();
     private static volatile World dressingIn;
     private static long watchedDone = -1L;
     private static long watchedAt;
@@ -161,7 +162,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         dressingIn = world;
         try {
             for (long key : DRESS_LATER) {
-                Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
+                Chunk chunk = provider.getLoadedChunk(Longs.low(key), Longs.high(key));
                 if (chunk == null || chunk.isTerrainPopulated()) { continue; }
                 chunk.populate(provider, provider.chunkGenerator);
                 dressed++;
@@ -172,17 +173,11 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         Set<Long> around = new LinkedHashSet<>();
         for (long key : DRESS_LATER) {
             for (int dx = -1; dx <= 1; dx++) {
-                for (int dz = -1; dz <= 1; dz++) { around.add(ChunkPos.asLong((int) key + dx, (int) (key >> 32) + dz)); }
+                for (int dz = -1; dz <= 1; dz++) { around.add(ChunkPos.asLong(Longs.low(key) + dx, Longs.high(key) + dz)); }
             }
         }
         for (long key : around) {
-            Chunk chunk = provider.getLoadedChunk((int) key, (int) (key >> 32));
-            if (chunk == null || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { continue; }
-            chunk.checkLight();
-            if (chunk.isLightPopulated()) {
-                relit++;
-                chunk.markDirty();
-            }
+            if (ContentDressLight.relit(provider.getLoadedChunk(Longs.low(key), Longs.high(key)))) { relit++; }
         }
         ContentLog.LOGGER.info("Dressed {} of the {} chunk(s) that were loaded while the light was being seen to, the rest having been let go in the meantime, with the light held off while they were dressed and {} chunk(s) lit again afterwards in one go", dressed, DRESS_LATER.size(), relit);
         DRESS_LATER.clear();
@@ -212,9 +207,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return worker != null && world.provider.getDimension() == worker.dimension;
     }
 
-    public static long start(ICommandSender asked, int dimension, int centreX, int centreZ, int radius) {
-        return start(asked, dimension, centreX, centreZ, radius, false);
-    }
+    public static long start(ICommandSender asked, int dimension, int centreX, int centreZ, int radius) { return start(asked, dimension, centreX, centreZ, radius, false); }
 
     public static long start(ICommandSender asked, int dimension, int centreX, int centreZ, int radius, boolean lightOnly) {
         ContentPregen worker = new ContentPregen(asked, dimension, centreX, centreZ, radius, lightOnly);
@@ -314,9 +307,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         if ((done & 255L) == 0L) {
             Runtime memory = Runtime.getRuntime();
             long used = (memory.totalMemory() - memory.freeMemory()) >> 20;
-            if (rubic) {
-                ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20);
-            }
+            if (rubic) { ContentLog.LOGGER.debug("Pregen telemetry: columns={}/{} loadedColumns={} loadedCubes={} pendingCubeSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), RubicWorldControl.loadedCubes(provider), RubicWorldControl.pendingSaves(provider), used, memory.maxMemory() >> 20); }
             else {
                 int pending = provider.chunkLoader instanceof AnvilChunkLoader ? ((AnvilChunkLoader) provider.chunkLoader).getPendingSaveCount() : -1;
                 ContentLog.LOGGER.debug("Pregen telemetry: chunks={}/{} loadedChunks={} pendingChunkSaves={} heap={}/{}MB", done, order.total(), provider.getLoadedChunkCount(), pending, used, memory.maxMemory() >> 20);
@@ -393,31 +384,25 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
             for (int dz = -1; dz <= 1; dz++) {
                 int x = madeX + dx;
                 int z = madeZ + dz;
-                if (!held.contains(ChunkPos.asLong(x, z)) || !ringHeld(x, z)) { continue; }
-                Chunk chunk = provider.getLoadedChunk(x, z);
-                if (chunk == null || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { continue; }
-                chunk.checkLight();
-                if (chunk.isLightPopulated()) {
-                    brightened++;
-                    chunk.markDirty();
-                }
+                if (!held.contains(ChunkPos.asLong(x, z)) || ringGap(x, z)) { continue; }
+                if (ContentDressLight.relit(provider.getLoadedChunk(x, z))) { brightened++; }
             }
         }
     }
 
-    private boolean ringHeld(int x, int z) {
+    private boolean ringGap(int x, int z) {
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 if (dx == 0 && dz == 0) { continue; }
-                if (!held.contains(ChunkPos.asLong(x + dx, z + dz))) { return false; }
+                if (!held.contains(ChunkPos.asLong(x + dx, z + dz))) { return true; }
             }
         }
-        return true;
+        return false;
     }
 
     private void release(ChunkProviderServer provider, long key) {
-        int x = (int) key;
-        int z = (int) (key >> 32);
+        int x = Longs.low(key);
+        int z = Longs.high(key);
         if (provider.world.getPlayerChunkMap().contains(x, z)) { return; }
         Chunk chunk = provider.getLoadedChunk(x, z);
         if (chunk == null) { return; }
@@ -477,7 +462,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         String said = ContentPregenProgress.says("pregenBackupSays", Config.chunks.pregenBackupSays).trim();
         try { server.saveAllWorlds(true); }
         catch (RuntimeException notSaved) { ContentLog.LOGGER.warn("The worlds could not be flushed before the pristine copy, copying what is on disk", notSaved); }
-        long begun = System.currentTimeMillis();
+        long copyStart = System.currentTimeMillis();
         int[] last = { -1 };
         int files = ContentPristine.take(server, along -> {
             if (said.isEmpty() || along == last[0]) { return; }
@@ -486,10 +471,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         });
         if (files > 0) { ContentPristine.mark(server); }
         if (files > 0 && !said.isEmpty()) { ContentPregenHold.tellBar(server, said + " " + Lang.tr("rdpl.pregen.done")); }
-        ContentLog.LOGGER.info("The pristine copy took {} ms", System.currentTimeMillis() - begun);
+        ContentLog.LOGGER.info("The pristine copy took {} ms", System.currentTimeMillis() - copyStart);
     }
 
-    public static boolean holdsStill(net.minecraft.world.World world) {
+    public static boolean holdsStill(World world) {
         if (world.isRemote) { return false; }
         ContentPregen worker = running;
         if (worker != null) { return world.provider.getDimension() == worker.dimension; }
@@ -542,7 +527,7 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
                 ending += Lang.tr("rdpl.pregen.tooktime", took / 3600L, took / 60L % 60L, took % 60L);
             }
             chainBegun = 0L;
-            ContentPregenHold.tell(ending, TextFormatting.GREEN);
+            ContentPregenHold.tell(TextFormatting.GREEN, ending);
             if (!stopping) { keepPristine(); }
             ContentPregenHold.releaseEveryone(!stopping);
         }

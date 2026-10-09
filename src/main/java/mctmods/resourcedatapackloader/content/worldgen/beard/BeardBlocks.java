@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiome;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
@@ -31,32 +32,34 @@ public final class BeardBlocks {
     private static final int FOOTING_REACH = 8;
     private static Set<Block> packGround;
     private static Set<Block> packStone;
+    private static final BlockPos.MutableBlockPos AT = new BlockPos.MutableBlockPos();
 
     private BeardBlocks() {}
 
-    public static boolean terrainBlock(Block held) {
-        return held == Blocks.STONE || held == Blocks.DIRT || held == Blocks.GRASS || held == Blocks.GRAVEL || held == Blocks.SAND
-                || held == Blocks.CLAY || held == Blocks.SNOW_LAYER || held == Blocks.SNOW || held == Blocks.ICE || held == Blocks.PACKED_ICE
-                || held instanceof BlockOre || held instanceof BlockRedstoneOre || packGround().contains(held);
-    }
+    public static boolean terrainBlock(Block held) { return held == Blocks.STONE || held == Blocks.DIRT || held == Blocks.GRASS || held == Blocks.GRAVEL || held == Blocks.SAND || held == Blocks.CLAY || held == Blocks.SNOW_LAYER || held == Blocks.SNOW || held == Blocks.ICE || held == Blocks.PACKED_ICE || held instanceof BlockOre || held instanceof BlockRedstoneOre || packGround().contains(held); }
 
     private static Set<Block> packGround() {
-        if (packGround != null) { return packGround; }
-        Set<Block> ground = new HashSet<>();
+        if (packGround == null) { packGround = packBlocks(true); }
+        return packGround;
+    }
+
+    private static Set<Block> packBlocks(boolean surface) {
+        Set<Block> found = new HashSet<>();
         for (Biome biome : Biome.REGISTRY) {
             if (!(biome instanceof ContentBiome)) { continue; }
-            ground.add(biome.topBlock.getBlock());
-            ground.add(biome.fillerBlock.getBlock());
+            if (surface) {
+                found.add(biome.topBlock.getBlock());
+                found.add(biome.fillerBlock.getBlock());
+            }
             IBlockState stone = ((ContentBiome) biome).getStoneState();
-            if (stone != null) { ground.add(stone.getBlock()); }
+            if (stone != null) { found.add(stone.getBlock()); }
         }
-        ground.remove(Blocks.AIR);
-        packGround = ground;
-        return ground;
+        found.remove(Blocks.AIR);
+        return found;
     }
-    public static boolean opening(Material material) {
-        return material == Material.ROCK || material == Material.GROUND || material == Material.GRASS || material == Material.SAND || material == Material.CLAY || material == Material.SNOW;
-    }
+
+    public static boolean opening(Material material) { return material == Material.ROCK || material == Material.GROUND || material == Material.GRASS || material == Material.SAND || material == Material.CLAY || material == Material.SNOW; }
+
     public static boolean loose(Material material) { return opening(material) || material == Material.CRAFTED_SNOW || material == Material.ICE; }
 
     public static boolean overhang(IBlockState held) {
@@ -69,12 +72,12 @@ public final class BeardBlocks {
         BlockHugeMushroom.EnumType part = held.getValue(BlockHugeMushroom.VARIANT);
         return part == BlockHugeMushroom.EnumType.STEM || part == BlockHugeMushroom.EnumType.ALL_STEM;
     }
-    private static final BlockPos.MutableBlockPos AT = new BlockPos.MutableBlockPos();
 
     private static boolean sandBiome(World world, int x, int z) {
         Biome biome = world.getBiome(AT.setPos(x, 64, z));
         return biome.topBlock.getBlock() == Blocks.SAND;
     }
+
     private static IBlockState vergeBlock(World world, int x, int y, int z) { return BeardRoads.pathPalette("villagePathVergeBlock", Config.worldgen.villagePathVergeBlock, Blocks.AIR.getDefaultState()).pick(world, x, y, z); }
 
     public static IBlockState overWater(World world, int x, int y, int z) {
@@ -104,6 +107,7 @@ public final class BeardBlocks {
         if (top == Blocks.GRAVEL) { return Blocks.GRAVEL.getDefaultState(); }
         return Blocks.DIRT.getDefaultState();
     }
+
     public static void note(World world, BlockPos.MutableBlockPos at, String pass) {
         if (!ContentLog.LOGGER.debugEnabled()) { return; }
         IBlockState held = world.getBlockState(at);
@@ -121,16 +125,16 @@ public final class BeardBlocks {
         if (BeardKeep.holds(at.getX(), at.getY(), at.getZ())) { return 0; }
         note(world, at, "Felling or clearing");
         boolean grassy = world.getBlockState(at).getBlock() == Blocks.GRASS;
-        world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+        world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
         int cleared = 1;
         at.move(EnumFacing.UP);
         if (world.getBlockState(at).getBlock() == Blocks.SNOW_LAYER) {
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
             cleared++;
         }
         at.move(EnumFacing.DOWN);
         at.move(EnumFacing.DOWN);
-        if (grassy && !BeardKeep.holds(at.getX(), at.getY(), at.getZ()) && world.getBlockState(at) == Blocks.DIRT.getDefaultState()) { world.setBlockState(at, Blocks.GRASS.getDefaultState(), 2); }
+        if (grassy && !BeardKeep.holds(at.getX(), at.getY(), at.getZ()) && world.getBlockState(at) == Blocks.DIRT.getDefaultState()) { world.setBlockState(at, Blocks.GRASS.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
         at.move(EnumFacing.UP);
         return cleared;
     }
@@ -168,15 +172,16 @@ public final class BeardBlocks {
             if (BeardKeep.holds(x, y, z)) { continue; }
             if (!terrainBlock(above.getBlock()) && above.getMaterial().isSolid()) { break; }
             note(world, at, pass);
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
             cleared++;
         }
         return cleared;
     }
+
     public static int cutBank(World world, BlockPos.MutableBlockPos at, int x, int z, int from, int roof) {
         int cut = clearAbove(world, at, x, z, from, roof, "Cutting a ring");
         at.setPos(x, from - 1, z);
-        if (world.getBlockState(at).getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { world.setBlockState(at, Blocks.GRASS.getDefaultState(), 2); }
+        if (world.getBlockState(at).getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { world.setBlockState(at, Blocks.GRASS.getDefaultState(), BlockFlags.UPDATE_CLIENTS); }
         return cut;
     }
 
@@ -224,16 +229,8 @@ public final class BeardBlocks {
     }
 
     private static Set<Block> packStone() {
-        if (packStone != null) { return packStone; }
-        Set<Block> rock = new HashSet<>();
-        for (Biome biome : Biome.REGISTRY) {
-            if (!(biome instanceof ContentBiome)) { continue; }
-            IBlockState stone = ((ContentBiome) biome).getStoneState();
-            if (stone != null) { rock.add(stone.getBlock()); }
-        }
-        rock.remove(Blocks.AIR);
-        packStone = rock;
-        return rock;
+        if (packStone == null) { packStone = packBlocks(false); }
+        return packStone;
     }
 
     public static boolean underSoil(IBlockState held) {
@@ -264,7 +261,7 @@ public final class BeardBlocks {
         if (!underSoil(world.getBlockState(at))) { return Crowned.TOP_NOT_UNDER_SOIL; }
         if (BeardKeep.holds(x, top, z)) { return Crowned.HELD; }
         if (BeardRails.insideBore(world, x, top, z)) { return Crowned.BORED; }
-        world.setBlockState(at, born, 2);
+        world.setBlockState(at, born, BlockFlags.UPDATE_CLIENTS);
         return Crowned.WRITTEN;
     }
 
@@ -277,7 +274,7 @@ public final class BeardBlocks {
         for (int y = base + 1; y <= from; y++) {
             if (BeardKeep.holds(x, y, z)) { continue; }
             boolean hangs = firm != loose && !world.getBlockState(at.setPos(x, y - 1, z)).getMaterial().isSolid();
-            world.setBlockState(at.setPos(x, y, z), hangs ? firm : loose, 2);
+            world.setBlockState(at.setPos(x, y, z), hangs ? firm : loose, BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;
@@ -304,7 +301,7 @@ public final class BeardBlocks {
         for (int y = from; y >= floor && y >= 1; y--) {
             at.setPos(x, y, z);
             if (world.getBlockState(at).getMaterial().isSolid()) { break; }
-            world.setBlockState(at, body, 2);
+            world.setBlockState(at, body, BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;
@@ -336,7 +333,7 @@ public final class BeardBlocks {
             IBlockState laid = fillGround(world, x, z);
             if (field && laid.getBlock() == Blocks.SAND && !sandBiome(world, x, z)) { laid = Blocks.DIRT.getDefaultState(); }
             if (laid.getBlock() == Blocks.DIRT && !world.getBlockState(at.up()).getMaterial().isSolid()) { laid = Blocks.GRASS.getDefaultState(); }
-            world.setBlockState(at, laid, 2);
+            world.setBlockState(at, laid, BlockFlags.UPDATE_CLIENTS);
             filled++;
         }
         return filled;

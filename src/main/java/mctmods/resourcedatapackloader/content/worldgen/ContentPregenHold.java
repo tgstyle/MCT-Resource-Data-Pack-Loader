@@ -1,13 +1,18 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentServer;
+import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
+import mctmods.resourcedatapackloader.content.card.CardIds;
+import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.block.BlockFalling;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -39,7 +44,10 @@ import java.util.concurrent.TimeUnit;
 public final class ContentPregenHold {
     private static final Map<UUID, Held> HELD = new ConcurrentHashMap<>();
     private static final String HELD_MODE = "rdplPregenHeldMode";
+    private static final Set<UUID> ARRIVED = new HashSet<>();
     private static ScheduledExecutorService flasher;
+    private static long beats;
+    private static String lastSaid = "";
     static volatile String progress = "";
 
     private static boolean online(MinecraftServer server, UUID id) {
@@ -57,16 +65,16 @@ public final class ContentPregenHold {
     static String greetingFor(int dimension, boolean fallBack) {
         String everywhere = null;
         for (String entry : ContentControl.list(ContentControl.CHUNKS, "welcomeSays", Config.chunks.welcomeSays)) {
-            String[] parts = entry.split("=", 2);
+            String[] parts = Settings.split(entry);
             Integer named = null;
-            if (parts.length == 2) {
-                try { named = Integer.parseInt(parts[0].trim()); }
+            if (parts != null) {
+                try { named = Integer.parseInt(parts[0]); }
                 catch (NumberFormatException ignored) {}
             }
             if (named == null) {
                 if (everywhere == null) { everywhere = entry.trim(); }
             }
-            else if (named == dimension) { return parts[1].trim(); }
+            else if (named == dimension) { return parts[1]; }
         }
         return fallBack ? everywhere : null;
     }
@@ -143,13 +151,8 @@ public final class ContentPregenHold {
         flasher = null;
     }
 
-    private static long beats;
-    private static String lastSaid = "";
-
     private static void flashHeld() {
-        ContentPregen live = ContentPregen.running;
-        String said = live == null ? progress : ContentPregenProgress.sofar(live);
-        if (!said.isEmpty()) { progress = said; }
+        String said = progress;
         boolean titles = beats % 6L == 0L;
         boolean keepAlive = beats % 8L == 0L;
         beats++;
@@ -206,23 +209,21 @@ public final class ContentPregenHold {
         welcome(player);
     }
 
-    private static final Set<UUID> ARRIVED = new HashSet<>();
-
     public static boolean arrived(EntityPlayerMP player) { return ARRIVED.contains(player.getUniqueID()); }
 
     static void welcome(EntityPlayerMP player) {
         greet(player);
         if (!ARRIVED.add(player.getUniqueID())) { return; }
-        mctmods.resourcedatapackloader.content.card.CardEvents.joined(player);
-        mctmods.resourcedatapackloader.content.ContentScoring.greet(player);
-        mctmods.resourcedatapackloader.content.ContentTeams.greet(player);
+        CardEvents.joined(player);
+        ContentScoring.greet(player);
+        ContentTeams.greet(player);
     }
 
     private static void greet(EntityPlayerMP player) {
         String greeting = welcomeAtDefault() ? Lang.tr(player, "rdpl.pregen.welcome") : greetingFor(player.dimension, true);
         if (greeting == null || greeting.isEmpty()) { return; }
         if (Says.card()) {
-            Says.tell(player, greeting, TextFormatting.GREEN);
+            Says.tell(player, TextFormatting.GREEN, greeting);
             return;
         }
         show(player, greeting, TextFormatting.GREEN);
@@ -255,13 +256,9 @@ public final class ContentPregenHold {
         release((EntityPlayerMP) event.player, held);
     }
 
-    @SubscribeEvent public static void onTravelWhileMakingLand(EntityTravelToDimensionEvent event) {
-        if (ContentPregen.busy()) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onTravelWhileMakingLand(EntityTravelToDimensionEvent event) { if (ContentPregen.busy()) { event.setCanceled(true); } }
 
-    @SubscribeEvent public static void onEnderTeleportWhileMakingLand(EnderTeleportEvent event) {
-        if (ContentPregen.busy()) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onEnderTeleportWhileMakingLand(EnderTeleportEvent event) { if (ContentPregen.busy()) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onHoldTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
@@ -291,7 +288,7 @@ public final class ContentPregenHold {
         }
     }
 
-    public static void tell(String said, TextFormatting color) { Says.tellAll(mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_ENDED, said, color); }
+    public static void tell(TextFormatting color, String said) { Says.tellAll(CardIds.PREGEN_ENDED, color, said); }
 
     @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
         ContentPregenDimensions.startWhenEntered(event.player.dimension);
@@ -303,6 +300,6 @@ public final class ContentPregenHold {
         if (event.player instanceof EntityPlayerMP) { hold((EntityPlayerMP) event.player, true); }
         String said = ContentPregenProgress.sofar(worker);
         if (said.isEmpty()) { return; }
-        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, mctmods.resourcedatapackloader.content.card.CardIds.PREGEN_RUNNING, said, TextFormatting.YELLOW); }
+        if (event.player instanceof EntityPlayerMP) { Says.tell((EntityPlayerMP) event.player, CardIds.PREGEN_RUNNING, TextFormatting.YELLOW, said); }
     }
 }

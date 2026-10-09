@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util.interfaces;
 
-
 public interface IBucketSorterEntry {
     default long getSorterStorage(int id) {
         long[] containerData = getBucketEntryData();

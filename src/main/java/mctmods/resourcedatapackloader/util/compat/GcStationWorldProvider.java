@@ -9,7 +9,6 @@ import micdoodle8.mods.galacticraft.core.client.SkyProviderOrbit;
 import micdoodle8.mods.galacticraft.core.dimension.WorldProviderOverworldOrbit;
 import net.minecraft.world.DimensionType;
 import net.minecraftforge.client.IRenderHandler;
-import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
@@ -21,14 +20,12 @@ public class GcStationWorldProvider extends WorldProviderOverworldOrbit {
     private static Vector3 color(int rgb) { return new Vector3(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
 
     @Override protected void init() {
-        station = DimensionManager.isDimensionRegistered(getDimension()) ? GcStations.byType(DimensionManager.getProviderType(getDimension()).getId()) : null;
+        DimensionType type = GcCelestial.registeredType(getDimension());
+        station = type == null ? null : GcStations.byType(type.getId());
         super.init();
     }
 
-    @Override @Nonnull public DimensionType getDimensionType() {
-        if (!DimensionManager.isDimensionRegistered(getDimension())) { return super.getDimensionType(); }
-        return DimensionManager.getProviderType(getDimension());
-    }
+    @Override @Nonnull public DimensionType getDimensionType() { return GcDimensionTypes.of(getDimension(), super.getDimensionType()); }
 
     @Override public CelestialBody getCelestialBody() { return station == null ? super.getCelestialBody() : station.body; }
 

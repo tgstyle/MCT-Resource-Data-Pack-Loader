@@ -1,16 +1,46 @@
 package mctmods.resourcedatapackloader;
 
+import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.CenterCard;
+import mctmods.resourcedatapackloader.client.HoldView;
+import mctmods.resourcedatapackloader.client.PackListEntries;
+import mctmods.resourcedatapackloader.client.PackOptionsButton;
+import mctmods.resourcedatapackloader.client.ProspectTooltip;
+import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.command.ClientCommands;
 import mctmods.resourcedatapackloader.command.ServerCommands;
 import mctmods.resourcedatapackloader.content.ContentExposures;
 import mctmods.resourcedatapackloader.content.ContentAnvils;
+import mctmods.resourcedatapackloader.content.ContentBoards;
+import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.ContentHardnessCheck;
 import mctmods.resourcedatapackloader.content.ContentOverrides;
+import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentSetup;
+import mctmods.resourcedatapackloader.content.ContentTeams;
+import mctmods.resourcedatapackloader.content.block.ContentBlockBell;
 import mctmods.resourcedatapackloader.content.block.ContentSpawners;
+import mctmods.resourcedatapackloader.content.card.CardEvents;
+import mctmods.resourcedatapackloader.content.card.CardRules;
+import mctmods.resourcedatapackloader.content.card.CardScan;
 import mctmods.resourcedatapackloader.content.compat.ContentBlastPlaster;
+import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
+import mctmods.resourcedatapackloader.content.item.ContentItemContainer;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
+import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
+import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
+import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
+import mctmods.resourcedatapackloader.content.entity.ContentOrders;
+import mctmods.resourcedatapackloader.content.entity.EntityStorage;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensionAmbience;
+import mctmods.resourcedatapackloader.content.worldgen.ContentFogSampler;
+import mctmods.resourcedatapackloader.content.worldgen.ContentHeatShimmer;
+import mctmods.resourcedatapackloader.content.worldgen.ContentPristine;
+import mctmods.resourcedatapackloader.content.worldgen.ContentProspect;
 import mctmods.resourcedatapackloader.util.compat.CbmpRubicParts;
 import mctmods.resourcedatapackloader.util.compat.CmsRubicSpawns;
 import mctmods.resourcedatapackloader.util.compat.GcRubicWorldgen;
@@ -32,10 +62,12 @@ import mctmods.resourcedatapackloader.content.village.CityGrid;
 import mctmods.resourcedatapackloader.content.village.ContentPierCargo;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.village.RecurrentVillages;
-import mctmods.resourcedatapackloader.content.village.MergePiece;
-import mctmods.resourcedatapackloader.content.village.RailPiece;
+import mctmods.resourcedatapackloader.content.village.VillagePieces;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBeardSeat;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomeControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderers;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpawnChunks;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCelestial;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
@@ -45,6 +77,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.portal.ContentPortalFrames;
+import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPathIntersects;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
@@ -79,21 +112,18 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Toasts;
 
-import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.storage.loot.LootTableList;
 import net.minecraft.world.storage.loot.functions.LootFunctionManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Loader;
 import net.minecraftforge.fluids.FluidRegistry;
-import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
-import mctmods.resourcedatapackloader.content.tile.TileEntityPackBell;
-import mctmods.resourcedatapackloader.content.tile.TileEntityPackContainer;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.network.NetworkRegistry;
 import net.minecraftforge.fml.common.registry.GameRegistry;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
@@ -112,6 +142,8 @@ public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     public static final String ICON = "textures/gui/icon.png";
     @Mod.Instance(MOD_ID) public static ResourceDataPackLoader INSTANCE;
+
+    public static ResourceLocation id(String path) { return new ResourceLocation(MOD_ID, path); }
 
     static {
         try {
@@ -136,10 +168,9 @@ public class ResourceDataPackLoader {
         FurnaceRecipes.reload();
         if (ContentFuels.load()) { MinecraftForge.EVENT_BUS.register(ContentFuels.class); }
         RecurrentVillages.register();
-        MapGenStructureIO.registerStructureComponent(RailPiece.class, RailPiece.ID);
-        MapGenStructureIO.registerStructureComponent(MergePiece.class, MergePiece.ID);
-        GameRegistry.registerTileEntity(TileEntityPackContainer.class, new ResourceLocation(MOD_ID, "container"));
-        GameRegistry.registerTileEntity(TileEntityPackBell.class, new ResourceLocation(MOD_ID, "bell"));
+        VillagePieces.rails();
+        GameRegistry.registerTileEntity(TileEntityPackContainer.class, id("container"));
+        GameRegistry.registerTileEntity(TileEntityPackBell.class, id("bell"));
         NetworkRegistry.INSTANCE.registerGuiHandler(this, new PackGuiHandler());
         ContentPotions.registerContainers();
         ContentPotions.applyBrewing();
@@ -166,8 +197,8 @@ public class ResourceDataPackLoader {
             MinecraftForge.EVENT_BUS.register(ContentThreat.class);
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
-        if (mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentCaveAmbience.class); }
-        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentProspect.class);
+        if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
+        MinecraftForge.EVENT_BUS.register(ContentProspect.class);
         if (ContentSeams.enabled()) { MinecraftForge.EVENT_BUS.register(ContentSeams.class); }
         if (ContentExposures.enabled()) { MinecraftForge.EVENT_BUS.register(ContentExposures.class); }
         if (ContentExposures.spreads()) { MinecraftForge.EVENT_BUS.register(ContentExposures.Mobs.class); }
@@ -175,37 +206,38 @@ public class ResourceDataPackLoader {
         if (Config.worldgen.tellWorldType && !ContentTerrain.worldType().isEmpty()) { MinecraftForge.EVENT_BUS.register(ContentTerrain.class); }
         ContentDimensions.load();
         ContentGameRules.load();
-        mctmods.resourcedatapackloader.content.ContentTeams.load();
-        mctmods.resourcedatapackloader.content.ContentScoring.load();
-        mctmods.resourcedatapackloader.content.ContentDice.load();
-        mctmods.resourcedatapackloader.content.ContentBoards.load();
-        mctmods.resourcedatapackloader.content.ContentRaids.load();
+        ContentTeams.load();
+        ContentScoring.load();
+        ContentDice.load();
+        ContentBoards.load();
+        if (ContentRaids.load()) { MinecraftForge.EVENT_BUS.register(ContentRaids.class); }
+        if (ContentRaids.belled()) { MinecraftForge.EVENT_BUS.register(ContentBlockBell.class); }
         if (ContentEntities.load()) {
             MinecraftForge.EVENT_BUS.register(ContentEntities.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentMobExperience.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.EntityStorage.class);
-            if (mctmods.resourcedatapackloader.content.entity.ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.entity.ContentOrders.class); }
+            MinecraftForge.EVENT_BUS.register(ContentMobExperience.class);
+            MinecraftForge.EVENT_BUS.register(EntityStorage.class);
+            if (ContentOrders.load()) { MinecraftForge.EVENT_BUS.register(ContentOrders.class); }
         }
         if (ContentVillages.load()) { ContentVillages.register(); }
         ContentBlastPlaster.install();
         ContentGates.load();
         if (ContentGates.enabled()) { MinecraftForge.EVENT_BUS.register(GateEvents.class); }
-        mctmods.resourcedatapackloader.content.card.CardRules.load();
-        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.card.CardEvents.class);
-        MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.card.CardScan.class);
+        CardRules.load();
+        MinecraftForge.EVENT_BUS.register(CardEvents.class);
+        MinecraftForge.EVENT_BUS.register(CardScan.class);
         if (!Loader.isModLoaded("universaltweaks")) { MinecraftForge.EVENT_BUS.register(VanillaPortalLink.class); }
         CmsRubicSpawns.register();
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
         GcRubicWorldgen.register();
         ThutRubicLifts.register();
-        if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPaths.class); }
+        MinecraftForge.EVENT_BUS.register(ContentPaths.class);
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
         if (ContentOreControl.enabled()) { MinecraftForge.ORE_GEN_BUS.register(ContentOreControl.class); }
         MinecraftForge.EVENT_BUS.register(ContentVoidWorld.class);
         if (ContentBedrock.enabled()) { MinecraftForge.EVENT_BUS.register(ContentBedrock.class); }
         List<WorldgenDef> veins = Config.content.load && Config.worldgen.load ? ContentRegistry.resolveWorldgen() : Collections.emptyList();
-        if (veins.isEmpty() && !ContentStructureMaps.any()) { ContentRetrogen.setup(veins, null); }
+        if (veins.isEmpty() && ContentStructureMaps.none()) { ContentRetrogen.setup(veins, null); }
         else {
             ContentWorldgen worldgen = new ContentWorldgen(veins);
             GameRegistry.registerWorldGenerator(worldgen, 3);
@@ -237,23 +269,23 @@ public class ResourceDataPackLoader {
                 MinecraftForge.EVENT_BUS.register(ContentHardnessCheck.class);
                 ContentHardnessCheck.watching();
             }
-            MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackOptionsButton.Handler());
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CardOverlay.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.CenterCard.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.HoldView.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentFogSampler.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentHeatShimmer.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.content.worldgen.ContentDimensionAmbience.class);
-            MinecraftForge.EVENT_BUS.register(mctmods.resourcedatapackloader.client.ProspectTooltip.class);
-            MinecraftForge.EVENT_BUS.register(new mctmods.resourcedatapackloader.client.PackListEntries.Handler());
-            if (mctmods.resourcedatapackloader.content.item.ContentItemContainer.baubled()) { mctmods.resourcedatapackloader.client.PouchKey.register(); }
+            MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
+            MinecraftForge.EVENT_BUS.register(CardOverlay.class);
+            MinecraftForge.EVENT_BUS.register(CenterCard.class);
+            MinecraftForge.EVENT_BUS.register(HoldView.class);
+            MinecraftForge.EVENT_BUS.register(ContentFogSampler.class);
+            MinecraftForge.EVENT_BUS.register(ContentHeatShimmer.class);
+            MinecraftForge.EVENT_BUS.register(ContentDimensionAmbience.class);
+            MinecraftForge.EVENT_BUS.register(ProspectTooltip.class);
+            MinecraftForge.EVENT_BUS.register(new PackListEntries.Handler());
+            if (ContentItemContainer.baubled()) { PouchKey.register(); }
         }
     }
 
     @Mod.EventHandler public void interModComms(FMLInterModComms.IMCEvent event) { ContentCelestial.register(); }
 
-    @Mod.EventHandler public void postInit(net.minecraftforge.fml.common.event.FMLPostInitializationEvent event) {
-        mctmods.resourcedatapackloader.content.entity.ContentEntityTypes.registerLate();
+    @Mod.EventHandler public void postInit(FMLPostInitializationEvent event) {
+        ContentEntityTypes.registerLate();
         ContentBiomes.resolveSpawns();
     }
 
@@ -261,11 +293,12 @@ public class ResourceDataPackLoader {
         RecipeDisabled.apply();
         FurnaceBlocking.apply();
         ContentSpawners.apply();
+        ContentPortals.bind();
         ContentCelestial.loadComplete();
     }
 
     @Mod.EventHandler public void beforeServerStart(FMLServerAboutToStartEvent event) {
-        mctmods.resourcedatapackloader.content.worldgen.ContentPristine.beforeWorldsLoad(event.getServer());
+        ContentPristine.beforeWorldsLoad(event.getServer());
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
         PackManager.get().scan(root);
@@ -279,7 +312,12 @@ public class ResourceDataPackLoader {
         ContentStructurePlacement.reload();
         ContentEntityTicks.reload();
         ContentVillages.reload();
-        mctmods.resourcedatapackloader.content.card.CardRules.load();
+        ContentBeardSeat.reload();
+        ContentCityMaps.reload();
+        ContentChunkSaves.reload();
+        ContentSpawnChunks.reload();
+        if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { ContentSkyRenderers.reload(); }
+        CardRules.load();
         if (ContentVillages.load()) { ContentVillages.register(); }
     }
 
@@ -287,7 +325,7 @@ public class ResourceDataPackLoader {
 
     @Mod.EventHandler public void onServerStarted(FMLServerStartedEvent event) {
         ContentCelestial.serverStarted();
-        mctmods.resourcedatapackloader.content.ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }

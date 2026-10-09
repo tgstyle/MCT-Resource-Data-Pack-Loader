@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
-public final class
-ContentWorldTemplates {
+public final class ContentWorldTemplates {
     private static final Map<String, BiomeDictionary.Type> ROLES = roles();
     private static final List<String> ROLE_ORDER = Collections.unmodifiableList(Arrays.asList(
             "ocean", "river", "beach", "mushroom", "swamp", "hills", "mountain", "jungle",

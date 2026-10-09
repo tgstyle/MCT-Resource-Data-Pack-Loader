@@ -1,39 +1,23 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
-import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Random;
 
-public final class ContentVent implements IContentShape {
-    private final ContentPlacer placer;
-    private final ShapeDef shape;
-
-    public ContentVent(ContentPlacer placer, ShapeDef shape) {
-        this.placer = placer;
-        this.shape = shape;
-    }
+public final class ContentVent extends ContentShapeBase {
+    public ContentVent(ContentPlacer placer, ShapeDef shape) { super(placer, shape); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
-        int radius = MathHelper.clamp(shape.radius.pick(random), 0, ShapeDef.MOST_REACH);
-        int height = Math.max(1, shape.height.pick(random));
-        int step = shape.hanging ? -1 : 1;
+        int radius = radius(random);
+        int height = rise(random);
+        int step = step();
         boolean round = shape.isRound();
-        int span = radius * radius;
         boolean placed = false;
         for (int level = 0; level < height; level++) {
             int y = origin.getY() + step * level;
-            boolean any = false;
-            for (int offX = -radius; offX <= radius; offX++) {
-                for (int offZ = -radius; offZ <= radius; offZ++) {
-                    if (round && offX * offX + offZ * offZ > span) { continue; }
-                    any |= placer.place(world, random, origin.getX() + offX, y, origin.getZ() + offZ);
-                }
-            }
-            if (!any) { break; }
+            if (!placer.disc(world, random, origin, radius, round, y, y)) { break; }
             placed = true;
         }
         return placed;

@@ -1,23 +1,20 @@
 package mctmods.resourcedatapackloader.content;
 
-import mctmods.resourcedatapackloader.content.block.ContentBlockCane;
 import mctmods.resourcedatapackloader.content.block.ContentBlockCrop;
-import mctmods.resourcedatapackloader.content.block.ContentBlockFlower;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLeaves;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLog;
-import mctmods.resourcedatapackloader.content.block.ContentBlockSapling;
 import mctmods.resourcedatapackloader.content.block.ContentFluid;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTypes;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
 import mctmods.resourcedatapackloader.content.types.*;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.util.ContentOreDict;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCofhWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
-import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.core.CofhWorldContainer;
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
@@ -49,6 +46,7 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.oredict.OreDictionary;
 import java.util.*;
+import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 public final class ContentRegistry {
@@ -84,15 +82,7 @@ public final class ContentRegistry {
         if (loaded) { return; }
         loaded = true;
         if (!Config.registersToClients()) { return; }
-        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
-            ResourceLocation key = held.getKey();
-            if (ContentOwners.reserved(key)) { continue; }
-            try {
-                BlockDef def = ContentParser.block(key, held.getValue());
-                if (def != null) { BLOCK_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", key, ex.getMessage()); }
-        }
+        parseAll(PackManager.BLOCKS, "block", ContentParser::block, BLOCK_DEFS);
         for (Map.Entry<ResourceLocation, DimensionDef> opened : ContentPortals.opening().entrySet()) {
             ResourceLocation key = ContentPortals.blockName(opened.getKey());
             if (BLOCK_DEFS.containsKey(key)) { continue; }
@@ -102,15 +92,7 @@ public final class ContentRegistry {
             ContentPortals.made(key);
             ContentLog.LOGGER.debug("Dimension {} opens through a frame, so {} is registered to stand inside it", opened.getKey(), key);
         }
-        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
-            ResourceLocation key = held.getKey();
-            if (ContentOwners.reserved(key)) { continue; }
-            try {
-                ItemDef def = ContentParser.item(key, held.getValue());
-                if (def != null) { ITEM_DEFS.put(key, def); }
-            }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", key, ex.getMessage()); }
-        }
+        parseAll(PackManager.ITEMS, "item", ContentParser::item, ITEM_DEFS);
         Json.eachFile(PackManager.FLUIDS, "fluid definition", (key, contents) -> {
             if (ContentOwners.reserved(key)) { return; }
             FluidDef def = ContentParser.fluid(key, contents);
@@ -141,6 +123,18 @@ public final class ContentRegistry {
         }
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !WORLDGEN_DEFS.isEmpty()) {
             Summary.info("content", "Loaded " + BLOCK_DEFS.size() + " block, " + ITEM_DEFS.size() + " item, " + FLUID_DEFS.size() + " fluid and " + WORLDGEN_DEFS.size() + " worldgen definition(s)");
+        }
+    }
+
+    private static <T> void parseAll(String folder, String what, BiFunction<ResourceLocation, String, T> parse, Map<ResourceLocation, T> into) {
+        for (Map.Entry<ResourceLocation, String> held : ContentInherits.collect(folder).entrySet()) {
+            ResourceLocation key = held.getKey();
+            if (ContentOwners.reserved(key)) { continue; }
+            try {
+                T def = parse.apply(key, held.getValue());
+                if (def != null) { into.put(key, def); }
+            }
+            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in {} definition {}, ignoring it: {}", what, key, ex.getMessage()); }
         }
     }
 
@@ -246,6 +240,7 @@ public final class ContentRegistry {
             ContentOwners.as(key.getNamespace(), () -> {
                 ContentBlockFluid block = new ContentBlockFluid(def.getResolved(), def);
                 ContentSetup.apply(block, def.creativeTab);
+                ContentSetup.flammable(block, def.fireSpread, def.flammability);
                 event.getRegistry().register(block);
                 FLUID_BLOCKS.put(key, block);
             });
@@ -289,7 +284,6 @@ public final class ContentRegistry {
         ContentMaterials.resolveRepairItems();
         registerOreDictionary();
         ContentOreDict.apply();
-        BlockDrops.reload();
     }
 
     public static List<WorldgenDef> resolveWorldgen() {
@@ -309,9 +303,7 @@ public final class ContentRegistry {
                     ContentLog.LOGGER.error("Worldgen {} names replace block {}, which is not registered, leaving it out", entry.getKey(), name.block);
                     continue;
                 }
-                if (!name.properties.isEmpty()) { exact.add(ContentStates.of(target, 0, name.properties, entry.getKey())); }
-                else if (name.meta >= 0) { exact.add(ContentStates.of(target, name.meta)); }
-                else { targets.add(target); }
+                ContentStates.sort(name, target, targets::add, exact::add, entry.getKey());
             }
             if (targets.isEmpty() && exact.isEmpty()) {
                 ContentLog.LOGGER.error("Worldgen {} has no registered block to replace, skipping it", entry.getKey());
@@ -325,9 +317,7 @@ public final class ContentRegistry {
                     ContentLog.LOGGER.error("Worldgen {} names adjacent block {}, which is not registered, leaving it out", entry.getKey(), name.block);
                     continue;
                 }
-                if (!name.properties.isEmpty()) { nearbyExact.add(ContentStates.of(target, 0, name.properties, entry.getKey())); }
-                else if (name.meta >= 0) { nearbyExact.add(ContentStates.of(target, name.meta)); }
-                else { nearby.add(target); }
+                ContentStates.sort(name, target, nearby::add, nearbyExact::add, entry.getKey());
             }
             if (!def.adjacent.isEmpty() && nearby.isEmpty() && nearbyExact.isEmpty()) {
                 ContentLog.LOGGER.error("Worldgen {} has no registered adjacent block, skipping it so it does not generate everywhere", entry.getKey());
@@ -395,16 +385,8 @@ public final class ContentRegistry {
 
     private static void resolveCrops() {
         for (Map.Entry<ResourceLocation, Block> entry : BLOCKS_BY_NAME.entrySet()) {
-            if (entry.getValue() instanceof ContentBlockCane) {
-                ((ContentBlockCane) entry.getValue()).resolveSoil();
-                continue;
-            }
-            if (entry.getValue() instanceof ContentBlockSapling) {
-                ((ContentBlockSapling) entry.getValue()).resolveSoil();
-                continue;
-            }
-            if (entry.getValue() instanceof ContentBlockFlower) {
-                ((ContentBlockFlower) entry.getValue()).resolveSoil();
+            if (entry.getValue() instanceof IContentSoil) {
+                ((IContentSoil) entry.getValue()).soil().resolve();
                 continue;
             }
             if (!(entry.getValue() instanceof ContentBlockCrop)) { continue; }

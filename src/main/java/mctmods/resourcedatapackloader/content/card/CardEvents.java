@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.util.Stacks;
 
@@ -17,7 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 public final class CardEvents {
-    private static final ResourceLocation CARD = new ResourceLocation("rdpl", "card");
+    private static final ResourceLocation CARD = ResourceDataPackLoader.id("card");
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
 
     private CardEvents() {}

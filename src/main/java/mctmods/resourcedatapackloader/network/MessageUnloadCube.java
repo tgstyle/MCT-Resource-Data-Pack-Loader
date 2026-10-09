@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 import mctmods.resourcedatapackloader.util.CubePos;
 
 import com.google.common.base.Preconditions;
@@ -30,11 +29,8 @@ public class MessageUnloadCube implements IMessage {
 
     public static class Handler extends AbstractClientMessageHandler<MessageUnloadCube> {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageUnloadCube message, MessageContext ctx) {
-            IRubicWorld worldClient = (IRubicWorld) world;
-            if (!worldClient.rdpl$isRubicWorld()) { return; }
-            if (!(((World) worldClient).getChunkProvider() instanceof CubeProviderClient)) { return; }
-            CubeProviderClient cubeCache = (CubeProviderClient) worldClient.rdpl$getCubeCache();
-
+            CubeProviderClient cubeCache = cubeCache(world);
+            if (cubeCache == null) { return; }
             cubeCache.getCube(message.getCubePos()).markForRenderUpdate();
             cubeCache.unloadCube(message.getCubePos());
         }

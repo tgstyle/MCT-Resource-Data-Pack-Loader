@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio.async;
 
+import mctmods.resourcedatapackloader.util.ContentLog;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -7,7 +8,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 
-abstract class PendingLoad<T> implements Runnable {
+abstract class PendingLoad<T> {
     private final List<Consumer<T>> waiting = new CopyOnWriteArrayList<>();
     private final AtomicBoolean readStarted = new AtomicBoolean();
     private final AtomicBoolean handedOver = new AtomicBoolean();
@@ -30,11 +31,6 @@ abstract class PendingLoad<T> implements Runnable {
 
     boolean claimRead() { return readStarted.compareAndSet(false, true); }
 
-    @Override public void run() {
-        if (!claimRead()) { return; }
-        readNow();
-    }
-
     void readNow() {
         try { readOffThread(); }
         catch (Throwable thrown) { failure = thrown; }
@@ -51,11 +47,16 @@ abstract class PendingLoad<T> implements Runnable {
 
     boolean hasBeenHandedOver() { return handedOver.get(); }
 
+    void abandon() { handedOver.set(true); }
+
     void handOver() {
         if (!handedOver.compareAndSet(false, true)) { return; }
-        if (failure != null) { throw new RuntimeException("Could not read " + describe(), failure); }
-        applyOnServerThread();
-        T value = loaded();
+        T value = null;
+        if (failure != null) { ContentLog.LOGGER.error("Could not read {}, so it is handed over as missing", describe(), failure); }
+        else {
+            applyOnServerThread();
+            value = loaded();
+        }
         for (Consumer<T> listener : waiting) { listener.accept(value); }
         waiting.clear();
     }

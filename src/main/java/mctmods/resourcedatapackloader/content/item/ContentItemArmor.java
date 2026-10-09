@@ -10,7 +10,6 @@ import net.minecraft.item.EnumRarity;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.item.ItemStack;
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 @SuppressWarnings("deprecation") public class ContentItemArmor extends ItemArmor implements IContentItem {
     private final ItemDef def;
@@ -23,15 +22,10 @@ import javax.annotation.Nullable;
         ContentSetup.apply(this, def.creativeTab);
     }
 
-    @Nullable private ItemVariant single() { return def.visible.isEmpty() ? null : def.visible.get(0); }
-
-    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) {
-        ItemVariant value = single();
-        return value == null ? super.getTranslationKey() : super.getTranslationKey() + "." + value.name;
-    }
+    @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.singleKey(this, def); }
 
     @Override @Nonnull public EnumRarity getRarity(@Nonnull ItemStack stack) {
-        ItemVariant value = single();
+        ItemVariant value = ItemVariants.single(def);
         return value == null ? EnumRarity.COMMON : value.rarity;
     }
 }

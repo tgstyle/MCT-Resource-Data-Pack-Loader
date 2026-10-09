@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -13,7 +14,11 @@ import net.minecraftforge.event.terraingen.OreGenEvent;
 import net.minecraftforge.fml.common.eventhandler.Event;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public final class ContentOreControl {
     public static final String MINECRAFT = "minecraft";
@@ -49,19 +54,17 @@ public final class ContentOreControl {
     private static boolean outsideScope(int dimension) {
         int[] allowed = SCOPE.get(() -> ContentControl.numbers(ContentControl.ORES, "blockOreDimensions", Config.worldgen.blockOreDimensions));
         if (allowed.length == 0) { return false; }
-        return listed(allowed, dimension) == SCOPE_BLACKLIST.get(() -> ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist));
+        return Listing.blocks(listed(allowed, dimension), SCOPE_BLACKLIST.get(() -> ContentControl.flag(ContentControl.ORES, "blockOreDimensionsAreBlacklist", Config.worldgen.blockOreDimensionsAreBlacklist)));
     }
 
     private static boolean listed(int[] allowed, int dimension) {
-        for (int wanted : allowed) {
-            if (wanted == dimension) { return true; }
-        }
+        for (int wanted : allowed) { if (wanted == dimension) { return true; } }
         return false;
     }
 
     private static boolean typeBlocked(String type) {
         if (oreTypes.isEmpty()) { return false; }
-        return oreTypes.contains(type) == ContentControl.flag(ContentControl.ORES, "oreTypesAreBlacklist", Config.worldgen.oreTypesAreBlacklist);
+        return Listing.blocks(oreTypes.contains(type), ContentControl.flag(ContentControl.ORES, "oreTypesAreBlacklist", Config.worldgen.oreTypesAreBlacklist));
     }
 
     private static void deny(OreGenEvent.GenerateMinable event, String type, String owner) {
@@ -69,21 +72,19 @@ public final class ContentOreControl {
         denied(type, owner);
     }
 
-    public static boolean blocks(String type, String owner, int dimension) {
-        if (!enabled()) { return false; }
+    public static boolean passes(String type, String owner, int dimension) {
+        if (!enabled()) { return true; }
         if (oreTypes == null) { load(); }
-        if (outsideScope(dimension)) { return false; }
-        if (typeBlocked(type)) { return true; }
-        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) { return false; }
-        return !whitelist.contains(owner);
+        if (outsideScope(dimension)) { return true; }
+        if (typeBlocked(type)) { return false; }
+        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) { return true; }
+        return whitelist.contains(owner);
     }
 
     public static void denied(String type, String owner) {
         String key = owner + " " + type;
         BLOCKED.count(key);
-        if (ContentControl.flag(ContentControl.ORES, "logBlockedOres", Config.worldgen.logBlockedOres) && REPORTED.add(key)) {
-            ContentLog.LOGGER.info("Blocking {} ore generation from {}. Use /rdplserver oregen to see running totals", type, owner);
-        }
+        if (ContentControl.flag(ContentControl.ORES, "logBlockedOres", Config.worldgen.logBlockedOres) && REPORTED.add(key)) { ContentLog.LOGGER.info("Blocking {} ore generation from {}. Use /rdplserver oregen to see running totals", type, owner); }
     }
 
     public static Map<String, Integer> blocked() { return BLOCKED.map(); }
@@ -92,13 +93,9 @@ public final class ContentOreControl {
         whitelist = Settings.lower(ContentControl.list(ContentControl.ORES, "oreWhitelist", Config.worldgen.oreWhitelist));
         oreTypes = new LinkedHashSet<>();
         for (String name : ContentControl.list(ContentControl.ORES, "oreTypes", Config.worldgen.oreTypes)) { oreTypes.add(name.toUpperCase(Locale.ROOT)); }
-        if (ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) {
-            Summary.info("oregen", "Blocking ore generation except from " + (whitelist.isEmpty() ? "nothing" : whitelist));
-        }
+        if (ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres)) { Summary.info("oregen", "Blocking ore generation except from " + (whitelist.isEmpty() ? "nothing" : whitelist)); }
         if (!oreTypes.isEmpty()) { Summary.info("oregen.types", (ContentControl.flag(ContentControl.ORES, "oreTypesAreBlacklist", Config.worldgen.oreTypesAreBlacklist) ? "Blocking these ore types outright: " : "Allowing only these ore types to generate: ") + oreTypes); }
-        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres) && !whitelist.contains(MINECRAFT)) {
-            ContentLog.LOGGER.warn("oreWhitelist leaves out {}, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything", MINECRAFT);
-        }
+        if (!ContentControl.flag(ContentControl.ORES, "blockOres", Config.worldgen.blockOres) && !whitelist.contains(MINECRAFT)) { ContentLog.LOGGER.warn("oreWhitelist leaves out {}, but blockOres is off, so nothing is being blocked by mod. Turn blockOres on for the whitelist to mean anything", MINECRAFT); }
     }
 
     public static void beginPack(String namespace) { PACK.set(namespace); }

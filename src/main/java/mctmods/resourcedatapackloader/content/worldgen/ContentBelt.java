@@ -89,5 +89,4 @@ public final class ContentBelt implements IContentShape {
             }
         }
     }
-
 }

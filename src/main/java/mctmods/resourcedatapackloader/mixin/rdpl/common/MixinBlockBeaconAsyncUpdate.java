@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Shadow(remap = false, aliases = "field_180358_a") @Final World val$worldIn;
     @Shadow(remap = false, aliases = "field_180357_b") @Final BlockPos val$glassPos;
 
-    @Inject(method = "run", at = @At("HEAD"), cancellable = true) private void runRubic(CallbackInfo ci) {
+    @Inject(method = "run", at = @At("HEAD"), cancellable = true) private void rdpl$runRubic(CallbackInfo ci) {
         if (!((IRubicWorld) val$worldIn).rdpl$isRubicWorld()) { return; }
         ci.cancel();
         BeaconUpdater.run(val$worldIn, val$glassPos);

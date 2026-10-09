@@ -3,7 +3,10 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
+import net.minecraft.tileentity.TileEntityBeacon;
+import net.minecraft.tileentity.TileEntityLockable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -13,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraft.tileentity.TileEntityBeacon;
-import net.minecraft.tileentity.TileEntityLockable;
 import java.util.List;
 
 @Mixin(TileEntityBeacon.class) public abstract class MixinTileEntityBeacon extends TileEntityLockable {
@@ -22,13 +23,14 @@ import java.util.List;
     @Shadow @Final private List<TileEntityBeacon.BeamSegment> beamSegments;
     @Unique private int rdpl$scanTop = 256;
 
-    @ModifyConstant(method = "updateSegmentColors", constant = @Constant(expandZeroConditions = Constant.Condition.LESS_THAN_ZERO)) private int updateSegmentColorsYValue(int orig) {
-        return ((IRubicWorld) world).rdpl$getMinHeight();
-    }
+    @ModifyConstant(method = "updateSegmentColors", constant = @Constant(expandZeroConditions = Constant.Condition.LESS_THAN_ZERO)) private int rdpl$updateSegmentColorsYValue(int orig) { return GenHeights.floor(world, orig); }
 
     @Inject(method = "updateSegmentColors", at = @At("HEAD")) private void rdpl$figureScanTop(CallbackInfo ci) {
         IRubicWorld rubic = (IRubicWorld) world;
-        if (!rubic.rdpl$isRubicWorld()) { rdpl$scanTop = 256; return; }
+        if (!rubic.rdpl$isRubicWorld()) {
+            rdpl$scanTop = 256;
+            return;
+        }
         rdpl$scanTop = Math.min(rubic.rdpl$getMaxHeight(), Math.max(rdpl$topStorageBlockY() + 1, pos.getY() + 1));
     }
 

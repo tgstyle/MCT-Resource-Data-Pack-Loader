@@ -21,8 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow private ChunkGeneratorSettings settings;
     @Shadow public abstract LostCityProfile getProfile();
 
-    @Inject(method = "<init>(Lnet/minecraft/world/World;J)V", at = @At("TAIL"), remap = false)
-    private void rdpl$packTerrain(World world, long seed, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/World;J)V", at = @At("TAIL"), remap = false) private void rdpl$packTerrain(World world, long seed, CallbackInfo ci) {
         String worldType = world.getWorldInfo().getTerrainType().getName();
         if (ContentTerrain.options(worldType).isEmpty()) { return; }
         settings = ChunkGeneratorSettings.Factory.jsonToFactory(ContentTerrain.merge(getProfile().GENERATOR_OPTIONS, worldType)).build();

@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EntityRenderer.class) public class MixinEntityRendererRubic {
     @Shadow @Final private Minecraft mc;
 
-    @Redirect(method = {"updateRenderer", "setupCameraTransform", "renderWorldPass", "updateFogColor"}, at = @At(value = "FIELD", target = "Lnet/minecraft/client/settings/GameSettings;renderDistanceChunks:I", opcode = Opcodes.GETFIELD)) private int getRenderDistance(GameSettings settings) {
+    @Redirect(method = {"updateRenderer", "setupCameraTransform", "renderWorldPass", "updateFogColor"}, at = @At(value = "FIELD", target = "Lnet/minecraft/client/settings/GameSettings;renderDistanceChunks:I", opcode = Opcodes.GETFIELD)) private int rdpl$getRenderDistance(GameSettings settings) {
         if (!((IRubicWorld) mc.world).rdpl$isRubicWorld()) { return settings.renderDistanceChunks; }
         return Math.max(settings.renderDistanceChunks, Config.client.verticalCubeLoadDistance);
     }

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world.cube;
 
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.EntityContainer;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
@@ -47,7 +47,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class Cube implements ICube {
-    @Nullable protected static final ExtendedBlockStorage NULL_STORAGE = null;
     @Nullable private byte[] blockBiomeArray = null;
     @Nonnull private final TicketList tickets;
     private boolean isModified = false;
@@ -76,10 +75,14 @@ public class Cube implements ICube {
         this.tileEntityMap = new HashMap<>();
         this.tileEntityPosQueue = new ConcurrentLinkedQueue<>();
         this.cubeLightData = ((IRubicWorldInternal) world).rdpl$getLightingManager().createLightData();
-        this.storage = NULL_STORAGE;
+        this.storage = null;
+        this.capabilities = attachCapabilities();
+    }
+
+    private CapabilityDispatcher attachCapabilities() {
         AttachCapabilitiesEvent<ICube> event = new AttachCapabilitiesEvent<>(ICube.class, this);
         MinecraftForge.EVENT_BUS.post(event);
-        this.capabilities = !event.getCapabilities().isEmpty() ? new CapabilityDispatcher(event.getCapabilities(), null) : null;
+        return !event.getCapabilities().isEmpty() ? new CapabilityDispatcher(event.getCapabilities(), null) : null;
     }
 
     public Cube(Chunk column, int cubeY, CubePrimer primer) {
@@ -90,18 +93,8 @@ public class Cube implements ICube {
                 for (int x = 0; x < Cube.SIZE; x++) {
                     IBlockState newstate = primer.getBlockState(x, y, z);
                     if (newstate != air) {
-                        if (storage == NULL_STORAGE) { newStorage(); }
+                        if (storage == null) { newStorage(); }
                         storage.set(x, y, z, newstate);
-                    }
-                }
-            }
-        }
-        if (primer.hasBiomes()) {
-            for (int biomeX = 0; biomeX < 4; biomeX++) {
-                for (int biomeY = 0; biomeY < 4; biomeY++) {
-                    for (int biomeZ = 0; biomeZ < 4; biomeZ++) {
-                        Biome biome = primer.getBiome(biomeX, biomeY, biomeZ);
-                        if (biome != null) { setBiome(biomeX, biomeY, biomeZ, biome); }
                     }
                 }
             }
@@ -122,18 +115,15 @@ public class Cube implements ICube {
         this.tileEntityMap = tileEntityMap;
         this.tileEntityPosQueue = tileEntityPosQueue;
         this.cubeLightData = null;
-        AttachCapabilitiesEvent<ICube> event = new AttachCapabilitiesEvent<>(ICube.class, this);
-        MinecraftForge.EVENT_BUS.post(event);
-        this.capabilities = !event.getCapabilities().isEmpty() ? new CapabilityDispatcher(event.getCapabilities(), null) : null;
+        this.capabilities = attachCapabilities();
     }
 
     @Override public IBlockState getBlockState(BlockPos pos) { return this.getBlockState(pos.getX(), pos.getY(), pos.getZ()); }
 
     public IBlockState getBlockState(int blockX, int localOrBlockY, int blockZ) {
-        if (storage == NULL_STORAGE) { return Blocks.AIR.getDefaultState(); }
+        if (storage == null) { return Blocks.AIR.getDefaultState(); }
         return storage.get(blockToLocal(blockX), blockToLocal(localOrBlockY), blockToLocal(blockZ));
     }
-
 
     public int getCachedLightFor(EnumSkyBlock type, BlockPos pos) {
         int x = blockToLocal(pos.getX());
@@ -191,8 +181,7 @@ public class Cube implements ICube {
     }
 
     @Override public Biome getBiome(BlockPos pos) {
-        if (this.blockBiomeArray == null)
-            return this.getColumn().getBiome(pos, world.getBiomeProvider());
+        if (this.blockBiomeArray == null) { return this.getColumn().getBiome(pos, world.getBiomeProvider()); }
         int biomeX = Coords.blockToLocalBiome3d(pos.getX());
         int biomeY = Coords.blockToLocalBiome3d(pos.getY());
         int biomeZ = Coords.blockToLocalBiome3d(pos.getZ());
@@ -202,8 +191,7 @@ public class Cube implements ICube {
     }
 
     @Override public void setBiome(int localBiomeX, int localBiomeY, int localBiomeZ, Biome biome) {
-        if (this.blockBiomeArray == null)
-            this.blockBiomeArray = new byte[4 * 4 * 4];
+        if (this.blockBiomeArray == null) { this.blockBiomeArray = new byte[4 * 4 * 4]; }
         this.blockBiomeArray[AddressTools.getBiomeAddress3d(localBiomeX, localBiomeY, localBiomeZ)] = (byte) Biome.REGISTRY.getIDForObject(biome);
     }
 
@@ -215,7 +203,7 @@ public class Cube implements ICube {
             return;
         }
         if (this.blockBiomeArray.length != biomeArray.length) {
-            Rubic.LOGGER.warn("Could not set level cube biomes, array length is {} instead of {}", biomeArray.length,
+            ContentLog.LOGGER.warn("Could not set level cube biomes, array length is {} instead of {}", biomeArray.length,
                     this.blockBiomeArray.length);
         }
         else { System.arraycopy(biomeArray, 0, this.blockBiomeArray, 0, this.blockBiomeArray.length); }
@@ -270,25 +258,25 @@ public class Cube implements ICube {
 
     public void onLoad() {
         if (isCubeLoaded) {
-            Rubic.LOGGER.error("Attempting to load already loaded cube at {}", this.getCoords());
+            ContentLog.LOGGER.error("Attempting to load already loaded cube at {}", this.getCoords());
             return;
         }
         this.world.addTileEntities(this.tileEntityMap.values());
         this.world.loadEntities(this.entities.getEntities());
         this.isCubeLoaded = true;
         boolean raised = false;
-        ExtendedBlockStorage blocks = storage == NULL_STORAGE || storage.isEmpty() ? null : storage;
+        ExtendedBlockStorage blocks = storage == null || storage.isEmpty() ? null : storage;
         boolean stale = isSurfaceTracked && !world.isRemote && surfaceIsStale(blocks);
         if (!isSurfaceTracked || stale) {
             IColumnInternal held = getColumn();
             int[] before = new int[256];
-            for (int i = 0; i < 256; i++) { before[i] = held.getTopYWithStaging(i & 15, i >> 4); }
+            for (int i = 0; i < 256; i++) { before[i] = held.getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i)); }
             if (stale) {
-                Rubic.LOGGER.warn("Cube {} and the height map of its column disagree, so the height map is rebuilt from the cube", this.getCoords());
+                ContentLog.LOGGER.warn("Cube {} and the height map of its column disagree, so the height map is rebuilt from the cube", this.getCoords());
                 pushOpacity(blocks);
             }
             else { held.addToStagingHeightmap(this); }
-            for (int i = 0; i < 256 && !raised; i++) { raised = held.getTopYWithStaging(i & 15, i >> 4) > before[i]; }
+            for (int i = 0; i < 256 && !raised; i++) { raised = held.getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i)) > before[i]; }
         }
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onCubeLoad(this, raised);
         CompatHandler.onCubeLoad(new ChunkEvent.Load(getColumn()));
@@ -321,7 +309,7 @@ public class Cube implements ICube {
     }
 
     public void trackSurface() {
-        if (storage != NULL_STORAGE && !storage.isEmpty()) { pushOpacity(storage); }
+        if (storage != null &&!storage.isEmpty()) { pushOpacity(storage); }
         isSurfaceTracked = true;
         ((IColumnInternal) getColumn()).removeFromStagingHeightmap(this);
         ((IRubicWorldInternal) world).rdpl$getLightingManager().onTrackCubeSurface(this);
@@ -330,7 +318,7 @@ public class Cube implements ICube {
     public void onUnload() {
         ((IRubicWorldInternal) this.world).rdpl$getLightingManager().onCubeUnload();
         if (!isCubeLoaded) {
-            Rubic.LOGGER.error("Attempting to unload already unloaded cube at {}", this.getCoords());
+            ContentLog.LOGGER.error("Attempting to unload already unloaded cube at {}", this.getCoords());
             return;
         }
         this.isCubeLoaded = false;

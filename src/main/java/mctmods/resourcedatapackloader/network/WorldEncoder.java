@@ -4,10 +4,9 @@ import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;
 import mctmods.resourcedatapackloader.util.Coords;
 
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.chunk.Chunk;
@@ -20,12 +19,9 @@ class WorldEncoder {
     static void encodeCubes(PacketBuffer out, Collection<Cube> cubes) {
         cubes.forEach(cube -> {
             byte flags = 0;
-            if(cube.isEmpty())
-                flags |= 1;
-            if(cube.getStorage() != null)
-                flags |= 2;
-            if(cube.getBiomeArray() != null)
-                flags |= 4;
+            if (cube.isEmpty()) { flags |= 1; }
+            if (cube.getStorage() != null) { flags |= 2; }
+            if (cube.getBiomeArray() != null) { flags |= 4; }
             out.writeByte(flags);
         });
 
@@ -51,8 +47,7 @@ class WorldEncoder {
         });
 
         cubes.forEach(cube -> {
-            if (cube.getBiomeArray() != null)
-                out.writeBytes(cube.getBiomeArray());
+            if (cube.getBiomeArray() != null) { out.writeBytes(cube.getBiomeArray()); }
         });
     }
 

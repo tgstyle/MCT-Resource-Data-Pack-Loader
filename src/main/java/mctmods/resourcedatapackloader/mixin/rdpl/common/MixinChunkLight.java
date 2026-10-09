@@ -29,81 +29,69 @@ import net.minecraft.util.math.ChunkPos;
     @Shadow @Final private World world;
     @Shadow private boolean isTerrainPopulated;
     @Shadow private boolean isGapLightingUpdated;
-    @Unique private static final ThreadLocal<long[]> rdpl$litStart = ThreadLocal.withInitial(() -> new long[1]);
-    @Unique private static final ThreadLocal<long[]> rdpl$relitStart = ThreadLocal.withInitial(() -> new long[1]);
+    @Unique private static final ContentChunkWatch.Timer rdpl$litStart = new ContentChunkWatch.Timer();
+    @Unique private static final ContentChunkWatch.Timer rdpl$relitStart = new ContentChunkWatch.Timer();
     @Unique private final BlockPos.MutableBlockPos rdpl$column = new BlockPos.MutableBlockPos();
 
-    @Inject(method = "checkLight()V", at = @At("HEAD"), cancellable = true)
-    private void rdpl$startLight(CallbackInfo ci) {
+    @Inject(method = "checkLight()V", at = @At("HEAD"), cancellable = true) private void rdpl$startLight(CallbackInfo ci) {
         Chunk chunk = (Chunk) (Object) this;
         World world = chunk.getWorld();
         boolean timing = ContentChunkWatch.watching();
-        long start = timing ? System.nanoTime() : 0L;
+        if (timing) { rdpl$litStart.start(); }
         ContentLightArea.enter(world, chunk.x, chunk.z);
-        if (world.isRemote || GenHeights.rubic(world)) {
-            if (timing) { rdpl$litStart.get()[0] = start; }
-            return;
-        }
+        if (world.isRemote || GenHeights.rubic(world)) { return; }
         ci.cancel();
         isTerrainPopulated = true;
         try { isLightPopulated = ContentFirstLight.relight(chunk); }
         finally { ContentLightArea.leave(world); }
         if (isLightPopulated) { isGapLightingUpdated = true; }
-        if (timing) { ContentChunkWatch.lit(System.nanoTime() - start, isLightPopulated); }
+        if (timing) { ContentChunkWatch.lit(rdpl$litStart.stop(), isLightPopulated); }
     }
 
-    @Inject(method = "checkLight()V", at = @At("RETURN"))
-    private void rdpl$endLight(CallbackInfo ci) {
+    @Inject(method = "checkLight()V", at = @At("RETURN")) private void rdpl$endLight(CallbackInfo ci) {
         ContentLightArea.leave(((Chunk) (Object) this).getWorld());
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(System.nanoTime() - rdpl$litStart.get()[0], isLightPopulated); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.lit(rdpl$litStart.stop(), isLightPopulated); }
     }
 
-    @Inject(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("RETURN"))
-    private void rdpl$relightDressed(IChunkGenerator generator, CallbackInfo ci) {
+    @Inject(method = "populate(Lnet/minecraft/world/gen/IChunkGenerator;)V", at = @At("RETURN")) private void rdpl$relightDressed(IChunkGenerator generator, CallbackInfo ci) {
         if (IChunk.rdpl$getPopulating() == null) { ContentDressLight.relight(); }
     }
 
-    @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V"))
-    private void rdpl$gapsAfterwards(Chunk chunk, boolean onlyOne) {
+    @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;recheckGaps(Z)V")) private void rdpl$gapsAfterwards(Chunk chunk, boolean onlyOne) {
         if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
         ((IChunkGaps) chunk).rdpl$recheckGaps(onlyOne);
     }
 
-    @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V"))
-    private void rdpl$countRetry(Chunk chunk) {
+    @Redirect(method = "onTick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;checkLight()V")) private void rdpl$countRetry(Chunk chunk) {
         if (ContentPregen.holds(chunk.x, chunk.z) || ContentPregen.covers(chunk.getWorld(), chunk.x, chunk.z)) { return; }
         if (ContentChunkWatch.watching()) { ContentChunkWatch.retried(); }
         chunk.checkLight();
     }
 
-    @Redirect(method = "enqueueRelightChecks", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
-    private EnumFacing[] rdpl$sidesWithoutCopying() { return EnumFacing.VALUES; }
+    @Redirect(method = "enqueueRelightChecks", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;")) private EnumFacing[] rdpl$sidesWithoutCopying() { return EnumFacing.VALUES; }
 
-    @Redirect(method = {"generateSkylightMap", "relightBlock"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;notifyLightSet(Lnet/minecraft/util/math/BlockPos;)V"))
-    private void rdpl$tellNobodyEither(World world, BlockPos pos) {
+    @Redirect(method = {"generateSkylightMap", "relightBlock"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;notifyLightSet(Lnet/minecraft/util/math/BlockPos;)V")) private void rdpl$tellNobodyEither(World world, BlockPos pos) {
         if (((ILightAreaHolder) world).rdpl$quietLight()) { return; }
         world.notifyLightSet(pos);
     }
 
     @Inject(method = "enqueueRelightChecks", at = @At("HEAD")) private void rdpl$startRelight(CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { rdpl$relitStart.get()[0] = System.nanoTime(); }
+        if (ContentChunkWatch.watching()) { rdpl$relitStart.start(); }
     }
 
     @Inject(method = "enqueueRelightChecks", at = @At("RETURN")) private void rdpl$endRelight(CallbackInfo ci) {
-        if (ContentChunkWatch.watching()) { ContentChunkWatch.relit(System.nanoTime() - rdpl$relitStart.get()[0]); }
+        if (ContentChunkWatch.watching()) { ContentChunkWatch.relit(rdpl$relitStart.stop()); }
     }
 
-    @Redirect(method = "checkLight(II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;checkLight(Lnet/minecraft/util/math/BlockPos;)Z"))
-    private boolean rdpl$skipSettledSky(World world, BlockPos pos) {
-        if (!world.provider.hasSkyLight() || !ContentLightArea.skySettled(world, pos)) { return world.checkLight(pos); }
+    @Redirect(method = "checkLight(II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;checkLight(Lnet/minecraft/util/math/BlockPos;)Z")) private boolean rdpl$skipSettledSky(World world, BlockPos pos) {
+        if (!world.provider.hasSkyLight() || ContentLightArea.skyUnsettled(world, pos)) { return world.checkLight(pos); }
         ContentChunkWatch.skySettled();
         return world.checkLightFor(EnumSkyBlock.BLOCK, pos);
     }
 
     @Shadow protected abstract void updateSkylightNeighborHeight(int x, int z, int startY, int endY);
 
-    @SuppressWarnings("ConstantValue") @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V"))
-    private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
+    @SuppressWarnings("ConstantValue") @Redirect(method = "relightBlock", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;updateSkylightNeighborHeight(IIII)V")) private void rdpl$skipSkyWhileDressing(Chunk chunk, int x, int z, int startY, int endY) {
         if (rdpl$dressingThis(x, z)) { return; }
         World world = chunk.getWorld();
         boolean pregen = ContentPregen.quenches(world, chunk.x, chunk.z);

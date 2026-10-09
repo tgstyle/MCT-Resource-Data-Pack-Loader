@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo @Mixin(targets = "net.optifine.render.ChunkVisibility") public class MixinChunkVisibility {
-    @Dynamic @Inject(method = "getMaxChunkY", at = @At("HEAD"), cancellable = true, remap = false) private static void getMaxChunkYRubic(World world, Entity viewEntity, int renderDistanceChunks, CallbackInfoReturnable<Integer> cbi) {
+    @Dynamic @Inject(method = "getMaxChunkY", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$getMaxChunkYRubic(World world, Entity viewEntity, int renderDistanceChunks, CallbackInfoReturnable<Integer> cbi) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         cbi.setReturnValue(Integer.MAX_VALUE - 1);
     }

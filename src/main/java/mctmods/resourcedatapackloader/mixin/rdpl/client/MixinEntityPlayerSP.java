@@ -16,9 +16,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(EntityPlayerSP.class) public class MixinEntityPlayerSP extends AbstractClientPlayer {
     public MixinEntityPlayerSP(World worldIn, GameProfile playerProfile) { super(worldIn, playerProfile); }
 
-    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.0D)) private double replaceEntityYForBlockPos(double value) { return this.posY; }
+    @ModifyConstant(method = "onUpdate", constant = @Constant(doubleValue = 0.0D)) private double rdpl$replaceEntityYForBlockPos(double value) { return this.posY; }
 
-    @Redirect(method = "onUpdate",
-            at = @At(target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/math/BlockPos;)Z", value = "INVOKE"))
-    private boolean canEntityUpdate_isBlockLoadedRedirect(World world, BlockPos pos) { return MixinUtils.canTickPosition(world, pos); }
+    @Redirect(method = "onUpdate", at = @At(target = "Lnet/minecraft/world/World;isBlockLoaded(Lnet/minecraft/util/math/BlockPos;)Z", value = "INVOKE")) private boolean rdpl$canEntityUpdate_isBlockLoadedRedirect(World world, BlockPos pos) { return MixinUtils.canTickPosition(world, pos); }
 }

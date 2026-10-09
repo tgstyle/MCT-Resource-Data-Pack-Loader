@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.extra;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentOwners;
+import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.AttributeDef;
@@ -15,14 +16,14 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
-import static mctmods.resourcedatapackloader.util.Json.strings;
 import mctmods.resourcedatapackloader.util.Summary;
+import static mctmods.resourcedatapackloader.util.Json.strings;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.potion.PotionHelper;
@@ -41,7 +42,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentPotions {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, PotionDef> POTIONS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, PotionTypeDef> TYPES = new LinkedHashMap<>();
     private static final List<BrewingDef> BREWING = new ArrayList<>();
@@ -73,11 +73,8 @@ public final class ContentPotions {
     public static boolean wanted() { return !POTIONS.isEmpty() || !TYPES.isEmpty() || !BREWING.isEmpty(); }
 
     private static void readPotion(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Potion file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "potion file");
+        if (json == null) { return; }
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
             for (JsonElement element : JsonUtils.getJsonArray(json, "attributes")) {
@@ -112,29 +109,9 @@ public final class ContentPotions {
     }
 
     private static void readType(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Potion type file {} is empty, ignoring it", key);
-            return;
-        }
-        List<PotionEffectDef> effects = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, "effects")) {
-            if (!element.isJsonObject()) {
-                ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
-                continue;
-            }
-            JsonObject entry = element.getAsJsonObject();
-            String potion = JsonUtils.getString(entry, "potion", "");
-            if (potion.isEmpty()) {
-                ContentLog.LOGGER.error("An effect in {} names no potion, skipping it", key);
-                continue;
-            }
-            effects.add(new PotionEffectDef(potion,
-                    Math.max(1, JsonUtils.getInt(entry, "duration", 3600)),
-                    Math.max(0, JsonUtils.getInt(entry, "amplifier", 0)),
-                    JsonUtils.getBoolean(entry, "ambient", false),
-                    JsonUtils.getBoolean(entry, "showParticles", true)));
-        }
+        JsonObject json = Json.object(key, contents, "potion type file");
+        if (json == null) { return; }
+        List<PotionEffectDef> effects = ContentParser.effects(key, JsonUtils.getJsonArray(json, "effects"), 3600, true);
         if (effects.isEmpty()) {
             ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
             return;
@@ -146,11 +123,8 @@ public final class ContentPotions {
     }
 
     private static void readBrewing(ResourceLocation key, String contents) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Brewing file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "brewing file");
+        if (json == null) { return; }
         for (JsonElement element : JsonUtils.getJsonArray(json, "brewing")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
@@ -223,7 +197,7 @@ public final class ContentPotions {
 
     public static void registerContainers() {
         int count = 0;
-        for (Map.Entry<ResourceLocation, net.minecraft.item.Item> entry : ContentRegistry.registeredItems()) {
+        for (Map.Entry<ResourceLocation, Item> entry : ContentRegistry.registeredItems()) {
             if (!(entry.getValue() instanceof ContentItemPotion)) { continue; }
             PotionHelper.addContainer((ContentItemPotion) entry.getValue());
             count++;
@@ -241,7 +215,7 @@ public final class ContentPotions {
                 PotionType from = type(def.key, def.from);
                 PotionType to = type(def.key, def.to);
                 if (from == null || to == null) { continue; }
-                PotionHelper.addMix(from, ingredient.getItem(), to);
+                PotionHelper.addMix(from, Ingredient.fromStacks(ingredient), to);
                 count++;
                 continue;
             }

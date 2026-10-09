@@ -31,12 +31,6 @@ public interface ICube extends IXYZAddressable, ICapabilityProvider {
 
     @SuppressWarnings({"deprecation", "RedundantSuppression"}) <T extends Chunk & IColumn> T getColumn();
 
-    int getX();
-
-    int getY();
-
-    int getZ();
-
     CubePos getCoords();
 
     @Nullable ExtendedBlockStorage getStorage();
@@ -56,9 +50,4 @@ public interface ICube extends IXYZAddressable, ICapabilityProvider {
     Biome getBiome(BlockPos pos);
 
     void setBiome(int localBiomeX, int localBiomeY, int localBiomeZ, Biome biome);
-
-    @Deprecated default void setBiome(int localBiomeX, int localBiomeZ, Biome biome) {
-        for (int biomeY = 0; biomeY < 4; biomeY++) { setBiome(localBiomeX >> 1, biomeY, localBiomeZ >> 1, biome); }
-    }
-
 }

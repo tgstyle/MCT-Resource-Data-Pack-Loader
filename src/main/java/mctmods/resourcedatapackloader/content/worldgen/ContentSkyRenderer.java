@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.client.render.Blends;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
 import net.minecraft.client.Minecraft;
@@ -36,16 +37,10 @@ import org.lwjgl.opengl.GL11;
         if (lists < 0) { build(); }
         GlStateManager.disableTexture2D();
         Vec3d color = world.getSkyColor(viewer, partialTicks);
-        float red = (float) color.x;
-        float green = (float) color.y;
-        float blue = (float) color.z;
-        if (mc.gameSettings.anaglyph) {
-            float r = (red * 30.0F + green * 59.0F + blue * 11.0F) / 100.0F;
-            float g = (red * 30.0F + green * 70.0F) / 100.0F;
-            blue = (red * 30.0F + blue * 70.0F) / 100.0F;
-            red = r;
-            green = g;
-        }
+        float[] tint = anaglyph(mc, (float) color.x, (float) color.y, (float) color.z);
+        float red = tint[0];
+        float green = tint[1];
+        float blue = tint[2];
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder buffer = tessellator.getBuffer();
         GlStateManager.depthMask(false);
@@ -55,7 +50,7 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.disableFog();
         GlStateManager.disableAlpha();
         GlStateManager.enableBlend();
-        GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
+        Blends.translucent();
         ContentSkyExtras.backdrop(world);
         RenderHelper.disableStandardItemLighting();
         sunrise(world, mc, buffer, tessellator, partialTicks);
@@ -115,6 +110,11 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.depthMask(true);
     }
 
+    private static float[] anaglyph(Minecraft mc, float red, float green, float blue) {
+        if (!mc.gameSettings.anaglyph) { return new float[] { red, green, blue }; }
+        return new float[] { (red * 30.0F + green * 59.0F + blue * 11.0F) / 100.0F, (red * 30.0F + green * 70.0F) / 100.0F, (red * 30.0F + blue * 70.0F) / 100.0F };
+    }
+
     private static void sunrise(WorldClient world, Minecraft mc, BufferBuilder buffer, Tessellator tessellator, float partialTicks) {
         float[] glow = world.provider.calcSunriseSunsetColors(world.getCelestialAngle(partialTicks), partialTicks);
         if (glow == null) { return; }
@@ -124,18 +124,9 @@ import org.lwjgl.opengl.GL11;
         GlStateManager.rotate(90.0F, 1.0F, 0.0F, 0.0F);
         GlStateManager.rotate(MathHelper.sin(world.getCelestialAngleRadians(partialTicks)) < 0.0F ? 180.0F : 0.0F, 0.0F, 0.0F, 1.0F);
         GlStateManager.rotate(90.0F, 0.0F, 0.0F, 1.0F);
-        float red = glow[0];
-        float green = glow[1];
-        float blue = glow[2];
-        if (mc.gameSettings.anaglyph) {
-            float r = (red * 30.0F + green * 59.0F + blue * 11.0F) / 100.0F;
-            float g = (red * 30.0F + green * 70.0F) / 100.0F;
-            blue = (red * 30.0F + blue * 70.0F) / 100.0F;
-            red = r;
-            green = g;
-        }
+        float[] tint = anaglyph(mc, glow[0], glow[1], glow[2]);
         buffer.begin(GL11.GL_TRIANGLE_FAN, DefaultVertexFormats.POSITION_COLOR);
-        buffer.pos(0.0D, 100.0D, 0.0D).color(red, green, blue, glow[3]).endVertex();
+        buffer.pos(0.0D, 100.0D, 0.0D).color(tint[0], tint[1], tint[2], glow[3]).endVertex();
         for (int step = 0; step <= 16; ++step) {
             float at = step * ((float) Math.PI * 2.0F) / 16.0F;
             float sin = MathHelper.sin(at);
@@ -184,6 +175,13 @@ import org.lwjgl.opengl.GL11;
         buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_COLOR);
         for (double[] corner : corners) { buffer.pos(corner[0], corner[1], corner[2]).color(0, 0, 0, 255).endVertex(); }
         tessellator.draw();
+    }
+
+    void release() {
+        starField.release();
+        if (lists < 0) { return; }
+        GLAllocation.deleteDisplayLists(lists, 2);
+        lists = -1;
     }
 
     private void build() {

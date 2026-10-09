@@ -7,7 +7,9 @@ import java.io.IOException;
 import java.util.Optional;
 
 public interface IKeyIdToSectorMap<K extends IKey> extends Iterable<RegionEntryLocation> {
-	default Optional<RegionEntryLocation> getEntryLocation(K key) { return getEntryLocation(key.getId()); }
-	Optional<RegionEntryLocation> getEntryLocation(int id);
-	void setOffsetAndSize(K key, RegionEntryLocation location) throws IOException;
+    default Optional<RegionEntryLocation> getEntryLocation(K key) { return getEntryLocation(key.getId()); }
+
+    Optional<RegionEntryLocation> getEntryLocation(int id);
+
+    void setOffsetAndSize(K key, RegionEntryLocation location) throws IOException;
 }

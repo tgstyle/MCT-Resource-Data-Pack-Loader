@@ -56,6 +56,8 @@ public final class ItemDef {
         this.passesTurn = passesTurn;
     }
 
+    @Nullable public ItemVariant at(int meta) { return byMeta.get(meta); }
+
     public void resolveContainer(ItemStack stack) { this.resolvedContainer = stack; }
 
     public ItemStack getResolvedContainer() { return resolvedContainer; }

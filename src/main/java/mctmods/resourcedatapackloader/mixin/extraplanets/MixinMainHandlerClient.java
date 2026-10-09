@@ -17,8 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = MainHandlerClient.class, remap = false) public abstract class MixinMainHandlerClient {
     @Shadow public abstract void showPressureHUD(int amount);
 
-    @Inject(method = "onRenderTick", at = @At(value = "FIELD", target = "Lcom/mjr/extraplanets/Config;HIDE_RADIATION_PRESSURE_HUD:Z", opcode = Opcodes.GETSTATIC, ordinal = 0))
-    private void rdpl$packPressure(RenderTickEvent event, CallbackInfo ci) {
+    @Inject(method = "onRenderTick", at = @At(value = "FIELD", target = "Lcom/mjr/extraplanets/Config;HIDE_RADIATION_PRESSURE_HUD:Z", opcode = Opcodes.GETSTATIC, ordinal = 0)) private void rdpl$packPressure(RenderTickEvent event, CallbackInfo ci) {
         EntityPlayerSP player = Minecraft.getMinecraft().player;
         if (!Config.PRESSURE || player == null || !(player.world.provider instanceof GcWorldProvider)) { return; }
         int pressure = ((GcWorldProvider) player.world.provider).extraPlanetsPressure();

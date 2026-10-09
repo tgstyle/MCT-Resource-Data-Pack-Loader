@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 
 import com.google.gson.JsonElement;
@@ -63,7 +64,7 @@ public final class Port {
     }
 
     @Nullable static Integer packFormat(Path root) {
-        Path meta = root.resolve("pack.mcmeta");
+        Path meta = root.resolve(PackManager.PACK_META);
         if (!Files.isRegularFile(meta)) { return null; }
         try {
             JsonElement parsed = new JsonParser().parse(new String(Files.readAllBytes(meta), StandardCharsets.UTF_8));
@@ -103,7 +104,7 @@ public final class Port {
             for (Path file : files) {
                 String name = trim(file.getFileName().toString());
                 if (name.endsWith(".lang")) { return false; }
-                if (name.endsWith(".json")) { json = true; }
+                if (name.endsWith(PackManager.JSON_SUFFIX)) { json = true; }
             }
         }
         return json;
@@ -115,14 +116,14 @@ public final class Port {
         int slash = path.indexOf('/');
         String head = slash < 0 ? path : path.substring(0, slash);
         if (NO_TWIN_ASSETS.contains(head)) { return new Mapped(path, Kind.DROPPED, "the '" + head + "' folder has no twin on 1.12.2"); }
-        if (path.startsWith("lang/") && path.endsWith(".json")) { return new Mapped(path.substring(0, path.length() - ".json".length()).toLowerCase(Locale.ROOT) + ".lang", Kind.LANG, ""); }
-        if (path.startsWith("font/") && path.endsWith(".json")) { return new Mapped(path, Kind.DROPPED, "a font provider file has no twin on 1.12.2"); }
+        if (path.startsWith("lang/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(PackManager.stripJson(path, 0).toLowerCase(Locale.ROOT) + ".lang", Kind.LANG, ""); }
+        if (path.startsWith("font/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.DROPPED, "a font provider file has no twin on 1.12.2"); }
         if (path.startsWith("textures/")) {
             String moved = texturePath(path);
-            return new Mapped(moved, path.endsWith(".json") ? Kind.PIXELMAP : Kind.RAW, "");
+            return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.PIXELMAP : Kind.RAW, "");
         }
-        if (path.startsWith("models/") && path.endsWith(".json")) { return new Mapped(path, Kind.MODEL, ""); }
-        if (path.startsWith("blockstates/") && path.endsWith(".json")) { return new Mapped(path, Kind.BLOCKSTATE, ""); }
+        if (path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.MODEL, ""); }
+        if (path.startsWith("blockstates/") && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.BLOCKSTATE, ""); }
         return new Mapped(path, Kind.RAW, "");
     }
 
@@ -145,27 +146,26 @@ public final class Port {
         String moved = slash < 0 ? path : folder + "/" + rest;
         if (NO_TWIN_DATA.contains(head)) { return new Mapped(path, Kind.DROPPED, "the '" + head + "' folder has no twin on 1.12.2"); }
         switch (folder) {
-            case "recipes": return new Mapped(moved, path.endsWith(".json") ? Kind.RECIPE : Kind.RAW, "");
+            case "recipes": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.RECIPE : Kind.RAW, "");
             case "loot_tables":
-            case "loot_injections": return new Mapped(moved, path.endsWith(".json") ? Kind.LOOT : Kind.RAW, "");
-            case "advancements": return new Mapped(moved, path.endsWith(".json") ? Kind.ADVANCEMENT : Kind.RAW, "");
+            case "loot_injections": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.LOOT : Kind.RAW, "");
+            case "advancements": return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.ADVANCEMENT : Kind.RAW, "");
             case "functions": return new Mapped(moved, path.endsWith(".mcfunction") ? Kind.FUNCTION : Kind.RAW, "");
             case "structures": return new Mapped(moved, path.endsWith(".nbt") ? Kind.STRUCTURE : Kind.RAW, "");
             case "tags": return tag(path, rest);
             case "worldgen": {
                 int inner = rest.indexOf('/');
                 if (inner > 0 && VANILLA_WORLDGEN.contains(rest.substring(0, inner))) { return new Mapped(path, Kind.DROPPED, "vanilla's data driven '" + rest.substring(0, inner) + "' worldgen has no twin on 1.12.2"); }
-                return new Mapped(moved, path.endsWith(".json") ? Kind.DEFINITION : Kind.RAW, "");
             }
-            default: return new Mapped(moved, path.endsWith(".json") ? Kind.DEFINITION : Kind.RAW, "");
+            default: return new Mapped(moved, path.endsWith(PackManager.JSON_SUFFIX) ? Kind.DEFINITION : Kind.RAW, "");
         }
     }
 
     private static Mapped tag(String path, String rest) {
         int slash = rest.indexOf('/');
         String kind = slash < 0 ? rest : rest.substring(0, slash);
-        if (("items".equals(kind) || "item".equals(kind)) && path.endsWith(".json")) { return new Mapped(path, Kind.ITEM_TAG, ""); }
-        if (("functions".equals(kind) || "function".equals(kind)) && path.endsWith(".json")) { return new Mapped(path, Kind.FUNCTION_TAG, ""); }
+        if (("items".equals(kind) || "item".equals(kind)) && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.ITEM_TAG, ""); }
+        if (("functions".equals(kind) || "function".equals(kind)) && path.endsWith(PackManager.JSON_SUFFIX)) { return new Mapped(path, Kind.FUNCTION_TAG, ""); }
         return new Mapped(path, Kind.DROPPED, "a '" + kind + "' tag has no twin on 1.12.2, where only items have an ore dictionary");
     }
 }

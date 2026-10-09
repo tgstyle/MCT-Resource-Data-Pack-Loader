@@ -10,8 +10,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import twilightforest.world.ChunkGeneratorTFBase;
 import twilightforest.world.ChunkGeneratorTwilightForest;
+import twilightforest.world.ChunkGeneratorTwilightVoid;
 
-@Mixin(value = ChunkGeneratorTwilightForest.class, remap = false) public abstract class MixinChunkGeneratorTwilightForest extends ChunkGeneratorTFBase {
+@Mixin(value = { ChunkGeneratorTwilightForest.class, ChunkGeneratorTwilightVoid.class }, remap = false) public abstract class MixinChunkGeneratorTwilightForest extends ChunkGeneratorTFBase {
     @SuppressWarnings({"ConstantConditions", "DataFlowIssue"}) private MixinChunkGeneratorTwilightForest() { super(null, 0L, false, false); }
 
     @Inject(method = "generateChunk", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$emptyChunk(int x, int z, CallbackInfoReturnable<Chunk> cir) {

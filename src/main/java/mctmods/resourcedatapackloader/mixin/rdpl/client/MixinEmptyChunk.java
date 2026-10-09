@@ -22,7 +22,7 @@ import java.util.Collections;
 @Mixin(EmptyChunk.class) @Implements(@Interface(iface = IColumn.class, prefix = "chunk$")) public abstract class MixinEmptyChunk {
     @Unique private Cube rdpl$blankCube;
 
-    @Inject(method = "<init>", at = @At(value = "RETURN")) private void rubic_onConstruct(World worldIn, int x, int z, CallbackInfo cbi) {
+    @Inject(method = "<init>", at = @At(value = "RETURN")) private void rdpl$onConstruct(World worldIn, int x, int z, CallbackInfo cbi) {
         if (((IRubicWorld) worldIn).rdpl$isRubicWorld()) { rdpl$blankCube = new BlankCube((Chunk) (Object) this); }
     }
 
@@ -30,8 +30,7 @@ import java.util.Collections;
 
     public ICube chunk$removeCube(int cubeY) { return rdpl$blankCube; }
 
-    public void chunk$addCube(ICube cube) {
-    }
+    public void chunk$addCube(ICube cube) {}
 
     public Collection<ICube> chunk$getLoadedCubes() { return Collections.emptySet(); }
 

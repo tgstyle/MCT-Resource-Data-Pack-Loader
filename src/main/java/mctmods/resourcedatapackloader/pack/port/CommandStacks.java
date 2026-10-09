@@ -30,7 +30,8 @@ final class CommandStacks {
         int meta = 0;
         if (bracket > 0 && (brace < 0 || bracket < brace)) {
             int close = token.lastIndexOf(']');
-            name = token.substring(0, bracket);
+            if (close < bracket) { throw new Commands.Kept("its item components " + token + " are not closed by a ]"); }
+            name =token.substring(0, bracket);
             String components = token.substring(bracket + 1, close);
             if (close + 1 < token.length()) { nbt = token.substring(close + 1); }
             for (String component : CommandSelectors.splitTop(components)) {

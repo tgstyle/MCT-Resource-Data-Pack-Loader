@@ -10,6 +10,8 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Longs;
+import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.BlockRailBase;
@@ -26,9 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.List;import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -53,7 +53,7 @@ public final class BeardLinks {
 
     static boolean carriedUnderground() { return BeardRails.lines(false) <= 0; }
 
-    private static String stationShape() { return ContentControl.text(ContentControl.VILLAGES, "villageRailLinkStation", Config.worldgen.villageRailLinkStation).trim().toLowerCase(Locale.ROOT); }
+    private static String stationShape() { return Settings.lower(ContentControl.text(ContentControl.VILLAGES, "villageRailLinkStation", Config.worldgen.villageRailLinkStation)); }
 
     private static int stationLength() { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villageRailLinkStationLength", Config.worldgen.villageRailLinkStationLength)); }
 
@@ -190,6 +190,7 @@ public final class BeardLinks {
                     box.maxX += wider;
                 }
             }
+            BeardPlots.resized();
             Node partner = link.node(!lowSide);
             int[] packed = new int[END];
             packed[0] = dir;
@@ -477,7 +478,7 @@ public final class BeardLinks {
                     if (!clip.isVecInside(at) || BeardKeep.holds(x, level + 1, z)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() != wanted.getBlock() || held == wanted) { continue; }
-                    world.setBlockState(at, wanted, 2);
+                    world.setBlockState(at, wanted, BlockFlags.UPDATE_CLIENTS);
                     forced++;
                 }
             }

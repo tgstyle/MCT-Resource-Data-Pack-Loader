@@ -66,9 +66,7 @@ final class Snbt {
         return entity;
     }
 
-    private void skip() {
-        while (at < text.length() && Character.isWhitespace(text.charAt(at))) { at++; }
-    }
+    private void skip() { while (at < text.length() && Character.isWhitespace(text.charAt(at))) { at++; } }
 
     private Object value() {
         skip();
@@ -146,7 +144,5 @@ final class Snbt {
         return text.charAt(at++);
     }
 
-    private void colon() {
-        if (next() != ':') { throw new IllegalArgumentException("expected : in nbt at " + at); }
-    }
+    private void colon() { if (next() != ':') { throw new IllegalArgumentException("expected : in nbt at " + at); } }
 }

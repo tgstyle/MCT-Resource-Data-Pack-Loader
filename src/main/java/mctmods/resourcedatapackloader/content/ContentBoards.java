@@ -14,7 +14,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.EntityJoinWorldEvent;
@@ -48,7 +47,7 @@ public final class ContentBoards {
     public static void load() {
         RULES.clear();
         Json.eachFile(PackManager.GAMES, "game file", (key, contents) -> {
-            JsonObject json = JsonUtils.gsonDeserialize(ContentParser.GSON, contents, JsonObject.class);
+            JsonObject json = Json.object(key, contents, "game file");
             if (json == null) { return; }
             String name = key.getPath();
             if (RULES.containsKey(name)) {

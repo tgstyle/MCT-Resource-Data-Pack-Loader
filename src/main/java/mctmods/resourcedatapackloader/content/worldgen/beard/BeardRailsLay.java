@@ -6,9 +6,9 @@ import mctmods.resourcedatapackloader.content.village.ContentVillageDecor;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeardTrees;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 
 import net.minecraft.block.Block;
@@ -23,6 +23,7 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
@@ -51,16 +52,14 @@ public final class BeardRailsLay {
         for (int y = level; y <= top; y++) {
             if (BeardKeep.holds(x, y, z)) { continue; }
             at.setPos(x, y, z);
-            world.setBlockState(at, linings.pick(world, x, y, z), 2);
+            world.setBlockState(at, linings.pick(world, x, y, z), BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         return laid;
     }
 
     public static void lay(RailPiece rail, World world, StructureBoundingBox clip) {
-        BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
-        try { laid(rail, world, clip); }
-        finally { BeardBiome.leave(); }
+        BeardBiome.within(world, clip, () -> laid(rail, world, clip));
     }
 
     private static final class Dress {
@@ -173,7 +172,7 @@ public final class BeardRailsLay {
         boolean[] frames = bridgeFrames(grade);
         int halls = 0;
         int stepped = 0;
-        List<StructureBoundingBox> stairs = sub ? rail.stations() : java.util.Collections.emptyList();
+        List<StructureBoundingBox> stairs = sub ? rail.stations() : Collections.emptyList();
         int framed = 0;
         int[] rising = rail.rising(world);
         if (rising != null && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Subway line {} climbs out over the {} row(s) {} of row {}, {} of ramp to rise {} block(s) and the rest of it open track", rail.line(), rising[1] > 0 ? rail.rowMost() - rising[0] : rising[0] - rail.rowLeast(), rising[1] > 0 ? "beyond" : "short", rising[0], BeardRails.subwayDepth() * BeardRails.climb(true), BeardRails.subwayDepth()); }
@@ -366,7 +365,7 @@ public final class BeardRailsLay {
             if (BeardRails.alongTheLine(box, alongX)) { continue; }
             if (row < (alongX ? box.minX : box.minZ) - 1 || row > (alongX ? box.maxX : box.maxZ) + 1) { continue; }
             if (center < (alongX ? box.minZ : box.minX) || center > (alongX ? box.maxZ : box.maxX)) { continue; }
-            BeardRoads.Grade grade = road instanceof IRoadLayout ? ((IRoadLayout) road).rdpl$layout() : null;
+            BeardRoads.Grade grade = BeardRoads.layoutOf(road);
             if (grade == null) { return false; }
             int at = grade.at(center);
             return at != Integer.MIN_VALUE && at >= level + BeardRails.OVER;
@@ -408,7 +407,7 @@ public final class BeardRailsLay {
         if (BeardKeep.holds(x, y, z)) { return 0; }
         at.setPos(x, y, z);
         if (world.getBlockState(at) == state) { return 0; }
-        world.setBlockState(at, state, 2);
+        world.setBlockState(at, state, BlockFlags.UPDATE_CLIENTS);
         return 1;
     }
 
@@ -425,13 +424,13 @@ public final class BeardRailsLay {
             if (up == Blocks.AIR || BeardKeep.holds(x, y, z) || BeardRails.railBlock(above)) { continue; }
             if (above.getMaterial().isLiquid()) {
                 if (!bored) { break; }
-                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                 continue;
             }
             if (tree(world, at, x, y, z, above, within, seeds)) { continue; }
             if (bored || BeardBlocks.terrainBlock(up) || up == Blocks.GRASS_PATH || up == Blocks.SANDSTONE || up == Blocks.MYCELIUM || !above.getMaterial().isSolid()) {
                 BeardBlocks.note(world, at, "Laying a railway");
-                world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+                world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
                 continue;
             }
             break;
@@ -457,7 +456,7 @@ public final class BeardRailsLay {
         BlockPos trunk = BeardClearing.sustainer(world, new BlockPos(x, y, z), within);
         if (trunk == null) {
             BeardBlocks.note(world, at, "Laying a railway");
-            world.setBlockState(at, Blocks.AIR.getDefaultState(), 2);
+            world.setBlockState(at, Blocks.AIR.getDefaultState(), BlockFlags.UPDATE_CLIENTS);
         }
         else if (!ContentVillageDecor.plantedAt(world, trunk.getX(), trunk.getZ())) { seeds.add(trunk); }
         return true;

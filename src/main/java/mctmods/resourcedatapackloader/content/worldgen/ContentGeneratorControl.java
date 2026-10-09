@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -60,9 +62,9 @@ public final class ContentGeneratorControl {
         named = Settings.lower(ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators));
         kinds = new LinkedHashSet<>();
         for (String name : ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes)) {
-            String kind = name.trim().toLowerCase(Locale.ROOT);
+            String kind = Settings.lower(name);
             if (kind.isEmpty()) { continue; }
-            if (!PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN)) {
+            if (invalid(kind)) {
                 ContentLog.LOGGER.error("generatorTypes names '{}', which is not one of {} or {}, ignoring it", kind, PATTERNS.keySet(), UNKNOWN);
                 continue;
             }
@@ -74,7 +76,7 @@ public final class ContentGeneratorControl {
             if (parts == null) { continue; }
             String pattern = parts[0].toLowerCase(Locale.ROOT);
             String kind = parts[1].toLowerCase(Locale.ROOT);
-            if (!PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN)) {
+            if (invalid(kind)) {
                 ContentLog.LOGGER.error("generatorTypeMap entry '{}' names a type that is not one of {} or {}, ignoring it", entry, PATTERNS.keySet(), UNKNOWN);
                 continue;
             }
@@ -94,12 +96,12 @@ public final class ContentGeneratorControl {
         if (whitelist == null) { load(); }
         if (generator == null || world == null) { return false; }
         String owner = owner(generator.getClass());
-        if (owner.equals("resourcedatapackloader")) { return false; }
+        if (owner.equals(Rubic.MODID)) { return false; }
         if (ContentVoidWorld.appliesTo(world)) {
             count(owner, generator, kind(generator.getClass(), owner));
             return true;
         }
-        if (!inScope(world)) { return false; }
+        if (outOfScope(world)) { return false; }
         if (!named.isEmpty() && (named.contains(owner) || matches(generator.getClass().getName().toLowerCase(Locale.ROOT)))) {
             count(owner, generator, kind(generator.getClass(), owner));
             return true;
@@ -128,7 +130,7 @@ public final class ContentGeneratorControl {
 
     private static boolean kindBlocked(String kind) {
         if (kinds.isEmpty()) { return false; }
-        return kinds.contains(kind) == typesAreBlacklist();
+        return Listing.blocks(kinds.contains(kind), typesAreBlacklist());
     }
 
     private static String resolveKind(Class<?> type, String owner) {
@@ -144,6 +146,8 @@ public final class ContentGeneratorControl {
         return UNKNOWN;
     }
 
+    private static boolean invalid(String kind) { return !PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN); }
+
     private static boolean matches(String type) {
         for (String entry : named) {
             if (type.contains(entry)) { return true; }
@@ -151,17 +155,15 @@ public final class ContentGeneratorControl {
         return false;
     }
 
-    private static boolean inScope(World world) {
-        if (dimensions.isEmpty()) { return true; }
-        return dimensions.contains(world.provider.getDimension()) != ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist);
+    private static boolean outOfScope(World world) {
+        if (dimensions.isEmpty()) { return false; }
+        return Listing.allows(dimensions.contains(world.provider.getDimension()), ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist));
     }
 
     private static void count(String owner, IWorldGenerator generator, String kind) {
         BLOCKED.count(owner + " " + kind);
         if (!ContentControl.flag(ContentControl.GENERATORS, "logBlockedGenerators", Config.worldgen.logBlockedGenerators)) { return; }
-        if (REPORTED.add(owner + "/" + generator.getClass().getName())) {
-            ContentLog.LOGGER.info("Blocking {} world generator {} from {}. Use /rdplserver generators to see running totals", kind, generator.getClass().getSimpleName(), owner);
-        }
+        if (REPORTED.add(owner + "/" + generator.getClass().getName())) { ContentLog.LOGGER.info("Blocking {} world generator {} from {}. Use /rdplserver generators to see running totals", kind, generator.getClass().getSimpleName(), owner); }
     }
 
     public static String owner(IWorldGenerator generator) { return owner(generator.getClass()); }
@@ -179,10 +181,11 @@ public final class ContentGeneratorControl {
         CodeSource source = type.getProtectionDomain() == null ? null : type.getProtectionDomain().getCodeSource();
         if (source == null || source.getLocation() == null) { return UNKNOWN; }
         String location = source.getLocation().getPath();
+        String located = new File(location).getName();
         for (ModContainer container : Loader.instance().getModList()) {
             File file = container.getSource();
             if (file == null) { continue; }
-            if (location.endsWith(file.getName()) || location.contains(file.getName())) { return container.getModId().toLowerCase(Locale.ROOT); }
+            if (located.equals(file.getName()) || location.contains("/" + file.getName() + "/")) { return container.getModId().toLowerCase(Locale.ROOT); }
         }
         return UNKNOWN;
     }

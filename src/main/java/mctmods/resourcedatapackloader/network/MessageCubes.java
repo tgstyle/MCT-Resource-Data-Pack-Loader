@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.network;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
-import mctmods.resourcedatapackloader.content.rubic.Rubic;
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.util.CubePos;
 import mctmods.resourcedatapackloader.util.PacketUtils;
@@ -27,12 +27,11 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class MessageCubes implements IMessage {
+    private static final int MAX_CUBES = 1024;
+    private static final int MAX_BYTES = 512 * 1024;
     private CubePos[] cubePos;
     private byte[] data;
     private List<List<NBTTagCompound>> tileEntityTags;
-
-    private static final int MAX_CUBES = 1024;
-    private static final int MAX_BYTES = 512 * 1024;
 
     public MessageCubes() {}
 
@@ -112,7 +111,7 @@ public class MessageCubes implements IMessage {
         @Override public void handleClientMessage(World world, EntityPlayer player, MessageCubes message, MessageContext ctx) {
             WorldClient worldClient = (WorldClient) player.getEntityWorld();
             if (!(worldClient.getChunkProvider() instanceof CubeProviderClient)) {
-                Rubic.LOGGER.warn("Ignored cubes sent for a world the client no longer sees as rubic");
+                ContentLog.LOGGER.warn("Ignored cubes sent for a world the client no longer sees as rubic");
                 return;
             }
             CubeProviderClient cubeCache = (CubeProviderClient) worldClient.getChunkProvider();
@@ -120,7 +119,7 @@ public class MessageCubes implements IMessage {
             List<Cube> cubes = new ArrayList<>();
             for (CubePos pos : cubePos) {
                 Cube cube = cubeCache.loadCube(pos);
-                if (cube == null) { Rubic.LOGGER.error("Out of order cube received! No column for cube at {} exists!", pos); }
+                if (cube == null) { ContentLog.LOGGER.error("Out of order cube received! No column for cube at {} exists!", pos); }
                 cubes.add(cube);
             }
 

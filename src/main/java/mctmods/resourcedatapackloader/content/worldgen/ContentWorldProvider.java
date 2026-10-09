@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.MusicTicker;
@@ -21,6 +22,7 @@ import net.minecraft.world.DimensionType;
 import net.minecraft.world.WorldProvider;
 import net.minecraft.world.WorldProviderSurface;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.BiomeProvider;
 import net.minecraft.world.biome.BiomeProviderSingle;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkGeneratorEnd;
@@ -33,6 +35,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.function.IntUnaryOperator;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -53,8 +56,8 @@ public class ContentWorldProvider extends WorldProviderSurface {
         if (def != null && FMLCommonHandler.instance().getSide().isClient()) { ContentSkyRenderers.apply(this, def); }
     }
 
-    private net.minecraft.world.biome.BiomeProvider provider() {
-        if (def == null || DimensionDef.INHERIT.equals(def.biomeSource)) { return new net.minecraft.world.biome.BiomeProvider(world.getWorldInfo()); }
+    private BiomeProvider provider() {
+        if (def == null || DimensionDef.INHERIT.equals(def.biomeSource)) { return new BiomeProvider(world.getWorldInfo()); }
         Biome single = ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
         return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
     }
@@ -97,7 +100,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return def.starBrightness;
     }
 
-    private static Vec3d color(int rgb) { return new Vec3d(((rgb >> 16) & 255) / 255.0D, ((rgb >> 8) & 255) / 255.0D, (rgb & 255) / 255.0D); }
+    private static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getCloudColor(float partialTicks) {
         if (drawingLayer != null && drawingLayer.color >= 0) { return color(drawingLayer.color); }
@@ -114,15 +117,15 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override @Nullable @SideOnly(Side.CLIENT) public IRenderHandler getCloudRenderer() { return drawingClouds ? null : super.getCloudRenderer(); }
 
     @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) {
-        if (def == null || def.look == null || !def.look.tintsLight()) { return; }
+        if (def == null || def.look == null || def.look.plainLight()) { return; }
         SkyLookDef look = def.look;
         float sky = skyLight * look.skyFactor;
         float skyRed = sky * (sunBrightness * 0.65F + 0.35F);
         float blockGreen = blockLight * ((blockLight * 0.6F + 0.4F) * 0.6F + 0.4F);
         float blockBlue = blockLight * (blockLight * blockLight * 0.6F + 0.4F);
-        colors[0] = (skyRed * channel(look.lightSkyColor, 16) + blockLight * channel(look.lightBlockColor, 16)) * 0.96F + 0.03F;
-        colors[1] = (skyRed * channel(look.lightSkyColor, 8) + blockGreen * channel(look.lightBlockColor, 8)) * 0.96F + 0.03F;
-        colors[2] = (sky * channel(look.lightSkyColor, 0) + blockBlue * channel(look.lightBlockColor, 0)) * 0.96F + 0.03F;
+        colors[0] = (skyRed * channel(look.lightSkyColor, Colors::red) + blockLight * channel(look.lightBlockColor, Colors::red)) * 0.96F + 0.03F;
+        colors[1] = (skyRed * channel(look.lightSkyColor, Colors::green) + blockGreen * channel(look.lightBlockColor, Colors::green)) * 0.96F + 0.03F;
+        colors[2] = (sky * channel(look.lightSkyColor, Colors::blue) + blockBlue * channel(look.lightBlockColor, Colors::blue)) * 0.96F + 0.03F;
         IEntityRenderer renderer = (IEntityRenderer) Minecraft.getMinecraft().entityRenderer;
         float boss = renderer.getBossColorModifierPrev() + (renderer.getBossColorModifier() - renderer.getBossColorModifierPrev()) * partialTicks;
         if (boss <= 0.0F) { return; }
@@ -131,7 +134,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         colors[2] *= 1.0F - BOSS_GREEN_BLUE * boss;
     }
 
-    private static float channel(int rgb, int shift) { return rgb == SkyLookDef.UNSET ? 1.0F : ((rgb >> shift) & 255) / 255.0F; }
+    private static float channel(int rgb, IntUnaryOperator pick) { return rgb == SkyLookDef.UNSET ? 1.0F : pick.applyAsInt(rgb) / 255.0F; }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
         if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
@@ -198,7 +201,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public boolean isDaytime() {
         if (def != null && def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return true; }
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
-        long time = def.fixedTime % 24000L;
+        long time = def.fixedTime % DimensionTraitsDef.VANILLA_DAY;
         return time < 12300L || time > 23850L;
     }
 

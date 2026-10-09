@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -111,8 +113,7 @@ final class Ids {
     static boolean vanilla(String name) { return name.startsWith(MINECRAFT + ":") || name.indexOf(':') < 0; }
 
     static String namespaced(String name) {
-        String trimmed = name.trim();
-        return trimmed.indexOf(':') < 0 ? MINECRAFT + ":" + trimmed : trimmed;
+        return IdNames.namespaced(name.trim());
     }
 
     private static synchronized void load() {
@@ -254,7 +255,7 @@ final class Ids {
     }
 
     static String lootTable(String name) {
-        String asked = namespaced(name.trim().toLowerCase(Locale.ROOT));
+        String asked = namespaced(Settings.lower(name));
         if (!asked.startsWith(MINECRAFT + ":")) { return asked; }
         String path = asked.substring(MINECRAFT.length() + 1);
         String renamed = LOOT_TABLES.get(path);
@@ -263,12 +264,11 @@ final class Ids {
         String rest = path.substring(ENTITY_TABLES.length());
         int slash = rest.indexOf('/');
         String entity = entity(slash < 0 ? rest : rest.substring(0, slash));
-        return MINECRAFT + ":" + ENTITY_TABLES + entity.substring(entity.indexOf(':') + 1) + (slash < 0 ? "" : rest.substring(slash));
+        return MINECRAFT + ":" + ENTITY_TABLES + IdNames.path(entity) + (slash < 0 ? "" : rest.substring(slash));
     }
 
     static String attribute(String name) {
-        String trimmed = name.trim();
-        if (trimmed.startsWith(MINECRAFT + ":")) { trimmed = trimmed.substring(MINECRAFT.length() + 1); }
+        String trimmed = IdNames.bare(name.trim());
         int dot = trimmed.indexOf('.');
         if (dot < 0) { return trimmed; }
         return trimmed.substring(0, dot + 1) + camel(trimmed.substring(dot + 1), false);
@@ -300,16 +300,12 @@ final class Ids {
         return given;
     }
 
-    @Nullable static String particle(String given) {
-        String name = given.trim();
-        if (name.startsWith(MINECRAFT + ":")) { name = name.substring(MINECRAFT.length() + 1); }
-        return PARTICLES.get(name);
-    }
+    @Nullable static String particle(String given) { return PARTICLES.get(IdNames.bare(given.trim())); }
 
     @Nullable static String oreName(String tag) {
         String id = namespaced(tag.trim().startsWith("#") ? tag.trim().substring(1) : tag.trim());
         String namespace = id.substring(0, id.indexOf(':'));
-        String path = id.substring(id.indexOf(':') + 1);
+        String path = IdNames.path(id);
         String whole = ORE_WHOLE.get(id);
         if (whole != null) { return whole; }
         boolean convention = "forge".equals(namespace) || "c".equals(namespace);

@@ -1,18 +1,24 @@
 package mctmods.resourcedatapackloader.mixin;
 
+import mctmods.resourcedatapackloader.core.MCTMixin;
+import mctmods.resourcedatapackloader.core.util.ConfigLate;
+import mctmods.resourcedatapackloader.core.util.EarlyConfig;
+import mctmods.resourcedatapackloader.util.ModJars;
+import mctmods.resourcedatapackloader.util.WriteBoxWatch;
+
+import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import net.minecraft.launchwrapper.Launch;
-import org.apache.logging.log4j.LogManager;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.io.File;
-import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2BooleanMap;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.zip.ZipFile;
 
 public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final Set<String> OPTIMIZATIONS = new HashSet<>(Arrays.asList(
@@ -57,11 +63,11 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
-    private Boolean lightingReplaced;
+    private static Boolean lightingReplaced;
     private static Boolean sponge;
-    private Boolean pathfindingReplaced;
-    private Boolean optimizationsOff;
-    private Boolean universalTweaks;
+    private static Boolean pathfindingReplaced;
+    private static Boolean optimizationsOff;
+    private static Boolean universalTweaks;
 
     @Override public void onLoad(String mixinPackage) {
         if (mixinPackage.endsWith(".mixin.rdpl") && !rubicLoaded) {
@@ -74,25 +80,23 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     public static boolean cubicChunksPresent() {
         if (cubicChunks == null) {
             cubicChunks = Launch.classLoader.getResource(CUBIC_CHUNKS_MARKER) != null || inModJars();
-            if (cubicChunks) {
-                LogManager.getLogger("RDPL").warn("CubicChunks is installed, so it makes the cubic worlds and this mod's rubic worlds stand down. The rest of this mod still runs");
-            }
+            if (cubicChunks) { MCTMixin.LOGGER.warn("CubicChunks is installed, so it makes the cubic worlds and this mod's rubic worlds stand down. The rest of this mod still runs"); }
         }
         return cubicChunks;
     }
 
     private static boolean inModJars() {
         try {
-            for (File jar : mctmods.resourcedatapackloader.util.ModJars.list()) {
-                try (java.util.zip.ZipFile zip = new java.util.zip.ZipFile(jar)) {
+            for (File jar : ModJars.list()) {
+                try (ZipFile zip = new ZipFile(jar)) {
                     if (zip.getEntry(CUBIC_CHUNKS_MARKER) != null) { return true; }
                 }
-                catch (Exception unreadable) { LogManager.getLogger("RDPL").debug("Could not open {} while looking for CubicChunks", jar.getName()); }
+                catch (Exception unreadable) { MCTMixin.LOGGER.debug("Could not open {} while looking for CubicChunks", jar.getName()); }
             }
             return false;
         }
         catch (Exception failed) {
-            LogManager.getLogger("RDPL").warn("Could not scan the mods folder for CubicChunks, assuming it is absent", failed);
+            MCTMixin.LOGGER.warn("Could not scan the mods folder for CubicChunks, assuming it is absent", failed);
             return false;
         }
     }
@@ -107,17 +111,17 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                 optifineVersion = (String) getVersionHandler.invoke(null, new Object[0]);
                 optifineVersion = optifineVersion.replace("_pre", "");
                 optifineVersion = optifineVersion.substring(optifineVersion.length() - 2);
-                LogManager.getLogger("RDPL").info("Detected Optifine version: {}", optifineVersion);
+                MCTMixin.LOGGER.info("Detected Optifine version: {}", optifineVersion);
             }
             catch (ClassNotFoundException e) { optifineVersion = null; }
             catch (Exception e) {
-                LogManager.getLogger("RDPL").error("Optifine detected, but could not detect version. It may not work. Assuming Optifine E1...", e);
+                MCTMixin.LOGGER.error("Optifine detected, but could not detect version. It may not work. Assuming Optifine E1...", e);
                 optifineVersion = "E1";
             }
         }
         optifine = optifineVersion != null;
         if (optifine && optifineVersion.compareTo("E1") < 0) { throw new RuntimeException("OptiFine " + optifineVersion + " is not supported. Use OptiFine 1.12.2 HD U G5."); }
-        if (optifine && optifineVersion.compareTo("G5") > 0) { LogManager.getLogger("RDPL").error("Unknown optifine version: {}, it may not work. Assuming E1-G5.", optifineVersion); }
+        if (optifine && optifineVersion.compareTo("G5") > 0) { MCTMixin.LOGGER.error("Unknown optifine version: {}, it may not work. Assuming E1-G5.", optifineVersion); }
         RUBIC_CONDITIONS.defaultReturnValue(true);
         String selectable = "mctmods.resourcedatapackloader.mixin.rdpl.";
         RUBIC_CONDITIONS.put(selectable + "client.MixinRenderGlobalNoOptifine", !optifine);
@@ -145,7 +149,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
         if (rubic(mixinClassName) && cubicChunksPresent()) { return false; }
         if (RUBIC_CONDITIONS.containsKey(mixinClassName)) { return RUBIC_CONDITIONS.getBoolean(mixinClassName); }
         String simple = mixinClassName.substring(mixinClassName.lastIndexOf('.') + 1);
-        if (simple.equals("MixinChunkWriteBox")) { return mctmods.resourcedatapackloader.util.WriteBoxWatch.watching(); }
+        if (simple.equals("MixinChunkWriteBox")) { return WriteBoxWatch.watching(); }
         switch (simple) {
             case "MixinBlockCactus":
             case "MixinBlockReed":
@@ -160,14 +164,14 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                 pathfindingReplaced = Launch.classLoader.getResource("me/jellysquid/mods/lithium/common/ai/pathing/PathNodeCache.class") != null
                         || (Launch.classLoader.getResource("me/elephant1214/paperfixes/mixin/common/lithium/path_node_cache/WalkNodeProcessorMixin.class") != null
                         && settingOn());
-                if (pathfindingReplaced) { LogManager.getLogger("RDPL").info("Another mod already works out what the blocks under a path mean, so that half of the pathfinding fast path is standing down for it. What this mod remembers between lookups stays on"); }
+                if (pathfindingReplaced) { MCTMixin.LOGGER.info("Another mod already works out what the blocks under a path mean, so that half of the pathfinding fast path is standing down for it. What this mod remembers between lookups stays on"); }
             }
             if (pathfindingReplaced) { return false; }
         }
         if (OPTIMIZATIONS.contains(simple)) {
             if (optimizationsOff == null) {
                 optimizationsOff = optimizationsDisabled();
-                if (optimizationsOff) { LogManager.getLogger("RDPL").warn("disableOptimizations is set, so every pregen and generation optimization is standing down. Why would you do this?"); }
+                if (optimizationsOff) { MCTMixin.LOGGER.warn("disableOptimizations is set, so every pregen and generation optimization is standing down. Why would you do this?"); }
             }
             if (optimizationsOff) { return false; }
         }
@@ -178,7 +182,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                     || Launch.classLoader.getResource("me/jellysquid/mods/phosphor/mod/PhosphorMod.class") != null
                     || Launch.classLoader.getResource("com/sumirelabs/pulsar/light/WorldLightManager.class") != null
                     || spongePresent() || cubicChunksPresent();
-            if (lightingReplaced) { LogManager.getLogger("RDPL").info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
+            if (lightingReplaced) { MCTMixin.LOGGER.info("Another mod has taken over the light engine, so the pregeneration lighting fast path is standing down for it"); }
         }
         return !lightingReplaced;
     }
@@ -194,11 +198,11 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
     }
 
     private static boolean standDown(String simple, boolean taken) {
-        if (taken) { LogManager.getLogger("RDPL").info("Universal Tweaks already covers this, so {} is left out", simple); }
+        if (taken) { MCTMixin.LOGGER.info("Universal Tweaks already covers this, so {} is left out", simple); }
         return !taken;
     }
 
-    private boolean universalTweaksPresent() {
+    private static boolean universalTweaksPresent() {
         if (universalTweaks == null) { universalTweaks = Launch.classLoader.getResource("mod/acgaming/universaltweaks/UniversalTweaks.class") != null; }
         return universalTweaks;
     }
@@ -207,9 +211,9 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean tweakOn(String name) { return cfgFlag("Universal Tweaks - Tweaks.cfg", "B:\"" + name + "\"=", true); }
 
-    private static boolean optimizationsDisabled() { return cfgFlag("mct_resourcedatapackloader_mixin.cfg", "B:disableOptimizations=", false); }
+    private static boolean optimizationsDisabled() { return cfgFlag(ConfigLate.FILE, "B:disableOptimizations=", false); }
 
-    private static boolean cfgFlag(String file, String prefix, boolean fallback) { return mctmods.resourcedatapackloader.core.util.EarlyConfig.flag(Launch.minecraftHome, file, prefix, fallback); }
+    private static boolean cfgFlag(String file, String prefix, boolean fallback) { return EarlyConfig.flag(Launch.minecraftHome, file, prefix, fallback); }
 
     @Override public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {}
 

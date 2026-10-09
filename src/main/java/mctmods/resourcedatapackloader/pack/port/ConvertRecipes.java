@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -53,7 +55,7 @@ final class ConvertRecipes {
         }
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        String type = Convert.text(held, "type");
+        String type = Json.text(held, "type");
         if (type.startsWith("neoforge:")) { type = "forge:" + type.substring("neoforge:".length()); }
         if ("forge:item_exists".equals(type)) { type = "minecraft:item_exists"; }
         if (!type.isEmpty()) { held.addProperty("type", type); }
@@ -68,7 +70,7 @@ final class ConvertRecipes {
             }
             return false;
         }
-        return element.isJsonObject() && "forge:ore_dict".equals(Convert.text(element.getAsJsonObject(), "type"));
+        return element.isJsonObject() && "forge:ore_dict".equals(Json.text(element.getAsJsonObject(), "type"));
     }
 
     private static JsonElement ingredient(JsonElement element, String from, Ported pack) {
@@ -86,7 +88,7 @@ final class ConvertRecipes {
         }
         if (!element.isJsonObject()) { return element; }
         JsonObject held = element.getAsJsonObject();
-        String type = Convert.text(held, "type");
+        String type = Json.text(held, "type");
         if (type.endsWith(":compound") && held.has("children")) { return ingredient(held.get("children"), from, pack); }
         if (held.has("tag")) {
             String tag = held.get("tag").getAsString();
@@ -143,6 +145,7 @@ final class ConvertRecipes {
             pack.note("A smelting recipe smelts " + ingredient + ", which is not one item, and 1.12.2's furnace takes one item, so it is left out");
             return null;
         }
+        if (!json.has("result")) { return null; }
         JsonElement result = stack(json.get("result"), from, pack);
         if (!result.isJsonObject() || !result.getAsJsonObject().has("item")) { return null; }
         JsonObject out = new JsonObject();

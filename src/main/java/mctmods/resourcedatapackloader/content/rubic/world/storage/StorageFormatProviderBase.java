@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world.storage;
 
+import mctmods.resourcedatapackloader.content.rubic.Rubic;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicStorage;
 
 import net.minecraft.util.ResourceLocation;
@@ -11,25 +12,16 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public abstract class StorageFormatProviderBase implements IForgeRegistryEntry<StorageFormatProviderBase> {
-    public static final ResourceLocation DEFAULT = new ResourceLocation("resourcedatapackloader", "rubic3d");
+    public static final ResourceLocation DEFAULT = new ResourceLocation(Rubic.MODID, "rubic3d");
     public static IForgeRegistry<StorageFormatProviderBase> REGISTRY;
 
     public static void init() {
         REGISTRY = new RegistryBuilder<StorageFormatProviderBase>()
                 .setType(StorageFormatProviderBase.class)
                 .setIDRange(0, 256)
-                .setName(new ResourceLocation("resourcedatapackloader", "storage_format_provider_registry"))
+                .setName(new ResourceLocation(Rubic.MODID, "storage_format_provider_registry"))
                 .addCallback(StorageFormatCallbacks.INSTANCE)
                 .create();
-    }
-
-    public static ResourceLocation defaultStorageFormatProviderName(String fallback) {
-        if (!fallback.isEmpty()) { return new ResourceLocation(fallback); }
-        ResourceLocation[] providersThatCanBeDefault = REGISTRY.getValuesCollection().stream()
-                .filter(StorageFormatProviderBase::canBeDefault)
-                .map(StorageFormatProviderBase::getRegistryName)
-                .toArray(ResourceLocation[]::new);
-        return providersThatCanBeDefault.length == 1 ? providersThatCanBeDefault[0] : DEFAULT;
     }
 
     public ResourceLocation registryName;
@@ -44,8 +36,6 @@ public abstract class StorageFormatProviderBase implements IForgeRegistryEntry<S
     @Override public Class<StorageFormatProviderBase> getRegistryType() { return StorageFormatProviderBase.class; }
 
     public abstract IRubicStorage provideStorage(World world, Path path) throws IOException;
-
-    public boolean canBeDefault() { return false; }
 
     private static class StorageFormatCallbacks implements IForgeRegistry.MissingFactory<StorageFormatProviderBase> {
         private static final StorageFormatCallbacks INSTANCE = new StorageFormatCallbacks();

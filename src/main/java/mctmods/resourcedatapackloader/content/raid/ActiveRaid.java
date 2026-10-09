@@ -26,6 +26,7 @@ import net.minecraft.world.BossInfo;
 import net.minecraft.world.BossInfoServer;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -305,7 +306,7 @@ public final class ActiveRaid {
         raid.waveHealth = tag.getFloat("WaveHealth");
         try { raid.status = Status.valueOf(tag.getString("Status")); }
         catch (IllegalArgumentException unknown) { raid.status = Status.STOPPED; }
-        NBTTagList ids = tag.getTagList("Raiders", 10);
+        NBTTagList ids = tag.getTagList("Raiders", Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < ids.tagCount(); i++) { raid.raiders.add(NBTUtil.getUUIDFromTag(ids.getCompoundTagAt(i))); }
         return raid;
     }

@@ -1,18 +1,20 @@
 package mctmods.resourcedatapackloader.content.entity.ai;
 
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Walking;
 
 import net.minecraft.entity.EntityCreature;
 import net.minecraft.entity.ai.EntityAIBase;
 import net.minecraft.entity.ai.RandomPositionGenerator;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import javax.annotation.Nullable;
 
 public final class EntityAISleepByDay extends EntityAIBase {
     private static final int RETRY = 40;
     private static final int TRIES = 3;
+    private static final double SPEED = 1.0D;
     private final EntityCreature mob;
-    private BlockPos shade;
+    @Nullable private BlockPos shade;
     private boolean settled;
 
     public EntityAISleepByDay(EntityCreature mob) {
@@ -46,9 +48,13 @@ public final class EntityAISleepByDay extends EntityAIBase {
 
     @Override public void startExecuting() {
         settled = false;
-        if (ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("{} at {}, {}, {} heads for shade at {}, {}, {} for the day, sky over it {}", mob.getName(), (int) mob.posX, (int) mob.posY, (int) mob.posZ, shade.getX(), shade.getY(), shade.getZ(), covered(new BlockPos(mob)) ? "covered" : "open"); }
-        mob.getNavigator().tryMoveToXYZ(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D, 1.0D);
+        BlockPos place = shade;
+        if (place == null) { return; }
+        GoalLog.debug(mob, "heads for shade at {}, {}, {} for the day, sky over it {}", place.getX(), place.getY(), place.getZ(), covered(new BlockPos(mob)) ? "covered" : "open");
+        walkTo(place);
     }
+
+    private void walkTo(BlockPos place) { Walking.toBlock(mob, place, SPEED); }
 
     @Override public void resetTask() {
         shade = null;
@@ -58,13 +64,14 @@ public final class EntityAISleepByDay extends EntityAIBase {
     }
 
     @Override public void updateTask() {
-        if (settled) { return; }
-        if (mob.getDistanceSq(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D) <= 2.25D) {
+        BlockPos place = shade;
+        if (settled || place == null) { return; }
+        if (mob.getDistanceSq(place.getX() + 0.5D, place.getY(), place.getZ() + 0.5D) <= 2.25D) {
             settled = true;
             mob.setSneaking(true);
             mob.getNavigator().clearPath();
             return;
         }
-        if (mob.getNavigator().noPath() && mob.ticksExisted % 20 == 0) { mob.getNavigator().tryMoveToXYZ(shade.getX() + 0.5D, shade.getY(), shade.getZ() + 0.5D, 1.0D); }
+        if (mob.getNavigator().noPath() && mob.ticksExisted % 20 == 0) { walkTo(place); }
     }
 }

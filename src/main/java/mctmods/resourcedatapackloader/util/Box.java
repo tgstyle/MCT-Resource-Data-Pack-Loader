@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-
 public class Box {
     protected int x1, y1, z1;
     protected int x2, y2, z2;

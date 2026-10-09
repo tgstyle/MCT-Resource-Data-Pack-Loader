@@ -12,8 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = EntitySpaceshipBase.class, remap = false) public class MixinEntitySpaceshipBase {
-    @Inject(method = "getSpaceshipGui", at = @At("HEAD"), cancellable = true)
-    private void rdpl$packRocketGui(CallbackInfoReturnable<ResourceLocation> cir) {
+    @Inject(method = "getSpaceshipGui", at = @At("HEAD"), cancellable = true) private void rdpl$packRocketGui(CallbackInfoReturnable<ResourceLocation> cir) {
         WorldProvider provider = ((Entity) (Object) this).world.provider;
         if (!(provider instanceof GcWorldProvider)) { return; }
         ResourceLocation gui = ((GcWorldProvider) provider).rocketGui();

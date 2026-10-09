@@ -93,8 +93,7 @@ public class ColumnWatcher extends PlayerChunkMapEntry implements IXZAddressable
         return true;
     }
 
-    @Override @Deprecated public void sendToPlayer(@Nonnull EntityPlayerMP player) {
-    }
+    @Override @Deprecated public void sendToPlayer(@Nonnull EntityPlayerMP player) {}
 
     @Override @Deprecated public void blockChanged(int x, int y, int z) {
         CubeWatcher watcher = playerCubeMap.getCubeWatcher(Coords.blockToCube(x), Coords.blockToCube(y), Coords.blockToCube(z));

@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.Enums;
 
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.MathHelper;
@@ -37,7 +38,7 @@ public final class ContentServer {
         if (held.isEmpty()) { return null; }
         if ("true".equalsIgnoreCase(held)) { return Boolean.TRUE; }
         if ("false".equalsIgnoreCase(held)) { return Boolean.FALSE; }
-        if (WARNED.add(key)) { ContentLog.LOGGER.error("{} is '{}', which is not true or false, so the server keeps its own", key, held); }
+        ContentLog.LOGGER.errorOnce(WARNED, key, "{} is '{}', which is not true or false, so the server keeps its own", key, held);
         return null;
     }
 
@@ -60,18 +61,15 @@ public final class ContentServer {
         return DIFFICULTY.at(dimension, ContentControl.lines(ContentControl.SERVER, "worldDifficulty", Config.worldgen.worldDifficulty));
     }
 
-    @Nullable private static EnumDifficulty difficultyFrom(String name) {
-        for (EnumDifficulty difficulty : EnumDifficulty.values()) {
-            if (difficulty.name().equalsIgnoreCase(name)) { return difficulty; }
-        }
-        return null;
-    }
+    @Nullable private static EnumDifficulty difficultyFrom(String name) { return Enums.byName(EnumDifficulty.class, name); }
 
     @Nullable public static Boolean forceGameMode() { return choice("worldForceGameMode", Config.worldgen.worldForceGameMode); }
 
     @Nullable public static Boolean pvp() { return choice("worldPvp", Config.worldgen.worldPvp); }
 
     @Nullable public static Boolean flight() { return choice("worldFlight", Config.worldgen.worldFlight); }
+
+    public static boolean off(@Nullable Boolean choice) { return Boolean.FALSE.equals(choice); }
 
     @Nullable public static Boolean nether() { return choice("worldNether", Config.worldgen.worldNether); }
 

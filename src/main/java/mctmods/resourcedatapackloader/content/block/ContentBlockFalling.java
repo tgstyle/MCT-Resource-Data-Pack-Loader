@@ -2,7 +2,6 @@ package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
-import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
@@ -28,15 +27,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentBlockFalling extends BlockFalling implements IContentBlock {
+@SuppressWarnings("deprecation") public class ContentBlockFalling extends BlockFalling implements IContentBlock, IVariantBlock {
     private final BlockDef def;
     private final PropertyVariant variant;
 
-    public static ContentBlockFalling create(BlockDef def) {
-        BlockVariants.begin(def);
-        try { return new ContentBlockFalling(def); }
-        finally { BlockVariants.end(); }
-    }
+    public static ContentBlockFalling create(BlockDef def) { return BlockVariants.construct(def, ContentBlockFalling::new); }
 
     protected ContentBlockFalling(BlockDef def) {
         super(def.material);
@@ -48,27 +43,19 @@ import javax.annotation.Nullable;
         setDefaultState(this.blockState.getBaseState().withProperty(this.variant, def.at(0).name));
     }
 
-    @Override @Nonnull protected BlockStateContainer createBlockState() {
-        PropertyVariant property = BlockVariants.fresh();
-        return new BlockStateContainer(this, property);
-    }
+    @Override @Nonnull protected BlockStateContainer createBlockState() { return BlockVariants.container(this); }
 
     @Override public BlockDef getDef() { return def; }
 
-    @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) {
-        if (def.sustains(plantable.getPlantType(world, pos.offset(direction)))) { return true; }
-        return super.canSustainPlant(state, world, pos, direction, plantable);
-    }
+    @Override public boolean canSustainPlant(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing direction, @Nonnull IPlantable plantable) { return BlockVariants.sustains(def, world, pos, direction, plantable) || super.canSustainPlant(state, world, pos, direction, plantable); }
 
     private BlockDef def() { return def == null ? BlockVariants.def() : def; }
 
     @Override @Nullable public ItemBlock createItem() { return new ContentItemBlock(this, def); }
 
-    public PropertyVariant getVariantProperty() { return variant; }
+    @Override public PropertyVariant getVariantProperty() { return variant; }
 
-    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(this, 1, value.meta)); }
-    }
+    @Override public void getSubBlocks(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { BlockVariants.subBlocks(this, def, list); }
 
     @Override @Nonnull public IBlockState getStateFromMeta(int meta) { return getDefaultState().withProperty(variant, def.at(meta).name); }
 
@@ -80,12 +67,20 @@ import javax.annotation.Nullable;
 
     @Override public int getHarvestLevel(@Nonnull IBlockState state) { return def.at(getMetaFromState(state)).harvestLevel; }
 
-    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) {
-        return def.at(getMetaFromState(state)).hardness;
+    @Override public float getBlockHardness(@Nonnull IBlockState state, @Nonnull World worldIn, @Nonnull BlockPos pos) { return def.at(getMetaFromState(state)).hardness; }
+
+    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) { return ContentSetup.resistanceOf(def, def.at(getMetaFromState(world.getBlockState(pos)))); }
+
+    @Override public int getExpDrop(@Nonnull IBlockState state, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, int fortune) { return VariantDrops.experience(def, RANDOM); }
+
+    @Override public void getDrops(@Nonnull NonNullList<ItemStack> drops, @Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull IBlockState state, int fortune) {
+        if (def.at(getMetaFromState(state)).drops.isEmpty()) { super.getDrops(drops, world, pos, state, fortune); }
+        else { VariantDrops.roll(this, drops, world, state, def.at(getMetaFromState(state)), fortune); }
     }
 
-    @Override public float getExplosionResistance(World world, @Nonnull BlockPos pos, Entity exploder, @Nonnull Explosion explosion) {
-        return def.at(getMetaFromState(world.getBlockState(pos))).resistance / def.explosionResistanceDivisor;
+    @Override public void breakBlock(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) {
+        if (!world.isRemote) { VariantDrops.spawnEntities(world, pos, def.at(getMetaFromState(state))); }
+        super.breakBlock(world, pos, state);
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public BlockRenderLayer getRenderLayer() { return def().renderLayer; }
@@ -96,14 +91,5 @@ import javax.annotation.Nullable;
 
     @Override public int getLightOpacity(@Nonnull IBlockState state) { return def().lightOpacity; }
 
-    @Override @Nonnull public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) {
-        BlockDef current = def();
-        return current.bounds == null ? super.getBoundingBox(state, source, pos) : current.bounds;
-    }
-
-    @Override public int getFlammability(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability; }
-
-    @Override public int getFireSpreadSpeed(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().fireSpread; }
-
-    @Override public boolean isFlammable(@Nonnull IBlockAccess world, @Nonnull BlockPos pos, @Nonnull EnumFacing face) { return def().flammability > 0; }
+    @Override @Nonnull public AxisAlignedBB getBoundingBox(@Nonnull IBlockState state, @Nonnull IBlockAccess source, @Nonnull BlockPos pos) { return BlockVariants.bounds(def(), super.getBoundingBox(state, source, pos)); }
 }

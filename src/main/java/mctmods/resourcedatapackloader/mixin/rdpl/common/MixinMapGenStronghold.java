@@ -18,8 +18,7 @@ import java.util.List;
     @Shadow private double distance;
     @Shadow private int spread;
 
-    @Inject(method = "<init>()V", at = @At("RETURN"))
-    private void rdpl$placement(CallbackInfo ci) {
+    @Inject(method = "<init>()V", at = @At("RETURN")) private void rdpl$placement(CallbackInfo ci) {
         distance = ContentStructurePlacement.spacing(ContentStructurePlacement.STRONGHOLDS, (int) distance);
         spread = ContentStructurePlacement.separation(ContentStructurePlacement.STRONGHOLDS, spread);
         ContentStructurePlacement.filter(ContentStructurePlacement.STRONGHOLDS, allowedBiomes);

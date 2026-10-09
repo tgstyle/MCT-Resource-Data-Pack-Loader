@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Listing;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
@@ -27,7 +28,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureVillagePieces;
@@ -47,7 +47,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentVillages {
-    private static final String COMPONENT = "RDPL:Plot";
     private static final String AT = "at=";
     private static final String UNDER = "under=";
     private static final Map<String, VillageDef> DEFS = new LinkedHashMap<>();
@@ -88,7 +87,7 @@ public final class ContentVillages {
     public static void register() {
         if (registered || DEFS.isEmpty()) { return; }
         registered = true;
-        MapGenStructureIO.registerStructureComponent(ContentVillagePiece.class, COMPONENT);
+        VillagePieces.plots();
         VillagerRegistry.instance().registerVillageCreationHandler(new Handler());
     }
 
@@ -97,12 +96,12 @@ public final class ContentVillages {
         return !names().isEmpty();
     }
 
-    public static boolean blocked(Class<?> piece) {
-        if (piece == null) { return false; }
+    public static boolean allowed(Class<?> piece) {
+        if (piece == null) { return true; }
         boolean listed = names().contains(piece.getSimpleName().toLowerCase(Locale.ROOT));
-        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return listed; }
-        if (listed) { return false; }
-        return piece.getEnclosingClass() == StructureVillagePieces.class;
+        if (ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist)) { return !listed; }
+        if (listed) { return true; }
+        return piece.getEnclosingClass() != StructureVillagePieces.class;
     }
 
     @Nullable public static VillageDef byName(String name) { return defs().get(name); }
@@ -181,8 +180,9 @@ public final class ContentVillages {
 
     private static int widestPlot() {
         int widest = 13;
+        boolean filtering = filtering();
         for (VillageDef def : defs().values()) {
-            if (missing(def) || blocked(def)) { continue; }
+            if (missing(def) || (filtering && blocked(def))) { continue; }
             StructureMapDef map = ContentStructureMaps.byName(def.structure);
             if (map != null) {
                 widest = Math.max(widest, Math.max(map.cellsWide, map.cellsDeep) * map.cell);
@@ -300,7 +300,7 @@ public final class ContentVillages {
             listed = named(template);
         }
         if (!listed) { listed = named(def.registryName); }
-        boolean barred = ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist) == listed;
+        boolean barred = Listing.blocks(listed, ContentControl.flag(ContentControl.STRUCTURES, "villagePiecesAreBlacklist", Config.worldgen.villagePiecesAreBlacklist));
         BARRED.put(def, barred);
         return barred;
     }

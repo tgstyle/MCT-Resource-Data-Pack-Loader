@@ -26,9 +26,9 @@ public final class BeardKeep {
     private static final int CROWDED = 400000;
     private static final Set<Long> HELD = new LinkedHashSet<>();
     private static final Map<Long, Set<Long>> LAMPS = new HashMap<>();
-    @Nullable private static StructureBoundingBox watched = null;
-    @Nullable private static String watchedName = null;
-    private static IBlockState[] before = null;
+    @Nullable private static StructureBoundingBox watched;
+    @Nullable private static String watchedName;
+    private static IBlockState[] before;
     private static int fromX;
     private static int fromZ;
     private static int fromY;

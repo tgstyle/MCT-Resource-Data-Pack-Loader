@@ -56,10 +56,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         cir.setReturnValue(((Cube) column.getCube(blockToCube(pos.getY()))).getCachedLightFor(type, pos));
     }
 
-    @Nullable @Redirect(method = "getLightFor", at = @At(
-            value = "FIELD",
-            target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;",
-            opcode = Opcodes.GETFIELD, args = "array=get"
-    ), expect = 0)
-    private ExtendedBlockStorage rdpl$getLightForStorage(ExtendedBlockStorage[] array, int index) { return ((IColumnInternal) this).getStorageForCube(index); }
+    @Nullable @Redirect(method = "getLightFor", at = @At(value = "FIELD", target = "Lnet/minecraft/world/chunk/Chunk;storageArrays:[Lnet/minecraft/world/chunk/storage/ExtendedBlockStorage;", opcode = Opcodes.GETFIELD, args = "array=get"), expect = 0) private ExtendedBlockStorage rdpl$getLightForStorage(ExtendedBlockStorage[] array, int index) { return ((IColumnInternal) this).getStorageForCube(index); }
 }

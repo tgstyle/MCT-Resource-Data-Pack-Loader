@@ -37,7 +37,7 @@ import java.util.List;
 
     @Override public void rdpl$setLightArea(ContentLightArea area) { rdpl$area = area; }
 
-    @Unique private static final ThreadLocal<long[]> rdpl$spreadStart = ThreadLocal.withInitial(() -> new long[1]);
+    @Unique private static final ContentChunkWatch.Timer rdpl$spreadStart = new ContentChunkWatch.Timer();
 
     @Inject(method = "addEventListener", at = @At("RETURN")) private void rdpl$listenerAdded(IWorldEventListener listener, CallbackInfo ci) { rdpl$quietLight = -1; }
 
@@ -56,9 +56,7 @@ import java.util.List;
     }
 
     @Unique private boolean rdpl$onlyTheGameListening() {
-        for (IWorldEventListener listener : eventListeners) {
-            if (!rdpl$deaf(listener)) { return false; }
-        }
+        for (IWorldEventListener listener : eventListeners) { if (!rdpl$deaf(listener)) { return false; } }
         return true;
     }
 
@@ -76,8 +74,7 @@ import java.util.List;
         ContentLog.LOGGER.debug("Light changes will keep being announced, something besides the game is listening: {}", who);
     }
 
-    @Redirect(method = "setLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;notifyLightSet(Lnet/minecraft/util/math/BlockPos;)V"))
-    private void rdpl$tellNobody(World world, BlockPos pos) {
+    @Redirect(method = "setLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;notifyLightSet(Lnet/minecraft/util/math/BlockPos;)V")) private void rdpl$tellNobody(World world, BlockPos pos) {
         if (rdpl$nobodyListening()) { return; }
         world.notifyLightSet(pos);
     }
@@ -95,15 +92,13 @@ import java.util.List;
         }
     }
 
-    @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(Lnet/minecraft/util/math/BlockPos;IZ)Z"))
-    private boolean rdpl$alreadyKnown(World world, BlockPos center, int radius, boolean allowEmpty) {
+    @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;isAreaLoaded(Lnet/minecraft/util/math/BlockPos;IZ)Z")) private boolean rdpl$alreadyKnown(World world, BlockPos center, int radius, boolean allowEmpty) {
         int known = ContentLightArea.answer(world, center, radius);
         if (known != ContentLightArea.UNKNOWN) { return known == ContentLightArea.YES; }
         return world.isAreaLoaded(center, radius, allowEmpty);
     }
 
-    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;)I"))
-    private int rdpl$lightNearby(World world, EnumSkyBlock type, BlockPos pos) {
+    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;)I")) private int rdpl$lightNearby(World world, EnumSkyBlock type, BlockPos pos) {
         Chunk chunk = ContentLightArea.at(world, pos);
         if (chunk == null) { return world.getLightFor(type, pos); }
         if (pos.getY() < 0) { return chunk.getLightFor(type, rdpl$floor.setPos(pos.getX(), 0, pos.getZ())); }
@@ -111,15 +106,13 @@ import java.util.List;
         return chunk.getLightFor(type, pos);
     }
 
-    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;"))
-    private IBlockState rdpl$stateNearby(World world, BlockPos pos) {
+    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getBlockState(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/block/state/IBlockState;")) private IBlockState rdpl$stateNearby(World world, BlockPos pos) {
         Chunk chunk = rdpl$nearby(world, pos);
         if (chunk == null) { return world.getBlockState(pos); }
         return chunk.getBlockState(pos);
     }
 
-    @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;I)V"))
-    private void rdpl$writeNearby(World world, EnumSkyBlock type, BlockPos pos, int lightValue) {
+    @Redirect(method = "checkLightFor", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;setLightFor(Lnet/minecraft/world/EnumSkyBlock;Lnet/minecraft/util/math/BlockPos;I)V")) private void rdpl$writeNearby(World world, EnumSkyBlock type, BlockPos pos, int lightValue) {
         Chunk chunk = rdpl$nearby(world, pos);
         if (chunk == null) {
             world.setLightFor(type, pos, lightValue);
@@ -134,23 +127,22 @@ import java.util.List;
         return ContentLightArea.at(world, pos);
     }
 
-    @Redirect(method = "getRawLight", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;canSeeSky(Lnet/minecraft/util/math/BlockPos;)Z"))
-    private boolean rdpl$skyNearby(World world, BlockPos pos) {
+    @Redirect(method = "getRawLight", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;canSeeSky(Lnet/minecraft/util/math/BlockPos;)Z")) private boolean rdpl$skyNearby(World world, BlockPos pos) {
         Chunk chunk = ContentLightArea.at(world, pos);
         if (chunk == null) { return world.canSeeSky(pos); }
         return chunk.canSeeSky(pos);
     }
 
-    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
-    private EnumFacing[] rdpl$sidesWithoutCopying() { return EnumFacing.VALUES; }
+    @Redirect(method = {"checkLightFor", "getRawLight"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;")) private EnumFacing[] rdpl$sidesWithoutCopying() { return EnumFacing.VALUES; }
 
     @Inject(method = "checkLightFor", at = @At("HEAD")) private void rdpl$startSpread(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if (!ContentChunkWatch.watching()) { return; }
-        rdpl$spreadStart.get()[0] = ContentChunkWatch.timingThisOne() ? System.nanoTime() : 0L;
+        if (ContentChunkWatch.timingThisOne()) { rdpl$spreadStart.start(); }
+        else { rdpl$spreadStart.skip(); }
     }
 
     @Inject(method = "checkLightFor", at = @At("RETURN")) private void rdpl$endSpread(EnumSkyBlock lightType, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
         if (!ContentChunkWatch.watching()) { return; }
-        ContentChunkWatch.spread(rdpl$spreadStart.get()[0], lightType == EnumSkyBlock.SKY);
+        ContentChunkWatch.spread(rdpl$spreadStart.stop(), lightType == EnumSkyBlock.SKY);
     }
 }

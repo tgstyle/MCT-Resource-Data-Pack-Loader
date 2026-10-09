@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
+import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -11,7 +11,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import java.util.Random;
 
 @Mixin(WorldGenDoublePlant.class) public class MixinWorldGenDoublePlants {
-    @ModifyConstant(method = "generate", constant = @Constant(intValue = 254)) private int getMaxGenHeight(int orig, World worldIn, Random rand, BlockPos position) {
-        return ((IRubicWorld) worldIn).rdpl$getMaxHeight() - 2;
-    }
+    @ModifyConstant(method = "generate", constant = @Constant(intValue = 254)) private int rdpl$getMaxGenHeight(int orig, World worldIn, Random rand, BlockPos position) { return GenHeights.ceiling(worldIn, orig + 2) - 2; }
 }

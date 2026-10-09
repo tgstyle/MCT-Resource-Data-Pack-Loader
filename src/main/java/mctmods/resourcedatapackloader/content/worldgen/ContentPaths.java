@@ -25,11 +25,11 @@ import javax.annotation.Nullable;
 public final class ContentPaths {
     private ContentPaths() {}
 
-    public static boolean enabled() { return Config.content.shovelPaths || Config.content.hoeTilling; }
+    private static boolean idle() { return !Config.content.shovelPaths && !Config.content.hoeTilling; }
 
     @SubscribeEvent public static void onRightClick(PlayerInteractEvent.RightClickBlock event) {
         ItemStack held = event.getItemStack();
-        if (held.isEmpty()) { return; }
+        if (held.isEmpty() || idle()) { return; }
         EnumFacing face = event.getFace();
         if (face == null || face == EnumFacing.DOWN) { return; }
         World world = event.getWorld();

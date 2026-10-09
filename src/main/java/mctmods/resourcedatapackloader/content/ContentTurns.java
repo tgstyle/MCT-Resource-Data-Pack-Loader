@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.TurnsDef;
+import mctmods.resourcedatapackloader.content.util.TellThrottle;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.TurnClock;
@@ -39,7 +40,7 @@ public final class ContentTurns {
     private static final List<String> ORDER = new ArrayList<>();
     private static final Set<UUID> HELD = new HashSet<>();
     private static final Map<String, GameType> ASIDE = new LinkedHashMap<>();
-    private static final Map<String, Long> TOLD = new LinkedHashMap<>();
+    private static final TellThrottle TOLD = new TellThrottle(NOTE_TICKS);
     private static final TurnClock CLOCK = new TurnClock();
     @Nullable private static ScoreDef playing;
     @Nullable private static String current;
@@ -72,9 +73,6 @@ public final class ContentTurns {
         }
         playing = def;
         Map<String, List<Entity>> groups = groups(server, turns);
-        for (String group : groups.keySet()) {
-            if (!SEEN.contains(group)) { SEEN.add(group); }
-        }
         if (reached(server, def, turns)) {
             ContentLog.LOGGER.info("A side reached {} in {}, so the turns are over", turns.endsAtScore, def.name);
             ContentScoring.finish(def, "turns", null);
@@ -235,9 +233,8 @@ public final class ContentTurns {
     static boolean refused(EntityPlayer player) {
         if (free(player)) { return false; }
         long now = player.world.getTotalWorldTime();
-        Long last = TOLD.get(player.getName());
-        if (last == null || now - last >= NOTE_TICKS) {
-            TOLD.put(player.getName(), now);
+        if (TOLD.ready(player.getName(), now)) {
+            TOLD.mark(player.getName(), now);
             Says.chat(player, TextFormatting.GRAY, ContentDice.words(player, "notturn"));
         }
         return true;
@@ -251,18 +248,18 @@ public final class ContentTurns {
             String group = groupOf(turns, overworld, player);
             if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(player); }
         }
-        for (WorldServer world : server.worlds) {
-            for (Entity one : world.loadedEntityList) {
-                if (!(one instanceof EntityLiving) || one.isDead || ((EntityLiving) one).getHealth() <= 0.0F) { continue; }
-                String group = groupOf(turns, world, one);
-                if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(one); }
-            }
+        ContentTeams.eachAlive(server, EntityLiving.class, (world, one) -> {
+            String group = groupOf(turns, world, one);
+            if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(one); }
+        });
+        for (String group : groups.keySet()) {
+            if (!SEEN.contains(group)) { SEEN.add(group); }
         }
         return groups;
     }
 
     @Nullable private static String groupOf(TurnsDef turns, World world, Entity who) {
-        String member = who instanceof EntityPlayer ? who.getName() : who.getCachedUniqueIdString();
+        String member = ContentTeams.memberName(who);
         String side = ContentScoring.sideOf(world, who, member);
         if (side != null || who instanceof EntityPlayer) { return side == null ? member : side; }
         for (String tag : turns.mobTags) {
@@ -281,15 +278,16 @@ public final class ContentTurns {
     }
 
     private static int score(MinecraftServer server, ScoreDef def, String group) {
-        Scoreboard board = server.getWorld(0).getScoreboard();
+        Scoreboard board = ContentTeams.board(server);
         ScoreObjective objective = board.getObjective(def.name);
         return objective == null || !board.entityHasObjective(group, objective) ? 0 : board.getOrCreateScore(group, objective).getScorePoints();
     }
 
     @Nullable private static String leader(MinecraftServer server, ScoreDef def) {
-        ScoreObjective objective = server.getWorld(0).getScoreboard().getObjective(def.name);
+        Scoreboard board = ContentTeams.board(server);
+        ScoreObjective objective = board.getObjective(def.name);
         if (objective == null) { return null; }
-        List<Score> top = ContentScoringTie.top(server.getWorld(0).getScoreboard().getSortedScores(objective));
+        List<Score> top = ContentScoringTie.top(board.getSortedScores(objective));
         return top.size() == 1 ? top.get(0).getPlayerName() : null;
     }
 

@@ -6,8 +6,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [
-    "MixinMaterialModelLoader",
-    "MixinToolModelLoader"
+    "MixinMaterialModelLoader"
   ],
   "server": []
 }

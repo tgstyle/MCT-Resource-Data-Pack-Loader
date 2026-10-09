@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
 import mctmods.resourcedatapackloader.util.JsonTree;
+import mctmods.resourcedatapackloader.util.IdNames;
 
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
@@ -78,8 +81,7 @@ final class Down {
             boolean attribute = i >= 2 && "attribute".equals(args.get(i - 2));
             args.set(i, attribute ? DownFixes.attribute(arg) : renamed(arg));
         }
-        String out = (macro ? "$" : "") + String.join(" ", args);
-        return out.equals(line) ? line : out;
+        return (macro ? "$" : "") + String.join(" ", args);
     }
 
     private static List<String> split(String text) {
@@ -116,13 +118,13 @@ final class Down {
         if (id.isEmpty() || id.startsWith("#") || id.startsWith("@")) { return arg; }
         String renamed = DownFixes.name(id);
         if (renamed.equals(id)) { return arg; }
-        return (id.indexOf(':') < 0 ? renamed.substring(DownFixes.MINECRAFT.length()) : renamed) + arg.substring(end);
+        return (id.indexOf(':') < 0 ? renamed.substring(MINECRAFT.length()) : renamed) + arg.substring(end);
     }
 
     private static String gamerule(String line) {
         String[] args = line.split(" +");
         if (args.length < 2) { return line; }
-        String name = args[1].startsWith(DownFixes.MINECRAFT) ? args[1].substring(DownFixes.MINECRAFT.length()) : args[1];
+        String name = IdNames.bare(args[1]);
         String value = args.length > 2 ? args[2] : null;
         if (FIRE.equals(name)) {
             name = "doFireTick";
@@ -132,6 +134,6 @@ final class Down {
             if (INVERTED.contains(name) && value != null) { value = String.valueOf(!Boolean.parseBoolean(value)); }
             name = OLD_RULES.get(name);
         }
-        return "gamerule " + name + (value != null ? " " + value : "");
+        return GAMERULE + name + (value != null ? " " + value : "");
     }
 }

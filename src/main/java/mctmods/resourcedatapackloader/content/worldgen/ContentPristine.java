@@ -1,9 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.server.MinecraftServer;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,8 +15,10 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
 public final class ContentPristine {
@@ -27,7 +32,7 @@ public final class ContentPristine {
         Path save = save(server);
         Path kept = holdingFor(server);
         Path stamp = stampFor(server);
-        if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || !empty(save)) { return; }
+        if (!Files.isDirectory(kept) || !Files.isRegularFile(stamp) || hasRegion(save)) { return; }
         if (!stamped(stamp)) {
             ContentLog.LOGGER.info("The pristine copy of {} was made by different packs, so it is thrown away and the world is generated, then copied afresh", server.getFolderName());
             clear(kept, stamp);
@@ -41,21 +46,17 @@ public final class ContentPristine {
         }
     }
 
-    private static boolean empty(Path save) {
+    private static boolean hasRegion(Path save) {
         Path region = save.resolve("region");
-        if (!Files.isDirectory(region)) { return true; }
-        try (java.util.stream.Stream<Path> held = Files.list(region)) { return !held.findAny().isPresent(); }
-        catch (IOException unreadable) { return false; }
+        if (!Files.isDirectory(region)) { return false; }
+        try (Stream<Path> held = Files.list(region)) { return held.findAny().isPresent(); }
+        catch (IOException unreadable) { return true; }
     }
 
     private static int copy(Path from, Path to) {
         try {
             List<Path> wanted = worth(from);
-            for (Path one : wanted) {
-                Path landing = to.resolve(from.relativize(one).toString());
-                Files.createDirectories(landing.getParent());
-                Files.copy(one, landing, StandardCopyOption.REPLACE_EXISTING);
-            }
+            copyAll(wanted, from, to, done -> { });
             return wanted.size();
         }
         catch (IOException broken) {
@@ -82,7 +83,7 @@ public final class ContentPristine {
     }
 
     private static boolean stamped(Path stamp) {
-        try { return Files.isRegularFile(stamp) && new String(Files.readAllBytes(stamp), java.nio.charset.StandardCharsets.UTF_8).equals(fingerprint()); }
+        try { return Files.isRegularFile(stamp) && new String(Files.readAllBytes(stamp), StandardCharsets.UTF_8).equals(fingerprint()); }
         catch (IOException unreadable) { return false; }
     }
 
@@ -113,17 +114,15 @@ public final class ContentPristine {
     private static String fingerprint() {
         StringBuilder made = new StringBuilder();
         List<String> packs = new ArrayList<>();
-        for (mctmods.resourcedatapackloader.pack.RDPLPack pack : mctmods.resourcedatapackloader.pack.PackManager.get().getPacks()) {
-            packs.add(pack.getName() + ":" + pack.getFileCount());
-        }
-        java.util.Collections.sort(packs);
+        for (RDPLPack pack : PackManager.get().getPacks()) { packs.add(pack.getName() + ":" + pack.getFileCount()); }
+        Collections.sort(packs);
         for (String pack : packs) { made.append(pack).append('\n'); }
         return made.toString();
     }
 
     public static void mark(MinecraftServer server) {
         Path stamp = stampFor(server);
-        try { Files.write(stamp, fingerprint().getBytes(java.nio.charset.StandardCharsets.UTF_8)); }
+        try { Files.write(stamp, fingerprint().getBytes(StandardCharsets.UTF_8)); }
         catch (IOException broken) { ContentLog.LOGGER.warn("The pristine copy could not be stamped, so it will not be trusted later", broken); }
     }
 
@@ -134,19 +133,23 @@ public final class ContentPristine {
             List<Path> wanted = worth(save);
             if (wanted.isEmpty()) { return 0; }
             Files.createDirectories(kept);
-            int done = 0;
-            for (Path from : wanted) {
-                Path to = kept.resolve(save.relativize(from).toString());
-                Files.createDirectories(to.getParent());
-                Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);
-                along.accept(++done * 100 / wanted.size());
-            }
+            copyAll(wanted, save, kept, along);
             ContentLog.LOGGER.info("Kept a pristine copy of {} in {}, {} file(s)", save.getFileName(), kept, wanted.size());
             return wanted.size();
         }
         catch (IOException broken) {
             ContentLog.LOGGER.error("The pristine copy of {} could not be written to {}, so there is nothing to reset to", save.getFileName(), kept, broken);
             return 0;
+        }
+    }
+
+    private static void copyAll(List<Path> wanted, Path from, Path to, IntConsumer along) throws IOException {
+        int done = 0;
+        for (Path one : wanted) {
+            Path landing = to.resolve(from.relativize(one).toString());
+            Files.createDirectories(landing.getParent());
+            Files.copy(one, landing, StandardCopyOption.REPLACE_EXISTING);
+            along.accept(++done * 100 / wanted.size());
         }
     }
 

@@ -12,7 +12,10 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = RenderGlobal.class, priority = 1999) public abstract class MixinRenderGlobalVertViewDistance implements IVerticalRenderDistance {
@@ -26,32 +29,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Override public int rdpl$getVerticalRenderDistanceCubes() { return rdpl$verticalRenderDistanceCubes; }
 
-    @Inject(
-            method = "loadRenderers",
-            at = @At(
-                    value = "FIELD",
-                    target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I",
-                    opcode = Opcodes.PUTFIELD)
-    )
-    private void onUpdateRenderDistance(CallbackInfo cbi) { this.rdpl$verticalRenderDistanceCubes = Config.client.verticalCubeLoadDistance; }
+    @Inject(method = "loadRenderers", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I", opcode = Opcodes.PUTFIELD)) private void rdpl$onUpdateRenderDistance(CallbackInfo cbi) { this.rdpl$verticalRenderDistanceCubes = Config.client.verticalCubeLoadDistance; }
 
-    @Inject(method = "setupTerrain", at = @At("HEAD")) private void onSetupTerrain(CallbackInfo cbi) {
+    @Inject(method = "setupTerrain", at = @At("HEAD")) private void rdpl$onSetupTerrain(CallbackInfo cbi) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return; }
         if (mc.gameSettings.renderDistanceChunks == renderDistanceChunks
                 && Config.client.verticalCubeLoadDistance != rdpl$verticalRenderDistanceCubes) { this.loadRenderers(); }
     }
 
-    @Redirect(
-            method = "setupTerrain",
-            at = @At(
-                    value = "FIELD",
-                    target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I",
-                    opcode = Opcodes.GETFIELD),
-            slice = @Slice(
-                    from = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;loadRenderers()V")
-            )
-    )
-    private int onGetRenderDistance(RenderGlobal _this) {
+    @Redirect(method = "setupTerrain", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderDistanceChunks:I", opcode = Opcodes.GETFIELD), slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;loadRenderers()V"))) private int rdpl$onGetRenderDistance(RenderGlobal _this) {
         if (!((IRubicWorld) world).rdpl$isRubicWorld()) { return mc.gameSettings.renderDistanceChunks; }
         return Math.max(mc.gameSettings.renderDistanceChunks, Config.client.verticalCubeLoadDistance);
     }

@@ -8,10 +8,10 @@ import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRails;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoads;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsGrade;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardRoadsTunnels;
-import mctmods.resourcedatapackloader.content.worldgen.beard.interfaces.IRoadLayout;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureComponentBox;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.Facings;
 
 import net.minecraft.util.EnumFacing;
 import net.minecraft.world.World;
@@ -26,6 +26,7 @@ import java.util.Random;
 import java.util.function.Predicate;
 
 public final class ContentBeardEnds {
+    private static final int MERGE_ROWS = 3;
     private static Predicate<StructureComponent> vetoed;
 
     private ContentBeardEnds() {}
@@ -150,15 +151,8 @@ public final class ContentBeardEnds {
                 ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
                 pieces.remove(plot);
             }
-            if (alongX) {
-                if (outward) { box.maxX = metNear - 1; }
-                else { box.minX = metNear + 1; }
-            }
-            else {
-                if (outward) { box.maxZ = metNear - 1; }
-                else { box.minZ = metNear + 1; }
-            }
-            if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
+            BeardPlots.setEnd(box, alongX, outward, outward ? metNear - 1 : metNear + 1);
+            BeardRoads.clearLayout(piece);
             ContentLog.LOGGER.debug("The dead end at {}, {} reaches the facing street at {}, {} and joins it, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, joining.size());
             return;
         }
@@ -205,47 +199,29 @@ public final class ContentBeardEnds {
             ContentLog.LOGGER.debug("{} at {}, {} makes way for the road closing its dead end", plot.getClass().getSimpleName(), plot.getBoundingBox().minX, plot.getBoundingBox().minZ);
             pieces.remove(plot);
         }
-        if (alongX) {
-            if (outward) { box.maxX = overlaps ? metAcrossLo - 1 : metAcrossHi; }
-            else { box.minX = overlaps ? metAcrossHi + 1 : metAcrossLo; }
-            if (!overlaps) {
+        BeardPlots.setEnd(box, alongX, outward, outward ? (overlaps ? metAcrossLo - 1 : metAcrossHi) : (overlaps ? metAcrossHi + 1 : metAcrossLo));
+        if (!overlaps) {
+            if (alongX) {
                 if (metAlongLo > acrossHi) { bestMet.minZ = box.maxZ + 1; }
                 else { bestMet.maxZ = box.minZ - 1; }
             }
-        }
-        else {
-            if (outward) { box.maxZ = overlaps ? metAcrossLo - 1 : metAcrossHi; }
-            else { box.minZ = overlaps ? metAcrossHi + 1 : metAcrossLo; }
-            if (!overlaps) {
+            else {
                 if (metAlongLo > acrossHi) { bestMet.minX = box.maxX + 1; }
                 else { bestMet.maxX = box.minX - 1; }
             }
         }
-        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
-        if (bestOther instanceof IRoadLayout) { ((IRoadLayout) bestOther).rdpl$layout(null); }
+        BeardRoads.clearLayout(piece);
+        BeardRoads.clearLayout(bestOther);
         ContentLog.LOGGER.debug("The dead end at {}, {} reaches the road at {}, {} and closes into a {}, {} plot(s) making way", endX, endZ, bestMet.minX, bestMet.minZ, overlaps ? "junction" : "corner", making.size());
     }
 
     private static boolean stepsTo(List<StructureComponent> pieces, StructureBoundingBox box, boolean alongX, boolean outward, int reach) {
         StructureBoundingBox longer = new StructureBoundingBox(box);
-        if (alongX) {
-            if (outward) { longer.maxX = reach; }
-            else { longer.minX = reach; }
-        }
-        else {
-            if (outward) { longer.maxZ = reach; }
-            else { longer.minZ = reach; }
-        }
-        EnumFacing facing = alongX ? (outward ? EnumFacing.EAST : EnumFacing.WEST) : (outward ? EnumFacing.SOUTH : EnumFacing.NORTH);
-        List<StructureComponent> held = ContentBeard.laid();
-        int kept;
-        ContentBeard.laying(pieces);
-        try { kept = BeardRoadsGrade.roadReach(longer, facing); }
-        finally { ContentBeard.laying(held); }
+        BeardPlots.setEnd(longer, alongX, outward, reach);
+        EnumFacing facing = Facings.along(alongX, outward);
+        int kept = ContentBeard.layingOf(pieces, () -> BeardRoadsGrade.roadReach(longer, facing));
         return kept < (alongX ? longer.maxX - longer.minX : longer.maxZ - longer.minZ) + 1;
     }
-
-    private static final int MERGE_ROWS = 3;
 
     private static boolean mergeInto(StructureStart start, StructureComponent piece, StructureBoundingBox box, boolean alongX, boolean outward, List<StructureComponent> everyone, StructureComponent other, int acrossLo, int acrossHi, int metSideLo, int metSideHi, int cFrom, int cTo, int offset) {
         List<StructureComponent> pieces = start.getComponents();
@@ -255,7 +231,7 @@ public final class ContentBeardEnds {
         int endX = alongX ? (outward ? box.maxX : box.minX) : (acrossLo + acrossHi) / 2;
         int endZ = alongX ? (acrossLo + acrossHi) / 2 : (outward ? box.maxZ : box.minZ);
         StructureBoundingBox met = other.getBoundingBox();
-        if (shift > (BeardRoads.pathFullWidth() - 1) / 2 || rows < MERGE_ROWS * shift) {
+        if (shift > ContentBeard.streetHalf() || rows < MERGE_ROWS * shift) {
             ContentLog.LOGGER.debug("The dead end at {}, {} faces the street at {}, {} {} block(s) off its line with {} row(s) between them, too far off or too close to merge", endX, endZ, met.minX, met.minZ, shift, rows);
             return false;
         }
@@ -352,15 +328,8 @@ public final class ContentBeardEnds {
         StructureVillagePieces.Path lane = new StructureVillagePieces.Path((StructureVillagePieces.Start) pieces.get(0), 0, rand, avenue, alongX ? EnumFacing.SOUTH : EnumFacing.EAST);
         pieces.add(lane);
         everyone.add(lane);
-        if (alongX) {
-            if (outward) { box.maxX = conLo - 1; }
-            else { box.minX = conHi + 1; }
-        }
-        else {
-            if (outward) { box.maxZ = conLo - 1; }
-            else { box.minZ = conHi + 1; }
-        }
-        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
+        BeardPlots.setEnd(box, alongX, outward, outward ? conLo - 1 : conHi + 1);
+        BeardRoads.clearLayout(piece);
         ContentLog.LOGGER.debug("The dead end at {}, {} and the offset street at {}, {} tie through a cross street at {}, {}, {} plot(s) making way", endX, endZ, other.getBoundingBox().minX, other.getBoundingBox().minZ, avenue.minX, avenue.minZ, making.size());
     }
 

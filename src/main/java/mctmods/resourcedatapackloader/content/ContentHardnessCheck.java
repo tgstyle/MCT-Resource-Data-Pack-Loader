@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.client.IWeightedModel;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
@@ -18,7 +19,6 @@ import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.io.InputStream;
@@ -120,8 +120,8 @@ public final class ContentHardnessCheck {
             ContentLog.LOGGER.debug("  the game finds {} copy/copies of {}, in the order it merges them:", found.size(), location);
             for (IResource one : found) {
                 StringBuilder says = new StringBuilder();
-                try {
-                    JsonObject held = new Gson().fromJson(new InputStreamReader(one.getInputStream(), StandardCharsets.UTF_8), JsonObject.class);
+                try (IResource open = one) {
+                    JsonObject held = Json.GSON.fromJson(new InputStreamReader(open.getInputStream(), StandardCharsets.UTF_8), JsonObject.class);
                     if (held != null && held.has("variants")) {
                         for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(held, "variants").entrySet()) {
                             says.append(' ').append(entry.getKey()).append('=').append(entry.getValue().isJsonArray() ? entry.getValue().getAsJsonArray().size() : 1);
@@ -139,7 +139,7 @@ public final class ContentHardnessCheck {
     private static void count(String namespace, String path, boolean overriding) {
         try (InputStream stream = PackManager.get().openRaw(namespace, path, overriding)) {
             if (stream == null) { return; }
-            JsonObject json = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
+            JsonObject json = Json.GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
             if (json == null || !json.has("variants")) {
                 ContentLog.LOGGER.debug("  the file the pack serves has no variants block at all");
                 return;

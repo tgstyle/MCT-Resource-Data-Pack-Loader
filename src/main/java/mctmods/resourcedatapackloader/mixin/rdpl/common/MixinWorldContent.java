@@ -57,8 +57,7 @@ import java.util.List;
         unloadedEntityList.clear();
     }
 
-    @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;onUpdate()V"))
-    private void rdpl$slowDistant(Entity entity) {
+    @Redirect(method = "updateEntityWithOptionalForce", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;onUpdate()V")) private void rdpl$slowDistant(Entity entity) {
         if (ContentEntityTicks.slowedNow(entity)) { ContentEntityTicks.age(entity); }
         else { entity.onUpdate(); }
     }

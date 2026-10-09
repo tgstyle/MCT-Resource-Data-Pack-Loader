@@ -14,15 +14,11 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 import java.util.Random;
 
 @SuppressWarnings("unused") @Mixin(value = RCBiomeDecorator.class, remap = false) public abstract class MixinRCBiomeDecorator {
-    @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;)Lnet/minecraftforge/fml/common/eventhandler/Event$Result;",
-            at = @At("HEAD"), cancellable = true, remap = false)
-    private static void rdpl$leaveDecorationAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, CallbackInfoReturnable<Event.Result> cir) {
+    @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;)Lnet/minecraftforge/fml/common/eventhandler/Event$Result;", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$leaveDecorationAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, CallbackInfoReturnable<Event.Result> cir) {
         if (ContentStructures.blocks(worldIn, "reccomplex")) { cir.setReturnValue(Event.Result.DEFAULT); }
     }
 
-    @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;I)I",
-            at = @At("HEAD"), cancellable = true, remap = false)
-    private static void rdpl$leaveDecorationAmountAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, int amount, CallbackInfoReturnable<Integer> cir) {
+    @Inject(method = "decorate(Lnet/minecraft/world/WorldServer;Ljava/util/Random;Lnet/minecraft/util/math/BlockPos;Livorius/reccomplex/world/gen/feature/decoration/RCBiomeDecorator$DecorationType;I)I", at = @At("HEAD"), cancellable = true, remap = false) private static void rdpl$leaveDecorationAmountAlone(WorldServer worldIn, Random random, BlockPos chunkPos, RCBiomeDecorator.DecorationType type, int amount, CallbackInfoReturnable<Integer> cir) {
         if (ContentStructures.blocks(worldIn, "reccomplex")) { cir.setReturnValue(amount); }
     }
 }

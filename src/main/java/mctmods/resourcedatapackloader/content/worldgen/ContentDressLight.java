@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class ContentDressLight {
     private static final Set<Chunk> DARKENED = new LinkedHashSet<>();
@@ -26,8 +27,15 @@ public final class ContentDressLight {
         List<Chunk> chunks = new ArrayList<>(DARKENED);
         DARKENED.clear();
         for (Chunk chunk : chunks) {
-            if (!chunk.isLoaded() || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { continue; }
-            chunk.checkLight();
+            if (chunk.isLoaded()) { relit(chunk); }
         }
+    }
+
+    public static boolean relit(@Nullable Chunk chunk) {
+        if (chunk == null || chunk.isLightPopulated() || !chunk.isTerrainPopulated()) { return false; }
+        chunk.checkLight();
+        if (!chunk.isLightPopulated()) { return false; }
+        chunk.markDirty();
+        return true;
     }
 }

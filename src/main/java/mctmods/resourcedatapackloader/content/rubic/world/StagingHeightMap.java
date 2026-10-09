@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.world;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IHeightMap;
+import mctmods.resourcedatapackloader.util.AddressTools;
 import mctmods.resourcedatapackloader.util.Coords;
 
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
@@ -12,10 +13,10 @@ import java.util.concurrent.atomic.AtomicIntegerArray;
 
 public class StagingHeightMap implements IHeightMap {
     private static final Comparator<ICube> TOP_DOWN = Comparator.comparingInt(cube -> -cube.getCoords().getY());
-    private final List<ICube> stagedCubes = new CopyOnWriteArrayList<>();
     private static final int COLUMNS = ICube.SIZE * ICube.SIZE;
     private static final int CLEAN = 0;
     private static final int DIRTY = 1;
+    private final List<ICube> stagedCubes = new CopyOnWriteArrayList<>();
     private final AtomicIntegerArray heightmap = new AtomicIntegerArray(COLUMNS);
     private final AtomicIntegerArray dirtyFlag = new AtomicIntegerArray(COLUMNS);
     private final AtomicIntegerArray raises = new AtomicIntegerArray(COLUMNS);
@@ -56,7 +57,7 @@ public class StagingHeightMap implements IHeightMap {
         else if (blockY == getTopBlockY(localX, localZ)) { dirtyFlag.set(index(localX, localZ), DIRTY); }
     }
 
-    private int index(int localX, int localZ) { return (localZ << 4) | localX; }
+    private int index(int localX, int localZ) { return AddressTools.getLocalAddress(localX, localZ); }
 
     @Override public int getTopBlockY(int localX, int localZ) {
         int idx = index(localX, localZ);

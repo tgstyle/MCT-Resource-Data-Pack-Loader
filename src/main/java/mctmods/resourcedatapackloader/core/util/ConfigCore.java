@@ -16,8 +16,7 @@ public final class ConfigCore {
 
     public static boolean read(String category, String name) {
         try {
-            Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
-            cfg.load();
+            Configuration cfg = load();
             if (!cfg.hasCategory(category)) { return false; }
             Property prop = cfg.getCategory(category).get(name);
             return prop != null && prop.getBoolean();
@@ -27,13 +26,18 @@ public final class ConfigCore {
 
     public static String text(String category, String name, String fallback) {
         try {
-            Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
-            cfg.load();
+            Configuration cfg = load();
             if (!cfg.hasCategory(category)) { return fallback; }
             Property prop = cfg.getCategory(category).get(name);
             return prop == null ? fallback : prop.getString();
         }
         catch (RuntimeException ex) { return fallback; }
+    }
+
+    private static Configuration load() {
+        Configuration cfg = new Configuration(new File(directory(), ConfigLate.FILE));
+        cfg.load();
+        return cfg;
     }
 
     private static File directory() {

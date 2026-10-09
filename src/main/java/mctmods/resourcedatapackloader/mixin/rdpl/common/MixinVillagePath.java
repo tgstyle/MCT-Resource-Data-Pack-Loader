@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.village.CityGrowth;
 import mctmods.resourcedatapackloader.content.village.CityLayout;
 import mctmods.resourcedatapackloader.content.village.ContentVillages;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
+import mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeardJoins;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardLayout;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
@@ -96,13 +97,9 @@ import javax.annotation.Nullable;
     @Unique private int[] rdpl$lifts = new int[0];
     @Unique @Nullable private JsonObject rdpl$keys;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL"))
-    private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) {
-        if (start instanceof IVillageBlock) { ((IVillageBlock) this).rdpl$block(((IVillageBlock) start).rdpl$block()); }
-    }
+    @Inject(method = "<init>(Lnet/minecraft/world/gen/structure/StructureVillagePieces$Start;ILjava/util/Random;Lnet/minecraft/world/gen/structure/StructureBoundingBox;Lnet/minecraft/util/EnumFacing;)V", at = @At("TAIL")) private void rdpl$inheritBlock(StructureVillagePieces.Start start, int p_i45562_2_, Random rand, StructureBoundingBox p_i45562_4_, EnumFacing facing, CallbackInfo ci) { if (start instanceof IVillageBlock) { ((IVillageBlock) this).rdpl$block(((IVillageBlock) start).rdpl$block()); } }
 
-    @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I"))
-    private static int rdpl$longerRuns(Random random, int minimum, int maximum, StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing) {
+    @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;getInt(Ljava/util/Random;II)I")) private static int rdpl$longerRuns(Random random, int minimum, int maximum, StructureVillagePieces.Start start, List<StructureComponent> p_175848_1_, Random rand, int p_175848_3_, int p_175848_4_, int p_175848_5_, EnumFacing facing) {
         if (!ContentBeard.wanted()) { return MathHelper.getInt(random, minimum, maximum); }
         int least = Math.max(5, (ContentVillages.largestPlot() + 9) / 7);
         int block = start instanceof IVillageBlock ? ((IVillageBlock) start).rdpl$block() : 0;
@@ -112,8 +109,7 @@ import javax.annotation.Nullable;
         return rolled;
     }
 
-    @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;findIntersecting(Ljava/util/List;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Lnet/minecraft/world/gen/structure/StructureComponent;"))
-    @SuppressWarnings("ConstantConditions") private static StructureComponent rdpl$whoBlocks(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn) {
+    @SuppressWarnings("ConstantConditions") @Redirect(method = "findPieceBox", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/gen/structure/StructureComponent;findIntersecting(Ljava/util/List;Lnet/minecraft/world/gen/structure/StructureBoundingBox;)Lnet/minecraft/world/gen/structure/StructureComponent;")) private static StructureComponent rdpl$whoBlocks(List<StructureComponent> listIn, StructureBoundingBox boundingboxIn) {
         StructureComponent blocker = StructureComponent.findIntersecting(listIn, boundingboxIn);
         if (blocker != null) { ContentLog.LOGGER.debug("A road attempt {} is blocked by {} at {}", boundingboxIn, blocker.getClass().getSimpleName(), blocker.getBoundingBox()); }
         return blocker;
@@ -168,7 +164,7 @@ import javax.annotation.Nullable;
                 ContentLog.LOGGER.debug("A road attempt {} facing {} widened would run into another village's piece after {} row(s), so it stops short of it", wide, facing, room);
                 if (BeardRails.blocked(pieces, found)) { return null; }
             }
-            if (!BeardLayout.tooNear(start, pieces, wide, facing) && BeardLayout.widensPast(pieces, wide, facing) && !ContentBeard.taken(pieces, wide) && !BeardRails.blocked(pieces, wide)) {
+            if (BeardLayout.clearAhead(start, pieces, wide, facing) && BeardLayout.widensPast(pieces, wide, facing) && !ContentBeard.taken(pieces, wide) && !BeardRails.blocked(pieces, wide)) {
                 if (ContentBeardJoins.claimCorners(pieces, wide, alongX)) { return wide; }
                 ContentLog.LOGGER.debug("A road attempt {} facing {} needs a junction corner that is already taken, so it may only be an alley", wide, facing);
             }
@@ -186,13 +182,9 @@ import javax.annotation.Nullable;
         return found;
     }
 
-    @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$alleyStops(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
-        CityGrowth.alleyLaying(BeardRoads.roadNarrow(getBoundingBox(), BeardPlots.roadAlongX(this)));
-    }
+    @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$alleyStops(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) { CityGrowth.alleyLaying(BeardRoads.roadNarrow(getBoundingBox(), BeardPlots.roadAlongX(this))); }
 
-    @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
-        CityGrowth.alleyLaying(false);
-    }
+    @Inject(method = "buildComponent", at = @At("RETURN")) private void rdpl$alleyStopsEnd(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) { CityGrowth.alleyLaying(false); }
 
     @SuppressWarnings("ConstantConditions") @Inject(method = "buildComponent", at = @At("HEAD")) private void rdpl$branchAtBlocks(StructureComponent componentIn, List<StructureComponent> listIn, Random rand, CallbackInfo ci) {
         if (!ContentBeard.wanted() || !(componentIn instanceof StructureVillagePieces.Start) || !(this instanceof IVillageBlock) || CityLayout.drawn()) { return; }
@@ -201,9 +193,7 @@ import javax.annotation.Nullable;
         BeardLayout.branchAtBlocks(this, (StructureVillagePieces.Start) componentIn, listIn, rand, block);
     }
 
-    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"))
-    private BlockPos rdpl$layInWindow(World world, BlockPos pos) { return GroundLevel.inWindow(world, pos); }
+    @Redirect(method = "addComponentParts", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;")) private BlockPos rdpl$layInWindow(World world, BlockPos pos) { return GroundLevel.inWindow(world, pos); }
 
     @Inject(method = "addComponentParts", at = @At("HEAD"), cancellable = true) private void rdpl$grade(World worldIn, Random randomIn, StructureBoundingBox structureBoundingBoxIn, CallbackInfoReturnable<Boolean> cir) {
         if (!ContentBeard.wanted()) { return; }
@@ -213,13 +203,11 @@ import javax.annotation.Nullable;
     }
 
     @Unique private void rdpl$pave(World world, StructureBoundingBox clip) {
-        mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.enter(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2);
-        JsonObject was = ContentControl.roadKeys(rdpl$keys);
-        try { rdpl$paved(world, clip); }
-        finally {
-            ContentControl.roadKeys(was);
-            mctmods.resourcedatapackloader.content.worldgen.beard.BeardBiome.leave();
-        }
+        BeardBiome.within(world, clip, () -> {
+            JsonObject was = ContentControl.roadKeys(rdpl$keys);
+            try { rdpl$paved(world, clip); }
+            finally { ContentControl.roadKeys(was); }
+        });
     }
 
     @Unique private void rdpl$paved(World world, StructureBoundingBox clip) {

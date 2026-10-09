@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.gui.PackGuiHandler;
@@ -23,11 +24,7 @@ import javax.annotation.Nullable;
     private static final ContainerDef PLAIN = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
     private final ContainerDef container;
 
-    public static ContentBlockContainer create(BlockDef def) {
-        beginConstruction(def);
-        try { return new ContentBlockContainer(def); }
-        finally { endConstruction(); }
-    }
+    public static ContentBlockContainer create(BlockDef def) { return BlockVariants.construct(def, ContentBlockContainer::new); }
 
     protected ContentBlockContainer(BlockDef def) {
         super(def);
@@ -64,8 +61,7 @@ import javax.annotation.Nullable;
         TileEntity tile = world.getTileEntity(pos);
         if (!(tile instanceof TileEntityPackContainer)) { return; }
         ((TileEntityPackContainer) tile).unloot();
-        ((TileEntityPackContainer) tile).face(EnumFacing.byHorizontalIndex(
-                net.minecraft.util.math.MathHelper.floor(placer.rotationYaw * 4.0F / 360.0F + 0.5D) & 3).getOpposite());
+        ((TileEntityPackContainer) tile).face(placer.getHorizontalFacing().getOpposite());
         tile.markDirty();
         world.notifyBlockUpdate(pos, state, state, 3);
     }
@@ -76,9 +72,7 @@ import javax.annotation.Nullable;
         super.breakBlock(world, pos, state);
     }
 
-    @Override @Nonnull public net.minecraft.util.EnumBlockRenderType getRenderType(@Nonnull IBlockState state) {
-        return held().chestModel ? net.minecraft.util.EnumBlockRenderType.ENTITYBLOCK_ANIMATED : super.getRenderType(state);
-    }
+    @Override @Nonnull public net.minecraft.util.EnumBlockRenderType getRenderType(@Nonnull IBlockState state) { return held().chestModel ? net.minecraft.util.EnumBlockRenderType.ENTITYBLOCK_ANIMATED : super.getRenderType(state); }
 
     @Override public boolean isOpaqueCube(@Nonnull IBlockState state) { return !held().chestModel && super.isOpaqueCube(state); }
 
@@ -95,9 +89,5 @@ import javax.annotation.Nullable;
         return tile instanceof TileEntityPackContainer ? Container.calcRedstoneFromInventory((TileEntityPackContainer) tile) : 0;
     }
 
-    @Override public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, int id, int value) {
-        super.eventReceived(state, world, pos, id, value);
-        TileEntity tile = world.getTileEntity(pos);
-        return tile != null && tile.receiveClientEvent(id, value);
-    }
+    @Override public boolean eventReceived(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, int id, int value) { return ContentSetup.forwardEvent(world, pos, id, value); }
 }

@@ -2,14 +2,13 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.JsonUtils;
-import net.minecraft.util.ResourceLocation;
-import java.util.Locale;
-import javax.annotation.Nullable;
+import net.minecraft.util.ResourceLocation;import javax.annotation.Nullable;
 
 public final class ContentParserContainers {
     private ContentParserContainers() {}
@@ -20,9 +19,7 @@ public final class ContentParserContainers {
         return json.has("container") && json.get("container").isJsonPrimitive() ? JsonUtils.getString(json, "container", "") : "";
     }
 
-    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) {
-        return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null;
-    }
+    @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null; }
 
     @Nullable static ContainerDef container(ResourceLocation key, JsonObject json) {
         if (!json.has("container")) { return null; }
@@ -31,9 +28,7 @@ public final class ContentParserContainers {
         int askedColumns = JsonUtils.getInt(held, "columns", 9);
         int rows = MathHelper.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
         int columns = MathHelper.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
-        if (askedRows != rows || askedColumns != columns) {
-            ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
-        }
+        if (askedRows != rows || askedColumns != columns) { ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows); }
         String named = JsonUtils.getString(held, "guiTexture", "").trim();
         ResourceLocation texture = named.isEmpty() ? null : new ResourceLocation(named);
         int wide = JsonUtils.getInt(held, "guiWidth", 0);
@@ -47,7 +42,7 @@ public final class ContentParserContainers {
         ResourceLocation sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(asked.getAsString().trim(), key.toString()) : null;
         return new ContainerDef(rows, columns, JsonUtils.getString(held, "lootTable", "").trim(),
                 chest, sheet, texture, wide, tall,
-                JsonUtils.getString(held, "bauble", "").trim().toLowerCase(Locale.ROOT));
+                Settings.lower(JsonUtils.getString(held, "bauble", "")));
     }
 
     static boolean chested(JsonObject json) {

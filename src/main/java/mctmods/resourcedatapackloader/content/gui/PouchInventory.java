@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import javax.annotation.Nonnull;
 
@@ -75,7 +76,7 @@ public class PouchInventory implements IInventory {
 
     @Override public void closeInventory(@Nonnull EntityPlayer player) { save(); }
 
-    @Override public boolean isItemValidForSlot(int slot, @Nonnull ItemStack stack) { return !ContainerPack.nests(stack); }
+    @Override public boolean isItemValidForSlot(int slot, @Nonnull ItemStack stack) { return ContainerPack.storable(stack); }
 
     @Override public int getField(int id) { return 0; }
 
@@ -89,7 +90,5 @@ public class PouchInventory implements IInventory {
 
     @Override public boolean hasCustomName() { return pouch.hasDisplayName(); }
 
-    @Override @Nonnull public ITextComponent getDisplayName() {
-        return pouch.hasDisplayName() ? new net.minecraft.util.text.TextComponentString(pouch.getDisplayName()) : new TextComponentTranslation(named);
-    }
+    @Override @Nonnull public ITextComponent getDisplayName() { return pouch.hasDisplayName() ? new TextComponentString(pouch.getDisplayName()) : new TextComponentTranslation(named); }
 }

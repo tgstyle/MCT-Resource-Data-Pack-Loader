@@ -14,9 +14,9 @@ public final class OverrideDef {
     @Nullable public final Integer lightOpacity;
     @Nullable public final String soundType;
     @Nullable public final String harvestTool;
-    @Nullable public final Integer harvestToolLevel;
+    public final int harvestToolLevel;
     @Nullable public final Integer flammability;
-    @Nullable public final Integer fireSpread;
+    public final int fireSpread;
     @Nullable public final Integer maxStackSize;
     @Nullable public final Integer maxDamage;
     @Nullable public final String containerItem;
@@ -24,7 +24,7 @@ public final class OverrideDef {
     @Nullable public final FoodDef food;
     public final List<String> requires;
 
-    public OverrideDef(ResourceLocation target, ResourceLocation source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType, @Nullable String harvestTool, @Nullable Integer harvestToolLevel, @Nullable Integer flammability, @Nullable Integer fireSpread, @Nullable Integer maxStackSize, @Nullable Integer maxDamage, @Nullable String containerItem, @Nullable List<PotionEffectDef> effects, @Nullable FoodDef food, List<String> requires) {
+    public OverrideDef(ResourceLocation target, ResourceLocation source, @Nullable Float hardness, @Nullable Float resistance, @Nullable Float slipperiness, @Nullable Integer light, @Nullable Integer lightOpacity, @Nullable String soundType, @Nullable String harvestTool, int harvestToolLevel, @Nullable Integer flammability, int fireSpread, @Nullable Integer maxStackSize, @Nullable Integer maxDamage, @Nullable String containerItem, @Nullable List<PotionEffectDef> effects, @Nullable FoodDef food, List<String> requires) {
         this.target = target;
         this.source = source;
         this.hardness = hardness;

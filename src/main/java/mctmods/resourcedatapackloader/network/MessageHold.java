@@ -3,8 +3,6 @@ package mctmods.resourcedatapackloader.network;
 import io.netty.buffer.ByteBuf;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
-import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
-import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 
 public class MessageHold implements IMessage {
     public boolean held;
@@ -37,9 +35,5 @@ public class MessageHold implements IMessage {
         buf.writeBoolean(fog);
         buf.writeBoolean(backdrop);
         ByteBufUtils.writeUTF8String(buf, font);
-    }
-
-    public static class Idle implements IMessageHandler<MessageHold, IMessage> {
-        @Override public IMessage onMessage(MessageHold message, MessageContext ctx) { return null; }
     }
 }

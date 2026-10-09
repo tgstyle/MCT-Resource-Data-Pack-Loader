@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.function.Predicate;
 
 public final class ContentBeardTrees {
-
     private ContentBeardTrees() {}
 
     static int fellAround(World world, StructureStart start, StructureComponent piece, StructureBoundingBox box, StructureBoundingBox clip, BlockPos.MutableBlockPos at, boolean bare) {

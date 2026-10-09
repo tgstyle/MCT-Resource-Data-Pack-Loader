@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -74,13 +75,14 @@ public final class ContentControl {
 
     public static void check(@Nullable WorldTemplateDef template) {
         if (template == null || template.settings == null) { return; }
-        for (Map.Entry<String, JsonElement> entry : template.settings.entrySet()) {
-            if (KNOWN.contains(entry.getKey())) { continue; }
-            ContentLog.LOGGER.error("World template {} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", template.getKey(), entry.getKey());
-        }
+        warnUnknown("World template " + template.getKey(), template.settings);
     }
 
-    public static boolean ignores(String key) { return !KNOWN.contains(key); }
+    public static void warnUnknown(String owner, JsonObject settings) {
+        for (Map.Entry<String, JsonElement> entry : settings.entrySet()) {
+            if (!KNOWN.contains(entry.getKey())) { ContentLog.LOGGER.error("{} sets '{}', which is not a setting anything reads, so it does nothing. Check the spelling against the list of settings in HOWTO.md", owner, entry.getKey()); }
+        }
+    }
 
     @Nullable public static JsonObject roadKeys() { return ROAD_KEYS.get(); }
 
@@ -120,7 +122,6 @@ public final class ContentControl {
         return value.getAsFloat();
     }
 
-    private static final String BIOME_SETTINGS = "biomes";
     private static final Map<String, JsonElement> BIOME_KEYS = new ConcurrentHashMap<>();
     private static final Set<String> BIOME_WARNED = new LinkedHashSet<>();
     @Nullable private static JsonObject biomeSettings;
@@ -132,11 +133,9 @@ public final class ContentControl {
             biomesFrom = template;
             BIOME_KEYS.clear();
             JsonObject settings = template == null ? null : template.settings;
-            JsonElement held = settings == null || !settings.has(BIOME_SETTINGS) ? null : settings.get(BIOME_SETTINGS);
+            JsonElement held = settings == null || !settings.has(BIOMES) ? null : settings.get(BIOMES);
             if (held != null && !held.isJsonObject()) {
-                if (BIOME_WARNED.add(BIOME_SETTINGS)) {
-                    ContentLog.LOGGER.error("The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOME_SETTINGS);
-                }
+                ContentLog.LOGGER.errorOnce(BIOME_WARNED, BIOMES, "The world template's '{}' setting is not a set of biome names holding settings of their own, so no biome takes settings of its own", BIOMES);
                 held = null;
             }
             biomeSettings = held == null ? null : held.getAsJsonObject();
@@ -166,7 +165,6 @@ public final class ContentControl {
             JsonObject sections = biomeSections();
             JsonObject inside = sections != null && sections.has(section) && sections.get(section).isJsonObject() ? sections.getAsJsonObject(section) : null;
             held = inside != null && inside.has(key) ? inside.get(key) : JsonNull.INSTANCE;
-            if (inside != null && !inside.has(key) && KNOWN.contains(key)) { held = JsonNull.INSTANCE; }
             BIOME_KEYS.put(at, held);
         }
         return held.isJsonNull() ? null : held;
@@ -191,27 +189,26 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (!value.isJsonArray()) { return rejected(key, "a list of text values", fallback); }
+        return textArray(value.getAsJsonArray(), key, "a list of text values", fallback);
+    }
+
+    private static String[] textArray(JsonArray array, String key, String expected, String[] fallback) {
         List<String> found = new ArrayList<>();
-        for (JsonElement entry : value.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive()) { return rejected(key, "a list of text values", fallback); }
+        for (JsonElement entry : array) {
+            if (!entry.isJsonPrimitive()) { return rejected(key, expected, fallback); }
             found.add(entry.getAsString());
         }
         return found.toArray(new String[0]);
     }
 
-    public static boolean listed(String group, String key) { return setting(group, key) instanceof JsonArray; }
+    public static boolean notArray(String group, String key) { return !(setting(group, key) instanceof JsonArray); }
 
     public static String[] lines(String group, String key, String[] fallback) {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         if (value.isJsonPrimitive()) { return new String[] {value.getAsString()}; }
         if (!value.isJsonArray()) { return rejected(key, "a text value or a list of them", fallback); }
-        List<String> found = new ArrayList<>();
-        for (JsonElement entry : value.getAsJsonArray()) {
-            if (!entry.isJsonPrimitive()) { return rejected(key, "a text value or a list of them", fallback); }
-            found.add(entry.getAsString());
-        }
-        return found.toArray(new String[0]);
+        return textArray(value.getAsJsonArray(), key, "a text value or a list of them", fallback);
     }
 
     public static int[] numbers(String group, String key, int[] fallback) {
@@ -229,7 +226,7 @@ public final class ContentControl {
     }
 
     private static <T> T rejected(String key, String wanted, T fallback) {
-        if (WARNED.add(key)) { ContentLog.LOGGER.error("The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted); }
+        ContentLog.LOGGER.errorOnce(WARNED, key, "The active world template sets '{}' to something that is not {}, using the global value instead", key, wanted);
         return fallback;
     }
 
@@ -263,7 +260,7 @@ public final class ContentControl {
         String held = raw(group);
         String[] known = MODES.get(group);
         if (known != null && Objects.equals(known[0], held)) { return known[1]; }
-        String value = held.trim().toLowerCase(Locale.ROOT);
+        String value = Settings.lower(held);
         if (!DEFAULT.equals(value) && !GLOBAL.equals(value) && !OFF.equals(value)) {
             ContentLog.LOGGER.error("control.{} is '{}', which is not default, global or off, using default", group, value);
             value = DEFAULT;

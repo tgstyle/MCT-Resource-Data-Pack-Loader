@@ -14,6 +14,7 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IStructureStartGrow;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
+import mctmods.resourcedatapackloader.util.Turns;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import com.google.gson.JsonObject;
@@ -34,16 +35,17 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class CityLayout {
-    private static final Rotation[] TURNS = Rotation.values();
     private static final int WELL = 6;
     private static final int ALLEY = 3;
     private static final int ENDS_HINTED = 1;
     private static final int LOW_END = 2;
     private static final int HIGH_END = 4;
-    private static final Set<String> MISSING = new HashSet<>();
+    private static final Set<String> MISSING_MAPS = new HashSet<>();
+    private static final Set<String> MISSING_PLOTS = new HashSet<>();
     private static boolean laying;
     private static boolean drawn;
 
@@ -65,31 +67,22 @@ public final class CityLayout {
         if (name.isEmpty()) { return false; }
         CityMapDef def = ContentCityMaps.byName(name);
         if (def == null) {
-            if (MISSING.add(name)) { ContentLog.LOGGER.error("villageLayout names city map '{}', which no pack provides, so the village grows as usual", name); }
+            ContentLog.LOGGER.errorOnce(MISSING_MAPS, name, "villageLayout names city map '{}', which no pack provides, so the village grows as usual", name);
             return false;
         }
         List<StructureComponent> components = held.getComponents();
         if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return false; }
         StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
         StructureBoundingBox well = startPiece.getBoundingBox();
-        Rotation turn = TURNS[(int) (MathUtil.mix(world.getSeed(), well.minX, 7, well.minZ) & 3L)];
+        Rotation turn = Turns.ALL[(int) (MathUtil.mix(world.getSeed(), well.minX, 7, well.minZ) & 3L)];
         CityMapDef.Kind[][] grid = def.turned(turn);
         char[][] marks = def.turnedMarks(turn);
         int deep = grid.length;
         int wide = grid[0].length;
-        int anchorX = wide / 2;
-        int anchorZ = deep / 2;
-        boolean found = false;
-        for (int z = 0; z < deep && !found; z++) {
-            for (int x = 0; x < wide; x++) {
-                if (grid[z][x] == CityMapDef.Kind.PLAZA) {
-                    anchorX = x;
-                    anchorZ = z;
-                    found = true;
-                    break;
-                }
-            }
-        }
+        List<int[]> plazaCells = plazaCells(grid);
+        int[] anchor = plazaCells.isEmpty() ? new int[] {wide / 2, deep / 2} : plazaCells.get(0);
+        int anchorX = anchor[0];
+        int anchorZ = anchor[1];
         int cell = def.cell;
         int inset = (cell - WELL) / 2;
         int originX = well.minX - anchorX * cell - inset;
@@ -104,45 +97,33 @@ public final class CityLayout {
         Lifts lifts = liftGroups(grid, marks, def, originX, originZ);
         boolean[][] alongRow = new boolean[deep][wide];
         boolean[][] alongColumn = new boolean[deep][wide];
-        for (int z = 0; z < deep; z++) {
-            for (int x = 0; x < wide; ) {
-                if (!carries(grid[z][x])) {
-                    x++;
-                    continue;
-                }
-                int end = x;
-                while (end + 1 < wide && carries(grid[z][end + 1])) { end++; }
-                boolean anyStreet = false;
-                for (int i = x; i <= end; i++) { anyStreet |= streetLike(grid[z][i]); }
-                boolean stub = end == x && streetLike(grid[z][x]) && !carries(z > 0 ? grid[z - 1][x] : CityMapDef.Kind.OPEN) && !carries(z + 1 < deep ? grid[z + 1][x] : CityMapDef.Kind.OPEN);
-                if (anyStreet && (end > x || stub)) {
-                    JsonObject keys = keysAlong(def, grid, marks, z, x, z, end);
-                    StructureComponent road = road(components, startPiece, rand, originX + x * cell, originX + (end + 1) * cell - 1, originZ + z * cell + cell / 2, roadY, BeardRoads.fullWidthFor(keys), true);
-                    drawnRoad(road, hinted ? ends(grid[z][x], grid[z][end]) : 0, lifts.along(z, x, z, end), keys);
-                    for (int i = x; i <= end; i++) { alongRow[z][i] = true; }
-                    streets++;
-                }
-                x = end + 1;
+        for (int[] run : runs(grid, true, CityLayout::carries)) {
+            int z = run[0];
+            int x = run[1];
+            int end = run[2];
+            boolean anyStreet = false;
+            for (int i = x; i <= end; i++) { anyStreet |= streetLike(grid[z][i]); }
+            boolean stub = end == x && streetLike(grid[z][x]) && !carries(z > 0 ? grid[z - 1][x] : CityMapDef.Kind.OPEN) && !carries(z + 1 < deep ? grid[z + 1][x] : CityMapDef.Kind.OPEN);
+            if (anyStreet && (end > x || stub)) {
+                JsonObject keys = keysAlong(def, grid, marks, z, x, z, end);
+                StructureComponent road = road(components, startPiece, rand, originX + x * cell, originX + (end + 1) * cell - 1, originZ + z * cell + cell / 2, roadY, BeardRoads.fullWidthFor(keys), true);
+                drawnRoad(road, hinted ? ends(grid[z][x], grid[z][end]) : 0, lifts.along(z, x, z, end), keys);
+                for (int i = x; i <= end; i++) { alongRow[z][i] = true; }
+                streets++;
             }
         }
-        for (int x = 0; x < wide; x++) {
-            for (int z = 0; z < deep; ) {
-                if (!carries(grid[z][x])) {
-                    z++;
-                    continue;
-                }
-                int end = z;
-                while (end + 1 < deep && carries(grid[end + 1][x])) { end++; }
-                boolean anyStreet = false;
-                for (int i = z; i <= end; i++) { anyStreet |= streetLike(grid[i][x]); }
-                if (anyStreet && end > z) {
-                    JsonObject keys = keysAlong(def, grid, marks, z, x, end, x);
-                    StructureComponent road = road(components, startPiece, rand, originZ + z * cell, originZ + (end + 1) * cell - 1, originX + x * cell + cell / 2, roadY, BeardRoads.fullWidthFor(keys), false);
-                    drawnRoad(road, hinted ? ends(grid[z][x], grid[end][x]) : 0, lifts.along(z, x, end, x), keys);
-                    for (int i = z; i <= end; i++) { alongColumn[i][x] = true; }
-                    streets++;
-                }
-                z = end + 1;
+        for (int[] run : runs(grid, false, CityLayout::carries)) {
+            int x = run[0];
+            int z = run[1];
+            int end = run[2];
+            boolean anyStreet = false;
+            for (int i = z; i <= end; i++) { anyStreet |= streetLike(grid[i][x]); }
+            if (anyStreet && end > z) {
+                JsonObject keys = keysAlong(def, grid, marks, z, x, end, x);
+                StructureComponent road = road(components, startPiece, rand, originZ + z * cell, originZ + (end + 1) * cell - 1, originX + x * cell + cell / 2, roadY, BeardRoads.fullWidthFor(keys), false);
+                drawnRoad(road, hinted ? ends(grid[z][x], grid[end][x]) : 0, lifts.along(z, x, end, x), keys);
+                for (int i = z; i <= end; i++) { alongColumn[i][x] = true; }
+                streets++;
             }
         }
         for (int z = 0; z < deep; z++) {
@@ -162,45 +143,31 @@ public final class CityLayout {
                 }
             }
         }
-        for (int z = 0; z < deep; z++) {
-            for (int x = 0; x < wide; ) {
-                if (grid[z][x] != CityMapDef.Kind.ALLEY) {
-                    x++;
-                    continue;
-                }
-                int end = x;
-                while (end + 1 < wide && grid[z][end + 1] == CityMapDef.Kind.ALLEY) { end++; }
-                boolean vertical = end == x && ((z > 0 && grid[z - 1][x] == CityMapDef.Kind.ALLEY) || (z + 1 < deep && grid[z + 1][x] == CityMapDef.Kind.ALLEY));
-                if (!vertical) {
-                    road(components, startPiece, rand, originX + x * cell, originX + (end + 1) * cell - 1, originZ + z * cell + cell / 2, roadY, ALLEY, true);
-                    alleys++;
-                }
-                x = end + 1;
+        for (int[] run : runs(grid, true, CityLayout::alley)) {
+            int z = run[0];
+            int x = run[1];
+            int end = run[2];
+            boolean vertical = end == x && ((z > 0 && alley(grid[z - 1][x])) || (z + 1 < deep && alley(grid[z + 1][x])));
+            if (!vertical) {
+                road(components, startPiece, rand, originX + x * cell, originX + (end + 1) * cell - 1, originZ + z * cell + cell / 2, roadY, ALLEY, true);
+                alleys++;
             }
         }
-        for (int x = 0; x < wide; x++) {
-            for (int z = 0; z < deep; ) {
-                if (grid[z][x] != CityMapDef.Kind.ALLEY) {
-                    z++;
-                    continue;
-                }
-                int end = z;
-                while (end + 1 < deep && grid[end + 1][x] == CityMapDef.Kind.ALLEY) { end++; }
-                if (end > z) {
-                    road(components, startPiece, rand, originZ + z * cell, originZ + (end + 1) * cell - 1, originX + x * cell + cell / 2, roadY, ALLEY, false);
-                    alleys++;
-                }
-                z = end + 1;
+        for (int[] run : runs(grid, false, CityLayout::alley)) {
+            int x = run[0];
+            int z = run[1];
+            int end = run[2];
+            if (end > z) {
+                road(components, startPiece, rand, originZ + z * cell, originZ + (end + 1) * cell - 1, originX + x * cell + cell / 2, roadY, ALLEY, false);
+                alleys++;
             }
         }
-        for (int z = 0; z < deep; z++) {
-            for (int x = 0; x < wide; x++) {
-                if (grid[z][x] != CityMapDef.Kind.PLAZA || (x == anchorX && z == anchorZ)) { continue; }
-                StructureVillagePieces.Well plaza = new StructureVillagePieces.Well(startPiece, 0, rand, originX + x * cell + inset, originZ + z * cell + inset);
-                plaza.getBoundingBox().offset(0, well.minY - plaza.getBoundingBox().minY, 0);
-                components.add(plaza);
-                plazas++;
-            }
+        for (int[] at : plazaCells) {
+            if (at[0] == anchorX && at[1] == anchorZ) { continue; }
+            StructureVillagePieces.Well plaza = new StructureVillagePieces.Well(startPiece, 0, rand, originX + at[0] * cell + inset, originZ + at[1] * cell + inset);
+            plaza.getBoundingBox().offset(0, well.minY - plaza.getBoundingBox().minY, 0);
+            components.add(plaza);
+            plazas++;
         }
         for (int z = 0; z < deep; z++) {
             for (int x = 0; x < wide; x++) {
@@ -214,7 +181,7 @@ public final class CityLayout {
                 String picked = PickDef.pick(mark.picks, SeededRandom.at(world, cellX, cellZ), "");
                 VillageDef plot = ContentVillages.byName(picked);
                 if (plot == null) {
-                    if (MISSING.add(picked)) { ContentLog.LOGGER.error("City map {} names plot '{}', which no pack provides, leaving that cell open", def.key, picked); }
+                    ContentLog.LOGGER.errorOnce(MISSING_PLOTS, picked, "City map {} names plot '{}', which no pack provides, leaving that cell open", def.key, picked);
                     continue;
                 }
                 EnumFacing facing = facingFor(grid, x, z);
@@ -234,6 +201,16 @@ public final class CityLayout {
         ContentLog.LOGGER.debug("City map {} laid the village at {}, {} turned {}: {} street(s), {} alley(s), {} plaza(s) besides the start, {} plot(s), {} raised stretch(es){}", def.key, well.minX, well.minZ, turn, streets, alleys, plazas, plots, lifts.boxes.length, grows ? ", with cells left to grow" : "");
         drawn = !grows;
         return drawn;
+    }
+
+    private static List<int[]> plazaCells(CityMapDef.Kind[][] grid) {
+        List<int[]> found = new ArrayList<>();
+        for (int z = 0; z < grid.length; z++) {
+            for (int x = 0; x < grid[z].length; x++) {
+                if (grid[z][x] == CityMapDef.Kind.PLAZA) { found.add(new int[] {x, z}); }
+            }
+        }
+        return found;
     }
 
     private static final class Lifts {
@@ -367,6 +344,27 @@ public final class CityLayout {
         }
         return -1;
     }
+
+    private static List<int[]> runs(CityMapDef.Kind[][] grid, boolean alongX, Predicate<CityMapDef.Kind> kind) {
+        List<int[]> runs = new ArrayList<>();
+        int lines = alongX ? grid.length : grid[0].length;
+        int length = alongX ? grid[0].length : grid.length;
+        for (int line = 0; line < lines; line++) {
+            for (int at = 0; at < length; ) {
+                if (!kind.test(alongX ? grid[line][at] : grid[at][line])) {
+                    at++;
+                    continue;
+                }
+                int end = at;
+                while (end + 1 < length && kind.test(alongX ? grid[line][end + 1] : grid[end + 1][line])) { end++; }
+                runs.add(new int[] { line, at, end });
+                at = end + 1;
+            }
+        }
+        return runs;
+    }
+
+    private static boolean alley(CityMapDef.Kind kind) { return kind == CityMapDef.Kind.ALLEY; }
 
     private static boolean carries(CityMapDef.Kind kind) { return kind == CityMapDef.Kind.PLAZA || streetLike(kind); }
 

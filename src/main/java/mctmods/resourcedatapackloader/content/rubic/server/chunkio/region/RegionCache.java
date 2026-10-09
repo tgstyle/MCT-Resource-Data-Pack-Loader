@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio.region;
 
 import mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.interfaces.IRegion;
+import mctmods.resourcedatapackloader.content.rubic.regionlib.interfaces.ICheckedFunction;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -14,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 
 public final class RegionCache {
     private static final int LEAST_REGIONS = 64;
@@ -37,17 +37,20 @@ public final class RegionCache {
 
     private RegionCache() {}
 
-    @Nullable @SuppressWarnings("unchecked") public static synchronized <R extends IRegion<?>> R held(Object key) {
+    @SuppressWarnings("unchecked") public static synchronized <R extends IRegion<?>> R computeIfAbsent(Object key, ICheckedFunction<Object, R, IOException> opener) throws IOException {
         R found = (R) OPEN.get(key);
-        if (found == null) { misses++; }
-        else { hits++; }
+        if (found != null) {
+            hits++;
+            return found;
+        }
+        misses++;
+        found = opener.apply(key);
+        if (found != null) {
+            OPEN.put(key, found);
+            tune();
+            trim();
+        }
         return found;
-    }
-
-    public static synchronized void hold(Object key, IRegion<?> region) throws IOException {
-        OPEN.put(key, region);
-        tune();
-        trim();
     }
 
     public static synchronized void flushAll() throws IOException {

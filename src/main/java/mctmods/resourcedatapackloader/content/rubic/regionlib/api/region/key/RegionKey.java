@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.rubic.regionlib.api.region.key;
 
-
 public class RegionKey {
     private final String name;
 

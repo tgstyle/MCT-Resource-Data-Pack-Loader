@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 import mctmods.resourcedatapackloader.content.village.RailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.world.GenHeights;
 
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -83,7 +82,7 @@ public final class BeardRailsGrade {
         int[] rising = sub ? rail.rising(world) : null;
         if (sub) {
             double down = BeardRails.subwayDepth();
-            double floorLeast = GenHeights.floor(world, BeardRails.FLOOR_LEAST);
+            double floorLeast = BeardRails.lined(world);
             for (int at = 0; at < rows; at++) {
                 if (BeardRails.surfaced(rising, rail.rowLeast() + at)) { continue; }
                 base[at] = Math.max(floorLeast, base[at] - down);

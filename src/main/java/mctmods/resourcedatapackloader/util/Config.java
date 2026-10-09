@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.util;
 import mctmods.resourcedatapackloader.core.MCTMixin;
 import mctmods.resourcedatapackloader.pack.PackManager;
 
-
 @net.minecraftforge.common.config.Config(modid = MCTMixin.MIXIN_ID, name = "mct_resourcedatapackloader_mixin") public class Config {
     @net.minecraftforge.common.config.Config.Comment("Who decides each group of settings. 'default' lets the pack decide and falls back to the values here, 'global' makes the values here win and ignores the pack, 'off' disables the group entirely and no pack can turn it back on") public static Control control = new Control();
     @net.minecraftforge.common.config.Config.Comment("How pack folders are found and served") public static Packs packs = new Packs();
@@ -15,12 +14,9 @@ import mctmods.resourcedatapackloader.pack.PackManager;
     @net.minecraftforge.common.config.Config.Comment("Working around other mods") public static Compat compat = new Compat();
     @net.minecraftforge.common.config.Config.Comment("What the game shows while a world loads") public static Client client = new Client();
     @net.minecraftforge.common.config.Config.Comment("Small changes to how vanilla behaves") public static Tweaks tweaks = new Tweaks();
-
     @net.minecraftforge.common.config.Config.Comment("Chunks held loaded around a world's spawn point") public static Chunks chunks = new Chunks();
     @net.minecraftforge.common.config.Config.Comment("Who may run the parts of /rdplserver that can be opened up") public static Commands commands = new Commands();
 
-    /** Whether pack content that a client must also know about may register. Turning on vanillaClients stops all of it,
-     *  while leaving the parts that live on the server alone, such as ore veins, gates and world templates, running. */
     public static boolean registersToClients() { return content.load && !content.vanillaClients; }
 
     public static class Control {
@@ -118,22 +114,8 @@ import mctmods.resourcedatapackloader.pack.PackManager;
         @net.minecraftforge.common.config.Config.Comment("How many milliseconds of each round a bulk generation run may take. 50 keeps the server responsive enough to play on while land is made; higher trades responsiveness for generation speed, and at the 1000 cap the server is a generation appliance running about one round a second [Default=50]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1000) public int pregenMillisPerRound = 50;
         @net.minecraftforge.common.config.Config.Comment("How far around the spawn, in chunks, a world has its land made before anybody plays it. The game makes 12 chunks around the spawn on its own, so 12 is the floor and 0 means that floor rather than nothing: the ground the game was going to make anyway is adopted and lit in one organized pass instead of trickling in. Raise it to reach further than the game does [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 8192) public int pregenOnNewWorld = 0;
         @net.minecraftforge.common.config.Config.Comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centered on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]") public boolean pregenToBorder = false;
-        @net.minecraftforge.common.config.Config.Comment({
-                "The furthest a border may reach, in chunks either way, before making land out to it is refused.",
-                "This is here to stop a mistake running for weeks, not to be turned up. A pack cannot set it.",
-                "A square of this reach holds 268 million chunks. At two hundred a second that is a fortnight",
-                "of running, and several terabytes on disk. If a border is being refused, it is nearly always",
-                "the border that is wrong, not this number. Raise it only having worked out how long the run",
-                "will take and where it will be kept [Default=8192]"})
-        @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1875000) public int pregenBorderLimit = 8192;
-        @net.minecraftforge.common.config.Config.Comment({
-                "The most region files a rubic world may hold open at once. Every open file costs about 16 kB of",
-                "memory and one file handle, and a player at the usual view distance reaches about thirty of them,",
-                "so a busy world wants hundreds. The mod tunes itself between 64 and this figure: it holds more",
-                "while the heap is easy and it is missing the cache, and lets files go when the heap gets tight.",
-                "It never asks for more than a quarter of the open file limit the machine allows.",
-                "0 leaves the ceiling to the mod [Default=0]"})
-        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 8192) public int regionCacheLimit = 0;
+        @net.minecraftforge.common.config.Config.Comment({"The furthest a border may reach, in chunks either way, before making land out to it is refused.", "This is here to stop a mistake running for weeks, not to be turned up. A pack cannot set it.", "A square of this reach holds 268 million chunks. At two hundred a second that is a fortnight", "of running, and several terabytes on disk. If a border is being refused, it is nearly always", "the border that is wrong, not this number. Raise it only having worked out how long the run", "will take and where it will be kept [Default=8192]"}) @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 1875000) public int pregenBorderLimit = 8192;
+        @net.minecraftforge.common.config.Config.Comment({"The most region files a rubic world may hold open at once. Every open file costs about 16 kB of", "memory and one file handle, and a player at the usual view distance reaches about thirty of them,", "so a busy world wants hundreds. The mod tunes itself between 64 and this figure: it holds more", "while the heap is easy and it is missing the cache, and lets files go when the heap gets tight.", "It never asks for more than a quarter of the open file limit the machine allows.", "0 leaves the ceiling to the mod [Default=0]"}) @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 8192) public int regionCacheLimit = 0;
         @net.minecraftforge.common.config.Config.Comment("Which dimensions a new world has its land made in, in the order given, one after another [Default=0]") public int[] pregenDimensions = {0};
         @net.minecraftforge.common.config.Config.Comment("Make the land of every dimension anything registers, modded ones included, the overworld first and the rest in rising order, instead of only those in pregenDimensions. Ones named in pregenDimensionsWhenEntered are still left for their first visitor [Default=false]") public boolean pregenAllDimensions = false;
         @net.minecraftforge.common.config.Config.Comment("Dimensions whose land is made not up front but the first time anybody sets foot in them, to the same reach, holding everybody the same way until it is done. One named here and in pregenDimensions is simply made up front [Default=]") public int[] pregenDimensionsWhenEntered = {};
@@ -226,16 +208,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
         @net.minecraftforge.common.config.Config.Comment("Where every new world spawns, written as x,z or x,y,z. Without a y the game's usual ground level for the world type is used. Only applied to a world as it is created, so worlds that already exist are left alone. Empty leaves the choice to the game [Default=empty]") public String worldSpawn = "";
         @net.minecraftforge.common.config.Config.Comment("How far across, in blocks, the world border stands in every new world. Only applied to a world as it is created, so worlds that already exist are left alone. 0 leaves the border where the game puts it [Default=0]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 60000000) public int worldBorder = 0;
         @net.minecraftforge.common.config.Config.Comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]") @net.minecraftforge.common.config.Config.RangeInt(min = 1, max = 60000000) public int worldBorderLimit = 60000000;
-        @net.minecraftforge.common.config.Config.Comment({
-                "The furthest, in blocks either way from zero, a pack may push a rubic world's floor and ceiling",
-                "through worldMinHeight and worldMaxHeight. A pack asking for more is refused and the world is",
-                "made at the usual heights instead. A pack cannot set this.",
-                "Height costs room. Every 16 blocks of it is another cube in every column, and a cube with",
-                "anything in it holds about 6 kB in memory and writes about 0.75 kB to disk. The usual -64 to 320",
-                "is 24 cubes a column. At this limit it is 512, so a column costs twenty times as much, land made",
-                "up front costs twenty times as long, and the spawn area alone runs to hundreds of megabytes.",
-                "Raise it only on a machine with the memory and the disk to hold what is asked for [Default=4096]"})
-        @net.minecraftforge.common.config.Config.RangeInt(min = 256, max = 30000000) public int rubicHeightLimit = 4096;
+        @net.minecraftforge.common.config.Config.Comment({"The furthest, in blocks either way from zero, a pack may push a rubic world's floor and ceiling", "through worldMinHeight and worldMaxHeight. A pack asking for more is refused and the world is", "made at the usual heights instead. A pack cannot set this.", "Height costs room. Every 16 blocks of it is another cube in every column, and a cube with", "anything in it holds about 6 kB in memory and writes about 0.75 kB to disk. The usual -64 to 320", "is 24 cubes a column. At this limit it is 512, so a column costs twenty times as much, land made", "up front costs twenty times as long, and the spawn area alone runs to hundreds of megabytes.", "Raise it only on a machine with the memory and the disk to hold what is asked for [Default=4096]"}) @net.minecraftforge.common.config.Config.RangeInt(min = 256, max = 30000000) public int rubicHeightLimit = 4096;
         @net.minecraftforge.common.config.Config.Comment("Which dimensions become rubic when a pack asks for rubic worlds. Empty means every dimension. A dimension left out keeps its ordinary Anvil world, which is the right call for dimensions whose own generators reach into chunk internals [Default={}]") public int[] rubicWorldDimensions = {};
         @net.minecraftforge.common.config.Config.Comment("Treat rubicWorldDimensions as the dimensions to leave alone instead [Default=false]") public boolean rubicWorldDimensionsAreBlacklist = false;
         @net.minecraftforge.common.config.Config.Comment("Lock the overworld's time of day, in ticks, the same figure /time set takes, so 18000 is midnight. The clock stops and never moves. -1 leaves time running [Default=-1]") @net.minecraftforge.common.config.Config.RangeInt(min = -1, max = 23999) public int worldTime = -1;
@@ -460,29 +433,11 @@ import mctmods.resourcedatapackloader.pack.PackManager;
     }
 
     public static class Commands {
-        @net.minecraftforge.common.config.Config.Comment({
-                "The permission level a sender needs to run /rdplserver goto <name>, which carries them to the nearest one.",
-                "3 is an operator and keeps it to operators, which is where every part of this command sits by default.",
-                "2 also lets a command block run it, so a pack can put the jump on a button or a pressure plate without",
-                "handing anybody the rest of the command. 0 lets any player type it. The other parts of /rdplserver stay",
-                "at 3 whatever this says [Default=3]"})
-        @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int gotoLevel = 3;
+        @net.minecraftforge.common.config.Config.Comment({"The permission level a sender needs to run /rdplserver goto <name>, which carries them to the nearest one.", "3 is an operator and keeps it to operators, which is where every part of this command sits by default.", "2 also lets a command block run it, so a pack can put the jump on a button or a pressure plate without", "handing anybody the rest of the command. 0 lets any player type it. The other parts of /rdplserver stay", "at 3 whatever this says [Default=3]"}) @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int gotoLevel = 3;
         @net.minecraftforge.common.config.Config.Comment("The permission level for /rdplserver goto <name> next, which passes over the one it last carried the sender to and finds another. Same scale as gotoLevel [Default=3]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int gotoNextLevel = 3;
         @net.minecraftforge.common.config.Config.Comment("The permission level for /rdplserver goto <name> back, which returns the sender to the one before. Same scale as gotoLevel [Default=3]") @net.minecraftforge.common.config.Config.RangeInt(min = 0, max = 4) public int gotoBackLevel = 3;
-        @net.minecraftforge.common.config.Config.Comment({
-                "Permission levels for single places, as name=level entries, one per line, overriding the three settings",
-                "above for that place alone and in all three of its forms. The name is what you would type after goto,",
-                "so a vanilla one such as Village or Mansion, or a name a pack registered for its own structures with",
-                "locateAs. Same scale: 3 an operator, 2 also a command block, 0 anybody.",
-                "A pack can then open the way to its own ruins while every vanilla structure stays shut, or the other",
-                "way about. A name nothing has registered is ignored with a note in the log [Default=empty]"})
-        public String[] gotoPlaceLevels = new String[0];
-        @net.minecraftforge.common.config.Config.Comment({
-                "Permission levels for the parts of /rdplserver game, as name=level entries, one per line. The name is the",
-                "part as typed after game: coin, die, dice, advantage, disadvantage, pick, deck draw, deck shuffle, deck left,",
-                "teamroll, tiebreak or last. Same scale: 3 an operator, 2 also a command block, 0 anybody. A part not listed",
-                "keeps its own level: 2 for deck shuffle and tiebreak, 0 for every other [Default=empty]"})
-        public String[] gameLevels = new String[0];
+        @net.minecraftforge.common.config.Config.Comment({"Permission levels for single places, as name=level entries, one per line, overriding the three settings", "above for that place alone and in all three of its forms. The name is what you would type after goto,", "so a vanilla one such as Village or Mansion, or a name a pack registered for its own structures with", "locateAs. Same scale: 3 an operator, 2 also a command block, 0 anybody.", "A pack can then open the way to its own ruins while every vanilla structure stays shut, or the other", "way about. A name nothing has registered is ignored with a note in the log [Default=empty]"}) public String[] gotoPlaceLevels = new String[0];
+        @net.minecraftforge.common.config.Config.Comment({"Permission levels for the parts of /rdplserver game, as name=level entries, one per line. The name is the", "part as typed after game: coin, die, dice, advantage, disadvantage, pick, deck draw, deck shuffle, deck left,", "teamroll, tiebreak or last. Same scale: 3 an operator, 2 also a command block, 0 anybody. A part not listed", "keeps its own level: 2 for deck shuffle and tiebreak, 0 for every other [Default=empty]"}) public String[] gameLevels = new String[0];
     }
 
     public static class Tweaks {

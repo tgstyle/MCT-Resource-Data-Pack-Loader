@@ -5,10 +5,9 @@ import mctmods.resourcedatapackloader.mixin.rdpl.common.IJsonContext;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
@@ -32,7 +31,6 @@ import java.util.function.BiFunction;
 import javax.annotation.Nullable;
 
 public final class RecipeOverrides {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final String CONSTANTS = "_constants.json";
     private static final String CONDITIONS = "conditions";
     private static final String ITEM = "item";
@@ -110,7 +108,7 @@ public final class RecipeOverrides {
     }
 
     private static boolean skipPackRecipe(ResourceLocation key, String contents, String namespace) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+        JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         if (json == null) { return false; }
         String missing = findMissing(json, namespace);
         if (missing == null) { return false; }
@@ -122,7 +120,7 @@ public final class RecipeOverrides {
     @Nullable private static JsonObject read(Path file) {
         try {
             String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-            return JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+            return JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
         }
         catch (IOException | IllegalArgumentException | JsonParseException ex) { return null; }
     }
@@ -182,7 +180,7 @@ public final class RecipeOverrides {
 
     private static boolean isRemoval(ResourceLocation key, String contents) {
         try {
-            JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+            JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
             return json != null && JsonUtils.getBoolean(json, REMOVE, false);
         }
         catch (IllegalArgumentException | JsonParseException ex) {
@@ -193,7 +191,7 @@ public final class RecipeOverrides {
 
     @Nullable private static IRecipe build(ResourceLocation key, String contents, JsonContext ctx) {
         try {
-            JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
+            JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
             if (json == null) {
                 ContentLog.LOGGER.error("Recipe {} is empty or null, leaving the original in place", key);
                 return null;
@@ -226,7 +224,7 @@ public final class RecipeOverrides {
         if (!Files.isRegularFile(file)) { return; }
         try {
             String contents = new String(Files.readAllBytes(file), StandardCharsets.UTF_8);
-            JsonObject[] json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject[].class);
+            JsonObject[] json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject[].class);
             if (json != null) { ((IJsonContext) ctx).rdpl$loadConstants(json); }
         }
         catch (IOException | IllegalArgumentException | JsonParseException ex) {
@@ -241,9 +239,9 @@ public final class RecipeOverrides {
         if (disabled()) { return; }
         int[] added = new int[1];
         int[] replaced = new int[1];
-        PackManager.get().forEach(PackManager.RECIPES, PackManager.JSON, (namespace, path, contents) -> {
-            if (path.startsWith("_")) { return; }
-            ResourceLocation key = new ResourceLocation(namespace, path);
+        Json.eachFile(PackManager.RECIPES, "recipe", (key, contents) -> {
+            String namespace = key.getNamespace();
+            if (key.getPath().startsWith("_")) { return; }
             if (SERVED.contains(key)) { return; }
             if (isRemoval(key, contents)) {
                 if (registry.containsKey(key) && remove(registry, key)) { removed++; }
@@ -267,11 +265,12 @@ public final class RecipeOverrides {
     }
 
     private static boolean remove(IForgeRegistry<IRecipe> registry, ResourceLocation key) {
-        if (!(registry instanceof IForgeRegistryModifiable)) {
+        IForgeRegistryModifiable<IRecipe> modifiable = RecipeRemovals.modifiable(registry);
+        if (modifiable == null) {
             ContentLog.LOGGER.error("Cannot replace recipe {}, the registry does not allow removal", key);
             return false;
         }
-        ((IForgeRegistryModifiable<IRecipe>) registry).remove(key);
+        modifiable.remove(key);
         return true;
     }
 }

@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.gate;
 
+import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.util.Stacks;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.content.ContentParserWorlds;
@@ -31,7 +33,7 @@ public final class ContentGates {
     private static final Map<Integer, List<GateDef>> BY_DIMENSION = new LinkedHashMap<>();
     private static final Map<ResourceLocation, GateDef> ALL = Collections.unmodifiableMap(DEFS);
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
-    private static final ResourceLocation GATE = new ResourceLocation("rdpl", "gate");
+    private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentGates() {}
@@ -71,49 +73,42 @@ public final class ContentGates {
         if (def.open) { return true; }
         if (!def.hold.isEmpty() && carrying(player, def.hold)) { return true; }
         if (!def.advancement.isEmpty() && earned(player, def.advancement)) { return true; }
-        if (def.global) { return GateStorage.unlockedGlobally(player.world, def.getKey()); }
-        return GateStorage.unlockedFor(player, def.getKey());
+        return GateStorage.unlocked(player, def);
     }
 
     public static void unlock(EntityPlayer player, GateDef def, boolean announce) {
-        if (def.global) { GateStorage.unlockGlobally(player.world, def.getKey()); }
-        else { GateStorage.unlockFor(player, def.getKey()); }
+        GateStorage.unlock(player, def);
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
         if (def.global) { broadcast(player, message); }
-        else { Says.line(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
+        else { Says.line(player, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
     }
 
-    public static void lock(EntityPlayer player, GateDef def) {
-        if (def.global) { GateStorage.lockGlobally(player.world, def.getKey()); }
-        else { GateStorage.lockFor(player, def.getKey()); }
-    }
+    public static void lock(EntityPlayer player, GateDef def) { GateStorage.lock(player, def); }
 
     public static void refuse(EntityPlayer player, GateDef def) {
         if (def.blockedMessage.isEmpty()) { return; }
         String needed = def.consume.isEmpty() ? def.craft : def.consume;
         if (needed.isEmpty()) { needed = def.hold; }
         String message = def.blockedMessage.replace("%dim%", def.name).replace("%item%", describe(needed));
-        Says.bar(player, mctmods.resourcedatapackloader.content.card.CardIds.GATE_BLOCKED, TextFormatting.RED, message);
+        Says.bar(player, CardIds.GATE_BLOCKED, TextFormatting.RED, message);
     }
 
     public static boolean carrying(EntityPlayer player, String item) {
         ItemStack wanted = stack(item);
         if (wanted.isEmpty()) { return false; }
         for (ItemStack held : player.inventory.mainInventory) {
-            if (matches(held, wanted)) { return true; }
+            if (Stacks.matches(wanted, held)) { return true; }
         }
-        return matches(player.inventory.offHandInventory.get(0), wanted);
+        return Stacks.matches(wanted, player.inventory.offHandInventory.get(0));
     }
-
-    public static boolean matches(ItemStack found, ItemStack wanted) { return Stacks.matches(wanted, found); }
 
     private static boolean earned(EntityPlayer player, String name) { return mctmods.resourcedatapackloader.util.Advancements.has(player, name); }
 
     private static void broadcast(EntityPlayer player, String message) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, mctmods.resourcedatapackloader.content.card.CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
+        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
     }
 
     private static String describe(String item) {

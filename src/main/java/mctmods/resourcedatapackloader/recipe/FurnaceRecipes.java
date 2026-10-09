@@ -10,8 +10,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
@@ -23,7 +21,6 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 
 public final class FurnaceRecipes {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private FurnaceRecipes() {}
@@ -33,7 +30,7 @@ public final class FurnaceRecipes {
         if (!GENERATION.stale()) { return; }
         int[] counts = new int[2];
         Map<String, int[]> perPack = new LinkedHashMap<>();
-        Json.eachFile(PackManager.FURNACE, "furnace file", (key, contents) -> apply(key, contents, perPack.computeIfAbsent(key.getNamespace(), k -> new int[2])));
+        Json.eachObject(PackManager.FURNACE, "furnace file", (key, json) -> apply(key, json,perPack.computeIfAbsent(key.getNamespace(), k -> new int[2])));
         for (int[] mine : perPack.values()) {
             counts[0] += mine[0];
             counts[1] += mine[1];
@@ -41,25 +38,12 @@ public final class FurnaceRecipes {
         if (counts[0] == 0 && counts[1] == 0) { return; }
         Summary.info("furnace", "Removed " + counts[0] + " and added " + counts[1] + " furnace recipe(s)");
         if (perPack.size() < 2) { return; }
-        for (Map.Entry<String, int[]> entry : perPack.entrySet()) {
-            ContentLog.LOGGER.debug("  {} removed {} and added {}", entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
-        }
+        for (Map.Entry<String, int[]> entry : perPack.entrySet()) { ContentLog.LOGGER.debug("  {} removed {} and added {}", entry.getKey(), entry.getValue()[0], entry.getValue()[1]); }
     }
 
-    private static void apply(ResourceLocation key, String contents, int[] counts) {
-        JsonObject json = JsonUtils.gsonDeserialize(GSON, contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Furnace file {} is empty, ignoring it", key);
-            return;
-        }
-        if (json.has("remove")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "remove")) { counts[0] += remove(key, element); }
-        }
-        if (json.has("add")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "add")) {
-                if (add(key, element)) { counts[1]++; }
-            }
-        }
+    private static void apply(ResourceLocation key, JsonObject json, int[] counts) {
+        if (json.has("remove")) { for (JsonElement element : JsonUtils.getJsonArray(json, "remove")) { counts[0] += remove(key, element); } }
+        if (json.has("add")) { for (JsonElement element : JsonUtils.getJsonArray(json, "add")) { if (add(key, element)) { counts[1]++; } } }
     }
 
     private static int remove(ResourceLocation key, JsonElement element) {

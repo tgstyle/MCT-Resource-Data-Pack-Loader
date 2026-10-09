@@ -38,7 +38,7 @@ public final class Snbt {
         return at == 0 ? line : out.append(line.substring(at)).toString();
     }
 
-    public static int end(String text, int from) {
+    private static int end(String text, int from) {
         if (from >= text.length()) { return from; }
         char first = text.charAt(from);
         if (first == '"' || first == '\'') { return quoted(text, from) + 1; }

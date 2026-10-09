@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.interfaces.IPregenMemory;
 import mctmods.resourcedatapackloader.content.interfaces.IVoidMemory;
+import mctmods.resourcedatapackloader.content.rubic.world.WorldSavedRubicData;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorldSettings;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
@@ -16,6 +17,7 @@ import net.minecraft.world.GameType;
 import net.minecraft.world.WorldSettings;
 import net.minecraft.world.WorldType;
 import net.minecraft.world.storage.WorldInfo;
+import net.minecraftforge.common.util.Constants;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -31,6 +33,14 @@ import java.util.Map;
     @Unique private NBTTagCompound rdpl$pregenRun = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$packOptions = new NBTTagCompound();
     @Unique private NBTTagCompound rdpl$voidMade = new NBTTagCompound();
+    @Unique private boolean rdpl$isRubic;
+    @Shadow private long randomSeed;
+    @Shadow private String generatorOptions;
+    @Shadow private WorldType terrainType;
+    @Shadow private GameType gameType;
+    @Shadow private boolean allowCommands;
+    @Shadow private boolean hardcore;
+    @Shadow private boolean mapFeaturesEnabled;
 
     @Override public boolean rdpl$voidRecorded() { return rdpl$voidMade.hasKey("enabled"); }
 
@@ -64,12 +74,11 @@ import java.util.Map;
 
     @Override public void rdpl$setLandMadeAt(int dimension, int reached) { rdpl$landMade.setInteger("at" + dimension, reached); }
 
-    @Inject(method = "<init>(Lnet/minecraft/nbt/NBTTagCompound;)V", at = @At("TAIL"))
-    private void rdpl$rememberLandMade(NBTTagCompound nbt, CallbackInfo ci) {
-        if (nbt.hasKey("RDPLLandMade", 10)) { rdpl$landMade = nbt.getCompoundTag("RDPLLandMade"); }
-        if (nbt.hasKey("RDPLPregenRun", 10)) { rdpl$pregenRun = nbt.getCompoundTag("RDPLPregenRun"); }
-        if (nbt.hasKey("RDPLPackOptions", 10)) { rdpl$packOptions = nbt.getCompoundTag("RDPLPackOptions"); }
-        if (nbt.hasKey("RDPLVoidWorld", 10)) { rdpl$voidMade = nbt.getCompoundTag("RDPLVoidWorld"); }
+    @Inject(method = "<init>(Lnet/minecraft/nbt/NBTTagCompound;)V", at = @At("TAIL")) private void rdpl$rememberLandMade(NBTTagCompound nbt, CallbackInfo ci) {
+        if (nbt.hasKey("RDPLLandMade", Constants.NBT.TAG_COMPOUND)) { rdpl$landMade = nbt.getCompoundTag("RDPLLandMade"); }
+        if (nbt.hasKey("RDPLPregenRun", Constants.NBT.TAG_COMPOUND)) { rdpl$pregenRun = nbt.getCompoundTag("RDPLPregenRun"); }
+        if (nbt.hasKey("RDPLPackOptions", Constants.NBT.TAG_COMPOUND)) { rdpl$packOptions = nbt.getCompoundTag("RDPLPackOptions"); }
+        if (nbt.hasKey("RDPLVoidWorld", Constants.NBT.TAG_COMPOUND)) { rdpl$voidMade = nbt.getCompoundTag("RDPLVoidWorld"); }
         rdpl$comparePackOptions();
     }
 
@@ -94,16 +103,7 @@ import java.util.Map;
         if (!changed.isEmpty()) { ContentLog.LOGGER.info("Pack options have changed since this world was last played: {}", changed); }
     }
 
-    @Shadow private long randomSeed;
-    @Shadow private String generatorOptions;
-    @Shadow private WorldType terrainType;
-    @Shadow private GameType gameType;
-    @Shadow private boolean allowCommands;
-    @Shadow private boolean hardcore;
-    @Shadow private boolean mapFeaturesEnabled;
-
-    @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL"))
-    private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
+    @Inject(method = "<init>(Lnet/minecraft/world/WorldSettings;Ljava/lang/String;)V", at = @At("TAIL")) private void rdpl$shapeTerrain(WorldSettings settings, String name, CallbackInfo ci) {
         PackOptions.worldTold();
         ContentVoidWorld.record(this);
         String seed = ContentTerrain.worldSeed();
@@ -151,21 +151,17 @@ import java.util.Map;
         Summary.info("terrain.shaped", "Shaping the overworld of '" + name + "' with " + options);
     }
 
-    @Unique private boolean rdpl$isRubic;
-
-    @SuppressWarnings("ConstantValue") @Inject(method = "populateFromWorldSettings", at = @At("RETURN")) private void onConstructWithSettings(WorldSettings settings, CallbackInfo cbi) {
+    @SuppressWarnings("ConstantValue") @Inject(method = "populateFromWorldSettings", at = @At("RETURN")) private void rdpl$onPopulateFromSettings(WorldSettings settings, CallbackInfo cbi) {
         Object asked = settings;
         this.rdpl$isRubic = asked instanceof IRubicWorldSettings && ((IRubicWorldSettings) asked).rdpl$isRubic();
     }
 
-    @Inject(method = "<init>(Lnet/minecraft/world/storage/WorldInfo;)V", at = @At("RETURN"))
-    private void onConstructWithSettings(WorldInfo worldInformation, CallbackInfo cbi) { this.rdpl$isRubic = ((IRubicWorldSettings) worldInformation).rdpl$isRubic(); }
+    @Inject(method = "<init>(Lnet/minecraft/world/storage/WorldInfo;)V", at = @At("RETURN")) private void rdpl$onCopyConstruct(WorldInfo worldInformation, CallbackInfo cbi) { this.rdpl$isRubic = ((IRubicWorldSettings) worldInformation).rdpl$isRubic(); }
 
-    @Inject(method = "<init>(Lnet/minecraft/nbt/NBTTagCompound;)V", at = @At("RETURN"))
-    private void onConstructWithSettings(NBTTagCompound nbt, CallbackInfo cbi) { this.rdpl$isRubic = nbt.getBoolean("isRubicWorld"); }
+    @Inject(method = "<init>(Lnet/minecraft/nbt/NBTTagCompound;)V", at = @At("RETURN")) private void rdpl$onReadConstruct(NBTTagCompound nbt, CallbackInfo cbi) { this.rdpl$isRubic = nbt.getBoolean(WorldSavedRubicData.IS_RUBIC_WORLD); }
 
-    @Inject(method = "updateTagCompound", at = @At("RETURN")) private void onConstructWithSettings(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo cbi) {
-        if (rdpl$isRubic) { nbt.setBoolean("isRubicWorld", true); }
+    @Inject(method = "updateTagCompound", at = @At("RETURN")) private void rdpl$onWriteTag(NBTTagCompound nbt, NBTTagCompound playerNbt, CallbackInfo cbi) {
+        if (rdpl$isRubic) { nbt.setBoolean(WorldSavedRubicData.IS_RUBIC_WORLD, true); }
     }
 
     @Override public boolean rdpl$isRubic() { return rdpl$isRubic && !RDPLMixinPlugin.cubicChunksPresent(); }

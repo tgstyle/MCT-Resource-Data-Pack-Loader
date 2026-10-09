@@ -18,9 +18,9 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(value = Side.CLIENT, modid = ResourceDataPackLoader.MOD_ID) public final class ChatHistoryKeeper {
     private static final int KEPT = 10;
-    private static final List<String> typed = new ArrayList<>();
-    private static boolean loaded = false;
-    private static volatile String pending = null;
+    private static final List<String> TYPED = new ArrayList<>();
+    private static boolean loaded;
+    private static volatile String pending;
 
     private ChatHistoryKeeper() {}
 
@@ -30,11 +30,11 @@ import java.util.List;
         if (mc.ingameGUI == null) { return; }
         if (!loaded) {
             loaded = true;
-            typed.addAll(load(mc));
+            TYPED.addAll(load(mc));
         }
-        if (mc.ingameGUI.getChatGUI().getSentMessages().isEmpty() && !typed.isEmpty()) {
-            for (String line : typed) { mc.ingameGUI.getChatGUI().addToSentMessages(line); }
-            ContentLog.LOGGER.debug("The chat history keeper seeded {} kept line(s) into {} as the chat screen opened", typed.size(), mc.ingameGUI.getChatGUI().getClass().getSimpleName());
+        if (mc.ingameGUI.getChatGUI().getSentMessages().isEmpty() && !TYPED.isEmpty()) {
+            for (String line : TYPED) { mc.ingameGUI.getChatGUI().addToSentMessages(line); }
+            ContentLog.LOGGER.debug("The chat history keeper seeded {} kept line(s) into {} as the chat screen opened", TYPED.size(), mc.ingameGUI.getChatGUI().getClass().getSimpleName());
         }
     }
 
@@ -57,9 +57,9 @@ import java.util.List;
     }
 
     private static void commit(String line) {
-        if (!typed.isEmpty() && typed.get(typed.size() - 1).equals(line)) { return; }
-        typed.add(line);
-        while (typed.size() > KEPT) { typed.remove(0); }
+        if (!TYPED.isEmpty() && TYPED.get(TYPED.size() - 1).equals(line)) { return; }
+        TYPED.add(line);
+        while (TYPED.size() > KEPT) { TYPED.remove(0); }
         save(Minecraft.getMinecraft());
     }
 
@@ -75,7 +75,7 @@ import java.util.List;
 
     private static void save(Minecraft mc) {
         File kept = file(mc);
-        try { Files.write(kept.toPath(), typed, StandardCharsets.UTF_8); }
+        try { Files.write(kept.toPath(), TYPED, StandardCharsets.UTF_8); }
         catch (IOException failed) { ContentLog.LOGGER.warn("Could not keep the chat history in {}: {}", kept, failed.toString()); }
     }
 

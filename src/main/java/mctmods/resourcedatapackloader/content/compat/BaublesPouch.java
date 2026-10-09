@@ -27,12 +27,9 @@ public final class BaublesPouch {
         if (type == null) { return null; }
         BaubleItem bauble = new BaubleItem(type);
         return new ICapabilityProvider() {
-            @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) {
-                return capability == BaublesCapabilities.CAPABILITY_ITEM_BAUBLE;
-            }
-            @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) {
-                return capability == BaublesCapabilities.CAPABILITY_ITEM_BAUBLE ? BaublesCapabilities.CAPABILITY_ITEM_BAUBLE.cast(bauble) : null;
-            }
+            @Override public boolean hasCapability(@Nonnull Capability<?> capability, @Nullable EnumFacing facing) { return capability == BaublesCapabilities.CAPABILITY_ITEM_BAUBLE; }
+
+            @Override @Nullable public <T> T getCapability(@Nonnull Capability<T> capability, @Nullable EnumFacing facing) { return capability == BaublesCapabilities.CAPABILITY_ITEM_BAUBLE ? BaublesCapabilities.CAPABILITY_ITEM_BAUBLE.cast(bauble) : null; }
         };
     }
 

@@ -1,12 +1,8 @@
 package mctmods.resourcedatapackloader.content.def;
 
-import mctmods.resourcedatapackloader.content.rubic.worldgen.generator.DeepGeneration;
-
-import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 
 public final class BiomeDef {
     public static final int AUTO_ID = -1;
@@ -48,13 +44,9 @@ public final class BiomeDef {
     public final boolean keepDefaultSpawns;
     public final List<SpawnEntryDef> spawns;
     public final List<String> requires;
-    public final String skyStone;
-    public final float skyIslands;
-    public final float skyThickness;
-    private boolean skyResolved;
-    @Nullable private IBlockState skyState;
+    public final SkyStone sky;
 
-    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, int snowColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, String skyStone, float skyIslands, float skyThickness) {
+    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, int snowColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, SkyStone sky) {
         this.registryName = registryName;
         this.name = name;
         this.id = id;
@@ -93,20 +85,10 @@ public final class BiomeDef {
         this.keepDefaultSpawns = keepDefaultSpawns;
         this.spawns = spawns;
         this.requires = requires;
-        this.skyStone = skyStone;
-        this.skyIslands = skyIslands;
-        this.skyThickness = skyThickness;
+        this.sky = sky;
     }
 
     public boolean isAutoId() { return id == AUTO_ID; }
 
-    public boolean shapesSky() { return !skyStone.isEmpty() || !Float.isNaN(skyIslands) || !Float.isNaN(skyThickness) || !topBlock.isEmpty() || !fillerBlock.isEmpty(); }
-
-    @Nullable public IBlockState skyState() {
-        if (!skyResolved) {
-            skyResolved = true;
-            skyState = DeepGeneration.parseState(skyStone, registryName + " skyStone");
-        }
-        return skyState;
-    }
+    public boolean shapesSky() { return sky.shapes() || !topBlock.isEmpty() || !fillerBlock.isEmpty(); }
 }

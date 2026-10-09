@@ -1,31 +1,24 @@
 package mctmods.resourcedatapackloader.util;
 
 import mctmods.resourcedatapackloader.util.interfaces.IXYZAddressable;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
-    private static final int HASH_SEED = 1183822147;
+public class XYZMap<T extends IXYZAddressable> extends AbstractAddressMap implements Iterable<T> {
     @Nonnull private IXYZAddressable[] bucketsByPointer;
     @Nonnull private IXYZAddressable[] bucketsByHash;
     @Nonnull private int[] pointers;
-    private int size = 0;
-    private final float loadFactor;
-    private int loadThreshold;
-    private int mask;
     private final Thread debugStartThreadRef = Thread.currentThread();
 
     public XYZMap(float loadFactor, int capacity) {
-        if (loadFactor > 1.0) { throw new IllegalArgumentException("You really dont want to be using a " + loadFactor + " load loadFactor with this hash table!"); }
-        this.loadFactor = loadFactor;
-        int tCapacity = 1;
-        while (tCapacity < capacity) { tCapacity <<= 1; }
-        this.bucketsByPointer = new IXYZAddressable[tCapacity];
-        this.bucketsByHash = new IXYZAddressable[tCapacity];
-        this.pointers = new int[tCapacity];
+        super(loadFactor, capacity);
+        this.bucketsByPointer = new IXYZAddressable[this.tableLength];
+        this.bucketsByHash = new IXYZAddressable[this.tableLength];
+        this.pointers = new int[this.tableLength];
         this.refreshFields();
     }
 
@@ -44,9 +37,6 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
 
     private int getPointerIndex(int x, int y, int z) { return hash(x, y, z) & this.mask; }
 
-    private int getNextPointerIndex(int pointerIndex) { return ++pointerIndex & this.mask; }
-
-
     public void put(T value) {
         checkThreadedWrite();
         int x = value.getX();
@@ -61,14 +51,13 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
                 this.bucketsByHash[pointerIndex] = value;
                 return;
             }
-            pointerIndex = this.getNextPointerIndex(pointerIndex);
+            pointerIndex = this.getNextIndex(pointerIndex);
             index = pointers[pointerIndex];
         }
         this.bucketsByPointer[++size] = value;
         this.bucketsByHash[pointerIndex] = value;
         this.pointers[pointerIndex] = size;
-        if (this.size > this.loadThreshold)
-            grow();
+        if (this.size > this.loadThreshold) { grow(); }
     }
 
     @SuppressWarnings("unchecked") @Nullable public T remove(int x, int y, int z) {
@@ -81,7 +70,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
                 this.collapseBucket(pointerIndex, index);
                 return (T) bucket;
             }
-            pointerIndex = this.getNextPointerIndex(pointerIndex);
+            pointerIndex = this.getNextIndex(pointerIndex);
             index = pointers[pointerIndex];
         }
         return null;
@@ -100,7 +89,6 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         return null;
     }
 
-
     private void grow() {
         int newLength = this.bucketsByPointer.length * 2;
         int newMask = newLength - 1;
@@ -111,8 +99,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
             IXYZAddressable bucket = bucketsByPointer[i];
             newBucketsByPointer[i] = bucket;
             int pointerIndex = hash(bucket.getX(), bucket.getY(), bucket.getZ()) & newMask;
-            while (newPointers[pointerIndex] != 0)
-                pointerIndex = ++pointerIndex & newMask;
+            while (newPointers[pointerIndex] != 0) { pointerIndex = ++pointerIndex & newMask; }
             newPointers[pointerIndex] = i;
             newBucketsByHash[pointerIndex] = bucket;
         }
@@ -134,7 +121,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
         this.bucketsByPointer[lastElement] = null;
         this.bucketsByHash[holePointerIndex] = null;
         this.size--;
-        int pointerIndex = this.getNextPointerIndex(holePointerIndex);
+        int pointerIndex = this.getNextIndex(holePointerIndex);
         int index = pointers[pointerIndex];
         while (index != 0) {
             IXYZAddressable bucket = this.bucketsByPointer[index];
@@ -142,7 +129,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
             nextBucketIndexes.add(index);
             this.pointers[pointerIndex] = 0;
             this.bucketsByHash[pointerIndex] = null;
-            pointerIndex = this.getNextPointerIndex(pointerIndex);
+            pointerIndex = this.getNextIndex(pointerIndex);
             index = pointers[pointerIndex];
         }
         for (int i = 0; i < nextPointersBuckets.size(); i++) {
@@ -153,7 +140,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
             int newBucketPointerIndex = this.getPointerIndex(x, y, z);
             int newIndex = pointers[newBucketPointerIndex];
             while (newIndex != 0) {
-                newBucketPointerIndex = this.getNextPointerIndex(newBucketPointerIndex);
+                newBucketPointerIndex = this.getNextIndex(newBucketPointerIndex);
                 newIndex = pointers[newBucketPointerIndex];
             }
             this.pointers[newBucketPointerIndex] = nextBucketIndexes.get(i);
@@ -164,7 +151,7 @@ public class XYZMap<T extends IXYZAddressable> implements Iterable<T> {
     private int getElementPointerIndex(int index) {
         IXYZAddressable lastElement = this.bucketsByPointer[index];
         int pointerIndex = this.getPointerIndex(lastElement.getX(), lastElement.getY(), lastElement.getZ());
-        while (pointers[pointerIndex] != index) { pointerIndex = this.getNextPointerIndex(pointerIndex); }
+        while (pointers[pointerIndex] != index) { pointerIndex = this.getNextIndex(pointerIndex); }
         return pointerIndex;
     }
 

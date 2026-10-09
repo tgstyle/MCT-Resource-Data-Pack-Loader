@@ -21,24 +21,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Unique private int rdpl$yBase() { return GenHeights.rubic(world) ? head.y - 128 : 0; }
 
-    @Inject(method = "checkedAdd", at = @At("HEAD"), cancellable = true)
-    private void rdpl$dropBeyondWindow(BlockVec3 vec, CallbackInfo cbi) {
+    @Inject(method = "checkedAdd", at = @At("HEAD"), cancellable = true) private void rdpl$dropBeyondWindow(BlockVec3 vec, CallbackInfo cbi) {
         if (!GenHeights.rubic(world)) { return; }
         int base = rdpl$yBase();
         if (vec.y < base || vec.y > base + 255) { cbi.cancel(); }
     }
 
-    @Redirect(method = "checkedAdd", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD))
-    private int rdpl$rebaseAdd(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
+    @Redirect(method = "checkedAdd", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD)) private int rdpl$rebaseAdd(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
 
-    @Redirect(method = "checkedContains(Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;)Z",
-            at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD))
-    private int rdpl$rebaseContains(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
+    @Redirect(method = "checkedContains(Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;)Z", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD)) private int rdpl$rebaseContains(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
 
-    @Redirect(method = "checkedContains(Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;I)Z",
-            at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD))
-    private int rdpl$rebaseContainsSided(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
+    @Redirect(method = "checkedContains(Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;I)Z", at = @At(value = "FIELD", target = "Lmicdoodle8/mods/galacticraft/api/vector/BlockVec3;y:I", opcode = Opcodes.GETFIELD)) private int rdpl$rebaseContainsSided(BlockVec3 vec) { return vec.y - rdpl$yBase(); }
 
-    @ModifyVariable(method = "checkedAll", at = @At("STORE"), name = "y")
-    private int rdpl$rebaseAll(int y) { return y + rdpl$yBase(); }
+    @ModifyVariable(method = "checkedAll", at = @At("STORE"), name = "y") private int rdpl$rebaseAll(int y) { return y + rdpl$yBase(); }
 }

@@ -15,22 +15,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@SuppressWarnings({"target", "MixinAnnotationTarget"}) @Mixin(value = {
-        EntityDragon.class,
-        PhaseHoldingPattern.class,
-        PhaseLanding.class,
-        PhaseLandingApproach.class,
-        PhaseTakeoff.class,
-        DragonFightManager.class}
-)
-public class MixinRubicEndWorkaround {
-    @Redirect(method = "*", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/WorldServer;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"),
-            require = 0, expect = 0)
-    private BlockPos getTopSolidOrLiquidBlockRedirect(WorldServer world, BlockPos pos) { return ((IRubicWorldInternal) world).getTopSolidOrLiquidBlockVanilla(pos); }
+@SuppressWarnings({"target", "MixinAnnotationTarget"}) @Mixin(value = {EntityDragon.class, PhaseHoldingPattern.class, PhaseLanding.class, PhaseLandingApproach.class, PhaseTakeoff.class, DragonFightManager.class}) public class MixinRubicEndWorkaround {
+    @Redirect(method = "*", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/WorldServer;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"), require = 0, expect = 0) private BlockPos rdpl$getTopSolidOrLiquidBlockRedirect(WorldServer world, BlockPos pos) { return ((IRubicWorldInternal) world).getTopSolidOrLiquidBlockVanilla(pos); }
 
-    @Redirect(method = "*", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"),
-            require = 0, expect = 0)
-    private BlockPos getTopSolidOrLiquidBlockRedirect(World world, BlockPos pos) { return ((IRubicWorldInternal) world).getTopSolidOrLiquidBlockVanilla(pos); }
+    @Redirect(method = "*", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"), require = 0, expect = 0) private BlockPos rdpl$getTopSolidOrLiquidBlockRedirect(World world, BlockPos pos) { return ((IRubicWorldInternal) world).getTopSolidOrLiquidBlockVanilla(pos); }
 }

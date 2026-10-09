@@ -3,10 +3,10 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
-import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.MathUtil;
 import mctmods.resourcedatapackloader.util.world.Noise3D;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
@@ -19,20 +19,16 @@ import java.util.Random;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
-public final class ContentOreVein implements IContentShape {
+public final class ContentOreVein extends ContentChunkShape {
     public static final String BANDED = "banded";
     public static final String TUBE = "tube";
-    private static final int OFFSET = 8;
+    public static final int REACH = 24;
     private static final int FULL = 16;
     private static final int WANING = 20;
-    public static final int REACH = 24;
     private static final float TUBE_WALL = 5.0F;
-    private final ContentPlacer placer;
     private final ShapeDef shape;
     private final int size;
     private final AmountDef attempts;
-    private final int minHeight;
-    private final int maxHeight;
     private final ResourceLocation registryName;
     private final long salt;
     private final Noise3D noise;
@@ -43,38 +39,23 @@ public final class ContentOreVein implements IContentShape {
     @Nullable private IBlockState poor;
 
     public ContentOreVein(ContentPlacer placer, ShapeDef shape, AmountDef size, AmountDef attempts, int minHeight, int maxHeight, ResourceLocation registryName) {
-        this.placer = placer;
+        super(placer, minHeight, maxHeight);
         this.shape = shape;
         this.size = Math.max(1, size.most);
         this.attempts = attempts;
-        this.minHeight = minHeight;
-        this.maxHeight = maxHeight;
         this.registryName = registryName;
-        this.salt = registryName.toString().hashCode() * 0x9E3779B97F4A7C15L;
+        this.salt = registryName.toString().hashCode() * MathUtil.GOLDEN_GAMMA;
         this.noise = new Noise3D(salt);
         this.warp = new Noise3D(salt - 1);
         this.wobble = new Noise3D(salt + 1000);
     }
 
-    @Override public boolean generate(World world, Random random, BlockPos origin) { return false; }
-
-    public static final class Vein {
-        public final int x;
-        public final int y;
-        public final int z;
-        Vein(int x, int y, int z) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-        }
-    }
-
     public List<Vein> veinsOf(World world, int chunkX, int chunkZ) {
         List<Vein> found = new ArrayList<>();
-        int lowest = Math.max(ContentPlacer.floorY(world), minHeight);
-        int highest = Math.min(ContentPlacer.ceilingY(world) - 1, maxHeight);
+        int lowest = lowest(world);
+        int highest = highest(world);
         if (highest < lowest) { return found; }
-        Random roll = new Random(world.getSeed() ^ salt ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
+        Random roll = SeededRandom.at(world.getSeed() ^ salt, chunkX, chunkZ);
         if (shape.rarity > 0 && !shape.perChunk && roll.nextInt(shape.rarity) != 0) { return found; }
         int tries = shape.rarity > 0 && shape.perChunk ? shape.rarity : attempts.pick(roll);
         int band = highest - lowest + 1;
@@ -100,11 +81,11 @@ public final class ContentOreVein implements IContentShape {
         resolve();
         int baseX = chunkX * 16 + OFFSET;
         int baseZ = chunkZ * 16 + OFFSET;
-        int lowest = Math.max(ContentPlacer.floorY(world), minHeight);
-        int highest = Math.min(ContentPlacer.ceilingY(world) - 1, maxHeight);
+        int lowest = lowest(world);
+        int highest = highest(world);
         if (highest < lowest) { return; }
         long seed = world.getSeed() ^ salt;
-        Random random = new Random(seed ^ (chunkX * 341873128712L + chunkZ * 132897987541L));
+        Random random = SeededRandom.at(seed, chunkX, chunkZ);
         int placed = 0;
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
@@ -216,5 +197,16 @@ public final class ContentOreVein implements IContentShape {
         IBlockState state = ContentStates.parse(named, key);
         if (state == null) { ContentLog.LOGGER.error("Worldgen {} names {} as its {} block, which is not a registered block, so that tier places the normal block", registryName, named, key); }
         return state;
+    }
+
+    public static final class Vein {
+        public final int x;
+        public final int y;
+        public final int z;
+        Vein(int x, int y, int z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
     }
 }

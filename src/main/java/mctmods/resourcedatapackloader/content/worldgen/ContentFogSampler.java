@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Colors;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.material.MapColor;
@@ -51,7 +52,7 @@ import javax.annotation.Nullable;
         return vanilla;
     }
 
-    private static Vec3d rgb(int color) { return new Vec3d((color >> 16 & 255) / 255.0D, (color >> 8 & 255) / 255.0D, (color & 255) / 255.0D); }
+    private static Vec3d rgb(int color) { return new Vec3d(Colors.red(color) / 255.0D, Colors.green(color) / 255.0D, Colors.blue(color) / 255.0D); }
 
     @SubscribeEvent public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
@@ -79,9 +80,9 @@ import javax.annotation.Nullable;
                 BlockPos top = world.getHeight(new BlockPos(x + dx, 0, z + dz)).down();
                 MapColor map = world.getBlockState(top).getMapColor(world, top);
                 if (map == MapColor.AIR) { continue; }
-                red += (map.colorValue >> 16 & 255) / 255.0D;
-                green += (map.colorValue >> 8 & 255) / 255.0D;
-                blue += (map.colorValue & 255) / 255.0D;
+                red += Colors.red(map.colorValue) / 255.0D;
+                green += Colors.green(map.colorValue) / 255.0D;
+                blue += Colors.blue(map.colorValue) / 255.0D;
                 count++;
             }
         }

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.WorldgenDef;
 import mctmods.resourcedatapackloader.content.worldgen.beard.BeardPlots;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
+import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
@@ -39,7 +40,7 @@ public final class ContentOreSigns {
             IBlockState under = world.getBlockState(spot.down());
             if (!under.getMaterial().isSolid() || under.getMaterial().isLiquid()) { continue; }
             if (taken(world, x, z)) { continue; }
-            world.setBlockState(spot, state, 2);
+            world.setBlockState(spot, state, BlockFlags.UPDATE_CLIENTS);
             laid++;
         }
         if (laid > 0 && ContentLog.LOGGER.debugEnabled()) { ContentLog.LOGGER.debug("Left {} indicator block(s) on the surface over the {} at {}, {}, {}", laid, def.registryName, origin.getX(), origin.getY(), origin.getZ()); }

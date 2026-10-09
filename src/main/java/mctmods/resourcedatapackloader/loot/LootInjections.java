@@ -25,29 +25,23 @@ import java.util.List;
 import java.util.Map;
 
 public final class LootInjections {
-    private static final Gson GSON = new Gson();
-    public static final String TARGET = "target";
-    public static final String POOLS = "pools";
+    private static final String TARGET = "target";
+    private static final String POOLS = "pools";
     private static final Map<ResourceLocation, List<String>> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private LootInjections() {}
 
-    public static void reload() {
+    private static void reload() {
         BY_TABLE.clear();
         GENERATION.stale();
         if (!Config.data.lootInjections) { return; }
         int[] count = new int[1];
-        Json.eachFile(PackManager.LOOT_INJECTIONS, "loot injection", (key, contents) -> read(key, contents, count));
+        Json.eachObject(PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count));
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Loot injection {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(ResourceLocation key, JsonObject json, int[] count) {
         String target = JsonUtils.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);

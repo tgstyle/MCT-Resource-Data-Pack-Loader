@@ -167,7 +167,5 @@ public class ContentBiome extends Biome {
         return map;
     }
 
-    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeFoliageColor(int original) {
-        return def.foliageColor == ContentTypes.NO_COLOR ? original : def.foliageColor;
-    }
+    @Override @SideOnly(Side.CLIENT) public int getModdedBiomeFoliageColor(int original) { return def.foliageColor == ContentTypes.NO_COLOR ? original : def.foliageColor; }
 }

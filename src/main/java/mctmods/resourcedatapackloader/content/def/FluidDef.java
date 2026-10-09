@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.block.material.Material;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.fluids.Fluid;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -25,7 +26,7 @@ public final class FluidDef {
     public final int quantaPerBlock;
     public final List<String> potions;
     public final List<String> requires;
-    @Nullable private net.minecraftforge.fluids.Fluid resolved;
+    @Nullable private Fluid resolved;
 
     public FluidDef(ResourceLocation registryName, String name, int color, ResourceLocation still, ResourceLocation flowing, int temperature, int density, int viscosity, int luminosity, boolean gaseous, boolean bucket, boolean createBlock, Material material, String creativeTab, int flammability, int fireSpread, int quantaPerBlock, List<String> potions, List<String> requires) {
         this.registryName = registryName;
@@ -49,7 +50,7 @@ public final class FluidDef {
         this.requires = requires;
     }
 
-    public void resolve(net.minecraftforge.fluids.Fluid fluid) { this.resolved = fluid; }
+    public void resolve(Fluid fluid) { this.resolved = fluid; }
 
-    @Nullable public net.minecraftforge.fluids.Fluid getResolved() { return resolved; }
+    @Nullable public Fluid getResolved() { return resolved; }
 }

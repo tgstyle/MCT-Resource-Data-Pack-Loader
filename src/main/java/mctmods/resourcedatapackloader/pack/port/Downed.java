@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.JsonTree;
 import mctmods.resourcedatapackloader.util.LineNote;
@@ -31,7 +32,7 @@ final class Downed {
     }
 
     @Nullable static Downed of(Path root) {
-        JsonObject meta = Ported.readJson(root.resolve("pack.mcmeta"));
+        JsonObject meta = Ported.readJson(root.resolve(PackManager.PACK_META));
         JsonObject pack = meta != null && meta.has("pack") && meta.get("pack").isJsonObject() ? meta.getAsJsonObject("pack") : new JsonObject();
         boolean data = Files.isDirectory(root.resolve(Port.DATA));
         int format = pack.has("pack_format") ? major(pack.get("pack_format")) : 0;

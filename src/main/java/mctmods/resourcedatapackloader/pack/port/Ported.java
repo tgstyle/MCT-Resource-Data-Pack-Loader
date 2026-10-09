@@ -1,7 +1,10 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -13,10 +16,10 @@ import com.google.gson.JsonPrimitive;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.apache.commons.io.IOUtils;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -54,15 +57,15 @@ public final class Ported {
     private final Set<String> ownFluids = new HashSet<>();
     private final Map<String, JsonObject> blockDefs = new LinkedHashMap<>();
     private final Map<String, JsonObject> itemDefs = new LinkedHashMap<>();
-    private final Map<String, Integer> dimensionNumbers = new LinkedHashMap<>();
+    private final Set<String> textures = new LinkedHashSet<>();
+    private final Map<String, Integer> dimensionNumbers =new LinkedHashMap<>();
     private final Map<String, Integer> dimensionShifts = new HashMap<>();
     private final List<Integer> templateShifts = new ArrayList<>();
     private final Map<String, Map<String, Source>> exposed = new LinkedHashMap<>();
     private final Map<String, byte[]> cache = new ConcurrentHashMap<>();
     private final Set<String> notes = Collections.synchronizedSet(new LinkedHashSet<>());
     private final Set<String> missing = ConcurrentHashMap.newKeySet();
-    private final Set<String> textures = new LinkedHashSet<>();
-    private final Map<String, JsonObject> furnace = new LinkedHashMap<>();
+    private final Map<String, JsonObject> furnace =new LinkedHashMap<>();
     private volatile boolean reported;
     private int moved;
     private int converted;
@@ -147,12 +150,12 @@ public final class Ported {
                             break;
                         }
                         itemTags.add(json);
-                        tagIds.add(ns + ":" + path.substring(path.indexOf('/', "tags/".length()) + 1, path.length() - ".json".length()));
+                        tagIds.add(ns + ":" + PackManager.stripJson(path, path.indexOf('/', "tags/".length()) + 1));
                         break;
                     }
                     case FUNCTION_TAG: {
                         JsonObject json = readJson(home.resolve(path));
-                        String tag = path.substring(path.lastIndexOf('/') + 1, path.length() - ".json".length());
+                        String tag = PackManager.stripJson(path, path.lastIndexOf('/') + 1);
                         if (json != null && json.has("values") && json.get("values").isJsonArray()) {
                             for (JsonElement value : json.getAsJsonArray("values")) {
                                 String id = value.isJsonObject() && value.getAsJsonObject().has("id") ? value.getAsJsonObject().get("id").getAsString() : value.getAsString();
@@ -192,7 +195,7 @@ public final class Ported {
                 drop(from, mapped.why);
                 return;
             case BLOCKSTATE: {
-                String file = path.substring("blockstates/".length(), path.length() - ".json".length());
+                String file = PackManager.stripJson(path, "blockstates/".length());
                 Own held = ownBlocks.get(namespace + ":" + file);
                 if (held != null) {
                     drop(from, "it is the modern blockstate of the variant '" + file + "', and 1.12.2 reads one blockstate per file, so " + held.namespace + ":blockstates/" + held.file + ".json is generated in its place");
@@ -202,7 +205,7 @@ public final class Ported {
             }
             case MODEL: {
                 if (path.startsWith("models/item/") && path.indexOf('/', "models/item/".length()) < 0) {
-                    String variant = path.substring("models/item/".length(), path.length() - ".json".length());
+                    String variant = PackManager.stripJson(path, "models/item/".length());
                     Own held = ownItems.containsKey(namespace + ":" + variant) ? ownItems.get(namespace + ":" + variant) : ownBlocks.get(namespace + ":" + variant);
                     if (held != null) {
                         String nested = "models/item/" + held.file + "/" + variant + ".json";
@@ -228,13 +231,13 @@ public final class Ported {
 
     private String overrideTarget(String path, String from) {
         String prefix = "overrides/minecraft/";
-        if (!path.startsWith(prefix) || !path.endsWith(".json")) { return path; }
-        String modern = "minecraft:" + path.substring(prefix.length(), path.length() - ".json".length());
+        if (!path.startsWith(prefix) || !path.endsWith(PackManager.JSON_SUFFIX)) { return path; }
+        String modern = "minecraft:" + PackManager.stripJson(path, prefix.length());
         Ids.Legacy found = Ids.block(modern, Collections.emptyMap());
         if (found == null) { found = Ids.item(modern); }
         if (found == null || found.id.equals(modern)) { return path; }
         note("'" + from + "' overrides " + modern + ", which 1.12.2 holds as " + found.id + ":" + found.meta + ", and an override changes every variant of " + found.id);
-        return prefix + found.id.substring(found.id.indexOf(':') + 1) + ".json";
+        return prefix + IdNames.path(found.id) + ".json";
     }
 
     private void recipe(String namespace, String path, Port.Mapped mapped, Path real, String from) {
@@ -259,38 +262,44 @@ public final class Ported {
     private void learn(String namespace, List<String> paths) {
         Path home = root.resolve(Port.DATA).resolve(namespace);
         for (String path : paths) {
-            boolean blocks = path.startsWith(BLOCKS + "/") && path.endsWith(".json");
-            boolean items = path.startsWith(ITEMS + "/") && path.endsWith(".json");
+            boolean blocks = path.startsWith(BLOCKS + "/") && path.endsWith(PackManager.JSON_SUFFIX);
+            boolean items = path.startsWith(ITEMS + "/") && path.endsWith(PackManager.JSON_SUFFIX);
             if (blocks || items) {
                 namespaces.add(namespace);
                 JsonObject json = readJson(home.resolve(path));
                 if (json == null) { continue; }
                 String folder = blocks ? BLOCKS : ITEMS;
-                String file = path.substring(folder.length() + 1, path.length() - ".json".length());
+                String file = PackManager.stripJson(path, folder.length() + 1);
                 String type = json.has("type") && json.get("type").isJsonPrimitive() ? json.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
-                (blocks ? blockDefs : itemDefs).put(namespace + ":" + file, json);
                 JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
+                (blocks ? blockDefs : itemDefs).put(namespace + ":" + file, json);
                 int count = variants.size();
                 int meta = 0;
                 for (Map.Entry<String, JsonElement> variant : variants.entrySet()) {
-                    int given = variant.getValue().isJsonObject() && variant.getValue().getAsJsonObject().has("meta") ? variant.getValue().getAsJsonObject().get("meta").getAsInt() : meta;
+                    int given = metaOf(variant.getValue(), meta);
                     Own held = new Own(namespace, folder, file, variant.getKey(), given, type, count);
                     (blocks ? ownBlocks : ownItems).putIfAbsent(namespace + ":" + variant.getKey(), held);
                     if (meta == 0) { ownFiles.putIfAbsent(folder + ":" + namespace + ":" + file, held); }
                     meta++;
                 }
             }
-            else if (path.startsWith("fluids/") && path.endsWith(".json")) { ownFluids.add(namespace + ":" + path.substring("fluids/".length(), path.length() - ".json".length())); }
-            else if (path.startsWith("dimensions/") && path.endsWith(".json")) { dimension(namespace, path, readJson(home.resolve(path))); }
-            else if (path.startsWith("worldtemplates/") && path.endsWith(".json")) {
+            else if (path.startsWith("fluids/") && path.endsWith(PackManager.JSON_SUFFIX)) { ownFluids.add(namespace + ":" + PackManager.stripJson(path, "fluids/".length())); }
+            else if (path.startsWith("dimensions/") && path.endsWith(PackManager.JSON_SUFFIX)) { dimension(namespace, path, readJson(home.resolve(path))); }
+            else if (path.startsWith("worldtemplates/") && path.endsWith(PackManager.JSON_SUFFIX)) {
                 JsonObject json = readJson(home.resolve(path));
                 templateShifts.add(json != null && json.has("settings") && json.get("settings").isJsonObject() ? Convert.flatShift(json.getAsJsonObject("settings")) : 0);
             }
         }
     }
 
+    private static int metaOf(JsonElement variant, int fallback) {
+        if (!variant.isJsonObject()) { return fallback; }
+        JsonElement given = variant.getAsJsonObject().get("meta");
+        return given != null && given.isJsonPrimitive() && given.getAsJsonPrimitive().isNumber() ? given.getAsInt() : fallback;
+    }
+
     private void dimension(String namespace, String path, @Nullable JsonObject json) {
-        String id = namespace + ":" + path.substring("dimensions/".length(), path.length() - ".json".length());
+        String id = namespace + ":" + PackManager.stripJson(path, "dimensions/".length());
         int number;
         if (json != null && json.has("id") && json.get("id").isJsonPrimitive() && json.getAsJsonPrimitive("id").isNumber()) { number = json.get("id").getAsInt(); }
         else {
@@ -419,13 +428,9 @@ public final class Ported {
         note("could not carry '" + from + "': " + why);
     }
 
-    void note(String said) {
-        if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); }
-    }
+    void note(String said) { if (notes.add(said) && reported) { ContentLog.LOGGER.info("Pack '{}': {}", name, said); } }
 
-    void noTwin(String id, String where) {
-        if (missing.add(id)) { note(where + " names " + id + ", which has no twin on 1.12.2, so it is left as written"); }
-    }
+    void noTwin(String id, String where) { if (missing.add(id)) { note(where + " names " + id + ", which has no twin on 1.12.2, so it is left as written"); } }
 
     String mainNamespace() {
         for (String namespace : namespaces) {
@@ -446,7 +451,7 @@ public final class Ported {
     }
 
     @Nullable Integer dimensionNumber(String named) {
-        String id = Ids.namespaced(named.trim().toLowerCase(Locale.ROOT));
+        String id = Ids.namespaced(Settings.lower(named));
         int vanilla = VANILLA_DIMENSIONS.indexOf(id);
         if (vanilla >= 0) { return vanilla == 0 ? 0 : vanilla == 1 ? -1 : 1; }
         return dimensionNumbers.get(id);
@@ -500,7 +505,7 @@ public final class Ported {
                 case RECIPE: out = ConvertRecipes.recipe(object(raw), source.from, this); break;
                 case LOOT: out = ConvertLoot.loot(object(raw), source.from, this); break;
                 case ADVANCEMENT: out = ConvertAdvancements.advancement(object(raw), source.from, this); break;
-                case DEFINITION: out = Convert.definition(object(raw), folder, namespace, path.substring(folder.length() + 1, path.length() - ".json".length()), this); break;
+                case DEFINITION: out = Convert.definition(object(raw), folder, namespace, PackManager.stripJson(path, folder.length() + 1), this); break;
                 default: return raw;
             }
             converted++;
@@ -532,9 +537,7 @@ public final class Ported {
         for (String line : said) { ContentLog.LOGGER.info("  {}", line); }
     }
 
-    public void closing() {
-        if (failed > 0 || converted > 0) { ContentLog.LOGGER.info("Pack '{}': the port converted {} file(s) and could not carry {} while the pack was read", name, converted, failed); }
-    }
+    public void closing() { if (failed > 0 || converted > 0) { ContentLog.LOGGER.info("Pack '{}': the port converted {} file(s) and could not carry {} while the pack was read", name, converted, failed); } }
 
     public void writeVersion(ZipOutputStream out, String prefix) throws IOException {
         int written = 0;
@@ -544,31 +547,24 @@ public final class Ported {
                 try (InputStream in = open(namespace.getKey(), path.getKey())) {
                     if (in == null) { continue; }
                     out.putNextEntry(new ZipEntry(prefix + RDPLPack.ASSETS + "/" + namespace.getKey() + "/" + path.getKey()));
-                    copy(in, out);
+                    IOUtils.copy(in, out);
                     out.closeEntry();
                     written++;
                 }
             }
         }
-        JsonObject old = readJson(root.resolve("pack.mcmeta"));
+        JsonObject old = readJson(root.resolve(PackManager.PACK_META));
         JsonObject pack = old != null && old.has("pack") && old.get("pack").isJsonObject() ? old.getAsJsonObject("pack") : new JsonObject();
         JsonObject meta = new JsonObject();
         JsonObject kept = new JsonObject();
         kept.addProperty("pack_format", Port.LEGACY_FORMAT);
         kept.add("description", pack.has("description") ? pack.get("description") : new JsonPrimitive(name));
         meta.add("pack", kept);
-        out.putNextEntry(new ZipEntry(prefix + "pack.mcmeta"));
+        out.putNextEntry(new ZipEntry(prefix + PackManager.PACK_META));
         out.write(GSON.toJson(meta).getBytes(StandardCharsets.UTF_8));
         out.closeEntry();
         note("written into " + prefix + ", " + written + " file(s) 1.12.2 reads differently; the rest is read from the root as it is");
     }
 
-    private boolean carried(String namespace, String path, Source source) {
-        return source.made == null && source.kind == Port.Kind.RAW && Port.unchanged(path) && root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path).equals(source.real);
-    }
-
-    private static void copy(InputStream in, OutputStream out) throws IOException {
-        byte[] buffer = new byte[8192];
-        for (int read = in.read(buffer); read > 0; read = in.read(buffer)) { out.write(buffer, 0, read); }
-    }
+    private boolean carried(String namespace, String path, Source source) { return source.made == null && source.kind == Port.Kind.RAW && Port.unchanged(path) && root.resolve(RDPLPack.ASSETS).resolve(namespace).resolve(path).equals(source.real); }
 }

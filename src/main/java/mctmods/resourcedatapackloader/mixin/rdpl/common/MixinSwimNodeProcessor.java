@@ -34,8 +34,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         rdpl$memo = PathNodeMemo.held();
     }
 
-    @WrapOperation(method = "getWaterNode", at = @At(value = "INVOKE", target = "Lnet/minecraft/pathfinding/SwimNodeProcessor;isFree(III)Lnet/minecraft/pathfinding/PathNodeType;"))
-    private PathNodeType rdpl$rememberWater(SwimNodeProcessor self, int p_186327_1_, int p_186327_2_, int p_186327_3_, Operation<PathNodeType> original) {
+    @WrapOperation(method = "getWaterNode", at = @At(value = "INVOKE", target = "Lnet/minecraft/pathfinding/SwimNodeProcessor;isFree(III)Lnet/minecraft/pathfinding/PathNodeType;")) private PathNodeType rdpl$rememberWater(SwimNodeProcessor self, int p_186327_1_, int p_186327_2_, int p_186327_3_, Operation<PathNodeType> original) {
         if (!rdpl$located) { return original.call(self, p_186327_1_, p_186327_2_, p_186327_3_); }
         int tick = ContentEntityTicks.ticks();
         PathNodeType held = rdpl$memo.known(rdpl$owner, rdpl$world, tick, p_186327_1_, p_186327_2_, p_186327_3_);
@@ -45,8 +44,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         return found;
     }
 
-    @Redirect(method = "isFree", at = @At(value = "NEW", target = "()Lnet/minecraft/util/math/BlockPos$MutableBlockPos;"))
-    private BlockPos.MutableBlockPos rdpl$whereItLooks() {
+    @Redirect(method = "isFree", at = @At(value = "NEW", target = "()Lnet/minecraft/util/math/BlockPos$MutableBlockPos;")) private BlockPos.MutableBlockPos rdpl$whereItLooks() {
         if (rdpl$looking == null) { rdpl$looking = new BlockPos.MutableBlockPos(); }
         return rdpl$looking;
     }

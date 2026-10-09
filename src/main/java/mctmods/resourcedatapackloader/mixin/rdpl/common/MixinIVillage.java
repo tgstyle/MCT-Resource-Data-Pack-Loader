@@ -33,9 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
     @Inject(method = "readStructureFromNBT", at = @At("TAIL")) private void rdpl$loadBlock(NBTTagCompound tagCompound, TemplateManager p_143011_2_, CallbackInfo ci) { rdpl$block = tagCompound.getInteger("rdpl_block"); }
 
-    @Redirect(method = "getAverageGroundLevel", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;"))
-    private BlockPos rdpl$seatInWindow(World world, BlockPos pos) { return GroundLevel.inWindow(world, pos); }
+    @Redirect(method = "getAverageGroundLevel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;getTopSolidOrLiquidBlock(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/util/math/BlockPos;")) private BlockPos rdpl$seatInWindow(World world, BlockPos pos) { return GroundLevel.inWindow(world, pos); }
 
     @Inject(method = "getAverageGroundLevel", at = @At("RETURN"), cancellable = true) private void rdpl$leanLow(World worldIn, StructureBoundingBox structurebb, CallbackInfoReturnable<Integer> cir) {
         if (!ContentBeard.wanted()) { return; }

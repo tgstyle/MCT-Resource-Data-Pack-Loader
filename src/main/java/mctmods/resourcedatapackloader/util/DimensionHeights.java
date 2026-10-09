@@ -20,17 +20,17 @@ public final class DimensionHeights {
             Map<Integer, Integer> scoped = new HashMap<>();
             for (String entry : asked) {
                 String line = entry.trim();
-                int split = line.indexOf('=');
-                String value = split < 0 ? line : line.substring(split + 1).trim();
+                String[] sides = Settings.split(line);
+                String value = sides == null ? line : sides[1];
                 int found;
                 try { found = Integer.parseInt(value); }
                 catch (NumberFormatException wrong) {
                     ContentLog.LOGGER.error("{} names '{}', whose height is not a whole number, ignoring it", key, line);
                     continue;
                 }
-                if (split < 0) { bare = found; }
+                if (sides == null) { bare = found; }
                 else {
-                    try { scoped.put(Integer.parseInt(line.substring(0, split).trim()), found); }
+                    try { scoped.put(Integer.parseInt(sides[0]), found); }
                     catch (NumberFormatException wrong) { ContentLog.LOGGER.error("{} names '{}', whose dimension is not a whole number, ignoring it", key, line); }
                 }
             }

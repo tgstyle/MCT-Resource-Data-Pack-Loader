@@ -33,35 +33,29 @@ public interface IRubicWorldInternal extends IRubicWorld {
 
     default BlockPos rdpl$groundInWindow(BlockPos pos) {
         World world = (World) this;
-        int floor = MathHelper.clamp(RubicWorldControl.terrainOffsetCubes() << 4, rdpl$getMinHeight(), rdpl$getMaxHeight());
+        int floor = MathHelper.clamp(RubicWorldControl.terrainOffsetBlocks(), rdpl$getMinHeight(), rdpl$getMaxHeight());
         int ceiling = MathHelper.clamp(world.provider.getActualHeight(), floor, rdpl$getMaxHeight() - 1);
         Chunk chunk = world.getChunk(pos);
         int top = Math.max(floor, Math.min(ceiling, chunk.getHeightValue(pos.getX() & 15, pos.getZ() & 15)));
-        BlockPos.MutableBlockPos current = new BlockPos.MutableBlockPos(pos.getX(), top, pos.getZ());
-        BlockPos.MutableBlockPos next = new BlockPos.MutableBlockPos();
-        while (current.getY() > floor) {
-            next.setPos(current.getX(), current.getY() - 1, current.getZ());
-            IBlockState state = chunk.getBlockState(next);
-            if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, world, next) && !state.getBlock().isFoliage(world, next)) {
-                break;
-            }
-            current.setY(next.getY());
-        }
-        return current.toImmutable();
+        return rdpl$scanDown(chunk, new BlockPos(pos.getX(), top, pos.getZ()), floor);
     }
 
     default BlockPos getTopSolidOrLiquidBlockVanilla(BlockPos pos) {
         Chunk chunk = ((World) this).getChunk(pos);
-        BlockPos current = new BlockPos(pos.getX(), chunk.getTopFilledSegment() + 16, pos.getZ());
-        while (current.getY() >= 0) {
-            BlockPos next = current.down();
+        return rdpl$scanDown(chunk, new BlockPos(pos.getX(), chunk.getTopFilledSegment() + 16, pos.getZ()), -1);
+    }
+
+    default BlockPos rdpl$scanDown(Chunk chunk, BlockPos start, int floor) {
+        World world = (World) this;
+        BlockPos.MutableBlockPos current = new BlockPos.MutableBlockPos(start);
+        BlockPos.MutableBlockPos next = new BlockPos.MutableBlockPos();
+        while (current.getY() > floor) {
+            next.setPos(current.getX(), current.getY() - 1, current.getZ());
             IBlockState state = chunk.getBlockState(next);
-            if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, (World) this, next) && !state.getBlock().isFoliage((World) this, next)) {
-                break;
-            }
-            current = next;
+            if (state.getMaterial().blocksMovement() && !state.getBlock().isLeaves(state, world, next) && !state.getBlock().isFoliage(world, next)) { break; }
+            current.setY(next.getY());
         }
-        return current;
+        return current.toImmutable();
     }
 
     interface IServer extends IRubicWorldInternal, IRubicWorldServer {

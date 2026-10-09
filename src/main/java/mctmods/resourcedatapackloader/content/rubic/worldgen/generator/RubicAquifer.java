@@ -13,7 +13,6 @@ import net.minecraft.world.biome.Biome;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import java.util.Objects;
 
 public final class RubicAquifer {
     private static final int SEA_LEVEL = 63;
@@ -51,61 +50,19 @@ public final class RubicAquifer {
 
     public IBlockState substance(int x, int y, int z, double density) {
         if (y > surfaceEstimate(x, z) + 8 + 12) { return at(pack(SEA_LEVEL, false), y); }
-        int xAnchor = gridX(x - 5);
-        int yAnchor = gridY(y + 1);
-        int zAnchor = gridZ(z - 5);
-        long distanceSqr1 = Long.MAX_VALUE;
-        long distanceSqr2 = Long.MAX_VALUE;
-        long distanceSqr3 = Long.MAX_VALUE;
-        long cell1 = 0;
-        long cell2 = 0;
-        long cell3 = 0;
-        int[] location1 = null;
-        int[] location2 = null;
-        int[] location3 = null;
-        for (int x1 = 0; x1 <= 1; x1++) {
-            for (int y1 = -1; y1 <= 1; y1++) {
-                for (int z1 = 0; z1 <= 1; z1++) {
-                    long cell = cellKey(xAnchor + x1, yAnchor + y1, zAnchor + z1);
-                    int[] location = location(cell, xAnchor + x1, yAnchor + y1, zAnchor + z1);
-                    long dx = location[0] - x;
-                    long dy = location[1] - y;
-                    long dz = location[2] - z;
-                    long distance = dx * dx + dy * dy + dz * dz;
-                    if (distanceSqr1 >= distance) {
-                        cell3 = cell2;
-                        cell2 = cell1;
-                        cell1 = cell;
-                        location3 = location2;
-                        location2 = location1;
-                        location1 = location;
-                        distanceSqr3 = distanceSqr2;
-                        distanceSqr2 = distanceSqr1;
-                        distanceSqr1 = distance;
-                    } else if (distanceSqr2 >= distance) {
-                        cell3 = cell2;
-                        cell2 = cell;
-                        location3 = location2;
-                        location2 = location;
-                        distanceSqr3 = distanceSqr2;
-                        distanceSqr2 = distance;
-                    } else if (distanceSqr3 >= distance) {
-                        cell3 = cell;
-                        location3 = location;
-                        distanceSqr3 = distance;
-                    }
-                }
-            }
-        }
-        long status1 = status(cell1, location1);
+        Nearest nearest = nearest3(x, y, z);
+        long distanceSqr1 = nearest.distance[0];
+        long distanceSqr2 = nearest.distance[1];
+        long distanceSqr3 = nearest.distance[2];
+        long status1 = status(nearest.cell[0], nearest.location[0]);
         double similarity12 = similarity(distanceSqr1, distanceSqr2);
         IBlockState state = at(status1, y);
         if (similarity12 <= 0.0D) { return settled(state, x, y, z); }
         if (state.getBlock() == Blocks.WATER && y - 1 < lavaLevel) { return barrierBlock; }
         double[] noiseHolder = { Double.NaN };
-        long status2 = status(cell2, location2);
+        long status2 = status(nearest.cell[1], nearest.location[1]);
         if (density + similarity12 * pressure(x, y, z, status1, status2, noiseHolder) > 0.0D) { return barrierBlock; }
-        long status3 = status(cell3, location3);
+        long status3 = status(nearest.cell[2], nearest.location[2]);
         double similarity13 = similarity(distanceSqr1, distanceSqr3);
         if (similarity13 > 0.0D && density + similarity12 * similarity13 * pressure(x, y, z, status1, status3, noiseHolder) > 0.0D) { return barrierBlock; }
         double similarity23 = similarity(distanceSqr2, distanceSqr3);
@@ -128,12 +85,15 @@ public final class RubicAquifer {
     }
 
     private long nearestStatus(int x, int y, int z) {
+        Nearest nearest = nearest3(x, y, z);
+        return status(nearest.cell[0], nearest.location[0]);
+    }
+
+    private Nearest nearest3(int x, int y, int z) {
         int xAnchor = gridX(x - 5);
         int yAnchor = gridY(y + 1);
         int zAnchor = gridZ(z - 5);
-        long bestDistance = Long.MAX_VALUE;
-        long bestCell = 0;
-        int[] bestLocation = null;
+        Nearest nearest = new Nearest();
         for (int x1 = 0; x1 <= 1; x1++) {
             for (int y1 = -1; y1 <= 1; y1++) {
                 for (int z1 = 0; z1 <= 1; z1++) {
@@ -142,16 +102,32 @@ public final class RubicAquifer {
                     long dx = location[0] - x;
                     long dy = location[1] - y;
                     long dz = location[2] - z;
-                    long distance = dx * dx + dy * dy + dz * dz;
-                    if (distance < bestDistance) {
-                        bestDistance = distance;
-                        bestCell = cell;
-                        bestLocation = location;
-                    }
+                    nearest.insert(cell, location, dx * dx + dy * dy + dz * dz);
                 }
             }
         }
-        return status(bestCell, bestLocation);
+        return nearest;
+    }
+
+    private static final class Nearest {
+        final long[] cell = new long[3];
+        final int[][] location = new int[3][];
+        final long[] distance = {Long.MAX_VALUE, Long.MAX_VALUE, Long.MAX_VALUE};
+
+        void insert(long newCell, int[] newLocation, long newDistance) {
+            for (int slot = 0; slot < 3; slot++) {
+                if (distance[slot] < newDistance) { continue; }
+                for (int moved = 2; moved > slot; moved--) {
+                    cell[moved] = cell[moved - 1];
+                    location[moved] = location[moved - 1];
+                    distance[moved] = distance[moved - 1];
+                }
+                cell[slot] = newCell;
+                location[slot] = newLocation;
+                distance[slot] = newDistance;
+                return;
+            }
+        }
     }
 
     private static double similarity(long distanceSqr1, long distanceSqr2) { return 1.0D - (distanceSqr2 - distanceSqr1) / 25.0D; }
@@ -174,7 +150,8 @@ public final class RubicAquifer {
         double gradient;
         if (aboveAverage > 0.0D) {
             gradient = edge > 0.0D ? edge / 1.5D : edge / 2.5D;
-        } else {
+        }
+        else {
             double fromBottom = 3.0D + edge;
             gradient = fromBottom > 0.0D ? fromBottom / 3.0D : fromBottom / 10.0D;
         }
@@ -242,14 +219,16 @@ public final class RubicAquifer {
         int level;
         if (flood > fullyThreshold) {
             level = level(global);
-        } else if (flood > partialThreshold) {
+        }
+        else if (flood > partialThreshold) {
             int cellX = Math.floorDiv(x, 16);
             int cellY = Math.floorDiv(y, 40);
             int cellZ = Math.floorDiv(z, 16);
             int middle = cellY * 40 + 20;
             int quantized = (int) Math.floor(spread.sample(cellX, cellY, cellZ) * 10.0D / 3.0D) * 3;
             level = Math.min(lowestSurface, middle + quantized);
-        } else {
+        }
+        else {
             level = DRY;
         }
         boolean lava = false;
@@ -271,9 +250,9 @@ public final class RubicAquifer {
 
     private static double clamp01(double value) { return value < 0.0D ? 0.0D : Math.min(value, 1.0D); }
 
-    private IBlockState at(long status, int y) {
-        if (y >= level(status)) { return Objects.requireNonNull(Blocks.AIR).getDefaultState(); }
-        return isLava(status) ? Objects.requireNonNull(Blocks.LAVA).getDefaultState() : Objects.requireNonNull(Blocks.WATER).getDefaultState();
+    @SuppressWarnings("ConstantConditions") private IBlockState at(long status, int y) {
+        if (y >= level(status)) { return Blocks.AIR.getDefaultState(); }
+        return isLava(status) ? Blocks.LAVA.getDefaultState() : Blocks.WATER.getDefaultState();
     }
 
     private static long pack(int level, boolean lava) { return ((long) level << 1) | (lava ? 1L : 0L); }
