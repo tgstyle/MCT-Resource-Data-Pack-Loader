@@ -3,12 +3,15 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.def.TurnsDef;
+import mctmods.resourcedatapackloader.content.util.TellThrottle;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Scores;
 import mctmods.resourcedatapackloader.util.TurnClock;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,7 +22,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -32,10 +34,10 @@ import javax.annotation.Nullable;
 public final class ContentTurns {
     private static final long NOTE_TICKS = 60L;
     private static final List<String> SEEN = new ArrayList<>();
-    private static final List<String> ORDER = new ArrayList<>();
+    private static final ObjectArrayList<String> ORDER = new ObjectArrayList<>();
     private static final Set<UUID> HELD = new HashSet<>();
     private static final Map<String, GameType> ASIDE = new LinkedHashMap<>();
-    private static final Map<String, Long> TOLD = new LinkedHashMap<>();
+    private static final TellThrottle TOLD = new TellThrottle(NOTE_TICKS);
     private static final TurnClock CLOCK = new TurnClock();
     @Nullable private static ScoreDef playing;
     @Nullable private static String current;
@@ -68,9 +70,6 @@ public final class ContentTurns {
         }
         playing = def;
         Map<String, List<Entity>> groups = groups(server, turns);
-        for (String group : groups.keySet()) {
-            if (!SEEN.contains(group)) { SEEN.add(group); }
-        }
         if (reached(server, def, turns)) {
             ContentLog.LOGGER.info("A side reached {} in {}, so the turns are over", turns.endsAtScore(), def.name());
             ContentScoring.finish(server, def, "turns", null);
@@ -124,7 +123,7 @@ public final class ContentTurns {
         for (String group : SEEN) {
             if (groups.containsKey(group)) { ORDER.add(group); }
         }
-        if (TurnsDef.RANDOM.equals(turns.order())) { Collections.shuffle(ORDER, new java.util.Random(server.overworld().getRandom().nextLong())); }
+        if (TurnsDef.RANDOM.equals(turns.order())) { Util.shuffle(ORDER, server.overworld().getRandom()); }
         else if (TurnsDef.LOWEST_FIRST.equals(turns.order())) { ORDER.sort(Comparator.comparingInt(group -> score(server, def, group))); }
         else if (TurnsDef.LAST_WINNER.equals(turns.order()) && lastWinner != null && ORDER.remove(lastWinner)) { ORDER.add(0, lastWinner); }
         ContentLog.LOGGER.info("Cycle {} of turns in {} goes {}", cycle + 1, def.name(), ORDER);
@@ -229,9 +228,8 @@ public final class ContentTurns {
     static boolean refused(ServerPlayer player) {
         if (free(player)) { return false; }
         long now = player.serverLevel().getGameTime();
-        Long last = TOLD.get(player.getGameProfile().getName());
-        if (last == null || now - last >= NOTE_TICKS) {
-            TOLD.put(player.getGameProfile().getName(), now);
+        if (TOLD.ready(player.getGameProfile().getName(), now)) {
+            TOLD.mark(player.getGameProfile().getName(), now);
             Says.line(player, ChatFormatting.GRAY, ContentDice.words(player, "notturn"));
         }
         return true;
@@ -246,12 +244,12 @@ public final class ContentTurns {
             String group = groupOf(turns, overworld, player);
             if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(player); }
         }
-        for (ServerLevel level : server.getAllLevels()) {
-            for (Entity one : level.getAllEntities()) {
-                if (!(one instanceof Mob mob) || !mob.isAlive() || mob.getHealth() <= 0.0F) { continue; }
-                String group = groupOf(turns, level, mob);
-                if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(mob); }
-            }
+        ContentTeams.eachAlive(server, Mob.class, (level, mob) -> {
+            String group = groupOf(turns, level, mob);
+            if (group != null) { groups.computeIfAbsent(group, none -> new ArrayList<>()).add(mob); }
+        });
+        for (String group : groups.keySet()) {
+            if (!SEEN.contains(group)) { SEEN.add(group); }
         }
         return groups;
     }
@@ -278,7 +276,7 @@ public final class ContentTurns {
     private static int score(MinecraftServer server, ScoreDef def, String group) {
         Scoreboard board = Scores.board(server);
         Objective objective = Scores.objective(board, def.name());
-        return objective == null || !Scores.has(board, group, objective) ? 0 : Scores.score(board, group, objective);
+        return objective == null || Scores.lacks(board, group, objective) ? 0 : Scores.score(board, group, objective);
     }
 
     @Nullable private static String leader(MinecraftServer server, ScoreDef def) {
@@ -294,11 +292,7 @@ public final class ContentTurns {
         return side == null ? group : side.displayName();
     }
 
-    private static void tellAll(MinecraftServer server, String key, String group) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { Says.line(player, ChatFormatting.GOLD, ContentDice.words(player, key, "group", shown(group))); }
-    }
+    private static void tellAll(MinecraftServer server, String key, String group) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { Says.line(player, ChatFormatting.GOLD, ContentDice.words(player, key, "group", shown(group))); } }
 
-    private static void bar(MinecraftServer server, String key, Object... pairs) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.displayClientMessage(Says.marked(ContentDice.words(player, key, pairs), ChatFormatting.YELLOW), true); }
-    }
+    private static void bar(MinecraftServer server, String key, Object... pairs) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { player.displayClientMessage(Says.marked(ContentDice.words(player, key, pairs), ChatFormatting.YELLOW), true); } }
 }

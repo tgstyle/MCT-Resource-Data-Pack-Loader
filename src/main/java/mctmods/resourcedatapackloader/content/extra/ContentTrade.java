@@ -33,9 +33,7 @@ public final class ContentTrade implements VillagerTrades.ItemListing {
 
     private static AmountDef amount(TradeStackDef def) { return def.max() <= def.min() ? AmountDef.of(def.min()) : new AmountDef(def.min(), def.max()); }
 
-    @Override public MerchantOffer getOffer(@Nullable Entity trader, @Nonnull RandomSource random) {
-        return new MerchantOffer(sized(buy, buyCount, random), sized(buySecondary, buySecondaryCount, random), sized(sell, sellCount, random), def.maxUses(), def.xp(), 0.05F);
-    }
+    @Override public MerchantOffer getOffer(@Nullable Entity trader, @Nonnull RandomSource random) { return new MerchantOffer(sized(buy, buyCount, random), sized(buySecondary, buySecondaryCount, random), sized(sell, sellCount, random), def.maxUses(), def.xp(), 0.05F); }
 
     private static ItemStack sized(ItemStack stack, AmountDef count, RandomSource random) {
         if (stack.isEmpty()) { return ItemStack.EMPTY; }

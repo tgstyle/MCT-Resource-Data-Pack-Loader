@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.VillageDef;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
@@ -19,7 +20,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.JigsawBlock;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.pools.SinglePoolElement;
@@ -29,10 +29,9 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorList;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
+import javax.annotation.Nonnull;
 
 public final class ContentPlotPoolElement extends SinglePoolElement {
     public static final Codec<ContentPlotPoolElement> CODEC = RecordCodecBuilder.create(instance -> instance.group(templateCodec(), processorsCodec(), projectionCodec(), Codec.STRING.fieldOf("plot").forGetter(held -> held.plot)).apply(instance, ContentPlotPoolElement::new));
@@ -75,7 +74,7 @@ public final class ContentPlotPoolElement extends SinglePoolElement {
             for (BlockPos spot : level.getChunk(box.minX() >> 4, box.minZ() >> 4).getBlockEntitiesPos()) {
                 if (!held.isInside(spot) || !box.isInside(spot)) { continue; }
                 BlockEntity entity = level.getBlockEntity(spot);
-                if (entity instanceof RandomizableContainerBlockEntity container) { container.setLootTable(table, level.getSeed() ^ spot.asLong()); }
+                StructureLoot.stock(entity, table, level.getSeed() ^ spot.asLong());
             }
         }
         ContentCity.residents(level, def, box, index -> offset.offset(StructureTemplate.calculateRelativePosition(settings, new BlockPos(def.villagerX() + index, def.villagerY(), def.villagerZ()))));

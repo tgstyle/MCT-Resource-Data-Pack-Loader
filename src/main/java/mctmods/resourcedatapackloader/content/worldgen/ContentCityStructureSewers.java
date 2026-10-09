@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
@@ -45,8 +47,7 @@ public final class ContentCityStructureSewers {
 
     static void joins(CityPlan plan, int bottom, Map<CityPlan.Line, ContentCityStructure.Laid> laid, List<ContentCityStructure.Well> wells, StructurePiecesBuilder builder) {
         int[] around = wellBoxes(wells);
-        for (CityPlan.Line line : plan.alongX()) { joins(plan, line, bottom, laid, sewerRows(plan, line, wells), around, builder); }
-        for (CityPlan.Line line : plan.alongZ()) { joins(plan, line, bottom, laid, sewerRows(plan, line, wells), around, builder); }
+        for (CityPlan.Line line : CityLines.of(plan)) { joins(plan, line, bottom, laid, sewerRows(plan, line, wells), around, builder); }
     }
 
     private static void joins(CityPlan plan, CityPlan.Line line, int bottom, Map<CityPlan.Line, ContentCityStructure.Laid> laid, int[] rows, int[] around, StructurePiecesBuilder builder) {
@@ -78,34 +79,29 @@ public final class ContentCityStructureSewers {
     }
 
     private static int[] sewerRows(CityPlan plan, CityPlan.Line line, List<ContentCityStructure.Well> wells) {
-        List<Integer> rows = new ArrayList<>();
-        for (CityPlan.Line other : plan.crossing(line)) {
-            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
-            rows.add(other.middle());
-        }
+        List<Integer> rows = crossingRows(plan, line);
         if (ContentCity.sewerWellEntrance()) {
             for (ContentCityStructure.Well well : wells) {
-                if (!well.middle().alongX().equals(line) && !well.middle().alongZ().equals(line)) { continue; }
+                if (!well.middle().on(line)) { continue; }
                 BoundingBox box = well.box();
-                rows.add((line.alongX() ? box.minX() : box.minZ()) - ContentCitySewerLoopPiece.LOOP);
-                rows.add((line.alongX() ? box.maxX() : box.maxZ()) + ContentCitySewerLoopPiece.LOOP);
+                rows.add(CityLines.least(line, box) - ContentCitySewerLoopPiece.LOOP);
+                rows.add(CityLines.most(line, box) + ContentCitySewerLoopPiece.LOOP);
             }
         }
-        int[] found = new int[rows.size()];
-        for (int at = 0; at < found.length; at++) { found[at] = rows.get(at); }
-        return found;
+        return rowArray(rows);
     }
 
-    private static int[] hatchRows(CityPlan plan, CityPlan.Line line) {
+    private static int[] rowArray(List<Integer> rows) { return rows.stream().mapToInt(Integer::intValue).toArray(); }
+
+    private static List<Integer> crossingRows(CityPlan plan, CityPlan.Line line) {
         List<Integer> rows = new ArrayList<>();
         for (CityPlan.Line other : plan.crossing(line)) {
-            if (other.from() > line.last() + 1 || other.to() < line.at() - 1) { continue; }
-            rows.add(other.middle());
+            if (CityLines.beside(line, other)) { rows.add(other.middle()); }
         }
-        int[] found = new int[rows.size()];
-        for (int at = 0; at < found.length; at++) { found[at] = rows.get(at); }
-        return found;
+        return rows;
     }
+
+    private static int[] hatchRows(CityPlan plan, CityPlan.Line line) { return rowArray(crossingRows(plan, line)); }
 
     private static boolean plazaOffLoop(List<ContentCityStructure.Well> wells, int x, int z) {
         int reach = CityPlan.plazaReach();
@@ -118,14 +114,8 @@ public final class ContentCityStructureSewers {
     }
 
     private static int[] wellBoxes(List<ContentCityStructure.Well> wells) {
-        int[] found = new int[wells.size() * 4];
-        for (int at = 0; at < wells.size(); at++) {
-            BoundingBox box = wells.get(at).box();
-            found[at * 4] = box.minX();
-            found[at * 4 + 1] = box.minZ();
-            found[at * 4 + 2] = box.maxX();
-            found[at * 4 + 3] = box.maxZ();
-        }
-        return found;
+        IntList found = new IntArrayList();
+        for (ContentCityStructure.Well well : wells) { CityBoxes.add(found, well.box()); }
+        return found.toIntArray();
     }
 }

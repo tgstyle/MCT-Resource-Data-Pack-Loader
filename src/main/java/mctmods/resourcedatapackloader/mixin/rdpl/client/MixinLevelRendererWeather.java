@@ -17,13 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         return view != null && ContentWeather.above(view.level(), view.getBlockY());
     }
 
-    @Inject(method = "renderSnowAndRain", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipWeatherRender(CallbackInfo ci) {
-        if (rdpl$aboveCeiling()) { ci.cancel(); }
-    }
+    @Inject(method = "renderSnowAndRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherRender(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
 
-    @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true)
-    private void rdpl$skipWeatherParticles(CallbackInfo ci) {
-        if (rdpl$aboveCeiling()) { ci.cancel(); }
-    }
+    @Inject(method = "tickRain", at = @At("HEAD"), cancellable = true) private void rdpl$skipWeatherParticles(CallbackInfo ci) { if (rdpl$aboveCeiling()) { ci.cancel(); } }
 }

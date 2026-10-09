@@ -1,5 +1,6 @@
-package mctmods.resourcedatapackloader.client;
+package mctmods.resourcedatapackloader.client.render;
 
+import mctmods.resourcedatapackloader.client.SkyMesh;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
@@ -54,14 +55,12 @@ public final class SeamSkyRenderer {
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         RenderSystem.disableCull();
         RenderSystem.depthMask(false);
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder buffer = tesselator.getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         buffer.vertex(pose, -extent, y, -extent).color(red, green, blue, 255).endVertex();
         buffer.vertex(pose, -extent, y, extent).color(red, green, blue, 255).endVertex();
         buffer.vertex(pose, extent, y, extent).color(red, green, blue, 255).endVertex();
         buffer.vertex(pose, extent, y, -extent).color(red, green, blue, 255).endVertex();
-        tesselator.end();
+        Tesselator.getInstance().end();
         RenderSystem.depthMask(true);
         RenderSystem.enableCull();
     }

@@ -1,16 +1,16 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.RoundResetDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
+import mctmods.resourcedatapackloader.content.def.TeamDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
-import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.scores.PlayerTeam;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -18,8 +18,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class ContentRoundReset {
-    public static final String CALLED = "Your vote to reset the round is called";
-    public static final String DONE = "The round is reset";
     private static final Map<String, Boolean> BALLOTS = new LinkedHashMap<>();
     @Nullable private static ScoreDef voting;
     private static int left;
@@ -34,40 +32,40 @@ public final class ContentRoundReset {
         quietUntil = 0L;
     }
 
-    public static String call(MinecraftServer server, String name, @Nullable ServerPlayer who, boolean operator) {
+    public static RoundSay call(MinecraftServer server, String name, @Nullable ServerPlayer who, boolean operator) {
         ScoreDef def = ContentScoring.resetOffer();
-        if (def == null) { return "This pack's rounds cannot be reset"; }
-        if (ContentScoring.noRoundToReset()) { return "There is no round running to reset"; }
+        if (def == null) { return RoundSay.bad("rdpl.round.reset.cannot"); }
+        if (ContentScoring.noRoundToReset()) { return RoundSay.bad("rdpl.round.reset.norunning"); }
         RoundResetDef reset = def.reset();
         String way = operator ? RoundResetDef.NOW : who == null ? RoundResetDef.NONE : wayFor(who, reset);
         if (RoundResetDef.NOW.equals(way)) {
             drop();
-            if (!reset.leadSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_LEAD, reset.leadSays().replace("{player}", name), ChatFormatting.GOLD); }
+            if (!reset.leadSays().isEmpty()) { Says.tellAll(server, CardIds.RESET_LEAD, ChatFormatting.GOLD, reset.leadSays().replace("{player}", name)); }
             ContentLog.LOGGER.info("{} reset the round", name);
             ContentScoring.resetRound(server, def);
-            return DONE;
+            return RoundSay.good("rdpl.round.reset.done");
         }
-        if (RoundResetDef.NONE.equals(way)) { return reset.playersVote() ? "Your side cannot call a vote to reset the round" : "Only a side's leader resets the round"; }
-        if (voting != null) { return "A reset vote is already running: /rdpl round vote yes or no"; }
+        if (RoundResetDef.NONE.equals(way)) { return RoundSay.bad(reset.playersVote() ? "rdpl.round.reset.sidenovote" : "rdpl.round.reset.leaderonly"); }
+        if (voting != null) { return RoundSay.bad("rdpl.round.reset.voterunning"); }
         long wait = quietUntil - System.currentTimeMillis();
-        if (wait > 0L) { return "A reset vote was just held, so another can be called in " + (wait + 999L) / 1000L + " second(s)"; }
+        if (wait > 0L) { return RoundSay.bad("rdpl.round.reset.cooldown", (wait + 999L) / 1000L); }
         voting = def;
         left = reset.voteSeconds();
         BALLOTS.clear();
         BALLOTS.put(name, true);
         ContentLog.LOGGER.info("{} called a vote to reset the round", name);
-        if (!reset.voteSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_VOTE, reset.voteSays().replace("{player}", name).replace("{seconds}", Integer.toString(left)), ChatFormatting.GOLD); }
+        if (!reset.voteSays().isEmpty()) { Says.tellAll(server, CardIds.RESET_VOTE, ChatFormatting.GOLD, reset.voteSays().replace("{player}", name).replace("{seconds}", Integer.toString(left))); }
         decide(server);
-        return CALLED;
+        return RoundSay.good("rdpl.round.reset.called");
     }
 
-    public static String vote(MinecraftServer server, ServerPlayer who, boolean yes) {
-        if (voting == null) { return "No reset vote is running"; }
+    public static RoundSay vote(MinecraftServer server, ServerPlayer who, boolean yes) {
+        if (voting == null) { return RoundSay.bad("rdpl.round.vote.none"); }
         String name = who.getGameProfile().getName();
-        if (!voters(server).contains(name)) { return "Only players on a side vote"; }
+        if (!voters(server).contains(name)) { return RoundSay.bad("rdpl.round.vote.sideonly"); }
         BALLOTS.put(name, yes);
         decide(server);
-        return yes ? "You voted to reset the round" : "You voted to play on";
+        return RoundSay.good(yes ? "rdpl.round.vote.yes" : "rdpl.round.vote.no");
     }
 
     public static void second(MinecraftServer server) {
@@ -92,8 +90,8 @@ public final class ContentRoundReset {
     }
 
     @Nullable private static String sideOf(ServerPlayer who) {
-        PlayerTeam team = Scores.teamOf(Scores.board(who.server), who.getGameProfile().getName());
-        return team == null || ContentTeams.named(team.getName()) == null ? null : team.getName();
+        TeamDef def = ContentTeams.defOf(who);
+        return def == null ? null : def.name();
     }
 
     private static List<String> voters(MinecraftServer server) {
@@ -126,7 +124,7 @@ public final class ContentRoundReset {
         if (counted[2] > 0 && counted[0] * 100 >= needed) {
             ContentLog.LOGGER.info("The vote to reset the round passed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
             drop();
-            if (!reset.passSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_PASS, reset.passSays(), ChatFormatting.GOLD); }
+            if (!reset.passSays().isEmpty()) { Says.tellAll(server, CardIds.RESET_PASS, ChatFormatting.GOLD, reset.passSays()); }
             ContentScoring.resetRound(server, def);
             return;
         }
@@ -134,7 +132,7 @@ public final class ContentRoundReset {
         ContentLog.LOGGER.info("The vote to reset the round failed, {} yes and {} no of {} voter(s)", counted[0], counted[1], counted[2]);
         drop();
         quietUntil = System.currentTimeMillis() + reset.cooldownSeconds() * 1000L;
-        if (!reset.failSays().isEmpty()) { Says.tellAll(server, mctmods.resourcedatapackloader.content.card.CardIds.RESET_FAIL, reset.failSays(), ChatFormatting.GRAY); }
+        if (!reset.failSays().isEmpty()) { Says.tellAll(server, CardIds.RESET_FAIL, ChatFormatting.GRAY, reset.failSays()); }
     }
 
     private static void drop() {

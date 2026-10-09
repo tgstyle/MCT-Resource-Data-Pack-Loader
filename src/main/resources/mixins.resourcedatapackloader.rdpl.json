@@ -91,6 +91,7 @@
         "common.IRandomStrollGoal",
         "common.MixinBreedGoal",
         "common.MixinTargetGoal",
+        "common.MixinNodeEvaluator",
         "common.MixinSwimNodeEvaluator",
         "common.MixinWalkNodeEvaluator",
         "common.MixinExplosionDamageCalculator",
@@ -168,7 +169,6 @@
     ],
     "server": [
         "server.ISettings",
-        "server.MixinDedicatedServerGameMode",
         "server.MixinDedicatedServerProperties"
     ],
     "injectors": {

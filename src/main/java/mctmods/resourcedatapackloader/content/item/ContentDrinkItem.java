@@ -19,7 +19,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentDrinkItem extends Item {
+public final class ContentDrinkItem extends Item {
     private final ItemDef def;
     @Nullable private final MobEffectInstance effect;
     @Nullable private Item container;
@@ -42,9 +42,9 @@ public class ContentDrinkItem extends Item {
     }
 
     @Override @Nonnull public ItemStack finishUsingItem(@Nonnull ItemStack stack, @Nonnull Level level, @Nonnull LivingEntity entity) {
-        if (!level.isClientSide && effect != null) { entity.addEffect(ContentEffects.copy(effect)); }
+        if (!level.isClientSide() && effect != null) { entity.addEffect(ContentEffects.copy(effect)); }
         Player player = entity instanceof Player held ? held : null;
-        if (player != null && def.cooldown() > 0) { player.getCooldowns().addCooldown(this, def.cooldown()); }
+        ContentEffects.cooldown(entity, this, def.cooldown());
         if (player != null && player.getAbilities().instabuild) { return stack; }
         stack.shrink(1);
         if (container == null) { return stack; }

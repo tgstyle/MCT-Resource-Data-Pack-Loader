@@ -2,20 +2,19 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentFormats;
+import mctmods.resourcedatapackloader.util.Blocked;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.ScopedFeatures;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.minecraftforge.event.level.LevelEvent;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,9 +27,9 @@ import javax.annotation.Nullable;
 public final class ContentGeneratorControl {
     public static final String UNKNOWN = "unknown";
     private static final Map<String, List<String>> PATTERNS = new LinkedHashMap<>();
-    private static final Map<String, Integer> BLOCKED = new LinkedHashMap<>();
+    private static final Blocked BLOCKED = new Blocked();
     private static final Set<String> REPORTED = ConcurrentHashMap.newKeySet();
-    private static volatile Map<ChunkGenerator, Map<PlacedFeature, Refused>> scoped = Map.of();
+    private static final ScopedFeatures<Refused> SCOPED = new ScopedFeatures<>();
     private static volatile boolean logging;
     private static Set<String> whitelist = Set.of();
     private static Set<String> named = Set.of();
@@ -47,20 +46,24 @@ public final class ContentGeneratorControl {
 
     private ContentGeneratorControl() {}
 
+    private static List<String> blockedGenerators() { return ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators()); }
+
+    private static List<String> generatorTypes() { return ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes()); }
+
     public static boolean enabled() {
         if (ContentControl.off(ContentControl.GENERATORS)) { return false; }
-        return blocking() || !ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators()).isEmpty()
-                || !ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes()).isEmpty();
+        return blocking() || !blockedGenerators().isEmpty()
+                || !generatorTypes().isEmpty();
     }
 
     public static void load() {
-        whitelist = lower(ContentControl.list(ContentControl.GENERATORS, "generatorWhitelist", Config.worldgen.generatorWhitelist()));
-        named = lower(ContentControl.list(ContentControl.GENERATORS, "blockedGenerators", Config.worldgen.blockedGenerators()));
+        whitelist = Settings.lower(ContentControl.list(ContentControl.GENERATORS, "generatorWhitelist", Config.worldgen.generatorWhitelist()));
+        named = Settings.lower(blockedGenerators());
         Set<String> wanted = new LinkedHashSet<>();
-        for (String name : ContentControl.list(ContentControl.GENERATORS, "generatorTypes", Config.worldgen.generatorTypes())) {
-            String kind = name.trim().toLowerCase(Locale.ROOT);
+        for (String name : generatorTypes()) {
+            String kind = Settings.lower(name);
             if (kind.isEmpty()) { continue; }
-            if (!PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN)) {
+            if (invalid(kind)) {
                 ContentLog.LOGGER.error("generatorTypes names '{}', which is not one of {} or {}, ignoring it", kind, PATTERNS.keySet(), UNKNOWN);
                 continue;
             }
@@ -69,18 +72,18 @@ public final class ContentGeneratorControl {
         kinds = wanted;
         Map<String, String> patterns = new LinkedHashMap<>();
         for (String entry : ContentControl.list(ContentControl.GENERATORS, "generatorTypeMap", Config.worldgen.generatorTypeMap())) {
-            String[] parts = pair(entry);
+            String[] parts = Settings.pair(entry, "generatorTypeMap", "pattern=type");
             if (parts == null) { continue; }
             String pattern = parts[0].toLowerCase(Locale.ROOT);
             String kind = parts[1].toLowerCase(Locale.ROOT);
-            if (!PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN)) {
+            if (invalid(kind)) {
                 ContentLog.LOGGER.error("generatorTypeMap entry '{}' names a type that is not one of {} or {}, ignoring it", entry, PATTERNS.keySet(), UNKNOWN);
                 continue;
             }
             patterns.put(pattern, kind);
         }
         mapped = patterns;
-        synchronized (BLOCKED) { BLOCKED.clear(); }
+        BLOCKED.clear();
         REPORTED.clear();
         if (!enabled()) { return; }
         if (blocking()) { Summary.info("generators", "Blocking third party world generation except from " + whitelist); }
@@ -90,32 +93,21 @@ public final class ContentGeneratorControl {
 
     public static void onLevelLoad(LevelEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel level)) { return; }
-        Map<ChunkGenerator, Map<PlacedFeature, Refused>> next = level.dimension() == Level.OVERWORLD ? new IdentityHashMap<>() : new IdentityHashMap<>(scoped);
-        if (enabled() && inScope(level.dimension().location().toString())) {
-            boolean byMod = blocking();
-            Map<PlacedFeature, Refused> features = new IdentityHashMap<>();
-            for (Map.Entry<ResourceKey<PlacedFeature>, PlacedFeature> entry : level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE).entrySet()) {
-                Refused refused = refused(entry.getKey().location(), byMod);
-                if (refused != null) { features.put(entry.getValue(), refused); }
-            }
-            next.put(level.getChunkSource().getGenerator(), features);
-            ContentLog.LOGGER.debug("Generator blocking refuses {} placed feature(s) in {}", features.size(), level.dimension().location());
-        }
+        boolean active = enabled() && inScope(level.dimension().location().toString());
+        boolean byMod = blocking();
         logging = ContentControl.flag(ContentControl.GENERATORS, "logBlockedGenerators", Config.worldgen.logBlockedGenerators());
-        scoped = next;
+        int count = SCOPED.load(level, active, (id, feature) -> refused(id, byMod));
+        if (active) { ContentLog.LOGGER.debug("Generator blocking refuses {} placed feature(s) in {}", count, level.dimension().location()); }
     }
 
     public static boolean refuses(ChunkGenerator generator, PlacedFeature feature) {
-        Map<PlacedFeature, Refused> held = scoped.get(generator);
-        Refused refused = held == null ? null : held.get(feature);
+        Refused refused = SCOPED.get(generator, feature);
         if (refused == null) { return false; }
         count(refused);
         return true;
     }
 
-    public static Map<String, Integer> blocked() {
-        synchronized (BLOCKED) { return Map.copyOf(BLOCKED); }
-    }
+    public static Map<String, Integer> blocked() { return BLOCKED.map(); }
 
     @Nullable private static Refused refused(ResourceLocation id, boolean byMod) {
         String owner = id.getNamespace().toLowerCase(Locale.ROOT);
@@ -149,6 +141,8 @@ public final class ContentGeneratorControl {
         return UNKNOWN;
     }
 
+    private static boolean invalid(String kind) { return !PATTERNS.containsKey(kind) && !kind.equals(UNKNOWN); }
+
     private static boolean matches(String id) {
         for (String entry : named) {
             if (id.contains(entry)) { return true; }
@@ -158,41 +152,13 @@ public final class ContentGeneratorControl {
 
     private static boolean inScope(String dimension) {
         List<String> dimensions = ContentControl.list(ContentControl.GENERATORS, "blockGeneratorDimensions", Config.worldgen.blockGeneratorDimensions());
-        if (dimensions.isEmpty()) { return true; }
-        boolean listed = false;
-        for (String wanted : dimensions) {
-            if (ContentFormats.dimensionId(wanted).equals(dimension)) {
-                listed = true;
-                break;
-            }
-        }
-        return listed != ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist());
+        return DimensionValues.listed(dimension, dimensions, ContentControl.flag(ContentControl.GENERATORS, "blockGeneratorDimensionsAreBlacklist", Config.worldgen.blockGeneratorDimensionsAreBlacklist()));
     }
 
     private static void count(Refused refused) {
-        synchronized (BLOCKED) { BLOCKED.merge(refused.owner() + " " + refused.kind(), 1, Integer::sum); }
+        BLOCKED.count(refused.owner() + " " + refused.kind());
         if (!logging) { return; }
         if (REPORTED.add(refused.owner() + "/" + refused.name())) { ContentLog.LOGGER.info("Blocking {} world generator {} from {}. Use /rdplserver generators to see running totals", refused.kind(), refused.name(), refused.owner()); }
-    }
-
-    private static Set<String> lower(List<String> values) {
-        Set<String> out = new LinkedHashSet<>();
-        for (String value : values) {
-            String trimmed = value.trim().toLowerCase(Locale.ROOT);
-            if (!trimmed.isEmpty()) { out.add(trimmed); }
-        }
-        return out;
-    }
-
-    @Nullable private static String[] pair(String entry) {
-        int split = entry.indexOf('=');
-        String left = split < 0 ? "" : entry.substring(0, split).trim();
-        String right = split < 0 ? "" : entry.substring(split + 1).trim();
-        if (left.isEmpty() || right.isEmpty()) {
-            ContentLog.LOGGER.error("generatorTypeMap entry '{}' is not written as pattern=type, ignoring it", entry);
-            return null;
-        }
-        return new String[] { left, right };
     }
 
     private record Refused(String owner, String kind, String name) {}

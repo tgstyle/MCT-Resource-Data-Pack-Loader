@@ -1,26 +1,35 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.stream.JsonReader;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.GameRules;
 import java.io.Serial;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class Commands {
-    static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
-    static final String MINECRAFT = "minecraft:";
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
     static final String SELF = "@s";
     private static final String[] EFFECTS = {"", "speed", "slowness", "haste", "mining_fatigue", "strength", "instant_health", "instant_damage", "jump_boost", "nausea", "regeneration", "resistance", "fire_resistance", "water_breathing", "invisibility", "blindness", "night_vision", "hunger", "weakness", "poison", "wither", "health_boost", "absorption", "saturation", "glowing", "levitation", "luck", "unluck"};
     static final Map<String, String> GAME_MODES = Map.ofEntries(
@@ -69,34 +78,13 @@ public final class Commands {
     }
 
     public static String function(String contents, String path, Ported pack) {
-        String[] lines = contents.split("\r?\n", -1);
-        StringBuilder out = new StringBuilder();
-        int changed = 0;
-        int kept = 0;
-        for (int i = 0; i < lines.length; i++) {
-            if (i > 0) { out.append('\n'); }
-            String line = lines[i].trim();
-            if (line.isEmpty() || line.startsWith("#")) {
-                out.append(lines[i]);
-                continue;
-            }
-            try {
-                String converted = command(line, pack);
-                out.append(converted);
-                if (!converted.equals(line)) {
-                    changed++;
-                    pack.rewrote();
-                }
-            }
-            catch (Kept why) {
-                kept++;
-                out.append(line);
-                pack.note("'" + path + "' line " + (i + 1) + " is kept as written, since " + why.getMessage() + ": " + line);
-            }
-        }
-        if (pack.overworldShift() != 0 && changed > 0) { pack.note("The pack's overworld is a 1.12.2 flat world, whose floor sat at y 0, so every absolute y in its functions moves by " + pack.overworldShift() + " to the flat floor this version lays; a function that runs in another dimension needs its heights checked by hand"); }
-        if (changed > 0 || kept > 0) { pack.note("'" + path + "' is a 1.12.2 function: " + changed + " command(s) rewritten for this version, " + kept + " kept as written"); }
-        return out.toString();
+        FunctionLines.Result result = pack.function(contents, path, "this version", line -> {
+            String converted = command(line, pack);
+            if (!converted.equals(line)) { pack.rewrote(); }
+            return converted;
+        });
+        if (pack.overworldShift() != 0 && result.changed() > 0) { pack.note("The pack's overworld is a 1.12.2 flat world, whose floor sat at y 0, so every absolute y in its functions moves by " + pack.overworldShift() + " to the flat floor this version lays; a function that runs in another dimension needs its heights checked by hand"); }
+        return result.text();
     }
 
     private static String command(String line, Ported pack) {
@@ -143,9 +131,7 @@ public final class Commands {
         };
     }
 
-    static void need(String[] args, int count) {
-        if (args.length < count) { throw new Kept("it has fewer arguments than " + args[0] + " needs"); }
-    }
+    static void need(String[] args, int count) { if (args.length < count) { throw new Kept("it has fewer arguments than " + args[0] + " needs"); } }
 
     static String at(String[] args, int index) {
         need(args, index + 1);
@@ -161,6 +147,8 @@ public final class Commands {
 
     static String rest(String[] args, int from) { return join(args, from, args.length); }
 
+    @Nullable static String restFrom(String[] args, int from) { return args.length > from ? rest(args, from) : null; }
+
     private static String join(String[] args, int from, int to) { return String.join(" ", Arrays.copyOfRange(args, from, to)); }
 
     static int number(String text) {
@@ -168,16 +156,15 @@ public final class Commands {
         catch (NumberFormatException failed) { throw new Kept("'" + text + "' is not a number"); }
     }
 
+    static String numberText(String text) { return String.valueOf(number(text)); }
+
     static String named(Map<String, String> names, String given, String what) {
         String found = names.get(given.toLowerCase(Locale.ROOT));
         if (found == null) { throw new Kept("'" + given + "' is not a " + what); }
         return found;
     }
 
-    static String namespaced(String name) {
-        String lowered = name.trim().toLowerCase(Locale.ROOT);
-        return lowered.indexOf(':') < 0 ? MINECRAFT + lowered : lowered;
-    }
+    static String namespaced(String name) { return IdNames.namespaced(Settings.lower(name)); }
 
     static String height(String token, Ported pack) {
         if (token.startsWith("~") || token.startsWith("^")) { return token; }
@@ -196,14 +183,25 @@ public final class Commands {
     }
 
     static String entity(String named, Ported pack) {
-        String name = namespaced(named);
-        return pack.owns(name) ? name : Ids.entity(name);
+        return entityId(namespaced(named), pack);
+    }
+
+    static String entityId(String id, Ported pack) { return pack.owns(id) ? id : Ids.entity(id); }
+
+    static Map<String, String> pairs(String text, Function<String, String> message) {
+        Map<String, String> out = new LinkedHashMap<>();
+        for (String part : text.split(",")) {
+            int equals = part.indexOf('=');
+            if (equals <= 0) { throw new Kept(message.apply(part)); }
+            out.put(part.substring(0, equals), part.substring(equals + 1));
+        }
+        return out;
     }
 
     private static String give(String[] args, Ported pack) {
         need(args, 3);
         int meta = args.length > 4 ? number(args[4]) : 0;
-        return "give " + CommandSelectors.target(args[1], pack) + " " + CommandStacks.item(args[2], meta, args.length > 5 ? rest(args, 5) : null, pack) + (args.length > 3 ? " " + number(args[3]) : "");
+        return "give " + CommandSelectors.target(args[1], pack) + " " + CommandStacks.item(args[2], meta, restFrom(args, 5), pack) + (args.length > 3 ? " " + number(args[3]) : "");
     }
 
     private static String clear(String[] args, Ported pack) {
@@ -211,7 +209,7 @@ public final class Commands {
         StringBuilder out = new StringBuilder("clear ").append(CommandSelectors.target(args[1], pack));
         if (args.length < 3) { return out.toString(); }
         int meta = args.length > 3 ? number(args[3]) : -1;
-        out.append(' ').append(CommandStacks.itemTest(args[2], meta, args.length > 5 ? rest(args, 5) : null, pack));
+        out.append(' ').append(CommandStacks.itemTest(args[2], meta, restFrom(args, 5), pack));
         int most = args.length > 4 ? number(args[4]) : -1;
         if (most >= 0) { out.append(' ').append(most); }
         return out.toString();
@@ -220,7 +218,7 @@ public final class Commands {
     private static String setblock(String[] args, Ported pack) {
         need(args, 5);
         String mode = arg(args, 6);
-        return "setblock " + position(args, 1, pack) + " " + CommandStacks.block(args[4], arg(args, 5), args.length > 7 ? rest(args, 7) : null, pack) + (mode == null ? "" : " " + ("destroy".equals(mode) || "keep".equals(mode) ? mode : "replace"));
+        return "setblock " + position(args, 1, pack) + " " + CommandStacks.block(args[4], arg(args, 5), restFrom(args, 7), pack) + (mode == null ? "" : " " + ("destroy".equals(mode) || "keep".equals(mode) ? mode : "replace"));
     }
 
     private static String fill(String[] args, Ported pack) {
@@ -229,7 +227,7 @@ public final class Commands {
         String mode = arg(args, 9);
         String out = "fill " + position(args, 1, pack) + " " + position(args, 4, pack) + " ";
         if ("replace".equals(mode) && args.length > 10 && !args[10].startsWith("{")) { return out + CommandStacks.block(args[7], data, null, pack) + " replace " + CommandStacks.blockTest(args[10], arg(args, 11), null, pack); }
-        String placed = CommandStacks.block(args[7], data, args.length > 10 ? rest(args, 10) : null, pack);
+        String placed = CommandStacks.block(args[7], data, restFrom(args, 10), pack);
         if (mode == null) { return out + placed; }
         return out + placed + " " + (FILL_MODES.contains(mode) ? mode : "replace");
     }
@@ -245,7 +243,7 @@ public final class Commands {
 
     private static String testforblock(String[] args, Ported pack) {
         need(args, 5);
-        return "execute if block " + position(args, 1, pack) + " " + CommandStacks.blockTest(args[4], arg(args, 5), args.length > 6 ? rest(args, 6) : null, pack);
+        return "execute if block " + position(args, 1, pack) + " " + CommandStacks.blockTest(args[4], arg(args, 5), restFrom(args, 6), pack);
     }
 
     private static String testforblocks(String[] args, Ported pack) {
@@ -399,6 +397,8 @@ public final class Commands {
         };
     }
 
+    static String quote(String text) { return GSON.toJson(new JsonPrimitive(text)); }
+
     private static String text(String json, Ported pack) {
         JsonElement parsed;
         try {
@@ -418,15 +418,15 @@ public final class Commands {
         }
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        if (held.has("selector") && held.get("selector").isJsonPrimitive()) { held.addProperty("selector", CommandSelectors.target(held.get("selector").getAsString(), pack)); }
-        if (held.has("score") && held.get("score").isJsonObject() && held.getAsJsonObject("score").has("name") && held.getAsJsonObject("score").get("name").isJsonPrimitive()) {
+        if (GsonHelper.isValidPrimitive(held, "selector")) { held.addProperty("selector", CommandSelectors.target(held.get("selector").getAsString(), pack)); }
+        if (GsonHelper.isObjectNode(held, "score") && GsonHelper.isValidPrimitive(held.getAsJsonObject("score"), "name")) {
             JsonObject score = held.getAsJsonObject("score");
             score.addProperty("name", CommandSelectors.target(score.get("name").getAsString(), pack));
         }
         if (held.has("clickEvent") && held.get("clickEvent").isJsonObject()) {
             JsonObject click = held.getAsJsonObject("clickEvent");
-            String action = click.has("action") && click.get("action").isJsonPrimitive() ? click.get("action").getAsString() : "";
-            String value = click.has("value") && click.get("value").isJsonPrimitive() ? click.get("value").getAsString() : "";
+            String action = Json.text(click, "action");
+            String value = Json.text(click, "value");
             if (("run_command".equals(action) || "suggest_command".equals(action)) && value.startsWith("/") && value.length() > 1) {
                 String converted = command(value.substring(1), pack);
                 if (converted.indexOf('\n') < 0) { click.addProperty("value", "/" + converted); }
@@ -486,7 +486,7 @@ public final class Commands {
         String holder = block ? "block " + position(args, 2, pack) : "entity " + CommandSelectors.target(args[2], pack);
         String named = args[slot].startsWith("slot.") ? args[slot].substring("slot.".length()) : args[slot];
         int meta = args.length > slot + 3 ? number(args[slot + 3]) : 0;
-        String item = CommandStacks.item(args[slot + 1], meta, args.length > slot + 4 ? rest(args, slot + 4) : null, pack);
+        String item = CommandStacks.item(args[slot + 1], meta, restFrom(args, slot + 4), pack);
         return "item replace " + holder + " " + named + " with " + item + (args.length > slot + 2 ? " " + number(args[slot + 2]) : "");
     }
 
@@ -506,7 +506,8 @@ public final class Commands {
         out.append(" at ").append(SELF);
         if (!"~ ~ ~".equals(place)) { out.append(" positioned ").append(place); }
         int from = 5;
-        if ("detect".equals(args[5]) && args.length > 11) {
+        if ("detect".equals(args[5])) {
+            if (args.length <= 11) { throw new Kept("its detect has no command to run after it"); }
             out.append(" if block ").append(position(args, 6, pack)).append(' ').append(CommandStacks.blockTest(args[9], args[10], null, pack));
             from = 11;
         }

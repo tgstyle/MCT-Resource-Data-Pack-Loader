@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,12 +16,10 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import com.mojang.math.Axis;
-
 import javax.annotation.Nonnull;
 
-public class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity> {
-    private static final ResourceLocation VANILLA = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/entity/chest/normal.png");
+public final class ContentContainerRenderer implements BlockEntityRenderer<ContentContainerBlockEntity> {
+    private static final ResourceLocation VANILLA = ResourceLocation.withDefaultNamespace("textures/entity/chest/normal.png");
     private final ModelPart bottom;
     private final ModelPart lid;
     private final ModelPart lock;

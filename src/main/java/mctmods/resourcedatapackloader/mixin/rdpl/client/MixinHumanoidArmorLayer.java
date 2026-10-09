@@ -16,15 +16,9 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(HumanoidArmorLayer.class) public abstract class MixinHumanoidArmorLayer<T extends LivingEntity> {
-    @Unique private static final String RDPL_RENDER = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V";
+    @Unique private static final String rdpl$RENDER = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V";
 
-    @Inject(method = RDPL_RENDER, at = @At("HEAD"), cancellable = true)
-    private void rdpl$hidden(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T livingEntity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) {
-        if (ContentEntities.hidesArmor(livingEntity)) { ci.cancel(); }
-    }
+    @Inject(method = rdpl$RENDER, at = @At("HEAD"), cancellable = true) private void rdpl$hidden(PoseStack poseStack, MultiBufferSource buffer, int packedLight, T livingEntity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo ci) { if (ContentEntities.hidesArmor(livingEntity)) { ci.cancel(); } }
 
-    @ModifyVariable(method = RDPL_RENDER, at = @At("HEAD"), argsOnly = true)
-    private MultiBufferSource rdpl$tinted(MultiBufferSource tinted, PoseStack poseStack, MultiBufferSource buffer, int packedLight, T livingEntity) {
-        return EntityTint.wrap(tinted, ContentEntities.tint(livingEntity, EntityVariantDef.ARMOR));
-    }
+    @ModifyVariable(method = rdpl$RENDER, at = @At("HEAD"), argsOnly = true) private MultiBufferSource rdpl$tinted(MultiBufferSource tinted, PoseStack poseStack, MultiBufferSource buffer, int packedLight, T livingEntity) { return EntityTint.wrap(tinted, ContentEntities.tint(livingEntity, EntityVariantDef.ARMOR)); }
 }

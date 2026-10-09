@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ExperienceOrb.class) public abstract class MixinExperienceOrb {
-    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void rdpl$slowTick(CallbackInfo ci) {
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true) private void rdpl$slowTick(CallbackInfo ci) {
         ExperienceOrb self = (ExperienceOrb) (Object) this;
         if (!ContentEntityTicks.slowedNow(self)) { return; }
         IExperienceOrb aging = (IExperienceOrb) self;
@@ -22,6 +21,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ci.cancel();
     }
 
-    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = -0.03D))
-    private double rdpl$worldGravity(double vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
+    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = -0.03D)) private double rdpl$worldGravity(double vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
 }

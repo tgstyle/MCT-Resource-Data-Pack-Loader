@@ -62,9 +62,7 @@ public final class ContentReset {
         int count = GateStorage.countGlobally(server, RESETS);
         if (count <= 0 || GateStorage.notedFor(player, RESETS) >= count) { return; }
         GateStorage.noteFor(player, RESETS, count);
-        Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
-        if (landing == null) { return; }
-        player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
+        if (!sendTo(server, player)) { return; }
         ContentLog.LOGGER.info("{} was away when the map was reset, so they arrive where the pack sends players after a reset", player.getGameProfile().getName());
     }
 
@@ -72,9 +70,7 @@ public final class ContentReset {
         int swept = 0;
         for (ServerLevel level : server.getAllLevels()) {
             List<Entity> doomed = new ArrayList<>();
-            for (Entity held : level.getAllEntities()) {
-                if (!(held instanceof Player)) { doomed.add(held); }
-            }
+            for (Entity held : level.getAllEntities()) { if (!(held instanceof Player)) { doomed.add(held); } }
             for (Entity held : doomed) {
                 held.discard();
                 swept++;
@@ -104,14 +100,16 @@ public final class ContentReset {
         }
     }
 
-    private static void place(MinecraftServer server) {
-        String asked = ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo());
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            Landing landing = landingFor(server, asked, player);
-            if (landing == null) { continue; }
-            player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot());
-        }
+    private static void place(MinecraftServer server) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { sendTo(server, player); } }
+
+    private static boolean sendTo(MinecraftServer server, ServerPlayer player) {
+        Landing landing = landingFor(server, ContentPregenProgress.says("resetSendsTo", Config.chunks.resetSendsTo()), player);
+        if (landing == null) { return false; }
+        send(player, landing);
+        return true;
     }
+
+    private static void send(ServerPlayer player, Landing landing) { player.teleportTo(landing.level(), landing.x() + 0.5D, landing.y(), landing.z() + 0.5D, player.getYRot(), player.getXRot()); }
 
     @Nullable private static Landing landingFor(MinecraftServer server, String asked, ServerPlayer player) {
         ServerLevel level = player.serverLevel();

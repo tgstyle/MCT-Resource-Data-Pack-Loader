@@ -1,13 +1,15 @@
 package mctmods.resourcedatapackloader.client;
 
+import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
+
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
@@ -16,7 +18,6 @@ import org.joml.Matrix4f;
 import javax.annotation.Nullable;
 
 public final class ContentSkyExtras {
-    private static final float SIZE = 100.0F;
     private static final float[][][] FACES = {
             {{-1, 1, 1}, {1, 1, 1}, {1, 1, -1}, {-1, 1, -1}},
             {{-1, -1, -1}, {1, -1, -1}, {1, -1, 1}, {-1, -1, 1}},
@@ -99,14 +100,8 @@ public final class ContentSkyExtras {
         return Math.min(1.0F, (RAINBOW_TICKS - (tick - wetAt)) / RAINBOW_FADE) * (1.0F - level.getRainLevel(partialTick));
     }
 
-    private static BufferBuilder begin(VertexFormat format) {
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.QUADS, format);
-        return buffer;
-    }
-
     private static void face(Matrix4f pose, float[][] corners) {
-        BufferBuilder buffer = begin(DefaultVertexFormat.POSITION_TEX);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.vertex(pose, corners[0][0] * SIZE, corners[0][1] * SIZE, corners[0][2] * SIZE).uv(0.0F, 0.0F).endVertex();
         buffer.vertex(pose, corners[1][0] * SIZE, corners[1][1] * SIZE, corners[1][2] * SIZE).uv(1.0F, 0.0F).endVertex();
         buffer.vertex(pose, corners[2][0] * SIZE, corners[2][1] * SIZE, corners[2][2] * SIZE).uv(1.0F, 1.0F).endVertex();
@@ -115,7 +110,7 @@ public final class ContentSkyExtras {
     }
 
     private static void panorama(Matrix4f pose) {
-        BufferBuilder buffer = begin(DefaultVertexFormat.POSITION_TEX);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         for (int row = 0; row < LATITUDES; ++row) {
             float top = (float) row / LATITUDES;
             float bottom = (float) (row + 1) / LATITUDES;
@@ -139,7 +134,7 @@ public final class ContentSkyExtras {
     }
 
     private static void aurora(Matrix4f pose, SkyLookDef.Aurora aurora, float strength, float time) {
-        BufferBuilder buffer = begin(DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         for (int band = 0; band < 2; ++band) {
             for (int step = 0; step < AURORA_STEPS; ++step) {
                 curtain(buffer, pose, aurora, strength, time, band, step, false);
@@ -160,13 +155,13 @@ public final class ContentSkyExtras {
         float flat = Mth.cos(up) * SIZE;
         int color = top ? aurora.topColor() : aurora.color();
         float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * (0.6F + 0.4F * Mth.sin(time * 0.11F + step * 0.9F + band * 0.7F));
-        buffer.vertex(pose, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat).color((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha).endVertex();
+        buffer.vertex(pose, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat).color(Rgb.red(color), Rgb.green(color), Rgb.blue(color), alpha).endVertex();
     }
 
     private static void bow(Matrix4f pose, float sunAngle, float strength) {
         float[] away = {Mth.sin(sunAngle), -Mth.cos(sunAngle)};
         float[] side = {-Mth.cos(sunAngle), -Mth.sin(sunAngle)};
-        BufferBuilder buffer = begin(DefaultVertexFormat.POSITION_COLOR);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
         for (int ring = 0; ring < BOW_RADII.length - 1; ++ring) {
             for (int step = 0; step < BOW_STEPS; ++step) {
                 arc(buffer, pose, away, side, ring, step, strength);
@@ -186,6 +181,6 @@ public final class ContentSkyExtras {
         float along = Mth.sin(turn) * out;
         int color = BOW_COLORS[ring];
         float alpha = ring == 0 || ring == BOW_RADII.length - 1 ? 0.0F : strength * 0.35F;
-        buffer.vertex(pose, (away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, Mth.cos(turn) * out * SIZE).color((color >> 16 & 255) / 255.0F, (color >> 8 & 255) / 255.0F, (color & 255) / 255.0F, alpha).endVertex();
+        buffer.vertex(pose, (away[0] * in + side[0] * along) * SIZE, (away[1] * in + side[1] * along) * SIZE, Mth.cos(turn) * out * SIZE).color(Rgb.red(color), Rgb.green(color), Rgb.blue(color), alpha).endVertex();
     }
 }

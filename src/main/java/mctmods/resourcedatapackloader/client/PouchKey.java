@@ -13,7 +13,6 @@ import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.client.settings.KeyConflictContext;
 import net.minecraftforge.event.TickEvent;
 import org.lwjgl.glfw.GLFW;
-
 import javax.annotation.Nullable;
 
 public final class PouchKey {

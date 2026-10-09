@@ -15,8 +15,7 @@ import javax.annotation.Nullable;
 @Mixin(LevelRenderer.class) public abstract class MixinLevelRenderer {
     @Shadow @Nullable private ClientLevel level;
 
-    @Redirect(method = "renderClouds", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;getCloudHeight()F"))
-    private float rdpl$cloudHeightAsked(DimensionSpecialEffects effects) {
+    @Redirect(method = "renderClouds", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/DimensionSpecialEffects;getCloudHeight()F")) private float rdpl$cloudHeightAsked(DimensionSpecialEffects effects) {
         float own = effects.getCloudHeight();
         if (level == null || Float.isNaN(own) || effects instanceof ContentDimensionEffects content && content.drawsLayer()) { return own; }
         Integer asked = ContentDimensions.cloudHeight(level.dimension().location().toString());

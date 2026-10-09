@@ -16,11 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "initServer", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/server/ServerLifecycleHooks;handleServerStarting(Lnet/minecraft/server/MinecraftServer;)Z", remap = false)) private void rdpl$packServerRules(CallbackInfoReturnable<Boolean> cir) { ContentServer.applyTo((MinecraftServer) (Object) this); }
 
-    @Inject(method = "isCommandBlockEnabled", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) {
-        if (Boolean.FALSE.equals(ContentServer.commandBlocks())) { cir.setReturnValue(false); }
-    }
+    @Inject(method = "isCommandBlockEnabled", at = @At("HEAD"), cancellable = true) private void rdpl$commandBlocks(CallbackInfoReturnable<Boolean> cir) { if (ContentServer.off(ContentServer.commandBlocks())) { cir.setReturnValue(false); } }
 
-    @Inject(method = "getForcedGameType", at = @At("HEAD"), cancellable = true) private void rdpl$forceGameMode(CallbackInfoReturnable<GameType> cir) {
-        if (Boolean.FALSE.equals(ContentServer.forceGameMode())) { cir.setReturnValue(null); }
-    }
+    @Inject(method = "getForcedGameType", at = @At("HEAD"), cancellable = true) private void rdpl$forceGameMode(CallbackInfoReturnable<GameType> cir) { if (ContentServer.off(ContentServer.forceGameMode())) { cir.setReturnValue(null); } }
 }

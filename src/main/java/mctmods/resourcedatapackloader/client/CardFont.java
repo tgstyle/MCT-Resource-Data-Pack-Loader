@@ -13,6 +13,8 @@ import javax.annotation.Nullable;
 
 final class CardFont {
     static final String RDPL = "resourcedatapackloader:rdpl";
+    static final String RDPL_ITALIC = "resourcedatapackloader:rdpl_italic";
+    static final String RDPL_BOLD = "resourcedatapackloader:rdpl_bold";
     private static final String RUNIC = "resourcedatapackloader:rdpl_runic";
     private static final String OURS = "resourcedatapackloader:";
     private static final Set<String> SHORT = new HashSet<>(Arrays.asList("rdpl", "rdpl_bold", "rdpl_italic", "rdpl_runic", "rdpl_runic_bold", "rdpl_runic_italic"));

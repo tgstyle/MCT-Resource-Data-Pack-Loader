@@ -13,7 +13,6 @@ import mctmods.resourcedatapackloader.content.def.MaterialDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
 import mctmods.resourcedatapackloader.content.item.ContentDrinkItem;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IFireBlock;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackOptions;
 import mctmods.resourcedatapackloader.pack.PackRequirements;
@@ -31,7 +30,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -110,7 +108,7 @@ public final class ContentRegistry {
 
     public static boolean reserved(ResourceLocation key) {
         if (!ResourceDataPackLoader.MOD_ID.equals(key.getNamespace())) { return false; }
-        if (CLAIMED.add(key.getNamespace())) { ContentLog.LOGGER.error("A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace()); }
+        ContentLog.LOGGER.errorOnce(CLAIMED, key.getNamespace(), "A pack is trying to define content under '{}', which belongs to this mod. Content there is ignored, because it would claim ownership of things this mod registers and confuse the whitelists that read it. Use your own namespace, such as the pack name. Overriding this mod's own assets is still fine, only registering content is not", key.getNamespace());
         return true;
     }
 
@@ -126,7 +124,7 @@ public final class ContentRegistry {
                     return false;
                 }
                 if (Files.exists(PackRequirements.gameDirectory().resolve(path))) { continue; }
-                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked);
+                skipped(key, asked);
                 return false;
             }
             if (asked.startsWith(PackRequirements.CONFIG_GATE)) {
@@ -135,16 +133,18 @@ public final class ContentRegistry {
                 Boolean held = split < 0 ? PackOptions.anywhere(option) : PackOptions.option(option.substring(0, split), option.substring(split + 1));
                 if (Boolean.TRUE.equals(held)) { continue; }
                 if (held == null && WARNED.add(asked)) { ContentLog.LOGGER.warn("Skipping anything that requires {}, which no pack option file defines. Check the name against the files in rdploader/config", asked); }
-                ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked);
+                skipped(key, asked);
                 return false;
             }
             if (PackRequirements.modLoaded(asked) || PackManager.get().provides(asked)) { continue; }
             if (WARNED.add(asked)) { ContentLog.LOGGER.info("Skipping anything that requires {}, which is neither an installed mod nor a loaded pack. Turn on debug logging to see each one", asked); }
-            ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked);
+            skipped(key, asked);
             return false;
         }
         return true;
     }
+
+    private static void skipped(ResourceLocation key, String asked) { ContentLog.LOGGER.debug("Skipping {}, it requires {}", key, asked); }
 
     public static void addDef(BlockDef def) { BLOCK_DEFS.put(def.key(), def); }
 
@@ -182,7 +182,7 @@ public final class ContentRegistry {
         BlockEntry entry = new BlockEntry(id, block, def, variant, role);
         BLOCKS.put(id, entry);
         BY_BLOCK.put(block, entry);
-        if (def.flammability() > 0) { ((IFireBlock) Blocks.FIRE).rdpl$setFlammable(block, def.fireSpread(), def.flammability()); }
+        if (def.flammability() > 0 || def.fireSpread() > 0) { ContentOverrides.flammable(block, def.fireSpread(), def.flammability()); }
     }
 
     public static void addItem(ResourceLocation id, Item item, @Nullable ItemDef def, @Nullable ItemVariant variant, @Nullable BlockEntry block, String tab) {
@@ -209,7 +209,7 @@ public final class ContentRegistry {
         BlockEntry entry = BY_BLOCK.get(block);
         if (entry == null || ContentBlockTypes.SLAB.equals(entry.def().type())) { return null; }
         BlockDef def = entry.def();
-        if (ContentBlockTypes.CONTAINER.equals(def.type()) && def.container() != null && def.container().chestModel()) { return 0; }
+        if (ContentBlockTypes.CONTAINER.equals(def.type()) && def.chested()) { return 0; }
         if (ContentBlockTypes.BELL.equals(def.type())) { return 0; }
         return Mth.clamp(def.lightOpacity(), 0, 15);
     }
@@ -222,7 +222,7 @@ public final class ContentRegistry {
     public static Set<Block> resolveSoil(Iterable<String> names, ResourceLocation owner) {
         Set<Block> resolved = new HashSet<>();
         for (String name : names) {
-            Block block = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(name));
+            Block block = Registered.block(name);
             if (block != null) { resolved.add(block); }
             else { ContentLog.LOGGER.error("{} names soil {}, which is not registered, leaving it out", owner, name); }
         }

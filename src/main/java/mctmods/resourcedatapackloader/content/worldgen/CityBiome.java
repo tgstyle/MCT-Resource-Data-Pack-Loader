@@ -1,12 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.content.ContentFormats;
+import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -26,14 +25,14 @@ public final class CityBiome {
 
     private CityBiome() {}
 
-    public static void enter(WorldGenLevel level, int x, int z) {
-        if (ContentControl.hasBiomeSettings()) { ContentControl.enterSection(at(level, x, z)); }
-    }
+    public static void enter(WorldGenLevel level, int x, int z) { if (ContentControl.hasBiomeSettings()) { ContentControl.enterSection(at(level, x, z)); } }
 
     public static void leave() { ContentControl.leaveSection(); }
 
-    public static void within(WorldGenLevel level, BoundingBox box, Runnable laid) {
-        enter(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
+    public static void within(WorldGenLevel level, BoundingBox box, Runnable laid) { within(level, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2, laid); }
+
+    public static void within(WorldGenLevel level, int x, int z, Runnable laid) {
+        enter(level, x, z);
         try { laid.run(); }
         finally { leave(); }
     }
@@ -76,13 +75,12 @@ public final class CityBiome {
         if (ContentControl.hasBiomeSection(named.getPath())) { return named.getPath(); }
         for (String section : ContentControl.biomeSectionNames()) {
             if (section.contains(":")) {
-                ResourceLocation tag = ResourceLocation.tryParse(section.startsWith("#") ? section.substring(1) : section);
-                if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return section; }
+                TagKey<Biome> tag = BiomeNames.tagged(section);
+                if (tag != null && biome.is(tag)) { return section; }
                 continue;
             }
-            String mapped = ContentFormats.biomeTag(section.toLowerCase(Locale.ROOT));
-            ResourceLocation tag = mapped == null ? null : ResourceLocation.tryParse(mapped);
-            if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return section; }
+            TagKey<Biome> mapped = BiomeNames.tag(section.toLowerCase(Locale.ROOT));
+            if (mapped != null && biome.is(mapped)) { return section; }
         }
         return null;
     }

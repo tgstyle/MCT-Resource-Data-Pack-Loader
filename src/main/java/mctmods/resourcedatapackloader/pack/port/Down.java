@@ -1,5 +1,10 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
+
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
+import mctmods.resourcedatapackloader.util.Snbt;
+
 import com.google.gson.JsonObject;
 import net.minecraft.world.level.GameRules;
 import java.util.ArrayList;
@@ -53,7 +58,7 @@ final class Down {
 
     private static void definition(JsonObject json, String path, String file, Consumer<String> note) {
         if (path.startsWith("dimension_type/")) { DownWorld.dimensionType(json, file, note); }
-        else if (path.startsWith("worldgen/biome/")) { DownWorld.biome(json, file, note); }
+        else if (path.startsWith(WorldgenFiles.BIOME + "/")) { DownWorld.biome(json, file, note); }
         else if (path.startsWith("worldgen/configured_feature/")) { DownWorld.feature(json, file, note); }
         else if (path.startsWith("trim_material/") || path.startsWith("trim_pattern/")) { DownWorld.trim(json, path, file, note); }
         else if (path.startsWith("wolf_variant/")) { DownWorld.wolf(json, file, note); }
@@ -89,14 +94,13 @@ final class Down {
     private static String commands(String line) {
         if (line.isEmpty() || line.startsWith("#")) { return line; }
         boolean macro = line.startsWith("$");
-        List<String> args = CrossCommands.split(macro ? line.substring(1) : line, ' ');
+        List<String> args = Snbt.split(macro ? line.substring(1) : line, ' ');
         for (int i = 0; i < args.size(); i++) {
             String arg = args.get(i);
             boolean attribute = i >= 2 && "attribute".equals(args.get(i - 2));
             args.set(i, attribute ? DownFixes.attribute(arg) : renamed(arg));
         }
-        String out = (macro ? "$" : "") + String.join(" ", args);
-        return out.equals(line) ? line : out;
+        return (macro ? "$" : "") + String.join(" ", args);
     }
 
     private static String renamed(String arg) {
@@ -109,13 +113,13 @@ final class Down {
         if (id.isEmpty() || id.startsWith("#") || id.startsWith("@")) { return arg; }
         String renamed = DownFixes.name(id);
         if (renamed.equals(id)) { return arg; }
-        return (id.indexOf(':') < 0 ? renamed.substring(DownFixes.MINECRAFT.length()) : renamed) + arg.substring(end);
+        return (id.indexOf(':') < 0 ? renamed.substring(MINECRAFT.length()) : renamed) + arg.substring(end);
     }
 
     private static String gamerule(String line, String file, Consumer<String> note) {
         String[] args = line.split(" +");
         if (args.length < 2) { return line; }
-        String name = args[1].startsWith(DownFixes.MINECRAFT) ? args[1].substring(DownFixes.MINECRAFT.length()) : args[1];
+        String name = args[1].startsWith(MINECRAFT) ? args[1].substring(MINECRAFT.length()) : args[1];
         String value = args.length > 2 ? args[2] : null;
         if (FIRE.equals(name)) {
             name = "doFireTick";
@@ -129,7 +133,7 @@ final class Down {
             note.accept("'" + file + "' sets the game rule " + args[1] + ", which " + Port.Line.running().title() + " does not have, so that line is left out");
             return null;
         }
-        return "gamerule " + name + (value != null ? " " + value : "");
+        return GAMERULE + name + (value != null ? " " + value : "");
     }
 
     private static synchronized Set<String> knownRules() {

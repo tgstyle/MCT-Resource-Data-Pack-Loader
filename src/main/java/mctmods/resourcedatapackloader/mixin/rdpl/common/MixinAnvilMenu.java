@@ -16,20 +16,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private ItemStack rdpl$leftKept = ItemStack.EMPTY;
     @Unique private ItemStack rdpl$rightKept = ItemStack.EMPTY;
 
-    @Inject(method = "onTake", at = @At("HEAD"))
-    private void rdpl$noteWhatStays(Player player, ItemStack stack, CallbackInfo ci) {
-        AnvilMenu menu = AnvilMenu.class.cast(this);
+    @Inject(method = "onTake", at = @At("HEAD")) private void rdpl$noteWhatStays(Player player, ItemStack stack, CallbackInfo ci) {
+        AnvilMenu menu = (AnvilMenu) (Object) this;
         rdpl$leftKept = ContentAnvils.leftAfterWork(menu, stack);
         rdpl$rightKept = ContentAnvils.rightAfterWork(menu, stack);
     }
 
-    @ModifyArg(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Container;setItem(ILnet/minecraft/world/item/ItemStack;)V", ordinal = 0), index = 1)
-    private ItemStack rdpl$keepWhatStays(ItemStack emptied) { return rdpl$leftKept; }
+    @ModifyArg(method = "onTake", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/Container;setItem(ILnet/minecraft/world/item/ItemStack;)V", ordinal = 0), index = 1) private ItemStack rdpl$keepWhatStays(ItemStack emptied) { return rdpl$leftKept; }
 
-    @Inject(method = "onTake", at = @At("RETURN"))
-    private void rdpl$offerTheNext(Player player, ItemStack stack, CallbackInfo ci) {
+    @Inject(method = "onTake", at = @At("RETURN")) private void rdpl$offerTheNext(Player player, ItemStack stack, CallbackInfo ci) {
         if (!rdpl$rightKept.isEmpty()) {
-            AnvilMenu.class.cast(this).getSlot(1).set(rdpl$rightKept);
+            ((AnvilMenu) (Object) this).getSlot(1).set(rdpl$rightKept);
             rdpl$rightKept = ItemStack.EMPTY;
         }
         if (rdpl$leftKept.isEmpty()) { return; }

@@ -18,7 +18,7 @@ import net.minecraftforge.common.IPlantable;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-@SuppressWarnings("deprecation") public class ContentFallingBlock extends FallingBlock {
+@SuppressWarnings("deprecation") public final class ContentFallingBlock extends FallingBlock {
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
 
@@ -28,9 +28,7 @@ import javax.annotation.Nullable;
         this.shape = ContentBlock.shape(def);
     }
 
-    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return shape == null ? super.getShape(state, level, pos, context) : shape;
-    }
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
     @Override public boolean canSustainPlant(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction facing, @Nonnull IPlantable plantable) {
         if (def.sustains(plantable.getPlantType(level, pos.relative(facing)))) { return true; }
@@ -38,10 +36,4 @@ import javax.annotation.Nullable;
     }
 
     @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.sustains(PlantType.PLAINS); }
-
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
-
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
-
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
 }

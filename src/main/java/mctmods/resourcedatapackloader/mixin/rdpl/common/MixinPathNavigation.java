@@ -18,9 +18,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PathNavigation.class) public abstract class MixinPathNavigation {
-    @Unique private static final float RDPL_STILL_SPEED = 0.06F;
-    @Unique private static final long RDPL_SHORTCUT_HOLD = 2L;
-
+    @Unique private static final float rdpl$STILL_SPEED = 0.06F;
+    @Unique private static final long rdpl$SHORTCUT_HOLD = 2L;
     @Shadow @Final protected Mob mob;
     @Shadow @Final protected Level level;
     @Shadow protected Path path;
@@ -29,12 +28,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private long rdpl$shortcutCell;
     @Unique private long rdpl$shortcutTick;
 
-    @Inject(method = "followThePath", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;doStuckDetection(Lnet/minecraft/world/phys/Vec3;)V"))
-    private void rdpl$straightAhead(CallbackInfo ci) {
+    @Inject(method = "followThePath", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/navigation/PathNavigation;doStuckDetection(Lnet/minecraft/world/phys/Vec3;)V")) private void rdpl$straightAhead(CallbackInfo ci) {
         if (path == null || !(mob.getNavigation() instanceof GroundPathNavigation)) { return; }
         long cell = mob.blockPosition().asLong();
         long tick = level.getGameTime();
-        if (path == rdpl$shortcutPath && path.getNextNodeIndex() == rdpl$shortcutNode && cell == rdpl$shortcutCell && tick - rdpl$shortcutTick <= RDPL_SHORTCUT_HOLD) { return; }
+        if (path == rdpl$shortcutPath && path.getNextNodeIndex() == rdpl$shortcutNode && cell == rdpl$shortcutCell && tick - rdpl$shortcutTick <= rdpl$SHORTCUT_HOLD) { return; }
         PathShortcut.ahead(mob, level, path);
         rdpl$shortcutPath = path;
         rdpl$shortcutNode = path.getNextNodeIndex();
@@ -42,9 +40,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         rdpl$shortcutTick = tick;
     }
 
-    @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 0))
-    private float rdpl$stuckTest(Mob asked) { return ContentEntities.def(asked) == null ? asked.getSpeed() : 1.0F; }
+    @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 0)) private float rdpl$stuckTest(Mob asked) { return ContentEntities.def(asked) == null ? asked.getSpeed() : 1.0F; }
 
-    @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 1))
-    private float rdpl$stuckReach(Mob asked) { return ContentEntities.def(asked) == null ? asked.getSpeed() : RDPL_STILL_SPEED; }
+    @Redirect(method = "doStuckDetection", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getSpeed()F", ordinal = 1)) private float rdpl$stuckReach(Mob asked) { return ContentEntities.def(asked) == null ? asked.getSpeed() : rdpl$STILL_SPEED; }
 }

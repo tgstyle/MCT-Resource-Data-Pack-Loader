@@ -29,7 +29,7 @@ public final class StrayPacks {
     private static final String SERVER_PROPERTIES = "server.properties";
     private static final String LEVEL_NAME = "level-name";
     private static final String DEFAULT_LEVEL = "world";
-    private static final String ZIP = ".zip";
+    static final String ZIP = ".zip";
     private static final String MOVING = ".moving";
 
     private StrayPacks() {}

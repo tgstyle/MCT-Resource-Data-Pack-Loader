@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Dynamic;
@@ -28,7 +27,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class ContentGameRules {
-    private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, Map<String, String>> BY_DIMENSION = new LinkedHashMap<>();
     private static final Map<Level, GameRules> BUILT = Collections.synchronizedMap(new WeakHashMap<>());
     private static final Set<String> KNOWN = new LinkedHashSet<>();
@@ -41,7 +39,7 @@ public final class ContentGameRules {
         loaded = true;
         if (Config.definitionsOff()) { return; }
         Json.eachFile(PackManager.GAMERULES, "game rule file", (key, contents) -> {
-            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.object(key, contents, "game rule file");
             if (json == null) { return; }
             for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
                 if (!entry.getValue().isJsonObject()) {
@@ -53,11 +51,7 @@ public final class ContentGameRules {
                     ContentLog.LOGGER.error("Game rule file {} names dimension '{}', which is not a dimension id, ignoring it", key, entry.getKey());
                     continue;
                 }
-                Map<String, String> rules = BY_DIMENSION.computeIfAbsent(dimension, id -> new LinkedHashMap<>());
-                for (Map.Entry<String, JsonElement> rule : entry.getValue().getAsJsonObject().entrySet()) {
-                    if (!rule.getValue().isJsonPrimitive()) { continue; }
-                    rules.put(rule.getKey(), rule.getValue().getAsString());
-                }
+                ContentDimensionParser.rules(dimension, entry.getValue().getAsJsonObject(), BY_DIMENSION.computeIfAbsent(dimension, id -> new LinkedHashMap<>()));
             }
         });
         for (DimensionDef def : ContentDimensions.all()) {

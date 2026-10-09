@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.content.def.ExposureDef;
 import mctmods.resourcedatapackloader.content.def.ExposureLevelDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
+import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.ExposureSpread;
@@ -36,10 +37,10 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -123,12 +124,7 @@ public final class ContentExposures {
         return immune != null && living.hasEffect(immune);
     }
 
-    @Nullable private static MobEffect immunity(ExposureDef def) {
-        if (IMMUNITIES.containsKey(def)) { return IMMUNITIES.get(def); }
-        MobEffect found = effect(def.immunity(), def, "immunity");
-        IMMUNITIES.put(def, found);
-        return found;
-    }
+    @Nullable private static MobEffect immunity(ExposureDef def) { return cachedEffect(IMMUNITIES, def, def.immunity(), def, "immunity"); }
 
     private static int scanItems(ExposureDef def, ServerPlayer player, int most) {
         Map<Item, Integer> levels = itemLevels(def);
@@ -240,15 +236,17 @@ public final class ContentExposures {
         });
     }
 
-    @Nullable private static MobEffect extraEffect(PotionEffectDef extra, ExposureDef def) {
-        if (EXTRAS.containsKey(extra)) { return EXTRAS.get(extra); }
-        MobEffect found = effect(extra.potion(), def, "extra effect");
-        EXTRAS.put(extra, found);
+    @Nullable private static MobEffect extraEffect(PotionEffectDef extra, ExposureDef def) { return cachedEffect(EXTRAS, extra, extra.potion(), def, "extra effect"); }
+
+    @Nullable private static <K> MobEffect cachedEffect(Map<K, MobEffect> cache, K key, String name, ExposureDef def, String what) {
+        if (cache.containsKey(key)) { return cache.get(key); }
+        MobEffect found = effect(name, def, what);
+        cache.put(key, found);
         return found;
     }
 
     @Nullable private static MobEffect effect(String name, ExposureDef def, String what) {
-        MobEffect found = Registered.find(ForgeRegistries.MOB_EFFECTS, ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT)));
+        MobEffect found = ContentEffects.find(name);
         if (found == null) { ContentLog.LOGGER.error("Exposure {} names effect {} as its {}, which nothing registers, so that part does nothing", def.key(), name, what); }
         return found;
     }
@@ -259,28 +257,18 @@ public final class ContentExposures {
         return type == null ? living.damageSources().magic() : new ExposureDamage(type);
     }
 
-    private static Map<Block, Integer> blockLevels(ExposureDef def) {
-        return BLOCK_LEVELS.computeIfAbsent(def, held -> {
-            Map<Block, Integer> levels = new IdentityHashMap<>();
-            for (Map.Entry<ResourceLocation, Integer> entry : held.blocks().entrySet()) {
-                Block block = Registered.find(ForgeRegistries.BLOCKS, entry.getKey());
-                if (block == null) { ContentLog.LOGGER.error("Exposure {} names block {}, which is not registered, so it is ignored", held.key(), entry.getKey()); }
-                else { levels.put(block, entry.getValue()); }
-            }
-            return levels;
-        });
-    }
+    private static Map<Block, Integer> blockLevels(ExposureDef def) { return BLOCK_LEVELS.computeIfAbsent(def, held -> resolved(held, held.blocks(), ForgeRegistries.BLOCKS, "block")); }
 
-    private static Map<Item, Integer> itemLevels(ExposureDef def) {
-        return ITEM_LEVELS.computeIfAbsent(def, held -> {
-            Map<Item, Integer> levels = new IdentityHashMap<>();
-            for (Map.Entry<ResourceLocation, Integer> entry : held.items().entrySet()) {
-                Item item = Registered.find(ForgeRegistries.ITEMS, entry.getKey());
-                if (item == null) { ContentLog.LOGGER.error("Exposure {} names item {}, which is not registered, so it is ignored", held.key(), entry.getKey()); }
-                else { levels.put(item, entry.getValue()); }
-            }
-            return levels;
-        });
+    private static Map<Item, Integer> itemLevels(ExposureDef def) { return ITEM_LEVELS.computeIfAbsent(def, held -> resolved(held, held.items(), ForgeRegistries.ITEMS, "item")); }
+
+    private static <T> Map<T, Integer> resolved(ExposureDef def, Map<ResourceLocation, Integer> named, IForgeRegistry<T> registry, String kind) {
+        Map<T, Integer> levels = new IdentityHashMap<>();
+        for (Map.Entry<ResourceLocation, Integer> entry : named.entrySet()) {
+            T found = Registered.find(registry, entry.getKey());
+            if (found == null) { ContentLog.LOGGER.error("Exposure {} names {} {}, which is not registered, so it is ignored", def.key(), kind, entry.getKey()); }
+            else { levels.put(found, entry.getValue()); }
+        }
+        return levels;
     }
 
     public static void generate() {

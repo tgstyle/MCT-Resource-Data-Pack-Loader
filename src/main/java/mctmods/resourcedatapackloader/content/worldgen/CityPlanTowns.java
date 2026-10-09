@@ -12,6 +12,8 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlanPlots.Tally;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
@@ -21,11 +23,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 final class CityPlanTowns {
     static final Map<List<Long>, Optional<CityPlan>> PLANS = new ConcurrentHashMap<>();
-    private static final int DEFAULT_BLOCK = 32;
     private static final int NEAR_DISTRICTS = 2;
     private static final int SHORT_LEAST = 7;
     static final Map<Long, Optional<CityPlan>> RAW = new ConcurrentHashMap<>();
@@ -58,7 +60,7 @@ final class CityPlanTowns {
         for (Line tie : tied) { (tie.alongX() ? rows : columns).add(tie); }
         if (!tied.isEmpty()) { ContentLog.LOGGER.debug("The district at {}, {} is no city's, but {} tie street(s) between the cities around it run through it", CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), tied.size()); }
         String type = tied.isEmpty() ? CityGround.VILLAGE_TYPES.get(0) : ground.villageStyle(CityPlan.windowOf(districtX, true) + size / 2, CityPlan.windowOf(districtZ, false) + size / 2);
-        CityPlan made = new CityPlan(CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), DEFAULT_BLOCK, List.copyOf(rows), List.copyOf(columns), List.of(), List.copyOf(passing), CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), false, List.of(), List.of(), type, null);
+        CityPlan made = new CityPlan(CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), List.copyOf(rows), List.copyOf(columns), List.of(), List.copyOf(passing), CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), false, List.of(), List.of(), type, null);
         return tied.isEmpty() ? made : made.clearOfRails(ground, rail -> CityRails.bed(ground, rail));
     }
 
@@ -115,7 +117,7 @@ final class CityPlanTowns {
         boolean keepLow = lowMet != highMet ? lowMet > highMet : high == null || low != null && Math.abs(well - (low.from() + low.to()) / 2) <= Math.abs(well - (high.from() + high.to()) / 2);
         Line kept = keepLow ? low : high;
         if (kept == null) { return null; }
-        boolean plaza = plan.plazas().stream().anyMatch(held -> held.alongX().equals(line) || held.alongZ().equals(line));
+        boolean plaza = plan.plazas().stream().anyMatch(held -> held.on(line));
         return kept.to() - kept.from() + 1 < SHORT_LEAST && !plaza ? null : kept;
     }
 
@@ -178,17 +180,14 @@ final class CityPlanTowns {
             }
             return found;
         }
+        citiesAround(ground, districtX, districtZ, spacing).filter(city -> !city.districts().isEmpty()).forEach(city -> found.add(town(ground, city)));
+        return found;
+    }
+
+    private static Stream<City> citiesAround(CityGround ground, int districtX, int districtZ, int spacing) {
         int regionX = Math.floorDiv(districtX, spacing);
         int regionZ = Math.floorDiv(districtZ, spacing);
-        for (int aroundX = -1; aroundX <= 1; aroundX++) {
-            for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
-                int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
-                if (center == null) { continue; }
-                City city = CityGrowth.city(ground, center, spacing);
-                if (!city.districts().isEmpty()) { found.add(town(ground, city)); }
-            }
-        }
-        return found;
+        return CityDistricts.around(ground, regionX, regionZ, spacing).stream().map(center -> CityGrowth.city(ground, center, spacing));
     }
 
     @Nullable public static Town townIn(CityGround ground, int cellX, int cellZ) {
@@ -206,6 +205,10 @@ final class CityPlanTowns {
             Town town = CityLayout.mapTown(ground, map, center[0], center[1], true);
             return town == null || CityGrowth.tooSmall(ground, map, center[0], center[1], true, town) ? null : town;
         }
+        return townAt(ground, center, spacing);
+    }
+
+    @Nullable static Town townAt(CityGround ground, int[] center, int spacing) {
         City city = CityGrowth.city(ground, center, spacing);
         return city.districts().isEmpty() ? null : town(ground, city);
     }
@@ -238,7 +241,7 @@ final class CityPlanTowns {
         int size = CityPlan.district();
         int[] cross = CityDistricts.crossOf(districtX, districtZ);
         int[] well = CityDistricts.plazaCenter(districtX, districtZ, cross);
-        return new Town(CityPlan.packed(districtX, districtZ), CityPlan.key(ground.seed(), districtX, districtZ), 0L, well[0], well[1], CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtX, true) + size - 1, CityPlan.windowOf(districtZ, false), CityPlan.windowOf(districtZ, false) + size - 1, List.of(), cross[0], cross[1]);
+        return new Town(CityPlan.packed(districtX, districtZ), SeededRandom.keyed(ground.seed(), districtX, districtZ), 0L, well[0], well[1], CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtX, true) + size - 1, CityPlan.windowOf(districtZ, false), CityPlan.windowOf(districtZ, false) + size - 1, List.of(), cross[0], cross[1]);
     }
 
     static Town town(CityGround ground, City city) {
@@ -249,30 +252,18 @@ final class CityPlanTowns {
         int lowZ = Integer.MAX_VALUE;
         int highZ = Integer.MIN_VALUE;
         for (long packed : city.districts()) {
-            int x = (int) (packed >> 32);
-            int z = (int) packed;
+            int x = Longs.high(packed);
+            int z = Longs.low(packed);
             lowX = Math.min(lowX, x);
             highX = Math.max(highX, x);
             lowZ = Math.min(lowZ, z);
             highZ = Math.max(highZ, z);
         }
-        return new Town(CityPlan.packed(city.centerX(), city.centerZ()), CityPlan.key(ground.seed(), city.centerX(), city.centerZ()), citySalt(city.centerX(), city.centerZ()), well[0], well[1], CityPlan.windowOf(lowX, true), CityPlan.windowOf(highX + 1, true) - 1, CityPlan.windowOf(lowZ, false), CityPlan.windowOf(highZ + 1, false) - 1, List.of(), cross[0], cross[1]);
+        return new Town(CityPlan.packed(city.centerX(), city.centerZ()), SeededRandom.keyed(ground.seed(), city.centerX(), city.centerZ()), SeededRandom.salt(city.centerX(), city.centerZ()), well[0], well[1], CityPlan.windowOf(lowX, true), CityPlan.windowOf(highX + 1, true) - 1, CityPlan.windowOf(lowZ, false), CityPlan.windowOf(highZ + 1, false) - 1, List.of(), cross[0], cross[1]);
     }
 
-    static long citySalt(int centerX, int centerZ) { return centerX * 341873128712L + centerZ * 132897987541L; }
-
     @Nullable private static City cityOf(CityGround ground, int districtX, int districtZ, int spacing) {
-        int regionX = Math.floorDiv(districtX, spacing);
-        int regionZ = Math.floorDiv(districtZ, spacing);
-        for (int aroundX = -1; aroundX <= 1; aroundX++) {
-            for (int aroundZ = -1; aroundZ <= 1; aroundZ++) {
-                int[] center = CityDistricts.center(ground, (regionX + aroundX) * spacing, (regionZ + aroundZ) * spacing);
-                if (center == null) { continue; }
-                City city = CityGrowth.city(ground, center, spacing);
-                if (city.has(districtX, districtZ)) { return city; }
-            }
-        }
-        return null;
+        return citiesAround(ground, districtX, districtZ, spacing).filter(city -> city.has(districtX, districtZ)).findFirst().orElse(null);
     }
 
     @Nullable public static int[] cityCenter(CityGround ground, int districtX, int districtZ) {
@@ -319,7 +310,7 @@ final class CityPlanTowns {
 
     static CityPlan laid(CityGround ground, int districtX, int districtZ, Town proto) {
         long seed = ground.seed();
-        RandomSource roll = RandomSource.create(seed ^ CityPlan.SALT ^ (districtX * 341873128712L + districtZ * 132897987541L));
+        RandomSource roll = SeededRandom.at(seed ^ CityPlan.SALT, districtX, districtZ);
         int size = CityPlan.district();
         int full = CityPlan.fullWidth();
         int half = full / 2;
@@ -327,8 +318,8 @@ final class CityPlanTowns {
         int originZ = CityPlan.windowOf(districtZ, false);
         int centerX = originX + proto.crossX() + half;
         int centerZ = originZ + proto.crossZ() + half;
-        Line row = new Line(centerZ - half, full, false, true, originX, originX + size - 1, End.MET, End.MET);
-        Line column = new Line(centerX - half, full, false, false, originZ, originZ + size - 1, End.MET, End.MET);
+        Line row = Line.met(centerZ - half, full, true, originX, originX + size - 1);
+        Line column = Line.met(centerX - half, full, false, originZ, originZ + size - 1);
         List<Line> alongX = new ArrayList<>(List.of(row));
         List<Line> alongZ = new ArrayList<>(List.of(column));
         List<Rail> placed = CityRails.placed(seed, proto);
@@ -336,14 +327,14 @@ final class CityPlanTowns {
         for (boolean acrossZ : new boolean[] {true, false}) {
             int at = (acrossZ ? originZ : originX) + CityAlleys.branchAt(proto.crossAcross(acrossZ));
             int from = acrossZ ? originX : originZ;
-            if (CityAlleys.branches(seed, proto, placed, acrossZ ? districtZ : districtX, acrossZ)) { (acrossZ ? alongX : alongZ).add(new Line(at, full, false, acrossZ, from, from + size - 1, End.MET, End.MET)); }
+            if (CityAlleys.branches(seed, proto, placed, acrossZ ? districtZ : districtX, acrossZ)) { (acrossZ ? alongX : alongZ).add(Line.met(at, full, acrossZ, from, from + size - 1)); }
             else { ContentLog.LOGGER.debug("The district at {}, {} lays no side street {} at {} {}: it did not roll, as a village road branches two times in three, or it would run on a railway line of its city", originX, originZ, acrossZ ? "east to west" : "north to south", acrossZ ? "z" : "x", at); }
         }
         int block = blockAt(seed, districtX, districtZ);
         CityAlleys.alleys(roll, originX, originZ, size, row, column, alongX, alongZ, rails, block);
         String type = ground.villageStyle(centerX, centerZ);
         List<VillageDef> choices = CityPlanPlots.choices(block, type);
-        Tally tally = new Tally(ContentVillages.frontLimit(RandomSource.create(seed ^ CityPlan.SALT ^ 0x11A17L ^ (districtX * 341873128712L + districtZ * 132897987541L))));
+        Tally tally = new Tally(ContentVillages.frontLimit(SeededRandom.at(seed ^ CityPlan.SALT ^ 0x11A17L, districtX, districtZ)));
         Junction plaza = new Junction(row, column);
         List<Plot> plots = CityPlanPlots.radialPlots(roll, choices, tally, originX, originZ, size, row, column, alongX, alongZ, rails, List.of(plaza));
         CityAlleys.idleAlleys(plots, alongX, alongZ);
@@ -353,15 +344,15 @@ final class CityPlanTowns {
         }
         int sideStreets = alongX.size() + alongZ.size() - 2 - alleyCount;
         ContentLog.LOGGER.debug("The district at {}, {} has its plaza at {}, {}, {} side street(s), {} alley(s) and {} line(s), its blocks {} deep and its plots built as {} villages", originX, originZ, centerX, centerZ, sideStreets, alleyCount, rails.size(), block, type);
-        return new CityPlan(originX, originZ, DEFAULT_BLOCK, List.copyOf(alongX), List.copyOf(alongZ), plots, List.copyOf(rails), originX, originZ, false, List.of(plaza), List.of(), type, null);
+        return new CityPlan(originX, originZ, List.copyOf(alongX), List.copyOf(alongZ), plots, List.copyOf(rails), originX, originZ, false, List.of(plaza), List.of(), type, null);
     }
 
-    static int blockAt(long seed, int districtX, int districtZ) { return CityPlanPlots.districtBlock(RandomSource.create(seed ^ CityPlan.SALT ^ 0xB10C5L ^ (districtX * 341873128712L + districtZ * 132897987541L))); }
+    static int blockAt(long seed, int districtX, int districtZ) { return CityPlanPlots.districtBlock(SeededRandom.at(seed ^ CityPlanPlots.BLOCK_SALT, districtX, districtZ)); }
 
     static Town protoTown(CityGround ground, int centerX, int centerZ) {
         int[] cross = CityDistricts.crossOf(centerX, centerZ);
         int[] well = CityDistricts.plazaCenter(centerX, centerZ, cross);
-        return new Town(CityPlan.packed(centerX, centerZ), CityPlan.key(ground.seed(), centerX, centerZ), citySalt(centerX, centerZ), well[0], well[1], 0, 0, 0, 0, List.of(), cross[0], cross[1]);
+        return new Town(CityPlan.packed(centerX, centerZ), SeededRandom.keyed(ground.seed(), centerX, centerZ), SeededRandom.salt(centerX, centerZ), well[0], well[1], 0, 0, 0, 0, List.of(), cross[0], cross[1]);
     }
 
     static List<Rail> across(List<Rail> placed, int windowX, int windowZ) {

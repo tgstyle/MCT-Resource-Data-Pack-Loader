@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.util;
 
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
+
 import com.google.gson.JsonObject;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
@@ -25,20 +27,11 @@ public final class TintFactory {
     }
 
     @Nullable public static Integer color(String written) {
-        String digits = digits(written);
-        if (digits.length() != 6 && digits.length() != 8) { return null; }
-        try {
-            long value = Long.parseLong(digits, 16);
-            return digits.length() == 6 ? (int) (value | 0xFF000000L) : (int) value;
-        }
-        catch (NumberFormatException ex) { return null; }
-    }
-
-    private static String digits(String value) {
-        String cleaned = value == null ? "" : value.trim();
-        if (cleaned.startsWith("#")) { cleaned = cleaned.substring(1); }
-        if (cleaned.startsWith("0x") || cleaned.startsWith("0X")) { cleaned = cleaned.substring(2); }
-        return cleaned;
+        int digits = ContentTypes.digits(written).length();
+        if (digits != 6 && digits != 8) { return null; }
+        Long value = ContentTypes.hex(written);
+        if (value == null) { return null; }
+        return digits == 6 ? (int) (value | 0xFF000000L) : value.intValue();
     }
 
     public int shade(int color) {

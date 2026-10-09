@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
 
 import com.google.common.collect.MapMaker;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -50,12 +51,11 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class EntityStorage implements ICapabilitySerializable<CompoundTag> {
-    private static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "storage");
+    private static final ResourceLocation KEY = ResourceDataPackLoader.id("storage");
     private static final String ITEMS = "Items";
     private static final String FLUID = "Fluid";
     private static final String ENERGY = "Energy";
     private static final UUID SLOWED = UUID.fromString("5c3f1a2e-8d47-4b61-9f0a-2e7d6c1b8a94");
-    private static final int SECOND = 20;
     private static final Map<Entity, EntityStorage> HELD = new MapMaker().weakKeys().makeMap();
     @Nullable private final Items items;
     @Nullable private final Tank tank;
@@ -104,7 +104,7 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
     }
 
     public static void tick(LivingEntity living) {
-        if (living.level().isClientSide() || living.tickCount % SECOND != 0) { return; }
+        if (living.level().isClientSide() || living.tickCount % SharedConstants.TICKS_PER_SECOND != 0) { return; }
         EntityStorage storage = of(living);
         if (storage == null || !storage.spends()) { return; }
         boolean paid = !storage.dry();
@@ -191,18 +191,14 @@ public final class EntityStorage implements ICapabilitySerializable<CompoundTag>
             }
             return;
         }
-        if (event.getEntity() instanceof ServerPlayer player) {
-            NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, opener) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def));
-        }
+        if (event.getEntity() instanceof ServerPlayer player) { NetworkHooks.openScreen(player, new SimpleMenuProvider((id, inventory, opener) -> new EntityStorageMenu(id, inventory, target, def), target.getDisplayName()), extra -> EntityStorageMenu.write(extra, target, def)); }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
     }
 
     @Override @Nonnull public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction side) { return held(capability).cast(); }
 
-    private LazyOptional<?> held(Capability<?> capability) {
-        return capability == ForgeCapabilities.ITEM_HANDLER ? itemsHeld : capability == ForgeCapabilities.FLUID_HANDLER ? tankHeld : capability == ForgeCapabilities.ENERGY ? energyHeld : LazyOptional.empty();
-    }
+    private LazyOptional<?> held(Capability<?> capability) { return capability == ForgeCapabilities.ITEM_HANDLER ? itemsHeld : capability == ForgeCapabilities.FLUID_HANDLER ? tankHeld : capability == ForgeCapabilities.ENERGY ? energyHeld : LazyOptional.empty(); }
 
     @Override public CompoundTag serializeNBT() {
         CompoundTag tag = new CompoundTag();

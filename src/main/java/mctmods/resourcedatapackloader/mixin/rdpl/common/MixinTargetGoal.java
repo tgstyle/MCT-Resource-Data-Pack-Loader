@@ -15,8 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(TargetGoal.class) public abstract class MixinTargetGoal {
     @Shadow @Final protected Mob mob;
 
-    @Inject(method = "getFollowDistance", at = @At("RETURN"), cancellable = true)
-    private void rdpl$notice(CallbackInfoReturnable<Double> cir) {
+    @Inject(method = "getFollowDistance", at = @At("RETURN"), cancellable = true) private void rdpl$notice(CallbackInfoReturnable<Double> cir) {
         if (!(mob instanceof Enemy)) { return; }
         double base = cir.getReturnValueD();
         double wanted = ContentThreat.notice(mob, base);

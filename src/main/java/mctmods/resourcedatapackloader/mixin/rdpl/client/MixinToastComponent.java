@@ -15,9 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ToastComponent.class) public abstract class MixinToastComponent {
-    @Inject(method = "addToast", at = @At("HEAD"), cancellable = true) private void rdpl$noToast(Toast toast, CallbackInfo ci) {
-        if (Toasts.hides(rdpl$kind(toast))) { ci.cancel(); }
-    }
+    @Inject(method = "addToast", at = @At("HEAD"), cancellable = true) private void rdpl$noToast(Toast toast, CallbackInfo ci) { if (Toasts.hides(rdpl$kind(toast))) { ci.cancel(); } }
 
     @Unique private static int rdpl$kind(Toast toast) {
         if (toast instanceof AdvancementToast) { return Toasts.ADVANCEMENTS; }

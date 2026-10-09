@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.types;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.def.ItemDef;
 import mctmods.resourcedatapackloader.content.def.ItemVariant;
@@ -14,7 +15,6 @@ import mctmods.resourcedatapackloader.content.item.ContentRollItem;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.Registered;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -30,7 +30,6 @@ import net.minecraft.world.item.ShovelItem;
 import net.minecraft.world.item.DiggerItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -112,9 +111,7 @@ public final class ContentItemTypes {
     }
 
     @Nullable private static Item seed(ItemDef def, ItemVariant variant, Item.Properties properties) {
-        ResourceLocation named = ResourceLocation.tryParse(def.crop());
-        ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
-        Block crop = made != null ? made.block() : Registered.find(ForgeRegistries.BLOCKS, named);
+        Block crop = ContentStates.registered(def.crop());
         if (crop == null) {
             ContentLog.LOGGER.error("Seed {} plants '{}', which is not a registered block, the item is skipped", variant.id(), def.crop());
             return null;

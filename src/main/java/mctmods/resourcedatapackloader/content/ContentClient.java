@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content;
 import mctmods.resourcedatapackloader.client.SplashDark;
 import mctmods.resourcedatapackloader.client.PouchKey;
 import mctmods.resourcedatapackloader.content.block.ContentContainerBlockEntity;
+import mctmods.resourcedatapackloader.client.render.ContentBannerRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentBellRenderer;
 import mctmods.resourcedatapackloader.client.render.ContentContainerRenderer;
 import mctmods.resourcedatapackloader.client.render.ReturningThrowRenderer;
@@ -21,6 +22,7 @@ import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -41,7 +43,6 @@ import net.minecraftforge.client.event.RegisterColorHandlersEvent;
 import net.minecraftforge.client.model.DynamicFluidContainerModel;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import java.util.Locale;
 import java.util.Map;
 
 public final class ContentClient {
@@ -74,15 +75,15 @@ public final class ContentClient {
     }
 
     private static void renderers(EntityRenderersEvent.RegisterRenderers event) {
-        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.registered();
+        BlockEntityType<ContentBannerBlockEntity> type = ContentBanners.TYPE.registeredType();
         if (type != null) { event.registerBlockEntityRenderer(type, ContentBannerRenderer::new); }
-        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.registeredType();
+        BlockEntityType<ContentContainerBlockEntity> chests = ContentContainers.TYPE.registeredType();
         if (chests != null) { event.registerBlockEntityRenderer(chests, ContentContainerRenderer::new); }
-        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.registeredType();
+        BlockEntityType<ContentBellBlockEntity> bells = ContentBells.TYPE.registeredType();
         if (bells != null) { event.registerBlockEntityRenderer(bells, ContentBellRenderer::new); }
         EntityType<ReturningThrow> returning = ContentEntities.returningThrow();
         if (returning != null) { event.registerEntityRenderer(returning, ReturningThrowRenderer::new); }
-        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$providers();
+        Map<EntityType<?>, EntityRendererProvider<?>> providers = IEntityRenderers.rdpl$getProviders();
         for (EntityType<?> variant : ContentEntities.types().values()) {
             EntityType<?> base = ContentEntities.base(variant);
             EntityRendererProvider<?> provider = base == null ? null : providers.get(base);
@@ -96,9 +97,9 @@ public final class ContentClient {
     private static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             SplashDark.apply();
-            MenuType<ContentContainerMenu> menu = ContentContainers.registeredMenu();
+            MenuType<ContentContainerMenu> menu = ContentContainers.MENU.registeredType();
             if (menu != null) { MenuScreens.register(menu, ContentContainerScreen::new); }
-            MenuType<EntityStorageMenu> storage = ContentContainers.registeredStorageMenu();
+            MenuType<EntityStorageMenu> storage = ContentContainers.STORAGE_MENU.registeredType();
             if (storage != null) { MenuScreens.register(storage, EntityStorageScreen::new); }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
@@ -132,7 +133,7 @@ public final class ContentClient {
 
     private static int potionColor(ItemStack stack, int index) { return index > 0 ? -1 : PotionUtils.getColor(stack); }
 
-    private static String mode(String tint) { return tint == null ? "" : tint.trim().toLowerCase(Locale.ROOT); }
+    private static String mode(String tint) { return tint == null ? "" : Settings.lower(tint); }
 
     private static int fixed(String tint, Object context) {
         return switch (tint) {

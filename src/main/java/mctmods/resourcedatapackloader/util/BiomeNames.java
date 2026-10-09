@@ -1,20 +1,35 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.biome.Biome;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class BiomeNames {
     private BiomeNames() {}
 
-    public static String shownName(ResourceLocation biome) {
+    @Nullable public static TagKey<Biome> tag(String type) {
+        String named = ContentFormats.biomeTag(type);
+        return named == null ? null : tagged(named);
+    }
+
+    @Nullable public static TagKey<Biome> tagged(String named) {
+        ResourceLocation id = Registered.tagId(named);
+        return id == null ? null : TagKey.create(Registries.BIOME, id);
+    }
+
+    private static String shownName(ResourceLocation biome) {
         BiomeDef def = ContentBiomes.def(biome);
         return def != null ? def.name() : Lang.vanilla("biome." + biome.getNamespace() + "." + biome.getPath());
     }

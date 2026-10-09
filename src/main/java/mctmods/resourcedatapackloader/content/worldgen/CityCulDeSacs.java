@@ -5,9 +5,10 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.End;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Junction;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Line;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Plot;
+import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Rail;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import net.minecraft.util.Mth;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,6 +20,13 @@ final class CityCulDeSacs {
     enum Hold { STREET, LANE, PLOT, FIXED }
 
     record Held(int minX, int minZ, int maxX, int maxZ, Hold hold, boolean alongX) {
+        static Held ofPlot(Plot plot) { return new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true); }
+
+        static Held ofBox(BoundingBox box, Hold hold) { return new Held(box.minX(), box.minZ(), box.maxX(), box.maxZ(), hold, true); }
+
+        static Held ofWell(BoundingBox well) { return ofBox(well, Hold.FIXED); }
+
+        static Held ofRail(Rail rail) { return rail.alongX() ? new Held(rail.from(), rail.at(), rail.to(), rail.last(), Hold.FIXED, true) : new Held(rail.at(), rail.from(), rail.last(), rail.to(), Hold.FIXED, false); }
 
         boolean meets(int fromX, int fromZ, int toX, int toZ) { return maxX >= fromX && minX <= toX && maxZ >= fromZ && minZ <= toZ; }
     }
@@ -65,10 +73,10 @@ final class CityCulDeSacs {
         Map<Line, int[]> profiles = new HashMap<>();
         for (Line other : lines) {
             if (other.alongX() == line.alongX() || !line.covers(other.middle()) || !other.covers(line.middle())) { continue; }
-            CityGrade.pin(profile, held, start, other.at(), other.last(), CityPlan.junctionLevel(ground, line.alongX() ? new Junction(line, other) : new Junction(other, line), profiles));
+            CityGrade.pin(profile, held, start, other.at(), other.last(), CityPlan.junctionLevel(ground, Junction.of(line, other), profiles));
         }
         CityGrade.reconcile(profile, held);
-        CityGrade.smooth(profile, held);
+        CityGradeRails.rein(profile, held);
         boolean[] bored = CityGrade.bore(profile, natural, held, new boolean[profile.length], ContentCity.tunnelDepth(), line.endsLow() != End.MET, line.endsHigh() != End.MET);
         return new StreetGrade(start, profile, bored);
     }
@@ -76,7 +84,7 @@ final class CityCulDeSacs {
     static void makeWay(List<Plot> found, List<Held> held, Held court) {
         for (Plot plot : List.copyOf(found)) {
             if (!court.meets(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ())) { continue; }
-            Held own = new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true);
+            Held own = Held.ofPlot(plot);
             int[][] pushes = {{court.maxX() + 1 - plot.fromX(), 0}, {court.minX() - 1 - plot.toX(), 0}, {0, court.maxZ() + 1 - plot.fromZ()}, {0, court.minZ() - 1 - plot.toZ()}};
             Arrays.sort(pushes, Comparator.comparingInt(push -> Math.abs(push[0]) + Math.abs(push[1])));
             held.remove(own);
@@ -94,7 +102,7 @@ final class CityCulDeSacs {
                 continue;
             }
             found.add(moved);
-            held.add(new Held(moved.fromX(), moved.fromZ(), moved.toX(), moved.toZ(), Hold.PLOT, true));
+            held.add(Held.ofPlot(moved));
             ContentLog.LOGGER.debug("Plot {} at {}, {} slides {}, {} out of the cul-de-sac at {}, {}", plot.def().key(), plot.fromX(), plot.fromZ(), moved.fromX() - plot.fromX(), moved.fromZ() - plot.fromZ(), court.minX(), court.minZ());
         }
     }
@@ -109,53 +117,28 @@ final class CityCulDeSacs {
 
     static Court court(CityGround ground, Line street, boolean low, List<Held> held, int level) {
         int end = low ? street.from() : street.to();
-        int dir = low ? -1 : 1;
-        int least = (street.width() + 1) / 2 + 1;
         int endX = street.alongX() ? end : street.middle();
         int endZ = street.alongX() ? street.middle() : end;
         Held own = held(street);
-        boolean cut = false;
-        for (int radius = (street.width() + 7) / 2; radius >= least; radius--) {
-            for (int stem = 1; stem <= 7; stem += 3) {
-                int spot = end + dir * (stem + radius + 1);
-                int discX = street.alongX() ? spot : street.middle();
-                int discZ = street.alongX() ? street.middle() : spot;
-                Held box = courtBox(street, end, dir, radius, stem);
-                if (nearDisc(held, own, discX, discZ, radius) || yields(held, own, box)) { continue; }
-                if (ContentCityStructure.steep(ground, discX, discZ, radius, level)) {
-                    cut = true;
-                    continue;
-                }
-                if (ContentCityStructure.dry(ground, box.minX(), box.minZ(), discX, discZ, radius)) { return new Court(street, low, radius, stem); }
-                ContentLog.LOGGER.debug("The dead end at {}, {} of the drawn city rolled a cul-de-sac, but water stands under the court it would take, so it stays a plain end", endX, endZ);
-                return new Court(street, low, 0, 0);
-            }
-        }
-        if (cut) { ContentLog.LOGGER.debug("The dead end at {}, {} of the drawn city rolled a cul-de-sac, but every court it could seat would cut the ground beside it, so it stays a plain end", endX, endZ); }
+        CityCourtSearch.Seat seat = CityCourtSearch.seat(ground, street, low, level, null, (x, z, radius, box) -> nearDisc(held, own, x, z, radius) || yields(held, own, Held.ofBox(box, Hold.STREET)));
+        if (seat.verdict() == CityCourtSearch.Verdict.SEATED) { return new Court(street, low, seat.radius(), seat.stem()); }
+        if (seat.verdict() == CityCourtSearch.Verdict.WET) { ContentLog.LOGGER.debug("The dead end at {}, {} of the drawn city rolled a cul-de-sac, but water stands under the court it would take, so it stays a plain end", endX, endZ); }
+        else if (seat.verdict() == CityCourtSearch.Verdict.CUT) { ContentLog.LOGGER.debug("The dead end at {}, {} of the drawn city rolled a cul-de-sac, but every court it could seat would cut the ground beside it, so it stays a plain end", endX, endZ); }
         else { ContentLog.LOGGER.debug("The dead end at {}, {} of the drawn city rolled a cul-de-sac, but finds no room for a court at any size it could take, so it stays a plain end", endX, endZ); }
         return new Court(street, low, 0, 0);
     }
 
-    static Held courtBox(Line street, int end, int dir, int radius, int stem) {
-        int near = end + dir;
-        int far = end + dir * (stem + 2 * radius + 1);
-        int least = Math.min(near, far);
-        int most = Math.max(near, far);
-        return street.alongX() ? new Held(least, street.middle() - radius, most, street.middle() + radius, Hold.STREET, true) : new Held(street.middle() - radius, least, street.middle() + radius, most, Hold.STREET, false);
-    }
+    static Held courtBox(Line street, int end, int dir, int radius, int stem) { return held(courtLine(street, end, dir, radius, stem)); }
 
     static Line courtLine(Line street, int end, int dir, int radius, int stem) {
         int near = end + dir;
         int far = end + dir * (stem + 2 * radius + 1);
-        return new Line(street.middle() - radius, 2 * radius + 1, false, street.alongX(), Math.min(near, far), Math.max(near, far), End.MET, End.MET);
+        return Line.met(street.middle() - radius, 2 * radius + 1, street.alongX(), Math.min(near, far), Math.max(near, far));
     }
 
     private static boolean nearDisc(List<Held> held, Held own, int discX, int discZ, int radius) {
         for (Held other : held) {
-            if (other.equals(own)) { continue; }
-            int nearX = Mth.clamp(discX, other.minX(), other.maxX()) - discX;
-            int nearZ = Mth.clamp(discZ, other.minZ(), other.maxZ()) - discZ;
-            if (nearX * nearX + nearZ * nearZ <= (radius + 1) * (radius + 1)) { return true; }
+            if (!other.equals(own) && CityCourtSearch.crowds(other.minX(), other.minZ(), other.maxX(), other.maxZ(), discX, discZ, radius)) { return true; }
         }
         return false;
     }

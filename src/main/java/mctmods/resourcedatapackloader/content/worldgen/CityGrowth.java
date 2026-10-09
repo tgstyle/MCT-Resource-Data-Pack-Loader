@@ -3,7 +3,6 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.content.worldgen.CityCulDeSacs.Held;
-import mctmods.resourcedatapackloader.content.worldgen.CityCulDeSacs.Hold;
 import mctmods.resourcedatapackloader.content.worldgen.CityCulDeSacs.StreetGrade;
 import mctmods.resourcedatapackloader.content.worldgen.CityLayout.Drawing;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Court;
@@ -16,17 +15,18 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Town;
 import mctmods.resourcedatapackloader.content.worldgen.CityPlanPlots.Tally;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Raced;
 
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
-import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 final class CityGrowth {
@@ -184,11 +184,7 @@ final class CityGrowth {
     }
 
     static Growth mapGrowth(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered, Town town) {
-        Growth known = MAP_GROWTH.get(town.key());
-        if (known != null) { return known; }
-        Growth made = grown(ground, map, cityX, cityZ, centered, town);
-        Growth raced = MAP_GROWTH.putIfAbsent(town.key(), made);
-        return raced == null ? made : raced;
+        return Raced.held(MAP_GROWTH, town.key(), () -> grown(ground, map, cityX, cityZ, centered, town));
     }
 
     private static Growth grown(CityGround ground, CityMapDef map, int cityX, int cityZ, boolean centered, Town town) {
@@ -202,13 +198,11 @@ final class CityGrowth {
         int[][] groups = new int[deep][wide];
         CityLayout.lifts(grid, marks, map, origin[0], origin[1], groups);
         Drawing drawing = new Drawing(map, grid, marks, groups, origin[0], origin[1], map.bulbHinted());
-        List<Line> rows = new ArrayList<>();
-        List<Line> columns = new ArrayList<>();
-        for (int z = 0; z < deep; z++) { CityLayout.runs(drawing, z, wide, deep, true, rows); }
-        for (int x = 0; x < wide; x++) { CityLayout.runs(drawing, x, deep, wide, false, columns); }
-        int runRows = rows.size();
-        int runColumns = columns.size();
-        CityLayout.junctions(drawing, rows, columns);
+        CityLayout.Sketch sketch = CityLayout.sketch(drawing);
+        List<Line> rows = sketch.rows();
+        List<Line> columns = sketch.columns();
+        int runRows = sketch.runRows();
+        int runColumns = sketch.runColumns();
         CityLayout.settle(ground, town, rows, rows.size(), columns, drawing.hinted());
         CityLayout.settle(ground, town, columns, columns.size(), rows, drawing.hinted());
         CityEnds.closeEnds(ground, town, rows, columns, drawing.hinted(), true);
@@ -234,13 +228,11 @@ final class CityGrowth {
         }
         List<Held> held = new ArrayList<>();
         for (Line line : lines) { held.add(CityCulDeSacs.held(line)); }
-        for (Plot plot : drawnPlots) { held.add(new Held(plot.fromX(), plot.fromZ(), plot.toX(), plot.toZ(), Hold.PLOT, true)); }
-        for (BoundingBox well : CityLayout.mapWells(town)) {
-            held.add(new Held(well.minX(), well.minZ(), well.maxX(), well.maxZ(), Hold.FIXED, true));
-        }
+        for (Plot plot : drawnPlots) { held.add(Held.ofPlot(plot)); }
+        for (BoundingBox well : CityLayout.mapWells(town)) { held.add(Held.ofWell(well)); }
         for (Rail rail : rails) {
             if (rail.subway()) { continue; }
-            held.add(rail.alongX() ? new Held(rail.from(), rail.at(), rail.to(), rail.last(), Hold.FIXED, true) : new Held(rail.at(), rail.from(), rail.last(), rail.to(), Hold.FIXED, false));
+            held.add(Held.ofRail(rail));
         }
         List<Line> refusing = new ArrayList<>(lines);
         List<Court> courts = new ArrayList<>();
@@ -265,10 +257,10 @@ final class CityGrowth {
         if (CityPlanPlots.backRow() && !choices.isEmpty()) { CityPlanPlots.backRows(roll, choices, found, rails, refusing, plazas, List.copyOf(found), origin[0], origin[0] + wide * map.cell() - 1, origin[1], origin[1] + deep * map.cell() - 1, most); }
         int behind = found.size() - drawnPlots.size();
         List<BoundingBox> standing = new ArrayList<>();
-        for (Plot plot : found) { standing.add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
+        for (Plot plot : found) { standing.add(plot.box()); }
         standing.addAll(CityLayout.mapWells(town));
         for (Rail rail : rails) {
-            if (!rail.subway()) { standing.add(CityRails.railBox(rail)); }
+            if (!rail.subway()) { standing.add(rail.box()); }
         }
         for (Court court : courts) {
             if (court.room() <= 0) { continue; }
@@ -278,8 +270,7 @@ final class CityGrowth {
         CityMapDistricts.Grown districts = CityMapDistricts.grow(ground, town, lines, standing, rails, found.size(), CityMapDistricts.others(ground, map, cityX, cityZ, town));
         List<Line> beyond = new ArrayList<>(districts.ties());
         for (CityPlan district : districts.districts().values()) {
-            beyond.addAll(district.alongX());
-            beyond.addAll(district.alongZ());
+            beyond.addAll(CityLines.of(district));
         }
         refusing.addAll(beyond);
         found.addAll(districts.plots());

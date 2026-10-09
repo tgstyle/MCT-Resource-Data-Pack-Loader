@@ -58,7 +58,7 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
 
     private static BoundingBox box(int fromX, int fromZ, int toX, int toZ, int level) {
         int reach = LOOP + ContentCity.sewerWidth() / 2;
-        int floor = level - ContentCity.sewerDepth();
+        int floor = ContentCitySewerPiece.floorAt(level);
         int roof = floor + 2 + ContentCity.sewerHeight();
         return new BoundingBox(fromX - reach, floor, fromZ - reach, toX + reach, Math.max(roof, level), toZ + reach);
     }
@@ -83,16 +83,15 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
     }
 
     private void laid(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
-        BlockState lining = ContentCitySewerPiece.block(ContentCity.sewerBlock());
+        BlockState lining = CityPalette.state(ContentCity.sewerBlock());
         if (lining == null) { return; }
-        int depth = ContentCity.sewerDepth();
-        int floor = this.level - depth;
+        int floor = ContentCitySewerPiece.floorAt(this.level);
         int height = ContentCity.sewerHeight();
         if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
         BlockState air = Blocks.AIR.defaultBlockState();
         BlockState water = CityPalette.stateOr(ContentCity.sewerWaterBlock(), air);
         BlockState walk = CityPalette.stateOr(ContentCity.sewerWalkBlock(), lining);
-        BlockState light = ContentCitySewerPiece.block(ContentCity.sewerLightBlock());
+        BlockState light = CityPalette.state(ContentCity.sewerLightBlock());
         CityPalette moss = CityPalette.mixed(ContentCity.sewerMossBlock());
         int mossChance = moss == null ? 0 : ContentCity.sewerMossChance();
         int half = ContentCity.sewerWidth() / 2;
@@ -108,7 +107,7 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
         for (int x = well[0] - LOOP - half; x <= well[2] + LOOP + half; x++) {
             for (int z = well[1] - LOOP - half; z <= well[3] + LOOP + half; z++) {
                 int ring = CityPlotGround.band(well, x, z);
-                if (ring < LOOP - half || ring > LOOP + half || CityPlotGround.kept(keep, x, z)) { continue; }
+                if (ring < LOOP - half || ring > LOOP + half || CityPlotGround.nearRoad(keep, x, z, 0)) { continue; }
                 if (!box.isInside(at.set(x, floor, z))) { continue; }
                 int top = Math.min(roof, under(x, z));
                 if (top < roof) { yielded++; }
@@ -137,9 +136,9 @@ public final class ContentCitySewerLoopPiece extends StructurePiece {
         }
         int holes = 0;
         for (int x : new int[] {well[0] - LOOP, well[2] + LOOP}) {
-            if (!CityPlotGround.kept(keep, x, crossZ + 1) && ContentCitySewerPiece.shaft(level, box, subways, x, crossZ + 1, floor, roof, this.level, lining, at)) { holes++; }
+            if (!CityPlotGround.nearRoad(keep, x, crossZ + 1, 0) && ContentCitySewerPiece.shaft(level, box, subways, x, crossZ + 1, floor, roof, this.level, lining, at)) { holes++; }
         }
-        if (dug + holes + walled > 0) { ContentLog.LOGGER.debug("The sewer loop around the well at {}, {} laid {} column(s) {} block(s) under the plaza, {} lit, {} manhole(s) down onto it, {} column(s) walled solid where a subway passes through its depth, the street sewers at x {} and z {} running through it, {} column(s) kept under the support of a street graded below the plaza", well[0], well[1], dug, depth, lit, holes, walled, crossX, crossZ, yielded); }
+        if (dug + holes + walled > 0) { ContentLog.LOGGER.debug("The sewer loop around the well at {}, {} laid {} column(s) {} block(s) under the plaza, {} lit, {} manhole(s) down onto it, {} column(s) walled solid where a subway passes through its depth, the street sewers at x {} and z {} running through it, {} column(s) kept under the support of a street graded below the plaza", well[0], well[1], dug, ContentCity.sewerDepth(), lit, holes, walled, crossX, crossZ, yielded); }
     }
 
     @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {

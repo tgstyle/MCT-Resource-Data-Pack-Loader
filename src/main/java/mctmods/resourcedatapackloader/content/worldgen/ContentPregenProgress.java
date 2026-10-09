@@ -17,7 +17,7 @@ public final class ContentPregenProgress {
     static String defaulted(String key, String fallback, String shipped, String langKey, @Nullable ServerPlayer player) {
         String said = says(key, fallback);
         if (!said.equals(shipped.trim())) { return said; }
-        return player == null ? Lang.tr(langKey) : Lang.tr(player, langKey);
+        return Lang.tr(player, langKey);
     }
 
     static String sofar(ContentPregen worker) {
@@ -38,7 +38,7 @@ public final class ContentPregenProgress {
         return Lang.tr("rdpl.pregen.checking", stepped) + Lang.tr("rdpl.pregen.checked", spent / 3600L, spent / 60L % 60L, spent % 60L);
     }
 
-    private static String eta(ContentPregen worker) {
+    private static synchronized String eta(ContentPregen worker) {
         long total = worker.order.total();
         if (worker.begun == 0L || worker.done <= worker.resumedFrom || worker.done >= total) { return ""; }
         long now = System.currentTimeMillis();
@@ -60,6 +60,6 @@ public final class ContentPregenProgress {
     static String report(ContentPregen worker) {
         long seconds = Math.max(1L, (System.currentTimeMillis() - worker.started) / 1000L);
         long rate = (worker.done - worker.resumedFrom) / seconds;
-        return String.format("Made %d of %d chunk(s) in %s, %d of them new or loaded, %d refused, at %d a second with %d asked for at once", worker.done, worker.order.total(), worker.dimension.location(), worker.made, worker.failed, rate, worker.inFlight);
+        return Lang.tr("rdpl.pregen.report", worker.done, worker.order.total(), worker.dimension.location(), worker.made, worker.failed, rate, worker.inFlight);
     }
 }

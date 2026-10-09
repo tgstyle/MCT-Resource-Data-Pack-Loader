@@ -10,21 +10,21 @@ import javax.annotation.Nonnull;
 
 public final class CardStorage extends SavedData {
     private static final String NAME = "rdpl_cards";
-    private static final String FIRED = "Fired";
+    private static final String OLD_FIRED = "Fired";
     private static final String PERSISTED = "rdplCards";
     private static final String PERSISTED_KILLS = "rdplCardKills";
     private CompoundTag fired = new CompoundTag();
 
-    private static CardStorage of(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(CardStorage::read, CardStorage::new, NAME); }
+    private static CardStorage get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(CardStorage::read, CardStorage::new, NAME); }
 
     private static CardStorage read(CompoundTag tag) {
         CardStorage held = new CardStorage();
-        held.fired = tag.getCompound(FIRED).copy();
+        held.fired = tag.getCompound(tag.contains(PERSISTED) ? PERSISTED : OLD_FIRED).copy();
         return held;
     }
 
     @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag) {
-        tag.put(FIRED, fired.copy());
+        tag.put(PERSISTED, fired.copy());
         return tag;
     }
 
@@ -38,10 +38,10 @@ public final class CardStorage extends SavedData {
 
     static void clearTallyFor(Player player, String key) { PlayerPersisted.clearTally(player, PERSISTED_KILLS, key); }
 
-    static boolean firedInWorld(MinecraftServer server, String key) { return of(server).fired.contains(key); }
+    static boolean firedInWorld(MinecraftServer server, String key) { return get(server).fired.contains(key); }
 
     static void stampWorld(MinecraftServer server, String key, long now) {
-        CardStorage data = of(server);
+        CardStorage data = get(server);
         data.fired.putLong(key, now);
         data.setDirty();
     }

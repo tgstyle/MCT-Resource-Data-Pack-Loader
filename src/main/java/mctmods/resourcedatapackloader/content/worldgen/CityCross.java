@@ -1,7 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
-import mctmods.resourcedatapackloader.util.Config;
 
 public final class CityCross {
     public static final int NONE = 0;
@@ -12,6 +11,7 @@ public final class CityCross {
     public static final int EAST = 2;
     public static final int NORTH = 4;
     public static final int SOUTH = 8;
+    public static final int ALL_ARMS = WEST | EAST | NORTH | SOUTH;
     private final int core;
     private final int lines;
     private final int walk;
@@ -25,10 +25,10 @@ public final class CityCross {
     public static CityCross of(CityPlan.Line line) { return ContentControl.onRoad(line.keys(), () -> of(line.width(), line.alley())); }
 
     public static CityCross of(int width, boolean alley) {
-        int bare = (width - 1) / 2;
+        int bare = CityRails.halfWidth(width);
         if (alley) { return new CityCross(bare, 0, 0); }
         int lines = ContentCity.lineBlock().isEmpty() ? 0 : 1;
-        int walk = ContentCity.sidewalkBlock().isEmpty() ? 0 : Math.max(0, ContentControl.number(ContentControl.VILLAGES, "villagePathSidewalkWidth", Config.worldgen.villagePathSidewalkWidth()));
+        int walk = CityPlan.walkWidth();
         if (bare - lines - walk < 0) { return new CityCross(bare, 0, 0); }
         return new CityCross(bare - lines - walk, lines, walk);
     }

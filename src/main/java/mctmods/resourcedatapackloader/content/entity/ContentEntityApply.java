@@ -2,14 +2,16 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
+import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 import mctmods.resourcedatapackloader.content.util.ContentAttributes;
+import mctmods.resourcedatapackloader.content.util.ContentEffects;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ICreeper;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IGhast;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IMob;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.SwoopMoveControl;
-import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -21,16 +23,16 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WallClimberNavigation;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.WaterBoundPathNavigation;
+import net.minecraft.world.entity.animal.Rabbit;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.Zombie;
@@ -40,13 +42,17 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraftforge.registries.ForgeRegistries;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 final class ContentEntityApply {
     static final String DRESSED = "rdplDressed";
     private static final String ROLLED = "rdplBabyRolled";
+    private static final Set<String> MISSING = new HashSet<>();
     static final String YOUNG = "rdplBabyYoung";
     private static final Map<String, String> CACTUS_PATHS = Map.of("danger_cactus", "DANGER_OTHER", "damage_cactus", "DAMAGE_OTHER");
 
@@ -84,7 +90,6 @@ final class ContentEntityApply {
         mob.setCanPickUpLoot(def.flags().picksUpLoot());
         if (def.physics().climbs() != null) { climber(mob, def.physics().climbs()); }
         if (def.combat().ownBlast()) { blast(mob, def.combat()); }
-
         navigation(mob, def);
         priorities(mob, def);
         ContentEntityBehavior.behavior(mob, def);
@@ -115,10 +120,9 @@ final class ContentEntityApply {
 
     private static void effects(LivingEntity mob, EntityVariantDef def) {
         for (Map.Entry<String, Integer> entry : def.effects().entrySet()) {
-            ResourceLocation name = ResourceLocation.tryParse(entry.getKey());
-            MobEffect effect = Registered.find(ForgeRegistries.MOB_EFFECTS, name);
+            MobEffect effect = ContentEffects.find(entry.getKey());
             if (effect == null) {
-                ContentLog.LOGGER.error("Entity variant {} wants effect {}, which nothing registers", def.key(), entry.getKey());
+                ContentLog.LOGGER.errorOnce(MISSING, def.key() + " " + entry.getKey(), "Entity variant {} wants effect {}, which nothing registers", def.key(), entry.getKey());
                 continue;
             }
             mob.addEffect(new MobEffectInstance(effect, MobEffectInstance.INFINITE_DURATION, entry.getValue(), false, false));
@@ -143,10 +147,7 @@ final class ContentEntityApply {
     }
 
     @Nullable private static EquipmentSlot slot(String name) {
-        for (EquipmentSlot slot : EquipmentSlot.values()) {
-            if (slot.getName().equalsIgnoreCase(name) || slot.name().equalsIgnoreCase(name)) { return slot; }
-        }
-        return null;
+        return Enums.byName(EquipmentSlot.class, name);
     }
 
     private static boolean rolledYoung(Mob mob, EntityVariantDef def) {
@@ -160,7 +161,7 @@ final class ContentEntityApply {
 
     private static void child(Mob mob) {
         if (mob instanceof Zombie zombie) { zombie.setBaby(true); }
-        else if (mob instanceof AgeableMob ageable) { ageable.setAge(-24000); }
+        else if (mob instanceof AgeableMob ageable) { ageable.setAge(AgeableMob.BABY_START_AGE); }
     }
 
     private static void profession(Villager villager, EntityVariantDef def) {
@@ -178,12 +179,9 @@ final class ContentEntityApply {
     private static void priorities(Mob mob, EntityVariantDef def) {
         for (Map.Entry<String, Float> entry : def.pathPriorities().entrySet()) {
             String named = CACTUS_PATHS.getOrDefault(entry.getKey().toLowerCase(Locale.ROOT), entry.getKey());
-            BlockPathTypes type = null;
-            for (BlockPathTypes value : BlockPathTypes.values()) {
-                if (value.name().equalsIgnoreCase(named)) { type = value; }
-            }
+            BlockPathTypes type = Enums.byName(BlockPathTypes.class, named);
             if (type == null) {
-                ContentLog.LOGGER.error("Entity variant {} names path type '{}', which is not one of {}", def.key(), entry.getKey(), java.util.Arrays.toString(BlockPathTypes.values()));
+                ContentLog.LOGGER.error("Entity variant {} names path type '{}', which is not one of {}", def.key(), entry.getKey(), Arrays.toString(BlockPathTypes.values()));
                 continue;
             }
             mob.setPathfindingMalus(type, entry.getValue());

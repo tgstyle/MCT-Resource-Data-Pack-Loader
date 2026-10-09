@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.client.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.ContentHeatShimmer;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.ProspectTooltip;
-import mctmods.resourcedatapackloader.client.SeamSkyRenderer;
+import mctmods.resourcedatapackloader.client.render.SeamSkyRenderer;
 import mctmods.resourcedatapackloader.client.ChatHistoryKeeper;
 import mctmods.resourcedatapackloader.client.PackOptionsButton;
 import mctmods.resourcedatapackloader.client.FaceCacheReset;
@@ -102,6 +102,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Toasts;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Unit;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
 import net.minecraft.world.entity.Entity;
@@ -133,6 +134,8 @@ import java.util.Set;
 @Mod(ResourceDataPackLoader.MOD_ID) public class ResourceDataPackLoader {
     public static final String MOD_ID = "resourcedatapackloader";
     public static final Logger LOGGER = LogManager.getLogger("RDPL");
+
+    public static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(MOD_ID, path); }
 
     public ResourceDataPackLoader(FMLJavaModLoadingContext context) {
         Lang.load();
@@ -197,7 +200,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onAttack);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onTouch);
         MinecraftForge.EVENT_BUS.addListener(ContentBoards::onSquare);
-        if (ContentPaths.enabled()) { MinecraftForge.EVENT_BUS.addListener(ContentPaths::onRightClick); }
+        MinecraftForge.EVENT_BUS.addListener(ContentPaths::onRightClick);
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onBreakSpeed);
         MinecraftForge.EVENT_BUS.addListener(ContentAnvils::onAnvil);
         MinecraftForge.EVENT_BUS.addListener(ContentAnvils::onTaken);
@@ -283,10 +286,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentPregenDimensions::onDimensionChange);
         MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onTravel);
         MinecraftForge.EVENT_BUS.addListener(ContentPregenHold::onTeleport);
-        MinecraftForge.EVENT_BUS.addListener(ContentReplacements::onChunkLoad);
-        MinecraftForge.EVENT_BUS.addListener(ContentReplacements::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
-        MinecraftForge.EVENT_BUS.addListener(ContentReplacements::onLevelUnload);
         MinecraftForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
@@ -371,7 +371,7 @@ import java.util.Set;
             MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingOut event) -> {
                 HoldView.reset();
                 CenterCard.reset();
-                Toasts.show(0);
+                Toasts.leave();
             });
             ContentClient.register(modBus);
             if (Config.worldgen.worldgenDebug()) {
@@ -408,9 +408,15 @@ import java.util.Set;
             RegistryRemaps.reload();
             event.enqueueWork(() -> {
                 ContentSpawners.apply();
+                ContentPortals.bind();
                 ContentHardness.setup();
                 ContentAnvils.load();
-                if (ContentOrders.load()) { ContentOrders.listen(); }
+                if (ContentOrders.load()) {
+                    MinecraftForge.EVENT_BUS.addListener(ContentOrders::onLevelTick);
+                    MinecraftForge.EVENT_BUS.addListener(ContentOrders::onPlace);
+                    MinecraftForge.EVENT_BUS.addListener(ContentOrders::onBreak);
+                    MinecraftForge.EVENT_BUS.addListener(ContentOrders::onInteract);
+                }
                 ContentOverrides.reload();
             });
             return;
@@ -420,15 +426,9 @@ import java.util.Set;
         throw new IllegalStateException(message);
     }
 
-    private void onAddReloadListeners(AddReloadListenerEvent event) {
-        event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> {
-            if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); }
-        }, executor2));
-    }
+    private void onAddReloadListeners(AddReloadListenerEvent event) { event.addListener((barrier, manager, profiler, profiler2, executor, executor2) -> barrier.wait(Unit.INSTANCE).thenRunAsync(() -> { if (event.getServerResources().getRecipeManager() instanceof IRecipeFilter filter) { RecipeLoading.afterReload(filter); } }, executor2)); }
 
-    private void onTagsUpdated(TagsUpdatedEvent event) {
-        if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); }
-    }
+    private void onTagsUpdated(TagsUpdatedEvent event) { if (event.getUpdateCause() == TagsUpdatedEvent.UpdateCause.SERVER_DATA_LOAD) { RecipeLoading.onTagsBound(); } }
 
     private void onAddPackFinders(AddPackFindersEvent event) { event.addRepositorySource(new PackFinder(event.getPackType())); }
 
@@ -442,6 +442,7 @@ import java.util.Set;
         RegistryRemaps.reload();
         ContentOverrides.reload();
         ContentReplacements.reload();
+        ContentCityMaps.reload();
         ContentWorldTemplates.load();
         ContentEntityTicks.reload();
         ContentTeams.load();
@@ -459,6 +460,7 @@ import java.util.Set;
 
     private void onServerStopped(ServerStoppedEvent event) {
         ContentStructureSearch.forget();
+        CityBorder.forget();
         if (FMLEnvironment.dist == Dist.CLIENT) { return; }
         PackManager.get().close();
     }

@@ -5,9 +5,8 @@ import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.pack.port.IPackPort;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.server.packs.PackType;
@@ -31,8 +30,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +43,7 @@ public final class PackManager {
     public static final String ROOT_PACK = "<loose files>";
     public static final String CONFIG = "config";
     public static final String JSON = "json";
+    public static final String JSON_SUFFIX = "." + JSON;
     public static final PackType CONTENT = PackType.SERVER_DATA;
     public static final String BLOCKS = "blocks";
     public static final String ITEMS = "items";
@@ -95,7 +95,6 @@ public final class PackManager {
     private static final String DISABLED_SUFFIX = ".disabled";
     private static final Pattern PRIORITY = Pattern.compile("^[Rr][Dd][Pp][Ll](\\d+)?(?:([OoNn])(?=[ _-]|$))?[ _-]?");
     private static final PackManager INSTANCE = new PackManager();
-    private static final Gson GSON = new GsonBuilder().create();
     private final List<RDPLPack> packs = new CopyOnWriteArrayList<>();
     private final Map<PackType, Map<String, Map<String, Entry>>> mergedNormal = new EnumMap<>(PackType.class);
     private final Map<PackType, Map<String, Map<String, Entry>>> mergedOverride = new EnumMap<>(PackType.class);
@@ -103,6 +102,7 @@ public final class PackManager {
     private final Set<String> served = ConcurrentHashMap.newKeySet();
     private final AtomicInteger generation = new AtomicInteger();
     @Nullable private volatile Path root;
+    private volatile boolean scanned;
     @Nullable private volatile JsonObject meta;
 
     private PackManager() {
@@ -120,22 +120,24 @@ public final class PackManager {
 
     @Nullable public Path getRoot() { return root; }
 
+    public boolean scanned() { return scanned; }
+
     public int getGeneration() { return generation.get(); }
 
-    public boolean provides(String namespace) {
+    public Set<String> namespaces() {
+        Set<String> all = new LinkedHashSet<>();
         for (RDPLPack pack : packs) {
-            for (PackType type : PackType.values()) {
-                if (pack.getNamespaces(type).contains(namespace)) { return true; }
-            }
+            for (PackType type : PackType.values()) { all.addAll(pack.getNamespaces(type)); }
         }
-        return false;
+        return all;
     }
 
-    public void forEach(String folder, String ext, IPackConsumer consumer) {
-        for (RDPLPack pack : packs) { pack.forEach(CONTENT, folder, ext, consumer); }
-    }
+    public boolean provides(String namespace) { return namespaces().contains(namespace); }
+
+    public void forEach(String folder, String ext, IPackConsumer consumer) { for (RDPLPack pack : packs) { pack.forEach(CONTENT, folder, ext, consumer); } }
 
     public void scan(Path packRoot) {
+        scanned = true;
         if (packRoot.getNameCount() == 0 || packRoot.equals(packRoot.getRoot())) {
             ContentLog.LOGGER.error("rootDirectory resolves to '{}', which would treat the whole folder as the pack root. Set it to a folder name such as '{}'. No packs loaded.", packRoot, ROOT_DIRECTORY);
             close();
@@ -181,10 +183,12 @@ public final class PackManager {
         generation.incrementAndGet();
     }
 
+    private Map<String, Map<String, Entry>> merged(PackType type, boolean overriding) { return (overriding ? mergedOverride : mergedNormal).get(type); }
+
     private void buildIndex() {
         for (PackType type : PackType.values()) {
             for (RDPLPack pack : packs) {
-                Map<String, Map<String, Entry>> target = (pack.isOverriding() ? mergedOverride : mergedNormal).get(type);
+                Map<String, Map<String, Entry>> target = merged(type, pack.isOverriding());
                 for (String namespace : pack.getNamespaces(type)) {
                     Map<String, Entry> paths = target.computeIfAbsent(namespace, k -> new ConcurrentHashMap<>());
                     for (String path : pack.getPaths(type, namespace)) {
@@ -236,7 +240,7 @@ public final class PackManager {
 
     @Nullable private RDPLPack load(Path entry) {
         String fileName = entry.getFileName().toString();
-        if (!fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) { return null; }
+        if (!fileName.toLowerCase(Locale.ROOT).endsWith(StrayPacks.ZIP)) { return null; }
         FileSystem zip = null;
         try {
             zip = FileSystems.newFileSystem(entry);
@@ -251,7 +255,7 @@ public final class PackManager {
             Path written = PackVersions.write(entry, port);
             if (written == null) { return pack; }
             closeQuietly(zip);
-            if (!PackVersions.swap(written, entry)) { return null; }
+            if (PackVersions.swapFailed(written, entry)) { return null; }
             ContentLog.LOGGER.info("Pack '{}': what this version reads differently was written into its '{}' folder, and the {} files at the root are left as they were, so the same zip still loads on {}. Read the port's notes above and the parsers' lines below for what to finish by hand", fileName, PackVersions.prefix(), port.origin(), port.origin());
             return load(entry);
         }
@@ -297,6 +301,8 @@ public final class PackManager {
         return dot < 0 ? fileName : fileName.substring(0, dot);
     }
 
+    public static String stripJson(String path, int from) { return path.substring(from, path.length() - JSON_SUFFIX.length()); }
+
     public void warnAboutDisabledFeatures() { PackReport.warnAboutDisabledFeatures(packs); }
 
     public void report() { PackReport.report(packs, root); }
@@ -308,7 +314,7 @@ public final class PackManager {
     }
 
     @Nullable private Entry lookup(PackType type, String namespace, String path, boolean overriding) {
-        Map<String, Entry> paths = (overriding ? mergedOverride : mergedNormal).get(type).get(namespace);
+        Map<String, Entry> paths = merged(type, overriding).get(namespace);
         if (paths == null) { return null; }
         Entry entry = paths.get(lower(path));
         if (entry == null) { return null; }
@@ -356,7 +362,7 @@ public final class PackManager {
     }
 
     @Nullable public byte[] bytes(PackType type, String namespace, String path) {
-        for (boolean overriding : new boolean[] {false, true}) {
+        for (boolean overriding : new boolean[] {true, false}) {
             try (InputStream stream = openRaw(type, namespace, path, overriding)) {
                 if (stream != null) { return stream.readAllBytes(); }
             }
@@ -368,9 +374,9 @@ public final class PackManager {
     private static boolean drawable(PackType type, String path) { return type == PackType.CLIENT_RESOURCES && ContentPixelMaps.couldBeDrawn(path); }
 
     public void list(PackType type, String namespace, boolean overriding, String prefix, Consumer<String> out) {
-        Map<String, Entry> paths = (overriding ? mergedOverride : mergedNormal).get(type).get(namespace);
+        Map<String, Entry> paths = merged(type, overriding).get(namespace);
         if (paths == null) { return; }
-        String head = prefix.isEmpty() || prefix.endsWith("/") ? prefix : prefix + "/";
+        String head = GeneratedResources.head(prefix);
         for (Map.Entry<String, Entry> held : paths.entrySet()) {
             if (!held.getKey().startsWith(head)) { continue; }
             served.add(key(type, namespace, held.getValue().actual()));
@@ -465,7 +471,7 @@ public final class PackManager {
 
     @Nullable private static JsonObject validMeta(String contents) {
         try {
-            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
             return json != null && json.has("pack") && json.get("pack").isJsonObject() ? json : null;
         }
         catch (RuntimeException malformed) { return null; }

@@ -17,10 +17,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 public final class GameFont {
-    private static final ResourceLocation ASCII = ResourceLocation.fromNamespaceAndPath("minecraft", "textures/font/ascii.png");
-    private static final ResourceLocation RDPL = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl");
-    private static final ResourceLocation ITALIC = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_italic");
-    private static final ResourceLocation BOLD = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "rdpl_bold");
+    private static final ResourceLocation ASCII = ResourceLocation.withDefaultNamespace("textures/font/ascii.png");
+    private static final ResourceLocation RDPL = ResourceLocation.parse(CardFont.RDPL);
+    private static final ResourceLocation ITALIC = ResourceLocation.parse(CardFont.RDPL_ITALIC);
+    private static final ResourceLocation BOLD = ResourceLocation.parse(CardFont.RDPL_BOLD);
     private static final String VANILLA = "vanilla";
     private static final Map<ResourceLocation, ResourceLocation> SLANTS = new ConcurrentHashMap<>();
     private static volatile boolean yields;
@@ -49,9 +49,7 @@ public final class GameFont {
     public static List<GlyphProviderDefinition> providers(List<GlyphProviderDefinition> providers) {
         if (!yields) { return providers; }
         List<GlyphProviderDefinition> kept = new ArrayList<>(providers.size());
-        for (GlyphProviderDefinition provider : providers) {
-            if (!(provider instanceof ProviderReferenceDefinition reference && RDPL.equals(reference.id()))) { kept.add(provider); }
-        }
+        for (GlyphProviderDefinition provider : providers) { if (!(provider instanceof ProviderReferenceDefinition reference && RDPL.equals(reference.id()))) { kept.add(provider); } }
         return kept;
     }
 }

@@ -12,6 +12,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Beardifier.class) public abstract class MixinBeardifier {
-    @Inject(method = "forStructuresInChunk", at = @At("RETURN"), cancellable = true)
-    private static void rdpl$spareDecks(StructureManager structureManager, ChunkPos chunkPos, CallbackInfoReturnable<Beardifier> cir) { cir.setReturnValue(CityDeckBeard.around(EncapsulateBeard.around(cir.getReturnValue(), structureManager, chunkPos), structureManager, chunkPos)); }
+    @Inject(method = "forStructuresInChunk", at = @At("RETURN"), cancellable = true) private static void rdpl$spareDecks(StructureManager structureManager, ChunkPos chunkPos, CallbackInfoReturnable<Beardifier> cir) { cir.setReturnValue(CityDeckBeard.around(EncapsulateBeard.around(cir.getReturnValue(), structureManager, chunkPos), structureManager, chunkPos)); }
 }

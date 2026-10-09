@@ -6,5 +6,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 import java.util.Properties;
 
 @Mixin(Settings.class) public interface ISettings {
-    @Accessor("properties") Properties rdpl$properties();
+    @Accessor("properties") Properties rdpl$getProperties();
 }

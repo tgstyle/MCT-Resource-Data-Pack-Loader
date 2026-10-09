@@ -14,9 +14,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
@@ -49,27 +49,25 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public final class BlockDrops extends LootModifier {
-    public static final String DROPS = "drops";
-    public static final String REPLACE = "replace";
-    public static final String ITEM = "item";
-    public static final String COUNT = "count";
-    public static final String CHANCE = "chance";
-    public static final String FORTUNE = "fortune";
-    public static final String SILK_TOUCH = "silkTouch";
-    public static final String EXPERIENCE = "experience";
-    public static final String ADVANCEMENT = "advancement";
+    private static final String DROPS = "drops";
+    private static final String REPLACE = "replace";
+    private static final String ITEM = "item";
+    private static final String COUNT = "count";
+    private static final String CHANCE = "chance";
+    private static final String FORTUNE = "fortune";
+    private static final String SILK_TOUCH = "silkTouch";
+    private static final String EXPERIENCE = "experience";
+    private static final String ADVANCEMENT = "advancement";
     private static final String EITHER = "either";
     private static final String ONLY = "only";
     private static final String NEVER = "never";
     public static final Codec<BlockDrops> CODEC = RecordCodecBuilder.create(instance -> codecStart(instance).apply(instance, BlockDrops::new));
     public static final DeferredRegister<Codec<? extends IGlobalLootModifier>> REGISTER = DeferredRegister.create(ForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS, ResourceDataPackLoader.MOD_ID);
-    private static final Gson GSON = new Gson();
     private static final Map<Block, List<Rule>> BY_BLOCK = new HashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
@@ -83,21 +81,16 @@ public final class BlockDrops extends LootModifier {
 
     private record Drop(ItemStack item, boolean experience, AmountDef count, float chance, int fortune, String silkTouch) {}
 
-    public static void reload() {
+    private static void reload() {
         BY_BLOCK.clear();
         GENERATION.stale();
         if (Config.data.blockDropsOff()) { return; }
         int[] count = new int[1];
-        Json.eachFile(PackManager.BLOCK_DROPS, "block drops", (key, contents) -> read(key, contents, count));
+        Json.eachObject(PackManager.BLOCK_DROPS, "block drops", (key, json) -> read(key, json, count));
         if (count[0] > 0) { Summary.info("loot.blockdrops", "Loaded " + count[0] + " block drop rule(s) across " + BY_BLOCK.size() + " block(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Block drops {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(ResourceLocation key, JsonObject json, int[] count) {
         if (GsonHelper.getAsString(json, "block", "").isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
             return;
@@ -137,7 +130,7 @@ public final class BlockDrops extends LootModifier {
         if (!experience && item.isEmpty()) { return null; }
         AmountDef count = amount(key, json, experience ? EXPERIENCE : COUNT);
         if (count == null) { return null; }
-        String silkTouch = GsonHelper.getAsString(json, SILK_TOUCH, EITHER).trim().toLowerCase(Locale.ROOT);
+        String silkTouch = Settings.lower(GsonHelper.getAsString(json, SILK_TOUCH, EITHER));
         if (!EITHER.equals(silkTouch) && !ONLY.equals(silkTouch) && !NEVER.equals(silkTouch)) {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
@@ -197,7 +190,6 @@ public final class BlockDrops extends LootModifier {
 
     private static void roll(List<Rule> rules, ObjectArrayList<ItemStack> generatedLoot, BlockState state, ServerLevel level, BlockPos pos, @Nullable Player player, @Nullable ItemStack tool, @Nullable Float radius, RandomSource random, boolean prospecting) {
         boolean silk = player != null && tool != null && tool.getEnchantmentLevel(Enchantments.SILK_TOUCH) > 0 && silkHarvests(state, level, pos);
-        boolean withheld = prospecting && !silk;
         int fortuneLevel = silk || tool == null ? 0 : tool.getEnchantmentLevel(Enchantments.BLOCK_FORTUNE);
         for (Rule rule : rules) {
             if (rule.states() != null && !rule.states().contains(state)) { continue; }
@@ -211,10 +203,10 @@ public final class BlockDrops extends LootModifier {
                 if (drop.fortune() > 0 && fortuneLevel > 0) { count += random.nextInt(drop.fortune() * fortuneLevel + 1); }
                 if (count <= 0) { continue; }
                 if (drop.experience()) {
-                    level.addFreshEntity(new ExperienceOrb(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, count));
+                    if (!prospecting) { level.addFreshEntity(new ExperienceOrb(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, count)); }
                     continue;
                 }
-                if (withheld || radius != null && random.nextFloat() > 1.0F / radius) { continue; }
+                if (prospecting || radius != null && random.nextFloat() > 1.0F / radius) { continue; }
                 generatedLoot.add(drop.item().copyWithCount(count));
             }
         }

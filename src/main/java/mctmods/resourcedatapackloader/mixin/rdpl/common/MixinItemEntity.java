@@ -13,8 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ItemEntity.class) public abstract class MixinItemEntity {
-    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
-    private void rdpl$slowTick(CallbackInfo ci) {
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true) private void rdpl$slowTick(CallbackInfo ci) {
         ItemEntity self = (ItemEntity) (Object) this;
         if (!ContentEntityTicks.slowedNow(self)) { return; }
         IItemEntity aging = (IItemEntity) self;
@@ -22,6 +21,5 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ci.cancel();
     }
 
-    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = -0.04D))
-    private double rdpl$worldGravity(double vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
+    @ModifyConstant(method = "tick", constant = @Constant(doubleValue = -0.04D)) private double rdpl$worldGravity(double vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
 }

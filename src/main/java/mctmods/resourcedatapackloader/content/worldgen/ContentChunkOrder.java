@@ -5,8 +5,6 @@ import net.minecraft.world.level.ChunkPos;
 public final class ContentChunkOrder {
     private static final int REGION = 32;
     private static final int[] CURVE = new int[REGION * REGION * 2];
-    private final int middleX;
-    private final int middleZ;
     private final int lowX;
     private final int lowZ;
     private final int highX;
@@ -59,8 +57,6 @@ public final class ContentChunkOrder {
     }
 
     public ContentChunkOrder(int middleX, int middleZ, int reach) {
-        this.middleX = middleX;
-        this.middleZ = middleZ;
         this.lowX = middleX - reach;
         this.lowZ = middleZ - reach;
         this.highX = middleX + reach;
@@ -108,30 +104,9 @@ public final class ContentChunkOrder {
         return at;
     }
 
-    public long skipMadeBefore(long count) {
-        rewind();
-        long widest = (long) Math.sqrt((double) count);
-        while ((widest + 1L) * (widest + 1L) <= count) { widest++; }
-        while (widest > 0L && widest * widest > count) { widest--; }
-        long made = (widest - 1L) / 2L;
-        if (made <= 0L) { return 0L; }
-        while (at < total && inside((int) Math.min(Integer.MAX_VALUE, made))) {
-            at += held();
-            if (at >= total) { break; }
-            toNextTile();
-        }
-        return at;
-    }
-
     public boolean nearTile(int x, int z, int reach) { return x >= baseX - reach && x <= baseX + spanX - 1 + reach && z >= baseZ - reach && z <= baseZ + spanZ - 1 + reach; }
 
     private long held() { return (long) spanX * spanZ; }
-
-    private boolean inside(int made) {
-        int reachX = Math.max(Math.abs(baseX - middleX), Math.abs(baseX + spanX - 1 - middleX));
-        int reachZ = Math.max(Math.abs(baseZ - middleZ), Math.abs(baseZ + spanZ - 1 - middleZ));
-        return Math.max(reachX, reachZ) <= made;
-    }
 
     private void rewind() {
         at = 0L;

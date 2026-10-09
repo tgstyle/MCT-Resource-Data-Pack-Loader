@@ -45,7 +45,6 @@ import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockSetType;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.List;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -76,7 +75,6 @@ public final class ContentBlockTypes {
     public static final String PORTAL = "portal";
     public static final String BELL = "bell";
     private static final Set<String> KNOWN = Set.of(BASIC, ORE, FALLING, SLAB, STAIRS, FENCE, PANE, WALL, DOOR, TRAPDOOR, FENCE_GATE, LADDER, TORCH, LOG, LEAVES, SAPLING, CROP, FLOWER, CANE, VINE, BANNER, PORTAL, CONTAINER, BELL);
-    private static final Set<String> LATER = Set.of();
     private static final Set<String> PLANTS = Set.of(SAPLING, CROP, FLOWER, CANE, VINE);
     private static final Set<String> VARIANT_LEVELS = Set.of(BASIC, ORE, CONTAINER, PORTAL, FENCE, PANE, LOG, FALLING, SLAB, WALL);
 
@@ -104,10 +102,6 @@ public final class ContentBlockTypes {
 
     public static List<Created> create(BlockDef def, BlockVariant variant) {
         String type = def.type();
-        if (LATER.contains(type)) {
-            ContentLog.LOGGER.error("Block {} is a '{}', which this line does not carry yet, skipping it", variant.id(), type);
-            return List.of();
-        }
         if (!KNOWN.contains(type)) {
             ContentLog.LOGGER.error("Unknown block type '{}' in {}, treating it as '{}'. Known types are {}", type, def.key(), BASIC, KNOWN);
             type = BASIC;
@@ -128,16 +122,16 @@ public final class ContentBlockTypes {
             case BANNER -> {
                 ContentBannerBlock standing = new ContentBannerBlock(id, properties.noCollission().forceSolidOn());
                 ContentWallBannerBlock wall = new ContentWallBannerBlock(id, ContentTypes.properties(def, variant, type).noCollission().forceSolidOn());
-                yield List.of(new Created(id, standing, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
+                yield List.of(new Created(id, standing, ContentRegistry.MAIN), new Created(ContentTypes.wallId(id), wall, ContentRegistry.WALL));
             }
             case TORCH -> {
                 ContentTorchBlock torch = new ContentTorchBlock(def, properties.noCollission());
                 ContentWallTorchBlock wall = new ContentWallTorchBlock(def, ContentTypes.properties(def, variant, type).noCollission());
-                yield List.of(new Created(id, torch, ContentRegistry.MAIN), new Created(ResourceLocation.fromNamespaceAndPath(id.getNamespace(), id.getPath() + "_wall"), wall, ContentRegistry.WALL));
+                yield List.of(new Created(id, torch, ContentRegistry.MAIN), new Created(ContentTypes.wallId(id), wall, ContentRegistry.WALL));
             }
             case CONTAINER -> List.of(new Created(id, new ContentContainerBlock(def, properties), ContentRegistry.MAIN));
             case BELL -> List.of(new Created(id, new ContentBellBlock(def, properties.noOcclusion()), ContentRegistry.MAIN));
-            case LOG -> List.of(new Created(id, new ContentLogBlock(def, properties), ContentRegistry.MAIN));
+            case LOG -> List.of(new Created(id, new ContentLogBlock(properties), ContentRegistry.MAIN));
             case LEAVES -> List.of(new Created(id, new ContentLeavesBlock(def, properties.randomTicks().isSuffocating((state, level, pos) -> false).isViewBlocking((state, level, pos) -> false)), ContentRegistry.MAIN));
             case SAPLING -> {
                 if (def.sapling() == null) {
@@ -147,7 +141,7 @@ public final class ContentBlockTypes {
                 yield List.of(new Created(id, ContentSaplingBlock.create(def, variant.id(), properties), ContentRegistry.MAIN));
             }
             case CROP -> List.of(new Created(id, new ContentCropBlock(def, properties), ContentRegistry.MAIN));
-            case FLOWER -> List.of(new Created(id, new ContentBushBlock(def, def.growth() == null ? GrowthDef.bush() : def.growth(), properties), ContentRegistry.MAIN));
+            case FLOWER -> List.of(new Created(id, new ContentBushBlock(def, GrowthDef.orBush(def), properties), ContentRegistry.MAIN));
             case CANE -> {
                 if (def.growth() == null) {
                     ContentLog.LOGGER.error("Block {} is a cane but has no 'growth' section, so it has no height to grow to", variant.id());
@@ -155,7 +149,7 @@ public final class ContentBlockTypes {
                 }
                 yield List.of(new Created(id, new ContentCaneBlock(def, def.growth(), properties), ContentRegistry.MAIN));
             }
-            case VINE -> List.of(new Created(id, new ContentVineBlock(def.growth() == null ? GrowthDef.bush() : def.growth(), properties.noOcclusion()), ContentRegistry.MAIN));
+            case VINE -> List.of(new Created(id, new ContentVineBlock(GrowthDef.orBush(def), properties.noOcclusion()), ContentRegistry.MAIN));
             case PORTAL -> {
                 if (def.portal() == null) {
                     ContentLog.LOGGER.error("Block {} is a portal but has no 'portal' section, so it has nowhere to lead", variant.id());
@@ -175,12 +169,12 @@ public final class ContentBlockTypes {
             case CROP -> null;
             case TORCH -> {
                 if (!entry.isMain()) { yield null; }
-                ContentRegistry.BlockEntry wall = ContentRegistry.block(ResourceLocation.fromNamespaceAndPath(entry.id().getNamespace(), entry.id().getPath() + "_wall"));
+                ContentRegistry.BlockEntry wall = ContentRegistry.block(ContentTypes.wallId(entry.id()));
                 yield wall == null ? new BlockItem(entry.block(), properties) : new StandingAndWallBlockItem(entry.block(), wall.block(), properties, Direction.DOWN);
             }
             case BANNER -> {
                 if (!entry.isMain()) { yield null; }
-                ContentRegistry.BlockEntry wall = ContentRegistry.block(ResourceLocation.fromNamespaceAndPath(entry.id().getNamespace(), entry.id().getPath() + "_wall"));
+                ContentRegistry.BlockEntry wall = ContentRegistry.block(ContentTypes.wallId(entry.id()));
                 yield wall == null ? new BlockItem(entry.block(), properties.stacksTo(16)) : new ContentBannerItem(entry.block(), wall.block(), properties.stacksTo(16));
             }
             case DOOR -> new DoubleHighBlockItem(entry.block(), properties);
@@ -194,8 +188,7 @@ public final class ContentBlockTypes {
     }
 
     static BlockState base(BlockDef def) {
-        ResourceLocation named = ResourceLocation.tryParse(def.modelBlock());
-        Block block = Registered.find(ForgeRegistries.BLOCKS, named);
+        Block block = Registered.block(def.modelBlock());
         return block == null || block == Blocks.AIR ? Blocks.STONE.defaultBlockState() : block.defaultBlockState();
     }
 

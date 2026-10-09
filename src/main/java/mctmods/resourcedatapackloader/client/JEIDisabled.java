@@ -14,7 +14,7 @@ import java.util.List;
 import javax.annotation.Nonnull;
 
 @SuppressWarnings("unused") @JeiPlugin public final class JEIDisabled implements IModPlugin {
-    private static final ResourceLocation UID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "disabled");
+    private static final ResourceLocation UID = ResourceDataPackLoader.id("disabled");
 
     @Override @Nonnull public ResourceLocation getPluginUid() { return UID; }
 

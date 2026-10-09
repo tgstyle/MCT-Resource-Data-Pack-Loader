@@ -1,5 +1,9 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -10,7 +14,6 @@ import java.util.function.Consumer;
 final class DownRecipes {
     private static final String TYPE = "type";
     private static final String CUSTOM_TYPE = "neoforge:ingredient_type";
-    private static final String COMPONENTS = "components";
     private static final List<String> SINGLE = List.of("ingredient", "base", "addition", "template");
     private static final List<String> NESTED = List.of("children", "base", "subtracted");
 
@@ -18,8 +21,8 @@ final class DownRecipes {
 
     static void recipe(JsonObject json, String file, Consumer<String> note) {
         if (!json.has(TYPE)) { return; }
-        String type = DownFixes.namespaced(DownFixes.string(json, TYPE));
-        if (!DownFixes.knownRecipe(type)) {
+        String type = namespaced(Json.text(json, TYPE));
+        if (DownFixes.unknownRecipe(type)) {
             dropped(json);
             note.accept("'" + file + "' is a " + type + " recipe, a type " + Port.Line.running().title() + " does not have, so it is left out");
             return;
@@ -73,7 +76,7 @@ final class DownRecipes {
             JsonElement value = entry.getValue();
             if (CUSTOM_TYPE.equals(key)) { continue; }
             if (NESTED.contains(key)) { out.add(key, ingredient(value, file, note)); }
-            else if (COMPONENTS.equals(key) && value.isJsonObject()) {
+            else if (CrossJson.COMPONENTS.equals(key) && value.isJsonObject()) {
                 JsonObject components = value.getAsJsonObject().deepCopy();
                 DownFixes.components(components, file, note);
                 out.add(key, components);

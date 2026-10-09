@@ -4,19 +4,11 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonObject;
-import net.minecraft.SharedConstants;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.packs.AbstractPackResources;
-import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.server.packs.metadata.MetadataSectionSerializer;
 import net.minecraft.server.packs.resources.IoSupplier;
-
-import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
@@ -24,16 +16,15 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class RDPLResourcePack implements PackResources {
+public final class RDPLResourcePack extends RDPLPackResources {
     public static final String ID = "RDPL";
     public static final String ID_OVERRIDING = "RDPL (overriding)";
     private static final String DEFAULT_DESCRIPTION = "Files loaded by Resource Data Pack Loader";
     private static final Set<String> TRACED = Collections.synchronizedSet(new HashSet<>());
-    private final PackType type;
     private final boolean overriding;
 
     public RDPLResourcePack(PackType type, boolean overriding) {
-        this.type = type;
+        super(type);
         this.overriding = overriding;
     }
 
@@ -41,16 +32,24 @@ public final class RDPLResourcePack implements PackResources {
 
     @Override @Nonnull public String packId() { return id(overriding); }
 
+    @Override @Nonnull protected String description() {
+        String description = PackManager.get().description();
+        return description == null ? DEFAULT_DESCRIPTION : description;
+    }
+
+    @Override protected void extend(JsonObject json) {
+        JsonObject language = type == PackType.CLIENT_RESOURCES ? PackManager.get().language() : null;
+        if (language != null) { json.add("language", language); }
+    }
+
     @Override @Nullable public IoSupplier<InputStream> getRootResource(@Nonnull String... elements) {
         String name = String.join("/", elements);
-        if (PACK_META.equals(name)) {
-            byte[] meta = meta().getBytes(StandardCharsets.UTF_8);
-            return () -> new ByteArrayInputStream(meta);
-        }
+        IoSupplier<InputStream> meta = metaFile(name);
+        if (meta != null) { return meta; }
         Path file = PackManager.get().packFile(name);
         if (file != null) { return IoSupplier.create(file); }
         byte[] icon = FallbackIcon.FILE.equals(name) ? FallbackIcon.bytes() : null;
-        return icon == null ? null : () -> new ByteArrayInputStream(icon);
+        return icon == null ? null : bytes(icon);
     }
 
     @Override @Nullable public IoSupplier<InputStream> getResource(@Nonnull PackType asked, @Nonnull ResourceLocation location) {
@@ -85,28 +84,4 @@ public final class RDPLResourcePack implements PackResources {
     }
 
     @Override @Nonnull public Set<String> getNamespaces(@Nonnull PackType asked) { return PackManager.get().getNamespaces(asked, overriding); }
-
-    @Override @Nullable public <T> T getMetadataSection(@Nonnull MetadataSectionSerializer<T> serializer) throws IOException {
-        return metadata(serializer, meta());
-    }
-
-    @Nullable static <T> T metadata(MetadataSectionSerializer<T> serializer, String meta) throws IOException {
-        try (InputStream stream = new ByteArrayInputStream(meta.getBytes(StandardCharsets.UTF_8))) { return AbstractPackResources.getMetadataFromStream(serializer, stream); }
-    }
-
-    private String meta() {
-        String description = PackManager.get().description();
-        JsonObject pack = new JsonObject();
-        pack.addProperty("pack_format", SharedConstants.getCurrentVersion().getPackVersion(type));
-        pack.addProperty("description", description == null ? DEFAULT_DESCRIPTION : description);
-        JsonObject json = new JsonObject();
-        json.add("pack", pack);
-        JsonObject language = type == PackType.CLIENT_RESOURCES ? PackManager.get().language() : null;
-        if (language != null) { json.add("language", language); }
-        return json.toString();
-    }
-
-    @Override public boolean isBuiltin() { return false; }
-
-    @Override public void close() {}
 }

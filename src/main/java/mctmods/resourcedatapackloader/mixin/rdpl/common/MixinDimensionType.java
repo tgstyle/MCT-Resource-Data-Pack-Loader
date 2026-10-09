@@ -13,6 +13,5 @@ import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
     @Override public void rdpl$dayLength(long ticks) { rdpl$dayLength = ticks; }
 
-    @ModifyConstant(method = "timeOfDay(J)F", constant = @Constant(doubleValue = 24000.0D))
-    private double rdpl$ownDayLength(double vanilla) { return rdpl$dayLength > 0L ? rdpl$dayLength : vanilla; }
+    @ModifyConstant(method = "timeOfDay(J)F", constant = @Constant(doubleValue = 24000.0D)) private double rdpl$ownDayLength(double vanilla) { return rdpl$dayLength > 0L ? rdpl$dayLength : vanilla; }
 }

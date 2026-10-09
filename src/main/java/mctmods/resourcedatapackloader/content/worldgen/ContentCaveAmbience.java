@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
 
@@ -51,7 +52,7 @@ public final class ContentCaveAmbience {
     private static void sound(ServerPlayer player, CaveRegionDef region, RandomSource random) {
         Holder<SoundEvent> sound = SOUNDS.computeIfAbsent(region.ambientSound(), ContentCaveAmbience::soundNamed).orElse(null);
         if (sound == null) {
-            if (TOLD.add(region.key() + " sound")) { ContentLog.LOGGER.error("Cave region {} names the ambient sound {}, which nothing registers, so the region stays quiet", region.key(), region.ambientSound()); }
+            ContentLog.LOGGER.errorOnce(TOLD, region.key() + " sound", "Cave region {} names the ambient sound {}, which nothing registers, so the region stays quiet", region.key(), region.ambientSound());
             return;
         }
         player.connection.send(new ClientboundSoundPacket(sound, SoundSource.AMBIENT, player.getX(), player.getEyeY(), player.getZ(), 1.0F, 0.8F + random.nextFloat() * 0.4F, random.nextLong()));
@@ -60,7 +61,7 @@ public final class ContentCaveAmbience {
     private static void particles(ServerPlayer player, ServerLevel level, CaveRegionDef region, RandomSource random) {
         SimpleParticleType type = PARTICLES.computeIfAbsent(region.particle(), ContentCaveAmbience::particle).orElse(null);
         if (type == null) {
-            if (TOLD.add(region.key() + " particle")) { ContentLog.LOGGER.error("Cave region {} names the particle {}, which is not a particle the game shows without settings of its own, so the region shows none", region.key(), region.particle()); }
+            ContentLog.LOGGER.errorOnce(TOLD, region.key() + " particle", "Cave region {} names the particle {}, which is not a particle the game shows without settings of its own, so the region shows none", region.key(), region.particle());
             return;
         }
         int tries = Mth.clamp(Math.round(POSITIONS_PER_TICK * region.particleChance() * EVERY), 1, MOST_PARTICLES);
@@ -72,10 +73,7 @@ public final class ContentCaveAmbience {
         }
     }
 
-    private static Optional<Holder<SoundEvent>> soundNamed(String name) {
-        ResourceLocation id = ResourceLocation.tryParse(name);
-        return id == null ? Optional.empty() : ForgeRegistries.SOUND_EVENTS.getHolder(id);
-    }
+    private static Optional<Holder<SoundEvent>> soundNamed(String name) { return Optional.ofNullable(ContentSounds.holder(name)); }
 
     private static Optional<SimpleParticleType> particle(String name) {
         ParticleType<?> found = Registered.find(ForgeRegistries.PARTICLE_TYPES, ResourceLocation.tryParse(name));

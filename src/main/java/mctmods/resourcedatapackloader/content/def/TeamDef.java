@@ -22,7 +22,5 @@ public record TeamDef(String name, String displayName, ChatFormatting color, Str
 
     public boolean standsIn() { return !standIn.isEmpty() && standInAt != null; }
 
-    public boolean holds(double x, double y, double z) {
-        return spawnBox != null && x >= spawnBox[0] && x <= spawnBox[3] && y >= spawnBox[1] && y <= spawnBox[4] && z >= spawnBox[2] && z <= spawnBox[5];
-    }
+    public boolean holds(double x, double y, double z) { return spawnBox != null && x >= spawnBox[0] && x <= spawnBox[3] && y >= spawnBox[1] && y <= spawnBox[4] && z >= spawnBox[2] && z <= spawnBox[5]; }
 }

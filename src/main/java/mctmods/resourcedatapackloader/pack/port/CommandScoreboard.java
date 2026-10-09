@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.pack.port;
 
-import com.google.gson.JsonPrimitive;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -27,7 +26,7 @@ final class CommandScoreboard {
     private static String objectives(String[] args, String action) {
         return switch (action) {
             case "list" -> "scoreboard objectives list";
-            case "add" -> "scoreboard objectives add " + Commands.at(args, 3) + " " + criterion(Commands.at(args, 4)) + (args.length > 5 ? " " + Commands.GSON.toJson(new JsonPrimitive(Commands.rest(args, 5))) : "");
+            case "add" -> "scoreboard objectives add " + Commands.at(args, 3) + " " + criterion(Commands.at(args, 4)) + (args.length > 5 ? " " + Commands.quote(Commands.rest(args, 5)) : "");
             case "remove" -> "scoreboard objectives remove " + Commands.at(args, 3);
             case "setdisplay" -> "scoreboard objectives setdisplay " + ("belowname".equalsIgnoreCase(Commands.at(args, 3)) ? BELOW_NAME : args[3]) + (args.length > 4 ? " " + args[4] : "");
             default -> throw new Commands.Kept("scoreboard objectives has no action named " + args[2]);
@@ -69,8 +68,8 @@ final class CommandScoreboard {
     }
 
     private static String tested(String least, @Nullable String most) {
-        String low = "*".equals(least) ? null : String.valueOf(Commands.number(least));
-        String high = most == null || "*".equals(most) ? null : String.valueOf(Commands.number(most));
+        String low = "*".equals(least) ? null : Commands.numberText(least);
+        String high = most == null || "*".equals(most) ? null : Commands.numberText(most);
         if (low == null && high == null) { return Integer.MIN_VALUE + ".."; }
         return CommandSelectors.bounds(low, high);
     }
@@ -78,7 +77,7 @@ final class CommandScoreboard {
     private static String teams(String[] args, String action, Ported pack) {
         return switch (action) {
             case "list" -> "team list" + (args.length > 3 ? " " + args[3] : "");
-            case "add" -> "team add " + Commands.at(args, 3) + (args.length > 4 ? " " + Commands.GSON.toJson(new JsonPrimitive(Commands.rest(args, 4))) : "");
+            case "add" -> "team add " + Commands.at(args, 3) + (args.length > 4 ? " " + Commands.quote(Commands.rest(args, 4)) : "");
             case "remove", "empty" -> "team " + action + " " + Commands.at(args, 3);
             case "join" -> {
                 Commands.need(args, 4);

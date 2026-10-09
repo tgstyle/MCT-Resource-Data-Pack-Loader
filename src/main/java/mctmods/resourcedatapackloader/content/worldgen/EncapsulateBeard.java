@@ -17,7 +17,6 @@ import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pools.JigsawJunction;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraftforge.common.world.PieceBeardifierModifier;
-
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;

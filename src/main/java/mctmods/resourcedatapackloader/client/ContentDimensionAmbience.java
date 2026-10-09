@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
@@ -36,7 +37,7 @@ public final class ContentDimensionAmbience {
     private ContentDimensionAmbience() {}
 
     @Nullable private static Vanilla vanilla(@Nullable Level level) {
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         AmbienceDef ambience = def == null ? null : def.traits().ambience();
         return ambience == null ? null : VANILLA.computeIfAbsent(ambience, held -> new Vanilla(def.key(), held));
     }
@@ -84,13 +85,14 @@ public final class ContentDimensionAmbience {
     }
 
     @Nullable private static RainDef rain(@Nullable Level level) {
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         return def == null ? null : def.traits().rain();
     }
 
     @Nullable private static Holder<SoundEvent> sound(@Nullable ResourceLocation name) {
         if (name == null) { return null; }
-        return ForgeRegistries.SOUND_EVENTS.getHolder(name).orElseGet(() -> Holder.direct(SoundEvent.createVariableRangeEvent(name)));
+        Holder<SoundEvent> registered = ContentSounds.holder(name);
+        return registered == null ? Holder.direct(SoundEvent.createVariableRangeEvent(name)) : registered;
     }
 
     private static boolean tints(@Nullable ParticleType<?> type) { return type == ParticleTypes.ENTITY_EFFECT || type == ParticleTypes.AMBIENT_ENTITY_EFFECT; }

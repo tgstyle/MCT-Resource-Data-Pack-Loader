@@ -14,6 +14,5 @@ import java.util.List;
 @Mixin(PackRepository.class) public abstract class MixinPackRepository {
     @Shadow private List<Pack> selected;
 
-    @Inject(method = {"reload", "setSelected"}, at = @At("TAIL"))
-    private void rdpl$seatPacks(CallbackInfo ci) { selected = PackFinder.seat(selected); }
+    @Inject(method = {"reload", "setSelected"}, at = @At("TAIL")) private void rdpl$seatPacks(CallbackInfo ci) { selected = PackFinder.seat(selected); }
 }

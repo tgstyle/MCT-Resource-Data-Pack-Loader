@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.Item;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -15,7 +16,7 @@ public record OrderDef(String name, Job job, @Nullable TagKey<Item> blocks, int 
 
     public int reach(int tier) {
         if (areaByTier.isEmpty()) { return area; }
-        return areaByTier.get(Math.max(0, Math.min(tier, areaByTier.size() - 1)));
+        return areaByTier.get(Mth.clamp(tier, 0, areaByTier.size() - 1));
     }
 
     public enum Job { GATHER, MINE, FARM, HAUL }

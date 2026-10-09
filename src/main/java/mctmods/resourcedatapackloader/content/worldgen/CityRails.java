@@ -3,13 +3,14 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Medians;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
 import net.minecraft.core.Vec3i;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,6 +21,8 @@ import javax.annotation.Nullable;
 
 public final class CityRails {
     public static final int CLEAR = 4;
+    public static final int BANK_REACH = 4;
+    static final int LEG = 4;
     private static final int COURSES = 2;
     static final int MARGIN = 7;
     static final int LEAST_OPEN = 8;
@@ -27,7 +30,7 @@ public final class CityRails {
     static final int FILL = 3;
     private static final int SLIDE = 48;
     static final int NEAR = 8;
-    private static final long SALT = 0x1F0D3F5B7C9E1A37L ^ 0x5EED5L;
+    private static final long SALT = CityPlan.SALT ^ 0x5EED5L;
     private static final Map<Long, List<CityPlan.Rail>> PLACED = new ConcurrentHashMap<>();
     private static final Map<Long, List<CityPlan.Rail>> FITTED = new ConcurrentHashMap<>();
     static final Map<Long, CityPlan.Town> TOWNS = new ConcurrentHashMap<>();
@@ -58,23 +61,25 @@ public final class CityRails {
         return null;
     }
 
-    public record Laid(CityPlan.Rail rail, int start, int[] profile, int[] ground, boolean[] bridged, boolean[] tunnel, boolean[] bored, boolean[] crossed, boolean[] frames, @Nullable int[] rising, List<Station> stations, List<Station> claimed) {
-        public int level(int row) { return profile[Mth.clamp(row - start, 0, profile.length - 1)]; }
+    public interface Track {
+        int start();
 
-        public boolean within(int row) { return row >= start && row < start + profile.length; }
+        int[] profile();
 
+        boolean[] bored();
+
+        default int level(int row) { return profile()[Mth.clamp(row - start(), 0, profile().length - 1)]; }
+
+        default boolean within(int row) { return row >= start() && row < start() + profile().length; }
+
+        default boolean boredAt(int row) { return within(row) && bored()[row - start()]; }
+    }
+
+    public record Laid(CityPlan.Rail rail, int start, int[] profile, boolean[] bridged, boolean[] tunnel, boolean[] bored, boolean[] crossed, boolean[] frames, @Nullable int[] rising, List<Station> stations, List<Station> claimed) implements Track {
         public boolean tunnelAt(int row) { return within(row) && tunnel[row - start]; }
-
-        public boolean boredAt(int row) { return within(row) && bored[row - start]; }
     }
 
-    record Bed(int start, int[] profile, boolean[] bored) {
-        int level(int row) { return profile[Mth.clamp(row - start, 0, profile.length - 1)]; }
-
-        boolean within(int row) { return row >= start && row < start + profile.length; }
-
-        boolean boredAt(int row) { return within(row) && bored[row - start]; }
-    }
+    record Bed(int start, int[] profile, boolean[] bored) implements Track {}
 
     public static void forget() {
         PLACED.clear();
@@ -97,11 +102,17 @@ public final class CityRails {
         return made;
     }
 
+    static boolean[] bridgedRows(int[] profile, int[] floor) {
+        boolean[] bridged = new boolean[profile.length];
+        for (int at = 0; at < profile.length; at++) { bridged[at] = floor[at] == Integer.MIN_VALUE || profile[at] > floor[at] + FILL; }
+        return bridged;
+    }
+
     static int spacing(boolean sub) { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwaySpacing" : "villageRailSpacing", sub ? Config.worldgen.villageSubwaySpacing() : Config.worldgen.villageRailSpacing())); }
 
     static int lines(boolean sub) { return Math.max(0, ContentControl.number(ContentControl.VILLAGES, sub ? "villageSubwayLines" : "villageRailLines", sub ? Config.worldgen.villageSubwayLines() : Config.worldgen.villageRailLines())); }
 
-    static int clear(boolean sub) { return sub ? 0 : CityPlan.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + CityPlan.streetFullWidth() + (CityPlan.railWidth(false) - 1) / 2 + 2; }
+    static int clear(boolean sub) { return sub ? 0 : CityPlan.plazaReach() + Math.max(13, ContentVillages.largestPlot()) + CityPlan.fullWidth() + railHalf(false) + 2; }
 
     static List<CityPlan.Rail> staged(CityGround ground, CityPlan.Town town) {
         List<CityPlan.Rail> held = STAGED.get(town.key());
@@ -169,7 +180,11 @@ public final class CityRails {
         return kept == null ? made : kept;
     }
 
-    public static int halfOf(CityPlan.Rail rail) { return (rail.width() - 1) / 2 + (rail.subway() ? ContentCity.stationReach() : 0); }
+    public static int halfWidth(int width) { return (width - 1) / 2; }
+
+    public static int railHalf(boolean sub) { return halfWidth(CityPlan.railWidth(sub)); }
+
+    public static int halfOf(CityPlan.Rail rail) { return halfWidth(rail.width()) + (rail.subway() ? ContentCity.stationReach() : 0); }
 
     @Nullable static Bed bed(CityGround ground, CityPlan.Rail rail) {
         Bed held = BEDS.get(rail);
@@ -199,12 +214,7 @@ public final class CityRails {
                 if (sampled < sea - 1) { continue; }
                 taken[count++] = sampled;
             }
-            if (count * 2 <= wide) {
-                floor[at] = Integer.MIN_VALUE;
-                continue;
-            }
-            Arrays.sort(taken, 0, count);
-            floor[at] = taken[count / 2];
+            floor[at] = Medians.majority(taken, count, wide);
         }
         return floor;
     }
@@ -215,8 +225,7 @@ public final class CityRails {
             for (int across = CityPlan.districtOf(acrossLeast, !alongX); across <= CityPlan.districtOf(acrossMost, !alongX); across++) {
                 CityPlan plan = CityPlan.of(ground, alongX ? along : across, alongX ? across : along);
                 if (plan == null || plan.town() == null || (town != null && plan.town().key() != town.key())) { continue; }
-                seen.addAll(plan.alongX());
-                seen.addAll(plan.alongZ());
+                seen.addAll(CityLines.of(plan));
                 for (BoundingBox box : plan.wellBoxes()) {
                     if (!wells.contains(box)) { wells.add(box); }
                 }
@@ -280,7 +289,7 @@ public final class CityRails {
         }
         int chance = ContentCity.subwaySurfaces();
         if (chance <= 0) { return null; }
-        RandomSource roll = RandomSource.create(ground.seed() ^ SALT ^ (rail.at() * 341873128712L + (rail.alongX() ? 11L : 13L)));
+        RandomSource roll = RandomSource.create(ground.seed() ^ SALT ^ (rail.at() * SeededRandom.ACROSS + (rail.alongX() ? 11L : 13L)));
         if (roll.nextInt(100) >= chance) {
             ContentLog.LOGGER.debug("Subway line at {} rolled to stay buried at {} in a hundred", rail.middle(), chance);
             return null;
@@ -393,7 +402,7 @@ public final class CityRails {
 
     public static boolean onRoadOrWell(List<CityPlan.Line> lines, List<BoundingBox> wells, BoundingBox box) {
         for (CityPlan.Line line : lines) {
-            if (box.intersects(lineBox(line))) { return true; }
+            if (box.intersects(line.box())) { return true; }
         }
         for (BoundingBox well : wells) {
             if (box.intersects(well)) { return true; }
@@ -404,15 +413,10 @@ public final class CityRails {
     public static boolean onPlaza(List<BoundingBox> wells, BoundingBox box) {
         int reach = CityPlan.plazaReach();
         for (BoundingBox well : wells) {
-            if (box.maxX() < well.minX() - reach || box.minX() > well.maxX() + reach || box.maxZ() < well.minZ() - reach || box.minZ() > well.maxZ() + reach) { continue; }
-            return true;
+            if (box.intersects(well.minX() - reach, well.minZ() - reach, well.maxX() + reach, well.maxZ() + reach)) { return true; }
         }
         return false;
     }
-
-    public static BoundingBox lineBox(CityPlan.Line line) { return line.alongX() ? new BoundingBox(line.from(), 0, line.at(), line.to(), 0, line.last()) : new BoundingBox(line.at(), 0, line.from(), line.last(), 0, line.to()); }
-
-    static BoundingBox railBox(CityPlan.Rail rail) { return rail.alongX() ? new BoundingBox(rail.from(), 0, rail.at(), rail.to(), 0, rail.last()) : new BoundingBox(rail.at(), 0, rail.from(), rail.last(), 0, rail.to()); }
 
     static boolean crosses(CityPlan.Rail rail, BoundingBox box) {
         boolean boxAlongX = box.maxX() - box.minX() >= box.maxZ() - box.minZ();
@@ -452,7 +456,7 @@ public final class CityRails {
     static int flatAt(CityGround ground, CityPlan.Line line, int row, int run) {
         if (run <= 1 || CityPlan.underwater(ground, line, row)) { return Integer.MIN_VALUE; }
         int grid = row - Math.floorMod(row, run);
-        int center = line.at() + (line.width() - 1) / 2;
+        int center = line.middle();
         int[] taken = new int[3];
         int count = 0;
         for (int across = center - 1; across <= center + 1; across++) {
@@ -460,9 +464,7 @@ public final class CityRails {
             if (found < ground.sea() - 1) { continue; }
             taken[count++] = found;
         }
-        if (count == 0) { return Integer.MIN_VALUE; }
-        Arrays.sort(taken, 0, count);
-        return taken[count / 2];
+        return Medians.of(taken, count);
     }
 
     static int alongLine(CityGround ground, CityPlan.Line line, int row) {
@@ -471,11 +473,12 @@ public final class CityRails {
             int across = line.at() + at;
             taken[at] = line.alongX() ? ground.surface(row, across) : ground.surface(across, row);
         }
-        Arrays.sort(taken);
-        return taken[taken.length / 2];
+        return Medians.of(taken, taken.length);
     }
 
     public static List<Laid> subways(CityGround ground, int leastX, int leastZ, int mostX, int mostZ) { return ContentCity.subways() ? near(ground, leastX, leastZ, mostX, mostZ, true) : new ArrayList<>(); }
+
+    public static List<Laid> subwaysAround(CityGround ground, BoundingBox held) { return subways(ground, held.minX() - BANK_REACH, held.minZ() - BANK_REACH, held.maxX() + BANK_REACH, held.maxZ() + BANK_REACH); }
 
     public static List<Laid> railways(CityGround ground, int leastX, int leastZ, int mostX, int mostZ) { return near(ground, leastX, leastZ, mostX, mostZ, false); }
 
@@ -507,7 +510,7 @@ public final class CityRails {
         CityPlan.Rail rail = laid.rail();
         int along = rail.alongX() ? x : z;
         int across = rail.alongX() ? z : x;
-        if (along < rail.from() || along > rail.to() || Math.abs(across - rail.middle()) > (CityPlan.railWidth(rail.subway()) - 1) / 2 + 1) { return Integer.MIN_VALUE; }
+        if (along < rail.from() || along > rail.to() || Math.abs(across - rail.middle()) > railHalf(rail.subway()) + 1) { return Integer.MIN_VALUE; }
         return laid.level(along);
     }
 
@@ -528,12 +531,12 @@ public final class CityRails {
         return false;
     }
 
-    public static boolean underBed(List<Laid> lines, int x, int y, int z) {
+    public static boolean notUnderBed(List<Laid> lines, int x, int y, int z) {
         for (Laid laid : lines) {
             int level = boreLevel(laid, x, z);
-            if (y <= level && y >= level - CityPlotGround.FILL_UNDER) { return true; }
+            if (y <= level && y >= level - CityPlotGround.FILL_UNDER) { return false; }
         }
-        return false;
+        return true;
     }
 
     public static int boreRoof(List<Laid> subways, int x, int z) {
@@ -543,6 +546,11 @@ public final class CityRails {
             if (level != Integer.MIN_VALUE) { roof = Math.max(roof, level + CLEAR + 1); }
         }
         return roof;
+    }
+
+    public static int fillFloor(List<Laid> subways, int x, int z, int deep) {
+        int roof = boreRoof(subways, x, z);
+        return roof == Integer.MIN_VALUE ? deep : Math.max(deep, roof + 1);
     }
 
     public static boolean givesWay(Collection<Laid> tracks, CityPlan.Plot plot, BoundingBox met, int floor) {

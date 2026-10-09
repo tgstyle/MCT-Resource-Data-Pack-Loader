@@ -6,5 +6,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(StructureManager.class) public interface IStructureManager {
-    @Accessor("level") LevelAccessor rdpl$level();
+    @Accessor("level") LevelAccessor rdpl$getLevel();
 }

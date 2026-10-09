@@ -30,9 +30,7 @@ public final class ContentMaterials {
 
     private ContentMaterials() {}
 
-    public static Tier tier(MaterialDef def) {
-        return TIERS.computeIfAbsent(def.key(), key -> new ForgeTier(def.harvestLevel(), def.durability(), def.efficiency(), def.damage(), def.enchantability(), needs(def.harvestLevel()), () -> repair(def)));
-    }
+    public static Tier tier(MaterialDef def) { return TIERS.computeIfAbsent(def.key(), key -> new ForgeTier(def.harvestLevel(), def.durability(), def.efficiency(), def.damage(), def.enchantability(), needs(def.harvestLevel()), () -> repair(def))); }
 
     public static ArmorMaterial armor(MaterialDef def) { return ARMORS.computeIfAbsent(def.key(), key -> new Armor(def)); }
 
@@ -66,7 +64,7 @@ public final class ContentMaterials {
 
         @Override @Nonnull public SoundEvent getEquipSound() { return sound(def.equipSound()); }
 
-        @Override @Nonnull public Ingredient getRepairIngredient() { return Ingredient.EMPTY; }
+        @Override @Nonnull public Ingredient getRepairIngredient() { return repair(def); }
 
         @Override @Nonnull public String getName() { return def.armorTexture(); }
 

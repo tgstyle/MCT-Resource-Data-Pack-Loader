@@ -30,9 +30,9 @@ public final class ContentTreeTrunk extends TrunkPlacer {
 
     public ContentTreeTrunk(int baseHeight, int heightRandA, int heightRandB) { super(baseHeight, heightRandA, heightRandB); }
 
-    @Nonnull @Override protected TrunkPlacerType<?> type() { return TYPE.get(); }
+    @Override @Nonnull protected TrunkPlacerType<?> type() { return TYPE.get(); }
 
-    @Nonnull @Override public List<FoliagePlacer.FoliageAttachment> placeTrunk(@Nonnull LevelSimulatedReader level, @Nonnull BiConsumer<BlockPos, BlockState> setter, @Nonnull RandomSource random, int height, @Nonnull BlockPos position, @Nonnull TreeConfiguration config) {
+    @Override @Nonnull public List<FoliagePlacer.FoliageAttachment> placeTrunk(@Nonnull LevelSimulatedReader level, @Nonnull BiConsumer<BlockPos, BlockState> setter, @Nonnull RandomSource random, int height, @Nonnull BlockPos position, @Nonnull TreeConfiguration config) {
         BlockPos below = position.below();
         BlockState soil = ((LevelReader) level).getBlockState(below);
         if (!soil.onTreeGrow((LevelReader) level, setter, random, below, config) && (soil.is(Blocks.GRASS_BLOCK) || soil.is(Blocks.FARMLAND))) { setter.accept(below, config.dirtProvider.getState(random, below)); }

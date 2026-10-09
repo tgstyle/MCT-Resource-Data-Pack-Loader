@@ -1,11 +1,14 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.refuse;
+
 import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.ContentTurns;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Scores;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -66,11 +69,6 @@ final class CommandGames {
 
     private static String sub(String[] args) { return args.length > 1 && ("deck".equals(args[0]) || "board".equals(args[0])) ? args[0] + " " + args[1] : args[0]; }
 
-    private static int refuse(CommandSourceStack source, String text) {
-        source.sendFailure(Component.literal(text));
-        return 0;
-    }
-
     private static int run(CommandSourceStack source, String name, String line) {
         CommandShared.ran(source, name, "game " + line);
         String[] args = line.trim().split("\\s+");
@@ -100,7 +98,7 @@ final class CommandGames {
             plain.add(args[at]);
         }
         if ("last".equals(args[0])) { return last(source, plain); }
-        if (store != null && !ContentDice.keeps(server, store)) { return refuse(source, ContentDice.words(source.getPlayer(), "noobjective", "objective", store)); }
+        if (store != null && ContentDice.lacks(server, store)) { return refuse(source, ContentDice.words(source.getPlayer(), "noobjective", "objective", store)); }
         ContentDice.Result result = roll(server, source, args[0], plain);
         if (result == null) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
         if (result.refused()) { return refuse(source, ContentDice.text(source.getPlayer(), result, source.getTextName())); }
@@ -143,8 +141,9 @@ final class CommandGames {
     private static int last(CommandSourceStack source, List<String> plain) {
         int count = 10;
         if (!plain.isEmpty()) {
-            try { count = Math.max(1, Math.min(MOST_SHOWN, Integer.parseInt(plain.get(0)))); }
-            catch (NumberFormatException notNumber) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
+            Integer asked = Settings.clamped(plain.get(0), 1, MOST_SHOWN);
+            if (asked == null) { return refuse(source, ContentDice.words(source.getPlayer(), "usage")); }
+            count = asked;
         }
         List<String> recent = ContentDice.recent(count);
         if (recent.isEmpty()) { CommandShared.send(source, ChatFormatting.GRAY, Component.literal(ContentDice.words(source.getPlayer(), "lastnone"))); }
@@ -163,9 +162,7 @@ final class CommandGames {
     private static List<String> offered(CommandSourceStack source, List<String> words) {
         if (words.isEmpty()) {
             List<String> open = new ArrayList<>();
-            for (String roll : ROLLS) {
-                if (source.hasPermission(lowestOf(roll))) { open.add(roll); }
-            }
+            for (String roll : ROLLS) { if (source.hasPermission(lowestOf(roll))) { open.add(roll); } }
             return open;
         }
         if ("board".equals(words.get(0))) { return CommandBoard.offered(source.getServer(), words); }

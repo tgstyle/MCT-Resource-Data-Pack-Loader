@@ -10,7 +10,6 @@ import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,30 +26,24 @@ import java.util.List;
 import java.util.Map;
 
 public final class LootInjections {
-    public static final String TARGET = "target";
-    public static final String POOLS = "pools";
-    private static final Gson GSON = new GsonBuilder().create();
+    private static final String TARGET = "target";
+    private static final String POOLS = "pools";
     private static final Gson LOOT = Deserializers.createLootTableSerializer().create();
     private static final Map<ResourceLocation, List<JsonElement>> BY_TABLE = new LinkedHashMap<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private LootInjections() {}
 
-    public static void reload() {
+    private static void reload() {
         BY_TABLE.clear();
         GENERATION.stale();
         if (Config.data.lootInjectionsOff()) { return; }
         int[] count = new int[1];
-        Json.eachFile(PackManager.LOOT_INJECTIONS, "loot injection", (key, contents) -> read(key, contents, count));
+        Json.eachObject(PackManager.LOOT_INJECTIONS, "loot injection", (key, json) -> read(key, json, count));
         if (count[0] > 0) { Summary.info("loot.injected", "Loaded " + count[0] + " loot pool injection(s) across " + BY_TABLE.size() + " table(s)"); }
     }
 
-    private static void read(ResourceLocation key, String contents, int[] count) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Loot injection {} is empty, ignoring it", key);
-            return;
-        }
+    private static void read(ResourceLocation key, JsonObject json, int[] count) {
         String target = GsonHelper.getAsString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
@@ -72,10 +65,15 @@ public final class LootInjections {
         }
     }
 
+    private static synchronized List<JsonElement> poolsFor(ResourceLocation name) {
+        if (GENERATION.stale()) { reload(); }
+        List<JsonElement> pools = BY_TABLE.get(name);
+        return pools == null ? null : List.copyOf(pools);
+    }
+
     public static void onLootTableLoad(LootTableLoadEvent event) {
         if (Config.data.lootInjectionsOff()) { return; }
-        if (GENERATION.stale()) { reload(); }
-        List<JsonElement> pools = BY_TABLE.get(event.getName());
+        List<JsonElement> pools = poolsFor(event.getName());
         if (pools == null) { return; }
         LootTable table = event.getTable();
         ResourceLocation synthetic = ResourceLocation.fromNamespaceAndPath(event.getName().getNamespace(), event.getName().getPath() + "_rdpl_injection");

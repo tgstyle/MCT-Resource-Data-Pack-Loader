@@ -1,17 +1,19 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardIds;
 import mctmods.resourcedatapackloader.content.def.AnvilDef;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
+import mctmods.resourcedatapackloader.content.util.ItemUseGate;
+import mctmods.resourcedatapackloader.content.util.TellThrottle;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Advancements;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.ChatFormatting;
@@ -31,6 +33,7 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.AnvilBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.level.block.state.BlockState;
@@ -39,22 +42,18 @@ import net.minecraftforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.AttackEntityEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
 
 public final class ContentAnvils {
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ItemStack, AnvilDef> OFFERED = Collections.synchronizedMap(new WeakHashMap<>());
     private static final int TOLD_EVERY = 40;
     private static final float BREAK_CHANCE = 0.12F;
@@ -64,7 +63,7 @@ public final class ContentAnvils {
     private static final Map<AnvilDef, List<ItemStack>> WITH = new IdentityHashMap<>();
     private static final Map<AnvilDef, ItemStack> RESULTS = new IdentityHashMap<>();
     private static final Map<AnvilDef, Map<Enchantment, Integer>> ENCHANTMENTS = new IdentityHashMap<>();
-    private static final Map<String, Long> TOLD = new HashMap<>();
+    private static final TellThrottle TOLD = new TellThrottle(TOLD_EVERY);
 
     private ContentAnvils() {}
 
@@ -105,11 +104,8 @@ public final class ContentAnvils {
     }
 
     @Nullable private static AnvilDef read(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Anvil work {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "anvil work");
+        if (json == null) { return null; }
         List<String> item = itemsOf(json, "item");
         if (item.isEmpty()) {
             ContentLog.LOGGER.error("Anvil work {} names no item, ignoring it", key);
@@ -126,7 +122,7 @@ public final class ContentAnvils {
                 ContentLog.LOGGER.error("Anvil work {} gives the enchantment {} something that is not a level, skipping it", key, entry.getKey());
                 continue;
             }
-            enchantments.put(entry.getKey().trim().toLowerCase(Locale.ROOT), Mth.clamp(entry.getValue().getAsInt(), 1, MOST_LEVEL));
+            enchantments.put(Settings.lower(entry.getKey()),Mth.clamp(entry.getValue().getAsInt(), 1, MOST_LEVEL));
         }
         return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), resultOf(json), countOf(json, "result"), Math.max(1, GsonHelper.getAsInt(json, "levels", 1)),
                 enchantments, GsonHelper.getAsString(json, "grants", "").trim(), GsonHelper.getAsBoolean(json, "locks", false));
@@ -183,9 +179,7 @@ public final class ContentAnvils {
         return null;
     }
 
-    private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) {
-        return any(left, ITEMS.get(def)) && left.getCount() >= def.itemCount() && any(right, WITH.get(def)) && right.getCount() >= def.withCount();
-    }
+    private static boolean pairs(AnvilDef def, ItemStack left, ItemStack right) { return any(left, ITEMS.get(def)) && left.getCount() >= def.itemCount() && any(right, WITH.get(def)) && right.getCount() >= def.withCount(); }
 
     private static ItemStack worked(AnvilDef def, ItemStack left) {
         ItemStack output = left.copy();
@@ -245,7 +239,7 @@ public final class ContentAnvils {
         for (ItemEntity dropped : mob.level().getEntitiesOfClass(ItemEntity.class, mob.getBoundingBox().inflate(1.0D, 0.5D, 1.0D))) {
             if (!dropped.isAlive() || dropped.hasPickUpDelay()) { continue; }
             ItemStack stack = dropped.getItem();
-            if (!paysFor(stack)) { continue; }
+            if (ignores(stack)) { continue; }
             ItemStack right = mob.getOffhandItem();
             int room = right.isEmpty() ? stack.getMaxStackSize() : ItemHandlerHelper.canItemStacksStack(right, stack) ? right.getMaxStackSize() - right.getCount() : 0;
             int taken = Math.min(room, stack.getCount());
@@ -259,11 +253,11 @@ public final class ContentAnvils {
         }
     }
 
-    private static boolean paysFor(ItemStack stack) {
+    private static boolean ignores(ItemStack stack) {
         for (AnvilDef def : DEFS) {
-            if (any(stack, WITH.get(def))) { return true; }
+            if (any(stack, WITH.get(def))) { return false; }
         }
-        return false;
+        return true;
     }
 
     public static void work(Mob mob, AnvilDef def, BlockPos anvil) {
@@ -287,7 +281,7 @@ public final class ContentAnvils {
                 level.levelEvent(LevelEvent.SOUND_ANVIL_BROKEN, anvil, 0);
             }
             else {
-                level.setBlock(anvil, worn, 2);
+                level.setBlock(anvil, worn, Block.UPDATE_CLIENTS);
                 level.levelEvent(LevelEvent.SOUND_ANVIL_USED, anvil, 0);
             }
         }
@@ -321,26 +315,16 @@ public final class ContentAnvils {
 
     public static void onHeld(LivingEquipmentChangeEvent event) {
         if (DEFS.isEmpty() || event.getSlot() != EquipmentSlot.MAINHAND || !(event.getEntity() instanceof ServerPlayer player)) { return; }
-        AnvilDef def = holding(event.getTo());
-        if (def == null || !def.locks() || def.grants().isEmpty() || Advancements.has(player, def.grants())) { return; }
-        tell(player, def);
+        locked(player, event.getTo());
     }
 
-    public static void onAttack(AttackEntityEvent event) {
-        if (locked(event.getEntity(), event.getEntity().getMainHandItem())) { event.setCanceled(true); }
-    }
+    public static void onAttack(AttackEntityEvent event) { ItemUseGate.cancel(event, locked(event.getEntity(), event.getEntity().getMainHandItem())); }
 
-    public static void onUse(PlayerInteractEvent.RightClickItem event) {
-        if (locked(event.getEntity(), event.getItemStack())) { event.setCanceled(true); }
-    }
+    public static void onUse(PlayerInteractEvent.RightClickItem event) { ItemUseGate.cancel(event, locked(event.getEntity(), event.getItemStack())); }
 
-    public static void onUseOn(PlayerInteractEvent.RightClickBlock event) {
-        if (locked(event.getEntity(), event.getItemStack())) { event.setUseItem(Event.Result.DENY); }
-    }
+    public static void onUseOn(PlayerInteractEvent.RightClickBlock event) { ItemUseGate.denyUse(event, locked(event.getEntity(), event.getItemStack())); }
 
-    public static void onDig(PlayerInteractEvent.LeftClickBlock event) {
-        if (locked(event.getEntity(), event.getItemStack())) { event.setCanceled(true); }
-    }
+    public static void onDig(PlayerInteractEvent.LeftClickBlock event) { ItemUseGate.cancel(event, locked(event.getEntity(), event.getItemStack())); }
 
     private static boolean locked(Player player, ItemStack held) {
         if (DEFS.isEmpty()) { return false; }
@@ -353,9 +337,8 @@ public final class ContentAnvils {
     private static void tell(ServerPlayer player, AnvilDef def) {
         long now = player.serverLevel().getGameTime();
         String name = player.getGameProfile().getName();
-        Long last = TOLD.get(name);
-        if (last != null && now - last < TOLD_EVERY) { return; }
-        TOLD.put(name, now);
-        Says.tell(player, mctmods.resourcedatapackloader.content.card.CardIds.ANVIL_WAITS, "That waits on " + Advancements.title(player.server, def.grants()), ChatFormatting.RED);
+        if (!TOLD.ready(name, now)) { return; }
+        TOLD.mark(name, now);
+        Says.tell(player, CardIds.ANVIL_WAITS, ChatFormatting.RED, "That waits on " + Advancements.title(player.server, def.grants()));
     }
 }

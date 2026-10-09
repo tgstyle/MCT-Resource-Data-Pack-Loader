@@ -14,7 +14,7 @@ import net.minecraftforge.fluids.FluidType;
 import java.util.function.Consumer;
 import javax.annotation.Nonnull;
 
-public class ContentFluidType extends FluidType {
+public final class ContentFluidType extends FluidType {
     private static final double LAVA_MOTION = 0.0023333333333333335D;
     private final FluidDef def;
 

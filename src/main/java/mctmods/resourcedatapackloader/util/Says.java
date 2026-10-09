@@ -29,11 +29,11 @@ public final class Says {
     public static final int CARD_TICKS = 160;
     private static final int CARD_BACKGROUND = 0x1E2630;
     private static final int PLAIN = 0xFFFF55;
-    private static final ResourceLocation KEY = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "saysicon");
+    private static final ResourceLocation KEY = ResourceDataPackLoader.id("saysicon");
 
     private Says() {}
 
-    public static void tell(ServerPlayer player, String said, ChatFormatting color) {
+    public static void tell(ServerPlayer player, ChatFormatting color, String said) {
         if (said.isEmpty()) { return; }
         if (!card() || !RDPLNetwork.reaches(player)) {
             line(player, color, said);
@@ -42,9 +42,9 @@ public final class Says {
         RDPLNetwork.sendCard(player, new MessageCard("", List.of(said), icon(), image(), background(), rgb(color), CARD_TICKS, false, panel(), font()));
     }
 
-    public static void tell(ServerPlayer player, String rule, String said, ChatFormatting color) {
+    public static void tell(ServerPlayer player, String rule, ChatFormatting color, String said) {
         if (said.isEmpty()) { return; }
-        if (CardRules.unset(rule)) { tell(player, said, color); }
+        if (CardRules.unset(rule)) { tell(player, color, said); }
         else { CardFire.builtin(rule, player, CardLook.says(said, color, CardLook.CORNER)); }
     }
 
@@ -55,9 +55,7 @@ public final class Says {
 
     public static void options(ServerPlayer player, ChatFormatting color, String said, Map<String, String> commands) {
         MutableComponent line = marked(said, color);
-        for (Map.Entry<String, String> option : commands.entrySet()) {
-            line.append(Component.literal(" [" + option.getKey() + "]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, option.getValue()))));
-        }
+        for (Map.Entry<String, String> option : commands.entrySet()) { line.append(Component.literal(" [" + option.getKey() + "]").withStyle(Style.EMPTY.withColor(ChatFormatting.AQUA).withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, option.getValue())))); }
         player.sendSystemMessage(line);
     }
 
@@ -87,43 +85,32 @@ public final class Says {
         return all;
     }
 
-    public static void tellAll(MinecraftServer server, String said, ChatFormatting color) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, said, color); }
-    }
+    public static void tellAll(MinecraftServer server, ChatFormatting color, String said) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, color, said); } }
 
-    public static void tellAll(MinecraftServer server, String rule, String said, ChatFormatting color) {
-        for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, rule, said, color); }
-    }
+    public static void tellAll(MinecraftServer server, String rule, ChatFormatting color, String said) { for (ServerPlayer player : server.getPlayerList().getPlayers()) { tell(player, rule, color, said); } }
 
     public static boolean card() { return ContentControl.flag(ContentControl.CHUNKS, "saysCard", Config.chunks.saysCard()); }
 
     public static ItemStack icon() {
-        String iconName = ContentControl.text(ContentControl.CHUNKS, "saysIcon", Config.chunks.saysIcon()).trim();
+        String iconName = text("saysIcon", Config.chunks.saysIcon());
         return iconName.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(KEY, iconName, 1);
     }
 
     public static int background() {
-        String colorName = ContentControl.text(ContentControl.CHUNKS, "saysColor", Config.chunks.saysColor()).trim();
+        String colorName = text("saysColor", Config.chunks.saysColor());
         return colorName.isEmpty() ? CARD_BACKGROUND : ContentParser.color(colorName, "saysColor") & 0xFFFFFF;
     }
 
-    public static String image() { return ContentControl.text(ContentControl.CHUNKS, "saysImage", Config.chunks.saysImage()).trim(); }
+    public static String image() { return text("saysImage", Config.chunks.saysImage()); }
 
     public static boolean panel() { return ContentControl.flag(ContentControl.CHUNKS, "saysBackground", Config.chunks.saysBackground()); }
 
-    public static String font() { return ContentControl.text(ContentControl.CHUNKS, "saysFont", Config.chunks.saysFont()).trim(); }
+    public static String font() { return text("saysFont", Config.chunks.saysFont()); }
+
+    private static String text(String key, String fallback) { return ContentControl.text(ContentControl.CHUNKS, key, fallback).trim(); }
 
     public static int rgb(ChatFormatting color) {
-        return switch (color) {
-            case GREEN -> 0x55FF55;
-            case RED -> 0xFF5555;
-            case GOLD -> 0xFFAA00;
-            case AQUA -> 0x55FFFF;
-            case GRAY -> 0xAAAAAA;
-            case WHITE -> 0xFFFFFF;
-            case LIGHT_PURPLE -> 0xFF55FF;
-            case BLUE -> 0x5555FF;
-            default -> PLAIN;
-        };
+        Integer value = color.getColor();
+        return value == null ? PLAIN : value;
     }
 }

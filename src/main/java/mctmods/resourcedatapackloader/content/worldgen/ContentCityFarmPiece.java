@@ -11,6 +11,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CropBlock;
 import net.minecraft.world.level.block.Rotation;
@@ -40,7 +41,6 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     private static final String TURN = "Turn";
     private static final String KEEP = "Keep";
     private static final String ROADS = "Roads";
-    private static final int BANK_REACH = 4;
     private final int level;
     private final String edge;
     private final String soil;
@@ -81,7 +81,7 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         this.row = tag.getInt(ROW);
         this.plot = tag.getString(PLOT);
         this.height = tag.contains(HEIGHT) ? tag.getInt(HEIGHT) : boundingBox.maxY() - tag.getInt(LEVEL);
-        this.turn = tag.contains(TURN) ? Rotation.valueOf(tag.getString(TURN)) : Rotation.NONE;
+        this.turn = ContentCityPlotPiece.rotation(tag, TURN);
         this.keep = tag.getIntArray(KEEP);
         this.roads = tag.getIntArray(ROADS);
     }
@@ -111,19 +111,19 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         int worldX = switch (turn) {
             case CLOCKWISE_90 -> boundingBox.maxX() - z;
             case COUNTERCLOCKWISE_90 -> boundingBox.minX() + z;
+            case CLOCKWISE_180 -> boundingBox.maxX() - x;
             default -> boundingBox.minX() + x;
         };
         int worldZ = switch (turn) {
             case CLOCKWISE_180 -> boundingBox.maxZ() - z;
-            case CLOCKWISE_90, COUNTERCLOCKWISE_90 -> boundingBox.minZ() + x;
+            case CLOCKWISE_90 -> boundingBox.minZ() + x;
+            case COUNTERCLOCKWISE_90 -> boundingBox.maxZ() - x;
             default -> boundingBox.minZ() + z;
         };
         return new BlockPos(worldX, level + y, worldZ);
     }
 
-    private void put(WorldGenLevel world, BoundingBox box, BlockPos at, BlockState state) {
-        if (box.isInside(at)) { world.setBlock(at, ContentCityBlocks.ruled(world, world.getSeed(), at, state), 2); }
-    }
+    private void put(WorldGenLevel world, BoundingBox box, BlockPos at, BlockState state) { if (box.isInside(at)) { world.setBlock(at, ContentCityBlocks.ruled(world, world.getSeed(), at, state), Block.UPDATE_CLIENTS); } }
 
     private void plant(WorldGenLevel world, BoundingBox box, List<CityRails.Laid> bores, BlockPos at, BlockState state) {
         if (CityRails.insideBore(bores, at.getX(), at.getY(), at.getZ())) { return; }
@@ -173,7 +173,7 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
                 for (int y = top.getY(); y < world.getMaxBuildHeight(); y++) {
                     at.set(top.getX(), y, top.getZ());
                     if (!box.isInside(at) || world.getBlockState(at).isAir()) { break; }
-                    world.setBlock(at, air, 2);
+                    world.setBlock(at, air, Block.UPDATE_CLIENTS);
                 }
                 BlockPos foot = world(x, -1, z);
                 for (int y = foot.getY(); y > world.getMinBuildHeight(); y--) {
@@ -187,21 +187,16 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
         }
         CityPlotGround.footing(world, held, box, level, under, bores);
         CityPlotGround.liftOffRoof(world, held, box);
-        CityPlotGround.bankRing(world, held, box, level, keep, roads, bankBores(world), true, plot);
+        CityPlotGround.bankRing(world, held, box, level, keep, roads, CityRails.subwaysAround(CityGround.of(world), held), true, plot);
         VillageDef def = ContentVillages.byKey(plot);
         if (def == null) { return; }
         ContentCity.residents(world, def, box, index -> world(def.villagerX() + index, def.villagerY(), def.villagerZ()));
     }
 
-    private List<CityRails.Laid> bankBores(WorldGenLevel world) {
-        BoundingBox held = getBoundingBox();
-        return CityRails.subways(CityGround.of(world), held.minX() - BANK_REACH, held.minZ() - BANK_REACH, held.maxX() + BANK_REACH, held.maxZ() + BANK_REACH);
-    }
-
     public void ringBeyond(@Nonnull WorldGenLevel world, @Nonnull BoundingBox box) {
         BoundingBox held = getBoundingBox();
         if (CityPlotGround.ringMisses(held, box)) { return; }
-        CityBiome.within(world, box, () -> CityPlotGround.bankRing(world, held, box, level, keep, roads, bankBores(world), true, plot));
+        CityBiome.within(world, box, () -> CityPlotGround.bankRing(world, held, box, level, keep, roads, CityRails.subwaysAround(CityGround.of(world), held), true, plot));
     }
 
     private BlockState crop(long seed, BlockPos at) {
@@ -225,8 +220,6 @@ public final class ContentCityFarmPiece extends StructurePiece implements PieceB
     @Override public int getGroundLevelDelta() { return 1; }
 
     @Override public void postProcess(@Nonnull WorldGenLevel world, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(world, (box.minX() + box.maxX()) / 2, (box.minZ() + box.maxZ()) / 2);
-        try { laid(world, manager, chunk, box); }
-        finally { CityBiome.leave(); }
+        CityBiome.within(world, box, () -> laid(world, manager, chunk, box));
     }
 }

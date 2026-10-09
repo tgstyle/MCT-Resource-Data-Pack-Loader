@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.util.Hashes;
+
 import net.minecraft.util.Mth;
 
 public final class ContentField {
@@ -108,7 +110,7 @@ public final class ContentField {
             int offZ = face == 4 ? 1 : face == 5 ? -1 : 0;
             int level = seedLevel(salt, x + offX, y + offY, z + offZ);
             if (level <= 1) { continue; }
-            long gate = mix(salt ^ 0x9E3779B97F4A7C15L, (x + offX) * 31 + offX, (y + offY) * 31 + offY, (z + offZ) * 31 + offZ);
+            long gate = mix(salt ^ Hashes.GOLDEN, (x + offX) * 31 + offX, (y + offY) * 31 + offY, (z + offZ) * 31 + offZ);
             if ((((gate >>> 17) & 0xFFFFL) / 65536.0F) >= spread) { continue; }
             level -= 1 + (int) ((gate >>> 5) & 0xFFL) % 3;
             if (level > best) { best = level; }
@@ -175,7 +177,7 @@ public final class ContentField {
         value = value * 6364136223846793005L + (y * 116129781L);
         value = value * 6364136223846793005L + (z * 4295001919L);
         value ^= value >>> 29;
-        value *= -7046029254386353131L;
+        value *= Hashes.GOLDEN;
         value ^= value >>> 32;
         return value;
     }
@@ -191,8 +193,6 @@ public final class ContentField {
 
         private Cell(int size) { this.data = new float[size]; }
 
-        private boolean holds(long salt, int cellX, int cellY, int cellZ) {
-            return filled && this.salt == salt && this.cellX == cellX && this.cellY == cellY && this.cellZ == cellZ;
-        }
+        private boolean holds(long salt, int cellX, int cellY, int cellZ) { return filled && this.salt == salt && this.cellX == cellX && this.cellY == cellY && this.cellZ == cellZ; }
     }
 }

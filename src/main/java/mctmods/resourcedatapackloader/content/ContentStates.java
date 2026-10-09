@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.nbt.CompoundTag;
@@ -10,11 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -75,14 +74,20 @@ public final class ContentStates {
             name = text.substring(0, open).trim();
             String inside = text.substring(open + 1, text.endsWith("]") ? text.length() - 1 : text.length());
             for (String pair : inside.split(",")) {
-                String[] halves = pair.split("=", 2);
-                if (halves.length == 2) { properties.put(halves[0].trim(), halves[1].trim()); }
+                String[] halves = Settings.split(pair);
+                if (halves != null) { properties.put(halves[0], halves[1]); }
             }
         }
         if (name.isEmpty()) { return null; }
-        Block block = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(name.toLowerCase(Locale.ROOT)));
+        Block block = Registered.block(name);
         if (block == null) { return null; }
         return new Spec(state(block, properties, context), tag, !properties.isEmpty());
+    }
+
+    @Nullable public static Block registered(@Nullable String name) {
+        ResourceLocation named = name == null ? null : ResourceLocation.tryParse(name);
+        ContentRegistry.BlockEntry made = named == null ? null : ContentRegistry.block(named);
+        return made != null ? made.block() : Registered.block(name);
     }
 
     public static BlockState state(Block block, Map<String, String> properties, Object context) {

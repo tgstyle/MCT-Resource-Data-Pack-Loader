@@ -25,6 +25,8 @@ public final class CityBorder {
         held = new Held(server, live.getMinX(), live.getMinZ(), live.getMaxX(), live.getMaxZ());
     }
 
+    public static void forget() { held = null; }
+
     static boolean live() {
         Held known = held;
         return known != null && known.on(ServerLifecycleHooks.getCurrentServer());

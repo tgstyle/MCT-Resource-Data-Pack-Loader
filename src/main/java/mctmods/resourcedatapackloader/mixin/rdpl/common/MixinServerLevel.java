@@ -24,22 +24,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(ServerLevel.class) public abstract class MixinServerLevel {
-    @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;removeRegionTicket(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;ILjava/lang/Object;)V"))
-    private <T> void rdpl$spawnTicketReleased(ServerChunkCache chunks, TicketType<T> type, ChunkPos pos, int distance, T value) {
-        if (ContentSpawnChunks.leftToTheGame()) { chunks.removeRegionTicket(type, pos, distance, value); }
-    }
+    @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;removeRegionTicket(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;ILjava/lang/Object;)V")) private <T> void rdpl$spawnTicketReleased(ServerChunkCache chunks, TicketType<T> type, ChunkPos pos, int distance, T value) { if (ContentSpawnChunks.leftToTheGame()) { chunks.removeRegionTicket(type, pos, distance, value); } }
 
-    @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;addRegionTicket(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;ILjava/lang/Object;)V"))
-    private <T> void rdpl$spawnTicketHeld(ServerChunkCache chunks, TicketType<T> type, ChunkPos pos, int distance, T value) {
+    @Redirect(method = "setDefaultSpawnPos", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerChunkCache;addRegionTicket(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;ILjava/lang/Object;)V")) private <T> void rdpl$spawnTicketHeld(ServerChunkCache chunks, TicketType<T> type, ChunkPos pos, int distance, T value) {
         ServerLevel level = (ServerLevel) (Object) this;
         if (ContentSpawnChunks.leftToTheGame()) { chunks.addRegionTicket(type, pos, distance, value); }
         else if (level.dimension() == Level.OVERWORLD) { ContentSpawnChunks.hold(level, pos); }
     }
 
-    @Redirect(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;)Lnet/minecraft/world/level/Explosion;",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"))
-    private void rdpl$ownBlast(ServerGamePacketListenerImpl connection, Packet<?> packet, Entity source, DamageSource damageSource, ExplosionDamageCalculator damageCalculator,
-                               double x, double y, double z, float radius, boolean fire, Level.ExplosionInteraction explosionInteraction) {
+    @Redirect(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;)Lnet/minecraft/world/level/Explosion;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V")) private void rdpl$ownBlast(ServerGamePacketListenerImpl connection, Packet<?> packet, Entity source, DamageSource damageSource, ExplosionDamageCalculator damageCalculator, double x, double y, double z, float radius, boolean fire, Level.ExplosionInteraction explosionInteraction) {
         if (!(packet instanceof ClientboundExplodePacket blast) || ContentEntities.explodeSound(source) == null || RDPLNetwork.hush(connection.player, x, y, z)) {
             connection.send(packet);
             return;

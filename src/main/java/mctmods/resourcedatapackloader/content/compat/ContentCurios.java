@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.ModList;
-
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;

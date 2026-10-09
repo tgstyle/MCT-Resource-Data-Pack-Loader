@@ -1,8 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.LEG;
+
+import mctmods.blastplaster.util.BlastPlasterUtil;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
-import net.minecraftforge.common.world.PieceBeardifierModifier;
+import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -12,6 +16,7 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.BaseRailBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LeavesBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -27,8 +32,7 @@ import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-import it.unimi.dsi.fastutil.shorts.ShortList;
-
+import net.minecraftforge.common.world.PieceBeardifierModifier;
 import java.util.ArrayList;
 import java.util.List;
 import javax.annotation.Nonnull;
@@ -36,8 +40,6 @@ import javax.annotation.Nullable;
 
 public final class ContentCityRailPiece extends StructurePiece implements PieceBeardifierModifier, ContentCityTrees.IFelling {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityRailPiece::new;
-    public static final int CLEAR = CityRails.CLEAR;
-    private static final int LEG = 4;
     private static final int WET_REACH = 3;
     private static final int CANOPY = 14;
     private static final String LEVEL = "Level";
@@ -100,7 +102,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     }
 
     private static BoundingBox box(int from, int to, int level, int middle, boolean alongX, int width, int platform) {
-        int reach = (width - 1) / 2 + 1 + platform;
+        int reach = CityRails.halfWidth(width) + 1 + platform;
         return alongX ? new BoundingBox(from, level, middle - reach, to, level + CLEAR + 1, middle + reach) : new BoundingBox(middle - reach, level, from, middle + reach, level + CLEAR + 1, to);
     }
 
@@ -136,7 +138,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     @Override @Nullable public BoundingBox owned() {
         BoundingBox held = getBoundingBox();
         boolean platformed = CityLinks.platformOver(trunk, ends, alongX ? held.minX() : held.minZ(), alongX ? held.maxX() : held.maxZ()) > 0;
-        if (bridged) { return ContentCityTrees.bridge(platformed || CityLinks.beardless(ends, alongX ? held.minX() : held.minZ(), alongX ? held.maxX() : held.maxZ()) ? held : trimmed(),level, ContentCity.railFrameHeight()); }
+        if (bridged) { return ContentCityTrees.bridge(platformed || CityLinks.beardless(ends, alongX ? held.minX() : held.minZ(), alongX ? held.maxX() : held.maxZ()) ? held : trimmed(), level, ContentCity.railFrameHeight()); }
         return platformed ? held : null;
     }
 
@@ -147,14 +149,14 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
     @Override public BoundingBox crowned() { return strip(level + 1); }
 
     private BoundingBox strip(int bottom) {
-        int half = (width - 1) / 2;
+        int half = CityRails.halfWidth(width);
         BoundingBox held = getBoundingBox();
         return alongX ? new BoundingBox(held.minX(), bottom, middle - half, held.maxX(), level + CANOPY, middle + half) : new BoundingBox(middle - half, bottom, held.minZ(), middle + half, level + CANOPY, held.maxZ());
     }
 
     private void laid(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkPos chunk, @Nonnull BoundingBox box) {
         long seed = level.getSeed();
-        int boreHalf = (width - 1) / 2;
+        int boreHalf = CityRails.halfWidth(width);
         int acrossLeast = middle - boreHalf;
         int acrossMost = middle + boreHalf;
         int shoulder = ContentCity.railShoulderWidth(subway);
@@ -166,8 +168,8 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         boolean inBed = ContentCity.trackInBed(dress.track(), subway);
         int powerRun = dress.powered().isAir() || inBed ? 0 : ContentCity.railPowerRun(subway);
         BoundingBox held = getBoundingBox();
-        int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int first = CityClip.first(box, held, alongX);
+        int last = CityClip.last(box, held, alongX);
         if (CityLinks.partnerless(level, trunk, held)) { return; }
         int[] unfounded = CityLinks.unfounded(level.getLevel(), ends);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
@@ -236,19 +238,19 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 int top = bridged || bored ? this.level + CLEAR : Math.max(this.level + CLEAR, level.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z) + 1);
                 stilled += clearAbove(level, x, z, this.level + 1, top, bored || subway, at, near);
                 if (bridged) {
-                    level.setBlock(at.set(x, this.level, z), onRail && inBed ? laying : dress.deck().pick(seed, x, this.level, z), 2);
+                    level.setBlock(at.set(x, this.level, z), onRail && inBed ? laying : dress.deck().pick(seed, x, this.level, z), Block.UPDATE_CLIENTS);
                     if (edge && legRow) { piled += CityPlotGround.piling(level, x, z, this.level - 1, dress.support().pick(seed, x, this.level - 1, z), CityRails.boreRoof(bores, x, z), at); }
-                    if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), laying, 2); }
-                    else if (edge && dress.barrier() != null) { level.setBlock(at.set(x, this.level + 1, z), dress.barrier().pick(seed, x, this.level + 1, z), 2); }
+                    if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), laying, Block.UPDATE_CLIENTS); }
+                    else if (edge && dress.barrier() != null) { level.setBlock(at.set(x, this.level + 1, z), dress.barrier().pick(seed, x, this.level + 1, z), Block.UPDATE_CLIENTS); }
                     continue;
                 }
-                int floor = fillFloor(bores, x, z);
+                int floor = CityRails.fillFloor(bores, x, z, this.level - CityPlotGround.FILL_UNDER);
                 CityPlotGround.fillUnder(level, box, x, z, CityPlotGround.belowLoose(level, x, z, this.level - 1, floor, at), floor);
                 BlockState base = onRail && inBed ? laying : powerRow && onRail ? dress.base() : onShoulder ? dress.shoulder() : tieRow ? dress.tie() : dress.bed();
-                level.setBlock(at.set(x, this.level, z), base, 2);
-                if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), powerRow ? sloped(dress.powered(), row) : laying, 2); }
+                level.setBlock(at.set(x, this.level, z), base, Block.UPDATE_CLIENTS);
+                if (onRail && !inBed) { level.setBlock(at.set(x, this.level + 1, z), powerRow ? sloped(dress.powered(), row) : laying, Block.UPDATE_CLIENTS); }
                 if (bored) {
-                    level.setBlock(at.set(x, this.level + CLEAR + 1, z), litRow && across == middle ? dress.light() : dress.linings().pick(seed, x, this.level + CLEAR + 1, z), 2);
+                    level.setBlock(at.set(x, this.level + CLEAR + 1, z), litRow && across == middle ? dress.light() : dress.linings().pick(seed, x, this.level + CLEAR + 1, z), Block.UPDATE_CLIENTS);
                     lined++;
                 }
             }
@@ -274,7 +276,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
                 if (!onTrack(across, tracks, gap)) { continue; }
                 at.set(alongX ? row : across, inBed ? this.level : this.level + 1, alongX ? across : row);
                 if (!box.isInside(at)) { continue; }
-                level.setBlock(at, sloped(dress.track(), row), 2);
+                level.setBlock(at, sloped(dress.track(), row), Block.UPDATE_CLIENTS);
                 crossing++;
             }
             int platform = Math.max(0, CityLinks.platformAt(trunk, ends, row));
@@ -316,7 +318,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     private List<BoundingBox> underAnother(StructureManager manager, ChunkPos chunk, BoundingBox near) {
         List<BoundingBox> found = new ArrayList<>();
-        for (StructureStart start : manager.startsForStructure(chunk, structure -> structure instanceof ContentCityStructure)) {
+        for (StructureStart start : CityCrown.cities(manager, chunk)) {
             if (!start.getPieces().contains(this)) { continue; }
             for (StructurePiece piece : start.getPieces()) {
                 if (piece == this) { continue; }
@@ -338,7 +340,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     private int boreWall(WorldGenLevel level, BoundingBox box, List<BoundingBox> under, List<CityRails.Laid> bores, int x, int z, CityPalette linings, long seed, BlockPos.MutableBlockPos at) {
         if (CityPlotGround.covered(under, x, z)) { return 0; }
-        for (int y = this.level; y <= this.level + CLEAR + 1; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), 2); }
+        for (int y = this.level; y <= this.level + CLEAR + 1; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), Block.UPDATE_CLIENTS); }
         if (!subway) { CityPlotGround.wallFoot(level, box, bores, x, z, this.level - 1, linings.pick(seed, x, this.level - 1, z)); }
         return CLEAR + 2;
     }
@@ -373,7 +375,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         int z = alongX ? across : row;
         int laid = 0;
         for (int y = this.level; y <= top; y++) {
-            level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), 2);
+            level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), Block.UPDATE_CLIENTS);
             laid++;
         }
         return laid;
@@ -387,17 +389,11 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
         else { CityPlotGround.fillUnder(level, box, x, z, top - 1, top - CityPlotGround.FILL_UNDER); }
         int laid = 0;
         for (int y = this.level; y <= top; y++) {
-            level.setBlock(at.set(x, y, z), platforms.pick(seed, x, y, z), 2);
+            level.setBlock(at.set(x, y, z), platforms.pick(seed, x, y, z), Block.UPDATE_CLIENTS);
             laid++;
         }
-        if (railed && railing != null) { level.setBlock(at.set(x, top + 1, z), railing.pick(seed, x, top + 1, z), 2); }
+        if (railed && railing != null) { level.setBlock(at.set(x, top + 1, z), railing.pick(seed, x, top + 1, z), Block.UPDATE_CLIENTS); }
         return laid;
-    }
-
-    private int fillFloor(List<CityRails.Laid> bores, int x, int z) {
-        int deep = this.level - CityPlotGround.FILL_UNDER;
-        int roof = CityRails.boreRoof(bores, x, z);
-        return roof == Integer.MIN_VALUE ? deep : Math.max(deep, roof + 1);
     }
 
     private static int clearAbove(WorldGenLevel level, int x, int z, int from, int to, boolean bored, BlockPos.MutableBlockPos at, BlockPos.MutableBlockPos near) {
@@ -407,17 +403,17 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
             if (over.isAir() || over.getBlock() instanceof BaseRailBlock) { continue; }
             if (bored) {
                 if (ContentCityTrees.clears(level, at, over)) {
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     stilled += still(level, at, near);
                 }
                 continue;
             }
             if (!over.getFluidState().isEmpty()) { return stilled; }
             if (CityPlotGround.cuts(level, at, over)) {
-                level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                 stilled += still(level, at, near);
             }
-            else if (!(over.getBlock() instanceof LeavesBlock) && !mctmods.blastplaster.util.BlastPlasterUtil.isHugeMushroom(over)) { return stilled; }
+            else if (!(over.getBlock() instanceof LeavesBlock) && !BlastPlasterUtil.isHugeMushroom(over)) { return stilled; }
         }
         return stilled;
     }
@@ -433,9 +429,9 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
             int z = alongX ? across : row;
             if (!box.isInside(at.set(x, this.level, z))) { continue; }
             if (across == acrossLeast || across == acrossMost) {
-                for (int y = this.level + 1; y <= this.level + height; y++) { level.setBlock(at.set(x, y, z), posts.pick(seed, x, y, z), 2); }
+                for (int y = this.level + 1; y <= this.level + height; y++) { level.setBlock(at.set(x, y, z), posts.pick(seed, x, y, z), Block.UPDATE_CLIENTS); }
             }
-            level.setBlock(at.set(x, this.level + height + 1, z), beams.pick(seed, x, this.level + height + 1, z), 2);
+            level.setBlock(at.set(x, this.level + height + 1, z), beams.pick(seed, x, this.level + height + 1, z), Block.UPDATE_CLIENTS);
         }
     }
 
@@ -464,7 +460,7 @@ public final class ContentCityRailPiece extends StructurePiece implements PieceB
 
     private BoundingBox trimmed() {
         BoundingBox held = getBoundingBox();
-        int half = (width - 1) / 2;
+        int half = CityRails.halfWidth(width);
         int[] rows = CityLinks.bearded(ends, alongX ? held.minX() : held.minZ(), alongX ? held.maxX() : held.maxZ());
         return alongX ? new BoundingBox(rows[0], level, middle - half, rows[1], level, middle + half) : new BoundingBox(middle - half, level, rows[0], middle + half, level, rows[1]);
     }

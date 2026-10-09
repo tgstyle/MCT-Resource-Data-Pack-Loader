@@ -33,21 +33,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Mixin(RecipeManager.class) public abstract class MixinRecipeManager implements IRecipeFilter {
-    @Unique private static final RegistryAccess RDPL_REGISTRIES = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
-    @Unique private static final int RDPL_COOKING_TIME = 200;
+    @Unique private static final RegistryAccess rdpl$REGISTRIES = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
+    @Unique private static final int rdpl$COOKING_TIME = 200;
     @Shadow private Map<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> recipes;
     @Shadow private Map<ResourceLocation, Recipe<?>> byName;
     @Shadow(remap = false) @Final private ICondition.IContext context;
 
-    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD"))
-    private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.begin(object, resourceManager, json -> !json.isJsonObject() || CraftingHelper.processConditions(json.getAsJsonObject(), "conditions", context), this::rdpl$parse); }
+    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("HEAD")) private void rdpl$beforeRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) { RecipeLoading.begin(object, resourceManager, json -> !json.isJsonObject() || CraftingHelper.processConditions(json.getAsJsonObject(), "conditions", context), this::rdpl$parse); }
 
     @SuppressWarnings("ConstantValue") @Unique private void rdpl$parse(ResourceLocation id, JsonElement json) {
         if (RecipeManager.fromJson(id, GsonHelper.convertToJsonObject(json, "top element"), context) == null) { throw new JsonParseException("its serializer produced no recipe"); }
     }
 
-    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN"))
-    private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
+    @Inject(method = "apply(Ljava/util/Map;Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)V", at = @At("RETURN")) private void rdpl$afterRecipes(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler, CallbackInfo ci) {
         rdpl$rebuild(false);
         RecipeLoading.attach(this);
     }
@@ -69,7 +67,7 @@ import java.util.Map;
         }
         if (late) {
             for (FurnaceRecipes.Addition addition : FurnaceRecipes.settle()) {
-                if (!named.containsKey(addition.id())) { rdpl$keep(kept, named, new SmeltingRecipe(addition.id(), "", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.output().getCount() * Math.min(addition.experience(), 1.0F), RDPL_COOKING_TIME)); }
+                if (!named.containsKey(addition.id())) { rdpl$keep(kept, named, new SmeltingRecipe(addition.id(), "", CookingBookCategory.MISC, Ingredient.of(addition.input()), addition.output(), addition.output().getCount() * Math.min(addition.experience(), 1.0F), rdpl$COOKING_TIME)); }
             }
         }
         ImmutableMap.Builder<RecipeType<?>, Map<ResourceLocation, Recipe<?>>> byType = ImmutableMap.builder();
@@ -80,7 +78,7 @@ import java.util.Map;
     }
 
     @Unique private static ItemStack rdpl$result(Recipe<?> recipe) {
-        try { return recipe.getResultItem(RDPL_REGISTRIES); }
+        try { return recipe.getResultItem(rdpl$REGISTRIES); }
         catch (RuntimeException needsWorldRegistries) { return ItemStack.EMPTY; }
     }
 

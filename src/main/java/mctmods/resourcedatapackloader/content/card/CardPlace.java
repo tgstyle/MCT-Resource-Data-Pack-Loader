@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
+import mctmods.resourcedatapackloader.util.BiomeNames;
+import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.core.BlockPos;
@@ -21,7 +23,6 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 final class CardPlace {
-    private static final long DAY_TICKS = 24000L;
 
     private CardPlace() {}
 
@@ -31,7 +32,7 @@ final class CardPlace {
         return id.contains(":") ? id : "minecraft:" + id;
     }
 
-    static boolean inDimension(String wanted, ServerPlayer player) { return wanted.isEmpty() || wanted.equals(dimensionName(player)); }
+    static boolean elsewhere(String wanted, ServerPlayer player) { return !wanted.isEmpty() && !wanted.equals(dimensionName(player)); }
 
     static String dimensionName(ServerPlayer player) { return player.level().dimension().location().toString(); }
 
@@ -40,8 +41,8 @@ final class CardPlace {
         ResourceLocation name = biome.unwrapKey().map(ResourceKey::location).orElse(null);
         for (String one : wanted) {
             if (one.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(one.substring(1));
-                if (tag != null && biome.is(TagKey.create(Registries.BIOME, tag))) { return true; }
+                TagKey<Biome> tag = BiomeNames.tag(one.substring(1));
+                if (tag != null && biome.is(tag)) { return true; }
             }
             else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
         }
@@ -55,7 +56,7 @@ final class CardPlace {
         BlockPos at = player.blockPosition();
         for (String name : wanted) {
             if (name.startsWith("#")) {
-                ResourceLocation tag = ResourceLocation.tryParse(name.substring(1));
+                ResourceLocation tag = Registered.tagId(name);
                 if (tag != null && level.structureManager().getStructureWithPieceAt(at, TagKey.create(Registries.STRUCTURE, tag)).isValid()) { return true; }
                 continue;
             }
@@ -75,11 +76,11 @@ final class CardPlace {
         Scoreboard board = player.getScoreboard();
         Objective found = Scores.objective(board, objective);
         String owner = player.getScoreboardName();
-        if (found == null || !Scores.has(board, owner, found)) { return null; }
+        if (found == null || Scores.lacks(board, owner, found)) { return null; }
         return Scores.score(board, owner, found);
     }
 
-    static long day(Level level) { return level.getDayTime() / DAY_TICKS; }
+    static long day(Level level) { return level.getDayTime() / Level.TICKS_PER_DAY; }
 
-    static int timeOfDay(Level level) { return (int) (level.getDayTime() % DAY_TICKS); }
+    static int timeOfDay(Level level) { return (int) (level.getDayTime() % Level.TICKS_PER_DAY); }
 }

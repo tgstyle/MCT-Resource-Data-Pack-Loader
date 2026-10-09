@@ -1,16 +1,16 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-
 import mctmods.resourcedatapackloader.util.ContentLog;
-import net.minecraftforge.common.world.PieceBeardifierModifier;
+import mctmods.resourcedatapackloader.util.world.SeededRandom;
+
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -18,7 +18,7 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
+import net.minecraftforge.common.world.PieceBeardifierModifier;
 import javax.annotation.Nonnull;
 
 public final class ContentCityDecorPiece extends StructurePiece implements PieceBeardifierModifier {
@@ -92,7 +92,7 @@ public final class ContentCityDecorPiece extends StructurePiece implements Piece
                 continue;
             }
             laid++;
-            RandomSource roll = RandomSource.create(ContentCityBlocks.spot(level.getSeed(), x, z));
+            RandomSource roll = RandomSource.create(SeededRandom.spot(level.getSeed(), x, z));
             String named = ContentCity.decor(roll);
             if (named == null) { continue; }
             ContentWorldgen.Entry entry = ContentWorldgen.byName(named);

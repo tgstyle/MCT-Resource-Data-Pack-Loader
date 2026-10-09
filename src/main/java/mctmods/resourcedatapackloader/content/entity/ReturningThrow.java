@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.entity;
 
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -30,7 +31,7 @@ public final class ReturningThrow extends Entity {
     private static final EntityDataAccessor<ItemStack> STACK = SynchedEntityData.defineId(ReturningThrow.class, EntityDataSerializers.ITEM_STACK);
     private static final int LOYALTY = 3;
     private static final int STUCK_TICKS = 4;
-    private static final int LIFE = 1200;
+    private static final int LIFE = SharedConstants.TICKS_PER_MINUTE;
     private static final double CATCH_DISTANCE_SQ = 2.25D;
     private static final double DRAG = 0.99D;
     private static final double SPREAD = 0.0075D;
@@ -67,7 +68,7 @@ public final class ReturningThrow extends Entity {
     @Override public void tick() {
         super.tick();
         Vec3 motion = getDeltaMovement();
-        if (level().isClientSide) {
+        if (level().isClientSide()) {
             setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
             face();
             return;

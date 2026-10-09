@@ -15,8 +15,6 @@ import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
@@ -54,7 +52,6 @@ import javax.annotation.Nullable;
 
 public final class ContentVillagers {
     private static final byte[] PLAIN_SKIN = Base64.getDecoder().decode("iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAJ0lEQVR42u3BAQ0AAADCoPdPbQ43oAAAAAAAAAAAAAAAAAAAAIB3A0BAAAGveg7oAAAAAElFTkSuQmCC");
-    private static final Gson GSON = new GsonBuilder().create();
     private static final Map<ResourceLocation, VillagerDef> VILLAGERS = new LinkedHashMap<>();
     private static final List<TradeDef> TRADES = new ArrayList<>();
     private static final Set<ResourceLocation> JOB_SITES = new LinkedHashSet<>();
@@ -93,19 +90,13 @@ public final class ContentVillagers {
     }
 
     private static void readVillager(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Villager file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "villager file");
+        if (json == null) { return; }
         if (json.has("careers")) { ContentLog.LOGGER.warn("Villager profession {} lists careers, which this line does not read. There are no careers now, so give each one its own villager file and name it in the trade's 'profession'", key); }
         skin(key, "villager", GsonHelper.getAsString(json, "texture", "").trim());
         skin(key, "zombie_villager", GsonHelper.getAsString(json, "zombieTexture", "").trim());
         String jobSite = GsonHelper.getAsString(json, "jobSite", "").trim();
         VILLAGERS.put(key, new VillagerDef(key,
-                GsonHelper.getAsString(json, "texture", ""),
-                GsonHelper.getAsString(json, "zombieTexture", ""),
-                Json.strings(json, "careers"),
                 jobSite,
                 GsonHelper.getAsString(json, "workSound", "").trim(),
                 Json.strings(json, "requires")));
@@ -122,11 +113,8 @@ public final class ContentVillagers {
     }
 
     private static void readTrades(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Trade file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "trade file");
+        if (json == null) { return; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "trades")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
@@ -163,7 +151,7 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
                 continue;
             }
-            TRADES.add(new TradeDef(key, profession, career,
+            TRADES.add(new TradeDef(key, profession,
                     level, buy, stack(entry, "buySecondary"), sell,
                     Math.max(1, GsonHelper.getAsInt(entry, "maxUses", 12)),
                     Math.max(0, GsonHelper.getAsInt(entry, "xp", 2)),
@@ -219,23 +207,28 @@ public final class ContentVillagers {
         if (JOBLESS.isEmpty()) { return; }
         VillagerData data = villager.getVillagerData();
         if (data.getProfession() == VillagerProfession.NONE && type != MobSpawnType.STRUCTURE && type != MobSpawnType.CONVERSION) {
-            List<VillagerProfession> professions = new ArrayList<>();
-            for (VillagerProfession profession : ForgeRegistries.VILLAGER_PROFESSIONS.getValues()) {
-                if (profession != VillagerProfession.NONE) { professions.add(profession); }
-            }
-            VillagerProfession picked = professions.get(villager.getRandom().nextInt(professions.size()));
-            if (JOBLESS.contains(picked)) { villager.setVillagerData(data.setProfession(picked)); }
+            VillagerProfession picked = pick(villager.getRandom());
+            if (picked != null && JOBLESS.contains(picked)) { villager.setVillagerData(data.setProfession(picked)); }
         }
         keepsJob(villager);
     }
 
-    public static void professed(Entity made, RandomSource random) {
+    private static List<VillagerProfession> professions() {
         List<VillagerProfession> professions = new ArrayList<>();
         for (VillagerProfession profession : ForgeRegistries.VILLAGER_PROFESSIONS.getValues()) {
             if (profession != VillagerProfession.NONE) { professions.add(profession); }
         }
-        if (professions.isEmpty()) { return; }
-        VillagerProfession picked = professions.get(random.nextInt(professions.size()));
+        return professions;
+    }
+
+    @Nullable private static VillagerProfession pick(RandomSource random) {
+        List<VillagerProfession> professions = professions();
+        return professions.isEmpty() ? null : professions.get(random.nextInt(professions.size()));
+    }
+
+    public static void professed(Entity made, RandomSource random) {
+        VillagerProfession picked = pick(random);
+        if (picked == null) { return; }
         if (made instanceof Villager villager) {
             villager.setVillagerData(villager.getVillagerData().setProfession(picked));
             if (villager.getVillagerXp() == 0) { villager.setVillagerXp(KEEPS_PROFESSION_XP); }
@@ -243,9 +236,7 @@ public final class ContentVillagers {
         else if (made instanceof ZombieVillager zombie) { zombie.setVillagerData(zombie.getVillagerData().setProfession(picked)); }
     }
 
-    public static void keepsJob(Villager villager) {
-        if (JOBLESS.contains(villager.getVillagerData().getProfession()) && villager.getVillagerXp() == 0) { villager.setVillagerXp(KEEPS_PROFESSION_XP); }
-    }
+    public static void keepsJob(Villager villager) { if (JOBLESS.contains(villager.getVillagerData().getProfession()) && villager.getVillagerXp() == 0) { villager.setVillagerXp(KEEPS_PROFESSION_XP); } }
 
     public static void applyTrades(VillagerTradesEvent event) {
         load();
@@ -282,7 +273,7 @@ public final class ContentVillagers {
     }
 
     @Nullable private static Block block(VillagerDef def) {
-        Block block = Registered.find(ForgeRegistries.BLOCKS, ResourceLocation.tryParse(def.jobSite()));
+        Block block = Registered.block(def.jobSite());
         if (block == null) {
             ContentLog.LOGGER.error("Villager profession {} names job site block '{}', which is not registered, skipping the profession", def.key(), def.jobSite());
             return null;
@@ -292,8 +283,7 @@ public final class ContentVillagers {
 
     @Nullable private static SoundEvent workSound(VillagerDef def) {
         if (def.workSound().isEmpty()) { return null; }
-        ResourceLocation name = ResourceLocation.tryParse(def.workSound());
-        SoundEvent sound = Registered.find(ForgeRegistries.SOUND_EVENTS, name);
+        SoundEvent sound = ContentSounds.find(def.workSound());
         if (sound == null) { ContentLog.LOGGER.error("Villager profession {} names work sound '{}', which is not registered, leaving it silent", def.key(), def.workSound()); }
         return sound;
     }

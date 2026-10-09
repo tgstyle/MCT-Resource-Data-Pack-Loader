@@ -21,10 +21,9 @@ import mctmods.resourcedatapackloader.pack.FallbackIcon;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -41,7 +40,6 @@ import java.util.Set;
 import javax.annotation.Nullable;
 
 public final class ContentGenerated {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     static final String ITEM_GENERATED = "minecraft:item/generated";
     private static final String ITEM_HANDHELD = "minecraft:item/handheld";
     private static final String SURVIVES = "{\"condition\":\"minecraft:survives_explosion\"}";
@@ -83,7 +81,7 @@ public final class ContentGenerated {
     static void cropLoot() {
         for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
             if (!(entry.block() instanceof ContentCropBlock)) { continue; }
-            String path = ContentFormats.LOOT_FOLDER + "/blocks/" + entry.id().getPath() + ".json";
+            String path = lootPath(entry.id().getPath());
             if (!provided(PackType.SERVER_DATA, entry.id().getNamespace(), path)) { data(entry.id().getNamespace(), path, loot(entry, entry.def().type())); }
         }
     }
@@ -96,13 +94,12 @@ public final class ContentGenerated {
         boolean hasItem = ContentRegistry.items().stream().anyMatch(item -> item.block() == entry);
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + ".json")) { ContentGeneratedModels.models(entry, namespace, name, type); }
         if (hasItem && !def.itemModelFromFile() && !provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + ".json")) { ContentGeneratedModels.itemModel(def, namespace, name, type); }
-        if (!provided(PackType.SERVER_DATA, namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json")) { data(namespace, ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json", loot(entry, type)); }
+        if (!provided(PackType.SERVER_DATA, namespace, lootPath(name))) { data(namespace, lootPath(name), loot(entry, type)); }
         if (entry.isMain()) {
             tagBlock(entry, blockTags, itemTags, hasItem);
             SaplingDef sapling = def.sapling();
-            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && sapling.growsVanilla() && !provided(PackType.SERVER_DATA, namespace, "worldgen/configured_feature/" + name + "_tree.json")) {
-                data(namespace, "worldgen/configured_feature/" + name + "_tree.json", tree(sapling));
-            }
+            String treePath = ContentFormats.CONFIGURED_FEATURES + "/" + name + "_tree.json";
+            if (ContentBlockTypes.SAPLING.equals(type) && sapling != null && sapling.growsVanilla() && !provided(PackType.SERVER_DATA, namespace, treePath)) { data(namespace, treePath, tree(sapling)); }
         }
     }
 
@@ -169,13 +166,13 @@ public final class ContentGenerated {
         JsonArray pools = new JsonArray();
         switch (type) {
             case ContentBlockTypes.CROP -> {
-                JsonObject grown = obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj("age", String.valueOf(def.cropMaxAge())));
+                JsonObject grown = stateCondition(entry, "age", String.valueOf(def.cropMaxAge()));
                 ContentCropBlock crop = (ContentCropBlock) entry.block();
                 String produce = ContentStacks.id(crop.produce());
                 String seed = ContentStacks.id(crop.seed());
                 pools.add(pool(arr(item(produce)), arr(grown)));
-                pools.add(pool(arr(item(seed)), arr(obj("condition", "minecraft:inverted", "term", grown))));
-                pools.add(pool(arr(entryWith(seed, arr(obj("function", "minecraft:set_count", "count", 0, "add", false), obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", obj("extra", 3, "probability", (def.cropMaxAge() + 1) / (2.0 * def.cropMaxAge())))))), arr(grown)));
+                pools.add(pool(arr(item(seed)), arr(inverted(grown))));
+                pools.add(pool(arr(entryWith(seed, arr(setCount(0), obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", obj("extra", 3, "probability", (def.cropMaxAge() + 1) / (2.0 * def.cropMaxAge())))))), arr(grown)));
             }
             case ContentBlockTypes.LEAVES -> {
                 JsonObject silk = ContentFormats.silkTouch();
@@ -189,9 +186,10 @@ public final class ContentGenerated {
                     pools.add(pool(arr(entryWith(sapling.toString(), arr(json(DECAY)))), arr(inverted(silk), inverted(shears), bonus, json(SURVIVES))));
                 }
             }
-            case ContentBlockTypes.DOOR -> pools.add(pool(arr(item(self)), arr(obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj("half", "lower")), json(SURVIVES))));
+            case ContentBlockTypes.DOOR -> pools.add(pool(arr(item(self)), arr(stateCondition(entry, "half", "lower"), json(SURVIVES))));
             case ContentBlockTypes.SLAB -> {
-                JsonObject doubled = obj("function", "minecraft:set_count", "count", 2, "add", false, "conditions", arr(obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj("type", "double"))));
+                JsonObject doubled = setCount(2);
+                doubled.add("conditions", arr(stateCondition(entry, "type", "double")));
                 pools.add(pool(arr(entryWith(self, arr(doubled, json(DECAY)))), arr(json(SURVIVES))));
             }
             case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER -> pools.add(pool(arr(item(self)), arr(json(SURVIVES))));
@@ -199,7 +197,7 @@ public final class ContentGenerated {
                 boolean own = def.growth() == null || def.growth().drop().isEmpty();
                 String dropped = own ? self : def.growth().drop();
                 int count = def.growth() == null ? 1 : def.growth().dropCount();
-                JsonArray functions = count > 1 ? arr(obj("function", "minecraft:set_count", "count", count, "add", false)) : arr();
+                JsonArray functions = count > 1 ? arr(setCount(count)) : arr();
                 if (own || !ContentBlockTypes.VINE.equals(type)) {
                     pools.add(pool(arr(entryWith(dropped, functions)), arr(json(SURVIVES))));
                     break;
@@ -237,7 +235,7 @@ public final class ContentGenerated {
         JsonArray functions = new JsonArray();
         if (!drop.amount().fixed() || drop.amount().least() != 1) {
             JsonElement count = drop.amount().fixed() ? new JsonPrimitive(drop.amount().least()) : obj("type", "minecraft:uniform", "min", drop.amount().least(), "max", drop.amount().most());
-            functions.add(obj("function", "minecraft:set_count", "count", count, "add", false));
+            functions.add(setCount(count));
         }
         if (drop.chance() < 100 || drop.hasBonus()) { functions.add(obj("function", LootFunctions.NAMESPACE + ":drop_roll", "chance", drop.chance(), "bonusChance", arr(Arrays.stream(drop.bonusChance()).boxed().toArray()))); }
         return functions;
@@ -256,6 +254,12 @@ public final class ContentGenerated {
         if (!functions.isEmpty()) { entry.add("functions", functions); }
         return entry;
     }
+
+    private static String lootPath(String name) { return ContentFormats.LOOT_FOLDER + "/blocks/" + name + ".json"; }
+
+    private static JsonObject stateCondition(ContentRegistry.BlockEntry entry, String property, String value) { return obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj(property, value)); }
+
+    private static JsonObject setCount(Object count) { return obj("function", "minecraft:set_count", "count", count, "add", false); }
 
     private static JsonObject inverted(JsonObject term) { return obj("condition", "minecraft:inverted", "term", term); }
 
@@ -425,9 +429,9 @@ public final class ContentGenerated {
 
     static boolean provided(PackType type, String namespace, String path) { return PackManager.get().provides(type, namespace, path); }
 
-    static void asset(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, GSON.toJson(json)); }
+    static void asset(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.CLIENT_RESOURCES, namespace, path, Json.PRETTY.toJson(json)); }
 
-    private static void data(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.SERVER_DATA, namespace, path, GSON.toJson(json)); }
+    private static void data(String namespace, String path, JsonObject json) { GeneratedResources.put(PackType.SERVER_DATA, namespace, path, Json.PRETTY.toJson(json)); }
 
     private static JsonObject json(String literal) { return JsonParser.parseString(literal).getAsJsonObject(); }
 

@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -13,8 +16,8 @@ final class ConvertLoot {
 
     private ConvertLoot() {}
 
-    public static String loot(JsonObject json, Ported pack) {
-        if (json.has("target") && json.get("target").isJsonPrimitive()) { lootTable(json, "target", pack); }
+    static String loot(JsonObject json, Ported pack) {
+        if (GsonHelper.isValidPrimitive(json, "target")) { lootTable(json, "target", pack); }
         lootWalk(json, pack);
         return Ported.GSON.toJson(json);
     }
@@ -27,12 +30,12 @@ final class ConvertLoot {
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
         for (String key : new String[] {"type", "function", "condition"}) {
-            if (held.has(key) && held.get(key).isJsonPrimitive() && held.get(key).getAsString().indexOf(':') < 0) {
+            if (GsonHelper.isValidPrimitive(held, key) && held.get(key).getAsString().indexOf(':') < 0) {
                 held.addProperty(key, "minecraft:" + held.get(key).getAsString());
                 pack.rewrote();
             }
         }
-        String condition = held.has("condition") && held.get("condition").isJsonPrimitive() ? held.get("condition").getAsString() : "";
+        String condition = Json.text(held, "condition");
         if (KILLED_BY_PLAYER.equals(condition) && held.has("inverse")) { inverse(held, pack); }
         if (ENTITY_PROPERTIES.equals(condition) && held.has("properties") && held.get("properties").isJsonObject()) { entityProperties(held, pack); }
         if (held.has("function") && SET_ATTRIBUTES.equals(held.get("function").getAsString()) && held.has("modifiers") && held.get("modifiers").isJsonArray()) {
@@ -43,6 +46,7 @@ final class ConvertLoot {
         if (held.has("name") && held.has("type") && "minecraft:loot_table".equals(held.get("type").getAsString())) { lootTable(held, "name", pack); }
         if (held.has("name") && held.has("type") && "minecraft:item".equals(held.get("type").getAsString())) {
             int data = 0;
+            boolean chosen = false;
             if (held.has("functions") && held.get("functions").isJsonArray()) {
                 JsonArray functions = held.getAsJsonArray("functions");
                 for (int i = functions.size() - 1; i >= 0; i--) {
@@ -51,7 +55,10 @@ final class ConvertLoot {
                     JsonObject held2 = function.getAsJsonObject();
                     String name = held2.has("function") ? held2.get("function").getAsString() : "";
                     if ("minecraft:set_data".equals(name) || "set_data".equals(name)) {
-                        if (held2.has("data") && held2.get("data").isJsonPrimitive() && held2.get("data").getAsJsonPrimitive().isNumber()) { data = held2.get("data").getAsInt(); }
+                        if (!chosen && GsonHelper.isNumberValue(held2, "data")) {
+                            data = held2.get("data").getAsInt();
+                            chosen = true;
+                        }
                         functions.remove(i);
                         pack.rewrote();
                     }
@@ -64,13 +71,7 @@ final class ConvertLoot {
         }
     }
 
-    static void lootTable(JsonObject held, String key, Ported pack) {
-        String named = held.get(key).getAsString();
-        String mapped = Ids.lootTable(named);
-        if (mapped.equals(named)) { return; }
-        held.addProperty(key, mapped);
-        pack.rewrote();
-    }
+    static void lootTable(JsonObject held, String key, Ported pack) { Convert.renamed(held, key, Ids::lootTable, pack); }
 
     private static void inverse(JsonObject held, Ported pack) {
         boolean inverse = held.remove("inverse").getAsBoolean();
@@ -96,7 +97,7 @@ final class ConvertLoot {
     }
 
     private static void attributeModifier(JsonObject modifier, Ported pack) {
-        if (!modifier.has("attribute") || !modifier.get("attribute").isJsonPrimitive()) { return; }
+        if (!GsonHelper.isValidPrimitive(modifier, "attribute")) { return; }
         String attribute = modifier.get("attribute").getAsString();
         String mapped = Ids.attribute(attribute);
         if (mapped.equals(attribute)) { return; }

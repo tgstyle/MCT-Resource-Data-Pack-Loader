@@ -4,11 +4,8 @@ import java.security.MessageDigest
 
 plugins {
     id 'java-library'
-    id 'maven-publish'
     id 'net.neoforged.moddev.legacyforge' version '2.0.140'
     id 'idea'
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.6'
-    id 'eclipse'
 }
 
 class JarStamp {
@@ -42,8 +39,6 @@ def baseVersion = versionProps.getProperty('version')
 def newVersion = "${baseVersion}-b${nextBuild}-${stage}"
 
 version = newVersion
-ext.version_buildnumber = nextBuild
-ext.stage = stage
 
 println "-> build.gradle applying version: $version (build ${nextBuild})"
 
@@ -76,9 +71,7 @@ ext {
 
 def version_replaces = [
         'version'          : project.version,
-        'build_number'     : version_buildnumber,
         'version_mc'       : version_minecraft,
-        'version_forge'    : version_forge,
         'version_forge_min': version_forge_min,
         'version_bp'       : version_bp,
         'mod_license'      : mod_license,
@@ -86,7 +79,6 @@ def version_replaces = [
         'mod_authors'      : mod_authors,
         'mod_description'  : mod_description,
         'mod_url'          : mod_url,
-        'stage'            : stage,
 ]
 
 sourceSets {
@@ -110,13 +102,6 @@ processResources {
             }
         }
     }
-}
-
-tasks.register('copyModsTomlForIntelliJ', Copy) {
-    from processResources.destinationDir
-    into "$projectDir/out/production/resources"
-    include "META-INF/mods.toml"
-    dependsOn processResources
 }
 
 def devSyncScript = null
@@ -232,28 +217,8 @@ tasks.register('bumpVersion') {
     }
 }
 
-tasks.register('optimizePng') {
-    def pngPatterns = ["**/*.png"]
-    def resourceDirs = sourceSets.main.resources.srcDirs
-    def pngFiles = resourceDirs.collectMany { dir -> fileTree(dir: dir, includes: pngPatterns).files as List }
-    def execOps = project.services.get(ExecOperations)
-    doLast {
-        pngFiles.each { File file ->
-            long size = file.length()
-            execOps.exec { ExecSpec spec -> spec.commandLine('optipng', '-q', '-o7', '-zm1-9', '-strip', 'all', file.absolutePath) }
-            long newSize = file.length()
-            if (newSize < size) {
-                System.out.format("Reduced File size of %s from %d bytes to %d bytes (reduced by %.2f%%)\n",
-                        file, size, newSize, ((double) (size - newSize)) / ((double) size) * 100.0)
-            }
-        }
-    }
-}
-
 processResources.dependsOn bumpVersion
 jar.dependsOn bumpVersion
-
-tasks.register('genIntellijRunsDummy') {}
 
 jar {
     archiveBaseName.set("MCT-ResourceDataPackLoader-${version_minecraft}")
@@ -273,10 +238,5 @@ tasks.named('reobfJar') {
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 
 idea { module { downloadSources = true; downloadJavadoc = true } }
-
-publishing {
-    publications { register('mavenJava', MavenPublication) { from(components.java as SoftwareComponent) }}
-    repositories { maven { url = "file://${project.projectDir}/repo" } }
-}
 
 build.dependsOn bumpVersion

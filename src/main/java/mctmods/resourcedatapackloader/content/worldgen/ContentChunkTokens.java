@@ -23,7 +23,7 @@ import javax.annotation.Nullable;
 
 public final class ContentChunkTokens {
     public static final Capability<Held> TOKENS = CapabilityManager.get(new CapabilityToken<>() {});
-    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, ContentWorldgen.RETROGEN_TOKENS);
+    private static final ResourceLocation ID = ResourceDataPackLoader.id(ContentWorldgen.RETROGEN_TOKENS);
     private static final String TAG = "tokens";
 
     private ContentChunkTokens() {}
@@ -33,6 +33,12 @@ public final class ContentChunkTokens {
     public static void onAttach(AttachCapabilitiesEvent<LevelChunk> event) { event.addCapability(ID, new Held()); }
 
     public static Set<String> get(LevelChunk chunk) { return chunk.getCapability(TOKENS).map(Held::held).orElse(Set.of()); }
+
+    public static void add(LevelChunk chunk, String token) {
+        Set<String> tokens = new LinkedHashSet<>(get(chunk));
+        tokens.add(token);
+        put(chunk, tokens);
+    }
 
     public static void put(LevelChunk chunk, Set<String> tokens) {
         chunk.getCapability(TOKENS).ifPresent(held -> held.keep(tokens));

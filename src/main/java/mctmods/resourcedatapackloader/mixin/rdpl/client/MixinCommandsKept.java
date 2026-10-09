@@ -12,8 +12,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Commands.class) public abstract class MixinCommandsKept {
-    @Inject(method = "performCommand", at = @At("RETURN"))
-    private void rdpl$keepRanCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfoReturnable<Integer> cir) {
-        if (cir.getReturnValueI() > 0 && parseResults.getContext().getSource().getEntity() instanceof ServerPlayer) { ChatHistoryKeeper.commandRan(command); }
-    }
+    @Inject(method = "performCommand", at = @At("RETURN")) private void rdpl$keepRanCommand(ParseResults<CommandSourceStack> parseResults, String command, CallbackInfoReturnable<Integer> cir) { if (cir.getReturnValueI() > 0 && parseResults.getContext().getSource().getEntity() instanceof ServerPlayer) { ChatHistoryKeeper.commandRan(command); } }
 }

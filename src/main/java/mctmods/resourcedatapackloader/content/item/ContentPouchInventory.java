@@ -8,7 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
-
 import javax.annotation.Nonnull;
 
 public final class ContentPouchInventory extends SimpleContainer {

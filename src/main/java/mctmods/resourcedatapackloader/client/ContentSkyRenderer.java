@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.client;
 
+import static mctmods.resourcedatapackloader.client.SkyMesh.SIZE;
+
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -8,7 +10,6 @@ import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.math.Axis;
@@ -118,9 +119,8 @@ final class ContentSkyRenderer {
         poseStack.mulPose(Axis.ZP.rotationDegrees(Mth.sin(level.getSunAngle(partialTick)) < 0.0F ? 180.0F : 0.0F));
         poseStack.mulPose(Axis.ZP.rotationDegrees(90.0F));
         Matrix4f pose = poseStack.last().pose();
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
-        buffer.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
-        buffer.vertex(pose, 0.0F, 100.0F, 0.0F).color(glow[0], glow[1], glow[2], glow[3]).endVertex();
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        buffer.vertex(pose, 0.0F, SIZE, 0.0F).color(glow[0], glow[1], glow[2], glow[3]).endVertex();
         for (int step = 0; step <= 16; ++step) {
             float at = step * ((float) Math.PI * 2.0F) / 16.0F;
             float sin = Mth.sin(at);
@@ -139,24 +139,22 @@ final class ContentSkyRenderer {
         float top = row / 2.0F;
         float right = (column + 1) / 4.0F;
         float bottom = (row + 1) / 2.0F;
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         RenderSystem.setShaderTexture(0, MOON_PHASES);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.vertex(pose, -size, -100.0F, size).uv(right, bottom).endVertex();
-        buffer.vertex(pose, size, -100.0F, size).uv(left, bottom).endVertex();
-        buffer.vertex(pose, size, -100.0F, -size).uv(left, top).endVertex();
-        buffer.vertex(pose, -size, -100.0F, -size).uv(right, top).endVertex();
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.vertex(pose, -size, -SIZE, size).uv(right, bottom).endVertex();
+        buffer.vertex(pose, size, -SIZE, size).uv(left, bottom).endVertex();
+        buffer.vertex(pose, size, -SIZE, -size).uv(left, top).endVertex();
+        buffer.vertex(pose, -size, -SIZE, -size).uv(right, top).endVertex();
         BufferUploader.drawWithShader(buffer.end());
     }
 
     private static void quad(Matrix4f pose, ResourceLocation texture, float size) {
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         RenderSystem.setShaderTexture(0, texture);
-        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.vertex(pose, -size, 100.0F, -size).uv(0.0F, 0.0F).endVertex();
-        buffer.vertex(pose, size, 100.0F, -size).uv(1.0F, 0.0F).endVertex();
-        buffer.vertex(pose, size, 100.0F, size).uv(1.0F, 1.0F).endVertex();
-        buffer.vertex(pose, -size, 100.0F, size).uv(0.0F, 1.0F).endVertex();
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        buffer.vertex(pose, -size, SIZE, -size).uv(0.0F, 0.0F).endVertex();
+        buffer.vertex(pose, size, SIZE, -size).uv(1.0F, 0.0F).endVertex();
+        buffer.vertex(pose, size, SIZE, size).uv(1.0F, 1.0F).endVertex();
+        buffer.vertex(pose, -size, SIZE, size).uv(0.0F, 1.0F).endVertex();
         BufferUploader.drawWithShader(buffer.end());
     }
 
@@ -176,10 +174,9 @@ final class ContentSkyRenderer {
     }
 
     private static BufferBuilder.RenderedBuffer disc(float height) {
-        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
         float reach = Math.signum(height) * 512.0F;
         RenderSystem.setShader(GameRenderer::getPositionShader);
-        buffer.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION);
         buffer.vertex(0.0D, height, 0.0D).endVertex();
         for (int degrees = -180; degrees <= 180; degrees += 45) {
             float at = degrees * ((float) Math.PI / 180.0F);

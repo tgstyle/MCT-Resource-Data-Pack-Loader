@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import java.util.List;
-import java.util.Locale;
 
 public final class Toasts {
     public static final int ADVANCEMENTS = 1;
@@ -16,20 +15,24 @@ public final class Toasts {
     public static final int OTHER = 16;
     private static final int ALL = ADVANCEMENTS | RECIPES | TUTORIAL | SYSTEM | OTHER;
     private static final String KEY = "toasts";
-    private static volatile int shown;
+    private static final int OFF_SERVER = -1;
+    private static volatile int shown = OFF_SERVER;
 
     private Toasts() {}
 
-    public static boolean hides(int kind) { return (shown & kind) == 0; }
+    public static boolean hides(int kind) {
+        int kinds = shown == OFF_SERVER ? (Config.chunks.toasts() ? ALL : 0) : shown;
+        return (kinds & kind) == 0;
+    }
 
     public static void show(int kinds) { shown = kinds; }
 
-    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { RDPLNetwork.sendToasts(player, allowed()); }
-    }
+    public static void leave() { shown = OFF_SERVER; }
+
+    public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.getEntity() instanceof ServerPlayer player) { RDPLNetwork.sendToasts(player, allowed()); } }
 
     private static int allowed() {
-        if (!ContentControl.listed(ContentControl.CHUNKS, KEY)) { return ContentControl.flag(ContentControl.CHUNKS, KEY, Config.chunks.toasts()) ? ALL : 0; }
+        if (ContentControl.notArray(ContentControl.CHUNKS, KEY)) { return ContentControl.flag(ContentControl.CHUNKS, KEY, Config.chunks.toasts()) ? ALL : 0; }
         int kinds = 0;
         for (String name : ContentControl.list(ContentControl.CHUNKS, KEY, List.of())) {
             int kind = kind(name);
@@ -40,7 +43,7 @@ public final class Toasts {
     }
 
     private static int kind(String name) {
-        return switch (name.trim().toLowerCase(Locale.ROOT)) {
+        return switch (Settings.lower(name)) {
             case "advancements" -> ADVANCEMENTS;
             case "recipes" -> RECIPES;
             case "tutorial" -> TUTORIAL;

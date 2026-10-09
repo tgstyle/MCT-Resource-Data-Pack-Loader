@@ -17,10 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Unique private final LongSet rdpl$laidBlocks = new LongOpenHashSet();
     @Unique private boolean rdpl$layingPieces;
 
-    @Inject(method = "setBlock", at = @At("RETURN"))
-    private void rdpl$laid(BlockPos pos, BlockState state, int flags, int recursionLeft, CallbackInfoReturnable<Boolean> cir) {
-        if (rdpl$layingPieces && cir.getReturnValueZ() && !state.isAir()) { rdpl$laidBlocks.add(pos.asLong()); }
-    }
+    @Inject(method = "setBlock", at = @At("RETURN")) private void rdpl$laid(BlockPos pos, BlockState state, int flags, int recursionLeft, CallbackInfoReturnable<Boolean> cir) { if (rdpl$layingPieces && cir.getReturnValueZ() && !state.isAir()) { rdpl$laidBlocks.add(pos.asLong()); } }
 
     @Override public void rdpl$laying(boolean laying) { rdpl$layingPieces = laying; }
 

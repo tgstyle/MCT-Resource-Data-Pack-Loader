@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Says;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.SharedConstants;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -128,7 +129,7 @@ public final class ContentBoardPlay {
 
     static void clickPiece(ServerPlayer player, BoardGame game, Entity piece) {
         moveOn(player);
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         BoardState state = game.state;
         if (rules == null || state == null) { return; }
         if (!game.running()) {
@@ -149,7 +150,7 @@ public final class ContentBoardPlay {
     static boolean clickSquare(ServerPlayer player, BoardGame game, int square) {
         moveOn(player);
         Picked picked = PICKED.get(player.getUUID());
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         BoardState state = game.state;
         if (picked == null || !picked.board.equals(game.name) || rules == null || state == null || !game.running()) { return false; }
         int there = state.at(square);
@@ -160,7 +161,7 @@ public final class ContentBoardPlay {
 
     private static void pick(ServerPlayer player, BoardGame game, BoardRules rules, int square, int side) {
         BoardState state = game.state;
-        if (state == null || barred(player, game, rules, side)) { return; }
+        if (state == null || state.at(square) == 0 || barred(player, game, rules, side)) { return; }
         if (side != state.turn) {
             Says.line(player, ChatFormatting.GRAY, say(player, "notturn", "side", sideName(rules, state.turn)));
             return;
@@ -239,7 +240,7 @@ public final class ContentBoardPlay {
 
     private static void settle(MinecraftServer server, Choice waiting) {
         BoardGame game = ContentBoards.board(server, waiting.board);
-        BoardRules rules = game == null ? null : ContentBoards.rules(game.game);
+        BoardRules rules = game == null ? null : ContentBoards.rules(game);
         if (game == null || rules == null || game.version != waiting.version || !game.running()) { return; }
         play(server, game, rules, waiting.move);
     }
@@ -252,7 +253,7 @@ public final class ContentBoardPlay {
     static void answer(MinecraftServer server, BoardGame game, int version, int move) {
         if (game.version != version) { return; }
         game.thinking = false;
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         if (rules == null || move < 0 || !game.running()) { return; }
         play(server, game, rules, move);
     }
@@ -304,7 +305,7 @@ public final class ContentBoardPlay {
     }
 
     public static String resign(ServerPlayer player, BoardGame game) {
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         int side = side(player, game);
         if (rules == null || !game.running()) { return say(player, "over", "board", game.name); }
         if (side < 0) { return say(player, "notseated", "board", game.name); }
@@ -313,7 +314,7 @@ public final class ContentBoardPlay {
     }
 
     public static String draw(ServerPlayer player, BoardGame game) {
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         BoardState state = game.state;
         int side = side(player, game);
         if (rules == null || state == null || !game.running()) { return say(player, "over", "board", game.name); }
@@ -334,7 +335,7 @@ public final class ContentBoardPlay {
     }
 
     public static String takeback(ServerPlayer player, BoardGame game) {
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         int side = side(player, game);
         if (rules == null || !game.running()) { return say(player, "over", "board", game.name); }
         if (side < 0) { return say(player, "notseated", "board", game.name); }
@@ -372,7 +373,7 @@ public final class ContentBoardPlay {
     }
 
     public static String computer(MinecraftServer server, @Nullable ServerPlayer viewer, BoardGame game, String sideName, int level) {
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         if (rules == null) { return say(viewer, "nogame", "game", game.game); }
         int side = rules.sides[0].equalsIgnoreCase(sideName) ? 0 : rules.sides[1].equalsIgnoreCase(sideName) ? 1 : -1;
         if (side < 0) { return say(viewer, "noside", "side", sideName, "board", game.name); }
@@ -388,7 +389,7 @@ public final class ContentBoardPlay {
 
     public static List<String> show(@Nullable ServerPlayer viewer, BoardGame game) {
         List<String> lines = new ArrayList<>();
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         BoardState state = game.state;
         if (rules == null || state == null) {
             lines.add(say(viewer, "nogame", "game", game.game));
@@ -408,7 +409,7 @@ public final class ContentBoardPlay {
         lines.add(files.toString());
         for (int side = 0; side < 2; side++) {
             String holder = game.owners[side].isEmpty() ? game.computer(side) ? say(viewer, "ai") : say(viewer, "open") : game.owners[side];
-            String clock = rules.clockTicks > 0 ? String.format(" %d:%02d", game.clock[side] / 1200, game.clock[side] / 20 % 60) : "";
+            String clock = rules.clockTicks > 0 ? String.format(" %d:%02d", game.clock[side] / SharedConstants.TICKS_PER_MINUTE, game.clock[side] / SharedConstants.TICKS_PER_SECOND % 60) : "";
             lines.add(say(viewer, "seat", "side", sideName(rules, side), "player", holder) + clock);
         }
         lines.add(game.running() ? say(viewer, "turn", "side", sideName(rules, state.turn), "ply", game.moves.size()) : say(viewer, "over", "board", game.name));
@@ -416,7 +417,7 @@ public final class ContentBoardPlay {
     }
 
     public static String state(@Nullable ServerPlayer viewer, BoardGame game) {
-        BoardRules rules = ContentBoards.rules(game.game);
+        BoardRules rules = ContentBoards.rules(game);
         BoardState state = game.state;
         if (rules == null || state == null) { return say(viewer, "nogame", "game", game.game); }
         return game.running() ? say(viewer, "turn", "side", sideName(rules, state.turn), "ply", game.moves.size()) : result(viewer, game, rules);

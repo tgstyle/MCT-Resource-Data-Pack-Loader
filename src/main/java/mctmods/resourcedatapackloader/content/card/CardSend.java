@@ -93,9 +93,7 @@ final class CardSend {
         return all;
     }
 
-    private static void chat(CardLook look, ServerPlayer player) {
-        for (String line : all(look)) { Says.line(player, look.chat, line); }
-    }
+    private static void chat(CardLook look, ServerPlayer player) { for (String line : all(look)) { Says.line(player, look.chat, line); } }
 
     private static void titles(CardLook look, ServerPlayer player) {
         String subtitle = look.lines.isEmpty() ? "" : look.lines.get(0);

@@ -27,7 +27,7 @@ public final class ContentCitySewerHatchPiece extends StructurePiece {
     private final int shaftZ;
 
     public ContentCitySewerHatchPiece(int shaftX, int shaftZ, int level) {
-        super(TYPE, 0, new BoundingBox(shaftX - 1, level - ContentCity.sewerDepth(), shaftZ - 1, shaftX + 1, level, shaftZ + 1));
+        super(TYPE, 0, new BoundingBox(shaftX - 1, ContentCitySewerPiece.floorAt(level), shaftZ - 1, shaftX + 1, level, shaftZ + 1));
         this.level = level;
         this.shaftX = shaftX;
         this.shaftZ = shaftZ;
@@ -47,15 +47,15 @@ public final class ContentCitySewerHatchPiece extends StructurePiece {
     }
 
     @Override public void postProcess(@Nonnull WorldGenLevel level, @Nonnull StructureManager manager, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BoundingBox box, @Nonnull ChunkPos chunk, @Nonnull BlockPos pos) {
-        CityBiome.enter(level, shaftX, shaftZ);
-        try {
-            BlockState lining = ContentCitySewerPiece.block(ContentCity.sewerBlock());
-            if (lining == null) { return; }
-            int floor = this.level - ContentCity.sewerDepth();
-            int height = ContentCity.sewerHeight();
-            if (ContentCitySewerPiece.cramped(level.getMinBuildHeight(), this.level)) { return; }
-            if (ContentCitySewerPiece.shaft(level, box, CityRails.subways(CityGround.of(level), shaftX - 1, shaftZ - 1, shaftX + 1, shaftZ + 1), shaftX, shaftZ, floor, floor + 2 + height, this.level, lining, new BlockPos.MutableBlockPos())) { ContentLog.LOGGER.debug("A manhole is cut at {}, {} from the street at y {} down to the sewer walk", shaftX, shaftZ, this.level); }
-        }
-        finally { CityBiome.leave(); }
+        CityBiome.within(level, shaftX, shaftZ, () -> cut(level, box));
+    }
+
+    private void cut(WorldGenLevel world, BoundingBox box) {
+        BlockState lining = CityPalette.state(ContentCity.sewerBlock());
+        if (lining == null) { return; }
+        int floor = ContentCitySewerPiece.floorAt(this.level);
+        int height = ContentCity.sewerHeight();
+        if (ContentCitySewerPiece.cramped(world.getMinBuildHeight(), this.level)) { return; }
+        if (ContentCitySewerPiece.shaft(world, box, CityRails.subways(CityGround.of(world), shaftX - 1, shaftZ - 1, shaftX + 1, shaftZ + 1), shaftX, shaftZ, floor, floor + 2 + height, this.level, lining, new BlockPos.MutableBlockPos())) { ContentLog.LOGGER.debug("A manhole is cut at {}, {} from the street at y {} down to the sewer walk", shaftX, shaftZ, this.level); }
     }
 }

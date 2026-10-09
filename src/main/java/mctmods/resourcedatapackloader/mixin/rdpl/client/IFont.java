@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Font.class) public interface IFont {
-    @Invoker("getFontSet") FontSet rdpl$fontSet(ResourceLocation font);
+    @Invoker("getFontSet") FontSet rdpl$getFontSet(ResourceLocation font);
 }

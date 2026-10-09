@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity.goal;
 
+import mctmods.resourcedatapackloader.util.Walking;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -56,9 +58,7 @@ public final class SniffGoal extends Goal {
 
     @Override public boolean canContinueToUse() { return heardAt != null && mob.getTarget() == null && walked < GIVE_UP && !mob.getNavigation().isDone(); }
 
-    private void walk() {
-        if (heardAt != null) { mob.getNavigation().moveTo(heardAt.getX() + 0.5D, heardAt.getY(), heardAt.getZ() + 0.5D, 1.0D); }
-    }
+    private void walk() { if (heardAt != null) { Walking.toBlock(mob, heardAt, 1.0D); } }
 
     @Override public void start() { walk(); }
 

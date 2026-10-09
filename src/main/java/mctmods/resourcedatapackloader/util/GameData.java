@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.util;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
@@ -20,19 +19,21 @@ import java.nio.file.Path;
 import javax.annotation.Nullable;
 
 public final class GameData {
-    private static final String MINECRAFT = "minecraft";
-    private static final Gson GSON = new Gson();
     @Nullable private static VanillaPackResources vanilla;
 
     private GameData() {}
 
     @Nullable public static JsonObject json(ResourceLocation at) {
-        JsonObject found = MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at);
+        JsonObject found = read(at);
         if (found == null) { ContentLog.LOGGER.error("The game's or a mod's data file {} could not be read, so what a pack builds on it is left out", at); }
         return found;
     }
 
-    public static boolean has(ResourceLocation at) { return (MINECRAFT.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at)) != null; }
+    @Nullable public static JsonObject noiseSettings(String name) { return json(ResourceLocation.withDefaultNamespace("worldgen/noise_settings/" + name + ".json")); }
+
+    public static boolean has(ResourceLocation at) { return read(at) != null; }
+
+    @Nullable private static JsonObject read(ResourceLocation at) { return ResourceLocation.DEFAULT_NAMESPACE.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at); }
 
     public static void release() { vanilla = null; }
 
@@ -40,8 +41,7 @@ public final class GameData {
         if (vanilla == null) { vanilla = ServerPacksSource.createVanillaPackSource(); }
         IoSupplier<InputStream> supplier = vanilla.getResource(PackType.SERVER_DATA, at);
         if (supplier == null) { return null; }
-        try (InputStream in = supplier.get(); Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) { return GSON.fromJson(reader, JsonObject.class); }
-        catch (IOException | JsonParseException failed) { return null; }
+        return read(() -> new InputStreamReader(supplier.get(), StandardCharsets.UTF_8));
     }
 
     @Nullable private static JsonObject fromMod(ResourceLocation at) {
@@ -49,7 +49,11 @@ public final class GameData {
         if (info == null) { return null; }
         Path path = info.getFile().findResource("data", at.getNamespace(), at.getPath());
         if (!Files.isRegularFile(path)) { return null; }
-        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) { return GSON.fromJson(reader, JsonObject.class); }
+        return read(() -> Files.newBufferedReader(path, StandardCharsets.UTF_8));
+    }
+
+    @Nullable private static JsonObject read(IoSupplier<Reader> opener) {
+        try (Reader reader = opener.get()) { return Json.GSON.fromJson(reader, JsonObject.class); }
         catch (IOException | JsonParseException failed) { return null; }
     }
 }

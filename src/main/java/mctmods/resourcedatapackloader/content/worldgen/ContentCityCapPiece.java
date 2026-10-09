@@ -1,13 +1,12 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-
-import net.minecraftforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
@@ -15,7 +14,7 @@ import net.minecraft.world.level.levelgen.structure.StructurePiece;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
-
+import net.minecraftforge.common.world.PieceBeardifierModifier;
 import javax.annotation.Nonnull;
 
 public final class ContentCityCapPiece extends StructurePiece implements PieceBeardifierModifier {
@@ -58,16 +57,17 @@ public final class ContentCityCapPiece extends StructurePiece implements PieceBe
         if (state == null) { return; }
         BoundingBox held = getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (rise == 0) {
-                    level.setBlock(at.set(x, this.level, z), state, 2);
+                    level.setBlock(at.set(x, this.level, z), state, Block.UPDATE_CLIENTS);
                     continue;
                 }
                 for (int up = 1; up <= rise; up++) {
                     at.set(x, this.level + up, z);
                     if (!level.getBlockState(at).canBeReplaced()) { break; }
-                    level.setBlock(at, state, 2);
+                    level.setBlock(at, state, Block.UPDATE_CLIENTS);
                 }
             }
         }

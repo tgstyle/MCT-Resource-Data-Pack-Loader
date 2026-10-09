@@ -25,7 +25,7 @@ import java.util.Locale;
 public final class ContentSpawning {
     private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
     private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
-    private static final String ANIMALS = "animals";
+    public static final String ANIMALS = "animals";
 
     private ContentSpawning() {}
 
@@ -52,22 +52,18 @@ public final class ContentSpawning {
 
     public static void onPositionCheck(MobSpawnEvent.PositionCheck event) {
         ServerLevel level = event.getLevel().getLevel();
-        if (ContentVoidWorld.voidApplies(level)) {
-            event.setResult(Event.Result.DENY);
-            return;
-        }
-        if (!ContentDimensions.spawns(level)) {
-            event.setResult(Event.Result.DENY);
+        if (ContentVoidWorld.voidApplies(level) || ContentDimensions.spawnsOff(level)) {
+            deny(event);
             return;
         }
         boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
         if (!spawner && placed(event.getSpawnType())) { return; }
         Mob mob = event.getEntity();
         if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
-            if (ContentThreat.deniedAtGeneration(mob)) { event.setResult(Event.Result.DENY); }
+            if (ContentThreat.deniedAtGeneration(mob)) { deny(event); }
             return;
         }
-        if (!spawner && !ContentThreat.allowed(mob)) {
+        if (!spawner && ContentThreat.barred(mob)) {
             event.setResult(Event.Result.DENY);
             return;
         }
@@ -79,22 +75,24 @@ public final class ContentSpawning {
         if (!spawner) {
             int lightCap = LIGHT_CAP.get(() -> ContentControl.number(ContentControl.SPAWNING, "monsterSpawnLight", Config.worldgen.monsterSpawnLight()));
             if (lightCap >= 0 && level.getBrightness(LightLayer.BLOCK, pos) > lightCap) {
-                event.setResult(Event.Result.DENY);
+                deny(event);
                 return;
             }
         }
         float rate = rateFor(level, pos) * ContentThreat.spawnRate(level, pos);
         if (rate == 1.0F) { return; }
         if (rate <= 0.0F) {
-            event.setResult(Event.Result.DENY);
+            deny(event);
             return;
         }
         if (rate < 1.0F) {
-            if (level.random.nextFloat() >= rate) { event.setResult(Event.Result.DENY); }
+            if (level.random.nextFloat() >= rate) { deny(event); }
             return;
         }
         if (level.random.nextFloat() < rate - 1.0F) { event.setResult(Event.Result.ALLOW); }
     }
+
+    private static void deny(MobSpawnEvent.PositionCheck event) { event.setResult(Event.Result.DENY); }
 
     private static boolean placed(MobSpawnType type) { return type != MobSpawnType.NATURAL && type != MobSpawnType.CHUNK_GENERATION; }
 

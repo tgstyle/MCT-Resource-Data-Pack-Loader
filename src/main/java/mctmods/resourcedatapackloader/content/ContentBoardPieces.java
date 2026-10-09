@@ -19,6 +19,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ final class ContentBoardPieces {
         for (int file = 0; file < rules.files; file++) {
             for (int rank = 0; rank < rules.ranks; rank++) {
                 BlockState state = (file + rank) % 2 == 0 ? dark : light;
-                if (state != null) { level.setBlock(new BlockPos(game.x + file, game.y - 1, game.z + rank), state, 2); }
+                if (state != null) { level.setBlock(new BlockPos(game.x + file, game.y - 1, game.z + rank), state, Block.UPDATE_CLIENTS); }
             }
         }
     }
@@ -60,9 +61,7 @@ final class ContentBoardPieces {
         return level && file >= 0 && rank >= 0 && file < rules.files && rank < rules.ranks ? rank * rules.files + file : -1;
     }
 
-    static void clear(ServerLevel level, BoardGame game) {
-        for (Entity piece : held(level, game)) { piece.discard(); }
-    }
+    static void clear(ServerLevel level, BoardGame game) { for (Entity piece : held(level, game)) { piece.discard(); } }
 
     static void strike(ServerLevel level, BoardGame game, BoardRules rules, int from, int victim) {
         Entity striker = standing(level, game, rules, from);
@@ -89,14 +88,14 @@ final class ContentBoardPieces {
         BoardState state = game.state;
         game.strike = 0;
         if (state == null) { return; }
-        if (!load(level, game, rules)) {
+        if (awaitsLoad(level, game, rules)) {
             clear(level, game);
             game.spawn = level.random.nextLong();
         }
         List<double[]> wanted = new ArrayList<>();
         for (int square = 0; square < state.size(); square++) {
             int cell = state.at(square);
-            if (cell != 0) { wanted.add(new double[] {square % rules.files, Math.floorDiv(square, rules.files),BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
+            if (cell != 0) { wanted.add(new double[] {square % rules.files, Math.floorDiv(square, rules.files), BoardState.kind(cell) * 2 + BoardState.side(cell)}); }
         }
         for (int side = 0; side < 2; side++) {
             List<Integer> taken = state.taken.get(side);
@@ -129,16 +128,16 @@ final class ContentBoardPieces {
         for (Entity piece : pool) { piece.discard(); }
     }
 
-    private static boolean load(ServerLevel level, BoardGame game, BoardRules rules) {
+    private static boolean awaitsLoad(ServerLevel level, BoardGame game, BoardRules rules) {
         int span = rules.ranks;
-        boolean ready = true;
+        boolean waiting = false;
         for (int cx = game.x - 2 - span >> 4; cx <= game.x + rules.files + 1 + span >> 4; cx++) {
             for (int cz = game.z >> 4; cz <= game.z + rules.ranks >> 4; cz++) {
                 level.getChunk(cx, cz);
-                ready &= level.areEntitiesLoaded(ChunkPos.asLong(cx, cz));
+                waiting |= !level.areEntitiesLoaded(ChunkPos.asLong(cx, cz));
             }
         }
-        return ready;
+        return waiting;
     }
 
     private static int key(Entity piece) { return piece.getPersistentData().getInt(KIND); }
@@ -158,7 +157,7 @@ final class ContentBoardPieces {
         String mob = piece.mob(side);
         Entity made = EntityType.byString(mob).map(type -> type.create(level)).orElse(null);
         if (made == null) {
-            if (UNMADE.add(rules.id + mob)) { ContentLog.LOGGER.error("Game {} plays {} as {}, which nothing registers, so that piece is not shown; this is said once", rules.id, piece.name, mob); }
+            ContentLog.LOGGER.errorOnce(UNMADE, rules.id + mob, "Game {} plays {} as {}, which nothing registers, so that piece is not shown; this is said once", rules.id, piece.name, mob);
             return;
         }
         float yaw = side == 0 ? 0.0F : 180.0F;

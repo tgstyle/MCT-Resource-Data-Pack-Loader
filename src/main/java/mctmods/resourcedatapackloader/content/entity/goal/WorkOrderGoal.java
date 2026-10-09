@@ -10,7 +10,6 @@ import mctmods.resourcedatapackloader.util.Walking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -25,7 +24,6 @@ import javax.annotation.Nullable;
 
 public final class WorkOrderGoal extends Goal {
     private static final int LOOK = 20;
-    private static final int SWING = 6;
     private static final int GIVE_UP = 300;
     private static final int HOPS = 3;
     private static final double REACH_SQ = 16.0D;
@@ -108,22 +106,19 @@ public final class WorkOrderGoal extends Goal {
             return;
         }
         BlockState state = mob.level().getBlockState(pos);
-        if (total == 0 && !begin(held, pos, state)) { return; }
-        mob.getLookControl().setLookAt(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, 30.0F, 30.0F);
-        if ((total - left) % SWING == 0) { mob.swing(InteractionHand.MAIN_HAND); }
-        left--;
-        mob.level().destroyBlockProgress(mob.getId(), pos, (int) (9.0F * (total - left) / total));
+        if (total == 0 && blocked(held, pos, state)) { return; }
+        left = BlockBreak.step(mob, pos, total, left);
         if (left > 0) { return; }
         mob.level().destroyBlockProgress(mob.getId(), pos, -1);
         harvest(held, pos, state);
     }
 
-    private boolean begin(WorkOrder held, BlockPos pos, BlockState state) {
+    private boolean blocked(WorkOrder held, BlockPos pos, BlockState state) {
         if (!OrderItems.wanted(held.def, mob.level(), pos, state)) {
             target = null;
-            return false;
+            return true;
         }
-        if (!OrderItems.harvestable(mob, state)) {
+        if (OrderItems.unharvestable(mob, state)) {
             held.giveBack(pos);
             target = null;
             if (!held.def.tool().isEmpty() && !OrderItems.isKind(mob.getMainHandItem(), held.def.tool())) {
@@ -132,12 +127,12 @@ public final class WorkOrderGoal extends Goal {
                 walked = 0;
             }
             else { giveUp(); }
-            return false;
+            return true;
         }
         total = OrderItems.digTicks(mob, pos, state, held.def.speed());
         left = total;
         mob.getNavigation().stop();
-        return true;
+        return false;
     }
 
     private void harvest(WorkOrder held, BlockPos pos, BlockState state) {
@@ -168,7 +163,7 @@ public final class WorkOrderGoal extends Goal {
         ItemStack tool = mob.getMainHandItem();
         if (tool.isEmpty() || !tool.isDamageableItem()) { return; }
         String was = def.tool().isEmpty() ? OrderItems.kind(tool) : def.tool();
-        tool.hurtAndBreak(1, mob, broken -> broken.broadcastBreakEvent(EquipmentSlot.MAINHAND));
+        OrderItems.wear(mob);
         if (!mob.getMainHandItem().isEmpty()) { return; }
         mob.setItemSlot(EquipmentSlot.MAINHAND, ItemStack.EMPTY);
         kind = was;
@@ -247,7 +242,7 @@ public final class WorkOrderGoal extends Goal {
         if (walked % 20 != 1) { return; }
         BlockPos to = approach(pos);
         double pace = Walking.pace(mob);
-        if (mob.getNavigation().moveTo(to.getX() + 0.5D, to.getY(), to.getZ() + 0.5D, pace)) { return; }
+        if (Walking.toBlock(mob, to, pace)) { return; }
         Vec3 aim = Vec3.atBottomCenterOf(to);
         double floor = Math.min(mob.getY(), to.getY()) - 1.0D;
         for (int tries = 0; tries < HOPS; tries++) {

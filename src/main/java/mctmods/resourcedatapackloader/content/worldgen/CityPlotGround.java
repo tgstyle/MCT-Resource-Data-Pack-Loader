@@ -5,13 +5,13 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.core.BlockPos;
-
 import net.minecraft.core.Holder;
 import net.minecraft.tags.BiomeTags;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.LeavesBlock;
@@ -22,6 +22,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraftforge.common.Tags;
 import java.util.List;
+import javax.annotation.Nullable;
 
 public final class CityPlotGround {
     static final int BRIDGE_GAP = 6;
@@ -35,7 +36,6 @@ public final class CityPlotGround {
     private static final int CUT_HEIGHT = 6;
     private static final int ROAD_NEAR = 6;
     static final int ROAD_BESIDE = 1;
-    private static final int ROOF_CLEAR = 4;
     private static final int VERGE_WET = 8;
     private static final int FOOTING_REACH = 8;
     static final int FILL_UNDER = 8;
@@ -43,10 +43,7 @@ public final class CityPlotGround {
 
     private CityPlotGround() {}
 
-    public static boolean terrain(BlockState state) {
-        return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY)
-                || state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.ICE) || state.is(Tags.Blocks.ORES) || ContentBiomes.packGround(state);
-    }
+    public static boolean terrain(BlockState state) { return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) || state.is(Blocks.GRAVEL) || state.is(BlockTags.SAND) || state.is(Blocks.CLAY) || state.is(Blocks.SNOW) || state.is(Blocks.SNOW_BLOCK) || state.is(BlockTags.ICE) || state.is(Tags.Blocks.ORES) || ContentBiomes.packGround(state); }
 
     static boolean opening(BlockState state) { return terrain(state) || state.is(BlockTags.TERRACOTTA) || state.is(Blocks.SANDSTONE) || state.is(Blocks.RED_SANDSTONE) || state.is(Blocks.MOSSY_COBBLESTONE); }
 
@@ -70,13 +67,6 @@ public final class CityPlotGround {
     }
 
     static boolean stoneStep(BlockState state) { return state.getBlock() instanceof StairBlock && !state.ignitedByLava(); }
-
-    public static boolean kept(int[] keep, int x, int z) {
-        for (int at = 0; at + 3 < keep.length; at += 4) {
-            if (x >= keep[at] && x <= keep[at + 2] && z >= keep[at + 1] && z <= keep[at + 3]) { return true; }
-        }
-        return false;
-    }
 
     public static int band(int[] well, int x, int z) {
         int bx = x < well[0] ? well[0] - x : x > well[2] ? x - well[2] : 0;
@@ -160,12 +150,20 @@ public final class CityPlotGround {
 
     static void fillUnder(WorldGenLevel level, BoundingBox box, int x, int z, int from, int floor) { fillDown(level, box, x, from, z, floor, groundFor(level, x, z)); }
 
+    static void raise(WorldGenLevel level, BoundingBox box, BlockPos.MutableBlockPos at, BlockState rail, int height, int x, int deckY, int z) {
+        for (int up = 1; up <= height; up++) {
+            at.set(x, deckY + up, z);
+            if (!box.isInside(at) || solid(level.getBlockState(at))) { break; }
+            level.setBlock(at, rail, Block.UPDATE_CLIENTS);
+        }
+    }
+
     static int piling(WorldGenLevel level, int x, int z, int from, BlockState support, int roof, BlockPos.MutableBlockPos at) {
         int laid = 0;
         for (int y = from; y >= from - PILING_REACH && y > level.getMinBuildHeight() && y > roof; y--) {
             at.set(x, y, z);
             if (solid(level.getBlockState(at))) { break; }
-            level.setBlock(at, support, 2);
+            level.setBlock(at, support, Block.UPDATE_CLIENTS);
             laid++;
         }
         return laid;
@@ -178,7 +176,7 @@ public final class CityPlotGround {
         BlockState firm = firmGround(ground);
         for (int y = base + 1; y <= from; y++) {
             boolean hangs = firm != ground && !solid(level.getBlockState(at.set(x, y - 1, z)));
-            level.setBlock(at.set(x, y, z), hangs ? firm : ground, 2);
+            level.setBlock(at.set(x, y, z), hangs ? firm : ground, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -195,7 +193,7 @@ public final class CityPlotGround {
             if (!box.isInside(at)) { break; }
             BlockState held = level.getBlockState(at);
             if (!held.isAir() && !liquid(held) && (y <= bed || !terrain(held))) { break; }
-            level.setBlock(at, ground, 2);
+            level.setBlock(at, ground, Block.UPDATE_CLIENTS);
         }
     }
 
@@ -221,7 +219,7 @@ public final class CityPlotGround {
         for (int y = from; y > footing; y--) {
             at.set(x, y, z);
             if (!box.isInside(at)) { continue; }
-            level.setBlock(at, exposed(level, at, ground), 2);
+            level.setBlock(at, exposed(level, at, ground), Block.UPDATE_CLIENTS);
             filled++;
         }
         return filled;
@@ -247,16 +245,17 @@ public final class CityPlotGround {
         if (strip == null) { return 0; }
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int bridged = 0;
-        for (int x = Math.max(strip[0], box.minX()); x <= Math.min(strip[1], box.maxX()); x++) {
-            for (int z = Math.max(strip[2], box.minZ()); z <= Math.min(strip[3], box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, strip[0], strip[2], strip[1], strip[3]);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 if (covered(streets, x, z)) { continue; }
                 int base = away(held, x, z) <= away(near, x, z) ? seat : nearSeat;
                 for (int y = base + 1; y <= base + BRIDGE_HIGH; y++) {
                     at.set(x, y, z);
                     if (!box.isInside(at) || insideAny(others, at)) { continue; }
                     BlockState state = level.getBlockState(at);
-                    if (!opening(state) && !overhang(state)) { continue; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                    if (!opening(state) && notOverhang(state)) { continue; }
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     bridged++;
                 }
             }
@@ -264,11 +263,12 @@ public final class CityPlotGround {
         return bridged;
     }
 
-    @javax.annotation.Nullable private static int[] facingStrip(BoundingBox held, BoundingBox near) {
-        int lowX = Math.max(held.minX(), near.minX());
-        int highX = Math.min(held.maxX(), near.maxX());
-        int lowZ = Math.max(held.minZ(), near.minZ());
-        int highZ = Math.min(held.maxZ(), near.maxZ());
+    @Nullable private static int[] facingStrip(BoundingBox held, BoundingBox near) {
+        CityClip clip = CityClip.of(near, held, 0);
+        int lowX = clip.minX();
+        int highX = clip.maxX();
+        int lowZ = clip.minZ();
+        int highZ = clip.maxZ();
         if (lowX <= highX && (facing(near.minZ() - held.maxZ()) || facing(held.minZ() - near.maxZ()))) {
             boolean beyond = near.minZ() > held.maxZ();
             return new int[] { lowX, highX, beyond ? held.maxZ() + 1 : near.maxZ() + 1, beyond ? near.minZ() - 1 : held.minZ() - 1 };
@@ -291,7 +291,7 @@ public final class CityPlotGround {
         return false;
     }
 
-    private static boolean overhang(BlockState state) { return state.is(BlockTags.LEAVES) && (!state.hasProperty(LeavesBlock.PERSISTENT) || !state.getValue(LeavesBlock.PERSISTENT)); }
+    private static boolean notOverhang(BlockState state) { return !state.is(BlockTags.LEAVES) || ContentCityTrees.persistent(state); }
 
     static void vergeFill(WorldGenLevel level, BoundingBox box, List<BoundingBox> others, List<CityRails.Laid> bores, int x, int z, int grade, BlockPos.MutableBlockPos at) {
         if (!box.isInside(at.set(x, grade, z)) || covered(others, x, z)) { return; }
@@ -326,23 +326,24 @@ public final class CityPlotGround {
             BlockState held = level.getBlockState(at);
             if (held.isAir()) { continue; }
             if (!terrain(held) && solid(held)) { break; }
-            level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+            level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
             cut++;
         }
         at.set(x, from - 1, z);
-        if (box.isInside(at) && level.getBlockState(at).is(Blocks.DIRT) && !solid(level.getBlockState(at.above()))) { level.setBlock(at, Blocks.GRASS_BLOCK.defaultBlockState(), 2); }
+        if (box.isInside(at) && level.getBlockState(at).is(Blocks.DIRT) && !solid(level.getBlockState(at.above()))) { level.setBlock(at, Blocks.GRASS_BLOCK.defaultBlockState(), Block.UPDATE_CLIENTS); }
         return cut;
     }
 
     public static void eaves(WorldGenLevel level, BoundingBox held, BoundingBox box, int seat) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 int top = Math.min(held.maxY(), level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1);
                 for (int y = seat + 1; y <= top; y++) {
                     at.set(x, y, z);
                     BlockState state = level.getBlockState(at);
-                    if (terrain(state) || state.is(Blocks.VINE)) { level.setBlock(at, Blocks.AIR.defaultBlockState(), 2); }
+                    if (terrain(state) || state.is(Blocks.VINE)) { level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS); }
                 }
             }
         }
@@ -350,18 +351,15 @@ public final class CityPlotGround {
 
     public static int footing(WorldGenLevel level, BoundingBox held, BoundingBox box, int seat, BlockState ground, List<CityRails.Laid> bores) {
         int least = level.getMinBuildHeight() + 1;
-        int minX = Math.max(held.minX(), box.minX());
-        int maxX = Math.min(held.maxX(), box.maxX());
-        int minZ = Math.max(held.minZ(), box.minZ());
-        int maxZ = Math.min(held.maxZ(), box.maxZ());
-        if (minX > maxX || minZ > maxZ) { return 0; }
-        int depth = maxZ - minZ + 1;
+        CityClip clip = CityClip.of(box, held, 0);
+        if (clip.empty()) { return 0; }
+        int depth = clip.maxZ() - clip.minZ() + 1;
         int from = seat - 1;
-        int[] tops = new int[(maxX - minX + 1) * depth];
+        int[] tops = new int[(clip.maxX() - clip.minX() + 1) * depth];
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                int spot = (x - minX) * depth + (z - minZ);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                int spot = (x - clip.minX()) * depth + (z - clip.minZ());
                 tops[spot] = Integer.MIN_VALUE;
                 for (int y = from; y > Math.max(least - 1, from - FOOTING_DROP); y--) {
                     BlockState state = level.getBlockState(at.set(x, y, z));
@@ -373,9 +371,9 @@ public final class CityPlotGround {
         }
         BlockPos.MutableBlockPos above = new BlockPos.MutableBlockPos();
         int stood = 0;
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                int spot = (x - minX) * depth + (z - minZ);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                int spot = (x - clip.minX()) * depth + (z - clip.minZ());
                 BlockState laid = ground;
                 if (tops[spot] != Integer.MIN_VALUE) {
                     BlockState resting = level.getBlockState(at.set(x, tops[spot], z));
@@ -390,7 +388,7 @@ public final class CityPlotGround {
                     BlockState placed = laid;
                     if (exposed && laid.is(Blocks.DIRT)) { placed = Blocks.GRASS_BLOCK.defaultBlockState(); }
                     else if (!exposed && laid.is(Blocks.GRASS_BLOCK)) { placed = Blocks.DIRT.defaultBlockState(); }
-                    level.setBlock(at, placed, 2);
+                    level.setBlock(at, placed, Block.UPDATE_CLIENTS);
                     stood++;
                 }
             }
@@ -417,13 +415,14 @@ public final class CityPlotGround {
     public static int liftOffRoof(WorldGenLevel level, BoundingBox held, BoundingBox box) {
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         int lifted = 0;
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
-                int top = Math.min(held.maxY() + ROOF_CLEAR, level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1);
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                int top = Math.min(held.maxY() + CityRails.CLEAR, level.getHeight(Heightmap.Types.WORLD_SURFACE_WG, x, z) - 1);
                 for (int y = held.maxY() + 1; y <= top; y++) {
                     at.set(x, y, z);
                     if (!terrain(level.getBlockState(at))) { continue; }
-                    level.setBlock(at, Blocks.AIR.defaultBlockState(), 2);
+                    level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_CLIENTS);
                     lifted++;
                 }
             }
@@ -447,7 +446,7 @@ public final class CityPlotGround {
         for (int x = held.minX() - RING; x <= held.maxX() + RING; x++) {
             for (int z = held.minZ() - RING; z <= held.maxZ() + RING; z++) {
                 if (x > held.minX() && x < held.maxX() && z > held.minZ() && z < held.maxZ()) { continue; }
-                if (kept(keep, x, z) || nearRoad(roads, x, z, ROAD_BESIDE)) { continue; }
+                if (nearRoad(keep, x, z, 0) || nearRoad(roads, x, z, ROAD_BESIDE)) { continue; }
                 at.set(x, bank, z);
                 if (!box.isInside(at)) { continue; }
                 BlockState state = level.getBlockState(at);
@@ -470,7 +469,7 @@ public final class CityPlotGround {
         for (int x = held.minX() - RING - 1; inWindow && x <= held.maxX() + RING + 1; x++) {
             for (int z = held.minZ() - RING - 1; z <= held.maxZ() + RING + 1; z++) {
                 if (x > held.minX() - RING - 1 && x < held.maxX() + RING + 1 && z > held.minZ() - RING - 1 && z < held.maxZ() + RING + 1) { continue; }
-                if (kept(keep, x, z) || nearRoad(roads, x, z, ROAD_BESIDE)) { continue; }
+                if (nearRoad(keep, x, z, 0) || nearRoad(roads, x, z, ROAD_BESIDE)) { continue; }
                 int inX = Mth.clamp(x, held.minX() - RING, held.maxX() + RING);
                 int inZ = Mth.clamp(z, held.minZ() - RING, held.maxZ() + RING);
                 int index = (inX - held.minX() + RING) * deep + (inZ - held.minZ() + RING);
@@ -488,7 +487,7 @@ public final class CityPlotGround {
         }
         for (int x = held.minX() - RING - 2; x <= held.maxX() + RING + 2; x++) {
             for (int z = held.minZ() - RING - 2; z <= held.maxZ() + RING + 2; z++) {
-                if (kept(keep, x, z)) { continue; }
+                if (nearRoad(keep, x, z, 0)) { continue; }
                 at.set(x, bank, z);
                 if (!box.isInside(at)) { continue; }
                 BlockState state = level.getBlockState(at);
@@ -516,9 +515,10 @@ public final class CityPlotGround {
     public static void raisedFooting(WorldGenLevel level, BoundingBox held, BoundingBox box, int seat, int[] keep, int[] roads, List<CityRails.Laid> bores) {
         CityGround ground = CityGround.of(level);
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX() - FOOTING_RING, box.minX()); x <= Math.min(held.maxX() + FOOTING_RING, box.maxX()); x++) {
-            for (int z = Math.max(held.minZ() - FOOTING_RING, box.minZ()); z <= Math.min(held.maxZ() + FOOTING_RING, box.maxZ()); z++) {
-                if (!inside(held, x, z) && (kept(keep, x, z) || nearRoad(roads, x, z, 0))) { continue; }
+        CityClip clip = CityClip.of(box, held, FOOTING_RING);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
+                if (!inside(held, x, z) && (nearRoad(keep, x, z, 0) || nearRoad(roads, x, z, 0))) { continue; }
                 int floor = ground.floor(x, z);
                 if (floor >= seat - 1) { continue; }
                 BlockState resting = level.getBlockState(at.set(x, floor, z));
@@ -535,12 +535,12 @@ public final class CityPlotGround {
                     BlockState was = level.getBlockState(at);
                     boolean hollow = open(was);
                     if (y < filler) {
-                        if (hollow) { level.setBlock(at, banded ? ground.band(x, y, z) : rock, 2); }
+                        if (hollow) { level.setBlock(at, banded ? ground.band(x, y, z) : rock, Block.UPDATE_CLIENTS); }
                         continue;
                     }
                     if (!hollow && !was.is(BlockTags.BASE_STONE_OVERWORLD)) { continue; }
                     BlockState under = level.getBlockState(at.below());
-                    level.setBlock(at, solid(under) ? verge(level, at, false, x, y, z) : exposed(level, at, Blocks.DIRT.defaultBlockState()), 2);
+                    level.setBlock(at, solid(under) ? verge(level, at, false, x, y, z) : exposed(level, at, Blocks.DIRT.defaultBlockState()), Block.UPDATE_CLIENTS);
                 }
             }
         }
@@ -551,12 +551,13 @@ public final class CityPlotGround {
         long seed = level.getSeed();
         int soiled = 0;
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int x = Math.max(held.minX(), box.minX()); x <= Math.min(held.maxX(), box.maxX()); x++) {
-            for (int z = Math.max(held.minZ(), box.minZ()); z <= Math.min(held.maxZ(), box.maxZ()); z++) {
+        CityClip clip = CityClip.of(box, held, 0);
+        for (int x = clip.minX(); x <= clip.maxX(); x++) {
+            for (int z = clip.minZ(); z <= clip.maxZ(); z++) {
                 for (int y = seat - 8; y <= seat; y++) {
                     at.set(x, y, z);
                     if (!level.getBlockState(at).is(BlockTags.SAND)) { continue; }
-                    level.setBlock(at, verges.pick(seed, x, y, z), 2);
+                    level.setBlock(at, verges.pick(seed, x, y, z), Block.UPDATE_CLIENTS);
                     soiled++;
                 }
             }

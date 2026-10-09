@@ -2,11 +2,13 @@ package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentHardness;
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
@@ -38,7 +40,6 @@ import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public final class OrderItems {
-    private static final List<String> KINDS = List.of("pickaxe", "axe", "shovel", "hoe", "sword");
     private static final List<Tier> TIERS = List.of(Tiers.STONE, Tiers.IRON, Tiers.DIAMOND, Tiers.NETHERITE);
     private static final Map<OrderDef, Map<BlockState, Boolean>> DROPS = new IdentityHashMap<>();
     private static final Map<OrderDef, Set<BlockState>> MINED = new IdentityHashMap<>();
@@ -97,17 +98,23 @@ public final class OrderItems {
         }
     }
 
-    public static boolean harvestable(Mob mob, BlockState state) {
+    public static boolean unharvestable(Mob mob, BlockState state) {
         ItemStack tool = mob.getMainHandItem();
-        if (ContentHardness.digBarred(mob, state, tool)) { return false; }
-        return !state.requiresCorrectToolForDrops() || tool.isCorrectToolForDrops(state);
+        if (ContentHardness.digBarred(mob, state, tool)) { return true; }
+        return state.requiresCorrectToolForDrops() && !tool.isCorrectToolForDrops(state);
     }
+
+    public static void wear(Mob mob) { mob.getMainHandItem().hurtAndBreak(1, mob, broken -> broken.broadcastBreakEvent(EquipmentSlot.MAINHAND)); }
 
     public static int digTicks(Mob mob, BlockPos pos, BlockState state, float speed) {
         ItemStack tool = mob.getMainHandItem();
         float dig = tool.isEmpty() ? 1.0F : tool.getDestroySpeed(state);
         int efficiency = tool.getEnchantmentLevel(Enchantments.BLOCK_EFFICIENCY);
         if (dig > 1.0F && efficiency > 0) { dig += efficiency * efficiency + 1; }
+        return breakTicks(mob, pos, state, dig, speed);
+    }
+
+    public static int breakTicks(Mob mob, BlockPos pos, BlockState state, float dig, float speed) {
         float hardness = state.getDestroySpeed(mob.level(), pos);
         float ticks = hardness * 30.0F / dig * ContentHardness.miningAt(state, mob, pos.getX(), pos.getY(), pos.getZ()) / Math.max(0.01F, speed);
         return Math.max(1, Mth.ceil(ticks));
@@ -130,7 +137,7 @@ public final class OrderItems {
     }
 
     public static String kind(ItemStack tool) {
-        for (String kind : KINDS) {
+        for (String kind : ContentToolTypes.HARVEST) {
             if (isKind(tool, kind)) { return kind; }
         }
         return "";

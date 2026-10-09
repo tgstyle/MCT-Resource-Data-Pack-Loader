@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import static mctmods.resourcedatapackloader.content.worldgen.CityRails.CLEAR;
+
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -8,6 +10,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -21,7 +24,6 @@ import javax.annotation.Nonnull;
 public final class ContentCityStationPiece extends StructurePiece {
     public static final StructurePieceType TYPE = (StructurePieceType.ContextlessType) ContentCityStationPiece::new;
     public static final int OPEN = Integer.MIN_VALUE;
-    private static final int CLEAR = CityRails.CLEAR;
     private static final int RAISE = 2;
     private static final String LEVEL = "Level";
     private static final String MIDDLE = "Mid";
@@ -94,8 +96,8 @@ public final class ContentCityStationPiece extends StructurePiece {
         int roof = this.level + CLEAR + 1 + RAISE;
         BoundingBox held = getBoundingBox();
         BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        int first = alongX ? Math.max(held.minX(), box.minX()) : Math.max(held.minZ(), box.minZ());
-        int last = alongX ? Math.min(held.maxX(), box.maxX()) : Math.min(held.maxZ(), box.maxZ());
+        int first = CityClip.first(box, held, alongX);
+        int last = CityClip.last(box, held, alongX);
         int endLow = alongX ? held.minX() : held.minZ();
         int endHigh = alongX ? held.maxX() : held.maxZ();
         int laid = 0;
@@ -110,20 +112,20 @@ public final class ContentCityStationPiece extends StructurePiece {
                 if (!box.isInside(at.set(x, this.level, z))) { continue; }
                 if (end) {
                     int from = Math.abs(across - middle) <= bedHalf ? Math.min(this.level, bore) + CLEAR + 2 : this.level;
-                    for (int y = from; y <= roof; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), 2); }
+                    for (int y = from; y <= roof; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), Block.UPDATE_CLIENTS); }
                     ends++;
                     continue;
                 }
                 if (across == middle - reach - 1 || across == middle + reach + 1) {
-                    for (int y = this.level; y <= roof; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), 2); }
+                    for (int y = this.level; y <= roof; y++) { level.setBlock(at.set(x, y, z), linings.pick(seed, x, y, z), Block.UPDATE_CLIENTS); }
                     laid++;
                     continue;
                 }
                 boolean added = Math.abs(across - middle) > bedHalf;
-                if (added) { level.setBlock(at.set(x, this.level + 1, z), platforms.pick(seed, x, this.level + 1, z), 2); }
-                for (int y = this.level + (added ? 2 : CLEAR + 1); y <= roof - 1; y++) { level.setBlock(at.set(x, y, z), air, 2); }
+                if (added) { level.setBlock(at.set(x, this.level + 1, z), platforms.pick(seed, x, this.level + 1, z), Block.UPDATE_CLIENTS); }
+                for (int y = this.level + (added ? 2 : CLEAR + 1); y <= roof - 1; y++) { level.setBlock(at.set(x, y, z), air, Block.UPDATE_CLIENTS); }
                 boolean lamp = light != null && Math.floorMod(row, run) == 0 && (across == middle || Math.abs(across - middle) == reach);
-                level.setBlock(at.set(x, roof, z), lamp ? light : linings.pick(seed, x, roof, z), 2);
+                level.setBlock(at.set(x, roof, z), lamp ? light : linings.pick(seed, x, roof, z), Block.UPDATE_CLIENTS);
                 laid++;
             }
         }

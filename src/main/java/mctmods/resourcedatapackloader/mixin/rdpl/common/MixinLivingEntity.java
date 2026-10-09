@@ -30,90 +30,68 @@ import org.slf4j.Logger;
     @Shadow protected abstract SoundEvent getHurtSound(DamageSource damageSource);
     @Shadow protected abstract SoundEvent getDeathSound();
 
-    @Unique private EntityVariantDef rdpl$def() { return ContentEntities.def(LivingEntity.class.cast(this)); }
+    @Unique private EntityVariantDef rdpl$def() { return ContentEntities.def((LivingEntity) (Object) this); }
 
-    @Redirect(method = "playHurtSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;"))
-    private SoundEvent rdpl$hurtSound(LivingEntity self, DamageSource damageSource) {
-        SoundEvent sound = ContentEntities.sound(self, ContentEntities.HURT);
-        return sound != null ? sound : getHurtSound(damageSource);
-    }
+    @Redirect(method = "playHurtSound", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent;")) private SoundEvent rdpl$hurtSound(LivingEntity self, DamageSource damageSource) { return ContentEntities.sound(self, ContentEntities.HURT, () -> getHurtSound(damageSource)); }
 
-    @Redirect(method = { "hurt", "handleEntityEvent" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeathSound()Lnet/minecraft/sounds/SoundEvent;"))
-    private SoundEvent rdpl$deathSound(LivingEntity self) {
-        SoundEvent sound = ContentEntities.sound(self, ContentEntities.DEATH);
-        return sound != null ? sound : getDeathSound();
-    }
+    @Redirect(method = { "hurt", "handleEntityEvent" }, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getDeathSound()Lnet/minecraft/sounds/SoundEvent;")) private SoundEvent rdpl$deathSound(LivingEntity self) { return ContentEntities.sound(self, ContentEntities.DEATH, this::getDeathSound); }
 
-    @Redirect(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false))
-    private void rdpl$namedDeathLog(Logger logger, String format, Object entity, Object message) {
-        if (rdpl$def() == null) { logger.info(format, entity, message); }
-    }
+    @Redirect(method = "die(Lnet/minecraft/world/damagesource/DamageSource;)V", at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V", remap = false)) private void rdpl$namedDeathLog(Logger logger, String format, Object entity, Object message) { if (rdpl$def() == null) { logger.info(format, entity, message); } }
 
-    @Inject(method = "getSoundVolume", at = @At("RETURN"), cancellable = true)
-    private void rdpl$soundVolume(CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getSoundVolume", at = @At("RETURN"), cancellable = true) private void rdpl$soundVolume(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null && def.sounds().volume() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().volume()); }
     }
 
-    @Inject(method = "getVoicePitch", at = @At("RETURN"), cancellable = true)
-    private void rdpl$voicePitch(CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getVoicePitch", at = @At("RETURN"), cancellable = true) private void rdpl$voicePitch(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null && def.sounds().pitch() != 1.0F) { cir.setReturnValue(cir.getReturnValueF() * def.sounds().pitch()); }
     }
 
-    @Inject(method = "jumpFromGround", at = @At("RETURN"))
-    private void rdpl$jumpHigher(CallbackInfo ci) {
+    @Inject(method = "jumpFromGround", at = @At("RETURN")) private void rdpl$jumpHigher(CallbackInfo ci) {
         EntityVariantDef def = rdpl$def();
         if (def == null || def.physics().jumpMultiplier() == 1.0F) { return; }
-        LivingEntity self = LivingEntity.class.cast(this);
+        LivingEntity self = (LivingEntity) (Object) this;
         Vec3 motion = self.getDeltaMovement();
         self.setDeltaMovement(motion.x, motion.y * def.physics().jumpMultiplier(), motion.z);
     }
 
-    @Inject(method = "getWaterSlowDown", at = @At("RETURN"), cancellable = true)
-    private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {
+    @Inject(method = "getWaterSlowDown", at = @At("RETURN"), cancellable = true) private void rdpl$waterSlowDown(CallbackInfoReturnable<Float> cir) {
         EntityVariantDef def = rdpl$def();
         if (def != null) { cir.setReturnValue(def.physics().waterSlowdown()); }
     }
 
-    @Inject(method = "getMobType", at = @At("HEAD"), cancellable = true)
-    private void rdpl$mobType(CallbackInfoReturnable<MobType> cir) {
-        MobType type = ContentEntities.mobType(LivingEntity.class.cast(this));
+    @Inject(method = "getMobType", at = @At("HEAD"), cancellable = true) private void rdpl$mobType(CallbackInfoReturnable<MobType> cir) {
+        MobType type = ContentEntities.mobType((LivingEntity) (Object) this);
         if (type != null) { cir.setReturnValue(type); }
     }
 
-    @Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true)
-    private void rdpl$riddenInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
-        if (!ContentEntities.steerable(LivingEntity.class.cast(this))) { return; }
+    @Inject(method = "getRiddenInput", at = @At("RETURN"), cancellable = true) private void rdpl$riddenInput(Player player, Vec3 travelVector, CallbackInfoReturnable<Vec3> cir) {
+        if (!ContentEntities.steerable((LivingEntity) (Object) this)) { return; }
         float forward = player.zza;
         if (forward <= 0.0F) { forward *= 0.25F; }
         cir.setReturnValue(new Vec3(player.xxa * 0.5F, 0.0D, forward));
     }
 
-    @Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true)
-    private void rdpl$riddenSpeed(Player player, CallbackInfoReturnable<Float> cir) {
-        LivingEntity self = LivingEntity.class.cast(this);
+    @Inject(method = "getRiddenSpeed", at = @At("RETURN"), cancellable = true) private void rdpl$riddenSpeed(Player player, CallbackInfoReturnable<Float> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
         if (ContentEntities.steerable(self)) { cir.setReturnValue((float) self.getAttributeValue(Attributes.MOVEMENT_SPEED)); }
     }
 
-    @Inject(method = "getDimensions", at = @At("RETURN"), cancellable = true)
-    private void rdpl$angrySize(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
-        float factor = ContentEntities.angryFactor(LivingEntity.class.cast(this));
+    @Inject(method = "getDimensions", at = @At("RETURN"), cancellable = true) private void rdpl$angrySize(Pose pose, CallbackInfoReturnable<EntityDimensions> cir) {
+        float factor = ContentEntities.angryFactor((LivingEntity) (Object) this);
         if (factor != 1.0F) { cir.setReturnValue(cir.getReturnValue().scale(factor)); }
     }
 
-    @Inject(method = "onClimbable", at = @At("RETURN"), cancellable = true)
-    private void rdpl$climbs(CallbackInfoReturnable<Boolean> cir) {
-        LivingEntity self = LivingEntity.class.cast(this);
+    @Inject(method = "onClimbable", at = @At("RETURN"), cancellable = true) private void rdpl$climbs(CallbackInfoReturnable<Boolean> cir) {
+        LivingEntity self = (LivingEntity) (Object) this;
         Boolean wanted = ContentEntities.climbs(self);
         if (wanted != null) { cir.setReturnValue(wanted && (cir.getReturnValueZ() || self.horizontalCollision)); }
     }
 
-    @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/attributes/AttributeInstance;getValue()D", ordinal = 0))
-    private double rdpl$openAirGravity(AttributeInstance gravity) { return ContentPhysics.openAirGravity(LivingEntity.class.cast(this), gravity); }
+    @Redirect(method = "travel", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/ai/attributes/AttributeInstance;getValue()D", ordinal = 0)) private double rdpl$openAirGravity(AttributeInstance gravity) { return ContentPhysics.openAirGravity((LivingEntity) (Object) this, gravity); }
 
-    @Redirect(method = "aiStep",at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;jumpInFluid(Lnet/minecraftforge/fluids/FluidType;)V", remap = false))
-    private void rdpl$sink(LivingEntity self, FluidType type) {
+    @Redirect(method = "aiStep", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;jumpInFluid(Lnet/minecraftforge/fluids/FluidType;)V", remap = false)) private void rdpl$sink(LivingEntity self, FluidType type) {
         if (type == ForgeMod.WATER_TYPE.get() && ContentEntities.sinks(self)) { return; }
         self.jumpInFluid(type);
     }

@@ -9,7 +9,7 @@ public record SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWei
 
     public boolean tintsStars() { return starColor != UNSET || starTwinkle > 0.0F; }
 
-    public boolean tintsLight() { return lightSkyColor != UNSET || lightBlockColor != UNSET || skyFactor < 1.0F; }
+    public boolean plainLight() { return lightSkyColor == UNSET && lightBlockColor == UNSET && skyFactor >= 1.0F; }
 
     public boolean movesClouds() { return cloudSpeed != 1.0F || !cloudLayers.isEmpty(); }
 

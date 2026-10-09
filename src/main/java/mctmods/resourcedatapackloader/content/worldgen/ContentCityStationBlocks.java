@@ -9,7 +9,6 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlac
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessor;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -19,7 +18,7 @@ public final class ContentCityStationBlocks extends StructureProcessor {
 
     public ContentCityStationBlocks(BlockState lining) { this.lining = lining; }
 
-    @Override @Nonnull public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos origin, @Nonnull BlockPos pivot, @Nonnull StructureTemplate.StructureBlockInfo was, StructureTemplate.StructureBlockInfo now, @Nonnull StructurePlaceSettings how, @Nullable StructureTemplate template) {
+    @Override @Nonnull public StructureTemplate.StructureBlockInfo process(@Nonnull LevelReader level, @Nonnull BlockPos origin, @Nonnull BlockPos pivot, @Nonnull StructureTemplate.StructureBlockInfo was, @Nonnull StructureTemplate.StructureBlockInfo now, @Nonnull StructurePlaceSettings how, @Nullable StructureTemplate template) {
         if (!now.state().is(Blocks.SPONGE)) { return now; }
         return new StructureTemplate.StructureBlockInfo(now.pos(), lining, now.nbt());
     }

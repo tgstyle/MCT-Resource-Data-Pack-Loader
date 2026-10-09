@@ -15,7 +15,9 @@ public record BlockDef(ResourceLocation key, String type, String material, Strin
     public static final String PARTICLE_COLORED = "colored";
     private static final String BUSH = "bush";
 
-    public boolean dropsExperience() { return expDropMax > 0 || expDropMin > 0; }
+    public boolean noExperience() { return expDropMax <= 0 && expDropMin <= 0; }
+
+    public boolean chested() { return container != null && container.chestModel(); }
 
     public boolean sustains(PlantType plant) {
         if (PlantType.PLAINS.equals(plant) && behavesAs.contains(BUSH)) { return true; }

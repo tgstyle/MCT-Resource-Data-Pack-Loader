@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content;
+package mctmods.resourcedatapackloader.client.render;
 
 import mctmods.resourcedatapackloader.content.block.ContentBannerBlockEntity;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBanner;

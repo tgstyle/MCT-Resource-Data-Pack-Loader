@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.def.OrderDef;
+import mctmods.resourcedatapackloader.util.TileScan;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -9,7 +10,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import java.util.ArrayDeque;
@@ -100,9 +100,7 @@ public final class WorkOrder {
         return wants;
     }
 
-    public void delivered(int count) {
-        if (!standing() && count > 0) { left = Math.max(0, left - count); }
-    }
+    public void delivered(int count) { if (!standing() && count > 0) { left = Math.max(0, left - count); } }
 
     public boolean done() { return !standing() && left <= 0; }
 
@@ -122,9 +120,7 @@ public final class WorkOrder {
         return null;
     }
 
-    public void giveBack(BlockPos pos) {
-        if (queue.size() < QUEUE) { queue.addLast(pos); }
-    }
+    public void giveBack(BlockPos pos) { if (queue.size() < QUEUE) { queue.addLast(pos); } }
 
     private boolean still(Level level, BlockPos pos) {
         if (!level.isLoaded(pos)) { return false; }
@@ -168,17 +164,14 @@ public final class WorkOrder {
         List<ItemStack> wants = stock ? stockWants(own) : null;
         if (wants != null && wants.isEmpty()) { return; }
         int radius = def.widest();
-        for (int cx = chest.getX() - radius >> 4; cx <= chest.getX() + radius >> 4; cx++) {
-            for (int cz = chest.getZ() - radius >> 4; cz <= chest.getZ() + radius >> 4; cz++) {
-                if (!level.hasChunk(cx, cz)) { continue; }
-                for (BlockEntity tile : level.getChunk(cx, cz).getBlockEntities().values()) {
-                    BlockPos pos = tile.getBlockPos();
-                    if (beyond(pos, radius) || ContentOrders.isOrderChest(level, pos) || queue.contains(pos)) { continue; }
-                    IItemHandler items = OrderItems.handler(level, pos);
-                    if (items != null && holds(items, wants)) { queue.addLast(pos); }
-                }
-            }
-        }
+        TileScan.within(level, chest, radius, tile -> {
+            if (queue.size() >= QUEUE) { return false; }
+            BlockPos pos = tile.getBlockPos();
+            if (beyond(pos, radius) || ContentOrders.isOrderChest(level, pos) || queue.contains(pos)) { return true; }
+            IItemHandler items = OrderItems.handler(level, pos);
+            if (items != null && holds(items, wants)) { queue.addLast(pos); }
+            return true;
+        });
     }
 
     private boolean holds(IItemHandler items, @Nullable List<ItemStack> wants) {

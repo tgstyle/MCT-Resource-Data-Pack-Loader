@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
@@ -11,12 +12,12 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Unit;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import java.util.function.BiConsumer;
 import javax.annotation.Nullable;
 
 public final class ContentSpawnChunks {
     private static final int MOST_BLOCKS = 1024;
-    private static final String OVERWORLD = "minecraft:overworld";
     private static final int BOOT_MARGIN = 4;
     private static final int FARTHEST_TICKET = 33;
     private static final int BLOCK_TICKING = 1;
@@ -37,12 +38,12 @@ public final class ContentSpawnChunks {
     private static int asked() {
         int asked = ContentControl.number(ContentControl.CHUNKS, "spawnChunkRadius", Config.chunks.spawnChunkRadius());
         for (String entry : ContentControl.list(ContentControl.CHUNKS, "spawnChunkRadii", Config.chunks.spawnChunkRadii())) {
-            int split = entry.indexOf('=');
-            Integer blocks = split > 0 ? ContentDimensions.height(entry.substring(split + 1).trim()) : null;
+            String[] sides = Settings.split(entry);
+            Integer blocks = sides != null && !sides[0].isEmpty() ? ContentDimensions.height(sides[1]) : null;
             if (blocks == null) {
-                if (ContentWorldShape.WARNED.add("spawnChunkRadii:" + entry)) { ContentLog.LOGGER.error("spawnChunkRadii entry '{}' is not written as dimension=blocks, ignoring it", entry); }
+                ContentLog.LOGGER.errorOnce(ContentWorldShape.WARNED, "spawnChunkRadii:" + entry, "spawnChunkRadii entry '{}' is not written as dimension=blocks, ignoring it", entry);
             }
-            else if (ContentFormats.dimensionId(entry.substring(0, split)).equals(OVERWORLD)) { asked = blocks; }
+            else if (ContentFormats.dimensionId(sides[0]).equals(Level.OVERWORLD.location().toString())) { asked = blocks; }
         }
         return asked;
     }

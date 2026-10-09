@@ -1,6 +1,5 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
-import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
@@ -11,18 +10,20 @@ import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.Hashes;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,16 +44,16 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.event.level.LevelEvent;
+import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -61,20 +62,18 @@ import javax.annotation.Nullable;
 public final class ContentCaveRegions {
     public static final String COVER_FEATURE = "cover";
     public static final String STRUCTURE_FEATURE = "cave_structures";
-    private static final ResourceLocation DRIPSTONE = ResourceLocation.fromNamespaceAndPath("minecraft", "dripstone_caves");
+    private static final ResourceLocation DRIPSTONE = ResourceLocation.withDefaultNamespace("dripstone_caves");
     private static final float UNREACHABLE = 2.0F;
     private static final int MEMO_LIMIT = 4096;
     private static final Object NONE = new Object();
-    private static final ThreadLocal<Map<Long, Object>> MEMO = ThreadLocal.withInitial(HashMap::new);
     private static final Map<BiomeSource, Bound> BOUND = Collections.synchronizedMap(new WeakHashMap<>());
-    private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, CaveRegionDef> DEFS = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Made> MADE = new LinkedHashMap<>();
     private static final Map<ResourceLocation, Map<String, List<MobSpawnSettings.SpawnerData>>> SPAWNERS = new LinkedHashMap<>();
     private static boolean loaded;
     private static boolean ambient;
 
-    private record Bound(long seed, List<CaveRegionDef> regions, Map<ResourceLocation, Holder<Biome>> biomes) {}
+    private record Bound(long seed, List<CaveRegionDef> regions, Map<ResourceLocation, Holder<Biome>> biomes, ThreadLocal<Map<Long, Object>> memo) {}
 
     private ContentCaveRegions() {}
 
@@ -100,11 +99,11 @@ public final class ContentCaveRegions {
             if (def.biome() != null) {
                 JsonObject biome = build(def);
                 if (biome == null) { continue; }
-                GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), "worldgen/biome/" + def.key().getPath() + ".json", biome.toString());
+                GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), WorldgenFiles.file(WorldgenFiles.BIOME, def.key().getPath()), biome.toString());
             }
             active.add(def);
         }
-        int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight()));
+        int plain = plainWeight();
         int total = plain;
         for (CaveRegionDef def : active) { total += def.weight(); }
         int structured = 0;
@@ -120,7 +119,7 @@ public final class ContentCaveRegions {
             BlockState ceiling = state(def, def.ceilingCover(), "ceilingCover");
             boolean unnamed = !def.coverReplace().isEmpty() && replace.isEmpty() && (floor != null || ceiling != null);
             if (unnamed) { ContentLog.LOGGER.error("Cave region {} names only coverReplace blocks that are not registered, so it takes no cover", def.key()); }
-            ContentCover cover = unnamed || floor == null && ceiling == null ? null : new ContentCover(floor, def.floorChance(), ceiling, def.ceilingChance(), replace, def.minHeight() == CaveRegionDef.WORLD_FLOOR ? Integer.MIN_VALUE : def.minHeight(), def.maxHeight());
+            ContentCover cover = unnamed || floor == null && ceiling == null ? null : new ContentCover(floor, def.floorChance(), ceiling, def.ceilingChance(), replace, def.minHeight(), def.maxHeight());
             List<BlockState> states = new ArrayList<>();
             if (floor != null) { states.add(floor); }
             if (ceiling != null) { states.add(ceiling); }
@@ -156,7 +155,7 @@ public final class ContentCaveRegions {
 
     public static ContentPalette palette(ResourceLocation region) {
         Made made = MADE.get(region);
-        return made == null || made.palette() == null ? new ContentPalette(List.of(net.minecraft.world.level.block.Blocks.AIR.defaultBlockState()), List.of(1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of()) : made.palette();
+        return made == null || made.palette() == null ? new ContentPalette(List.of(Blocks.AIR.defaultBlockState()), List.of(1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of()) : made.palette();
     }
 
     public static void points(String dimension, JsonArray out) {
@@ -176,18 +175,12 @@ public final class ContentCaveRegions {
         return false;
     }
 
-    private static boolean appliesTo(CaveRegionDef def, String dimension) {
-        if (def.dimensions().isEmpty()) { return true; }
-        for (String named : def.dimensions()) {
-            if (ContentFormats.dimensionId(named).equals(dimension)) { return true; }
-        }
-        return false;
-    }
+    private static boolean appliesTo(CaveRegionDef def, String dimension) { return DimensionValues.listed(dimension, def.dimensions(), false); }
 
     @Nullable private static JsonObject build(CaveRegionDef def) {
         ResourceLocation base = def.biome();
         if (base == null) { return null; }
-        JsonObject held = GameData.json(ResourceLocation.fromNamespaceAndPath(base.getNamespace(), "worldgen/biome/" + base.getPath() + ".json"));
+        JsonObject held = GameData.json(WorldgenFiles.id(WorldgenFiles.BIOME, base));
         if (held == null) {
             ContentLog.LOGGER.error("Cave region {} is built on biome {}, which is not one the game or a mod ships, so it is skipped", def.key(), base);
             return null;
@@ -233,7 +226,7 @@ public final class ContentCaveRegions {
             biomes.put(made.def().key(), held);
         }
         if (regions.isEmpty()) { return; }
-        BOUND.put(level.getChunkSource().getGenerator().getBiomeSource(), new Bound(level.getSeed(), List.copyOf(regions), Map.copyOf(biomes)));
+        BOUND.put(level.getChunkSource().getGenerator().getBiomeSource(), new Bound(level.getSeed(), List.copyOf(regions), Map.copyOf(biomes), ThreadLocal.withInitial(HashMap::new)));
     }
 
     @Nullable public static Holder<Biome> biomeAt(BiomeSource source, int quartX, int quartY, int quartZ) {
@@ -296,13 +289,11 @@ public final class ContentCaveRegions {
     }
 
     @Nullable private static CaveRegionDef regionAt(Bound bound, int qx, int qy, int qz) {
-        long memoKey = bound.seed() * 0x9E3779B97F4A7C15L ^ (((long) System.identityHashCode(bound) & 0xFF) << 54) ^ (((long) qx & 0x3FFFF) << 36) ^ (((long) qy & 0x3FFFF) << 18) ^ ((long) qz & 0x3FFFF);
-        Map<Long, Object> memo = MEMO.get();
+        long memoKey = ((long) (qx & 0xFFFFFF) << 40) | ((long) (qz & 0xFFFFFF) << 16) | (qy & 0xFFFF);
+        Map<Long, Object> memo = bound.memo().get();
         Object held = memo.get(memoKey);
         if (held != null) { return clampBand(held == NONE ? null : (CaveRegionDef) held, qy << 2); }
-        int cellsXZ = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells()));
-        int cellsY = Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY()));
-        CaveRegionDef found = resolve(bound.seed(), bound.regions(), qx, qy, qz, cellsXZ >> 2, cellsY >> 2);
+        CaveRegionDef found = resolve(bound.seed(), bound.regions(), qx, qy, qz, spanXZ(), spanY());
         if (memo.size() > MEMO_LIMIT) { memo.clear(); }
         memo.put(memoKey, found == null ? NONE : found);
         return clampBand(found, qy << 2);
@@ -312,6 +303,8 @@ public final class ContentCaveRegions {
         if (def == null || y < def.minHeight() || y > def.maxHeight()) { return null; }
         return def;
     }
+
+    static long center(long cellHash, int shift, int cell, int span) { return cell * (long) span + Math.floorMod(cellHash >>> shift, span); }
 
     @Nullable private static CaveRegionDef resolve(long seed, List<CaveRegionDef> defs, int qx, int qy, int qz, int spanXZ, int spanY) {
         int cellX = Math.floorDiv(qx, spanXZ);
@@ -327,9 +320,9 @@ public final class ContentCaveRegions {
                     int cy = cellY + dy;
                     int cz = cellZ + dz;
                     long cellHash = Hashes.mix(seed, cx, cy, cz);
-                    long jx = cx * (long) spanXZ + Math.floorMod(cellHash, spanXZ);
-                    long jy = cy * (long) spanY + Math.floorMod(cellHash >>> 20, spanY);
-                    long jz = cz * (long) spanXZ + Math.floorMod(cellHash >>> 40, spanXZ);
+                    long jx = center(cellHash, 0, cx, spanXZ);
+                    long jy = center(cellHash, 20, cy, spanY);
+                    long jz = center(cellHash, 40, cz, spanXZ);
                     long offX = jx - qx;
                     long offY = (jy - qy) * spanXZ / Math.max(1, spanY);
                     long offZ = jz - qz;
@@ -345,8 +338,14 @@ public final class ContentCaveRegions {
         return regionForCell(bestHash, bestCenterY, defs);
     }
 
+    static int spanXZ() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCells", Config.worldgen.caveRegionCells())) >> 2; }
+
+    static int spanY() { return Math.max(16, ContentControl.number(ContentControl.TERRAIN, "caveRegionCellsY", Config.worldgen.caveRegionCellsY())) >> 2; }
+
+    private static int plainWeight() { return Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight())); }
+
     @Nullable private static CaveRegionDef regionForCell(long cellHash, int centerY, List<CaveRegionDef> defs) {
-        int plain = Math.max(0, ContentControl.number(ContentControl.TERRAIN, "caveRegionPlainWeight", Config.worldgen.caveRegionPlainWeight()));
+        int plain = plainWeight();
         int total = plain;
         for (CaveRegionDef def : defs) {
             if (centerY >= def.minHeight() && centerY <= def.maxHeight()) { total += def.weight(); }
@@ -405,11 +404,8 @@ public final class ContentCaveRegions {
     @Nullable private static BlockMatchDef cover(ResourceLocation key, JsonObject json, String name) { return json.has(name) ? ContentParser.match(key, json.get(name)) : null; }
 
     @Nullable private static CaveRegionDef parse(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Cave region {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "cave region");
+        if (json == null) { return null; }
         for (String rubic : List.of("skyStone", "skyIslands", "skyThickness")) {
             if (json.has(rubic)) { ContentLog.LOGGER.info("Cave region {} sets '{}', which was the rubic world's and is not read on this line", key, rubic); }
         }
@@ -428,8 +424,8 @@ public final class ContentCaveRegions {
         }
         List<PickDef> structures = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
-            if (element.isJsonPrimitive()) { structures.add(new PickDef(element.getAsString().trim().toLowerCase(Locale.ROOT), 1)); }
-            else if (element.isJsonObject()) { structures.add(new PickDef(GsonHelper.getAsString(element.getAsJsonObject(), "structure", "").trim().toLowerCase(Locale.ROOT), Math.max(1, GsonHelper.getAsInt(element.getAsJsonObject(), "weight", 1)))); }
+            if (element.isJsonPrimitive()) { structures.add(new PickDef(Settings.lower(element.getAsString()), 1)); }
+            else if (element.isJsonObject()) { structures.add(new PickDef(Settings.lower(GsonHelper.getAsString(element.getAsJsonObject(), "structure", "")),Math.max(1, GsonHelper.getAsInt(element.getAsJsonObject(), "weight", 1)))); }
         }
         return new CaveRegionDef(key, Math.max(0, GsonHelper.getAsInt(json, "weight", 1)), minHeight, maxHeight, Json.strings(json, "dimensions"),
                 cover(key, json, "floorCover"), Mth.clamp(GsonHelper.getAsFloat(json, "floorChance", 1.0F), 0.0F, 1.0F),

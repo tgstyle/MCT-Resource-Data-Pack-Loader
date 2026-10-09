@@ -16,10 +16,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
 import java.util.function.Supplier;
-
 import javax.annotation.Nonnull;
 
-public class ContentContainerItem extends Item {
+public final class ContentContainerItem extends Item {
     private final ContainerDef container;
 
     public ContentContainerItem(ContainerDef container, Properties properties) {
@@ -39,9 +38,7 @@ public class ContentContainerItem extends Item {
         MenuProvider provider = new MenuProvider() {
             @Override @Nonnull public Component getDisplayName() { return held.getHoverName(); }
 
-            @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory bag, @Nonnull Player opening) {
-                return new ContentContainerMenu(id, bag, inventory, container, held, source, worn);
-            }
+            @Override @Nonnull public AbstractContainerMenu createMenu(int id, @Nonnull Inventory bag, @Nonnull Player opening) { return new ContentContainerMenu(id, bag, inventory, container, held, source, worn); }
         };
         NetworkHooks.openScreen(player, provider, extra -> ContentContainerMenu.write(extra, container, worn));
     }

@@ -1,25 +1,7 @@
 package mctmods.resourcedatapackloader.content.block;
 
-import mctmods.resourcedatapackloader.content.def.BlockDef;
-
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.RotatedPillarBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import javax.annotation.Nonnull;
 
-public class ContentLogBlock extends RotatedPillarBlock {
-    private final BlockDef def;
-
-    public ContentLogBlock(BlockDef def, Properties properties) {
-        super(properties);
-        this.def = def;
-    }
-
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
-
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
-
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
+public final class ContentLogBlock extends RotatedPillarBlock {
+    public ContentLogBlock(Properties properties) { super(properties); }
 }

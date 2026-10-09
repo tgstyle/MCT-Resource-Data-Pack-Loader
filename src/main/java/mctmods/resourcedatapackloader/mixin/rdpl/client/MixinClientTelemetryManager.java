@@ -10,7 +10,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ClientTelemetryManager.class) public abstract class MixinClientTelemetryManager {
-    @Inject(method = "createEventSender", at = @At("HEAD"), cancellable = true) private void rdpl$sendNothing(CallbackInfoReturnable<TelemetryEventSender> cir) {
-        if (ContentServer.privacy()) { cir.setReturnValue(TelemetryEventSender.DISABLED); }
-    }
+    @Inject(method = "createEventSender", at = @At("HEAD"), cancellable = true) private void rdpl$sendNothing(CallbackInfoReturnable<TelemetryEventSender> cir) { if (ContentServer.privacy()) { cir.setReturnValue(TelemetryEventSender.DISABLED); } }
 }

@@ -1,12 +1,18 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+import static mctmods.resourcedatapackloader.util.Json.flag;
+
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.SharedConstants;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +45,8 @@ final class DownWorld {
         boolean modern = held != null || NEW_TYPE_FIELDS.stream().anyMatch(json::has);
         if (!modern) { return; }
         JsonObject attributes = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
-        String skybox = DownFixes.string(json, "skybox");
-        boolean nether = "nether".equals(DownFixes.string(json, "cardinal_light")) || "none".equals(skybox) && flag(json, "has_ceiling");
+        String skybox = Json.text(json, "skybox");
+        boolean nether = "nether".equals(Json.text(json, "cardinal_light")) || "none".equals(skybox) && flag(json, "has_ceiling");
         String effects = "end".equals(skybox) ? "minecraft:the_end" : nether ? "minecraft:the_nether" : "minecraft:overworld";
         boolean fixed = flag(json, "has_fixed_time");
         NEW_TYPE_FIELDS.forEach(json::remove);
@@ -69,8 +75,6 @@ final class DownWorld {
         if (!lost.isEmpty()) { note.accept("'" + file + "' sets the dimension attribute(s) " + String.join(", ", lost) + ", which " + Port.Line.running().title() + " does not have, so they are left out and it takes the " + effects + " look"); }
     }
 
-    private static boolean flag(JsonObject json, String key) { return json.has(key) && json.get(key).isJsonPrimitive() && json.get(key).getAsBoolean(); }
-
     private static int fixedTime(int light) {
         if (light >= FULL_SKY_LIGHT) { return NOON; }
         if (light <= skyLight(MIDNIGHT)) { return MIDNIGHT; }
@@ -96,13 +100,13 @@ final class DownWorld {
             if (timeOfDay(middle) < wanted) { low = middle; }
             else { high = middle; }
         }
-        return (int) (Math.round((low + 0.25) * 24000.0) % 24000L);
+        return (int) (Math.round((low + 0.25) * SharedConstants.TICKS_PER_GAME_DAY) % SharedConstants.TICKS_PER_GAME_DAY);
     }
 
     private static double timeOfDay(double turn) { return (turn * 2.0 + (0.5 - Math.cos(turn * Math.PI) / 2.0)) / 3.0; }
 
     private static int skyLight(long time) {
-        double day = timeOfDay((time / 24000.0 - 0.25) - Math.floor(time / 24000.0 - 0.25));
+        double day = timeOfDay((time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25) - Math.floor(time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25));
         double dark = 1.0 - Mth.clamp(1.0 - (Math.cos(day * Math.PI * 2.0) * 2.0 + 0.5), 0.0, 1.0);
         return FULL_SKY_LIGHT - (int) ((1.0 - dark) * 11.0);
     }
@@ -139,7 +143,7 @@ final class DownWorld {
         List<String> lost = new ArrayList<>(attributes.keySet());
         if (effects.remove("music_volume") != null) { lost.add("music_volume"); }
         for (Map.Entry<String, Integer> color : BIOME_COLORS.entrySet()) { effects.addProperty(color.getKey(), DownFixes.color(effects.get(color.getKey()), color.getValue())); }
-        float temperature = json.has("temperature") && json.get("temperature").isJsonPrimitive() ? json.get("temperature").getAsFloat() : 0.5F;
+        float temperature = GsonHelper.isValidPrimitive(json, "temperature") ? json.get("temperature").getAsFloat() : 0.5F;
         effects.addProperty("sky_color", DownFixes.color(effects.get("sky_color"), skyColor(temperature)));
         for (String tint : List.of("foliage_color", "grass_color")) {
             if (effects.has(tint)) { effects.addProperty(tint, DownFixes.color(effects.get(tint), 0)); }
@@ -154,12 +158,12 @@ final class DownWorld {
     }
 
     static void feature(JsonObject json, String file, Consumer<String> note) {
-        String type = DownFixes.namespaced(DownFixes.string(json, "type"));
+        String type = namespaced(Json.text(json, "type"));
         JsonObject config = json.has(CONFIG) && json.get(CONFIG).isJsonObject() ? json.getAsJsonObject(CONFIG) : null;
         if (config == null) { return; }
         switch (type) {
             case "minecraft:spike" -> {
-                String block = config.has("state") && config.get("state").isJsonObject() ? DownFixes.string(config.getAsJsonObject("state"), "Name") : "";
+                String block = config.has("state") && config.get("state").isJsonObject() ? Json.text(config.getAsJsonObject("state"), "Name") : "";
                 if (!block.isEmpty() && !"minecraft:packed_ice".equals(block)) { note.accept("'" + file + "' is a spike of " + block + ", and " + Port.Line.running().title() + " builds spikes of packed ice only, so it is an ice spike"); }
                 json.addProperty("type", "minecraft:ice_spike");
                 json.add(CONFIG, new JsonObject());
@@ -185,20 +189,20 @@ final class DownWorld {
             config.addProperty("force_dirt", false);
             return;
         }
-        boolean rules = "minecraft:rule_based_state_provider".equals(DownFixes.namespaced(DownFixes.string(below.getAsJsonObject(), "type")));
+        boolean rules = "minecraft:rule_based_state_provider".equals(namespaced(Json.text(below.getAsJsonObject(), "type")));
         if (rules) { note.accept("'" + file + "' places blocks under its trunk by rules, which " + Port.Line.running().title() + " cannot hold, so it places dirt"); }
         config.add("dirt_provider", rules ? simpleState() : below);
         config.addProperty("force_dirt", !rules);
     }
 
     @Nullable private static JsonElement guarded(JsonObject provider) {
-        if (!"minecraft:rule_based_state_provider".equals(DownFixes.namespaced(DownFixes.string(provider, "type"))) || !provider.has("rules") || !provider.get("rules").isJsonArray()) { return null; }
+        if (!"minecraft:rule_based_state_provider".equals(namespaced(Json.text(provider, "type"))) || !provider.has("rules") || !provider.get("rules").isJsonArray()) { return null; }
         JsonArray rules = provider.getAsJsonArray("rules");
         if (rules.size() != 1 || !rules.get(0).isJsonObject()) { return null; }
         JsonObject rule = rules.get(0).getAsJsonObject();
         JsonElement test = rule.get("if_true");
         JsonObject inner = test != null && test.isJsonObject() && test.getAsJsonObject().has("predicate") && test.getAsJsonObject().get("predicate").isJsonObject() ? test.getAsJsonObject().getAsJsonObject("predicate") : null;
-        boolean vanilla = inner != null && "minecraft:cannot_replace_below_tree_trunk".equals(DownFixes.string(inner, "tag"));
+        boolean vanilla = inner != null && "minecraft:cannot_replace_below_tree_trunk".equals(Json.text(inner, "tag"));
         return vanilla ? rule.get("then") : null;
     }
 
@@ -216,7 +220,8 @@ final class DownWorld {
         if (material && json.has("override_armor_assets")) { json.add("override_armor_materials", json.remove("override_armor_assets")); }
         List<String> needed = material ? List.of("ingredient", "item_model_index") : List.of("template_item");
         if (needed.stream().allMatch(json::has)) { return; }
-        JsonObject twin = GameData.json(ResourceLocation.fromNamespaceAndPath("minecraft", path));
+        ResourceLocation twinId = ResourceLocation.withDefaultNamespace(path);
+        JsonObject twin = GameData.has(twinId) ? GameData.json(twinId) : null;
         boolean guessed = false;
         for (String key : needed) {
             if (json.has(key)) { continue; }
@@ -239,18 +244,21 @@ final class DownWorld {
         JsonElement conditions = json.remove("spawn_conditions");
         JsonArray biomes = new JsonArray();
         JsonElement single = null;
+        List<String> tags = new ArrayList<>();
         int named = 0;
         if (conditions != null && conditions.isJsonArray()) {
             for (JsonElement selector : conditions.getAsJsonArray()) {
                 JsonObject condition = selector.isJsonObject() && selector.getAsJsonObject().has("condition") && selector.getAsJsonObject().get("condition").isJsonObject() ? selector.getAsJsonObject().getAsJsonObject("condition") : null;
-                if (condition == null || !"minecraft:biome".equals(DownFixes.namespaced(DownFixes.string(condition, "type"))) || !condition.has("biomes")) { continue; }
+                if (condition == null || !"minecraft:biome".equals(namespaced(Json.text(condition, "type"))) || !condition.has("biomes")) { continue; }
                 JsonElement held = condition.get("biomes");
                 named++;
                 single = held;
                 if (held.isJsonArray()) { held.getAsJsonArray().forEach(biomes::add); }
-                else if (!held.getAsString().startsWith("#")) { biomes.add(held); }
+                else if (held.getAsString().startsWith("#")) { tags.add(held.getAsString()); }
+                else { biomes.add(held); }
             }
         }
+        if (named > 1 && !tags.isEmpty()) { note.accept("'" + file + "' names several biome conditions, and a biome tag cannot join a list of biomes, so " + String.join(", ", tags) + " is left out of its spawn biomes"); }
         json.add("biomes", named == 1 ? single : biomes);
         if (baby != null && !baby.equals(assets)) { note.accept("'" + file + "' gives pups their own textures, which " + Port.Line.running().title() + " does not have, so its pups look like its grown wolves"); }
     }

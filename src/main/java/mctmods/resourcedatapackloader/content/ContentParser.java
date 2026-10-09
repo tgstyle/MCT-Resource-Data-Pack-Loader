@@ -17,15 +17,14 @@ import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.def.PotionEffectDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.def.TabDef;
+import mctmods.resourcedatapackloader.content.types.ContentToolTypes;
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgenParser;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
-import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgenParser;
 
-import java.util.LinkedHashMap;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -34,6 +33,7 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -48,22 +48,17 @@ public final class ContentParser {
     public static final String VARIANTS = "variants";
     public static final String TAGS = "tags";
     private static final String ORE_DICT = "oreDict";
-    private static final List<String> HARVEST_TOOLS = List.of("pickaxe", "axe", "shovel", "hoe", "sword");
     private static final List<String> BEHAVIORS = List.of("animals", "bush", "path", "till");
     private static final List<String> RENDER_LAYERS = List.of("solid", "cutout", "cutout_mipped", "translucent");
-    static final Gson GSON = new GsonBuilder().create();
     private static final int[] NO_CHANCE = new int[0];
 
     private ContentParser() {}
 
     @Nullable public static BlockDef block(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Block definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "block definition");
+        if (json == null) { return null; }
         JsonObject exp = GsonHelper.getAsJsonObject(json, "expDrop", new JsonObject());
-        String type = GsonHelper.getAsString(json, "type", DEFAULT_TYPE).trim().toLowerCase(Locale.ROOT);
+        String type = Settings.lower(GsonHelper.getAsString(json, "type", DEFAULT_TYPE));
         boolean opaque = GsonHelper.getAsBoolean(json, "opaque", !ContentParserContainers.chested(json));
         List<BlockVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
@@ -78,12 +73,12 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Block definition {} has no usable variants, so it registers nothing", key);
             return null;
         }
-        String harvestTool = GsonHelper.getAsString(json, "harvestTool", "pickaxe").trim().toLowerCase(Locale.ROOT);
-        if (!harvestTool.isEmpty() && !HARVEST_TOOLS.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, HARVEST_TOOLS, TAGS); }
+        String harvestTool = Settings.lower(GsonHelper.getAsString(json, "harvestTool", "pickaxe"));
+        if (!harvestTool.isEmpty() && !ContentToolTypes.HARVEST.contains(harvestTool)) { ContentLog.LOGGER.warn("Block {} names harvestTool '{}', which no tool on this line answers to, so only the material decides what harvests it. Known tools are {}; a modded tool reads its own block tag, which a variant can name under '{}'", key, harvestTool, ContentToolTypes.HARVEST, TAGS); }
         return new BlockDef(key, type,
-                GsonHelper.getAsString(json, "material", "rock").trim().toLowerCase(Locale.ROOT),
-                GsonHelper.getAsString(json, "mapColor", "").trim().toLowerCase(Locale.ROOT),
-                GsonHelper.getAsString(json, "soundType", "").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "material", "rock")),
+                Settings.lower(GsonHelper.getAsString(json, "mapColor", "")),
+                Settings.lower(GsonHelper.getAsString(json, "soundType", "")),
                 GsonHelper.getAsString(json, "creativeTab", "").trim(),
                 harvestTool,
                 GsonHelper.getAsInt(json, "harvestToolLevel", 0),
@@ -101,7 +96,7 @@ public final class ContentParser {
                 GsonHelper.getAsInt(json, "fireSpread", 0),
                 GsonHelper.getAsString(json, "modelBlock", "minecraft:stone").trim(),
                 "item".equals(GsonHelper.getAsString(json, "itemModel", "state")),
-                GsonHelper.getAsString(json, "particle", BlockDef.PARTICLE_FLAME).trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "particle", BlockDef.PARTICLE_FLAME)),
                 GsonHelper.getAsBoolean(json, "smoke", true),
                 color(GsonHelper.getAsString(json, "particleColor", "FFFFFF"), key),
                 GsonHelper.getAsString(json, "seed", "").trim(),
@@ -122,7 +117,7 @@ public final class ContentParser {
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {
-        String layer = GsonHelper.getAsString(json, "renderLayer", "").trim().toLowerCase(Locale.ROOT);
+        String layer = Settings.lower(GsonHelper.getAsString(json, "renderLayer", ""));
         if (!layer.isEmpty() && !RENDER_LAYERS.contains(layer)) { ContentLog.LOGGER.error("Unknown renderLayer '{}' in {}, using the type default", layer, key); }
         return layer;
     }
@@ -144,11 +139,11 @@ public final class ContentParser {
             ContentLog.LOGGER.error("The portal of {} names dimension '{}', which is not a dimension id, so it leads nowhere", key, named);
             return null;
         }
-        String backNamed = GsonHelper.getAsString(entry, "returnDimension", "minecraft:overworld").trim();
+        String backNamed = GsonHelper.getAsString(entry, "returnDimension", ContentBiomes.OVERWORLD).trim();
         ResourceLocation back = ResourceLocation.tryParse(ContentFormats.dimensionId(backNamed));
         if (back == null) {
             ContentLog.LOGGER.error("The portal of {} names return dimension '{}', which is not a dimension id, returning to the overworld", key, backNamed);
-            back = ResourceLocation.parse("minecraft:overworld");
+            back = ResourceLocation.parse(ContentBiomes.OVERWORLD);
         }
         return new PortalDef(dimension, back, GsonHelper.getAsString(entry, "gate", "").trim(), Math.max(0, GsonHelper.getAsInt(entry, "cooldown", 60)),
                 GsonHelper.getAsBoolean(entry, "platform", true), GsonHelper.getAsString(entry, "platformBlock", "").trim(), GsonHelper.getAsString(entry, "sound", "").trim(),
@@ -169,7 +164,7 @@ public final class ContentParser {
             if (drop != null) { drops.add(drop); }
         }
         return new BlockVariant(id, id.getPath(),
-                GsonHelper.getAsString(json, "rarity", "common").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "rarity", "common")),
                 Mth.clamp(GsonHelper.getAsInt(json, "maxSize", 64), 1, 64),
                 tags(key, id.getPath(), json),
                 GsonHelper.getAsFloat(json, "hardness", 1.0F),
@@ -206,8 +201,12 @@ public final class ContentParser {
 
     public static List<PotionEffectDef> effects(ResourceLocation key, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
+        return Collections.unmodifiableList(effects(key, GsonHelper.getAsJsonArray(json, "effects"), 3600, true));
+    }
+
+    public static List<PotionEffectDef> effects(ResourceLocation key, JsonArray array, int durationDefault, boolean particlesDefault) {
         List<PotionEffectDef> effects = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "effects")) {
+        for (JsonElement element : array) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("An effect in {} is not an object, skipping it", key);
                 continue;
@@ -219,12 +218,12 @@ public final class ContentParser {
                 continue;
             }
             effects.add(new PotionEffectDef(potion,
-                    Math.max(1, GsonHelper.getAsInt(entry, "duration", 3600)),
+                    Math.max(durationDefault > 0 ? 1 : 0,GsonHelper.getAsInt(entry, "duration", durationDefault)),
                     Math.max(0, GsonHelper.getAsInt(entry, "amplifier", 0)),
                     GsonHelper.getAsBoolean(entry, "ambient", false),
-                    GsonHelper.getAsBoolean(entry, "showParticles", true)));
+                    GsonHelper.getAsBoolean(entry, "showParticles", particlesDefault)));
         }
-        return Collections.unmodifiableList(effects);
+        return effects;
     }
 
     private static List<String> tags(ResourceLocation key, String name, JsonObject json) {
@@ -265,11 +264,8 @@ public final class ContentParser {
     }
 
     @Nullable public static ItemDef item(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Item definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "item definition");
+        if (json == null) { return null; }
         List<ItemVariant> variants = new ArrayList<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, VARIANTS, new JsonObject()).entrySet()) {
             ResourceLocation id = variantId(key, entry.getKey(), "Item");
@@ -279,7 +275,7 @@ public final class ContentParser {
             }
             JsonObject variant = entry.getValue().getAsJsonObject();
             variants.add(new ItemVariant(id, id.getPath(),
-                    GsonHelper.getAsString(variant, "rarity", "common").trim().toLowerCase(Locale.ROOT),
+                    Settings.lower(GsonHelper.getAsString(variant, "rarity", "common")),
                     Mth.clamp(GsonHelper.getAsInt(variant, "maxSize", 64), 1, 64),
                     tags(key, id.getPath(), variant),
                     GsonHelper.getAsInt(variant, "healAmount", 0),
@@ -290,7 +286,7 @@ public final class ContentParser {
             ContentLog.LOGGER.error("Item definition {} has no usable variants, so it registers nothing", key);
             return null;
         }
-        return new ItemDef(key, GsonHelper.getAsString(json, "type", DEFAULT_TYPE).trim().toLowerCase(Locale.ROOT),
+        return new ItemDef(key, Settings.lower(GsonHelper.getAsString(json, "type", DEFAULT_TYPE)),
                 GsonHelper.getAsString(json, "creativeTab", "").trim(),
                 GsonHelper.getAsBoolean(json, "alwaysEdible", false),
                 Collections.unmodifiableList(variants), Json.strings(json, "requires"),
@@ -298,8 +294,8 @@ public final class ContentParser {
                 GsonHelper.getAsBoolean(json, "eat", false),
                 ContentParserContainers.remainder(json),
                 GsonHelper.getAsString(json, "material", "").trim(),
-                GsonHelper.getAsString(json, "toolClass", "").trim().toLowerCase(Locale.ROOT),
-                GsonHelper.getAsString(json, "slot", "").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(json, "toolClass", "")),
+                Settings.lower(GsonHelper.getAsString(json, "slot", "")),
                 GsonHelper.getAsString(json, "crop", "").trim(),
                 GsonHelper.getAsString(json, "soil", "minecraft:farmland").trim(),
                 Json.strings(json, "potionTypes"),
@@ -311,11 +307,8 @@ public final class ContentParser {
     }
 
     @Nullable public static FluidDef fluid(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Fluid definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "fluid definition");
+        if (json == null) { return null; }
         String name = GsonHelper.getAsString(json, "name", key.getPath()).trim();
         if (ResourceLocation.tryBuild(key.getNamespace(), name) == null) {
             ContentLog.LOGGER.error("Fluid definition {} names itself '{}', which is not a usable registry name, ignoring it", key, name);
@@ -335,7 +328,7 @@ public final class ContentParser {
                 GsonHelper.getAsBoolean(json, "gaseous", false),
                 GsonHelper.getAsBoolean(json, "bucket", true),
                 json.has("block"),
-                GsonHelper.getAsString(block, "material", "water").trim().toLowerCase(Locale.ROOT),
+                Settings.lower(GsonHelper.getAsString(block, "material", "water")),
                 GsonHelper.getAsString(json, "creativeTab", "").trim(),
                 GsonHelper.getAsInt(block, "flammability", 0),
                 GsonHelper.getAsInt(block, "fireSpread", 0),
@@ -344,11 +337,8 @@ public final class ContentParser {
     }
 
     @Nullable public static MaterialDef material(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Material file {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "material file");
+        if (json == null) { return null; }
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
             JsonArray array = GsonHelper.getAsJsonArray(json, "reduction");
@@ -372,11 +362,8 @@ public final class ContentParser {
     }
 
     @Nullable public static ExposureDef exposure(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Exposure definition {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "exposure definition");
+        if (json == null) { return null; }
         List<ExposureLevelDef> levels = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(json, "levels", new JsonArray())) {
             if (!element.isJsonObject()) {
@@ -389,17 +376,7 @@ public final class ContentParser {
                 ContentLog.LOGGER.error("A level in {} names no effect, skipping it", key);
                 continue;
             }
-            List<PotionEffectDef> extras = new ArrayList<>();
-            for (JsonElement extraElement : GsonHelper.getAsJsonArray(level, "effects", new JsonArray())) {
-                if (!extraElement.isJsonObject()) { continue; }
-                JsonObject extra = extraElement.getAsJsonObject();
-                String potion = GsonHelper.getAsString(extra, "potion", "");
-                if (potion.isEmpty()) {
-                    ContentLog.LOGGER.error("An extra effect in {} names no potion, skipping it", key);
-                    continue;
-                }
-                extras.add(new PotionEffectDef(potion, Math.max(0, GsonHelper.getAsInt(extra, "duration", 0)), Math.max(0, GsonHelper.getAsInt(extra, "amplifier", 0)), GsonHelper.getAsBoolean(extra, "ambient", false), GsonHelper.getAsBoolean(extra, "showParticles", false)));
-            }
+            List<PotionEffectDef> extras = effects(key, GsonHelper.getAsJsonArray(level, "effects", new JsonArray()), 0, false);
             levels.add(new ExposureLevelDef(effect, Math.max(0.0F, GsonHelper.getAsFloat(level, "damage", 0.0F)), Math.max(0, GsonHelper.getAsInt(level, "damageInterval", 160)), Collections.unmodifiableList(extras)));
         }
         if (levels.isEmpty()) {
@@ -448,31 +425,22 @@ public final class ContentParser {
         for (JsonElement element : GsonHelper.getAsJsonArray(json, member, new JsonArray())) {
             if (!element.isJsonPrimitive()) { continue; }
             String entry = element.getAsString();
-            String named = entry.trim();
-            int level = 1;
-            int split = named.indexOf('=');
-            if (split >= 0) {
-                try { level = Math.max(1, Integer.parseInt(named.substring(split + 1).trim())); }
-                catch (NumberFormatException bad) { ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key); }
-                named = named.substring(0, split).trim();
-            }
-            if (named.isEmpty()) { continue; }
-            ResourceLocation name = location(named);
+            Settings.Weighted split = Settings.weighted(entry, 1);
+            if (split.unreadable()) { ContentLog.LOGGER.error("The {} entry '{}' in {} has a level that is not a number, so it counts as level 1", member, entry, key); }
+            if (split.name().isEmpty()) { continue; }
+            ResourceLocation name = location(split.name());
             if (name == null) {
                 ContentLog.LOGGER.error("The {} entry '{}' in {} is not a name, ignoring it", member, entry, key);
                 continue;
             }
-            found.put(name, level);
+            found.put(name, Math.max(1, split.weight()));
         }
         return found;
     }
 
     @Nullable public static TabDef tab(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Creative tab {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "creative tab");
+        if (json == null) { return null; }
         String icon = GsonHelper.getAsString(json, "icon", "").trim();
         if (icon.isEmpty()) { ContentLog.LOGGER.error("Creative tab {} has no icon, it will fall back to the first block that uses it", key); }
         return new TabDef(key, GsonHelper.getAsString(json, "label", key.getPath()).trim(), icon, Json.strings(json, "requires"));
@@ -539,14 +507,10 @@ public final class ContentParser {
 
     public static int color(String value, Object context) {
         if (value == null || value.trim().isEmpty()) { return 0xFFFFFF; }
-        String cleaned = value.trim();
-        if (cleaned.startsWith("#")) { cleaned = cleaned.substring(1); }
-        if (cleaned.startsWith("0x") || cleaned.startsWith("0X")) { cleaned = cleaned.substring(2); }
-        try { return (int) (Long.parseLong(cleaned, 16) & 0xFFFFFFL); }
-        catch (NumberFormatException ex) {
-            ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
-            return 0xFFFFFF;
-        }
+        Long parsed = ContentTypes.hex(value);
+        if (parsed != null) { return (int) (parsed & 0xFFFFFFL); }
+        ContentLog.LOGGER.error("Color '{}' in {} is not hexadecimal, using white", value, context);
+        return 0xFFFFFF;
     }
 
     @Nullable public static ResourceLocation location(String value) {
@@ -557,7 +521,7 @@ public final class ContentParser {
     private static List<String> behaviors(ResourceLocation key, JsonObject json) {
         List<String> found = new ArrayList<>();
         for (String raw : Json.strings(json, "behavesAs")) {
-            String name = raw.trim().toLowerCase(Locale.ROOT);
+            String name = Settings.lower(raw);
             if (!BEHAVIORS.contains(name)) {
                 ContentLog.LOGGER.error("Block {} says it behaves as '{}', which is not one of {}, ignoring it", key, raw, String.join(", ", BEHAVIORS));
                 continue;

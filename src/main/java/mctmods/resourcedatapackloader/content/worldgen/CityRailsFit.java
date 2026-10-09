@@ -24,7 +24,7 @@ public final class CityRailsFit {
         int width = CityPlan.railWidth(sub);
         int spacing = CityRails.spacing(sub);
         int apart = width + spacing;
-        int half = (width - 1) / 2;
+        int half = CityRails.halfWidth(width);
         int clear = CityRails.clear(sub);
         int well = town.wellAcross(alongX);
         List<Integer> placed = new ArrayList<>();
@@ -83,7 +83,7 @@ public final class CityRailsFit {
         return true;
     }
 
-    private static int acrossReach() { return (CityPlan.railWidth(true) - 1) / 2 + ContentCity.stationReach() + 1 + CityLinks.linkReach(); }
+    private static int acrossReach() { return CityRails.railHalf(true) + ContentCity.stationReach() + 1 + CityLinks.linkReach(); }
 
     private static int offWell(CityPlan.Town town, boolean alongX, int center, int side) {
         int reach = acrossReach();
@@ -106,7 +106,7 @@ public final class CityRailsFit {
             }
             return null;
         }
-        int base = town.crossAcross(alongX) + (CityPlan.streetFullWidth() - 1) / 2 - ContentCityWellPiece.SIZE / 2;
+        int base = town.crossAcross(alongX) + CityRails.halfWidth(CityPlan.fullWidth()) - ContentCityWellPiece.SIZE / 2;
         for (int k = CityPlan.districtOf(center - reach - base, !alongX) - 1; k <= CityPlan.districtOf(center + reach - base, !alongX) + 1; k++) {
             int least = CityPlan.windowOf(k, !alongX) + base;
             int most = least + ContentCityWellPiece.SIZE - 1;
@@ -115,16 +115,17 @@ public final class CityRailsFit {
         return null;
     }
 
-    private static List<Integer> streetCenters(long seed, CityPlan.Town town,List<CityPlan.Rail> rails, boolean alongX, int near, int reach) {
+    private static List<Integer> streetCenters(long seed, CityPlan.Town town, List<CityPlan.Rail> rails, boolean alongX, int near, int reach) {
         List<Integer> found = new ArrayList<>();
         if (!town.drawn().isEmpty()) {
             for (CityPlan.Line line : town.drawn()) {
-                if (line.alongX() == alongX && !line.alley()) { found.add(line.at() + (line.width() - 1) / 2); }
+                if (line.alongX() == alongX && !line.alley()) { found.add(line.middle()); }
             }
             return found;
         }
-        int offset = town.crossAcross(alongX) + (CityPlan.streetFullWidth() - 1) / 2;
-        int side = CityAlleys.branchAt(town.crossAcross(alongX)) + (CityPlan.streetFullWidth() - 1) / 2;
+        int streetHalf = CityRails.halfWidth(CityPlan.fullWidth());
+        int offset = town.crossAcross(alongX) + streetHalf;
+        int side = CityAlleys.branchAt(town.crossAcross(alongX)) + streetHalf;
         for (int k = CityPlan.districtOf(near - reach - offset, !alongX) - 1; k <= CityPlan.districtOf(near + reach - offset, !alongX) + 1; k++) {
             found.add(CityPlan.windowOf(k, !alongX) + offset);
             if (CityAlleys.branches(seed, town, rails, k, alongX)) { found.add(CityPlan.windowOf(k, !alongX) + side); }
@@ -180,7 +181,7 @@ public final class CityRailsFit {
         }
         int shallow = sub ? shallowRow(ground, rail, from, to) : Integer.MIN_VALUE;
         if (shallow != Integer.MIN_VALUE) {
-            ContentLog.LOGGER.debug("Subway line at {} of the city at {}, {} has no room under the ground at row {}: {} block(s) of depth would reach below y {}, the world floor plus its lining, so it is not laid", center, town.wellX(), town.wellZ(), shallow, ContentCity.subwayDepth(), ground.bottom() + ContentCitySewerPiece.FLOOR_LEAST);
+            ContentLog.LOGGER.debug("Subway line at {} of the city at {}, {} has no room under the ground at row {}: {} block(s) of depth would reach below y {}, the world floor plus its lining, so it is not laid", center, town.wellX(), town.wellZ(), shallow, ContentCity.subwayDepth(), ground.lined());
             return null;
         }
         ContentLog.LOGGER.debug("{} line at {} of the city at {}, {} is fitted to rows {} to {}, {} beyond the city either way", sub ? "Subway" : "Railway", center, town.wellX(), town.wellZ(), from, to, tail);
@@ -195,7 +196,7 @@ public final class CityRailsFit {
             }
             return boxes;
         }
-        int half = (CityPlan.streetFullWidth() - 1) / 2;
+        int half = CityRails.halfWidth(CityPlan.fullWidth());
         int reach = (to - from) / 2 + CityPlan.district();
         for (int street : streetCenters(ground.seed(), town, CityRails.placed(ground.seed(), town), !alongX, (from + to) / 2, reach)) { boxes.add(new int[] {street - half, street + half}); }
         return boxes;
@@ -209,7 +210,7 @@ public final class CityRailsFit {
     }
 
     private static int shallowRow(CityGround ground, CityPlan.Rail rail, int from, int to) {
-        int least = ground.bottom() + ContentCitySewerPiece.FLOOR_LEAST + ContentCity.subwayDepth();
+        int least = ground.lined() + ContentCity.subwayDepth();
         for (int row = from; row <= to; row++) {
             int sampled = rail.alongX() ? ground.floor(row, rail.middle()) : ground.floor(rail.middle(), row);
             if (sampled < least) { return row; }

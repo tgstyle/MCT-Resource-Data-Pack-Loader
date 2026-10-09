@@ -7,18 +7,16 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -28,7 +26,6 @@ public final class ContentWorldTemplates {
     private static final String BUILT_IN = "rdpl";
     public static final List<String> ROLE_ORDER = List.of("ocean", "river", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "water");
     private static final List<String> ROLES = List.of("ocean", "river", "water", "beach", "mushroom", "swamp", "hills", "mountain", "jungle", "forest", "savanna", "sandy", "mesa", "snowy", "wasteland", "plains", "nether", "end");
-    private static final Gson GSON = new Gson();
     private static final Map<ResourceLocation, WorldTemplateDef> DEFS = new LinkedHashMap<>();
     @Nullable private static WorldTemplateDef active;
 
@@ -51,16 +48,8 @@ public final class ContentWorldTemplates {
     @Nullable public static WorldTemplateDef active() { return active; }
 
     @Nullable private static WorldTemplateDef parse(ResourceLocation key, String contents) {
-        JsonObject json;
-        try { json = GSON.fromJson(contents, JsonObject.class); }
-        catch (JsonParseException ex) {
-            ContentLog.LOGGER.error("World template {} could not be read, ignoring it", key, ex);
-            return null;
-        }
-        if (json == null) {
-            ContentLog.LOGGER.error("World template {} is empty, ignoring it", key);
-            return null;
-        }
+        JsonObject json = Json.object(key, contents, "world template");
+        if (json == null) { return null; }
         JsonObject settings = json.has("settings") ? GsonHelper.getAsJsonObject(json, "settings") : null;
         return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", GsonHelper.getAsString(json, "default", WorldTemplateDef.VOID)).trim(), roles(key, json), switches(json), Json.strings(json, "dimensions"));
     }
@@ -68,7 +57,7 @@ public final class ContentWorldTemplates {
     private static Map<String, String> roles(ResourceLocation key, JsonObject json) {
         Map<String, String> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> role : GsonHelper.getAsJsonObject(json, "roles", new JsonObject()).entrySet()) {
-            String name = role.getKey().trim().toLowerCase(Locale.ROOT);
+            String name = Settings.lower(role.getKey());
             if (!ROLES.contains(name)) {
                 ContentLog.LOGGER.error("World template {} names role '{}', which is not one of {}, ignoring it", key, role.getKey(), String.join(", ", ROLES));
                 continue;
@@ -86,7 +75,7 @@ public final class ContentWorldTemplates {
         if (!json.has("structures")) { return Map.of(); }
         Map<String, Boolean> out = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "structures").entrySet()) {
-            if (entry.getValue().isJsonPrimitive()) { out.put(entry.getKey().trim().toLowerCase(Locale.ROOT), entry.getValue().getAsBoolean()); }
+            if (entry.getValue().isJsonPrimitive()) { out.put(Settings.lower(entry.getKey()),entry.getValue().getAsBoolean()); }
         }
         return Map.copyOf(out);
     }

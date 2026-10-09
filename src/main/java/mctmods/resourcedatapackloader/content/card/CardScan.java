@@ -18,7 +18,6 @@ import java.util.UUID;
 
 public final class CardScan {
     private static final int EVERY = 20;
-    private static final long DAY_TICKS = 24000L;
     private static final long MINUTE_TICKS = 1200L;
     private static final String PLAY_FROM = "rdplPlayFrom";
     private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
@@ -75,8 +74,8 @@ public final class CardScan {
             Long before = CLOCKS.put(level.dimension(), now);
             if (before == null || now <= before) { continue; }
             if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, before, now); }
-            long day = now / DAY_TICKS;
-            if (day == before / DAY_TICKS) { continue; }
+            long day = now / Level.TICKS_PER_DAY;
+            if (day == before / Level.TICKS_PER_DAY) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
                 if (rule.day < 0L || rule.day == day) { fireAll(rule, here); }
             }
@@ -85,8 +84,8 @@ public final class CardScan {
 
     private static void crossings(List<CardRule> rules, List<ServerPlayer> here, long before, long now) {
         for (CardRule rule : rules) {
-            long next = before - before % DAY_TICKS + rule.time;
-            if (next <= before) { next += DAY_TICKS; }
+            long next = before - before % Level.TICKS_PER_DAY + rule.time;
+            if (next <= before) { next += Level.TICKS_PER_DAY; }
             if (next <= now) { fireAll(rule, here); }
         }
     }

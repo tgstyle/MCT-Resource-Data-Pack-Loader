@@ -1,11 +1,15 @@
 package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.content.ContentFormats;
+import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
+import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,28 +22,28 @@ final class ConvertDefinitions {
     private static final String PIECES = "villagePieces";
     private static final String PIECES_BLACKLIST = "villagePiecesAreBlacklist";
     private static final List<String> ANVIL_INPUTS = List.of("item", "with");
-    private static final List<String> VANILLA_DIMENSIONS = List.of("minecraft:overworld", "minecraft:the_nether", "minecraft:the_end");
+    private static final List<String> VANILLA_DIMENSIONS = List.of(ContentBiomes.OVERWORLD, "minecraft:the_nether", "minecraft:the_end");
     private static final Map<String, List<String>> LEGACY_STRUCTURES = Map.of(
-            "minecraft:overworld", List.of("villages", "mineshafts", "strongholds", "temples", "monuments", "mansions"),
+            ContentBiomes.OVERWORLD, List.of("villages", "mineshafts", "strongholds", "temples", "monuments", "mansions"),
             "minecraft:the_nether", List.of("netherbridges"), "minecraft:the_end", List.of("endcities"));
     private static final Map<String, List<String>> MODERN_STRUCTURES = Map.of(
-            "minecraft:overworld", List.of("ancient_cities", "buried_treasures", "ocean_ruins", "pillager_outposts", "ruined_portals", "shipwrecks", "trail_ruins"),
+            ContentBiomes.OVERWORLD, List.of("ancient_cities", "buried_treasures", "ocean_ruins", "pillager_outposts", "ruined_portals", "shipwrecks", "trail_ruins"),
             "minecraft:the_nether", List.of("nether_fossils"), "minecraft:the_end", List.of());
 
     private ConvertDefinitions() {}
 
     static void villagePieces(JsonObject settings, Ported pack) {
         if (!settings.has(PIECES) || !settings.get(PIECES).isJsonArray()) { return; }
-        if (settings.has(PIECES_BLACKLIST) && settings.get(PIECES_BLACKLIST).isJsonPrimitive() && !settings.get(PIECES_BLACKLIST).getAsBoolean()) { return; }
+        if (GsonHelper.isValidPrimitive(settings, PIECES_BLACKLIST) && !settings.get(PIECES_BLACKLIST).getAsBoolean()) { return; }
         Set<String> named = new HashSet<>();
         for (JsonElement element : settings.getAsJsonArray(PIECES)) {
-            if (element.isJsonPrimitive()) { named.add(element.getAsString().trim().toLowerCase(Locale.ROOT)); }
+            if (element.isJsonPrimitive()) { named.add(Settings.lower(element.getAsString())); }
         }
         if (!named.containsAll(VANILLA_PIECES)) { return; }
         List<String> kept = new ArrayList<>();
         for (String plot : pack.plots()) {
             String id = plot.toLowerCase(Locale.ROOT);
-            if (!named.contains(id) && !named.contains(id.substring(id.indexOf(':') + 1))) { kept.add(plot); }
+            if (!named.contains(id) && !named.contains(IdNames.path(id))) { kept.add(plot); }
         }
         if (kept.isEmpty()) { return; }
         JsonArray whitelist = new JsonArray();
@@ -61,7 +65,7 @@ final class ConvertDefinitions {
                 continue;
             }
             String level = split < 0 ? "" : text.substring(split);
-            List<String> mapped = pack.owns(name) ? blocks ? pack.ownBlocks(name) : pack.ownItems(name) : Ids.isModded(name) ? List.of(name) : blocks ? Ids.blocks(name) : Ids.items(name);
+            List<String> mapped = pack.variants(name, blocks);
             if (mapped.size() != 1 || !mapped.get(0).equals(name)) { pack.rewrote(); }
             for (String one : mapped) { out.add(one + level); }
         }
@@ -97,8 +101,8 @@ final class ConvertDefinitions {
                 continue;
             }
             JsonObject removal = element.getAsJsonObject();
-            List<String> inputs = removal.has("input") && removal.get("input").isJsonPrimitive() ? Convert.itemNames(removal.get("input").getAsString(), pack) : List.of("");
-            List<String> results = removal.has("result") && removal.get("result").isJsonPrimitive() ? Convert.itemNames(removal.get("result").getAsString(), pack) : List.of("");
+            List<String> inputs = GsonHelper.isValidPrimitive(removal, "input") ? Convert.itemNames(removal.get("input").getAsString(), pack) : List.of("");
+            List<String> results = GsonHelper.isValidPrimitive(removal, "result") ? Convert.itemNames(removal.get("result").getAsString(), pack) : List.of("");
             for (String input : inputs) {
                 for (String result : results) {
                     JsonObject one = new JsonObject();
@@ -121,7 +125,7 @@ final class ConvertDefinitions {
         List<String> added = new ArrayList<>();
         for (String dimension : dimensions) {
             List<String> legacy = LEGACY_STRUCTURES.get(dimension);
-            if (legacy == null || !allOff(structures, legacy)) { continue; }
+            if (legacy == null || anyOn(structures, legacy)) { continue; }
             for (String set : MODERN_STRUCTURES.get(dimension)) {
                 if (structures.has(set)) { continue; }
                 structures.addProperty(set, false);
@@ -145,7 +149,7 @@ final class ConvertDefinitions {
     }
 
     static void movedPoint(JsonObject holder, String key, int shift, Ported pack, String owner) {
-        if (!holder.has(key) || !holder.get(key).isJsonPrimitive()) { return; }
+        if (!GsonHelper.isValidPrimitive(holder, key)) { return; }
         String written = holder.get(key).getAsString();
         String moved = shiftedPoint(written, shift, pack);
         if (moved.equals(written)) { return; }
@@ -158,9 +162,7 @@ final class ConvertDefinitions {
         pack.note(what + " in a 1.12.2 flat world, whose floor sat at y 0; this version lays a flat world from its bottom, so it becomes '" + moved + "'");
     }
 
-    static void flatLayers(JsonObject settings, Ported pack) {
-        if (Convert.flat(settings) && settings.has("generatorOptions") && settings.get("generatorOptions").isJsonPrimitive()) { settings.addProperty("generatorOptions", superflat(settings.get("generatorOptions").getAsString(), pack)); }
-    }
+    static void flatLayers(JsonObject settings, Ported pack) { if (Convert.flat(settings) && GsonHelper.isValidPrimitive(settings, "generatorOptions")) { settings.addProperty("generatorOptions", superflat(settings.get("generatorOptions").getAsString(), pack)); } }
 
     private static String superflat(String text, Ported pack) {
         String[] parts = text.split(";", -1);
@@ -186,33 +188,35 @@ final class ConvertDefinitions {
         if (json.has("standIn") && json.get("standIn").isJsonObject()) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, "Team file " + team + " standIn"); }
         if (shift == 0 || !json.has("spawnBox") || !json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) { return; }
         JsonArray box = json.getAsJsonArray("spawnBox");
+        boolean changed = false;
         for (int corner : new int[] {1, 4}) {
-            if (box.get(corner).isJsonPrimitive() && box.get(corner).getAsJsonPrimitive().isNumber()) { box.set(corner, new JsonPrimitive(box.get(corner).getAsInt() + shift)); }
+            if (box.get(corner).isJsonPrimitive() && box.get(corner).getAsJsonPrimitive().isNumber()) {
+                box.set(corner, new JsonPrimitive(box.get(corner).getAsInt() + shift));
+                changed = true;
+            }
         }
-        flatNote("Team file " + team + " gives a spawnBox", box.toString(), pack);
+        if (changed) { flatNote("Team file " + team + " gives a spawnBox", box.toString(), pack); }
     }
 
     static void groundLevel(JsonObject json, String dimension, Ported pack) {
         int shift = pack.shiftIn(dimension);
-        JsonObject sky = json.has("sky") && json.get("sky").isJsonObject() ? json.getAsJsonObject("sky") : null;
-        if (shift == 0 || sky == null || !sky.has("groundLevel") || !sky.get("groundLevel").isJsonPrimitive() || !sky.getAsJsonPrimitive("groundLevel").isNumber()) { return; }
+        JsonObject sky = json.has("sky") && json.get("sky").isJsonObject() ? json.getAsJsonObject("sky") : new JsonObject();
+        if (shift == 0 || !GsonHelper.isNumberValue(sky, "groundLevel")) { return; }
         int written = sky.get("groundLevel").getAsInt();
         sky.addProperty("groundLevel", written + shift);
         flatNote("Dimension " + dimension + " gives groundLevel " + written, String.valueOf(written + shift), pack);
     }
 
-    private static boolean allOff(JsonObject structures, List<String> names) {
-        for (String name : names) {
-            if (!structures.has(name) || !structures.get(name).isJsonPrimitive() || structures.get(name).getAsBoolean()) { return false; }
-        }
-        return true;
+    private static boolean anyOn(JsonObject structures, List<String> names) {
+        for (String name : names) { if (!GsonHelper.isValidPrimitive(structures, name) || structures.get(name).getAsBoolean()) { return true; } }
+        return false;
     }
 
     static void anvil(JsonObject json, Ported pack) {
         for (String key : ANVIL_INPUTS) {
             JsonObject holder = json.has(key) && json.get(key).isJsonObject() ? json.getAsJsonObject(key) : json;
             String field = holder == json ? key : "item";
-            if (!holder.has(field) || !holder.get(field).isJsonPrimitive() || !holder.get(field).getAsString().trim().endsWith(Convert.WILDCARD)) { continue; }
+            if (!GsonHelper.isValidPrimitive(holder, field) || !holder.get(field).getAsString().trim().endsWith(Convert.WILDCARD)) { continue; }
             JsonArray names = new JsonArray();
             for (String name : Convert.itemNames(holder.get(field).getAsString(), pack)) { names.add(name); }
             holder.add(field, names);
@@ -244,7 +248,7 @@ final class ConvertDefinitions {
         for (JsonElement element : json.getAsJsonArray("orders")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject entry = element.getAsJsonObject();
-            if (!entry.has("blocks") || !entry.get("blocks").isJsonPrimitive()) { continue; }
+            if (!GsonHelper.isValidPrimitive(entry, "blocks")) { continue; }
             String blocks = entry.get("blocks").getAsString().trim();
             if (blocks.isEmpty() || blocks.contains(":")) { continue; }
             entry.addProperty("blocks", Ids.oreDictTag(blocks));

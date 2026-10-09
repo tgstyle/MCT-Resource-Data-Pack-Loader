@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(StructureTemplatePool.class) public interface IStructureTemplatePool {
-    @Accessor("templates") ObjectArrayList<StructurePoolElement> rdpl$templates();
+    @Accessor("templates") ObjectArrayList<StructurePoolElement> rdpl$getTemplates();
 }

@@ -11,22 +11,23 @@ import mctmods.resourcedatapackloader.content.worldgen.CityPlan.Rail;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Hashes;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.util.RandomSource;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 final class CityPlanPlots {
     static final int GAP = 1;
     static final int SETBACK = 1;
-    private static final Set<String> WARNED = new LinkedHashSet<>();
+    static final long BLOCK_SALT = CityPlan.SALT ^ 0xB10C5L;
+    private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
 
     static final class Tally {
         private final int limit;
@@ -59,35 +60,35 @@ final class CityPlanPlots {
 
     private CityPlanPlots() {}
 
-    static int townBlock(long seed, CityPlan.Town town) { return districtBlock(RandomSource.create(seed ^ CityPlan.SALT ^ 0xB10C5L ^ town.hash())); }
+    static int townBlock(long seed, CityPlan.Town town) { return districtBlock(RandomSource.create(seed ^ BLOCK_SALT ^ town.hash())); }
 
     static int districtBlock(RandomSource roll) {
         List<PickDef> picks = new ArrayList<>();
         for (String entry : ContentControl.list(ContentControl.VILLAGES, "villageBlockSizes", Config.worldgen.villageBlockSizes())) {
-            String text = entry.trim().toLowerCase(Locale.ROOT);
+            String text = Settings.lower(entry);
             if (text.isEmpty()) { continue; }
-            int at = text.indexOf('=');
-            if (at <= 0 || at == text.length() - 1) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlockSizes entry '{}' is not written as size=weight, ignoring it", entry); }
+            String[] sides = Settings.split(text);
+            if (sides == null || sides[0].isEmpty() || sides[1].isEmpty()) {
+                ContentLog.LOGGER.errorOnce(WARNED, "size|" + entry, "villageBlockSizes entry '{}' is not written as size=weight, ignoring it", entry);
                 continue;
             }
             int weight;
-            try { weight = Integer.parseInt(text.substring(at + 1).trim()); }
+            try { weight = Integer.parseInt(sides[1]); }
             catch (NumberFormatException notNumber) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlockSizes entry '{}' gives a weight that is not a whole number, ignoring the entry", entry); }
+                ContentLog.LOGGER.errorOnce(WARNED, "size|" + entry, "villageBlockSizes entry '{}' gives a weight that is not a whole number, ignoring the entry", entry);
                 continue;
             }
             if (weight < 1) {
-                if (WARNED.add(entry)) { ContentLog.LOGGER.error("villageBlockSizes entry '{}' asks for a weight below 1, ignoring the entry", entry); }
+                ContentLog.LOGGER.errorOnce(WARNED, "size|" + entry, "villageBlockSizes entry '{}' asks for a weight below 1, ignoring the entry", entry);
                 continue;
             }
-            picks.add(new PickDef(text.substring(0, at).trim(), weight));
+            picks.add(new PickDef(sides[0], weight));
         }
         String picked = PickDef.pick(picks, roll);
         if (picked == null) { return ContentVillages.largestPlot(); }
         try { return Math.max(CityGrowth.BLOCK_LEAST, Integer.parseInt(picked)); }
         catch (NumberFormatException notNumber) {
-            if (WARNED.add(picked)) { ContentLog.LOGGER.error("villageBlockSizes entry '{}' is not a whole number of blocks, so the district keeps the largest plot as its block", picked); }
+            ContentLog.LOGGER.errorOnce(WARNED, "block|" + picked, "villageBlockSizes entry '{}' is not a whole number of blocks, so the district keeps the largest plot as its block", picked);
             return ContentVillages.largestPlot();
         }
     }
@@ -180,7 +181,7 @@ final class CityPlanPlots {
         if (packs.isEmpty()) { return 0; }
         int seated = 0;
         int noRoom = 0;
-        int[] refused = new int[4];
+        int[] refused = new int[5];
         for (Plot front : fronts) {
             if (most > 0 && found.size() >= most) { break; }
             if (ContentVillages.vanillaHouse(front.def())) { continue; }
@@ -200,13 +201,12 @@ final class CityPlanPlots {
                 int least = (alongX ? front.fromX() : front.fromZ()) + (wide - def.width()) / 2;
                 int near = front.lower() ? edge : edge - def.depth() + 1;
                 int over = near + def.depth() - 1;
-                Plot plot = alongX ? new Plot(least, near, least + def.width() - 1, over, front.street(), front.lower(), def, true)
-                                   : new Plot(near, least, over, least + def.width() - 1, front.street(), front.lower(), def, true);
-                int why = least < lowAlong || least + def.width() - 1 > highAlong ? 0 : refusal(found, rails, lines, plazas, plot);
+                Plot plot = alongX ? new Plot(least, near, least + def.width() - 1, over, front.street(), front.lower(), def, true) : new Plot(near, least, over, least + def.width() - 1, front.street(), front.lower(), def, true);
+                int why = least < lowAlong || least + def.width() - 1 > highAlong ? 4 : refusal(found, rails, lines, plazas, plot);
                 if (why < 0) { back = plot; }
                 else {
                     refused[why]++;
-                    left.remove(def);
+                    drop(left, def);
                 }
             }
             if (back != null) {
@@ -215,7 +215,7 @@ final class CityPlanPlots {
             }
             else if (!any) { noRoom++; }
         }
-        if (!fronts.isEmpty()) { ContentLog.LOGGER.debug("Behind {} front plot(s): {} seated, {} with no room behind, tries refused {} on a plot, {} on a railway, {} on a street, {} beside a well", fronts.size(), seated, noRoom, refused[0], refused[1], refused[2], refused[3]); }
+        if (!fronts.isEmpty()) { ContentLog.LOGGER.debug("Behind {} front plot(s): {} seated, {} with no room behind, tries refused {} on a plot, {} on a railway, {} on a street, {} beside a well, {} out of the quarter", fronts.size(), seated, noRoom, refused[0], refused[1], refused[2], refused[3], refused[4]); }
         return seated;
     }
 
@@ -323,7 +323,7 @@ final class CityPlanPlots {
         for (Junction plaza : plazas) {
             int x = plaza.alongZ().middle();
             int z = plaza.alongX().middle();
-            if (plot.toX() >= x - reach && plot.fromX() <= x + reach && plot.toZ() >= z - reach && plot.fromZ() <= z + reach) { return true; }
+            if (plot.meets(x - reach, z - reach, x + reach, z + reach)) { return true; }
         }
         return false;
     }
@@ -349,7 +349,7 @@ final class CityPlanPlots {
 
     private static boolean fits(List<Plot> found, Plot plot) {
         for (Plot held : found) {
-            if (plot.fromX() <= held.toX() && plot.toX() >= held.fromX() && plot.fromZ() <= held.toZ() && plot.toZ() >= held.fromZ()) { return false; }
+            if (plot.meets(held.fromX(), held.fromZ(), held.toX(), held.toZ())) { return false; }
         }
         return true;
     }
@@ -398,7 +398,7 @@ final class CityPlanPlots {
                 String picked = PickDef.pick(held.picks(), RandomSource.create(Hashes.mix(seed ^ CityPlan.SALT, cellX, 11, cellZ)));
                 VillageDef def = picked == null ? null : ContentVillages.byKey(picked);
                 if (def == null) {
-                    if (picked != null && WARNED.add(picked)) { ContentLog.LOGGER.error("City map {} names plot '{}', which no pack provides, so that cell stays open", map.key(), picked); }
+                    if (picked != null) { ContentLog.LOGGER.errorOnce(WARNED, "plot|" + picked, "City map {} names plot '{}', which no pack provides, so that cell stays open", map.key(), picked); }
                     continue;
                 }
                 Plot facing = facingFor(grid, x, z, cellX, cellZ, cell, alongX, alongZ, def);
@@ -451,5 +451,4 @@ final class CityPlanPlots {
         int fromZ = midZ - def.width() / 2;
         return new Plot(fromX, fromZ, fromX + def.depth() - 1, fromZ + def.width() - 1, nearest, true, def, false);
     }
-
 }

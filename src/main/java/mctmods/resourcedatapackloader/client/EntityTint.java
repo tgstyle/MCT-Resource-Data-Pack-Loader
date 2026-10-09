@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.client;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
-
+import net.minecraft.util.FastColor;
 import javax.annotation.Nonnull;
 
 public final class EntityTint {
@@ -20,9 +20,9 @@ public final class EntityTint {
 
         Tinted(VertexConsumer inner, int tint) {
             this.inner = inner;
-            this.red = tint >> 16 & 255;
-            this.green = tint >> 8 & 255;
-            this.blue = tint & 255;
+            this.red = FastColor.ARGB32.red(tint);
+            this.green = FastColor.ARGB32.green(tint);
+            this.blue = FastColor.ARGB32.blue(tint);
         }
 
         @Override @Nonnull public VertexConsumer vertex(double x, double y, double z) { inner.vertex(x, y, z); return this; }

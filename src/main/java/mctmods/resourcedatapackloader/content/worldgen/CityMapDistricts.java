@@ -2,9 +2,9 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.def.CityMapDef;
-
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import java.util.ArrayList;
@@ -34,7 +34,7 @@ final class CityMapDistricts {
         int least = ContentVillages.plotsLeast();
         if (least <= 0 || built >= least) { return NONE; }
         List<BoundingBox> drawn = new ArrayList<>(pieces);
-        for (CityPlan.Line line : lines) { drawn.add(box(line)); }
+        for (CityPlan.Line line : lines) { drawn.add(line.box()); }
         Standing standing = new Standing(ground, town, new ArrayList<>(lines), new ArrayList<>(pieces), List.copyOf(drawn), new ArrayList<>(CityLayout.mapWells(town)), rails, new LinkedHashMap<>(), new ArrayList<>(), new int[6], others);
         List<CityPlan.Plot> plots = new ArrayList<>();
         Set<Long> tried = new HashSet<>();
@@ -46,12 +46,11 @@ final class CityMapDistricts {
             if (cell == Long.MIN_VALUE) { break; }
             attempts++;
             tried.add(cell);
-            CityPlan made = settle(standing, (int) (cell >> 32), (int) cell);
+            CityPlan made = settle(standing, Longs.high(cell), Longs.low(cell));
             if (made == null) { continue; }
             standing.districts().put(cell, made);
-            standing.roads().addAll(made.alongX());
-            standing.roads().addAll(made.alongZ());
-            for (CityPlan.Plot plot : made.plots()) { standing.pieces().add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
+            standing.roads().addAll(CityLines.of(made));
+            for (CityPlan.Plot plot : made.plots()) { standing.pieces().add(plot.box()); }
             standing.wells().addAll(made.wellBoxes());
             plots.addAll(made.plots());
             total += made.plots().size();
@@ -63,7 +62,7 @@ final class CityMapDistricts {
         return new Grown(List.copyOf(standing.ties()), Collections.unmodifiableMap(new LinkedHashMap<>(standing.districts())), List.copyOf(plots));
     }
 
-    private static int spacing() { return 2 * ContentVillages.largestPlot() + 2 * CityPlan.plazaReach() + 2 * CityPlan.streetFullWidth(); }
+    private static int spacing() { return 2 * ContentVillages.largestPlot() + 2 * CityPlan.plazaReach() + 2 * CityPlan.fullWidth(); }
 
     private static long site(Standing standing, Set<Long> tried) {
         int cx = standing.town().wellX();
@@ -74,7 +73,7 @@ final class CityMapDistricts {
         int spacing = spacing();
         for (CityPlan.Line road : standing.roads()) {
             boolean alongX = road.alongX();
-            int line = (road.at() + road.last()) / 2;
+            int line = road.middle();
             for (int sign = -1; sign <= 1; sign += 2) {
                 int edge = sign < 0 ? road.from() : road.to();
                 for (int away = CityPlan.plazaReach() + 4; away <= Math.max(48, spacing + 16); away += 8) {
@@ -107,8 +106,8 @@ final class CityMapDistricts {
 
     private static boolean closed(Standing standing, long cell) {
         int size = CityPlan.district();
-        int x = CityPlan.windowOf((int) (cell >> 32), true);
-        int z = CityPlan.windowOf((int) cell, false);
+        int x = CityPlan.windowOf(Longs.high(cell), true);
+        int z = CityPlan.windowOf(Longs.low(cell), false);
         return standing.districts().containsKey(cell) || meetsAny(standing.drawn(), new BoundingBox(x, 0, z, x + size - 1, 0, z + size - 1));
     }
 
@@ -122,7 +121,7 @@ final class CityMapDistricts {
     @Nullable private static CityPlan settle(Standing standing, int cellX, int cellZ) {
         CityPlan.Town town = standing.town();
         int[] refused = standing.refused();
-        int half = CityPlan.streetFullWidth() / 2;
+        int half = CityPlan.fullWidth() / 2;
         int centerX = CityPlan.windowOf(cellX, true) + town.crossX() + half;
         int centerZ = CityPlan.windowOf(cellZ, false) + town.crossZ() + half;
         if (crowded(standing.wells(), centerX, centerZ, spacing())) {
@@ -136,8 +135,8 @@ final class CityMapDistricts {
         int reach = CityPlan.plazaReach();
         int wellX = centerX - ContentCityWellPiece.SIZE / 2;
         int wellZ = centerZ - ContentCityWellPiece.SIZE / 2;
-        BoundingBox well = new BoundingBox(wellX, 0, wellZ, wellX + ContentCityWellPiece.SIZE - 1, 0, wellZ + ContentCityWellPiece.SIZE - 1);
-        BoundingBox square = new BoundingBox(well.minX() - reach, 0, well.minZ() - reach, well.maxX() + reach, 0, well.maxZ() + reach);
+        BoundingBox well = CityBoxes.well(wellX, 0, wellZ, 0);
+        BoundingBox square = CityBoxes.flattened(well, reach);
         if (meetsAny(standing.others(), square)) {
             refused[5]++;
             ContentLog.LOGGER.debug("The district at {}, {} beside the drawn city at {}, {} would stand beside another city, so it is not grown", wellX, wellZ, town.wellX(), town.wellZ());
@@ -148,10 +147,9 @@ final class CityMapDistricts {
             return null;
         }
         CityPlan laid = CityPlanTowns.laid(standing.ground(), cellX, cellZ, town);
-        List<CityPlan.Line> own = new ArrayList<>(laid.alongX());
-        own.addAll(laid.alongZ());
+        List<CityPlan.Line> own = CityLines.of(laid);
         for (CityPlan.Line line : own) {
-            if (meetsAny(standing.pieces(), box(line))) {
+            if (meetsAny(standing.pieces(), line.box())) {
                 refused[3]++;
                 ContentLog.LOGGER.debug("The district at {}, {} beside the drawn city would lay a street across a standing piece, so it is not grown", CityPlan.windowOf(cellX, true), CityPlan.windowOf(cellZ, false));
                 return null;
@@ -159,7 +157,7 @@ final class CityMapDistricts {
         }
         List<CityPlan.Plot> kept = new ArrayList<>();
         for (CityPlan.Plot plot : laid.plots()) {
-            BoundingBox lot = new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ());
+            BoundingBox lot = plot.box();
             if (!meetsAny(standing.pieces(), lot) && !meetsRoad(standing.roads(), lot)) { kept.add(plot); }
         }
         CityPlan made = kept.size() == laid.plots().size() ? laid : laid.keeping(kept);
@@ -185,7 +183,7 @@ final class CityMapDistricts {
 
     private static List<CityPlan.Line> regrow(Standing standing, List<CityPlan.Line> own, CityPlan made, int cellX, int cellZ) {
         List<BoundingBox> pieces = new ArrayList<>(standing.pieces());
-        for (CityPlan.Plot plot : made.plots()) { pieces.add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
+        for (CityPlan.Plot plot : made.plots()) { pieces.add(plot.box()); }
         CityPlan.Line[] grown = new CityPlan.Line[own.size() * 2];
         for (int round = 1; round <= JOIN; round++) {
             boolean grew = false;
@@ -206,7 +204,7 @@ final class CityMapDistricts {
                     }
                     for (int length = GROW; length >= GROW_STEP; length -= GROW_STEP) {
                         int far = tip + dir * length;
-                        BoundingBox strip = box(new CityPlan.Line(street.at(), street.width(), false, street.alongX(), Math.min(tip + dir, far), Math.max(tip + dir, far), CityPlan.End.MET, CityPlan.End.MET));
+                        BoundingBox strip = new CityPlan.Line(street.at(), street.width(), false, street.alongX(), Math.min(tip + dir, far), Math.max(tip + dir, far), CityPlan.End.MET, CityPlan.End.MET).box();
                         if (meetsAny(pieces, strip) || meetsRoad(roads, strip) || strays(standing, strip, cellX, cellZ)) { continue; }
                         int start = held == null ? tip + dir : (dir > 0 ? held.from() : held.to());
                         grown[slot] = new CityPlan.Line(street.at(), street.width(), false, street.alongX(), Math.min(start, far), Math.max(start, far), CityPlan.End.MET, CityPlan.End.MET);
@@ -218,7 +216,7 @@ final class CityMapDistricts {
             if (!grew) { break; }
             List<CityPlan.Line> reached = new ArrayList<>();
             for (CityPlan.Line line : grown) {
-                if (line != null && joined(standing, List.of(line), box(line))) { reached.add(line); }
+                if (line != null && joined(standing, List.of(line), line.box())) { reached.add(line); }
             }
             if (!reached.isEmpty()) {
                 ContentLog.LOGGER.debug("The district at {}, {} joined the drawn city after {} round(s) of street growth, lengthening {} of its street(s) toward it", CityPlan.windowOf(cellX, true), CityPlan.windowOf(cellZ, false), round, reached.size());
@@ -232,15 +230,15 @@ final class CityMapDistricts {
         int reach = CityPlan.plazaReach();
         List<BoundingBox> mine = new ArrayList<>(List.of(square));
         for (CityPlan.Line line : own) {
-            if (!line.alley()) { mine.add(box(line)); }
+            if (!line.alley()) { mine.add(line.box()); }
         }
         for (BoundingBox at : mine) {
-            BoundingBox grown = new BoundingBox(at.minX() - 1, 0, at.minZ() - 1, at.maxX() + 1, 0, at.maxZ() + 1);
+            BoundingBox grown = CityBoxes.flattened(at, 1);
             for (CityPlan.Line road : standing.roads()) {
-                if (!road.alley() && box(road).intersects(grown)) { return true; }
+                if (!road.alley() && road.box().intersects(grown)) { return true; }
             }
             for (BoundingBox well : standing.wells()) {
-                if (new BoundingBox(well.minX() - reach, 0, well.minZ() - reach, well.maxX() + reach, 0, well.maxZ() + reach).intersects(grown)) { return true; }
+                if (CityBoxes.flattened(well, reach).intersects(grown)) { return true; }
             }
         }
         return false;
@@ -252,19 +250,19 @@ final class CityMapDistricts {
         int[] refused = new int[4];
         int side = CityPlanTowns.blockAt(standing.ground().seed(), cellX, cellZ);
         List<BoundingBox> pieces = new ArrayList<>(standing.pieces());
-        for (CityPlan.Plot plot : made.plots()) { pieces.add(new BoundingBox(plot.fromX(), 0, plot.fromZ(), plot.toX(), 0, plot.toZ())); }
+        for (CityPlan.Plot plot : made.plots()) { pieces.add(plot.box()); }
         List<CityPlan.Line> roads = new ArrayList<>(standing.roads());
         roads.addAll(own);
         for (CityPlan.Line street : own) {
             if (street.alley()) { continue; }
             boolean alongX = street.alongX();
-            int center = (street.at() + street.last()) / 2;
+            int center = street.middle();
             for (int dir = -1; dir <= 1; dir += 2) {
                 int end = dir > 0 ? street.to() : street.from();
                 for (CityPlan.Line met : standing.roads()) {
                     if (met.alley()) { continue; }
                     if (met.alongX() != alongX && !met.covers(center)) { continue; }
-                    if (met.alongX() == alongX && (met.at() + met.last()) / 2 != center) { continue; }
+                    if (met.alongX() == alongX && met.middle() != center) { continue; }
                     int metLow = met.alongX() == alongX ? met.from() : met.at();
                     int metHigh = met.alongX() == alongX ? met.to() : met.last();
                     int near = dir > 0 ? metLow : metHigh;
@@ -273,12 +271,12 @@ final class CityMapDistricts {
                     int to = dir > 0 ? near - 1 : end - 1;
                     int length = to - from + 1;
                     if (length >= bestLength) { continue; }
-                    if (length > TIE_REACH || length <= CityPlan.streetFullWidth()) {
+                    if (length > TIE_REACH || length <= CityPlan.fullWidth()) {
                         refused[0]++;
                         continue;
                     }
                     CityPlan.Line tried = new CityPlan.Line(street.at(), street.width(), false, alongX, from, to, CityPlan.End.MET, CityPlan.End.MET);
-                    BoundingBox strip = box(tried);
+                    BoundingBox strip = tried.box();
                     if (standsOn(standing.rails(), pieces, strip) || meetsRoad(roads, strip) || strays(standing, strip, cellX, cellZ)) {
                         refused[1]++;
                         continue;
@@ -306,16 +304,16 @@ final class CityMapDistricts {
 
     private static boolean standsOn(List<CityPlan.Rail> rails, List<BoundingBox> pieces, BoundingBox tie) {
         for (BoundingBox piece : pieces) {
-            if (piece.intersects(tie) && !crossedClean(rails, piece, tie)) { return true; }
+            if (piece.intersects(tie) && uncrossed(rails, piece, tie)) { return true; }
         }
         return false;
     }
 
-    private static boolean crossedClean(List<CityPlan.Rail> rails, BoundingBox piece, BoundingBox tie) {
+    private static boolean uncrossed(List<CityPlan.Rail> rails, BoundingBox piece, BoundingBox tie) {
         for (CityPlan.Rail rail : rails) {
-            if (!rail.subway() && piece.equals(CityRails.railBox(rail)) && CityRails.crosses(rail, tie)) { return true; }
+            if (!rail.subway() && piece.equals(rail.box()) && CityRails.crosses(rail, tie)) { return false; }
         }
-        return false;
+        return true;
     }
 
     private static boolean strays(Standing standing, BoundingBox strip, int cellX, int cellZ) {
@@ -340,7 +338,7 @@ final class CityMapDistricts {
 
     private static boolean boreUnder(List<CityPlan.Rail> rails, BoundingBox well) {
         for (CityPlan.Rail rail : rails) {
-            if (rail.subway() && CityRails.railBox(rail).intersects(well)) { return true; }
+            if (rail.subway() && rail.box().intersects(well)) { return true; }
         }
         return false;
     }
@@ -371,12 +369,10 @@ final class CityMapDistricts {
 
     private static boolean meetsRoad(List<CityPlan.Line> roads, BoundingBox box) {
         for (CityPlan.Line road : roads) {
-            if (box(road).intersects(box)) { return true; }
+            if (road.box().intersects(box)) { return true; }
         }
         return false;
     }
-
-    static BoundingBox box(CityPlan.Line line) { return line.alongX() ? new BoundingBox(line.from(), 0, line.at(), line.to(), 0, line.last()) : new BoundingBox(line.at(), 0, line.from(), line.last(), 0, line.to()); }
 
     private static boolean crowded(List<BoundingBox> wells, int x, int z, int spacing) {
         for (BoundingBox well : wells) {

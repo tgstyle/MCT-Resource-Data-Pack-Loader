@@ -39,7 +39,6 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.common.IPlantable;
 import net.minecraftforge.network.NetworkHooks;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -62,17 +61,11 @@ import javax.annotation.Nullable;
 
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(HorizontalDirectionalBlock.FACING); }
 
-    @Override @Nonnull public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) {
-        return defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite());
-    }
+    @Override @Nonnull public BlockState getStateForPlacement(@Nonnull BlockPlaceContext context) { return defaultBlockState().setValue(HorizontalDirectionalBlock.FACING, context.getHorizontalDirection().getOpposite()); }
 
-    @Override @Nonnull public BlockState rotate(BlockState state, Rotation rotation) {
-        return state.setValue(HorizontalDirectionalBlock.FACING, rotation.rotate(state.getValue(HorizontalDirectionalBlock.FACING)));
-    }
+    @Override @Nonnull public BlockState rotate(BlockState state, Rotation rotation) { return state.setValue(HorizontalDirectionalBlock.FACING, rotation.rotate(state.getValue(HorizontalDirectionalBlock.FACING))); }
 
-    @Override @Nonnull public BlockState mirror(BlockState state, Mirror mirror) {
-        return state.setValue(HorizontalDirectionalBlock.FACING, mirror.mirror(state.getValue(HorizontalDirectionalBlock.FACING)));
-    }
+    @Override @Nonnull public BlockState mirror(BlockState state, Mirror mirror) { return state.setValue(HorizontalDirectionalBlock.FACING, mirror.getRotation(state.getValue(HorizontalDirectionalBlock.FACING)).rotate(state.getValue(HorizontalDirectionalBlock.FACING))); }
 
     @Override @Nonnull public RenderShape getRenderShape(@Nonnull BlockState state) { return container.chestModel() ? RenderShape.ENTITYBLOCK_ANIMATED : RenderShape.MODEL; }
 
@@ -82,7 +75,7 @@ import javax.annotation.Nullable;
 
     @Override @Nullable public <T extends BlockEntity> BlockEntityTicker<T> getTicker(@Nonnull Level level, @Nonnull BlockState state, @Nonnull BlockEntityType<T> type) {
         if (!level.isClientSide() || !container.chestModel()) { return null; }
-        return createTickerHelper(type, ContentContainers.type(), ContentContainerBlockEntity::lidTick);
+        return createTickerHelper(type, ContentContainers.TYPE.get(), ContentContainerBlockEntity::lidTick);
     }
 
     @Override @Nonnull public InteractionResult use(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
@@ -115,9 +108,7 @@ import javax.annotation.Nullable;
 
     @Override public boolean hasAnalogOutputSignal(@Nonnull BlockState state) { return true; }
 
-    @Override public int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos) {
-        return ContentContainerBlockEntity.comparatorOutput(level.getBlockEntity(pos));
-    }
+    @Override public int getAnalogOutputSignal(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos) { return ContentContainerBlockEntity.comparatorOutput(level.getBlockEntity(pos)); }
 
     @Override public boolean triggerEvent(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, int id, int value) {
         super.triggerEvent(state, level, pos, id, value);

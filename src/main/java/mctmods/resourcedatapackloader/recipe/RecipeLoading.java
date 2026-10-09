@@ -19,9 +19,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.AbstractCookingRecipe;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
-import java.util.HashMap;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -155,9 +155,13 @@ public final class RecipeLoading {
 
     public static void onTagsBound() {
         IRecipeFilter filter = attached;
-        if (filter == null || FurnaceRecipes.resolvedAtLoad() && !ContentDisabled.any()) { return; }
+        if (filter == null || FurnaceRecipes.resolvedAtLoad() && ContentDisabled.none()) { return; }
         filter.rdpl$filterLate();
         if (FurnaceRecipes.resolvedAtLoad()) { return; }
+        reportFurnaces();
+    }
+
+    private static void reportFurnaces() {
         FurnaceBlocking.report();
         FurnaceRecipes.report();
     }
@@ -169,8 +173,7 @@ public final class RecipeLoading {
         if (removed > 0) { Summary.info("recipes.removed", "Removed " + removed + " recipe(s): " + removedByFile + " by a remove file, " + removedByName + " by name, " + removedByOutput + " by output"); }
         RecipeBlocking.report();
         if (!FurnaceRecipes.resolvedAtLoad()) { return; }
-        FurnaceBlocking.report();
-        FurnaceRecipes.report();
+        reportFurnaces();
     }
 
     @Nullable private static String missingItem(JsonElement element, String namespace) {

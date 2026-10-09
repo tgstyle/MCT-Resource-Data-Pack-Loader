@@ -12,5 +12,5 @@ public final class BlastHush {
 
     public static void mark(MessageHush blast) { HUSHED.add(blast); }
 
-    public static boolean hushed(double x, double y, double z) { return HUSHED.remove(new MessageHush(x, y, z)); }
+    public static boolean audible(double x, double y, double z) { return !HUSHED.remove(new MessageHush(x, y, z)); }
 }

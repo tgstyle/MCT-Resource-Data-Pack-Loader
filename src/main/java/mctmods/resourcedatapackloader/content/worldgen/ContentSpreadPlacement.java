@@ -46,7 +46,7 @@ public final class ContentSpreadPlacement extends PlacementModifier {
         WorldGenLevel level = context.getLevel();
         if (!ContentWorldgen.dimensionAllows(held, level)) { return Stream.empty(); }
         int[] pinned = def.shape().pinnedAt();
-        if (!farEnoughFromSpawn(def, level, pinned == null ? origin : new BlockPos(pinned[0] & ~15, origin.getY(), pinned[1] & ~15))) { return Stream.empty(); }
+        if (tooCloseToSpawn(def, level, pinned == null ? origin : new BlockPos(pinned[0] & ~15, origin.getY(), pinned[1] & ~15))) { return Stream.empty(); }
         if (def.shape().wholeChunk()) { return Stream.of(origin); }
         if (pinned != null) { return pinnedPosition(held, context, origin, pinned); }
         int tries = def.attempts().pick(random);
@@ -63,7 +63,7 @@ public final class ContentSpreadPlacement extends PlacementModifier {
                 pos = snap(level, pos, WorldgenDef.CEILING.equals(def.snap()), def.snapDepth());
                 if (pos == null) { continue; }
             }
-            if (!ContentWorldgen.inRegion(held, level, pos) || !ContentWorldgen.allows(held, level, pos)) { continue; }
+            if (ContentWorldgen.outsideRegion(held, level, pos) || !ContentWorldgen.allows(held, level, pos)) { continue; }
             found.add(pos);
         }
         return found.stream();
@@ -91,12 +91,9 @@ public final class ContentSpreadPlacement extends PlacementModifier {
         return at.immutable();
     }
 
-    private static boolean farEnoughFromSpawn(WorldgenDef def, WorldGenLevel level, BlockPos origin) {
-        if (def.minDistanceFromSpawn() <= 0) { return true; }
-        BlockPos spawn = level.getLevel().getSharedSpawnPos();
-        double offX = (origin.getX() + 8) - spawn.getX();
-        double offZ = (origin.getZ() + 8) - spawn.getZ();
-        return offX * offX + offZ * offZ >= (double) def.minDistanceFromSpawn() * def.minDistanceFromSpawn();
+    private static boolean tooCloseToSpawn(WorldgenDef def, WorldGenLevel level, BlockPos origin) {
+        if (def.minDistanceFromSpawn() <= 0) { return false; }
+        return !ContentStructurePins.farFrom(level.getLevel().getSharedSpawnPos(), def.minDistanceFromSpawn(), origin.getX() + 8, origin.getZ() + 8);
     }
 
     @Nullable private static BlockPos snap(WorldGenLevel level, BlockPos pos, boolean ceiling, int depth) {

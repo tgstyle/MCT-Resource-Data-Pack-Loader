@@ -1,8 +1,11 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.Json;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,8 +22,8 @@ final class ConvertRecipes {
 
     private ConvertRecipes() {}
 
-    public static String recipe(JsonObject json, String namespace, Ported pack) {
-        if (json.has("type") && json.get("type").isJsonPrimitive()) {
+    static String recipe(JsonObject json, String namespace, Ported pack) {
+        if (GsonHelper.isValidPrimitive(json, "type")) {
             String type = json.get("type").getAsString();
             String mapped = switch (type) {
                 case "forge:ore_shaped", "crafting_shaped" -> "minecraft:crafting_shaped";
@@ -55,13 +58,13 @@ final class ConvertRecipes {
     private static void condition(JsonElement element, String namespace, Ported pack) {
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        String type = held.has("type") && held.get("type").isJsonPrimitive() ? held.get("type").getAsString() : "";
+        String type = Json.text(held, "type");
         String mapped = CONDITION_TYPES.getOrDefault(type, type);
         if (!mapped.equals(type)) {
             held.addProperty("type", mapped);
             pack.rewrote();
         }
-        if (held.has("item") && held.get("item").isJsonPrimitive()) {
+        if (GsonHelper.isValidPrimitive(held, "item")) {
             qualify(held, namespace, pack);
             held.addProperty("item", Convert.itemName(held.get("item").getAsString(), pack));
         }
@@ -83,7 +86,7 @@ final class ConvertRecipes {
         }
         if (!element.isJsonObject()) { return element; }
         JsonObject held = element.getAsJsonObject();
-        String type = held.has("type") && held.get("type").isJsonPrimitive() ? held.get("type").getAsString() : "";
+        String type = Json.text(held, "type");
         if (ORE_DICT.equals(type) || ITEM_TYPE.equals(type)) {
             held.remove("type");
             pack.rewrote();
@@ -102,7 +105,7 @@ final class ConvertRecipes {
     }
 
     private static void qualify(JsonObject held, String namespace, Ported pack) {
-        if (!held.has("item") || !held.get("item").isJsonPrimitive()) { return; }
+        if (!GsonHelper.isValidPrimitive(held, "item")) { return; }
         String item = held.get("item").getAsString().trim();
         if (item.startsWith("#")) {
             pack.note("A recipe names the constant '" + item + "', which lived in a 1.12.2 mod's _constants.json and has no twin here; name the item or tag it stood for");
@@ -114,7 +117,7 @@ final class ConvertRecipes {
     }
 
     private static JsonElement nbt(JsonObject held, Ported pack) {
-        if (!held.has("item") || !held.get("item").isJsonPrimitive()) { return held; }
+        if (!GsonHelper.isValidPrimitive(held, "item")) { return held; }
         String item = held.get("item").getAsString();
         int data = data(held);
         String nbt = !held.has("nbt") ? "{}" : held.get("nbt").isJsonObject() ? Ported.GSON.toJson(held.get("nbt")) : held.get("nbt").getAsString();
@@ -129,7 +132,7 @@ final class ConvertRecipes {
     }
 
     @Nullable private static JsonArray wildcard(JsonObject held, Ported pack) {
-        if (data(held) != WILDCARD_DATA || !held.has("item") || !held.get("item").isJsonPrimitive()) { return null; }
+        if (data(held) != WILDCARD_DATA || !GsonHelper.isValidPrimitive(held, "item")) { return null; }
         List<String> names = Convert.itemNames(held.get("item").getAsString() + Convert.WILDCARD, pack);
         if (names.size() < 2) { return null; }
         JsonArray out = new JsonArray();
@@ -141,10 +144,10 @@ final class ConvertRecipes {
         return out;
     }
 
-    private static int data(JsonObject held) { return held.has("data") && held.get("data").isJsonPrimitive() && held.get("data").getAsJsonPrimitive().isNumber() ? held.get("data").getAsInt() : 0; }
+    private static int data(JsonObject held) { return GsonHelper.isNumberValue(held, "data") ? held.get("data").getAsInt() : 0; }
 
     static void stack(JsonObject held, Ported pack) {
-        if (!held.has("item") || !held.get("item").isJsonPrimitive()) { return; }
+        if (!GsonHelper.isValidPrimitive(held, "item")) { return; }
         String item = held.get("item").getAsString();
         int data = data(held);
         if (data == WILDCARD_DATA) { data = 0; }
@@ -152,7 +155,7 @@ final class ConvertRecipes {
         held.addProperty("item", Convert.itemName(item + (data > 0 ? ":" + data : ""), pack));
     }
 
-    public static Map<String, JsonObject> oreDict(JsonObject json, Ported pack) {
+    static Map<String, JsonObject> oreDict(JsonObject json, Ported pack) {
         Map<String, JsonObject> tags = new LinkedHashMap<>();
         for (Map.Entry<String, JsonElement> entry : json.entrySet()) {
             String ore = entry.getKey();

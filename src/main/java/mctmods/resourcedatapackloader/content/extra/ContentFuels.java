@@ -8,8 +8,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
@@ -27,27 +25,23 @@ public final class ContentFuels {
     private static final String FUELS = "fuels";
     private static final String ORE_DICT = "oreDict";
     private static final String TAG = "tag";
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<Entry> ENTRIES = new ArrayList<>();
     private static final PackGeneration GENERATION = new PackGeneration();
 
     private ContentFuels() {}
 
-    public static boolean load() {
-        if (!GENERATION.stale()) { return !ENTRIES.isEmpty(); }
+    public static boolean noneLoaded() {
+        if (!GENERATION.stale()) { return ENTRIES.isEmpty(); }
         ENTRIES.clear();
-        if (!Config.content.fuels()) { return false; }
+        if (!Config.content.fuels()) { return true; }
         Json.eachFile(PackManager.FUELS, "fuel file", ContentFuels::read);
         if (!ENTRIES.isEmpty()) { Summary.info("fuels", "Loaded " + ENTRIES.size() + " fuel entry/entries"); }
-        return !ENTRIES.isEmpty();
+        return ENTRIES.isEmpty();
     }
 
     private static void read(ResourceLocation key, String contents) {
-        JsonObject json = GSON.fromJson(contents, JsonObject.class);
-        if (json == null) {
-            ContentLog.LOGGER.error("Fuel file {} is empty, ignoring it", key);
-            return;
-        }
+        JsonObject json = Json.object(key, contents, "fuel file");
+        if (json == null) { return; }
         for (JsonElement element : GsonHelper.getAsJsonArray(json, FUELS)) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
@@ -77,7 +71,7 @@ public final class ContentFuels {
     }
 
     public static void onFuelBurnTime(FurnaceFuelBurnTimeEvent event) {
-        if (!load()) { return; }
+        if (noneLoaded()) { return; }
         ItemStack fuel = event.getItemStack();
         if (fuel.isEmpty()) { return; }
         for (Entry entry : ENTRIES) {

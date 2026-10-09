@@ -3,13 +3,13 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
+import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.content.gate.ContentGates;
 import mctmods.resourcedatapackloader.content.gate.ContentTeleporter;
 import mctmods.resourcedatapackloader.content.gate.PortalStorage;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.portal.PortalFit;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -72,24 +72,18 @@ import javax.annotation.Nullable;
         };
     }
 
-    @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return portal.walkIn() ? Shapes.empty() : getShape(state, level, pos, context);
-    }
+    @Override @Nonnull public VoxelShape getCollisionShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return portal.walkIn() ? Shapes.empty() : getShape(state, level, pos, context); }
 
-    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) {
-        if (level instanceof ServerLevel server && !old.is(this)) { PortalStorage.add(server, pos, null); }
-    }
+    @Override public void onPlace(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState old, boolean moving) { if (level instanceof ServerLevel server && !old.is(this)) { PortalStorage.add(server, pos, null); } }
 
-    @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) {
-        if (level instanceof ServerLevel server) { PortalStorage.add(server, pos, placer instanceof Player ? placer.getUUID() : null); }
-    }
+    @Override public void setPlacedBy(@Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState state, @Nullable LivingEntity placer, @Nonnull ItemStack stack) { if (level instanceof ServerLevel server) { PortalStorage.add(server, pos, placer instanceof Player ? placer.getUUID() : null); } }
 
     @Override public void onRemove(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull BlockState replaced, boolean moving) {
         if (level instanceof ServerLevel server && !replaced.is(this)) { PortalStorage.remove(server, pos); }
         super.onRemove(state, level, pos, replaced, moving);
     }
 
-    @Override public boolean onDestroyedByPlayer(BlockState state, Level level, BlockPos pos, Player player, boolean willHarvest, FluidState fluid) {
+    @Override public boolean onDestroyedByPlayer(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, boolean willHarvest, @Nonnull FluidState fluid) {
         if (level instanceof ServerLevel server && !mayBreak(server, pos, player)) {
             player.displayClientMessage(Component.translatable("rdpl.portal.owned"), true);
             return false;
@@ -97,14 +91,14 @@ import javax.annotation.Nullable;
         return super.onDestroyedByPlayer(state, level, pos, player, willHarvest, fluid);
     }
 
-    @Override public boolean canDropFromExplosion(BlockState state, BlockGetter level, BlockPos pos, Explosion explosion) { return !portal.owned(); }
+    @Override public boolean canDropFromExplosion(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) { return !portal.owned(); }
 
-    @Override public void onBlockExploded(BlockState state, Level level, BlockPos pos, Explosion explosion) {
+    @Override public void onBlockExploded(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) {
         if (level instanceof ServerLevel server && owned(server, pos)) { return; }
         super.onBlockExploded(state, level, pos, explosion);
     }
 
-    @Override public float getExplosionResistance(BlockState state, BlockGetter level, BlockPos pos, Explosion explosion) {
+    @Override public float getExplosionResistance(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Explosion explosion) {
         if (level instanceof ServerLevel server && owned(server, pos)) { return Float.MAX_VALUE; }
         return super.getExplosionResistance(state, level, pos, explosion);
     }
@@ -153,7 +147,7 @@ import javax.annotation.Nullable;
 
     @Nullable private PortalFit returning(Level level, BlockPos pos) {
         ContentPortals.Binding binding = ContentPortals.forBlock(this);
-        if (binding == null || !binding.portal().buildsReturn()) { return null; }
+        if (binding == null || binding.portal().noReturn()) { return null; }
         return ContentPortals.fitAt(level, pos, binding);
     }
 

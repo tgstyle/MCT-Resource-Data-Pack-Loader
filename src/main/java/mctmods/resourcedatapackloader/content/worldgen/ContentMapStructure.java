@@ -16,17 +16,15 @@ import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePiecesBuilder;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
-
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 public final class ContentMapStructure extends Structure {
     public static final Codec<ContentMapStructure> CODEC = RecordCodecBuilder.create(instance -> instance.group(settingsCodec(instance),
             ResourceLocation.CODEC.fieldOf("map").forGetter(held -> held.map)).apply(instance, ContentMapStructure::new));
     public static final StructureType<ContentMapStructure> TYPE = () -> CODEC;
-    private static final Rotation[] TURNS = Rotation.values();
     private final ResourceLocation map;
 
     public ContentMapStructure(StructureSettings settings, ResourceLocation map) {
@@ -52,9 +50,7 @@ public final class ContentMapStructure extends Structure {
         int widest = def.widest();
         long salted = context.seed() ^ def.key().hashCode();
         List<Spot> spots = new ArrayList<>();
-        if (def.at() != null && reaches(def.at()[0], def.at()[1], windowX, windowZ, window, widest)) {
-            spots.add(spot(context, def, Hashes.mix(salted, def.at()[0], 0, def.at()[1]), def.at()[0], def.at()[1]));
-        }
+        if (def.at() != null && reaches(def.at()[0], def.at()[1], windowX, windowZ, window, widest)) { spots.add(spot(context, def, Hashes.mix(salted, def.at()[0], 0, def.at()[1]), def.at()[0], def.at()[1])); }
         if (def.spacing() <= 0) { return spots; }
         int pitch = def.spacing() * 16;
         int give = Math.max(1, pitch - widest);
@@ -70,12 +66,10 @@ public final class ContentMapStructure extends Structure {
         return spots;
     }
 
-    private static boolean reaches(int originX, int originZ, int windowX, int windowZ, int window, int widest) {
-        return originX + widest > windowX && originX < windowX + window && originZ + widest > windowZ && originZ < windowZ + window;
-    }
+    private static boolean reaches(int originX, int originZ, int windowX, int windowZ, int window, int widest) { return originX + widest > windowX && originX < windowX + window && originZ + widest > windowZ && originZ < windowZ + window; }
 
     private static Spot spot(GenerationContext context, StructureMapDef def, long seed, int originX, int originZ) {
-        Rotation turn = TURNS[Math.floorMod(seed >>> 8, TURNS.length)];
+        Rotation turn = Turns.ALL[Math.floorMod(seed >>> 8, Turns.ALL.length)];
         boolean swapped = turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90;
         int wide = def.cellsWide() * def.cell();
         int deep = def.cellsDeep() * def.cell();

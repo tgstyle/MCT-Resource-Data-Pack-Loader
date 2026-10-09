@@ -10,8 +10,5 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Spider.class) public abstract class MixinSpider {
-    @Inject(method = "onClimbable", at = @At("RETURN"), cancellable = true)
-    private void rdpl$grounded(CallbackInfoReturnable<Boolean> cir) {
-        if (Boolean.FALSE.equals(ContentEntities.climbs(Entity.class.cast(this)))) { cir.setReturnValue(Boolean.FALSE); }
-    }
+    @Inject(method = "onClimbable", at = @At("RETURN"), cancellable = true) private void rdpl$grounded(CallbackInfoReturnable<Boolean> cir) { if (Boolean.FALSE.equals(ContentEntities.climbs((Entity) (Object) this))) { cir.setReturnValue(Boolean.FALSE); } }
 }

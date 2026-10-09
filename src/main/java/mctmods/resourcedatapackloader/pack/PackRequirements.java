@@ -1,9 +1,9 @@
 package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.Settings;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraftforge.fml.ModList;
@@ -12,14 +12,12 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 public final class PackRequirements {
     public static final String REQUIRES = "requires";
     public static final String CONFIG_GATE = "config:";
     public static final String FILE_GATE = "file:";
-    private static final Gson GSON = new GsonBuilder().create();
     private static final List<String> FOLDERS = List.of(
             PackManager.BLOCKS, PackManager.ITEMS, PackManager.FLUIDS, PackManager.BIOMES, PackManager.WORLDGEN,
             PackManager.DIMENSIONS, PackManager.WORLDTEMPLATES, PackManager.PATHINTERSECTS, PackManager.STRUCTUREMAPS, PackManager.PORTALFRAMES, PackManager.GATES, PackManager.CARDS, PackManager.POTIONS,
@@ -53,13 +51,13 @@ public final class PackRequirements {
     private static void collect(String contents, Set<String> found) {
         if (!contents.contains("\"" + REQUIRES + "\"")) { return; }
         try {
-            JsonObject json = GSON.fromJson(contents, JsonObject.class);
+            JsonObject json = Json.GSON.fromJson(contents, JsonObject.class);
             if (json == null || !json.has(REQUIRES)) { return; }
             JsonElement element = json.get(REQUIRES);
             if (!element.isJsonArray()) { return; }
             for (JsonElement each : element.getAsJsonArray()) {
                 if (!each.isJsonPrimitive()) { continue; }
-                String modid = each.getAsString().trim().toLowerCase(Locale.ROOT);
+                String modid = Settings.lower(each.getAsString());
                 if (modid.isEmpty() || modid.startsWith(CONFIG_GATE) || modid.startsWith(FILE_GATE)) { continue; }
                 found.add(modid);
             }

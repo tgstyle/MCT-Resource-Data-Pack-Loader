@@ -69,8 +69,6 @@ public final class KilledName extends LootItemConditionalFunction {
             if (!value.tag.isEmpty()) { json.addProperty(TAG, value.tag); }
         }
 
-        @Override @Nonnull public KilledName deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootItemCondition[] conditions) {
-            return new KilledName(conditions, GsonHelper.getAsString(json, FORMAT, "%s"), GsonHelper.getAsString(json, TAG, ""));
-        }
+        @Override @Nonnull public KilledName deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootItemCondition[] conditions) { return new KilledName(conditions, GsonHelper.getAsString(json, FORMAT, "%s"), GsonHelper.getAsString(json, TAG, "")); }
     }
 }

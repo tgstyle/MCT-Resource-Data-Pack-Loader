@@ -6,65 +6,32 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.content.menu.EntityStorageMenu;
-import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Held;
 
-import com.mojang.datafixers.DSL;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.registries.RegisterEvent;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.Nullable;
 
 public final class ContentContainers {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "container");
-    private static final ResourceLocation STORAGE_ID = ResourceLocation.fromNamespaceAndPath(ResourceDataPackLoader.MOD_ID, "entity_storage");
+    public static final ResourceLocation ID = ResourceDataPackLoader.id("container");
+    private static final ResourceLocation STORAGE_ID = ResourceDataPackLoader.id("entity_storage");
     public static final ContainerDef FALLBACK = new ContainerDef(3, 9, "", false, null, null, 0, 0, "");
-    @Nullable private static BlockEntityType<ContentContainerBlockEntity> type;
-    @Nullable private static MenuType<ContentContainerMenu> menu;
-    @Nullable private static MenuType<EntityStorageMenu> storageMenu;
+    public static final Held<BlockEntityType<ContentContainerBlockEntity>> TYPE = new Held<>("pack container block entity type");
+    public static final Held<MenuType<ContentContainerMenu>> MENU = new Held<>("pack container menu type");
+    public static final Held<MenuType<EntityStorageMenu>> STORAGE_MENU = new Held<>("entity storage menu type");
 
     private ContentContainers() {}
 
-    public static BlockEntityType<ContentContainerBlockEntity> type() {
-        if (type == null) { throw new IllegalStateException("No pack container block entity type is registered"); }
-        return type;
-    }
-
-    public static MenuType<ContentContainerMenu> menu() {
-        if (menu == null) { throw new IllegalStateException("No pack container menu type is registered"); }
-        return menu;
-    }
-
-    @Nullable public static BlockEntityType<ContentContainerBlockEntity> registeredType() { return type; }
-
-    @Nullable public static MenuType<ContentContainerMenu> registeredMenu() { return menu; }
-
-    public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) {
-        List<Block> blocks = new ArrayList<>();
-        for (ContentRegistry.BlockEntry entry : ContentRegistry.blocks()) {
-            if (entry.block() instanceof IContentContainer) { blocks.add(entry.block()); }
-        }
-        if (blocks.isEmpty()) { return; }
-        type = BlockEntityType.Builder.of(ContentContainerBlockEntity::new, blocks.toArray(Block[]::new)).build(DSL.remainderType());
-        helper.register(ID, type);
-        ContentLog.LOGGER.info("Registered the container block entity type for {} pack container block(s)", blocks.size());
-    }
+    public static void register(RegisterEvent.RegisterHelper<BlockEntityType<?>> helper) { ContentBlockEntities.typeFor(helper, ID, IContentContainer.class, ContentContainerBlockEntity::new, TYPE, "container"); }
 
     public static void registerMenu(RegisterEvent.RegisterHelper<MenuType<?>> helper) {
-        menu = IForgeMenuType.create(ContentContainerMenu::new);
-        helper.register(ID, menu);
-        storageMenu = IForgeMenuType.create(EntityStorageMenu::new);
-        helper.register(STORAGE_ID, storageMenu);
+        MenuType<ContentContainerMenu> chest = IForgeMenuType.create(ContentContainerMenu::new);
+        MENU.set(chest);
+        helper.register(ID, chest);
+        MenuType<EntityStorageMenu> storage = IForgeMenuType.create(EntityStorageMenu::new);
+        STORAGE_MENU.set(storage);
+        helper.register(STORAGE_ID, storage);
     }
-
-    public static MenuType<EntityStorageMenu> storageMenu() {
-        if (storageMenu == null) { throw new IllegalStateException("No entity storage menu type is registered"); }
-        return storageMenu;
-    }
-
-    @Nullable public static MenuType<EntityStorageMenu> registeredStorageMenu() { return storageMenu; }
 }

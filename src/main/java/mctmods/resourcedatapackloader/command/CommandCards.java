@@ -18,12 +18,10 @@ import java.util.Collection;
 import java.util.List;
 
 final class CommandCards {
-    private static final int LEVEL = 2;
-
     private CommandCards() {}
 
     static LiteralArgumentBuilder<CommandSourceStack> card(String name) {
-        return Commands.literal("card").requires(source -> source.hasPermission(LEVEL))
+        return Commands.literal("card").requires(source -> source.hasPermission(CommandShared.MODERATOR))
                 .then(Commands.argument("rule", ResourceLocationArgument.id()).suggests((context, suggestions) -> SharedSuggestionProvider.suggest(CardRules.keys(), suggestions))
                         .executes(context -> show(context, name, List.of(context.getSource().getPlayerOrException())))
                         .then(Commands.argument("targets", EntityArgument.players()).executes(context -> show(context, name, EntityArgument.getPlayers(context, "targets")))));
@@ -35,10 +33,7 @@ final class CommandCards {
         CommandShared.ran(source, name, "card " + asked);
         CardRule rule = CardRules.find(asked.toString());
         if (rule == null) { rule = CardRules.find(asked.getPath()); }
-        if (rule == null) {
-            source.sendFailure(CommandShared.tr("rdpl.command.nocard", asked.toString()));
-            return 0;
-        }
+        if (rule == null) { return CommandShared.refuse(source, CommandShared.tr("rdpl.command.nocard", asked.toString())); }
         for (ServerPlayer player : players) { CardFire.show(rule, player); }
         CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.cardshown", rule.key(), players.size()));
         return players.size();

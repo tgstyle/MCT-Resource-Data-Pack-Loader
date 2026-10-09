@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.worldgen.CityGrowth.Growth;
 import mctmods.resourcedatapackloader.util.Capped;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Longs;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.Mth;
@@ -31,8 +32,14 @@ public final class CityPlan {
 
     public enum End { MET, BARE, COURT }
 
+    private static BoundingBox strip(boolean alongX, int at, int last, int from, int to) { return alongX ? new BoundingBox(from, 0, at, to, 0, last) : new BoundingBox(at, 0, from, last, 0, to); }
+
     public record Line(int at, int width, boolean alley, boolean alongX, int from, int to, End endsLow, End endsHigh, @Nullable JsonObject keys, List<Integer> lifts) {
         public Line(int at, int width, boolean alley, boolean alongX, int from, int to, End endsLow, End endsHigh) { this(at, width, alley, alongX, from, to, endsLow, endsHigh, null, List.of()); }
+
+        public BoundingBox box() { return strip(alongX, at, last(), from, to); }
+
+        static Line met(int at, int width, boolean alongX, int from, int to) { return new Line(at, width, false, alongX, from, to, End.MET, End.MET); }
 
         Line ending(End low, End high) { return new Line(at, width, alley, alongX, from, to, low, high, keys, lifts); }
 
@@ -50,6 +57,10 @@ public final class CityPlan {
     }
 
     public record Junction(Line alongX, Line alongZ) {
+        public static Junction of(Line line, Line other) { return line.alongX() ? new Junction(line, other) : new Junction(other, line); }
+
+        public boolean on(Line line) { return alongX.equals(line) || alongZ.equals(line); }
+
         public int fromX() { return alongZ.at(); }
 
         public int toX() { return alongZ.last(); }
@@ -62,7 +73,11 @@ public final class CityPlan {
     public record Plot(int fromX, int fromZ, int toX, int toZ, Line street, boolean lower, VillageDef def, boolean back) {
         public int middleAlong() { return street.alongX() ? (fromX + toX) / 2 : (fromZ + toZ) / 2; }
 
+        public BoundingBox box() { return new BoundingBox(fromX, 0, fromZ, toX, 0, toZ); }
+
         public boolean frontsLow() { return lower != back; }
+
+        public boolean meets(int minX, int minZ, int maxX, int maxZ) { return box().intersects(minX, minZ, maxX, maxZ); }
 
         public Plot slid(int by) { return street.alongX() ? new Plot(fromX + by, fromZ, toX + by, toZ, street, lower, def, back) : new Plot(fromX, fromZ + by, toX, toZ + by, street, lower, def, back); }
     }
@@ -72,16 +87,20 @@ public final class CityPlan {
 
         public int toAlong(boolean alongX) { return alongX ? toX : toZ; }
 
-        public boolean spans(Line line) {
+        public boolean misses(Line line) {
             int across = line.middle();
-            return line.alongX() ? across >= fromZ && across <= toZ : across >= fromX && across <= toX;
+            return line.alongX() ? across < fromZ || across > toZ : across < fromX || across > toX;
         }
     }
 
     public record Rail(int at, int width, boolean alongX, boolean subway, int from, int to, long town) {
+        public BoundingBox box() { return strip(alongX, at, last(), from, to); }
+
         public int last() { return at + width - 1; }
 
-        public int middle() { return at + (width - 1) / 2; }
+        public int center() { return CityRails.halfWidth(width); }
+
+        public int middle() { return at + center(); }
     }
 
     public record Town(long key, long hash, long salt, int wellX, int wellZ, int fromX, int toX, int fromZ, int toZ, List<Line> drawn, int crossX, int crossZ) {
@@ -98,7 +117,6 @@ public final class CityPlan {
 
     private final int originX;
     private final int originZ;
-    private final int block;
     final List<Line> alongX;
     final List<Line> alongZ;
     private final List<Plot> plots;
@@ -113,7 +131,7 @@ public final class CityPlan {
     @Nullable private volatile CityPlan settled;
     @Nullable private volatile Map<Junction, Integer> aproned;
 
-    CityPlan(int originX, int originZ, int block, List<Line> alongX, List<Line> alongZ, List<Plot> plots, List<Rail> rails, int windowX, int windowZ, boolean mapped, List<Junction> plazas, List<Lift> lifts, String type, @Nullable Town town) {
+    CityPlan(int originX, int originZ, List<Line> alongX, List<Line> alongZ, List<Plot> plots, List<Rail> rails, int windowX, int windowZ, boolean mapped, List<Junction> plazas, List<Lift> lifts, String type, @Nullable Town town) {
         this.town = town;
         this.type = type;
         this.lifts = lifts;
@@ -123,7 +141,6 @@ public final class CityPlan {
         this.mapped = mapped;
         this.originX = originX;
         this.originZ = originZ;
-        this.block = block;
         this.alongX = alongX;
         this.alongZ = alongZ;
         this.plots = plots;
@@ -132,9 +149,9 @@ public final class CityPlan {
 
     public int originX() { return originX; }
 
-    CityPlan withTown(Town held) { return new CityPlan(originX, originZ, block, alongX, alongZ, plots, rails, windowX, windowZ, mapped, plazas, lifts, type, held); }
+    CityPlan withTown(Town held) { return new CityPlan(originX, originZ, alongX, alongZ, plots, rails, windowX, windowZ, mapped, plazas, lifts, type, held); }
 
-    CityPlan withRails(List<Rail> held) { return new CityPlan(originX, originZ, block, alongX, alongZ, plots, held, windowX, windowZ, mapped, plazas, lifts, type, town); }
+    CityPlan withRails(List<Rail> held) { return new CityPlan(originX, originZ, alongX, alongZ, plots, held, windowX, windowZ, mapped, plazas, lifts, type, town); }
 
     CityPlan pulledBack(Map<Line, Line> pulled) {
         if (pulled.isEmpty()) { return this; }
@@ -143,7 +160,7 @@ public final class CityPlan {
         List<Junction> squares = new ArrayList<>();
         for (Junction plaza : plazas) { squares.add(new Junction(pulled.getOrDefault(plaza.alongX(), plaza.alongX()), pulled.getOrDefault(plaza.alongZ(), plaza.alongZ()))); }
         Town drawn = town == null ? null : new Town(town.key(), town.hash(), town.salt(), town.wellX(), town.wellZ(), town.fromX(), town.toX(), town.fromZ(), town.toZ(), swapped(town.drawn(), pulled), town.crossX(), town.crossZ());
-        return new CityPlan(originX, originZ, block, swapped(alongX, pulled), swapped(alongZ, pulled), List.copyOf(fronted), rails, windowX, windowZ, mapped, List.copyOf(squares), lifts, type, drawn);
+        return new CityPlan(originX, originZ, swapped(alongX, pulled), swapped(alongZ, pulled), List.copyOf(fronted), rails, windowX, windowZ, mapped, List.copyOf(squares), lifts, type, drawn);
     }
 
     private static List<Line> swapped(List<Line> lines, Map<Line, Line> pulled) {
@@ -181,7 +198,7 @@ public final class CityPlan {
             if (!plaza.alongX().covers(plaza.alongZ().middle()) || !plaza.alongZ().covers(plaza.alongX().middle())) { continue; }
             int x = (plaza.fromX() + plaza.toX()) / 2 - ContentCityWellPiece.SIZE / 2;
             int z = (plaza.fromZ() + plaza.toZ()) / 2 - ContentCityWellPiece.SIZE / 2;
-            found.add(new BoundingBox(x, 0, z, x + ContentCityWellPiece.SIZE - 1, 0, z + ContentCityWellPiece.SIZE - 1));
+            found.add(CityBoxes.well(x, 0, z, 0));
         }
         return found;
     }
@@ -189,20 +206,16 @@ public final class CityPlan {
     void apron(CityGround ground, Line line, int start, int[] profile) {
         boolean[] held = new boolean[profile.length];
         List<BoundingBox> wells = new ArrayList<>();
-        for (BoundingBox box : wellBoxes()) {
-            if (emits(box.minX(), box.minZ())) { wells.add(box); }
-        }
+        for (BoundingBox box : wellBoxes()) { if (emits(box.minX(), box.minZ())) { wells.add(box); } }
         List<Line> met = new ArrayList<>();
-        for (Line other : crossing(line)) {
-            if (line.covers(other.middle()) && other.covers(line.middle())) { met.add(other); }
-        }
+        for (Line other : crossing(line)) { if (line.covers(other.middle()) && other.covers(line.middle())) { met.add(other); } }
         Map<Junction, Integer> levels = apronLevels(ground, wells);
-        for (Line other : met) { CityGrade.pin(profile, held, start, other.at(), other.last(), squareLevel(levels, line, other)); }
+        for (Line other : met) { CityGrade.pin(profile, held, start, other.at(), other.last(), levels.get(Junction.of(line, other))); }
         for (Line other : met) {
             int[] rows = mouth(line, other, start, profile.length);
             if (rows == null) { continue; }
             BoundingBox plaza = mouthWell(line, wells, rows[0], rows[1]);
-            int flat = plaza == null ? squareLevel(levels, line, other) : wellGround(ground, plaza.minX(), plaza.minZ());
+            int flat = plaza == null ? levels.get(Junction.of(line, other)) : wellGround(ground, plaza.minX(), plaza.minZ());
             for (int row = rows[0]; row <= rows[1]; row++) {
                 if (held[row - start]) { continue; }
                 profile[row - start] = flat;
@@ -228,26 +241,18 @@ public final class CityPlan {
         return clamped;
     }
 
-    private static int squareLevel(Map<Junction, Integer> levels, Line line, Line other) { return levels.get(line.alongX() ? new Junction(line, other) : new Junction(other, line)); }
-
     private static int plazaLevel(CityGround ground, List<BoundingBox> wells, Junction junction, Map<Line, int[]> profiles) {
-        for (BoundingBox box : wells) {
-            if (inPlaza(box, junction)) { return wellGround(ground, box.minX(), box.minZ()); }
-        }
+        for (BoundingBox box : wells) { if (inPlaza(box, junction)) { return wellGround(ground, box.minX(), box.minZ()); } }
         return junctionLevel(ground, junction, profiles);
     }
 
     static boolean inPlaza(List<BoundingBox> wells, Junction junction) {
-        for (BoundingBox box : wells) {
-            if (inPlaza(box, junction)) { return true; }
-        }
+        for (BoundingBox box : wells) { if (inPlaza(box, junction)) { return true; } }
         return false;
     }
 
     @Nullable private static BoundingBox mouthWell(Line line, List<BoundingBox> wells, int from, int to) {
-        for (BoundingBox box : wells) {
-            if (nearMouth(line, box, from, to)) { return box; }
-        }
+        for (BoundingBox box : wells) { if (nearMouth(line, box, from, to)) { return box; } }
         return null;
     }
 
@@ -267,14 +272,14 @@ public final class CityPlan {
 
     static boolean nearMouth(Line line, BoundingBox box, int from, int to) {
         int reach = plazaReach();
-        return !offWell(line, box, reach) && to >= (line.alongX() ? box.minX() : box.minZ()) - reach && from <= (line.alongX() ? box.maxX() : box.maxZ()) + reach;
+        return !offWell(line, box, reach) && to >= CityLines.least(line, box) - reach && from <= CityLines.most(line, box) + reach;
     }
 
     static void clampToWell(Line line, int start, int[] profile, boolean[] held, BoundingBox box, int level) {
         int reach = plazaReach();
         if (offWell(line, box, reach)) { return; }
-        int from = Math.max(start, (line.alongX() ? box.minX() : box.minZ()) - reach);
-        int to = Math.min(start + profile.length - 1, (line.alongX() ? box.maxX() : box.maxZ()) + reach);
+        int from = Math.max(start, CityLines.least(line, box) - reach);
+        int to = Math.min(start + profile.length - 1, CityLines.most(line, box) + reach);
         for (int row = from; row <= to; row++) {
             if (held[row - start]) { continue; }
             profile[row - start] = level;
@@ -369,15 +374,10 @@ public final class CityPlan {
         List<Line> columns = new ArrayList<>(alongZ);
         rows.removeAll(refused);
         columns.removeAll(refused);
-        return new CityPlan(originX, originZ, block, List.copyOf(rows), List.copyOf(columns), List.copyOf(kept), rails, windowX, windowZ, mapped, plazas, lifts, type, town);
+        return new CityPlan(originX, originZ, List.copyOf(rows), List.copyOf(columns), List.copyOf(kept), rails, windowX, windowZ, mapped, plazas, lifts, type, town);
     }
 
-    private boolean offPlaza(Line line) {
-        for (Junction plaza : plazas) {
-            if (plaza.alongX().equals(line) || plaza.alongZ().equals(line)) { return false; }
-        }
-        return true;
-    }
+    private boolean offPlaza(Line line) { return plazas.stream().noneMatch(plaza -> plaza.on(line)); }
 
     private boolean railCramped(CityGround ground, Line line, Function<Rail, CityRails.Bed> beds) {
         String kind = line.alley() ? "alley" : "street";
@@ -396,7 +396,7 @@ public final class CityPlan {
             int streetRow = beyond ? line.at() : line.last();
             for (Line crossing : crossing(line)) {
                 if (!line.covers(crossing.middle()) || !crossing.covers(line.middle())) { continue; }
-                int center = crossing.at() + (crossing.width() - 1) / 2;
+                int center = crossing.middle();
                 int start = spanStart(crossing);
                 int end = start + spanLength(crossing) - 1;
                 if (!track.within(center) || rail.last() < start || rail.at() > end || rail.middle() < crossing.from() || rail.middle() > crossing.to() || metBetween(crossing, line, railRow, streetRow)) { continue; }
@@ -406,7 +406,7 @@ public final class CityPlan {
                     ContentLog.LOGGER.debug("The {} at {} of the district at {}, {} is not laid: it would meet the street at {} {} row(s) from the railway line at {}, inside the {} row(s) a crossing keeps clear", kind, line.at(), originX, originZ, crossing.at(), clear, rail.middle(), CityRails.MARGIN);
                     return true;
                 }
-                int met = junctionLevel(ground, line.alongX() ? new Junction(line, crossing) : new Junction(crossing, line), profiles);
+                int met = junctionLevel(ground, Junction.of(line, crossing), profiles);
                 if (Math.abs(met - level) > Math.abs(streetRow - railRow)) {
                     ContentLog.LOGGER.debug("The {} at {} of the district at {}, {} is not laid: the street at {} could not climb from the railway line at {} at y {} to it at y {} in {} row(s)", kind, line.at(), originX, originZ, crossing.at(), rail.middle(), level, met, Math.abs(streetRow - railRow));
                     return true;
@@ -464,7 +464,7 @@ public final class CityPlan {
     }
 
     private static int apronLevel(CityGround ground, Line setter, Line met, int[] profile) {
-        int center = Mth.clamp((met.at() + met.last()) / 2, setter.from(), setter.to()) - setter.from();
+        int center = Mth.clamp(met.middle(), setter.from(), setter.to()) - setter.from();
         int level = profile[center] != Integer.MIN_VALUE ? profile[center] : CityGrade.carried(profile, center);
         for (int row = Math.max(setter.from(), met.at()); row <= Math.min(setter.to(), met.last()); row++) {
             if (underwater(ground, setter, row)) { return Math.max(level, ground.sea()); }
@@ -480,32 +480,24 @@ public final class CityPlan {
         return wet * 2 >= line.width();
     }
 
-    static long packed(int x, int z) { return ((long) x << 32) ^ (z & 0xFFFFFFFFL); }
+    static long packed(int x, int z) { return Longs.pack(x, z); }
 
-    static long key(long seed, int districtX, int districtZ) { return seed ^ (districtX * 341873128712L) ^ (districtZ * 132897987541L); }
-
-    CityPlan keeping(List<Plot> kept) { return new CityPlan(originX, originZ, block, alongX, alongZ, List.copyOf(kept), rails, windowX, windowZ, mapped, plazas, lifts, type, town); }
+    CityPlan keeping(List<Plot> kept) { return new CityPlan(originX, originZ, alongX, alongZ, List.copyOf(kept), rails, windowX, windowZ, mapped, plazas, lifts, type, town); }
 
     CityPlan grownFrom(Town held, List<Line> ties) {
         List<Line> rows = new ArrayList<>(alongX);
         List<Line> columns = new ArrayList<>(alongZ);
         for (Line tie : ties) { (tie.alongX() ? rows : columns).add(tie); }
-        return new CityPlan(originX, originZ, block, List.copyOf(rows), List.copyOf(columns), plots, rails, windowX, windowZ, mapped, plazas, lifts, type, held);
+        return new CityPlan(originX, originZ, List.copyOf(rows), List.copyOf(columns), plots, rails, windowX, windowZ, mapped, plazas, lifts, type, held);
     }
 
     public List<Plot> plots() { return plots; }
 
     public boolean blocks(Plot tried, Plot moved) {
         if (!mapped && (tried.fromX() < originX || tried.fromZ() < originZ || tried.toX() >= originX + district || tried.toZ() >= originZ + district)) { return true; }
-        for (Plot held : plots) {
-            if (held != moved && tried.fromX() <= held.toX() && tried.toX() >= held.fromX() && tried.fromZ() <= held.toZ() && tried.toZ() >= held.fromZ()) { return true; }
-        }
-        for (Court court : plannedCourts(this)) {
-            if (court.meets(tried.fromX(), tried.fromZ(), tried.toX(), tried.toZ())) { return true; }
-        }
-        List<Line> lines = new ArrayList<>(alongX);
-        lines.addAll(alongZ);
-        return CityPlanPlots.onRail(rails, tried) || CityPlanPlots.onLine(lines, tried, CityPlanPlots.GAP) || CityPlanPlots.besideWell(plazas, tried);
+        for (Plot held : plots) { if (held != moved && tried.meets(held.fromX(), held.fromZ(), held.toX(), held.toZ())) { return true; } }
+        for (Court court : plannedCourts(this)) { if (court.meets(tried.fromX(), tried.fromZ(), tried.toX(), tried.toZ())) { return true; } }
+        return CityPlanPlots.onRail(rails, tried) || CityPlanPlots.onLine(CityLines.of(this), tried, CityPlanPlots.GAP) || CityPlanPlots.besideWell(plazas, tried);
     }
 
     public List<Rail> rails() { return rails; }
@@ -527,9 +519,7 @@ public final class CityPlan {
     }
 
     @Nullable static Court plannedCourt(CityPlan plan, Line line, boolean low) {
-        for (Court court : plannedCourts(plan)) {
-            if (court.low() == low && court.serves(line)) { return court; }
-        }
+        for (Court court : plannedCourts(plan)) { if (court.low() == low && court.serves(line)) { return court; } }
         return null;
     }
 
@@ -548,8 +538,6 @@ public final class CityPlan {
     }
 
     public static int flatRun() { return Math.max(1, ContentControl.number(ContentControl.VILLAGES, "villagePathFlatRun", Config.worldgen.villagePathFlatRun())); }
-
-    public static int streetFullWidth() { return fullWidth(); }
 
     static int fullWidthFor(@Nullable JsonObject keys) { return keys == null ? fullWidth() : ContentControl.onRoad(keys, CityPlan::fullWidth); }
 

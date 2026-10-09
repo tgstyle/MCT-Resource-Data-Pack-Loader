@@ -15,16 +15,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldOpenFlows.class) public abstract class MixinWorldOpenFlows {
-    @Inject(method = "confirmWorldCreation", at = @At("HEAD"), cancellable = true)
-    private static void rdpl$skipCreationWarning(Minecraft minecraft, CreateWorldScreen screen, Lifecycle lifecycle, Runnable loadWorld, boolean skipWarnings, CallbackInfo ci) {
+    @Inject(method = "confirmWorldCreation", at = @At("HEAD"), cancellable = true) private static void rdpl$skipCreationWarning(Minecraft minecraft, CreateWorldScreen screen, Lifecycle lifecycle, Runnable loadWorld, boolean skipWarnings, CallbackInfo ci) {
         if (Config.tweaks.experimentalWarning() || lifecycle == Lifecycle.stable()) { return; }
         ContentLog.LOGGER.debug("Skipping the experimental settings warning for the new world, tweaks.experimentalWarning is off");
         loadWorld.run();
         ci.cancel();
     }
 
-    @Redirect(method = "doLoadLevel(Lnet/minecraft/client/gui/screens/Screen;Ljava/lang/String;ZZZ)V", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/WorldData;worldGenSettingsLifecycle()Lcom/mojang/serialization/Lifecycle;", remap = true))
-    private Lifecycle rdpl$skipLoadWarning(WorldData data) {
+    @Redirect(method = "doLoadLevel(Lnet/minecraft/client/gui/screens/Screen;Ljava/lang/String;ZZZ)V", remap = false, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/storage/WorldData;worldGenSettingsLifecycle()Lcom/mojang/serialization/Lifecycle;", remap = true)) private Lifecycle rdpl$skipLoadWarning(WorldData data) {
         Lifecycle held = data.worldGenSettingsLifecycle();
         if (Config.tweaks.experimentalWarning() || held == Lifecycle.stable()) { return held; }
         ContentLog.LOGGER.debug("Skipping the experimental settings warning while opening the world, tweaks.experimentalWarning is off");

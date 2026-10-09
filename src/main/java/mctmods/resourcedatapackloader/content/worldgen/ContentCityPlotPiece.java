@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.VillageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraftforge.common.world.PieceBeardifierModifier;
 import net.minecraft.core.BlockPos;
@@ -15,7 +16,6 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkGenerator;
@@ -33,6 +33,7 @@ import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemp
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +47,6 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     private static final String KEEP = "Keep";
     private static final String ROADS = "Roads";
     private static final String STANDING = "Standing";
-    private static final int BANK_REACH = 4;
     private final String plot;
     private final boolean ruled;
     private final int seat;
@@ -69,7 +69,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     }
 
     public ContentCityPlotPiece(StructureTemplateManager manager, CompoundTag tag) {
-        super(TYPE, tag, manager, held -> settings(Rotation.valueOf(tag.getString(ROTATION)), tag.getInt(INTEGRITY), tag.getBoolean(RULED)));
+        super(TYPE, tag, manager, held -> settings(rotation(tag, ROTATION), tag.getInt(INTEGRITY), tag.getBoolean(RULED)));
         this.plot = tag.getString(PLOT);
         this.ruled = tag.getBoolean(RULED);
         this.seat = tag.contains(SEAT) ? tag.getInt(SEAT) : templatePosition.getY();
@@ -77,6 +77,8 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         this.roads = tag.getIntArray(ROADS);
         this.standing = tag.contains(STANDING) ? tag.getBoolean(STANDING) : plot.isEmpty();
     }
+
+    static Rotation rotation(CompoundTag tag, String key) { return tag.contains(key) ? Rotation.valueOf(tag.getString(key)) : Rotation.NONE; }
 
     private static StructurePlaceSettings settings(Rotation rotation, int integrity, boolean ruled) {
         StructurePlaceSettings settings = new StructurePlaceSettings().setRotation(rotation).setMirror(Mirror.NONE);
@@ -101,7 +103,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
 
     @Override public int fellFloor() { return seat + 1; }
 
-    @Override public BoundingBox crowned() {
+    @Override @Nullable public BoundingBox crowned() {
         if (!settled()) { return null; }
         BoundingBox held = getBoundingBox();
         return new BoundingBox(held.minX() - CityPlotGround.RING, seat + 1, held.minZ() - CityPlotGround.RING, held.maxX() + CityPlotGround.RING, Math.max(seat + CityPlotClearing.OPEN_LEAST, held.maxY() + 1), held.maxZ() + CityPlotGround.RING);
@@ -115,7 +117,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         int felled = ContentCityTrees.fellAround(level, manager, chunk, this, box);
         if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) crowding {} at {}, {}", felled, named(), held.minX(), held.minZ()); }
         if (def != null) { CityPlotGround.eaves(level, held, box, seat); }
-        List<CityRails.Laid> bores = bores(level);
+        List<CityRails.Laid> bores = CityRails.subwaysAround(CityGround.of(level), held);
         ContentCityBlocks.bored(bores);
         try { super.postProcess(level, manager, generator, random, box, chunk, pos); }
         finally { ContentCityBlocks.unbored(); }
@@ -145,11 +147,6 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         return bridged;
     }
 
-    private List<CityRails.Laid> bores(WorldGenLevel level) {
-        BoundingBox held = getBoundingBox();
-        return CityRails.subways(CityGround.of(level), held.minX() - BANK_REACH, held.minZ() - BANK_REACH, held.maxX() + BANK_REACH, held.maxZ() + BANK_REACH);
-    }
-
     boolean settled() { return !plot.isEmpty() && ContentVillages.byKey(plot) != null; }
 
     int[] roads() { return roads; }
@@ -157,7 +154,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
     public void ringBeyond(@Nonnull WorldGenLevel level, @Nonnull BoundingBox box) {
         BoundingBox held = getBoundingBox();
         if (!settled() || CityPlotGround.ringMisses(held, box)) { return; }
-        CityBiome.within(level, box, () -> CityPlotGround.bankRing(level, held, box, seat, keep, roads, bores(level), false, named()));
+        CityBiome.within(level, box, () -> CityPlotGround.bankRing(level, held, box, seat, keep, roads, CityRails.subwaysAround(CityGround.of(level), held), false, named()));
     }
 
     private void stock(WorldGenLevel level, BoundingBox box, VillageDef def) {
@@ -170,7 +167,7 @@ public final class ContentCityPlotPiece extends TemplateStructurePiece implement
         for (BlockPos spot : spots) {
             if (!held.isInside(spot) || !box.isInside(spot)) { continue; }
             BlockEntity entity = level.getBlockEntity(spot);
-            if (entity instanceof RandomizableContainerBlockEntity container) { container.setLootTable(table, seed ^ spot.asLong()); }
+            StructureLoot.stock(entity, table, seed ^ spot.asLong());
         }
     }
 

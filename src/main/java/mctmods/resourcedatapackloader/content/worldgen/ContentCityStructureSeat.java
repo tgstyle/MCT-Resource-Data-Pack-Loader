@@ -123,10 +123,8 @@ public final class ContentCityStructureSeat {
     }
 
     private static int besideGrade(CityPlan plan, ContentCityStructure.District district, CityPlan.Plot placed) {
-        List<CityPlan.Line> lines = new ArrayList<>();
-        lines.add(placed.street());
-        lines.addAll(plan.alongX());
-        lines.addAll(plan.alongZ());
+        List<CityPlan.Line> lines = CityLines.of(plan);
+        lines.add(0, placed.street());
         for (CityPlan.Line line : lines) {
             ContentCityStructure.Street street = district.streets().get(line);
             if (street == null || gap(line, placed) > STREET_BESIDE) { continue; }
@@ -179,10 +177,8 @@ public final class ContentCityStructureSeat {
             }
         }
         if (nearest == null) { return leaned; }
-        for (List<CityPlan.Line> lines : List.of(plan.alongX(), plan.alongZ())) {
-            for (CityPlan.Line line : lines) {
-                if (gap(line, placed) <= STREET_CLAMP) { return Math.max(leaned, nearest.level() - 1); }
-            }
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            if (gap(line, placed) <= STREET_CLAMP) { return Math.max(leaned, nearest.level() - 1); }
         }
         return leaned;
     }
@@ -248,21 +244,19 @@ public final class ContentCityStructureSeat {
         CityPlan.Line beside = null;
         for (CityPlan other : ContentCityStructureSite.around(ground, plan, placed)) {
             ContentCityStructure.District district = other == plan ? own : null;
-            for (List<CityPlan.Line> lines : List.of(other.alongX(), other.alongZ())) {
-                for (CityPlan.Line line : lines) {
-                    if (other != plan && ownStreets.containsKey(line)) { continue; }
-                    boolean alongX = line.alongX();
-                    if ((alongX ? placed.fromZ() : placed.fromX()) > line.last() + ContentCityStructure.FRONT_REACH || (alongX ? placed.toZ() : placed.toX()) < line.at() - ContentCityStructure.FRONT_REACH) { continue; }
-                    if (district == null) { district = ContentCityStructureSite.district(context, ground, other); }
-                    ContentCityStructure.Street street = district.streets().get(line);
-                    if (street == null) { continue; }
-                    String fronted = boredRows(line, street, (alongX ? placed.fromX() : placed.fromZ()) - 1, (alongX ? placed.toX() : placed.toZ()) + 1);
-                    if (!fronted.isEmpty()) {
-                        ContentLog.LOGGER.debug("Village plot {} at {}, {} to {}, {} makes way for the street tunnel of the road at {}, {}: the road is roofed over the row(s){} its frontage stands on, so those rows are buried and offer it no way out", placed.def().key(), placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ(), alongX ? line.from() : line.at(), alongX ? line.at() : line.from(), fronted);
-                        return true;
-                    }
-                    if (beside == null && ContentLog.LOGGER.debugEnabled() && !boredRows(line, street, line.from(), line.to()).isEmpty()) { beside = line; }
+            for (CityPlan.Line line : CityLines.of(other)) {
+                if (other != plan && ownStreets.containsKey(line)) { continue; }
+                boolean alongX = line.alongX();
+                if ((alongX ? placed.fromZ() : placed.fromX()) > line.last() + ContentCityStructure.FRONT_REACH || (alongX ? placed.toZ() : placed.toX()) < line.at() - ContentCityStructure.FRONT_REACH) { continue; }
+                if (district == null) { district = ContentCityStructureSite.district(context, ground, other); }
+                ContentCityStructure.Street street = district.streets().get(line);
+                if (street == null) { continue; }
+                String fronted = boredRows(line, street, (alongX ? placed.fromX() : placed.fromZ()) - 1, (alongX ? placed.toX() : placed.toZ()) + 1);
+                if (!fronted.isEmpty()) {
+                    ContentLog.LOGGER.debug("Village plot {} at {}, {} to {}, {} makes way for the street tunnel of the road at {}, {}: the road is roofed over the row(s){} its frontage stands on, so those rows are buried and offer it no way out", placed.def().key(), placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ(), alongX ? line.from() : line.at(), alongX ? line.at() : line.from(), fronted);
+                    return true;
                 }
+                if (beside == null && ContentLog.LOGGER.debugEnabled() && !boredRows(line, street, line.from(), line.to()).isEmpty()) { beside = line; }
             }
         }
         if (beside != null) { ContentLog.LOGGER.debug("Village plot {} at {}, {} to {}, {} stands beside the tunneled road at {}, {} and is kept: none of the road's roofed rows lie on its frontage", placed.def().key(), placed.fromX(), placed.fromZ(), placed.toX(), placed.toZ(), beside.alongX() ? beside.from() : beside.at(), beside.alongX() ? beside.at() : beside.from()); }

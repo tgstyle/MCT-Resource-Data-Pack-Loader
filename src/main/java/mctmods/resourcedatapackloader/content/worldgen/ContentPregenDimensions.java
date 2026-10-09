@@ -30,7 +30,6 @@ public final class ContentPregenDimensions {
     public static final int VANILLA_SPAWN_REACH = 12;
     private static final double NO_BORDER = 5.9E7D;
     private static final long REGION_HEADER = 8192L;
-    private static final String OVERWORLD = "minecraft:overworld";
     static final Deque<ResourceLocation> PENDING = new ArrayDeque<>();
     static int wantedRadius;
     static boolean chaining;
@@ -63,7 +62,7 @@ public final class ContentPregenDimensions {
             if (madeUpFront(level.dimension().location())) { picked.add(level.dimension().location()); }
         }
         picked.sort(null);
-        ResourceLocation overworld = ResourceLocation.parse(OVERWORLD);
+        ResourceLocation overworld = Level.OVERWORLD.location();
         if (picked.remove(overworld)) { picked.add(0, overworld); }
         return picked;
     }
@@ -200,7 +199,5 @@ public final class ContentPregenDimensions {
         return run;
     }
 
-    public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player) { startWhenEntered(player.server, event.getTo()); }
-    }
+    public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) { if (event.getEntity() instanceof ServerPlayer player) { startWhenEntered(player.server, event.getTo()); } }
 }

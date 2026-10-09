@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
 import net.minecraft.client.gui.screens.worldselection.WorldCreationUiState;
@@ -13,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.client.event.ScreenEvent;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Set;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
@@ -57,22 +57,17 @@ public final class ContentWorldScreen {
         for (WorldCreationUiState.WorldTypeEntry entry : state.getNormalPresetList()) {
             if (entry.preset() != null && entry.preset().unwrapKey().map(key -> key.location().equals(wanted)).orElse(false)) { return entry; }
         }
-        if (WARNED.add(wanted.toString())) { ContentLog.LOGGER.error("The generated world preset {} is not in the world screen's list, so the world type is left as chosen", wanted); }
+        ContentLog.LOGGER.errorOnce(WARNED, wanted.toString(), "The generated world preset {} is not in the world screen's list, so the world type is left as chosen", wanted);
         return null;
     }
 
     private static boolean kept(WorldCreationUiState.WorldTypeEntry current) {
         ResourceLocation chosen = current.preset() == null ? null : current.preset().unwrapKey().map(ResourceKey::location).orElse(null);
-        if (chosen == null) { return true; }
-        for (String exception : ContentTerrain.worldTypeExceptions()) {
-            String named = exception.trim();
-            if (named.equalsIgnoreCase(chosen.toString()) || named.equalsIgnoreCase(chosen.getPath())) { return true; }
-        }
-        return false;
+        return chosen == null || ContentTerrain.keeps(chosen.toString());
     }
 
     @Nullable private static WorldCreationUiState.SelectedGameMode selected(String mode) {
-        String lowered = mode.trim().toLowerCase(Locale.ROOT);
+        String lowered = Settings.lower(mode);
         return switch (lowered) {
             case "" -> null;
             case "survival" -> WorldCreationUiState.SelectedGameMode.SURVIVAL;
@@ -83,9 +78,7 @@ public final class ContentWorldScreen {
                 yield null;
             }
             default -> {
-                if (WARNED.add(lowered)) {
-                    ContentLog.LOGGER.error("A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so the mode is left as chosen", mode);
-                }
+                ContentLog.LOGGER.errorOnce(WARNED, lowered, "A pack asks for the game mode '{}', which is not one of survival, hardcore, creative, adventure or spectator, so the mode is left as chosen", mode);
                 yield null;
             }
         };

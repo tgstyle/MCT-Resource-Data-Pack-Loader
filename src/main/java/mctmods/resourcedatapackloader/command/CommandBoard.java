@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.command;
 
+import static mctmods.resourcedatapackloader.command.CommandShared.refuse;
+
 import mctmods.resourcedatapackloader.content.ContentBoardPlay;
 import mctmods.resourcedatapackloader.content.ContentBoards;
 import mctmods.resourcedatapackloader.content.ContentDice;
@@ -23,11 +25,6 @@ final class CommandBoard {
     private CommandBoard() {}
 
     private static String say(CommandSourceStack source, String key, Object... pairs) { return ContentDice.words(source.getPlayer(), "board." + key, pairs); }
-
-    private static int refuse(CommandSourceStack source, String text) {
-        source.sendFailure(Component.literal(text));
-        return 0;
-    }
 
     private static int done(CommandSourceStack source, String refused) { return refused.isEmpty() ? 1 : refuse(source, refused); }
 

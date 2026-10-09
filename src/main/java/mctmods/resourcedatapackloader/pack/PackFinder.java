@@ -6,9 +6,9 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import com.google.common.collect.ImmutableList;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
-import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.repository.RepositorySource;
 import net.minecraftforge.fml.loading.FMLPaths;
@@ -32,7 +32,7 @@ public final class PackFinder implements RepositorySource {
 
     public static void ensureScanned() {
         PackManager manager = PackManager.get();
-        if (manager.getRoot() != null) { return; }
+        if (manager.scanned()) { return; }
         Path root = root();
         ContentLog.LOGGER.info("Pack root: {}", root);
         StrayPacks.collect(FMLPaths.GAMEDIR.get(), root);
@@ -44,30 +44,22 @@ public final class PackFinder implements RepositorySource {
         ensureScanned();
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
-        if (!GeneratedResources.isEmpty()) { offerGenerated(out); }
+        if (GeneratedResources.holds()) { offerGenerated(out); }
         if (manager.hasTier(false)) { offer(out, false); }
         if (manager.hasTier(true)) { offer(out, true); }
     }
 
-    private void offerGenerated(Consumer<Pack> out) {
-        Pack.ResourcesSupplier supplier = packId -> new GeneratedPack(type);
-        Pack.Info info = Pack.readPackInfo(GeneratedPack.ID, supplier);
-        if (info == null) {
-            ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", GeneratedPack.ID, type.getDirectory());
-            return;
-        }
-        out.accept(Pack.create(GeneratedPack.ID, Component.literal(GeneratedPack.ID), true, supplier, info, type, Pack.Position.BOTTOM, true, SOURCE));
-    }
+    private void offerGenerated(Consumer<Pack> out) { offer(out, GeneratedPack.ID, packId -> new GeneratedPack(type), UnaryOperator.identity(), Pack.Position.BOTTOM, SOURCE); }
 
-    private void offer(Consumer<Pack> out, boolean overriding) {
-        String id = RDPLResourcePack.id(overriding);
-        Pack.ResourcesSupplier supplier = packId -> new RDPLResourcePack(type, overriding);
+    private void offer(Consumer<Pack> out, boolean overriding) { offer(out, RDPLResourcePack.id(overriding), packId -> new RDPLResourcePack(type, overriding), info -> described(info, overriding), overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, tierSource()); }
+
+    private void offer(Consumer<Pack> out, String id, Pack.ResourcesSupplier supplier, UnaryOperator<Pack.Info> describe, Pack.Position position, PackSource source) {
         Pack.Info info = Pack.readPackInfo(id, supplier);
         if (info == null) {
             ContentLog.LOGGER.error("The {} pack could not describe itself to the game, so it is not offered as a {} pack", id, type.getDirectory());
             return;
         }
-        out.accept(Pack.create(id, Component.literal(id), true, supplier, described(info, overriding), type, overriding ? Pack.Position.TOP : Pack.Position.BOTTOM, true, tierSource()));
+        out.accept(Pack.create(id, Component.literal(id), true, supplier, describe.apply(info), type, position, true, source));
     }
 
     private PackSource tierSource() { return type == PackType.CLIENT_RESOURCES ? PLAIN : SOURCE; }
@@ -104,24 +96,22 @@ public final class PackFinder implements RepositorySource {
         for (int i = 0; i < opened.size(); i++) {
             PackResources pack = opened.get(i);
             if (pack.getClass().getName().startsWith(KUBEJS)) { scripted.add(pack); }
-            else if (own < 0 && (pack instanceof RDPLResourcePack || pack instanceof GeneratedPack)) { own = i; }
+            else if (own < 0 && pack instanceof RDPLPackResources) { own = i; }
         }
         if (scripted.isEmpty() || own < 0) { return opened; }
         List<PackResources> ordered = new ArrayList<>(opened);
         ordered.removeAll(scripted);
         int at = 0;
-        while (at < ordered.size() && !(ordered.get(at) instanceof RDPLResourcePack) && !(ordered.get(at) instanceof GeneratedPack)) { at++; }
+        while (at < ordered.size() && !(ordered.get(at) instanceof RDPLPackResources)) { at++; }
         ordered.addAll(at, scripted);
         return ordered;
     }
 
     private static int lastBase(List<Pack> packs) {
         int last = -1;
-        for (int i = 0; i < packs.size(); i++) {
-            if (!userPicked(packs.get(i))) { last = i; }
-        }
+        for (int i = 0; i < packs.size(); i++) { if (base(packs.get(i))) { last = i; } }
         return last;
     }
 
-    private static boolean userPicked(@Nullable Pack pack) { return pack != null && (pack.getId().startsWith("file/") || pack.getPackSource() == PackSource.SERVER); }
+    private static boolean base(@Nullable Pack pack) { return pack == null || !pack.getId().startsWith("file/") && pack.getPackSource() != PackSource.SERVER; }
 }

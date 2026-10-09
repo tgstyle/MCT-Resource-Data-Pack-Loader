@@ -22,7 +22,7 @@ public final class PortalStorage extends SavedData {
     private static final String EARLIER_TAG = "Positions";
     private final Map<Long, String> positions = new LinkedHashMap<>();
 
-    private static PortalStorage of(ServerLevel level) { return level.getDataStorage().computeIfAbsent(PortalStorage::read, PortalStorage::new, NAME); }
+    private static PortalStorage get(ServerLevel level) { return level.getDataStorage().computeIfAbsent(PortalStorage::read, PortalStorage::new, NAME); }
 
     private static PortalStorage read(CompoundTag tag) {
         PortalStorage held = new PortalStorage();
@@ -53,7 +53,7 @@ public final class PortalStorage extends SavedData {
     }
 
     public static void add(ServerLevel level, BlockPos pos, @Nullable UUID owner) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         String stored = owner == null ? "" : owner.toString();
         if (stored.equals(data.positions.get(pos.asLong()))) { return; }
         data.positions.put(pos.asLong(), stored);
@@ -61,20 +61,20 @@ public final class PortalStorage extends SavedData {
     }
 
     @Nullable public static UUID owner(ServerLevel level, BlockPos pos) {
-        String stored = of(level).positions.get(pos.asLong());
+        String stored = get(level).positions.get(pos.asLong());
         if (stored == null || stored.isEmpty()) { return null; }
         try { return UUID.fromString(stored); }
         catch (IllegalArgumentException broken) { return null; }
     }
 
     public static void remove(ServerLevel level, BlockPos pos) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         if (data.positions.remove(pos.asLong()) == null) { return; }
         data.setDirty();
     }
 
     @Nullable public static BlockPos nearest(ServerLevel level, BlockPos around) {
-        PortalStorage data = of(level);
+        PortalStorage data = get(level);
         if (data.positions.isEmpty()) { return null; }
         BlockPos best = null;
         double closest = Double.MAX_VALUE;

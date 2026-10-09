@@ -46,13 +46,13 @@ public final class ConfigChunks {
         saysBackground = builder.comment("Draw the card's panel, border and color stripe, and the dark backdrop behind the welcome and the hold notes. Off leaves only the text, which keeps its shadow, and saysImage if one is set [Default=true]").define("saysBackground", true);
         saysFont = builder.comment("A font for the card's text, named as namespace:name, e.g. rubyworld:runes for the pack's assets/rubyworld/font/runes.json. Empty uses the game's font [Default=]").define("saysFont", "");
         toasts = builder.comment("Show the game's toasts, the pop-ups in the upper right corner for advancements, unlocked recipes, tutorial hints and system notices, other mods' toasts included. Off shows none. Takes effect on the next world or server joined [Default=false]").define("toasts", false);
-        welcomeSays = builder.comment("Welcome lines, shown in green on every login and after pregeneration. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. minecraft:the_nether=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]").defineListAllowEmpty("welcomeSays", List.of(Config.WELCOME), each -> each instanceof String);
+        welcomeSays = builder.comment("Welcome lines, shown in green on every login and after pregeneration. A bare entry is the line for everywhere; a dimension=message entry overrides it for that dimension and also greets every arrival there, e.g. minecraft:the_nether=Welcome to the Nether!. An empty message after the = mutes that dimension; an empty list shows nothing. Left at this default it speaks each player's language [Default=[Welcome to your World!]]").defineListAllowEmpty("welcomeSays", List.of(Config.WELCOME), ConfigCore.IS_TEXT);
         pregenOnNewWorld = builder.comment("How far around the spawn, in chunks, a world has its land made before anybody plays it. The game makes 12 chunks around the spawn on its own, so 12 is the floor and 0 means that floor rather than nothing: the ground the game was going to make anyway is adopted and lit in one organized pass instead of trickling in. Raise it to reach further than the game does [Default=0]").defineInRange("pregenOnNewWorld", 0, 0, 8192);
         pregenToBorder = builder.comment("Whether a new world has its land made out to its world border instead of a set number of chunks, centered on the border rather than the spawn. A world whose border was never moved in has no border to reach and is passed over [Default=false]").define("pregenToBorder", false);
         pregenBorderLimit = builder.comment("The furthest a border may reach, in chunks either way, before making land out to it is refused. This is here to stop a mistake running for weeks, not to be turned up, and a pack cannot set it. A square of 8192 holds 268 million chunks [Default=8192]").defineInRange("pregenBorderLimit", 8192, 1, 1875000);
-        pregenDimensions = builder.comment("Which dimensions a new world has its land made in, by id, in the order given, one after another [Default=[minecraft:overworld]]").defineListAllowEmpty("pregenDimensions", List.of("minecraft:overworld"), each -> each instanceof String);
+        pregenDimensions = builder.comment("Which dimensions a new world has its land made in, by id, in the order given, one after another [Default=[minecraft:overworld]]").defineListAllowEmpty("pregenDimensions", List.of("minecraft:overworld"), ConfigCore.IS_TEXT);
         pregenAllDimensions = builder.comment("Make the land of every dimension the server holds, modded ones included, the overworld first and the rest in id order, instead of only those in pregenDimensions. Ones named in pregenDimensionsWhenEntered are still left for their first visitor [Default=false]").define("pregenAllDimensions", false);
-        pregenDimensionsWhenEntered = builder.comment("Dimensions whose land is made not up front but the first time anybody sets foot in them, to the same reach, holding everybody the same way until it is done. One named here and in pregenDimensions is simply made up front [Default=[]]").defineListAllowEmpty("pregenDimensionsWhenEntered", List.of(), each -> each instanceof String);
+        pregenDimensionsWhenEntered = builder.comment("Dimensions whose land is made not up front but the first time anybody sets foot in them, to the same reach, holding everybody the same way until it is done. One named here and in pregenDimensions is simply made up front [Default=[]]").defineListAllowEmpty("pregenDimensionsWhenEntered", List.of(), ConfigCore.IS_TEXT);
         pregenResume = builder.comment("Whether a run that was stopped or cut short picks up where it left off next time the world is loaded, rather than starting again [Default=false]").define("pregenResume", false);
         pregenChunksInFlight = builder.comment("How many chunks a land-making run asks the game for at once. More keeps the generation threads busier and the server less responsive to whoever is held watching [Default=32]").defineInRange("pregenChunksInFlight", 32, 1, 512);
         pregenRunningSays = builder.comment("The progress message players see while the world generates, where %d is the percentage and a second %s the dimension. Empty tells them nothing. Left at this default it speaks each player's language [Default=" + Config.PREGEN_RUNNING + "]").define("pregenRunningSays", Config.PREGEN_RUNNING);
@@ -70,71 +70,71 @@ public final class ConfigChunks {
         resetClearsInventory = builder.comment("Empty every player's inventory, armor and off hand included, when the map is reset [Default=false]").define("resetClearsInventory", false);
         resetClearsExperience = builder.comment("Set every player's experience back to level zero when the map is reset [Default=false]").define("resetClearsExperience", false);
         spawnChunkRadius = builder.comment("How far from the spawn point, in blocks, chunks are held loaded whether or not a player is there, rounded to whole chunks as (blocks + 8) / 16 each way, so 128 holds 8 chunks each way. As a world starts, the overworld prepares a square 4 chunks wider each way before the server is ready. 0 prepares and holds none, so the spawn area unloads like anywhere else [Default=128]").defineInRange("spawnChunkRadius", 128, 0, 1024);
-        spawnChunkRadii = builder.comment("A radius for the overworld written as dimension=blocks, as in minecraft:overworld=64, which overrides spawnChunkRadius. Only the overworld has spawn chunks, so an entry for any other dimension changes nothing [Default=[]]").defineListAllowEmpty("spawnChunkRadii", List.of(), each -> each instanceof String);
+        spawnChunkRadii = builder.comment("A radius for the overworld written as dimension=blocks, as in minecraft:overworld=64, which overrides spawnChunkRadius. Only the overworld has spawn chunks, so an entry for any other dimension changes nothing [Default=[]]").defineListAllowEmpty("spawnChunkRadii", List.of(), ConfigCore.IS_TEXT);
         builder.pop();
     }
 
-    public int pregenOnNewWorld() { return Config.loaded() ? pregenOnNewWorld.get() : 0; }
+    public int pregenOnNewWorld() { return ConfigCore.number(pregenOnNewWorld); }
 
-    public boolean pregenToBorder() { return Config.loaded() && pregenToBorder.get(); }
+    public boolean pregenToBorder() { return ConfigCore.flag(pregenToBorder); }
 
-    public int pregenBorderLimit() { return Config.loaded() ? pregenBorderLimit.get() : 8192; }
+    public int pregenBorderLimit() { return ConfigCore.number(pregenBorderLimit); }
 
-    public List<String> pregenDimensions() { return Config.loaded() ? List.copyOf(pregenDimensions.get()) : List.of("minecraft:overworld"); }
+    public List<String> pregenDimensions() { return ConfigCore.strings(pregenDimensions); }
 
-    public boolean pregenAllDimensions() { return Config.loaded() && pregenAllDimensions.get(); }
+    public boolean pregenAllDimensions() { return ConfigCore.flag(pregenAllDimensions); }
 
-    public List<String> pregenDimensionsWhenEntered() { return Config.loaded() ? List.copyOf(pregenDimensionsWhenEntered.get()) : List.of(); }
+    public List<String> pregenDimensionsWhenEntered() { return ConfigCore.strings(pregenDimensionsWhenEntered); }
 
-    public boolean pregenResume() { return Config.loaded() && pregenResume.get(); }
+    public boolean pregenResume() { return ConfigCore.flag(pregenResume); }
 
-    public int pregenChunksInFlight() { return Config.loaded() ? pregenChunksInFlight.get() : 32; }
+    public int pregenChunksInFlight() { return ConfigCore.number(pregenChunksInFlight); }
 
-    public String pregenRunningSays() { return Config.loaded() ? pregenRunningSays.get() : Config.PREGEN_RUNNING; }
+    public String pregenRunningSays() { return ConfigCore.text(pregenRunningSays); }
 
-    public String pregenFinishedSays() { return Config.loaded() ? pregenFinishedSays.get() : Config.PREGEN_FINISHED; }
+    public String pregenFinishedSays() { return ConfigCore.text(pregenFinishedSays); }
 
-    public String pregenStoppedSays() { return Config.loaded() ? pregenStoppedSays.get() : Config.PREGEN_STOPPED; }
+    public String pregenStoppedSays() { return ConfigCore.text(pregenStoppedSays); }
 
-    public String pregenSpectatingSays() { return Config.loaded() ? pregenSpectatingSays.get() : Config.PREGEN_SPECTATING; }
+    public String pregenSpectatingSays() { return ConfigCore.text(pregenSpectatingSays); }
 
-    public String pregenLogo() { return Config.loaded() ? pregenLogo.get() : "center"; }
+    public String pregenLogo() { return ConfigCore.text(pregenLogo); }
 
-    public boolean pregenBackup() { return Config.loaded() && pregenBackup.get(); }
+    public boolean pregenBackup() { return ConfigCore.flag(pregenBackup); }
 
-    public String pregenBackupSays() { return Config.loaded() ? pregenBackupSays.get() : "Pack requested world backup"; }
+    public String pregenBackupSays() { return ConfigCore.text(pregenBackupSays); }
 
-    public String resetSays() { return Config.loaded() ? resetSays.get() : "Pack requested map reset"; }
+    public String resetSays() { return ConfigCore.text(resetSays); }
 
-    public String resetSendsTo() { return Config.loaded() ? resetSendsTo.get() : "spawn"; }
+    public String resetSendsTo() { return ConfigCore.text(resetSendsTo); }
 
-    public String resetRuns() { return Config.loaded() ? resetRuns.get() : ""; }
+    public String resetRuns() { return ConfigCore.text(resetRuns); }
 
-    public boolean resetClearsEntities() { return !Config.loaded() || resetClearsEntities.get(); }
+    public boolean resetClearsEntities() { return ConfigCore.flag(resetClearsEntities); }
 
-    public boolean resetClearsScores() { return !Config.loaded() || resetClearsScores.get(); }
+    public boolean resetClearsScores() { return ConfigCore.flag(resetClearsScores); }
 
-    public boolean resetClearsInventory() { return Config.loaded() && resetClearsInventory.get(); }
+    public boolean resetClearsInventory() { return ConfigCore.flag(resetClearsInventory); }
 
-    public boolean resetClearsExperience() { return Config.loaded() && resetClearsExperience.get(); }
+    public boolean resetClearsExperience() { return ConfigCore.flag(resetClearsExperience); }
 
-    public int spawnChunkRadius() { return Config.loaded() ? spawnChunkRadius.get() : 128; }
+    public int spawnChunkRadius() { return ConfigCore.number(spawnChunkRadius); }
 
-    public List<String> spawnChunkRadii() { return Config.loaded() ? List.copyOf(spawnChunkRadii.get()) : List.of(); }
+    public List<String> spawnChunkRadii() { return ConfigCore.strings(spawnChunkRadii); }
 
-    public boolean saysCard() { return Config.loaded() ? saysCard.get() : ConfigCore.flag("chunks.saysCard", false); }
+    public boolean saysCard() { return ConfigCore.flag(saysCard); }
 
-    public String saysIcon() { return Config.loaded() ? saysIcon.get() : ConfigCore.text("chunks.saysIcon", ""); }
+    public String saysIcon() { return ConfigCore.text(saysIcon); }
 
-    public String saysColor() { return Config.loaded() ? saysColor.get() : ConfigCore.text("chunks.saysColor", ""); }
+    public String saysColor() { return ConfigCore.text(saysColor); }
 
-    public String saysImage() { return Config.loaded() ? saysImage.get() : ConfigCore.text("chunks.saysImage", ""); }
+    public String saysImage() { return ConfigCore.text(saysImage); }
 
-    public boolean saysBackground() { return Config.loaded() ? saysBackground.get() : ConfigCore.flag("chunks.saysBackground", true); }
+    public boolean saysBackground() { return ConfigCore.flag(saysBackground); }
 
-    public String saysFont() { return Config.loaded() ? saysFont.get() : ConfigCore.text("chunks.saysFont", ""); }
+    public String saysFont() { return ConfigCore.text(saysFont); }
 
-    public boolean toasts() { return Config.loaded() ? toasts.get() : ConfigCore.flag("chunks.toasts", false); }
+    public boolean toasts() { return ConfigCore.flag(toasts); }
 
-    public List<String> welcomeSays() { return Config.loaded() ? List.copyOf(welcomeSays.get()) : List.of(Config.WELCOME); }
+    public List<String> welcomeSays() { return ConfigCore.strings(welcomeSays); }
 }

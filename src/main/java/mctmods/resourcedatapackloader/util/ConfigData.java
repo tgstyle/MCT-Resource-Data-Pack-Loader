@@ -21,15 +21,15 @@ public final class ConfigData {
         builder.pop();
     }
 
-    public boolean lootInjectionsOff() { return !lootInjections.get(); }
+    public boolean lootInjectionsOff() { return !ConfigCore.flag(lootInjections); }
 
-    public boolean playerLootOff() { return !playerLoot.get(); }
+    public boolean playerLootOff() { return !ConfigCore.flag(playerLoot); }
 
-    public boolean registryRemapsOff() { return !registryRemaps.get(); }
+    public boolean registryRemapsOff() { return !ConfigCore.flag(registryRemaps); }
 
-    public boolean anvilsOff() { return !anvils.get(); }
+    public boolean anvilsOff() { return !ConfigCore.flag(anvils); }
 
-    public boolean blockDropsOff() { return !blockDrops.get(); }
+    public boolean blockDropsOff() { return !ConfigCore.flag(blockDrops); }
 
-    public boolean functionsOff() { return !functions.get(); }
+    public boolean functionsOff() { return !ConfigCore.flag(functions); }
 }

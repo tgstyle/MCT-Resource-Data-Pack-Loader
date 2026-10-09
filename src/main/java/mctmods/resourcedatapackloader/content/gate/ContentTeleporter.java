@@ -27,7 +27,6 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.portal.PortalInfo;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.util.ITeleporter;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -84,9 +83,9 @@ public final class ContentTeleporter implements ITeleporter {
         else {
             portalPos = landing(level, mapped);
             boolean adrift = def.platform() && !occupied(level, portalPos.below());
-            if (!rebuild(level, portalPos, adrift)) {
+            if (unbuilt(level, portalPos, adrift)) {
                 if (adrift) { support(level, portalPos); }
-                level.setBlock(portalPos, portalState, 2);
+                level.setBlock(portalPos, portalState, Block.UPDATE_CLIENTS);
                 clearAbove(level, portalPos);
             }
         }
@@ -134,21 +133,22 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static void hold(ServerLevel level, BlockPos at) { level.getChunkAt(at); }
 
-    private boolean rebuild(ServerLevel level, BlockPos landing, boolean adrift) {
-        if (fit == null || fit.holes().isEmpty()) { return false; }
+    private boolean unbuilt(ServerLevel level, BlockPos landing, boolean adrift) {
+        if (fit == null || fit.holes().isEmpty()) { return true; }
         BlockPos anchor = lowest(fit.holes());
         List<BlockPos> holes = new ArrayList<>();
         Map<BlockPos, BlockState> edges = new LinkedHashMap<>();
         for (BlockPos hole : fit.holes()) { holes.add(shift(hole, anchor, landing)); }
         for (Map.Entry<BlockPos, BlockState> edge : fit.edge().entrySet()) { edges.put(shift(edge.getKey(), anchor, landing), edge.getValue()); }
-        for (BlockPos at : holes) { hold(level, at); }
-        for (BlockPos at : edges.keySet()) { hold(level, at); }
-        if (adrift) { footing(level, edges.keySet(), holes); }
+        List<BlockPos> under = new ArrayList<>(edges.keySet());
+        under.addAll(holes);
+        for (BlockPos at : under) { hold(level, at); }
+        if (adrift) { footing(level, under); }
         for (BlockPos at : holes) { level.removeBlock(at, false); }
-        for (Map.Entry<BlockPos, BlockState> edge : edges.entrySet()) { level.setBlock(edge.getKey(), edge.getValue(), 2); }
-        for (BlockPos at : holes) { level.setBlock(at, portalState, 2); }
+        for (Map.Entry<BlockPos, BlockState> edge : edges.entrySet()) { level.setBlock(edge.getKey(), edge.getValue(), Block.UPDATE_CLIENTS); }
+        for (BlockPos at : holes) { level.setBlock(at, portalState, Block.UPDATE_CLIENTS); }
         ContentLog.LOGGER.debug("Built a frame of {} on arrival at {}, {} edge block(s) around {} of portal", fit.frame().name(), landing, edges.size(), holes.size());
-        return true;
+        return false;
     }
 
     private static BlockPos shift(BlockPos from, BlockPos anchor, BlockPos landing) { return landing.offset(from.getX() - anchor.getX(), from.getY() - anchor.getY(), from.getZ() - anchor.getZ()); }
@@ -161,15 +161,11 @@ public final class ContentTeleporter implements ITeleporter {
         return found;
     }
 
-    private void footing(ServerLevel level, Iterable<BlockPos> edges, Iterable<BlockPos> holes) {
+    private void footing(ServerLevel level, List<BlockPos> under) {
         Block floor = block(def.platformBlock());
         int bed = Integer.MAX_VALUE;
         Set<BlockPos> columns = new LinkedHashSet<>();
-        for (BlockPos at : edges) {
-            bed = Math.min(bed, at.getY());
-            columns.add(new BlockPos(at.getX(), 0, at.getZ()));
-        }
-        for (BlockPos at : holes) {
+        for (BlockPos at : under) {
             bed = Math.min(bed, at.getY());
             columns.add(new BlockPos(at.getX(), 0, at.getZ()));
         }
@@ -185,7 +181,7 @@ public final class ContentTeleporter implements ITeleporter {
                 BlockPos at = above.offset(dx, -1, dz);
                 hold(level, at);
                 if (occupied(level, at)) { continue; }
-                level.setBlock(at, floor.defaultBlockState(), 2);
+                level.setBlock(at, floor.defaultBlockState(), Block.UPDATE_CLIENTS);
             }
         }
     }
@@ -208,8 +204,7 @@ public final class ContentTeleporter implements ITeleporter {
 
     private static Block block(String name) {
         if (name.isEmpty()) { return Blocks.STONE; }
-        ResourceLocation key = ResourceLocation.tryParse(name);
-        Block found = Registered.find(ForgeRegistries.BLOCKS, key);
+        Block found = Registered.block(name);
         if (found != null) { return found; }
         ContentLog.LOGGER.error("Portal platform block {} is not registered, using stone", name);
         return Blocks.STONE;

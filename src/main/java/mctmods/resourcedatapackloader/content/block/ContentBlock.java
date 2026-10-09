@@ -55,14 +55,12 @@ import javax.annotation.Nullable;
 
     public BlockDef getDef() { return def; }
 
-    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) {
-        return shape == null ? super.getShape(state, level, pos, context) : shape;
-    }
+    @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
     @Override public int getExpDrop(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull RandomSource random, @Nonnull BlockPos pos, int fortune, int silkTouch) { return experience(def, expDrop, random, silkTouch); }
 
     public static int experience(BlockDef def, AmountDef range, RandomSource random, int silkTouch) {
-        if (!def.dropsExperience() || silkTouch > 0 && def.silkHarvest()) { return 0; }
+        if (def.noExperience() || silkTouch > 0 && def.silkHarvest()) { return 0; }
         return Math.max(0, range.pick(random));
     }
 
@@ -79,22 +77,16 @@ import javax.annotation.Nullable;
 
     @Override public boolean onTreeGrow(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return def.sustains(PlantType.PLAINS); }
 
-    @Override public boolean isFlammable(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability() > 0; }
-
-    @Override public int getFlammability(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.flammability(); }
-
-    @Override public int getFireSpreadSpeed(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull Direction face) { return def.fireSpread(); }
-
     @Override @Nonnull public InteractionResult use(@Nonnull BlockState state, @Nonnull Level level, @Nonnull BlockPos pos, @Nonnull Player player, @Nonnull InteractionHand hand, @Nonnull BlockHitResult hit) {
         if (def.opensWith() == null) { return super.use(state, level, pos, player, hand, hit); }
         ItemStack held = player.getItemInHand(hand);
         Item key = ContentStacks.item(def.opensWith());
         if (key == null || !held.is(key)) {
-            if (!level.isClientSide) { player.displayClientMessage(Component.translatable(getDescriptionId() + ".locked"), true); }
-            return InteractionResult.sidedSuccess(level.isClientSide);
+            if (!level.isClientSide()) { player.displayClientMessage(Component.translatable(getDescriptionId() + ".locked"), true); }
+            return InteractionResult.sidedSuccess(level.isClientSide());
         }
         if (level instanceof ServerLevel server) { open(server, pos, state, player, held); }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return InteractionResult.sidedSuccess(level.isClientSide());
     }
 
     private void open(ServerLevel level, BlockPos pos, BlockState state, Player player, ItemStack held) {

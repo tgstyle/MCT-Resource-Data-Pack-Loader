@@ -27,7 +27,7 @@ public final class ContentWeather {
 
     public static DimensionTraitsDef traits(@Nullable LevelReader world) {
         Level level = level(world);
-        DimensionDef def = level == null ? null : ContentDimensions.def(level);
+        DimensionDef def = ContentDimensions.def(level);
         return def == null ? DimensionTraitsDef.DEFAULTS : def.traits();
     }
 
@@ -40,6 +40,6 @@ public final class ContentWeather {
 
     @Nullable private static Integer ceilingFor(Level level) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return null; }
-        return HEIGHTS.at(level.dimension().location().toString(),ContentControl.lines(ContentControl.TERRAIN, KEY, Config.worldgen.weatherCeiling()));
+        return HEIGHTS.at(level.dimension().location().toString(), ContentControl.lines(ContentControl.TERRAIN, KEY, Config.worldgen.weatherCeiling()));
     }
 }

@@ -4,12 +4,9 @@ import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.DimensionValues;
-import mctmods.resourcedatapackloader.util.TemplateMemo;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -52,18 +49,18 @@ public final class ContentSeams {
     private static final String BEDROCK_ROOF = "bedrock_roof";
     private static final Map<Level, Map<UUID, BlockPos>> STOOD = new WeakHashMap<>();
     private static final Set<ResourceLocation> MISSING = new LinkedHashSet<>();
-    private static final Target BELOW = new Target("worldBelow");
-    private static final Target ABOVE = new Target("worldAbove");
+    private static final ContentDimensionSetting<ResourceLocation> BELOW = new ContentDimensionSetting<>("worldBelow", Config.worldgen::worldBelow, ContentSeams::dimension, "which is not a dimension id");
+    private static final ContentDimensionSetting<ResourceLocation> ABOVE = new ContentDimensionSetting<>("worldAbove", Config.worldgen::worldAbove, ContentSeams::dimension, "which is not a dimension id");
 
     private ContentSeams() {}
 
-    @Nullable public static ResourceLocation below(String dimension) { return BELOW.targetFor(dimension); }
+    @Nullable public static ResourceLocation below(String dimension) { return BELOW.at(dimension, null); }
 
-    @Nullable public static ResourceLocation above(String dimension) { return ABOVE.targetFor(dimension); }
+    @Nullable public static ResourceLocation above(String dimension) { return ABOVE.at(dimension, null); }
 
-    public static boolean opensFloor(String dimension) { return BELOW.targetFor(dimension) != null && opensBedrock(); }
+    public static boolean opensFloor(String dimension) { return below(dimension) != null && opensBedrock(); }
 
-    public static boolean opensCeiling(String dimension) { return ABOVE.targetFor(dimension) != null && opensBedrock(); }
+    public static boolean opensCeiling(String dimension) { return above(dimension) != null && opensBedrock(); }
 
     private static boolean opensBedrock() { return !ContentControl.flag(ContentControl.TERRAIN, "worldSeamBedrock", Config.worldgen.worldSeamBedrock()); }
 
@@ -71,21 +68,12 @@ public final class ContentSeams {
         boolean floor = opensFloor(dimension);
         boolean roof = opensCeiling(dimension);
         JsonArray sequence = WorldgenJson.sequenceOf(settings);
-        List<JsonElement> kept = new ArrayList<>();
-        int removed = 0;
-        for (JsonElement element : sequence) {
+        int before = sequence.size();
+        sequence.asList().removeIf(element -> {
             String gradient = element.isJsonObject() ? WorldgenJson.gradientName(element.getAsJsonObject()) : null;
-            if (gradient != null && ((floor && gradient.endsWith(BEDROCK_FLOOR)) || (roof && gradient.endsWith(BEDROCK_ROOF)))) {
-                removed++;
-                continue;
-            }
-            kept.add(element);
-        }
-        if (removed == 0) { return; }
-        JsonArray rebuilt = new JsonArray();
-        for (JsonElement element : kept) { rebuilt.add(element); }
-        sequence.asList().clear();
-        sequence.asList().addAll(rebuilt.asList());
+            return gradient != null && ((floor && gradient.endsWith(BEDROCK_FLOOR)) || (roof && gradient.endsWith(BEDROCK_ROOF)));
+        });
+        if (sequence.size() == before) { return; }
         ContentLog.LOGGER.debug("Left the bedrock out of {} at its {} so the seam can be dug through", dimension, floor && roof ? "floor and ceiling" : floor ? "floor" : "ceiling");
     }
 
@@ -96,8 +84,8 @@ public final class ContentSeams {
 
     public static void tick(ServerLevel level) {
         String dimension = level.dimension().location().toString();
-        ResourceLocation below = BELOW.targetFor(dimension);
-        ResourceLocation above = ABOVE.targetFor(dimension);
+        ResourceLocation below = below(dimension);
+        ResourceLocation above = above(dimension);
         if (below == null && above == null) { return; }
         int floor = level.getMinBuildHeight();
         int ceiling = ceiling(level);
@@ -109,9 +97,7 @@ public final class ContentSeams {
             if (entity.isRemoved() || entity.isPassenger()) { continue; }
             boolean player = entity instanceof ServerPlayer;
             if (!player && !carryEntities) { continue; }
-            if (player && entity.onGround() && entity.getY() >= floor && entity.getY() <= ceiling) {
-                STOOD.computeIfAbsent(level, key -> new HashMap<>()).put(entity.getUUID(), entity.blockPosition());
-            }
+            if (player && entity.onGround() && entity.getY() >= floor && entity.getY() <= ceiling) { STOOD.computeIfAbsent(level, key -> new HashMap<>()).put(entity.getUUID(), entity.blockPosition()); }
             if (below != null && entity.getY() < floor + 1) {
                 if (falling == null) { falling = new ArrayList<>(); }
                 falling.add(entity);
@@ -121,12 +107,8 @@ public final class ContentSeams {
                 rising.add(entity);
             }
         }
-        if (falling != null) {
-            for (Entity entity : falling) { carry(level, entity, below, true, floor, ceiling); }
-        }
-        if (rising != null) {
-            for (Entity entity : rising) { carry(level, entity, above, false, floor, ceiling); }
-        }
+        if (falling != null) { for (Entity entity : falling) { carry(level, entity, below, true, floor, ceiling); } }
+        if (rising != null) { for (Entity entity : rising) { carry(level, entity, above, false, floor, ceiling); } }
     }
 
     private static void carry(ServerLevel level, Entity entity, ResourceLocation target, boolean down, int sourceFloor, int sourceCeiling) {
@@ -134,7 +116,7 @@ public final class ContentSeams {
         MinecraftServer server = level.getServer();
         ServerLevel destination = server.getLevel(ResourceKey.create(Registries.DIMENSION, target));
         if (destination == null) {
-            if (MISSING.add(target)) { ContentLog.LOGGER.error("The seam of {} leads to {}, which is not a loaded dimension, so nothing crosses it", level.dimension().location(), target); }
+            ContentLog.LOGGER.errorOnce(MISSING, target, "The seam of {} leads to {}, which is not a loaded dimension, so nothing crosses it", level.dimension().location(), target);
             if (entity instanceof ServerPlayer player) { bounce(player, down, sourceFloor, sourceCeiling); }
             return;
         }
@@ -183,18 +165,31 @@ public final class ContentSeams {
         int x = player.getBlockX();
         int z = player.getBlockZ();
         for (int y = floor + 1; y <= highest; y++) {
-            for (int reach = 0; reach <= RESCUE_REACH; reach++) {
-                for (int dx = -reach; dx <= reach; dx++) {
-                    for (int dz = -reach; dz <= reach; dz++) {
-                        if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
-                        BlockState below = level.getBlockState(at.set(x + dx, y - 1, z + dz));
-                        if (below.isAir() || !below.getFluidState().isEmpty()) { continue; }
-                        if (level.isEmptyBlock(at.set(x + dx, y, z + dz)) && level.isEmptyBlock(at.set(x + dx, y + 1, z + dz))) { return new BlockPos(x + dx, y, z + dz); }
-                    }
+            int feet = y;
+            BlockPos found = ring(x, feet, z, 0, RESCUE_REACH, (atX, atZ) -> {
+                BlockState below = level.getBlockState(at.set(atX, feet - 1, atZ));
+                if (below.isAir() || !below.getFluidState().isEmpty()) { return false; }
+                return level.isEmptyBlock(at.set(atX, feet, atZ)) && level.isEmptyBlock(at.set(atX, feet + 1, atZ));
+            });
+            if (found != null) { return found; }
+        }
+        return null;
+    }
+
+    @Nullable private static BlockPos ring(int x, int y, int z, int least, int most, Spot spot) {
+        for (int reach = least; reach <= most; reach++) {
+            for (int dx = -reach; dx <= reach; dx++) {
+                for (int dz = -reach; dz <= reach; dz++) {
+                    if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
+                    if (spot.fits(x + dx, z + dz)) { return new BlockPos(x + dx, y, z + dz); }
                 }
             }
         }
         return null;
+    }
+
+    private interface Spot {
+        boolean fits(int x, int z);
     }
 
     @Nullable private static BlockPos stood(ServerPlayer player) {
@@ -289,16 +284,7 @@ public final class ContentSeams {
 
         @Nullable private BlockPos nearest(ServerLevel level, BlockPos.MutableBlockPos at, int blockX, int feet, int blockZ, int offset, boolean open) {
             if (offset > 0 && (open ? standable(level, at, blockX, feet, blockZ) : grounded(level, at, blockX, feet, blockZ))) { return new BlockPos(blockX, feet, blockZ); }
-            for (int reach = 1; reach <= LEDGE_REACH; reach++) {
-                for (int dx = -reach; dx <= reach; dx++) {
-                    for (int dz = -reach; dz <= reach; dz++) {
-                        if (Math.max(Math.abs(dx), Math.abs(dz)) != reach) { continue; }
-                        boolean fits = open ? standable(level, at, blockX + dx, feet, blockZ + dz) : grounded(level, at, blockX + dx, feet, blockZ + dz);
-                        if (fits) { return new BlockPos(blockX + dx, feet, blockZ + dz); }
-                    }
-                }
-            }
-            return null;
+            return ring(blockX, feet, blockZ, 1, LEDGE_REACH, (atX, atZ) -> open ? standable(level, at, atX, feet, atZ) : grounded(level, at, atX, feet, atZ));
         }
 
         private BlockPos surface(ServerLevel level, int blockX, int blockZ) {
@@ -320,23 +306,5 @@ public final class ContentSeams {
         }
     }
 
-    private static final class Target {
-        private final String key;
-        private final DimensionValues<ResourceLocation> values;
-        private final TemplateMemo<List<String>> asked = new TemplateMemo<>();
-
-        Target(String key) {
-            this.key = key;
-            this.values = new DimensionValues<>(key, Target::dimension, "which is not a dimension id");
-        }
-
-        List<String> asked() {
-            if (ContentControl.off(ContentControl.TERRAIN)) { return List.of(); }
-            return asked.get(() -> ContentControl.list(ContentControl.TERRAIN, key, "worldBelow".equals(key) ? Config.worldgen.worldBelow() : Config.worldgen.worldAbove()));
-        }
-
-        @Nullable ResourceLocation targetFor(String dimension) { return values.at(dimension, asked()); }
-
-        @Nullable private static ResourceLocation dimension(String value) { return ResourceLocation.tryParse(ContentFormats.dimensionId(value)); }
-    }
+    @Nullable private static ResourceLocation dimension(String value) { return ResourceLocation.tryParse(ContentFormats.dimensionId(value)); }
 }

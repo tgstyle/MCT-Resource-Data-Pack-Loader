@@ -9,4 +9,6 @@ public record GateDef(ResourceLocation key, ResourceLocation dimension, String n
     public static final String PLAYER = "player";
 
     public String id() { return key.toString(); }
+
+    public String scope() { return global ? GLOBAL : PLAYER; }
 }

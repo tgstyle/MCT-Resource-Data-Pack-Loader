@@ -1,7 +1,10 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.util.IdNames;
+
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -26,7 +29,7 @@ final class ConvertAssets {
 
     private ConvertAssets() {}
 
-    public static String lang(String contents, Ported pack) {
+    static String lang(String contents, Ported pack) {
         Map<String, String> out = new LinkedHashMap<>();
         for (String line : contents.split("\r?\n")) {
             String trimmed = line.trim();
@@ -82,9 +85,9 @@ final class ConvertAssets {
         return List.of(key);
     }
 
-    public static String texturePath(String path) {
+    static String texturePath(String path) {
         String namespace = path.indexOf(':') < 0 ? "minecraft" : path.substring(0, path.indexOf(':'));
-        String rest = path.indexOf(':') < 0 ? path : path.substring(path.indexOf(':') + 1);
+        String rest = IdNames.path(path);
         if (rest.startsWith("blocks/")) { rest = "block/" + rest.substring("blocks/".length()); }
         else if (rest.startsWith("items/")) { rest = "item/" + rest.substring("items/".length()); }
         else if (rest.startsWith("textures/blocks/")) { rest = "textures/block/" + rest.substring("textures/blocks/".length()); }
@@ -93,7 +96,7 @@ final class ConvertAssets {
         return namespace + ":" + rest;
     }
 
-    public static String model(JsonObject json, Ported pack) {
+    static String model(JsonObject json, Ported pack) {
         if (json.has("textures") && json.get("textures").isJsonObject()) {
             JsonObject textures = json.getAsJsonObject("textures");
             for (Map.Entry<String, JsonElement> texture : new ArrayList<>(textures.entrySet())) {
@@ -107,9 +110,9 @@ final class ConvertAssets {
                 }
             }
         }
-        if (json.has("parent") && json.get("parent").isJsonPrimitive()) {
+        if (GsonHelper.isValidPrimitive(json, "parent")) {
             String parent = json.get("parent").getAsString();
-            String bare = parent.startsWith("minecraft:") ? parent.substring("minecraft:".length()) : parent;
+            String bare = IdNames.bare(parent);
             String renamed = RENAMED_MODELS.get(bare.startsWith("block/") ? bare.substring("block/".length()) : bare);
             if (renamed != null && (bare.startsWith("block/") || bare.indexOf('/') < 0)) {
                 json.addProperty("parent", "minecraft:block/" + renamed);
@@ -123,15 +126,8 @@ final class ConvertAssets {
         return Ported.GSON.toJson(json);
     }
 
-    public static String pixelMap(JsonObject json, Ported pack) {
-        if (json.has("extends") && json.get("extends").isJsonPrimitive()) {
-            String held = json.get("extends").getAsString();
-            String mapped = texturePath(held);
-            if (!mapped.equals(held)) {
-                json.addProperty("extends", mapped);
-                pack.rewrote();
-            }
-        }
+    static String pixelMap(JsonObject json, Ported pack) {
+        Convert.renamed(json, "extends", ConvertAssets::texturePath, pack);
         return Ported.GSON.toJson(json);
     }
 }

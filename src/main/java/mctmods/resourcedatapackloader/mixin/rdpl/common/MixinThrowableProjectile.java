@@ -9,6 +9,5 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 @Mixin(ThrowableProjectile.class) public abstract class MixinThrowableProjectile {
-    @ModifyConstant(method = "getGravity", constant = @Constant(floatValue = 0.03F))
-    private float rdpl$worldGravity(float vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
+    @ModifyConstant(method = "getGravity", constant = @Constant(floatValue = 0.03F)) private float rdpl$worldGravity(float vanilla) { return ContentPhysics.scaledFall((Entity) (Object) this, vanilla); }
 }

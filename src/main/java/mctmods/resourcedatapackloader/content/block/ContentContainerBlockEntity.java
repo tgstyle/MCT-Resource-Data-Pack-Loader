@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.ContainerDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentContainer;
 import mctmods.resourcedatapackloader.content.menu.ContentContainerMenu;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -26,11 +27,10 @@ import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
+public final class ContentContainerBlockEntity extends RandomizableContainerBlockEntity implements LidBlockEntity {
     private static final String STOCKED = "RdplStocked";
     private static final String ROWS = "RdplRows";
     private static final String COLUMNS = "RdplColumns";
@@ -42,16 +42,14 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     private boolean stocked;
 
     public ContentContainerBlockEntity(BlockPos pos, BlockState state) {
-        super(ContentContainers.type(), pos, state);
+        super(ContentContainers.TYPE.get(), pos, state);
         ContainerDef def = def(state);
         this.rows = def.rows();
         this.columns = def.columns();
         this.items = NonNullList.withSize(def.size(), ItemStack.EMPTY);
     }
 
-    private static ContainerDef def(BlockState state) {
-        return state.getBlock() instanceof IContentContainer held ? held.container() : ContentContainers.FALLBACK;
-    }
+    private static ContainerDef def(BlockState state) { return state.getBlock() instanceof IContentContainer held ? held.container() : ContentContainers.FALLBACK; }
 
     public ContainerDef def() { return def(getBlockState()); }
 
@@ -65,9 +63,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
 
     @Override @Nonnull protected Component getDefaultName() { return getBlockState().getBlock().getName(); }
 
-    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) {
-        return new ContentContainerMenu(id, inventory, this, shape());
-    }
+    @Override @Nonnull protected AbstractContainerMenu createMenu(int id, @Nonnull Inventory inventory) { return new ContentContainerMenu(id, inventory, this, shape()); }
 
     @Override public void startOpen(@Nonnull Player player) {
         if (player.isSpectator()) { return; }
@@ -92,8 +88,7 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
     private void sound(SoundEvent event) {
         if (level == null || !def().chestModel()) { return; }
         BlockPos at = getBlockPos();
-        level.playSound(null, at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D, event, SoundSource.BLOCKS,
-                0.5F, level.getRandom().nextFloat() * 0.1F + 0.9F);
+        level.playSound(null, at.getX() + 0.5D, at.getY() + 0.5D, at.getZ() + 0.5D, event, SoundSource.BLOCKS, 0.5F, level.getRandom().nextFloat() * 0.1F + 0.9F);
     }
 
     @Override public float getOpenNess(float partial) { return lid.getOpenness(partial); }
@@ -147,10 +142,8 @@ public class ContentContainerBlockEntity extends RandomizableContainerBlockEntit
             ContentLog.LOGGER.error("The container at {} names the loot table '{}', which is not a valid id, so it starts empty", getBlockPos(), named);
             return;
         }
-        setLootTable(table, seed);
+        StructureLoot.stock(this, table, seed);
     }
 
-    public static int comparatorOutput(BlockEntity held) {
-        return held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0;
-    }
+    public static int comparatorOutput(BlockEntity held) { return held instanceof Container container ? AbstractContainerMenu.getRedstoneSignalFromContainer(container) : 0; }
 }
