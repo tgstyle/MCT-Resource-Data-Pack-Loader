@@ -3104,6 +3104,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3117,6 +3118,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3137,6 +3139,23 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `requires`  | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine    | Die Datei wird übersprungen, wenn nicht alle da sind                                                                              |
 
 Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp und die Noise-Einstellungen werden für dich unter dem Namespace des Packs geschrieben, ein Vanilla-Client erfährt also beim Beitreten von ihr und reist wie in jede andere dorthin. Die Dimension behält ihren eigenen Speicherordner unter der Welt, benannt nach ihrer Id, und ist geladen, solange jemand darin ist oder ein `forceload` einen Chunk hält.
+
+### Bestehende Dimensionen
+
+*dimensionen*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+Eine Datei unter `minecraft/dimensions/overworld.json`, `the_nether.json` oder `the_end.json` oder unter der Id einer Dimension, die ein anderer Mod oder ein Datapack hinzufügt, etwa `othermod/dimensions/caverns.json`, ändert diese Dimension, statt eine neue hinzuzufügen. Jeder Schlüssel, den die Datei schreibt, gilt dort, und jeder, den sie weglässt, behält das Verhalten der Dimension. Ihre Level-Daten und Chunks bleiben also, wie sie sind, und ein bestehender Spielstand lädt weiter.
+
+`terrain.type` tauscht den Generator aus: Ab dann erzeugte Chunks kommen aus ihm, und `generatorOptions`, `structures` und der Block `biomes` gelten mit ihm. Ohne `terrain.type` entfallen diese Schlüssel, und das Log meldet es, denn auf dieser Version gehören die Biome einer Dimension zu ihrem Generator. Schlüssel, die der Dimensionstyp hält, etwa `hasSkyLight` oder `ambientLight`, werden in den eigenen Typ der Dimension geschrieben. Eine Mod-Dimension, die einen der geteilten Typen des Spiels nutzt oder ihren Typ inline schreibt, behält ihren Typ, und das Log meldet es. Die Zeile `dimensions.existing` der Zusammenfassung listet jede so angewandte Datei.
+
+Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigenen Himmel der Dimension aus, und der Mond behält seine Phasen. `bodies`, `stars`, `sun.size` oder `moon.size` ersetzen den ganzen Himmel durch [den von RDPL](#der-himmelsrenderer).
 
 ### Der Block `terrain`
 
@@ -3205,7 +3224,7 @@ Eine Dimension ist in dieser Version ein Datenpaket-Eintrag: Der Dimensionstyp u
 
 *dimensionen*
 
-Sobald `sun`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanilla-Himmel durch einen eigenen. Der zeichnet Kuppel, Morgenrot und Leere wie Vanilla, nimmt Sonne, übrige Himmelskörper und Sterne aber aus dem Pack. Er läuft nur auf dem Client; ein dedizierter Server lädt ihn nie. `renderSky: false` hat weiterhin Vorrang und zeichnet nichts, und einen Himmel ohne Wolken macht `renderClouds: false`.
+Sobald `sun`, `moon`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanilla-Himmel durch einen eigenen. Der zeichnet Kuppel, Morgenrot und Leere wie Vanilla, nimmt Sonne, übrige Himmelskörper und Sterne aber aus dem Pack. Er läuft nur auf dem Client; ein dedizierter Server lädt ihn nie. `renderSky: false` hat weiterhin Vorrang und zeichnet nichts, und einen Himmel ohne Wolken macht `renderClouds: false`.
 
 Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
 
@@ -3213,6 +3232,8 @@ Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Li
 | ---------------------- | ------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sun.texture`          | nein    | Texturpfad  | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
 | `sun.size`             | nein    | float       | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
+| `moon.texture`         | nein    | Texturpfad  | der Vanilla-Mond  | Das Bild des Mondes: ein Blatt mit seinen acht Phasen, vier nebeneinander und zwei untereinander, wie Vanillas `moon_phases.png`                                                                   |
+| `moon.size`            | nein    | float       | `20`              | Halbe Breite des Mondes auf 100 Blöcke Abstand. `0` blendet ihn aus. Mit `bodies` entfällt er                                                                                                      |
 | `bodies[].texture`     | ja      | Texturpfad  |                   | Das Bild des Körpers                                                                                                                                                                               |
 | `bodies[].size`        | nein    | float       | `20`              | Halbe Breite auf 100 Blöcke Abstand. Der Vanilla-Mond hat `20`                                                                                                                                     |
 | `bodies[].angle`       | nein    | float, Grad | `180`             | Wie weit er auf der Sonnenbahn hinter der Sonne steht. `180` ist die Stelle des Vanilla-Monds. Mit `followsTime` aus zählt der Winkel ab dem Zenit: `0` steht senkrecht über dir, `90` am Horizont |
@@ -3381,6 +3402,7 @@ Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity
 | `lightning`             | nein    | boolean               | `true`                   | Aus kommen Regen und Gewitter ohne Blitze                                                                                          |
 | `snow`                  | nein    | boolean               | `true`                   | Aus bleibt nie Schnee liegen                                                                                                       |
 | `freeze`                | nein    | boolean               | `true`                   | Aus friert Wasser nie zu                                                                                                           |
+| `alwaysRain`            | nein    | boolean               | `false`                  | An regnet es hier ständig ohne trockene Pausen, vor jedem `cycle`. Mit `precipitation` aus entfällt es                             |
 | `cycle.rainTicks`       | nein    | int oder `[min, max]` | `[1000, 4600]`           | Wie lange ein Schauer dauert                                                                                                       |
 | `cycle.clearTicks`      | nein    | int oder `[min, max]` | `[1000, 3000]`           | Wie lange es zwischen zwei Schauern trocken bleibt                                                                                 |
 | `cycle.maxStrength`     | nein    | float, über 0 bis 1   | `0.6`                    | Wie stark ein Schauer höchstens wird. Jeder Schauer pendelt zwischen einem Viertel davon und dem vollen Wert                       |

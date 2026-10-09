@@ -3104,6 +3104,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     "renderClouds": true,
     "renderWeather": true,
     "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
     "bodies": [
       { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
       { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
@@ -3117,6 +3118,7 @@ Every key, shown at once. A real file writes only the ones it needs.
     "lightning": true,
     "snow": false,
     "freeze": false,
+    "alwaysRain": false,
     "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
     "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
     "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
@@ -3137,6 +3139,23 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `requires`  | no       | list of mod ids or pack namespaces | none    | The file is skipped unless all are present                                                                   |
 
 A dimension is a data pack entry on this version: the dimension type and the noise settings are written for you under the pack's namespace, so a vanilla client is told about it as it joins and travels there like any other. The dimension keeps its own save folder under the world, named after its id, and is loaded while somebody is in it, or while a `forceload` holds a chunk.
+
+### Existing dimensions
+
+*dimensions*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+A file at `minecraft/dimensions/overworld.json`, `the_nether.json` or `the_end.json`, or at the id of a dimension another mod or datapack adds, such as `othermod/dimensions/caverns.json`, changes that dimension instead of adding one. Every key the file writes applies there, and every key it leaves out keeps the dimension's own behavior, so its level data and chunks stay as they are and an existing save keeps loading.
+
+`terrain.type` swaps the generator, so chunks generated from then on come from it, and `generatorOptions`, `structures` and the `biomes` block apply along with it; without `terrain.type` those keys are left out and the log says so, since a dimension's biomes belong to its generator on this version. Keys the dimension type holds, such as `hasSkyLight` or `ambientLight`, are written into the dimension's own type. A modded dimension that uses one of the game's shared types, or writes its type inline, keeps its type as it is, and the log says so. The summary's `dimensions.existing` line lists every file applied this way.
+
+A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension's own sky, and the moon keeps its phases. Setting `bodies`, `stars`, `sun.size` or `moon.size` replaces the whole sky with [RDPL's own](#the-sky-renderer).
 
 ### The `terrain` block
 
@@ -3205,7 +3224,7 @@ A dimension is a data pack entry on this version: the dimension type and the noi
 
 *dimensions*
 
-Setting any of `sun`, `bodies` or `stars` swaps the vanilla sky for RDPL's own, which draws the same dome, sunrise glow and void as vanilla but takes the sun, the other bodies and the stars from the pack. It is drawn on the client only, and a dedicated server never loads it. `renderSky: false` still wins and draws nothing, and `renderClouds: false` is how a sky without clouds is made.
+Setting any of `sun`, `moon`, `bodies` or `stars` swaps the vanilla sky for RDPL's own, which draws the same dome, sunrise glow and void as vanilla but takes the sun, the other bodies and the stars from the pack. It is drawn on the client only, and a dedicated server never loads it. `renderSky: false` still wins and draws nothing, and `renderClouds: false` is how a sky without clouds is made.
 
 Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list is everything besides the sun, so an empty list is a sky with no moon.
 
@@ -3213,6 +3232,8 @@ Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list i
 | ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `sun.texture`          | no       | texture path   | the vanilla sun | The sun's picture                                                                                                                                                                                |
 | `sun.size`             | no       | float          | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
+| `moon.texture`         | no       | texture path   | vanilla's moon  | The moon's picture: a sheet of its eight phases, four across and two down, as vanilla's `moon_phases.png`                                                                                        |
+| `moon.size`            | no       | float          | `20`            | Half the moon's width at a distance of 100. `0` hides it. Left out with `bodies`                                                                                                                 |
 | `bodies[].texture`     | yes      | texture path   |                 | The body's picture                                                                                                                                                                               |
 | `bodies[].size`        | no       | float          | `20`            | Half its width at a distance of 100. The vanilla moon is `20`                                                                                                                                    |
 | `bodies[].angle`       | no       | float, degrees | `180`           | How far along the sun's path it sits behind the sun. `180` is where the vanilla moon is. With `followsTime` off it is measured from straight overhead, so `0` is the zenith and `90` the horizon |
@@ -3381,6 +3402,7 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 | `lightning`             | no       | boolean                | `true`                   | Off, rain and storms come without lightning                                                                      |
 | `snow`                  | no       | boolean                | `true`                   | Off, snow never settles                                                                                          |
 | `freeze`                | no       | boolean                | `true`                   | Off, water never freezes over                                                                                    |
+| `alwaysRain`            | no       | boolean                | `false`                  | On, it rains here all the time with no clear spells, ahead of any `cycle`. Left out with `precipitation` off     |
 | `cycle.rainTicks`       | no       | int or `[min, max]`    | `[1000, 4600]`           | How long a shower lasts                                                                                          |
 | `cycle.clearTicks`      | no       | int or `[min, max]`    | `[1000, 3000]`           | How long the dry spell between showers lasts                                                                     |
 | `cycle.maxStrength`     | no       | float, above 0 up to 1 | `0.6`                    | The heaviest a shower gets. Each shower drifts between a quarter of this and all of it                           |

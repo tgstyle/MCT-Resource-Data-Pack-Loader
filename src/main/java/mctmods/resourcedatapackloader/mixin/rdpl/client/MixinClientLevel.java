@@ -6,17 +6,26 @@ import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.util.CubicSampler;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Mutable;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ClientLevel.class) public abstract class MixinClientLevel {
+    @Mutable @Shadow @Final private DimensionSpecialEffects effects;
+
     @Unique private DimensionDef rdpl$def() { return ContentDimensions.def((ClientLevel) (Object) this); }
+
+    @Inject(method = "<init>", at = @At("RETURN")) private void rdpl$existingEffects(CallbackInfo ci) { effects = ContentDimensionEffects.existing(effects, rdpl$def()); }
 
     @Redirect(method = "getSkyColor", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/CubicSampler;gaussianSampleVec3(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/util/CubicSampler$Vec3Fetcher;)Lnet/minecraft/world/phys/Vec3;")) private Vec3 rdpl$skyColor(Vec3 vec, CubicSampler.Vec3Fetcher fetcher) {
         DimensionDef def = rdpl$def();
@@ -24,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     }
 
     @Inject(method = "getCloudColor", at = @At("HEAD"), cancellable = true) private void rdpl$cloudColor(float partialTick, CallbackInfoReturnable<Vec3> cir) {
-        int layer = ((ClientLevel) (Object) this).effects() instanceof ContentDimensionEffects effects ? effects.layerColor() : SkyLookDef.UNSET;
+        int layer = effects instanceof ContentDimensionEffects content ? content.layerColor() : SkyLookDef.UNSET;
         DimensionDef def = rdpl$def();
         if (layer >= 0) { cir.setReturnValue(Vec3.fromRGB24(layer)); }
         else if (def != null && def.cloudColor() >= 0) { cir.setReturnValue(Vec3.fromRGB24(def.cloudColor())); }

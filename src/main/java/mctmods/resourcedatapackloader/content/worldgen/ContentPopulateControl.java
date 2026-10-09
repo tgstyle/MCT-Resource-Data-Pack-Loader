@@ -99,7 +99,7 @@ public final class ContentPopulateControl {
 
     private static Set<String> optionsOff(ServerLevel level) {
         DimensionDef def = ContentDimensions.def(level);
-        JsonObject options = level.dimension() == Level.OVERWORLD ? ContentTerrain.customizedOptions() : def == null ? null : def.options();
+        JsonObject options = level.dimension() == Level.OVERWORLD ? ContentTerrain.customizedOptions() : def == null || !ContentDimensions.shapes(def) ? null : def.options();
         Set<String> out = new LinkedHashSet<>();
         if (options == null) { return out; }
         for (Map.Entry<String, String> option : OPTIONS.entrySet()) {
