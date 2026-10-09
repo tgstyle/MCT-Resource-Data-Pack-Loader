@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.util.JsonUtils;
 
 final class DownFixes {
     static final String TARGET = "1.12.2";
@@ -184,7 +185,7 @@ final class DownFixes {
         if (display != null && display.isJsonObject()) {
             JsonObject shown = display.getAsJsonObject();
             if (shown.has("hide_tooltip") && shown.get("hide_tooltip").getAsBoolean()) { components.add(MINECRAFT + "hide_tooltip", new JsonObject()); }
-            if (shown.has("hidden_components") && shown.get("hidden_components").isJsonArray()) {
+            if (JsonUtils.isJsonArray(shown, "hidden_components")) {
                 for (JsonElement one : shown.getAsJsonArray("hidden_components")) { hidden.add(namespaced(one.getAsString())); }
             }
         }
@@ -218,7 +219,7 @@ final class DownFixes {
             case "minecraft:custom_model_data": {
                 if (value.isJsonPrimitive()) { return value; }
                 JsonObject data = value.getAsJsonObject();
-                JsonArray floats = data.has("floats") && data.get("floats").isJsonArray() ? data.getAsJsonArray("floats") : null;
+                JsonArray floats = JsonUtils.isJsonArray(data, "floats") ? data.getAsJsonArray("floats") : null;
                 return floats == null || floats.size() == 0 ? null : new JsonPrimitive((int) Math.floor(floats.get(0).getAsDouble()));
             }
             case "minecraft:damage_resistant": {
@@ -267,7 +268,7 @@ final class DownFixes {
         if (consumable == null || !consumable.isJsonObject()) { return; }
         JsonObject used = consumable.getAsJsonObject();
         if (used.has("consume_seconds")) { eaten.add("eat_seconds", used.get("consume_seconds")); }
-        if (!used.has("on_consume_effects") || !used.get("on_consume_effects").isJsonArray()) { return; }
+        if (!JsonUtils.isJsonArray(used, "on_consume_effects")) { return; }
         JsonArray effects = new JsonArray();
         for (JsonElement effect : used.getAsJsonArray("on_consume_effects")) {
             JsonObject applied = effect.isJsonObject() ? effect.getAsJsonObject() : new JsonObject();

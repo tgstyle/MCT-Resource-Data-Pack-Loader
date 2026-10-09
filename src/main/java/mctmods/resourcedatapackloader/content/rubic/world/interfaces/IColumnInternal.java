@@ -30,9 +30,7 @@ public interface IColumnInternal extends IColumn {
 
     default void markPregenDone() {}
 
-    default void writeHeightmapDataForClient(PacketBuffer out) {
-        for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { out.writeInt(getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i))); }
-    }
+    default void writeHeightmapDataForClient(PacketBuffer out) { for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { out.writeInt(getTopYWithStaging(AddressTools.getLocalX(i), AddressTools.getLocalZ(i))); } }
 
     default void loadClientHeightmapData(PacketBuffer in) { ((ClientHeightMap) getOpacityIndex()).loadData(in); }
 }

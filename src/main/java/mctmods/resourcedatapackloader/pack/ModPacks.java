@@ -28,6 +28,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class ModPacks {
     static final String IN_JAR = PackManager.ROOT_DIRECTORY;
@@ -126,8 +127,8 @@ public final class ModPacks {
     private static JsonObject settingsFor(JsonObject control, String modId) {
         JsonElement held = control.get(modId);
         JsonObject settings = held != null && held.isJsonObject() ? held.getAsJsonObject() : new JsonObject();
-        if (!settings.has(ENABLED) || !settings.get(ENABLED).isJsonPrimitive() || !settings.get(ENABLED).getAsJsonPrimitive().isBoolean()) { settings.addProperty(ENABLED, true); }
-        if (!settings.has(PRIORITY) || !settings.get(PRIORITY).isJsonPrimitive() || !settings.get(PRIORITY).getAsJsonPrimitive().isNumber()) { settings.addProperty(PRIORITY, -1); }
+        if (!JsonUtils.isJsonPrimitive(settings, ENABLED) || !settings.get(ENABLED).getAsJsonPrimitive().isBoolean()) { settings.addProperty(ENABLED, true); }
+        if (!JsonUtils.isJsonPrimitive(settings, PRIORITY) || !settings.get(PRIORITY).getAsJsonPrimitive().isNumber()) { settings.addProperty(PRIORITY, -1); }
         control.add(modId, settings);
         return settings;
     }

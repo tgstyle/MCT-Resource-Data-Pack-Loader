@@ -8,6 +8,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 
@@ -33,6 +34,8 @@ public final class ContentDecoration implements IContentShape {
         this.scatterY = shape.scatterY;
         this.scatterZ = shape.scatterZ;
     }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         boolean placed = false;

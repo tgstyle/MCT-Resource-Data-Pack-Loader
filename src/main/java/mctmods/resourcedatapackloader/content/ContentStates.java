@@ -26,6 +26,16 @@ public final class ContentStates {
 
     private ContentStates() {}
 
+    public static boolean alike(IBlockState wanted, IBlockState found) {
+        if (wanted.getBlock() != found.getBlock()) { return false; }
+        for (IProperty<?> property : wanted.getPropertyKeys()) {
+            String name = property.getName();
+            if (name.equals("axis") || name.equals("decayable") || name.equals("check_decay")) { continue; }
+            if (!wanted.getValue(property).equals(found.getValue(property))) { return false; }
+        }
+        return true;
+    }
+
     @Nullable public static Block block(String name, Object context) {
         if (name == null || name.isEmpty()) {
             ContentLog.LOGGER.error("A block name is missing in {}, the entry is skipped", context);

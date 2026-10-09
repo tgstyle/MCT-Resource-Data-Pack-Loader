@@ -47,9 +47,7 @@ public class IONbtReader {
         return column;
     }
 
-    private static void readPregenDone(NBTTagCompound nbt, Chunk column) {
-        if (nbt.getBoolean("PregenDone")) { ((IColumnInternal) column).markPregenDone(); }
-    }
+    private static void readPregenDone(NBTTagCompound nbt, Chunk column) { if (nbt.getBoolean("PregenDone")) { ((IColumnInternal) column).markPregenDone(); } }
 
     @Nullable private static Chunk readBaseColumn(World world, int x, int z, NBTTagCompound nbt) {
         byte version = nbt.getByte("v");
@@ -67,9 +65,7 @@ public class IONbtReader {
         return column;
     }
 
-    private static void readCaps(@Nullable CapabilityDispatcher caps, NBTTagCompound nbt) {
-        if (caps != null && nbt.hasKey("ForgeCaps")) { caps.deserializeNBT(nbt.getCompoundTag("ForgeCaps")); }
-    }
+    private static void readCaps(@Nullable CapabilityDispatcher caps, NBTTagCompound nbt) { if (caps != null && nbt.hasKey("ForgeCaps")) { caps.deserializeNBT(nbt.getCompoundTag("ForgeCaps")); } }
 
     private static void readBiomes(NBTTagCompound nbt, Chunk column) {
         System.arraycopy(nbt.getByteArray("Biomes"), 0, column.getBiomeArray(), 0, Cube.SIZE * Cube.SIZE);

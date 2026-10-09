@@ -11,6 +11,7 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -39,6 +40,15 @@ public final class ContentTree implements IContentShape {
         this.log = ContentStates.parse(shape.log, key);
         this.leaves = ContentStates.parse(shape.leaves, key);
         if (!templated && (this.log == null || this.leaves == null)) { ContentLog.LOGGER.error("Worldgen {} grows a tree but its log '{}' or leaves '{}' are not registered, so nothing generates", key, shape.log, shape.leaves); }
+    }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) {
+        if (templated) { return imprint.places(world, wood, canopies); }
+        if (log == null || leaves == null || !ContentStates.alike(log, wood)) { return false; }
+        for (IBlockState canopy : canopies) {
+            if (ContentStates.alike(leaves, canopy)) { return true; }
+        }
+        return canopies.isEmpty();
     }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {

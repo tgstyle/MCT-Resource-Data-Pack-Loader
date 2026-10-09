@@ -32,16 +32,26 @@ public final class BeardClearing {
     private BeardClearing() {}
 
     public static BlockPos sustainer(World world, BlockPos leaf, Predicate<BlockPos> within) {
-        BlockPos.MutableBlockPos near = new BlockPos.MutableBlockPos();
-        for (int dx = -4; dx <= 4; dx++) {
-            for (int dy = -4; dy <= 4; dy++) {
-                for (int dz = -4; dz <= 4; dz++) {
-                    if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 4) { continue; }
-                    near.setPos(leaf.getX() + dx, leaf.getY() + dy, leaf.getZ() + dz);
-                    if (!within.test(near)) { continue; }
-                    if (BlastPlasterUtil.isTreeWood(world.getBlockState(near))) { return near.toImmutable(); }
+        IBlockState crown = world.getBlockState(leaf);
+        Set<BlockPos> chain = new HashSet<>();
+        chain.add(leaf);
+        List<BlockPos> front = new ArrayList<>();
+        front.add(leaf);
+        for (int step = 1; step <= 4 && !front.isEmpty(); step++) {
+            List<BlockPos> next = new ArrayList<>();
+            for (BlockPos cell : front) {
+                for (EnumFacing side : EnumFacing.values()) {
+                    BlockPos near = cell.offset(side);
+                    if (!chain.add(near)) { continue; }
+                    if (!world.isBlockLoaded(near)) { continue; }
+                    IBlockState held = world.getBlockState(near);
+                    if (BlastPlasterUtil.isTreeWood(held)) {
+                        if (within.test(near) && ContentVillageDecor.sustains(world, near, crown)) { return near; }
+                    }
+                    else if (held.getMaterial() == Material.LEAVES) { next.add(near); }
                 }
             }
+            front = next;
         }
         return null;
     }
@@ -136,7 +146,7 @@ public final class BeardClearing {
                 continue;
             }
             if (felledLogs.contains(trunk)) { continue; }
-            if (ContentVillageDecor.plantedAt(world, trunk.getX(), trunk.getZ())) {
+            if (ContentVillageDecor.plantedAt(world, trunk)) {
                 planted++;
                 continue;
             }
@@ -157,14 +167,17 @@ public final class BeardClearing {
 
     private static boolean decorated(World world, BlockPos leaf) {
         BlockPos trunk = sustainer(world, leaf, unused -> true);
-        return trunk != null && ContentVillageDecor.plantedAt(world, trunk.getX(), trunk.getZ());
+        return trunk != null && ContentVillageDecor.plantedAt(world, trunk);
     }
 
     public static int sweepOrphanedLeaves(StructureStart start, World world, StructureBoundingBox clip, BlockPos.MutableBlockPos at) {
         StructureBoundingBox village = start.getBoundingBox();
         int swept = 0;
-        for (int x = Math.max(village.minX - 8, clip.minX); x <= Math.min(village.maxX + 8, clip.maxX); x++) {
-            for (int z = Math.max(village.minZ - 8, clip.minZ); z <= Math.min(village.maxZ + 8, clip.maxZ); z++) {
+        int spill = ContentBeard.fellReach(start, clip);
+        for (int x = Math.max(village.minX - 8, clip.minX - spill); x <= Math.min(village.maxX + 8, clip.maxX + spill); x++) {
+            for (int z = Math.max(village.minZ - 8, clip.minZ - spill); z <= Math.min(village.maxZ + 8, clip.maxZ + spill); z++) {
+                boolean beyond = x < clip.minX || x > clip.maxX || z < clip.minZ || z > clip.maxZ;
+                if (beyond && !world.isAreaLoaded(at.setPos(x, village.minY, z), 4)) { continue; }
                 for (int y = Math.max(1, village.minY - 4); y <= village.minY + 44; y++) {
                     at.setPos(x, y, z);
                     IBlockState held = world.getBlockState(at);

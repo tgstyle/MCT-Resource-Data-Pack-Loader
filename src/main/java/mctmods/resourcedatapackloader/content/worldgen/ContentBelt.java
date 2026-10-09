@@ -3,10 +3,12 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import java.util.List;
 import java.util.Random;
 import java.util.function.Predicate;
 
@@ -29,6 +31,8 @@ public final class ContentBelt implements IContentShape {
         this.maxHeight = maxHeight;
         this.seedXor = name.toString().hashCode();
     }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) { return false; }
 

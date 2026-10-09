@@ -64,13 +64,9 @@ public final class CardEvents {
         }
     }
 
-    @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) {
-        if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.CRAFT), (EntityPlayerMP) event.player, event.crafting); }
-    }
+    @SubscribeEvent public static void onCraft(PlayerEvent.ItemCraftedEvent event) { if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.CRAFT), (EntityPlayerMP) event.player, event.crafting); } }
 
-    @SubscribeEvent public static void onPickup(PlayerEvent.ItemPickupEvent event) {
-        if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.PICKUP), (EntityPlayerMP) event.player, event.getStack()); }
-    }
+    @SubscribeEvent public static void onPickup(PlayerEvent.ItemPickupEvent event) { if (event.player instanceof EntityPlayerMP) { item(CardRules.on(CardRule.PICKUP), (EntityPlayerMP) event.player, event.getStack()); } }
 
     @SubscribeEvent public static void onLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         CardFire.forget(event.player.getUniqueID());

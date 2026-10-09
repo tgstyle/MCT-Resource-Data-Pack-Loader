@@ -22,9 +22,7 @@ public class WorldgenHangWatchdog {
     private final WeakHashMap<Thread, Entry> entries = new WeakHashMap<>();
     private static volatile String crashInfo = null;
 
-    private WorldgenHangWatchdog() {
-        if (INSTANCE != null) { throw new IllegalStateException("Already initialized"); }
-    }
+    private WorldgenHangWatchdog() { if (INSTANCE != null) { throw new IllegalStateException("Already initialized"); } }
 
     public static String getCrashInfo() { return crashInfo; }
 

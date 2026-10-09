@@ -124,11 +124,7 @@ public final class ContentVoidWorld {
         return Math.abs(player.posX - (center.getX() + 0.5)) <= 0.5 && Math.abs(player.posZ - (center.getZ() + 0.5)) <= 0.5;
     }
 
-    @SubscribeEvent public static void onPotentialSpawns(WorldEvent.PotentialSpawns event) {
-        if (appliesTo(event.getWorld())) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onPotentialSpawns(WorldEvent.PotentialSpawns event) { if (appliesTo(event.getWorld())) { event.setCanceled(true); } }
 
-    @SubscribeEvent public static void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) {
-        if (appliesTo(event.getWorld())) { event.setResult(Event.Result.DENY); }
-    }
+    @SubscribeEvent public static void onCheckSpawn(LivingSpawnEvent.CheckSpawn event) { if (appliesTo(event.getWorld())) { event.setResult(Event.Result.DENY); } }
 }

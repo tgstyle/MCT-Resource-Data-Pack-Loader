@@ -69,9 +69,7 @@ import java.util.stream.IntStream;
         ItemUseGate.cancel(event, held(event.getEntityPlayer(), EnumHand.MAIN_HAND));
     }
 
-    @SubscribeEvent public static void onPlace(BlockEvent.EntityPlaceEvent event) {
-        if (ContentDisabled.disabled(event.getPlacedBlock().getBlock())) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onPlace(BlockEvent.EntityPlaceEvent event) { if (ContentDisabled.disabled(event.getPlacedBlock().getBlock())) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onPickup(EntityItemPickupEvent event) {
         if (!ContentDisabled.disabled(event.getItem().getItem())) { return; }
@@ -79,9 +77,7 @@ import java.util.stream.IntStream;
         event.getItem().setDead();
     }
 
-    @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) {
-        if (event.getEntity() instanceof EntityItem && ContentDisabled.disabled(((EntityItem) event.getEntity()).getItem())) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onJoin(EntityJoinWorldEvent event) { if (event.getEntity() instanceof EntityItem && ContentDisabled.disabled(((EntityItem) event.getEntity()).getItem())) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onHarvest(BlockEvent.HarvestDropsEvent event) { event.getDrops().removeIf(ContentDisabled::disabled); }
 

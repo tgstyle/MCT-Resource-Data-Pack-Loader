@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.pack.port;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.IdNames;
 
 import com.google.gson.JsonArray;
@@ -10,6 +11,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 final class Blockstates {
     private static final String[] FACINGS = {"east", "south", "west", "north"};
@@ -28,13 +30,13 @@ final class Blockstates {
             String namespace = entry.getKey().substring(0, entry.getKey().indexOf(':'));
             String file = IdNames.path(entry.getKey());
             JsonObject def = entry.getValue();
-            if (pack.exposes(namespace, "blockstates/" + file + ".json")) { continue; }
+            if (pack.exposes(namespace, "blockstates/" + file + PackManager.JSON_SUFFIX)) { continue; }
             List<String> variants = new ArrayList<>();
             if (def.has("variants") && def.get("variants").isJsonObject()) {
                 for (Map.Entry<String, JsonElement> variant : def.getAsJsonObject("variants").entrySet()) { variants.add(variant.getKey()); }
             }
             if (variants.isEmpty()) { continue; }
-            String type = def.has("type") && def.get("type").isJsonPrimitive() ? def.get("type").getAsString().toLowerCase(Locale.ROOT) : "basic";
+            String type = JsonUtils.isJsonPrimitive(def, "type") ? def.get("type").getAsString().toLowerCase(Locale.ROOT) : "basic";
             new Blockstates.Maker(pack, namespace, file, variants, type, def).make();
         }
         for (Map.Entry<String, JsonObject> entry : pack.itemDefs().entrySet()) {
@@ -42,10 +44,10 @@ final class Blockstates {
             String file = IdNames.path(entry.getKey());
             JsonObject def = entry.getValue();
             if (!def.has("variants") || !def.get("variants").isJsonObject()) { continue; }
-            String type = def.has("type") && def.get("type").isJsonPrimitive() ? def.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
+            String type = JsonUtils.isJsonPrimitive(def, "type") ? def.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
             int count = def.getAsJsonObject("variants").size();
             for (Map.Entry<String, JsonElement> variant : def.getAsJsonObject("variants").entrySet()) {
-                String nested = "models/item/" + file + "/" + variant.getKey() + ".json";
+                String nested = "models/item/" + file + "/" + variant.getKey() + PackManager.JSON_SUFFIX;
                 if (pack.exposes(namespace, nested)) { continue; }
                 String texture = texture(pack, namespace, "items", variant.getKey(), file);
                 if (texture == null) {
@@ -54,7 +56,7 @@ final class Blockstates {
                 }
                 JsonObject model = obj("parent", type.contains("pickaxe") || type.contains("axe") || type.contains("sword") || type.contains("shovel") || type.contains("hoe") || type.contains("tool") ? "item/handheld" : "item/generated", "textures", obj("layer0", texture));
                 model(pack, namespace, nested, model);
-                if (count == 1 && !pack.exposes(namespace, "models/item/" + file + ".json")) { model(pack, namespace, "models/item/" + file + ".json", model); }
+                if (count == 1 && !pack.exposes(namespace, "models/item/" + file + PackManager.JSON_SUFFIX)) { model(pack, namespace, "models/item/" + file + PackManager.JSON_SUFFIX, model); }
                 pack.note("The item " + namespace + ":" + variant.getKey() + " had its model generated on the modern line, so " + namespace + ":" + nested + " is generated for 1.12.2");
             }
         }
@@ -69,7 +71,7 @@ final class Blockstates {
         names.add(file + suffix);
         for (String name : names) {
             String path = "textures/" + folder + "/" + name + ".png";
-            if (pack.hasTexture(namespace, path) || pack.hasTexture(namespace, path + ".json")) { return namespace + ":" + folder + "/" + name; }
+            if (pack.hasTexture(namespace, path) || pack.hasTexture(namespace, path + PackManager.JSON_SUFFIX)) { return namespace + ":" + folder + "/" + name; }
         }
         return null;
     }
@@ -154,15 +156,13 @@ final class Blockstates {
             else { pack.note("The block file " + namespace + ":blocks/" + file + " had its blockstate and models generated on the modern line, so a 1.12.2 blockstate is generated for it"); }
         }
 
-        private void state(JsonObject json) { model(pack, namespace, "blockstates/" + file + ".json", json); }
+        private void state(JsonObject json) { model(pack, namespace, "blockstates/" + file + PackManager.JSON_SUFFIX, json); }
 
-        private void state(String name, JsonObject json) { model(pack, namespace, "blockstates/" + name + ".json", json); }
+        private void state(String name, JsonObject json) { model(pack, namespace, "blockstates/" + name + PackManager.JSON_SUFFIX, json); }
 
-        private void blockModel(String name, JsonObject json) { model(pack, namespace, "models/block/" + name + ".json", json); }
+        private void blockModel(String name, JsonObject json) { model(pack, namespace, "models/block/" + name + PackManager.JSON_SUFFIX, json); }
 
-        private void itemModel(JsonObject json) {
-            if (!pack.exposes(namespace, "models/item/" + file + ".json")) { model(pack, namespace, "models/item/" + file + ".json", json); }
-        }
+        private void itemModel(JsonObject json) { if (!pack.exposes(namespace, "models/item/" + file + PackManager.JSON_SUFFIX)) { model(pack, namespace, "models/item/" + file + PackManager.JSON_SUFFIX, json); } }
 
         private JsonObject forge(JsonObject defaults, JsonObject blocks, boolean inventory) {
             JsonObject variantsJson = new JsonObject();
@@ -226,7 +226,7 @@ final class Blockstates {
             for (String variant : variants) {
                 String texture = face(variant);
                 blocks.add(variant, obj("textures", obj("texture", texture)));
-                model(pack, namespace, "models/item/" + file + "/" + variant + ".json", obj("parent", "block/fence_inventory", "textures", obj("texture", texture)));
+                model(pack, namespace, "models/item/" + file + "/" + variant + PackManager.JSON_SUFFIX, obj("parent", "block/fence_inventory", "textures", obj("texture", texture)));
             }
             JsonObject json = forge(obj("model", "fence_post", "uvlock", true), blocks, false);
             for (int i = 0; i < SIDES.length; i++) { json.getAsJsonObject("variants").add(SIDES[i], obj("true", obj("submodel", obj(SIDES[i], obj("model", "fence_side", "y", i * 90, "uvlock", true))), "false", new JsonObject())); }
@@ -238,7 +238,7 @@ final class Blockstates {
             for (String variant : variants) {
                 String texture = face(variant);
                 blocks.add(variant, obj("textures", obj("wall", texture)));
-                model(pack, namespace, "models/item/" + file + "/" + variant + ".json", obj("parent", "block/wall_inventory", "textures", obj("wall", texture)));
+                model(pack, namespace, "models/item/" + file + "/" + variant + PackManager.JSON_SUFFIX, obj("parent", "block/wall_inventory", "textures", obj("wall", texture)));
             }
             JsonObject json = forge(obj("uvlock", true), blocks, false);
             JsonObject variantsJson = json.getAsJsonObject("variants");
@@ -252,7 +252,7 @@ final class Blockstates {
             for (String variant : variants) {
                 String texture = face(variant);
                 blocks.add(variant, obj("textures", obj("pane", texture, "edge", tex(variant, "_top", texture))));
-                model(pack, namespace, "models/item/" + file + "/" + variant + ".json", obj("parent", "item/generated", "textures", obj("layer0", texture)));
+                model(pack, namespace, "models/item/" + file + "/" + variant + PackManager.JSON_SUFFIX, obj("parent", "item/generated", "textures", obj("layer0", texture)));
             }
             JsonObject json = forge(obj("model", "pane_post", "uvlock", true), blocks, false);
             JsonObject variantsJson = json.getAsJsonObject("variants");
@@ -281,7 +281,7 @@ final class Blockstates {
 
         private void sapling(String variant) {
             JsonObject sapling = def.has("sapling") && def.get("sapling").isJsonObject() ? def.getAsJsonObject("sapling") : new JsonObject();
-            int stages = Math.max(1, sapling.has("stages") && sapling.get("stages").isJsonPrimitive() ? sapling.get("stages").getAsInt() : 2);
+            int stages = Math.max(1, JsonUtils.isJsonPrimitive(sapling, "stages") ? sapling.get("stages").getAsInt() : 2);
             JsonObject stage = new JsonObject();
             for (int i = 0; i < stages; i++) { stage.add(String.valueOf(i), new JsonObject()); }
             String texture = face(variant);

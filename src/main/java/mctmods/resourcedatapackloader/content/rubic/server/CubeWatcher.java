@@ -60,9 +60,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
                 consumer);
     }
 
-    void scheduleAddPlayer(EntityPlayerMP player) {
-        if (!playersToAdd.contains(player)) { playersToAdd.add(player); }
-    }
+    void scheduleAddPlayer(EntityPlayerMP player) { if (!playersToAdd.contains(player)) { playersToAdd.add(player); } }
 
     void removeScheduledAddPlayer(EntityPlayerMP player) { playersToAdd.rem(player); }
 
@@ -257,9 +255,7 @@ public class CubeWatcher implements ITicket, ICubeWatcher, IBucketSorterEntry {
 
     private long getWorldTime() { return playerCubeMap.getWorldServer().getWorldTime(); }
 
-    private void sendPacketToAllPlayers(Packet<?> packet) {
-        for (EntityPlayerMP entry : this.players) { entry.connection.sendPacket(packet); }
-    }
+    private void sendPacketToAllPlayers(Packet<?> packet) { for (EntityPlayerMP entry : this.players) { entry.connection.sendPacket(packet); } }
 
     CubePos getCubePos() { return cubePos; }
 

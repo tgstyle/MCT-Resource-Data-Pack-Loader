@@ -53,9 +53,7 @@ public final class EntityAISniff extends EntityAIBase {
 
     @Override public boolean shouldContinueExecuting() { return heardAt != null && mob.getAttackTarget() == null && walked < GIVE_UP && !mob.getNavigator().noPath(); }
 
-    @Override public void startExecuting() {
-        if (heardAt != null) { walkTo(heardAt); }
-    }
+    @Override public void startExecuting() { if (heardAt != null) { walkTo(heardAt); } }
 
     private void walkTo(BlockPos at) { Walking.toBlock(mob, at, SPEED); }
 

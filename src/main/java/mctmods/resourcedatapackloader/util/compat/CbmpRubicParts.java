@@ -18,9 +18,7 @@ import java.util.List;
 public final class CbmpRubicParts {
     private CbmpRubicParts() {}
 
-    public static void register() {
-        if (CompatHooks.present("forgemultipartcbe", "Forge Multipart only describes its parts to a client when a whole chunk is watched, so on rubic worlds every cube sent to a player carries its part descriptions with it")) { MinecraftForge.EVENT_BUS.register(new Handler()); }
-    }
+    public static void register() { if (CompatHooks.present("forgemultipartcbe", "Forge Multipart only describes its parts to a client when a whole chunk is watched, so on rubic worlds every cube sent to a player carries its part descriptions with it")) { MinecraftForge.EVENT_BUS.register(new Handler()); } }
 
     public static final class Handler {
         @SubscribeEvent public void onCubeWatch(CubeWatchEvent event) {

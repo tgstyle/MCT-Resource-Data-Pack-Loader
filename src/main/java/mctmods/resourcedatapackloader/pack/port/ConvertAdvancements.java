@@ -4,6 +4,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Map;
+import net.minecraft.util.JsonUtils;
 
 final class ConvertAdvancements {
     private ConvertAdvancements() {}
@@ -12,7 +13,7 @@ final class ConvertAdvancements {
         if (json.has("display") && json.get("display").isJsonObject()) {
             JsonObject display = json.getAsJsonObject("display");
             if (display.has("icon") && display.get("icon").isJsonObject()) { display.add("icon", ConvertRecipes.stack(display.get("icon"), from, pack)); }
-            if (display.has("background") && display.get("background").isJsonPrimitive()) { display.addProperty("background", ConvertAssets.textureRef(display.get("background").getAsString())); }
+            if (JsonUtils.isJsonPrimitive(display, "background")) { display.addProperty("background", ConvertAssets.textureRef(display.get("background").getAsString())); }
         }
         json.remove("sends_telemetry_event");
         if (json.has("criteria") && json.get("criteria").isJsonObject()) {
@@ -51,7 +52,7 @@ final class ConvertAdvancements {
                 if (ref != null && ref.specific) { held.addProperty("data", ref.meta); }
             }
         }
-        if (held.has("tag") && held.get("tag").isJsonPrimitive()) {
+        if (JsonUtils.isJsonPrimitive(held, "tag")) {
             String tag = held.remove("tag").getAsString();
             String ore = Ids.oreName(tag);
             held.addProperty("type", "forge:ore_dict");

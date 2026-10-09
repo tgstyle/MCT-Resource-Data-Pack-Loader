@@ -25,9 +25,7 @@ public final class JEIPluginOrder {
 
     public static void end() { current = null; }
 
-    public static void markProvider() {
-        if (current != null) { PROVIDERS.add(current); }
-    }
+    public static void markProvider() { if (current != null) { PROVIDERS.add(current); } }
 
     public static List<IModPlugin> reorder(List<IModPlugin> plugins) {
         if (PROVIDERS.isEmpty()) { return plugins; }

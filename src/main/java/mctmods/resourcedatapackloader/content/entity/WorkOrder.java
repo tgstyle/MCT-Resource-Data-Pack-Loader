@@ -99,9 +99,7 @@ public final class WorkOrder {
         return wants;
     }
 
-    public void delivered(int count) {
-        if (!standing() && count > 0) { left = Math.max(0, left - count); }
-    }
+    public void delivered(int count) { if (!standing() && count > 0) { left = Math.max(0, left - count); } }
 
     public boolean done() { return !standing() && left <= 0; }
 
@@ -121,9 +119,7 @@ public final class WorkOrder {
         return null;
     }
 
-    public void giveBack(BlockPos pos) {
-        if (queue.size() < QUEUE) { queue.addLast(pos); }
-    }
+    public void giveBack(BlockPos pos) { if (queue.size() < QUEUE) { queue.addLast(pos); } }
 
     private boolean still(World world, BlockPos pos) {
         if (!world.isBlockLoaded(pos)) { return false; }

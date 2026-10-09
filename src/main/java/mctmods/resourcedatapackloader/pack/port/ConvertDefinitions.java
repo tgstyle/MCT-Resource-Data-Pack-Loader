@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.util.JsonUtils;
 
 final class ConvertDefinitions {
     private static final Set<String> MODERN_STRUCTURES = Convert.set("ancient_cities", "buried_treasures", "ocean_ruins", "pillager_outposts", "ruined_portals", "shipwrecks", "trail_ruins", "trial_chambers", "nether_fossils");
@@ -44,7 +45,7 @@ final class ConvertDefinitions {
         movedPoint(settings, "worldSpawn", shift, pack, where);
         movedPoint(settings, "resetSendsTo", shift, pack, where);
         if (shift != 0 && settings.has("worldMinHeight")) { settings.remove("worldMinHeight"); }
-        if (shift != 0 && settings.has("generatorOptions") && settings.get("generatorOptions").isJsonPrimitive()) { settings.addProperty("generatorOptions", superflat(settings.get("generatorOptions").getAsString(), pack, where)); }
+        if (shift != 0 && JsonUtils.isJsonPrimitive(settings, "generatorOptions")) { settings.addProperty("generatorOptions", superflat(settings.get("generatorOptions").getAsString(), pack, where)); }
     }
 
     private static String superflat(String text, Ported pack, String where) {
@@ -64,7 +65,7 @@ final class ConvertDefinitions {
         int shift = pack.overworldShift();
         movedPoint(json, "spawn", shift, pack, where);
         if (json.has("standIn") && json.get("standIn").isJsonObject()) { movedPoint(json.getAsJsonObject("standIn"), "at", shift, pack, where); }
-        if (shift == 0 || !json.has("spawnBox") || !json.get("spawnBox").isJsonArray() || json.getAsJsonArray("spawnBox").size() != 6) { return; }
+        if (shift == 0 || !JsonUtils.isJsonArray(json, "spawnBox") || json.getAsJsonArray("spawnBox").size() != 6) { return; }
         JsonArray box = json.getAsJsonArray("spawnBox");
         boolean changed = false;
         for (int corner : new int[] {1, 4}) {
@@ -77,7 +78,7 @@ final class ConvertDefinitions {
     }
 
     static void movedPoint(JsonObject holder, String key, int shift, Ported pack, String where) {
-        if (!holder.has(key) || !holder.get(key).isJsonPrimitive()) { return; }
+        if (!JsonUtils.isJsonPrimitive(holder, key)) { return; }
         String written = holder.get(key).getAsString().trim();
         int comma = written.indexOf(',');
         int colon = comma < 0 ? -1 : written.lastIndexOf(':', comma);
@@ -106,7 +107,7 @@ final class ConvertDefinitions {
         JsonObject terrain = json.has("terrain") && json.get("terrain").isJsonObject() ? json.getAsJsonObject("terrain") : null;
         if (shift != 0 && terrain != null) { terrain.remove("minHeight"); }
         JsonObject sky = json.has("sky") && json.get("sky").isJsonObject() ? json.getAsJsonObject("sky") : null;
-        if (shift == 0 || sky == null || !sky.has("groundLevel") || !sky.get("groundLevel").isJsonPrimitive() || !sky.getAsJsonPrimitive("groundLevel").isNumber()) { return; }
+        if (shift == 0 || sky == null || !JsonUtils.isJsonPrimitive(sky, "groundLevel") || !sky.getAsJsonPrimitive("groundLevel").isNumber()) { return; }
         int written = sky.get("groundLevel").getAsInt();
         sky.addProperty("groundLevel", written + shift);
         flatNote("Dimension " + id + " gives groundLevel " + written, String.valueOf(written + shift), pack);
@@ -116,7 +117,7 @@ final class ConvertDefinitions {
         for (String key : new String[] {"item", "with"}) {
             JsonObject holder = json.has(key) && json.get(key).isJsonObject() ? json.getAsJsonObject(key) : json;
             String field = holder == json ? key : "item";
-            if (!holder.has(field) || !holder.get(field).isJsonArray()) { continue; }
+            if (!JsonUtils.isJsonArray(holder, field)) { continue; }
             JsonArray names = holder.getAsJsonArray(field);
             Set<String> files = new LinkedHashSet<>();
             for (JsonElement named : names) {
@@ -140,7 +141,7 @@ final class ConvertDefinitions {
     }
 
     static void fuels(JsonObject json, Ported pack, String where) {
-        if (!json.has("fuels") || !json.get("fuels").isJsonArray()) { return; }
+        if (!JsonUtils.isJsonArray(json, "fuels")) { return; }
         for (JsonElement element : json.getAsJsonArray("fuels")) {
             if (!element.isJsonObject() || !element.getAsJsonObject().has("tag")) { continue; }
             JsonObject fuel = element.getAsJsonObject();
@@ -164,7 +165,7 @@ final class ConvertDefinitions {
     }
 
     static void trades(JsonObject json, Ported pack, String where) {
-        if (!json.has("trades") || !json.get("trades").isJsonArray()) { return; }
+        if (!JsonUtils.isJsonArray(json, "trades")) { return; }
         for (JsonElement element : json.getAsJsonArray("trades")) {
             if (!element.isJsonObject()) { continue; }
             JsonObject trade = element.getAsJsonObject();
@@ -182,7 +183,7 @@ final class ConvertDefinitions {
 
     static void exposures(JsonObject json, Ported pack, String where) {
         for (String key : new String[] {"blocks", "items"}) {
-            if (!json.has(key) || !json.get(key).isJsonArray()) { continue; }
+            if (!JsonUtils.isJsonArray(json, key)) { continue; }
             JsonArray out = new JsonArray();
             for (JsonElement element : json.remove(key).getAsJsonArray()) {
                 String text = element.isJsonPrimitive() ? element.getAsString() : "";

@@ -8,6 +8,7 @@ import com.google.gson.JsonObject;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 final class ConvertRecipes {
     private static final Set<String> TWINNED_RECIPES = Convert.set("minecraft:crafting_shaped", "minecraft:crafting_shapeless", "forge:ore_shaped", "forge:ore_shapeless", "minecraft:smelting");
@@ -25,7 +26,7 @@ final class ConvertRecipes {
                 ores |= usesOre(entry.getValue());
             }
         }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
+        if (JsonUtils.isJsonArray(json, "ingredients")) {
             JsonArray ingredients = json.getAsJsonArray("ingredients");
             for (int i = 0; i < ingredients.size(); i++) {
                 ingredients.set(i, ingredient(ingredients.get(i), from, pack));
@@ -35,7 +36,7 @@ final class ConvertRecipes {
         if (json.has("result")) { json.add("result", stack(json.get("result"), from, pack)); }
         json.remove("category");
         json.remove("show_notification");
-        String type = json.has("type") && json.get("type").isJsonPrimitive() ? Ids.namespaced(json.get("type").getAsString()) : "";
+        String type = JsonUtils.isJsonPrimitive(json, "type") ? Ids.namespaced(json.get("type").getAsString()) : "";
         if (ores && "minecraft:crafting_shaped".equals(type)) { json.addProperty("type", "forge:ore_shaped"); }
         if (ores && "minecraft:crafting_shapeless".equals(type)) { json.addProperty("type", "forge:ore_shapeless"); }
         return Ported.GSON.toJson(json);
@@ -100,7 +101,7 @@ final class ConvertRecipes {
             return out;
         }
         if (!type.isEmpty() && !type.endsWith(":item") && !type.endsWith(":nbt") && !type.endsWith(":components") && !type.endsWith(":partial_nbt")) { pack.note("'" + from + "' uses the ingredient type " + type + ", which has no twin on 1.12.2, so it is served as written"); }
-        String named = held.has("item") ? held.get("item").getAsString() : held.has("items") && held.get("items").isJsonPrimitive() ? held.get("items").getAsString() : "";
+        String named = held.has("item") ? held.get("item").getAsString() : JsonUtils.isJsonPrimitive(held, "items") ? held.get("items").getAsString() : "";
         if (named.isEmpty()) { return held; }
         Convert.Ref ref = Convert.item(named, pack, "'" + from + "'");
         JsonObject out = new JsonObject();

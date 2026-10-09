@@ -63,9 +63,7 @@ public final class CardFire {
         return (overworld == null ? world : overworld).getTotalWorldTime();
     }
 
-    private static void runs(CardRule rule, EntityPlayerMP subject) {
-        if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); }
-    }
+    private static void runs(CardRule rule, EntityPlayerMP subject) { if (!rule.runs.isEmpty()) { Functions.runAs(subject, rule.runs, "Card rule " + rule.key); } }
 
     public static void afterIntro(EntityPlayerMP player) {
         CardScan.startClock(player);

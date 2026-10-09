@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import java.util.Map;
 import java.util.function.BiFunction;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class NumberSlots {
     private static final String TYPE = "type";
@@ -63,7 +64,7 @@ public final class NumberSlots {
             }
             case "set_custom_model_data|floats": {
                 if (value.isJsonArray()) { return listed(value.getAsJsonArray(), fit); }
-                if (!value.isJsonObject() || !value.getAsJsonObject().has("values") || !value.getAsJsonObject().get("values").isJsonArray()) { return walk(value, fit); }
+                if (!value.isJsonObject() || !JsonUtils.isJsonArray(value.getAsJsonObject(), "values")) { return walk(value, fit); }
                 JsonObject out = JsonTree.copy(value.getAsJsonObject());
                 out.add("values", listed(out.getAsJsonArray("values"), fit));
                 return out;
@@ -101,7 +102,7 @@ public final class NumberSlots {
     }
 
     public static String type(JsonObject object) {
-        String type = object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? object.get(TYPE).getAsString() : "";
+        String type = JsonUtils.isJsonPrimitive(object, TYPE) ? object.get(TYPE).getAsString() : "";
         return IdNames.bare(type);
     }
 }

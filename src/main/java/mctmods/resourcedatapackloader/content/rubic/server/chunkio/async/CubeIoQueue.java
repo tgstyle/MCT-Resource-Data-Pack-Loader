@@ -171,9 +171,7 @@ import javax.annotation.Nullable;
 
     @SubscribeEvent public static void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) { sizeReaders(event.player.getServer()); }
 
-    @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) { tick(); }
-    }
+    @SubscribeEvent public static void onServerTick(TickEvent.ServerTickEvent event) { if (event.phase == TickEvent.Phase.END) { tick(); } }
 
     private static void sizeReaders(@Nullable MinecraftServer server) {
         if (server == null) { return; }

@@ -172,7 +172,7 @@ public final class CommandShared {
         }
         if ("unused".equals(action)) {
             send(sender, TextFormatting.YELLOW, Lang.tr(sender, "rdpl.command.config.unused", stale.size()));
-            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + ".json"); }
+            for (String one : stale) { send(sender, TextFormatting.GRAY, "  " + one + PackManager.JSON_SUFFIX); }
             send(sender, TextFormatting.GRAY, Lang.tr(sender, note));
             return;
         }

@@ -39,9 +39,7 @@ public final class BeardRoads {
 
     @Nullable public static Grade layoutOf(StructureComponent piece) { return piece instanceof IRoadLayout ? ((IRoadLayout) piece).rdpl$layout() : null; }
 
-    public static void clearLayout(StructureComponent piece) {
-        if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); }
-    }
+    public static void clearLayout(StructureComponent piece) { if (piece instanceof IRoadLayout) { ((IRoadLayout) piece).rdpl$layout(null); } }
 
     @Nullable public static Grade fittedLayout(StructureComponent piece) {
         Grade grade = layoutOf(piece);

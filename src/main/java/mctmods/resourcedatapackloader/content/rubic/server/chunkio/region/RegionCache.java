@@ -53,9 +53,7 @@ public final class RegionCache {
         return found;
     }
 
-    public static synchronized void flushAll() throws IOException {
-        for (IRegion<?> region : OPEN.values()) { region.flush(); }
-    }
+    public static synchronized void flushAll() throws IOException { for (IRegion<?> region : OPEN.values()) { region.flush(); } }
 
     public static synchronized void closeAll() throws IOException {
         List<IRegion<?>> going = new ArrayList<>(OPEN.values());

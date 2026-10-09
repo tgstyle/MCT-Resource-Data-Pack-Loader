@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import net.minecraft.util.JsonUtils;
 import net.minecraft.util.math.MathHelper;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public final class BoardRules {
         JsonObject board = object(json, "board");
         light = text(board, "light", "");
         dark = text(board, "dark", "");
-        JsonArray sideList = json.has("sides") && json.get("sides").isJsonArray() ? json.getAsJsonArray("sides") : new JsonArray();
+        JsonArray sideList = JsonUtils.isJsonArray(json, "sides") ? json.getAsJsonArray("sides") : new JsonArray();
         sides = new String[2];
         colors = new String[2];
         for (int side = 0; side < 2; side++) {
@@ -173,7 +174,7 @@ public final class BoardRules {
             return null;
         }
         List<BoardPiece.Steps> moves = new ArrayList<>();
-        JsonArray list = json.has("moves") && json.get("moves").isJsonArray() ? json.getAsJsonArray("moves") : new JsonArray();
+        JsonArray list = JsonUtils.isJsonArray(json, "moves") ? json.getAsJsonArray("moves") : new JsonArray();
         for (JsonElement one : list) {
             BoardPiece.Steps steps = one.isJsonObject() ? steps(id, name, one.getAsJsonObject()) : null;
             if (steps == null) { return null; }
@@ -189,7 +190,7 @@ public final class BoardRules {
             ContentLog.LOGGER.error("Game file {} lets {} capture by '{}', which is not both, never, only or hop, so it is left out", id, name, mode);
             return null;
         }
-        JsonArray list = json.has("steps") && json.get("steps").isJsonArray() ? json.getAsJsonArray("steps") : new JsonArray();
+        JsonArray list = JsonUtils.isJsonArray(json, "steps") ? json.getAsJsonArray("steps") : new JsonArray();
         int[][] steps = new int[list.size()][];
         for (int at = 0; at < steps.length; at++) {
             JsonElement step = list.get(at);

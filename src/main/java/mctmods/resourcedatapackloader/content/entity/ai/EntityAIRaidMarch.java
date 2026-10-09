@@ -32,9 +32,7 @@ public final class EntityAIRaidMarch extends EntityAIBase {
 
     @Override public boolean shouldContinueExecuting() { return mob.getAttackTarget() == null && !mob.getNavigator().noPath(); }
 
-    @Override public void startExecuting() {
-        if (toward != null) { mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, SPEED); }
-    }
+    @Override public void startExecuting() { if (toward != null) { mob.getNavigator().tryMoveToXYZ(toward.x, toward.y, toward.z, SPEED); } }
 
     @Override public void resetTask() { toward = null; }
 }

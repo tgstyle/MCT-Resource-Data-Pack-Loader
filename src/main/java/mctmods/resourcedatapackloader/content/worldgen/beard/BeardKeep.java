@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.worldgen.beard;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
 
+import net.minecraft.block.BlockLeaves;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
@@ -147,12 +148,17 @@ public final class BeardKeep {
                     IBlockState was = seen[index++];
                     at.setPos(x, y, z);
                     IBlockState now = world.getBlockState(at);
-                    if (now == was || now.getBlock() == Blocks.AIR) { continue; }
+                    if (now == was || now.getBlock() == Blocks.AIR || decayCheckOnly(was, now)) { continue; }
                     mine.add(packed(x, y, z));
                 }
             }
         }
         return mine;
+    }
+
+    private static boolean decayCheckOnly(IBlockState was, IBlockState now) {
+        return was.getBlock() == now.getBlock() && was.getBlock() instanceof BlockLeaves
+                && was.withProperty(BlockLeaves.CHECK_DECAY, now.getValue(BlockLeaves.CHECK_DECAY)) == now;
     }
 
     public static void learnLamp(World world) {

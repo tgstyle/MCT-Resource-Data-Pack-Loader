@@ -19,7 +19,5 @@ public final class Blocked {
 
     public Map<String, Integer> map() { return Collections.unmodifiableMap(counts); }
 
-    public void report(String what) {
-        for (Map.Entry<String, Integer> entry : counts.entrySet()) { ContentLog.LOGGER.debug("  blocked {} {} from {}", entry.getValue(), what, entry.getKey()); }
-    }
+    public void report(String what) { for (Map.Entry<String, Integer> entry : counts.entrySet()) { ContentLog.LOGGER.debug("  blocked {} {} from {}", entry.getValue(), what, entry.getKey()); } }
 }

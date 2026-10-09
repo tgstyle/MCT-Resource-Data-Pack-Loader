@@ -366,7 +366,7 @@ public final class PackManager {
             for (Entry entry : namespace.getValue().values()) {
                 String path = "assets/" + namespace.getKey() + "/" + entry.actual;
                 paths.add(path);
-                if (path.endsWith(ContentPixelMaps.PNG + ContentPixelMaps.SUFFIX)) { paths.add(path.substring(0, path.length() - ContentPixelMaps.SUFFIX.length())); }
+                if (path.endsWith(ContentPixelMaps.PNG + JSON_SUFFIX)) { paths.add(path.substring(0, path.length() - JSON_SUFFIX.length())); }
             }
         }
         return paths;
@@ -501,9 +501,7 @@ public final class PackManager {
         }
     }
 
-    public void forEach(String type, String ext, IPackConsumer consumer) {
-        for (RDPLPack pack : packs) { pack.forEach(type, ext, consumer); }
-    }
+    public void forEach(String type, String ext, IPackConsumer consumer) { for (RDPLPack pack : packs) { pack.forEach(type, ext, consumer); } }
 
     public Set<String> getNamespaces(boolean overriding) {
         Set<String> cached = overriding ? namespacesOverride : namespacesNormal;

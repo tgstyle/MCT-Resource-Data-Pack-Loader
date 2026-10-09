@@ -162,9 +162,7 @@ public final class ContentBoards {
         if (data != null && ContentBoardPieces.stale(entity, data.boards.get(board))) { event.setCanceled(true); }
     }
 
-    @SubscribeEvent public static void onAttack(AttackEntityEvent event) {
-        if (ContentBoardPieces.boardOf(event.getTarget()) != null) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onAttack(AttackEntityEvent event) { if (ContentBoardPieces.boardOf(event.getTarget()) != null) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onTouch(PlayerInteractEvent.EntityInteract event) {
         Entity target = event.getTarget();

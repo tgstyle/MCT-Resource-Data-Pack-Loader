@@ -253,9 +253,7 @@ import javax.annotation.Nullable;
         return whole == null ? FULL_BLOCK_AABB : whole;
     }
 
-    @Override public void addCollisionBoxToList(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull AxisAlignedBB entityBox, @Nonnull List<AxisAlignedBB> boxes, @Nullable Entity entity, boolean actualState) {
-        for (AxisAlignedBB part : parts(state)) { addCollisionBoxToList(pos, entityBox, boxes, part); }
-    }
+    @Override public void addCollisionBoxToList(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull AxisAlignedBB entityBox, @Nonnull List<AxisAlignedBB> boxes, @Nullable Entity entity, boolean actualState) { for (AxisAlignedBB part : parts(state)) { addCollisionBoxToList(pos, entityBox, boxes, part); } }
 
     @Override @Nullable public RayTraceResult collisionRayTrace(@Nonnull IBlockState state, @Nonnull World world, @Nonnull BlockPos pos, @Nonnull Vec3d start, @Nonnull Vec3d end) {
         RayTraceResult nearest = null;

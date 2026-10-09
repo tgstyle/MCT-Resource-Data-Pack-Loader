@@ -100,9 +100,7 @@ final class CardSend {
         return all;
     }
 
-    private static void chat(CardLook look, EntityPlayerMP player) {
-        for (String line : all(look)) { Says.chat(player, look.chat, line); }
-    }
+    private static void chat(CardLook look, EntityPlayerMP player) { for (String line : all(look)) { Says.chat(player, look.chat, line); } }
 
     private static void titles(CardLook look, EntityPlayerMP player) {
         String subtitle = look.lines.isEmpty() ? "" : look.lines.get(0);

@@ -40,9 +40,7 @@ public class Utils {
         }
     }
 
-    public static void writeFully(ByteChannel dst, ByteBuffer data) throws IOException {
-        while (data.hasRemaining()) { dst.write(data); }
-    }
+    public static void writeFully(ByteChannel dst, ByteBuffer data) throws IOException { while (data.hasRemaining()) { dst.write(data); } }
 
     public static void writeFully(GatheringByteChannel dst, ByteBuffer[] data) throws IOException {
         long totalRemaining = Arrays.stream(data).mapToLong(ByteBuffer::remaining).sum();

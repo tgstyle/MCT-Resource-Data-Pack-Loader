@@ -89,9 +89,7 @@ public class RailPiece extends StructureVillagePieces.Road {
 
     public int stationTop(int which) { return which >= 0 && which < stationTops.length ? stationTops[which] : Integer.MIN_VALUE; }
 
-    public void stationTop(int which, int y) {
-        if (which >= 0 && which < stationTops.length) { stationTops[which] = y; }
-    }
+    public void stationTop(int which, int y) { if (which >= 0 && which < stationTops.length) { stationTops[which] = y; } }
 
     public int rowLeast() { return alongX() ? boundingBox.minX : boundingBox.minZ; }
 

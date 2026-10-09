@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import net.minecraft.util.JsonUtils;
 
 final class ConvertLoot {
     private static final Set<String> LOOT_FUNCTIONS = Convert.set("set_count", "set_data", "set_damage", "set_nbt", "enchant_randomly", "enchant_with_levels", "looting_enchant", "furnace_smelt", "set_attributes", "exploration_map");
@@ -26,11 +27,11 @@ final class ConvertLoot {
     private ConvertLoot() {}
 
     static String loot(JsonObject json, String from, Ported pack) {
-        if (json.has("target") && json.get("target").isJsonPrimitive()) { json.addProperty("target", Ids.lootTable(json.get("target").getAsString())); }
+        if (JsonUtils.isJsonPrimitive(json, "target")) { json.addProperty("target", Ids.lootTable(json.get("target").getAsString())); }
         json.remove("type");
         json.remove("random_sequence");
         if (json.has("functions")) { json.add("functions", lootFunctions(json.get("functions").getAsJsonArray(), from, pack)); }
-        if (!json.has("pools") || !json.get("pools").isJsonArray()) { return Ported.GSON.toJson(json); }
+        if (!JsonUtils.isJsonArray(json, "pools")) { return Ported.GSON.toJson(json); }
         int index = 0;
         for (JsonElement element : json.getAsJsonArray("pools")) {
             if (!element.isJsonObject()) { continue; }
@@ -116,7 +117,7 @@ final class ConvertLoot {
             numberAt(function, "damage", from, pack);
             numberAt(function, "levels", from, pack);
             if ("set_nbt".equals(bare) && function.has("tag") && function.get("tag").isJsonObject()) { function.addProperty("tag", function.get("tag").toString()); }
-            if ("set_attributes".equals(bare) && function.has("modifiers") && function.get("modifiers").isJsonArray()) {
+            if ("set_attributes".equals(bare) && JsonUtils.isJsonArray(function, "modifiers")) {
                 for (JsonElement modifier : function.getAsJsonArray("modifiers")) {
                     if (!modifier.isJsonObject()) { continue; }
                     JsonObject held = modifier.getAsJsonObject();
@@ -177,7 +178,7 @@ final class ConvertLoot {
         if ("binomial".equals(bare)) {
             JsonObject range = new JsonObject();
             range.addProperty("min", 0);
-            range.add("max", provider.has("n") && provider.get("n").isJsonPrimitive() ? provider.get("n") : new JsonPrimitive(1));
+            range.add("max", JsonUtils.isJsonPrimitive(provider, "n") ? provider.get("n") : new JsonPrimitive(1));
             holder.add(key, range);
             pack.note("'" + from + "' rolls a binomial " + key + ", and 1.12.2 rolls only uniform ranges, so it becomes " + range);
             return;

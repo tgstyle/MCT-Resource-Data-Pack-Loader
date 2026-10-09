@@ -10,6 +10,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import java.util.List;
 import java.util.Random;
 import javax.annotation.Nullable;
 
@@ -41,6 +42,8 @@ public final class ContentGeode implements IContentShape {
         if (state == null) { ContentLog.LOGGER.error("Worldgen {} names block {} as its geode {}, which is not registered, leaving that layer out", key, name, what); }
         return state;
     }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         int width = MathHelper.clamp(shape.width.pick(random), 3, ShapeDef.MOST_REACH * 2);

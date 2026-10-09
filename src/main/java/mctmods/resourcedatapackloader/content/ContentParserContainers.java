@@ -16,7 +16,7 @@ public final class ContentParserContainers {
     static String remainder(JsonObject json) {
         String named = JsonUtils.getString(json, "containerItem", "").trim();
         if (!named.isEmpty()) { return named; }
-        return json.has("container") && json.get("container").isJsonPrimitive() ? JsonUtils.getString(json, "container", "") : "";
+        return JsonUtils.isJsonPrimitive(json, "container") ? JsonUtils.getString(json, "container", "") : "";
     }
 
     @Nullable static ContainerDef holds(ResourceLocation key, JsonObject json) { return json.has("container") && json.get("container").isJsonObject() ? container(key, json) : null; }

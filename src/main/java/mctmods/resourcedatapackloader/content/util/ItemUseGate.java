@@ -6,11 +6,7 @@ import net.minecraftforge.fml.common.eventhandler.Event;
 public final class ItemUseGate {
     private ItemUseGate() {}
 
-    public static void cancel(Event event, boolean denied) {
-        if (denied) { event.setCanceled(true); }
-    }
+    public static void cancel(Event event, boolean denied) { if (denied) { event.setCanceled(true); } }
 
-    public static void denyUse(PlayerInteractEvent.RightClickBlock event, boolean denied) {
-        if (denied) { event.setUseItem(Event.Result.DENY); }
-    }
+    public static void denyUse(PlayerInteractEvent.RightClickBlock event, boolean denied) { if (denied) { event.setUseItem(Event.Result.DENY); } }
 }

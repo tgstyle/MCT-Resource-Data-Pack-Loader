@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class FormatDown {
     private static final String TYPE = "type";
@@ -104,7 +105,7 @@ public final class FormatDown {
     public static JsonElement asset(JsonElement json, String path, LineNote note) {
         if (!json.isJsonObject()) { return json; }
         JsonObject out = JsonTree.copy(json.getAsJsonObject());
-        if (path.startsWith("models/") && out.has("elements") && out.get("elements").isJsonArray()) {
+        if (path.startsWith("models/") && JsonUtils.isJsonArray(out, "elements")) {
             for (JsonElement element : out.getAsJsonArray("elements")) {
                 if (!element.isJsonObject()) { continue; }
                 JsonElement shade = element.getAsJsonObject().remove("shade_direction_override");
@@ -114,7 +115,7 @@ public final class FormatDown {
             }
         }
         else if (path.startsWith("equipment/") && out.remove("trim_overrides") != null) { note.accept("colors trims per equipment with trim_overrides, which 26.2 reads from the trim material's override_armor_assets, so those palettes are dropped"); }
-        else if (path.startsWith("atlases/") && out.has("sources") && out.get("sources").isJsonArray()) {
+        else if (path.startsWith("atlases/") && JsonUtils.isJsonArray(out, "sources")) {
             for (JsonElement source : out.getAsJsonArray("sources")) {
                 if (!source.isJsonObject() || !"paletted_permutations".equals(IdNames.bare(Json.text(source.getAsJsonObject(), TYPE)))) { continue; }
                 JsonObject permuted = source.getAsJsonObject();

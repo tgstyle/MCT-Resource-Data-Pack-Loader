@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class FeatureForms {
     private static final String TABLE = "/assets/resourcedatapackloader/port/features.json";
@@ -185,7 +186,7 @@ public final class FeatureForms {
                 break;
             }
             case SEAGRASS: {
-                if (!config.has("probability") || !config.get("probability").isJsonPrimitive()) { return null; }
+                if (!JsonUtils.isJsonPrimitive(config, "probability")) { return null; }
                 double chance = config.get("probability").getAsDouble();
                 int scale = 100;
                 while (scale < 10000 && Math.abs(chance * scale - Math.round(chance * scale)) > 1.0E-6) { scale *= 10; }
@@ -226,7 +227,7 @@ public final class FeatureForms {
     }
 
     @Nullable private static JsonObject corals(JsonObject selector) {
-        if (!selector.has(FEATURES) || !selector.get(FEATURES).isJsonArray()) { return null; }
+        if (!JsonUtils.isJsonArray(selector, FEATURES)) { return null; }
         List<JsonElement> left = listed(selector.getAsJsonArray(FEATURES));
         JsonArray kept = new JsonArray();
         for (String coral : CORALS) {
@@ -272,7 +273,7 @@ public final class FeatureForms {
     }
 
     @Nullable private static String referenced(JsonObject placed) {
-        if (!placed.has(PLACEMENT) || !placed.get(PLACEMENT).isJsonArray()) { return null; }
+        if (!JsonUtils.isJsonArray(placed, PLACEMENT)) { return null; }
         String feature = Json.text(placed, FEATURE);
         return feature.isEmpty() || feature.startsWith("#") ? null : id(feature);
     }

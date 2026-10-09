@@ -7,12 +7,15 @@ import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import java.util.List;
 import java.util.Random;
 
 public final class ContentSpring implements IContentShape {
     private final ContentPlacer placer;
 
     public ContentSpring(ContentPlacer placer) { this.placer = placer; }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return placer.offers(wood); }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         int x = origin.getX();

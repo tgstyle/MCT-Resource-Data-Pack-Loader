@@ -103,7 +103,7 @@ public final class ContentParserCelestial {
 
     @Nullable private static CelestialDef system(ResourceLocation key, JsonObject json) {
         String name = JsonUtils.getString(json, "name", key.getPath()).trim();
-        if (!json.has("mapPosition") || !json.get("mapPosition").isJsonArray()) {
+        if (!JsonUtils.isJsonArray(json, "mapPosition")) {
             ContentLog.LOGGER.error("Star system {} has no mapPosition, so there is nowhere on the galaxy map to put it", key);
             return null;
         }

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
 
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.JsonTree;
 
@@ -15,11 +16,11 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 final class DownAssets {
     private static final String ITEM_MODELS = "models/item/";
     private static final String ITEMS = "items/";
-    private static final String JSON = ".json";
     private static final String MCMETA = ".mcmeta";
     private static final String TYPE = "type";
     private static final String MODEL = "model";
@@ -58,12 +59,12 @@ final class DownAssets {
     }
 
     @Nullable static String modelPath(String path) {
-        if (!path.startsWith(ITEMS) || !path.endsWith(JSON)) { return null; }
+        if (!path.startsWith(ITEMS) || !path.endsWith(PackManager.JSON_SUFFIX)) { return null; }
         String rest = path.substring(ITEMS.length());
-        return rest.length() == JSON.length() || rest.indexOf('/') >= 0 ? null : ITEM_MODELS + rest;
+        return rest.length() == PackManager.JSON_SUFFIX.length() || rest.indexOf('/') >= 0 ? null : ITEM_MODELS + rest;
     }
 
-    private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - JSON.length()); }
+    private static String selfModel(String namespace, String modelPath) { return namespace + ":item/" + modelPath.substring(ITEM_MODELS.length(), modelPath.length() - PackManager.JSON_SUFFIX.length()); }
 
     @Nullable static JsonObject made(String namespace, String modelPath, @Nullable JsonObject definition, String file, Consumer<String> note) {
         String self = selfModel(namespace, modelPath);
@@ -120,7 +121,7 @@ final class DownAssets {
                 break;
             case "minecraft:select":
                 if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, file, note); }
-                if (!"minecraft:main_hand".equals(property) || !held.has("cases") || !held.get("cases").isJsonArray()) {
+                if (!"minecraft:main_hand".equals(property) || !JsonUtils.isJsonArray(held, "cases")) {
                     lost(file, property, note);
                     return;
                 }
@@ -136,7 +137,7 @@ final class DownAssets {
         if (held.has(FALLBACK)) { collect(held.get(FALLBACK), predicate, self, out, file, note); }
         String named = RANGES.get(property);
         boolean normalized = !held.has("normalize") || held.get("normalize").getAsBoolean();
-        if (named == null || "damage".equals(named) && !normalized || !held.has("entries") || !held.get("entries").isJsonArray()) {
+        if (named == null || "damage".equals(named) && !normalized || !JsonUtils.isJsonArray(held, "entries")) {
             lost(file, property, note);
             return;
         }

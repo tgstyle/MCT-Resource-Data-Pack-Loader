@@ -114,9 +114,7 @@ public final class EntityClassMaker {
         return method;
     }
 
-    private static void load(MethodVisitor method, int... slots) {
-        for (int slot : slots) { method.visitVarInsn(Opcodes.ALOAD, slot); }
-    }
+    private static void load(MethodVisitor method, int... slots) { for (int slot : slots) { method.visitVarInsn(Opcodes.ALOAD, slot); } }
 
     private static void close(MethodVisitor method, int returning, int stack, int locals) {
         method.visitInsn(returning);

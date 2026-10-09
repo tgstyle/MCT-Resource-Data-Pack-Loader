@@ -93,9 +93,7 @@ public final class GcCelestial {
         if (!made.isEmpty()) { Summary.info("galacticraft", "Put " + made.size() + " pack body(ies) on the Galacticraft map: " + made); }
     }
 
-    public static void stationRecipes() {
-        if (stations) { GcStations.recipes(); }
-    }
+    public static void stationRecipes() { if (stations) { GcStations.recipes(); } }
 
     public static Planet stationHome(Satellite station) { return stations ? GcStations.home(station) : station.getParentPlanet(); }
 
@@ -163,9 +161,7 @@ public final class GcCelestial {
         if (!EXTRA_PLANETS && gc != null && gc.extraPlanets != null) { ContentLog.LOGGER.error("Celestial body {} sets extraplanets keys, but ExtraPlanets is not loaded, so they do nothing", def.key); }
     }
 
-    public static void extraPlanetsRadiation() {
-        if (EXTRA_PLANETS && !RADIATION.isEmpty()) { EpPlanets.radiation(RADIATION); }
-    }
+    public static void extraPlanetsRadiation() { if (EXTRA_PLANETS && !RADIATION.isEmpty()) { EpPlanets.radiation(RADIATION); } }
 
     static void map(CelestialBody body, CelestialDef def) {
         body.setRelativeSize(def.relativeSize);

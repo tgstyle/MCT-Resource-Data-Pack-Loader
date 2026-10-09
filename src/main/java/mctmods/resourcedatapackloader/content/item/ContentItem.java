@@ -35,9 +35,7 @@ import javax.annotation.Nullable;
 
     @Nullable protected ItemVariant variant(ItemStack stack) { return ItemVariants.at(def, stack); }
 
-    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) {
-        if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); }
-    }
+    @Override public void getSubItems(@Nonnull CreativeTabs tab, @Nonnull NonNullList<ItemStack> list) { if (isInCreativeTab(tab)) { ItemVariants.subItems(this, def, list); } }
 
     @Override @Nonnull public String getTranslationKey(@Nonnull ItemStack stack) { return ItemVariants.key(this, def, stack); }
 

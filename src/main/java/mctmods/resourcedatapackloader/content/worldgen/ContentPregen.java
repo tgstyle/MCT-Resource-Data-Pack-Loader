@@ -34,6 +34,7 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 public final class ContentPregen implements WorldWorkerManager.IWorker {
     private static final long STILL_AFTER_MS = 3000L;
@@ -240,10 +241,10 @@ public final class ContentPregen implements WorldWorkerManager.IWorker {
         return true;
     }
 
-    public static String state() {
+    public static String state(@Nullable ICommandSender reader) {
         ContentPregen worker = running;
-        if (worker == null) { return "Nothing is being made at the moment"; }
-        return ContentPregenProgress.report(worker);
+        if (worker == null) { return Lang.tr(reader, "rdpl.pregen.idle"); }
+        return ContentPregenProgress.report(worker, reader);
     }
 
     @Override public boolean hasWork() { return !over; }

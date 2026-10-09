@@ -61,9 +61,7 @@ final class ContentBoardPieces {
         return level && file >= 0 && rank >= 0 && file < rules.files && rank < rules.ranks ? rank * rules.files + file : -1;
     }
 
-    static void clear(World world, BoardGame game) {
-        for (Entity piece : held(world, game)) { piece.setDead(); }
-    }
+    static void clear(World world, BoardGame game) { for (Entity piece : held(world, game)) { piece.setDead(); } }
 
     static void strike(World world, BoardGame game, BoardRules rules, int from, int victim) {
         Entity striker = standing(world, game, rules, from);

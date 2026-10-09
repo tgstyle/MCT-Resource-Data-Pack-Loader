@@ -17,7 +17,6 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 final class Downed {
-    private static final String JSON = ".json";
     private static final int LAST_1_21_DATA_FORMAT = 48;
     private static final int LAST_1_21_RESOURCE_FORMAT = 34;
     private static final int LAST_26_2_DATA_FORMAT = 107;
@@ -89,7 +88,7 @@ final class Downed {
                 String out = Down.function(lined ? LinePort.function(contents, said) : contents);
                 return out.equals(contents) ? raw : out.getBytes(StandardCharsets.UTF_8);
             }
-            if (!path.endsWith(JSON)) { return raw; }
+            if (!path.endsWith(PackManager.JSON_SUFFIX)) { return raw; }
             JsonElement before = new JsonParser().parse(contents);
             JsonElement json = !lined ? JsonTree.copy(before) : asset ? LinePort.asset(JsonTree.copy(before), path, said) : LinePort.data(JsonTree.copy(before), path, said);
             if (json.isJsonObject() && (!asset || kind == Port.Kind.MODEL)) {
@@ -106,7 +105,7 @@ final class Downed {
     }
 
     private static Port.Kind kind(String path, boolean asset) {
-        if (asset) { return path.startsWith("models/") && path.endsWith(JSON) ? Port.Kind.MODEL : Port.Kind.DEFINITION; }
+        if (asset) { return path.startsWith("models/") && path.endsWith(PackManager.JSON_SUFFIX) ? Port.Kind.MODEL : Port.Kind.DEFINITION; }
         if (path.startsWith("function/")) { return path.endsWith(".mcfunction") ? Port.Kind.FUNCTION : Port.Kind.RAW; }
         if (path.startsWith("recipe/")) { return Port.Kind.RECIPE; }
         if (path.startsWith("loot_table/") || path.startsWith("predicate/") || path.startsWith("item_modifier/") || path.startsWith("loot_modifiers/")) { return Port.Kind.LOOT; }
@@ -119,7 +118,7 @@ final class Downed {
 
             @Override @Nullable public JsonElement carried(String folder, String id) {
                 int colon = id.indexOf(':');
-                Path file = root.resolve(Port.DATA).resolve(colon < 0 ? "minecraft" : id.substring(0, colon)).resolve(folder).resolve(id.substring(colon + 1) + JSON);
+                Path file = root.resolve(Port.DATA).resolve(colon < 0 ? "minecraft" : id.substring(0, colon)).resolve(folder).resolve(id.substring(colon + 1) + PackManager.JSON_SUFFIX);
                 if (!Files.isRegularFile(file)) { return null; }
                 try { return new JsonParser().parse(new String(Files.readAllBytes(file), StandardCharsets.UTF_8)); }
                 catch (IOException | RuntimeException unreadable) { return null; }

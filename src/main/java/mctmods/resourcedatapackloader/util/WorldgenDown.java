@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.util.JsonUtils;
 
 public final class WorldgenDown {
     private static final String TYPE = "type";
@@ -390,7 +391,7 @@ public final class WorldgenDown {
     private static JsonElement withoutVeins(JsonElement element, Consumer<String> note) {
         if (!element.isJsonObject()) { return element; }
         JsonObject rule = element.getAsJsonObject();
-        if (rule.has(SEQUENCE) && rule.get(SEQUENCE).isJsonArray()) {
+        if (JsonUtils.isJsonArray(rule, SEQUENCE)) {
             JsonArray kept = new JsonArray();
             for (JsonElement step : rule.getAsJsonArray(SEQUENCE)) {
                 if (step.isJsonObject() && "ore_vein".equals(IdNames.bare(type(step.getAsJsonObject())))) {
@@ -452,7 +453,7 @@ public final class WorldgenDown {
     }
 
     private static boolean newState(JsonObject object) {
-        if (!object.has(ID) || !object.get(ID).isJsonPrimitive()) { return false; }
+        if (!JsonUtils.isJsonPrimitive(object, ID)) { return false; }
         for (String key : JsonTree.keys(object)) {
             if (!ID.equals(key) && !PROPERTIES.equals(key)) { return false; }
         }

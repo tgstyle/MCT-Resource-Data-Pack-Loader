@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 final class Ids {
     static final String MINECRAFT = "minecraft";
@@ -175,7 +176,7 @@ final class Ids {
     }
 
     private static void list(JsonObject table, String section, Set<String> into) {
-        if (!table.has(section) || !table.get(section).isJsonArray()) { return; }
+        if (!JsonUtils.isJsonArray(table, section)) { return; }
         for (JsonElement element : table.getAsJsonArray(section)) { into.add(element.getAsString()); }
     }
 

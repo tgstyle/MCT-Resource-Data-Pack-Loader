@@ -80,9 +80,7 @@ public final class ContentSetup {
         flammable(block, def.fireSpread, def.flammability);
     }
 
-    public static void flammable(Block block, int fireSpread, int flammability) {
-        if (flammability > 0 || fireSpread > 0) { FLAMMABLE.put(block, new int[] {fireSpread, flammability}); }
-    }
+    public static void flammable(Block block, int fireSpread, int flammability) { if (flammability > 0 || fireSpread > 0) { FLAMMABLE.put(block, new int[] {fireSpread, flammability}); } }
 
     public static float resistanceOf(BlockDef def, BlockVariant variant) { return variant.resistance / def.explosionResistanceDivisor; }
 

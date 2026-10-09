@@ -56,9 +56,7 @@ public class ContentBiome extends Biome {
 
     public BiomeDef getDef() { return def; }
 
-    public void resolveSpawns() {
-        for (SpawnEntryDef entry : def.spawns) { addSpawn(entry); }
-    }
+    public void resolveSpawns() { for (SpawnEntryDef entry : def.spawns) { addSpawn(entry); } }
 
     private void clearSpawns() {
         spawnableMonsterList.clear();

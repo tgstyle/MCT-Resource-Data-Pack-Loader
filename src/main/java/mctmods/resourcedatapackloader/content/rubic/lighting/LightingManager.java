@@ -45,9 +45,7 @@ public class LightingManager implements ILightingManager {
 
     @Override public void processUpdates() { lightEngine.processLightUpdates(); }
 
-    @Override public void processUpdatesOnAccess() {
-        if (!world.isRemote) { processUpdates(); }
-    }
+    @Override public void processUpdatesOnAccess() { if (!world.isRemote) { processUpdates(); } }
 
     @Override public String getId() { return lightEngine.getId(); }
 
@@ -64,9 +62,7 @@ public class LightingManager implements ILightingManager {
 
     @Override public Cube.ICubeLightTrackingInfo createLightData() { return new CubeLightData(); }
 
-    @Override public void onHeightUpdate(BlockPos pos) {
-        if (!world.isRemote) { ((PlayerCubeMap) ((WorldServer) world).getPlayerChunkMap()).heightUpdated(pos.getX(), pos.getZ()); }
-    }
+    @Override public void onHeightUpdate(BlockPos pos) { if (!world.isRemote) { ((PlayerCubeMap) ((WorldServer) world).getPlayerChunkMap()).heightUpdated(pos.getX(), pos.getZ()); } }
 
     @Override public void onTrackCubeSurface(ICube cube) {
         if (!world.isRemote) {

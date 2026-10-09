@@ -44,13 +44,9 @@ public final class ContentLog {
 
     public void warn(String message, Object... args) { write(WARN, message, args); }
 
-    public void once(String message, Object... args) {
-        if (told.add(message + Arrays.toString(args))) { info(message, args); }
-    }
+    public void once(String message, Object... args) { if (told.add(message + Arrays.toString(args))) { info(message, args); } }
 
-    public void onceWarn(String message, Object... args) {
-        if (told.add(message + Arrays.toString(args))) { warn(message, args); }
-    }
+    public void onceWarn(String message, Object... args) { if (told.add(message + Arrays.toString(args))) { warn(message, args); } }
 
     public void error(String message, Object... args) { write(ERROR, message, args); }
 

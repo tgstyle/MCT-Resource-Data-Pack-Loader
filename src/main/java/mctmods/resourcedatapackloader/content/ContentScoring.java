@@ -439,9 +439,7 @@ public final class ContentScoring {
         event.setCanceled(true);
     }
 
-    @SubscribeEvent public static void onHeldHurt(LivingAttackEvent event) {
-        if (event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().world.isRemote && holding()) { event.setCanceled(true); }
-    }
+    @SubscribeEvent public static void onHeldHurt(LivingAttackEvent event) { if (event.getEntityLiving() instanceof EntityPlayer && !event.getEntityLiving().world.isRemote && holding()) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onHeldHit(AttackEntityEvent event) { refuse(event, event.getEntityPlayer()); }
 
@@ -455,13 +453,9 @@ public final class ContentScoring {
 
     @SubscribeEvent public static void onHeldBreak(BlockEvent.BreakEvent event) { refuse(event, event.getPlayer()); }
 
-    @SubscribeEvent public static void onHeldPlace(BlockEvent.EntityPlaceEvent event) {
-        if (event.getEntity() instanceof EntityPlayer) { refuse(event, (EntityPlayer) event.getEntity()); }
-    }
+    @SubscribeEvent public static void onHeldPlace(BlockEvent.EntityPlaceEvent event) { if (event.getEntity() instanceof EntityPlayer) { refuse(event, (EntityPlayer) event.getEntity()); } }
 
-    private static void refuse(Event event, EntityPlayer player) {
-        if (ContentScoringLobby.refused(player)) { event.setCanceled(true); }
-    }
+    private static void refuse(Event event, EntityPlayer player) { if (ContentScoringLobby.refused(player)) { event.setCanceled(true); } }
 
     @SubscribeEvent public static void onHeldToss(ItemTossEvent event) {
         if (!ContentScoringLobby.refused(event.getPlayer())) { return; }
@@ -470,9 +464,7 @@ public final class ContentScoring {
         event.getPlayer().inventoryContainer.detectAndSendChanges();
     }
 
-    public static void greet(EntityPlayerMP player) {
-        if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getName(), player.world.getTotalWorldTime() + ContentScoringLobby.NOTE_TICKS); }
-    }
+    public static void greet(EntityPlayerMP player) { if (closed && lobbied) { ContentScoringLobby.DUE.put(player.getName(), player.world.getTotalWorldTime() + ContentScoringLobby.NOTE_TICKS); } }
 
     public static RoundSay start(MinecraftServer server, EntityPlayer who, boolean operator) {
         if (lobbyDef() == null) { return RoundSay.bad("rdpl.round.start.opens"); }

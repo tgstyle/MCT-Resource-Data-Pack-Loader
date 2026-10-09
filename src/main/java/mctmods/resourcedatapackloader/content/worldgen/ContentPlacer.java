@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.GenHeights;
@@ -110,6 +111,13 @@ public final class ContentPlacer {
     public static int floorY(World world) { return GenHeights.floor(world, 1); }
 
     public static int ceilingY(World world) { return GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT); }
+
+    public boolean offers(IBlockState found) {
+        for (IBlockState state : states) {
+            if (ContentStates.alike(state, found)) { return true; }
+        }
+        return false;
+    }
 
     public IBlockState choose(Random random) {
         if (states.size() < 2) { return states.get(0); }

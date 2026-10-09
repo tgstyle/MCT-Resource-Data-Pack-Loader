@@ -65,9 +65,7 @@ import javax.annotation.Nullable;
         WAITING.clear();
     }
 
-    @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) {
-        if (event.getWorld().isRemote) { WAITING.clear(); }
-    }
+    @SubscribeEvent public static void onWorldUnload(WorldEvent.Unload event) { if (event.getWorld().isRemote) { WAITING.clear(); } }
 
     @SubscribeEvent public static void onHud(RenderGameOverlayEvent.Post event) {
         MessageCard card = shown;

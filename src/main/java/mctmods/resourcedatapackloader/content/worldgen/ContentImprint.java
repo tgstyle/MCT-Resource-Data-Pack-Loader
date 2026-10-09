@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentStates;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
@@ -8,6 +9,10 @@ import mctmods.resourcedatapackloader.util.Turns;
 import mctmods.resourcedatapackloader.util.world.BlockFlags;
 import mctmods.resourcedatapackloader.util.world.StructureLoot;
 
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.NBTUtil;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.ResourceLocation;
@@ -19,11 +24,17 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.gen.structure.template.ITemplateProcessor;
 import net.minecraft.world.gen.structure.template.PlacementSettings;
 import net.minecraft.world.gen.structure.template.Template;
+import net.minecraftforge.common.util.Constants;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ContentImprint implements IContentShape {
     private static final int WORLDGEN_FLAGS = BlockFlags.UPDATE_CLIENTS;
     private static final int OFFSET = 8;
+    private static final Map<String, List<IBlockState>> PALETTES = new ConcurrentHashMap<>();
     private final ContentPlacer placer;
     private final ShapeDef shape;
     private final ResourceLocation key;
@@ -41,6 +52,42 @@ public final class ContentImprint implements IContentShape {
     public static int backZ(Rotation rotation, BlockPos span) { return rotation == Rotation.CLOCKWISE_180 || rotation == Rotation.COUNTERCLOCKWISE_90 ? span.getZ() - 1 : 0; }
 
     public int[] pinnedAt() { return shape.at != null && shape.at.length == 2 ? shape.at : null; }
+
+    @Override public boolean places(World world, IBlockState wood, List<IBlockState> canopies) {
+        if (!(world instanceof WorldServer)) { return false; }
+        WorldServer server = (WorldServer) world;
+        List<String> names = new ArrayList<>();
+        if (shape.structures.isEmpty()) { names.add(shape.structure); }
+        else {
+            for (PickDef pick : shape.structures) { names.add(pick.name); }
+        }
+        for (String named : names) {
+            if (named == null || named.isEmpty()) { continue; }
+            List<IBlockState> states = PALETTES.get(named);
+            if (states == null) {
+                Template loaded = server.getStructureTemplateManager().get(server.getMinecraftServer(), new ResourceLocation(named));
+                if (loaded == null) { continue; }
+                states = new ArrayList<>();
+                NBTTagList palette = loaded.writeToNBT(new NBTTagCompound()).getTagList("palette", Constants.NBT.TAG_COMPOUND);
+                for (int i = 0; i < palette.tagCount(); i++) { states.add(NBTUtil.readBlockState(palette.getCompoundTagAt(i))); }
+                PALETTES.put(named, states);
+            }
+            if (holds(states, wood, canopies)) { return true; }
+        }
+        return false;
+    }
+
+    private static boolean holds(List<IBlockState> palette, IBlockState wood, List<IBlockState> canopies) {
+        boolean timber = false;
+        boolean crown = canopies.isEmpty();
+        for (IBlockState state : palette) {
+            if (ContentStates.alike(state, wood)) { timber = true; }
+            for (IBlockState canopy : canopies) {
+                if (ContentStates.alike(state, canopy)) { crown = true; }
+            }
+        }
+        return timber && crown;
+    }
 
     @Override public boolean generate(World world, Random random, BlockPos origin) {
         String named = PickDef.pick(shape.structures, random, shape.structure);

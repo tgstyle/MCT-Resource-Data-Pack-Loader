@@ -23,9 +23,7 @@ public final class BeardBiome {
 
     private BeardBiome() {}
 
-    private static void enter(@Nullable World world, int x, int z) {
-        if (ContentControl.hasBiomeSettings()) { BUILDING.set(at(world, x, z)); }
-    }
+    private static void enter(@Nullable World world, int x, int z) { if (ContentControl.hasBiomeSettings()) { BUILDING.set(at(world, x, z)); } }
 
     public static void within(@Nullable World world, StructureBoundingBox clip, Runnable laid) { within(world, (clip.minX + clip.maxX) / 2, (clip.minZ + clip.maxZ) / 2, laid); }
 

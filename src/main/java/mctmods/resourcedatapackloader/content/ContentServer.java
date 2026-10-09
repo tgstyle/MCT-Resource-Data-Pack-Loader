@@ -121,13 +121,9 @@ public final class ContentServer {
         return asked;
     }
 
-    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) {
-        if (value != null) { asked.put(key, value.toString()); }
-    }
+    private static void put(Map<String, String> asked, String key, @Nullable Boolean value) { if (value != null) { asked.put(key, value.toString()); } }
 
-    private static void put(Map<String, String> asked, String key, int value) {
-        if (value >= 0) { asked.put(key, Integer.toString(value)); }
-    }
+    private static void put(Map<String, String> asked, String key, int value) { if (value >= 0) { asked.put(key, Integer.toString(value)); } }
 
     public static void applyTo(MinecraftServer server) {
         Boolean pvp = pvp();

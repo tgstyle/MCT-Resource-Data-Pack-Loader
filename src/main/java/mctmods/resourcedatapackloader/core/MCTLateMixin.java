@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core;
 
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
+import mctmods.resourcedatapackloader.pack.PackManager;
 
 import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.common.Loader;
@@ -48,13 +49,13 @@ import java.util.function.BooleanSupplier;
 
     @Override public List<String> getMixinConfigs() {
         List<String> configs = new ArrayList<>(QUEUED.size());
-        for (String name : QUEUED.keySet()) { configs.add(PREFIX + name + ".json"); }
+        for (String name : QUEUED.keySet()) { configs.add(PREFIX + name + PackManager.JSON_SUFFIX); }
         return configs;
     }
 
     @Override public boolean shouldMixinConfigQueue(String mixinConfig) {
         for (Map.Entry<String, BooleanSupplier> entry : QUEUED.entrySet()) {
-            if (mixinConfig.endsWith("." + entry.getKey() + ".json")) { return entry.getValue().getAsBoolean(); }
+            if (mixinConfig.endsWith("." + entry.getKey() + PackManager.JSON_SUFFIX)) { return entry.getValue().getAsBoolean(); }
         }
         return true;
     }

@@ -19,9 +19,7 @@ import java.util.Map;
 public final class CmsRubicSpawns {
     private CmsRubicSpawns() {}
 
-    public static void register() {
-        if (CompatHooks.present("customspawner", "Custom Mob Spawner strips the biome spawn lists and its own spawner keeps within the vanilla heights, so on rubic worlds the mobs it remembered are handed back for everything above 255 or below 0")) { MinecraftForge.EVENT_BUS.register(new Handler()); }
-    }
+    public static void register() { if (CompatHooks.present("customspawner", "Custom Mob Spawner strips the biome spawn lists and its own spawner keeps within the vanilla heights, so on rubic worlds the mobs it remembered are handed back for everything above 255 or below 0")) { MinecraftForge.EVENT_BUS.register(new Handler()); } }
 
     public static final class Handler {
         private static final Map<Biome, EnumMap<EnumCreatureType, List<Biome.SpawnListEntry>>> REMEMBERED = new IdentityHashMap<>();

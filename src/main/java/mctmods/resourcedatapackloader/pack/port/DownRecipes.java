@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.util.JsonUtils;
 
 final class DownRecipes {
     private static final String TYPE = "type";
@@ -28,7 +29,7 @@ final class DownRecipes {
         for (String key : SINGLE) {
             if (json.has(key)) { json.add(key, ingredient(json.get(key), file, note)); }
         }
-        if (json.has("ingredients") && json.get("ingredients").isJsonArray()) {
+        if (JsonUtils.isJsonArray(json, "ingredients")) {
             JsonArray out = new JsonArray();
             for (JsonElement one : json.getAsJsonArray("ingredients")) { out.add(ingredient(one, file, note)); }
             json.add("ingredients", out);

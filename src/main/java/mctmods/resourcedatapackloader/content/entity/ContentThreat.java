@@ -227,9 +227,7 @@ public final class ContentThreat {
         return most >= 0 ? Math.min(score, most) : score;
     }
 
-    private static void tally(int[] held, Iterable<ItemStack> stacks) {
-        for (ItemStack stack : stacks) { tally(held, stack); }
-    }
+    private static void tally(int[] held, Iterable<ItemStack> stacks) { for (ItemStack stack : stacks) { tally(held, stack); } }
 
     private static void tally(int[] held, ItemStack stack) {
         if (stack.isEmpty()) { return; }

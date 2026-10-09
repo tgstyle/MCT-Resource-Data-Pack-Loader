@@ -105,11 +105,7 @@ public abstract class SaveSection<K extends IKey> implements Flushable, Closeabl
         return false;
     }
 
-    @Override public void flush() throws IOException {
-        for (IRegionProvider<K> prov : this.regionProviders) { prov.flush(); }
-    }
+    @Override public void flush() throws IOException { for (IRegionProvider<K> prov : this.regionProviders) { prov.flush(); } }
 
-    @Override public void close() throws IOException {
-        for (IRegionProvider<K> prov : this.regionProviders) { prov.close(); }
-    }
+    @Override public void close() throws IOException { for (IRegionProvider<K> prov : this.regionProviders) { prov.close(); } }
 }

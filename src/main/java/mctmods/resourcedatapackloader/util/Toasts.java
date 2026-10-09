@@ -29,9 +29,7 @@ public final class Toasts {
 
     public static void leave() { shown = OFF_SERVER; }
 
-    @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.player instanceof EntityPlayerMP) { RDPLNetwork.sendToasts((EntityPlayerMP) event.player, allowed()); }
-    }
+    @SubscribeEvent public static void onLogin(PlayerEvent.PlayerLoggedInEvent event) { if (event.player instanceof EntityPlayerMP) { RDPLNetwork.sendToasts((EntityPlayerMP) event.player, allowed()); } }
 
     @SubscribeEvent public static void onDisconnect(FMLNetworkEvent.ClientDisconnectionFromServerEvent event) { leave(); }
 

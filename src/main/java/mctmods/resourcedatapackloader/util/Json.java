@@ -36,16 +36,16 @@ public final class Json {
 
     private static String label(String kind) { return Character.toUpperCase(kind.charAt(0)) + kind.substring(1); }
 
-    public static String text(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString() : ""; }
+    public static String text(JsonObject object, String key) { return JsonUtils.isJsonPrimitive(object, key) ? object.get(key).getAsString() : ""; }
 
-    public static String text(JsonObject object, String key, String fallback) { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsString().trim() : fallback; }
+    public static String text(JsonObject object, String key, String fallback) { return JsonUtils.isJsonPrimitive(object, key) ? object.get(key).getAsString().trim() : fallback; }
 
     public static int number(JsonObject object, String key, int fallback) {
-        try { return object.has(key) && object.get(key).isJsonPrimitive() ? object.get(key).getAsInt() : fallback; }
+        try { return JsonUtils.isJsonPrimitive(object, key) ? object.get(key).getAsInt() : fallback; }
         catch (NumberFormatException notNumber) { return fallback; }
     }
 
-    public static boolean flag(JsonObject object, String key) { return object.has(key) && object.get(key).isJsonPrimitive() && object.get(key).getAsBoolean(); }
+    public static boolean flag(JsonObject object, String key) { return JsonUtils.isJsonPrimitive(object, key) && object.get(key).getAsBoolean(); }
 
     public static List<String> strings(JsonObject json, String member) {
         if (!json.has(member)) { return Collections.emptyList(); }
@@ -60,7 +60,7 @@ public final class Json {
 
     public static List<String> names(JsonObject json, String field) {
         List<String> found = new ArrayList<>();
-        if (!json.has(field) || !json.get(field).isJsonArray()) { return found; }
+        if (!JsonUtils.isJsonArray(json, field)) { return found; }
         for (JsonElement entry : json.getAsJsonArray(field)) {
             String named = entry.getAsString().trim();
             if (!named.isEmpty()) { found.add(named); }

@@ -44,9 +44,7 @@ public class ClientHeightMap implements IHeightMap {
 
     public void setHeight(int localX, int localZ, int height) { hmap.set(getIndex(localX, localZ), height); }
 
-    public void loadData(PacketBuffer in) {
-        for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { hmap.set(i, in.readInt()); }
-    }
+    public void loadData(PacketBuffer in) { for (int i = 0; i < Cube.SIZE * Cube.SIZE; i++) { hmap.set(i, in.readInt()); } }
 
     private static int getIndex(int localX, int localZ) { return AddressTools.getLocalAddress(localX, localZ); }
 }

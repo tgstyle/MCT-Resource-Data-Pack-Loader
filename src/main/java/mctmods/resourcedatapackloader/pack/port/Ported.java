@@ -36,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class Ported {
     static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -156,7 +157,7 @@ public final class Ported {
                     case FUNCTION_TAG: {
                         JsonObject json = readJson(home.resolve(path));
                         String tag = PackManager.stripJson(path, path.lastIndexOf('/') + 1);
-                        if (json != null && json.has("values") && json.get("values").isJsonArray()) {
+                        if (json != null && JsonUtils.isJsonArray(json, "values")) {
                             for (JsonElement value : json.getAsJsonArray("values")) {
                                 String id = value.isJsonObject() && value.getAsJsonObject().has("id") ? value.getAsJsonObject().get("id").getAsString() : value.getAsString();
                                 functionTags.computeIfAbsent(ns + ":" + tag, k -> new ArrayList<>()).add(id);
@@ -208,9 +209,9 @@ public final class Ported {
                     String variant = PackManager.stripJson(path, "models/item/".length());
                     Own held = ownItems.containsKey(namespace + ":" + variant) ? ownItems.get(namespace + ":" + variant) : ownBlocks.get(namespace + ":" + variant);
                     if (held != null) {
-                        String nested = "models/item/" + held.file + "/" + variant + ".json";
+                        String nested = "models/item/" + held.file + "/" + variant + PackManager.JSON_SUFFIX;
                         expose(namespace, nested, new Source(real, Port.Kind.MODEL, from, null));
-                        if (held.variants == 1) { expose(namespace, "models/item/" + held.file + ".json", new Source(real, Port.Kind.MODEL, from, null)); }
+                        if (held.variants == 1) { expose(namespace, "models/item/" + held.file + PackManager.JSON_SUFFIX, new Source(real, Port.Kind.MODEL, from, null)); }
                         movedLine(from, namespace, nested);
                         return;
                     }
@@ -237,12 +238,12 @@ public final class Ported {
         if (found == null) { found = Ids.item(modern); }
         if (found == null || found.id.equals(modern)) { return path; }
         note("'" + from + "' overrides " + modern + ", which 1.12.2 holds as " + found.id + ":" + found.meta + ", and an override changes every variant of " + found.id);
-        return prefix + IdNames.path(found.id) + ".json";
+        return prefix + IdNames.path(found.id) + PackManager.JSON_SUFFIX;
     }
 
     private void recipe(String namespace, String path, Port.Mapped mapped, Path real, String from) {
         JsonObject json = down == null ? readJson(real) : down.json(real, from, this);
-        String type = json != null && json.has("type") && json.get("type").isJsonPrimitive() ? Ids.namespaced(json.get("type").getAsString()) : "";
+        String type = json != null && JsonUtils.isJsonPrimitive(json, "type") ? Ids.namespaced(json.get("type").getAsString()) : "";
         if (json != null && ("minecraft:smelting".equals(type))) {
             JsonObject entry = ConvertRecipes.smelting(json, this);
             if (entry == null) { return; }
@@ -270,7 +271,7 @@ public final class Ported {
                 if (json == null) { continue; }
                 String folder = blocks ? BLOCKS : ITEMS;
                 String file = PackManager.stripJson(path, folder.length() + 1);
-                String type = json.has("type") && json.get("type").isJsonPrimitive() ? json.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
+                String type = JsonUtils.isJsonPrimitive(json, "type") ? json.get("type").getAsString().toLowerCase(Locale.ROOT) : "";
                 JsonObject variants = json.has("variants") && json.get("variants").isJsonObject() ? json.getAsJsonObject("variants") : new JsonObject();
                 (blocks ? blockDefs : itemDefs).put(namespace + ":" + file, json);
                 int count = variants.size();
@@ -301,7 +302,7 @@ public final class Ported {
     private void dimension(String namespace, String path, @Nullable JsonObject json) {
         String id = namespace + ":" + PackManager.stripJson(path, "dimensions/".length());
         int number;
-        if (json != null && json.has("id") && json.get("id").isJsonPrimitive() && json.getAsJsonPrimitive("id").isNumber()) { number = json.get("id").getAsInt(); }
+        if (json != null && JsonUtils.isJsonPrimitive(json, "id") && json.getAsJsonPrimitive("id").isNumber()) { number = json.get("id").getAsInt(); }
         else {
             number = FIRST_DIMENSION + Math.floorMod(id.hashCode(), DIMENSION_SPAN);
             while (dimensionNumbers.containsValue(number)) { number = FIRST_DIMENSION + Math.floorMod(number - FIRST_DIMENSION + 1, DIMENSION_SPAN); }
@@ -309,8 +310,8 @@ public final class Ported {
         }
         dimensionNumbers.put(id, number);
         JsonObject terrain = json != null && json.has("terrain") && json.get("terrain").isJsonObject() ? json.getAsJsonObject("terrain") : null;
-        if (terrain != null && terrain.has("type") && terrain.get("type").isJsonPrimitive() && "flat".equalsIgnoreCase(terrain.get("type").getAsString().trim())) {
-            int floor = terrain.has("minHeight") && terrain.get("minHeight").isJsonPrimitive() && terrain.getAsJsonPrimitive("minHeight").isNumber() ? terrain.get("minHeight").getAsInt() : MODERN_FLAT_FLOOR;
+        if (terrain != null && JsonUtils.isJsonPrimitive(terrain, "type") && "flat".equalsIgnoreCase(terrain.get("type").getAsString().trim())) {
+            int floor = JsonUtils.isJsonPrimitive(terrain, "minHeight") && terrain.getAsJsonPrimitive("minHeight").isNumber() ? terrain.get("minHeight").getAsInt() : MODERN_FLAT_FLOOR;
             dimensionShifts.put(id, -floor);
         }
     }
@@ -326,12 +327,12 @@ public final class Ported {
             Set<String> values = new LinkedHashSet<>();
             expandTag(tag.getKey(), byId, values, new LinkedHashSet<>());
             JsonObject json = tag.getValue();
-            if (json.has("replace") && json.get("replace").isJsonPrimitive() && json.get("replace").getAsBoolean()) {
+            if (JsonUtils.isJsonPrimitive(json, "replace") && json.get("replace").getAsBoolean()) {
                 JsonArray all = new JsonArray();
                 all.add("*");
                 out.add("-" + ore, all);
             }
-            if (json.has("remove") && json.get("remove").isJsonArray()) {
+            if (JsonUtils.isJsonArray(json, "remove")) {
                 JsonArray removed = new JsonArray();
                 for (JsonElement value : json.getAsJsonArray("remove")) {
                     if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { removed.add(Convert.itemString(value.getAsString(), this)); }
@@ -351,7 +352,7 @@ public final class Ported {
     private void expandTag(String id, Map<String, JsonObject> byId, Set<String> values, Set<String> seen) {
         if (!seen.add(id)) { return; }
         JsonObject json = byId.get(id);
-        if (json == null || !json.has("values") || !json.get("values").isJsonArray()) { return; }
+        if (json == null || !JsonUtils.isJsonArray(json, "values")) { return; }
         for (JsonElement value : json.getAsJsonArray("values")) {
             String named = value.isJsonObject() && value.getAsJsonObject().has("id") ? value.getAsJsonObject().get("id").getAsString() : value.isJsonPrimitive() ? value.getAsString() : "";
             if (named.isEmpty()) { continue; }

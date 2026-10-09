@@ -42,7 +42,5 @@ public final class BlockVariants {
 
     public static AxisAlignedBB bounds(BlockDef def, AxisAlignedBB fallback) { return def.bounds == null ? fallback : def.bounds; }
 
-    public static void subBlocks(Block block, BlockDef def, NonNullList<ItemStack> list) {
-        for (BlockVariant value : def.visible) { list.add(new ItemStack(block, 1, value.meta)); }
-    }
+    public static void subBlocks(Block block, BlockDef def, NonNullList<ItemStack> list) { for (BlockVariant value : def.visible) { list.add(new ItemStack(block, 1, value.meta)); } }
 }

@@ -51,9 +51,7 @@ public class CachedRegionProvider<K extends IKey> implements IRegionProvider<K> 
         return RegionCache.computeIfAbsent(new Held(key.getRegionKey(), reader), held -> opener.apply(key));
     }
 
-    private void awake() {
-        if (closed) { throw new IllegalStateException("This region provider is closed"); }
-    }
+    private void awake() { if (closed) { throw new IllegalStateException("This region provider is closed"); } }
 
     private static final class Held {
         private final RegionKey region;

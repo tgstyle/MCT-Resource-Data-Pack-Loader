@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
+import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -57,7 +58,7 @@ public final class ContentCofhWorld {
             Enumeration<? extends ZipEntry> entries = zip.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
-                if (entry.isDirectory() || !entry.getName().startsWith(prefix) || !entry.getName().endsWith(".json")) { continue; }
+                if (entry.isDirectory() || !entry.getName().startsWith(prefix) || !entry.getName().endsWith(PackManager.JSON_SUFFIX)) { continue; }
                 try (InputStream stream = zip.getInputStream(entry)) {
                     source = jar;
                     owner = modid;
@@ -133,7 +134,7 @@ public final class ContentCofhWorld {
     }
 
     private static String name(String path, String entry) {
-        String file = path.substring(path.lastIndexOf('/') + 1).replace(".json", "");
+        String file = path.substring(path.lastIndexOf('/') + 1).replace(PackManager.JSON_SUFFIX, "");
         return (file + "_" + entry).toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9_]", "_");
     }
 

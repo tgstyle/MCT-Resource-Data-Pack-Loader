@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import net.minecraft.util.JsonUtils;
 
 final class ConvertAssets {
     private static final Pattern LANG_BLOCK = Pattern.compile("^(block|item)\\.([a-z0-9_.-]+?)\\.([a-z0-9_/.-]+?)(\\.locked)?$");
@@ -107,7 +108,7 @@ final class ConvertAssets {
                 if (texture.getValue().isJsonPrimitive()) { textures.addProperty(texture.getKey(), textureRef(texture.getValue().getAsString())); }
             }
         }
-        if (json.has("parent") && json.get("parent").isJsonPrimitive()) { json.addProperty("parent", modelRef(json.get("parent").getAsString())); }
+        if (JsonUtils.isJsonPrimitive(json, "parent")) { json.addProperty("parent", modelRef(json.get("parent").getAsString())); }
         json.remove("render_type");
         json.remove("gui_light");
         if (json.has("loader")) {
@@ -127,7 +128,7 @@ final class ConvertAssets {
             }
             json.add("variants", out);
         }
-        if (json.has("multipart") && json.get("multipart").isJsonArray()) {
+        if (JsonUtils.isJsonArray(json, "multipart")) {
             for (JsonElement part : json.getAsJsonArray("multipart")) {
                 if (part.isJsonObject() && part.getAsJsonObject().has("apply")) { stateModels(part.getAsJsonObject().get("apply")); }
             }
@@ -154,7 +155,7 @@ final class ConvertAssets {
     }
 
     static String pixelMap(JsonObject json) {
-        if (json.has("extends") && json.get("extends").isJsonPrimitive()) { json.addProperty("extends", textureRef(json.get("extends").getAsString())); }
+        if (JsonUtils.isJsonPrimitive(json, "extends")) { json.addProperty("extends", textureRef(json.get("extends").getAsString())); }
         return Ported.GSON.toJson(json);
     }
 }

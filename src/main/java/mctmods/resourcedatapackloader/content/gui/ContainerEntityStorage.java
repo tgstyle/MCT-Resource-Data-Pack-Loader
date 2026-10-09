@@ -100,9 +100,7 @@ public class ContainerEntityStorage extends Container {
         }
     }
 
-    @Override @SideOnly(Side.CLIENT) public void updateProgressBar(int id, int data) {
-        if (id >= 0 && id < shown.length) { shown[id] = data & LOW; }
-    }
+    @Override @SideOnly(Side.CLIENT) public void updateProgressBar(int id, int data) { if (id >= 0 && id < shown.length) { shown[id] = data & LOW; } }
 
     @Override public boolean canInteractWith(@Nonnull EntityPlayer player) { return entity.isEntityAlive() && player.getDistanceSq(entity) <= REACH; }
 

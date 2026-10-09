@@ -155,9 +155,7 @@ public class ServerCommands extends CommandBase {
         return open;
     }
 
-    private void allow(ICommandSender sender, int needed) throws CommandException {
-        if (!sender.canUseCommand(needed, getName())) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); }
-    }
+    private void allow(ICommandSender sender, int needed) throws CommandException { if (!sender.canUseCommand(needed, getName())) { throw new CommandException(Lang.tr(sender, "rdpl.command.notallowed")); } }
 
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
@@ -409,7 +407,7 @@ public class ServerCommands extends CommandBase {
 
     private void pregen(ICommandSender sender, String[] args) throws CommandException {
         if (args.length == 2 && "status".equals(args[1])) {
-            send(sender, TextFormatting.GREEN, ContentPregen.state());
+            send(sender, TextFormatting.GREEN, ContentPregen.state(sender));
             return;
         }
         if (args.length == 2 && "stop".equals(args[1])) {
@@ -516,9 +514,7 @@ public class ServerCommands extends CommandBase {
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 
-    private void biome(ICommandSender sender) {
-        for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); }
-    }
+    private void biome(ICommandSender sender) { for (String line : ContentBiomeControl.inspect(sender.getEntityWorld(), sender.getPosition())) { send(sender, TextFormatting.WHITE, line); } }
 
     private void dimensions(ICommandSender sender) {
         Map<ResourceLocation, DimensionDef> defs = ContentDimensions.all();

@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class Port {
     public static final String DATA = "data";
@@ -69,7 +70,7 @@ public final class Port {
         try {
             JsonElement parsed = new JsonParser().parse(new String(Files.readAllBytes(meta), StandardCharsets.UTF_8));
             JsonObject pack = parsed.isJsonObject() && parsed.getAsJsonObject().has("pack") && parsed.getAsJsonObject().get("pack").isJsonObject() ? parsed.getAsJsonObject().getAsJsonObject("pack") : null;
-            if (pack == null || !pack.has("pack_format") || !pack.get("pack_format").isJsonPrimitive()) { return null; }
+            if (pack == null || !JsonUtils.isJsonPrimitive(pack, "pack_format")) { return null; }
             return pack.get("pack_format").getAsInt();
         }
         catch (IOException | RuntimeException unreadable) { return null; }

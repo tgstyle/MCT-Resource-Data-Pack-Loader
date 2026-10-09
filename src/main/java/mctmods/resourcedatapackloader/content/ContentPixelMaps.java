@@ -36,7 +36,6 @@ import javax.annotation.Nullable;
 import javax.imageio.ImageIO;
 
 public final class ContentPixelMaps {
-    public static final String SUFFIX = ".json";
     public static final String PNG = ".png";
     public static final String CACHE_DIRECTORY = "pixelmap-cache";
     private static final String EXTENDS = "extends";
@@ -62,7 +61,7 @@ public final class ContentPixelMaps {
 
     public static boolean couldBeDrawn(String path) { return path.endsWith(PNG); }
 
-    public static boolean exists(String namespace, String path, boolean overriding) { return PackManager.get().existsRaw(namespace, path + SUFFIX, overriding); }
+    public static boolean exists(String namespace, String path, boolean overriding) { return PackManager.get().existsRaw(namespace, path + PackManager.JSON_SUFFIX, overriding); }
 
     @Nullable public static byte[] made(String namespace, String path, boolean overriding) {
         String key = namespace + ":" + path + (overriding ? "!" : "");
@@ -107,7 +106,7 @@ public final class ContentPixelMaps {
         String baseFrom = null;
         StringBuilder sources = new StringBuilder();
         String where = namespace;
-        String at = path + SUFFIX;
+        String at = path + PackManager.JSON_SUFFIX;
         Set<String> seen = new LinkedHashSet<>();
         while (at != null) {
             if (!seen.add(where + ":" + at)) {
@@ -175,9 +174,9 @@ public final class ContentPixelMaps {
             int colon = next.indexOf(':');
             String nextWhere = colon < 0 ? where : next.substring(0, colon);
             String nextPath = colon < 0 ? next : next.substring(colon + 1);
-            if (PackManager.get().existsRaw(nextWhere, nextPath + SUFFIX, overriding)) {
+            if (PackManager.get().existsRaw(nextWhere, nextPath + PackManager.JSON_SUFFIX, overriding)) {
                 where = nextWhere;
-                at = nextPath + SUFFIX;
+                at = nextPath + PackManager.JSON_SUFFIX;
                 continue;
             }
             int[][] image = image(nextWhere, nextPath);
@@ -405,7 +404,7 @@ public final class ContentPixelMaps {
         if (stamp.isEmpty()) { return true; }
         boolean overriding = stamp.charAt(0) == OVERRIDING;
         if (!overriding && stamp.charAt(0) != PLAIN) { return true; }
-        return !PackManager.get().existsRaw(namespace, held.substring(0, dash) + SUFFIX, overriding);
+        return !PackManager.get().existsRaw(namespace, held.substring(0, dash) + PackManager.JSON_SUFFIX, overriding);
     }
 
     private static void prune(Path folder) {

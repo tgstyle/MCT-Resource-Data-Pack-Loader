@@ -224,9 +224,7 @@ public final class ContentHardness {
         return !mayBreak(mob, state, held);
     }
 
-    public static void dig(EntityLivingBase digger, BlockPos pos) {
-        for (ItemStack stack : harvest(digger, pos, 0)) { Block.spawnAsEntity(digger.world, pos, stack); }
-    }
+    public static void dig(EntityLivingBase digger, BlockPos pos) { for (ItemStack stack : harvest(digger, pos, 0)) { Block.spawnAsEntity(digger.world, pos, stack); } }
 
     public static List<ItemStack> harvest(EntityLivingBase digger, BlockPos pos, int fortune) {
         World world = digger.world;

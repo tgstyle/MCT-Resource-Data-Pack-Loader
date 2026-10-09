@@ -221,9 +221,7 @@ public final class ContentOrders {
         OrderBoard.of(world).open(world, haul, pos, null, player, true);
     }
 
-    @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) {
-        if (!event.getWorld().isRemote) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); }
-    }
+    @SubscribeEvent public static void onBreak(BlockEvent.BreakEvent event) { if (!event.getWorld().isRemote) { OrderBoard.of(event.getWorld()).cancelAt(event.getPos()); } }
 
     private static void signs(World world) {
         Map<BlockPos, Pending> waiting = PENDING.get(world.provider.getDimension());

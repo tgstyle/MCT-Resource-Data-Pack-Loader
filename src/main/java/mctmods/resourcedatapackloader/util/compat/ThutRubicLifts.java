@@ -40,9 +40,7 @@ public final class ThutRubicLifts {
 
     private ThutRubicLifts() {}
 
-    public static void register() {
-        if (CompatHooks.present("thuttech", "Thut's Elevators finds its lifts in the loaded entity list, which vanilla fills a whole column at a time, so on rubic worlds a lift's cube is kept loaded while a player watches its column")) { MinecraftForge.EVENT_BUS.register(new Handler()); }
-    }
+    public static void register() { if (CompatHooks.present("thuttech", "Thut's Elevators finds its lifts in the loaded entity list, which vanilla fills a whole column at a time, so on rubic worlds a lift's cube is kept loaded while a player watches its column")) { MinecraftForge.EVENT_BUS.register(new Handler()); } }
 
     public static final class Handler {
         @SubscribeEvent public void onJoin(EntityJoinWorldEvent event) {
@@ -138,9 +136,7 @@ public final class ThutRubicLifts {
         pin.cubeZ = cubeZ;
     }
 
-    private static void unpin(WorldServer world, @Nullable Pin pin) {
-        if (pin != null) { release(world, pin); }
-    }
+    private static void unpin(WorldServer world, @Nullable Pin pin) { if (pin != null) { release(world, pin); } }
 
     private static void release(WorldServer world, Pin pin) {
         if (!pin.pinned) { return; }

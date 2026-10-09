@@ -21,9 +21,7 @@ public class StagingHeightMap implements IHeightMap {
     private final AtomicIntegerArray dirtyFlag = new AtomicIntegerArray(COLUMNS);
     private final AtomicIntegerArray raises = new AtomicIntegerArray(COLUMNS);
 
-    public StagingHeightMap() {
-        for (int i = 0; i < COLUMNS; i++) { heightmap.set(i, Coords.NO_HEIGHT); }
-    }
+    public StagingHeightMap() { for (int i = 0; i < COLUMNS; i++) { heightmap.set(i, Coords.NO_HEIGHT); } }
 
     public void addStagedCube(ICube cube) {
         stagedCubes.add(cube);

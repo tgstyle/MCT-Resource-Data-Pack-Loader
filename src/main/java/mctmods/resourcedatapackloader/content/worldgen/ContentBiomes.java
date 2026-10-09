@@ -238,9 +238,7 @@ public final class ContentBiomes {
         }
     }
 
-    public static void resolveSpawns() {
-        for (ContentBiome biome : REGISTERED) { biome.resolveSpawns(); }
-    }
+    public static void resolveSpawns() { for (ContentBiome biome : REGISTERED) { biome.resolveSpawns(); } }
 
     public static void applyPlacement() {
         int placed = 0;

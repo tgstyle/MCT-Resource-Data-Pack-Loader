@@ -82,7 +82,7 @@ public final class ContentParserWorldgen {
         made.indicatorCount = ContentParser.amount(json, "indicatorCount", 1, 0);
         made.indicatorSpread = Math.max(0, JsonUtils.getInt(json, "indicatorSpread", 0));
         List<FollowDef> followers = new ArrayList<>();
-        if (json.has("then") && json.get("then").isJsonArray()) {
+        if (JsonUtils.isJsonArray(json, "then")) {
             for (JsonElement element : json.getAsJsonArray("then")) {
                 String name;
                 int weight;

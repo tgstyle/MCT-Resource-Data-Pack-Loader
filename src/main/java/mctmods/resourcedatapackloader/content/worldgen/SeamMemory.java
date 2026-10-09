@@ -27,9 +27,7 @@ public final class SeamMemory extends WorldSavedData {
 
     public static long column(int x, int z) { return Longs.pack(x, z); }
 
-    public void noteEntry(int x, int z) {
-        if (entries.add(column(x, z))) { markDirty(); }
-    }
+    public void noteEntry(int x, int z) { if (entries.add(column(x, z))) { markDirty(); } }
 
     @Nullable public BlockPos entryNear(double x, double z, int reach) {
         long best = 0L;

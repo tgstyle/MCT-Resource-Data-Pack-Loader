@@ -66,9 +66,7 @@ public final class ContentDimensionRules {
         }
     }
 
-    public static void renderers(World world, WorldProvider provider, DimensionDef def) {
-        if (world.isRemote) { ContentSkyRenderers.apply(provider, def); }
-    }
+    public static void renderers(World world, WorldProvider provider, DimensionDef def) { if (world.isRemote) { ContentSkyRenderers.apply(provider, def); } }
 
     static float celestialAngle(long dayLength, long worldTime, float partialTicks) {
         float angle = ((float) (worldTime % dayLength) + partialTicks) / dayLength - 0.25F;

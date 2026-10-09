@@ -21,6 +21,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 final class Convert {
     static final String FLAT = "flat";
@@ -145,8 +146,8 @@ final class Convert {
     }
 
     static int flatShift(JsonObject settings) {
-        if (!settings.has("worldType") || !settings.get("worldType").isJsonPrimitive() || !FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString()))) { return 0; }
-        int floor = settings.has("worldMinHeight") && settings.get("worldMinHeight").isJsonPrimitive() && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : Ported.MODERN_FLAT_FLOOR;
+        if (!JsonUtils.isJsonPrimitive(settings, "worldType") || !FLAT_TYPES.contains(Settings.lower(settings.get("worldType").getAsString()))) { return 0; }
+        int floor = JsonUtils.isJsonPrimitive(settings, "worldMinHeight") && settings.getAsJsonPrimitive("worldMinHeight").isNumber() ? settings.get("worldMinHeight").getAsInt() : Ported.MODERN_FLAT_FLOOR;
         return -floor;
     }
 
@@ -197,7 +198,7 @@ final class Convert {
                 ConvertDefinitions.anvil(json, pack, where);
                 break;
             case "player_loot":
-                if (json.has("table") && json.get("table").isJsonPrimitive()) { json.addProperty("table", Ids.lootTable(json.get("table").getAsString())); }
+                if (JsonUtils.isJsonPrimitive(json, "table")) { json.addProperty("table", Ids.lootTable(json.get("table").getAsString())); }
                 break;
             case "fuels":
                 ConvertDefinitions.fuels(json, pack, where);
@@ -230,9 +231,7 @@ final class Convert {
         return Ported.GSON.toJson(json);
     }
 
-    private static void renamed(JsonObject json, String key, String mapped) {
-        if (json.has(key) && json.get(key).isJsonPrimitive() && !mapped.isEmpty()) { json.addProperty(key, mapped); }
-    }
+    private static void renamed(JsonObject json, String key, String mapped) { if (JsonUtils.isJsonPrimitive(json, key) && !mapped.isEmpty()) { json.addProperty(key, mapped); } }
 
     private static void particle(JsonObject json) {
         String held = Json.text(json, "particle");
@@ -242,9 +241,9 @@ final class Convert {
 
     private static void content(JsonObject json, Ported pack, String where) {
         behaviors(json, pack);
-        if (json.has("creativeTab") && json.get("creativeTab").isJsonPrimitive()) { json.addProperty("creativeTab", tab(json.get("creativeTab").getAsString().trim(), pack)); }
+        if (JsonUtils.isJsonPrimitive(json, "creativeTab")) { json.addProperty("creativeTab", tab(json.get("creativeTab").getAsString().trim(), pack)); }
         for (String key : new String[] {"still", "flow"}) {
-            if (json.has(key) && json.get(key).isJsonPrimitive()) { json.addProperty(key, ConvertAssets.textureRef(json.get(key).getAsString())); }
+            if (JsonUtils.isJsonPrimitive(json, key)) { json.addProperty(key, ConvertAssets.textureRef(json.get(key).getAsString())); }
         }
         if (!json.has("variants") || !json.get("variants").isJsonObject()) { return; }
         int meta = 0;
@@ -253,8 +252,8 @@ final class Convert {
             JsonObject held = variant.getValue().getAsJsonObject();
             if (!held.has("meta")) { held.addProperty("meta", meta); }
             meta++;
-            if (!held.has("tags") || !held.get("tags").isJsonArray()) { continue; }
-            JsonArray ores = held.has("oreDict") && held.get("oreDict").isJsonArray() ? held.getAsJsonArray("oreDict") : new JsonArray();
+            if (!JsonUtils.isJsonArray(held, "tags")) { continue; }
+            JsonArray ores = JsonUtils.isJsonArray(held, "oreDict") ? held.getAsJsonArray("oreDict") : new JsonArray();
             for (JsonElement tag : held.remove("tags").getAsJsonArray()) {
                 String ore = Ids.oreName(tag.getAsString());
                 if (ore == null) { pack.note(where + " tags the variant '" + variant.getKey() + "' with " + tag.getAsString() + ", which has no ore dictionary name, so it is left out"); }
@@ -265,7 +264,7 @@ final class Convert {
     }
 
     private static void behaviors(JsonObject json, Ported pack) {
-        if (!json.has("behavesAs") || !json.get("behavesAs").isJsonArray()) { return; }
+        if (!JsonUtils.isJsonArray(json, "behavesAs")) { return; }
         JsonArray kept = new JsonArray();
         for (JsonElement held : json.getAsJsonArray("behavesAs")) {
             if (!held.isJsonPrimitive()) { continue; }
@@ -494,9 +493,9 @@ final class Convert {
     }
 
     private static void container(JsonObject held) {
-        if (held.has("lootTable") && held.get("lootTable").isJsonPrimitive()) { held.addProperty("lootTable", Ids.lootTable(held.get("lootTable").getAsString())); }
+        if (JsonUtils.isJsonPrimitive(held, "lootTable")) { held.addProperty("lootTable", Ids.lootTable(held.get("lootTable").getAsString())); }
         for (String key : new String[] {"chestModel", "guiTexture"}) {
-            if (held.has(key) && held.get(key).isJsonPrimitive() && held.getAsJsonPrimitive(key).isString()) { held.addProperty(key, ConvertAssets.textureRef(held.get(key).getAsString())); }
+            if (JsonUtils.isJsonPrimitive(held, key) && held.getAsJsonPrimitive(key).isString()) { held.addProperty(key, ConvertAssets.textureRef(held.get(key).getAsString())); }
         }
     }
 }

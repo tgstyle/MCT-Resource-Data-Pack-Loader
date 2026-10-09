@@ -52,7 +52,7 @@ public final class ContentBeardTrees {
                     if (!clip.isVecInside(at)) { continue; }
                     IBlockState held = world.getBlockState(at);
                     if (held.getBlock() == Blocks.AIR || BeardPlots.insideAnother(start, piece, at)) { continue; }
-                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { if (!ContentVillageDecor.plantedAt(world, x, z)) { seeds.add(at.toImmutable()); } }
+                    if (mctmods.blastplaster.util.BlastPlasterUtil.isTreeWood(held)) { if (!ContentVillageDecor.plantedAt(world, at)) { seeds.add(at.toImmutable()); } }
                     else if (BeardBlocks.mushroomStem(held)) { seeds.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.LEAVES) { canopy.add(at.toImmutable()); }
                     else if (held.getMaterial() == Material.VINE) { felled += BeardBlocks.clearAt(world, at); }
@@ -114,7 +114,7 @@ public final class ContentBeardTrees {
         Set<BlockPos> whole = TreeCollector.mushroom(world, seed, mctmods.blastplaster.Config.view(world).getMaxTreeSize(), within);
         felledLogs.addAll(whole);
         for (BlockPos part : whole) {
-            if (BeardBlocks.mushroomStem(world.getBlockState(part)) && !whole.contains(part.down()) && ContentVillageDecor.plantedAt(world, part.getX(), part.getZ())) { return 0; }
+            if (BeardBlocks.mushroomStem(world.getBlockState(part)) && !whole.contains(part.down()) && ContentVillageDecor.plantedAt(world, part)) { return 0; }
         }
         int felled = 0;
         for (BlockPos part : whole) {

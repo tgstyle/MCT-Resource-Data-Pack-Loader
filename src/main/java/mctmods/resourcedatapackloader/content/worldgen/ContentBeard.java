@@ -129,6 +129,20 @@ public final class ContentBeard {
         return new StructureBoundingBox(blockX, 0, blockZ, blockX + 15, 255, blockZ + 15);
     }
 
+    private static int fellReach(StructureComponent piece) { return piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2; }
+
+    public static int fellReach(StructureStart start, StructureBoundingBox clip) {
+        int reach = 0;
+        for (StructureComponent piece : start.getComponents()) {
+            if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
+            StructureBoundingBox box = piece.getBoundingBox();
+            int near = fellReach(piece);
+            if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { continue; }
+            reach = Math.max(reach, near);
+        }
+        return reach;
+    }
+
     @SubscribeEvent public static void onBorn(PopulateChunkEvent.Pre event) {
         if (event.getWorld().isRemote || !wanted()) { return; }
         Collection<StructureStart> starts = ContentStructureSearch.villageStarts(event.getWorld());
@@ -158,12 +172,10 @@ public final class ContentBeard {
                 if (seams > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of groove left between the plots of the village at {}, {}, where two aprons met without meeting", seams, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 int freed = BeardClearing.freeDoors(start, event.getWorld(), clip, at, repaved);
                 if (freed > 0) { ContentLog.LOGGER.debug("Freed {} block(s) that had closed a doorway of the village at {}, {} after the roads were repaired", freed, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
-                int swept = BeardClearing.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
-                if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 for (StructureComponent piece : start.getComponents()) {
                     if (!(piece instanceof StructureVillagePieces.Village)) { continue; }
                     StructureBoundingBox box = piece.getBoundingBox();
-                    int near = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2;
+                    int near = fellReach(piece);
                     if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { continue; }
                     if (BeardRails.isRail(piece)) {
                         int opened = BeardRailsLay.open((RailPiece) piece, event.getWorld(), start, clip);
@@ -186,6 +198,8 @@ public final class ContentBeard {
                         openAround(start, piece, event.getWorld(), clip);
                     }
                 }
+                int swept = BeardClearing.sweepOrphanedLeaves(start, event.getWorld(), clip, at);
+                if (swept > 0) { ContentLog.LOGGER.debug("Swept {} orphaned leaf block(s) no trunk sustains around the village at {}, {}, left behind where a felled tree crossed a chunk edge", swept, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
                 int pits = BeardSeams.fillPlotPits(start, event.getWorld(), clip, at);
                 if (pits > 0) { ContentLog.LOGGER.debug("Filled {} block(s) of pit left open inside the plots of the village at {}, {}, where a plot kept a column of its box clear that the rings around it skip", pits, start.getBoundingBox().minX, start.getBoundingBox().minZ); }
             }
@@ -209,7 +223,7 @@ public final class ContentBeard {
     public static void fellFor(StructureStart start, StructureComponent piece, World world, StructureBoundingBox clip) {
         if (!(piece instanceof StructureVillagePieces.Village)) { return; }
         StructureBoundingBox box = piece.getBoundingBox();
-        int near = piece instanceof StructureVillagePieces.Path && CityGrowth.bulbWide(piece) ? 6 : 2;
+        int near = fellReach(piece);
         if (box.minX - near > clip.maxX || box.maxX + near < clip.minX || box.minZ - near > clip.maxZ || box.maxZ + near < clip.minZ) { return; }
         int felled = ContentBeardTrees.fellAround(world, start, piece, box, clip, new BlockPos.MutableBlockPos(), true);
         if (felled > 0) { ContentLog.LOGGER.debug("Felled {} tree block(s) before {} at {}, {} was built", felled, piece.getClass().getSimpleName(), box.minX, box.minZ); }

@@ -15,7 +15,5 @@ public class SideUtils {
         else { return server.get().apply(param); }
     }
 
-    public static void runForClient(Supplier<Runnable> toRun) {
-        if (FMLCommonHandler.instance().getSide().isClient()) { toRun.get().run(); }
-    }
+    public static void runForClient(Supplier<Runnable> toRun) { if (FMLCommonHandler.instance().getSide().isClient()) { toRun.get().run(); } }
 }

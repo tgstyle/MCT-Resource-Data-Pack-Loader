@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.util.JsonUtils;
 
 public final class LootDown {
     private static final String TYPE = "type";
@@ -31,7 +32,7 @@ public final class LootDown {
         if (!element.isJsonObject()) { return JsonTree.copy(element); }
         JsonObject out = new JsonObject();
         for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) { walked(out, entry.getKey(), entry.getValue(), note); }
-        if (out.size() == 2 && out.has("expected") && out.has("id") && out.get("id").isJsonPrimitive() && out.get("id").getAsString().startsWith("#")) { out.addProperty("id", out.get("id").getAsString().substring(1)); }
+        if (out.size() == 2 && out.has("expected") && JsonUtils.isJsonPrimitive(out, "id") && out.get("id").getAsString().startsWith("#")) { out.addProperty("id", out.get("id").getAsString().substring(1)); }
         if ("add".equals(type(out)) && out.has("inputs")) {
             out.addProperty(TYPE, MINECRAFT + "sum");
             out.add("summands", out.remove("inputs"));
@@ -125,7 +126,7 @@ public final class LootDown {
     }
 
     private static JsonArray conditions(JsonElement value, Consumer<String> note) {
-        if (value.isJsonObject() && "all_of".equals(type(value.getAsJsonObject())) && value.getAsJsonObject().has(TERMS) && value.getAsJsonObject().get(TERMS).isJsonArray()) { return terms(value.getAsJsonObject().get(TERMS), note); }
+        if (value.isJsonObject() && "all_of".equals(type(value.getAsJsonObject())) && JsonUtils.isJsonArray(value.getAsJsonObject(), TERMS)) { return terms(value.getAsJsonObject().get(TERMS), note); }
         JsonArray out = new JsonArray();
         out.add(condition(value, note));
         return out;
@@ -212,5 +213,5 @@ public final class LootDown {
         return out;
     }
 
-    private static String type(JsonObject object) { return object.has(TYPE) && object.get(TYPE).isJsonPrimitive() ? IdNames.bare(object.get(TYPE).getAsString()) : ""; }
+    private static String type(JsonObject object) { return JsonUtils.isJsonPrimitive(object, TYPE) ? IdNames.bare(object.get(TYPE).getAsString()) : ""; }
 }

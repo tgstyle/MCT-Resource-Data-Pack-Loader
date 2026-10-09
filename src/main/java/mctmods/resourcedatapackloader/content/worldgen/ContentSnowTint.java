@@ -48,9 +48,7 @@ import javax.annotation.Nullable;
         return false;
     }
 
-    @SubscribeEvent public static void registerColors(ColorHandlerEvent.Block event) {
-        if (wanted()) { event.getBlockColors().registerBlockColorHandler((state, world, pos, layer) -> color(world, pos), SNOW); }
-    }
+    @SubscribeEvent public static void registerColors(ColorHandlerEvent.Block event) { if (wanted()) { event.getBlockColors().registerBlockColorHandler((state, world, pos, layer) -> color(world, pos), SNOW); } }
 
     @SubscribeEvent public static void tintModels(ModelBakeEvent event) {
         if (!wanted()) { return; }

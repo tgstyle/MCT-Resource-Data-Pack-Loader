@@ -36,7 +36,5 @@ public final class ItemVariants {
         return value == null ? item.getTranslationKey() : item.getTranslationKey() + "." + value.name;
     }
 
-    public static void subItems(Item item, ItemDef def, NonNullList<ItemStack> list) {
-        for (ItemVariant value : def.visible) { list.add(new ItemStack(item, 1, value.meta)); }
-    }
+    public static void subItems(Item item, ItemDef def, NonNullList<ItemStack> list) { for (ItemVariant value : def.visible) { list.add(new ItemStack(item, 1, value.meta)); } }
 }

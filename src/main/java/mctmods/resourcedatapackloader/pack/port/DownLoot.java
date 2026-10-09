@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.util.JsonUtils;
 
 final class DownLoot {
     private static final String COMPONENTS = "components";
@@ -42,7 +43,7 @@ final class DownLoot {
             }
         }
         JsonObject rewards = json.has("rewards") && json.get("rewards").isJsonObject() ? json.getAsJsonObject("rewards") : null;
-        if (rewards != null && rewards.has("recipes") && rewards.get("recipes").isJsonArray()) {
+        if (rewards != null && JsonUtils.isJsonArray(rewards, "recipes")) {
             JsonArray recipes = new JsonArray();
             for (JsonElement recipe : rewards.getAsJsonArray("recipes")) { recipes.add(recipe.isJsonPrimitive() ? new JsonPrimitive(DownFixes.recipe(recipe.getAsString())) : recipe); }
             rewards.add("recipes", recipes);
@@ -58,11 +59,11 @@ final class DownLoot {
         if (!element.isJsonObject()) { return; }
         JsonObject json = element.getAsJsonObject();
         for (String key : TARGET_KEYS) {
-            if (json.has(key) && json.get(key).isJsonPrimitive() && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
+            if (JsonUtils.isJsonPrimitive(json, key) && TARGETS.containsKey(json.get(key).getAsString())) { json.addProperty(key, TARGETS.get(json.get(key).getAsString())); }
         }
         String condition = namespaced(Json.text(json, "condition"));
         if ("minecraft:time_check".equals(condition)) { json.remove("clock"); }
-        if (json.has("recipe") && json.get("recipe").isJsonPrimitive()) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
+        if (JsonUtils.isJsonPrimitive(json, "recipe")) { json.addProperty("recipe", DownFixes.recipe(json.get("recipe").getAsString())); }
         String function = Json.text(json, "function");
         if (!function.isEmpty()) { function(json, namespaced(function), file, note); }
         else if (json.has(COMPONENTS) && json.get(COMPONENTS).isJsonObject()) {
@@ -85,7 +86,7 @@ final class DownLoot {
                 if (json.has("name")) { json.add("name", DownFixes.text(json.get("name"))); }
                 break;
             case "minecraft:set_lore": {
-                if (!json.has("lore") || !json.get("lore").isJsonArray()) { return; }
+                if (!JsonUtils.isJsonArray(json, "lore")) { return; }
                 JsonArray lore = new JsonArray();
                 for (JsonElement line : json.getAsJsonArray("lore")) { lore.add(DownFixes.text(line)); }
                 json.add("lore", lore);
@@ -102,7 +103,7 @@ final class DownLoot {
         for (String other : MODEL_LISTS) {
             if (json.remove(other) != null) { lost.add(other); }
         }
-        JsonArray values = floats != null && floats.isJsonObject() && floats.getAsJsonObject().has("values") && floats.getAsJsonObject().get("values").isJsonArray() ? floats.getAsJsonObject().getAsJsonArray("values") : null;
+        JsonArray values = floats != null && floats.isJsonObject() && JsonUtils.isJsonArray(floats.getAsJsonObject(), "values") ? floats.getAsJsonObject().getAsJsonArray("values") : null;
         if (values != null && values.size() > 0) { json.add("value", values.get(0)); }
         else { json.addProperty("value", 0); }
         if (values != null && values.size() > 1) { lost.add("floats after the first"); }

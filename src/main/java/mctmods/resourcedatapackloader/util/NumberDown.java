@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
+import net.minecraft.util.JsonUtils;
 
 public final class NumberDown {
     private static final String INPUT = "input";
@@ -50,7 +51,7 @@ public final class NumberDown {
                 return out;
             }
             case "add": {
-                if (out.has(INPUTS) && out.get(INPUTS).isJsonArray()) { out.add(INPUTS, listed(out.getAsJsonArray(INPUTS), whole, note, depth)); }
+                if (JsonUtils.isJsonArray(out, INPUTS)) { out.add(INPUTS, listed(out.getAsJsonArray(INPUTS), whole, note, depth)); }
                 return out;
             }
             case "binomial": {
@@ -107,7 +108,7 @@ public final class NumberDown {
             Double right = folded(held.get("right"));
             return left == null || right == null ? null : binary(type, left, right);
         }
-        if (!held.has(INPUTS) || !held.get(INPUTS).isJsonArray() || held.getAsJsonArray(INPUTS).size() == 0) { return null; }
+        if (!JsonUtils.isJsonArray(held, INPUTS) || held.getAsJsonArray(INPUTS).size() == 0) { return null; }
         double sum = 0.0;
         double least = Double.MAX_VALUE;
         double most = -Double.MAX_VALUE;

@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.village;
 
+import mctmods.blastplaster.util.BlastPlasterUtil;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBeard;
@@ -16,6 +17,9 @@ import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.util.world.GroundLevel;
 import mctmods.resourcedatapackloader.util.world.SeededRandom;
 
+import net.minecraft.block.material.Material;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -25,7 +29,10 @@ import net.minecraft.world.gen.structure.StructureVillagePieces;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 public final class ContentVillageDecor {
@@ -113,9 +120,23 @@ public final class ContentVillageDecor {
         return 8;
     }
 
-    public static boolean plantedAt(World world, int x, int z) {
+    public static boolean plantedAt(World world, BlockPos wood) {
+        IContentShape figure = figureAt(world, wood);
+        return figure != null && figure.places(world, world.getBlockState(wood), canopiesOver(world, wood));
+    }
+
+    public static boolean sustains(World world, BlockPos wood, IBlockState leaf) {
+        IContentShape figure = figureAt(world, wood);
+        if (figure == null) { return true; }
+        IBlockState state = world.getBlockState(wood);
+        return !figure.places(world, state, canopiesOver(world, wood)) || figure.places(world, state, Collections.singletonList(leaf));
+    }
+
+    private static IContentShape figureAt(World world, BlockPos wood) {
         if (CHOICES.stale()) { load(); }
-        if (CHOICES.isEmpty()) { return false; }
+        if (CHOICES.isEmpty()) { return null; }
+        int x = wood.getX();
+        int z = wood.getZ();
         boolean spot = false;
         for (StructureStart village : ContentStructureSearch.villageStarts(world)) {
             if (village != null && BeardPlots.vergeSpot(village, x, z, STEP)) {
@@ -123,9 +144,25 @@ public final class ContentVillageDecor {
                 break;
             }
         }
-        if (!spot) { return false; }
+        if (!spot) { return null; }
         WeightedPicks.Pick chosen = CHOICES.pick(SeededRandom.at(world, x, z));
-        return chosen != null && !WeightedPicks.EMPTY.equals(chosen.name) && ContentWorldgen.shapeFor(chosen.name) != null;
+        if (chosen == null || WeightedPicks.EMPTY.equals(chosen.name)) { return null; }
+        return ContentWorldgen.shapeFor(chosen.name);
+    }
+
+    private static List<IBlockState> canopiesOver(World world, BlockPos wood) {
+        BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos(wood);
+        for (int climbed = 0; climbed < 64 && BlastPlasterUtil.isTreeWood(world.getBlockState(at)); climbed++) { at.move(EnumFacing.UP); }
+        List<IBlockState> crowns = new ArrayList<>();
+        IBlockState over = world.getBlockState(at);
+        if (over.getMaterial() == Material.LEAVES) { crowns.add(over); }
+        at.move(EnumFacing.DOWN);
+        BlockPos top = at.toImmutable();
+        for (EnumFacing side : EnumFacing.HORIZONTALS) {
+            IBlockState beside = world.getBlockState(top.offset(side));
+            if (beside.getMaterial() == Material.LEAVES) { crowns.add(beside); }
+        }
+        return crowns;
     }
 
     private static void load() {

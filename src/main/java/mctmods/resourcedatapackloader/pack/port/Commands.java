@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
+import net.minecraft.util.JsonUtils;
 
 final class Commands {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
@@ -295,7 +296,7 @@ final class Commands {
         }
         if (!element.isJsonObject()) { return; }
         JsonObject held = element.getAsJsonObject();
-        if (held.has("selector") && held.get("selector").isJsonPrimitive()) { held.addProperty("selector", CommandSelectors.target(held.get("selector").getAsString(), pack)); }
+        if (JsonUtils.isJsonPrimitive(held, "selector")) { held.addProperty("selector", CommandSelectors.target(held.get("selector").getAsString(), pack)); }
         if (held.has("score") && held.get("score").isJsonObject() && held.getAsJsonObject("score").has("name")) { held.getAsJsonObject("score").addProperty("name", CommandSelectors.target(held.getAsJsonObject("score").get("name").getAsString(), pack)); }
         for (String key : new String[] {"clickEvent", "click_event"}) {
             if (!held.has(key) || !held.get(key).isJsonObject()) { continue; }

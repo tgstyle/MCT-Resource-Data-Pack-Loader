@@ -61,9 +61,7 @@ import javax.annotation.Nullable;
         Minecraft.getMinecraft().displayGuiScreen(new GuiWorldIntro(pages, track(), landBeingMade));
     }
 
-    public static void landMade() {
-        if (Minecraft.getMinecraft().currentScreen instanceof GuiWorldIntro) { ((GuiWorldIntro) Minecraft.getMinecraft().currentScreen).landBeingMade = false; }
-    }
+    public static void landMade() { if (Minecraft.getMinecraft().currentScreen instanceof GuiWorldIntro) { ((GuiWorldIntro) Minecraft.getMinecraft().currentScreen).landBeingMade = false; } }
 
     @Override public boolean doesGuiPauseGame() { return !landBeingMade; }
 
@@ -119,9 +117,7 @@ import javax.annotation.Nullable;
         else if (button.id == NEXT) { advance(); }
     }
 
-    @Override protected void keyTyped(char typedChar, int keyCode) {
-        if (keyCode == 1) { finish(); }
-    }
+    @Override protected void keyTyped(char typedChar, int keyCode) { if (keyCode == 1) { finish(); } }
 
     private void advance() {
         if (page >= pages.size() - 1) {
@@ -133,9 +129,7 @@ import javax.annotation.Nullable;
         initGui();
     }
 
-    @Override public void onGuiClosed() {
-        if (music != null) { mc.getSoundHandler().stopSound(music); }
-    }
+    @Override public void onGuiClosed() { if (music != null) { mc.getSoundHandler().stopSound(music); } }
 
     private void finish() {
         RDPLNetwork.introDone();

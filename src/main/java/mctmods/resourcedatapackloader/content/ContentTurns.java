@@ -296,11 +296,7 @@ public final class ContentTurns {
         return side == null ? group : side.displayName;
     }
 
-    private static void tellAll(MinecraftServer server, String key, String group) {
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { Says.chat(player, TextFormatting.GOLD, ContentDice.words(player, key, "group", shown(group))); }
-    }
+    private static void tellAll(MinecraftServer server, String key, String group) { for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { Says.chat(player, TextFormatting.GOLD, ContentDice.words(player, key, "group", shown(group))); } }
 
-    private static void bar(MinecraftServer server, String key, Object... pairs) {
-        for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { player.sendStatusMessage(Says.marked(ContentDice.words(player, key, pairs), TextFormatting.YELLOW), true); }
-    }
+    private static void bar(MinecraftServer server, String key, Object... pairs) { for (EntityPlayerMP player : server.getPlayerList().getPlayers()) { player.sendStatusMessage(Says.marked(ContentDice.words(player, key, pairs), TextFormatting.YELLOW), true); } }
 }

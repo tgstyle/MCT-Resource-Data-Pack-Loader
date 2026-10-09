@@ -72,9 +72,7 @@ final class BoardCommand {
         }
     }
 
-    private static void done(String refused) throws CommandException {
-        if (!refused.isEmpty()) { throw new CommandException(refused); }
-    }
+    private static void done(String refused) throws CommandException { if (!refused.isEmpty()) { throw new CommandException(refused); } }
 
     private static void list(MinecraftServer server, ICommandSender sender) {
         List<String> names = ContentBoards.boardNames(server);

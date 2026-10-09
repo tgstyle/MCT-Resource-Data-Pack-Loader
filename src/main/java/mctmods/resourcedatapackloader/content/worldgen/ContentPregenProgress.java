@@ -5,10 +5,12 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Lang;
 
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 import java.util.IllegalFormatException;
+import javax.annotation.Nullable;
 
 public final class ContentPregenProgress {
     static final Config.Chunks SHIPPED = new Config.Chunks();
@@ -64,21 +66,20 @@ public final class ContentPregenProgress {
         return world == null ? String.valueOf(worker.dimension) : world.provider.getDimensionType().getName();
     }
 
-    static String report(ContentPregen worker) {
+    static String report(ContentPregen worker) { return report(worker, null); }
+
+    static String report(ContentPregen worker, @Nullable ICommandSender reader) {
         long seconds = Math.max(1L, (System.currentTimeMillis() - worker.started) / 1000L);
         long rate = (worker.done - worker.resumedFrom) / seconds;
         boolean rubic = worker.rubicRun;
         if (worker.lightOnly) {
-            if (rubic) { return String.format("Went over %d of %d column(s) in dimension %d, all of them lit and dressed cube by cube as they were made", worker.done, worker.order.total(), worker.dimension); }
-            return String.format("Went over %d of %d chunk(s) in dimension %d looking for ones the light never reached, lighting %d and leaving %d, with %d never made in the first place%s",
-                    worker.done, worker.order.total(), worker.dimension, worker.brightened, worker.dark + worker.darkAtEdge, worker.missing,
-                    worker.undressed == 0L ? "" : ", and " + worker.undressed + " of them had never been dressed, " + worker.dressedLate + " of which were dressed on the spot and the rest left alone to be dressed when somebody comes to them");
+            if (rubic) { return Lang.tr(reader, "rdpl.pregen.report.rubiclight", worker.done, worker.order.total(), worker.dimension); }
+            return Lang.tr(reader, "rdpl.pregen.report.light", worker.done, worker.order.total(), worker.dimension, worker.brightened, worker.dark + worker.darkAtEdge, worker.missing,
+                    worker.undressed == 0L ? "" : Lang.tr(reader, "rdpl.pregen.report.undressed", worker.undressed, worker.dressedLate));
         }
         if (rubic) {
-            return String.format("Made %d of %d column(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Every cube was lit and dressed as it was made, keeping within %d ms a round",
-                    worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.slice);
+            return Lang.tr(reader, "rdpl.pregen.report.rubic", worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.slice);
         }
-        return String.format("Made %d of %d chunk(s) in dimension %d, %d of them new, at %d a second, holding %d and resting %d time(s) for the writing to catch up. Light reached %d of them, %d were left for later and %d could never be lit, having been asked for at the very edge of what was wanted, keeping within %d ms a round",
-                worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.brightened, worker.dark, worker.darkAtEdge, worker.slice);
+        return Lang.tr(reader, "rdpl.pregen.report.made", worker.done, worker.order.total(), worker.dimension, worker.made, rate, worker.resident.size(), worker.paused, worker.brightened, worker.dark, worker.darkAtEdge, worker.slice);
     }
 }
