@@ -4,12 +4,12 @@
 
 十三个可直接运行的示例。把其中任意一个直接放进 `rdploader`，看看每个文件是怎么写的。
 
-- [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) 用到了加载器能读取的几乎所有文件类型：方块、物品、一种流体、一个创造模式标签页、生物群系、一个世界模板、一个设有传送门限制的维度、世界生成、一种药水及其酿造、一名村民及其交易、配方、战利品、对原版内容的覆盖、一个音效、一个进度和一个函数。其自述文件说明了在游戏中应检查什么。
+- [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) 用到了加载器能读取的几乎所有文件类型：方块、物品、一种流体、一个创造模式标签页、生物群系、一个世界模板、一个设有闸门的维度、世界生成、一种药水及其酿造、一名村民及其交易、配方、战利品、对原版内容的覆盖、一个音效、一个进度和一个函数。其自述文件说明了在游戏中应检查什么。
 - [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) 把主世界变成一片空无一物的虚空，世界生成的内容悬浮在半空中，每个高度带一种形状，方便单独观察每一种。
 - [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) 在普通主世界中放入三种矿脉，每种对应一种矿脉样式（普通、条带和管状），各有富矿、普通和贫矿三个等级，并在其上方的地表放置了几个标记方块，供你据此勘探。
 - [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) 把同样的三种矿脉样式悬浮在空无一物的虚空中，让每种形状都能完整地看清。
 - [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) 把主世界的底部降到 -320，在原版世界之下再生成 256 格：包括深层石头混合（安山岩从深板岩中逐渐过渡而出）、一直延伸到底部的游戏自带噪声洞穴，以及三个可向下探索的洞穴区域，每个区域都有自己的装饰和氛围。
-- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) 添加了带有物品栏的方块与手持物品，格数从三格到允许的最大值各种尺寸齐备，配有战利品表、从原版贴图集中染色而来的箱子模型、全部以像素图绘制的纹理，以及可在 Curios 中佩戴的一个小袋和一个挎包。
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) 添加了带有物品栏的方块与手持物品，格数从三格到允许的最大值各种尺寸齐备，配有战利品表、从原版贴图表中染色而来的箱子模型、全部以像素图绘制的纹理，以及可在 Curios 中佩戴的一个小袋和一个挎包。
 - [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) 生成一个超平坦世界，城市街区首尾相接铺满地面，扩展到一千个地块并固定在原点；有混凝土街道、街道之下的下水道、其下的两条地铁线和一条穿过城市的铁路，以及最高 123 格的框架建筑。
 - [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) 是同一座城市，世界高度提升到 512、云层抬升到 384，配有行道树，以及建在 16、32 和 64 格宽地块上、最高 251 格的框架高楼。这座城市没有边界：世界上的每个街区都是一座独立的城镇，无论走到哪里，街道都会一直延伸下去。
 - [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) 用一张城市地图来绘制同一座城市，而不是随机生成：一张每格 48 个方块的字符网格，配合调色板指明街道、广场、小巷以及按权重选取的建筑，因此街区布局由手工排定。
@@ -71,7 +71,7 @@
 - [游戏规则](#游戏规则)
 - [生物群系](#生物群系)
 - [维度](#维度)
-- [传送门与门](#传送门与门)
+- [传送门与闸门](#传送门与闸门)
 - [深层世界](#深层世界)
 - [洞穴区域](#洞穴区域)
 
@@ -146,7 +146,7 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 | `<namespace>/dimensions/*.json`              | 维度定义。[维度](#维度)                                                                                               |
 | `<namespace>/worldtemplates/*.json`          | 把整个世界的设置写在一个文件里。[世界模板](#世界模板)                                                                 |
 | `<namespace>/worldintro/*.json`              | 玩家进入世界时显示的页面。[世界介绍](#世界介绍)                                                                       |
-| `<namespace>/gates/*.json`                   | 传送门与维度的条件。[传送门与门](#传送门与门)                                                                         |
+| `<namespace>/gates/*.json`                   | 传送门与维度的条件。[传送门与闸门](#传送门与闸门)                                                                         |
 | `<namespace>/gamerules/*.json`               | 新世界的游戏规则。[游戏规则](#游戏规则)                                                                               |
 | `<namespace>/teams/*.json`                   | 原版记分板上的阵营，以及谁会加入。[队伍](#队伍)                                                                       |
 | `<namespace>/scoring/*.json`                 | 目标、积分以及一场比赛如何结束。[计分](#计分)                                                                         |
@@ -221,27 +221,27 @@ Resource Data Pack Loader（RDPL）读取唯一的一个文件夹 `rdploader`，
 
 | 表中写作                                            | 你应写成                                                                                                                                                                         |
 | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| int                                                 | `8`                                                                                                                                                                              |
-| int, ticks                                          | `100`（20 刻 = 1 秒）                                                                                                                                                            |
-| int or range                                        | `8`，或 `{ "min": 4, "max": 12 }`，在两者之间随机取值                                                                                                                           |
-| 0 to 15, 1 to 100 and such                          | 位于该范围内的整数                                                                                                                                                               |
-| float                                               | `0.5`                                                                                                                                                                            |
-| boolean                                             | `true` 或 `false`                                                                                                                                                                |
-| string                                              | `"words in quotes"`                                                                                                                                                              |
-| block name, item name                               | `"minecraft:stone"`。方块状态就是名称加上并列的 `properties`：`{ "block": "minecraft:oak_log", "properties": { "axis": "x" } }`                                                  |
+| 整数                                                  | `8`                                                                                                                                                                              |
+| 整数，单位为刻                                      | `100`（20 刻 = 1 秒）                                                                                                                                                            |
+| 整数或范围                                          | `8`，或 `{ "min": 4, "max": 12 }`，在两者之间随机取值                                                                                                                           |
+| 0 到 15、1 到 100 等                                | 位于该范围内的整数                                                                                                                                                               |
+| 浮点数                                              | `0.5`                                                                                                                                                                            |
+| 布尔值                                              | `true` 或 `false`                                                                                                                                                                |
+| 字符串                                              | `"words in quotes"`                                                                                                                                                              |
+| 方块名称、物品名称                                  | `"minecraft:stone"`。方块状态就是名称加上并列的 `properties`：`{ "block": "minecraft:oak_log", "properties": { "axis": "x" } }`                                                  |
 | `namespace:name`                                    | `"mypack:ruby_ore"`                                                                                                                                                              |
-| biome name, sound name, tab name                    | 同样的带引号的 `namespace:name` 形式                                                                                                                                             |
-| dimension id                                        | `"minecraft:overworld"`、`"minecraft:the_nether"`、`"minecraft:the_end"`，或资源包自己的 `"mypack:verdant"`。1.12.2 的数字 `0`、`-1` 和 `1` 仍会被当作这三个维度                  |
-| hex color                                           | 六位十六进制数字，`"A0C8FF"`，`#` 可有可无                                                                                                                                       |
-| texture path                                        | `"mypack:block/ruby_ore"`                                                                                                                                                        |
-| list of ints                                        | `[4, 12]`                                                                                                                                                                        |
-| list of block names                                 | `["minecraft:stone", "minecraft:andesite"]`                                                                                                                                      |
-| list of biome names                                 | `["minecraft:windswept_hills", "mypack:ruby_hills"]`                                                                                                                             |
-| list of biome types                                 | `["mountain", "forest"]`，即[值列表](#值列表)中列出的类型词，每个词代表一个生物群系标签                                                                                          |
-| list of mod ids or pack namespaces                  | `["quark", "mypack"]`                                                                                                                                                            |
-| list of objects                                     | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`，键以该对象自己的表为准                                                                                                  |
-| object                                              | `{ "type": "cluster" }`，键以其自己的表为准                                                                                                                                      |
-| object of role to biome, of variant name to variant | 键是前者，值是后者：`{ "ocean": "mypack:ruby_ocean" }`                                                                                                                           |
+| 生物群系名称、音效名称、标签页名称                  | 同样的带引号的 `namespace:name` 形式                                                                                                                                             |
+| 维度 id                                             | `"minecraft:overworld"`、`"minecraft:the_nether"`、`"minecraft:the_end"`，或资源包自己的 `"mypack:verdant"`。1.12.2 的数字 `0`、`-1` 和 `1` 仍会被当作这三个维度                  |
+| 十六进制颜色                                        | 六位十六进制数字，`"A0C8FF"`，`#` 可有可无                                                                                                                                       |
+| 纹理路径                                            | `"mypack:block/ruby_ore"`                                                                                                                                                        |
+| 整数列表                                            | `[4, 12]`                                                                                                                                                                        |
+| 方块名称列表                                        | `["minecraft:stone", "minecraft:andesite"]`                                                                                                                                      |
+| 生物群系名称列表                                    | `["minecraft:windswept_hills", "mypack:ruby_hills"]`                                                                                                                             |
+| 生物群系类型列表                                    | `["mountain", "forest"]`，即[值列表](#值列表)中列出的类型词，每个词代表一个生物群系标签                                                                                          |
+| 模组 id 或资源包命名空间列表                        | `["quark", "mypack"]`                                                                                                                                                            |
+| 对象列表                                            | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`，键以该对象自己的表为准                                                                                                  |
+| 对象                                                | `{ "type": "cluster" }`，键以其自己的表为准                                                                                                                                      |
+| 角色到生物群系、变种名称到变种的对象              | 键是前者，值是后者：`{ "ocean": "mypack:ruby_ocean" }`                                                                                                                           |
 
 大多数定义还接受 `requires`，这是一个由模组 id 或资源包命名空间组成的列表，这些都必须存在，否则该文件会被跳过。
 
@@ -367,11 +367,11 @@ rdploader/RDPL1O Seasonal       priority and override combined
 
 | 键                      | 必需 | 值                    | 默认值  | 作用                                                                                                                                        |
 | ----------------------- | ---- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| an option name          | yes  | boolean, or an object |         | `true` 或 `false` 即该选项的默认值。对象则携带下面的三个键                                                                                  |
-| `hide` at the top level | no   | boolean               | `false` | 使本资源包的选项不出现在选项界面和生成的文件中，而它们仍按默认值控制内容                                                                    |
-| `default`               | yes  | boolean               |         | 在用户更改之前该选项的值。没有布尔值 `default` 的对象会被忽略，并给出警告                                                                   |
-| `hide` inside an option | no   | boolean               | `false` | 隐藏这一个选项，使其无法被切换，并保持默认值                                                                                                |
-| `description`           | no   | string                | none    | 显示在选项界面中该选项名称的下方                                                                                                            |
+| 选项名称                | 是   | 布尔值，或对象        |         | `true` 或 `false` 即该选项的默认值。对象则携带下面的三个键                                                                                  |
+| 顶层的 `hide`           | 否   | 布尔值                | `false` | 使本资源包的选项不出现在选项界面和生成的文件中，而它们仍按默认值控制内容                                                                    |
+| `default`               | 是   | 布尔值                |         | 在用户更改之前该选项的值。没有布尔值 `default` 的对象会被忽略，并给出警告                                                                   |
+| 选项内的 `hide`         | 否   | 布尔值                | `false` | 隐藏这一个选项，使其无法被切换，并保持默认值                                                                                                |
+| `description`           | 否   | 字符串                 | 无      | 显示在选项界面中该选项名称的下方                                                                                                            |
 
 资源包可以在 `assets` 和 `data` 旁边带一个 `config` 文件夹，其中是由 JSON 文件组成的、带默认值的真假选项：
 
@@ -488,12 +488,12 @@ RDPL 适合替换一两个配方，而你自己内容的配方则应随资源包
 | `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster`                                                     | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides`（客户端文件夹：没有客户端时，请不要放）           |
 | 整个控制层、设置和预生成                                                                                                                                  |                                                                                                                         |
 
-右列是硬性限制：原版客户端没有的方块、物品、实体类型、声音和药水效果，无法向它描述，而维度自己的传送门就是资源包的方块之一；暴露设置只会与那些内容一起加载。左列之所以可行，是因为其中的一切要么完全在服务端运行，要么以原版已能读取的数据包条目的形式传到客户端（生物群系、洞穴区域、维度类型），要么通过原版已经会说的数据包传到客户端（由服务器填充的合成结果槽、普通的进度数据包、状态消息形式的传送门拒绝提示，以及由原版游戏模式/标题/传送数据包构成的预生成等待）。
+右列是硬性限制：原版客户端没有的方块、物品、实体类型、声音和药水效果，无法向它描述，而维度自己的传送门就是资源包的方块之一；暴露设置只会与那些内容一起加载。左列之所以可行，是因为其中的一切要么完全在服务端运行，要么以原版已能读取的数据包条目的形式传到客户端（生物群系、洞穴区域、维度类型），要么通过原版已经会说的数据包传到客户端（由服务器填充的合成结果槽、普通的进度数据包、状态消息形式的闸门拒绝提示，以及由原版游戏模式/标题/传送数据包构成的预生成等待）。
 
 设置步骤：
 
 1. 在配置中启用 `vanillaClients`（`content` 类别，需要重启）。它会强制执行右列：这些文件夹在加载时被跳过，每个被跳过的文件都会在日志中点名，所以一个误放的方块文件只会变成一行日志，而不是被拒绝的连接。
-2. 无论如何都要让定义远离右列的文件夹；被跳过的文件只是累赘。当资源包引用物品时（门的 `hold`、`killedDrops`、配方产物、交易），只写原版或服务器上其他两端都有的模组所提供的物品。一个指明了资源包自己地面方块的生物群系会保留基础生物群系的地面，由自己的传送门开启的维度则需要那个传送门方块，所以请用命令把玩家送过去。
+2. 无论如何都要让定义远离右列的文件夹；被跳过的文件只是累赘。当资源包引用物品时（闸门的 `hold`、`killedDrops`、配方产物、交易），只写原版或服务器上其他两端都有的模组所提供的物品。一个指明了资源包自己地面方块的生物群系会保留基础生物群系的地面，由自己的传送门开启的维度则需要那个传送门方块，所以请用命令把玩家送过去。
 3. 在此版本中，实体变种本身就是独立的实体类型，所以它们属于右列：开启 `vanillaClients` 后它们会被跳过，它们的生成也随之跳过，日志会点名它们。
 4. 照常安装在服务器上，并装上 Blast Plaster，本模组要求它，而它同样不注册任何东西。玩家的机器上什么都不用放；对他们来说 `/rdpl` 不会存在。
 5. 用一个干净的同版本原版客户端加入一次来测试。失败会很明显：连接在门口就被拒绝，而不是稍后悄悄出问题。
@@ -515,6 +515,11 @@ RDPL 适合替换一两个配方，而你自己内容的配方则应随资源包
   "mapping": { "oldmod:old_name": "newmod:new_name" }
 }
 ```
+
+| 键 | 必需 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- | --- |
+| `registry` | 是 | 注册表名称 | 无 | 这些名称所属的注册表。1.12.2 的名称 `minecraft:blocks`、`minecraft:items`、`minecraft:biomes`、`minecraft:enchantments`、`minecraft:potions`、`minecraft:potiontypes`、`minecraft:soundevents`、`minecraft:entities` 和 `minecraft:villagerprofessions` 会被当作对应的现代注册表读取 |
+| `mapping` | 是 | 旧名称到新名称的对象 | 无 | 每个旧名称及其现在使用的名称 |
 
 注册表是条目所属的那一个，名称按游戏的叫法书写：`minecraft:item`、`minecraft:block`、`minecraft:entity_type` 等等。重命名可以串联，所以把 A 映射到 B，之后又把 B 映射到 C，就会把 A 直接送到 C。
 
@@ -547,7 +552,7 @@ thatmod.jar
 | 字段       | 值                | 默认值  | 作用                                                                                                                                        |
 | ---------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | `enabled`  | `true` 或 `false` | `true`  | 关闭该模组的内容，方式与 `.disabled` 关闭资源包相同                                                                                         |
-| `priority` | `-1` or a number  | `-1`    | `-1` 使该模组位于所有资源包之下；其他任何数字则把它放进与带编号资源包并列的普通[优先级](#组织资源包)顺序                                    |
+| `priority` | `-1` 或一个数字   | `-1`    | `-1` 使该模组位于所有资源包之下；其他任何数字则把它放进与带编号资源包并列的普通[优先级](#组织资源包)顺序                                    |
 
 无论 `overrideResourcePacks` 如何设置，模组资源包都不会加入资源包覆盖层级，因为只有资源包作者才能用 `O` 字母提出这一要求。日志会标出模组资源包，并从低到高列出资源包，所以没有任何东西会在不为人知的情况下加载。
 
@@ -568,7 +573,7 @@ thatmod.jar
 - 自 1.12.2 以来被重命名的战利品表，凡是资源包点名之处都会被重命名：`loot_injections` 的目标、`player_loot` 的表以及 `loot_table` 条目（1.21.1：其 `value`），所以 `minecraft:entities/zombie_pigman` 变成 `minecraft:entities/zombified_piglin`。带 `inverse` 的 `killed_by_player` 变成 `inverted` 条件，带 `on_fire` 的 `entity_properties` 变成 `flags` 谓词，`generic.maxHealth` 这样的 `set_attributes` 名称变成 `generic.max_health`（1.21.1：运算采用新名称，修饰符的 `name` 变成它的 `id`）。
 - 对被扁平化拆分的 1.12.2 方块的覆盖，例如 `overrides/minecraft/wool.json`，会被当作对它变成的每个方块的覆盖，即全部十六种羊毛，因为 1.12.2 一次改动了每个变种。
 - 游戏规则文件的 `gameLoopFunction` 会变成 `#minecraft:tick` 函数标签，写为 `data/minecraft/tags/function/tick.json`，因为该游戏规则已不存在。资源包自己的维度编号通过它的 `dimensions` 文件读取，所以 `dimensions/verdant.json` 中的 `"id": 7` 会使资源包点名它的每个地方都把 7 当作 `mypack:verdant`。`villageBlocks` 对的两侧都会被修复，概率保持不变，`registry_remap` 文件可以保留 1.12.2 的复数形式 `minecraft:blocks` 和 `minecraft:items`。
-- 如果世界模板关闭了 1.12.2 在某个维度中拥有的每一种结构，则只有此版本才有的结构在那里也会被关闭：主世界中的 `ancient_cities`、`buried_treasures`、`ocean_ruins`、`pillager_outposts`、`ruined_portals`、`shipwrecks` 、`trail_ruins` 和 `trial_chambers`，以及下界中的 `nether_fossils`。只要留着一个 1.12.2 的名称开启，它们就不会被动。生成器控制键 `blockWorldGenerators` 及其同类，会被排除在转换后的模板之外，并在日志中留下一行，因为这里没有任何东西读取它们。平坦模板的 `generatorOptions` 图层的方块名称会以同样的方式修复，所以 `minecraft:grass` 变成 `minecraft:grass_block`。
+- 如果世界模板关闭了 1.12.2 在某个维度中拥有的每一种结构，则只有此版本才有的结构在那里也会被关闭：主世界中的 `ancient_cities`、`buried_treasures`、`ocean_ruins`、`pillager_outposts`、`ruined_portals`、`shipwrecks`、`trail_ruins` 和 `trial_chambers`，以及下界中的 `nether_fossils`。只要留着一个 1.12.2 的名称开启，它们就不会被动。生成器控制键 `blockWorldGenerators` 及其同类，会被排除在转换后的模板之外，并在日志中留下一行，因为这里没有任何东西读取它们。平坦模板的 `generatorOptions` 图层的方块名称会以同样的方式修复，所以 `minecraft:grass` 变成 `minecraft:grass_block`。
 - 函数会被逐行改写成此版本的命令语法。带数据值的 id 会经过同样的数据修复器，所以 `give @p minecraft:wool 1 14` 变成 `give @p minecraft:red_wool 1`，`give @p mypack:materials 1 5` 给出 `meta` 为 5 的那个变种，物品、实体和方块的 nbt 会像世界中的那样被修复（1.21.1：物品的 nbt 变成它的组件）。`testforblock`、`testfor` 和 `scoreboard players test` 变成 `execute if`，`execute <entity> <x> <y> <z> [detect ...]` 变成 `execute as ... at @s [positioned ...] [if block ...] run`，`effect` 采用 `give` 和 `clear`，`blockdata`、`entitydata` 和 `replaceitem` 变成 `data merge` 和 `item replace`，`scoreboard teams` 和 `scoreboard players tag` 变成 `team` 和 `tag`。选择器把 `score_X_min` 和 `score_X` 换成 `scores`，把 `r` 和 `rm` 换成 `distance`，把 `l` 和 `lm` 换成 `level`，把 `m` 换成 `gamemode`，把 `c` 换成 `limit` 和 `sort`，把 `rx` 和 `ry` 换成 `x_rotation` 和 `y_rotation`。附魔和效果的编号、粒子和声音名称、游戏模式和难度的编号、以秒为单位的 `weather` 持续时间，以及对另一个实体的相对 `tp`，同样会被转换。转换无法处理的行会被改成注释（在该行前加 `# `），日志会点名文件、行以及原因；函数仍会加载，只是缺少这一行，直到手动恢复为止。`block_drops` 照原样转换，其 `meta` 折算进方块名称或它的 `properties`。
 - 1.12.2 的平坦世界，其地面位于 y 0，而此版本从底部 y -64 起铺设平坦世界，所以转换会把高度相应下移。当世界模板的 `worldType` 为 `flat` 或 `superflat` 时，它的 `worldSpawn` 和 `resetSendsTo` 会下移 64（若它指定了 `worldMinHeight`，则下移到该值），当资源包附带的每个世界模板都是平坦时，队伍的 `spawn`、`standIn` 的 `at` 与 `spawnBox` 的高度，以及计分文件的 `opens.lobby` 也同样下移。带有 `flat` 地形的资源包维度会下移它的 `groundLevel`，以及任何指向该维度的位置也同样处理（若它有 `minHeight`，则按该值）。函数并不说明它们在哪里运行，所以当资源包的主世界是平坦的时，其函数中的每个绝对 y 都会下移 64，包括选择器的 `y`，并且日志会说明一次；`~` 和 `^` 的高度则不动。处于普通地形上的世界保留每一个坐标，因为它的地表仍在海平面。
 
@@ -687,46 +692,46 @@ thatmod.jar
 
 | 键                           | 必需           | 值                                                | 默认值                                                                                                       | 作用                                                                                                                                                                                                                                                                                                                                                                                                                |
 | ---------------------------- | -------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variants`                   | yes            | object of variant name to variant                 |                                                                                                              | 每个条目一个方块。键就是它的注册名，并决定它的方块状态、模型、纹理和语言键的名称                                                                                                                                                                                                                                                                                                                                    |
-| `type`                       | no             | one of the types above                            | `basic`                                                                                                      | 方块采用哪种形态                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `material`                   | no             | one of the [block materials](#值列表)             | `rock`                                                                                                       | 方块的表现与该材料在 1.12.2 中一致：徒手破坏时是否掉落东西、活塞如何对待它、熔岩是否会将其点燃、流动的液体是否会将其冲走，以及放置的方块是否会替换它。`log` 始终是 `wood`，`leaves` 始终是 `leaves`，`vine` 是 `vine`，`torch` 或 `ladder` 是 `circuits`，`crop` 是 `plants`，而 `stairs` 和 `wall` 的表现与其 `modelBlock` 相同                                                                                   |
-| `soundType`                  | no             | one of the [sound types](#值列表)                 | `stone`；`log` 为 `wood`，`leaves` 和 `crop` 为 `plant`，`stairs` 和 `wall` 为其 `modelBlock` 的            | 脚步声、破坏声和放置声                                                                                                                                                                                                                                                                                                                                                                                              |
-| `mapColor`                   | no             | one of the [map colors](#值列表)                  | from the material                                                                                            | 它在地图上的外观                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `harvestTool`                | no             | `pickaxe`, `axe`, `shovel`, `hoe`, `sword`        | `pickaxe`                                                                                                    | 用哪种工具采集它，系统会替你写入游戏的 `mineable` 标签；`sword` 会写入 `resourcedatapackloader:mineable/sword`，资源包自己的 `sword` 工具可以挖掘它。对于掉落物，只有在需要工具的材料上才有影响。与 1.12.2 一样，镐也能以全速挖掘 `rock`、`iron` 和 `anvil`，斧能以全速挖掘 `wood`、`plants` 和 `vine`。任何其他名称，例如 `shears`，都会被记入日志并被忽略                                                           |
-| `harvestToolLevel`           | no             | 0 to 4                                            | `0`                                                                                                          | 0 木、1 石、2 铁、3 钻石、4 下界合金，系统会替你写入 `needs_*_tool` 标签。`basic`、`ore`、`container`、`portal`、`fence`、`pane`、`log`、`falling`、`slab` 或 `wall` 方块会忽略它，并采用变种的 `harvestLevel`，与 1.12.2 一样                                                                                                                                                                                     |
-| `silkHarvest`                | no             | boolean                                           | `true`                                                                                                       | 精准采集是否返回方块本身                                                                                                                                                                                                                                                                                                                                                                                            |
-| `opensWith`                  | no             | item id                                           | none                                                                                                         | 使该方块成为一个锁箱：破坏它会掉落方块本身，用指定的物品右键会消耗一个，播放该方块的破坏声，发放该变种的 `drops` 列表，并移除该方块。其他任何点击都会在动作栏显示语言文件中的 `block.<pack>.<block>.locked` 一行                                                                                                                                                                                                     |
-| `openSound`                  | no             | sound name                                        | the break sound                                                                                              | 锁箱被打开时播放的声音，取代它的破坏声。1.12.2 的名称仍可读取，参见[声音名称](#值列表)                                                                                                                                                                                                                                                                                                                              |
-| `expDrop`                    | no             | object with `min` and `max`                       | none                                                                                                         | 玩家破坏该方块、或收集经验的资源包生物挖掘它时掉落的经验；活塞、水和爆炸不会掉落经验。只有在 `silkHarvest` 开启时，精准采集才会使其消失                                                                                                                                                                                                                                                                              |
-| `creativeTab`                | no             | tab name                                          | none                                                                                                         | 它出现在哪个标签页中，参见[创造模式标签页](#创造模式标签页)                                                                                                                                                                                                                                                                                                                                                         |
-| `renderLayer`                | no             | `solid`, `cutout`, `cutout_mipped`, `translucent` | to suit the type                                                                                             | 它如何绘制。在 26.x 上只有 `translucent` 有实际效果；`solid`、`cutout` 和 `cutout_mipped` 可以填写，但绘制方式相同                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `opaque`                     | no             | boolean                                           | `true`                                                                                                       | 它是否完全阻挡视线和光线                                                                                                                                                                                                                                                                                                                                                                                            |
-| `fullCube`                   | no             | boolean                                           | same as `opaque`                                                                                             | 它是否填满整个空间                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `lightOpacity`               | no             | 0 to 255                                          | `255` when opaque, else `0`                                                                                  | 它吸收多少光：15 或更高会挡住全部光线，`0` 则让阳光直接穿过。`slab` 保持游戏自己的值，箱子模型的容器则让光线透过                                                                                                                                                                                                                                                                                                    |
-| `slipperiness`               | no             | float                                             | `0.6`                                                                                                        | 冰是 `0.98`                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `flammability`               | no             | int                                               | `0`                                                                                                          | 火焰烧毁它的难易程度                                                                                                                                                                                                                                                                                                                                                                                                |
-| `fireSpread`                 | no             | int                                               | `0`                                                                                                          | 火焰从它蔓延出去的难易程度                                                                                                                                                                                                                                                                                                                                                                                          |
-| `explosionResistanceDivisor` | no             | float                                             | `1.0`                                                                                                        | 用来除每个变种的 `resistance`，以得到其抗爆炸能力                                                                                                                                                                                                                                                                                                                                                                   |
-| `modelBlock`                 | no             | block name                                        | `minecraft:stone`                                                                                            | 当你的方块没有自带纹理和模型时，借用其模型的方块                                                                                                                                                                                                                                                                                                                                                                    |
-| `itemModel`                  | no             | `state`, `item`                                   | `state`                                                                                                      | `state` 跟随方块状态，`item` 查找它自己的文件，即 `models/item/<name>.json`                                                                                                                                                                                                                                                                                                                                         |
-| `tint`                       | no             | `biome`, `none`, or a hex color                   | none                                                                                                         | 需要模型中有 `tintindex` 才会显示                                                                                                                                                                                                                                                                                                                                                                                   |
-| `plantTypes`                 | no             | list of [plant types](#值列表)                    | none                                                                                                         | 可以种在它上面的东西                                                                                                                                                                                                                                                                                                                                                                                                |
-| `behavesAs`                  | no             | list of `till`, `path`, `bush`, `animals`         | none                                                                                                         | 要采用的原版行为                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `bounds`                     | no             | list of six numbers, 0 to 1                       | full block                                                                                                   | 碰撞箱，写作 `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                                                                                                                             |
-| `requires`                   | no             | list of mod ids or pack namespaces                | none                                                                                                         | 除非全部存在，否则该文件会被跳过                                                                                                                                                                                                                                                                                                                                                                                    |
-| `particle`                   | torch only     | `none`, `flame`, `colored`                        | `flame`                                                                                                      | 火把上方的粒子                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `particleColor`              | torch only     | hex color                                         | `FFFFFF`                                                                                                     | 当 `particle` 为 `colored` 时使用                                                                                                                                                                                                                                                                                                                                                                                   |
-| `smoke`                      | torch only     | boolean                                           | `true`                                                                                                       | 是否冒烟                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `leafSapling`                | leaves only    | block name                                        | none                                                                                                         | 它们掉落的树苗                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `leafSaplingChance`          | leaves only    | int                                               | `5`                                                                                                          | 每 N 个树叶方块有一个会掉落                                                                                                                                                                                                                                                                                                                                                                                         |
-| `seed`                       | crop only      | item name                                         | `minecraft:wheat_seeds`                                                                                      | 用来种植它的物品，也是未成熟作物掉落的东西                                                                                                                                                                                                                                                                                                                                                                          |
-| `produce`                    | crop only      | item name                                         | `minecraft:wheat`                                                                                            | 收获得到的东西                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `maxAge`                     | crop only      | int                                               | `7`                                                                                                          | 有多少个生长阶段                                                                                                                                                                                                                                                                                                                                                                                                    |
-| `growth`                     | plants only    | object                                            | none                                                                                                         | 参见[生长](#生长)                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `sapling`                    | sapling only   | object                                            | none                                                                                                         | 参见[树苗](#树苗)                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `portal`                     | portal only    | object                                            | none                                                                                                         | 参见[传送门与门](#传送门与门)                                                                                                                                                                                                                                                                                                                                                                                       |
-| `container`                  | container only | object                                            | none                                                                                                         | 参见[容器](#容器)                                                                                                                                                                                                                                                                                                                                                                                                   |
-| `bell`                       | bell only      | object                                            | none                                                                                                         | 参见[钟](#钟)                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `variants`                   | 是             | 变种名称到变种的对象                               |                                                                                                              | 每个条目一个方块。键就是它的注册名，并决定它的方块状态、模型、纹理和语言键的名称                                                                                                                                                                                                                                                                                                                                    |
+| `type`                       | 否             | 上述类型之一                                      | `basic`                                                                                                      | 方块采用哪种形态                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `material`                   | 否             | [方块材料](#值列表)之一                           | `rock`                                                                                                       | 方块的表现与该材料在 1.12.2 中一致：徒手破坏时是否掉落东西、活塞如何对待它、熔岩是否会将其点燃、流动的液体是否会将其冲走，以及放置的方块是否会替换它。`log` 始终是 `wood`，`leaves` 始终是 `leaves`，`vine` 是 `vine`，`torch` 或 `ladder` 是 `circuits`，`crop` 是 `plants`，而 `stairs` 和 `wall` 的表现与其 `modelBlock` 相同                                                                                   |
+| `soundType`                  | 否             | [音效类型](#值列表)之一                           | `stone`；`log` 为 `wood`，`leaves` 和 `crop` 为 `plant`，`stairs` 和 `wall` 为其 `modelBlock` 的            | 脚步声、破坏声和放置声                                                                                                                                                                                                                                                                                                                                                                                              |
+| `mapColor`                   | 否             | [地图颜色](#值列表)之一                           | 取自材料                                                                                            | 它在地图上的外观                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `harvestTool`                | 否             | `pickaxe`, `axe`, `shovel`, `hoe`, `sword`        | `pickaxe`                                                                                                    | 用哪种工具采集它，系统会替你写入游戏的 `mineable` 标签；`sword` 会写入 `resourcedatapackloader:mineable/sword`，资源包自己的 `sword` 工具可以挖掘它。对于掉落物，只有在需要工具的材料上才有影响。与 1.12.2 一样，镐也能以全速挖掘 `rock`、`iron` 和 `anvil`，斧能以全速挖掘 `wood`、`plants` 和 `vine`。任何其他名称，例如 `shears`，都会被记入日志并被忽略                                                           |
+| `harvestToolLevel`           | 否             | 0 到 4                                            | `0`                                                                                                          | 0 木、1 石、2 铁、3 钻石、4 下界合金，系统会替你写入 `needs_*_tool` 标签。`basic`、`ore`、`container`、`portal`、`fence`、`pane`、`log`、`falling`、`slab` 或 `wall` 方块会忽略它，并采用变种的 `harvestLevel`，与 1.12.2 一样                                                                                                                                                                                     |
+| `silkHarvest`                | 否             | 布尔值                                            | `true`                                                                                                       | 精准采集是否返回方块本身                                                                                                                                                                                                                                                                                                                                                                                            |
+| `opensWith`                  | 否             | 物品 id                                           | 无                                                                                                         | 使该方块成为一个锁箱：破坏它会掉落方块本身，用指定的物品右键会消耗一个，播放该方块的破坏声，发放该变种的 `drops` 列表，并移除该方块。其他任何点击都会在动作栏显示语言文件中的 `block.<pack>.<block>.locked` 一行                                                                                                                                                                                                     |
+| `openSound`                  | 否             | 音效名称                                          | 其破坏声                                                                                              | 锁箱被打开时播放的声音，取代它的破坏声。1.12.2 的名称仍可读取，参见[音效名称](#值列表)                                                                                                                                                                                                                                                                                                                              |
+| `expDrop`                    | 否             | 带 `min` 和 `max` 的对象                          | 无                                                                                                         | 玩家破坏该方块、或收集经验的资源包生物挖掘它时掉落的经验；活塞、水和爆炸不会掉落经验。只有在 `silkHarvest` 开启时，精准采集才会使其消失                                                                                                                                                                                                                                                                              |
+| `creativeTab`                | 否             | 标签页名称                                        | 无                                                                                                         | 它出现在哪个标签页中，参见[创造模式标签页](#创造模式标签页)                                                                                                                                                                                                                                                                                                                                                         |
+| `renderLayer`                | 否             | `solid`, `cutout`, `cutout_mipped`, `translucent` | 视类型而定                                                                                             | 它如何绘制。在 26.x 上只有 `translucent` 有实际效果；`solid`、`cutout` 和 `cutout_mipped` 可以填写，但绘制方式相同                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `opaque`                     | 否             | 布尔值                                            | `true`                                                                                                       | 它是否完全阻挡视线和光线；带箱子模型的容器默认为 `false`                                                                                                                                                                                                                                                                                                                                                                                            |
+| `fullCube`                   | 否             | 布尔值                                            | 与 `opaque` 相同                                                                                             | 它是否填满整个空间                                                                                                                                                                                                                                                                                                                                                                                                  |
+| `lightOpacity`               | 否             | 0 到 255                                          | 不透明时为 `255`，否则为 `0`                                                                                  | 它吸收多少光：15 或更高会挡住全部光线，`0` 则让阳光直接穿过。`slab` 保持游戏自己的值，箱子模型的容器则让光线透过                                                                                                                                                                                                                                                                                                    |
+| `slipperiness`               | 否             | 浮点数                                            | `0.6`                                                                                                        | 冰是 `0.98`                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `flammability`               | 否             | 整数                                              | `0`                                                                                                          | 火焰烧毁它的难易程度                                                                                                                                                                                                                                                                                                                                                                                                |
+| `fireSpread`                 | 否             | 整数                                              | `0`                                                                                                          | 火焰从它蔓延出去的难易程度                                                                                                                                                                                                                                                                                                                                                                                          |
+| `explosionResistanceDivisor` | 否             | 浮点数                                            | `1.0`                                                                                                        | 用来除每个变种的 `resistance`，以得到其抗爆炸能力                                                                                                                                                                                                                                                                                                                                                                   |
+| `modelBlock`                 | 否             | 方块名称                                          | `minecraft:stone`                                                                                            | 当你的方块没有自带纹理和模型时，借用其模型的方块                                                                                                                                                                                                                                                                                                                                                                    |
+| `itemModel`                  | 否             | `state`, `item`                                   | `state`                                                                                                      | `state` 跟随方块状态，`item` 查找它自己的文件，即 `models/item/<name>.json`                                                                                                                                                                                                                                                                                                                                         |
+| `tint`                       | 否             | `biome`、`none`，或十六进制颜色                   | 无                                                                                                         | 需要模型中有 `tintindex` 才会显示                                                                                                                                                                                                                                                                                                                                                                                   |
+| `plantTypes`                 | 否             | [植物类型](#值列表)列表                           | 无                                                                                                         | 可以种在它上面的东西                                                                                                                                                                                                                                                                                                                                                                                                |
+| `behavesAs`                  | 否             | `till`、`path`、`bush`、`animals` 的列表          | 无                                                                                                         | 要采用的原版行为                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `bounds`                     | 否             | 六个数字的列表，0 到 1                            | 完整方块                                                                                                   | 碰撞箱，写作 `[x1, y1, z1, x2, y2, z2]`                                                                                                                                                                                                                                                                                                                                                                             |
+| `requires`                   | 否             | 模组 id 或资源包命名空间列表                     | 无                                                                                                         | 除非全部存在，否则该文件会被跳过                                                                                                                                                                                                                                                                                                                                                                                    |
+| `particle`                   | 仅火把         | `none`, `flame`, `colored`                        | `flame`                                                                                                      | 火把上方的粒子                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `particleColor`              | 仅火把         | 十六进制颜色                                      | `FFFFFF`                                                                                                     | 当 `particle` 为 `colored` 时使用                                                                                                                                                                                                                                                                                                                                                                                   |
+| `smoke`                      | 仅火把         | 布尔值                                            | `true`                                                                                                       | 是否冒烟                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `leafSapling`                | 仅树叶         | 方块名称                                          | 无                                                                                                         | 它们掉落的树苗                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `leafSaplingChance`          | 仅树叶         | 整数                                              | `5`                                                                                                          | 每 N 个树叶方块有一个会掉落                                                                                                                                                                                                                                                                                                                                                                                         |
+| `seed`                       | 仅作物         | 物品名称                                          | `minecraft:wheat_seeds`                                                                                      | 用来种植它的物品，也是未成熟作物掉落的东西                                                                                                                                                                                                                                                                                                                                                                          |
+| `produce`                    | 仅作物         | 物品名称                                          | `minecraft:wheat`                                                                                            | 收获得到的东西                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `maxAge`                     | 仅作物         | 整数                                              | `7`                                                                                                          | 有多少个生长阶段                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `growth`                     | 仅植物         | 对象                                              | 无                                                                                                         | 参见[生长](#生长)                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `sapling`                    | 仅树苗         | 对象                                              | 无                                                                                                         | 参见[树苗](#树苗)                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `portal`                     | 仅传送门       | 对象                                              | 无                                                                                                         | 参见[传送门与闸门](#传送门与闸门)                                                                                                                                                                                                                                                                                                                                                                                       |
+| `container`                  | 仅容器         | 对象                                              | 无                                                                                                         | 参见[容器](#容器)                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `bell`                       | 仅钟           | 对象                                              | 无                                                                                                         | 参见[钟](#钟)                                                                                                                                                                                                                                                                                                                                                                                                       |
 
 ### 变种键
 
@@ -734,15 +739,15 @@ thatmod.jar
 
 | 键             | 必需        | 值                                   | 默认值       | 作用                                                                                                                                                                                               |
 | -------------- | ----------- | ------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hardness`     | no          | float                                | `1.0`        | 破坏它需要多长时间。黑曜石是 `50`，`-1` 表示不可破坏                                                                                                                                               |
-| `resistance`   | no          | float                                | `5.0`        | 按 1.12.2 的读法确定的爆炸抗性：方块保留该数值的五分之三，所以 `10` 得到石头的 `6`                                                                                                                 |
-| `light`        | no          | 0 to 15                              | `0`          | 发出的光                                                                                                                                                                                           |
-| `harvestLevel` | no          | 0 to 4                               | `0`          | `basic`、`ore`、`container`、`portal`、`fence`、`pane`、`log`、`falling`、`slab` 或 `wall` 方块的工具等级，取代文件的 `harvestToolLevel`。其他类型采用文件的值                                     |
-| `rarity`       | no          | `common`, `uncommon`, `rare`, `epic` | `common`     | 工具提示中名称的颜色                                                                                                                                                                               |
-| `maxSize`      | no          | 1 to 64                              | `64`         | 堆叠上限                                                                                                                                                                                           |
-| `tags`         | no          | list of tag ids                      | none         | 该变种被写入的方块和物品标签，例如 1.20.1 上的 `forge:ores/ruby` 或 1.21.1 上的 `c:ores/ruby`。标签文件会替你生成                                                                                  |
-| `drops`        | no          | list of drops                        | drops itself | 破坏它得到什么                                                                                                                                                                                     |
-| `portal`       | portal only | object                               | the file's   | 该变种自己的传送门，取代文件的传送门，写法见[传送门与门](#传送门与门)。文件本身仍然需要有它自己的一个                                                                                               |
+| `hardness`     | 否          | 浮点数                               | `1.0`        | 破坏它需要多长时间。黑曜石是 `50`，`-1` 表示不可破坏                                                                                                                                               |
+| `resistance`   | 否          | 浮点数                               | `5.0`        | 按 1.12.2 的读法确定的爆炸抗性：方块保留该数值的五分之三，所以 `10` 得到石头的 `6`                                                                                                                 |
+| `light`        | 否          | 0 到 15                              | `0`          | 发出的光                                                                                                                                                                                           |
+| `harvestLevel` | 否          | 0 到 4                               | `0`          | `basic`、`ore`、`container`、`portal`、`fence`、`pane`、`log`、`falling`、`slab` 或 `wall` 方块的工具等级，取代文件的 `harvestToolLevel`。其他类型采用文件的值                                     |
+| `rarity`       | 否          | `common`, `uncommon`, `rare`, `epic` | `common`     | 工具提示中名称的颜色                                                                                                                                                                               |
+| `maxSize`      | 否          | 1 到 64                              | `64`         | 堆叠上限                                                                                                                                                                                           |
+| `tags`         | 否          | 标签 id 列表                         | 无           | 该变种被写入的方块和物品标签，例如 1.20.1 上的 `forge:ores/ruby` 或 1.21.1 上的 `c:ores/ruby`。标签文件会替你生成                                                                                  |
+| `drops`        | 否          | 掉落物列表                           | 掉落自身     | 破坏它得到什么                                                                                                                                                                                     |
+| `portal`       | 仅传送门    | 对象                                 | 文件的       | 该变种自己的传送门，取代文件的传送门，写法见[传送门与闸门](#传送门与闸门)。文件本身仍然需要有它自己的一个                                                                                               |
 
 **名称是永久的。** 变种的键会写入每个包含它的已保存世界。之后重命名它，会把已放置的方块变成空气，除非用[注册表重命名](#注册表重命名)把旧名称映射到新名称。一个文件可以包含任意多个变种；每个都是独立的方块，而 1.12.2 资源包中的 `meta` 键会被忽略，并在日志中留下一条说明。
 
@@ -764,13 +769,13 @@ thatmod.jar
 
 | 键            | 必需           | 值                 | 默认值                                 | 作用                                                                       |
 | ------------- | -------------- | ------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
-| `block`       | one of the two | block or item name |                                        | 掉落什么                                                                   |
-| `entity`      | one of the two | entity name        |                                        | 方块被破坏时放出的实体，取代物品                                           |
-| `amount`      | no             | int or range       | `1`                                    | 多少个                                                                     |
-| `chance`      | no             | 0 to 100           | `100`, or `0` when `guaranteed` is off | 该掉落究竟发生的频率                                                       |
-| `weight`      | no             | int                | `0`                                    | 大于零时，该条目加入一个恰好产出一个掉落物的池。见下文                     |
-| `bonusChance` | no             | list of ints       | none                                   | 每个时运等级的额外掉落，每个等级一个条目                                   |
-| `guaranteed`  | no             | boolean            | `true`                                 | `chance` 的旧式简写。开启为 `100`，关闭为 `0`                              |
+| `block`       | 二选一         | 方块或物品名称     |                                        | 掉落什么                                                                   |
+| `entity`      | 二选一         | 实体名称           |                                        | 方块被破坏时放出的实体，取代物品                                           |
+| `amount`      | 否             | 整数或范围         | `1`                                    | 多少个                                                                     |
+| `chance`      | 否             | 0 到 100           | `100`；`guaranteed` 关闭时为 `0`       | 该掉落究竟发生的频率                                                       |
+| `weight`      | 否             | 整数               | `0`                                    | 大于零时，该条目加入一个恰好产出一个掉落物的池。见下文                     |
+| `bonusChance` | 否             | 整数列表           | 无                                     | 每个时运等级的额外掉落，每个等级一个条目                                   |
+| `guaranteed`  | 否             | 布尔值             | `true`                                 | `chance` 的旧式简写。开启为 `100`，关闭为 `0`                              |
 
 每个没有 `weight` 的条目都是独立判定的，所以有三个这样条目的方块，可能三个都掉落，也可能一个都不掉。给条目加上 `weight`，它们就不再独立：它们组成一个池，每次方块被破坏时恰好从中选出一个，几率与权重成比例。上面的例子里，钻石和绿宝石以一比四共用一个池，所以两者之一一定会掉出来，并且五次中有四次是绿宝石，而红宝石和煤炭是各自单独判定的，那只蠹虫则又是另外一回事。物品和实体分别成池，所以带权重的物品和带权重的实体彼此不竞争。
 
@@ -790,7 +795,6 @@ thatmod.jar
 {
   "growth": {
     "stages": 8,
-    "growth": 10,
     "spread": 1,
     "maxHeight": 3,
     "soil": ["minecraft:sand", "minecraft:red_sand"],
@@ -806,21 +810,20 @@ thatmod.jar
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `stages` | 否 | int | `16` | 完全长成前的生长阶段数。藤蔓在每个随机刻内有 1/该数值 的机会尝试生长 |
-| `growth` | 否 | int | | 每个随机刻有 1/N 的几率推进一个阶段 |
-| `spread` | 否 | int | `0` | 向相邻方块扩散的范围。当两格范围内已有这么多藤蔓时，藤蔓就不再向侧面延伸 |
-| `maxHeight` | 否 | int | `3` | 用于 cane 和 vine。柱体能长多高，或藤蔓向下垂多远；`1` 的藤蔓既不生长也不扩散 |
+| `stages` | 否 | 整数 | `16` | 完全长成前的生长阶段数。藤蔓在每个随机刻内有 1/该数值 的机会尝试生长 |
+| `spread` | 否 | 整数 | `0` | 向相邻方块扩散的范围。当两格范围内已有这么多藤蔓时，藤蔓就不再向侧面延伸 |
+| `maxHeight` | 否 | 整数 | `3` | 用于甘蔗类（`cane`）和藤蔓（`vine`）。柱体能长多高，或藤蔓向下垂多远；`1` 的藤蔓既不生长也不扩散 |
 | `soil` | 否 | 方块名称列表 | 该类型的常规值 | 它所立足的方块 |
-| `drop` | 否 | 物品名称 | 无 | 用于 cane 和 vine。被破坏时掉落的物品；花朵掉落其自身 |
-| `dropCount` | 否 | int | `1` | 用于 cane 和 vine。掉落数量 |
-| `needsSky` | 否 | boolean | `false` | 只在能看到天空的地方生长 |
-| `needsWater` | 否 | boolean | `false` | 只在水附近生长 |
-| `waterRange` | 否 | int | `1` | 水最远可以离多远 |
-| `damage` | 否 | boolean | `false` | 伤害接触它的一切 |
-| `damageAmount` | 否 | float，半颗心 | `1.0` | 伤害多少 |
-| `breaksNeighbors` | 否 | boolean | `false` | 像仙人掌一样，破坏放在它旁边的方块 |
+| `drop` | 否 | 物品名称 | 无 | 用于甘蔗类（`cane`）和藤蔓（`vine`）。被破坏时掉落的物品；花朵掉落其自身 |
+| `dropCount` | 否 | 整数 | `1` | 用于甘蔗类（`cane`）和藤蔓（`vine`）。掉落数量 |
+| `needsSky` | 否 | 布尔值 | `false` | 只在能看到天空的地方生长 |
+| `needsWater` | 否 | 布尔值 | `false` | 只在水附近生长 |
+| `waterRange` | 否 | 整数 | `1` | 水最远可以离多远 |
+| `damage` | 否 | 布尔值 | `false` | 伤害接触它的一切 |
+| `damageAmount` | 否 | 浮点数，半颗心 | `1.0` | 伤害多少 |
+| `breaksNeighbors` | 否 | 布尔值 | `false` | 像仙人掌一样，破坏放在它旁边的方块 |
 
 ### 树苗
 
@@ -848,20 +851,25 @@ thatmod.jar
 
 ```json
 {
-  "sapling": { "structure": "mypack:ruby_tree" }
+  "sapling": {
+    "structures": [
+      { "structure": "mypack:ruby_tree", "weight": 3 },
+      "mypack:tall_ruby_tree"
+    ]
+  }
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `soil` | 否 | 方块名称列表 | 无 | 它能在什么方块上生长 |
-| `stages` | 否 | int | `2` | 长成树之前的生长阶段数 |
-| `chance` | 否 | int | `7` | 每个随机刻有 1/N 的几率 |
+| `stages` | 否 | 整数 | `2` | 长成树之前的生长阶段数 |
+| `chance` | 否 | 整数 | `7` | 每个随机刻有 1/N 的几率 |
 | `light` | 否 | 0 到 15 | `9` | 所需的光照等级 |
 | `log` | 否 | 方块名称 | `minecraft:oak_log` | 树干方块 |
 | `leaves` | 否 | 方块名称 | `minecraft:oak_leaves` | 树叶方块 |
-| `height` | 否 | int | `4` | 树干高度 |
-| `vines` | 否 | boolean | `false` | 从树叶上垂下藤蔓 |
+| `height` | 否 | 整数 | `4` | 树干高度 |
+| `vines` | 否 | 布尔值 | `false` | 从树叶上垂下藤蔓 |
 | `structure` | 否 | `namespace:name` | 无 | 长成这个模板，而不是生成的树 |
 | `structures` | 否 | 列表 | 无 | 多个可长成的模板，每次生长时选其一。每个条目写作 `{ "structure": "namespace:name", "weight": 3 }`，或只写名称表示几率相等。会覆盖 `structure` |
 
@@ -888,14 +896,14 @@ thatmod.jar
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `rows` | int | `3` | 槽位的行数，1 到 9 |
-| `columns` | int | `9` | 每行的槽位数，1 到 12 |
-| `lootTable` | text | 空 | 第一次有任何东西接触其内容物时（玩家打开、漏斗、比较器或将其破坏）会向方块中投放的战利品表，与地牢箱子的填充方式完全一致。玩家自己放置的容器不会触发。留空则保持空容器 |
-| `chestModel` | boolean 或 text | `false` | 绘制为带有可开启盖子的箱子，而不是用你自己纹理绘制的普通方块。`true` 使用原版箱子的贴图；像 `mypack:entity/chest/strongbox` 这样的纹理名称则改用你自己的箱子贴图表，放置的方块和物品都是如此。箱子模型方块还会像原版箱子一样将 `opaque` 默认为 `false`，这样光线不会在方块处被截断，箱子也不会被画得发暗 |
-| `guiTexture` | text | 空 | 界面所用的你自己的背景图片。留空则按行列所需的尺寸，用原版箱子界面拼出一个 |
-| `guiWidth` | int | 无 | 界面的宽度，从该图片的左上角起，按 256 乘 256 的贴图表读取，使用 `guiTexture` 时必填 |
-| `guiHeight` | int | 无 | 界面的高度，使用 `guiTexture` 时必填 |
-| `curioSlot` | text | 空 | 仅用于物品：它可以佩戴的 Curios 槽位，`back`、`belt`、`body`、`charm`、`head`、`necklace`、`ring` 或其他模组添加的任何槽位。背包通常使用 `back`。未安装 Curios 时会被忽略，物品的其余功能照常工作。1.12.2 的键 `bauble` 会按此键读取，并采用 Baubles 的名称：`amulet` 变为 `necklace`，`ring` 提供两个戒指槽，`belt`、`head`、`body` 和 `charm` 保持原名，`trinket` 适用于以上所有槽位。其他任何名称都会让物品无法佩戴，并输出一条错误日志 |
+| `rows` | 整数 | `3` | 槽位的行数，1 到 9 |
+| `columns` | 整数 | `9` | 每行的槽位数，1 到 12 |
+| `lootTable` | 文本 | 空 | 第一次有任何东西接触其内容物时（玩家打开、漏斗、比较器或将其破坏）会向方块中投放的战利品表，与地牢箱子的填充方式完全一致。玩家自己放置的容器不会触发。留空则保持空容器 |
+| `chestModel` | 布尔值或文本 | `false` | 绘制为带有可开启盖子的箱子，而不是用你自己纹理绘制的普通方块。`true` 使用原版箱子的贴图；像 `mypack:entity/chest/strongbox` 这样的纹理名称则改用你自己的箱子贴图表，放置的方块和物品都是如此。箱子模型方块还会像原版箱子一样将 `opaque` 默认为 `false`，这样光线不会在方块处被截断，箱子也不会被画得发暗 |
+| `guiTexture` | 文本 | 空 | 界面所用的你自己的背景图片。留空则按行列所需的尺寸，用原版箱子界面拼出一个 |
+| `guiWidth` | 整数 | 无 | 界面的宽度，从该图片的左上角起，按 256 乘 256 的贴图表读取，使用 `guiTexture` 时必需 |
+| `guiHeight` | 整数 | 无 | 界面的高度，使用 `guiTexture` 时必需 |
+| `curioSlot` | 文本 | 空 | 仅用于物品：它可以佩戴的 Curios 槽位，`back`、`belt`、`body`、`charm`、`head`、`necklace`、`ring` 或其他模组添加的任何槽位。背包通常使用 `back`。未安装 Curios 时会被忽略，物品的其余功能照常工作。1.12.2 的键 `bauble` 会按此键读取，并采用 Baubles 的名称：`amulet` 变为 `necklace`，`ring` 提供两个戒指槽，`belt`、`head`、`body` 和 `charm` 保持原名，`trinket` 适用于以上所有槽位。其他任何名称都会让物品无法佩戴，并输出一条错误日志 |
 
 **九行乘十二列是上限**，也是一个界面能容纳的最大值。资源包要求更大时会被裁到这个上限，并输出一条错误日志说明。关于最高的尺寸有一点提醒：九行的界面高 276 像素，而 1080 显示器在 GUI 缩放为 `auto` 时只有 270，因此顶部和底部各被裁掉三像素；缩放设为 3 时可完整显示。
 
@@ -915,7 +923,7 @@ thatmod.jar
 }
 ```
 
-**容器物品是一个小袋**，即类型为 `container` 的物品，携带同样的 `container` 块，含 `rows` 和 `columns`；右键打开，并且在易手时保留其内容物。没有 `container` 对象时，它只有一行九格。给它 `curioSlot`，在安装了 Curios 的情况下，它会放入该槽位，并且可以用一个按键在不取下的情况下打开，默认是 `V`，可在控制设置中的 Resource Data Pack Loader 下重新绑定。已打开一个佩戴的容器时再次按下，会切换到你佩戴的下一个并循环，因此同时佩戴多个时都能打开。该按键只在有 Curios 时出现，而物品的其他一切（右键和它的物品栏）无论有没有 Curios 都能工作。小袋的可佩戴性会自动写入该槽位的 Curios 标签。
+**容器物品是一个小袋**，即类型为 `container` 的物品，携带同样的 `container` 块，含 `rows` 和 `columns`；右键打开，并且在转手时仍保留其内容物。没有 `container` 对象时，它只有一行九格。给它 `curioSlot`，在安装了 Curios 的情况下，它会放入该槽位，并且可以用一个按键在不取下的情况下打开，默认是 `V`，可在控制设置中的 Resource Data Pack Loader 下重新绑定。已打开一个佩戴的容器时再次按下，会切换到你佩戴的下一个并循环，因此同时佩戴多个时都能打开。该按键只在有 Curios 时出现，而物品的其他一切（右键和它的物品栏）无论有没有 Curios 都能工作。小袋的可佩戴性会自动写入该槽位的 Curios 标签。
 
 **战利品表在首次使用时填充**，而不是在方块放置时，这使它在结构中很有用：第一个打开它的人获得这次投放，而先接触它的漏斗或比较器同样会触发投放。同一张表也可以用于印记形状或村庄地块上的 `lootTable`，因此资源包可以通过世界生成放置这些容器，并以同样的方式为它们补充物品。
 
@@ -968,7 +976,7 @@ thatmod.jar
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `swing` | boolean | `true` | 用单独的模型文件绘制摆动的部分，并在钟响时让它摆动。`false` 则完全用方块状态中的模型绘制整只钟，没有任何动画 |
+| `swing` | 布尔值 | `true` | 用单独的模型文件绘制摆动的部分，并在钟响时让它摆动。`false` 则完全用方块状态中的模型绘制整只钟，没有任何动画 |
 | `sound` | 音效名称 | `minecraft:block.note_block.bell` | 钟响时播放。留空则无声 |
 | `resonateSound` | 音效名称 | `minecraft:block.note_block.chime` | 因附近有袭击者而共鸣时播放。留空则共鸣无声 |
 
@@ -976,7 +984,7 @@ thatmod.jar
 
 **什么能敲响它。** 使用钟体的侧面，位于横梁下方：地面钟是其横梁所跨的两个面，墙钟是紧贴墙的两个侧面，天花板钟则是任意一侧。顶部、底部和钟体以上的任何位置都没有效果。红石信号在接通的瞬间敲响一次，箭、雪球或任何其他投射物击中手能够碰到的一侧时也会敲响。钟体会从被击中的一侧摆开，持续两秒半；红石则让它沿钟所朝的方向摆动。
 
-**敲钟的效果。** 32 格内的村民听到后会跑回家躲藏十五秒，与游戏自带的钟让它们躲藏的方式一样。当 32 格内有袭击者时，钟会在敲响后四分之一秒共鸣，两秒后 48 格内的每个袭击者会发光三秒，并在钟旁各自所站的一侧产生彩色粒子。袭击者包括 [袭击](#袭击) 派出的一切，以及游戏自带的灾厄村民和女巫。这种类型的钟对每场袭击来说都是村庄钟：每一波到来时它都会响，无需在该袭击的 `bell` 中指名。
+**敲钟的效果。** 32 格内的村民听到后会跑回家躲藏十五秒，与游戏自带的钟让它们躲藏的方式一样。当 32 格内有袭击者时，钟会在敲响后四分之一秒共鸣，两秒后 48 格内的每个袭击者会发光三秒，并在钟旁各自所站的一侧产生彩色粒子。袭击者包括[袭击](#袭击)派出的一切，以及游戏自带的灾厄村民和女巫。这种类型的钟对每场袭击来说都是村庄钟：每一波到来时它都会响，无需在该袭击的 `bell` 中指名。
 
 **模型。** 钟以 `attachment` 和 `facing` 为键，共十六种状态，`powered` 不在键中。启用 `swing` 时，这些模型只绘制框架，而摆动部分是单独的模型文件 `<namespace>:block/<name>_body`：模组按该路径加载它并由渲染器绘制，因此这个名称不是你能选的，也不会出现在方块状态中。它建模在钟体所处的方块空间中，并绕着向内半格、向上四分之三格的点倾斜，与原版相同。关闭 `swing` 时没有钟体模型，十六个框架模型绘制完整的钟。为手持而写的物品模型把框架和钟体一起绘制，所以钟在手中显示为完整的；若想以别的方式绘制，请附带 `models/item/<name>.json`。
 
@@ -1013,10 +1021,10 @@ assets/mypack/lang/en_us.json
 | `bell` | `<name>` | 游戏自带的钟框架，分别为 `<name>_floor`、`<name>_ceiling`、`<name>_wall` 和 `<name>_between_walls`，模组的 `pack_bell_body` 作为 `<name>_body`，以及覆盖这些模型的十六个 `attachment` 和 `facing` 状态的方块状态 |
 | `crop` | `<name>_stage0` 直到 `<name>_stage<maxAge>`，或用 `<name>` 表示全部 | 每个阶段一个 `crop` 模型，`age=0` 到 `7` 映射到它们 |
 | `portal` | `<name>`，或下界传送门的纹理 | 对于 `fullCube` 方块（如 1.12.2 中的传送门方块）为 `cube_all`；对于不是的（例如某个维度的框架传送门），则是每个轴一个的三个传送门半砖 |
-| `banner` | 它自己的贴图表，见 [旗帜](#旗帜) | 游戏的旗帜模型 |
+| `banner` | 它自己的贴图表，见[旗帜](#旗帜) | 游戏的旗帜模型 |
 | 带有 `chestModel` 的 `container` | `chestModel` 中指定的箱子贴图表 | 模组的 `pack_chest` 模型 |
 
-所有纹理都在 `textures/block/` 下查找，名称就是变种的键，因此注册为 `ruby_ore` 的方块需要 `textures/block/ruby_ore.png`，其他什么都不用写。物品以平面形式绘制的方块，即门、梯子、火把、树苗、花、cane、藤蔓或玻璃板，手持时在 `textures/item/<name>.png` 存在时使用它，不存在时使用其方块纹理。
+所有纹理都在 `textures/block/` 下查找，名称就是变种的键，因此注册为 `ruby_ore` 的方块需要 `textures/block/ruby_ore.png`，其他什么都不用写。物品以平面形式绘制的方块，即门、梯子、火把、树苗、花、甘蔗类（`cane`）、藤蔓或玻璃板，手持时在 `textures/item/<name>.png` 存在时使用它，不存在时使用其方块纹理。
 
 **物品**使用 `textures/item/<name>.png` 和生成的 `item/generated` 模型，工具则使用 `item/handheld`。附带 `models/item/<name>.json` 可以用别的方式绘制。
 
@@ -1028,7 +1036,7 @@ assets/mypack/lang/en_us.json
 
 *模型、方块状态与纹理*
 
-所有生成的内容都可以替换。资源包附带的方块状态原样使用，采用游戏自己的格式：以方块属性为键的原版 `variants`，或 `multipart`。属性是游戏对每种类型自带的：原木用 `axis`，半砖用 `type`，楼梯用 `facing`、`half` 和 `shape`，门用 `facing`、`half`、`hinge` 和 `open`，活板门用 `facing`、`half` 和 `open`，栅栏门用 `facing`、`in_wall` 和 `open`，作物和 cane 用 `age`，树苗用 `stage`，栅栏或玻璃板用 `north`、`east`、`south`、`west`，墙和藤蔓则再加 `up`，立式旗帜用 `rotation`，墙上的旗帜用 `facing`，传送门用 `axis`，钟用 `attachment` 和 `facing`，其 `powered` 不在键中。`basic`、`ore`、`falling`、`leaves`、`flower` 或 `container` 方块只有一种状态，键为 `""`。
+所有生成的内容都可以替换。资源包附带的方块状态原样使用，采用游戏自己的格式：以方块属性为键的原版 `variants`，或 `multipart`。属性是游戏对每种类型自带的：原木用 `axis`，半砖用 `type`，楼梯用 `facing`、`half` 和 `shape`，门用 `facing`、`half`、`hinge` 和 `open`，活板门用 `facing`、`half` 和 `open`，栅栏门用 `facing`、`in_wall` 和 `open`，作物和甘蔗类（`cane`）用 `age`，树苗用 `stage`，栅栏或玻璃板用 `north`、`east`、`south`、`west`，墙和藤蔓则再加 `up`，立式旗帜用 `rotation`，墙上的旗帜用 `facing`，传送门用 `axis`，钟用 `attachment` 和 `facing`，其 `powered` 不在键中。`basic`、`ore`、`falling`、`leaves`、`flower` 或 `container` 方块只有一种状态，键为 `""`。
 
 模型应指向接受纹理的父模型，而不是已完成的原版模型：`cube_all` 接受 `all`；`cube_column` 接受 `end` 和 `side`；`cross` 接受 `cross`；楼梯的父模型接受 `bottom`、`top` 和 `side`；`fence_post` 和 `fence_side` 接受 `texture`；`template_wall_post` 和 `template_wall_side` 接受 `wall`；玻璃板模板接受 `pane` 和 `edge`；门的父模型接受 `top` 和 `bottom`；`template_orientable_trapdoor_*` 和 `template_fence_gate*` 接受 `texture`；`template_torch` 接受 `torch`；`crop` 接受 `crop`；`vine` 和 `ladder` 接受以各自名称命名的纹理。指向已完成的原版模型（例如 `oak_door_bottom_left`）的模型会连带继承原版的纹理，无论方块状态怎么写。
 
@@ -1040,7 +1048,7 @@ assets/mypack/lang/en_us.json
 
 **它会注册两个方块。** 一个定义会给你以自己名称命名的立式旗帜，以及名为 `<name>_wall` 的第二个方块用于悬挂的旗帜。两者都需要方块状态；只有立式的会得到物品，由该物品决定放置两者中的哪一个：点击方块顶部时放立式的，点击侧面时放墙式的。你永远不会直接放置墙式方块，它也不需要自己的物品。
 
-**立式旗帜以十六分之一圈转动。** 它的属性是 `rotation`，从 `0` 到 `15`，因为旗帜是按十六分之一圈而不是四分之一圈转动的。方块状态自带的 `y` 只接受 0、90、180 和 270，因此每个 rotation 都指向一个自己的小模型，该模型以你的旗帜模型为父模型，并用 `transform` 转动它：
+**立式旗帜以十六分之一圈转动。** 它的属性是 `rotation`，从 `0` 到 `15`，因为旗帜是按十六分之一圈而不是四分之一圈转动的。方块状态自带的 `y` 只接受 0、90、180 和 270，因此每个 `rotation` 都指向一个自己的小模型，该模型以你的旗帜模型为父模型，并用 `transform` 转动它：
 
 ```json
 {
@@ -1058,7 +1066,7 @@ assets/mypack/lang/en_us.json
 }
 ```
 
-……依此类推直到 `15`，每个都再多转 `-22.5` 度。符号与游戏自带的旗帜一致，它们按 rotation 的负值转动。请把模型建成朝南，因为玩家面朝南放置的旗帜最终就朝向那里。墙式方块是普通的方块状态，有常规的四个 `facing` 条目，分别为 0、90、180 和 270，因为它没有任何小数的部分。转换 1.12.2 资源包时，其 Forge 方块状态正是被转换成这种形式。
+……依此类推直到 `15`，每个都再多转 `-22.5` 度。符号与游戏自带的旗帜一致，它们按 `rotation` 的负值转动。请把模型建成朝南，因为玩家面朝南放置的旗帜最终就朝向那里。墙式方块是普通的方块状态，有常规的四个 `facing` 条目，分别为 0、90、180 和 270，因为它没有任何小数的部分。转换 1.12.2 资源包时，其 Forge 方块状态正是被转换成这种形式。
 
 **模型几乎有两个方块高。** 旗帜在放置和碰撞上只占一个方块，但绘制时远远超出这个范围，止于自身方块顶部的模型会显得发育不良。原版的比例（以十六分之一方块为单位）值得原样照抄：
 
@@ -1121,7 +1129,7 @@ assets/mypack/lang/en_us.json
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `size` | 是，或继承 | `widthxheight` | | 横向和纵向各有多少像素 |
 | `rows` | 是，或继承 | 文本列表 | | 每行像素一个字符串，每个像素一个字符，从上往下 |
@@ -1205,7 +1213,7 @@ oretest:textures/block/ruby_ore.png is 16x16
   a  #747474  86 pixel(s)  set by gem_ore.png.json   stone, the commonest tone
 ```
 
-每个字符都会列出它的颜色、覆盖的像素数、继承链中哪个文件设置了它，以及该文件说明它的用途。路径可以写成简短形式 `mypack:block/panel`，也可以写全。显示为 0 像素的字符，是调色板里提到而 rows 从未用到的，这通常是某一行里的笔误。
+每个字符都会列出它的颜色、覆盖的像素数、继承链中哪个文件设置了它，以及该文件说明它的用途。路径可以写成简短形式 `mypack:block/panel`，也可以写全。显示为 0 像素的字符，是调色板里提到而 `rows` 从未用到的，这通常是某一行里的笔误。
 
 **绘制出的图像保存在磁盘上**，位于 `rdploader/pixelmap-cache`，每个命名空间一个文件夹，文件以纹理命名，末尾带有其来源的哈希。哈希涵盖整条继承链，即这张图本身及其上方的每个模板，因此编辑模板会改变每个继承它的变种的戳记，它们都会被重新绘制。一张图被重绘时，它较旧的文件会被清除。
 
@@ -1238,7 +1246,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 }
 ```
 
-**`plantTypes`** 列出你的方块所支持的植物类型，这样树苗、作物和花就能种在它上面：`plains`、`desert`、`beach`、`cave`、`water`、`nether` 和 `crop`。**1.21.1** 完全没有植物类型；在那里 `behavesAs` 中的 `bush` 起到 `plains` 原来的作用，其余由植物自己的 soil 列表决定，该键会被读取但忽略。
+**`plantTypes`** 列出你的方块所支持的植物类型，这样树苗、作物和花就能种在它上面：`plains`、`desert`、`beach`、`cave`、`water`、`nether` 和 `crop`。**1.21.1** 完全没有植物类型；在那里 `behavesAs` 中的 `bush` 起到 `plains` 原来的作用，其余由植物自己的 `soil` 列表决定，该键会被读取但忽略。
 
 **`behavesAs`** 让原版把你的方块当作它自己的某个方块来对待：
 
@@ -1306,7 +1314,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `seed` | 种下你的某种作物 |
 | `potion` | 使用时施加你的药水效果 |
 | `potion_bottle` | 盛放你的药水类型，并在创造模式标签页中显示它们 |
-| `container` | 小袋：手持或佩戴的物品栏，见 [容器](#容器) |
+| `container` | 小袋：手持或佩戴的物品栏，见[容器](#容器) |
 
 `potion_bottle` 用 `potionTypes` 列出它能盛放的内容，这是一个药水类型名称的数组，如 `["mypack:ruby_tonic"]`。列表为空的物品不会注册任何内容，日志会说明这一点。
 
@@ -1314,22 +1322,22 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 *物品*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `variants` | 是 | 变种名称到变种的对象 | | 每个条目一个物品。键是它的注册名，并命名它的模型、纹理和语言键 |
 | `type` | 否 | 上述类型之一 | `basic` | 物品采用哪种类型 |
-| `creativeTab` | 否 | 标签页名称 | 无 | 它出现在哪个标签页，见 [创造模式标签页](#创造模式标签页) |
-| `material` | tool、armor | 材料名称 | 无 | 它由你的哪种材料制成 |
-| `toolClass` | tool | `pickaxe`、`axe`、`shovel`、`sword` | 无 | 它是哪种工具。`sword` 是 1.12.2 的工具而不是原版的剑：它造成 3 加上材料 `damage` 的伤害，能开采 `harvestTool` 为 `sword` 的方块，可使用挖掘类附魔，既不会横扫也不能砍蜘蛛网 |
-| `slot` | armor | `head`、`chest`、`legs`、`feet` | 无 | 穿戴的位置。`helmet`、`chestplate`、`leggings` 和 `boots` 也可使用 |
-| `eat` | food | boolean | `false` | 使用食用动画 |
-| `alwaysEdible` | food | boolean | `false` | 饥饿值已满时也可食用 |
-| `useDuration` | 否 | int，刻 | `32` | 使用它需要多长时间 |
-| `attackSpeed` | 否 | float | 视工具类别而定 | 用于 `tool`，即攻击速度属性，例如剑为 `-2.4` |
-| `cooldown` | 否 | int，刻 | `0` | 用于 `food`、`drink` 和 `potion`，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔 |
-| `container` | drink | 物品名称 | 无 | 留下的东西，例如瓶子。在 `container` 物品上，这个键改为小袋自己的设置，见 [容器](#容器) |
-| `crop` | seed | 方块名称 | 无 | 它种下的作物 |
-| `soil` | seed | 方块名称 | `minecraft:farmland` | 它可以种在什么方块上 |
+| `creativeTab` | 否 | 标签页名称 | 无 | 它出现在哪个标签页，见[创造模式标签页](#创造模式标签页) |
+| `material` | `tool`、`armor` | 材料名称 | 无 | 它由你的哪种材料制成 |
+| `toolClass` | `tool` | `pickaxe`、`axe`、`shovel`、`sword` | 无 | 它是哪种工具。`sword` 是 1.12.2 的工具而不是原版的剑：它造成 3 加上材料 `damage` 的伤害，能开采 `harvestTool` 为 `sword` 的方块，可使用挖掘类附魔，既不会横扫也不能砍蜘蛛网 |
+| `slot` | `armor` | `head`、`chest`、`legs`、`feet` | 无 | 穿戴的位置。`helmet`、`chestplate`、`leggings` 和 `boots` 也可使用 |
+| `eat` | `food` | 布尔值 | `false` | 使用食用动画 |
+| `alwaysEdible` | `food` | 布尔值 | `false` | 饥饿值已满时也可食用 |
+| `useDuration` | 否 | 整数，单位为刻 | `32` | 使用它需要多长时间 |
+| `attackSpeed` | 否 | 浮点数 | 视工具类别而定 | 用于 `tool`，即攻击速度属性，例如剑为 `-2.4` |
+| `cooldown` | 否 | 整数，单位为刻 | `0` | 用于 `food`、`drink` 和 `potion`，物品被消耗后多长时间内拒绝再次使用；对带 `rolls` 的物品而言，两次掷骰之间的间隔 |
+| `container` | `drink` | 物品名称 | 无 | 留下的东西，例如瓶子。在 `container` 物品上，这个键改为小袋自己的设置，见[容器](#容器) |
+| `crop` | `seed` | 方块名称 | 无 | 它种下的作物 |
+| `soil` | `seed` | 方块名称 | `minecraft:farmland` | 它可以种在什么方块上 |
 | `rolls` | 否 | `coin`、`d6`、`2d6+1`、一个骰子或一个牌堆 | 无 | 在普通物品上，右键会像 `/rdplserver game` 那样掷骰，并告知资源包的默认听众。参见[骰子与牌堆](#骰子与牌堆) |
 | `passesTurn` | 否 | 布尔值 | `false` | 在普通物品上，右键会像 `/rdplserver game pass` 那样结束持有者阵营的行动。参见[轮流行动](#轮流行动) |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
@@ -1338,14 +1346,14 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 *物品*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `maxSize` | 否 | 1 到 64 | `64` | 堆叠上限 |
-| `rarity` | 否 | `common`、`uncommon`、`rare`、`epic` | `common` | 提示框中名称的颜色 |
-| `healAmount` | food | int，半个鸡腿 | `0` | 恢复的饥饿值 |
-| `saturation` | food | float | `0.0` | 恢复的饱和度 |
+| `rarity` | 否 | `common`、`uncommon`、`rare`、`epic` | `common` | 工具提示中名称的颜色 |
+| `healAmount` | `food` | 整数，半个鸡腿 | `0` | 恢复的饥饿值 |
+| `saturation` | `food` | 浮点数 | `0.0` | 恢复的饱和度 |
 | `tags` | 否 | 标签 id 列表 | 无 | 该变种写入的物品标签；标签文件会为你生成 |
-| `potion` | food、drink | `potion,duration,amplifier` | 无 | 该变种被食用或饮用时施加的效果。第四个部分 `true` 使其成为环境效果。有益效果在提示框中以绿色显示名称，等级高于 0 时后面跟着罗马数字的等级，并且它所赋予的任何效果都不显示粒子 |
+| `potion` | `food`、`drink` | `potion,duration,amplifier` | 无 | 该变种被食用或饮用时施加的效果。第四个部分 `true` 使其成为环境效果。有益效果在工具提示中以绿色显示名称，等级高于 0 时后面跟着罗马数字的等级，并且它所赋予的任何效果都不显示粒子 |
 
 ## 流体
 
@@ -1379,18 +1387,18 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `name` | 否 | string | 文件名 | 流体及其桶（`<name>_bucket`）的注册名；方块保留文件的路径 |
+| `name` | 否 | 字符串 | 文件名 | 流体及其桶（`<name>_bucket`）的注册名；方块保留文件的路径 |
 | `still` | 否 | 纹理路径 | 原版静止的水 | 静止流体的纹理 |
 | `flow` | 否 | 纹理路径 | 原版流动的水 | 流动流体的纹理 |
 | `color` | 否 | 十六进制颜色 | 无 | 施加在这些纹理上的色调。在默认的水纹理上，它会乘以 1.12.2 水的蓝色，因此为 1.12.2 选的颜色在这里看起来一样 |
-| `bucket` | 否 | boolean | `true` | 为它注册一个桶 |
+| `bucket` | 否 | 布尔值 | `true` | 为它注册一个桶 |
 | `luminosity` | 否 | 0 到 15 | `0` | 发出的光 |
-| `density` | 否 | int | `1000` | 负值会像气体一样向上浮 |
-| `temperature` | 否 | int，开尔文 | `300` | 水是 300，熔岩是 1300 |
-| `viscosity` | 否 | int | `1000` | 流动得有多慢：流体每隔 viscosity / 200 刻前进一次。水是 1000，熔岩是 6000 |
-| `gaseous` | 否 | boolean | `false` | 视为气体 |
+| `density` | 否 | 整数 | `1000` | 负值会像气体一样向上浮 |
+| `temperature` | 否 | 整数，开尔文 | `300` | 水是 300，熔岩是 1300 |
+| `viscosity` | 否 | 整数 | `1000` | 流动得有多慢：流体每隔 viscosity / 200 刻前进一次。水是 1000，熔岩是 6000 |
+| `gaseous` | 否 | 布尔值 | `false` | 视为气体 |
 | `creativeTab` | 否 | 标签页名称 | 无 | 桶出现的标签页 |
 | `block` | 否 | 对象 | | 流体方块。`material`（`water`）：`water` 可以游泳和溺水，能让船漂浮，扑灭着火的生物，使耕地保持湿润，并在下界倒入时蒸发；`lava` 会点燃站在其中的一切，不能游泳或溺水，并使用熔岩桶的音效；任何其他材料都不具备以上这些。`flammability`（`0`）和 `fireSpread`（`0`）：火焰吞噬该方块并从它蔓延的难易程度。`quantaPerBlock`（`0`，按 8 读取）：它从源头流出多远，如 1.12.2 一样比该数字少一格；这里的流体能到达 1、2、3 或 7 格，因此 4 和 5 流 3 格，6 及以上流 7 格。`potions`（无，一个施加给站在其中的一切的效果列表，每个写作 `potion,duration,amplifier`，可加第四个部分 `true` 表示环境效果） |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
@@ -1420,16 +1428,16 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `harvestLevel` | 否 | 0 到 4 | `1` | 工具等级。0 木，1 石，2 铁，3 钻石，4 下界合金 |
-| `durability` | 否 | int | `250` | 损坏前的使用次数 |
-| `efficiency` | 否 | float | `6.0` | 挖掘速度。钻石是 8 |
-| `damage` | 否 | float | `2.0` | 攻击伤害加成 |
-| `enchantability` | 否 | int | `14` | 附魔的优质程度。金是 22 |
+| `durability` | 否 | 整数 | `250` | 损坏前的使用次数 |
+| `efficiency` | 否 | 浮点数 | `6.0` | 挖掘速度。钻石是 8 |
+| `damage` | 否 | 浮点数 | `2.0` | 攻击伤害加成 |
+| `enchantability` | 否 | 整数 | `14` | 附魔的优质程度。金是 22 |
 | `repairItem` | 否 | 物品名称 | 无 | 在铁砧中修复由它制成的工具所用的物品。由它制成的盔甲不通过这种方式修复，与 1.12.2 一致 |
-| `reduction` | 否 | 四个 int 的列表 | | 护甲值，顺序为靴子、护腿、胸甲、头盔 |
-| `toughness` | 否 | float | `0.0` | 盔甲韧性，如钻石所具有的 |
+| `reduction` | 否 | 四个整数的列表 | `[2, 5, 6, 2]` | 护甲值，顺序为靴子、护腿、胸甲、头盔 |
+| `toughness` | 否 | 浮点数 | `0.0` | 盔甲韧性，如钻石所具有的 |
 | `equipSound` | 否 | 音效名称 | `item.armor.equip_iron` | 穿上盔甲时的音效 |
 | `armorTexture` | 否 | 纹理前缀 | 文件名 | 穿戴的盔甲纹理，从该命名空间下的 `textures/models/armor/<name>_layer_1.png` 和 `_layer_2.png` 读取 |
 
@@ -1445,9 +1453,9 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 { "label": "rubypack", "icon": "mypack:ruby" }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `label` | 否 | string | 文件名 | 标签页的 id：方块和物品在 `creativeTab` 中指定它，显示的名称来自语言文件中的 `itemGroup.<namespace>.<label>` |
+| `label` | 否 | 字符串 | 文件名 | 标签页的 id：方块和物品在 `creativeTab` 中指定它，显示的名称来自语言文件中的 `itemGroup.<namespace>.<label>` |
 | `icon` | 否 | 物品名称 | 无 | 标签页上显示的物品 |
 
 ### 音效
@@ -1468,7 +1476,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 标签采用游戏自己的格式，放在游戏自己的文件夹中，资源包像数据包那样附带它们：`tags/items/ores/ruby.json`（1.21.1：`tags/item/`）中写 `{ "values": ["mypack:ruby_ore"] }`，就把这个矿石放进 `mypack:ores/ruby`，而 `data/forge/tags/items/ores/ruby.json`（1.21.1：`data/c/...`）下的文件会添加到每个模组都读取的共享约定标签中。资源包自己的方块和物品改为在变种的 `tags` 中指定它们的标签，文件会为你写好；`harvestTool` 和 `harvestToolLevel` 以同样的方式写出 `mineable` 和 `needs_*_tool` 标签。
 
-1.12.2 的矿物词典已被标签取代。它的名称对应到约定标签：`oreRuby` 在 1.20.1 上是 `forge:ores/ruby`，在 1.21.1 上是 `c:ores/ruby`，`ingotCopper` 是 `ingots/copper`，`gemRuby` 是 `gems/ruby`，`dustX` 是 `dusts/x`，`nuggetX` 是 `nuggets/x`，`blockX` 是 `storage_blocks/x`，而 `logWood`、`plankWood` 和 `stickWood` 是游戏自己的 `minecraft:logs`、`minecraft:planks` 和约定的 `rods/wooden`。标签文件的 `"remove": [...]` 从标签中移除单个条目，`"replace": true` 加上空的 `"values": []` 则清空它，因此来自较低资源包或某个模组的标签可以被削减或清空。若要一次性把物品从所有标签中移除并彻底退出游戏，请使用 [禁用的方块与物品](#禁用的方块与物品)。
+1.12.2 的矿物词典已被标签取代。它的名称对应到约定标签：`oreRuby` 在 1.20.1 上是 `forge:ores/ruby`，在 1.21.1 上是 `c:ores/ruby`，`ingotCopper` 是 `ingots/copper`，`gemRuby` 是 `gems/ruby`，`dustX` 是 `dusts/x`，`nuggetX` 是 `nuggets/x`，`blockX` 是 `storage_blocks/x`，而 `logWood`、`plankWood` 和 `stickWood` 是游戏自己的 `minecraft:logs`、`minecraft:planks` 和约定的 `rods/wooden`。标签文件的 `"remove": [...]` 从标签中移除单个条目，`"replace": true` 加上空的 `"values": []` 则清空它，因此来自较低资源包或某个模组的标签可以被削减或清空。若要一次性把物品从所有标签中移除并彻底退出游戏，请使用[禁用的方块与物品](#禁用的方块与物品)。
 
 ## 属性覆盖
 
@@ -1520,14 +1528,14 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 | 键 | 值 | 作用 |
 | --- | --- | --- |
-| `hardness` | float | 挖掘时间，与方块定义所接受的数值相同。若没有 `resistance`，它还会像 1.12.2 那样把爆炸抗性至少提高到同样的数值 |
-| `resistance` | float | 按 1.12.2 的读法读取的爆炸抗性：方块保留该数值的五分之三，因此 `10` 得到石头的 `6` |
-| `slipperiness` | float | `0.6` 是普通地面，`0.98` 是冰 |
+| `hardness` | 浮点数 | 挖掘时间，与方块定义所接受的数值相同。若没有 `resistance`，它还会像 1.12.2 那样把爆炸抗性至少提高到同样的数值 |
+| `resistance` | 浮点数 | 按 1.12.2 的读法读取的爆炸抗性：方块保留该数值的五分之三，因此 `10` 得到石头的 `6` |
+| `slipperiness` | 浮点数 | `0.6` 是普通地面，`0.98` 是冰 |
 | `light` | `0` 到 `15` | 发出的光 |
 | `lightOpacity` | `0` 到 `15` | 方块阻挡多少光 |
 | `soundType` | 音效类型之一 | 脚步、放置和破坏的音效 |
 | `harvestTool` | `pickaxe`、`axe`、`shovel`、`hoe` 或 `sword` | 用什么能快速挖掘它，写入工具标签；`harvestToolLevel`（默认 `0`）设置等级：1 石，2 铁，3 钻石，4 及以上下界合金。没有合适工具时方块是否掉落，保持方块原有的设定 |
-| `flammability` | int | 它烧毁的难易程度；`fireSpread`（默认 `5`）为火焰蔓延到它的难易程度 |
+| `flammability` | 整数 | 它烧毁的难易程度；`fireSpread`（默认 `5`）为火焰蔓延到它的难易程度 |
 
 ### 物品属性
 
@@ -1536,7 +1544,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | 键 | 值 | 作用 |
 | --- | --- | --- |
 | `maxStackSize` | `1` 到 `64` | 堆叠上限 |
-| `maxDamage` | int | 耐久度 |
+| `maxDamage` | 整数 | 耐久度 |
 | `containerItem` | 物品名称 | 留在合成网格中，就像桶那样 |
 | `food` | 对象 | 使物品可食用，见下文 |
 
@@ -1572,7 +1580,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 }
 ```
 
-在 `overrides/minecraft/swiftness.json` 处，迅捷药水现在会赋予飘浮。每个条目接受 `potion`（必填）、`duration`（`3600`）、`amplifier`（`0`）、`ambient`（`false`）和 `showParticles`（`true`），与 `potion_types/` 中相同，且列表不可为空。
+在 `overrides/minecraft/swiftness.json` 处，迅捷药水现在会赋予飘浮。每个条目接受 `potion`（必需）、`duration`（`3600`）、`amplifier`（`0`）、`ambient`（`false`）和 `showParticles`（`true`），与 `potion_types/` 中相同，且列表不可为空。
 
 ### 其他模组、重载与限制
 
@@ -1625,32 +1633,32 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 *硬度分组*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `blocks` | 是 | 方块名称或对象的列表 | | 该分组。与世界生成的 `replace` 形式相同 |
 | `except` | 否 | 方块名称或对象的列表 | 无 | 从该分组中剔除，无论 `blocks` 怎么写 |
 | `miningTime` | 否 | 数字，或含 `min` 和 `max` 的对象 | `1.0` | 方块需要多少倍的时间才能破坏，对玩家和 `digs` 生物同样适用 |
 | `blastResistance` | 否 | 数字，或含 `min` 和 `max` 的对象 | `1.0` | 乘以方块的爆炸抗性 |
 | `buckets` | 否 | 1 到 256 | `10` | 范围被划分成多少级 |
-| `minHeight` | 否 | int | 世界底部 | 低于此高度，随机结果取最硬的一级 |
-| `maxHeight` | 否 | int | 世界顶部 | 高于此高度，随机结果取最硬的一级 |
+| `minHeight` | 否 | 整数 | 世界底部 | 低于此高度，随机结果取最硬的一级 |
+| `maxHeight` | 否 | 整数 | 世界顶部 | 高于此高度，随机结果取最硬的一级 |
 | `field` | 否 | 对象 | 见下文 | 随机结果聚成团的形状 |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该文件 |
 
-单个数字让分组中的每个方块得到相同的倍率，不做任何随机。`min` 和 `max` 则按位置随机：矿场为空的地方取 `max`，团块中央取 `min`，两者之间的各级由 `buckets` 决定。
+单个数字让分组中的每个方块得到相同的倍率，不做任何随机。`min` 和 `max` 则按位置随机：分布场为空的地方取 `max`，团块中央取 `min`，两者之间的各级由 `buckets` 决定。
 
 ### 冒险挖掘与解锁
 
 *硬度分组*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `keeps` | 否 | boolean | `false` | 方块被挖掉后仍留在原处：掉落物、经验、工具损耗和破坏音效都会发生，而方块仍然在那里可以再次挖掘，因此该分组成为一条无穷无尽的矿脉，节奏由 `miningTime` 决定。创造模式照常将其移除 |
+| `keeps` | 否 | 布尔值 | `false` | 方块被挖掉后仍留在原处：掉落物、经验、工具损耗和破坏音效都会发生，而方块仍然在那里可以再次挖掘，因此该分组成为一条无穷无尽的矿脉，节奏由 `miningTime` 决定。创造模式照常将其移除 |
 | `adventure` | 否 | 对象 | 无 | 谁可以在冒险模式下破坏该分组，否则在冒险模式下什么都不能破坏。`tools` 列出必须手持其中之一的物品，留空表示手持任何东西均可；`teams`、`players` 和 `entities` 说明是谁，队伍用名称，玩家用名字，生物用其实体 id（用于 `digs` 任务），三者都为空表示任何持有该工具的人。生存模式和创造模式不受影响 |
 | `advancement` | 否 | `namespace:path` | 无 | 玩家只有获得该进度后，该分组才对其生效。两个分组可以指定同一个方块，一个带进度，一个不带，已解锁的那个优先；没有该进度的玩家得到普通分组，若没有则是原版。生物没有进度，因此带条件的分组永远不会作用于 `digs` 任务，而不属于任何玩家的爆炸抗性和纹理随机，则来自普通分组 |
 | `becomes` | 否 | 对象 | 无 | 一旦任何玩家获得 `advancement`，该分组的方块就在全世界范围内变成另一种方块：`{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`。每个已加载的区块会立刻被清扫，之后加载或生成的区块会在进入时被清扫，因此旧方块就此永远消失。给新方块一个自己的分组，可以改变它的挖掘方式 |
 
-### 矿场
+### 分布场
 
 *硬度分组*
 
@@ -1668,7 +1676,7 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 #### speckle
 
-*矿场*
+*分布场*
 
 每个方块各自抽取一个档位，相隔一面的方块还可以把一个更弱的档位传给它。这样得到的是密集而细碎的斑点，大多只有单个方块，相遇处偶尔会出现较大的斑块。在这两种方式中，它更接近本模组所借鉴的那个模组里的挖掘手感。
 
@@ -1687,11 +1695,11 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 | `chances` | 否   | 整数列表，单位为千分比 | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | 方块从每个档位起步的频率，最软的档位排在最后。剩余的部分都是最硬的档位 |
 | `spread`  | 否   | 0.0 到 1.0         | `0.15`                                 | 一个档位传给相邻方块的频率，传过去的档位会弱一档或三档               |
 
-列表按最软档位在最后的顺序读取，因此最后一项是最软的档位，第一项比最硬档位高一档。按上面的数值，每十个方块中约有七个是最硬档位，其余的散布其中。
+列表按最软档位在最后的顺序读取，因此最后一项是最软的档位，第一项比最硬档位高一档。默认概率合计为千分之 190，因此每十个方块中约有八个自己就掷出最硬档位，而 `spread` 会让其中一部分变软，最终每十个方块中约有七个是最硬档位，其余的散布其中。
 
 #### seeded
 
-*矿场*
+*分布场*
 
 种子分布在由世界和位置推算出的晶格上，方块的档位取决于它离最近一颗种子有多近。这样得到的斑块更少、更大、更圆，彼此相连，还能长出分支。
 
@@ -1710,11 +1718,11 @@ PNG 永远优先。如果 `panel.png` 和 `panel.png.json` 都存在，就提供
 
 | 键         | 必需 | 值             | 默认值 | 作用                     |
 | ---------- | ---- | -------------- | ------ | ------------------------ |
-| `cell`     | 否   | 整数，单位为方块 | `8`    | 种子之间相隔多远         |
+| `cell`     | 否   | 整数，单位为格  | `8`    | 种子之间相隔多远         |
 | `seeds`    | 否   | 1 到 4         | `1`    | 每个单元格中的种子数     |
-| `reach`    | 否   | 浮点数，单位为方块 | `3.0`  | 一颗种子的影响范围       |
+| `reach`    | 否   | 浮点数，单位为格  | `3.0`  | 一颗种子的影响范围       |
 | `arms`     | 否   | 0 到 6         | `0`    | 从每颗种子向外辐射的分支数 |
-| `armReach` | 否   | 浮点数，单位为方块 | `0.0`  | 分支延伸的距离           |
+| `armReach` | 否   | 浮点数，单位为格  | `0.0`  | 分支延伸的距离           |
 
 不写 `arms` 时，斑块是圆形的。给种子加上分支，它就变成带触须的结，相邻结的分支会彼此伸向对方，形成的是矿脉而不是团块。请让 `reach` 大于 `cell` 的一半，否则斑块无法相接，只会得到彼此之间空无一物的独立圆球。
 
@@ -1779,9 +1787,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键           | 必需 | 值                     | 默认值 | 作用                                                                                                     |
 | ------------ | ---- | ---------------------- | ------ | -------------------------------------------------------------------------------------------------------- |
 | `names`      | 否   | 方块和物品名称的列表   | 无     | 要禁用的内容。以 `*` 结尾的名称匹配所有以其余部分开头的名称                                              |
-| `namespaces` | 否   | 模组 id 的列表         | 无     | 该模组的所有方块和物品                                                                                   |
+| `namespaces` | 否   | 模组 id 列表          | 无     | 该模组的所有方块和物品                                                                                   |
 | `tags`       | 否   | 标签名称的列表         | 无     | 该名称的物品标签中的所有物品和方块标签中的所有方块，这两个标签随后都会被清空。允许在前面加 `#`           |
-| `requires`   | 否   | 模组 id 的列表         | 无     | 除非列出的模组全部已加载，否则跳过该文件。`config:` 和 `file:` 条目的作用与其他各处相同                  |
+| `requires`   | 否   | 模组 id 列表          | 无     | 除非列出的模组全部已加载，否则跳过该文件。`config:` 和 `file:` 条目的作用与其他各处相同                  |
 
 被禁用的方块或物品：
 
@@ -1850,8 +1858,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键         | 必需         | 值          | 默认值 | 作用                 |
 | ---------- | ------------ | ----------- | ------ | -------------------- |
-| `item`     | 两者选其一   | 物品名称    | 无     | 会燃烧的物品         |
-| `tag`      | 两者选其一   | 标签 id     | 无     | 该标签中的所有物品都会燃烧 |
+| `item`     | 二选一       | 物品名称    | 无     | 会燃烧的物品         |
+| `tag`      | 二选一       | 标签 id     | 无     | 该标签中的所有物品都会燃烧 |
 | `burnTime` | 是           | 整数，单位为刻 | `0`    | 煤炭是 1600，木板是 300 |
 
 ## 药水、药水类型与酿造
@@ -1883,8 +1891,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `badEffect`     | 否   | 布尔值       | `false`                                 | 视为有害效果，因此发酵蜘蛛眼会将其反转                                                                |
 | `beneficial`    | 否   | 布尔值       | `false`                                 | 显示为增益效果                                                                                        |
 | `instant`       | 否   | 布尔值       | `false`                                 | 一次性生效，而不是随时间持续                                                                          |
-| `effectiveness` | 否   | 浮点数       | `0.5`                                   | 读取它只是为了让 1.12.2 的文件能够加载；1.12.2 和此版本都不会用到它                                   |
-| `attributes`    | 否   | 对象列表     | 无                                      | `attribute`（游戏中的 id，例如 `minecraft:generic.movement_speed`）、`uuid`、`amount`（`0.0`）、`operation`（`0`） |
+| `effectiveness` | 否   | 浮点数       | `0.5`                                   | 可以接受但在所有线路上都不起作用：此版本从不读取它，原版 1.12.2 也从不读取 `Potion.effectiveness`                                   |
+| `attributes`    | 否   | 对象列表     | 无                                      | `attribute`（游戏中的 id，例如 `minecraft:generic.movement_speed`）、`uuid`（1.12.2 会读取，本版本忽略）、`amount`（`0.0`）、`operation`（`0`） |
 | `icon`          | 否   | 对象         | 无                                      | `x` 和 `y`，即图标在 1.12.2 状态图集中的列和行，不写则各为 `0`。仅在没有 `iconTexture` 时读取         |
 | `iconTexture`   | 否   | 纹理路径     | RDPL 图标，设置了 `icon` 时则为无       | 资源包自带的图片，例如 `mypack:textures/effect/rage.png`，整张绘制为图标                              |
 
@@ -1909,7 +1917,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键         | 必需 | 值       | 默认值             | 作用                                                                                                                                                                                                                                       |
 | ---------- | ---- | -------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `baseName` | 否   | 字符串   | 命名空间与名称     | 为药水命名：语言键 `item.minecraft.potion.effect.<baseName>`，其他形态则把 `potion` 换成 `splash_potion`、`lingering_potion` 或 `tipped_arrow`。盛放它的 `potion_bottle` 显示相同的名称，1.12.2 资源包的 `potion.effect.<baseName>` 键会被转换 |
+| `baseName` | 否   | 字符串    | 命名空间与名称     | 为药水命名：语言键 `item.minecraft.potion.effect.<baseName>`，其他形态则把 `potion` 换成 `splash_potion`、`lingering_potion` 或 `tipped_arrow`。盛放它的 `potion_bottle` 显示相同的名称，1.12.2 资源包的 `potion.effect.<baseName>` 键会被转换 |
 | `effects`  | 是   | 对象列表 |                    | 见下文                                                                                                                                                                                                                                     |
 
 每个效果接受 `potion`（必需）、`duration`（`3600`）、`amplifier`（`0`）、`ambient`（`false`）和 `showParticles`（`true`）。
@@ -2108,6 +2116,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | ------------ | ---- | -------- | ------ | ------------------------------------------------------------------------ |
 | `profession` | 是   | 职业名称 |        | 这是谁的交易。原版 1.12.2 名称连同它的 `career` 也会被读取，见上文       |
 | `level`      | 否   | 整数     | `1`    | 它出现在哪个交易等级，1 到 5。更高的等级并入 5 级，即村民所能达到的最高级 |
+| `buy`        | 是 | 物品堆 | 无 | 村民收取的物品，按物品堆写法书写（见下文）。没有收购或出售物品的交易会被跳过 |
+| `buySecondary` | 否 | 物品堆 | 无 | 村民在 `buy` 之外收取的第二件物品，写法相同 |
+| `sell`       | 是 | 物品堆 | 无 | 村民给出的物品，按物品堆写法书写（见下文） |
 | `maxUses`    | 否   | 整数     | `12`   | 锁定之前可以使用的次数                                                   |
 | `xp`         | 否   | 整数     | `2`    | 每次交易村民获得的、用于升级的经验                                       |
 
@@ -2230,12 +2241,15 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键              | 必需 | 值                         | 默认值 | 作用                                                                                                                                                  |
 | --------------- | ---- | -------------------------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `entity`        | 是   | `namespace:name`           | 无     | 作为基础的实体。任何模组的都可以，只要它使用普通的世界构造函数                                                                                        |
-| `name`          | 否   | 字符串                     | 无     | 它在世界中、死亡消息中以及刷怪蛋上显示的名称                                                                                                          |
+| `name`          | 否   | 字符串                      | 无     | 它在世界中、死亡消息中以及刷怪蛋上显示的名称                                                                                                          |
 | `showName`      | 否   | 布尔值                     | `false` | 不必注视它也显示名称                                                                                                                                  |
 | `profession`    | 否   | `namespace:name`           | 随机   | 对村民而言，它从事的职业                                                                                                                              |
 | `baby`          | 否   | 布尔值或 0.0 到 1.0        | `false` | 生成幼体的频率，且会一直保持幼体。`true` 表示总是，数字则表示其中的比例                                                                               |
 | `becomes`       | 否   | 列表                       | 无     | 它在生成时可能变成的其他变种，按权重决定。见下文                                                                                                      |
-| `egg`           | 否   | 布尔值或对象               | `true` | 刷怪蛋，颜色与它所复制的实体的刷怪蛋相同。`{ "primary": "AABBCC", "secondary": "112233" }` 可指定自己的颜色，`false` 则不提供刷怪蛋。在 26.x 上，没有资源包颜色的刷怪蛋保留它自己的材质；有资源包颜色的刷怪蛋则改为通过模板材质绘制                    |
+| `egg`           | 否   | 布尔值或对象               | `true` | 刷怪蛋，颜色与它所复制的实体的刷怪蛋相同。`{ "primary": "AABBCC", "secondary": "112233" }` 可指定自己的颜色，`false` 则不提供刷怪蛋。在 26.x 上，没有资源包颜色的刷怪蛋保留它自己的纹理；有资源包颜色的刷怪蛋则改为通过模板纹理绘制                    |
+| `egg.primary`   | 否   | 字符串                      | 被复制实体的颜色 | 蛋底色的十六进制颜色，如 `AABBCC`。不写时，蛋沿用该变种所复制实体的底色 |
+| `egg.secondary` | 否   | 字符串                      | 被复制实体的颜色 | 蛋斑点的十六进制颜色，如 `112233`。不写时，蛋沿用该变种所复制实体的斑点色 |
+| `becomes.variant` | 是 | 字符串                      | 无     | 在写成对象的 `becomes` 条目中，要变成的变种，写其注册名。条目也可以只写这个名称。没有写变种的条目会被跳过 |
 | `keepsBaseBaby` | 否   | 布尔值                     | `false` | 基础实体自己的幼体判定是否也照常进行。不写时，基于僵尸的变种只按 `baby` 所说生成幼体，不会出现僵尸自身判定产生的小孩，也不会出现鸡骑士                |
 | `requires`      | 否   | 模组 id 或资源包命名空间列表 | 无     | 除非全部存在，否则该变种会被省略                                                                                                                      |
 
@@ -2252,7 +2266,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-写上它自己的名字，就是让它保持原样的方式，权重就是概率。把这段写在 `mypack:walker` 上，一个蛋和一条生成条目就会给出大多数的 walker，偶尔夹杂一个小的，就像僵尸蛋偶尔会给你一个幼年僵尸。它发生在生物进入世界的时候，所以对蛋、`/summon` 和自然生成都成立，而到来的生物是所选变种的真实个体，具备该变种所写的一切。刷怪笼则更严格：它只在与所设变种同一基础生物、同一队伍的变种中掷骰，所以僵尸刷怪笼给出的是该队伍的僵尸及其幼体，永远不会出现其他种类或其他队伍的生物，就像原版的僵尸刷怪笼始终是僵尸刷怪笼。通过这种方式得到的变种不会再次转变，所以两个变种可以互相指名而不会陷入空转。
+条目可以只写变种名称，权重为 `1`；也可以是带有 `variant`（必需）和 `weight`（`1`，最小为 `1`）的对象。写上它自己的名字，就是让它保持原样的方式，权重就是概率。把这段写在 `mypack:walker` 上，一个蛋和一条生成条目就会给出大多数的 walker，偶尔夹杂一个小的，就像僵尸蛋偶尔会给你一个幼年僵尸。它发生在生物进入世界的时候，所以对蛋、`/summon` 和自然生成都成立，而到来的生物是所选变种的真实个体，具备该变种所写的一切。刷怪笼则更严格：它只在与所设变种同一基础生物、同一队伍的变种中掷骰，所以僵尸刷怪笼给出的是该队伍的僵尸及其幼体，永远不会出现其他种类或其他队伍的生物，就像原版的僵尸刷怪笼始终是僵尸刷怪笼。通过这种方式得到的变种不会再次转变，所以两个变种可以互相指名而不会陷入空转。
 
 **`baby` 的位置。** 游戏本身没有幼年僵尸这种东西：只有一种僵尸，在生成时判定自己是否为小孩。`baby` 说明频率，所以 `"baby": 0.05` 就是原版的习惯，`"baby": true` 则是总是。变种不会在此之上再叠加僵尸自己的判定，所以不会出现 `baby` 没有要求的小孩或鸡骑士；`keepsBaseBaby` 会把那次判定还给它。这两者是达到同一目的的两种方式，该用哪一种取决于你想要的差异：单独用 `baby` 得到一个有时是幼体的变种，`becomes` 则得到若干在你喜欢的任何方面各不相同的变种，两者混用也完全可以。
 
@@ -2322,7 +2336,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `leashable`      | 否   | 布尔值           | `false`    | 可以被拴绳牵着走，即使它所复制的实体从来不能                                                                                                                                                                                              |
 | `steerable`      | 否   | 布尔值           | `false`    | 被骑乘时可以操控                                                                                                                                                                                                                          |
 | `pathPriorities` | 否   | 对象             | 无         | 它愿意走过什么，如 `WATER`、`LAVA`、`DANGER_FIRE`、`DOOR_WOOD_CLOSED` 以及游戏路径类型的其余各项，每项是一个数字，负数表示绝不通行。1.12.2 的 `DANGER_CACTUS` 和 `DAMAGE_CACTUS` 会被读作 `DANGER_OTHER` 和 `DAMAGE_OTHER`，此版本把仙人掌与甜浆果丛归在这两项下 |
-| `stepHeight`     | 否   | 浮点数，单位为方块 | 基础实体的 | 它不用跳跃就能走上多高的台阶                                                                                                                                                                                                              |
+| `stepHeight`     | 否   | 浮点数，单位为格  | 基础实体的 | 它不用跳跃就能走上多高的台阶                                                                                                                                                                                                              |
 | `climbs`         | 否   | 布尔值           | 基础实体的 | 开启时，它会爬上走到的任何墙壁，像蜘蛛一样，无论基础是什么。关闭时，它什么都不爬，连梯子也不爬，蜘蛛则会留在地面上                                                                                                                          |
 | `teleports`      | 否   | 布尔值           | `true`     | 末影人或潜影贝是否可以传送。关闭时，它留在原地，白天和在水中也是如此                                                                                                                                                                      |
 | `walks`          | 否   | 布尔值           | `false`    | 兔子像其他动物那样行走，而不是蹦跳着移动。只有兔子会读取它                                                                                                                                                                                |
@@ -2346,7 +2360,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | --------------- | ---- | ---------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hostile`       | 否   | 布尔值           | `false`             | 攻击够得着的东西，受伤时会还击。无论基础是什么，敌对变种在游戏中都算作怪物，所以受怪物上限约束。和平模式只在其基础是怪物时才会清除它；其他基础会保留，在和平模式下无法伤害玩家。它会丢掉基础自带的动物任务：繁殖、被引诱、跟随父母、主人或同类、坐下 |
 | `targets`        | 否   | 实体名称列表     | 玩家                | 敌对时它去寻找什么。`minecraft:player` 可被识别，尽管玩家并不是已注册的实体                                                                                                                                                                                    |
-| `attackReach`   | 否   | 浮点数，单位为方块 | 它的体型            | 近战攻击能打多远。游戏按宽度的两倍计算，所以放大的生物能从更远处打中；这里则直接设定该值                                                                                                                                                                       |
+| `attackReach`   | 否   | 浮点数，单位为格  | 它的体型            | 近战攻击能打多远。游戏按宽度的两倍计算，所以放大的生物能从更远处打中；这里则直接设定该值                                                                                                                                                                       |
 | `knockback`     | 否   | 浮点数           | 基础实体的，`0.4`   | 它的攻击推得多用力。`0` 表示完全不推                                                                                                                                                                                                                           |
 | `hitEffects`    | 否   | 布尔值           | `true`              | 它是否会像所复制的实体那样给被击中的对象施加效果：凋灵骷髅的凋零、洞穴蜘蛛的中毒、尸壳的饥饿。关闭时，它只造成伤害                                                                                                                                             |
 | `hitFire`       | 否   | 布尔值           | `true`              | 当所复制的实体会这样做时，它是否会点燃被击中的对象：燃烧的僵尸、烈焰人的火球。关闭时，它的任何行为都不会在目标身上引起火焰                                                                                                                                     |
@@ -2377,7 +2391,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键               | 必需 | 值           | 默认值          | 作用                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------- | ---- | ------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `digs`           | 否   | 布尔值       | `false`         | 用手中的工具挖穿它与目标之间的一切：铲子挖泥土、沙子和沙砾，镐挖石头，斧砍木头，并且只能挖该工具的材质能破坏的东西，所以木镐永远打不开铁矿石，不到钻石就没有什么能打开黑曜石。方块耗费的时间与玩家使用该工具时相同，掉落的东西也一样，并且会磨损工具。用 `equipment` 给它工具；赤手空拳时它什么也挖不了，在 `mobGriefing` 关闭的地方也挖不了。它从不寻找绕路的办法：有目标时它径直走向目标，挖掉挡路的一切，工具打不开的方块前它就站着推。需要 `hostile`。它选取目标时不需要看见目标，因为它朝着挖掘的对象本来就在某物的后面 |
+| `digs`           | 否   | 布尔值       | `false`         | 用手中的工具挖穿它与目标之间的一切：铲子挖泥土、沙子和沙砾，镐挖石头，斧砍木头，并且只能挖该工具的材料能破坏的东西，所以木镐永远打不开铁矿石，不到钻石就没有什么能打开黑曜石。方块耗费的时间与玩家使用该工具时相同，掉落的东西也一样，并且会磨损工具。用 `equipment` 给它工具；赤手空拳时它什么也挖不了，在 `mobGriefing` 关闭的地方也挖不了。它从不寻找绕路的办法：有目标时它径直走向目标，挖掉挡路的一切，工具打不开的方块前它就站着推。需要 `hostile`。它选取目标时不需要看见目标，因为它朝着挖掘的对象本来就在某物的后面 |
 | `throws`         | 否   | 布尔值       | `false`         | 从远处把手里拿着的东西扔向目标，如果是 TNT，它会点燃并后退。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `throwAmmo`      | 否   | 整数         | 无              | 它有多少个可扔。不写则永远不会用完                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | `throwReload`    | 否   | 整数，单位为秒 | `explosionFuse` | 它的手空着多久才会再拿一个                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -2391,10 +2405,10 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `explosionFire`  | 否   | 布尔值       | `false`         | 爆炸后留下火焰                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `charges`        | 否   | 布尔值       | `false`         | 从远处冲向目标，接触时造成强烈的击退，像劫掠兽那样，然后休息一阵再进行下一次冲锋。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `pounces`        | 否   | 布尔值       | `false`         | 先蹲伏，然后划着弧线跃向目标，落地时攻击，像狐狸那样。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| `sniffs`         | 否   | 整数，单位为方块 | `0`         | 能听到该格数内移动的玩家，无论隔不隔墙，并走向听到声音的地方；潜行或站着不动的玩家听不到，之后被它看见的玩家会成为它的目标。`0` 表示不监听。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                 |
+| `sniffs`         | 否   | 整数，单位为格  | `0`         | 能听到该格数内移动的玩家，无论隔不隔墙，并走向听到声音的地方；潜行或站着不动的玩家听不到，之后被它看见的玩家会成为它的目标。`0` 表示不监听。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                 |
 | `fleesWhenHurt`  | 否   | 0.0 到 1.0   | `0`             | 当生命值低于该比例时，脱离战斗并从对手面前逃走，回升到该比例之上后再回来。`0` 表示从不逃跑。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `sleepsByDay`    | 否   | 布尔值       | `false`         | 白天寻找阴影，在那里一动不动，直到夜晚或被攻击。休息时它侧躺着                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `home`           | 否   | 整数，单位为方块 | `0`         | 活动范围限制在它最初站立处周围这么多格内，在其中游荡，走远了就走回来。`0` 表示自由漫游                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `home`           | 否   | 整数，单位为格  | `0`         | 活动范围限制在它最初站立处周围这么多格内，在其中游荡，走远了就走回来。`0` 表示自由漫游                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `patrols`        | 否   | 布尔值       | `false`         | 与同类一起，由一个领头者带领，在陆地上分长段巡行，像掠夺者巡逻队那样。一起生成的一群会选出一个领头者；其余的与它保持几格之内，领头者一旦有了目标，它们全都有目标。失去领头者的跟随者会自己接任领头。需要 `hostile`                                                                                                                                                                                                                                                                                                                         |
 | `swoops`         | 否   | 布尔值       | `false`         | 在目标上空盘旋并俯冲穿过目标，在掠过时攻击，像幻翼那样。变种会被赋予一个飞行辅助，所以它在狩猎时飞行，闲置时落回地面；它需要一个属于生物类的基础，比如鹦鹉，蝙蝠则不行。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                      |
 | `gusts`          | 否   | 布尔值       | `false`         | 蓄力后从远处向目标放出一阵风，把目标附近的一切向后向上掀飞，像旋风人的风弹那样。需要 `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -2445,14 +2459,14 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `priority` | int | 必填 | 它在基础实体任务中的位置。越小越先运行 |
-| `speed` | 数值 | 该任务通常的值 | 任务运行时的移动速度，为步行速度的倍数 |
-| `nearSpeed` | 数值 | `1.2` | `avoidEntity`：所躲避的对象靠近后的倍数 |
-| `distance` | 数值，格 | 该任务通常的值 | 它观察、跟随、射击或保持距离的远近 |
-| `near` | 数值，格 | 该任务通常的值 | `follow`、`followOwner`、`followOwnerFlying`：靠近到多近后停下 |
-| `chance` | 数值 | 该任务通常的值 | `wander`：每隔这么多刻掷一次；`wanderAvoidWater`：离开掩护的几率，0 到 1；`watchClosest`、`watchClosest2`：每刻注视的几率，0 到 1 |
-| `leap` | 数值 | `0.4` | `leapAtTarget`：跳得多高 |
-| `cooldown` | int，刻 | `20` | `attackRanged`、`attackRangedBow`：两次射击之间的刻数 |
+| `priority` | 整数 | 必需 | 它在基础实体任务中的位置。越小越先运行 |
+| `speed` | 数字 | 该任务通常的值 | 任务运行时的移动速度，为步行速度的倍数 |
+| `nearSpeed` | 数字 | `1.2` | `avoidEntity`：所躲避的对象靠近后的倍数 |
+| `distance` | 数字，单位为格 | 该任务通常的值 | 它观察、跟随、射击或保持距离的远近 |
+| `near` | 数字，单位为格 | 该任务通常的值 | `follow`、`followOwner`、`followOwnerFlying`：靠近到多近后停下 |
+| `chance` | 数字 | 该任务通常的值 | `wander`：每隔这么多刻掷一次；`wanderAvoidWater`：离开掩护的几率，0 到 1；`watchClosest`、`watchClosest2`：每刻注视的几率，0 到 1 |
+| `leap` | 数字 | `0.4` | `leapAtTarget`：跳得多高 |
+| `cooldown` | 整数，单位为刻 | `20` | `attackRanged`、`attackRangedBow`：两次射击之间的刻数 |
 | `entity` | 实体名称 | 无 | 任务所寻找、躲避、注视或繁殖的实体。可识别 `minecraft:player` |
 | `items` | 物品名称列表 | 无 | `tempt`：玩家手持的诱饵 |
 | `sight` | 布尔值 | `true` | `nearestAttackableTarget`、`targetNonTamed`：只针对它看得见的目标 |
@@ -2530,10 +2544,10 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `despawns` | 否 | 布尔值 | `true` | 关闭后，即使通常会被清除，它也会留下 |
-| `despawnAfter` | 否 | int，秒 | 无 | 它在世界中存在这么久之后会悄然消失，无论周围有多远没有人 |
+| `despawnAfter` | 否 | 整数，单位为秒 | 无 | 它在世界中存在这么久之后会悄然消失，无论周围有多远没有人 |
 | `persistent` | 否 | 布尔值 | `false` | 永不消失 |
 | `ignoresSpawnRules` | 否 | 布尔值 | `false` | 被放在哪里就在哪里生成，忽略它继承来的规则 |
-| `spawns` | 否 | 对象列表 | 无 | `creatureType`、`weight`、`min` 和 `max`，与生物群系使用的结构相同。`creatureType` 是[生物类型](#值列表)之一，省略时为 `creature`，并决定该条目加入哪个生成列表；类型为游戏所不认识的条目不会添加任何内容 |
+| `spawns` | 否 | 对象列表 | 无 | `creatureType`、`weight`、`min` 和 `max`，与生物群系使用的结构相同；`weight` 默认为 8，`min` 默认为 1，`max` 默认为 4。`creatureType` 是[生物类型](#值列表)之一，省略时为 `creature`，并决定该条目加入哪个生成列表；类型为游戏所不认识的条目不会添加任何内容 |
 | `biomes` | 否 | 生物群系名称列表 | 每个生物群系 | 这些生成被添加到哪里，可用生物群系 id，或 1.12.2 中对原版生物群系显示的名称，如 `Extreme Hills`。如果既没有这个也没有 `biomeTypes`，每个生物群系都会采用，包括下界和末地，而被两个列表都匹配到的生物群系，每个生成只采用一次 |
 | `biomeTypes` | 否 | 生物群系类型列表 | 无 | 同上，但按类型词 |
 
@@ -2549,9 +2563,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `trackingRange` | 否 | int | `80` | 客户端在多远处会被告知它的存在 |
+| `trackingRange` | 否 | 整数 | `80` | 客户端在多远处会被告知它的存在 |
 | `trackVelocity` | 否 | 布尔值 | `true` | 除位置外还发送它的速度。关闭可为几乎不动的东西节省流量 |
-| `trackingFrequency` | 否 | int | `3` | 多久一次，单位为刻 |
+| `trackingFrequency` | 否 | 整数 | `3` | 多久一次，单位为刻 |
 
 ### 存储
 
@@ -2605,18 +2619,18 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `capacity` | 是 | int，mB | 无 | 储罐容量 |
+| `capacity` | 是 | 整数，单位为 mB | 无 | 储罐容量 |
 | `filter` | 否 | 过滤条目列表 | 无 | 储罐接受哪些流体。没有它时，接受任何流体 |
 | `buckets` | 否 | 布尔值 | `false` | 不潜行时用桶或其他流体容器右键点击，会把其中的流体倒入储罐，或从储罐中灌满。没有移动任何流体的点击则留给实体处理 |
-| `use` | 否 | int，每秒 mB | `0` | 实体在存活的每一秒从储罐中消耗多少。`0` 表示无消耗 |
+| `use` | 否 | 整数，每秒 mB | `0` | 实体在存活的每一秒从储罐中消耗多少。`0` 表示无消耗 |
 
 `energy`：
 
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `capacity` | 是 | int，FE | 无 | 能存多少能量 |
-| `transfer` | 否 | int，FE | 无限制 | 一次操作中输入或输出的最大能量 |
-| `use` | 否 | int，每秒 FE | `0` | 实体在存活的每一秒消耗多少能量。`0` 表示无消耗 |
+| `capacity` | 是 | 整数，单位为 FE | 无 | 能存多少能量 |
+| `transfer` | 否 | 整数，单位为 FE | 无限制 | 一次操作中输入或输出的最大能量 |
+| `use` | 否 | 整数，每秒 FE | `0` | 实体在存活的每一秒消耗多少能量。`0` 表示无消耗 |
 
 过滤条目。第一个匹配的条目起决定作用，没有任何条目匹配的东西都会被拒绝：
 
@@ -2625,7 +2639,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `item` | 三者之一 | 物品 id | 无 | 一个物品，写作 `namespace:name` |
 | `tag` | 三者之一 | 物品标签 id | 无 | 该标签下的每个物品，如 `c:ingots/iron` |
 | `fluid` | 三者之一 | 流体 id | 无 | 以 id 指定的流体，如 `minecraft:water`。只由流体过滤器读取 |
-| `max` | 否 | int | `0` | 一次最多持有的数量，按所有槽位合计，流体则以 mB 计。`0` 表示无限制 |
+| `max` | 否 | 整数 | `0` | 一次最多持有的数量，按所有槽位合计，流体则以 mB 计。`0` 表示无限制 |
 
 ## 工作订单
 
@@ -2633,7 +2647,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 `<namespace>/orders/*.json`
 
-文件名随意，只读取文件夹，多个文件会叠加。一个文件包含一个 `orders` 列表，旁边还有三个作用于整个包的设置；由第一个设置它的文件决定。
+文件名随意，只读取文件夹，多个文件会叠加。一个文件包含一个 `orders` 列表，旁边还有三个作用于整个包的设置；由最后读取的、设置了它的文件决定，而优先级最高的包最后读取。
 
 订单是一项工作，由列为其接单者的实体变种为玩家完成：它们在订单范围内挖掘指定的方块，或从其他箱子里搬来指定的物品，再把所得放进订单的箱子。每种开启订单的方式都能在原版客户端上使用：
 
@@ -2683,8 +2697,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `stockName` | 否 | 字符串 | `Stock` | 让放下的箱子成为库存箱的名称，不区分大小写。留空则关闭库存箱 |
-| `hire` | 否 | 物品名 | 无 | 雇用空闲工人：不潜行时手持此物品右键点击它，它就归你，物品被消耗。空闲工人不属于任何玩家或队伍 |
-| `spawnCap` | 否 | int | `1` | 没有工人前来时，一个订单最多可在其箱子处生成多少工人。`0` 不生成 |
+| `hire` | 否 | 物品名称 | 无 | 雇用无主工人：不潜行时手持此物品右键点击它，它就归你，物品被消耗。无主工人不属于任何玩家或队伍 |
+| `spawnCap` | 否 | 整数  | `1` | 没有工人前来时，一个订单最多可在其箱子处生成多少工人。`0` 不生成 |
 
 订单键：
 
@@ -2692,13 +2706,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | --- | --- | --- | --- | --- |
 | `job` | 是 | `gather`、`mine`、`farm` 或 `haul` | | `gather` 和 `mine` 挖掘 `blocks` 指定的方块（以方块本身或其掉落物匹配），只要有一面暴露在空气或非完整方块旁。`farm` 收获成熟作物，并用其自身的种子补种。`haul` 把 `blocks` 指定的物品从其他箱子和容器搬进订单的箱子 |
 | `blocks` | 是，`farm` 除外 | 物品标签 id | 无 | 订单想要的东西，以物品标签表示，例如 `c:ores/iron`、`minecraft:logs` 或 `c:crops/wheat`。在 `mine` 订单中，标签内方块掉落的东西也计入，因此 `c:ores/iron` 会以粗铁填满。在 `farm` 订单上，它只收获会掉落该物品的作物 |
-| `area` | 否 | int | `16` | 工作从箱子起延伸多远，按每条轴的方块数计 |
+| `area` | 否 | 整数  | `16` | 工作从箱子起延伸多远，按每条轴的方块数计 |
 | `areaByTier` | 否 | int 列表 | 无 | 按工人工具的挖掘等级决定范围：第一项用于无工具或等级 0，之后每级一项，超出列表的等级都用最后一项。会覆盖 `area` |
 | `deliver` | 否 | `chest` 或 `self` | `chest` | `chest` 把收集到的东西送进订单的箱子。`self` 把它留在工人自己的存储里，订单在收集时计数 |
-| `limit` | 否 | int | `64` | 订单关闭前需要多少物品 |
-| `standing` | 否 | int | `0` | 大于 `0` 时订单永不关闭：它让箱子里保持这么多物品，少了就工作。此时不读取 `limit` |
-| `workers` | 否 | int | `1` | 同时处理该订单的最多工人数 |
-| `priority` | 否 | int | `0` | 空闲工人先接优先级最高的开放订单，其次是最近的 |
+| `limit` | 否 | 整数  | `64` | 订单关闭前需要多少物品 |
+| `standing` | 否 | 整数  | `0` | 大于 `0` 时订单永不关闭：它让箱子里保持这么多物品，少了就工作。此时不读取 `limit` |
+| `workers` | 否 | 整数  | `1` | 同时处理该订单的最多工人数 |
+| `priority` | 否 | 整数  | `0` | 空闲工人先接优先级最高的开放订单，其次是最近的 |
 | `takers` | 是 | 列表 | | 谁可以处理它：变种名、`team:<team>` 表示计分板队伍的任意成员，或 `tag:<tag>` 表示带有该标签的任意实体 |
 | `sign` | 否 | 字符串 | 无 | 告示牌第一行上开启该订单的词，不区分大小写 |
 | `speed` | 否 | 数字 | `1` | 乘以工人的挖掘速度。`2` 比拿同样工具的玩家快一倍 |
@@ -2706,7 +2720,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 **工人如何工作。** 被接单者点名的变种，或在任一接单者是队伍或标签时的所有变种，空闲时每秒寻找一次工作。它接下箱子位于自身范围外加 32 格以内的最佳开放订单，以租约持有，停止工作时租约失效，保存和重新载入后租约仍然保留。挖掘耗时与手持工人工具的玩家相同，计入效率，时运和精准采集都影响掉落。挖到的东西在变种有 `storage` 物品栏时放进其中，否则放进副手，绝不掉在地上。拿不下时，它走到箱子把所有东西放进去。每挖一个方块都会磨损工具，工具损坏的工人会回箱子取一把同种类的新工具，没有则休息一分钟。工人死亡时会掉落工具和手中的物品，其存储像往常一样只洒出一次。`mobGriefing` 不会阻止它，因为这项工作是玩家要求的。
 
-**谁为谁工作。** 开启订单的玩家在计分板队伍中时，只有该队伍的工人会接单。否则订单归该玩家所有，而工人归第一个给它工作的玩家——通过工具、通过 `hire`，或接下该玩家的订单；此后它只处理该玩家的订单。被队伍中的玩家雇用或递给工具的空闲工人会加入该队伍。
+**谁为谁工作。** 开启订单的玩家在计分板队伍中时，只有该队伍的工人会接单。否则订单归该玩家所有，而工人归第一个给它工作的玩家——通过工具、通过 `hire`，或接下该玩家的订单；此后它只处理该玩家的订单。被队伍中的玩家雇用或递给工具的无主工人会加入该队伍。
 
 **在箱子处生成。** 一个订单十秒没有工人时，会在其箱子旁生成一个它的变种接单者，每个订单最多 `spawnCap` 个。生成的工人属于订单的队伍或玩家。
 
@@ -2749,7 +2763,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `immunity` | 否 | 药水名称 | 无 | 带有该效果的人完全不会受到暴露 |
 | `scanInterval` | 否 | 刻 | `20` | 多久检查一次周围环境和物品栏 |
 | `range` | 否 | 格 | `10` | 方块的暴露范围有多远，为球形 |
-| `sourcesForNextLevel` | 否 | int | `0` | 附近有这么多个同一等级的来源，就会把该等级再推高一级。`0` 表示关闭此功能 |
+| `sourcesForNextLevel` | 否 | 整数  | `0` | 附近有这么多个同一等级的来源，就会把该等级再推高一级。`0` 表示关闭此功能 |
 | `skipsCreative` | 否 | 布尔值 | `true` | 创造模式和旁观模式的玩家不受影响 |
 
 ### 等级
@@ -2865,7 +2879,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-道路、桥梁、铁路、地铁、车站或下水道所用的每一个方块设置都响应这一点，加权混合的语法在节内的使用方式与在节外相同。生物群系在建造每个部件时读取，而且地面每次变换生物群系的地方，方块都会重新取用，因此驶出沙漠的道路或铁路会在边界处当场更换材料。世界加载时的一行日志会说明资源包提供了多少个节并列出其名称，开启调试后，每个生物群系还会说明它采用了哪一节，或者说它没有采用任何一节以及它本会响应什么。
+道路、桥梁、铁路、地铁、车站和下水道所用的每一个方块设置都支持这种写法，加权混合的语法在节内的用法与在节外相同。生物群系在建造每个部件时读取，而且地面每次变换生物群系的地方，方块都会重新取用，因此延伸出沙漠的道路或铁路会在边界处当场更换材料。世界加载时的一行日志会说明资源包提供了多少个节并列出其名称，开启调试后，每个生物群系还会说明它采用了哪一节，或者说它没有采用任何一节以及它本会响应什么。
 
 ## 游戏规则
 
@@ -2998,14 +3012,14 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `decoration` | 否 | 对象 | 基础生物群系的值 | 每区块的数量，改变基础生物群系已经放置的内容。它读取的名称有 `trees`、`flowers`、`grass`、`deadbush`、`mushrooms`、`bigmushrooms`、`reeds`、`cacti`、`sand`、`gravel`、`clay` 和 `waterlily`，以及开关 `falls`（湖泊和泉水）、`pumpkins`、`desertwells`、`ice`（冰刺和冰块地带）、`fossils` 和 `rocks`（森林巨石），其中任何大于零的值都保持基础生物群系自己的比率，零或更小则移除该特征，还有 `extratreechance`，即多一棵树的百分比几率，其中 `0` 也会移除基础生物群系所掷出的额外那棵树。对基础生物群系不放置的种类写数量不会添加任何内容；为此请写一个世界生成条目。其他任何名称都会被记入日志并忽略 |
-| `spawns` | 否 | 对象列表 | 原版列表 | 见下 |
+| `spawns` | 否 | 对象列表 | 原版列表 | 见下文 |
 | `keepDefaultSpawns` | 否 | 布尔值 | `false` | 在你的列表之外保留原版的列表 |
 | `spawnChance` | 否 | 浮点数，小于 1 | `0.1` | 陆地首次生成时，再放置另一群的可能性。只要成功，游戏就会继续掷骰，因此 1 永不停止，会一直填满世界直到没有空间。任何大于等于 0.99 的值都会被拒绝，改用 0.99 |
 | `spawnRates` | 否 | 由 `surfaceDay`、`surfaceNight`、`undergroundDay`、`undergroundNight` 到倍数的对象 | 无 | 敌对生物在此处多久生成一次，取代全局设置。见下 |
 
-生成条目接受 `entity`（必填）、`type`（`creature`，为 `monster`、`creature`、`ambient` 或 `water` 之一，`water_creature` 这类名称中的下划线可有可无）、`weight`（`10`）、`min`（`1`）和 `max`（`min`）。
+生成条目接受 `entity`（必需）、`type`（默认 `creature`，取 `monster`、`creature`、`ambient` 或 `water` 之一，`water_creature` 这类名称中的下划线可有可无）、`weight`（`10`）、`min`（`1`）和 `max`（`min`）。
 
-`spawnRates` 只涉及敌对生物，别无其他。它只接受四个键，不接受其他键：`surfaceDay` 和 `surfaceNight` 用于看得见天空的地方，`undergroundDay` 和 `undergroundNight` 用于看不见的地方。每一项都是敌对生物获准出现的频率的倍数，`1` 是普通比率，`0` 完全阻止它们，小于 1 会降低部分尝试，而大于 1 会放行游戏本会拒绝的尝试，所以 `2` 是两倍之多。省略某个键表示该生物群系不作决定，转而使用该时间和地点的全局设置。写在这里的其他任何内容都不是键，会被忽略，因此以生物类型命名的比率完全不起作用。
+`spawnRates` 只涉及敌对生物，别无其他。它只接受四个键，不接受其他键：`surfaceDay` 和 `surfaceNight` 用于看得见天空的地方，`undergroundDay` 和 `undergroundNight` 用于看不见的地方。每一项都是敌对生物获准出现的频率的倍数，`1` 是普通比率，`0` 完全阻止它们，小于 1 会降低部分尝试，而大于 1 会放行游戏本会拒绝的尝试，所以 `2` 即两倍。省略某个键表示该生物群系不作决定，转而使用该时间和地点的全局设置。写在这里的其他任何内容都不是键，会被忽略，因此以生物类型命名的比率完全不起作用。
 
 ### 生成位置
 
@@ -3019,7 +3033,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `climate` | 否 | `icy`、`cool`、`medium`、`warm` 或 `desert` | 无 | 它加入哪个气候带，即主世界自己的生物群系所依据分配的那五个。省略、`weight` 为 0 或写了此处未列出的气候时，该生物群系会被注册但永远不会被放置，除非模板的 `roles`、维度的 `biome` 或高度带要求它 |
-| `weight` | 否 | int | `10` | 在该气候带中与相邻生物群系相比被选中的频率 |
+| `weight` | 否 | 整数  | `10` | 在该气候带中与相邻生物群系相比被选中的频率 |
 | `villages` | 否 | 布尔值 | `false` | 允许生成村庄 |
 | `strongholds` | 否 | 布尔值 | `false` | 允许生成要塞 |
 | `playerSpawn` | 否 | 布尔值 | `false` | 世界出生点可以放在这里 |
@@ -3030,8 +3044,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `minHeight` | 否 | int | 无 | 该生物群系作为 3D 生物群系接管的最低 y。设置任一高度都会把该生物群系变成一个带：在带外，该列保持自己的生物群系，而在带内，世界的每个 4×4×4 单元格都报告为这一个 |
-| `maxHeight` | 否 | int | 无 | 该带的最高 y |
+| `minHeight` | 否 | 整数  | 无 | 该生物群系作为 3D 生物群系接管的最低 y。设置任一高度都会把该生物群系变成一个带：在带外，该列保持自己的生物群系，而在带内，世界的每个 4×4×4 单元格都报告为这一个 |
+| `maxHeight` | 否 | 整数  | 无 | 该带的最高 y |
 | `replaces` | 否 | 生物群系名称列表 | 每个生物群系 | 把该带限制在自身生物群系在此列出的那些列，因此高山带可以覆盖在山地之上而不触及其他地方。该列自身的生物群系是其地表处的那一个。没有 `minHeight` 或 `maxHeight` 时它不起作用 |
 
 ### 随高度变化的温度
@@ -3054,9 +3068,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `biomeTemperatureCenterY` | int | `80` | 曲线的度量起点高度。在此高度或以下，生物群系报告其自身未经改动的 `temperature` |
+| `biomeTemperatureCenterY` | 整数  | `80` | 曲线的度量起点高度。在此高度或以下，生物群系报告其自身未经改动的 `temperature` |
 | `biomeTemperatureHeightFactor` | 浮点数 | `-0.00125` | 高于该高度后每格温度变化多少，即游戏自己的每 40 格 0.05。负值随海拔变冷，正值变暖 |
-| `biomeTemperatureScaleMaxY` | int | 无 | 曲线停止的高度，这样比游戏自身更高的世界就不会一路冷却到顶部。不设置时，曲线延伸到世界顶部 |
+| `biomeTemperatureScaleMaxY` | 整数  | 无 | 曲线停止的高度，这样比游戏自身更高的世界就不会一路冷却到顶部。不设置时，曲线延伸到世界顶部 |
 
 ## 维度
 
@@ -3064,7 +3078,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 `<namespace>/dimensions/*.json`
 
-文件的路径就是维度的 id，因此 `mypack/dimensions/verdant.json` 就是 `mypack:verdant`，传送门、门、游戏规则文件和 `/execute in` 所指的都是它。此版本没有数字 id，1.12.2 的 `id` 或 `suffix` 会被读取并忽略。
+文件的路径就是维度的 id，因此 `mypack/dimensions/verdant.json` 就是 `mypack:verdant`，传送门、闸门、游戏规则文件和 `/execute in` 所指的都是它。此版本没有数字 id，1.12.2 的 `id` 或 `suffix` 会被读取并忽略。
 
 一次展示所有的键。实际的文件只写需要的那些。
 
@@ -3166,8 +3180,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `type` | 否 | `overworld`、`flat`、`void`、`nether`、`end` | `overworld` | 由游戏的哪个生成器来构建它，其噪声设置会被复制并由下面的键修改 |
-| `minHeight` | 否 | int，16 的倍数 | 该类型自身的值 | 维度的底部。低于该类型自身的值时，会在地形之下形成深层世界，见[深层世界](#深层世界) |
-| `maxHeight` | 否 | int，16 的倍数 | 该类型自身的值 | 其顶部之上的那一格方块 |
+| `minHeight` | 否 | 整数，16 的倍数  | 该类型自身的值 | 维度的底部。低于该类型自身的值时，会在地形之下形成深层世界，见[深层世界](#深层世界) |
+| `maxHeight` | 否 | 整数，16 的倍数  | 该类型自身的值 | 其顶部之上的那一格方块 |
 | `generatorOptions` | 否 | 对象、文本或列表 | 无 | 对于 `overworld` 和其他类型，是一个对象，或 1.12.2 所写的该对象的文本，包含 `seaLevel`、`useLavaOceans`，以及设为 false 以在此维度中省略相应内容的 `useCaves`、`useRavines`、`useDungeons`、`useLavaLakes`、`useStrongholds`、`useVillages`、`useMineShafts`、`useTemples`、`useMonuments` 和 `useMansions`。对于 `flat`，是自下而上的各层，如 `"minecraft:bedrock"`、`"59*minecraft:stone"`、`"3*minecraft:dirt"`、`"minecraft:grass_block"`，这也是默认的地面，或者 1.12.2 的超平坦文本，其生物群系编号设定生物群系，其 `decoration`、`lava_lake` 和结构名称的读取方式与主世界的 `generatorOptions` 相同 |
 | `structures` | 否 | 布尔值 | `true` | 原版结构是否生成 |
 
@@ -3194,17 +3208,18 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `nether` | 否 | 布尔值 | `false` | 在传送门和天花板方面被视为下界 |
 | `beds` | 否 | 布尔值 | `true` | 关闭后，床会爆炸 |
 | `waterVaporizes` | 否 | 布尔值 | `false` | 水会蒸发 |
-| `cloudHeight` | 否 | int | `128` | 云所在的高度。指名此维度的 `cloudHeight` 设置，或不带维度的设置，会胜过它 |
+| `cloudHeight` | 否 | 整数  | `128` | 云所在的高度。指名此维度的 `cloudHeight` 设置，或不带维度的设置，会胜过它 |
 | `cloudColor` | 否 | 十六进制颜色 | 无 | 云的色调 |
 | `cloudSpeed` | 否 | 浮点数 | `1.0` | 云飘动的速度。`0` 使其静止，负值使其反向 |
-| `groundLevel` | 否 | int | `63` | 海平面，用于地平线、出生点搜索，以及传送门到达或在虚空上方坠落后落地的位置 |
+| `cloudLayers` | 否 | 对象列表 | 无 | 多个云层。见[雾、光照、云与热浪](#雾光照云与热浪) |
+| `groundLevel` | 否 | 整数  | `63` | 海平面，用于地平线、出生点搜索，以及传送门到达或在虚空上方坠落后落地的位置 |
 | `movementFactor` | 否 | 浮点数 | `1.0` | 与主世界的距离比。下界使用 8 |
 | `fogColor` | 否 | 十六进制颜色或 `sample` | 无 | 正午的雾色调。夜间会像原版的雾一样变暗。`sample` 把天空与玩家周围的地面混合 |
 | `showFog` | 否 | 布尔值 | `false` | 浓雾，如同在下界 |
 | `fogDensity` | 否 | 浮点数，0 到 1 | `0.0` | 雾有多浓。`0` 保持原版距离，`1` 把它收紧到 8 格 |
 | `fogGroundWeight` | 否 | 浮点数，0 到 1 | `0.5` | 在 `fogColor: sample` 下，地面相对于天空占多大比重 |
 | `skyColor` | 否 | 十六进制颜色 | 无 | 正午的天空色调。夜间会变暗，雨天和雷暴时会像原版天空一样发灰 |
-| `fixedTime` | 否 | int，刻 | 无 | 锁定一天中的时间。在 26.x 上，带固定时间的维度类型会成为完全没有昼夜循环的维度；那里的 `time query` 会回答没有默认时钟，这是正确的 |
+| `fixedTime` | 否 | 整数，单位为刻 | 无 | 锁定一天中的时间。在 26.x 上，带固定时间的维度类型会成为完全没有昼夜循环的维度；那里的 `time query` 会回答没有默认时钟，这是正确的 |
 | `sunriseColors` | 否 | 布尔值 | `true` | 日出和日落是否带有色调 |
 | `ambientLight` | 否 | 浮点数，0 到 1 | `0.0` | 各处的最低光照 |
 | `lightSkyColor` | 否 | 十六进制颜色 | 无 | 日光照在方块和生物上的色调 |
@@ -3213,6 +3228,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `starBrightness` | 否 | 浮点数，0 到 1 | 无 | 星星有多亮 |
 | `sunBrightness` | 否 | 浮点数，0 到 1 | `1.0` | 太阳绘制得有多亮 |
 | `moonBrightness` | 否 | 浮点数，0 到 1 | `1.0` | 月亮绘制得有多亮，配合 `bodies` 时则为除太阳外的每个天体 |
+| `heat` | 否 | 对象 | 无 | 覆盖在视野上的热浪闪烁。见[雾、光照、云与热浪](#雾光照云与热浪) |
 | `renderSky` | 否 | 布尔值 | `true` | 关闭后，不绘制天空、太阳、月亮或星星，只留下雾色 |
 | `renderClouds` | 否 | 布尔值 | `true` | 关闭后，不绘制云 |
 | `renderWeather` | 否 | 布尔值 | `true` | 关闭后，不绘制雨或雪 |
@@ -3236,13 +3252,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `moon.size` | 否 | 浮点数 | `20` | 在距离 100 处月亮宽度的一半。`0` 将其隐藏。有 `bodies` 时不起作用 |
 | `bodies[].texture` | 是 | 纹理路径 | | 天体的图片 |
 | `bodies[].size` | 否 | 浮点数 | `20` | 在距离 100 处其宽度的一半。原版月亮为 `20` |
-| `bodies[].angle` | 否 | 浮点数，度 | `180` | 它在太阳轨迹上落后于太阳多远。`180` 是原版月亮所在的位置。关闭 `followsTime` 时，从正上方起量，因此 `0` 是天顶，`90` 是地平线 |
-| `bodies[].tilt` | 否 | 浮点数，度 | `0` | 它偏离太阳轨迹多远，向北或向南 |
+| `bodies[].angle` | 否 | 浮点数，单位为度 | `180` | 它在太阳轨迹上落后于太阳多远。`180` 是原版月亮所在的位置。关闭 `followsTime` 时，从正上方起量，因此 `0` 是天顶，`90` 是地平线 |
+| `bodies[].tilt` | 否 | 浮点数，单位为度 | `0` | 它偏离太阳轨迹多远，向北或向南 |
 | `bodies[].followsTime` | 否 | 布尔值 | `true` | 关闭后，它静止悬挂在天空中，而不随太阳一同转动 |
-| `stars.count` | 否 | int | `1500` | 有多少颗星星 |
+| `stars.count` | 否 | 整数  | `1500` | 有多少颗星星 |
 | `stars.size` | 否 | 浮点数 | `0.15` | 最小的星星；最大的再大出三分之二 |
 
-### 雾、光照与云
+### 雾、光照、云与热浪
 
 *维度*
 
@@ -3332,7 +3348,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 ### 天空盒、极光与彩虹
 
-*dimensions*
+*维度*
 
 这些键同样位于 `sky` 块中，也同样只在客户端绘制。
 
@@ -3356,7 +3372,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-`skybox` 把你自己的图片画在天空上，位于日出霞光、太阳、月亮和星星之后。以完整的纹理路径给出立方体的全部六个面，按立方体展开图排列：`up` 接在 `north` 的上边缘，`down` 接在它的下边缘，`west` 在它左边，`east` 在它右边，`south` 接在 `east` 之后。也可以只给出 `panorama`，用一张 2:1 的图片包住整个天空：图片左边缘朝北，沿顺时针方向经过东、南、西，最上一行在正上方，最下一行在正下方。缺少某个面又没有全景图的天空盒会被跳过，并在日志中记录一条错误。
+`skybox` 把你自己的图片画在天空上，位于日出光辉、太阳、月亮和星星之后。以完整的纹理路径给出立方体的全部六个面，按立方体展开图排列：`up` 接在 `north` 的上边缘，`down` 接在它的下边缘，`west` 在它左边，`east` 在它右边，`south` 接在 `east` 之后。也可以只给出 `panorama`，用一张 2:1 的图片包住整个天空：图片左边缘朝北，沿顺时针方向经过东、南、西，最上一行在正上方，最下一行在正下方。缺少某个面又没有全景图的天空盒会被跳过，并在日志中记录一条错误。
 
 `aurora` 在夜晚的北方低空挂起发光的光幕。光幕缓缓飘动，在日落时出现，白天和下雨时消失。`color` 是光幕底部的颜色，`topColor` 是它们在顶部淡出时的颜色。
 
@@ -3388,39 +3404,39 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *维度*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `dayLength` | 否 | int，单位刻 | `24000` | 此处一个昼夜的时长。月相仍然每 24000 刻轮转一次 |
+| `dayLength` | 否 | 整数，单位为刻 | `24000` | 此处一个昼夜的时长。月相仍然每 24000 刻轮转一次 |
 
 ### `weather` 块
 
 *维度*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `precipitation` | 否 | boolean | `true` | 关闭后，此处永远不会下雨、下雪或出现雷暴 |
-| `lightning` | 否 | boolean | `true` | 关闭后，降雨和雷暴不会伴有闪电 |
-| `snow` | 否 | boolean | `true` | 关闭后，雪不会积起来 |
-| `freeze` | 否 | boolean | `true` | 关闭后，水永远不会结冰 |
+| `precipitation` | 否 | 布尔值 | `true` | 关闭后，此处永远不会下雨、下雪或出现雷暴 |
+| `lightning` | 否 | 布尔值 | `true` | 关闭后，降雨和雷暴不会伴有闪电 |
+| `snow` | 否 | 布尔值 | `true` | 关闭后，雪不会积起来 |
+| `freeze` | 否 | 布尔值 | `true` | 关闭后，水永远不会结冰 |
 | `alwaysRain` | 否 | 布尔值 | `false` | 开启后，这里一直下雨，没有放晴的时候，优先于任何 `cycle`。`precipitation` 关闭时不起作用 |
-| `cycle.rainTicks` | 否 | int 或 `[min, max]` | `[1000, 4600]` | 一场阵雨持续多久 |
-| `cycle.clearTicks` | 否 | int 或 `[min, max]` | `[1000, 3000]` | 两场阵雨之间的晴朗间隔持续多久 |
-| `cycle.maxStrength` | 否 | float，大于 0 且至多为 1 | `0.6` | 阵雨最大能达到的强度。每场阵雨的强度在此值的四分之一到全部之间浮动 |
-| `cycle.thunderTicks` | 否 | int 或 `[min, max]` | 无 | 一场雷暴持续多久。不写则该循环永远不会出现雷暴 |
-| `cycle.calmTicks` | 否 | int 或 `[min, max]` | `[12000, 180000]` | 两场雷暴之间的平静期持续多久 |
-| `cycle.thunderStrength` | 否 | float，大于 0 且至多为 1 | `1` | 雷暴的天色能暗到什么程度。只有高于 `0.9` 时才会落雷 |
+| `cycle.rainTicks` | 否 | 整数或 `[min, max]`   | `[1000, 4600]` | 一场阵雨持续多久 |
+| `cycle.clearTicks` | 否 | 整数或 `[min, max]`   | `[1000, 3000]` | 两场阵雨之间的晴朗间隔持续多久 |
+| `cycle.maxStrength` | 否 | 浮点数，大于 0 且至多为 1 | `0.6` | 阵雨最大能达到的强度。每场阵雨的强度在此值的四分之一到全部之间浮动 |
+| `cycle.thunderTicks` | 否 | 整数或 `[min, max]`   | 无 | 一场雷暴持续多久。不写则该循环永远不会出现雷暴 |
+| `cycle.calmTicks` | 否 | 整数或 `[min, max]`   | `[12000, 180000]` | 两场雷暴之间的平静期持续多久 |
+| `cycle.thunderStrength` | 否 | 浮点数，大于 0 且至多为 1 | `1` | 雷暴的天色能暗到什么程度。只有高于 `0.9` 时才会落雷 |
 | `rain.particle` | 否 | 粒子 id | `minecraft:rain` | 雨滴落地处溅起的粒子 |
 | `rain.sound` | 否 | 音效名称 | `minecraft:weather.rain` | 雨声 |
-| `rain.volume` | 否 | float | `0.2` | 雨声的音量，雨从你头顶落下时减半 |
-| `rain.interval` | 否 | int | `3` | 雨声播放得有多稀疏；越大越稀疏，`0` 表示每次机会都播放 |
+| `rain.volume` | 否 | 浮点数 | `0.2` | 雨声的音量，雨从你头顶落下时减半 |
+| `rain.interval` | 否 | 整数  | `3` | 雨声播放得有多稀疏；越大越稀疏，`0` 表示每次机会都播放 |
 | `rain.color` | 否 | 十六进制颜色 | `#FFFFFF` | 落下的雨的色调 |
 | `rain.snowColor` | 否 | 十六进制颜色 | `#FFFFFF` | 落下的雪的色调 |
-| `rain.angle` | 否 | float，0 到 180 | `0` | 偏离正下方的角度：`90` 为横向吹，`180` 为笔直向上飘。绘制时最多倾斜 75 度 |
-| `rain.heading` | 否 | float，单位度 | `0` | 吹向哪个方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东 |
-| `rain.splashUpward` | 否 | boolean | `false` | 开启后，向上飘的雨（`angle` 大于 `90`）仍会在地面溅起水花并发出声音 |
-| `wind.gust` | 否 | float，0 到 90 | `15` | 阵风在最强时给 `angle` 增加的度数，最多到水平 |
-| `wind.every` | 否 | int 或 `[min, max]` | `[200, 600]` | 两阵风之间相隔的刻数 |
-| `wind.swing` | 否 | float，0 到 180 | `30` | 阵风让 `heading` 偏向一侧的度数 |
+| `rain.angle` | 否 | 浮点数，0 到 180 | `0` | 偏离正下方的角度：`90` 为横向吹，`180` 为笔直向上飘。绘制时最多倾斜 75 度 |
+| `rain.heading` | 否 | 浮点数，单位为度 | `0` | 吹向哪个方向：`0` 为南，`90` 为西，`180` 为北，`270` 为东 |
+| `rain.splashUpward` | 否 | 布尔值 | `false` | 开启后，向上飘的雨（`angle` 大于 `90`）仍会在地面溅起水花并发出声音 |
+| `wind.gust` | 否 | 浮点数，0 到 90 | `15` | 阵风在最强时给 `angle` 增加的度数，最多到水平 |
+| `wind.every` | 否 | 整数或 `[min, max]`   | `[200, 600]` | 两阵风之间相隔的刻数 |
+| `wind.swing` | 否 | 浮点数，0 到 180 | `30` | 阵风让 `heading` 偏向一侧的度数 |
 
 `wind` 块让雨一阵一阵地刮。每隔一段时间，一阵风会让雨再多倾斜最多 `gust` 度，并把方向向一侧偏转最多 `swing` 度；风势在四秒内起落，阵风每隔 `every` 刻到来。雨和雪随风倾斜，维度的环境粒子也朝雨倾斜的方向飘，无论有没有阵风。只有 `wind` 块而没有 `rain` 块时，雨使用默认值。
 
@@ -3432,12 +3448,12 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *维度*
 
-| 键                | 必填  | 值                | 默认值              | 作用                                                                                                 |
+| 键                | 必需  | 值                | 默认值              | 作用                                                                                                 |
 | ---------------- | --- | ---------------- | ---------------- | -------------------------------------------------------------------------------------------------- |
 | `music`          | 否   | 音效名称             | 无                | 在这里代替平常曲目播放的音乐，创造模式下也一样。进入时会切断正在播放的曲目                                                              |
-| `musicDelay`     | 否   | 整数或 `[min, max]` | `[12000, 24000]` | 两首曲目之间安静的刻数                                                                                        |
+| `musicDelay`     | 否   | 整数或 `[min, max]`   | `[12000, 24000]` | 两首曲目之间安静的刻数                                                                                        |
 | `loopSound`      | 否   | 音效名称             | 无                | 只要你在这里就循环播放的音效，进入时淡入，离开时淡出                                                                         |
-| `ambientSound`   | 否   | 音效名称             | 无                | 不时播放的音效，即生物群系的附加音效（additions）                                                                      |
+| `ambientSound`   | 否   | 音效名称             | 无                | 不时播放的音效，即生物群系的附加音效                                                                      |
 | `soundChance`    | 否   | 0.0 到 1.0        | `0.0111`         | 每刻播放 `ambientSound` 的几率                                                                            |
 | `particle`       | 否   | 粒子 id            | 无                | 在你周围空气中飘浮的粒子，例如 `minecraft:ash`、`minecraft:white_ash`、`minecraft:crimson_spore` 或 `minecraft:dust` |
 | `particleChance` | 否   | 0.0 到 1.0        | `0.00625`        | 它的密度，按现代生物群系的算法：每刻在 16 格范围内尝试约 667 个位置，在 32 格范围内再尝试 667 个，每个不是完整方块的位置以此几率显示粒子                      |
@@ -3445,7 +3461,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 `ambience` 块为维度提供自己的音乐、音效和飘浮粒子。这些键成为维度的环境属性 `minecraft:audio/background_music`、`minecraft:audio/ambient_sounds` 和 `minecraft:visual/ambient_particles`，叠加在其生物群系之上，所以听起来、看起来都和原版一样，“粒子”设置也会同样减少它们。省略的键保留各生物群系自己的，因此带有自身属性的原版生物群系 JSON 同样有效。
 
-## 传送门与门
+## 传送门与闸门
 
 *世界*
 
@@ -3473,21 +3489,21 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `dimension` | 是 | 维度 id | | 它把你送到哪里 |
 | `returnDimension` | 否 | 维度 id | `minecraft:overworld` | 它把你送回哪里 |
-| `gate` | 否 | 传送门名称 | 无 | 必须处于开启状态才能通过的传送门 |
-| `cooldown` | 否 | int，单位刻 | `60` | 同一名玩家再次使用前的等待时间 |
-| `platform` | 否 | boolean | `true` | 抵达时建造一个落脚平台 |
-| `platformBlock` | 否 | 方块名称 | 传送门自身的框架 | 该平台由什么方块构成 |
+| `gate` | 否 | 闸门名称 | 无 | 必须处于开启状态才能通过的闸门 |
+| `cooldown` | 否 | 整数，单位为刻 | `60` | 同一名玩家再次使用前的等待时间 |
+| `platform` | 否 | 布尔值 | `true` | 抵达时建造一个落脚平台 |
+| `platformBlock` | 否 | 方块名称 | 石头 | 该平台由什么方块构成 |
 | `sound` | 否 | 音效名称 | 无 | 通过时播放。参见[音效名称](#值列表) |
-| `owned` | 否 | boolean | `true` | 只有建造者及其允许的人可以使用。有主的传送门同时免疫爆炸 |
-| `walkIn` | 否 | boolean | `false` | 走进方块即可传送，就像下界传送门那样。关闭时则需用手使用 |
+| `owned` | 否 | 布尔值 | `true` | 只有建造者及其允许的人可以使用。有主的传送门同时免疫爆炸 |
+| `walkIn` | 否 | 布尔值 | `false` | 走进方块即可传送，就像下界传送门那样。关闭时则需用手使用 |
 
 ### 传送门框架
 
-*传送门与门*
+*传送门与闸门*
 
 `<namespace>/portalframes/*.json`
 
@@ -3511,16 +3527,16 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `name` | 否 | string | 文件名 | 日志中使用的名称 |
+| `name` | 否 | 字符串 | 文件名 | 日志中使用的名称 |
 | `axis` | 否 | `vertical`、`horizontal` 或 `both` | `vertical` | 是像下界传送门那样竖立、像末地传送门那样平躺，还是两者皆可 |
-| `legend` | 是 | 由单个字符映射到方块的 object | 无 | 各行可以使用的方块。带状态的方块名称的读取方式与其他地方相同 |
-| `rows` | 是 | string 列表 | 无 | 图样，最上面一行写在最前 |
-| `maxWidth` | 否 | int | `21` | `*` 最多能拉伸到的洞口宽度 |
-| `maxHeight` | 否 | int | `21` | `*` 最多能拉伸到的洞口高度 |
+| `legend` | 是 | 单个字符到方块的对象 | 无 | 各行可以使用的方块。带状态的方块名称的读取方式与其他地方相同 |
+| `rows` | 是 | 字符串列表 | 无 | 图样，最上面一行写在最前 |
+| `maxWidth` | 否 | 整数  | `21` | `*` 最多能拉伸到的洞口宽度 |
+| `maxHeight` | 否 | 整数  | `21` | `*` 最多能拉伸到的洞口高度 |
 
-有三个字符不代表方块。`.` 是传送门所在的洞口，没有洞口的框架会被拒绝。空格表示框架不关心的格子，因此 L 形的边框可以通过把角落留空来绘制。`*` 表示重复：整行只有 `*` 的行会按玩家搭建的次数重复其上一行，行内的 `*` 则以同样的方式重复它前面的字符。它可以一次也不重复，所以把图样中每个 `*` 都划掉后读出的就是能点亮的最小形态，而下文的最大值则是最大形态。不含 `*` 的图样是精确的，玩家必须原样搭建，不能多也不能少。
+有三个字符不代表方块。`.` 是传送门所在的洞口，没有洞口的框架会被拒绝。空格表示框架不关心的格子，因此 L 形的边框可以通过把角落留空来绘制。`*` 表示重复：整行只有 `*` 的行会按玩家搭建的次数重复其上一行，行内的 `*` 则以同样的方式重复它前面的字符。它可以一次也不重复，所以把图样中每个 `*` 都划掉后读出的就是能点亮的最小形态，而上表中的最大值则是最大形态。不含 `*` 的图样是精确的，玩家必须原样搭建，不能多也不能少。
 
 竖立的框架可在任一水平轴上、以任一朝向被识别，因此建造者面朝哪个方向都无关紧要。平放的框架则会在四种旋转下都被识别。
 
@@ -3532,7 +3548,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 ### 用框架开启维度
 
-*传送门与门*
+*传送门与闸门*
 
 `<namespace>/dimensions/*.json`
 
@@ -3553,18 +3569,18 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `frames` | 是 | 框架名称列表 | 无 | 能开启此维度的框架 |
 | `ignitedBy` | 否 | 物品名称 | `minecraft:flint_and_steel` | 玩家手持什么来点燃它 |
 | `color` | 否 | 十六进制颜色 | 白色 | 传送门绘制所用的颜色 |
 | `return` | 否 | `built`、`player` 或 `none` | `built` | 是否提供返回的路：自动建好、由玩家建造，或完全不提供 |
-| `gate` | 否 | 传送门名称 | 无 | 必须处于开启状态才能通过的传送门 |
-| `cooldown` | 否 | int，单位刻 | `60` | 同一名玩家再次通过前的等待时间 |
-| `platform` | 否 | boolean | `true` | 抵达时建造一个落脚平台 |
+| `gate` | 否 | 闸门名称 | 无 | 必须处于开启状态才能通过的闸门 |
+| `cooldown` | 否 | 整数，单位为刻 | `60` | 同一名玩家再次通过前的等待时间 |
+| `platform` | 否 | 布尔值 | `true` | 抵达时建造一个落脚平台 |
 | `platformBlock` | 否 | 方块名称 | 石头 | 该平台由什么方块构成 |
 | `sound` | 否 | 音效名称 | 无 | 通过时播放。参见[音效名称](#值列表) |
-| `owned` | 否 | boolean | `false` | 只有点燃者及其允许的人可以使用 |
+| `owned` | 否 | 布尔值 | `false` | 只有点燃者及其允许的人可以使用 |
 
 站在洞口里的方块不由资源包编写。带有 `portal` 部分的维度会得到一个属于自己的方块，以游戏自带的传送门纹理按 `color` 绘制，走进去即可传送而无需用手使用，并且不可破坏。颜色会与纹理相乘，方式和 `tintindex` 一样，所以 `#C77DFF` 保留下界的紫色，而 `#4CFFB0` 会把它变成毒绿色。若想要完全不是原版纹理的传送门，请编写你自己的普通 `portal` 方块并配上自己的纹理，需要的话可以画成[像素图](#以像素图编写的纹理)，其中 `tint` 可以在两种颜色之间渐变。
 
@@ -3574,13 +3590,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 破坏框架的任何一个方块都会使传送门熄灭，与原版一样。
 
-### 传送门
+### 闸门
 
-*传送门与门*
+*传送门与闸门*
 
 `<namespace>/gates/*.json`
 
-文件路径就是传送门的注册名，传送门方块随后在 `gate` 中引用它。
+文件路径就是闸门的注册名，传送门方块随后在 `gate` 中引用它。
 
 下面一次列出了所有键。实际的文件只写需要的那些。
 
@@ -3608,22 +3624,22 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `dimension` | 是 | 维度 id | | 它守卫的维度 |
-| `name` | 否 | string | 文件名 | 显示给玩家 |
+| `name` | 否 | 字符串 | 文件名 | 显示给玩家 |
 | `scope` | 否 | `player`、`global` | `player` | 一次针对一名玩家，还是针对整个世界 |
-| `open` | 否 | boolean | `false` | 是否一开始就处于开启状态 |
-| `unlock` | 否 | object | | 什么能开启它。见下文 |
-| `unlockedMessage` | 否 | string | `%dim% is now open` | 开启时显示 |
-| `blockedMessage` | 否 | string | `You need %item% to enter %dim%` | 拒绝时显示 |
-| `safeReturn` | 否 | boolean | `false` | 被拦回的玩家会被安置在他们试图离开的那个世界中的安全位置：若床或已充能的重生锚仍在，就放在其旁边，否则放在该世界的出生点 |
-| `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该传送门 |
-| `portalBlocks` | 否 | 方块名称列表 | 每个传送门 | 将该传送门限定于这些传送门方块，这样一个维度就可以同时拥有一扇受守卫的门和一扇敞开的门 |
+| `open` | 否 | 布尔值 | `false` | 是否一开始就处于开启状态 |
+| `unlock` | 否 | 对象 | | 什么能开启它。见下文 |
+| `unlockedMessage` | 否 | 字符串 | `%dim% is now open` | 开启时显示 |
+| `blockedMessage` | 否 | 字符串 | `You need %item% to enter %dim%` | 拒绝时显示 |
+| `safeReturn` | 否 | 布尔值 | `false` | 被拦回的玩家会被安置在他们试图离开的那个世界中的安全位置：若床或已充能的重生锚仍在，就放在其旁边，否则放在该世界的出生点 |
+| `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该闸门 |
+| `portalBlocks` | 否 | 方块名称列表 | 每个传送门 | 将该闸门限定于这些传送门方块，这样一个维度就可以同时拥有一个受守卫的传送门和一个敞开的传送门 |
 
-`unlock` 接受 `hold`（必须手持的物品）、`consume` 及 `consumeCount`（`1`）、`craft`（必须已合成过的物品）、`advancement`，以及 `killed`（一个实体名称，谁击杀了一个，传送门就为谁开启，因此可以让某个 Boss 持有通往一个世界的钥匙），当一个不够时可配合 `killedCount`（`1`），按 scope 的设定逐玩家或针对整个世界统计。加上 `killedDrops`（一个物品名称）后，被计入的击杀会把该物品放到击杀者脚边而不是开启传送门，并让计数从头开始，因此钥匙可以再次获得，并交给从未战斗过的人；对同一物品使用 `hold` 或 `consume` 来设门槛，即可使它成为钥匙。`%item%`、`%mob%` 和 `%dim%` 会自动填入。怪物掉落的钥匙在这里不需要任何特殊处理：给怪物设置掉落物，再用 `hold` 或 `consume` 设门槛即可。
+`unlock` 接受 `hold`（必须手持的物品）、`consume` 及 `consumeCount`（`1`）、`craft`（必须已合成过的物品）、`advancement`，以及 `killed`（一个实体名称，谁击杀了一个，闸门就为谁开启，因此可以让某个 Boss 持有通往一个世界的钥匙），当一个不够时可配合 `killedCount`（`1`），按 scope 的设定逐玩家或针对整个世界统计。加上 `killedDrops`（一个物品名称）后，被计入的击杀会把该物品放到击杀者脚边而不是开启闸门，并让计数从头开始，因此钥匙可以再次获得，并交给从未战斗过的人；对同一物品使用 `hold` 或 `consume` 来设置闸门条件，即可使它成为钥匙。`%item%`、`%mob%` 和 `%dim%` 会自动填入。怪物掉落的钥匙在这里不需要任何特殊处理：给怪物设置掉落物，再用 `hold` 或 `consume` 设置闸门条件即可。
 
-传送门也守卫游戏自带的维度：`dimension` 为 `minecraft:the_nether` 的传送门会挡在每一个下界传送门前面。
+闸门也守卫游戏自带的维度：`dimension` 为 `minecraft:the_nether` 的闸门会挡在每一个下界传送门前面。
 
 ## 深层世界
 
@@ -3646,8 +3662,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `worldMinHeight` | int，16 的倍数，最低到 -2032 | `-64` | 主世界最低的方块。游戏自带的底部是 -64；更低就会在原版地形之下形成一个深层世界，那里是实心的石头，直到世界生成层把它挖开，或者 `noiseCaves` 把游戏的洞穴延伸下去。只通过生成的预设应用，所以在资源包之前创建的世界会保持原有高度 |
-| `worldMaxHeight` | int，16 的倍数，最高到 2032，且至多比底部高 4064 | `320` | 主世界顶部之上的那个方块。游戏自带的顶部是 320；更高会在原版地形之上留出开阔的天空 |
+| `worldMinHeight` | 整数，16 的倍数，最低到 -2032  | `-64` | 主世界最低的方块。游戏自带的底部是 -64；更低就会在原版地形之下形成一个深层世界，那里是实心的石头，直到世界生成层把它挖开，或者 `noiseCaves` 把游戏的洞穴延伸下去。只通过生成的预设应用，所以在资源包之前创建的世界会保持原有高度 |
+| `worldMaxHeight` | 整数，16 的倍数，最高到 2032，且至多比底部高 4064  | `320` | 主世界顶部之上的那个方块。游戏自带的顶部是 320；更高会在原版地形之上留出开阔的天空 |
 | `deepStone` | 方块名称 | 无 | 当底部低于 -64 时，原版地形之下的世界所用的方块，例如资源包自己的深板岩。它会在 -64 以下的八层中与深板岩渐变融合，就像深板岩与石头融合那样。留空则保持石头 |
 | `noiseCaves` | `off`、`deep` 或 `world` | `off` | 当底部低于 -64 时，游戏的洞穴、隧道、面条洞穴和含水层在何处延续：`off` 让原版地形之下保持为实心深层石头，交给世界生成层去挖掘；`deep` 让它们一直延伸到底部，并把熔岩湖移到最底下的十层；`world` 在此版本上意思相同，因为原版地形本来就有它们 |
 
@@ -3700,10 +3716,10 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `weight` | int | `1` | 此区域赢得的单元格份额。`0` 将其关闭 |
-| `minHeight` | int | 世界底部 | 区域存在的高度带的底部 |
-| `maxHeight` | int | `48` | 该高度带的顶部。中心位于高度带之外的单元格永远不会选中此区域 |
-| `waterLevel` | int | 无 | 把区域内的地下水位固定在这个高度，取代那里的含水层。它保持在海平面以下，并且至少比深层熔岩高两个方块 |
+| `weight` | 整数  | `1` | 此区域赢得的单元格份额。`0` 将其关闭 |
+| `minHeight` | 整数  | 世界底部 | 区域存在的高度带的底部 |
+| `maxHeight` | 整数  | `48` | 该高度带的顶部。中心位于高度带之外的单元格永远不会选中此区域 |
+| `waterLevel` | 整数  | 无 | 把区域内的地下水位固定在这个高度，取代那里的含水层。它保持在海平面以下，并且至少比深层熔岩高两个方块 |
 | `dimensions` | 维度 id 列表 | 全部 | 区域出现在哪些维度中，包括资源包自己的维度。带 `biome` 的区域只会在生物群系按气候放置的地方显示它：主世界、下界，以及继承主世界生物群系的资源包维度 |
 | `floorCover` | 方块 | 无 | 替换区域内洞穴地面的顶层方块 |
 | `floorChance` | 0.0 到 1.0 | `1.0` | 地面有多少会被覆盖 |
@@ -3711,7 +3727,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `ceilingChance` | 0.0 到 1.0 | `1.0` | 顶部有多少会被覆盖 |
 | `coverReplace` | 方块列表 | 游戏的基础石头、矿石、圆石、砂岩、陶瓦、末地石和黑曜石方块 | 覆盖层可以替换什么。列出的方块只匹配其自身：`minecraft:stone` 不会同时覆盖安山岩、深板岩或凝灰岩，所以要把地面可能出现的每一种石头都列出来 |
 | `spawns` | 列表 | 无 | 在区域内生成的生物，与生物群系的 `spawns` 接受的条目相同：`entity`、`type`（monster、creature、ambient 或 water）、`weight`（`8`），以及表示群体规模的 `min`（`1`）和 `max`（`4`）。能看到天空的位置交给生物群系处理，覆盖层也是如此 |
-| `keepDefaultSpawns` | boolean | `false` | 在区域自己的列表之外保留生物群系原有的生成列表。关闭时，区域的列表在区域内完全取代它 |
+| `keepDefaultSpawns` | 布尔值 | `false` | 在区域自己的列表之外保留生物群系原有的生成列表。关闭时，区域的列表在区域内完全取代它 |
 | `structures` | 列表 | 无 | 每个区域单元格放置一次的结构，位于单元格的中心，并贴合到洞穴地面，就像游戏为洞穴生物群系提供地标那样。条目是 `namespace:name` 模板，或者用 `{ "structure": "...", "weight": 3 }` 在多个之间选择 |
 | `structureChance` | 0.0 到 1.0 | `1.0` | 区域的每个单元格实际得到其结构的几率 |
 | `structureLoot` | `namespace:path` | 无 | 已放置结构内的每个箱子首次被打开时所用的战利品表 |
@@ -3728,9 +3744,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `caveRegionCells` | int，方块 | `128` | 一个区域单元格有多宽 |
-| `caveRegionCellsY` | int，方块 | `64` | 一个区域单元格有多高 |
-| `caveRegionPlainWeight` | int | `4` | 每个单元格抽取时，普通、无区域的地下所占的权重。越高，地下没有任何区域的部分越多：只有一个权重为 1 的区域时，约五分之一的单元格会得到它 |
+| `caveRegionCells` | 整数，单位为格 | `128` | 一个区域单元格有多宽 |
+| `caveRegionCellsY` | 整数，单位为格 | `64` | 一个区域单元格有多高 |
+| `caveRegionPlainWeight` | 整数  | `4` | 每个单元格抽取时，普通、无区域的地下所占的权重。越高，地下没有任何区域的部分越多：只有一个权重为 1 的区域时，约五分之一的单元格会得到它 |
 
 `<namespace>/worldtemplates/*.json`
 
@@ -3830,63 +3846,63 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *世界生成条目*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `block` | 是 | 方块名称 | | 放置的内容 |
-| `blocks` | 否 | object 列表 | 无 | 加权列表，代替单个方块使用。见下文 |
-| `size` | 否 | int 或范围 | `8` | 一次尝试放置多少个方块，或带半径的形状有多大 |
-| `attempts` | 否 | int 或范围 | `8` | 每个区块尝试多少次 |
-| `replace` | 否 | 方块名称或 object 的列表 | `["minecraft:stone"]` | 它可以替换什么。见下文 |
-| `adjacent` | 否 | 方块名称或 object 的列表 | 无 | 只有当这些之一位于紧邻该位置的 26 个方块之中时才放置。形式与 `replace` 相同 |
-| `sparse` | 否 | boolean | `false` | 把方块分散开，而不是紧密堆在一起 |
-| `shape` | 否 | object | `{ "type": "cluster" }` | 它呈现的形态。参见[形状](#形状) |
-| `spread` | 否 | object | `{ "type": "even" }` | 它被放在哪里。参见[扩散](#扩散) |
+| `blocks` | 否 | 对象列表 | 无 | 加权列表，代替单个方块使用。见下文 |
+| `size` | 否 | 整数或范围   | `8` | 一次尝试放置多少个方块，或带半径的形状有多大 |
+| `attempts` | 否 | 整数或范围   | `8` | 每个区块尝试多少次 |
+| `replace` | 否 | 方块名称或对象的列表 | `["minecraft:stone"]` | 它可以替换什么。见下文 |
+| `adjacent` | 否 | 方块名称或对象的列表 | 无 | 只有当这些之一位于紧邻该位置的 26 个方块之中时才放置。形式与 `replace` 相同 |
+| `sparse` | 否 | 布尔值 | `false` | 把方块分散开，而不是紧密堆在一起 |
+| `shape` | 否 | 对象 | `{ "type": "cluster" }` | 它呈现的形态。参见[形状](#形状) |
+| `spread` | 否 | 对象 | `{ "type": "even" }` | 它被放在哪里。参见[扩散](#扩散) |
 
 ### 可生成的位置
 
 *世界生成条目*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `minHeight` | 否 | int | `0` | 它会放置的最低 y 坐标 |
-| `maxHeight` | 否 | int | `64` | 它会放置的最高 y 坐标 |
+| `minHeight` | 否 | 整数  | `0` | 它会放置的最低 y 坐标 |
+| `maxHeight` | 否 | 整数  | `64` | 它会放置的最高 y 坐标 |
 | `dimensions` | 否 | 维度 id 列表 | 每个维度 | 它在哪些维度中运行 |
-| `dimensionsAreBlacklist` | 否 | boolean | `false` | 把该列表变成需要避开的维度 |
+| `dimensionsAreBlacklist` | 否 | 布尔值 | `false` | 把该列表变成需要避开的维度 |
 | `biomes` | 否 | 生物群系名称列表 | 每个生物群系 | 它在哪些生物群系中运行 |
 | `biomeTypes` | 否 | 生物群系类型列表 | 无 | 按类型词指定生物群系，例如 `forest` 或 `nether` |
-| `biomesAreBlacklist` | 否 | boolean | `false` | 把这些列表变成需要避开的 |
-| `minTemperature` | 否 | float | `-100.0` | 它会生成的最冷生物群系 |
-| `maxTemperature` | 否 | float | `100.0` | 它会生成的最热生物群系 |
-| `minRainfall` | 否 | float | `-100.0` | 它会生成的最干燥生物群系 |
-| `maxRainfall` | 否 | float | `100.0` | 它会生成的最湿润生物群系 |
-| `minDistanceFromSpawn` | 否 | int，方块 | `0` | 距世界出生点多远才开始生成 |
+| `biomesAreBlacklist` | 否 | 布尔值 | `false` | 把这些列表变成需要避开的 |
+| `minTemperature` | 否 | 浮点数 | `-100.0` | 它会生成的最冷生物群系 |
+| `maxTemperature` | 否 | 浮点数 | `100.0` | 它会生成的最热生物群系 |
+| `minRainfall` | 否 | 浮点数 | `-100.0` | 它会生成的最干燥生物群系 |
+| `maxRainfall` | 否 | 浮点数 | `100.0` | 它会生成的最湿润生物群系 |
+| `minDistanceFromSpawn` | 否 | 整数，单位为格 | `0` | 距世界出生点多远才开始生成 |
 | `caveRegions` | 否 | 区域名称列表 | 无 | 只在这些[洞穴区域](#洞穴区域)内生成 |
 | `snap` | 否 | `floor` 或 `ceiling` | 无 | 先把每次尝试竖直移动到最近的洞穴地面或顶部 |
-| `snapDepth` | 否 | int | `0` | `snap` 随后越过表面多远，从地面向下、从顶部向上。`0` 停留在紧贴表面的开阔空间中，`1` 是表面方块本身，`2` 是它后面的那个。它可以覆盖什么仍由 `replace` 决定，所以资源包可以借此把一种方块分层放在地面之下而不是地面之上 |
+| `snapDepth` | 否 | 整数  | `0` | `snap` 随后越过表面多远，从地面向下、从顶部向上。`0` 停留在紧贴表面的开阔空间中，`1` 是表面方块本身，`2` 是它后面的那个。它可以覆盖什么仍由 `replace` 决定，所以资源包可以借此把一种方块分层放在地面之下而不是地面之上 |
 
 ### 地表标志与跟随者
 
 *世界生成条目*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `indicators` | 否 | `block=weight` 列表 | 无 | 在已生成的矿脉上方的地表散落的方块，让玩家能知道地下有什么；按矿脉的内容来挑选。`empty=weight` 让一个位置保持空白。没有权重或权重小于 1 的条目会被记入日志并忽略，并且不会在村庄或城市的街道和建筑上留下任何指示物 |
-| `indicatorCount` | 否 | int 或范围 | `1` | 每条生成的矿脉得到多少个地表位置 |
-| `indicatorSpread` | 否 | int，方块 | `0` | 指示物可以落在超出矿脉占地范围多远的地方 |
-| `then` | 否 | `name=weight` 或 object 的列表 | 无 | 在本条目生成之后立刻从它长出来、并依附于它的世界生成条目：跟随者的原点设在这条矿脉边缘的外侧，方向由 `thenSpread` 和 `thenDepth` 给出，使两者相接。条目可以是 `name=weight`，也可以是带有 `name`、`weight` 以及自己的 `spread` 和 `depth`（int 或范围）的 object，这些仅对该跟随者覆盖矿脉的设置，因此同一个列表可以让钻石尖端朝下、让分支朝侧面。裸名称在本资源包的命名空间中读取，`empty=weight` 不排入任何内容。跟随者保留自己的形状、方块、大小和 `replace`，但跳过自己的尝试次数、几率、高度带和生物群系限制，并且自己也可以带有 `then`，资源包想嵌套多深都可以；已经在同一条链中生成过的条目会使该链停止 |
-| `thenCount` | 否 | int 或范围 | `1` | 每条生成的矿脉从该列表中选出多少个不同的跟随者，每个条目至多一次，所以数量等于列表长度时，每一个都会长出来 |
-| `thenSpread` | 否 | int，方块 | 形状的半径 | 跟随者生长方向可以向侧面偏多远，在负的该值到正的该值之间随机取值 |
-| `thenDepth` | 否 | int 或范围 | `0` | 方向向下（负）或向上偏多远。`0` 且没有侧向偏移时，跟随者笔直向下悬挂 |
-| `prospectAs` | 否 | string | 文件名 | 勘探物品在其读数中如何称呼此条目，例如 `Hematite` |
+| `indicatorCount` | 否 | 整数或范围   | `1` | 每条生成的矿脉得到多少个地表位置 |
+| `indicatorSpread` | 否 | 整数，单位为格 | `0` | 指示物可以落在超出矿脉占地范围多远的地方 |
+| `then` | 否 | `name=weight` 或对象的列表 | 无 | 在本条目生成之后立刻从它长出来、并依附于它的世界生成条目：跟随者的原点设在这条矿脉边缘的外侧，方向由 `thenSpread` 和 `thenDepth` 给出，使两者相接。条目可以是 `name=weight`，也可以是带有 `name`、`weight` 以及自己的 `spread` 和 `depth`（int 或范围）的对象，这些仅对该跟随者覆盖矿脉的设置，因此同一个列表可以让钻石尖端朝下、让分支朝侧面。裸名称在本资源包的命名空间中读取，`empty=weight` 不排入任何内容。跟随者保留自己的形状、方块、大小和 `replace`，但跳过自己的尝试次数、几率、高度带和生物群系限制，并且自己也可以带有 `then`，资源包想嵌套多深都可以；已经在同一条链中生成过的条目会使该链停止 |
+| `thenCount` | 否 | 整数或范围   | `1` | 每条生成的矿脉从该列表中选出多少个不同的跟随者，每个条目至多一次，所以数量等于列表长度时，每一个都会长出来 |
+| `thenSpread` | 否 | 整数，单位为格 | 形状的半径 | 跟随者生长方向可以向侧面偏多远，在负的该值到正的该值之间随机取值 |
+| `thenDepth` | 否 | 整数或范围   | `0` | 方向向下（负）或向上偏多远。`0` 且没有侧向偏移时，跟随者笔直向下悬挂 |
+| `prospectAs` | 否 | 字符串 | 文件名 | 勘探物品在其读数中如何称呼此条目，例如 `Hematite` |
 
 ### 回溯生成与要求
 
 *世界生成条目*
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `retrogen` | 否 | boolean | `false` | 同时生成到已经存在的区块中 |
-| `retrogenKey` | 否 | string | 配置中的键 | 仅为此条目覆盖回溯生成键 |
+| `retrogen` | 否 | 布尔值 | `false` | 同时生成到已经存在的区块中 |
+| `retrogenKey` | 否 | 字符串 | 配置中的键 | 仅为此条目覆盖回溯生成键 |
 | `requires` | 否 | 模组 id 或资源包命名空间列表 | 无 | 除非全部存在，否则跳过该条目 |
 
 ### 加权方块
@@ -3904,11 +3920,11 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `block` | 是 | 方块名称 | | 放置的内容 |
-| `weight` | 否 | int | `1` | 这一个相对于其他方块被选中的频率 |
-| `properties` | 否 | 由属性映射到值的 object | 无 | 按名称指定的方块状态属性，用于方块默认状态之外的状态 |
+| `weight` | 否 | 整数  | `1` | 这一个相对于其他方块被选中的频率 |
+| `properties` | 否 | 属性到值的对象 | 无 | 按名称指定的方块状态属性，用于方块默认状态之外的状态 |
 
 即使使用了 `blocks`，文件顶层仍然需要 `block`；把第一个条目放在那里就很合适。
 
@@ -3930,7 +3946,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 形式 | 示例 | 它匹配什么 |
 | --- | --- | --- |
 | 名称 | `"minecraft:stone"` | 该方块的每一种状态 |
-| Object | `{ "block": "minecraft:oak_log", "properties": { "axis": "y" } }` | 仅该状态 |
+| 对象 | `{ "block": "minecraft:oak_log", "properties": { "axis": "y" } }` | 仅该状态 |
 
 末尾带元数据的 1.12.2 名称 `minecraft:stone:3` 会匹配该方块的每一种状态，并在日志中说明，因为带元数据的那些方块现在已是各自独立的方块：请写 `minecraft:diorite`。使用 `"minecraft:air"` 可在开阔空间中生成。
 
@@ -3958,7 +3974,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *世界生成条目*
 
-世界生成条目的 `then` 列表中的一个条目，是带权重的名称，或者当该跟随者需要自己的方向时使用 object。
+世界生成条目的 `then` 列表中的一个条目，是带权重的名称，或者当该跟随者需要自己的方向时使用对象。
 
 ```json
 {
@@ -3970,14 +3986,14 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-| 键 | 必填 | 值 | 默认值 | 作用 |
+| 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `name` | 是 | 条目名称 | | 从本条目长出来的世界生成条目。裸名称在本资源包的命名空间中读取 |
-| `weight` | 否 | int | `1` | 该跟随者相对于列表中其他跟随者被选中的频率 |
-| `spread` | 否 | int，方块 | 条目的 `thenSpread` | 该跟随者的方向可以向侧面偏多远，仅对此条目生效 |
-| `depth` | 否 | int 或范围 | 条目的 `thenDepth` | 该跟随者的方向向下（负）或向上偏多远，仅对此条目生效 |
+| `weight` | 否 | 整数  | `1` | 该跟随者相对于列表中其他跟随者被选中的频率 |
+| `spread` | 否 | 整数，单位为格 | 条目的 `thenSpread` | 该跟随者的方向可以向侧面偏多远，仅对此条目生效 |
+| `depth` | 否 | 整数或范围   | 条目的 `thenDepth` | 该跟随者的方向向下（负）或向上偏多远，仅对此条目生效 |
 
-`name=weight` 是只含这两项的 object 的简写，而 `empty=weight` 不排入任何内容。由于 `spread` 和 `depth` 是逐条目设置的，同一个列表可以让同一条矿脉上的钻石尖端笔直向下，同时让一个分支向侧面延伸。
+`name=weight` 是只含这两项的对象的简写，而 `empty=weight` 不排入任何内容。由于 `spread` 和 `depth` 是逐条目设置的，同一个列表可以让同一条矿脉上的钻石尖端笔直向下，同时让一个分支向侧面延伸。
 
 ## 形状
 
@@ -4066,12 +4082,12 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 使用者 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `type` | 全部 | 上述形状之一 | `cluster` | 哪种形状 |
-| `radius` | plate、geode、basin、spire、nodule、vent | int 或范围 | `6` | 它有多宽 |
-| `height` | plate、geode、basin、spire、vent、tree | int 或范围 | `1`，geode 为 `8`，tree 为 `5` | 它有多高或多厚 |
-| `width` | geode | int 或范围 | `12` | 腔体的整体跨度 |
+| `radius` | plate、geode、basin、spire、nodule、vent、belt | 整数或范围   | `6`，belt 为 `32` | 它有多宽 |
+| `height` | plate、geode、basin、spire、vent、tree | 整数或范围   | `1`，geode 为 `8`，tree 为 `5` | 它有多高或多厚 |
+| `width` | geode | 整数或范围   | `12` | 腔体的整体跨度 |
 | `plane` | plate、basin、spire、vent | `circle`、`square` | `circle` | 它的占地形状 |
-| `slim` | plate、largevein、nodule | boolean | `false` | plate：薄一层。largevein：单方块分支。nodule：空心外壳 |
-| `hanging` | spire、vent | boolean | `false` | 从顶部向下生长，而不是从地面向上生长 |
+| `slim` | plate、largevein、nodule | 布尔值 | `false` | plate：薄一层。largevein：单方块分支。nodule：空心外壳 |
+| `hanging` | spire、vent | 布尔值 | `false` | 从顶部向下生长，而不是从地面向上生长 |
 | `taper` | spire | `straight`、`bell`、`needle` | `straight` | 宽度向尖端如何收窄。`straight` 均匀收窄，`bell` 下方保持宽度然后骤降，`needle` 立刻变细成一根长长的尖 |
 | `outline` | geode | 方块名称 | 无 | 外壳方块 |
 | `fill` | geode | 方块名称 | 无 | 中间填充什么。省略时，中间是空心的 |
@@ -4089,14 +4105,14 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 使用者 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `surface` | decoration、tree | 方块名称列表 | 无 | 它会放在什么之上 |
-| `seeSky` | decoration | boolean | `true` | 只在能看到天空的地方放置 |
-| `checkStay` | decoration | boolean | `true` | 只在该方块能存活的地方放置 |
-| `stackHeight` | decoration | int 或范围 | `1` | 向上叠放多少个 |
-| `scatterX` | decoration、tree | int | `8` | 它向侧面游移多远 |
-| `scatterY` | decoration、tree | int | `4` | 它在竖直方向游移多远 |
-| `scatterZ` | decoration、tree | int | `8` | 它向侧面游移多远 |
-| `rarity` | 任意 | int | 无（belt 为 `400`） | 每隔这么多个区块放置一次。对 belt 而言，它拉开各个带之间的间距；对其他形状而言，它为整个条目设门槛，只有这么多个区块中的一个才会执行它的 `attempts`。`field` 忽略它 |
-| `rarityIsPerChunk` | 任意 | boolean | `false` | 把 `rarity` 变成每个区块得到多少次放置 |
+| `seeSky` | decoration | 布尔值 | `true` | 只在能看到天空的地方放置 |
+| `checkStay` | decoration | 布尔值 | `true` | 只在该方块能存活的地方放置 |
+| `stackHeight` | decoration | 整数或范围   | `1` | 向上叠放多少个 |
+| `scatterX` | decoration、tree | 整数  | `8` | 它向侧面游移多远 |
+| `scatterY` | decoration、tree | 整数  | `4` | 它在竖直方向游移多远 |
+| `scatterZ` | decoration、tree | 整数  | `8` | 它向侧面游移多远 |
+| `rarity` | 任意 | 整数  | 无（belt 为 `400`） | 每隔这么多个区块放置一次。对 belt 而言，它拉开各个带状区域之间的间距；对其他形状而言，它为整个条目设门槛，只有这么多个区块中的一个才会执行它的 `attempts`。`field` 忽略它 |
+| `rarityIsPerChunk` | 任意 | 布尔值 | `false` | 把 `rarity` 变成每个区块得到多少次放置 |
 
 ### 树木
 
@@ -4106,7 +4122,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | --- | --- | --- | --- | --- |
 | `log` | tree | 方块名称 | 无 | 树干方块 |
 | `leaves` | tree | 方块名称 | 无 | 树叶方块 |
-| `vines` | tree | boolean | `false` | 从树叶上垂下藤蔓 |
+| `vines` | tree | 布尔值 | `false` | 从树叶上垂下藤蔓 |
 
 没有 `log` 或 `leaves` 的 `tree` 什么也不会生成，并会在日志中说明。指明一个 `structure`，或在 `structures` 下指明多个，就会在每个位置种下该模板而不是长出一棵树，此时不再需要 `log` 或 `leaves`；使用模板的树读取 `turns`、`mirrors`、`integrity`、`lootTable` 和 `locateAs` 的方式与 `imprint` 完全相同。
 
@@ -4121,9 +4137,11 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `lootTable` | imprint、tree | `namespace:path` | 无 | 已放置模板内的每个箱子，以及任何其他接受战利品表的容器（包括潜影盒或模组的板条箱），首次被打开时所用的战利品表。涵盖 `structure` 和 `structures` 的每个条目；每个箱子各自掷出自己的种子 |
 | `structures` | imprint、tree | 列表 | 无 | 在多个模板之间选择，每次放置一个。每个条目是 `{ "structure": "namespace:name", "weight": 3 }`，或者用裸名称表示机会均等。会覆盖 `structure` |
 | `turns` | imprint、tree | 列表 | 任意 | 它可以朝哪个方向放置：`none`、`quarter`、`half`、`threequarter`。条目可以带 `weight`。省略时，四种方向的可能性相同 |
+| `turns[].turn` | imprint、tree | `none`、`quarter`、`half`、`threequarter` | 无 | `turns` 的对象条目所指定的旋转，如 `{ "turn": "half", "weight": 2 }` |
+| `mirrors[].mirror` | imprint、tree | `none`、`leftright`、`frontback` | 无 | `mirrors` 的对象条目所指定的翻转，如 `{ "mirror": "leftright", "weight": 2 }` |
 | `mirrors` | imprint、tree | 列表 | 无 | 同时翻转：`none`、`leftright`、`frontback`，可带 `weight`。要为条目指定自己的权重，写作 `{ "mirror": "leftright", "weight": 2 }`，`turns` 的条目同理，只是用 `turn` |
 | `at` | imprint | 两个 int，x 和 z | 无 | 在该区块生成时，在地表这些方块坐标处精确放置一次，而不是按几率放置。参见[位于精确位置的结构](#位于精确位置的结构) |
-| `locateAs` | imprint、tree | string | 无 | 把此条目放置的每个结构以该名称登记，使 `/rdplserver locate <name>` 能找到最近的一个。参见[查找已放置的结构](#查找已放置的结构) |
+| `locateAs` | imprint、tree | 字符串 | 无 | 把此条目放置的每个结构以该名称注册，使 `/rdplserver locate <name>` 能找到最近的一个。参见[查找已放置的结构](#查找已放置的结构) |
 
 对于没有内置类型能涵盖的形状，用 `imprint`：把它建成 `.nbt` 模板再放置它，用 `structures` 来变化，用 `turns` 和 `mirrors` 来转动，用 `integrity` 把它消解成比你绘制的文件更粗糙的样子。
 
@@ -4131,7 +4149,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *形状*
 
-原版结构通过 `terrain` 设置中的 `structureAt` 固定到精确位置，写成 `structure=x,z` 条目，每行一个：`"structureAt": ["villages=1000,-500"]`。**其中的 x 和 z 是方块坐标，不是区块坐标**，结构会在包含该方块的区块中生成。在 `terrainAdaptation` 把村庄铺成城市街道的情况下，被固定的村庄的水井就位于该方块本身；当该方块离街区边缘只有几个方块远时，则位于街区允许的最近处；其他结构，以及没有启用它而铺设的村庄，则从游戏在该区块中本会让它们开始的地方开始。每个想要的实例写一个条目。它的间距、间隔、最小出生点距离和平地检查全部不再起作用，所以位置由资源包自己负责，两个相距不到一个区块的固定位置会在同一个区块中放入两个结构。结构一旦建立，就按通常的规则贴合其区块处的地面。
+原版结构通过 `terrain` 设置中的 `structureAt` 固定到精确位置，写成 `structure=x,z` 条目，每行一个：`"structureAt": ["villages=1000,-500"]`。**其中的 x 和 z 是方块坐标，不是区块坐标**，结构会在包含该方块的区块中生成。在 `terrainAdaptation` 把村庄铺成城市街道的情况下，被固定的村庄的水井就位于该方块本身；当该方块离街区群边缘只有几个方块远时，则位于街区群允许的最近处；其他结构，以及没有启用它而铺设的村庄，则从游戏在该区块中本会让它们开始的地方开始。每个想要的实例写一个条目。它的间距、间隔、最小出生点距离和平地检查全部不再起作用，所以位置由资源包自己负责，两个相距不到一个区块的固定位置会在同一个区块中放入两个结构。结构一旦建立，就按通常的规则贴合其区块处的地面。
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
@@ -4143,7 +4161,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 *形状*
 
-带有 `"locateAs": "Crypt"` 的 `imprint` 条目会把它放置的每个结构以该名称登记，之后 `/rdplserver locate Crypt` 会指向最近的一个，并且该名称会出现在 Tab 补全中；`/rdplserver goto Crypt` 会把你带到那里。只有已经生成的结构才能被找到，因为资源包结构是在区块生成时按几率放置的，而不是按游戏可以预测的网格。这些名称保存在世界存档中，所以重启后仍然有效，在服务器上也能用。以这种方式登记的名称还可以用 `gotoPlaceLevels` 赋予它自己的权限，所以资源包可以把谁能被传送到它自己的结构，与原版结构分开来决定。
+带有 `"locateAs": "Crypt"` 的 `imprint` 条目会把它放置的每个结构以该名称注册，之后 `/rdplserver locate Crypt` 会指向最近的一个，并且该名称会出现在 Tab 补全中；`/rdplserver goto Crypt` 会把你带到那里。只有已经生成的结构才能被找到，因为资源包结构是在区块生成时按几率放置的，而不是按游戏可以预测的网格。这些名称保存在世界存档中，所以重启后仍然有效，在服务器上也能用。以这种方式注册的名称还可以用 `gotoPlaceLevels` 赋予它自己的权限，所以资源包可以把谁能被传送到它自己的结构，与原版结构分开来决定。
 
 ### 矿场与矿脉键
 
@@ -4151,9 +4169,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 使用者 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `field` | field | object | `{ "type": "speckle" }` | 矿场如何算出。键与硬度分组的 `field` 相同，在[矿场](#矿场)中说明：带 `chances` 和 `spread` 的 `speckle`，或带 `cell`、`seeds`、`reach`、`arms` 和 `armReach` 的 `seeded` |
+| `field` | field | 对象 | `{ "type": "speckle" }` | 分布场如何算出。键与硬度分组的 `field` 相同，在[矿场](#矿场)中说明：带 `chances` 和 `spread` 的 `speckle`，或带 `cell`、`seeds`、`reach`、`arms` 和 `armReach` 的 `seeded` |
 | `threshold` | field、vein | 0.0 到 1.0 | `0.5`（vein 为 `0.4`） | 某个方块处的场强必须达到多少才放置。越低，填充越多 |
-| `fade` | field | int | `0` | 让高度带的顶部呈斑点状消散，而不是平齐地结束：在高度范围的顶部这么多个方块内，每个方块被放置的几率逐级降低，与引擎在 `deepStone` 与上方世界相接处所呈现的效果相同 |
+| `fade` | field | 整数  | `0` | 让高度带的顶部呈斑点状消散，而不是平齐地结束：在高度范围的顶部这么多个方块内，每个方块被放置的几率逐级降低，与引擎在 `deepStone` 与上方世界相接处所呈现的效果相同 |
 | `pattern` | vein | `default`、`banded` 或 `tube` | `default` | 矿床的外观：扭曲的团块、每隔几个方块叠起的层，或在岩石中蜿蜒的空心管道 |
 | `density` | vein | 0.0 到 1.0 | `1.0` | 符合条件的方块中实际被放置的比例，逐方块掷硬币 |
 | `rich` | vein | 方块名称 | 无 | 从 `richAt` 起，在场强高于 `threshold` 的范围内放置，即矿床的核心，取代条目的方块 |
@@ -4173,13 +4191,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 }
 ```
 
-这些键写在它自己的 `field` object 中，而不是与 `type` 并列，因为形状上的 `type` 已经写了 `field`。
+这些键写在它自己的 `field` 对象中，而不是与 `type` 并列，因为形状上的 `type` 已经写了 `field`。
 
 ### 带状区域
 
 *形状*
 
-`belt` 是一个比单个区块大得多的球体，用于石头区域而不是矿脉。它的 `radius` 是球体的大小，每个区块都根据世界种子和条目自己的名称，各自算出附近的球体从哪里开始，所以无论区块以何种方式生成，带状区域都会完整出现，并且绝不会向相邻区块写入任何内容。
+`belt` 是一个比单个区块大得多的球体，用于石头区域而不是矿脉。它的 `radius` 是球体的大小（默认 32），每个区块都根据世界种子和条目自己的名称，各自算出附近的球体从哪里开始，所以无论区块以何种方式生成，带状区域都会完整出现，并且绝不会向相邻区块写入任何内容。
 
 ```json
 {
@@ -4258,15 +4276,15 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 使用者 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `type` | 全部 | 上述扩散类型之一 | `even` | 使用哪种扩散 |
-| `center` | centered | 整数 | 高度范围的中点 | 聚集所围绕的高度 |
-| `range` | centered | 整数 | 高度范围的一半 | 距该高度可延伸多远 |
+| `center` | centered | 整数  | 高度范围的中点 | 聚集所围绕的高度 |
+| `range` | centered | 整数  | 高度范围的一半 | 距该高度可延伸多远 |
 | `smoothness` | centered | 1 到 8 | `2` | 对多少次随机取平均。越高，分布带越集中 |
-| `veinHeight` | sprawl | 整数 | 高度范围 | 单条矿脉有多高 |
-| `veinDiameter` | sprawl | 整数 | `12` | 单条矿脉有多宽 |
+| `veinHeight` | sprawl | 整数  | 高度范围 | 单条矿脉有多高 |
+| `veinDiameter` | sprawl | 整数  | `12` | 单条矿脉有多宽 |
 | `verticalDensity` | sprawl | 1 到 100 | `16` | 垂直方向上有多密实 |
 | `horizontalDensity` | sprawl | 1 到 100 | `32` | 水平方向上有多密实 |
-| `offsetMin` | terrain | 整数 | `0` | 距地表的最低偏移 |
-| `offsetMax` | terrain | 整数 | `offsetMin` | 距地表的最高偏移 |
+| `offsetMin` | terrain | 整数  | `0` | 距地表的最低偏移 |
+| `offsetMax` | terrain | 整数  | `offsetMin` | 距地表的最高偏移 |
 | `ceiling` | cavern | 布尔值 | `false` | 附着在洞顶而不是地面 |
 
 ## 结构地图
@@ -4307,7 +4325,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `at` | 两个数字 | 无 | 将一份副本固定在精确的方块坐标上，方式与 `structureAt` 固定村庄相同 |
 | `spacing` | 数字 | `0` | 在相隔这么多区块的网格上散布副本，并依据世界种子加以抖动。`0` 表示不散布，因此只有 `at` 的地图恰好只会建造一次 |
 | `chance` | 数字 | `100` | 网格点中会建造副本的百分比 |
-| `dimensions` | 维度 ID 列表 | 全部 | 地图可在哪些维度建造，包括资源包自己的维度 |
+| `dimensions` | 维度 id 列表 | 全部 | 地图可在哪些维度建造，包括资源包自己的维度 |
 | `layers` | 列表 | 无 | 各层，自下而上，每层由一个 `palette` 和一个 `map` 组成 |
 
 调色板按注册表键引用资源包 `<namespace>/structures/` 中的模板。
@@ -4367,17 +4385,17 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 使用者 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
 | `type` | 全部 | `farm` 或 `template` | `farm` | 地块的种类 |
-| `weight` | 全部 | 整数 | `3` | 与资源包中其他地块相比，这个地块被选中的频率 |
-| `leastCount` | 全部 | 整数 | `1` | 每个街区的最少数量：街区沿街道安置地块，数量上限在其可建造地块中最低的 `leastCount` 与最高的 `mostCount` 之间随机抽取，二者在城市生长期间均加上 16，或加上 `villagePlotsLeast` 的三十二分之一（若该值更大）。位于其他地块后方的地块不计入 |
-| `mostCount` | 全部 | 整数 | `4` | 该随机范围的上限 |
-| `width` | 全部 | 整数 | `7` | 沿街道方向的宽度 |
-| `height` | 全部 | 整数 | `4` | 在地面以上清出的高度 |
-| `depth` | 全部 | 整数 | `9` | 远离街道方向的进深 |
-| `apron` | 全部 | 整数 | `2` | 地块下方的地面与街道标高相差多少仍可接受，超出则被拒绝或沿街道滑动：即其下的填土或其上隆起处的削平的方块数，且最高角与最低角之间的差也不超过此值。丘陵中的宽地块需要更大的值。设得过高，地块会径直在斜坡上形成梯田，在不合适的地方会把一座山削平 |
+| `weight` | 全部 | 整数  | `3` | 与资源包中其他地块相比，这个地块被选中的频率 |
+| `leastCount` | 全部 | 整数  | `1` | 每个街区群的最少数量：街区群沿街道安置地块，数量上限在其可建造地块中最低的 `leastCount` 与最高的 `mostCount` 之间随机抽取，二者在城市生长期间均加上 16，或加上 `villagePlotsLeast` 的三十二分之一（若该值更大）。位于其他地块后方的地块不计入 |
+| `mostCount` | 全部 | 整数  | `4` | 该随机范围的上限 |
+| `width` | 全部 | 整数  | `7` | 沿街道方向的宽度 |
+| `height` | 全部 | 整数  | `4` | 在地面以上清出的高度 |
+| `depth` | 全部 | 整数  | `9` | 远离街道方向的进深 |
+| `apron` | 全部 | 整数  | `2` | 地块下方的地面与街道标高相差多少仍可接受，超出则被拒绝或沿街道滑动：即其下的填土或其上隆起处的削平的方块数，且最高角与最低角之间的差也不超过此值。丘陵中的宽地块需要更大的值。设得过高，地块会径直在斜坡上形成梯田，在不合适的地方会把一座山削平 |
 | `ground` | 全部 | 方块名称 | `minecraft:dirt` | 在斜坡上垫在下方的材料 |
-| `requires` | 全部 | 模组 ID 或资源包命名空间的列表 | 无 | 除非全部存在，否则该地块会被排除 |
+| `requires` | 全部 | 模组 id 或资源包命名空间列表  | 无 | 除非全部存在，否则该地块会被排除 |
 
-地块是资源包自己的城市沿街道建造的内容，并且每个模板地块还会作为房屋之一加入游戏自带的村庄，入口位于其正面中央。若完全没有地块文件，城市会按各街区所在生物群系的村庄类型，建造游戏自带的村庄房屋。一旦某条街道要求一个地块，由 `weight` 决定选中你的哪一个；`villages` 设置中的 `villagePieces` 则以 `mypack:smithy`、`smithy` 或该地块所建造的结构来指明模板保留哪些地块。街道本身如何铺设、装饰、架桥、开凿隧道和铺设铁轨，由[各分组的作用](#各分组的作用)下的 `village*` 设置决定。
+地块是资源包自己的城市沿街道建造的内容，并且每个模板地块还会作为房屋之一加入游戏自带的村庄，入口位于其正面中央。若完全没有地块文件，城市会按各街区群所在生物群系的村庄类型，建造游戏自带的村庄房屋。一旦某条街道要求一个地块，由 `weight` 决定选中你的哪一个；`villages` 设置中的 `villagePieces` 则以 `mypack:smithy`、`smithy` 或该地块所建造的结构来指明模板保留哪些地块。街道本身如何铺设、装饰、架桥、开凿隧道和铺设铁轨，由[各分组的作用](#各分组的作用)下的 `village*` 设置决定。
 
 ### 农场
 
@@ -4404,7 +4422,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `edge` | farm | 方块名称 | `minecraft:oak_log` | 地块四周的边框 |
 | `soil` | farm | 方块名称 | `minecraft:farmland` | 各行所用的材料 |
 | `water` | farm | 布尔值 | `true` | 在各行之间放置一条水渠 |
-| `rowWidth` | farm | 整数 | `2` | 每行土壤有多宽 |
+| `rowWidth` | farm | 整数  | `2` | 每行土壤有多宽 |
 
 ### 由模板构建
 
@@ -4439,11 +4457,11 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `structure` | template | `namespace:name` | 无 | 要放置的模板，或你的某张结构地图，此时由地图决定地块的大小 |
 | `integrity` | template | 1 到 100 | `100` | 模板方块中会出现的百分比 |
 | `lootTable` | template | `namespace:path` | 无 | 放置后的模板内每个箱子在首次打开时所用的战利品表。指定了结构地图的地块不受影响 |
-| `villagers` | 全部 | 整数 | `0` | 地块生成多少人 |
+| `villagers` | 全部 | 整数  | `0` | 地块生成多少人 |
 | `villagerEntity` | 全部 | `namespace:name` | 村民 | 住在这里的是谁，例如你自己的实体变种 |
-| `villagerX` | 全部 | 整数 | `1` | 他们出现的位置，沿地块宽度方向 |
-| `villagerY` | 全部 | 整数 | `1` | 他们出现的位置，位于地板之上的高度 |
-| `villagerZ` | 全部 | 整数 | `1` | 他们出现的位置，向地块内部的进深 |
+| `villagerX` | 全部 | 整数  | `1` | 他们出现的位置，沿地块宽度方向 |
+| `villagerY` | 全部 | 整数  | `1` | 他们出现的位置，位于地板之上的高度 |
+| `villagerZ` | 全部 | 整数  | `1` | 他们出现的位置，向地块内部的进深 |
 
 ## 城市布局地图
 
@@ -4528,9 +4546,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
 | `terrainAdaptation` | 布尔值 | `false` | 铺设 RDPL 自己的城市街道。连绵城市需要开启它 |
-| `villageCitySpacing` | 整数，0 到 256 | `16` | `1` 让每个街区群都成为一座城市，城市正是因此而连绵不断。更大的数值会播种彼此分开、在各自边界处终止的城市 |
+| `villageCitySpacing` | 整数，0 到 256  | `16` | `1` 让每个街区群都成为一座城市，城市正是因此而连绵不断。更大的数值会播种彼此分开、在各自边界处终止的城市 |
 | `villageBlockSizes` | `size=weight` 的列表 | 空 | 平行街道之间的街区有多深，每个街区群抽取一次，因此城市会混合细密与稀疏的街网 |
-| `villagePlotsMost` | 整数，0 或更大 | `0` | 一个街区群最多安置多少个地块。0 表示不设上限 |
+| `villagePlotsMost` | 整数，0 或更大  | `0` | 一个街区群最多安置多少个地块。0 表示不设上限 |
 | `villagePlotsBackRow` | 布尔值 | `true` | 在每个正对街道的地块后方再安置一个地块，使每个街区的内部也被建满 |
 
 其他所有街道设置，从路面方块到路灯、桥梁、隧道和下水道，装点连绵城市的方式与其他城市相同。`villagePlotsLeast` 不起作用，因为每个街区群本身已是一座完整的城市。规划中地块和井合计不超过两个的街区群会留空，与任何这么小的城市一样。
@@ -4638,8 +4656,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | 键 | 作用 | 设置它的原因 |
 | --- | --- | --- |
 | `pregenOnNewWorld` | 在任何人游玩之前，围绕出生点生成的区块半径。12 是下限，0 表示取这个下限而不是什么都不生成，因为游戏本来就会自行在出生点周围生成 12 个区块。调高它可以延伸得比游戏更远 | 设定资源包在游戏已生成的地形之外延伸多远 |
-| `pregenDimensions` | 要生成哪些维度，按 ID 依次列出，每个维度围绕自己的出生点 | 添加下界、末地或你自己的维度 |
-| `pregenAllDimensions` | 服务器持有的每一个维度，而不是一份列表，主世界在前，其余按 ID 顺序 | 维度很多的资源包。每个模组的维度都算在内，所以要留意体积 |
+| `pregenDimensions` | 要生成哪些维度，按 id 依次列出，每个维度围绕自己的出生点 | 添加下界、末地或你自己的维度 |
+| `pregenAllDimensions` | 服务器持有的每一个维度，而不是一份列表，主世界在前，其余按 id 顺序 | 维度很多的资源包。每个模组的维度都算在内，所以要留意体积 |
 | `pregenDimensionsWhenEntered` | 这些维度在有人首次踏入时才生成，并再次固定所有人直到完成 | 大多数玩家不会去的维度；从不前往的玩家无需付出任何代价 |
 | `pregenToBorder` | 将每个维度填充到其世界边界，而不是按半径，并以边界为中心 | 有边界的世界 |
 | `pregenBorderLimit` | 边界最多可延伸多远，以区块计，向任一方向，超出则拒绝运行。仅限配置，绝不是资源包的键 | 防止失控的运行；只有在清楚它所需的时间和磁盘空间时才调高 |
@@ -4665,13 +4683,13 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `pregenSpectatingSays` | 生成地形期间屏幕中央的固定提示行。保持默认值时，它会使用每位玩家各自的语言；留空则不显示任何内容 | 请保持在约三十五个字符以内，否则小窗口会将其截断 |
 | `pregenLogo` | 预生成完成时徽标所在的位置：`left`、`center` 或 `right`，位于屏幕中央文字之上，显示几秒钟，然后随雾一同淡出 | 它总会显示；未知的词会被当作 `center` |
 | `welcomeSays` | 绿色的问候语，每次登录以及预生成之后都会显示。单独的一项是适用于所有地方的那一行；`dimension=message` 形式的项会为该维度覆盖它，并向每个抵达该维度的人问候，例如 `"minecraft:the_nether=Welcome to the Nether!"`。维度也可以写成 1.12.2 的 `0`、`-1` 或 `1`，在地形生成期间抵达的人不会收到问候。`=` 之后的空消息会让该维度静默；空列表则不显示任何内容。保持默认值时，它会使用每位玩家各自的语言 | 用一条单独的行写出你资源包的名称；再添加各维度的行，为每个世界设定主题。请将每行保持在约三十五个字符以内 |
-| `saysCard` | 将这个模组发出的各行文字，即欢迎语、中途加入的玩家收到的造陆提示、运行的结束（运行进度仍显示在动作栏上），以及威胁提示行，以卡片形式显示在右下角，而不是显示在聊天中。卡片滑入，停留八秒后淡出，即使打开了界面也会显示在其上方 | 当聊天栏很忙，或这些文字应当读起来像是世界的一部分而不是闲聊时，可将其开启 |
+| `saysCard` | 将这个模组发出的各行文字，即欢迎语、中途加入的玩家收到的地形生成提示、运行的结束（运行进度仍显示在动作栏上），以及威胁提示行，以卡片形式显示在右下角，而不是显示在聊天中。卡片滑入，停留八秒后淡出，即使打开了界面也会显示在其上方 | 当聊天栏很忙，或这些文字应当读起来像是世界的一部分而不是闲聊时，可将其开启 |
 | `saysIcon` | 绘制在卡片上的物品，例如 `minecraft:compass`。留空则不绘制 | 为卡片配上资源包的标志 |
 | `saysColor` | 卡片的背景颜色，十六进制，例如 `1E2630`。留空则使用深石板色 | 与资源包的配色相配 |
 | `saysImage` | 来自资源包客户端资源的 PNG，例如 `rubyworld:textures/gui/card.png`，拉伸后铺满卡片作为背景，绘制在颜色之上。留空则不绘制 | 为卡片配上一块绘制的面板；图片请保持宽而矮，它会被拉伸到文字所需的大小 |
-| `saysBackground` | 绘制卡片的面板、边框和颜色条，以及玩家被固定时屏幕中央欢迎语和提示后方的深色背景。关闭时只剩下文字（保留其阴影），以及设置了的话 `saysImage` | 让文字漂浮在世界之上，或者让绘制的 `saysImage` 独立呈现 |
+| `saysBackground` | 绘制卡片的面板、边框和颜色条，以及玩家被固定时屏幕中央欢迎语和提示后方的深色背景。关闭时只剩下文字（保留其阴影）以及 `saysImage`（若已设置） | 让文字漂浮在世界之上，或者让绘制的 `saysImage` 独立呈现 |
 | `saysFont` | 卡片文字所用的字体，以 `namespace:name` 命名，例如 `rubyworld:runes`。留空则使用 RDPL 字体 `resourcedatapackloader:rdpl`。它所指向的文件在“卡片”一节中说明 | 为卡片配上资源包自己的字体 |
-| `toasts` | 显示游戏的哪些提示框，即右上角的弹出通知。`true` 显示全部，`false` 全部不显示；列表则只显示其中列出的种类：`advancements`，`recipes` 表示已解锁的配方，`tutorial` 表示操作指引提示，`system` 表示游戏自己的通知，`other` 表示其余各项未涵盖的所有提示框，例如其他模组的。默认不显示任何一种。玩家的客户端会在加入时采用该值 | 当资源包用进度来引导玩家，而其余提示只会碍事时，请保留 `["advancements"]` |
+| `toasts` | 显示游戏的哪些弹出通知，即右上角的弹窗。`true` 显示全部，`false` 全部不显示；列表则只显示其中列出的种类：`advancements`，`recipes` 表示已解锁的配方，`tutorial` 表示操作指引提示，`system` 表示游戏自己的通知，`other` 表示其余各项未涵盖的所有弹出通知，例如其他模组的。默认不显示任何一种。玩家的客户端会在加入时采用该值 | 当资源包用进度来引导玩家，而其余提示只会碍事时，请保留 `["advancements"]` |
 
 ### 备份与地图重置
 
@@ -4682,7 +4700,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `pregenBackup` | 预生成完成后，在玩家仍被固定时，将世界复制为一份原始备份。这样生成只需付出一次代价：之后的重置，或使用同一资源包和种子的新世界，会还原这份副本而不是再次生成，这比预生成两次快得多。副本保存在存档之外，位于它旁边的 `rdpl-pristine/<world>`，因此其他模组的备份不会将它一并清扫，它也不会出现在它们管理的文件夹中。若副本所对应的资源包与当前加载的不再一致，它会被丢弃，并根据手头的世界重新保存，因此更换资源包绝不会重置成别人的地图 | `false` |
 | `pregenBackupSays` | 制作该副本期间向玩家显示的屏幕中央提示行，其后附有百分比。留空则不显示任何内容，副本会静默制作 | `Pack requested world backup` |
 | `resetSays` | `/rdplserver reset` 或一轮回合结束将地图复原期间，向玩家显示的屏幕中央提示行。留空则静默重置 | `Pack requested map reset` |
-| `resetSendsTo` | 重置时把玩家放在哪里：`spawn`，形如 `x,y,z` 或 `x,z` 的坐标（其中高度为海平面之上一格），或在任一者前加上 `dimension:` 以把他们送入另一个世界，维度可写 ID，也可写 1.12.2 的 `0`、`-1` 或 `1`，重置就是靠它把所有人放进大厅，而不是放回竞技场 | `spawn` |
+| `resetSendsTo` | 重置时把玩家放在哪里：`spawn`，形如 `x,y,z` 或 `x,z` 的坐标（其中高度为海平面之上一格），或在任一者前加上 `dimension:` 以把他们送入另一个世界，维度可写 id，也可写 1.12.2 的 `0`、`-1` 或 `1`，重置就是靠它把所有人放进大厅，而不是放回竞技场 | `spawn` |
 | `resetRuns` | 重置清除地图之后运行的函数，以 `namespace:path` 命名。它负责重新建造竞技场，因为用函数制作地图的资源包只需再运行一次即可。留空则不运行任何内容 | 空 |
 | `resetClearsEntities` | 移除所有不是玩家的实体。生物、掉落的物品和经验全部消失，这样才能让地图恢复到起始状态 | `true` |
 | `resetClearsScores` | 将资源包维护的每个目标重置为零，使新的比赛从零开始。队伍本身会被保留 | `true` |
@@ -4739,7 +4757,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `pages` | 是 | 页面列表 | 无 | 按顺序显示。没有页面的文件会被拒绝并报错 |
 | `once` | 否 | 布尔值 | `false` | 每位玩家在每个世界中只播放一次，而不是每次加入都播放 |
 | `music` | 否 | 声音事件名称 | 无 | 整个流程使用一首曲目，随第一页开始播放 |
-| `requires` | 否 | 模组 ID 或资源包命名空间的列表 | 无 | 除非全部存在，否则跳过该介绍 |
+| `requires` | 否 | 模组 id 或资源包命名空间列表  | 无 | 除非全部存在，否则跳过该介绍 |
 
 ### 页面
 
@@ -4852,7 +4870,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
 | `name` | 文本 | 文件名 | 队伍在记分板上的名称，1 到 16 个字符。`/team` 和其他文件使用的就是它 |
-| `displayName` | 文本 | 名称 | 向玩家显示的名称，用以代替 name |
+| `displayName` | 文本 | 名称 | 向玩家显示的名称，用以代替队伍名称 |
 | `color` | 文本 | `white` | 十六种文字颜色之一。它为名牌着色，并且是各队伍侧边栏栏位所依据的键 |
 | `prefix` | 文本 | 空 | 放在成员名字之前，位于颜色之后 |
 | `suffix` | 文本 | 空 | 放在成员名字之后 |
@@ -4879,16 +4897,16 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `entities` | 列表 | 空 | 实体 ID，其每一次生成都加入该阵营，例如 `minecraft:zombie` 或你自己的某个实体 |
+| `entities` | 列表 | 空 | 实体 id，其每一次生成都加入该阵营，例如 `minecraft:zombie` 或你自己的某个实体 |
 | `players` | 列表 | 空 | 在登录时加入该阵营的玩家名称 |
 | `spawnBox` | 列表 | 无 | 六个整数，x y z 到 x y z。在其内部生成的任何东西都会加入，两个角点的先后顺序可以任意 |
 | `joinable` | 布尔值 | `true` | 玩家是否可以用 `/rdplserver team join` 加入。对只供生物使用的阵营请设为 false |
 | `balance` | 布尔值 | `false` | 不带名称的 `/rdplserver team join` 是否可以把玩家放到这里。在允许它的阵营中，会选择玩家最少的那一个 |
 | `picks` | 数字 | `0` | 该阵营随机抽取多少名成员。每次回合开启时，阵营会让上一轮抽到的人回到他们原来站的位置，并从 `picksFrom` 所指的全部对象中重新抽取；在两次抽取之间，来自该池的登录或生成会立即填补空缺的席位。它的用途是：在所有人中抽出一名玩家，单独成为一个阵营 |
-| `picksFrom` | 列表 | 空 | 抽取的来源：`players` 表示所有在线玩家，实体 ID 表示该种类的每一只存活生物 |
+| `picksFrom` | 列表 | 空 | 抽取的来源：`players` 表示所有在线玩家，实体 id 表示该种类的每一只存活生物 |
 | `standIn` | 对象 | 无 | 在没有玩家加入该阵营期间，由一只生物替它守住阵营：`{ "entity": "mypack:herobrine", "at": "23,31,0" }` 会让该实体的一只在主世界的那个位置保持存活，缺失时将其召唤，并在有玩家加入阵营的那一刻将其移除，因此游戏会在玩家接手这个角色之前与 AI 对战。每五秒检查一次；该位置必须处于已加载的地面。在有大厅的游戏中（`opens.by: leader`），替身只会在大厅等待期间以及回合开启时召唤，因此倒下的替身会在回合的其余时间及其结束阶段保持缺席，直到所有人回到大厅；没有大厅时，在以 `ends.lastStanding` 结束的回合进行期间，倒下的替身不会被补充 |
 
-有三种加入方式，一个阵营可以同时使用。`entities` 指明实体 ID，该类型的任何东西在生成时加入，资源包就是这样在不改动生物本身的情况下给它们分配阵营的。`spawnBox` 划定世界的一角，在其中生成的任何东西都会加入，适合双方使用同一种生物的竞技场。`players` 则直接指名玩家。除此之外，玩家可以用 `/rdplserver team join <name>` 加入，除非该阵营把 `joinable` 设为 false，并可用 `/rdplserver team leave` 离开。
+有三种加入方式，一个阵营可以同时使用。`entities` 指明实体 id，该类型的任何东西在生成时加入，资源包就是这样在不改动生物本身的情况下给它们分配阵营的。`spawnBox` 划定世界的一角，在其中生成的任何东西都会加入，适合双方使用同一种生物的竞技场。`players` 则直接指名玩家。除此之外，玩家可以用 `/rdplserver team join <name>` 加入，除非该阵营把 `joinable` 设为 false，并可用 `/rdplserver team leave` 离开。
 
 ### 初始装备与出生点
 
@@ -4897,6 +4915,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
 | `gives` | 列表 | 空 | 玩家加入阵营时放入其物品栏的物品，单个物品写物品名称，多个或不会磨损的物品写 `{ "item", "count", "unbreakable" }`，放入任意空闲栏位，没有空位时则丢在其脚边。在清空物品栏的重置（`resetClearsInventory`）之后会再次发放 |
+| `gives.unbreakable` | 布尔值 | `false` | 在 `gives` 条目的对象写法中，使该物品永不磨损 |
 | `spawn` | 文本 | 无 | 主世界中的 `x,y,z`，回合开启时阵营的玩家被放置在这里，使每个阵营从自己的地盘开始；没有它时，他们留在重置或大厅让他们所在的位置 |
 
 ### 主导者
@@ -4953,7 +4972,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
 | `name` | 文本 | 文件名 | 目标在记分板上的名称，1 到 16 个字符 |
-| `displayName` | 文本 | 名称 | 向玩家显示的名称，用以代替 name |
+| `displayName` | 文本 | 名称 | 向玩家显示的名称，用以代替 `name` |
 | `criterion` | 文本 | `dummy` | 游戏自行统计的内容。未知的准则会被拒绝，并输出一行说明 |
 | `display` | 文本 | 空 | `sidebar`、`list`、`belowName`（也接受 `below_name`）或 `sidebar.team.<color>`。留空则不在任何地方显示；没有可供打开的记分板界面 |
 | `render` | 文本 | 准则自带的 | `integer` 或 `hearts` |
@@ -4988,7 +5007,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `ends.outSays` | 文本 | `You are out until the round ends` | 对被淘汰的玩家显示的话。留空则不说 |
 | `ends.locksTeams` | 布尔值 | `true` | 回合进行期间加入阵营要等到回合结束，这样就没有人会中途闯入一个正在计分的回合 |
 
-`ends` 负责结束比赛，要么在某个阵营达到 `atScore` 的瞬间，要么在经过 `afterMinutes` 之后。随后会显示排名，由游戏自身排序：以聊天形式显示，若 `results` 要求则以卡片形式显示。没有安装本模组的玩家会以聊天行的形式收到同样的排名，因此没有人会得不到结果。配合 `resets`，这次结束就是一个回合的结束：排名会停留 `intermissionSeconds` 秒，期间动作栏上倒数冷却时间，地图重置为欢迎时的状态，随后经过五秒倒计时开启下一回合。`awardsTo` 把回合交给领先的阵营，所用目标会在重置之后 `carries`（延续）。被延续的目标可以自行结束——三局两胜用 `atScore`，固定局数用 `afterRounds`——并且它的积分会在之后的那次重置中清除，从而开启全新的比赛。
+`ends` 负责结束比赛，要么在某个阵营达到 `atScore` 的瞬间，要么在经过 `afterMinutes` 之后。随后会显示排名，由游戏自身排序：以聊天形式显示，若 `results` 要求则以卡片形式显示。没有安装本模组的玩家会以聊天行的形式收到同样的排名，因此没有人会得不到结果。配合 `resets`，这次结束就是一个回合的结束：排名会停留 `intermissionSeconds` 秒，期间动作栏上倒数冷却时间，地图重置为欢迎时的状态，随后经过五秒倒计时开启下一回合。`awardsTo` 把回合交给领先的阵营，所用目标要设置 `carries`，使其在重置后保留。这样延续下来的目标可以自行结束——三局两胜用 `atScore`，固定局数用 `afterRounds`——并且它的积分会在之后的那次重置中清除，从而开启全新的比赛。
 
 ### 回合之间
 
@@ -5007,10 +5026,11 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
+| `opens` | 对象 | 空 | 包含下面的大厅设置，每一项都写在其中。不写时，各项都保持默认值 |
 | `opens.by` | 文本 | `auto` | `auto` 在重置五秒后自动开启下一回合。`leader` 则让游戏停在大厅：重置之后以及世界首次加载时，不计任何分，也没有计时，阵营可以自由加入和离开，只有当某个阵营的主导者或管理员运行 `/rdplserver round start` 时回合才会开启，且在仍有人在阅读世界介绍时不会开启；随后进行五秒倒计时，抽签完成，每个阵营被送到各自的 `spawn`。在世界等待期间，直到五秒倒计时结束，玩家留在原地，不能破坏、放置、使用、攻击或丢弃任何东西，也不会受到伤害，尝试时会看到等待提示，其他所有生物也都静止不动：没有 AI，没有移动。命令仍然可用，因此可以加入阵营并开始回合 |
 | `opens.says` | 文本 | `Waiting for {leader} to start the round` | 像欢迎语一样显示在屏幕中央，面向每个不是主导者的玩家：当他们越过介绍进入大厅、欢迎语显示过之后；回合结束后大厅再次开启时；主导者来去而内容变化时；以及他们尝试大厅所禁止的事情时。`{leader}` 是所有阵营的主导者，没有主导者时则为 `a leader`。留空则不显示 |
-| `opens.leaderSays` | 文本 | `Type /rdpl round start` | 以相同方式、在相同时刻显示给领导某个阵营的玩家，取代 `opens.says`。留空则不显示 |
-| `opens.lobby` | 文本 | 无 | overworld 中写作 `x,y,z`，其他世界中写作 `dimension:x,y,z`，例如 `minecraft:the_nether:0,64,0`，大厅持续期间所有人在这里等待：每个玩家以及每个属于某阵营的存活生物都被安置在该点周围的一个圆环上，各自面朝圆心，于是彼此怒目相对。每个单位分得的弧长为其自身宽度加两格，因此互不重叠，人数增多时圆环也随之扩大；每当有人加入或离开，圆环会重新布局。高度取他们所站立的地面，在上下三格范围内查找。玩家和生物可以直接进入那个世界并返回，不会建造传送门。回合开启时玩家前往所属阵营的 `spawn`，仍站着的生物则被放回它原来所在世界中的原位 |
+| `opens.leaderSays` | 文本 | `Type /rdpl round start` | 以相同方式、在相同时刻显示给主导某个阵营的玩家，取代 `opens.says`。留空则不显示 |
+| `opens.lobby` | 文本 | 无 | 主世界中写作 `x,y,z`，其他世界中写作 `dimension:x,y,z`，例如 `minecraft:the_nether:0,64,0`，大厅持续期间所有人在这里等待：每个玩家以及每个属于某阵营的存活生物都被安置在该点周围的一个圆环上，各自面朝圆心，于是彼此怒目相对。每个单位分得的弧长为其自身宽度加两格，因此互不重叠，人数增多时圆环也随之扩大；每当有人加入或离开，圆环会重新布局。高度取他们所站立的地面，在上下三格范围内查找。玩家和生物可以直接进入那个世界并返回，不会建造传送门。回合开启时玩家前往所属阵营的 `spawn`，仍站着的生物则被放回它原来所在世界中的原位 |
 | `opens.lobbyJoins` | 布尔值 | `false` | 回合中途登录的玩家，会被放进大厅以旁观者身份等待回合结束，而不是出现在他们登出时的位置。需要 `opens.lobby` |
 | `opens.joinsSays` | 文本 | `Round is in progress, you can join after it ends` | 对他们显示的话。留空则不说 |
 
@@ -5100,7 +5120,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 每次行动都会在聊天栏中宣布，计时在动作栏上倒数。正在行动的阵营会在剩 10 秒时在聊天栏中收到带提示音的警告，剩 3 秒时再提醒一次。`/rdplserver game pass`，或用带 `passesTurn` 的物品右键，会提前结束行动：玩家只能结束自己阵营的行动，命令方块或控制台则结束当前正在行动的阵营。
 
-因 `endsAtScore` 或 `cycles` 结束时，这一回合会像其他结束方式一样结束：显示战况，`awardsTo` 和 `tiebreak` 生效，`ends.resets` 会重置地图。只有第一个带 `turns` 的计分文件会轮流行动。相关文字是 `turn`、`turnclock`、`turnwarn`、`turnout`、`turnpass`、`turngap`、`notturn` 和 `noturns` 这些键，骰子文件的 `says` 可以修改它们。
+因 `endsAtScore` 或 `cycles` 结束时，这一回合会像其他结束方式一样结束：显示排名，`awardsTo` 和 `tiebreak` 生效，`ends.resets` 会重置地图。只有第一个带 `turns` 的计分文件会轮流行动。相关文字是 `turn`、`turnclock`、`turnwarn`、`turnout`、`turnpass`、`turngap`、`notturn` 和 `noturns` 这些键，骰子文件的 `says` 可以修改它们。
 
 ## 袭击
 
@@ -5114,7 +5134,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 进行中的袭击会随世界一起保存，其袭击者在重新载入后继续行军。袭击在和平难度下、经过 `timeout` 刻后，或村庄周围没有任何地点能容纳一波时，会无结局地停止。村庄是游戏记录其村庄点的地方，即村民占用的床、工作方块和钟：其中心是这些点的中央，范围至少向外延伸 32 格，其村民是在该范围内、且与中心高度相差在四格以内的村民。游戏自身的 `minecraft:bad_omen` 会先触发游戏自身的袭击，因此袭击要使用其资源包自己的效果。
 
-一波袭击来到村庄期间，村民会跑回家并留在那里，就像游戏中的钟敲响时一样。袭击者会拆毁挡路的木门以抵达他们，每扇门十二秒，在普通和困难难度下且 `mobGriefing` 开启时生效；铁门挡得住。类型为 `bell` 的方块无论位于何处都是村庄的钟，并按 [钟](#钟) 所述敲响；袭击的 `bell` 可以指定其他任何方块当作钟来敲响。一波到来时，村庄中的每一口钟都会敲响，被指定的方块在玩家使用时也会敲响：48 格内的村民躲藏十五秒，48 格内的袭击者发光三秒。`minecraft:bell` 本来就存在于游戏的村庄中，可以被指定，而且它仍会按游戏自己的方式敲响；资源包自己的钟方块则通过 NBT 结构放置到村庄中，作为地块或广场的中心装饰。
+一波袭击来到村庄期间，村民会跑回家并留在那里，就像游戏中的钟敲响时一样。袭击者会拆毁挡路的木门以追到村民，每扇门十二秒，在普通和困难难度下且 `mobGriefing` 开启时生效；铁门挡得住。类型为 `bell` 的方块无论位于何处都是村庄的钟，并按 [钟](#钟) 所述敲响；袭击的 `bell` 可以指定其他任何方块当作钟来敲响。一波到来时，村庄中的每一口钟都会敲响，被指定的方块在玩家使用时也会敲响：48 格内的村民躲藏十五秒，48 格内的袭击者发光三秒。`minecraft:bell` 本来就存在于游戏的村庄中，可以被指定，而且它仍会按游戏自己的方式敲响；资源包自己的钟方块则通过 NBT 结构放置到村庄中，作为地块或广场的中心装饰。
 
 ```json
 {
@@ -5134,24 +5154,24 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 }
 ```
 
-### 袭击
+### 单场袭击
 
 *袭击*
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `omen` | 效果名 | 无，必填 | 持有者在村庄内时触发袭击的效果。任何已注册的效果都可以，包括资源包自己的药水 |
+| `omen` | 效果名 | 无，必需 | 持有者在村庄内时触发袭击的效果。任何已注册的效果都可以，包括资源包自己的药水 |
 | `name` | 文本 | `Raid` | Boss 栏的标题 |
 | `color` | 文本 | `red` | 栏的颜色：`pink`、`blue`、`red`、`green`、`yellow`、`purple` 或 `white` |
-| `waves` | 波次列表 | 无，必填 | 每一波是一个分组的列表，各波按顺序到来 |
+| `waves` | 波次列表 | 无，必需 | 每一波是一个分组的列表，各波按顺序到来 |
 | `waveDelay` | 整数 | `300` | 第一波之前、以及一波结束到下一波之间的刻数 |
 | `spawnDistance` | 整数 | `32` | 一波到来时距村庄中心多远。最先尝试此距离的两倍处，然后是此距离处，再然后是村庄内部 |
 | `reach` | 整数 | `96` | 中心周围这么多格内的玩家会看到 Boss 栏，结束函数也会以他们的身份运行。越过该范围十六格的袭击者会脱离袭击 |
 | `timeout` | 整数 | `48000` | 未完成的袭击经过这么多刻后无结局地停止。`0` 表示永不停止 |
-| `sound` | 音效名 | 无 | 每波到来时，从该波来的方向向范围内的每个玩家播放 |
+| `sound` | 音效名称 | 无 | 每波到来时，从该波来的方向向范围内的每个玩家播放 |
 | `wins` | 函数 | 无 | 袭击胜利时，以范围内每个玩家的身份运行 |
 | `loses` | 函数 | 无 | 袭击失败时，以范围内每个玩家的身份运行 |
-| `bell` | 方块名或列表 | 无 | 在玩家使用时以及每波到来时，像钟一样敲响的其他方块。类型为 `bell` 的方块无需指定也会敲响 |
+| `bell` | 方块名称或列表 | 无 | 在玩家使用时以及每波到来时，像钟一样敲响的其他方块。类型为 `bell` 的方块无需指定也会敲响 |
 
 ### 一个分组
 
@@ -5159,7 +5179,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `entity` | 实体名 | 无，必填 | 来的是什么。实体变种保留自己的全部行为，并获得行军能力 |
+| `entity` | 实体名称 | 无，必需 | 来的是什么。实体变种保留自己的全部行为，并获得行军能力 |
 | `count` | 整数或 `{ "min", "max" }` | `1` | 来多少个 |
 
 ---
@@ -5197,7 +5217,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 }
 ```
 
-第二个文件保存为 `rdpl/cards/gate_blocked.json`，它把关闭的传送门所显示的红色动作栏文字变成一张带图标和第二行文字的卡片，并且每三十秒最多显示一次。
+第二个文件保存为 `rdpl/cards/gate_blocked.json`，它把关闭的闸门所显示的红色动作栏文字变成一张带图标和第二行文字的卡片，并且每三十秒最多显示一次。
 
 ```json
 {
@@ -5210,7 +5230,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 }
 ```
 
-第三个在玩家首次加入时用一张中央卡片迎接他，卡片背后没有面板，只有文字及其阴影，以资源包自己的字体绘制。
+第三个在玩家首次加入时用一张中央卡片迎接该玩家，卡片背后没有面板，只有文字及其阴影，以资源包自己的字体绘制。
 
 ### 触发器
 
@@ -5245,7 +5265,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `trigger` | 文本 | 无，必填 | 上面的触发器之一。内置规则不用写 |
+| `trigger` | 文本 | 无，必需 | 上面的触发器之一。内置规则不用写 |
 | `dimension` | 文本 | 无 | 维度 id，例如 `minecraft:the_nether`；没有命名空间的 id 按 `minecraft:` 读取。对于 `dimension_enter`，它是进入的那个维度；对于其他所有触发器，它把规则限制在该维度中的玩家 |
 | `biomes` | 列表 | 无 | 生物群系 id，例如 `minecraft:desert`，或用 `#tag` 表示生物群系标签，例如 `#minecraft:is_ocean` |
 | `structures` | 列表 | 无 | 结构 id，例如 `minecraft:village_plains`，或用 `#tag` 表示结构标签，例如 `#minecraft:village`，在玩家位于其中某个部件内时计入；也可以是资源包通过 `structures` 放置的结构的名称，在距其放置位置 `radius` 范围内计入 |
@@ -5259,7 +5279,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `day` | 整数 | 无 | 用于 `day`：唯一触发的那一天。不写则每天都触发 |
 | `minutes` | 整数 | 无 | 用于 `play_time` |
 | `objective`、`score` | 文本、整数 | 无、`1` | 用于 `score`：计分项和要达到的值 |
-| `requires` | 模组 id 或资源包命名空间的列表 | 无 | 除非全部存在，否则跳过该文件 |
+| `requires` | 模组 id 或资源包命名空间列表  | 无 | 除非全部存在，否则跳过该文件 |
 
 ### 时机
 
@@ -5291,7 +5311,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `image` | 文本 | `saysImage` | 来自资源包客户端资源的 PNG，拉伸铺满卡片作为背景 |
 | `background` | 布尔值 | `saysBackground` | `false` 去掉面板、边框和彩色条纹；文字保留阴影，`image` 仍会绘制 |
 | `font` | 文本 | `saysFont` | 卡片文字所用的字体，写作 `namespace:name`。留空则使用 RDPL 字体 |
-| `ticks` | 整数 | `160` | 卡片停留多久，包括淡出 |
+| `ticks` | 整数 | `0` | 卡片停留多久，包括淡出。`0` 沿用通常的 160 |
 | `audience` | 文本 | `player` | 谁能看到：`player`、`everyone`、`dimension`（玩家所在维度中的所有人）或 `team`（玩家的计分板队伍） |
 | `repeat` | 文本 | `always` | `always`、`once_per_player`、`once_per_world` 或 `once_per_session`（玩家重新登录后再次显示） |
 | `cooldown` | 整数 | `0` | 同一玩家的该规则再次触发前的秒数 |
@@ -5321,8 +5341,8 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 | Id | 消息 | 其文本来自 |
 | --- | --- | --- |
-| `rdpl:gate_unlocked` | 传送门开启 | [传送门](#传送门) 中的 `unlockedMessage` |
-| `rdpl:gate_blocked` | 关闭的传送门把玩家拦回，显示在动作栏上 | [传送门](#传送门) 中的 `blockedMessage` |
+| `rdpl:gate_unlocked` | 闸门开启 | [闸门](#闸门) 中的 `unlockedMessage` |
+| `rdpl:gate_blocked` | 关闭的闸门把玩家拦回，显示在动作栏上 | [闸门](#闸门) 中的 `blockedMessage` |
 | `rdpl:team_joined` | 玩家加入一个阵营 | 该阵营的 `displayName` |
 | `rdpl:team_lead` | 某个阵营的主导权落到一名玩家手中 | [队伍](#队伍) 中的 `leadSays` |
 | `rdpl:team_picked` | 玩家被选入一个阵营 | 该阵营的 `displayName` |
@@ -5390,7 +5410,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `dice` | `{player}`、`{dice}`、`{rolls}`、`{result}` |
 | `advantage`、`disadvantage` | `{player}`、`{dice}`、`{first}`、`{second}`、`{result}` |
 | `pickmember` | `{player}`、`{team}`、`{result}` |
-| `draw`, `reshuffled` | `{player}`、`{deck}`、`{result}`、`{left}` |
+| `draw`、`reshuffled` | `{player}`、`{deck}`、`{result}`、`{left}` |
 | `shuffle` | `{player}`、`{deck}`、`{left}` |
 | `left`、`empty`、`nodeck` | `{deck}`，`left` 另有 `{left}` |
 | `teamroll` | `{member}`、`{dice}`、`{result}` |
@@ -5470,7 +5490,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `clock` | 对象 | 无 | 每方的 `minutes`，以及每步后加上的 `addSeconds`。用完时间的一方判负 |
 | `ai` | 数字 | `2` | 电脑的等级，1 到 4，用于无人执掌的一方 |
 | `result` | 对象 | 无 | 对局结束时发放的 `objective`，以及 `win`、`draw`、`loss` 分数，不写时为 1、0、0 |
-| `quiet` | 真或假 | `false` | 不在聊天中发送走棋、选子和将军的消息。拒绝提示和对局结果照常发送，每一步也照常写入 `logs/rdpl.log` |
+| `quiet` | true 或 false | `false` | 不在聊天中发送走棋、选子和将军的消息。拒绝提示和对局结果照常发送，每一步也照常写入 `logs/rdpl.log` |
 
 | 棋子键 | 类型 | 作用 |
 | --- | --- | --- |
@@ -5478,8 +5498,8 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `value` | 数字 | 它对电脑而言的价值 |
 | `mobs` | 列表 | 每一方的生物，第一方在前。`mob` 为双方给出同一个 |
 | `moves` | 列表 | 以对象表示的步法：`steps`，从本方一端看的 `[file, rank]` 偏移列表；`slides`，一直走到被挡住为止；`captures`，`both`（默认）、`never`、`only` 或 `hop`，后者跳过对方的一枚棋子落到其后的空格并吃掉它；以及 `firstRange`，首步可以走几步 |
-| `royal` | 真或假 | 这枚棋子被将死时该方判负，且任何一步都不能让它处于被攻击状态。没有王棋时，无棋可走的一方判负 |
-| `enPassant` | 真或假 | 可以吃掉刚从它旁边走过两格的棋子 |
+| `royal` | true 或 false | 这枚棋子被将死时该方判负，且任何一步都不能让它处于被攻击状态。没有王棋时，无棋可走的一方判负 |
+| `enPassant` | true 或 false | 可以吃掉刚从它旁边走过两格的棋子 |
 | `castles` | 文本 | 一个搭档棋子：这枚棋子朝未动过的搭档走两格，搭档跳过它 |
 | `promotes` | 列表 | 到达底线时可以变成什么。除非着法指定其他，否则用第一个 |
 
@@ -5514,7 +5534,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `global` | 以配置为准。资源包中的相应部分被忽略 |
 | `off` | 该组被完全禁用，任何资源包都无法启用它 |
 
-这些组是 `ores`、`biomes`、`structures`、`spawning`、`bedrock`、`voidWorld`、`recipes`、`terrain`、`replacements`、`villages`、`entities`、`chunks`、`blastPlaster`、`commands` 和 `server`。
+这些组是 `ores`、`generators`、`biomes`、`structures`、`spawning`、`bedrock`、`voidWorld`、`recipes`、`terrain`、`replacements`、`villages`、`entities`、`chunks`、`blastPlaster`、`commands` 和 `server`。
 
 设置按 **生物群系部分 → 世界模板 → 配置** 的顺序解析。世界模板的 `settings` 块使用与配置相同的键名，因此资源包设置它们的方式与你自己设置的相同：
 
@@ -5571,10 +5591,10 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `blockOres` | 布尔值 | `false` | 阻止所有模组以及 Minecraft 本身生成矿石。只有 oreWhitelist 中的模组仍会生成。矿石是指基于游戏的矿石或散布矿石特征构建的放置特征，也就是 1.12.2 为其触发矿石事件的那些，涵盖 Minecraft 和大多数模组的矿石、泥土、沙砾和各种石头。资源包自己的世界生成条目绝不会被阻止，无论是被它还是被 oreTypes |
+| `blockOres` | 布尔值 | `false` | 阻止所有模组以及 Minecraft 本身生成矿石。只有 oreWhitelist 中的模组仍会生成。矿石是指基于游戏的矿石或散布矿石特征构建的放置特征，也就是 1.12.2 为其触发矿石事件的那些，涵盖 Minecraft 和大多数模组的矿石、泥土、沙砾和各种石头。资源包自己的世界生成条目绝不会被阻止，无论是 blockOres 还是 oreTypes |
 | `logBlockedOres` | 布尔值 | `true` | 每个模组和矿石类型第一次被拒之门外时记入日志 |
 | `oreWhitelist` | 模组 id 列表 | `["minecraft"]` | `blockOres` 开启时仍允许生成矿石的模组 |
-| `prospectItems` | 列表 | 空 | 潜行的玩家用其破坏方块时，用来勘探矿脉形状的世界生成条目的物品，写作 item=entry\|entry[,以区块计的半径] 或 item=*[,半径]，例如 minecraft:compass=iron_vein\|coal_seam 或 mypack:rod=*,12。读数会给出矿石名称和一个罗盘方位 |
+| `prospectItems` | 列表 | 空 | 用来勘探矿脉状世界生成条目的物品，潜行的玩家用其破坏方块时触发，写作 item=entry\|entry[,以区块计的半径] 或 item=*[,半径]，例如 minecraft:compass=iron_vein\|coal_seam 或 mypack:rod=*,12。读数会给出矿石名称和一个罗盘方位 |
 | `prospectItemsAreBlacklist` | 布尔值 | `false` | 开启时，每个物品的列表是它不读取的条目 |
 | `prospectDrops` | 布尔值 | `false` | 开启时，在勘探模式下破坏的方块仍会掉落并给予经验。关闭时，样本被消耗掉 |
 | `prospectSlow` | 整数，1 到 100 | `2` | 手持带标记物品的潜行玩家破坏一个方块要花多少倍的时间。`1` 为正常速度 |
@@ -5647,9 +5667,9 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `blockedGenerators` | 模组 id 或 id 片段的列表 | 空 | 直接被阻止的个别生成器，无论白名单如何规定，按模组 id 或放置特征 id 的一部分指定 |
 | `blockGeneratorDimensions` | 列表 | `["minecraft:overworld"]` | 生成器阻止适用的维度。留空表示每一个 |
 | `blockGeneratorDimensionsAreBlacklist` | 布尔值 | `false` | 开启时，阻止会跳过所列维度。关闭时，只对它们生效 |
-| `generatorTypes` | 列表 | 空 | 本设置适用的类型，无论生成器归谁所有、白名单如何规定：`ores`、`structures`、`flora`、`lakes`、`terrain`，或 `unknown` 表示都没有匹配的那些。类型取自特征 id 中的词，因此 `crystal_ore` 是 ores，`slime_island` 是 structures |
+| `generatorTypes` | 列表 | 空 | 本设置适用的类型，无论生成器归谁所有、白名单如何规定：`ores`、`structures`、`flora`、`lakes`、`terrain`，或 `unknown` 表示没有任何词匹配的生成器。类型取自特征 id 中的词，因此 `crystal_ore` 是 ores，`slime_island` 是 structures |
 | `generatorTypesAreBlacklist` | 布尔值 | `true` | 开启时，`generatorTypes` 中的类型被阻止。关闭时，只有这些类型会生成 |
-| `generatorTypeMap` | `pattern=type` 的列表 | 空 | 为 id 无法说明其类型的生成器指定类型，pattern 是模组 id 或特征 id 的一部分，例如 mymod=ores。映射条目先于内置的词检查，因此它们也能纠正词语读错了的那些 |
+| `generatorTypeMap` | `pattern=type` 的列表 | 空 | 为 id 无法说明其类型的生成器指定类型，pattern 是模组 id 或特征 id 的一部分，例如 mymod=ores。映射条目先于内置的词检查，因此它们也能纠正内置词语判断错误的生成器 |
 | `logBlockedGenerators` | 布尔值 | `true` | 每个生成器第一次被阻止时，连同赋予它的类型一起记入日志。`/rdplserver generators` 按模组和类型显示累计总数 |
 
 ### 替换
@@ -5736,7 +5756,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `villagePathBlock` | 文本 | 空 | terrainAdaptation 铺设城市道路时的路面。留空则保留生物群系本来会使用的方块：沙子上用砂岩，恶地上用陶瓦，泥土上用土径 |
 | `villagePathExtraWidth` | 整数，0 或更大 | `0` | terrainAdaptation 铺设道路时，每侧在通常的 3 格之外额外增加的道路宽度。这会加宽街道本身，因此街道之间的街区会从宽路旁退后 |
 | `villageBlockSizes` | `size=weight` 的列表 | 空 | 城市平行街道之间的街区有多深，根据广场位置为每个街区群抽取一次。留空则把每个街区都设为资源包所带最大地块的大小 |
-| `villageCitySpacing` | 整数，0 到 256 | `16` | 城市街区群之间的播种间隔，以街区群为单位，街区群的大小由地块决定（最大地块的两倍，加上一个广场和两侧各一条街道，向上取整到 16 格，至少 96）：每个这么多街区群组成的方格中有一个携带城市，为 1 时每个街区群都是城市，即一个中心有井的广场，以及从中伸出、与下一个街区群的街道相接的街道。0 表示不播种任何城市。资源包没有设置它时，由 `structureSpacing` 的 villages=chunks 来设置，至少 9 个区块。每个方格把城市建在它最平坦的街区群上，高低差不超过 10 格，位于村庄生物群系中（由 `structureBiomes` 的 villages= 选择），且不在林地府邸可能起始之处；`structureSeparation`、`structureMinDistanceFromSpawn` 和 `structureMost` 的 villages= 让城市彼此保持距离，就像它们对村庄所做的那样，`structureAt` 的 villages=x,z 则只在它所固定的位置建立城市。城市只会向其第一口井附近范围内、地面起伏不超过 6 格且高于水位线的街区群扩展，地块和井合计不足或仅有两个的城市不会被建造 |
+| `villageCitySpacing` | 整数，0 到 256 | `16` | 城市街区群之间的播种间隔，以街区群为单位，街区群的大小由地块决定（最大地块的两倍，加上一个广场和两侧各一条街道，向上取整到 16 格，至少 96）：每个这么多街区群组成的方格中有一个携带城市，为 1 时每个街区群都是城市，即一个中心有井的广场，以及从中伸出、与下一个街区群的街道相接的街道。0 表示不播种任何城市。资源包没有设置它时，由 `structureSpacing` 的 villages=chunks 来设置，至少 9 个区块。每个方格把城市建在它最平坦的街区群上，高低差不超过 10 格，位于村庄生物群系中（由 `structureBiomes` 的 villages= 选择），且不在林地府邸可能起始之处；`structureSeparation`、`structureMinDistanceFromSpawn` 和 `structureMost` 的 villages= 让城市彼此保持距离，就像它们对村庄所做的那样，`structureAt` 的 villages=x,z 则只在它所固定的位置建立城市。城市只会向其第一口井附近范围内、地面起伏不超过 6 格且高于水位线的街区群扩展，地块和井合计不超过两个的城市不会被建造 |
 | `villagePathAlleyBlock` | 方块 | 空 | 小巷的路面，小巷是窄到无法容纳线条和人行道的道路。小巷穿行于其所连接街道的人行道之间，自身没有人行道，且在与街道相接处不会画出人行横道。留空则用道路方块铺设小巷 |
 | `villagePathAlleyChance` | 整数，0 或更大 | `0` | 一条街道被铺成小巷而不是全宽的百分比概率。0 表示不铺设小巷 |
 | `villagePathMinimumWidth` | 整数，0 或更大 | `0` | 允许的最窄街道。会被铺得比这更窄的街道根本不铺，街区群围绕这个缺口布局。0 表示从不拒绝 |
@@ -5759,6 +5779,34 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `villageWellStructure` | 列表 | 空 | 作为每个广场中心装饰放置的结构文件，每行一个带权重的条目，写作 name=weight，如 mypack:plaza_spire=3，每个广场抽取一次。它以一个六格见方、清理并以 villagePathBlock 铺平的区域为中心，其最低一层位于该地面上。留空、空份额，或结构无法加载时，会在那里建造游戏自己的井。不是 name=weight 写法的条目会被忽略 |
 | `villagePathDeadEnds` | 列表 | 空 | 断头街道如何封口，每行一个条目，按每个尽头分别抽取：sidewalk 用人行道方块铺满尽头那一排，barrier 沿它立起 villagePathBridgeBarrierBlock，高 villagePathBridgeBarrierHeight；其他任何条目都被忽略。它们只封没有长出死胡同的尽头，没有设置方块的样式会退出抽取，小巷的尽头只采用 barrier。留空则让这类尽头敞开 |
 | `villagePathIntersects` | 列表 | 空 | 画在路口的设计，按注册表键命名，取自资源包的 `<namespace>/pathintersects/`。一个条目让每个路口都画得一样；多个条目则按权重为每个路口挑选 |
+
+**路口设计。** `villagePathIntersects` 指定资源包附带的文件，每个文件都是一幅小图，描绘道路相交处要画什么，以单个字符组成的行来绘制，一个字符对应一个方块。
+
+`<namespace>/pathintersects/*.json`
+
+文件的路径就是该设计的注册键，`villagePathIntersects` 随后用它来指定设计。
+
+```json
+{
+  "name": "Crosswalk",
+  "weight": 3,
+  "legend": { "w": "minecraft:quartz_block", "y": "minecraft:yellow_wool" },
+  "mouth": ["wwww", "....", "wwww"],
+  "corner": ["yy.", "y..", "..."]
+}
+```
+
+| 键 | 值 | 默认值 | 作用 |
+| --- | --- | --- | --- |
+| `name` | 字符串 | 文件名 | 设计的标签，不影响它的绘制方式 |
+| `weight` | 整数，1 及以上 | `1` | 列出多个设计时，该设计在路口中所占的份额 |
+| `legend` | 单个字符到方块的对象 | 无 | 行中除下列角色字符之外还可使用的字符。已经是角色字符的字符会被拒绝，并记入一行日志 |
+| `mouth` | 字符串列表 | 无 | 画在每个入口上的行，位于相交道路之外。第一行最靠近路口，其余的向外延伸。字符沿道路横向排列，若某行比道路宽度短则重复 |
+| `corner` | 字符串列表 | 无 | 画在路口内部的行。第一行最靠近相交道路的边缘，而在一行之中，第一个字符最靠近道路自身的边缘，向内依次排列。图案未覆盖的格子保持不变 |
+
+有五个字符是角色而不是方块，因此它们会跟随道路已有的装饰：`r` 是路面，`l` 是边线，`s` 是人行道，`.` 让方块完全保持原样，`c` 为保留字符，画成路面。资源包从未设置其方块的角色会回退为路面，而任何其他字符都会在 `legend` 中查找，同样回退为路面。既没有 `mouth` 也没有 `corner` 的设计会被丢弃，并记入一行日志。
+
+路口采用哪个设计，由世界种子和路口自身的位置算出，因此同一个世界总是画出同样的路口。设计只在三条或更多街道相交处绘制，即路口或水井广场；两条街道相交只会呈现为一个普通的弯角。
 
 #### 村庄桥梁与码头
 
@@ -5862,21 +5910,21 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `villageSewerBlock` | 方块名 | 空 | 村庄街道和小巷之下的下水道所用的衬砌方块：它的地面、两侧的墙和顶。留空则不挖下水道 |
+| `villageSewerBlock` | 方块名称 | 空 | 村庄街道和小巷之下的下水道所用的衬砌方块：它的地面、两侧的墙和顶。留空则不挖下水道 |
 | `villageSewerDepth` | 整数，4 或更大 | `8` | 下水道地面位于街道自身路面之下多深。下水道跟随它所在的街道，因此爬升的街道带着爬升的下水道。需要 `villageSewerBlock` |
 | `villageSewerHeight` | 整数，2 或更大 | `3` | 步道上方有多少格净空 |
 | `villageSewerWidth` | 整数，3 或更大 | `5` | 下水道有多宽，横向计算，包括两侧的墙。偶数会被向上取整，使水道保持居中 |
-| `villageSewerWaterBlock` | 方块名 | `minecraft:water` | 填满中间水道的东西。留空则让水道保持干燥 |
-| `villageSewerWalkBlock` | 方块名 | 空 | 水道两侧步道的铺面。留空则在衬砌方块上行走 |
-| `villageSewerLightBlock` | 方块名 | 空 | 作为光源嵌入水道上方顶部的方块。留空则不设光 |
+| `villageSewerWaterBlock` | 方块名称 | `minecraft:water` | 填满中间水道的东西。留空则让水道保持干燥 |
+| `villageSewerWalkBlock` | 方块名称 | 空 | 水道两侧步道的铺面。留空则在衬砌方块上行走 |
+| `villageSewerLightBlock` | 方块名称 | 空 | 作为光源嵌入水道上方顶部的方块。留空则不设光 |
 | `villageSewerLightRun` | 整数，1 或更大 | `8` | 这些光源相隔多少格。以世界坐标为锚，因此一段道路的光源会延续到下一段 |
 | `villageSewerLadderBlock` | 文本 | 空 | 检修井竖井用来攀爬的方块，从街道沿竖井一路设置到下水道顶部。留空则让竖井敞开 |
-| `villageSewerCoverBlock` | 方块名 | 空 | 盖住检修井的方块，与东西向街道的路面齐平设置，设在街道或小巷与之相接之处，以及该街道穿过下水道环路的广场上。通常选用木活板门：铁活板门接受红石信号而玩家无法徒手打开，这会把下水道对他们关闭。留空则让井口敞开 |
-| `villageSewerMossBlock` | 方块名 | 空 | 在衬砌中这里那里混入的第二种方块，例如在普通石头中混入苔石。留空则全程只用一种方块衬砌下水道 |
+| `villageSewerCoverBlock` | 方块名称 | 空 | 盖住检修井的方块，与东西向街道的路面齐平设置，设在街道或小巷与之相接之处，以及该街道穿过下水道环路的广场上。通常选用木活板门：铁活板门接受红石信号而玩家无法徒手打开，这会把下水道对他们关闭。留空则让井口敞开 |
+| `villageSewerMossBlock` | 方块名称 | 空 | 在衬砌中这里那里混入的第二种方块，例如在普通石头中混入苔石。留空则全程只用一种方块衬砌下水道 |
 | `villageSewerMossChance` | 0 到 100 | `25` | 衬砌方块中有百分之几会变成那第二种方块。根据世界种子对每个方块位置抽取，因此同一条下水道总会得到相同的结果 |
-| `villageSewerVineBlock` | 方块名 | 空 | 这里那里挂在下水道墙壁内侧的方块，例如藤蔓。它会附着在它所靠的那面墙上。留空则什么也不挂 |
+| `villageSewerVineBlock` | 方块名称 | 空 | 这里那里挂在下水道墙壁内侧的方块，例如藤蔓。它会附着在它所靠的那面墙上。留空则什么也不挂 |
 | `villageSewerVineChance` | 0 到 100 | `20` | 墙边的格子中有百分之几挂有它。根据世界种子对每个方块位置抽取，因此同一条下水道总会挂出相同的样子 |
-| `villageSewerWellEntrance` | 布尔值 | `true` | 在井周围的广场环下方建一圈下水道环路，每条街道的下水道都穿过它，东西向街道穿过它的每一侧，在广场上设一个检修井通向环路，这样各条下水道便成为一个相连的系统，并在城镇中心有一个入口。关闭时，每条街道的下水道止于井处，广场上没有下去的通道 |
+| `villageSewerWellEntrance` | 布尔值 | `true` | 在井周围的广场环下方建一圈下水道环路，每条街道的下水道都穿过它，并在东西向街道穿过环路的每一侧，于广场上各设一个检修井通向环路，这样各条下水道便成为一个相连的系统，并在城镇中心有一个入口。关闭时，每条街道的下水道止于井处，广场上没有下去的通道 |
 
 **下水道。** 指定 `villageSewerBlock` 后，会在每条街道和小巷之下挖一条下水道，位于该街道自身路面之下 `villageSewerDepth` 格。它不是独立的网络：它跟随街道，街道通向哪里它就通向哪里，街道爬升它也爬升，十字路口下的两条下水道相遇，因为它们上方的街道相遇；街道或小巷在另一条街道处终止时，它的下水道会继续延伸到那条街道之下与之相接。死胡同和架在桥上的路段没有下水道。其截面为衬砌的地面，中间一条填满 `villageSewerWaterBlock` 的水道，两侧各一条以 `villageSewerWalkBlock` 铺面的步道，`villageSewerHeight` 格的净空和衬砌的顶，宽 `villageSewerWidth`（包括两侧的墙），并且 `villageSewerLightBlock` 每隔 `villageSewerLightRun` 格在水道上方的顶部嵌入一个光源。地铁隧道从下水道的深度范围穿过时，无论在街道之下还是它旁边，下水道会在那里整面封死，那里的任何轨道则保持不动。`villageSewerWellEntrance` 开启时，街道的下水道止于井周围的环路，关闭时则止于井本身。下水道绝不会上升到干扰其上街道的程度，街道与世界底部之间没有空间的路段会被跳过，而不是被硬挤进去。
 
@@ -5938,8 +5986,8 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `villageRailTrackGap` | 整数，2 或更大 | `2` | 一个路基上的轨道相隔多少格，中心到中心。`2` 是允许的最小值，在它们之间留一格路基，这能防止它们像相邻铁轨那样彼此弯向对方 |
 | `villageRailShoulderBlock` | 方块 | 空 | 装饰路基最外侧的几列，即轨道旁的一条养护小路，相当于铁路对道路人行道的回应。留空则不铺 |
 | `villageRailShoulderWidth` | 整数，0 或更大 | `1` | 该路肩每侧有多少列宽，加在 `villageRailWidth` 之外。需要 `villageRailShoulderBlock` |
-| `villageRailPowerBlock` | 方块 | 空 | 每隔 `villageRailPowerRun` 排嵌入线路的动力轨道。留空则使用原版充能铁轨；不是铁轨的方块只是被直接铺在那里 |
-| `villageRailPowerBase` | 方块 | 空 | 动力轨道下用来给它供能的东西。留空则使用红石块 |
+| `villageRailPowerBlock` | 方块 | 空 | 每隔 `villageRailPowerRun` 排嵌入线路的充能铁轨。留空则使用原版充能铁轨；不是铁轨的方块只是被直接铺在那里 |
+| `villageRailPowerBase` | 方块 | 空 | 充能铁轨下用来给它供能的东西。留空则使用红石块 |
 | `villageRailPowerRun` | 整数，0 或更大 | `0` | 每隔这么多排，在原版铁轨线路中嵌入一根位于红石块之上的充能铁轨，让矿车保持滚动。`0` 表示不供能，除原版铁轨之外的任何轨道都会忽略它 |
 | `villageRailClimb` | 整数，1 或更大 | `8` | 线路每爬升或下降一格，要保持水平行进多少排。`1` 让它的坡度和道路一样陡 |
 | `villageRailTail` | 整数，0 或更大 | `48` | 铁路线越过城市最后一个街区群，向两端继续延伸多远 |
@@ -5964,7 +6012,7 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 
 **门阶。** 地面塌落处，每个地块的每扇门前的台阶会被用土垫起，而留在水上的石质台阶则用 `villagePathVergeWaterBlock` 装饰。
 
-**轨道。** `villageRailBlock` 为空时，轨道是顺着线路方向转好的原版铁轨，`villageRailPowerRun` 每隔若干排在一个红石块之上设置一根已通电的充能铁轨，让矿车能骑行整条线路；嵌入路基的轨道不带充能铁轨。想要铁块、铁栏杆或其他任何东西的资源包，直接指定它们即可：带轴的方块，例如原木，会顺着线路方向转向，其他方块则按原样铺设。每个铁路、地铁、车站和下水道方块都可以在方括号中携带其状态，上面的“混合方块”列出了按方块逐个抽取加权混合的那些设置。
+**轨道。** `villageRailBlock` 为空时，轨道是顺着线路方向转好的原版铁轨，`villageRailPowerRun` 每隔若干排在一个红石块之上设置一根已通电的充能铁轨，让矿车能一路行驶完整条线路；嵌入路基的轨道不带充能铁轨。想要铁块、铁栏杆或其他任何东西的资源包，直接指定它们即可：带轴的方块，例如原木，会顺着线路方向转向，其他方块则按原样铺设。每个铁路、地铁、车站和下水道方块都可以在方括号中携带其状态，上面的“混合方块”列出了按方块逐个抽取加权混合的那些设置。
 
 #### 村庄地铁
 
@@ -6018,9 +6066,9 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `villageSubwayTrackGap` | 整数，2 或更大 | `2` | 平行轨道相距多远 |
 | `villageSubwayShoulderBlock` | 方块 | 空 | 路基两侧的方块。留空则没有路肩 |
 | `villageSubwayShoulderWidth` | 整数，0 或更大 | `1` | 该路肩有多宽 |
-| `villageSubwayPowerBlock` | 方块 | 空 | 动力轨道方块。留空则使用原版充能铁轨 |
-| `villageSubwayPowerBase` | 方块 | 空 | 放在动力轨道下用来驱动它的方块。留空则使用红石块 |
-| `villageSubwayPowerRun` | 整数，0 或更大 | `0` | 动力轨道相隔多少格。0 表示不铺 |
+| `villageSubwayPowerBlock` | 方块 | 空 | 充能铁轨方块。留空则使用原版充能铁轨 |
+| `villageSubwayPowerBase` | 方块 | 空 | 放在充能铁轨下用来驱动它的方块。留空则使用红石块 |
+| `villageSubwayPowerRun` | 整数，0 或更大 | `0` | 充能铁轨相隔多少格。0 表示不铺 |
 | `villageSubwayTunnelBlock` | 文本 | 空 | 衬砌隧道的方块：两侧的墙和其上的顶。留空则挖出隧道及其车站而不衬砌 |
 | `villageSubwayTunnelLightBlock` | 方块 | 空 | 作为光源嵌入隧道顶部的方块。留空则不设光 |
 | `villageSubwayTunnelLightRun` | 整数，1 或更大 | `8` | 这些光源相隔多少格，以世界坐标为锚，使各段保持一致 |
@@ -6064,13 +6112,13 @@ RDPL 附带以下字体和字符。卡片、提示或介绍的 `font` 可以用�
 | `villageSubwayBenchBlock` | 方块 | `minecraft:oak_stairs` | 设在车站站台上和楼梯口旁的长椅座面。楼梯方块转向背离线路，看上去就是长椅；任何方块都行。留空则不设长椅 |
 | `villageSubwayBenchEndBlock` | 方块 | `minecraft:oak_log` | 车站长椅两端的扶手。留空则让座面两头光秃秃的 |
 | `villageSubwayBenchLength` | 整数，0 到 32 | `5` | 车站长椅有多长，包括扶手。`0` 表示不设长椅 |
-| `villageSubwayStation` | 文本 | 空 | 取自资源包 structures 文件夹、用作车站的结构：它的竖井、楼梯以及从街道进入的通道。用 #scripts/rdpl-grab-template.py 从手工建造的世界中取出一个：其实心格会被铺设，其空气格会被挖空，因此形状就是建筑本身，而不是对它的描述。留空则完全不建车站，无法加载的名称会记录一条错误并且不建任何车站 |
+| `villageSubwayStation` | 文本 | 空 | 取自资源包 structures 文件夹、用作车站的结构：它的竖井、楼梯以及从街道进入的通道。用 #scripts/rdpl-grab-template.py 从手工建造的世界中取出一个：其实心格会被铺设，其空气格会被挖空，因此形状就是建筑本身，而不是对它的描述。留空则完全不建车站，无法加载的名称会在日志中记录一条错误，并且不建任何车站 |
 | `villageSubwayStationFoot` | 整数，0 到 64 | `4` | 车站建筑底部有多少层只铺一次，在重复的部分之前。地面和通向站台的门洞位于这里 |
 | `villageSubwayStationRepeat` | 整数，0 到 64 | `12` | 车站建筑有多少层会重复，这样一座建筑就能适用于任何深度：竖井以这一段的整份副本增长，走廊吸收剩下的部分。它必须恰好是楼梯的整整一圈，否则各段楼梯无法衔接。`0` 表示建筑绝不增长 |
 
-**车站。** 只有当 `villageSubwayStation` 指定了一个能加载的建筑时，地铁线路才会有车站：留空时没有站厅、没有楼梯，也没有入口，无法加载的名称会记录一条错误并且不建任何车站。指定了建筑之后，一旦设置了 `villageSubwayStationLength` 和 `villageSubwayPlatformWidth`，线路会在城市第一口井所在的那一排设一座车站，并沿线每隔 `villageSubwayStationRun` 格再设一座。每座车站最多向两侧各滑动 48 格，为其建筑寻找一处位置：紧邻一条在该位置的整个长度上都与线路并行的街道，避开所有街道、井和广场，且与已占用的车站至少相距车站长度再加七格；站在该位置上的地块会让路，找不到这样位置的车站会被舍去。不设车站的线路不开站厅，因此绝不会有一个没有入口的站厅。站厅沿其长度保持水平：路基向两侧各扩开 `villageSubwayPlatformWidth`，以 `villageSubwayPlatformBlock` 铺地，以隧道衬砌砌墙并加顶，由隧道自己的 `villageSubwayTunnelLightBlock` 和 `villageSubwayTunnelLightRun` 照明，并在两端把隧道横向封死。从站台起有一条走廊通向车站建筑，建筑爬升到道路旁边的街道，绝不在它下面；建筑升到八格内最近街道的坡度上，也就是该街道在地面上保持的坡度，而不是架在其上的任何桥面或坡道，在没有街道的地方则升到地面的高度，当城市建造时该高度比站台高出不到三格、建筑即使增长也无法完成爬升、或通往站台的走廊会延伸超过 32 格时，它被舍去；日志会说明原因。那条街道与建筑之间的地面被调整到同一高度，塌落处被填平，头顶被清空，这样人们就能从道路走进车站。一张以 `villageSubwayBenchEndBlock` 为扶手、长 `villageSubwayBenchLength` 的 `villageSubwayBenchBlock` 长椅立在站台上。
+**车站。** 只有当 `villageSubwayStation` 指定了一个能加载的建筑时，地铁线路才会有车站：留空时没有站厅、没有楼梯，也没有入口，无法加载的名称会在日志中记录一条错误，并且不建任何车站。指定了建筑之后，一旦设置了 `villageSubwayStationLength` 和 `villageSubwayPlatformWidth`，线路会在城市第一口井所在的那一排设一座车站，并沿线每隔 `villageSubwayStationRun` 格再设一座。每座车站最多向两侧各移动 48 格，为其建筑寻找一处位置：紧邻一条在该位置的整个长度上都与线路并行的街道，避开所有街道、井和广场，且与已占用的车站至少相距车站长度再加七格；站在该位置上的地块会让路，找不到这样位置的车站会被舍去。不设车站的线路不开站厅，因此绝不会有一个没有入口的站厅。站厅沿其长度保持水平：路基向两侧各扩开 `villageSubwayPlatformWidth`，以 `villageSubwayPlatformBlock` 铺地，以隧道衬砌砌墙并加顶，由隧道自己的 `villageSubwayTunnelLightBlock` 和 `villageSubwayTunnelLightRun` 照明，并在两端把隧道横向封死。从站台起有一条走廊通向车站建筑，建筑爬升到道路旁边的街道，绝不在它下面；建筑升到八格内最近街道的坡度上，也就是该街道在地面上保持的坡度，而不是架在其上的任何桥面或坡道，在没有街道的地方则升到地面的高度，当城市建造时该高度比站台高出不到三格、建筑即使增长也无法完成爬升、或通往站台的走廊会延伸超过 32 格时，它被舍去；日志会说明原因。那条街道与建筑之间的地面被调整到同一高度，塌落处被填平，头顶被清空，这样人们就能从道路走进车站。一张以 `villageSubwayBenchEndBlock` 为扶手、长 `villageSubwayBenchLength` 的 `villageSubwayBenchBlock` 长椅立在站台上。
 
-**手工建造车站。** `villageSubwayStation` 指定一个用作车站的结构文件，资源包就是这样提供某人亲手建造的形状，而不是在设置中描述出来的形状。在世界中建好它，用 #scripts/rdpl-grab-template.py 取出，并随资源包放置：其方块按所建的样子铺设，海绵格变成隧道衬砌，其空气格被挖空，站在其中的任何东西，如矿车或盔甲架，也会随之而来。它从车站所占位置的角上安置。一座建筑能适用于任何深度，是因为它的中间部分会重复：底部先铺一次 `villageSubwayStationFoot` 层，带有地面和通向站台的门洞，然后接下来 `villageSubwayStationRepeat` 层的整份副本向上堆叠，直到建筑到达街道。那一段必须恰好是楼梯的整整一圈，否则两份副本相接之处，各段楼梯无法衔接。一条两格高的走廊从门洞通向站台，在落差太长、无法直行之处沿站厅折返；建筑头顶的地面向上清空八格，街道层的开口周围围一圈 `villageSubwayRailingBlock` 的栏杆，旁边立一张长椅。无法加载的建筑会让任何地方都不建车站并记录一条错误；其建筑无法升到街道的车站，在城市规划时被舍去，没有站厅，并记录原因。建筑自带通向街道的出口。
+**手工建造车站。** `villageSubwayStation` 指定一个用作车站的结构文件，资源包就是这样提供某人亲手建造的形状，而不是在设置中描述出来的形状。在世界中建好它，用 #scripts/rdpl-grab-template.py 取出，并随资源包放置：其方块按所建的样子铺设，海绵格变成隧道衬砌，其空气格被挖空，站在其中的任何东西，如矿车或盔甲架，也会随之而来。它从车站所占位置的角上安置。一座建筑能适用于任何深度，是因为它的中间部分会重复：底部先铺一次 `villageSubwayStationFoot` 层，带有地面和通向站台的门洞，然后接下来 `villageSubwayStationRepeat` 层的整份副本向上堆叠，直到建筑到达街道。那一段必须恰好是楼梯的整整一圈，否则两份副本相接之处，各段楼梯无法衔接。一条两格高的走廊从门洞通向站台，在落差太长、无法直行之处沿站厅折返；建筑头顶的地面向上清空八格，街道层的开口周围围一圈 `villageSubwayRailingBlock` 的栏杆，旁边立一张长椅。无法加载的建筑会让任何地方都不建车站，并在日志中记录一条错误；其建筑无法升到街道的车站，在城市规划时被舍去，没有站厅，并记录原因。建筑自带通向街道的出口。
 
 #### 铁路连接
 
@@ -6189,9 +6237,9 @@ xxoxoxx
 }
 ```
 
-`control.structures` 决定此分组是否生效。包括被关闭的原版结构，以及它们的间距、间隔、出生点距离、生物群系、生成物、固定位置和地形适配。
+`control.structures` 决定这一组。关闭原版结构，以及设置它们的间距、间隔、出生点距离、生物群系、生成物、固定位置和地形适配。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `structureSpacing`              | 列表                                          | 空                                                                     | 原版结构的播种间距（以区块为单位），写成 structure=chunks 条目：可用 1.12.2 的名称 temples、monuments、mansions、mineshafts、strongholds、netherbridges、endcities 和 villages，也可用任意结构集 id，例如 pillager_outposts。对于 mineshafts，该数值表示每这么多个区块出现一个；对于 strongholds，则是环的间距。下界要塞沿用自己的网格，netherbridges 间距对其无效 |
 | `structureSeparation`           | 列表                                          | 空                                                                     | 同一种结构两个实例之间允许的最小距离（以区块为单位），写成 structure=chunks 条目；对于 strongholds，则是环的分布范围。Temples、mineshafts 和 netherbridges 沿用自己的间隔，此项对其无效。对于 monuments，若间隔大到等于间距，会被降为间距减一，日志中会注明 |
@@ -6236,24 +6284,24 @@ xxoxoxx
 }
 ```
 
-`control.spawning` 决定此分组是否生效。包括生物生成上限、敌对生物的生成速率和光照上限。
+`control.spawning` 决定这一组。生物生成上限、敌对生物的生成速率和光照上限。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ----------------------------- | ---------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `surfaceDayMonsterRate`       | 数值，0.0 至 4.0       | `1.0`   | 白天地表敌对生物生成的倍率，`1.0` 即原版，因此可以关闭白天地表的生成而不影响洞穴 |
-| `surfaceNightMonsterRate`     | 数值，0.0 至 4.0       | `1.0`   | 同上，针对夜晚的地表 |
-| `undergroundDayMonsterRate`   | 数值，0.0 至 4.0       | `1.0`   | 同上，针对白天的地下 |
-| `undergroundNightMonsterRate` | 数值，0.0 至 4.0       | `1.0`   | 同上，针对夜晚的地下 |
-| `monsterCap`                  | 整数，-1 至 1000       | `-1`    | 同时可加载的敌对生物数量。原版为 70，`-1` 表示不改动 |
-| `creatureCap`                 | 整数，-1 至 1000       | `-1`    | 同上，针对被动动物。原版为 10 |
-| `ambientCap`                  | 整数，-1 至 1000       | `-1`    | 同上，针对蝙蝠之类。原版为 15 |
-| `waterCreatureCap`            | 整数，-1 至 1000       | `-1`    | 同上，针对鱿鱼。原版为 5 |
-| `monsterSpawnLight`           | 整数，-1 至 15         | `-1`    | 在原版检查之外，敌对生物仍可生成的最高方块亮度。-1 表示只保留原版规则。刷怪笼不受影响 |
+| `surfaceDayMonsterRate`       | 数字，0.0 到 4.0       | `1.0`   | 白天地表敌对生物生成的倍率，`1.0` 即原版，因此可以关闭白天地表的生成而不影响洞穴 |
+| `surfaceNightMonsterRate`     | 数字，0.0 到 4.0       | `1.0`   | 同上，针对夜晚的地表 |
+| `undergroundDayMonsterRate`   | 数字，0.0 到 4.0       | `1.0`   | 同上，针对白天的地下 |
+| `undergroundNightMonsterRate` | 数字，0.0 到 4.0       | `1.0`   | 同上，针对夜晚的地下 |
+| `monsterCap`                  | 整数，-1 到 1000       | `-1`    | 同时可加载的敌对生物数量。原版为 70，`-1` 表示不改动 |
+| `creatureCap`                 | 整数，-1 到 1000       | `-1`    | 同上，针对被动动物。原版为 10 |
+| `ambientCap`                  | 整数，-1 到 1000       | `-1`    | 同上，针对蝙蝠之类。原版为 15 |
+| `waterCreatureCap`            | 整数，-1 到 1000       | `-1`    | 同上，针对鱿鱼。原版为 5 |
+| `monsterSpawnLight`           | 整数，-1 到 15         | `-1`    | 在原版检查之外，敌对生物仍可生成的最高方块亮度。-1 表示只保留原版规则。刷怪笼不受影响 |
 | `threatItems`                 | 列表                   | 空      | 会提高玩家威胁等级的物品，写成 item=level,count 条目，末尾可选加 ,each 或 ,batch，例如 minecraft:diamond_sword=5,1 或 minecraft:diamond=1,16,batch。默认的 each 对持有的每一个都加上该等级，最多计入 count 个；batch 则每持有 count 个加一次该等级。超过物品堆叠上限的 count 会被截为堆叠上限。每个持有物品的已加载实体都是携带者：玩家的主物品栏、盔甲和副手，掉落的物品堆，任何带有物品栏的实体（如驮箱骡或运输箱矿车），以及其他生物手持的物品和穿戴的盔甲。留空则关闭威胁等级。即使 `control.spawning` 为 `off`，配置自身的威胁设置依然生效 |
 | `threatLevels`                | 列表                   | 空      | 进入各个等级带所需的分数，递增排列，因此 `10, 25, 50` 构成三个等级带。留空则关闭威胁等级 |
-| `threatMost`                  | 整数，-1 至 100000     | `-1`    | 为分数设上限。`-1` 表示不设上限 |
-| `threatSpawnRate`             | 数值，0.0 至 8.0       | `1.0`   | 在处于最高等级带的携带者 128 格范围内，在其他倍率之外再缩放敌对生物的生成，较低的等级带按比例获得一部分 |
-| `threatNotice`                | 数值，0.0 至 64.0      | `0.0`   | 敌对生物（包括原版生物）能在多远的额外距离外发现处于最高等级带的携带者，同样按比例分配给较低的等级带 |
+| `threatMost`                  | 整数，-1 到 100000     | `-1`    | 为分数设上限。`-1` 表示不设上限 |
+| `threatSpawnRate`             | 数字，0.0 到 8.0       | `1.0`   | 在处于最高等级带的携带者 128 格范围内，在其他倍率之外再缩放敌对生物的生成，较低的等级带按比例获得一部分 |
+| `threatNotice`                | 数字，0.0 到 64.0      | `0.0`   | 敌对生物（包括原版生物）能在多远的额外距离外发现处于最高等级带的携带者，同样按比例分配给较低的等级带 |
 | `threatSays`                  | `band=message` 列表    | 空      | 当玩家自己所在的等级带变化时以黄色显示的文字，等级带 `0` 是回落到第一个等级带以下时的文字 |
 
 ### 基岩
@@ -6280,14 +6328,14 @@ xxoxoxx
 }
 ```
 
-`control.bedrock` 决定此分组是否生效。包括平坦基岩及其维度和生物群系列表。
+`control.bedrock` 决定这一组。平坦基岩及其维度和生物群系列表。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ----------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `flatBedrock`                       | 布尔值                    | `false`                                                                                  | 将世界底部参差不齐的基岩替换为平坦的层。仅对新区块生效，除非开启 `flatBedrockRetrogen` |
 | `flatBedrockDimensions`             | 列表                      | `["minecraft:overworld"]`                                                                | 要平整的维度。留空表示所有维度 |
 | `flatBedrockDimensionsAreBlacklist` | 布尔值                    | `false`                                                                                  | 开启时，平整会跳过列出的维度。关闭时，只对它们生效 |
-| `bedrockLayers`                     | 整数，1 至 5              | `1`                                                                                      | 保留多少层基岩 |
+| `bedrockLayers`                     | 整数，1 到 5              | `1`                                                                                      | 保留多少层基岩 |
 | `flatBedrockBiomes`                 | 生物群系名称列表          | 空                                                                                    | 要平整的生物群系，可用显示名称或注册名称。留空表示所有生物群系 |
 | `flatBedrockBiomesAreBlacklist`     | 布尔值                    | `false`                                                                                  | 开启时，平整会跳过列出的生物群系。关闭时，只对它们生效 |
 | `flatBedrockRoof`                   | 布尔值                    | `false`                                                                                  | 在维度有基岩顶盖的地方（如下界顶部）也将其平整 |
@@ -6316,24 +6364,24 @@ xxoxoxx
 }
 ```
 
-`control.entities` 决定此分组是否生效。远离所有玩家的实体以较慢的节奏更新。
+`control.entities` 决定这一组。远离所有玩家的实体以较慢的节奏更新。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | --------------------- | --------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `slowDistantEntities` | 布尔值          | `true`                    | 对远离所有玩家的实体减少刻更新的频率。任何东西都不会完全停止更新，只是节奏变慢 |
 | `slowedKinds`         | 列表            | `["items", "experience"]` | 哪些种类会被减少刻更新：items、experience、projectiles，最后一项指箭、三叉戟、投掷的雪球、鸡蛋、药水、附魔之瓶和末影珍珠，以及羊驼的唾沫。凡是能自行思考的实体总是会被减慢，无需在此列出：它们选择下一步行动的频率降低，但仍然每刻移动。机器永远不会被减慢 |
-| `slowDistance`        | 整数，64 至 4096 | `192`                    | 区块距最近玩家多远（以方块为单位）才会被减慢。游戏在 64 格以外就不再向玩家通报大多数实体，因此不要低于这个值 |
-| `slowRate`            | 整数，1 至 20   | `4`                       | 被减慢的区块每这么多刻获得一刻更新。1 表示完全不减慢，20 表示每秒一次 |
+| `slowDistance`        | 整数，64 到 4096 | `192`                    | 区块距最近玩家多远（以方块为单位）才会被减慢。游戏在 64 格以外就不再向玩家通报大多数实体，因此不要低于这个值 |
+| `slowRate`            | 整数，1 到 20   | `4`                       | 被减慢的区块每这么多刻获得一刻更新。1 表示完全不减慢，20 表示每秒一次 |
 | `neverSlowed`         | 列表            | 空                     | 无论多远都不受影响的实体，写成 namespace:name |
-| `slowRecheck`         | 整数，1 至 100  | `20`                      | 每隔多少刻重新计算一次到最近玩家的距离。每位玩家各自独立计算，因此独自待在远处的人周围依然有属于自己的安静空间 |
+| `slowRecheck`         | 整数，1 到 100  | `20`                      | 每隔多少刻重新计算一次到最近玩家的距离。每位玩家各自独立计算，因此独自待在远处的人周围依然有属于自己的安静空间 |
 
-### 陆地、据点与模组的提示
+### 造陆、停留与模组的提示
 
 *各分组的作用*
 
-`control.chunks` 决定此分组是否生效。包括出生点区块半径、预生成、回溯生成与重置、欢迎文字、提示卡片以及游戏的 toast 通知。
+`control.chunks` 决定这一组。出生点区块半径、预生成、回溯生成与重置、欢迎文字、提示卡片以及游戏的 弹出通知。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ----------------------------- | ----------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `retrogen`                    | 布尔值            | `false`                                  | 让已存在的区块补上带有 \"retrogen\": true 的世界生成条目。关闭时，已存在的区块保持不变。无论开关，区块在生成时都会被标记，因此之后再开启只会影响比资源包更早的区块 |
 | `adoptExistingChunks`         | 布尔值            | `false`                                  | 将已存在的区块视作由此资源包生成，对其做标记，而不是留给回溯生成处理。替换一个已生成同样矿石的模组时开启它，这样回溯生成就不会让矿石翻倍。之后新增的世界生成条目仍会回溯生成到这些区块中 |
@@ -6341,23 +6389,23 @@ xxoxoxx
 | `saysIcon`                    | 文本              | 空                                    | 绘制在卡片上的物品，例如 minecraft:compass。留空则不绘制 |
 | `saysColor`                   | 文本              | 空                                    | 卡片的背景颜色，十六进制，例如 1E2630。留空则使用深石板色 |
 | `saysImage`                   | 文本              | 空                                    | 来自资源包客户端资源的 PNG，拉伸后作为卡片背景，例如 rubyworld:textures/gui/card.png，绘制在颜色之上。留空则不绘制 |
-| `saysBackground`              | 布尔值            | `true`                                   | 绘制卡片的面板、边框和彩色条纹，以及欢迎语和据点提示后方的深色背景。关闭后只剩文字（保留其阴影），若设置了 saysImage 则还有该图像 |
+| `saysBackground`              | 布尔值            | `true`                                   | 绘制卡片的面板、边框和彩色条纹，以及欢迎与停留提示后方的深色背景。关闭后只剩文字（保留其阴影），若设置了 saysImage 则还有该图像 |
 | `saysFont`                    | 文本              | 空                                    | 卡片文字所用的字体，写成 namespace:name，例如 rubyworld:runes 对应资源包的 assets/rubyworld/font/runes.json。留空则使用 RDPL 字体 |
-| `toasts`                      | 布尔值            | `false`                                  | 显示游戏的 toast 通知，即右上角用于进度、解锁配方、教程提示和系统通知的弹窗，其他模组的 toast 也包括在内。关闭则一律不显示。在下一次加入世界或服务器时生效。世界模板可以改为列出要显示的种类 |
-| `pregenOnNewWorld`            | 整数，0 至 8192   | `0`                                      | 在任何人开始游玩之前，新世界在出生点周围多大范围内（以区块为单位）完成造陆。游戏自己会在出生点周围生成 12 个区块，因此 12 是下限，0 表示这个下限而不是什么都不做：游戏本来就要生成的地面会在一次有组织的流程中被接管并完成光照，而不是零零散散地陆续出现。调高它可以比游戏覆盖得更远 |
+| `toasts`                      | 布尔值            | `false`                                  | 显示游戏的 弹出通知，即右上角用于进度、解锁配方、教程提示和系统通知的弹窗，其他模组的弹出通知也包括在内。关闭则一律不显示。在下一次加入世界或服务器时生效。世界模板可以改为列出要显示的种类 |
+| `pregenOnNewWorld`            | 整数，0 到 8192   | `0`                                      | 在任何人开始游玩之前，新世界在出生点周围多大范围内（以区块为单位）完成造陆。游戏自己会在出生点周围生成 12 个区块，因此 12 是下限，0 表示这个下限而不是什么都不做：游戏本来就要生成的地面会在一次有组织的流程中被接管并完成光照，而不是零零散散地陆续出现。调高它可以比游戏覆盖得更远 |
 | `pregenToBorder`              | 布尔值            | `false`                                  | 新世界是否将陆地一直生成到世界边界，而不是固定的区块数，并以边界为中心而不是出生点。边界从未向内收缩过的世界没有可到达的边界，会被跳过 |
 | `pregenAllDimensions`         | 布尔值            | `false`                                  | 为服务器拥有的每个维度（包括模组维度）造陆，先主世界，其余按 id 顺序，而不是只处理 pregenDimensions 中的维度。在 pregenDimensionsWhenEntered 中列出的维度仍留给第一位到访者 |
 | `pregenResume`                | 布尔值            | `false`                                  | 被停止或中途中断的运行，下次加载世界时是否从中断处继续，而不是重新开始 |
-| `pregenChunksInFlight`        | 整数，1 至 512    | `32`                                     | 一次造陆运行同时向游戏请求多少个区块。更多会让生成线程更忙，而服务器对被留在原地观看的人响应更慢 |
+| `pregenChunksInFlight`        | 整数，1 到 512    | `32`                                     | 一次造陆运行同时向游戏请求多少个区块。更多会让生成线程更忙，而服务器对被留在原地观看的人响应更慢 |
 | `pregenBackup`                | 布尔值            | `false`                                  | 预生成完成后、玩家仍被留在原地时，将世界复制为一份原始备份。重置时恢复的就是这份副本；资源包已不匹配的副本会被丢弃并重新保留 |
 | `resetClearsEntities`         | 布尔值            | `true`                                   | 地图重置时移除所有非玩家的实体 |
 | `resetClearsScores`           | 布尔值            | `true`                                   | 地图重置时将资源包保存的每个目标归零，让新的一场比赛从零开始。队伍本身会保留 |
 | `resetClearsInventory`        | 布尔值            | `false`                                  | 地图重置时清空每位玩家的物品栏，包括盔甲和副手 |
 | `resetClearsExperience`       | 布尔值            | `false`                                  | 地图重置时将每位玩家的经验设回零级 |
-| `spawnChunkRadius`            | 整数，0 至 1024   | `128`                                    | 距出生点多远（以方块为单位）的区块会一直保持加载，无论玩家是否在那里，按每个方向 (方块数 + 8) / 16 取整到整区块，因此 128 表示每个方向保持 8 个区块。世界启动时，主世界会在服务器就绪之前向每个方向多准备 4 个区块的方形范围，128 时即 25 乘 25 个区块。0 表示不准备也不保持任何区块，出生点区域会像其他地方一样卸载。RDPL 用自己的票据保持这些区块，因此在 1.21.1 上，只要此键生效，spawnChunkRadius 游戏规则就不起作用 |
+| `spawnChunkRadius`            | 整数，0 到 1024   | `128`                                    | 距出生点多远（以方块为单位）的区块会一直保持加载，无论玩家是否在那里，按每个方向 (方块数 + 8) / 16 取整到整区块，因此 128 表示每个方向保持 8 个区块。世界启动时，主世界会在服务器就绪之前向每个方向多准备 4 个区块的方形范围，128 时即 25 乘 25 个区块。0 表示不准备也不保持任何区块，出生点区域会像其他地方一样卸载。RDPL 用自己的票据保持这些区块，因此在 1.21.1 上，只要此键生效，spawnChunkRadius 游戏规则就不起作用 |
 | `spawnChunkRadii`             | 列表              | 空                                    | 为主世界写成 dimension=blocks 的半径，如 minecraft:overworld=64，覆盖 spawnChunkRadius。只有主世界有出生点区块，因此其他维度的条目不会改变任何东西 |
 | `welcomeSays`                 | 列表              | `[WELCOME]`                              | 欢迎语，每次登录和预生成之后以绿色显示。单独写的条目是适用于所有地方的文字；dimension=message 条目会为该维度覆盖它，并且在每次抵达该维度时也问候玩家，例如 minecraft:the_nether=Welcome to the Nether!。= 后面的消息为空会让该维度静音；空列表则什么都不显示。保持此默认值时，会使用每位玩家各自的语言 |
-| `pregenBorderLimit`           | 整数，1 至 1875000 | `8192`                                  | 在拒绝向边界造陆之前，边界允许延伸的最远距离，每个方向以区块计。它的作用是防止一个失误运行数周，而不是用来调高的，资源包也无法设置它。边长 8192 的正方形含有 2.68 亿个区块 **仅限配置。** |
+| `pregenBorderLimit`           | 整数，1 到 1875000 | `8192`                                  | 在拒绝向边界造陆之前，边界允许延伸的最远距离，每个方向以区块计。它的作用是防止一个失误运行数周，而不是用来调高的，资源包也无法设置它。边长 8192 的正方形含有 2.68 亿个区块 **仅限配置。** |
 | `pregenDimensions`            | 列表              | `["minecraft:overworld"]`                | 新世界在哪些维度中造陆，按 id，依给定顺序逐个进行 |
 | `pregenDimensionsWhenEntered` | 列表              | 空                                    | 不在一开始、而是在有人首次踏入时才造陆的维度，范围相同，同样会留住所有人直到完成。同时列在这里和 pregenDimensions 中的维度，直接在一开始完成 |
 | `pregenRunningSays`           | 文本              | `World pregeneration running, %d%% done` | 世界生成期间玩家看到的进度消息，其中 %d 是百分比，第二个 %s 是维度。留空则不告知玩家任何内容。保持此默认值时，会使用每位玩家各自的语言 |
@@ -6389,15 +6437,15 @@ xxoxoxx
 }
 ```
 
-`control.voidWorld` 决定此分组是否生效。包括虚空世界的生成及其平台。
+`control.voidWorld` 决定这一组。虚空世界的生成及其平台。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | --------------------------------- | ------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `voidWorld`                       | 布尔值             | `false`                   | 将列出的维度生成为空无一物的空间，出生点处有一个平台，且没有任何生物，原版三个维度通过生成的预设实现，资源包自己的维度文件则通过其文件实现；列出的任何其他维度会在造陆时被清空。该选择在世界创建时随世界保存，因此之后开启或关闭都不会改变已有的世界 |
 | `voidWorldDimensions`             | 列表               | `["minecraft:overworld"]` | 哪些维度变为虚空，按 id。留空表示没有，或者在 voidWorldDimensionsAreBlacklist 开启时表示所有维度 |
 | `voidWorldDimensionsAreBlacklist` | 布尔值             | `false`                   | 开启时，列出的维度是不受影响的那些 |
 | `voidPlatformBlock`               | 方块               | `minecraft:stone`         | 平台所用的材料 |
-| `voidPlatformHeight`              | 整数，-2032 至 2031 | `64`                     | 虚空世界平台所在的 y 坐标 |
+| `voidPlatformHeight`              | 整数，-2032 到 2031 | `64`                     | 虚空世界平台所在的 y 坐标 |
 | `voidPlatformSize`                | 整数，1 或更大     | `9`                       | 平台的宽度，向下取整为奇数，以便居中位于出生点 |
 | `voidWorld`                       | 文本               | `default`                 | 虚空世界的生成及其平台 [default\|global\|off] |
 
@@ -6415,7 +6463,7 @@ xxoxoxx
 }
 ```
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dragonFight` | 布尔值  | `true`  | 整场战斗是否发生：龙、它的血条、水晶、它所站立的喷泉，以及玩家用末影水晶发起的重生。属于 `structures` 分组 |
 
@@ -6459,22 +6507,22 @@ xxoxoxx
 }
 ```
 
-`control.terrain` 决定此分组是否生效。包括创建时的世界名称和种子、generatorOptions、洞穴区域、云层高度以及世界之间的接缝。
+`control.terrain` 决定这一组。创建时的世界名称和种子、generatorOptions、洞穴区域、云层高度以及世界之间的接缝。
 
-| 设置项 | 类型 | 默认值 | 作用 |
+| 设置 | 类型 | 默认值 | 作用 |
 | ----------------------- | ------------------ | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `worldSeed`             | 字符串             | 空                                | 每个新世界所用的种子，按键入时的写法书写：数字直接使用，其他内容则像游戏那样转换成数字。专用服务器也用它创建世界，并将其作为 `level-seed` 写入 `server.properties`。留空则不干预选择 |
 | `worldName`             | 文本               | 空                                | 打开创建世界的界面时新世界的名称。留空则保持游戏的默认命名 |
 | `worldType`             | 文本               | 空                                | 塑形后的世界所基于的世界类型，可选 default、largebiomes、amplified 或 flat，1.12.2 的名称 customized 和 default_1_1 按 default 读取；flat 是由 generatorOptions 的层构建的超平坦主世界，其上带有资源包的城市。下面的形态（高度、深层石头、海平面、基岩、虚空）会被生成为一个独立的世界预设，列在世界界面的“世界类型”下，并且无论之前选了什么，都会在那里被选中。专用服务器会将其作为 `level-type` 写入 `server.properties`，指向该预设；若没有任何塑形，则指向游戏自带的预设，除非 `level-type` 已经指向 worldTypeExceptions 中的某一项。留空则基于 default 构建 |
 | `worldTypeExceptions`   | 列表               | `["flat", "debug_all_block_states"]` | 玩家选择后，生成的预设不会去动的世界类型，例如 flat 或 debug_all_block_states。留空表示任何选择都会被替换 |
 | `generatorOptions`      | 文本               | 空                                | 主世界的地形设置，写成 JSON 对象，键为 1.12.2 的 customized 世界类型所写入的那些。此处读取：seaLevel、useLavaOceans、fixedBiome，以及设为 false 的 useCaves、useRavines、useDungeons、useLavaLakes、useStrongholds、useVillages、useMineShafts、useTemples、useMonuments 和 useMansions。在 worldType 为 flat 时，它改为表示各层，自下而上，写成 1.12.2 超平坦文本 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village 或一个层的列表；层之后的数字是生物群系，其后的 village、biome_1、mineshaft、stronghold、oceanmonument、lava_lake 和 decoration 会开启相应内容。仅在世界创建时应用。专用服务器会将其作为 `generator-settings` 写入 `server.properties`，平坦层则写成游戏自带的平坦 JSON，除非 `level-type` 已经指向 worldTypeExceptions 中的某一项。留空则保持世界类型生成的地形 |
-| `worldMinHeight`        | 整数，-2032 至 2016 | `-64`                               | 主世界的最低方块，为 16 的倍数，最低到 -2032。游戏自己的底部是 -64；更低则会在原版地形之下形成深层世界，一直是实心石头，直到世界生成层将其雕刻，或 noiseCaves 把游戏的洞穴延伸下去。仅通过生成的预设应用 |
-| `worldMaxHeight`        | 整数，-2016 至 2032 | `320`                               | 主世界顶部之上的那个方块，为 16 的倍数，最高到 2032，比 worldMinHeight 至多高 4064。游戏自己的顶部是 320；更高则在原版地形之上留出开阔的天空 |
+| `worldMinHeight`        | 整数，-2032 到 2016 | `-64`                               | 主世界的最低方块，为 16 的倍数，最低到 -2032。游戏自己的底部是 -64；更低则会在原版地形之下形成深层世界，一直是实心石头，直到世界生成层将其雕刻，或 noiseCaves 把游戏的洞穴延伸下去。仅通过生成的预设应用 |
+| `worldMaxHeight`        | 整数，-2016 到 2032 | `320`                               | 主世界顶部之上的那个方块，为 16 的倍数，最高到 2032，比 worldMinHeight 至多高 4064。游戏自己的顶部是 320；更高则在原版地形之上留出开阔的天空 |
 | `deepStone`             | 文本               | 空                                | 当 worldMinHeight 低于 -64 时，原版地形之下的世界所用的方块，例如资源包自己的深板岩。它在 -64 以下的八层中渗入深板岩，就像深板岩渗入石头那样。留空则保持石头 |
 | `noiseCaves`            | 文本               | `off`                                | 当 worldMinHeight 低于 -64 时，游戏的洞穴、隧道、面条洞穴和含水层在哪里延续：off 让原版地形之下的世界保持为实心深层石头，留给世界生成层去雕刻；deep 把它们一直延伸到底层，岩浆湖移到其最底部的十层；world 在此版本上含义相同，因为原版地形本来就有它们 |
 | `worldSpawn`            | 文本               | 空                                | 每个新世界的出生位置，写成 x,z 或 x,y,z。不带 y 时使用世界的平均地面高度，即海平面上一格，在超平坦世界中则是各层的顶部，之后游戏会像对待任何出生点那样在那里寻找安全的落脚处。仅在世界创建时应用。留空则交由游戏决定 |
-| `worldBorder`           | 整数，0 至 60000000 | `0`                                 | 每个新世界中世界边界的宽度（以方块为单位）。仅在世界创建时应用。0 表示让边界保持在游戏设定的位置 |
-| `worldTime`             | 整数，-1 至 23999  | `-1`                                 | 锁定主世界的一天中的时间，以刻为单位，与 /time set 接受的数值相同，因此 18000 是午夜。时钟停止且永不移动：/time set 无法推动它，天数仍在后台计数，移除此设置后就会恢复到应有的时间。-1 表示让时间照常流逝 |
+| `worldBorder`           | 整数，0 到 60000000 | `0`                                 | 每个新世界中世界边界的宽度（以方块为单位）。仅在世界创建时应用。0 表示让边界保持在游戏设定的位置 |
+| `worldTime`             | 整数，-1 到 23999  | `-1`                                 | 锁定主世界的一天中的时间，以刻为单位，与 /time set 接受的数值相同，因此 18000 是午夜。时钟停止且永不移动：/time set 无法推动它，天数仍在后台计数，移除此设置后就会恢复到应有的时间。-1 表示让时间照常流逝 |
 | `caveRegionPlainWeight` | 整数，0 或更大     | `4`                                  | 普通的、无区域的地下相对于洞穴区域各自权重的权重。越高，地下没有任何区域的部分越多 |
 | `caveRegionCells`       | 整数，16 或更大    | `128`                                | 洞穴区域单元格的宽度，以方块计。资源包的洞穴区域以大约这个大小的单元格涂绘在地下 |
 | `caveRegionCellsY`      | 整数，16 或更大    | `64`                                 | 洞穴区域单元格的高度，以方块计 |
@@ -6521,14 +6569,14 @@ xxoxoxx
 }
 ```
 
-`control.server` 决定本分组：资源包可以设置的 `server.properties` 中的各行，以及游戏模式、难度和对局域网开放的世界上的命令。在专用服务器上，资源包在此设置的每个值都会在服务器启动时写入 `server.properties`，因此该文件会写明当前生效的内容，服务器已经读取过的那些值也会同步设置到服务器上。单人世界采用集成服务器所具有的设置，各行已分别说明。留空，或数值为 `-1`，则保留服务器自身的值；`control.server` 为 `off` 时，每一行都保持服务器原样。
+`control.server` 决定这一组：资源包可以设置的 `server.properties` 中的各行，以及游戏模式、难度和对局域网开放的世界上的命令。在专用服务器上，资源包在此设置的每个值都会在服务器启动时写入 `server.properties`，因此该文件会写明当前生效的内容，服务器已经读取过的那些值也会同步设置到服务器上。单人世界采用集成服务器所具有的设置，各行已分别说明。留空，或数值为 `-1`，则保留服务器自身的值；`control.server` 为 `off` 时，每一行都保持服务器原样。
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `worldGameMode` | 文本 | 空 | 每个新世界以哪种模式开始，可选生存、极限、创造、冒险或旁观。极限模式即死亡后世界终结的生存模式，对整个存档生效，与世界选择界面上的选项相同。留空则保持创建世界者的选择。世界选择界面只提供生存、极限和创造，因此冒险和旁观只能在创建世界时设置。专用服务器在每次启动时都会把所有世界设为 server.properties 中的模式，所以在那里资源包的模式会在世界加载之前写入 server.properties（gamemode 和 hardcore） |
+| `worldGameMode` | 文本 | 空 | 每个新世界以哪种模式开始，可选 survival、hardcore、creative、adventure 或 spectator。hardcore 即死亡后世界终结的生存模式，对整个存档生效，与世界选择界面上的选项相同。留空则保持创建世界者的选择。世界选择界面只提供 survival、hardcore 和 creative，因此 adventure 和 spectator 只能在创建世界时设置。专用服务器在每次启动时都会把所有世界设为 server.properties 中的模式，所以在那里资源包的模式会在世界加载之前写入 server.properties（gamemode 和 hardcore） |
 | `privacy` | 布尔值 | `true` | 是否关闭游戏的遥测和聊天举报：不发送任何遥测事件，客户端不为聊天消息签名，服务器不保留聊天会话也不要求会话，因此任何消息都无法被举报。资源包省略该项时，采用 `tweaks` 类别中的 `privacy` 配置选项。在下一次加入世界或服务器时生效 |
-| `worldLanCommands` | 布尔值 | `true` | 将单人世界对局域网开放的玩家，是否可以为所有加入者开启命令。`false` 会使“对局域网开放”界面的“允许命令”按钮变灰并固定为关闭，无论以何种方式请求（包括 `/publish`），世界都不带命令开放 |
-| `worldDifficulty` | 列表 | 空 | 锁定难度，可选和平、简单、普通或困难。单独写的难度适用于所有维度；写成 维度=难度 的条目（例如 minecraft:the_nether=hard）只适用于该维度，并优先于单独写的难度。世界自身的设置保持原样，移除该条目后即恢复。专用服务器会把主世界的难度作为 `difficulty` 写入 `server.properties`。留空则保持所选难度 |
+| `worldLanCommands` | 布尔值 | `true` | 将单人世界对局域网开放的玩家，是否可以为所有加入者开启命令。`false` 会使“对局域网开放”界面的“允许作弊”按钮变灰并固定为关闭，无论以何种方式请求（包括 `/publish`），世界都不带命令开放 |
+| `worldDifficulty` | 列表 | 空 | 锁定难度，可选 peaceful、easy、normal 或 hard。单独写的难度适用于所有维度；写成 dimension=difficulty 的条目（例如 minecraft:the_nether=hard）只适用于该维度，并优先于单独写的难度。世界自身的设置保持原样，移除该条目后即恢复。专用服务器会把主世界的难度作为 `difficulty` 写入 `server.properties`。留空则保持所选难度 |
 | `worldForceGameMode` | 布尔值 | 空 | 加入的玩家是否每次都被设回服务器的游戏模式，即 `force-gamemode` 一行。对局域网开放的世界本来就会这样，`false` 在那里同样会使其停止 |
 | `worldPvp` | 布尔值 | 空 | 玩家之间是否可以互相伤害，即 `pvp` 一行。单人世界同样采用 |
 | `worldFlight` | 布尔值 | 空 | 在生存模式中飞行的玩家是否不被踢出，即 `allow-flight` 一行。单人世界同样采用 |
@@ -6537,13 +6585,13 @@ xxoxoxx
 | `worldCommandBlocks` | 布尔值 | 空 | 命令方块是否运行，即 `enable-command-block` 一行。单人世界本来就会运行，`false` 在那里同样会将其关闭 |
 | `worldIdleTimeout` | 整数，-1 或更大 | `-1` | 玩家挂机多少分钟后被踢出，即 `player-idle-timeout` 一行，0 表示永不。单人世界同样采用 |
 | `worldMotd` | 文本 | 空 | 在服务器列表中显示于服务器名称下方的那一行，即 `motd` 一行。对局域网开放的单人世界会用它取代房主和世界名称来显示 |
-| `worldMaxSize` | 整数，-1 至 29999984 | `-1` | 世界边界最远可以扩展到离中心多少格，即 `max-world-size` 一行。单人世界同样采用 |
+| `worldMaxSize` | 整数，-1 到 29999984 | `-1` | 世界边界最远可以扩展到离中心多少格，即 `max-world-size` 一行。单人世界同样采用 |
 | `worldStructures` | 布尔值 | 空 | 新世界是否生成结构，即 `generate-structures` 一行，也是世界选择界面上的“生成结构”选项。仅在创建世界时应用于该世界 |
 | `worldSpawnMonsters` | 布尔值 | 空 | 敌对生物是否生成，即 `spawn-monsters` 一行。`false` 在单人世界中同样会阻止其生成 |
 | `worldSpawnAnimals` | 布尔值 | 空 | 动物是否生成，即 `spawn-animals` 一行。`false` 在单人世界中同样会阻止其生成 |
 | `worldSpawnNpcs` | 布尔值 | 空 | 村民是否生成，即 `spawn-npcs` 一行。`false` 在单人世界中同样会阻止其生成 |
-| `worldViewDistance` | 整数，-1 至 32 | `-1` | 专用服务器向每位玩家发送多少区块范围内的世界，即 `view-distance` 一行。单人世界则遵循渲染距离 |
-| `worldSimulationDistance` | 整数，-1 至 32 | `-1` | 专用服务器让每位玩家周围多少区块范围内的世界保持刻更新，即 `simulation-distance` 一行。单人世界则遵循其自身的设置 |
+| `worldViewDistance` | 整数，-1 到 32 | `-1` | 专用服务器向每位玩家发送多少区块范围内的世界，即 `view-distance` 一行。单人世界则遵循渲染距离 |
+| `worldSimulationDistance` | 整数，-1 到 32 | `-1` | 专用服务器让每位玩家周围多少区块范围内的世界保持刻更新，即 `simulation-distance` 一行。单人世界则遵循其自身的设置 |
 
 ### 配方
 
@@ -6566,7 +6614,7 @@ xxoxoxx
 }
 ```
 
-`control.recipes` 决定本分组：合成配方和熔炉配方的屏蔽及其白名单。屏蔽熔炉配方时，高炉、烟熏炉和营火的配方也一并屏蔽，因为 1.12.2 把所有烹饪配方都放在同一个熔炉列表里。切石机配方和锻造台配方永远不会被屏蔽，因为 1.12.2 中没有这些配方。
+`control.recipes` 决定这一组。合成配方和熔炉配方的屏蔽及其白名单。屏蔽熔炉配方时，高炉、烟熏炉和营火的配方也一并屏蔽，因为 1.12.2 把所有烹饪配方都放在同一个熔炉列表里。切石机配方和锻造台配方永远不会被屏蔽，因为 1.12.2 中没有这些配方。
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
@@ -6580,19 +6628,19 @@ xxoxoxx
 | `logBlockedRecipes` | 布尔值 | `true` | 按模组记录被屏蔽数量的日志 |
 | `furnace` | 布尔值 | `true` | 应用 furnace/*.json 文件，用于添加和移除熔炉烧炼配方 **仅限配置。** |
 | `removals` | 布尔值 | `true` | 应用 recipe_removals/*.json 文件，按名称、命名空间或产出删除合成配方 **仅限配置。** |
-| `skipMissingItems` | 布尔值 | `true` | 跳过使用了未注册物品的配方，而不是让它们失败。数量只记录一次 **仅限配置。** |
+| `skipMissingItems` | 布尔值 | `true` | 跳过使用了未注册物品的配方，而不是让它们失败。数量只会在日志中记录一次 **仅限配置。** |
 
 ### 命令
 
 *各分组的作用*
 
-`control.commands` 决定本分组：谁可以运行本模组自己的命令，即 goto 的权限等级。
+`control.commands` 决定这一组。谁可以运行本模组自己的命令，即 goto 的权限等级。
 
 | 设置 | 类型 | 默认值 | 作用 |
 | --- | --- | --- | --- |
-| `gotoLevel` | 整数，0 至 4 | `3` | 运行 /rdplserver goto <name> 所需的权限等级，该命令会把发送者带到最近的一处。3 为管理员，命令其余各部分也处于这一级别。2 还允许命令方块运行它，因此资源包可以把这次跳转放在按钮或压力板上，而不必把命令的其余部分交给任何人。0 允许任何玩家输入。无论此项如何设置，/rdplserver 的其他部分都保持在 3 |
-| `gotoNextLevel` | 整数，0 至 4 | `3` | 运行 /rdplserver goto <name> next 的权限等级，该命令会跳过上一次带发送者去的那一处，另找一处。等级划分与 gotoLevel 相同 |
-| `gotoBackLevel` | 整数，0 至 4 | `3` | 运行 /rdplserver goto <name> back 的权限等级，该命令会把发送者送回上一处。等级划分与 gotoLevel 相同 |
+| `gotoLevel` | 整数，0 到 4 | `3` | 运行 /rdplserver goto <name> 所需的权限等级，该命令会把发送者带到最近的一处。3 为管理员，命令其余各部分也处于这一级别。2 还允许命令方块运行它，因此资源包可以把这次跳转放在按钮或压力板上，而不必把命令的其余部分交给任何人。0 允许任何玩家输入。无论此项如何设置，/rdplserver 的其他部分都保持在 3 |
+| `gotoNextLevel` | 整数，0 到 4 | `3` | 运行 /rdplserver goto <name> next 的权限等级，该命令会跳过上一次带发送者去的那一处，另找一处。等级划分与 gotoLevel 相同 |
+| `gotoBackLevel` | 整数，0 到 4 | `3` | 运行 /rdplserver goto <name> back 的权限等级，该命令会把发送者送回上一处。等级划分与 gotoLevel 相同 |
 | `gotoPlaceLevels` | 列表 | 空 | 针对单个地点的权限等级，写成 name=level 条目，每行一条，仅对该地点覆盖上面三项设置，且对其全部三种形式生效。name 就是你在 goto 之后输入的内容，即 Village 或 Mansion 这类原版名称，或资源包用 locateAs 为自己的结构注册的名称。等级划分相同：3 为管理员，2 还包括命令方块，0 为任何人。这样，资源包可以对自己的遗迹开放通路，而所有原版结构保持关闭，反之亦然。未注册任何内容的名称会被忽略，并在日志中留下一条说明 |
 
 ### 世界生成，仅限配置
@@ -6606,7 +6654,7 @@ xxoxoxx
 | `worldgenDebug` | 布尔值 | `false` | 把其他消息所指向的调试行写入 logs/rdpl.log，例如由哪个资源包提供了某个文件、每条命令做了什么。输出非常冗长 |
 | `worldTemplate` | 文本 | `auto` | 应用哪个世界模板的设置。资源包在 worldtemplates/*.json 中添加模板，你在此以 namespace:name 的形式指定。“auto”会从优先级最高的资源包中选取模板。留空则不使用 |
 | `tellWorldType` | 布尔值 | `true` | 玩家加入以生成的预设创建的世界时，在聊天中告知是哪个模板塑造了它。资源包无法设置此项 |
-| `worldBorderLimit` | 整数，1 至 60000000 | `60000000` | 资源包通过 worldBorder 可以请求的最宽边界。请求更大的资源包会被拒绝，边界保持游戏默认的位置。资源包无法设置此项 |
+| `worldBorderLimit` | 整数，1 到 60000000 | `60000000` | 资源包通过 worldBorder 可以请求的最宽边界。请求更大的资源包会被拒绝，边界保持游戏默认的位置。资源包无法设置此项 |
 | `retrogenKey` | 文本 | `0000` | 修改它可使每个区块重新符合回溯生成的条件，对所有世界生成条目生效。新矿脉会叠加在已有内容之上 |
 | `retrogenChunksPerTick` | 整数，1 或更大 | `2` | 每刻补做多少个已生成的区块。越高越快，但卡顿越明显 |
 
@@ -6622,7 +6670,7 @@ xxoxoxx
 | `overrideResourcePacks` | 布尔值 | `true` | 把资源包插入到玩家所选资源包和世界自带数据包之上。名为 RDPLO... 的资源包总是覆盖，RDPLN... 的则从不覆盖 |
 | `warnOnCaseMismatch` | 布尔值 | `true` | 当某个文件仅因文件系统不区分大小写才匹配成功时发出警告。这样的资源包在 Linux 上会失效 |
 | `logContents` | 布尔值 | `false` | 记录找到的每个资源包及其提供的文件数量 |
-| `traceUnresolvedVariables` | 布尔值 | `false` | 第一次请求文件名中带有“#”的文件时记录堆栈跟踪，指出是谁请求了它 |
+| `traceUnresolvedVariables` | 布尔值 | `false` | 第一次请求文件名中带有“#”的文件时在日志中记录堆栈跟踪，指出是谁请求了它 |
 
 ### `content` 类别
 
@@ -6648,8 +6696,8 @@ xxoxoxx
 | `shovelPathReverts` | 文本 | 空 | 持铲潜行时把土径变回什么。留空则使用泥土 |
 | `hoeTilling` | 布尔值 | `true` | 允许锄头耕地标记为 behavesAs till 的方块 |
 | `hoeTillsInto` | 文本 | 空 | 锄头把这些方块变成什么。留空则使用耕地 |
-| `caneMaxHeight` | 整数，1 至 255 | `3` | 原版甘蔗能长多高。原版为 3。资源包定义的甘蔗方块使用它们自己的生长部分，忽略此项 |
-| `cactusMaxHeight` | 整数，1 至 255 | `3` | 原版仙人掌的同样设置 |
+| `caneMaxHeight` | 整数，1 到 255 | `3` | 原版甘蔗能长多高。原版为 3。资源包定义的甘蔗方块使用它们自己的生长部分，忽略此项 |
+| `cactusMaxHeight` | 整数，1 到 255 | `3` | 原版仙人掌的同样设置 |
 
 ### `data` 类别
 
@@ -6678,7 +6726,7 @@ xxoxoxx
 | `lenientPaths` | 布尔值 | `true` | 可以在方块下方制作土径，并且在其上方放置方块时土径仍会保留 |
 | `unbreakableSpawners` | 布尔值 | `false` | 刷怪笼无法被挖掘或炸毁。创造模式仍可将其移除。需要重启 |
 | `experimentalWarning` | 布尔值 | `false` | 在创建或打开世界时显示游戏的实验性设置警告。关闭时会视作你已点击继续 |
-| `privacy` | 布尔值 | `true` | 关闭游戏的遥测和聊天举报：不发送也不记录任何遥测事件，客户端不为聊天消息签名，服务器不保留聊天会话也不要求会话，因此任何人发送的消息都无法被举报，客户端也不会显示服务器未强制安全聊天的警告提示。资源包可以在世界模板 `settings` 中以 `privacy` 设置它，归属于 [服务器](#服务器) 分组。在下一次加入世界或服务器时生效 |
+| `privacy` | 布尔值 | `true` | 关闭游戏的遥测和聊天举报：不发送任何遥测事件，也不将其写入日志，客户端不为聊天消息签名，服务器不保留聊天会话也不要求会话，因此任何人发送的消息都无法被举报，客户端也不会显示服务器未强制安全聊天的警告提示。资源包可以在世界模板 `settings` 中以 `privacy` 设置它，归属于 [服务器](#服务器) 分组。在下一次加入世界或服务器时生效 |
 | `darkSplash` | 布尔值 | `true` | 以深色绘制加载界面，并用资源包加载器的徽标取代游戏自己的徽标：徽标在界面创建时被替换，并且当游戏自带的“单色徽标”选项仍处于关闭时会将其开启，该选项在下次启动时生效。关闭则保持该选项原样 |
 
 ---
@@ -6740,24 +6788,24 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | 键 | 值 | 作用 |
 | --- | --- | --- |
 | `explosionMode` | `HEAL`、`EJECT_DROPS`、`VISUAL_TOSS` | 爆炸之后会发生什么 |
-| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true 或 false | 哪些爆炸会被处理 |
+| `healCreepers`、`healNonPlayerTNT`、`healWither`、`healAll` | true 或 false | 哪些爆炸会被处理 |
 | `processPlayerIgnitedTNT` | true 或 false | 玩家点燃的 TNT 是否与其他爆炸一同处理 |
 | `customEntitiesToHeal` | 实体名称列表 | 其他模组造成的爆炸，以 `modid:entity` 命名 |
 | `healFullTrees` | true 或 false | 被爆炸削去一角的树会被整棵取走或整棵恢复，而不是被拦腰截断 |
 | `maxTreeSize` | 数字 | 一棵树最多可以占用多少方块，超过则不予处理 |
-| `minimumTicksBeforeHeal`, `randomTickVar` | 数字 | 多久之后开始修复，以及修复节奏有多参差不齐 |
+| `minimumTicksBeforeHeal`、`randomTickVar` | 数字 | 多久之后开始修复，以及修复节奏有多参差不齐 |
 | `overrideBlocks` | true 或 false | 修复时是否覆盖此后在坑洞中建造的内容 |
 | `enableFakeTossedBlocks` | true 或 false | 从爆炸中飞出的碎片 |
 | `enableExplosionFlash` | true 或 false | 爆炸瞬间的明亮闪光 |
-| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | 数字 | 闪光持续多久、有多亮、喷出多少粒子，以及脉动多少次 |
+| `explosionFlashDuration`、`explosionFlashLightLevel`、`explosionFlashParticleCount`、`explosionFlashPulses` | 数字 | 闪光持续多久、有多亮、喷出多少粒子，以及脉动多少次 |
 | `enableExplosionSmoke` | true 或 false | 事后升起的烟柱 |
-| `explosionSmokeDuration`, `explosionSmokeParticleCount` | 数字 | 烟雾持续多久，以及有多浓 |
-| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true 或 false | 玩家自己的 TNT 会留下什么 |
-| `enableDropSuppression`, `dtSpecialDrops` | true 或 false | 爆炸范围内的掉落物，以及 Dynamic Trees 自己的掉落物 |
+| `explosionSmokeDuration`、`explosionSmokeParticleCount` | 数字 | 烟雾持续多久，以及有多浓 |
+| `playerTNTAlwaysDrops`、`playerTNTDropFullBlocks` | true 或 false | 玩家自己的 TNT 会留下什么 |
+| `enableDropSuppression`、`dtSpecialDrops` | true 或 false | 爆炸范围内的掉落物，以及 Dynamic Trees 自己的掉落物 |
 | `preventMobDrops` | true 或 false | 被爆炸杀死的生物是否仍会掉落物品 |
 | `blockConversions` | 规则列表 | 被炸的方块变成什么而不是原样恢复，使建筑每次爆炸磨损一级 |
 
-`blockConversions` 决定被炸的方块变成什么，而不是原样恢复。一条规则写作 `<source>=<result>[@chance]`：source 是方块 id，或以 `#` 开头的方块标签；result 是方块 id，或用 `nothing` 表示留空；chance 取值 0.0 至 1.0，默认为 1.0。第一条匹配的规则生效，所以具体的规则要放在宽泛的规则之上，并且已经是某条规则结果的方块不会再被转换，因此一堵墙每次爆炸只会退化一级，而不会被磨损殆尽。
+`blockConversions` 决定被炸的方块变成什么，而不是原样恢复。一条规则写作 `<source>=<result>[@chance]`：source 是方块 id，或以 `#` 开头的方块标签；result 是方块 id，或用 `nothing` 表示留空；chance 取值 0.0 到 1.0，默认为 1.0。第一条匹配的规则生效，所以具体的规则要放在宽泛的规则之上，并且已经是某条规则结果的方块不会再被转换，因此一堵墙每次爆炸只会退化一级，而不会被磨损殆尽。
 
 **完全原版的外观：** `EJECT_DROPS`，并将 `healFullTrees`、`enableFakeTossedBlocks`、`enableExplosionFlash`、`enableExplosionSmoke`、`preventMobDrops` 和 `playerTNTAlwaysDrops` 全部关闭。每个键都支持按维度设置。
 
@@ -6840,10 +6888,10 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdpl config unused` | 无 | `rdploader/config` 中已没有任何已安装资源包定义的选项文件 |
 | `/rdpl config prune` | 无 | 删除这些文件 |
 | `/rdpl pixelmap <namespace:path>` | 无 | [像素图](#以像素图编写的纹理) 的最终结果，逐字符显示 |
-| `/rdpl biome`, `biome list [all]` | 无 | 每个可以生成的生物群系及其 id；`all` 包括那些无法生成的 |
+| `/rdpl biome`、`biome list`、`biome list all` | 无 | 每个可以生成的生物群系及其 id；`all` 包括那些无法生成的 |
 | `/rdpl biome here` | 无 | 你所在的生物群系：其名称、id 和编号 |
 | `/rdpl biome find <name>` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
-| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
+| `/rdpl locate`、`goto`、`vein`、`gate`、`pregen`、`intro`、`team`、`round`、`dimensions`、`oregen`、`game` | 服务器的 | 已关联。原样传给 `/rdplserver`，由它来决定，参见下表 |
 
 **哪些服务器子命令已关联，其余为何没有。** `locate`、`goto`、`vein`、`gate`、`pregen`、`intro`、`team`、`round`、`dimensions`、`oregen` 和 `game` 只可能指服务器的，因为只有服务器了解世界、其中的玩家和回合，所以 `/rdpl` 把它们移交出去。在单人游戏中，这些命令之后的 Tab 补全提供的是 `/rdplserver` 会提供的内容；在服务器上，`goto` 提供原版结构名称。其余的 `reload`、`list`、`which`、`unused`、`config`、`pixelmap` 和 `biome` 保持各自的含义，即针对你的资源包和你的客户端。已关联的命令由服务器自己的权限检查来裁决，因此客户端既无法作弊，也不会被告知伪造的答案。
 
@@ -6880,19 +6928,19 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver biome list [all]` | 3 | 服务器上每个可以生成的生物群系，带其编号、id 和名称；`all` 包括那些无法生成的 |
 | `/rdplserver biome` | 3 | 你所在的生物群系以及资源包对它的处理：其 id、编号和名称，`blockBiomes` 是否开启、当前启用的是哪个世界模板，以及地面、其下的方块和 y 40 处的石头 |
 | `/rdplserver biome here [player]` | 3 | 你或所指定玩家所在的生物群系：其名称、id 和编号。控制台需要指明玩家 |
-| `/rdplserver biome find <name>` | 3 | 6400 格范围内最近的、生成与该 id 或显示名称相匹配的生物群系的地点：其坐标以及与运行命令处的距离。没有那么近的，或名称不匹配任何生物群系时会如实告知。`/rdpl biome find` 会转发给它 |
+| `/rdplserver biome find <name>` | 3 | 6400 格范围内最近的、与该 id 或显示名称相匹配的生物群系会生成的地点：其坐标以及与运行命令处的距离。没有那么近的，或名称不匹配任何生物群系时会如实告知。`/rdpl biome find` 会转发给它 |
 | `/rdplserver dimensions` | 3 | 每个维度，包括资源包添加的 |
-| `/rdplserver vein <entry> [radius]` | 3 | `vein` 形态的世界生成条目在运行命令处周围该区块数（默认 8）范围内播下矿脉的位置，由近及远，无论这些区块是否已经存在。`/rdpl vein` 会转发给它 |
+| `/rdplserver vein <entry> [radius]` | 3 | `vein` 形态的世界生成条目在运行命令处周围该区块数（1 到 64，默认 8）范围内播下矿脉的位置，由近及远，无论这些区块是否已经存在。`/rdpl vein` 会转发给它 |
 
-#### 传送门命令
+#### 闸门命令
 
 *服务器命令*
 
 | 命令 | 等级 | 作用 |
 | --- | --- | --- |
-| `/rdplserver gate`, `gate list` | 3 | 每个传送门、其维度、其范围，以及是否开启 |
-| `/rdplserver gate check <player>` | 3 | 玩家通过了哪些传送门 |
-| `/rdplserver gate grant <player> <gate>` | 3 | 为玩家开启一个传送门 |
+| `/rdplserver gate`、`gate list` | 3 | 每个闸门、其维度、其范围，以及是否开启 |
+| `/rdplserver gate check <player>` | 3 | 玩家通过了哪些闸门 |
+| `/rdplserver gate grant <player> <gate>` | 3 | 为玩家开启一个闸门 |
 | `/rdplserver gate revoke <player> <gate>` | 3 | 再把它关上 |
 
 #### 预生成命令
@@ -6912,10 +6960,10 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | 命令 | 等级 | 作用 |
 | --- | --- | --- |
 | `/rdplserver intro` | 0 | 让世界介绍在你下次加入时再次播放。任何玩家都可以运行，且只会清除自己的记录；没有资源包设置介绍时会被拒绝 |
-| `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | 资源包编排的阵营以及加入和离开它们的方式，仅在资源包编排阵营时提供，参见 [队伍](#队伍) |
-| `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no` | 0 | 开始资源包在大厅中等候的回合，重置正在进行的回合或发起投票，并在其中投票，具体按资源包的计分规则而定，且只有玩家才能开始回合；仅在资源包记分时才向玩家提供，参见 [计分](#计分) |
+| `/rdplserver team`、`team join [name]`、`team leave`、`team vote <player>`、`team claim` | 0 | 资源包编排的阵营以及加入和离开它们的方式，仅在资源包编排阵营时提供，参见 [队伍](#队伍) |
+| `/rdplserver round start`、`round reset`、`round vote yes`、`round vote no` | 0 | 开始资源包在大厅中等候的回合，重置正在进行的回合或发起投票，并在其中投票，具体按资源包的计分规则而定，且只有玩家才能开始回合；仅在资源包记分时才向玩家提供，参见 [计分](#计分) |
 | `/rdplserver card <rule> [players]` | 2 | 向指定的玩家或你自己显示一条 [卡片规则](#卡片)，通过其 id 或文件名指定。`when`、`repeat` 和 `cooldown` 会被跳过 |
-| `/rdplserver reset` | 3 | 像回合结束时那样把地图恢复原状：所有人被扣留，实体被清扫，分数被清除，运行 `resetRuns`，玩家被送到 `resetSendsTo` 后释放，并以起始人数开启一个回合，如 [预生成](#预生成) 下的重置设置所述。不会从 `/rdpl` 转发 |
+| `/rdplserver reset` | 3 | 像回合结束时那样把地图恢复原状：所有人被留在原地，实体被清扫，分数被清除，运行 `resetRuns`，玩家被送到 `resetSendsTo` 后释放，并以开局倒计时开启一个回合，如 [预生成](#预生成) 下的重置设置所述。不会从 `/rdpl` 转发 |
 
 #### 前往各处
 
@@ -6927,7 +6975,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver goto <structure>` | `gotoLevel`, `3` | 带你前往最近的一处尚无人去过的地方，沿途查找而不生成陆地。资源包用 `locateAs` 注册的地点则是放置的最近一处，无论是否有人去过。`temple` 指所有零散的特征结构：沙漠神殿、丛林神庙、女巫小屋和雪屋。在造陆期间会被拒绝 |
 | `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | 带你继续前往本次会话中尚未带你去过的最近一处，无论以前是否有人去过。离你八个区块以内的会被跳过；对于资源包的地点，则是 128 格以外最近的一处 |
 | `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | 带你前往上一处，沿着本次会话把你送去过的地点向后退 |
-| `/rdplserver goto <biome>` | `gotoLevel`, `3` | 带你前往该生物群系最近的地点，以 ID 指定，例如 `minecraft:river`，并落在其地表；`next` 与 `back` 的用法与结构相同。函数或命令方块以 2 级权限即可运行任何 `goto` |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | 带你前往该生物群系最近的地点，以 id 指定，例如 `minecraft:river`，并落在其地表；`next` 与 `back` 的用法与结构相同。函数或命令方块以 2 级权限即可运行任何 `goto` |
 
 #### 游戏
 
@@ -6956,10 +7004,12 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `/rdplserver game board draw <board>` | 0 | 提出和棋，或接受对方的提议 |
 | `/rdplserver game board takeback <board>` | 0 | 请求撤回上一步，或同意对方的请求 |
 | `/rdplserver game board ai <board> <side> <level>` | 2 | 让电脑以 1 到 4 级执掌一方，或用 0 交还 |
+| `/rdplserver game <roll> store <objective>` | 与该掷骰相同 | 把该次掷骰的数值写入发送者在该计分项上自己的分数 |
+| `/rdplserver game <roll> audience <who>` | 与该掷骰相同 | 为该次掷骰覆盖资源包的默认受众，说明见表格下方 |
 | `/rdplserver game last [count]` | 0 | 最近的掷骰，最新的在前：10 次，或给定的次数，最多 50 |
 | `/rdplserver game pass` | 0 | 当计分文件设置了轮流行动时，提前结束发送者所在阵营的行动。从命令方块或控制台执行时，结束当前正在行动的阵营 |
 
-任何掷骰都可以以 `store <objective>` 结尾，把结果数字写入发送者自己在该目标中的分数；也可以以 `audience <谁>` 结尾，取代资源包的默认值：`self`、`team`（发送者一方，没有队伍时只有发送者）、`all`、`radius <格数>`（同一世界中该距离内的玩家）或 `silent`，后者只写日志。`/rdpl game` 会转交给它。
+任何掷骰都可以以 `store <objective>` 结尾，把结果数字写入发送者自己在该目标中的分数；也可以以 `audience <who>` 结尾，取代资源包的默认值：`self`、`team`（发送者一方，没有队伍时只有发送者）、`all`、`radius <格数>`（同一世界中该距离内的玩家）或 `silent`，后者只写日志。`/rdpl game` 会转交给它。
 
 ### 谁可以使用 goto
 
@@ -6999,7 +7049,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 
 *命令*
 
-`game` 的每个部分都有自己的等级：每种掷骰为 0，`deck shuffle`、`tiebreak`、`board start`、`board end` 和 `board ai` 为 2。`gameLevels` 以 `部分=等级` 条目更改其中任意一个，部分即 `game` 之后的内容。
+`game` 的每个部分都有自己的等级：每种掷骰为 0，`deck shuffle`、`tiebreak`、`board start`、`board end` 和 `board ai` 为 2。`gameLevels` 以 `part=level` 条目更改其中任意一个，部分即 `game` 之后的内容。
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7011,7 +7061,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 }
 ```
 
-| 设置 | 管辖什么 |
+| 设置 | 它管辖什么 |
 | --- | --- |
 | `gameLevels` | `game` 的一个部分：`coin`、`die`、`dice`、`advantage`、`disadvantage`、`pick`、`deck draw`、`deck shuffle`、`deck left`、`teamroll`、`tiebreak`、`last`、`pass`，或 `board` 加其动作，例如 `board move` |
 
@@ -7037,7 +7087,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 
 **请先查看 `logs/rdpl.log`。** RDPL 所做的一切都记录在那里，而不是主日志。进度、战利品表、配方、函数、结构和每一项内容都会连同其来源资源包一并记录，任何格式错误的内容都会连同原因一起记录。
 
-**纹理和其他资源则不同。** 它们被请求得太频繁，无法逐个记录，因此改由 `/rdpl unused` 列出你的资源包中尚无任何东西请求过的文件。请在游戏加载完毕后运行它。路径正确的文件一定会被请求，所以列出的内容通常是拼写错误，但请记住有些文件只在需要时才加载，例如你所玩语言之外的其他语言。
+**纹理和其他资源则不同。** 它们被请求得太频繁，无法逐个写入日志，因此改由 `/rdpl unused` 列出你的资源包中尚无任何东西请求过的文件。请在游戏加载完毕后运行它。路径正确的文件一定会被请求，所以列出的内容通常是拼写错误，但请记住有些文件只在需要时才加载，例如你所玩语言之外的其他语言。
 
 **内部没有 `assets` 或 `data` 目录的 zip 会被跳过，** `rdploader` 中的任何文件夹也一样，日志会说明这一点。顶层是一个把它们包起来的文件夹的 zip，同样会被跳过。
 
@@ -7075,7 +7125,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 
 *额外功能：原版调整*
 
-`unbreakableSpawners` 让刷怪笼方块拥有基岩的数值：不可破坏的硬度和无物可存的爆炸抗性。无论镐子多好，玩家都无法挖掘它，苦力怕、TNT，以及会 `explodes` 的资源包实体也都无法将其摧毁。创造模式仍可将其移除，就像仍可移除基岩一样，因此资源包作者永远不会被锁在自己的建筑之外。它需要重启，因为方块的数值是在其注册时设定的。
+`unbreakableSpawners` 让刷怪笼方块拥有基岩的数值：不可破坏的硬度和没有任何东西能扛过的爆炸抗性。无论镐子多好，玩家都无法挖掘它，苦力怕、TNT，以及会 `explodes` 的资源包实体也都无法将其摧毁。创造模式仍可将其移除，就像仍可移除基岩一样，因此资源包作者永远不会被锁在自己的建筑之外。它需要重启，因为方块的数值是在其注册时设定的。
 
 **它针对的是方块，而不是刷怪笼。** 没有针对单个刷怪笼的开关。该选项更改的是 `minecraft:spawner` 本身，因此会一次性影响世界中的每一个刷怪笼：放置刷怪笼的原版结构、模组放置的任何一个，以及你自己的资源包放置的任何一个。你的某个 `.nbt` 模板中的刷怪笼，由 `imprint` 条目放置，就是一个自带方块实体的普通刷怪笼方块，因此该选项一开启它就受到保护。
 
@@ -7092,29 +7142,29 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `galacticraft` | 实体变种 | 本版本没有 Galacticraft，因此变种没有火箭等级、燃料箱、货物或有效载荷可供设置 |
 | `oreDictionary` | 设置 | 矿物词典已不复存在，因此没有可关闭的矿物词典文件。标签承担了它的工作，移植时会根据资源包的 `oreDict` 写出这些标签 |
 | `modelMeta` | 方块 | 模型按变种生成，因此没有可用于映射它们的元数据 |
-| `disableOverrides`, `tolerateMissingInAdvancements` | 设置 | 数据包通过在同一名称下提供一个配方或进度来替换原版的配方或进度 |
+| `disableOverrides`、`tolerateMissingInAdvancements` | 设置 | 数据包通过在同一名称下提供一个配方或进度来替换原版的配方或进度 |
 | `#CONSTANT` 物品名称 | 配方 | 配方常量存在于 1.12.2 模组的 `_constants.json` 中，没有资源包携带它，本版本也没有任何模组带有它。请写出该常量所代表的物品或标签 |
 | `harvestTool` 为 `pickaxe`、`axe`、`shovel`、`hoe` 和 `sword` 之外的值 | 属性覆盖 | 这里的工具通过方块标签挖掘，而只有这五种有标签。1.12.2 模组自创的工具类别没有标签可写，因此该方块的工具保持不变，并且日志会说明 |
 | `careers` | 村民 | 自 1.14 起就没有职业分支了，因此每个职业分支都变成一个独立的村民文件 |
 | `career` | 交易、实体 | 没有职业分支；请直接写出职业本身。指明了原版 1.12.2 职业及其职业分支的交易，会转到该职业分支所变成的职业 |
 | `gameLoopFunction` | 游戏规则 | 该游戏规则已不存在；`#minecraft:tick` 函数标签会每刻运行一个函数，移植时会写出一个 |
 | `id` | 生物群系、维度 | 生物群系和维度以其资源位置识别，绝不用数字 |
-| `suffix`, `keepLoaded` | 维度 | 存档文件夹跟随维度的名称。只有主世界有出生点区块，因此必须保持加载的维度要使用 `forceload` |
-| `baseHeight`, `heightVariation` | 生物群系 | 地形高度属于噪声设置，而不属于生物群系 |
+| `suffix`、`keepLoaded` | 维度 | 存档文件夹跟随维度的名称。只有主世界有出生点区块，因此必须保持加载的维度要使用 `forceload` |
+| `baseHeight`、`heightVariation` | 生物群系 | 地形高度属于噪声设置，而不属于生物群系 |
 | `placement.villageSpawn` | 生物群系 | 村民随村庄结构本身一同生成 |
-| `rubicWorld`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist`, `verticalCubeLoadDistance`, `cubeGCInterval`, `cubeGenMillisPerRound`, `cubesSentPerTick` | Rubic 世界 | Rubic 世界是 1.12.2 中突破 256 格世界的办法。在这里，维度的 `minHeight` 和 `maxHeight` 决定其大小，由区块系统对其进行流式加载 |
+| `rubicWorld`、`rubicWorldDimensions`、`rubicWorldDimensionsAreBlacklist`、`verticalCubeLoadDistance`、`cubeGCInterval`、`cubeGenMillisPerRound`、`cubesSentPerTick` | Rubic 世界 | Rubic 世界是 1.12.2 中突破 256 格世界的办法。在这里，维度的 `minHeight` 和 `maxHeight` 决定其大小，由区块系统对其进行流式加载 |
 | `rubicHeightLimit` | Rubic 世界 | Rubic 世界的高度上限随之而去；维度的 `minHeight` 和 `maxHeight` 改为决定其大小，没有单独的上限可供提高 |
 | `regionCacheLimit` | Rubic 世界 | 它对 Rubic 世界自身已打开的区域文件所做的缓存，随 Rubic 世界一同消失；这里的区块系统自行管理其文件 |
-| `skyStone`, `skyShape`, `skyIslands`, `skyThickness`, `skyHeights`, `skyAnimals` | 深层世界、生物群系、洞穴区域 | 空岛位于 Rubic 世界的地形窗口之上，而现在没有 Rubic 世界来容纳它 |
-| `deepRavines`, `oreVeins` | 深层世界 | 引擎自身的地形已经延伸到 y 0 以下，并带有自己的峡谷和大型矿脉 |
+| `skyStone`、`skyShape`、`skyIslands`、`skyThickness`、`skyHeights`、`skyAnimals` | 深层世界、生物群系、洞穴区域 | 空岛位于 Rubic 世界的地形窗口之上，而现在没有 Rubic 世界来容纳它 |
+| `deepRavines`、`oreVeins` | 深层世界 | 引擎自身的地形已经延伸到 y 0 以下，并带有自己的峡谷和大型矿脉 |
 | `terrainOffset` | 设置 | 没有固定的原版窗口可供平移；维度的 `minHeight` 和 `maxHeight` 设定其底部和顶部 |
-| `terrainWorldTypes`, `terrainWorldTypesAreBlacklist` | 设置 | 世界类型在这里就是世界预设，而世界模板会指定它自己的 |
-| `biomeSize`, `riverSize`, `dungeonChance`, `waterLakeChance`, `lavaLakeChance`、矿石大小、数量和高度键，以及自定义 `generatorOptions` 的噪声尺度键 | 设置、维度 | 生物群系大小和陆地形状属于噪声设置，特征或矿石的放置频率则属于其自身的放置特征，因此没有哪一个数字能影响它们。编号大于 39 的 `fixedBiome` 所指的生物群系，本版本无法映射 |
+| `terrainWorldTypes`、`terrainWorldTypesAreBlacklist` | 设置 | 世界类型在这里就是世界预设，而世界模板会指定它自己的 |
+| `biomeSize`、`riverSize`、`dungeonChance`、`waterLakeChance`、`lavaLakeChance`、矿石大小、数量和高度键，以及自定义 `generatorOptions` 的噪声尺度键 | 设置、维度 | 生物群系大小和陆地形状属于噪声设置，特征或矿石的放置频率则属于其自身的放置特征，因此没有哪一个数字能影响它们。编号大于 39 的 `fixedBiome` 所指的生物群系，本版本无法映射 |
 | `useWaterLakes`，以及超平坦文本中的 `lake` 和 `dungeon` | 设置、维度 | 自 1.18 起游戏就没有水湖了。平坦世界上的刷怪房随 `decoration` 而来，而不会单独出现 |
 | 作为 `flat` 或 `void` 维度 `biomes` 来源的 `inherit` | 维度 | 平坦生成器只容纳一个生物群系，因此这样的维度采用其超平坦文本所指明的那一个，或平原 |
 | `flatBedrockDimensions` 或 `voidWorldDimensions` 中另一个模组的维度 | 设置 | 基岩和虚空是写入生成的世界预设和资源包自己的维度文件的；其他模组创建的维度由它自己的文件构建 |
 | 作为 `worldType` 的模组世界类型，或 `debug_all_block_states` | 设置 | 世界类型现在是世界预设，而塑造出的世界建立在游戏自己的默认、大型生物群系、放大或平坦噪声之上。调试世界没有可供塑造的地形 |
-| `pregenKeepLoaded`, `pregenPauseAbove`, `pregenMillisPerRound`, `pregenRelightSays`, `hurryWritesAbove` | 预生成 | 它们用于调节 1.12.2 的区块写入器和重新照明流程。这里的区块系统在造陆的同时完成光照，并按自己的节奏写入 |
+| `pregenKeepLoaded`、`pregenPauseAbove`、`pregenMillisPerRound`、`pregenRelightSays`、`hurryWritesAbove` | 预生成 | 它们用于调节 1.12.2 的区块写入器和重新照明流程。这里的区块系统在造陆的同时完成光照，并按自己的节奏写入 |
 | `readCofhWorldFiles` | 设置 | CoFH World 及其自有的文件格式在此引擎上并不存在。像 1.12.2 已经推荐的那样，把这些文件转译成资源包，仍然是通行之道 |
 | `villagePathLamp*` 中的 `name:meta` | 村庄 | id 不带元数据，因此灯方块要用方括号写出其状态，花括号中的方块数据仍可读取 |
 | 指明 `shears` 或模组工具类别的 `harvestTool` | 方块 | 这里的工具读取的是方块标签而不是类别名称，因此没有任何东西响应类别名称。请在变种的 `tags` 下写出该模组工具自己的方块标签 |
@@ -7123,9 +7173,9 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `modernChestPlacement` | 原版调整 | 自 1.13 起游戏就是这样合并箱子的：仅当两个箱子朝向相同时，箱子才会与旁边的单个箱子相连，潜行则使其保持单个 |
 | `loadingScreenPercent` | 设置 | 游戏自己的世界加载界面已经显示出生点区域准备好了多少 |
 | `disableOptimizations` | 设置 | 它用于停用 1.12.2 的预生成和生成优化，这些优化是为那个引擎编写的，在这里没有对应之物 |
-| `fixTinkersModelErrors` | 设置 | 它用于压制 1.12.2 版本的 Tinkers' Construct 和 Construct's Armory 为每件工具、部件和盔甲所记录的模型错误。该修复深入到那些版本之中，因此在这里无可作用 |
+| `fixTinkersModelErrors` | 设置 | 它用于压制 1.12.2 版本的 Tinkers' Construct 和 Construct's Armory 为每件工具、部件和盔甲写入日志的模型错误。该修复深入到那些版本之中，因此在这里无可作用 |
 | `achievement.` 条件 | 计分、函数 | 成就变成了进度，而进度不保留可供计数的分数。`stat.` 条件会被读作它所变成的统计信息 |
-| `toggledownfall`, `stats` | 函数 | 这些命令已不存在。`weather` 指明要设置的天气，`execute store` 保存命令的结果 |
+| `toggledownfall`、`stats` | 函数 | 这些命令已不存在。`weather` 指明要设置的天气，`execute store` 保存命令的结果 |
 | `gamerule gameLoopFunction`，以及资源包自创的游戏规则 | 函数 | 存在哪些游戏规则由游戏决定。移植时会把游戏规则文件的 `gameLoopFunction` 转换为 `#minecraft:tick` 标签，但设置它的命令行会保留，留待你来移除 |
 | 数据值为 `-1` 或 `*`、现在变成了多个方块或物品的名称 | 函数：`clear`、`testforblock`、`execute ... detect`、`fill ... replace`、`clone ... filtered` | 现在一次检测只指向一个方块或物品。请写出所指的那一个，或使用 `#minecraft:wool` 之类的标签 |
 | 写成 `name=value` 对、但并非该方块完整 1.12.2 状态的方块状态，以及另一个模组的方块或物品上的数据值 | 函数 | 数据修复器只认识完整的 1.12.2 状态，而另一个模组的元数据没有可对应的扁平化名称 |
@@ -7133,7 +7183,7 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `debug_functions` | 噪声设置，*自 26.3 起* | 26.2 及更早版本没有调试密度函数，因此该列表会被丢弃 |
 | `aquifers` 中的 `exclusion` 和 `surface_level` | 噪声设置，*自 26.3 起* | 26.2 及更早版本把两者都内置了，因此资源包自己的会被丢弃 |
 | 指明了 `noise_router` 气候轴之外任何内容的 `spawn_target` 条目 | 噪声设置，*自 26.3 起* | 较早的出生目标只涵盖五个气候轴，因此该条目会被丢弃 |
-| 通过 `material_rule` 放置的矿脉 | 噪声设置，*自 26.3 起* | 26.2 无法通过材质规则放置矿脉，因此它们会被丢弃 |
+| 通过 `material_rule` 放置的矿脉 | 噪声设置，*自 26.3 起* | 26.2 无法通过材料规则放置矿脉，因此它们会被丢弃 |
 | 洞穴雕刻器自己的 `count`、`thickness`、`weird_thickness_bias` 或 `start_vertical_radius_multiplier` | 雕刻器，*自 26.3 起* | 26.2 无法设置它们，因此使用原版主世界或下界的洞穴形状 |
 | 作为修饰器的 `creature_world_gen_spawn_probability`，以及追加到其维度值上的属性 | 生物群系，*自 26.3 起* | 26.2 只接受普通数值：保留默认生成几率，并且生物群系自己的值会取代维度的值 |
 | 不相同的 x 和 z 偏移，以及设为 false 的 `normalize` | 放置特征、噪声，*自 26.3 起* | 26.2 以同一个量扩散两个轴，因此两者都使用 x 偏移，并且总是对噪声进行归一化 |
