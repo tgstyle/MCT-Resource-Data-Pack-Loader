@@ -31,6 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 public final class ContentParser {
@@ -107,7 +108,7 @@ public final class ContentParser {
                 sapling(json),
                 portal(json),
                 growth(json),
-                strings(json, "plantTypes"),
+                strings(json, "plantTypes").stream().map(Settings::lower).collect(Collectors.toList()),
                 behaviors(key, json),
                 JsonUtils.getString(json, "tint", ""),
                 JsonUtils.getString(json, "leafSapling", ""),
