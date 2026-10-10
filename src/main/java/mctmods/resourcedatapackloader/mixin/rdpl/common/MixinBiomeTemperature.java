@@ -26,14 +26,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
             int top = ContentControl.number(ContentControl.TERRAIN, "biomeTemperatureScaleMaxY", Integer.MIN_VALUE);
             float factor = ContentControl.decimal(ContentControl.TERRAIN, "biomeTemperatureHeightFactor", Float.NaN);
             if (center == Integer.MIN_VALUE && top == Integer.MIN_VALUE && Float.isNaN(factor)) { return null; }
-            return new float[] { center == Integer.MIN_VALUE ? 80.0F : center, top == Integer.MIN_VALUE ? Integer.MAX_VALUE : top, Float.isNaN(factor) ? -0.05F / 40.0F : factor };
+            return new float[] { center == Integer.MIN_VALUE ? Float.NaN : center, top == Integer.MIN_VALUE ? Integer.MAX_VALUE : top, Float.isNaN(factor) ? -0.05F / 40.0F : factor };
         });
         if (curve == null) { return; }
         float base = climateSettings.temperatureModifier().modifyTemperature(pos, getBaseTemperature());
-        if (pos.getY() <= curve[0]) {
+        float center = Float.isNaN(curve[0]) ? seaLevel + 17 : curve[0];
+        if (pos.getY() <= center) {
             cir.setReturnValue(base);
             return;
         }
-        cir.setReturnValue(base + (LineCompat.temperatureNoise(pos) + Math.min(pos.getY(), curve[1]) - curve[0]) * curve[2]);
+        cir.setReturnValue(base + (LineCompat.temperatureNoise(pos) + Math.min(pos.getY(), curve[1]) - center) * curve[2]);
     }
 }

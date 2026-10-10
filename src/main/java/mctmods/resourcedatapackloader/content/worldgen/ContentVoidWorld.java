@@ -74,7 +74,7 @@ public final class ContentVoidWorld {
 
     static BlockPos platformCenter(ServerLevel level) {
         int asked = ContentControl.number(ContentControl.VOID, "voidPlatformHeight", Config.worldgen.voidPlatformHeight());
-        return new BlockPos(0, Mth.clamp(asked, level.getMinY() + 1, level.getMaxY() - 1), 0);
+        return new BlockPos(0, Mth.clamp(asked, level.getMinY() + 1, level.getMaxY() - 5), 0);
     }
 
     static void platform(ServerLevel level, BlockPos center) {
