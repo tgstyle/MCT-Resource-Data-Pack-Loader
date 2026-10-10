@@ -5,10 +5,10 @@
 Trece ejemplos funcionales. Suelta cualquiera de ellos directamente en `rdploader` y fíjate en cómo está escrito cada archivo.
 
 - [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) usa casi todos los tipos de archivo que lee el loader: bloques, ítems, un fluido, una pestaña creativa, biomas, una plantilla de mundo, una dimensión tras un portal, worldgen, una poción y su elaboración, un aldeano y sus comercios, recetas, botín, sobrescrituras de elementos de vanilla, un sonido, un logro y una función. Su readme indica qué comprobar en el juego.
-- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) convierte el mundo principal en un vacío con worldgen suspendido en el aire, una forma por franja de altura, de modo que cada una se ve bien por separado.
-- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) coloca tres vetas de mineral en un mundo principal corriente, una por patrón de veta (simple, con bandas y en tubo), cada una con niveles rico, normal y pobre y unos bloques marcadores en la superficie encima para prospectar.
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) convierte el Overworld en un vacío con worldgen suspendido en el aire, una forma por franja de altura, de modo que cada una se ve bien por separado.
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) coloca tres vetas de mineral en un Overworld corriente, una por patrón de veta (simple, con bandas y en tubo), cada una con niveles rico, normal y pobre y unos bloques marcadores en la superficie encima para prospectar.
 - [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) suspende los mismos tres patrones de veta en un vacío, para que cada forma se vea entera.
-- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) baja el suelo del mundo principal a -320, de modo que quedan 256 bloques de mundo generado por debajo del de vanilla: la mezcla de piedra profunda, con andesita que surge poco a poco de la pizarra profunda, las propias cuevas de ruido del juego hasta el fondo y tres regiones de cuevas por las que descender, cada una con su propia decoración y ambientación.
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) baja el suelo del Overworld a -320, de modo que quedan 256 bloques de mundo generado por debajo del de vanilla: la mezcla de piedra profunda, con andesita que surge poco a poco de la pizarra profunda, las propias cuevas de ruido del juego hasta el fondo y tres regiones de cuevas por las que descender, cada una con su propia decoración y ambientación.
 - [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) añade bloques e ítems de mano que guardan un inventario, en todos los tamaños desde tres ranuras hasta el máximo permitido, con una tabla de botín, el modelo del cofre teñido a partir de la hoja de vanilla, todas las texturas dibujadas como mapas de píxeles y una bolsa y una mochila que se pueden llevar puestas en Curios.
 - [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) crea un mundo superplano cubierto de distritos urbanos de borde a borde, crecido hasta mil parcelas y fijado en el origen, con calles de hormigón, alcantarillas debajo, dos líneas de metro bajo ellas y un ferrocarril que cruza la ciudad, y edificios de estructura de hasta 123 bloques de altura.
 - [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) es esa misma ciudad con el mundo elevado a 512 y las nubes a 384, árboles en las calles y torres de estructura de hasta 251 bloques de altura en parcelas de 16, 32 y 64 de ancho. La ciudad no tiene fin: cada distrito del mundo es una ciudad por sí solo, y las calles siguen vayas adonde vayas.
@@ -71,7 +71,7 @@ Esta guía es para las versiones 1.20.1 y 1.21.1. Leen los mismos packs; los poc
 - [Reglas del juego](#reglas-del-juego)
 - [Biomas](#biomas)
 - [Dimensiones](#dimensiones)
-- [Portales y puertas dimensionales](#portales-y-puertas-dimensionales)
+- [Portales y puertas](#portales-y-puertas)
 - [El mundo profundo](#el-mundo-profundo)
 - [Regiones de cuevas](#regiones-de-cuevas)
 
@@ -122,7 +122,7 @@ Resource Data Pack Loader (RDPL) lee una única carpeta, `rdploader`, y hace tre
 
 - **Sobrescrituras.** Un archivo de la carpeta sustituye al que el juego o un mod habría cargado. Sin interruptores, sin configuración por mundo, sin nada que los jugadores deban activar.
 - **Contenido nuevo.** Las definiciones JSON registran bloques, ítems, fluidos, biomas, dimensiones, pociones y aldeanos. Sin Java, sin jar.
-- **Control.** Bloquea la generación de minerales, biomas, estructuras o recetas, aplana el lecho de roca, ajusta las tasas de aparición, vacía el overworld y establece los valores por defecto del mundo.
+- **Control.** Bloquea la generación de minerales, biomas, estructuras o recetas, aplana el lecho de roca, ajusta las tasas de aparición, vacía el Overworld y establece los valores por defecto del mundo.
 
 ## Dónde van los archivos
 
@@ -146,7 +146,7 @@ Bajo `data/`:
 | `<namespace>/dimensions/*.json` | Definiciones de dimensiones. [Dimensiones](#dimensiones) |
 | `<namespace>/worldtemplates/*.json` | Todos los ajustes de un mundo en un solo archivo. [Plantillas de mundo](#plantillas-de-mundo) |
 | `<namespace>/worldintro/*.json` | Páginas que se muestran cuando un jugador entra en el mundo. [Introducción al mundo](#introducción-al-mundo) |
-| `<namespace>/gates/*.json` | Condiciones de portales y dimensiones. [Portales y puertas dimensionales](#portales-y-puertas-dimensionales) |
+| `<namespace>/gates/*.json` | Condiciones de portales y dimensiones. [Portales y puertas](#portales-y-puertas) |
 | `<namespace>/gamerules/*.json` | Reglas del juego para mundos nuevos. [Reglas del juego](#reglas-del-juego) |
 | `<namespace>/teams/*.json` | Bandos del marcador de vanilla y qué los une. [Equipos](#equipos) |
 | `<namespace>/scoring/*.json` | Objetivos, puntos y cómo termina una partida. [Puntuación](#puntuación) |
@@ -180,7 +180,7 @@ Bajo `data/`:
 | `<namespace>/loot_tables/*.json` | Tablas de botín, sustituidas. [Qué puedes sobrescribir](#qué-puedes-sobrescribir) |
 | `<namespace>/loot_injections/*.json` | Una reserva añadida a una tabla que ya existe. [Qué puedes sobrescribir](#qué-puedes-sobrescribir) |
 | `<namespace>/block_drops/*.json` | Drops adicionales o sustitutivos para bloques que un pack no posee. [Drops de bloques](#drops-de-bloques) |
-| `<namespace>/player_loot/*.json` | Una tabla de botín que se tira cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores) |
+| `<namespace>/player_loot/*.json` | Una tabla de botín que se sortea cuando muere un jugador. [Botín de jugadores](#botín-de-jugadores) |
 | `<namespace>/advancements/*.json` | Logros. [Qué puedes sobrescribir](#qué-puedes-sobrescribir) |
 | `<namespace>/functions/*.mcfunction` | Archivos de función. [Qué puedes sobrescribir](#qué-puedes-sobrescribir) |
 | `<namespace>/tags/<kind>/*.json` | Etiquetas, en el formato propio del juego. [Materiales, pestañas, sonidos, etiquetas](#materiales-pestañas-sonidos-etiquetas) |
@@ -217,24 +217,24 @@ Todos los archivos son JSON estándar. Una entrada de worldgen representativa:
 }
 ```
 
-Las tablas de claves de este documento indican si una clave es obligatoria, qué contiene y cuál es el valor por defecto cuando se omite. Los valores no reconocidos se registran en el log y se sustituyen por el valor por defecto; no hacen que el juego se cierre. Tipos de valor usados en todo el documento:
+Las tablas de claves de este documento indican si una clave es obligatoria, qué contiene y cuál es el valor por defecto cuando se omite. Los valores no reconocidos se anotan en el registro y se sustituyen por el valor por defecto; no hacen que el juego se cierre. Tipos de valor usados en todo el documento:
 
 | Cuando una tabla dice | Escribes |
 | --- | --- |
-| int | `8` |
-| int, ticks | `100` (20 ticks = 1 segundo) |
-| int o rango | `8`, o `{ "min": 4, "max": 12 }` para elegir al azar entre ambos |
-| 0 a 15, 1 a 100 y similares | un int dentro de esos límites |
-| float | `0.5` |
-| boolean | `true` o `false` |
-| string | `"palabras entre comillas"` |
+| entero | `8` |
+| entero, ticks | `100` (20 ticks = 1 segundo) |
+| entero o rango | `8`, o `{ "min": 4, "max": 12 }` para elegir al azar entre ambos |
+| 0 a 15, 1 a 100 y similares | un entero dentro de esos límites |
+| decimal | `0.5` |
+| booleano | `true` o `false` |
+| cadena | `"palabras entre comillas"` |
 | nombre de bloque, nombre de ítem | `"minecraft:stone"`. Un estado de bloque es el nombre con `properties` al lado: `{ "block": "minecraft:oak_log", "properties": { "axis": "x" } }` |
 | `namespace:name` | `"mypack:ruby_ore"` |
 | nombre de bioma, nombre de sonido, nombre de pestaña | la misma forma `namespace:name` entre comillas |
 | id de dimensión | `"minecraft:overworld"`, `"minecraft:the_nether"`, `"minecraft:the_end"` o la propia `"mypack:verdant"` de un pack. Los números `0`, `-1` y `1` de 1.12.2 se siguen tomando como esas tres |
 | color hexadecimal | seis dígitos hexadecimales, `"A0C8FF"`, `#` opcional |
 | ruta de textura | `"mypack:block/ruby_ore"` |
-| lista de ints | `[4, 12]` |
+| lista de enteros | `[4, 12]` |
 | lista de nombres de bloque | `["minecraft:stone", "minecraft:andesite"]` |
 | lista de nombres de bioma | `["minecraft:windswept_hills", "mypack:ruby_hills"]` |
 | lista de tipos de bioma | `["mountain", "forest"]`, las palabras de tipo que figuran en [Listas de valores](#listas-de-valores), cada una equivalente a una etiqueta de bioma |
@@ -265,7 +265,7 @@ La ruta posterior a `assets` o `data` es siempre idéntica a la ruta dentro del 
 
 *primeros pasos*
 
-Los archivos sueltos funcionan bajo `rdploader/assets/<namespace>/` y `rdploader/data/<namespace>/`. Agruparlos también funciona, en un zip. Una carpeta dentro de `rdploader` nunca es un pack: se omite con una advertencia en el log, así que comprime un pack en zip antes de ponerlo ahí. Al comprimir, selecciona el contenido y comprime eso, no la carpeta que lo contiene: un zip cuyo nivel superior es una carpeta que envuelve `assets` o `data` se omite, y el log lo indica.
+Los archivos sueltos funcionan bajo `rdploader/assets/<namespace>/` y `rdploader/data/<namespace>/`. Agruparlos también funciona, en un zip. Una carpeta dentro de `rdploader` nunca es un pack: se omite con una advertencia en el registro, así que comprime un pack en zip antes de ponerlo ahí. Al comprimir, selecciona el contenido y comprime eso, no la carpeta que lo contiene: un zip cuyo nivel superior es una carpeta que envuelve `assets` o `data` se omite, y el registro lo indica.
 
 ```
 rdploader/assets/minecraft/textures/block/iron_ore.png
@@ -288,7 +288,7 @@ No distingue mayúsculas de minúsculas; un espacio, guion o guion bajo tras el 
 
 **Un zip para todas las versiones.** Un zip puede llevar una carpeta `versions/<version>/` por cada versión de Minecraft a la que sirve: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` y, en 26.x, la versión exacta que ejecuta: `versions/26.1.2/`, `versions/26.2/` o `versions/26.3/`. Cada una está organizada como la raíz de un pack para esa versión, `pack.mcmeta` incluido. Un archivo bajo la carpeta de la versión en ejecución se lee en lugar de la misma ruta en la raíz; la raíz es común a todas las versiones, y la carpeta de otra versión nunca se lee. Pon en la raíz lo que todas las versiones leen igual y en una carpeta de versión solo lo que difiere, y un solo zip se carga en las cuatro.
 
-**Los packs se convierten entre versiones.** Al cargar un pack escrito para otra línea, se convierte la primera vez, de la misma manera, escribiendo lo que cambió en su propia carpeta `versions/<version>/` como se ha descrito; esto ocurre automáticamente al cargar, incluida la carga que desencadena un `/rdpl reload` o `/rdplserver reload`, nunca mediante un comando propio. Cada pareja de versiones se convierte en ambos sentidos, de modo que un pack de 1.12.2, 1.20.1, 1.21.1 o 26.x se carga en cualquiera de las otras. Un pack de 26.3 se carga también en todas las líneas, leído con el formato de 26.2 en las más antiguas, y un pack más antiguo se carga en 26.3. Lo que un lado tiene y el otro no puede contener se descarta, y el log nombra cada descarte: al bajar desde 26.3, entre otras cosas, las funciones de densidad de depuración, la exclusión de acuíferos y el nivel de superficie propios de un pack, y los comandos que 26.2 no tiene; al subir a 26.3, la `depth` y el `offset` de un objetivo de aparición y las claves de vetas de mineral del enrutador de ruido. [Claves que no se mantuvieron](#claves-que-no-se-mantuvieron) las enumera todas.
+**Los packs se convierten entre versiones.** Al cargar un pack escrito para otra línea, se convierte la primera vez, de la misma manera, escribiendo lo que cambió en su propia carpeta `versions/<version>/` como se ha descrito; esto ocurre automáticamente al cargar, incluida la carga que desencadena un `/rdpl reload` o `/rdplserver reload`, nunca mediante un comando propio. Cada pareja de versiones se convierte en ambos sentidos, de modo que un pack de 1.12.2, 1.20.1, 1.21.1 o 26.x se carga en cualquiera de las otras. Un pack de 26.3 se carga también en todas las líneas, leído con el formato de 26.2 en las más antiguas, y un pack más antiguo se carga en 26.3. Lo que un lado tiene y el otro no puede contener se descarta, y el registro nombra cada descarte: al bajar desde 26.3, entre otras cosas, las funciones de densidad de depuración, la exclusión de acuíferos y el nivel de superficie propios de un pack, y los comandos que 26.2 no tiene; al subir a 26.3, la `depth` y el `offset` de un objetivo de aparición y las claves de vetas de mineral del enrutador de ruido. [Claves que no se mantuvieron](#claves-que-no-se-mantuvieron) las enumera todas.
 
 Un `pack.mcmeta` en la raíz del zip es bienvenido pero no necesario: el mod presenta cada pack al juego bajo una entrada propia, con el formato de pack que el juego espera, de modo que un pack nunca queda obsoleto por un número de formato. Pon un `pack.png` a su lado para dar un icono a la entrada de la carpeta. Sin él, la entrada muestra el icono de RDPL.
 
@@ -337,11 +337,11 @@ Así que elige un nombre al principio y no lo cambies nunca. Renombrar un espaci
 
 Esto funciona en ambos sentidos: `requires` acepta un espacio de nombres de pack igual que un id de mod instalado, de modo que un pack puede depender de otro y omitirse cuando este no está instalado.
 
-Un mod o un pack nombrado en `requires` que no esté instalado hace que se omita la definición: se escribe una línea en `logs/rdpl.log` con lo que faltaba y el juego sigue. Si un bloque que esperabas no está en la pestaña creativa, esa línea del log es el primer sitio donde mirar.
+Un mod o un pack nombrado en `requires` que no esté instalado hace que se omita la definición: se escribe una línea en `logs/rdpl.log` con lo que faltaba y el juego sigue. Si un bloque que esperabas no está en la pestaña creativa, esa línea del registro es el primer sitio donde mirar.
 
 `requires` solo admite ids simples. No hay sintaxis de rangos de versión, así que puede indicar que un mod debe estar presente pero no qué versión.
 
-El id propio del mod, `resourcedatapackloader`, está reservado. Definir contenido bajo él se ignora y se registra en el log, porque se atribuiría la propiedad de cosas que registra este mod. Sobrescribir los assets propios de este mod sigue permitido; solo registrar contenido ahí no lo está.
+El id propio del mod, `resourcedatapackloader`, está reservado. Definir contenido bajo él se ignora y se anota en el registro, porque se atribuiría la propiedad de cosas que registra este mod. Sobrescribir los assets propios de este mod sigue permitido; solo registrar contenido ahí no lo está.
 
 Cada tabla de abajo sigue las convenciones de [Cómo leer las tablas](#cómo-leer-las-tablas).
 
@@ -365,13 +365,13 @@ Todas las claves que acepta un archivo de opciones:
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| un nombre de opción | sí | boolean u objeto | | `true` o `false` es el valor por defecto de la opción. Un objeto lleva las tres claves siguientes |
-| `hide` en el nivel superior | no | boolean | `false` | Mantiene las opciones de este pack fuera de la pantalla de opciones y del archivo generado por completo, mientras siguen condicionando el contenido con sus valores por defecto |
-| `default` | sí | boolean | | El valor de la opción hasta que el usuario lo cambie. Un objeto sin un `default` booleano se ignora, con una advertencia |
-| `hide` dentro de una opción | no | boolean | `false` | Oculta solo esa opción, de modo que no se puede cambiar y se queda en su valor por defecto |
-| `description` | no | string | ninguna | Se muestra bajo el nombre de la opción en la pantalla de opciones |
+| un nombre de opción | sí | booleano u objeto | | `true` o `false` es el valor por defecto de la opción. Un objeto lleva las tres claves siguientes |
+| `hide` en el nivel superior | no | booleano | `false` | Mantiene las opciones de este pack fuera de la pantalla de opciones y del archivo generado por completo, mientras siguen condicionando el contenido con sus valores por defecto |
+| `default` | sí | booleano | | El valor de la opción hasta que el usuario lo cambie. Un objeto sin un `default` booleano se ignora, con una advertencia |
+| `hide` dentro de una opción | no | booleano | `false` | Oculta solo esa opción, de modo que no se puede cambiar y se queda en su valor por defecto |
+| `description` | no | cadena | ninguno | Se muestra bajo el nombre de la opción en la pantalla de opciones |
 
 Un pack puede llevar una carpeta `config` junto a sus `assets` y `data`, con archivos JSON de opciones verdadero/falso y sus valores por defecto:
 
@@ -392,7 +392,7 @@ Al iniciar, los archivos de opciones del pack se convierten en un archivo de con
 
 La lista `requires` de cualquier definición puede entonces nombrar una opción con una entrada `config:`: `"requires": ["config:enableTestingContent"]` registra ese contenido solo mientras la opción sea true, exactamente como lo omitiría un mod ausente. Un nombre simple comprueba el archivo de todos los packs y todos los packs que lo definen deben coincidir; `"config:PackA:enableTestingContent"` nombra un solo pack. Una opción que ningún pack define cuenta como false y se avisa de ello una vez.
 
-Una opción que condiciona algo con lo que se creó un mundo queda recordada por ese mundo, y se vuelve a registrar cada vez que el mundo se guarda. Si la cambias y abres el mundo de nuevo, y el cambio deja contenido que el mundo contiene sin registrar, primero se hace una copia de seguridad del mundo, en la carpeta `backups` propia del juego, exactamente como hace la pantalla Edit World; si esa copia falla, el mundo no se abre. Al primer jugador que entra en el overworld se le informa de qué opciones cambiaron y, cuando fue así, de que se hizo la copia.
+Una opción que condiciona algo con lo que se creó un mundo queda recordada por ese mundo, y se vuelve a registrar cada vez que el mundo se guarda. Si la cambias y abres el mundo de nuevo, y el cambio deja contenido que el mundo contiene sin registrar, primero se hace una copia de seguridad del mundo, en la carpeta `backups` propia del juego, exactamente como hace la pantalla Edit World; si esa copia falla, el mundo no se abre. Al primer jugador que entra en el Overworld se le informa de qué opciones cambiaron y, cuando fue así, de que se hizo la copia.
 
 Una entrada `file:` condiciona según la existencia de un archivo o carpeta bajo la carpeta del juego, para acoplar contenido a algo ajeno a los packs propios de RDPL, como el pack de recursos de otro mod: `"requires": ["file:config/StarMaker/resources/0_jackspace2_celestialpack.zip"]` registra el contenido solo mientras ese archivo exacto esté instalado. La ruta es relativa a la carpeta del juego, siempre con barras normales, y no puede contener `..`.
 
@@ -405,7 +405,7 @@ Una definición de bloque o de ítem puede partir de otra del mismo tipo con `"i
     { "inherits": "mypack:ruby_ore",
       "variants": { "sapphire_ore": { "hardness": 4.0 } } }
 
-El hijo copia todas las estadísticas del archivo del padre y de la variante nombrada, el orden de los archivos nunca importa, las cadenas se resuelven empezando por el padre, y un círculo o un padre ausente se registra en el log y deja al hijo tal como está escrito. Los campos que escribe el hijo sustituyen al valor heredado; las propiedades anidadas de las variantes se sobrescriben una a una, pero las listas como `requires` se sustituyen enteras, así que escribe la lista completa que quieras. Los bloques solo heredan de bloques y los ítems solo de ítems.
+El hijo copia todas las estadísticas del archivo del padre y de la variante nombrada, el orden de los archivos nunca importa, las cadenas se resuelven empezando por el padre, y un círculo o un padre ausente se anota en el registro y deja al hijo tal como está escrito. Los campos que escribe el hijo sustituyen al valor heredado; las propiedades anidadas de las variantes se sobrescriben una a una, pero las listas como `requires` se sustituyen enteras, así que escribe la lista completa que quieras. Los bloques solo heredan de bloques y los ítems solo de ítems.
 
 ### Plantillas de bloques e ítems
 
@@ -466,7 +466,7 @@ La plantilla nunca se registra, mientras que `jacks_ore` se registra con el mate
 - **Bloques e ítems desactivados**: retira del juego cualquier bloque o ítem, véase [Bloques e ítems desactivados](#bloques-e-ítems-desactivados)
 - **Inyecciones de botín**: añaden una reserva a una tabla de botín en lugar de sustituirla entera
 - **Drops de bloques**: añaden o sustituyen lo que suelta cualquier bloque al romperse, experiencia incluida
-- **Botín de jugadores**: tira una tabla de botín cuando muere un jugador, además de lo que llevaba encima o en su lugar
+- **Botín de jugadores**: sortea una tabla de botín cuando muere un jugador, además de lo que llevaba encima o en su lugar
 - **Propiedades de bloques, ítems y pociones existentes**: dureza, luz, tamaños de pila, comida en cualquier cosa, los efectos de una poción, véase [Sobrescritura de propiedades](#sobrescritura-de-propiedades)
 - **Recetas de horno, tiempos de combustión de combustibles, pestañas creativas y eventos de sonido**
 
@@ -492,9 +492,9 @@ La columna de la derecha es un límite estricto: los bloques, ítems, tipos de e
 
 Configuración:
 
-1. Activa `vanillaClients` en la configuración (categoría `content`, requiere reinicio). Hace cumplir la columna de la derecha: esas carpetas se omiten al cargar y cada archivo omitido se nombra en el log, de modo que un archivo de bloque que se haya colado se convierte en una línea de log en lugar de una conexión rechazada.
-2. Mantén igualmente las definiciones fuera de las carpetas de la derecha; los archivos omitidos son peso muerto. Cuando el pack haga referencia a ítems (el `hold` de un portal, `killedDrops`, resultados de recetas, comercios), nombra solo ítems que aporte vanilla o los otros mods de ambos lados del servidor. Un bioma que nombra los bloques de suelo propios del pack conserva el suelo del bioma base, y una dimensión que se abre con su propio portal necesita ese bloque de portal, así que envía a los jugadores allí por comando.
-3. Las variantes de entidades son tipos de entidad propios en esta versión, de modo que pertenecen a la columna de la derecha: con `vanillaClients` activado se omiten, y sus apariciones con ellas, y el log las nombra.
+1. Activa `vanillaClients` en la configuración (categoría `content`, requiere reinicio). Hace cumplir la columna de la derecha: esas carpetas se omiten al cargar y cada archivo omitido se nombra en el registro, de modo que un archivo de bloque que se haya colado se convierte en una línea de registro en lugar de una conexión rechazada.
+2. Mantén igualmente las definiciones fuera de las carpetas de la derecha; los archivos omitidos son peso muerto. Cuando el pack haga referencia a ítems (el `hold` de una puerta, `killedDrops`, resultados de recetas, comercios), nombra solo ítems que aporte vanilla o los otros mods de ambos lados del servidor. Un bioma que nombra los bloques de suelo propios del pack conserva el suelo del bioma base, y una dimensión que se abre con su propio portal necesita ese bloque de portal, así que envía a los jugadores allí por comando.
+3. Las variantes de entidades son tipos de entidad propios en esta versión, de modo que pertenecen a la columna de la derecha: con `vanillaClients` activado se omiten, y sus apariciones con ellas, y el registro las nombra.
 4. Instala en el servidor como de costumbre, con Blast Plaster, que el mod requiere y que tampoco registra nada. No va nada en las máquinas de los jugadores; `/rdpl` no existirá para ellos.
 5. Prueba con una única conexión limpia de un cliente de vanilla de la misma versión. Los fallos son ruidosos: la conexión se rechaza en la puerta, no se rompe en silencio más tarde.
 6. Dos carencias cosméticas aceptadas: las recetas añadidas por el servidor se fabrican pero no aparecen en el libro de recetas, y la retención mientras se crea el terreno es una retención de espectador simple con el progreso en la barra de acciones, sin la niebla ni el logo que dibuja el cliente del propio mod.
@@ -515,6 +515,11 @@ Cuando un mod renombra uno de sus bloques o ítems, los mundos guardados antes d
   "mapping": { "oldmod:old_name": "newmod:new_name" }
 }
 ```
+
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
+| --- | --- | --- | --- | --- |
+| `registry` | sí | nombre de registro | ninguno | El registro al que pertenecen los nombres. Los nombres de 1.12.2 `minecraft:blocks`, `minecraft:items`, `minecraft:biomes`, `minecraft:enchantments`, `minecraft:potions`, `minecraft:potiontypes`, `minecraft:soundevents`, `minecraft:entities` y `minecraft:villagerprofessions` se leen como sus registros modernos |
+| `mapping` | sí | objeto de nombre antiguo a nombre nuevo | ninguno | Cada nombre antiguo y el nombre que tiene ahora |
 
 El registro es aquel al que pertenece la entrada, nombrado como lo nombra el juego: `minecraft:item`, `minecraft:block`, `minecraft:entity_type` y así sucesivamente. Los renombrados se encadenan, de modo que asignar A a B y más tarde B a C lleva A directamente a C.
 
@@ -549,13 +554,13 @@ Cada mod que incluye una obtiene una entrada en `rdploader/config/mods.json` la 
 | `enabled` | `true` o `false` | `true` | Desactiva el contenido de ese mod, igual que `.disabled` desactiva un pack |
 | `priority` | `-1` o un número | `-1` | `-1` mantiene el mod por debajo de todos los packs; cualquier otro número lo coloca en el orden de [prioridad](#organizar-los-packs) ordinario junto a los packs numerados |
 
-El pack de un mod nunca entra en el nivel de sobrescritura de packs de recursos, diga lo que diga `overrideResourcePacks`, ya que solo un autor de packs puede pedirlo con la letra `O`. El log marca los packs de mods y enumera los packs de menor a mayor, de modo que nada se carga sin verse.
+El pack de un mod nunca entra en el nivel de sobrescritura de packs de recursos, diga lo que diga `overrideResourcePacks`, ya que solo un autor de packs puede pedirlo con la letra `O`. El registro marca los packs de mods y enumera los packs de menor a mayor, de modo que nada se carga sin verse.
 
 ## Packs escritos para 1.12.2
 
 *cómo funcionan los packs*
 
-Un pack hecho para la línea 1.12.2 se carga tal cual. El loader reconoce uno por el formato de su `pack.mcmeta`, por carpetas de definición bajo `assets/` sin `data/` al lado, o por un archivo `.lang`, y lo lleva hacia delante. Un zip se convierte una sola vez, dentro de sí mismo: cada archivo que esta versión lee de forma distinta se escribe en la carpeta `versions/1.20.1/` del zip (1.21.1: `versions/1.21.1/`) con todo lo que sigue ya hecho, y los archivos de 1.12.2 de la raíz se quedan como estaban, de modo que el mismo zip sigue cargándose en 1.12.2, como describe [un zip para todas las versiones](#organizar-los-packs). La conversión marca la carpeta que escribe con un archivo `port.stamp` que contiene la versión de RDPL. Un zip que ya tiene la carpeta de esta versión se lee a través de ella; cuando su `port.stamp` nombra otra versión de RDPL, la conversión vuelve a escribir la carpeta, sustituyendo todos sus archivos y nombrando cada uno en el log, y una carpeta sin `port.stamp`, como una que escribió el autor del pack, no se vuelve a convertir nunca. Los archivos de 1.12.2 de la raíz que la conversión sustituyó, como las definiciones bajo `assets/`, los archivos `.lang`, los blockstates y modelos de 1.12.2 y las texturas bajo `textures/blocks/` y `textures/items/`, no se leen en esta versión; solo se siguen leyendo los archivos de la raíz que la conversión deja pasar sin cambios, como los sonidos. El zip se escribe primero en un archivo temporal y sustituye al original solo cuando está completo. Los archivos sueltos bajo `rdploader/assets` no se reescriben; se leen a través de la misma conversión cada vez que se escanea la carpeta.
+Un pack hecho para la línea 1.12.2 se carga tal cual. El loader reconoce uno por el formato de su `pack.mcmeta`, por carpetas de definición bajo `assets/` sin `data/` al lado, o por un archivo `.lang`, y lo lleva hacia delante. Un zip se convierte una sola vez, dentro de sí mismo: cada archivo que esta versión lee de forma distinta se escribe en la carpeta `versions/1.20.1/` del zip (1.21.1: `versions/1.21.1/`) con todo lo que sigue ya hecho, y los archivos de 1.12.2 de la raíz se quedan como estaban, de modo que el mismo zip sigue cargándose en 1.12.2, como describe [un zip para todas las versiones](#organizar-los-packs). La conversión marca la carpeta que escribe con un archivo `port.stamp` que contiene la versión de RDPL. Un zip que ya tiene la carpeta de esta versión se lee a través de ella; cuando su `port.stamp` nombra otra versión de RDPL, la conversión vuelve a escribir la carpeta, sustituyendo todos sus archivos y nombrando cada uno en el registro, y una carpeta sin `port.stamp`, como una que escribió el autor del pack, no se vuelve a convertir nunca. Los archivos de 1.12.2 de la raíz que la conversión sustituyó, como las definiciones bajo `assets/`, los archivos `.lang`, los blockstates y modelos de 1.12.2 y las texturas bajo `textures/blocks/` y `textures/items/`, no se leen en esta versión; solo se siguen leyendo los archivos de la raíz que la conversión deja pasar sin cambios, como los sonidos. El zip se escribe primero en un archivo temporal y sustituye al original solo cuando está completo. Los archivos sueltos bajo `rdploader/assets` no se reescriben; se leen a través de la misma conversión cada vez que se escanea la carpeta.
 
 - Las carpetas de definición pasan de `assets/<namespace>/` a `data/<namespace>/`, y con ellas las carpetas de datos de vanilla: recetas, tablas de botín, inyecciones de botín, logros, funciones y estructuras, renombradas a los nombres en singular que lee 1.21.1 (`recipe`, `loot_table`, `advancement`, `function`, `structure`, `tags/item`).
 - `textures/blocks/` y `textures/items/` se sirven como `textures/block/` y `textures/item/`, en los modelos, en los mapas de píxeles y en los propios archivos. Un modelo de ítem en `models/item/<file>/<variant>.json` se sirve como `models/item/<variant>.json`.
@@ -564,15 +569,15 @@ Un pack hecho para la línea 1.12.2 se carga tal cual. El loader reconoce uno po
 - Un archivo `.lang` se sirve como el `.json` que lee el juego, con `tile.mypack:file.variant.name` como `block.mypack.variant`, `item.` de la misma manera, `itemGroup.x` como `itemGroup.mypack.x`, `fluid.x` como ambas claves de fluido, y todo lo demás tal como está escrito.
 - Un blockstate de 1.12.2 no se sirve en absoluto. En su lugar se leen sus texturas y se sirven con los nombres que busca el generador, `textures/block/<variant>.png` con `_top` y `_bottom` donde el blockstate tenía `end`, `top` o `bottom`, de modo que el blockstate y los modelos se generan para cada variante como se harían para un pack escrito aquí.
 - Las recetas pierden su `data` y ganan ids aplanados, `forge:ore_shaped` se convierte en `minecraft:crafting_shaped` con los ingredientes `ore` como `tag`, las tablas de botín pierden `set_data` del mismo modo, y el `item` con `data` de un logro se convierte en `items`. El `background` de un logro pasa de `textures/blocks/` a `textures/block/`, y su icono nombra el ítem como `id`.
-- También se traslada el vocabulario Forge de 1.12.2 de una receta: un tipo de ingrediente `forge:ore_dict` o `minecraft:item` se descarta, un ingrediente `minecraft:item_nbt` se convierte en `forge:nbt` (1.21.1: `neoforge:components`) con su nbt pasado por los data fixers, `minecraft:item_exists` se convierte en `forge:item_exists` (1.21.1: cada condición toma su nombre `neoforge`, bajo `neoforge:conditions`), un ítem sin espacio de nombres toma el de la receta, y `data` 32767 se convierte en una lista de todas las variantes. Una `#CONSTANT` del `_constants.json` de un mod no puede acompañar, y el log la nombra. Dondequiera que una lista nombre ítems, `name:*` se convierte en todas las variantes que tenía el ítem, y un valor único toma la primera; eso alcanza a los resultados de `recipe_removals` y a las eliminaciones de `furnace`, que también se trasladan como ítems. El `item` o `with` de un yunque escrito como `name:*` se convierte en una lista de todas las variantes, y responde cualquiera de ellas.
+- También se traslada el vocabulario Forge de 1.12.2 de una receta: un tipo de ingrediente `forge:ore_dict` o `minecraft:item` se descarta, un ingrediente `minecraft:item_nbt` se convierte en `forge:nbt` (1.21.1: `neoforge:components`) con su nbt pasado por los data fixers, `minecraft:item_exists` se convierte en `forge:item_exists` (1.21.1: cada condición toma su nombre `neoforge`, bajo `neoforge:conditions`), un ítem sin espacio de nombres toma el de la receta, y `data` 32767 se convierte en una lista de todas las variantes. Una `#CONSTANT` del `_constants.json` de un mod no puede acompañar, y el registro la nombra. Dondequiera que una lista nombre ítems, `name:*` se convierte en todas las variantes que tenía el ítem, y un valor único toma la primera; eso alcanza a los resultados de `recipe_removals` y a las eliminaciones de `furnace`, que también se trasladan como ítems. El `item` o `with` de un yunque escrito como `name:*` se convierte en una lista de todas las variantes, y responde cualquiera de ellas.
 - Las tablas de botín renombradas desde 1.12.2 se renombran dondequiera que un pack nombre una: el objetivo de un `loot_injections`, una tabla de `player_loot` y una entrada `loot_table` (1.21.1: su `value`), de modo que `minecraft:entities/zombie_pigman` se convierte en `minecraft:entities/zombified_piglin`. `killed_by_player` con `inverse` se convierte en una condición `inverted`, `entity_properties` con `on_fire` se convierte en un predicado `flags`, y los nombres de `set_attributes` como `generic.maxHealth` pasan a `generic.max_health` (1.21.1: la operación toma su nombre nuevo y el `name` del modificador pasa a ser su `id`).
 - Una sobrescritura de un bloque de 1.12.2 que la flattening dividió, como `overrides/minecraft/wool.json`, se lee como sobrescritura de todos los bloques en que se convirtió, las dieciséis lanas, ya que 1.12.2 cambiaba todas las variantes a la vez.
 - El `gameLoopFunction` de un archivo de reglas del juego se convierte en la etiqueta de función `#minecraft:tick`, escrita como `data/minecraft/tags/function/tick.json`, ya que la regla del juego ya no existe. Los números de dimensión propios del pack se leen a través de sus archivos `dimensions`, de modo que `"id": 7` en `dimensions/verdant.json` hace que 7 sea `mypack:verdant` dondequiera que el pack lo nombre. Ambos lados de un par de `villageBlocks` se corrigen, conservando la probabilidad, y un archivo `registry_remap` puede conservar los plurales `minecraft:blocks` y `minecraft:items` de 1.12.2.
-- Una plantilla de mundo que desactiva todas las estructuras que 1.12.2 tenía en una dimensión desactiva también allí las estructuras que solo tiene esta versión: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` y `trial_chambers` en el overworld y `nether_fossils` en el Nether. Si dejas activado uno de los nombres de 1.12.2, se dejan en paz. Las claves de control del generador, `blockWorldGenerators` y sus compañeras, se omiten de una plantilla convertida con una línea en el log, ya que nada aquí las lee. En las capas de `generatorOptions` de una plantilla plana, los nombres de bloque se corrigen igual, de modo que `minecraft:grass` se convierte en `minecraft:grass_block`.
-- Las funciones se reescriben línea a línea a la sintaxis de comandos de esta versión. Los ids con valores de datos pasan por los mismos data fixers, de modo que `give @p minecraft:wool 1 14` se convierte en `give @p minecraft:red_wool 1` y `give @p mypack:materials 1 5` da la variante cuyo `meta` era 5, y el nbt de ítems, entidades y bloques se corrige como se haría con el de un mundo (1.21.1: el nbt de un ítem se convierte en sus componentes). `testforblock`, `testfor` y `scoreboard players test` se convierten en `execute if`, `execute <entity> <x> <y> <z> [detect ...]` se convierte en `execute as ... at @s [positioned ...] [if block ...] run`, `effect` toma `give` y `clear`, `blockdata`, `entitydata` y `replaceitem` se convierten en `data merge` y `item replace`, y `scoreboard teams` y `scoreboard players tag` se convierten en `team` y `tag`. Los selectores cambian `score_X_min` y `score_X` por `scores`, `r` y `rm` por `distance`, `l` y `lm` por `level`, `m` por `gamemode`, `c` por `limit` y `sort`, y `rx` y `ry` por `x_rotation` y `y_rotation`. También se trasladan los números de encantamientos y efectos, los nombres de partículas y sonidos, los números de modo de juego y dificultad, la duración en segundos de un `weather` y un `tp` relativo a otra entidad. Una línea que la conversión no puede trasladar se convierte en un comentario (un `# ` delante de la línea) y el log nombra el archivo, la línea y el motivo; la función se sigue cargando, sin esa línea, hasta que se restaura a mano. `block_drops` se traslada tal cual, con su `meta` incorporado al nombre del bloque o a sus `properties`.
-- El suelo de un mundo plano de 1.12.2 estaba en y 0, y esta versión construye un mundo plano desde su fondo en y -64, así que la conversión baja las alturas en consecuencia. Cuando el `worldType` de una plantilla de mundo es `flat` o `superflat`, su `worldSpawn` y `resetSendsTo` bajan 64 (hasta su `worldMinHeight` cuando lo nombra), y también las alturas del `spawn` de un equipo, del `at` de `standIn` y de `spawnBox` y el `opens.lobby` de un archivo de puntuación cuando todas las plantillas de mundo que incluye el pack son planas. Una dimensión de pack con terreno `flat` baja su `groundLevel`, y cualquier posición que nombre esa dimensión, igual (según su `minHeight` cuando lo tiene). Las funciones no dicen dónde se ejecutan, así que cuando el overworld del pack es plano toda y absoluta de sus funciones baja 64, la `y` de un selector incluida, y el log lo indica una vez; las alturas con `~` y `^` se dejan en paz. Un mundo con terreno normal conserva todas las coordenadas, ya que su superficie sigue estando al nivel del mar.
+- Una plantilla de mundo que desactiva todas las estructuras que 1.12.2 tenía en una dimensión desactiva también allí las estructuras que solo tiene esta versión: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` y `trial_chambers` en el Overworld y `nether_fossils` en el Nether. Si dejas activado uno de los nombres de 1.12.2, se dejan en paz. Las claves de control del generador, `blockWorldGenerators` y sus compañeras, se omiten de una plantilla convertida con una línea en el registro, ya que nada aquí las lee. En las capas de `generatorOptions` de una plantilla plana, los nombres de bloque se corrigen igual, de modo que `minecraft:grass` se convierte en `minecraft:grass_block`.
+- Las funciones se reescriben línea a línea a la sintaxis de comandos de esta versión. Los ids con valores de datos pasan por los mismos data fixers, de modo que `give @p minecraft:wool 1 14` se convierte en `give @p minecraft:red_wool 1` y `give @p mypack:materials 1 5` da la variante cuyo `meta` era 5, y el nbt de ítems, entidades y bloques se corrige como se haría con el de un mundo (1.21.1: el nbt de un ítem se convierte en sus componentes). `testforblock`, `testfor` y `scoreboard players test` se convierten en `execute if`, `execute <entity> <x> <y> <z> [detect ...]` se convierte en `execute as ... at @s [positioned ...] [if block ...] run`, `effect` toma `give` y `clear`, `blockdata`, `entitydata` y `replaceitem` se convierten en `data merge` y `item replace`, y `scoreboard teams` y `scoreboard players tag` se convierten en `team` y `tag`. Los selectores cambian `score_X_min` y `score_X` por `scores`, `r` y `rm` por `distance`, `l` y `lm` por `level`, `m` por `gamemode`, `c` por `limit` y `sort`, y `rx` y `ry` por `x_rotation` y `y_rotation`. También se trasladan los números de encantamientos y efectos, los nombres de partículas y sonidos, los números de modo de juego y dificultad, la duración en segundos de un `weather` y un `tp` relativo a otra entidad. Una línea que la conversión no puede trasladar se convierte en un comentario (un `# ` delante de la línea) y el registro nombra el archivo, la línea y el motivo; la función se sigue cargando, sin esa línea, hasta que se restaura a mano. `block_drops` se traslada tal cual, con su `meta` incorporado al nombre del bloque o a sus `properties`.
+- El suelo de un mundo plano de 1.12.2 estaba en y 0, y esta versión construye un mundo plano desde su fondo en y -64, así que la conversión baja las alturas en consecuencia. Cuando el `worldType` de una plantilla de mundo es `flat` o `superflat`, su `worldSpawn` y `resetSendsTo` bajan 64 (hasta su `worldMinHeight` cuando lo nombra), y también las alturas del `spawn` de un equipo, del `at` de `standIn` y de `spawnBox` y el `opens.lobby` de un archivo de puntuación cuando todas las plantillas de mundo que incluye el pack son planas. Una dimensión de pack con terreno `flat` baja su `groundLevel`, y cualquier posición que nombre esa dimensión, igual (según su `minHeight` cuando lo tiene). Las funciones no dicen dónde se ejecutan, así que cuando el Overworld del pack es plano toda y absoluta de sus funciones baja 64, la `y` de un selector incluida, y el registro lo indica una vez; las alturas con `~` y `^` se dejan en paz. Un mundo con terreno normal conserva todas las coordenadas, ya que su superficie sigue estando al nivel del mar.
 
-El log lleva una línea de resumen por pack convertido y una línea por cada archivo que movió, omitió o no pudo trasladar, y cada clave que esta versión ya no lee la nombra igualmente el parser que la encuentra. La conversión es un mejor esfuerzo, no un pack terminado: lee esas líneas y termina a mano lo que nombran, empezando por cualquier línea de comando que convirtió en comentario y cualquier textura para la que no pudo encontrar nombre. Haz esas correcciones en la raíz del pack o en un zip aparte, nunca en la carpeta `versions/` que escribió la conversión: otra versión de RDPL escribe esa carpeta de nuevo.
+El registro lleva una línea de resumen por pack convertido y una línea por cada archivo que movió, omitió o no pudo trasladar, y cada clave que esta versión ya no lee la nombra igualmente el parser que la encuentra. La conversión es un mejor esfuerzo, no un pack terminado: lee esas líneas y termina a mano lo que nombran, empezando por cualquier línea de comando que convirtió en comentario y cualquier textura para la que no pudo encontrar nombre. Haz esas correcciones en la raíz del pack o en un zip aparte, nunca en la carpeta `versions/` que escribió la conversión: otra versión de RDPL escribe esa carpeta de nuevo.
 
 ---
 
@@ -660,9 +665,9 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `ore` | Suelta algo distinto de sí mismo, con fortuna y toque de seda |
 | `falling` | Cae como la arena o la grava |
 | `slab` | Inferior, superior y doble, y dos de ellos se fusionan en la mano |
-| `stairs` | Esquinas y pendientes resueltas por ti |
+| `stairs` | Esquinas y pendientes que el mod resuelve por ti |
 | `fence` | Se conecta con sus vecinos y con las vallas de otros mods |
-| `pane` | Se conecta como los paneles de cristal |
+| `pane` | Se conecta como los paneles de vidrio |
 | `wall` | Se conecta como los muros de adoquín, con la forma de poste |
 | `door` | Dos bloques de alto, se abre a mano y responde a la redstone |
 | `trapdoor` | Una trampilla con bisagra en la parte superior o inferior de un bloque, que se abre a mano o con redstone |
@@ -672,9 +677,9 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `torch` | Colocación en pared y en suelo, con una partícula. Emite la `light` de la variante tal como está escrita, así que una antorcha con `0` no da ninguna |
 | `bell` | Una campana como la que tienen las aldeas del juego: suena al usarla por un lado, con redstone o cuando un proyectil la golpea, se balancea en su marco y hace brillar a los saqueadores cercanos. Su blockstate lleva la orientación y cómo cuelga |
 | `log` | Gira hacia la cara contra la que la colocas y lleva la etiqueta `minecraft:logs`, de modo que la tala de árboles y Blast Plaster la traten como un tronco |
-| `leaves` | Se descompone, se cizalla, se tiñe y suelta un brote, y lleva la etiqueta `minecraft:leaves`. Si se dejan `opaque`, se dibujan sólidas, como las hojas rápidas; pon `"opaque": false` para ver a través de ellas |
+| `leaves` | Se descompone, se cizalla, se tiñe y suelta un brote, y lleva la etiqueta `minecraft:leaves`. Con `opaque` sin tocar, se dibujan sólidas, como las hojas rápidas; pon `"opaque": false` para ver a través de ellas |
 | `sapling` | Crece hasta convertirse en un árbol o en una de tus estructuras |
-| `crop` | Crece por etapas, suelta una semilla y un ítem de cosecha, semillas de trigo y trigo para el que el archivo deje sin indicar |
+| `crop` | Crece por etapas, suelta una semilla y un ítem de cosecha, semillas de trigo y trigo para lo que el archivo no indique |
 | `flower` | Una planta de un bloque que se sostiene sobre tierra |
 | `cane` | Crece hacia arriba en columna, como las cañas o el cactus |
 | `vine` | Trepa y cuelga de los lados de los bloques. Con `growth` crece hacia abajo hasta `maxHeight` y, con `spread`, llega hacia los lados a las paredes vecinas; sin ello, se queda como se colocó |
@@ -685,28 +690,28 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *bloques*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `variants` | sí | objeto de nombre de variante a variante | | Un bloque por entrada. La clave es su nombre de registro y nombra su blockstate, sus modelos, sus texturas y su clave de lang |
 | `type` | no | uno de los tipos de arriba | `basic` | Qué forma toma el bloque |
 | `material` | no | uno de los [materiales de bloque](#listas-de-valores) | `rock` | El bloque hace lo que hacía ese material en 1.12.2: si suelta algo al romperlo a mano, cómo lo tratan los pistones, si la lava lo incendia, si el líquido que fluye lo arrastra y si un bloque colocado lo sustituye. Un `log` es siempre `wood`, `leaves` siempre `leaves`, una `vine` `vine`, una `torch` o `ladder` `circuits`, un `crop` `plants`, y `stairs` y un `wall` se comportan como su `modelBlock` |
 | `soundType` | no | uno de los [tipos de sonido](#listas-de-valores) | `stone`; `wood` para un `log`, `plant` para `leaves` y un `crop`, el del `modelBlock` para `stairs` y un `wall` | Pasos, rotura y colocación |
 | `mapColor` | no | uno de los [colores de mapa](#listas-de-valores) | el del material | Cómo se ve en un mapa |
-| `harvestTool` | no | `pickaxe`, `axe`, `shovel`, `hoe`, `sword` | `pickaxe` | Qué herramienta lo recolecta, escrito por ti en las etiquetas `mineable` del juego; `sword` va a `resourcedatapackloader:mineable/sword`, que minan las herramientas `sword` propias de un pack. Para los drops solo importa en un material que necesita herramienta. Como en 1.12.2, un pico también mina `rock`, `iron` y `anvil` a máxima velocidad, y un hacha `wood`, `plants` y `vine`. Cualquier otro nombre, como `shears`, se registra en el log y se deja fuera |
-| `harvestToolLevel` | no | 0 a 4 | `0` | 0 madera, 1 piedra, 2 hierro, 3 diamante, 4 netherita, escrito por ti en las etiquetas `needs_*_tool`. Un bloque `basic`, `ore`, `container`, `portal`, `fence`, `pane`, `log`, `falling`, `slab` o `wall` lo ignora y toma el `harvestLevel` de la variante, como en 1.12.2 |
-| `silkHarvest` | no | boolean | `true` | Si el toque de seda devuelve el propio bloque |
+| `harvestTool` | no | `pickaxe`, `axe`, `shovel`, `hoe`, `sword` | `pickaxe` | Qué herramienta lo recolecta, que el mod escribe por ti en las etiquetas `mineable` del juego; `sword` va a `resourcedatapackloader:mineable/sword`, que minan las herramientas `sword` propias de un pack. Para los drops solo importa en un material que necesita herramienta. Como en 1.12.2, un pico también mina `rock`, `iron` y `anvil` a máxima velocidad, y un hacha `wood`, `plants` y `vine`. Cualquier otro nombre, como `shears`, se anota en el registro y se deja fuera |
+| `harvestToolLevel` | no | 0 a 4 | `0` | 0 madera, 1 piedra, 2 hierro, 3 diamante, 4 netherita, que el mod escribe por ti en las etiquetas `needs_*_tool`. Un bloque `basic`, `ore`, `container`, `portal`, `fence`, `pane`, `log`, `falling`, `slab` o `wall` lo ignora y toma el `harvestLevel` de la variante, como en 1.12.2 |
+| `silkHarvest` | no | booleano | `true` | Si el toque de seda devuelve el propio bloque |
 | `opensWith` | no | id de ítem | ninguno | Convierte el bloque en una caja con cerradura: al romperlo suelta el propio bloque, y al hacer clic derecho con el ítem nombrado se consume uno, suena el sonido de rotura del bloque, se entrega la lista `drops` de la variante y se elimina el bloque. Cualquier otro clic muestra en la barra de acciones la línea `block.<pack>.<block>.locked` de los archivos de idioma |
 | `openSound` | no | nombre de sonido | el sonido de rotura | Lo que reproduce una caja con cerradura al abrirse en lugar de su sonido de rotura. Un nombre de 1.12.2 sigue leyéndose, véanse los [nombres de sonido](#listas-de-valores) |
 | `expDrop` | no | objeto con `min` y `max` | ninguno | Experiencia que se suelta cuando un jugador rompe el bloque, o cuando un mob de un pack que recoge experiencia lo excava; los pistones, el agua y las explosiones no sueltan ninguna. El toque de seda la quita solo cuando `silkHarvest` está activado |
 | `creativeTab` | no | nombre de pestaña | ninguno | La pestaña en la que aparece, véase [Pestañas creativas](#pestañas-creativas) |
 | `renderLayer` | no | `solid`, `cutout`, `cutout_mipped`, `translucent` | según el tipo | Cómo se dibuja |
-| `opaque` | no | boolean | `true` | Si bloquea por completo la vista y la luz |
-| `fullCube` | no | boolean | igual que `opaque` | Si llena todo su espacio |
+| `opaque` | no | booleano | `true` | Si bloquea por completo la vista y la luz; en un contenedor con modelo de cofre es `false` por defecto |
+| `fullCube` | no | booleano | igual que `opaque` | Si llena todo su espacio |
 | `lightOpacity` | no | 0 a 255 | `255` cuando es opaco, si no `0` | Cuánta luz absorbe: 15 o más la detiene toda, y `0` deja pasar la luz del sol directamente. Un `slab` conserva el propio del juego, y un contenedor con modelo de cofre deja pasar la luz |
-| `slipperiness` | no | float | `0.6` | El hielo es `0.98` |
-| `flammability` | no | int | `0` | Con qué facilidad lo consume el fuego |
-| `fireSpread` | no | int | `0` | Con qué facilidad se propaga el fuego desde él |
-| `explosionResistanceDivisor` | no | float | `1.0` | Divide la `resistance` de cada variante frente a las explosiones |
+| `slipperiness` | no | decimal | `0.6` | El hielo es `0.98` |
+| `flammability` | no | entero | `0` | Con qué facilidad lo consume el fuego |
+| `fireSpread` | no | entero | `0` | Con qué facilidad se propaga el fuego desde él |
+| `explosionResistanceDivisor` | no | decimal | `1.0` | Divide la `resistance` de cada variante frente a las explosiones |
 | `modelBlock` | no | nombre de bloque | `minecraft:stone` | Bloque cuyo modelo se toma prestado cuando el tuyo no incluye textura ni modelo propio |
 | `itemModel` | no | `state`, `item` | `state` | `state` sigue el blockstate, `item` busca su propio archivo, `models/item/<name>.json` |
 | `tint` | no | `biome`, `none` o un color hexadecimal | ninguno | Necesita un `tintindex` en el modelo para verse |
@@ -716,15 +721,15 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `requires` | no | lista de ids de mod o espacios de nombres de pack | ninguno | El archivo se omite a menos que estén presentes todos |
 | `particle` | solo torch | `none`, `flame`, `colored` | `flame` | La partícula sobre una antorcha |
 | `particleColor` | solo torch | color hexadecimal | `FFFFFF` | Se usa cuando `particle` es `colored` |
-| `smoke` | solo torch | boolean | `true` | Si echa humo |
+| `smoke` | solo torch | booleano | `true` | Si echa humo |
 | `leafSapling` | solo leaves | nombre de bloque | ninguno | El brote que sueltan |
-| `leafSaplingChance` | solo leaves | int | `5` | Una de cada N hojas suelta uno |
+| `leafSaplingChance` | solo leaves | entero | `5` | Una de cada N hojas suelta uno |
 | `seed` | solo crop | nombre de ítem | `minecraft:wheat_seeds` | El ítem que lo planta y lo que suelta un cultivo sin madurar |
 | `produce` | solo crop | nombre de ítem | `minecraft:wheat` | Lo que da la cosecha |
-| `maxAge` | solo crop | int | `7` | Cuántas etapas de crecimiento |
+| `maxAge` | solo crop | entero | `7` | Cuántas etapas de crecimiento |
 | `growth` | solo plantas | objeto | ninguno | Véase [Crecimiento](#crecimiento) |
 | `sapling` | solo sapling | objeto | ninguno | Véase [Brotes](#brotes) |
-| `portal` | solo portal | objeto | ninguno | Véase [Portales y puertas dimensionales](#portales-y-puertas-dimensionales) |
+| `portal` | solo portal | objeto | ninguno | Véase [Portales y puertas](#portales-y-puertas) |
 | `container` | solo container | objeto | ninguno | Véase [Contenedores](#contenedores) |
 | `bell` | solo bell | objeto | ninguno | Véase [Campanas](#campanas) |
 
@@ -732,17 +737,17 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *bloques*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `hardness` | no | float | `1.0` | Cuánto se tarda en romperlo. La obsidiana es `50`, `-1` es irrompible |
-| `resistance` | no | float | `5.0` | Resistencia a las explosiones como la lee 1.12.2: el bloque conserva tres quintos de la cifra, así que `10` da el `6` de la piedra |
+| `hardness` | no | decimal | `1.0` | Cuánto se tarda en romperlo. La obsidiana es `50`, `-1` es irrompible |
+| `resistance` | no | decimal | `5.0` | Resistencia a las explosiones como la lee 1.12.2: el bloque conserva tres quintos de la cifra, así que `10` da el `6` de la piedra |
 | `light` | no | 0 a 15 | `0` | Luz emitida |
 | `harvestLevel` | no | 0 a 4 | `0` | El nivel de herramienta de un bloque `basic`, `ore`, `container`, `portal`, `fence`, `pane`, `log`, `falling`, `slab` o `wall`, en lugar del `harvestToolLevel` del archivo. Los demás tipos siguen el valor del archivo |
-| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Color del nombre en el tooltip |
+| `rarity` | no | `common`, `uncommon`, `rare`, `epic` | `common` | Color del nombre en la descripción emergente |
 | `maxSize` | no | 1 a 64 | `64` | Tamaño de pila |
 | `tags` | no | lista de ids de etiqueta | ninguno | Etiquetas de bloque e ítem en las que se escribe esta variante, como `forge:ores/ruby` en 1.20.1 o `c:ores/ruby` en 1.21.1. Los archivos de etiquetas se generan por ti |
 | `drops` | no | lista de drops | se suelta a sí mismo | Lo que da al romperlo |
-| `portal` | solo portal | objeto | el del archivo | El portal propio de esta variante en lugar del del archivo, escrito como en [Portales y puertas dimensionales](#portales-y-puertas-dimensionales). El archivo sigue necesitando uno propio |
+| `portal` | solo portal | objeto | el del archivo | El portal propio de esta variante en lugar del del archivo, escrito como en [Portales y puertas](#portales-y-puertas). El archivo sigue necesitando uno propio |
 
 **Los nombres son permanentes.** La clave de una variante se escribe en cada mundo guardado que la contenga. Renombrarla más tarde convierte los bloques colocados en aire, a menos que un [renombrado de registro](#renombrados-de-registro) asigne el nombre antiguo al nuevo. Un archivo puede contener tantas variantes como quiera; cada una es un bloque propio, y una clave `meta` de un pack de 1.12.2 se ignora con una nota en el log.
 
@@ -762,17 +767,17 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `block` | una de las dos | nombre de bloque o ítem | | Lo que se suelta |
 | `entity` | una de las dos | nombre de entidad | | Una entidad liberada cuando el bloque se rompe, en lugar de un ítem |
-| `amount` | no | int o rango | `1` | Cuántos |
+| `amount` | no | entero o rango | `1` | Cuántos |
 | `chance` | no | 0 a 100 | `100`, o `0` cuando `guaranteed` está desactivado | Con qué frecuencia ocurre el drop |
-| `weight` | no | int | `0` | Por encima de cero, la entrada se une a una reserva que da exactamente un drop. Véase más abajo |
-| `bonusChance` | no | lista de ints | ninguno | Drops extra por nivel de fortuna, una entrada por nivel |
-| `guaranteed` | no | boolean | `true` | Abreviatura heredada de `chance`. Activado es `100`, desactivado es `0` |
+| `weight` | no | entero | `0` | Por encima de cero, la entrada se une a una reserva que da exactamente un drop. Véase más abajo |
+| `bonusChance` | no | lista de enteros | ninguno | Drops extra por nivel de fortuna, una entrada por nivel |
+| `guaranteed` | no | booleano | `true` | Abreviatura heredada de `chance`. Activado es `100`, desactivado es `0` |
 
-Cada entrada sin `weight` se decide por separado, así que un bloque con tres de ellas puede soltar las tres, o ninguna. Dale un `weight` a las entradas y dejan de ser independientes: forman una reserva, de la que se elige exactamente una cada vez que se rompe el bloque, con probabilidades proporcionales a los pesos. Arriba, el diamante y la esmeralda comparten una reserva en proporción de uno a cuatro, así que siempre sale uno de los dos y es la esmeralda cuatro veces de cada cinco, mientras que el rubí y el carbón se deciden por separado y el lepisma es otra cosa distinta. Los ítems y las entidades se agrupan por separado, de modo que un ítem con peso y una entidad con peso no compiten.
+Cada entrada sin `weight` se decide por separado, así que un bloque con tres de ellas puede soltar las tres, o ninguna. Dale un `weight` a las entradas y dejan de ser independientes: forman una reserva, de la que se elige exactamente una cada vez que se rompe el bloque, con probabilidades proporcionales a los pesos. Arriba, el diamante y la esmeralda comparten una reserva en proporción de uno a cuatro, así que siempre sale uno de los dos y es la esmeralda cuatro veces de cada cinco, mientras que el rubí y el carbón se deciden por separado y el pez de plata es otra cosa distinta. Los ítems y las entidades se agrupan por separado, de modo que un ítem con peso y una entidad con peso no compiten.
 
 Una entrada que nombra una `entity` libera una donde estaba el bloque, mirando en una dirección aleatoria, y a un mob se le da su tratamiento de aparición habitual según la dificultad local, de modo que llega con el equipo y los efectos que habría tenido. `amount` decide cuántas, `chance` con qué frecuencia, y `weight` la mete en la reserva de entidades. Ocurre al romperse el bloque, sea como sea que se rompa, así que una explosión o un pistón las suelta igual que lo hace un pico. `bonusChance` y la fortuna no significan nada para una entidad y se ignoran.
 
@@ -790,7 +795,6 @@ Para `crop`, `flower`, `cane` y `vine`.
 {
   "growth": {
     "stages": 8,
-    "growth": 10,
     "spread": 1,
     "maxHeight": 3,
     "soil": ["minecraft:sand", "minecraft:red_sand"],
@@ -806,21 +810,20 @@ Para `crop`, `flower`, `cane` y `vine`.
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `stages`          | no       | int                 | `16`             | Etapas de crecimiento hasta completarse. Una enredadera intenta crecer en uno de cada tantos random ticks |
-| `growth`          | no       | int                 |                  | Probabilidad de 1 entre N por random tick de avanzar |
-| `spread`          | no       | int                 | `0`              | Hasta dónde se extiende a los bloques vecinos. Una enredadera deja de extenderse hacia los lados cuando hay tantas enredaderas como este valor a dos bloques o menos de ella |
-| `maxHeight`       | no       | int                 | `3`              | Caña y enredadera. Hasta qué altura crece la columna, o cuánto cuelga una enredadera; una enredadera con `1` ni crece ni se extiende |
+| `stages`          | no       | entero              | `16`             | Etapas de crecimiento hasta completarse. Una enredadera intenta crecer en uno de cada tantos random ticks |
+| `spread`          | no       | entero              | `0`              | Hasta dónde se extiende a los bloques vecinos. Una enredadera deja de extenderse hacia los lados cuando hay tantas enredaderas como este valor a dos bloques o menos de ella |
+| `maxHeight`       | no       | entero              | `3`              | Caña y enredadera. Hasta qué altura crece la columna, o cuánto cuelga una enredadera; una enredadera con `1` ni crece ni se extiende |
 | `soil`            | no       | lista de nombres de bloque | el habitual del tipo | Sobre qué se asienta |
 | `drop`            | no       | nombre de ítem      | ninguno          | Caña y enredadera. Qué suelta al romperse; una flor se suelta a sí misma |
-| `dropCount`       | no       | int                 | `1`              | Caña y enredadera. Cuántos |
-| `needsSky`        | no       | boolean             | `false`          | Solo crece donde se ve el cielo |
-| `needsWater`      | no       | boolean             | `false`          | Solo crece cerca del agua |
-| `waterRange`      | no       | int                 | `1`              | A qué distancia puede estar esa agua |
-| `damage`          | no       | boolean             | `false`          | Hace daño a lo que lo toca |
-| `damageAmount`    | no       | float, medios corazones | `1.0`        | Cuánto daño hace |
-| `breaksNeighbors` | no       | boolean             | `false`          | Rompe los bloques colocados a su lado, como el cactus |
+| `dropCount`       | no       | entero              | `1`              | Caña y enredadera. Cuántos |
+| `needsSky`        | no       | booleano            | `false`          | Solo crece donde se ve el cielo |
+| `needsWater`      | no       | booleano            | `false`          | Solo crece cerca del agua |
+| `waterRange`      | no       | entero              | `1`              | A qué distancia puede estar esa agua |
+| `damage`          | no       | booleano            | `false`          | Hace daño a lo que lo toca |
+| `damageAmount`    | no       | decimal, medios corazones | `1.0`        | Cuánto daño hace |
+| `breaksNeighbors` | no       | booleano            | `false`          | Rompe los bloques colocados a su lado, como el cactus |
 
 ### Brotes
 
@@ -848,20 +851,25 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 
 ```json
 {
-  "sapling": { "structure": "mypack:ruby_tree" }
+  "sapling": {
+    "structures": [
+      { "structure": "mypack:ruby_tree", "weight": 3 },
+      { "structure": "mypack:ruby_tree_tall", "weight": 1 }
+    ]
+  }
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `soil`       | no       | lista de nombres de bloque | ninguno           | Sobre qué crecerá |
-| `stages`     | no       | int                 | `2`                    | Etapas de crecimiento hasta convertirse en árbol |
-| `chance`     | no       | int                 | `7`                    | Una entre N por random tick |
+| `stages`     | no       | entero              | `2`                    | Etapas de crecimiento hasta convertirse en árbol |
+| `chance`     | no       | entero              | `7`                    | Una entre N por random tick |
 | `light`      | no       | 0 a 15              | `9`                    | Nivel de luz necesario |
 | `log`        | no       | nombre de bloque    | `minecraft:oak_log`    | Bloque del tronco |
 | `leaves`     | no       | nombre de bloque    | `minecraft:oak_leaves` | Bloque de las hojas |
-| `height`     | no       | int                 | `4`                    | Altura del tronco |
-| `vines`      | no       | boolean             | `false`                | Cuelga enredaderas de las hojas |
+| `height`     | no       | entero              | `4`                    | Altura del tronco |
+| `vines`      | no       | booleano            | `false`                | Cuelga enredaderas de las hojas |
 | `structure`  | no       | `namespace:name`    | ninguno                | Crece como esta plantilla en lugar de como un árbol generado |
 | `structures` | no       | lista               | ninguno                | Varias plantillas en las que crecer, una elegida cada vez que crece. Cada entrada es `{ "structure": "namespace:name", "weight": 3 }`, o un nombre suelto para probabilidades iguales. Sustituye a `structure` |
 
@@ -888,13 +896,13 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 
 | Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `rows`       | int             | `3`     | Cuántas filas de ranuras, de 1 a 9 |
-| `columns`    | int             | `9`     | Cuántas ranuras por fila, de 1 a 12 |
-| `lootTable`  | texto           | vacío   | Una loot table que se sortea dentro del bloque la primera vez que algo accede a su contenido, ya sea un jugador al abrirlo, una tolva, un comparador o al romperlo, exactamente como se llena un cofre de mazmorra. Un contenedor que coloca un jugador nunca la sortea. Vacío lo deja empezando vacío |
-| `chestModel` | boolean o texto | `false` | Se dibuja como un cofre con una tapa que se abre, en lugar de como un bloque normal con tu propia textura. `true` usa el aspecto del cofre de vanilla; un nombre de textura como `mypack:entity/chest/strongbox` usa en su lugar tu propia hoja de cofre, tanto para el bloque colocado como para el ítem. Un bloque con modelo de cofre también pone `opaque` a `false` por defecto, como un cofre de vanilla, de modo que la luz no se corta en el bloque y el cofre no se dibuja oscuro |
+| `rows`       | entero          | `3`     | Cuántas filas de ranuras, de 1 a 9 |
+| `columns`    | entero          | `9`     | Cuántas ranuras por fila, de 1 a 12 |
+| `lootTable`  | texto           | vacío   | Una tabla de botín que se sortea dentro del bloque la primera vez que algo accede a su contenido, ya sea un jugador al abrirlo, una tolva, un comparador o al romperlo, exactamente como se llena un cofre de mazmorra. Un contenedor que coloca un jugador nunca la sortea. Vacío lo deja empezando vacío |
+| `chestModel` | booleano o texto | `false` | Se dibuja como un cofre con una tapa que se abre, en lugar de como un bloque normal con tu propia textura. `true` usa el aspecto del cofre de vanilla; un nombre de textura como `mypack:entity/chest/strongbox` usa en su lugar tu propia hoja de cofre, tanto para el bloque colocado como para el ítem. Un bloque con modelo de cofre también pone `opaque` a `false` por defecto, como un cofre de vanilla, de modo que la luz no se corta en el bloque y el cofre no se dibuja oscuro |
 | `guiTexture` | texto           | vacío   | Tu propia imagen de fondo para la pantalla. Vacío dibuja una a partir de la pantalla del cofre de vanilla, con el tamaño que necesiten las filas y columnas |
-| `guiWidth`   | int             | ninguno | Cuánto mide de ancho la pantalla, dibujada desde la esquina superior izquierda de esa imagen leída como una hoja de 256 por 256, obligatoria con `guiTexture` |
-| `guiHeight`  | int             | ninguno | Cuánto mide de alto la pantalla, obligatoria con `guiTexture` |
+| `guiWidth`   | entero          | ninguno | Cuánto mide de ancho la pantalla, dibujada desde la esquina superior izquierda de esa imagen leída como una hoja de 256 por 256, obligatoria con `guiTexture` |
+| `guiHeight`  | entero          | ninguno | Cuánto mide de alto la pantalla, obligatoria con `guiTexture` |
 | `curioSlot`  | texto           | vacío   | Solo para ítems: la ranura de Curios en la que se puede llevar puesto, `back`, `belt`, `body`, `charm`, `head`, `necklace`, `ring` o cualquier ranura que añada otro mod. Una mochila suele usar `back`. Se ignora, sin que el resto del ítem deje de funcionar, cuando Curios no está instalado. La clave de 1.12.2 `bauble` se lee como esta y acepta los nombres de Baubles: `amulet` pasa a ser `necklace`, `ring` da dos ranuras de anillo, `belt`, `head`, `body` y `charm` conservan su nombre, y `trinket` encaja en todas esas ranuras. Cualquier otro nombre deja el ítem sin poder llevarse, con una línea de error |
 
 **Nueve filas por doce es el límite**, lo máximo que cabe en una pantalla. Un pack que pida más se recorta a ese límite con una línea de error que lo indica. Una advertencia sobre la más alta: una pantalla de nueve filas mide 276 píxeles, y una pantalla de 1080 con la escala de GUI en `auto` ofrece 270, de modo que la parte superior e inferior se recortan tres píxeles cada una; con escala 3 se ve entera.
@@ -903,7 +911,7 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 
 **Qué hace el bloque.** Conserva su contenido al guardar y recargar, lo suelta al romperse, responde a un comparador según lo lleno que esté y conserva las filas y columnas con las que se creó, de modo que cambiarlas después en el pack deja los contenedores que ya hay en un mundo como estaban. Un ítem contenedor o un bloque contenedor no se puede meter dentro de un contenedor. `chestModel` también le da el sonido de apertura del cofre y la animación de la tapa; si se deja desactivado, el bloque se dibuja con su propia textura como cualquier otro bloque, así que sirven igual una caja, un barril o un armario.
 
-**Colorear un cofre.** La hoja del cofre es una textura normal, de modo que un mapa de píxeles puede recolorear la de vanilla sin dibujar un solo píxel: haz que la `extends` y dale un `tint`, y luego nombra ese mapa en `chestModel`.
+**Colorear un cofre.** La hoja del cofre es una textura normal, de modo que un mapa de píxeles puede recolorear la de vanilla sin dibujar un solo píxel: extiéndela con `extends`, dale un `tint`, y luego nombra ese mapa en `chestModel`.
 
 ```json
 {
@@ -915,9 +923,9 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 }
 ```
 
-**Un ítem contenedor es una bolsa**, un ítem de tipo `container` que lleva el mismo bloque `container` con `rows` y `columns`; se abre con clic derecho y conserva su contenido al cambiar de manos. Sin el objeto `container` tiene una sola fila de nueve. Dale `curioSlot` y, donde Curios esté instalado, va en esa ranura y una tecla lo abre sin quitárselo, `V` por defecto, reasignable en Resource Data Pack Loader dentro de los controles. Al pulsarla de nuevo, con un contenedor puesto ya abierto, pasa al siguiente que lleves y da la vuelta al llegar al final, de modo que se pueda acceder a varios llevados a la vez. La tecla solo aparece cuando Curios está presente, y todo lo demás del ítem, el clic derecho y su inventario, funciona esté o no. La posibilidad de llevar la bolsa puesta se escribe por ti en la etiqueta de Curios de esa ranura.
+**Un ítem contenedor es una bolsa**, un ítem de tipo `container` que lleva el mismo bloque `container` con `rows` y `columns`; se abre con clic derecho y conserva su contenido al cambiar de manos. Sin el objeto `container` tiene una sola fila de nueve. Dale `curioSlot` y, donde Curios esté instalado, va en esa ranura y una tecla lo abre sin quitárselo, `V` por defecto, reasignable en Resource Data Pack Loader dentro de los controles. Al pulsarla de nuevo, con un contenedor puesto ya abierto, pasa al siguiente que lleves y da la vuelta al llegar al final, de modo que se pueda acceder a varios llevados a la vez. La tecla solo aparece cuando Curios está presente, y todo lo demás del ítem, el clic derecho y su inventario, funciona esté o no. La posibilidad de llevar la bolsa puesta la escribe el mod por ti en la etiqueta de Curios de esa ranura.
 
-**La loot table se llena en el primer uso**, no al colocar el bloque, que es lo que la hace útil en una estructura: quien lo abra primero recibe el sorteo, y una tolva o un comparador que lo alcance antes lo sortea igual. La misma tabla puede usarse con `lootTable` en una forma de impronta o en una parcela de aldea, de modo que un pack puede colocar estos contenedores mediante worldgen y abastecerlos del mismo modo.
+**La tabla de botín se llena en el primer uso**, no al colocar el bloque, que es lo que la hace útil en una estructura: quien lo abra primero recibe el sorteo, y una tolva o un comparador que lo alcance antes lo sortea igual. La misma tabla puede usarse con `lootTable` en una forma de impronta o en una parcela de aldea, de modo que un pack puede colocar estos contenedores mediante worldgen y abastecerlos del mismo modo.
 
 ## Campanas
 
@@ -968,7 +976,7 @@ Y su blockstate, `assets/mypack/blockstates/village_bell.json`, con claves `atta
 
 | Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `swing`         | boolean    | `true`                             | Dibuja la parte oscilante a partir de un archivo de modelo propio y la hace oscilar cuando suena la campana. `false` dibuja la campana entera a partir de los modelos del blockstate, sin nada animado |
+| `swing`         | booleano   | `true`                             | Dibuja la parte oscilante a partir de un archivo de modelo propio y la hace oscilar cuando suena la campana. `false` dibuja la campana entera a partir de los modelos del blockstate, sin nada animado |
 | `sound`         | nombre de sonido | `minecraft:block.note_block.bell`  | Se reproduce cuando suena la campana. Vacío la hace sonar en silencio |
 | `resonateSound` | nombre de sonido | `minecraft:block.note_block.chime` | Se reproduce cuando la campana resuena porque hay saqueadores cerca. Vacío la hace resonar en silencio |
 
@@ -986,7 +994,7 @@ Y su blockstate, `assets/mypack/blockstates/village_bell.json`, con claves `atta
 
 *bloques e ítems*
 
-Definir un bloque o un ítem lo registra. Su *aspecto* es un conjunto de archivos de recursos en las mismas carpetas y el mismo formato que usa el juego, bajo tu propio espacio de nombres, y en esta versión la mayoría se escriben por ti.
+Definir un bloque o un ítem lo registra. Su *aspecto* es un conjunto de archivos de recursos en las mismas carpetas y el mismo formato que usa el juego, bajo tu propio espacio de nombres, y en esta versión el mod escribe la mayoría por ti.
 
 ```
 assets/mypack/textures/block/ruby_ore.png
@@ -1005,7 +1013,7 @@ assets/mypack/lang/en_us.json
 | `stairs`                                                           | `<name>`                                                                                               | `stairs`, `inner_stairs`, `outer_stairs`, con los cuarenta estados escritos |
 | `fence`                                                            | `<name>`                                                                                               | `fence_post` y `fence_side` como multipart, y `fence_inventory` para la mano |
 | `wall`                                                             | `<name>`                                                                                               | las plantillas de poste y lateral de muro como multipart, y `wall_inventory` para la mano |
-| `pane`                                                             | `<name>` para el panel, `<name>_top` para el borde                                                       | las cinco plantillas de panel de cristal como multipart |
+| `pane`                                                             | `<name>` para el panel, `<name>_top` para el borde                                                       | las cinco plantillas de panel de vidrio como multipart |
 | `door`                                                             | `<name>_top` y `<name>_bottom`, o `<name>` para ambas                                                 | los ocho modelos de puerta y sus treinta y dos estados |
 | `trapdoor`                                                         | `<name>`                                                                                               | los tres modelos orientables de trampilla |
 | `fence_gate`                                                       | `<name>`                                                                                               | los cuatro modelos de puerta de valla, cerrada y abierta, en un muro y fuera de él |
@@ -1030,7 +1038,7 @@ Cada textura se busca en `textures/block/`, y el nombre es la clave de la varian
 
 Todo lo generado se puede sustituir. Un blockstate que distribuye el pack se usa tal cual, en el formato del propio juego: los `variants` de vanilla con las propiedades del bloque como claves, o `multipart`. Las propiedades son las del propio juego para cada tipo: `axis` en un tronco, `type` en una losa, `facing`, `half` y `shape` en unas escaleras, `facing`, `half`, `hinge` y `open` en una puerta, `facing`, `half` y `open` en una trampilla, `facing`, `in_wall` y `open` en una puerta de valla, `age` en un cultivo y una caña, `stage` en un brote, `north`, `east`, `south`, `west` en una valla o un panel, con `up` añadido en un muro y una enredadera, `rotation` en un estandarte de pie y `facing` en uno de pared, `axis` en un portal, `attachment` y `facing` en una campana con su `powered` fuera de las claves. Un bloque `basic`, `ore`, `falling`, `leaves`, `flower` o `container` tiene un solo estado, con la clave `""`.
 
-Apunta los modelos a los padres que aceptan texturas, no a los de vanilla ya terminados: `cube_all` toma un `all`; `cube_column` un `end` y un `side`; `cross` un `cross`; los padres de escaleras `bottom`, `top` y `side`; `fence_post` y `fence_side` una `texture`; `template_wall_post` y `template_wall_side` un `wall`; las plantillas de panel de cristal un `pane` y un `edge`; los padres de puerta un `top` y un `bottom`; `template_orientable_trapdoor_*` y `template_fence_gate*` una `texture`; `template_torch` un `torch`; `crop` un `crop`; `vine` y `ladder` su propio nombre. Un modelo que nombra un modelo de vanilla ya terminado, como `oak_door_bottom_left`, hereda con él las texturas de vanilla, diga lo que diga el blockstate.
+Apunta los modelos a los padres que aceptan texturas, no a los de vanilla ya terminados: `cube_all` toma un `all`; `cube_column` un `end` y un `side`; `cross` un `cross`; los padres de escaleras `bottom`, `top` y `side`; `fence_post` y `fence_side` una `texture`; `template_wall_post` y `template_wall_side` un `wall`; las plantillas de panel de vidrio un `pane` y un `edge`; los padres de puerta un `top` y un `bottom`; `template_orientable_trapdoor_*` y `template_fence_gate*` una `texture`; `template_torch` un `torch`; `crop` un `crop`; `vine` y `ladder` su propio nombre. Un modelo que nombra un modelo de vanilla ya terminado, como `oak_door_bottom_left`, hereda con él las texturas de vanilla, diga lo que diga el blockstate.
 
 ### Estandartes
 
@@ -1121,7 +1129,7 @@ Una textura puede ser un archivo JSON en lugar de un PNG. Ponla donde habría id
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `size`    | sí, o heredada | `anchoxalto`              |         | Cuántos píxeles de ancho y de alto |
 | `rows`    | sí, o heredada | lista de texto            |         | Una cadena por fila de píxeles, un carácter por píxel, de arriba abajo |
@@ -1143,7 +1151,7 @@ Una textura puede ser un archivo JSON en lugar de un PNG. Ponla donde habría id
 }
 ```
 
-Eso es una segunda textura completa: la misma forma en púrpura, y si algún día se redibuja la forma en la plantilla, todas las variantes la siguen. Una variante puede en cambio dar sus propias `rows` y conservar la paleta de la plantilla, que es lo inverso: los mismos colores en un patrón distinto. La herencia llega hasta ocho niveles, un bucle se detecta y se notifica, y un mapa que nombra una plantilla que nada proporciona se notifica en lugar de dibujarse en blanco.
+Eso es una segunda textura completa: la misma forma en purpur, y si algún día se redibuja la forma en la plantilla, todas las variantes la siguen. Una variante puede en cambio dar sus propias `rows` y conservar la paleta de la plantilla, que es lo inverso: los mismos colores en un patrón distinto. La herencia llega hasta ocho niveles, un bucle se detecta y se notifica, y un mapa que nombra una plantilla que nada proporciona se notifica en lugar de dibujarse en blanco.
 
 **Cuál de dos texturas es la plantilla** se decide por cuál contiene más distinciones, no por cuál se dibujó primero. Una variante da un color a cada carácter, de modo que todos los píxeles que la plantilla llama con el mismo carácter salen del mismo color en la variante. Por eso un mineral dibujado sobre piedra no puede heredar las `rows` de la piedra: la piedra llama piedra normal a las posiciones de las motas, y nada que pueda escribir una variante separa un carácter en dos. Dale la vuelta y funciona. Haz que el mineral sea la plantilla, de modo que los tonos de la piedra y los del mineral tengan cada uno sus propios caracteres, y un segundo mineral son cuatro colores:
 
@@ -1314,19 +1322,19 @@ Un `potion_bottle` enumera lo que puede contener con `potionTypes`, una lista de
 
 *ítems*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `variants`     | sí          | objeto de nombre de variante a variante | | Un ítem por entrada. La clave es su nombre de registro, y da nombre a su modelo, su textura y su clave de idioma |
 | `type`         | no          | uno de los tipos anteriores         | `basic`                | Qué tipo toma el ítem |
-| `creativeTab`  | no          | nombre de pestaña                   | ninguna                | La pestaña en la que aparece, véase [Pestañas creativas](#pestañas-creativas) |
+| `creativeTab`  | no          | nombre de pestaña                   | ninguno                | La pestaña en la que aparece, véase [Pestañas creativas](#pestañas-creativas) |
 | `material`     | tool, armor | nombre de material                  | ninguno                | De cuál de tus materiales está hecho |
-| `toolClass`    | tool        | `pickaxe`, `axe`, `shovel`, `sword` | ninguna                | Qué herramienta es. Una `sword` es una herramienta de 1.12.2 y no una espada de vanilla: golpea con 3 más el `damage` del material, pica los bloques cuyo `harvestTool` es `sword`, admite encantamientos de minería y ni barre ni corta telarañas |
+| `toolClass`    | tool        | `pickaxe`, `axe`, `shovel`, `sword` | ninguno                | Qué herramienta es. Una `sword` es una herramienta de 1.12.2 y no una espada de vanilla: golpea con 3 más el `damage` del material, pica los bloques cuyo `harvestTool` es `sword`, admite encantamientos de minería y ni barre ni corta telarañas |
 | `slot`         | armor       | `head`, `chest`, `legs`, `feet`     | ninguno                | Dónde se lleva puesta. `helmet`, `chestplate`, `leggings` y `boots` también sirven |
-| `eat`          | food        | boolean                             | `false`                | Usa la animación de comer |
-| `alwaysEdible` | food        | boolean                             | `false`                | Se puede comer con la barra de hambre llena |
-| `useDuration`  | no          | int, ticks                          | `32`                   | Cuánto tarda en usarse |
-| `attackSpeed`  | no          | float                               | el adecuado a la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada |
-| `cooldown`     | no          | int, ticks                          | `0`                    | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas |
+| `eat`          | food        | booleano                            | `false`                | Usa la animación de comer |
+| `alwaysEdible` | food        | booleano                            | `false`                | Se puede comer con la barra de hambre llena |
+| `useDuration`  | no          | entero, ticks                       | `32`                   | Cuánto tarda en usarse |
+| `attackSpeed`  | no          | decimal                             | el adecuado a la clase de herramienta | Para `tool`, el atributo de velocidad de ataque, como el `-2.4` de una espada |
+| `cooldown`     | no          | entero, ticks                       | `0`                    | Para `food`, `drink` y `potion`, cuánto tiempo rechaza el ítem volver a usarse tras consumirse; en un ítem con `rolls`, el tiempo entre tiradas |
 | `container`    | drink       | nombre de ítem                      | ninguno                | Lo que queda atrás, como una botella. En un ítem `container` esta clave son en cambio los ajustes propios de la bolsa, véase [Contenedores](#contenedores) |
 | `crop`         | seed        | nombre de bloque                    | ninguno                | El cultivo que planta |
 | `soil`         | seed        | nombre de bloque                    | `minecraft:farmland`   | Sobre qué se puede plantar |
@@ -1338,14 +1346,14 @@ Un `potion_bottle` enumera lo que puede contener con `potionTypes`, una lista de
 
 *ítems*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `maxSize`    | no          | 1 a 64                               | `64`     | Tamaño de la pila |
 | `rarity`     | no          | `common`, `uncommon`, `rare`, `epic` | `common` | Color del nombre en la descripción emergente |
-| `healAmount` | food        | int, medios muslos                   | `0`      | Hambre que restaura |
-| `saturation` | food        | float                                | `0.0`    | Saturación que restaura |
+| `healAmount` | food        | entero, medios muslos                | `0`      | Hambre que restaura |
+| `saturation` | food        | decimal                              | `0.0`    | Saturación que restaura |
 | `tags`       | no          | lista de ids de etiquetas            | ninguno  | Etiquetas de ítem en las que se escribe esta variante; los archivos de etiquetas se generan por ti |
-| `potion`     | food, drink | `potion,duration,amplifier`          | ninguno  | Un efecto que se aplica al comer o beber la variante. Una cuarta parte, `true`, lo hace ambiental. Un efecto beneficioso se nombra en verde en la descripción emergente, seguido del amplificador en números romanos cuando es mayor que 0, y ningún efecto que dé muestra partículas |
+| `potion`     | food, drink | `potion,duration,amplifier`          | ninguno  | Un efecto que se aplica al comer o beber la variante. Un cuarto campo, `true`, lo hace ambiental. Un efecto beneficioso se nombra en verde en la descripción emergente, seguido del amplificador en números romanos cuando es mayor que 0, y ningún efecto que dé muestra partículas |
 
 ## Fluidos
 
@@ -1379,20 +1387,20 @@ La ruta del archivo es el nombre de registro del bloque del fluido. `name` da no
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `name`        | no       | string                             | el nombre del archivo | El nombre de registro del fluido y de su cubo (`<name>_bucket`); el bloque conserva la ruta del archivo |
+| `name`        | no       | cadena                             | el nombre del archivo | El nombre de registro del fluido y de su cubo (`<name>_bucket`); el bloque conserva la ruta del archivo |
 | `still`       | no       | ruta de textura                    | agua quieta de vanilla | Textura del fluido quieto |
 | `flow`        | no       | ruta de textura                    | agua en movimiento de vanilla | Textura del fluido en movimiento |
 | `color`       | no       | color hexadecimal                  | ninguno               | Tinte aplicado a esas texturas. En las texturas de agua por defecto se multiplica por el azul del agua de 1.12.2, de modo que un color elegido para 1.12.2 se ve igual aquí |
-| `bucket`      | no       | boolean                            | `true`                | Registra un cubo para él |
+| `bucket`      | no       | booleano                           | `true`                | Registra un cubo para él |
 | `luminosity`  | no       | 0 a 15                             | `0`                   | Luz que emite |
-| `density`     | no       | int                                | `1000`                | Negativa flota hacia arriba, como un gas |
-| `temperature` | no       | int, kelvin                        | `300`                 | El agua es 300, la lava 1300 |
-| `viscosity`   | no       | int                                | `1000`                | Con qué lentitud fluye: el fluido avanza una vez cada viscosity / 200 ticks. El agua es 1000, la lava 6000 |
-| `gaseous`     | no       | boolean                            | `false`               | Se trata como un gas |
-| `creativeTab` | no       | nombre de pestaña                  | ninguna               | La pestaña en la que aparece el cubo |
-| `block`       | no       | objeto                             |                       | El bloque del fluido. `material` (`water`): `water` permite nadar y ahogarse en él, hace flotar los botes, apaga a las criaturas en llamas, mantiene húmeda la tierra de cultivo y se evapora al verterse en el Nether; `lava` prende fuego a lo que se encuentre en ella, no permite nadar ni ahogarse en ella y usa los sonidos del cubo de lava; cualquier otro material no hace nada de esto. `flammability` (`0`) y `fireSpread` (`0`): con qué facilidad lo consume el fuego y se propaga desde él. `quantaPerBlock` (`0`, leído como 8): hasta dónde corre desde una fuente, un bloque menos que el número como en 1.12.2; los fluidos aquí llegan a 1, 2, 3 o 7 bloques, de modo que 4 y 5 corren 3 bloques y 6 o más corren 7. `potions` (ninguno, una lista de efectos que se dan a lo que se encuentre en él, cada uno escrito `potion,duration,amplifier` con una cuarta parte opcional `true` para uno ambiental) |
+| `density`     | no       | entero                             | `1000`                | Negativa flota hacia arriba, como un gas |
+| `temperature` | no       | entero, kelvin                     | `300`                 | El agua es 300, la lava 1300 |
+| `viscosity`   | no       | entero                             | `1000`                | Con qué lentitud fluye: el fluido avanza una vez cada viscosity / 200 ticks. El agua es 1000, la lava 6000 |
+| `gaseous`     | no       | booleano                           | `false`               | Se trata como un gas |
+| `creativeTab` | no       | nombre de pestaña                  | ninguno               | La pestaña en la que aparece el cubo |
+| `block`       | no       | objeto                             |                       | El bloque del fluido. `material` (`water`): `water` permite nadar y ahogarse en él, hace flotar los botes, apaga a las criaturas en llamas, mantiene húmeda la tierra de cultivo y se evapora al verterse en el Nether; `lava` prende fuego a lo que se encuentre en ella, no permite nadar ni ahogarse en ella y usa los sonidos del cubo de lava; cualquier otro material no hace nada de esto. `flammability` (`0`) y `fireSpread` (`0`): con qué facilidad lo consume el fuego y se propaga desde él. `quantaPerBlock` (`0`, leído como 8): hasta dónde corre desde una fuente, un bloque menos que el número como en 1.12.2; los fluidos aquí llegan a 1, 2, 3 o 7 bloques, de modo que 4 y 5 corren 3 bloques y 6 o más corren 7. `potions` (ninguno, una lista de efectos que se dan a lo que se encuentre en él, cada uno escrito `potion,duration,amplifier` con un cuarto campo opcional `true` para uno ambiental) |
 | `requires`    | no       | lista de ids de mods o espacios de nombres de packs | ninguno | El archivo se omite a menos que estén todos presentes |
 
 ## Materiales, pestañas, sonidos, etiquetas
@@ -1418,16 +1426,16 @@ La ruta del archivo es el nombre del material, que un ítem de herramienta o arm
 }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `harvestLevel`   | no       | 0 a 4             | `1`                     | Nivel de la herramienta. 0 madera, 1 piedra, 2 hierro, 3 diamante, 4 netherita |
-| `durability`     | no       | int               | `250`                   | Usos antes de romperse |
-| `efficiency`     | no       | float             | `6.0`                   | Velocidad de minado. El diamante es 8 |
-| `damage`         | no       | float             | `2.0`                   | Bonificación de daño de ataque |
-| `enchantability` | no       | int               | `14`                    | Qué tan buenos son los encantamientos. El oro es 22 |
+| `durability`     | no       | entero            | `250`                   | Usos antes de romperse |
+| `efficiency`     | no       | decimal           | `6.0`                   | Velocidad de minado. El diamante es 8 |
+| `damage`         | no       | decimal           | `2.0`                   | Bonificación de daño de ataque |
+| `enchantability` | no       | entero            | `14`                    | Lo buenos que salen los encantamientos. El oro es 22 |
 | `repairItem`     | no       | nombre de ítem    | ninguno                 | Lo que repara en un yunque una herramienta hecha con él. La armadura hecha con él no se repara así, como en 1.12.2 |
-| `reduction`      | no       | lista de cuatro ints |                      | Puntos de armadura, en el orden botas, pantalones, peto, casco |
-| `toughness`      | no       | float             | `0.0`                   | Dureza de armadura, como la tiene el diamante |
+| `reduction`      | no       | lista de cuatro enteros | `[2, 5, 6, 2]`       | Puntos de armadura, en el orden botas, pantalones, peto, casco |
+| `toughness`      | no       | decimal           | `0.0`                   | Dureza de armadura, como la tiene el diamante |
 | `equipSound`     | no       | nombre de sonido  | `item.armor.equip_iron` | Sonido al ponerse la armadura |
 | `armorTexture`   | no       | prefijo de textura | el nombre del archivo  | La textura de la armadura puesta, leída de `textures/models/armor/<name>_layer_1.png` y `_layer_2.png` bajo ese espacio de nombres |
 
@@ -1437,15 +1445,15 @@ La ruta del archivo es el nombre del material, que un ítem de herramienta o arm
 
 `<namespace>/tabs/*.json`
 
-Los bloques, ítems y cubos nombran su pestaña en `creativeTab`. Un id completo, como `mypack:rubypack` o `minecraft:combat`, se usa tal como está escrito. Un nombre suelto se lee como 1.12.2 leía la etiqueta de una pestaña: `buildingBlocks` va a `minecraft:building_blocks`, `decorations` a `minecraft:functional_blocks`, `redstone` a `minecraft:redstone_blocks`, `transportation` y `tools` a `minecraft:tools_and_utilities`, `misc` y `materials` a `minecraft:ingredients`, `food` y `brewing` a `minecraft:food_and_drinks`, y `combat` a `minecraft:combat`, y cualquier otro nombre suelto es la pestaña `<namespace>:<name>` en el espacio de nombres del archivo que la nombra. Una pestaña que ningún archivo declara se crea por ti, con el título tomado de `itemGroup.<namespace>.<name>` y mostrando el primer ítem que contiene. La ruta de un archivo de pestaña es el nombre de la pestaña a menos que `label` la sustituya.
+Los bloques, ítems y cubos nombran su pestaña en `creativeTab`. Un id completo, como `mypack:rubypack` o `minecraft:combat`, se usa tal como está escrito. Un nombre suelto se lee como 1.12.2 leía la etiqueta de una pestaña: `buildingBlocks` va a `minecraft:building_blocks`, `decorations` a `minecraft:functional_blocks`, `redstone` a `minecraft:redstone_blocks`, `transportation` y `tools` a `minecraft:tools_and_utilities`, `misc` y `materials` a `minecraft:ingredients`, `food` y `brewing` a `minecraft:food_and_drinks`, y `combat` a `minecraft:combat`, y cualquier otro nombre suelto es la pestaña `<namespace>:<name>` en el espacio de nombres del archivo que la nombra. Una pestaña que ningún archivo declara se crea automáticamente, con el título tomado de `itemGroup.<namespace>.<name>` y mostrando el primer ítem que contiene. La ruta de un archivo de pestaña es el nombre de la pestaña a menos que `label` la sustituya.
 
 ```json
 { "label": "rubypack", "icon": "mypack:ruby" }
 ```
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `label` | no       | string    | el nombre del archivo | El id de la pestaña: los bloques y los ítems la nombran en `creativeTab`, y el nombre mostrado sale de `itemGroup.<namespace>.<label>` en los archivos de idioma |
+| `label` | no       | cadena    | el nombre del archivo | El id de la pestaña: los bloques y los ítems la nombran en `creativeTab`, y el nombre mostrado sale de `itemGroup.<namespace>.<label>` en los archivos de idioma |
 | `icon`  | no       | nombre de ítem | ninguno          | El ítem mostrado en la pestaña |
 
 ### Sonidos
@@ -1464,7 +1472,7 @@ El formato `sounds.json` de vanilla, de modo que un pack pueda distribuir su pro
 
 `<namespace>/tags/<kind>/*.json`
 
-Las etiquetas tienen el formato del propio juego en la carpeta del propio juego, y un pack las distribuye como lo haría en un data pack: `tags/items/ores/ruby.json` (1.21.1: `tags/item/`) con `{ "values": ["mypack:ruby_ore"] }` pone el mineral en `mypack:ores/ruby`, y un archivo en `data/forge/tags/items/ores/ruby.json` (1.21.1: `data/c/...`) añade a la etiqueta de convención compartida que lee todo mod. Los bloques e ítems propios de un pack nombran las suyas en las `tags` de la variante, y los archivos se escriben por ti; un `harvestTool` y un `harvestToolLevel` escriben del mismo modo las etiquetas `mineable` y `needs_*_tool`.
+Las etiquetas tienen el formato del propio juego en la carpeta del propio juego, y un pack las distribuye como lo haría en un data pack: `tags/items/ores/ruby.json` (1.21.1: `tags/item/`) con `{ "values": ["mypack:ruby_ore"] }` pone el mineral en `mypack:ores/ruby`, y un archivo en `data/forge/tags/items/ores/ruby.json` (1.21.1: `data/c/...`) añade a la etiqueta de convención compartida que lee todo mod. Los bloques e ítems propios de un pack nombran las suyas en las `tags` de la variante, y el mod escribe los archivos por ti; un `harvestTool` y un `harvestToolLevel` escriben del mismo modo las etiquetas `mineable` y `needs_*_tool`.
 
 El diccionario de minerales de 1.12.2 es lo que las etiquetas sustituyeron. Sus nombres se corresponden con las etiquetas de convención: `oreRuby` es `forge:ores/ruby` en 1.20.1 y `c:ores/ruby` en 1.21.1, `ingotCopper` es `ingots/copper`, `gemRuby` es `gems/ruby`, `dustX` es `dusts/x`, `nuggetX` es `nuggets/x`, `blockX` es `storage_blocks/x`, y `logWood`, `plankWood` y `stickWood` son los `minecraft:logs` y `minecraft:planks` del propio juego y el `rods/wooden` de convención. El `"remove": [...]` de un archivo de etiqueta quita entradas sueltas de una etiqueta, y `"replace": true` con un `"values": []` vacío la vacía, de modo que una etiqueta de un pack inferior o de un mod puede recortarse o vaciarse. Para quitar ítems de todas las etiquetas a la vez, y fuera de juego, usa [Bloques e ítems desactivados](#bloques-e-ítems-desactivados).
 
@@ -1518,14 +1526,14 @@ Todas las claves son opcionales y un archivo solo cambia lo que nombra, de modo 
 
 | Clave | Valor | Qué hace |
 | --- | --- | --- |
-| `hardness`     | float                                        | Tiempo de minado, la misma cifra que acepta una definición de bloque. Sin `resistance`, también sube la resistencia a las explosiones al menos a esa misma cifra, como hace 1.12.2 |
-| `resistance`   | float                                        | Resistencia a las explosiones como la lee 1.12.2: el bloque conserva tres quintos de la cifra, de modo que `10` da el `6` de la piedra |
-| `slipperiness` | float                                        | `0.6` es suelo normal, `0.98` es hielo |
+| `hardness`     | decimal                                      | Tiempo de minado, la misma cifra que acepta una definición de bloque. Sin `resistance`, también sube la resistencia a las explosiones al menos a esa misma cifra, como hace 1.12.2 |
+| `resistance`   | decimal                                      | Resistencia a las explosiones como la lee 1.12.2: el bloque conserva tres quintos de la cifra, de modo que `10` da el `6` de la piedra |
+| `slipperiness` | decimal                                      | `0.6` es suelo normal, `0.98` es hielo |
 | `light`        | `0` a `15`                                   | Luz que emite |
 | `lightOpacity` | `0` a `15`                                   | Cuánta luz detiene el bloque |
 | `soundType`    | uno de los tipos de sonido                   | Sonidos de pisada, colocación y rotura |
 | `harvestTool`  | `pickaxe`, `axe`, `shovel`, `hoe` o `sword` | Qué lo pica rápido, escrito en las etiquetas de herramientas; `harvestToolLevel`, `0` por defecto, fija el nivel: 1 piedra, 2 hierro, 3 diamante, 4 y superiores netherita. Si el bloque suelta ítems sin la herramienta adecuada se queda como lo tenga el bloque |
-| `flammability` | int                                          | Con qué facilidad se consume al arder; `fireSpread`, `5` por defecto, con qué facilidad le llega el fuego |
+| `flammability` | entero                                       | Con qué facilidad se consume al arder; `fireSpread`, `5` por defecto, con qué facilidad le llega el fuego |
 
 ### Propiedades de ítems
 
@@ -1534,7 +1542,7 @@ Todas las claves son opcionales y un archivo solo cambia lo que nombra, de modo 
 | Clave | Valor | Qué hace |
 | --- | --- | --- |
 | `maxStackSize`  | `1` a `64`  | Tamaño de la pila |
-| `maxDamage`     | int         | Durabilidad |
+| `maxDamage`     | entero      | Durabilidad |
 | `containerItem` | nombre de ítem | Se queda en la cuadrícula de fabricación, como ocurre con un cubo |
 | `food`          | objeto      | Hace el ítem comestible, véase más abajo |
 
@@ -1623,15 +1631,15 @@ Da a un grupo de bloques un multiplicador del tiempo de minado, sorteado por pos
 
 *grupos de dureza*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `blocks`          | sí       | lista de nombres de bloque u objetos   |                    | El grupo. Las mismas formas que un `replace` de worldgen |
 | `except`          | no       | lista de nombres de bloque u objetos   | ninguno            | Se saca del grupo, diga lo que diga `blocks` |
 | `miningTime`      | no       | número, u objeto con `min` y `max`     | `1.0`              | Cuántas veces más tarda en romperse el bloque, tanto para un jugador como para un mob con `digs` |
 | `blastResistance` | no       | número, u objeto con `min` y `max`     | `1.0`              | Multiplica la resistencia a las explosiones del bloque |
 | `buckets`         | no       | 1 a 256                                | `10`               | En cuántos pasos se divide el rango |
-| `minHeight`       | no       | int                                    | el fondo del mundo | Por debajo de esto el sorteo da el paso más duro |
-| `maxHeight`       | no       | int                                    | la cima del mundo  | Por encima de esto el sorteo da el paso más duro |
+| `minHeight`       | no       | entero                                 | el fondo del mundo | Por debajo de esto el sorteo da el paso más duro |
+| `maxHeight`       | no       | entero                                 | la cima del mundo  | Por encima de esto el sorteo da el paso más duro |
 | `field`           | no       | objeto                                 | véase más abajo    | La forma en la que se agrupa el sorteo |
 | `requires`        | no       | lista de ids de mods o espacios de nombres de packs | ninguno | El archivo se omite a menos que estén todos presentes |
 
@@ -1641,9 +1649,9 @@ Un solo número da a todos los bloques del grupo el mismo multiplicador, y no se
 
 *grupos de dureza*
 
-| Clave | Obligatoria | Valor | Por defecto | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `keeps`       | no       | boolean          | `false` | El bloque se queda donde está cuando se pica: los drops, la experiencia, el desgaste de la herramienta y el sonido de rotura ocurren y el bloque sigue ahí para volver a picarlo, de modo que el grupo es una veta interminable al ritmo que fije `miningTime`. El modo creativo lo elimina como siempre |
+| `keeps`       | no       | booleano         | `false` | El bloque se queda donde está cuando se pica: los drops, la experiencia, el desgaste de la herramienta y el sonido de rotura ocurren y el bloque sigue ahí para volver a picarlo, de modo que el grupo es una veta interminable al ritmo que fije `miningTime`. El modo creativo lo elimina como siempre |
 | `adventure`   | no       | objeto           | ninguno | Quién puede romper el grupo en modo aventura, donde de otro modo no se rompe nada. `tools` enumera los ítems de los cuales uno debe estar en la mano, vacío para cualquier cosa que se sostenga; `teams`, `players` y `entities` dicen quién, un equipo por su nombre, un jugador por su nombre, un mob por su id de entidad para la tarea `digs`, y los tres vacíos significan cualquiera con la herramienta. Supervivencia y creativo no se tocan |
 | `advancement` | no       | `namespace:path` | ninguno | El grupo cuenta para un jugador solo una vez que tiene ese logro. Dos grupos pueden nombrar el mismo bloque, uno con un logro y otro sin él, y gana el desbloqueado; un jugador sin él recibe el grupo normal, o vanilla si no hay ninguno. Los mobs no tienen logros, de modo que un grupo restringido nunca llega a una tarea `digs`, y la resistencia a las explosiones y el sorteo de textura, que no pertenecen a ningún jugador, salen del grupo normal |
 | `becomes`     | no       | objeto           | ninguno | Los bloques del grupo se convierten en otro bloque, en todo el mundo, en el momento en que cualquier jugador consigue `advancement`: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Se barren de golpe todos los chunks cargados, y un chunk cargado o creado más tarde se barre al entrar, de modo que el bloque antiguo desaparece para siempre. Dale al nuevo bloque un grupo propio para cambiar cómo se pica |
@@ -1660,7 +1668,7 @@ La tirada no se hace para cada bloque de forma totalmente independiente, o lo du
 }
 ```
 
-| Clave  | Obligatorio | Valor                 | Predeterminado | Qué hace                         |
+| Clave  | Obligatorio | Valor                 | Por defecto    | Qué hace                         |
 | ------ | ----------- | --------------------- | -------------- | -------------------------------- |
 | `type` | no          | `speckle` o `seeded`  | `speckle`      | Cuál de los dos siguientes se usa |
 
@@ -1680,12 +1688,12 @@ Cada bloque sortea su propio escalón, y un bloque contiguo por una cara puede t
 }
 ```
 
-| Clave     | Obligatorio | Valor                      | Predeterminado                         | Qué hace                                                                                          |
+| Clave     | Obligatorio | Valor                      | Por defecto                            | Qué hace                                                                                          |
 | --------- | ----------- | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `chances` | no          | lista de enteros, por mil  | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | Con qué frecuencia un bloque empieza en cada escalón, el más blando al final. Lo que sobra es el escalón más duro |
 | `spread`  | no          | 0.0 a 1.0                  | `0.15`                                 | Con qué frecuencia un escalón pasa al bloque contiguo, un escalón más débil o tres                |
 
-La lista se lee con el más blando al final, de modo que la última entrada es el escalón más blando y la primera es una por encima del más duro. Con los números anteriores, unos siete bloques de cada diez son del escalón más duro y el resto se reparte entre ellos.
+La lista se lee con el más blando al final, de modo que la última entrada es el escalón más blando y la primera es una por encima del más duro. Con los números anteriores, las probabilidades suman 190 por mil, así que 810 de cada mil bloques empiezan en el escalón más duro; la propagación sube algunos de ellos, y quedan unos siete bloques de cada diez en el escalón más duro y el resto repartido entre ellos.
 
 #### seeded
 
@@ -1706,13 +1714,13 @@ Las semillas se sitúan en una retícula calculada a partir del mundo y la posic
 }
 ```
 
-| Clave      | Obligatorio | Valor            | Predeterminado | Qué hace                                  |
+| Clave      | Obligatorio | Valor            | Por defecto    | Qué hace                                  |
 | ---------- | ----------- | ---------------- | -------------- | ----------------------------------------- |
 | `cell`     | no          | entero, bloques  | `8`            | A qué distancia están las semillas        |
 | `seeds`    | no          | 1 a 4            | `1`            | Semillas en cada celda                    |
-| `reach`    | no          | float, bloques   | `3.0`          | Hasta dónde llega la influencia de una semilla |
+| `reach`    | no          | decimal, bloques | `3.0`          | Hasta dónde llega la influencia de una semilla |
 | `arms`     | no          | 0 a 6            | `0`            | Brazos que irradian de cada semilla       |
-| `armReach` | no          | float, bloques   | `0.0`          | Hasta dónde llegan los brazos             |
+| `armReach` | no          | decimal, bloques | `0.0`          | Hasta dónde llegan los brazos             |
 
 Si se omite `arms`, las manchas son redondas. Dar brazos a una semilla la convierte en un nudo con zarcillos, y los brazos de nudos vecinos se alcanzan entre sí, lo que forma una veta en lugar de una mancha. Mantén `reach` por encima de la mitad de `cell` o las manchas no podrán tocarse y obtendrás bolas sueltas sin nada entre ellas.
 
@@ -1774,7 +1782,7 @@ Saca bloques e ítems del juego sin quitarles el registro, de modo que los mundo
 }
 ```
 
-| Clave        | Obligatorio | Valor                              | Predeterminado | Qué hace                                                                                                                                                              |
+| Clave        | Obligatorio | Valor                              | Por defecto    | Qué hace                                                                                                                                                              |
 | ------------ | ----------- | ---------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `names`      | no          | lista de nombres de bloques e ítems | ninguno        | Qué se desactiva. Un nombre que termina en `*` coincide con todos los nombres que empiecen por el resto                                                               |
 | `namespaces` | no          | lista de ids de mods               | ninguno        | Todos los bloques e ítems del mod                                                                                                                                     |
@@ -1786,9 +1794,9 @@ Un bloque o ítem desactivado:
 - desaparece de todas las pestañas creativas y de la pestaña de búsqueda, y queda oculto en JEI
 - no tiene ninguna receta que lo fabrique o lo use: se van todas las recetas de cualquier tipo que lo tengan como resultado, ya sean de fabricación, cocción, cortapiedras o herrería, y también toda receta con una ranura que solo él pueda ocupar. Una ranura que admite además otra cosa conserva su receta, y una ranura de etiqueta simplemente la pierde junto con la etiqueta
 - se retira de todas las etiquetas de ítems y de bloques, y figura en su lugar en `resourcedatapackloader:disabled`
-- se elimina de toda tirada de botín, ya sea de cofres, mobs o pesca, de los drops de bloques y de los comercios de aldeanos y del comerciante errante, y un stack suyo que se suelte se desvanece
-- no se puede colocar, usar, blandir ni recoger, y el stack que se lleva en la mano se elimina cuando un jugador lo intenta
-- se elimina allí donde aparezca un stack suyo: del inventario y del cofre de Ender de un jugador al iniciar sesión y cada segundo después, de cualquier contenedor cuando un jugador lo abre, y de cofres y otros inventarios cuando se carga su chunk
+- se elimina de toda tirada de botín, ya sea de cofres, mobs o pesca, de los drops de bloques y de los comercios de aldeanos y del comerciante errante, y una pila suya que se suelte se desvanece
+- no se puede colocar, usar, blandir ni recoger, y la pila que se lleva en la mano se elimina cuando un jugador lo intenta
+- se elimina allí donde aparezca una pila suya: del inventario y del cofre de Ender de un jugador al iniciar sesión y cada segundo después, de cualquier contenedor cuando un jugador lo abre, y de cofres y otros inventarios cuando se carga su chunk
 - se retira del mundo allí donde esté colocado: cada bloque suyo se convierte en aire, con su entidad de bloque, cuando se carga su chunk
 
 Para cambiar los bloques colocados por otra cosa en lugar de eliminarlos, dales una línea `blockReplacements` como `thermal:tin_ore=minecraft:stone` en la plantilla de mundo, consulta [Sustituciones](#sustituciones). Un bloque que el proceso de sustitución cambia queda a cargo de este. Las recetas que otro mod guarda dentro de sus propias máquinas pertenecen a ese mod y no se alcanzan. Ocultar de las pestañas creativas y de JEI ocurre en el cliente, así que un cliente vanilla sigue mostrando el ítem. `content.disabled` en la configuración desactiva la carpeta.
@@ -1820,7 +1828,7 @@ Añade y elimina recetas de horno. Una eliminación quita también las recetas c
 
 Entradas bajo `add`:
 
-| Clave        | Obligatorio | Valor           | Predeterminado | Qué hace                                                                                                                                                                  |
+| Clave        | Obligatorio | Valor           | Por defecto    | Qué hace                                                                                                                                                                  |
 | ------------ | ----------- | --------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `input`      | sí          | nombre de ítem  | ninguno        | Lo que entra                                                                                                                                                              |
 | `output`     | sí          | nombre de ítem  | ninguno        | Lo que sale                                                                                                                                                               |
@@ -1846,11 +1854,11 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 }
 ```
 
-| Clave      | Obligatorio      | Valor           | Predeterminado | Qué hace                              |
+| Clave      | Obligatorio      | Valor           | Por defecto    | Qué hace                              |
 | ---------- | ---------------- | --------------- | -------------- | ------------------------------------- |
 | `item`     | uno de los dos   | nombre de ítem  | ninguno        | El ítem que arde                      |
 | `tag`      | uno de los dos   | id de etiqueta  | ninguno        | Todo lo que hay en esa etiqueta arde  |
-| `burnTime` | sí               | entero, ticks   | `0`            | El carbón son 1600, una tabla 300     |
+| `burnTime` | sí               | entero, ticks   | `0`            | El carbón son 1600, un tablón 300     |
 
 ## Pociones, tipos de poción y elaboración
 
@@ -1874,15 +1882,15 @@ La ruta del archivo es el nombre de registro del efecto, así que `mypack/potion
 }
 ```
 
-| Clave           | Obligatorio | Valor                 | Predeterminado                                    | Qué hace                                                                                                                                      |
+| Clave           | Obligatorio | Valor                 | Por defecto                                       | Qué hace                                                                                                                                      |
 | --------------- | ----------- | --------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`          | no          | clave de traducción   | `effect.<namespace>.<name>`                       | Lo que ve el jugador                                                                                                                          |
 | `color`         | no          | color hexadecimal     | `FFFFFF`                                          | Color de las partículas                                                                                                                       |
 | `badEffect`     | no          | booleano              | `false`                                           | Cuenta como dañino, así que un ojo de araña fermentado lo invierte                                                                            |
 | `beneficial`    | no          | booleano              | `false`                                           | Se muestra como un efecto bueno                                                                                                               |
 | `instant`       | no          | booleano              | `false`                                           | Se aplica una sola vez en lugar de con el tiempo                                                                                              |
-| `effectiveness` | no          | float                 | `0.5`                                             | Se lee para que se cargue un archivo de 1.12.2; ni 1.12.2 ni esta versión actúan según él                                                    |
-| `attributes`    | no          | lista de objetos      | ninguno                                           | `attribute` (el id del juego, como `minecraft:generic.movement_speed`), `uuid`, `amount` (`0.0`), `operation` (`0`)                           |
+| `effectiveness` | no          | float                 | `0.5`                                             | Se acepta para que se cargue un archivo de 1.12.2 y no hace nada en ninguna versión; el vanilla de 1.12.2 tampoco lee nunca Potion.effectiveness |
+| `attributes`    | no          | lista de objetos      | ninguno                                           | `attribute` (el id del juego, como `minecraft:generic.movement_speed`), `uuid` (1.12.2 la lee, esta versión la ignora), `amount` (`0.0`), `operation` (`0`)                           |
 | `icon`          | no          | objeto                | ninguno                                           | `x` e `y`, la columna y la fila del icono en la hoja de estados de 1.12.2, cada una `0` si se omite. Solo se lee sin `iconTexture`            |
 | `iconTexture`   | no          | ruta de textura       | el icono de RDPL, o ninguno si se indica `icon`   | Una imagen que aporta un pack, como `mypack:textures/effect/rage.png`, dibujada entera como icono                                             |
 
@@ -1905,7 +1913,7 @@ La ruta del archivo es el nombre de registro del tipo de poción, que luego nomb
 }
 ```
 
-| Clave      | Obligatorio | Valor            | Predeterminado                  | Qué hace                                                                                                                                                                                                                                                                                                                                               |
+| Clave      | Obligatorio | Valor            | Por defecto                     | Qué hace                                                                                                                                                                                                                                                                                                                                               |
 | ---------- | ----------- | ---------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `baseName` | no          | cadena           | el espacio de nombres y el nombre | Nombra la poción: la clave de idioma `item.minecraft.potion.effect.<baseName>`, con `splash_potion`, `lingering_potion` o `tipped_arrow` en lugar de `potion` para las otras formas. Una `potion_bottle` que la contenga muestra el mismo nombre, y las claves `potion.effect.<baseName>` de un pack de 1.12.2 se convierten                              |
 | `effects`  | sí          | lista de objetos |                                 | Véase más abajo                                                                                                                                                                                                                                                                                                                                        |
@@ -1939,7 +1947,7 @@ Cada entrada es o bien `input`, `ingredient` y `output`, que elabora un ítem a 
 
 El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Cada archivo es un trabajo.
 
-Coloca el ítem indicado en la ranura izquierda de un yunque y su ítem `with` en la derecha, y el yunque ofrece de vuelta el de la izquierda con los encantamientos indicados, o su `result`, por los niveles señalados; se gasta uno de cada salvo que un recuento pida más, y el resto de cualquiera de los stacks se queda en el yunque. Sacarlo puede además otorgar un logro, y el ítem puede quedar bloqueado para su uso hasta que se consiga ese logro: una espada que solo se puede blandir una vez trabajada.
+Coloca el ítem indicado en la ranura izquierda de un yunque y su ítem `with` en la derecha, y el yunque ofrece de vuelta el de la izquierda con los encantamientos indicados, o su `result`, por los niveles señalados; se gasta uno de cada salvo que un recuento pida más, y el resto de cualquiera de las pilas se queda en el yunque. Sacarlo puede además otorgar un logro, y el ítem puede quedar bloqueado para su uso hasta que se consiga ese logro: una espada que solo se puede blandir una vez trabajada.
 
 ```json
 {
@@ -1952,10 +1960,10 @@ Coloca el ítem indicado en la ranura izquierda de un yunque y su ítem `with` e
 }
 ```
 
-| Clave          | Obligatorio | Valor                                                       | Predeterminado     | Qué hace                                                                                                                                                                                                                                                                                              |
+| Clave          | Obligatorio | Valor                                                       | Por defecto        | Qué hace                                                                                                                                                                                                                                                                                              |
 | -------------- | ----------- | ----------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `item`         | sí          | nombre de ítem, una lista de ellos o `{ "item", "count" }`  |                    | Lo que va en la ranura izquierda, cualquier ítem de una lista, y cuántos de ellos necesita un trabajo, uno por defecto; el resto del stack queda para el siguiente. `{ "item": "minecraft:coal", "count": 8 }` con un `result` de diamante son ocho carbones por un diamante                              |
-| `with`         | sí          | nombre de ítem, una lista de ellos o `{ "item", "count" }`  |                    | Lo que va en la ranura derecha, cualquier ítem de una lista, y cuántos se gastan, uno por defecto: `{ "item": "minecraft:coal", "count": 10 }` pide un stack de al menos diez y toma diez. Un yunque nunca responde ante un ítem solitario, así que todo trabajo es una pareja                           |
+| `item`         | sí          | nombre de ítem, una lista de ellos o `{ "item", "count" }`  |                    | Lo que va en la ranura izquierda, cualquier ítem de una lista, y cuántos de ellos necesita un trabajo, uno por defecto; el resto de la pila queda para el siguiente. `{ "item": "minecraft:coal", "count": 8 }` con un `result` de diamante son ocho carbones por un diamante                              |
+| `with`         | sí          | nombre de ítem, una lista de ellos o `{ "item", "count" }`  |                    | Lo que va en la ranura derecha, cualquier ítem de una lista, y cuántos se gastan, uno por defecto: `{ "item": "minecraft:coal", "count": 10 }` pide una pila de al menos diez y toma diez. Un yunque nunca responde ante un ítem solitario, así que todo trabajo es una pareja                           |
 | `result`       | no          | nombre de ítem, o `{ "item", "count" }`                     | el ítem izquierdo  | Lo que sale en lugar del ítem izquierdo, y cuántos, uno por defecto, conservando las etiquetas del ítem izquierdo, de modo que un pico de hierro irrompible y diez carbones pueden volver como uno de diamante irrompible. Los encantamientos se aplican a lo que salga                                 |
 | `levels`       | no          | entero                                                      | `1`                | Los niveles de experiencia que cuesta el trabajo, 1 como mínimo                                                                                                                                                                                                                                       |
 | `enchantments` | no          | objeto de nombre de encantamiento a nivel                   | ninguno            | Con lo que vuelve el ítem. Un nivel que ya tiene a esa altura o por encima se deja como está, y si no hay nada que subir el yunque no ofrece nada, salvo que se indique `grants`                                                                                                                       |
@@ -1989,7 +1997,7 @@ La tabla de botín de un bloque decide qué suelta, pero aportar una se apodera 
 }
 ```
 
-| Clave         | Obligatorio | Valor                           | Predeterminado | Qué hace                                                                                                                                      |
+| Clave         | Obligatorio | Valor                           | Por defecto    | Qué hace                                                                                                                                      |
 | ------------- | ----------- | ------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `block`       | sí          | id de bloque                    |                | El bloque que vigila la regla                                                                                                                 |
 | `properties`  | no          | objeto de propiedad a valor     | ninguno        | Solo los estados con estos valores, como `{ "axis": "x" }` en un tronco; sin ello, todos los estados. Un `meta` de 1.12.2 no se lee           |
@@ -1999,14 +2007,14 @@ La tabla de botín de un bloque decide qué suelta, pero aportar una se apodera 
 
 Cada drop:
 
-| Clave        | Obligatorio                | Valor                             | Predeterminado | Qué hace                                                                                                                                                                                                                                                                                                                                       |
+| Clave        | Obligatorio                | Valor                             | Por defecto    | Qué hace                                                                                                                                                                                                                                                                                                                                       |
 | ------------ | -------------------------- | --------------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `item`       | sí, salvo con `experience` | id de ítem                        |                | Lo que suelta                                                                                                                                                                                                                                                                                                                                  |
 | `experience` | no                         | número o `low-high`               |                | En lugar de un ítem, esa cantidad de experiencia en forma de orbes, sorteada de manera uniforme dentro del rango. `chance` y `silkTouch` se aplican igual que con un ítem                                                                                                                                                                       |
 | `count`      | no                         | número o `low-high`               | `1`            | Cuántos, sorteados de manera uniforme dentro del rango                                                                                                                                                                                                                                                                                         |
-| `chance`     | no                         | float                             | `1.0`          | La probabilidad de que el drop se produzca, siendo `0.05` una rotura de cada veinte                                                                                                                                                                                                                                                            |
+| `chance`     | no                         | decimal                           | `1.0`          | La probabilidad de que el drop se produzca, siendo `0.05` una rotura de cada veinte                                                                                                                                                                                                                                                            |
 | `fortune`    | no                         | entero                            | `0`            | Hasta tantos extra por nivel de Fortuna de la herramienta                                                                                                                                                                                                                                                                                      |
-| `silkTouch`  | no                         | `either`, `only` o `never`        | `either`       | Si el drop necesita una recolección con Toque de seda, la rechaza o le da igual. Es una cuando un jugador rompe, con una herramienta con Toque de seda, un bloque que se puede recolectar con toque de seda como lo decidía 1.12.2: un bloque completo sin entidad de bloque, o paneles de cristal, barrotes de hierro, telarañas y cofres de Ender |
+| `silkTouch`  | no                         | `either`, `only` o `never`        | `either`       | Si el drop necesita una recolección con Toque de seda, la rechaza o le da igual. Es una cuando un jugador rompe, con una herramienta con Toque de seda, un bloque que se puede recolectar con Toque de seda como lo decidía 1.12.2: un bloque completo sin entidad de bloque, o paneles de vidrio, barrotes de hierro, telarañas y cofres de Ender |
 
 Las reglas ven toda rotura que suelta el botín del bloque, como hacía 1.12.2: la de un jugador, y las explosiones, los pistones, el agua que fluye, los mobs y un mob del pack que cave a través del bloque, que sortean toda regla sin `advancement`. Cuando una explosión reduce los drops propios del bloque, cada ítem sorteado sobrevive con las mismas probabilidades; la experiencia no se reduce. Varias reglas para un mismo bloque se aplican todas, y un `replace` en cualquiera de ellas borra primero los drops habituales.
 
@@ -2029,7 +2037,7 @@ El juego no da a los jugadores ninguna tabla de botín propia: al morir solo se 
 }
 ```
 
-| Clave                 | Obligatorio | Valor              | Predeterminado | Qué hace                                                                              |
+| Clave                 | Obligatorio | Valor              | Por defecto    | Qué hace                                                                              |
 | --------------------- | ----------- | ------------------ | -------------- | ------------------------------------------------------------------------------------- |
 | `table`               | sí          | nombre de tabla    |                | La tabla de botín que se sortea cuando muere un jugador                               |
 | `mode`                | no          | `add` o `replace`  | `add`          | Si los ítems de la tabla se suman al inventario o lo sustituyen                       |
@@ -2072,7 +2080,7 @@ La ruta del archivo es el nombre de registro de la profesión, así que `mypack/
 }
 ```
 
-| Clave       | Obligatorio | Valor             | Predeterminado | Qué hace                                                                                                                                                                                                                                                                                                                        |
+| Clave       | Obligatorio | Valor             | Por defecto    | Qué hace                                                                                                                                                                                                                                                                                                                        |
 | ----------- | ----------- | ----------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `jobSite`   | no          | nombre de bloque  | ninguno        | El bloque que un aldeano reclama para asumir esta profesión, como la mesa de herrería hace a un herrero de herramientas. Sin él, ningún bloque otorga la profesión: como en 1.12.2, un aldeano que aparece o se cría la recibe al azar, la conserva y, sin bloque en el que trabajar, nunca repone sus existencias                 |
 | `workSound` | no          | nombre de sonido  | ninguno        | Lo que reproduce mientras trabaja en ese bloque                                                                                                                                                                                                                                                                                 |
@@ -2102,14 +2110,17 @@ El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos s
 }
 ```
 
-| Clave        | Obligatorio | Valor                  | Predeterminado | Qué hace                                                                                                      |
+| Clave        | Obligatorio | Valor                  | Por defecto    | Qué hace                                                                                                      |
 | ------------ | ----------- | ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------- |
 | `profession` | sí          | nombre de profesión    |                | De quién es este comercio. También se lee un nombre de vanilla de 1.12.2 con su `career`, véase más arriba    |
 | `level`      | no          | entero                 | `1`            | En qué nivel de comercio aparece, de 1 a 5. Un nivel mayor se suma al nivel 5, el más alto que alcanza un aldeano |
+| `buy`        | sí          | pila                   | ninguno        | Lo que el aldeano recibe, escrito como una pila (véase abajo). Un trueque sin ítem de compra o de venta se omite |
+| `buySecondary` | no        | pila                   | ninguno        | Un segundo ítem que el aldeano recibe junto con `buy`, escrito igual |
+| `sell`       | sí          | pila                   | ninguno        | Lo que el aldeano entrega, escrito como una pila (véase abajo) |
 | `maxUses`    | no          | entero                 | `12`           | Veces que se puede usar antes de bloquearse                                                                   |
 | `xp`         | no          | entero                 | `2`            | Experiencia que gana el aldeano por comercio hacia su siguiente nivel                                         |
 
-Un stack es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es simplemente `min`.
+Una pila es `item` con `min` (`1`) y `max` (`min`), de modo que un precio fijo es simplemente `min`.
 
 ---
 
@@ -2225,7 +2236,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 *variantes de entidades*
 
-| Clave           | Obligatorio | Valor                                | Predeterminado | Qué hace                                                                                                                                                                                                                     |
+| Clave           | Obligatorio | Valor                                | Por defecto    | Qué hace                                                                                                                                                                                                                     |
 | --------------- | ----------- | ------------------------------------ | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `entity`        | sí          | `namespace:name`                     | ninguno        | La entidad sobre la que construir. La de cualquier mod, siempre que admita un constructor de mundo simple                                                                                                                    |
 | `name`          | no          | cadena                               | ninguno        | El nombre que lleva en el mundo, en los mensajes de muerte y en su huevo                                                                                                                                                     |
@@ -2234,6 +2245,9 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `baby`          | no          | booleano o 0.0 a 1.0                 | `false`        | Con qué frecuencia aparece una cría, y se queda así. `true` es siempre, un número es esa proporción de ellas                                                                                                                 |
 | `becomes`       | no          | lista                                | ninguno        | Otras variantes en las que esta puede convertirse al aparecer, según su peso. Véase más abajo                                                                                                                                |
 | `egg`           | no          | booleano u objeto                    | `true`         | Un huevo generador, coloreado como el huevo de la entidad que copia. `{ "primary": "AABBCC", "secondary": "112233" }` elige tus propios colores, `false` omite el huevo                                                       |
+| `egg.primary`   | no          | cadena                               | el color de la entidad copiada | Color hexadecimal de la base del huevo, como `AABBCC`. Si falta, el huevo conserva el color base de la entidad que copia la variante |
+| `egg.secondary` | no          | cadena                               | el color de la entidad copiada | Color hexadecimal de las manchas del huevo, como `112233`. Si falta, el huevo conserva el color de manchas de la entidad que copia la variante |
+| `becomes.variant` | sí        | cadena                               | ninguno        | En una entrada de `becomes` escrita como objeto, la variante en la que se convierte, por su nombre de registro. Una entrada también puede ser solo ese nombre. La que no nombra variante se omite |
 | `keepsBaseBaby` | no          | booleano                             | `false`        | Si también se ejecuta la tirada de cría de la base. Sin ella, una variante basada en el zombi solo genera crías como indica `baby`, sin hijo de la tirada propia del zombi y sin jinete de gallina                            |
 | `requires`      | no          | lista de ids de mods o espacios de nombres de packs | ninguno | La variante se omite salvo que estén presentes todos                                                                                                                                                                         |
 
@@ -2250,7 +2264,7 @@ Una variante es una clase por derecho propio, así que un mundo que contenga una
 }
 ```
 
-Nombrarse a sí misma es la forma de seguir siendo como es, y los pesos son las probabilidades. Pon eso en `mypack:walker` y un huevo y una entrada de aparición darán sobre todo caminantes con algún pequeño ocasional, como un huevo de zombi te da de vez en cuando un bebé. Ocurre cuando la criatura entra en el mundo, así que vale por igual para huevos, `/summon` y aparición natural, y la criatura que llega es una real de la variante elegida con todo lo que esa variante dice. Un generador es más estricto: sortea solo entre las variantes del mismo mob base y del mismo equipo que la variante a la que está asignado, de modo que un generador de zombis da los zombis de ese equipo y sus crías, y nunca una criatura de otra clase ni de otro equipo, igual que un generador de zombis de vanilla sigue siendo un generador de zombis. Una variante alcanzada de este modo no vuelve a transformarse, así que dos variantes pueden nombrarse mutuamente sin entrar en bucle.
+Una entrada es un nombre de variante a secas, que pesa `1`, o un objeto con `variant` (obligatorio) y `weight` (`1`, mínimo `1`). Nombrarse a sí misma es la forma de seguir siendo como es, y los pesos son las probabilidades. Pon eso en `mypack:walker` y un huevo y una entrada de aparición darán sobre todo caminantes con algún pequeño ocasional, como un huevo de zombi te da de vez en cuando un bebé. Ocurre cuando la criatura entra en el mundo, así que vale por igual para huevos, `/summon` y aparición natural, y la criatura que llega es una real de la variante elegida con todo lo que esa variante dice. Un generador es más estricto: sortea solo entre las variantes del mismo mob base y del mismo equipo que la variante a la que está asignado, de modo que un generador de zombis da los zombis de ese equipo y sus crías, y nunca una criatura de otra clase ni de otro equipo, igual que un generador de zombis de vanilla sigue siendo un generador de zombis. Una variante alcanzada de este modo no vuelve a transformarse, así que dos variantes pueden nombrarse mutuamente sin entrar en bucle.
 
 **Dónde encaja `baby`.** El juego no tiene un zombi bebé propio: hay un único zombi que sortea si es un niño al aparecer. `baby` dice con qué frecuencia, así que `"baby": 0.05` es el hábito de vanilla y `"baby": true` es siempre. Una variante no toma además la tirada propia del zombi, de modo que no aparece ningún niño ni jinete de gallina que `baby` no haya pedido; `keepsBaseBaby` devuelve esa tirada. Entre ambas son dos maneras de llegar a lo mismo, y cuál elegir depende de la diferencia que busques: `baby` por sí solo da una variante que a veces es cría, `becomes` da varias variantes que se distinguen en lo que quieras, y una mezcla de ambas es válida.
 
@@ -2258,23 +2272,23 @@ Nombrarse a sí misma es la forma de seguir siendo como es, y los pesos son las 
 
 *variantes de entidades*
 
-| Clave        | Obligatorio | Valor                                  | Predeterminado | Qué hace                                                                                                          |
+| Clave        | Obligatorio | Valor                                  | Por defecto    | Qué hace                                                                                                          |
 | ------------ | ----------- | -------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `texture`    | no          | `namespace:textures/entity/<file>.png` | ninguno        | Una piel propia, con la misma disposición que la de la entidad que copia                                          |
 | `leftHanded` | no          | booleano                               | `false`        | Sostiene su arma en la otra mano                                                                                  |
 | `glowing`    | no          | booleano                               | `false`        | Con contorno visible a través de las paredes                                                                      |
 | `invisible`  | no          | booleano                               | `false`        | No se dibuja, aunque su equipo sí                                                                                 |
-| `scale`      | no          | float                                  | `1.0`          | Con qué tamaño se dibuja, y qué tamaño tiene su hitbox                                                            |
-| `angryScale` | no          | float                                  | `scale`        | El tamaño al que se hincha mientras tiene algo que atacar, y durante tres segundos tras perderlo                  |
-| `width`      | no          | float                                  | el de la base  | Su hitbox a lo ancho, antes de aplicar `scale`                                                                    |
-| `height`     | no          | float                                  | el de la base  | Su hitbox a lo alto, antes de aplicar `scale`                                                                     |
+| `scale`      | no          | decimal                                | `1.0`          | Con qué tamaño se dibuja, y qué tamaño tiene su hitbox                                                            |
+| `angryScale` | no          | decimal                                | `scale`        | El tamaño al que se hincha mientras tiene algo que atacar, y durante tres segundos tras perderlo                  |
+| `width`      | no          | decimal                                | el de la base  | Su hitbox a lo ancho, antes de aplicar `scale`                                                                    |
+| `height`     | no          | decimal                                | el de la base  | Su hitbox a lo alto, antes de aplicar `scale`                                                                     |
 | `bright`     | no          | booleano                               | `false`        | Se dibuja con luz plena dondequiera que esté, como bajo el sol de mediodía, de modo que nunca lo atenúan la noche, la sombra ni una cueva |
 | `hideArmor`  | no          | booleano                               | `false`        | Lleva su armadura sin que se dibuje                                                                               |
 | `hideHeld`   | no          | booleano                               | `false`        | Lo mismo para lo que sostiene                                                                                     |
 | `tint`       | no          | color hexadecimal                      | ninguno        | Colorea la entidad al dibujarla                                                                                   |
 | `tintParts`  | no          | lista de `body`, `armor`, `held`       | `["body"]`     | A qué partes llega el tinte                                                                                       |
 
-`scale` cambia tanto el modelo como la hitbox en ambos lados, de modo que lo que ves es lo que puedes golpear. Una criatura que cambia su propio tamaño, un animal que crece o un zombi que es un niño, se escala en torno al tamaño que haya elegido, de modo que ambos no se peleen. `angryScale` la hincha mientras tiene un objetivo y la devuelve a `scale` cuando lo pierde. Como el cliente nunca sabe qué está cazando una criatura, el indicador de carrera lleva esa noticia: se activa en una variante que usa `angryScale` y en nada más, de modo que un mod que lea la carrera en tus variantes la verá cambiar. Crecer bajo un techo bajo es posible, igual que cuando crece un slime, así que mantén la diferencia modesta.
+`scale` cambia tanto el modelo como la hitbox en ambos lados, de modo que lo que ves es lo que puedes golpear. Una criatura que cambia su propio tamaño, un animal que crece o un zombi que es un niño, se escala en torno al tamaño que haya elegido, de modo que ambos no se peleen. `angryScale` la hincha mientras tiene un objetivo y la devuelve a `scale` cuando lo pierde. Como el cliente nunca sabe qué está cazando una criatura, el indicador de sprint lleva esa noticia: se activa en una variante que usa `angryScale` y en nada más, de modo que un mod que lea el sprint de tus variantes lo verá cambiar. Crecer bajo un techo bajo es posible, igual que cuando crece un slime, así que mantén la diferencia modesta.
 
 Una `texture` se enlaza en lugar de la que la entidad usaría normalmente, sea cual sea el renderizador que herede, de modo que funciona tanto con entidades de mods como con las de vanilla. Tiene que coincidir con el modelo sobre el que se dibuja, ya que el modelo es el de la entidad base, una piel, no una forma nueva. Las capas conservan sus propias texturas, así que la armadura sigue pareciendo armadura en un zombi con otra piel.
 
@@ -2284,7 +2298,7 @@ La armadura solo se dibuja en una entidad cuyo renderizador tenga capa de armadu
 
 *variantes de entidades*
 
-| Clave         | Obligatorio | Valor    | Predeterminado | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Clave         | Obligatorio | Valor    | Por defecto    | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------- | ----------- | -------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sounds`      | no          | objeto   | los de la base | `ambient`, `hurt` y `death`, cada uno un evento de sonido registrado, y un nombre de 1.12.2 todavía se lee, véase [nombres de sonido](#listas-de-valores). Otros tres para los que no tiene sonido base: `target` se reproduce una vez cada vez que fija un objetivo, y `explode` es cómo suena su explosión, ya sea que explote ella misma con `explodes` o lance TNT con `throws`. `throw` se reproduce cuando lanza cualquier cosa con `throws`, en lugar del lanzamiento de bola de nieve, o del siseo de la mecha para el TNT. `targetVaries` desplaza cada reproducción de `target` hacia arriba o hacia abajo una cantidad aleatoria dentro de esos semitonos, así que `3` oscila un cuarto de octava hacia cada lado; `0` la reproduce tal cual. El sonido de la explosión se emite en lugar del propio del juego |
 | `soundVolume` | no          | número   | `1.0`          | Qué volumen tienen esos sonidos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
@@ -2295,11 +2309,11 @@ La armadura solo se dibuja en una entidad cuyo renderizador tenga capa de armadu
 
 *variantes de entidades*
 
-| Clave               | Obligatorio | Valor                                               | Predeterminado    | Qué hace                                                                                                                                                                                                                                                                                                       |
+| Clave               | Obligatorio | Valor                                               | Por defecto       | Qué hace                                                                                                                                                                                                                                                                                                       |
 | ------------------- | ----------- | --------------------------------------------------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `immuneTo`          | no          | lista de tipos de daño                              | ninguno           | Daño que ignora, por los nombres que usaba 1.12.2, `fall`, `drown`, `explosion`, `explosion.player`, `magic`, `indirectMagic`, `mob`, `player`, `inWall` y el resto, o por un id de tipo de daño. Véase [tipos de daño](#listas-de-valores)                                                                       |
-| `fallDamage`        | no          | float                                               | `1.0`             | Multiplica el daño que causa una caída. `0` elimina el daño por caída                                                                                                                                                                                                                                          |
-| `absorption`        | no          | float                                               | `0`               | Corazones extra sobre su salud                                                                                                                                                                                                                                                                                 |
+| `fallDamage`        | no          | decimal                                             | `1.0`             | Multiplica el daño que causa una caída. `0` elimina el daño por caída                                                                                                                                                                                                                                          |
+| `absorption`        | no          | decimal                                             | `0`               | Corazones extra sobre su salud                                                                                                                                                                                                                                                                                 |
 | `creatureAttribute` | no          | `undefined`, `undead`, `arthropod` o `illager`      | el de la base     | Qué cuenta como, de modo que Aspecto sagrado y las pociones de curación lo traten en consecuencia                                                                                                                                                                                                              |
 | `effects`           | no          | lista de objetos                                    | ninguno           | Efectos que tiene siempre: `{ "potion": "minecraft:strength", "amplifier": 1 }`                                                                                                                                                                                                                                |
 | `fireproof`         | no          | booleano                                            | `false`           | Nunca se prende fuego en absoluto, así que el fuego y la lava nunca le hacen daño y nunca arde a la luz del día                                                                                                                                                                                                |
@@ -2312,15 +2326,15 @@ La armadura solo se dibuja en una entidad cuyo renderizador tenga capa de armadu
 
 *variantes de entidades*
 
-| Clave            | Obligatorio | Valor            | Predeterminado | Qué hace                                                                                                                                                                                                                                                                                                                                      |
+| Clave            | Obligatorio | Valor            | Por defecto    | Qué hace                                                                                                                                                                                                                                                                                                                                      |
 | ---------------- | ----------- | ---------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `jumpMultiplier` | no          | float            | `1.0`          | Cuánto más alto salta que la entidad que copia                                                                                                                                                                                                                                                                                                |
+| `jumpMultiplier` | no          | decimal          | `1.0`          | Cuánto más alto salta que la entidad que copia                                                                                                                                                                                                                                                                                                |
 | `maxFallHeight`  | no          | entero           | el de la base  | Cuánto caerá al trazar rutas                                                                                                                                                                                                                                                                                                                  |
 | `noAI`           | no          | booleano         | `false`        | Se queda donde se la deja y no hace nada                                                                                                                                                                                                                                                                                                      |
 | `leashable`      | no          | booleano         | `false`        | Se puede llevar con una correa, aunque la entidad que copia nunca pudiera                                                                                                                                                                                                                                                                     |
 | `steerable`      | no          | booleano         | `false`        | Se puede dirigir mientras se la monta                                                                                                                                                                                                                                                                                                         |
 | `pathPriorities` | no          | objeto           | ninguno        | Por dónde caminará, como `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` y el resto de los tipos de ruta del juego, cada uno un número en el que un valor negativo significa nunca. Los `DANGER_CACTUS` y `DAMAGE_CACTUS` de 1.12.2 se leen como `DANGER_OTHER` y `DAMAGE_OTHER`, donde esta versión clasifica el cactus junto con los arbustos de bayas dulces |
-| `stepHeight`     | no          | float, bloques   | el de la base  | Qué altura de desnivel sube caminando sin saltar                                                                                                                                                                                                                                                                                              |
+| `stepHeight`     | no          | decimal, bloques | el de la base  | Qué altura de desnivel sube caminando sin saltar                                                                                                                                                                                                                                                                                              |
 | `climbs`         | no          | booleano         | el de la base  | Activado, trepa por cualquier pared contra la que camine, como una araña, sea cual sea su base. Desactivado, no trepa nada, ni siquiera una escalera, y una araña se queda en el suelo                                                                                                                                                         |
 | `teleports`      | no          | booleano         | `true`         | Si un enderman o un shulker puede teletransportarse. Desactivado, se queda donde está, también a la luz del día y en el agua                                                                                                                                                                                                                  |
 | `walks`          | no          | booleano         | `false`        | Un conejo camina como los demás animales en lugar de moverse a saltos. Solo lo lee un conejo                                                                                                                                                                                                                                                  |
@@ -2329,23 +2343,23 @@ La armadura solo se dibuja en una entidad cuyo renderizador tenga capa de armadu
 
 *variantes de entidades*
 
-| Clave                | Obligatorio | Valor    | Predeterminado | Qué hace                                                                                                                                                                                                                                              |
+| Clave                | Obligatorio | Valor    | Por defecto    | Qué hace                                                                                                                                                                                                                                              |
 | -------------------- | ----------- | -------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `breathesUnderwater` | no          | booleano | `false`        | Nunca se ahoga, y se hunde para caminar por el fondo en lugar de nadar hacia la superficie. Sigue orientándose por el suelo, así que el agua profunda de la que no pueda salir caminando la retendrá                                                  |
 | `swims`              | no          | booleano | `false`        | Se mueve por el agua como un calamar o un guardián, y nunca se ahoga. Se orienta por el agua en lugar de por el suelo, así que su sitio está en el agua y queda varada fuera de ella                                                                   |
 | `amphibious`         | no          | booleano | `false`        | Camina por tierra y nada con soltura en el agua, cambiando su forma de orientarse al entrar y salir del agua. Nunca se ahoga. Lo que estuviera persiguiendo se olvida en la orilla, así que duda un instante cada vez que la cruza                      |
-| `waterSlowdown`      | no          | float    | `0.8`          | Cuánto la frena el agua. Más alto es más rápido                                                                                                                                                                                                       |
+| `waterSlowdown`      | no          | decimal  | `0.8`          | Cuánto la frena el agua. Más alto es más rápido                                                                                                                                                                                                       |
 
 ### Combate
 
 *variantes de entidades*
 
-| Clave           | Obligatorio | Valor                          | Predeterminado         | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| Clave           | Obligatorio | Valor                          | Por defecto            | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------- | ----------- | ------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `hostile`       | no          | booleano                       | `false`                | Ataca lo que alcanza y se defiende cuando la hieren. Una variante hostil cuenta como monstruo para el juego sea cual sea su base, así que el límite de monstruos la contiene. El modo pacífico la elimina solo cuando su base es un monstruo; cualquier otra base se queda, incapaz de herir a un jugador allí. Descarta las tareas de animal con las que venía su base: criar, dejarse tentar, seguir a un progenitor, a un dueño o a los de su especie, sentarse                          |
 | `targets`       | no          | lista de nombres de entidades  | el jugador             | Lo que sale a buscar mientras es hostil. `minecraft:player` se entiende aunque el jugador no sea una entidad registrada                                                                                                                                                                                                                                                                                                                                                                    |
-| `attackReach`   | no          | float, bloques                 | su tamaño              | Hasta dónde llega un golpe cuerpo a cuerpo. El juego alcanza el doble del ancho, por lo que una criatura ampliada golpea desde más lejos; esto lo fija de forma directa                                                                                                                                                                                                                                                                                                                    |
-| `knockback`     | no          | float                          | el de la base, `0.4`   | Con qué fuerza empujan sus golpes. `0` no empuja en absoluto                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `attackReach`   | no          | decimal, bloques               | su tamaño              | Hasta dónde llega un golpe cuerpo a cuerpo. El juego alcanza el doble del ancho, por lo que una criatura ampliada golpea desde más lejos; esto lo fija de forma directa                                                                                                                                                                                                                                                                                                                    |
+| `knockback`     | no          | decimal                        | el de la base, `0.4`   | Con qué fuerza empujan sus golpes. `0` no empuja en absoluto                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `hitEffects`    | no          | booleano                       | `true`                 | Si aplica a lo que golpea el efecto que aplica la entidad que copia: el wither de un esqueleto wither, el veneno de una araña de las cuevas, el hambre de un husk. Desactivado, golpea solo con daño                                                                                                                                                                                                                                                                                       |
 | `hitFire`       | no          | booleano                       | `true`                 | Si prende fuego a lo que golpea cuando lo haría la entidad que copia: un zombi en llamas, la bola de fuego de un blaze. Desactivado, nada de lo que hace inicia un fuego en su objetivo                                                                                                                                                                                                                                                                                                    |
 | `passive`       | no          | booleano                       | `false`                | Le impide atacar a nada, sea cual sea su comportamiento normal                                                                                                                                                                                                                                                                                                                                                                                                                             |
@@ -2358,7 +2372,7 @@ La armadura solo se dibuja en una entidad cuyo renderizador tenga capa de armadu
 
 *variantes de entidades*
 
-| Clave                | Obligatorio | Valor                       | Predeterminado | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Clave                | Obligatorio | Valor                       | Por defecto    | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | -------------------- | ----------- | --------------------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lootTable`          | no          | `namespace:entities/<name>` | el de la base  | Lo que suelta. Sin esto suelta lo que suelte la entidad que copia                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `experience`         | no          | entero                      | el de la base  | Cuánta experiencia suelta                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
@@ -2373,15 +2387,15 @@ Una variante suelta lo que suelte la entidad que copia, porque la tabla de botí
 
 *variantes de entidades*
 
-| Clave            | Obligatorio | Valor              | Predeterminado         | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Clave            | Obligatorio | Valor              | Por defecto            | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | ---------------- | ----------- | ------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `digs`           | no          | booleano           | `false`                | Cava a través de lo que se interponga entre ella y su objetivo, con la herramienta que lleva en la mano: una pala a través de tierra, arena y grava, un pico a través de piedra, un hacha a través de madera, y solo lo que el material de esa herramienta pueda romper, de modo que un pico de madera nunca abre mineral de hierro y nada abre la obsidiana sin diamante. Un bloque tarda lo que tardaría con un jugador que usara esa herramienta, suelta lo que soltaría y desgasta la herramienta. Dale la herramienta con `equipment`; con las manos vacías no cava nada, y no cava nada donde `mobGriefing` esté desactivado. Nunca busca un camino alternativo: con un objetivo va directa hacia él y cava lo que se interponga, y donde la herramienta no puede abrir el bloque se queda empujando. Necesita `hostile`. Toma sus objetivos sin necesidad de verlos, ya que aquello hacia lo que cava está por naturaleza detrás de algo |
 | `throws`         | no          | booleano           | `false`                | Lanza lo que sostiene contra su objetivo desde la distancia, y si es TNT lo enciende y se aparta. Necesita `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | `throwAmmo`      | no          | entero             | ninguno                | Cuántos tiene para lanzar. Si se omite, nunca se queda corta                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `throwReload`    | no          | entero, segundos   | `explosionFuse`        | Cuánto tiempo permanece vacía su mano antes de sacar otro                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | `throwRetreat`   | no          | entero, segundos   | `explosionFuse`        | Cuánto tiempo se mantiene alejada tras un lanzamiento antes de volver                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| `throwPower`     | no          | float              | `1.0`                  | Con qué fuerza lanza. Duplicarlo duplica aproximadamente el alcance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `throwArc`       | no          | float              | `0.35`                 | A qué altura lanza en parábola. Más alto, más tiempo en el aire; casi cero es un lanzamiento plano; por debajo de cero lanza hacia abajo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `throwPower`     | no          | decimal            | `1.0`                  | Con qué fuerza lanza. Duplicarlo duplica aproximadamente el alcance                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `throwArc`       | no          | decimal            | `0.35`                 | A qué altura lanza en parábola. Más alto, más tiempo en el aire; casi cero es un lanzamiento plano; por debajo de cero lanza hacia abajo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | `throwReturns`   | no          | booleano           | `false`                | Lo que lanza vuela como un tridente: golpea con el `attackDamage` de la variante, o 8 en una base que no lo tenga, y luego vuelve volando a su mano como Lealtad devuelve un tridente. Nunca se agota y se apunta al objetivo como lo hace un esqueleto, más rápido con `throwPower` y con menos dispersión en dificultades más altas, y el lanzador se mantiene firme mientras vuela, así que `throwAmmo`, `throwReload`, `throwRetreat` y `throwArc` no se le aplican. El TNT se lanza como siempre                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `explodes`       | no          | booleano           | `false`                | Estalla junto a su objetivo, como un creeper. Necesita `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | `explosionPower` | no          | número             | `3.0`                  | Qué tamaño tiene la explosión. Un creeper es 3, el TNT es 4. En una base de creeper o ghast, escribir esto o `explosionFuse` fija también la explosión propia de la base sin `explodes`: el tamaño de la explosión y la mecha de un creeper, la bola de fuego de un ghast, cada uno en números enteros, de modo que un ghast al que solo se da `explosionFuse` explota con 3 en lugar de su 1 propio                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
@@ -2396,7 +2410,7 @@ Una variante suelta lo que suelte la entidad que copia, porque la tabla de botí
 | `patrols`        | no          | booleano           | `false`                | Recorre el terreno en largos tramos con otros de su especie que siguen a un líder, como una patrulla de pillagers. Un grupo que aparece junto elige un líder; el resto se mantiene a pocos bloques de él, y cuando el líder fija un objetivo lo hacen todos. Un seguidor que pierde a su líder asume el mando. Necesita `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `swoops`         | no          | booleano           | `false`                | Da vueltas sobre su objetivo y se lanza en picado a través de él, golpeando en la pasada, como un phantom. La variante recibe un ayudante volador, así que vuela mientras caza y se posa en el suelo cuando está inactiva; necesita una base que sea una criatura, un loro por ejemplo, y un murciélago no lo es. Necesita `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | `gusts`          | no          | booleano           | `false`                | Se prepara y lanza una ráfaga de viento contra su objetivo desde la distancia, arrojando hacia atrás y hacia arriba todo lo que rodea al objetivo, como la carga de viento de un breeze. Necesita `hostile`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| `gustPower`      | no          | float              | `1.5`                  | Con qué fuerza arroja una ráfaga. Un golpe de un mob es 0.4, un encantamiento de retroceso fuerte, alrededor de 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `gustPower`      | no          | decimal            | `1.5`                  | Con qué fuerza arroja una ráfaga. Un golpe de un mob es 0.4, un encantamiento de retroceso fuerte, alrededor de 1                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 
 **Lanzar en lugar de embestir.** `explodes` envía a una criatura a estallar contra su objetivo. `throws` es el otro temperamento: mantiene la distancia, lanza lo que lleva en la mano principal contra aquello con lo que lucha, y si resulta ser TNT lo enciende, lo lanza y se aparta mientras arde.
 
@@ -2443,23 +2457,23 @@ La lista se aplica después de que `hostile`, `passive` y los comportamientos an
 
 | Clave       | Tipo               | Por defecto      | Qué hace |
 | ----------- | ------------------ | ---------------- | -------- |
-| `priority`  | int                | obligatorio      | Su posición entre las tareas de la base. Menor se ejecuta antes |
+| `priority`  | entero             | obligatorio      | Su posición entre las tareas de la base. Menor se ejecuta antes |
 | `speed`     | número             | la habitual de la tarea | Con qué rapidez se mueve mientras se ejecuta la tarea, como multiplicador de su velocidad al caminar |
 | `nearSpeed` | número             | `1.2`            | `avoidEntity`: el multiplicador cuando aquello que evita está cerca |
 | `distance`  | número, bloques    | la habitual de la tarea | Hasta dónde mira, sigue, dispara o se mantiene alejado |
 | `near`      | número, bloques    | la habitual de la tarea | `follow`, `followOwner`, `followOwnerFlying`: cuánto se acerca antes de detenerse |
 | `chance`    | número             | la habitual de la tarea | `wander`: una tirada cada tantos ticks; `wanderAvoidWater`: la probabilidad, de 0 a 1, de salir del abrigo; `watchClosest`, `watchClosest2`: la probabilidad, de 0 a 1, de mirar en cada tick |
 | `leap`      | número             | `0.4`            | `leapAtTarget`: la altura del salto |
-| `cooldown`  | int, ticks         | `20`             | `attackRanged`, `attackRangedBow`: ticks entre disparos |
+| `cooldown`  | entero, ticks      | `20`             | `attackRanged`, `attackRangedBow`: ticks entre disparos |
 | `entity`    | nombre de entidad  | ninguno          | Qué entidad busca, evita, observa o con cuál se reproduce la tarea. Se entiende `minecraft:player` |
 | `items`     | lista de nombres de ítem | ninguno    | `tempt`: lo que ofrece un jugador en la mano |
-| `sight`     | boolean            | `true`           | `nearestAttackableTarget`, `targetNonTamed`: solo lo que puede ver |
-| `nearby`    | boolean            | `false`          | `nearestAttackableTarget`: solo lo que está dentro de su propio rango de seguimiento |
-| `help`      | boolean            | `false`          | `hurtByTarget`: otros de su especie cercanos se unen |
-| `memory`    | boolean            | `false`          | `attackMelee`, `zombieAttack`: persigue a un objetivo que ha perdido de vista |
-| `close`     | boolean            | `false`          | `openDoor`: cierra la puerta tras de sí |
-| `nocturnal` | boolean            | `false`          | `moveThroughVillage`: solo de noche |
-| `scared`    | boolean            | `false`          | `tempt`: un jugador que se mueve demasiado rápido rompe el hechizo |
+| `sight`     | booleano           | `true`           | `nearestAttackableTarget`, `targetNonTamed`: solo lo que puede ver |
+| `nearby`    | booleano           | `false`          | `nearestAttackableTarget`: solo lo que está dentro de su propio rango de seguimiento |
+| `help`      | booleano           | `false`          | `hurtByTarget`: otros de su especie cercanos se unen |
+| `memory`    | booleano           | `false`          | `attackMelee`, `zombieAttack`: persigue a un objetivo que ha perdido de vista |
+| `close`     | booleano           | `false`          | `openDoor`: cierra la puerta tras de sí |
+| `nocturnal` | booleano           | `false`          | `moveThroughVillage`: solo de noche |
+| `scared`    | booleano           | `false`          | `tempt`: un jugador que se mueve demasiado rápido rompe el hechizo |
 
 La columna `Lista` indica dónde vive la tarea. `tasks` es lo que hace la criatura; `targets` es cómo elige a qué atacar, y una tarea de objetivo sin un ataque que le corresponda no hace nada por sí sola.
 
@@ -2527,11 +2541,11 @@ La columna `Lista` indica dónde vive la tarea. `tasks` es lo que hace la criatu
 
 | Clave               | Obligatorio | Valor                   | Por defecto  | Qué hace |
 | ------------------- | ----------- | ----------------------- | ------------ | -------- |
-| `despawns`          | no          | boolean                 | `true`       | Desactivado, se queda incluso cuando normalmente se eliminaría |
-| `despawnAfter`      | no          | int, segundos           | ninguno      | Se va sin hacer ruido cuando lleva este tiempo en el mundo, por lejos que esté cualquiera |
-| `persistent`        | no          | boolean                 | `false`      | Nunca desaparece |
-| `ignoresSpawnRules` | no          | boolean                 | `false`      | Aparece donde se la coloque, ignorando las reglas heredadas |
-| `spawns`            | no          | lista de objetos        | ninguno      | `creatureType`, `weight`, `min` y `max`, con la misma forma que usa un bioma. `creatureType` es uno de los [tipos de criatura](#listas-de-valores), `creature` si se omite, y elige la lista de apariciones a la que se une la entrada; una entrada con un tipo que el juego no conoce no añade nada |
+| `despawns`          | no          | booleano                | `true`       | Desactivado, se queda incluso cuando normalmente se eliminaría |
+| `despawnAfter`      | no          | entero, segundos        | ninguno      | Se va sin hacer ruido cuando lleva este tiempo en el mundo, por lejos que esté cualquiera |
+| `persistent`        | no          | booleano                | `false`      | Nunca desaparece |
+| `ignoresSpawnRules` | no          | booleano                | `false`      | Aparece donde se la coloque, ignorando las reglas heredadas |
+| `spawns`            | no          | lista de objetos        | ninguno      | `creatureType`, `weight`, `min` y `max`, con la misma forma que usa un bioma; `weight` vale 8 por defecto, `min` 1 y `max` 4. `creatureType` es uno de los [tipos de criatura](#listas-de-valores), `creature` si se omite, y elige la lista de apariciones a la que se une la entrada; una entrada con un tipo que el juego no conoce no añade nada |
 | `biomes`            | no          | lista de nombres de bioma | todos los biomas | Dónde se añaden esas apariciones, por id de bioma o por el nombre que 1.12.2 mostraba para un bioma de vanilla, como `Extreme Hills`. Sin esta clave ni `biomeTypes`, todos los biomas las reciben, el Nether y el End incluidos, y un bioma que coincida con ambas listas recibe cada aparición una sola vez |
 | `biomeTypes`        | no          | lista de tipos de bioma | ninguno      | Lo mismo, por palabra de tipo |
 
@@ -2547,9 +2561,9 @@ El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está j
 
 | Clave               | Obligatorio | Valor   | Por defecto | Qué hace |
 | ------------------- | ----------- | ------- | ----------- | -------- |
-| `trackingRange`     | no          | int     | `80`        | Desde qué distancia se informa al cliente de su existencia |
-| `trackVelocity`     | no          | boolean | `true`      | Envía su velocidad además de su posición. Desactivado ahorra tráfico en cosas que apenas se mueven |
-| `trackingFrequency` | no          | int     | `3`         | Cada cuánto, en ticks |
+| `trackingRange`     | no          | entero  | `80`        | Desde qué distancia se informa al cliente de su existencia |
+| `trackVelocity`     | no          | booleano | `true`      | Envía su velocidad además de su posición. Desactivado ahorra tráfico en cosas que apenas se mueven |
+| `trackingFrequency` | no          | entero  | `3`         | Cada cuánto, en ticks |
 
 ### Almacenamiento
 
@@ -2588,7 +2602,7 @@ El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está j
 | `items`        | no          | objeto                      | ninguno     | Da a la entidad ranuras de ítems. El área son tres filas de 9: cada barra de fluido o de energía ocupa una fila y las ranuras ocupan el resto, así que 1x9 con ambas barras, 2x9 con una y 3x9 con ninguna. Sin `items`, solo se muestran las barras |
 | `fluid`        | no          | objeto                      | ninguno     | Un tanque de fluido |
 | `energy`       | no          | objeto                      | ninguno     | Un búfer de Forge Energy |
-| `dropsOnDeath` | no          | boolean                     | `true`      | Los ítems almacenados se esparcen como ítems sueltos donde muere la entidad. `false` los pierde. El fluido y la energía se pierden en ambos casos |
+| `dropsOnDeath` | no          | booleano                    | `true`      | Los ítems almacenados se esparcen como ítems sueltos donde muere la entidad. `false` los pierde. El fluido y la energía se pierden en ambos casos |
 | `runsDry`      | no          | `stops`, `slows` o `hurts`  | `stops`     | Qué ocurre mientras no puede pagar un segundo completo de `use`. `stops`: deja de pensar y se queda donde está, con sus tareas, objetivos y comportamientos inactivos hasta que se le rellene, aunque sigue cayendo y se le puede empujar. `slows`: se mueve a la mitad de velocidad. `hurts`: recibe 1 de daño cada segundo, como por inanición, así que `immuneTo` con `starve` se lo ahorra |
 
 **Funcionar con lo que lleva.** Un `use` en el tanque o en el búfer es un coste de funcionamiento: una vez por segundo la entidad toma esa cantidad, por encima de `transfer`, `buckets` y los filtros por igual. Cuando cualquiera de los dos contiene menos de un segundo completo de `use`, la entidad se ha quedado sin recursos: ya no se toma nada, `runsDry` decide qué ocurre, y vuelve a la normalidad en cuanto se rellena. Solo gasta una criatura; en una base que no está viva, como una vagoneta, `use` no hace nada.
@@ -2603,18 +2617,18 @@ El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está j
 
 | Clave      | Obligatorio | Valor                    | Por defecto | Qué hace |
 | ---------- | ----------- | ------------------------ | ----------- | -------- |
-| `capacity` | sí          | int, mB                  | ninguno     | Cuánto cabe en el tanque |
+| `capacity` | sí          | entero, mB               | ninguno     | Cuánto cabe en el tanque |
 | `filter`   | no          | lista de entradas de filtro | ninguno  | Qué fluidos acepta el tanque. Sin ella acepta cualquiera |
-| `buckets`  | no          | boolean                  | `false`     | Un clic derecho con un cubo u otro recipiente de fluido, sin agacharse, lo vacía en el tanque o lo llena desde el tanque. Un clic que no mueve fluido se deja a la entidad |
-| `use`      | no          | int, mB por segundo      | `0`         | Cuánto gasta la entidad del tanque cada segundo que está viva. `0` no cuesta nada |
+| `buckets`  | no          | booleano                 | `false`     | Un clic derecho con un cubo u otro recipiente de fluido, sin agacharse, lo vacía en el tanque o lo llena desde el tanque. Un clic que no mueve fluido se deja a la entidad |
+| `use`      | no          | entero, mB por segundo   | `0`         | Cuánto gasta la entidad del tanque cada segundo que está viva. `0` no cuesta nada |
 
 `energy`:
 
 | Clave      | Obligatorio | Valor              | Por defecto | Qué hace |
 | ---------- | ----------- | ------------------ | ----------- | -------- |
-| `capacity` | sí          | int, FE            | ninguno     | Cuánta energía contiene |
-| `transfer` | no          | int, FE            | sin límite  | La máxima energía que entra o sale en una operación |
-| `use`      | no          | int, FE por segundo | `0`        | Cuánta energía gasta cada segundo que está viva. `0` no cuesta nada |
+| `capacity` | sí          | entero, FE         | ninguno     | Cuánta energía contiene |
+| `transfer` | no          | entero, FE         | sin límite  | La máxima energía que entra o sale en una operación |
+| `use`      | no          | entero, FE por segundo | `0`        | Cuánta energía gasta cada segundo que está viva. `0` no cuesta nada |
 
 Una entrada de filtro. Decide la primera entrada que coincide, y todo lo que no coincida con ninguna se rechaza:
 
@@ -2623,7 +2637,7 @@ Una entrada de filtro. Decide la primera entrada que coincide, y todo lo que no 
 | `item`  | una de las tres  | id de ítem      | ninguno     | Un ítem, como `namespace:name` |
 | `tag`   | una de las tres  | id de etiqueta de ítem | ninguno | Todos los ítems de esa etiqueta, como `c:ingots/iron` |
 | `fluid` | una de las tres  | id de fluido    | ninguno     | Un fluido por su id, como `minecraft:water`. Solo lo lee un filtro de fluido |
-| `max`   | no               | int             | `0`         | La mayor cantidad que se guarda a la vez, contada en todas las ranuras, o en mB para un fluido. `0` es sin límite |
+| `max`   | no               | entero          | `0`         | La mayor cantidad que se guarda a la vez, contada en todas las ranuras, o en mB para un fluido. `0` es sin límite |
 
 ## Órdenes de trabajo
 
@@ -2631,13 +2645,13 @@ Una entrada de filtro. Decide la primera entrada que coincide, y todo lo que no 
 
 `<namespace>/orders/*.json`
 
-El nombre del archivo lo eliges tú, solo se lee la carpeta y varios archivos se suman. Un archivo contiene una lista `orders` y, junto a ella, tres ajustes para todo el paquete; el primer archivo que fija uno lo decide.
+El nombre del archivo lo eliges tú, solo se lee la carpeta y varios archivos se acumulan. Un archivo contiene una lista `orders` y, junto a ella, tres ajustes para todo el pack; el último archivo leído que fija uno lo decide, y el pack con la prioridad más alta se lee al final.
 
 Una orden es un trabajo que las variantes de entidad nombradas como sus encargados hacen para un jugador: extraen los bloques que nombra dentro de su área, o traen sus ítems desde otros cofres, y llevan lo obtenido a su cofre. Todas las formas de abrir una funcionan desde un cliente vanilla:
 
 - **Un cartel.** Coloca un cartel sobre un cofre o junto a él y escribe la palabra `sign` de la orden en la primera línea. La orden se abre en ese cofre, y la segunda línea del cartel muestra cuántos ítems faltan. Romper el cartel, o el cofre, la cancela.
 - **Una herramienta.** Haz clic derecho sobre un trabajador, sin agacharte, con una herramienta del tipo `tool` de la orden. El trabajador toma la herramienta, la que tenía vuelve a ti, y trabaja la orden en el cofre más cercano dentro de su área.
-- **Un cofre de existencias.** Renombra un cofre a `stockName` en un yunque y colócalo. Cada ítem de su primera fila se mantiene lleno hasta un montón completo: los trabajadores lo traen de otros cofres dentro del área de la primera orden `haul` del paquete, con los encargados, la prioridad y el área de esa orden.
+- **Un cofre de existencias.** Renombra un cofre a `stockName` en un yunque y colócalo. Cada ítem de su primera fila se mantiene lleno hasta un montón completo: los trabajadores lo traen de otros cofres dentro del área de la primera orden `haul` del pack, con los encargados, la prioridad y el área de esa orden.
 
 ```json
 {
@@ -2678,35 +2692,35 @@ Una orden es un trabajo que las variantes de entidad nombradas como sus encargad
 
 Ajustes junto a `orders`:
 
-| Clave | Obligatorio | Valor | Predeterminado | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `stockName` | no | cadena | `Stock` | El nombre que convierte un cofre colocado en cofre de existencias, sin distinguir mayúsculas. Vacío desactiva los cofres de existencias |
 | `hire` | no | nombre de ítem | ninguno | Contrata a un trabajador libre: haz clic derecho sobre él con este ítem, sin agacharte, y será tuyo y el ítem se gasta. Un trabajador libre no pertenece a ningún jugador ni equipo |
-| `spawnCap` | no | int | `1` | Cuántos trabajadores puede generar una orden en su cofre cuando no acude ninguno. `0` no genera ninguno |
+| `spawnCap` | no | entero | `1` | Cuántos trabajadores puede generar una orden en su cofre cuando no acude ninguno. `0` no genera ninguno |
 
 Claves de la orden:
 
-| Clave | Obligatorio | Valor | Predeterminado | Qué hace |
+| Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
 | `job` | sí | `gather`, `mine`, `farm` o `haul` | | `gather` y `mine` extraen los bloques que nombra `blocks`, como el bloque mismo o como lo que suelta, siempre que un lado dé al aire o a un bloque que no sea un cubo completo. `farm` cosecha los cultivos maduros y vuelve a plantar cada uno con sus propias semillas. `haul` lleva los ítems que nombra `blocks` desde otros cofres y contenedores al cofre de la orden |
 | `blocks` | sí, salvo en `farm` | id de etiqueta de ítem | ninguno | Lo que quiere la orden, como etiqueta de ítem, por ejemplo `c:ores/iron`, `minecraft:logs` o `c:crops/wheat`. En una orden `mine` también cuenta lo que suelta un bloque de la etiqueta, así que `c:ores/iron` se llena con hierro en bruto. En una orden `farm` limita la cosecha a los cultivos que lo sueltan |
-| `area` | no | int | `16` | Hasta dónde llega el trabajo desde el cofre, en bloques por cada eje |
-| `areaByTier` | no | lista de int | ninguno | El alcance según el nivel de extracción de la herramienta del trabajador: la primera entrada sin herramienta o con nivel 0, luego una entrada por nivel, y la última para cada nivel más allá del final. Sustituye a `area` |
+| `area` | no | entero | `16` | Hasta dónde llega el trabajo desde el cofre, en bloques por cada eje |
+| `areaByTier` | no | lista de entero | ninguno | El alcance según el nivel de extracción de la herramienta del trabajador: la primera entrada sin herramienta o con nivel 0, luego una entrada por nivel, y la última para cada nivel más allá del final. Sustituye a `area` |
 | `deliver` | no | `chest` o `self` | `chest` | `chest` lleva lo recogido al cofre de la orden. `self` lo guarda en el almacenamiento propio del trabajador, y la orden lo cuenta al recogerlo |
-| `limit` | no | int | `64` | Cuántos ítems quiere la orden antes de cerrarse |
-| `standing` | no | int | `0` | Por encima de `0` la orden nunca se cierra: mantiene esa cantidad de sus ítems en el cofre y trabaja cuando hay menos. `limit` entonces no se lee |
-| `workers` | no | int | `1` | El máximo de trabajadores en la orden a la vez |
-| `priority` | no | int | `0` | Un trabajador ocioso toma primero la orden abierta de mayor prioridad, luego la más cercana |
+| `limit` | no | entero | `64` | Cuántos ítems quiere la orden antes de cerrarse |
+| `standing` | no | entero | `0` | Por encima de `0` la orden nunca se cierra: mantiene esa cantidad de sus ítems en el cofre y trabaja cuando hay menos. `limit` entonces no se lee |
+| `workers` | no | entero | `1` | El máximo de trabajadores en la orden a la vez |
+| `priority` | no | entero | `0` | Un trabajador ocioso toma primero la orden abierta de mayor prioridad, luego la más cercana |
 | `takers` | sí | lista | | Quién puede trabajarla: un nombre de variante, `team:<team>` para cualquier miembro de un equipo del marcador, o `tag:<tag>` para cualquier entidad con esa etiqueta |
 | `sign` | no | cadena | ninguno | La palabra de la primera línea de un cartel que abre la orden, sin distinguir mayúsculas |
 | `speed` | no | número | `1` | Multiplica la velocidad de extracción del trabajador. `2` extrae el doble de rápido que un jugador con la misma herramienta |
 | `tool` | no | tipo de herramienta | ninguno | El tipo de herramienta, como `pickaxe`, `axe`, `shovel` o `hoe`, que da esta orden a un trabajador con clic derecho. Un trabajador cuya herramienta no puede extraer un bloque vuelve al cofre por una de este tipo |
 
-**Cómo trabaja un trabajador.** Una variante que nombra un encargado, o todas las variantes cuando algún encargado es un equipo o una etiqueta, busca trabajo una vez por segundo mientras está ociosa. Toma la mejor orden abierta cuyo cofre esté dentro de su área más 32 bloques, la sostiene con un arriendo que caduca si deja de trabajar y conserva el arriendo al guardar y volver a cargar. Extraer tarda lo mismo que para un jugador con la herramienta del trabajador, Eficiencia incluida, y Fortuna y Toque de seda cuentan para lo que suelta. Lo que extrae va a sus ítems de `storage` si la variante los tiene, si no a su mano secundaria, nunca al suelo. Cuando no puede cargar más, camina al cofre y lo deja todo dentro. Cada bloque desgasta la herramienta, y un trabajador cuya herramienta se rompe vuelve al cofre por otra del mismo tipo, o descansa un minuto si no la hay. Al morir, un trabajador suelta su herramienta y lo que tiene en las manos, y su almacenamiento se vacía una vez, como siempre lo hace el almacenamiento. `mobGriefing` no lo detiene, porque un jugador pidió el trabajo.
+**Cómo trabaja un trabajador.** Una variante que nombra un encargado, o todas las variantes cuando algún encargado es un equipo o una etiqueta, busca trabajo una vez por segundo mientras está ociosa. Toma la mejor orden abierta cuyo cofre esté dentro de su área más 32 bloques, la mantiene reservada con una concesión que caduca si deja de trabajar y conserva esa reserva al guardar y volver a cargar. Extraer tarda lo mismo que para un jugador con la herramienta del trabajador, Eficiencia incluida, y Fortuna y Toque de seda cuentan para lo que suelta. Lo que extrae va a sus ítems de `storage` si la variante los tiene, si no a su mano secundaria, nunca al suelo. Cuando no puede cargar más, camina al cofre y lo deja todo dentro. Cada bloque desgasta la herramienta, y un trabajador cuya herramienta se rompe vuelve al cofre por otra del mismo tipo, o descansa un minuto si no la hay. Al morir, un trabajador suelta su herramienta y lo que tiene en las manos, y su almacenamiento se vacía una vez, como siempre lo hace el almacenamiento. `mobGriefing` no lo detiene, porque un jugador pidió el trabajo.
 
-**Quién trabaja para quién.** Si el jugador que abre una orden está en un equipo del marcador, solo la toman los trabajadores de ese equipo. Si no, la orden pertenece a ese jugador, y un trabajador pertenece al primer jugador que le da un trabajo, con una herramienta, con `hire` o al tomar una orden de ese jugador; desde entonces solo trabaja las órdenes de ese jugador. Un trabajador libre contratado o al que da una herramienta un jugador de un equipo se une a ese equipo.
+**Quién trabaja para quién.** Si el jugador que abre una orden está en un equipo del marcador, solo la toman los trabajadores de ese equipo. Si no, la orden pertenece a ese jugador, y un trabajador pertenece al primer jugador que le da un trabajo, con una herramienta, con `hire` o al tomar una orden de ese jugador; desde entonces solo trabaja las órdenes de ese jugador. Un trabajador libre al que contrata o da una herramienta un jugador de un equipo se une a ese equipo.
 
-**Aparición en el cofre.** Una orden que lleva diez segundos sin trabajador genera a uno de sus encargados variante junto a su cofre, hasta `spawnCap` para esa orden. El trabajador generado pertenece al equipo o al jugador de la orden.
+**Aparición en el cofre.** Una orden que lleva diez segundos sin trabajador genera junto a su cofre a uno de sus encargados de tipo variante, hasta `spawnCap` para esa orden. El trabajador generado pertenece al equipo o al jugador de la orden.
 
 ## Exposiciones
 
@@ -2747,8 +2761,8 @@ Un peligro definido por el pack: bloques, ítems y dimensiones con nombre expone
 | `immunity`            | no               | nombre de poción                 | ninguno     | Un efecto cuyo portador no queda expuesto en absoluto |
 | `scanInterval`        | no               | ticks                            | `20`        | Cada cuánto se comprueban el entorno y el inventario |
 | `range`               | no               | bloques                          | `10`        | Hasta dónde llega la exposición de un bloque, como una esfera |
-| `sourcesForNextLevel` | no               | int                              | `0`         | Esta cantidad de fuentes cercanas de un nivel lo empuja un nivel más. `0` lo desactiva |
-| `skipsCreative`       | no               | boolean                          | `true`      | Los jugadores en creativo y en espectador se dejan en paz |
+| `sourcesForNextLevel` | no               | entero                           | `0`         | Esta cantidad de fuentes cercanas de un nivel lo empuja un nivel más. `0` lo desactiva |
+| `skipsCreative`       | no               | booleano                         | `true`      | Los jugadores en creativo y en espectador se dejan en paz |
 
 ### Niveles
 
@@ -2786,7 +2800,7 @@ Dos fuentes más, escritas en el mismo archivo. Los portadores y los afectados e
 | Clave               | Obligatorio      | Valor                              | Por defecto        | Qué hace |
 | ------------------- | ---------------- | ---------------------------------- | ------------------ | -------- |
 | `carriers`          | una de las cinco | lista de `entity` o `entity=level` |                    | Mobs, o `minecraft:player`, que siempre transmiten el peligro con ese nivel. Sin nivel significa 1 |
-| `contagious`        | no               | boolean                            | `false`            | Cualquiera que esté expuesto transmite el peligro con el nivel que tenga |
+| `contagious`        | no               | booleano                           | `false`            | Cualquiera que esté expuesto transmite el peligro con el nivel que tenga |
 | `catchers`          | no               | lista de nombres de entidad        | `minecraft:player` | Quién puede contagiarse. Un mob solo se contagia de portadores y afectados, nunca de bloques, ítems o clima |
 | `contagionRange`    | no               | bloques                            | `4`                | Hasta dónde llega un portador o afectado, como una esfera |
 | `contagionChance`   | no               | `0` a `1`                          | `0.1`              | La probabilidad, en cada escaneo del portador o afectado, de que cada receptor a su alcance se contagie |
@@ -2831,10 +2845,10 @@ Reúne la forma de un mundo en un solo archivo, de modo que un pack incluye un m
 
 | Clave        | Obligatorio | Valor                                               | Por defecto         | Qué hace |
 | ------------ | ----------- | --------------------------------------------------- | ------------------- | -------- |
-| `name`       | no          | string                                              | el nombre del archivo | Se muestra en el registro y en los informes |
+| `name`       | no          | cadena                                              | el nombre del archivo | Se muestra en el registro y en los informes |
 | `default`    | no          | nombre de bioma o `void`                            | `void`              | Qué llena un bioma que el bloqueo ha eliminado. `void` deja ahí el bioma vacío. Un bioma que no está registrado se anota en el registro y se usa el vacío. `fallback` es la misma clave con otro nombre |
 | `roles`      | no          | objeto de rol a bioma                               | ninguno             | Biomas que cubren funciones concretas: `ocean`, `river`, `beach`, `mushroom`, `swamp`, `hills`, `mountain`, `jungle`, `forest`, `savanna`, `sandy`, `mesa`, `snowy`, `wasteland`, `plains` y `water`, consultadas en ese orden sea cual sea el orden en que las escriba el archivo, de modo que un bioma bloqueado que es a la vez océano y nevado toma el rol de océano. Un rol que nombra `void` o un bioma que no está registrado pasa al siguiente. Los roles se aplican solo en las `dimensions` de la plantilla; en el resto, un bioma bloqueado se convierte en el vacío |
-| `structures` | no          | objeto de [nombre de estructura](#listas-de-valores) a boolean | ninguno  | Estructuras de vanilla activadas o desactivadas |
+| `structures` | no          | objeto de [nombre de estructura](#listas-de-valores) a booleano | ninguno  | Estructuras de vanilla activadas o desactivadas |
 | `settings`   | no          | objeto                                              | ninguno             | Valores de configuración que establece la plantilla |
 | `dimensions` | no          | lista de ids de dimensión                           | todas las dimensiones | A qué dimensiones se aplica |
 | `requires`   | no          | lista de ids de mod o espacios de nombres de pack   | ninguno             | La plantilla se omite a menos que estén presentes todos |
@@ -2863,7 +2877,7 @@ Qué plantilla está activa lo decide la opción de configuración `worldTemplat
 }
 ```
 
-Todo ajuste de bloque que toma un camino, un puente, un ferrocarril, un metro, una estación o una alcantarilla responde a esto, y la sintaxis de mezcla con pesos funciona dentro de una sección igual que fuera. El bioma se lee a medida que se construye una pieza, y los bloques se toman de nuevo allí donde el terreno cambia de bioma, así que un camino o un ferrocarril que sale de un desierto cambia de material en el propio límite. Una línea de registro al cargar el mundo indica cuántas secciones incluía un pack y las nombra, y con la depuración activada cada bioma dice qué sección tomó, o que no tomó ninguna y a qué habría respondido.
+Todo ajuste de bloque que usa un camino, un puente, un ferrocarril, un metro, una estación o una alcantarilla responde a esto, y la sintaxis de mezcla con pesos funciona dentro de una sección igual que fuera. El bioma se lee a medida que se construye una pieza, y los bloques se toman de nuevo allí donde el terreno cambia de bioma, así que un camino o un ferrocarril que sale de un desierto cambia de material en el propio límite. Una línea de registro al cargar el mundo indica cuántas secciones incluía un pack y las nombra, y con la depuración activada cada bioma dice qué sección tomó, o que no tomó ninguna y a qué habría respondido.
 
 ## Reglas del juego
 
@@ -2957,7 +2971,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 | Clave       | Obligatorio | Valor                              | Por defecto        | Qué hace |
 | ----------- | ----------- | ---------------------------------- | ------------------ | -------- |
-| `name`      | no          | string                             | el nombre del archivo | Nombre que se muestra al jugador |
+| `name`      | no          | cadena                             | el nombre del archivo | Nombre que se muestra al jugador |
 | `types`     | no          | lista de tipos de bioma            | deducidos          | Escribe el bioma en las etiquetas que representan esas palabras de tipo, como `forest`, `cold`, `wet` o `nether`, para que otros mods lo encuentren. Si se omite, los tipos se deducen del bioma como los deducía el juego: `forest` o `jungle` a partir de tres árboles o más, `plains` en caso contrario, `hot`, `cold`, `wet` y `dry` según la temperatura y la lluvia, `sparse` o `dense` según el número de árboles, `snowy` según `snow`, y `sandy`, `mushroom` o `mesa` según un suelo de arena, micelio o terracota |
 | `baseBiome` | no          | nombre de bioma                    | `minecraft:plains` | Un bioma existente del que copiar ajustes. Si no es un bioma que traiga el juego o un mod, se anota en el registro y se usa la llanura |
 | `requires`  | no          | lista de ids de mod o espacios de nombres de pack | ninguno | El archivo se omite a menos que estén presentes todos |
@@ -2970,10 +2984,10 @@ Un bioma es una entrada de data pack en esta versión, escrita por ti bajo `worl
 
 | Clave         | Obligatorio | Valor         | Por defecto | Qué hace |
 | ------------- | ----------- | ------------- | ----------- | -------- |
-| `temperature` | no          | float         | `0.5`       | Por debajo de 0.15 nieva, por encima de 1.0 hace calor de desierto |
-| `rainfall`    | no          | float, 0 a 1  | `0.5`       | Cuánta humedad hay |
-| `rain`        | no          | boolean       | `true`      | Si hay clima en absoluto |
-| `snow`        | no          | boolean       | `false`     | Si la lluvia cae como nieve. La nieve solo cae donde la temperatura es inferior a 0.15, y esto no cambia la temperatura, así que un bioma más cálido sigue lloviendo |
+| `temperature` | no          | decimal       | `0.5`       | Por debajo de 0.15 nieva, por encima de 1.0 hace calor de desierto |
+| `rainfall`    | no          | decimal, 0 a 1 | `0.5`       | Cuánta humedad hay |
+| `rain`        | no          | booleano      | `true`      | Si hay clima en absoluto |
+| `snow`        | no          | booleano      | `false`     | Si la lluvia cae como nieve. La nieve solo cae donde la temperatura es inferior a 0.15, y esto no cambia la temperatura, así que un bioma más cálido sigue lloviendo |
 
 ### Suelo y colores
 
@@ -2997,8 +3011,8 @@ Un bioma es una entrada de data pack en esta versión, escrita por ti bajo `worl
 | ------------------- | ----------- | -------------------------------------------------------------------------------------------- | ---------------- | -------- |
 | `decoration`        | no          | objeto                                                                                       | el del bioma base | Recuentos por chunk, que modifican lo que el bioma base ya coloca. Los nombres que lee son `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` y `waterlily`, además de los interruptores `falls` (lagos y manantiales), `pumpkins`, `desertwells`, `ice` (pinchos y parches de hielo), `fossils` y `rocks` (rocas de bosque), donde cualquier valor superior a cero mantiene la tasa propia del bioma base y cero o menos elimina la característica, y `extratreechance`, un porcentaje de probabilidad de un árbol más, donde `0` también elimina el árbol extra que tira el bioma base. Un recuento sobre un tipo que el bioma base no coloca no añade nada; para eso escribe una entrada de worldgen. Cualquier otro nombre se anota en el registro y se ignora |
 | `spawns`            | no          | lista de objetos                                                                             | la lista de vanilla | Véase más abajo |
-| `keepDefaultSpawns` | no          | boolean                                                                                      | `false`          | Conserva la lista de vanilla junto a la tuya |
-| `spawnChance`       | no          | float, menor que 1                                                                           | `0.1`            | Con qué probabilidad se coloca otra manada al crearse el terreno por primera vez. El juego sigue tirando mientras tenga éxito, así que 1 no se detiene nunca y llena el mundo hasta quedarse sin sitio. Cualquier valor igual o superior a 0.99 se rechaza y se usa 0.99 |
+| `keepDefaultSpawns` | no          | booleano                                                                                     | `false`          | Conserva la lista de vanilla junto a la tuya |
+| `spawnChance`       | no          | decimal, menor que 1                                                                         | `0.1`            | Con qué probabilidad se coloca otra manada al crearse el terreno por primera vez. El juego sigue tirando mientras tenga éxito, así que 1 no se detiene nunca y llena el mundo hasta quedarse sin sitio. Cualquier valor igual o superior a 0.99 se rechaza y se usa 0.99 |
 | `spawnRates`        | no          | objeto de `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` a un multiplicador | ninguno      | Con qué frecuencia aparecen aquí los mobs hostiles, en lugar de los ajustes globales. Véase más abajo |
 
 Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno de `monster`, `creature`, `ambient` o `water`, con los guiones bajos de un nombre como `water_creature` opcionales), `weight` (`10`), `min` (`1`) y `max` (`min`).
@@ -3016,11 +3030,11 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 
 | Clave         | Obligatorio | Valor                                       | Por defecto | Qué hace |
 | ------------- | ----------- | ------------------------------------------- | ----------- | -------- |
-| `climate`     | no          | `icy`, `cool`, `medium`, `warm` o `desert`  | ninguno     | A qué franja climática se une, las mismas cinco por las que se reparten los biomas del propio overworld. Si se omite, se deja con un `weight` de 0 o nombra un clima que no figura aquí, el bioma se registra pero nunca se coloca a menos que lo pida el `roles` de una plantilla, el `biome` de una dimensión o una franja de altura |
-| `weight`      | no          | int                                         | `10`        | Con qué frecuencia se elige frente a sus vecinos en esa franja |
-| `villages`    | no          | boolean                                     | `false`     | Pueden generarse aldeas |
-| `strongholds` | no          | boolean                                     | `false`     | Pueden generarse fortalezas |
-| `playerSpawn` | no          | boolean                                     | `false`     | El punto de aparición del mundo puede colocarse aquí |
+| `climate`     | no          | `icy`, `cool`, `medium`, `warm` o `desert`  | ninguno     | A qué franja climática se une, las mismas cinco por las que se reparten los biomas del propio Overworld. Si se omite, se deja con un `weight` de 0 o nombra un clima que no figura aquí, el bioma se registra pero nunca se coloca a menos que lo pida el `roles` de una plantilla, el `biome` de una dimensión o una franja de altura |
+| `weight`      | no          | entero                                      | `10`        | Con qué frecuencia se elige frente a sus vecinos en esa franja |
+| `villages`    | no          | booleano                                    | `false`     | Pueden generarse aldeas |
+| `strongholds` | no          | booleano                                    | `false`     | Pueden generarse fortalezas |
+| `playerSpawn` | no          | booleano                                    | `false`     | El punto de aparición del mundo puede colocarse aquí |
 
 ### Franjas de altura
 
@@ -3028,15 +3042,15 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 
 | Clave       | Obligatorio | Valor                     | Por defecto      | Qué hace |
 | ----------- | ----------- | ------------------------- | ---------------- | -------- |
-| `minHeight` | no          | int                       | ninguno          | La y más baja desde la que este bioma toma el control como bioma 3D. Establecer cualquiera de las dos alturas convierte el bioma en una franja: la columna conserva su propio bioma fuera de ella, y dentro cada celda de 4 por 4 por 4 del mundo informa de este |
-| `maxHeight` | no          | int                       | ninguno          | La y más alta de esa franja |
+| `minHeight` | no          | entero                    | ninguno          | La y más baja desde la que este bioma toma el control como bioma 3D. Establecer cualquiera de las dos alturas convierte el bioma en una franja: la columna conserva su propio bioma fuera de ella, y dentro cada celda de 4 por 4 por 4 del mundo informa de este |
+| `maxHeight` | no          | entero                    | ninguno          | La y más alta de esa franja |
 | `replaces`  | no          | lista de nombres de bioma | todos los biomas | Restringe la franja a las columnas cuyo propio bioma figura aquí, de modo que una franja alpina pueda quedar sobre las montañas y nada más. El bioma propio de la columna es el de su superficie. Sin `minHeight` ni `maxHeight` no hace nada |
 
 ### Temperatura según la altura
 
 *biomas*
 
-**Temperatura según la altura.** Un bioma se enfría a medida que sube, que es lo que pone nieve en las cimas de las montañas y detiene la lluvia por encima de una línea. Tres claves de `terrain` mueven esa curva, lo que importa en una dimensión cuyo suelo está muy por encima o por debajo de la altura que supone el juego. Sin establecer, se mantiene la curva propia del juego, así que un pack que las deja en paz no cambia nada.
+**Temperatura según la altura.** Un bioma se enfría a medida que sube, que es lo que pone nieve en las cimas de las montañas y detiene la lluvia por encima de una línea. Tres claves de `terrain` mueven esa curva, lo que importa en una dimensión cuyo suelo está muy por encima o por debajo de la altura que supone el juego. Si no se establecen, se mantiene la curva propia del juego, así que un pack que las deja en paz no cambia nada.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -3052,9 +3066,9 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 
 | Clave                          | Valor | Por defecto | Qué hace |
 | ------------------------------ | ----- | ----------- | -------- |
-| `biomeTemperatureCenterY`      | int   | `80`        | La altura desde la que se mide la curva. A esa altura o por debajo, un bioma informa de su propia `temperature` sin tocar |
-| `biomeTemperatureHeightFactor` | float | `-0.00125`  | Cuánto se mueve la temperatura por bloque por encima de esa altura, los 0.05 cada 40 bloques del propio juego. Negativo enfría con la altitud, positivo calienta |
-| `biomeTemperatureScaleMaxY`    | int   | ninguno     | La altura en la que se detiene la curva, para que un mundo más alto que el del juego no siga enfriándose hasta su techo. Sin establecer, la curva llega hasta lo alto del mundo |
+| `biomeTemperatureCenterY`      | entero | `80`        | La altura desde la que se mide la curva. A esa altura o por debajo, un bioma informa de su propia `temperature` sin tocar |
+| `biomeTemperatureHeightFactor` | decimal | `-0.00125`  | Cuánto se mueve la temperatura por bloque por encima de esa altura, los 0.05 cada 40 bloques del propio juego. Negativo enfría con la altitud, positivo calienta |
+| `biomeTemperatureScaleMaxY`    | entero | ninguno     | La altura en la que se detiene la curva, para que un mundo más alto que el del juego no siga enfriándose hasta su techo. Sin establecer, la curva llega hasta lo alto del mundo |
 
 ## Dimensiones
 
@@ -3062,7 +3076,7 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 
 `<namespace>/dimensions/*.json`
 
-La ruta del archivo es el id de la dimensión, así que `mypack/dimensions/verdant.json` es `mypack:verdant`, que es lo que nombran un portal, una puerta dimensional, un archivo de reglas del juego y `/execute in`. En esta versión no hay id numérico, y un `id` o `suffix` de 1.12.2 se lee y se ignora.
+La ruta del archivo es el id de la dimensión, así que `mypack/dimensions/verdant.json` es `mypack:verdant`, que es lo que nombran un portal, una puerta, un archivo de reglas del juego y `/execute in`. En esta versión no hay id numérico, y un `id` o `suffix` de 1.12.2 se lee y se ignora.
 
 Todas las claves, mostradas a la vez. Un archivo real escribe solo las que necesita.
 
@@ -3151,7 +3165,7 @@ Una dimensión es una entrada de data pack en esta versión: el tipo de dimensi�
 }
 ```
 
-Un archivo en `minecraft/dimensions/overworld.json`, `the_nether.json` o `the_end.json`, o en el id de una dimensión que añade otro mod o un datapack, como `othermod/dimensions/caverns.json`, cambia esa dimensión en lugar de añadir una nueva. Cada clave que escribe el archivo se aplica allí, y cada clave que omite mantiene el comportamiento propio de la dimensión, así que sus datos de nivel y sus chunks quedan como están y una partida existente sigue cargando.
+Un archivo en `minecraft/dimensions/overworld.json`, `the_nether.json` o `the_end.json`, o en el id de una dimensión que añade otro mod o un data pack, como `othermod/dimensions/caverns.json`, cambia esa dimensión en lugar de añadir una nueva. Cada clave que escribe el archivo se aplica allí, y cada clave que omite mantiene el comportamiento propio de la dimensión, así que sus datos de nivel y sus chunks quedan como están y una partida existente sigue cargando.
 
 `terrain.type` cambia el generador: los chunks generados a partir de entonces salen de él, y `generatorOptions`, `structures` y el bloque `biomes` se aplican junto con él; sin `terrain.type` esas claves se omiten y el registro lo indica, ya que en esta versión los biomas de una dimensión forman parte de su generador. Las claves que guarda el tipo de dimensión, como `hasSkyLight` o `ambientLight`, se escriben en el tipo propio de la dimensión. Una dimensión de un mod que usa uno de los tipos compartidos del juego, o que escribe su tipo en línea, conserva su tipo tal cual, y el registro lo indica. La línea `dimensions.existing` del resumen lista cada archivo aplicado de esta forma.
 
@@ -3164,10 +3178,10 @@ Un `sun` o un `moon` que solo establece `texture` cambia la imagen en el cielo p
 | Clave              | Obligatorio | Valor                                        | Por defecto       | Qué hace |
 | ------------------ | ----------- | -------------------------------------------- | ----------------- | -------- |
 | `type`             | no          | `overworld`, `flat`, `void`, `nether`, `end` | `overworld`       | Cuál de los generadores del juego la construye, con sus ajustes de ruido copiados y modificados por las claves siguientes |
-| `minHeight`        | no          | int, múltiplo de 16                          | el propio del tipo | El suelo de la dimensión. Más bajo que el del tipo crea un mundo profundo bajo el terreno, véase [El mundo profundo](#el-mundo-profundo) |
-| `maxHeight`        | no          | int, múltiplo de 16                          | el propio del tipo | El bloque por encima de su techo |
-| `generatorOptions` | no          | objeto, texto o una lista                    | ninguno           | Para `overworld` y los demás, un objeto, o el texto de uno tal como lo escribía 1.12.2, con `seaLevel`, `useLavaOceans`, y `useCaves`, `useRavines`, `useDungeons`, `useLavaLakes`, `useStrongholds`, `useVillages`, `useMineShafts`, `useTemples`, `useMonuments` y `useMansions` en false para dejarlos fuera de esta dimensión. Para `flat`, las capas, de abajo arriba, como `"minecraft:bedrock"`, `"59*minecraft:stone"`, `"3*minecraft:dirt"`, `"minecraft:grass_block"`, que es también el suelo por defecto, o el texto de superplano de 1.12.2, cuyo número de bioma establece el bioma y cuyos nombres `decoration`, `lava_lake` y de estructuras se leen como los lee el `generatorOptions` del overworld |
-| `structures`       | no          | boolean                                      | `true`            | Si se generan las estructuras de vanilla |
+| `minHeight`        | no          | entero, múltiplo de 16                       | el propio del tipo | El suelo de la dimensión. Más bajo que el del tipo crea un mundo profundo bajo el terreno, véase [El mundo profundo](#el-mundo-profundo) |
+| `maxHeight`        | no          | entero, múltiplo de 16                       | el propio del tipo | El bloque por encima de su techo |
+| `generatorOptions` | no          | objeto, texto o una lista                    | ninguno           | Para `overworld` y los demás, un objeto, o el texto de uno tal como lo escribía 1.12.2, con `seaLevel`, `useLavaOceans`, y `useCaves`, `useRavines`, `useDungeons`, `useLavaLakes`, `useStrongholds`, `useVillages`, `useMineShafts`, `useTemples`, `useMonuments` y `useMansions` en false para dejarlos fuera de esta dimensión. Para `flat`, las capas, de abajo arriba, como `"minecraft:bedrock"`, `"59*minecraft:stone"`, `"3*minecraft:dirt"`, `"minecraft:grass_block"`, que es también el suelo por defecto, o el texto de superplano de 1.12.2, cuyo número de bioma establece el bioma y cuyos nombres `decoration`, `lava_lake` y de estructuras se leen como los lee el `generatorOptions` del Overworld |
+| `structures`       | no          | booleano                                     | `true`            | Si se generan las estructuras de vanilla |
 
 ### El bloque `biomes`
 
@@ -3175,7 +3189,7 @@ Un `sun` o un `moon` que solo establece `texture` cambia la imagen en el cielo p
 
 | Clave    | Obligatorio   | Valor               | Por defecto        | Qué hace |
 | -------- | ------------- | ------------------- | ------------------ | -------- |
-| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` usa el mapa de biomas del propio overworld sea cual sea el tipo de terreno, de modo que una dimensión `nether` o `end` recibe los biomas del overworld sobre su propio suelo; `single` usa un solo bioma en todas partes. Una dimensión `flat` contiene un solo bioma en ambos casos, el de `single` o el de su texto de superplano |
+| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` usa el mapa de biomas del propio Overworld sea cual sea el tipo de terreno, de modo que una dimensión `nether` o `end` recibe los biomas del Overworld sobre su propio suelo; `single` usa un solo bioma en todas partes. Una dimensión `flat` contiene un solo bioma en ambos casos, el de `single` o el de su texto de superplano |
 | `biome`  | con `single`  | nombre de bioma     | `minecraft:plains` | Cuál es ese bioma |
 
 ### El bloque `sky`
@@ -3184,38 +3198,38 @@ Un `sun` o un `moon` que solo establece `texture` cambia la imagen en el cielo p
 
 | Clave              | Obligatorio | Valor                 | Por defecto | Qué hace |
 | ------------------ | ----------- | --------------------- | ----------- | -------- |
-| `hasSkyLight`      | no          | boolean               | `true`      | Si le llega la luz del día |
-| `surfaceWorld`     | no          | boolean               | `true`      | Si los mapas y las brújulas se comportan como en el overworld |
-| `respawn`          | no          | boolean               | `true`      | Si los jugadores reaparecen aquí |
+| `hasSkyLight`      | no          | booleano              | `true`      | Si le llega la luz del día |
+| `surfaceWorld`     | no          | booleano              | `true`      | Si los mapas y las brújulas se comportan como en el Overworld |
+| `respawn`          | no          | booleano              | `true`      | Si los jugadores reaparecen aquí |
 | `respawnDimension` | no          | id de dimensión       | ninguno     | Dónde reaparecen en su lugar |
-| `spawning`         | no          | boolean               | `true`      | Si aparecen mobs. Desactivado detiene toda aparición, spawners incluidos, diga lo que diga el grupo `spawning` |
-| `nether`           | no          | boolean               | `false`     | Se trata como el Nether para portales y techos |
-| `beds`             | no          | boolean               | `true`      | Desactivado, las camas explotan |
-| `waterVaporizes`   | no          | boolean               | `false`     | El agua se evapora |
-| `cloudHeight`      | no          | int                   | `128`       | Dónde están las nubes. Un ajuste `cloudHeight` que nombre esta dimensión, o uno sin nombre, se impone a este |
+| `spawning`         | no          | booleano              | `true`      | Si aparecen mobs. Desactivado detiene toda aparición, spawners incluidos, diga lo que diga el grupo `spawning` |
+| `nether`           | no          | booleano              | `false`     | Se trata como el Nether para portales y techos |
+| `beds`             | no          | booleano              | `true`      | Desactivado, las camas explotan |
+| `waterVaporizes`   | no          | booleano              | `false`     | El agua se evapora |
+| `cloudHeight`      | no          | entero                | `128`       | Dónde están las nubes. Un ajuste `cloudHeight` que nombre esta dimensión, o uno sin nombre, se impone a este |
 | `cloudColor`       | no          | color hexadecimal     | ninguno     | Tinte de las nubes |
-| `cloudSpeed`       | no          | float                 | `1.0`       | Con qué rapidez se desplazan las nubes. `0` las mantiene quietas, un valor negativo las invierte |
+| `cloudSpeed`       | no          | decimal               | `1.0`       | Con qué rapidez se desplazan las nubes. `0` las mantiene quietas, un valor negativo las invierte |
 | `cloudLayers`      | no          | lista de objetos      | ninguno     | Varias capas de nubes. Véase [Niebla, luz, nubes y calor](#niebla-luz-nubes-y-calor) |
-| `groundLevel`      | no          | int                   | `63`        | Nivel del mar, usado para el horizonte, para las búsquedas de aparición y para donde aterriza una llegada por puerta dimensional o una caída sobre el vacío |
-| `movementFactor`   | no          | float                 | `1.0`       | Proporción de distancia respecto al overworld. El Nether usa 8 |
+| `groundLevel`      | no          | entero                | `63`        | Nivel del mar, usado para el horizonte, para las búsquedas de aparición y para donde aterriza una llegada por una puerta o una caída sobre el vacío |
+| `movementFactor`   | no          | decimal               | `1.0`       | Proporción de distancia respecto al Overworld. El Nether usa 8 |
 | `fogColor`         | no          | color hexadecimal o `sample` | ninguno | Tinte de la niebla al mediodía. Se oscurece de noche como la niebla de vanilla. `sample` mezcla el cielo con el suelo que rodea al jugador |
-| `showFog`          | no          | boolean               | `false`     | Niebla espesa, como en el Nether |
-| `fogDensity`       | no          | float, 0 a 1          | `0.0`       | Cuán espesa es la niebla. `0` mantiene la distancia de vanilla, `1` la cierra hasta 8 bloques |
-| `fogGroundWeight`  | no          | float, 0 a 1          | `0.5`       | Con `fogColor: sample`, cuánto cuenta el suelo frente al cielo |
+| `showFog`          | no          | booleano              | `false`     | Niebla espesa, como en el Nether |
+| `fogDensity`       | no          | decimal, 0 a 1        | `0.0`       | Cuán espesa es la niebla. `0` mantiene la distancia de vanilla, `1` la cierra hasta 8 bloques |
+| `fogGroundWeight`  | no          | decimal, 0 a 1        | `0.5`       | Con `fogColor: sample`, cuánto cuenta el suelo frente al cielo |
 | `skyColor`         | no          | color hexadecimal     | ninguno     | Tinte del cielo al mediodía. Se oscurece de noche y se vuelve gris con lluvia y tormenta como el cielo de vanilla |
 | `fixedTime`        | no          | int, ticks            | ninguno     | Fija la hora del día |
-| `sunriseColors`    | no          | boolean               | `true`      | Si el amanecer y el atardecer se tiñen |
-| `ambientLight`     | no          | float, 0 a 1          | `0.0`       | Luz mínima en todas partes |
+| `sunriseColors`    | no          | booleano              | `true`      | Si el amanecer y el atardecer se tiñen |
+| `ambientLight`     | no          | decimal, 0 a 1        | `0.0`       | Luz mínima en todas partes |
 | `lightSkyColor`    | no          | color hexadecimal     | ninguno     | Tinte de la luz del día sobre bloques y mobs |
 | `lightBlockColor`  | no          | color hexadecimal     | ninguno     | Tinte de la luz de las antorchas y otras luces de bloque |
-| `skyFactor`        | no          | float, 0 a 1          | `1.0`       | Cuán brillante parece la luz del día. Se dibuja solo en el cliente, así que la aparición de mobs no cambia |
-| `starBrightness`   | no          | float, 0 a 1          | ninguno     | Cuán brillantes son las estrellas |
-| `sunBrightness`    | no          | float, 0 a 1          | `1.0`       | Cuán brillante se dibuja el sol |
-| `moonBrightness`   | no          | float, 0 a 1          | `1.0`       | Cuán brillante se dibuja la luna, y con `bodies` todos los cuerpos salvo el sol |
+| `skyFactor`        | no          | decimal, 0 a 1        | `1.0`       | Cuán brillante parece la luz del día. Se dibuja solo en el cliente, así que la aparición de mobs no cambia |
+| `starBrightness`   | no          | decimal, 0 a 1        | ninguno     | Cuán brillantes son las estrellas |
+| `sunBrightness`    | no          | decimal, 0 a 1        | `1.0`       | Cuán brillante se dibuja el sol |
+| `moonBrightness`   | no          | decimal, 0 a 1        | `1.0`       | Cuán brillante se dibuja la luna, y con `bodies` todos los cuerpos salvo el sol |
 | `heat`             | no          | objeto                | ninguno     | Un espejismo de calor sobre la vista. Véase [Niebla, luz, nubes y calor](#niebla-luz-nubes-y-calor) |
-| `renderSky`        | no          | boolean               | `true`      | Desactivado, nada dibuja el cielo, el sol, la luna ni las estrellas, y queda el color de la niebla |
-| `renderClouds`     | no          | boolean               | `true`      | Desactivado, no se dibujan nubes |
-| `renderWeather`    | no          | boolean               | `true`      | Desactivado, no se dibuja lluvia ni nieve |
+| `renderSky`        | no          | booleano              | `true`      | Desactivado, nada dibuja el cielo, el sol, la luna ni las estrellas, y queda el color de la niebla |
+| `renderClouds`     | no          | booleano              | `true`      | Desactivado, no se dibujan nubes |
+| `renderWeather`    | no          | booleano              | `true`      | Desactivado, no se dibuja lluvia ni nieve |
 | `sun`              | no          | objeto                | ninguno     | Tu propio sol. Véase [El renderizador del cielo](#el-renderizador-del-cielo) |
 | `bodies`           | no          | lista de objetos      | ninguno     | Planetas y lunas colgados en el cielo. Véase [El renderizador del cielo](#el-renderizador-del-cielo) |
 | `stars`            | no          | objeto                | ninguno     | Tu propio campo de estrellas. Véase [El renderizador del cielo](#el-renderizador-del-cielo) |
@@ -3227,20 +3241,20 @@ Un `sun` o un `moon` que solo establece `texture` cambia la imagen en el cielo p
 Establecer cualquiera de `sun`, `moon`, `bodies` o `stars` cambia el cielo de vanilla por el propio de RDPL, que dibuja la misma bóveda, el mismo resplandor del amanecer y el mismo vacío que vanilla pero toma el sol, los demás cuerpos y las estrellas del pack. Se dibuja solo en el cliente, y un servidor dedicado nunca lo carga. `renderSky: false` sigue imponiéndose y no dibuja nada, y `renderClouds: false` es como se consigue un cielo sin nubes.
 
 Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista es todo lo que hay además del sol, así que una lista vacía es un cielo sin luna.
-
 | Clave                  | Obligatorio | Valor              | Por defecto       | Qué hace |
+
 | ---------------------- | ----------- | ------------------ | ----------------- | -------- |
 | `sun.texture`          | no          | ruta de textura    | el sol de vanilla | La imagen del sol |
-| `sun.size`             | no          | float              | `30`              | La mitad del ancho del sol a una distancia de 100. `0` lo oculta |
-| `moon.texture`         | no          | ruta de textura    | la luna de vanilla | La imagen de la luna: una hoja con sus ocho fases, cuatro a lo ancho y dos a lo alto, como `moon_phases.png` de vanilla |
-| `moon.size`            | no          | float              | `20`              | La mitad del ancho de la luna a una distancia de 100. `0` la oculta. Con `bodies` no se usa |
+| `sun.size`             | no          | decimal            | `30`              | La mitad del ancho del sol a una distancia de 100. `0` lo oculta |
+| `moon.texture`         | no          | ruta de textura    | la luna de vanilla | Una hoja con las ocho fases de la luna, cuatro a lo ancho y dos a lo alto. Sin ella se dibuja la luna de vanilla |
+| `moon.size`            | no          | decimal            | `20`              | La mitad del ancho de la luna a una distancia de 100. `0` la oculta. Con `bodies` no se usa |
 | `bodies[].texture`     | sí          | ruta de textura    |                   | La imagen del cuerpo |
-| `bodies[].size`        | no          | float              | `20`              | La mitad de su ancho a una distancia de 100. La luna de vanilla es `20` |
-| `bodies[].angle`       | no          | float, grados      | `180`             | Cuánto se adelanta a lo largo de la trayectoria del sol, por detrás de este. `180` es donde está la luna de vanilla. Con `followsTime` desactivado se mide desde justo encima, así que `0` es el cenit y `90` el horizonte |
-| `bodies[].tilt`        | no          | float, grados      | `0`               | Cuánto se aparta de la trayectoria del sol, al norte o al sur |
-| `bodies[].followsTime` | no          | boolean            | `true`            | Desactivado, queda quieto en el cielo en lugar de girar con el sol |
-| `stars.count`          | no          | int                | `1500`            | Cuántas estrellas |
-| `stars.size`           | no          | float              | `0.15`            | La estrella más pequeña; la mayor es dos tercios más grande |
+| `bodies[].size`        | no          | decimal            | `20`              | La mitad de su ancho a una distancia de 100. La luna de vanilla es `20` |
+| `bodies[].angle`       | no          | decimal, grados    | `180`             | Cuánto se adelanta a lo largo de la trayectoria del sol, por detrás de este. `180` es donde está la luna de vanilla. Con `followsTime` desactivado se mide desde justo encima, así que `0` es el cenit y `90` el horizonte |
+| `bodies[].tilt`        | no          | decimal, grados    | `0`               | Cuánto se aparta de la trayectoria del sol, al norte o al sur |
+| `bodies[].followsTime` | no          | booleano           | `true`            | Desactivado, queda quieto en el cielo en lugar de girar con el sol |
+| `stars.count`          | no          | entero             | `1500`            | Cuántas estrellas |
+| `stars.size`           | no          | decimal            | `0.15`            | La estrella más pequeña; la mayor es dos tercios más grande |
 
 ### Niebla, luz, nubes y calor
 
@@ -3283,14 +3297,14 @@ Sin `cloudLayers`, `cloudSpeed` cambia la velocidad de la única capa de vanilla
 
 | Clave                  | Obligatorio | Valor         | Por defecto   | Qué hace |
 | ---------------------- | ----------- | ------------- | ------------- | -------- |
-| `cloudLayers[].height` | no          | float         | `cloudHeight` | Dónde está la capa |
-| `cloudLayers[].speed`  | no          | float         | `cloudSpeed`  | Con qué rapidez se desplaza. `0` la mantiene quieta, un valor negativo la invierte |
+| `cloudLayers[].height` | no          | decimal       | `cloudHeight` | Dónde está la capa |
+| `cloudLayers[].speed`  | no          | decimal       | `cloudSpeed`  | Con qué rapidez se desplaza. `0` la mantiene quieta, un valor negativo la invierte |
 | `cloudLayers[].color`  | no          | color hexadecimal | `cloudColor` | Su tinte |
-| `heat.strength`        | no          | float, 0 a 1  | `0.1`         | Cuán fuerte es el espejismo |
-| `heat.minTemperature`  | no          | float         | `1.5`         | La temperatura de bioma más baja que produce espejismo |
-| `heat.dayOnly`         | no          | boolean       | `true`        | Activado, el espejismo se desvanece con la luz del día y desaparece de noche |
-| `heat.mode`            | no          | string        | `screen`      | Dónde se aplica el espejismo, `screen` o `world` |
-| `heat.startDistance`   | no          | float         | `32`          | En el modo `world`, a cuántos bloques de distancia empieza el espejismo |
+| `heat.strength`        | no          | decimal, 0 a 1 | `0.1`         | Cuán fuerte es el espejismo |
+| `heat.minTemperature`  | no          | decimal       | `1.5`         | La temperatura de bioma más baja que produce espejismo |
+| `heat.dayOnly`         | no          | booleano      | `true`        | Activado, el espejismo se desvanece con la luz del día y desaparece de noche |
+| `heat.mode`            | no          | cadena        | `screen`      | Dónde se aplica el espejismo, `screen` o `world` |
+| `heat.startDistance`   | no          | decimal       | `32`          | En el modo `world`, a cuántos bloques de distancia empieza el espejismo |
 
 ### Nieve, fluidos, estrellas y rayos
 
@@ -3327,12 +3341,12 @@ En esta versión, `waterFogColor` sustituye en toda la dimensión el `water_fog_
 | `waterFogColor`  | no          | color hexadecimal | el del bioma | Color de la niebla bajo el agua |
 | `lavaFogColor`   | no          | color hexadecimal | `991A00`     | Color de la niebla en la lava |
 | `starColor`      | no          | color hexadecimal | blanco       | Tinte de las estrellas |
-| `starTwinkle`    | no          | float, 0 a 1      | `0.0`        | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
+| `starTwinkle`    | no          | decimal, 0 a 1    | `0.0`        | Cuánto se apagan las estrellas al titilar. `0` las deja fijas |
 | `lightningColor` | no          | color hexadecimal | `737380`     | Tinte de los rayos |
 
 ### Skybox, aurora y arcoíris
 
-*dimensions*
+*dimensiones*
 
 Estas claves también van en el bloque `sky`, y también se dibujan solo en el cliente.
 
@@ -3366,8 +3380,8 @@ Ninguna clave de vanilla da a una dimensión sus propias imágenes de cielo, una
 
 | Clave | Obligatorio | Valor | Por defecto | Qué hace |
 | --- | --- | --- | --- | --- |
-| `skybox.<face>` | no | ruta de textura | ninguna | Una cara del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Hacen falta las seis |
-| `skybox.panorama` | no | ruta de textura | ninguna | Una imagen que envuelve todo el cielo, en lugar de las caras |
+| `skybox.<face>` | no | ruta de textura | ninguno | Una cara del cubo: `up`, `down`, `north`, `east`, `south` o `west`. Hacen falta las seis |
+| `skybox.panorama` | no | ruta de textura | ninguno | Una imagen que envuelve todo el cielo, en lugar de las caras |
 | `aurora.color` | no | color hexadecimal | `40FF90` | Color en la base de las cortinas |
 | `aurora.topColor` | no | color hexadecimal | `8040FF` | Color arriba, donde las cortinas se desvanecen |
 | `rainbow` | no | booleano | `false` | Mostrar un arcoíris después de la lluvia |
@@ -3378,9 +3392,9 @@ Ninguna clave de vanilla da a una dimensión sus propias imágenes de cielo, una
 
 | Clave          | Obligatorio | Valor            | Por defecto            | Qué hace |
 | -------------- | ----------- | ---------------- | ---------------------- | -------- |
-| `gravity`      | no          | float, mayor que 0 | `1.0`                | Aceleración de caída aquí, como multiplicador de vanilla. `0.17` es como la Luna |
-| `fallDamage`   | no          | float, mayor que 0 | `1.0`                | Daño por caída aquí, como multiplicador |
-| `arrowGravity` | no          | float, mayor que 0 | sigue a `gravity`    | Con qué rapidez caen aquí las flechas, como multiplicador |
+| `gravity`      | no          | decimal, mayor que 0 | `1.0`                | Aceleración de caída aquí, como multiplicador de vanilla. `0.17` es como la Luna |
+| `fallDamage`   | no          | decimal, mayor que 0 | `1.0`                | Daño por caída aquí, como multiplicador |
+| `arrowGravity` | no          | decimal, mayor que 0 | sigue a `gravity`    | Con qué rapidez caen aquí las flechas, como multiplicador |
 
 Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravity` y `worldFallDamage`, establecidos en la dimensión. La línea `dimension=value` de una plantilla de mundo para esta dimensión sigue imponiéndose; un valor de plantilla de mundo sin nombre cubre solo las dimensiones que no establecen nada propio.
 
@@ -3388,43 +3402,43 @@ Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravit
 
 *dimensiones*
 
-| Clave       | Obligatoria | Valor      | Por defecto | Qué hace                                                                                         |
+| Clave       | Obligatorio | Valor      | Por defecto | Qué hace                                                                                         |
 | ----------- | ----------- | ---------- | ----------- | ------------------------------------------------------------------------------------------------ |
-| `dayLength` | no          | int, ticks | `24000`     | Cuánto dura aquí un día con su noche. La fase lunar sigue completando un ciclo cada 24000 ticks |
+| `dayLength` | no          | entero, ticks | `24000`     | Cuánto dura aquí un día con su noche. La fase lunar sigue completando un ciclo cada 24000 ticks |
 
 ### El bloque `weather`
 
 *dimensiones*
 
-| Clave                   | Obligatoria | Valor                  | Por defecto              | Qué hace                                                                                                                      |
+| Clave                   | Obligatorio | Valor                  | Por defecto              | Qué hace                                                                                                                      |
 | ----------------------- | ----------- | ---------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `precipitation`         | no          | boolean                | `true`                   | Desactivada, aquí nunca llueve, nieva ni hay tormentas                                                                        |
-| `lightning`             | no          | boolean                | `true`                   | Desactivada, la lluvia y las tormentas llegan sin rayos                                                                       |
-| `snow`                  | no          | boolean                | `true`                   | Desactivada, la nieve nunca se acumula                                                                                        |
-| `freeze`                | no          | boolean                | `true`                   | Desactivada, el agua nunca se congela                                                                                         |
+| `precipitation`         | no          | booleano               | `true`                   | Desactivado, aquí nunca llueve, nieva ni hay tormentas                                                                        |
+| `lightning`             | no          | booleano               | `true`                   | Desactivado, la lluvia y las tormentas llegan sin rayos                                                                       |
+| `snow`                  | no          | booleano               | `true`                   | Desactivado, la nieve nunca se acumula                                                                                        |
+| `freeze`                | no          | booleano               | `true`                   | Desactivado, el agua nunca se congela                                                                                         |
 | `alwaysRain`            | no          | booleano               | `false`                  | Activado, aquí llueve todo el tiempo sin claros, antes que cualquier `cycle`. Con `precipitation` desactivado no se usa       |
-| `cycle.rainTicks`       | no          | int o `[min, max]`     | `[1000, 4600]`           | Cuánto dura un chubasco                                                                                                       |
-| `cycle.clearTicks`      | no          | int o `[min, max]`     | `[1000, 3000]`           | Cuánto dura el periodo seco entre chubascos                                                                                   |
-| `cycle.maxStrength`     | no          | float, mayor que 0 hasta 1 | `0.6`                | La mayor intensidad que alcanza un chubasco. Cada chubasco oscila entre una cuarta parte de este valor y su totalidad         |
-| `cycle.thunderTicks`    | no          | int o `[min, max]`     | ninguno                  | Cuánto dura una tormenta eléctrica. Sin esta clave, el ciclo nunca genera tormentas                                           |
-| `cycle.calmTicks`       | no          | int o `[min, max]`     | `[12000, 180000]`        | Cuánto dura la calma entre tormentas                                                                                          |
-| `cycle.thunderStrength` | no          | float, mayor que 0 hasta 1 | `1`                  | Cuánto se oscurece el cielo en una tormenta. Los rayos solo caen por encima de `0.9`                                          |
+| `cycle.rainTicks`       | no          | entero o `[min, max]`  | `[1000, 4600]`           | Cuánto dura un chubasco                                                                                                       |
+| `cycle.clearTicks`      | no          | entero o `[min, max]`  | `[1000, 3000]`           | Cuánto dura el periodo seco entre chubascos                                                                                   |
+| `cycle.maxStrength`     | no          | decimal, mayor que 0 hasta 1 | `0.6`                | La mayor intensidad que alcanza un chubasco. Cada chubasco oscila entre una cuarta parte de este valor y su totalidad         |
+| `cycle.thunderTicks`    | no          | entero o `[min, max]`  | ninguno                  | Cuánto dura una tormenta eléctrica. Sin esta clave, el ciclo nunca genera tormentas                                           |
+| `cycle.calmTicks`       | no          | entero o `[min, max]`  | `[12000, 180000]`        | Cuánto dura la calma entre tormentas                                                                                          |
+| `cycle.thunderStrength` | no          | decimal, mayor que 0 hasta 1 | `1`                  | Cuánto se oscurece el cielo en una tormenta. Los rayos solo caen por encima de `0.9`                                          |
 | `rain.particle`         | no          | id de partícula        | `minecraft:rain`         | Lo que salpica donde cae la lluvia                                                                                            |
 | `rain.sound`            | no          | nombre de sonido       | `minecraft:weather.rain` | El sonido de la lluvia                                                                                                        |
-| `rain.volume`           | no          | float                  | `0.2`                    | Su volumen, que se reduce a la mitad cuando la lluvia cae justo encima de ti                                                  |
-| `rain.interval`         | no          | int                    | `3`                      | Con qué poca frecuencia suena; cuanto mayor, más espaciado, y con `0` suena en cada oportunidad                               |
+| `rain.volume`           | no          | decimal                | `0.2`                    | Su volumen, que se reduce a la mitad cuando la lluvia cae justo encima de ti                                                  |
+| `rain.interval`         | no          | entero                 | `3`                      | Con qué poca frecuencia suena; cuanto mayor, más espaciado, y con `0` suena en cada oportunidad                               |
 | `rain.color`            | no          | color hexadecimal      | `#FFFFFF`                | Tinte de la lluvia al caer                                                                                                    |
 | `rain.snowColor`        | no          | color hexadecimal      | `#FFFFFF`                | Tinte de la nieve al caer                                                                                                     |
-| `rain.angle`            | no          | float, de 0 a 180      | `0`                      | Grados respecto a la vertical descendente: `90` sopla de lado, `180` sube en vertical. Se dibuja inclinada 75 grados como máximo |
-| `rain.heading`          | no          | float, grados          | `0`                      | Hacia dónde sopla: `0` sur, `90` oeste, `180` norte, `270` este                                                               |
+| `rain.angle`            | no          | decimal, de 0 a 180    | `0`                      | Grados respecto a la vertical descendente: `90` sopla de lado, `180` sube en vertical. Se dibuja inclinada 75 grados como máximo |
+| `rain.heading`          | no          | decimal, grados        | `0`                      | Hacia dónde sopla: `0` sur, `90` oeste, `180` norte, `270` este                                                               |
 | `rain.splashUpward`     | no          | booleano               | `false`                  | Activado, la lluvia que sube (`angle` mayor que `90`) sigue salpicando el suelo y sonando                                     |
-| `wind.gust`             | no          | float, de 0 a 90       | `15`                     | Grados que una ráfaga suma a `angle` en su punto máximo, sin pasar nunca de la horizontal                                     |
-| `wind.every`            | no          | int o `[min, max]`     | `[200, 600]`             | Ticks entre una ráfaga y la siguiente                                                                                         |
-| `wind.swing`            | no          | float, de 0 a 180      | `30`                     | Grados que una ráfaga desvía `heading` hacia un lado                                                                          |
+| `wind.gust`             | no          | decimal, de 0 a 90     | `15`                     | Grados que una ráfaga suma a `angle` en su punto máximo, sin pasar nunca de la horizontal                                     |
+| `wind.every`            | no          | entero o `[min, max]`  | `[200, 600]`             | Ticks entre una ráfaga y la siguiente                                                                                         |
+| `wind.swing`            | no          | decimal, de 0 a 180    | `30`                     | Grados que una ráfaga desvía `heading` hacia un lado                                                                          |
 
 Un bloque `wind` vuelve racheada la lluvia. De vez en cuando, una ráfaga la inclina hasta `gust` grados más y desvía su rumbo hasta `swing` grados hacia un lado; crece y se apaga en menos de cuatro segundos, y las ráfagas llegan cada `every` ticks. La lluvia y la nieve se inclinan con ella, y las partículas ambientales de la dimensión derivan hacia donde se inclina la lluvia, haya ráfagas o no. Un bloque `wind` sin bloque `rain` deja la lluvia con sus valores por defecto.
 
-Las demás dimensiones comparten la lluvia de la superficie. Un `cycle` da a esta dimensión un clima propio: los chubascos van y vienen según los tiempos indicados arriba, haga lo que haga la superficie. Con `thunderTicks` también hay tormentas, con tiempos propios; una tormenta que coincide con un chubasco lo lleva a su máxima intensidad, oscurece el cielo y, con `lightning` activado, trae rayos. `weatherCeiling` en una [plantilla de mundo](#plantillas-de-mundo) sigue limitando hasta qué altura llega la lluvia.
+Las demás dimensiones comparten la lluvia del Overworld. Un `cycle` da a esta dimensión un clima propio: los chubascos van y vienen según los tiempos indicados arriba, haga lo que haga el Overworld. Con `thunderTicks` también hay tormentas, con tiempos propios; una tormenta que coincide con un chubasco lo lleva a su máxima intensidad, oscurece el cielo y, con `lightning` activado, trae rayos. `weatherCeiling` en una [plantilla de mundo](#plantillas-de-mundo) sigue limitando hasta qué altura llega la lluvia.
 
 Un bloque `rain` cambia el aspecto y el sonido de la lluvia y la nieve aquí, con o sin `cycle`; sin él se ven y suenan como en vanilla.
 
@@ -3432,20 +3446,20 @@ Un bloque `rain` cambia el aspecto y el sonido de la lluvia y la nieve aquí, co
 
 *dimensiones*
 
-| Clave            | Obligatoria | Valor              | Por defecto      | Qué hace                                                                                                                                                                                                                      |
+| Clave            | Obligatorio | Valor              | Por defecto      | Qué hace                                                                                                                                                                                                                      |
 | ---------------- | ----------- | ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `music`          | no          | nombre de sonido   | ninguno          | Música que suena aquí en lugar de las pistas habituales, también en creativo. Al llegar, corta la pista que suena                                                                                                             |
-| `musicDelay`     | no          | int o `[min, max]` | `[12000, 24000]` | Ticks de silencio entre dos pistas                                                                                                                                                                                            |
+| `musicDelay`     | no          | entero o `[min, max]` | `[12000, 24000]` | Ticks de silencio entre dos pistas                                                                                                                                                                                            |
 | `loopSound`      | no          | nombre de sonido   | ninguno          | Un sonido que se repite en bucle mientras estás aquí; sube al llegar y se apaga al salir                                                                                                                                      |
 | `ambientSound`   | no          | nombre de sonido   | ninguno          | Un sonido que se reproduce de vez en cuando, como el sonido adicional (additions) de un bioma                                                                                                                                 |
 | `soundChance`    | no          | 0.0 a 1.0          | `0.0111`         | La probabilidad, en cada tick, de que se reproduzca `ambientSound`                                                                                                                                                            |
 | `particle`       | no          | id de partícula    | ninguno          | Una partícula que flota en el aire a tu alrededor, como `minecraft:ash`, `minecraft:white_ash`, `minecraft:crimson_spore` o `minecraft:dust`                                                                                  |
 | `particleChance` | no          | 0.0 a 1.0          | `0.00625`        | Su densidad, contada como en los biomas modernos: en cada tick se prueban unos 667 puntos a menos de 16 bloques y otros 667 a menos de 32, y cada uno que no es un bloque completo muestra la partícula con esta probabilidad |
-| `particleColor`  | no          | color hex          | ninguno          | El tinte de una partícula que lo admite: `minecraft:dust` y `minecraft:entity_effect`                                                                                                                                         |
+| `particleColor`  | no          | color hexadecimal  | ninguno          | El tinte de una partícula que lo admite: `minecraft:dust` y `minecraft:entity_effect`                                                                                                                                         |
 
 Un bloque `ambience` da a la dimensión música, sonidos y partículas flotantes propios. Las claves alimentan los propios efectos de bioma del juego (música, bucle ambiental, sonido adicional y partícula ambiental), así que suenan y se ven como los de un bioma, y el ajuste «Partículas» las reduce del mismo modo. Una clave puesta aquí manda sobre todos los biomas de la dimensión; si falta, cada bioma conserva el suyo, así que un JSON de bioma vanilla con sus efectos también funciona.
 
-## Portales y puertas dimensionales
+## Portales y puertas
 
 *el mundo*
 
@@ -3473,21 +3487,21 @@ Un bloque `portal` lleva una sección `portal`:
 }
 ```
 
-| Clave             | Obligatoria | Valor        | Por defecto            | Qué hace                                                                                                       |
+| Clave             | Obligatorio | Valor        | Por defecto            | Qué hace                                                                                                       |
 | ----------------- | ----------- | ------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
 | `dimension`       | sí          | id de dimensión |                     | A dónde te envía                                                                                               |
 | `returnDimension` | no          | id de dimensión | `minecraft:overworld` | A dónde te devuelve                                                                                            |
 | `gate`            | no          | nombre de puerta | ninguno             | Una puerta que debe estar abierta para pasar                                                                   |
-| `cooldown`        | no          | int, ticks   | `60`                   | Tiempo antes de que el mismo jugador pueda volver a usarlo                                                     |
-| `platform`        | no          | boolean      | `true`                 | Construye una plataforma de aterrizaje al llegar                                                               |
-| `platformBlock`   | no          | nombre de bloque | el marco del propio portal | De qué está hecha esa plataforma                                                                          |
+| `cooldown`        | no          | entero, ticks | `60`                   | Tiempo antes de que el mismo jugador pueda volver a usarlo                                                     |
+| `platform`        | no          | booleano     | `true`                 | Construye una plataforma de aterrizaje al llegar                                                               |
+| `platformBlock`   | no          | nombre de bloque | piedra                     | De qué está hecha esa plataforma                                                                          |
 | `sound`           | no          | nombre de sonido | ninguno            | Suena al pasar. Consulta los [nombres de sonido](#listas-de-valores)                                           |
-| `owned`           | no          | boolean      | `true`                 | Solo puede usarlo quien lo construyó y quienes este autorice. Un portal con propietario también es inmune a las explosiones |
-| `walkIn`          | no          | boolean      | `false`                | Entrar caminando en el bloque te transporta, como en un portal del Nether. Desactivada, se usa a mano          |
+| `owned`           | no          | booleano     | `true`                 | Solo puede usarlo quien lo construyó y quienes este autorice. Un portal con propietario también es inmune a las explosiones |
+| `walkIn`          | no          | booleano     | `false`                | Entrar caminando en el bloque te transporta, como en un portal del Nether. Desactivado, se usa a mano          |
 
 ### Marcos de portal
 
-*portales y puertas dimensionales*
+*portales y puertas*
 
 `<namespace>/portalframes/*.json`
 
@@ -3511,14 +3525,14 @@ Un marco es un dibujo de lo que el jugador tiene que construir, y nada más: ind
 }
 ```
 
-| Clave       | Obligatoria | Valor                              | Por defecto          | Qué hace                                                                                                      |
+| Clave       | Obligatorio | Valor                              | Por defecto          | Qué hace                                                                                                      |
 | ----------- | ----------- | ---------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `name`      | no          | string                             | el nombre del archivo | El nombre que se usa en el registro                                                                          |
+| `name`      | no          | cadena                             | el nombre del archivo | El nombre que se usa en el registro                                                                          |
 | `axis`      | no          | `vertical`, `horizontal` o `both`  | `vertical`           | Si se alza como un portal del Nether, yace plano como un portal del End, o puede ser de cualquiera de las dos formas |
 | `legend`    | sí          | objeto de un carácter a un bloque  | ninguno              | Los bloques que pueden usar las filas. Un nombre de bloque con estados se interpreta igual que en cualquier otro sitio |
-| `rows`      | sí          | lista de strings                   | ninguno              | El dibujo, empezando por la fila superior                                                                     |
-| `maxWidth`  | no          | int                                | `21`                 | El hueco más ancho al que puede extenderse un `*`                                                             |
-| `maxHeight` | no          | int                                | `21`                 | El hueco más alto al que puede extenderse un `*`                                                              |
+| `rows`      | sí          | lista de cadenas                   | ninguno              | El dibujo, empezando por la fila superior                                                                     |
+| `maxWidth`  | no          | entero                             | `21`                 | El hueco más ancho al que puede extenderse un `*`                                                             |
+| `maxHeight` | no          | entero                             | `21`                 | El hueco más alto al que puede extenderse un `*`                                                              |
 
 Tres caracteres no son bloques. `.` es el hueco donde se sitúa el portal, y un marco sin él se rechaza. Un espacio es una celda que al marco le da igual, así que un contorno en forma de L se dibuja dejando las esquinas en blanco. `*` repite: una fila formada solo por `*` repite la fila anterior tantas veces como haya construido el jugador, y un `*` dentro de una fila repite del mismo modo el carácter que lo precede. Puede repetirse cero veces, de modo que el dibujo leído tachando todos los `*` es lo más pequeño que se encenderá, y los máximos de arriba son lo más grande. Un dibujo sin ningún `*` es exacto, y el jugador debe construir eso y nada más.
 
@@ -3526,13 +3540,13 @@ Un marco vertical se encuentra en cualquiera de los dos ejes horizontales y en c
 
 **El tamaño máximo lo decide el pack.** `maxWidth` y `maxHeight` son el hueco más grande al que se extenderá un `*`, y se acepta cualquier tamaño menor hasta el mínimo, de modo que un pack decide si su portal llega como máximo a los 21 de vanilla o a 4. El mínimo es un jugador: un marco vertical se rechaza salvo que su hueco pueda tener al menos 1 de ancho y 2 de alto, y uno horizontal al menos 1 por 1; un dibujo que nunca puede alcanzarlo se rechaza al cargar con una línea en el registro, en lugar de ser un marco que nadie puede atravesar.
 
-**Un marco cuesta más de buscar cuanto más puede estirarse.** Si hay tanto un `*` de fila como un `*` de columna, se prueban todas las combinaciones hasta los dos máximos, así que un marco que se estira en ambos sentidos hasta 21 son 441 dibujos. La búsqueda se rinde en lugar de colgarse y lo indica en el registro, que es la señal para bajar un máximo o quitar uno de los estiramientos.
+**Un marco cuesta más de buscar cuanto más puede estirarse.** Si hay tanto un `*` de fila como un `*` de columna, se prueban todas las combinaciones hasta los dos máximos, así que un marco que se estira en ambos sentidos hasta 21 son 441 dibujos. La búsqueda desiste en lugar de quedarse colgada y lo indica en el registro, que es la señal para bajar un máximo o quitar uno de los estiramientos.
 
-**Nada impide que un marco sea de obsidiana encendido con pedernal y acero, pero tiene prioridad.** Un marco se busca antes de que el objeto haga su propio trabajo, así que ese marco abre la dimensión del pack donde habría estado un portal del Nether. Elige otro bloque u otro encendedor para dejar en paz el portal de vanilla.
+**Nada impide que un marco sea de obsidiana encendido con pedernal y acero, pero tiene prioridad.** Un marco se busca antes de que el ítem haga su propio trabajo, así que ese marco abre la dimensión del pack donde habría estado un portal del Nether. Elige otro bloque u otro encendedor para dejar en paz el portal de vanilla.
 
 ### Abrir una dimensión con un marco
 
-*portales y puertas dimensionales*
+*portales y puertas*
 
 `<namespace>/dimensions/*.json`
 
@@ -3553,30 +3567,30 @@ Una dimensión se abre mediante un marco si lleva una sección `portal`. El marc
 }
 ```
 
-| Clave           | Obligatoria | Valor                       | Por defecto                 | Qué hace                                                                    |
+| Clave           | Obligatorio | Valor                       | Por defecto                 | Qué hace                                                                    |
 | --------------- | ----------- | --------------------------- | --------------------------- | --------------------------------------------------------------------------- |
 | `frames`        | sí          | lista de nombres de marco   | ninguno                     | Los marcos que abren esta dimensión                                         |
-| `ignitedBy`     | no          | nombre de objeto            | `minecraft:flint_and_steel` | Lo que sostiene un jugador para encender uno                                |
+| `ignitedBy`     | no          | nombre de ítem              | `minecraft:flint_and_steel` | Lo que sostiene un jugador para encender uno                                |
 | `color`         | no          | color hexadecimal           | blanco                      | El color con el que se dibuja el portal                                     |
 | `return`        | no          | `built`, `player` o `none`  | `built`                     | Si se ofrece un camino de vuelta, lo construye el jugador, o no hay ninguno |
 | `gate`          | no          | nombre de puerta            | ninguno                     | Una puerta que debe estar abierta para pasar                                |
-| `cooldown`      | no          | int, ticks                  | `60`                        | Tiempo antes de que el mismo jugador pueda volver a pasar                   |
-| `platform`      | no          | boolean                     | `true`                      | Construye una plataforma de aterrizaje al llegar                            |
+| `cooldown`      | no          | entero, ticks               | `60`                        | Tiempo antes de que el mismo jugador pueda volver a pasar                   |
+| `platform`      | no          | booleano                    | `true`                      | Construye una plataforma de aterrizaje al llegar                            |
 | `platformBlock` | no          | nombre de bloque            | piedra                      | De qué está hecha esa plataforma                                            |
 | `sound`         | no          | nombre de sonido            | ninguno                     | Suena al pasar. Consulta los [nombres de sonido](#listas-de-valores)        |
-| `owned`         | no          | boolean                     | `false`                     | Solo puede usarlo quien lo encendió y quienes este autorice                 |
+| `owned`         | no          | booleano                    | `false`                     | Solo puede usarlo quien lo encendió y quienes este autorice                 |
 
 El bloque que ocupa el hueco no lo escribe el pack. A una dimensión con una sección `portal` se le da uno propio, dibujado con la textura de portal del propio juego bajo `color`, que se atraviesa caminando en lugar de usarse a mano y que es irrompible. El color multiplica la textura, igual que un `tintindex`, de modo que `#C77DFF` conserva el violeta del Nether y `#4CFFB0` lo vuelve venenoso. Para un portal que no use en absoluto la textura de vanilla, escribe un bloque `portal` corriente propio con su propia textura, dibujada como [mapa de píxeles](#texturas-escritas-como-mapas-de-píxeles) si quieres, donde `tint` puede degradar entre dos colores.
 
 `return` decide qué ocurre al otro lado. `built` levanta el mismo marco, del tamaño que construyó el jugador, y lo enciende, que es como se comporta vanilla. `player` no construye nada pero permite encender allí el mismo marco, de modo que el camino de vuelta hay que encontrarlo y hacerlo. `none` se niega por completo a encender el marco en esa dimensión, y el viaje es solo de ida.
 
-**Un marco, varias dimensiones.** El par formado por un marco y el objeto que lo enciende es lo que elige la dimensión, así que el mismo `standing_gate` encendido con pedernal y acero y encendido con un encendedor propio del pack abre dos lugares distintos, cada uno con su color. Que dos dimensiones reclamen el mismo marco *y* el mismo objeto es un error del pack: la segunda se rechaza y lo dice en el registro, en lugar de que una de ellas gane en silencio.
+**Un marco, varias dimensiones.** El par formado por un marco y el ítem que lo enciende es lo que elige la dimensión, así que el mismo `standing_gate` encendido con pedernal y acero y encendido con un encendedor propio del pack abre dos lugares distintos, cada uno con su color. Que dos dimensiones reclamen el mismo marco *y* el mismo ítem es un error del pack: la segunda se rechaza y lo dice en el registro, en lugar de que una de ellas gane en silencio.
 
 Romper cualquier bloque del marco apaga el portal, como en vanilla.
 
-### Portales
+### Puertas
 
-*portales y puertas dimensionales*
+*portales y puertas*
 
 `<namespace>/gates/*.json`
 
@@ -3608,20 +3622,20 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 }
 ```
 
-| Clave             | Obligatoria | Valor                                  | Por defecto                      | Qué hace                                                                                                                                                                                                  |
+| Clave             | Obligatorio | Valor                                  | Por defecto                      | Qué hace                                                                                                                                                                                                  |
 | ----------------- | ----------- | -------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `dimension`       | sí          | id de dimensión                        |                                  | La dimensión que protege                                                                                                                                                                                  |
-| `name`            | no          | string                                 | el nombre del archivo            | Se muestra al jugador                                                                                                                                                                                     |
+| `name`            | no          | cadena                                 | el nombre del archivo            | Se muestra al jugador                                                                                                                                                                                     |
 | `scope`           | no          | `player`, `global`                     | `player`                         | Un jugador cada vez, o todo el mundo a la vez                                                                                                                                                             |
-| `open`            | no          | boolean                                | `false`                          | Si empieza abierta                                                                                                                                                                                        |
-| `unlock`          | no          | objeto                                 |                                  | Lo que la abre. Ver abajo                                                                                                                                                                                 |
-| `unlockedMessage` | no          | string                                 | `%dim% is now open`              | Se muestra cuando se abre                                                                                                                                                                                 |
-| `blockedMessage`  | no          | string                                 | `You need %item% to enter %dim%` | Se muestra cuando la puerta rechaza el paso                                                                                                                                                               |
-| `safeReturn`      | no          | boolean                                | `false`                          | Un jugador al que se hace volver se deja en un lugar seguro del mundo que intentó abandonar: junto a su cama o ancla de reaparición cargada allí si siguen en pie, y si no, en el punto de aparición de ese mundo |
+| `open`            | no          | booleano                               | `false`                          | Si empieza abierta                                                                                                                                                                                        |
+| `unlock`          | no          | objeto                                 |                                  | Lo que la abre. Véase más abajo                                                                                                                                                                                 |
+| `unlockedMessage` | no          | cadena                                 | `%dim% is now open`              | Se muestra cuando se abre                                                                                                                                                                                 |
+| `blockedMessage`  | no          | cadena                                 | `You need %item% to enter %dim%` | Se muestra cuando la puerta rechaza el paso                                                                                                                                                               |
+| `safeReturn`      | no          | booleano                               | `false`                          | Un jugador al que se hace volver se deja en un lugar seguro del mundo que intentó abandonar: junto a su cama o ancla de reaparición cargada allí si siguen en pie, y si no, en el punto de aparición de ese mundo |
 | `requires`        | no          | lista de ids de mod o espacios de nombres de pack | ninguno               | La puerta se omite salvo que estén presentes todos                                                                                                                                                        |
 | `portalBlocks`    | no          | lista de nombres de bloque             | todos los portales               | Limita la puerta a estos bloques de portal, de modo que una dimensión pueda tener una entrada protegida y otra abierta                                                                                    |
 
-`unlock` admite `hold` (un objeto que se debe sostener), `consume` con `consumeCount` (`1`), `craft` (un objeto que debe haberse fabricado), `advancement` y `killed` (un nombre de entidad; la puerta se abre para quien mate una, de modo que un jefe puede guardar la llave de un mundo) con `killedCount` (`1`) cuando una no basta, contabilizado por jugador o para todo el mundo según indique el ámbito. Añadir `killedDrops` (un nombre de objeto) hace que las muertes contadas dejen ese objeto a los pies de quien mató en lugar de abrir la puerta, y reinicia la cuenta, de modo que una llave puede volver a ganarse y entregarse a alguien que nunca peleó por ella; condiciona la puerta a `hold` o `consume` de ese mismo objeto para convertirlo en la llave. `%item%`, `%mob%` y `%dim%` se rellenan por ti. Una llave que suelta un mob no necesita nada especial aquí: haz que el mob suelte el objeto y condiciona la puerta a `hold` o `consume`.
+`unlock` admite `hold` (un ítem que se debe sostener), `consume` con `consumeCount` (`1`), `craft` (un ítem que debe haberse fabricado), `advancement` y `killed` (un nombre de entidad; la puerta se abre para quien mate una, de modo que un jefe puede guardar la llave de un mundo) con `killedCount` (`1`) cuando una no basta, contabilizado por jugador o para todo el mundo según indique el ámbito. Añadir `killedDrops` (un nombre de ítem) hace que las muertes contadas dejen ese ítem a los pies de quien mató en lugar de abrir la puerta, y reinicia la cuenta, de modo que una llave puede volver a ganarse y entregarse a alguien que nunca peleó por ella; condiciona la puerta a `hold` o `consume` de ese mismo ítem para convertirlo en la llave. `%item%`, `%mob%` y `%dim%` se rellenan por ti. Una llave que suelta un mob no necesita nada especial aquí: haz que el mob suelte el ítem y condiciona la puerta a `hold` o `consume`.
 
 Las puertas también protegen las dimensiones del propio juego: una puerta cuya `dimension` sea `minecraft:the_nether` se interpone ante todos los portales del Nether.
 
@@ -3629,7 +3643,7 @@ Las puertas también protegen las dimensiones del propio juego: una puerta cuya 
 
 *el mundo*
 
-La superficie puede ser más alta o más profunda de lo que el juego permite, y el espacio que se abre bajo el terreno se llena con una generación propia. Lo hacen cuatro claves de `terrain`, en el bloque `settings` de una plantilla de mundo como las demás; una dimensión de pack hace lo mismo con `minHeight` y `maxHeight` en su propio `terrain`.
+El Overworld puede ser más alto o más profundo de lo que el juego permite, y el espacio que se abre bajo el terreno se llena con una generación propia. Lo hacen cuatro claves de `terrain`, en el bloque `settings` de una plantilla de mundo como las demás; una dimensión de pack hace lo mismo con `minHeight` y `maxHeight` en su propio `terrain`.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -3646,9 +3660,9 @@ La superficie puede ser más alta o más profunda de lo que el juego permite, y 
 
 | Clave            | Valor                                                                  | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                                                                                              |
 | ---------------- | ---------------------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `worldMinHeight` | int, múltiplo de 16, hasta -2032                                       | `-64`       | El bloque más bajo de la superficie. El fondo del propio juego es -64; un valor menor crea un mundo profundo bajo el terreno de vanilla, de piedra maciza hasta que la capa de worldgen la excava o `noiseCaves` lleva las cuevas del juego hacia abajo. Solo se aplica mediante el preset generado, así que un mundo creado antes del pack conserva su altura                                          |
-| `worldMaxHeight` | int, múltiplo de 16, hasta 2032 y como máximo 4064 sobre el fondo      | `320`       | El bloque por encima del techo de la superficie. El techo del propio juego es 320; un valor mayor deja cielo abierto sobre el terreno de vanilla                                                                                                                                                                                                                                                      |
-| `deepStone`      | nombre de bloque                                                       | ninguno     | El bloque del que está hecho el mundo bajo el terreno de vanilla cuando el fondo baja de -64, como la propia pizarra abismal de un pack. Se funde con la pizarra abismal a lo largo de las ocho capas bajo -64, igual que la pizarra abismal se funde con la piedra. Vacío conserva la piedra                                                                                                                 |
+| `worldMinHeight` | entero, múltiplo de 16, hasta -2032                                    | `-64`       | El bloque más bajo del Overworld. El fondo del propio juego es -64; un valor menor crea un mundo profundo bajo el terreno de vanilla, de piedra maciza hasta que la capa de worldgen la excava o `noiseCaves` lleva las cuevas del juego hacia abajo. Solo se aplica mediante el preset generado, así que un mundo creado antes del pack conserva su altura                                          |
+| `worldMaxHeight` | entero, múltiplo de 16, hasta 2032 y como máximo 4064 sobre el fondo   | `320`       | El bloque por encima del techo del Overworld. El techo del propio juego es 320; un valor mayor deja cielo abierto sobre el terreno de vanilla                                                                                                                                                                                                                                                      |
+| `deepStone`      | nombre de bloque                                                       | ninguno     | El bloque del que está hecho el mundo bajo el terreno de vanilla cuando el fondo baja de -64, como la propia pizarra abisal de un pack. Se funde con la pizarra abisal a lo largo de las ocho capas bajo -64, igual que la pizarra abisal se funde con la piedra. Vacío conserva la piedra                                                                                                                 |
 | `noiseCaves`     | `off`, `deep` o `world`                                                | `off`       | Hasta dónde continúan las cuevas, túneles, tallarines y acuíferos del juego cuando el fondo baja de -64: `off` mantiene el mundo bajo el terreno de vanilla como piedra profunda maciza para que la capa de worldgen la excave, `deep` los lleva hasta el fondo con los lagos de lava trasladados a sus diez capas inferiores, `world` significa lo mismo en esta versión porque el terreno de vanilla ya los tiene |
 
 El mundo profundo es donde hacen su trabajo las entradas de worldgen, las regiones de cuevas y los grupos de dureza de un pack: `minHeight` y `maxHeight` en una entrada llegan tan abajo como llegue el fondo. Las características colocadas del propio juego se ciñen al terreno de vanilla: una cuya altura se cuenta desde el fondo del mundo, entre ellas los diamantes y la redstone inferior del juego, sigue contando desde -64, y una colocación que quedaría por debajo de -64 se omite, como ocurre en un mundo cuyo fondo es -64. Las claves de cielo de 1.12.2, `deepRavines`, `oreVeins`, `terrainOffset` y el propio mundo rubic no tienen equivalente aquí, ya que la generación de este motor ya abarca desde el fondo hasta el techo.
@@ -3700,22 +3714,22 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 | Clave               | Valor                                  | Por defecto                                                                                          | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------- | -------------------------------------- | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `weight`            | int                                    | `1`                                                                                                  | Proporción de celdas que gana esta región. `0` la desactiva                                                                                                                                                                                                                                                                                                                                                                    |
-| `minHeight`         | int                                    | el fondo del mundo                                                                                   | Límite inferior de la franja en la que existe la región                                                                                                                                                                                                                                                                                                                                                                        |
-| `maxHeight`         | int                                    | `48`                                                                                                 | Límite superior de esa franja. Una celda cuyo centro quede fuera de la franja nunca elige la región                                                                                                                                                                                                                                                                                                                            |
-| `waterLevel`        | int                                    | ninguno                                                                                              | Fija el nivel freático dentro de la región a esta altura, en lugar de los acuíferos de allí. Se mantiene por debajo del nivel del mar y al menos dos bloques por encima de la lava profunda                                                                                                                                                                                                                                      |
-| `dimensions`        | lista de ids de dimensión              | todas                                                                                                | En qué dimensiones aparece la región, incluidas las propias de un pack. Una región con `biome` solo lo muestra donde los biomas se colocan por clima: la superficie, el Nether y una dimensión de pack que hereda los biomas de la superficie                                                                                                                                                                                  |
+| `weight`            | entero                                 | `1`                                                                                                  | Proporción de celdas que gana esta región. `0` la desactiva                                                                                                                                                                                                                                                                                                                                                                    |
+| `minHeight`         | entero                                 | el fondo del mundo                                                                                   | Límite inferior de la franja en la que existe la región                                                                                                                                                                                                                                                                                                                                                                        |
+| `maxHeight`         | entero                                 | `48`                                                                                                 | Límite superior de esa franja. Una celda cuyo centro quede fuera de la franja nunca elige la región                                                                                                                                                                                                                                                                                                                            |
+| `waterLevel`        | entero                                 | ninguno                                                                                              | Fija el nivel freático dentro de la región a esta altura, en lugar de los acuíferos de allí. Se mantiene por debajo del nivel del mar y al menos dos bloques por encima de la lava profunda                                                                                                                                                                                                                                      |
+| `dimensions`        | lista de ids de dimensión              | todas                                                                                                | En qué dimensiones aparece la región, incluidas las propias de un pack. Una región con `biome` solo lo muestra donde los biomas se colocan por clima: el Overworld, el Nether y una dimensión de pack que hereda los biomas del Overworld                                                                                                                                                                                  |
 | `floorCover`        | bloque                                 | ninguno                                                                                              | Sustituye el bloque superior de los suelos de cueva dentro de la región                                                                                                                                                                                                                                                                                                                                                        |
 | `floorChance`       | 0.0 a 1.0                              | `1.0`                                                                                                | Qué parte del suelo queda cubierta                                                                                                                                                                                                                                                                                                                                                                                             |
 | `ceilingCover`      | bloque                                 | ninguno                                                                                              | Sustituye los bloques del techo de cueva dentro de la región                                                                                                                                                                                                                                                                                                                                                                   |
 | `ceilingChance`     | 0.0 a 1.0                              | `1.0`                                                                                                | Qué parte del techo                                                                                                                                                                                                                                                                                                                                                                                                            |
-| `coverReplace`      | lista de bloques                       | los bloques base del juego de piedra, mena, adoquín, arenisca, terracota, piedra del End y obsidiana | Lo que pueden sustituir las coberturas. Un bloque de la lista solo coincide consigo mismo: `minecraft:stone` no cubre también andesita, pizarra abismal ni toba, así que enumera todas las piedras que pueda tener el suelo                                                                                                                                                                                                      |
+| `coverReplace`      | lista de bloques                       | los bloques base del juego de piedra, mena, adoquín, arenisca, terracota, piedra del End y obsidiana | Lo que pueden sustituir las coberturas. Un bloque de la lista solo coincide consigo mismo: `minecraft:stone` no cubre también andesita, pizarra abisal ni toba, así que enumera todas las piedras que pueda tener el suelo                                                                                                                                                                                                      |
 | `spawns`            | lista                                  | ninguno                                                                                              | Mobs que aparecen dentro de la región, las mismas entradas que admite el `spawns` de un bioma: `entity`, `type` (monster, creature, ambient o water), `weight` (`8`), `min` (`1`) y `max` (`4`) para el tamaño del grupo. Un punto desde el que se ve el cielo se deja al bioma, igual que las coberturas                                                                                                                         |
-| `keepDefaultSpawns` | boolean                                | `false`                                                                                              | Conserva la lista de apariciones del propio bioma junto a la de la región. Desactivada, la lista de la región la sustituye por completo dentro de la región                                                                                                                                                                                                                                                                     |
+| `keepDefaultSpawns` | booleano                               | `false`                                                                                              | Conserva la lista de apariciones del propio bioma junto a la de la región. Desactivado, la lista de la región la sustituye por completo dentro de la región                                                                                                                                                                                                                                                                     |
 | `structures`        | lista                                  | ninguno                                                                                              | Una estructura colocada una vez por celda de región, en el corazón de la celda, ajustada al suelo de una cueva, como el juego da su hito a un bioma de cueva. Las entradas son plantillas `namespace:name`, o `{ "structure": "...", "weight": 3 }` para elegir entre varias                                                                                                                                                  |
 | `structureChance`   | 0.0 a 1.0                              | `1.0`                                                                                                | La probabilidad de que cada celda de la región reciba realmente su estructura                                                                                                                                                                                                                                                                                                                                                  |
 | `structureLoot`     | `namespace:path`                       | ninguno                                                                                              | La tabla de botín con la que se llena cada cofre de una estructura colocada la primera vez que se abre                                                                                                                                                                                                                                                                                                                          |
-| `biome`             | nombre de bioma                        | ninguno                                                                                              | El bioma que la región informa dentro de su volumen, escrito como bioma 3D. Da a la región su propio color de follaje, hierba y agua, música y sonidos ambientales, y permite que la ponderación de apariciones de vanilla lo lea. La superficie de arriba no se toca, ya que solo se escriben las celdas que ocupa la región. Si se omite, la región conserva el bioma que la rodea y aun así coloca sus coberturas, estructuras y apariciones |
+| `biome`             | nombre de bioma                        | ninguno                                                                                              | El bioma que la región indica dentro de su volumen, escrito como bioma 3D. Da a la región su propio color de follaje, hierba y agua, música y sonidos ambientales, y permite que la ponderación de apariciones de vanilla lo lea. La superficie de arriba no se toca, ya que solo se escriben las celdas que ocupa la región. Si se omite, la región conserva el bioma que la rodea y aun así coloca sus coberturas, estructuras y apariciones |
 | `requires`          | lista de ids de mod o espacios de nombres de pack | ninguno                                                                                   | La región se omite salvo que estén presentes todos                                                                                                                                                                                                                                                                                                                                                                             |
 | `ambientSound`      | nombre de sonido                       | ninguno                                                                                              | Un sonido que se reproduce de vez en cuando para un jugador dentro de la región, como los biomas del juego añaden sus propios sonidos de cueva. El servidor lo envía solo a ese jugador                                                                                                                                                                                                                                          |
 | `soundChance`       | 0.0 a 1.0                              | `0.0111`                                                                                             | La probabilidad por tick de que suene `ambientSound`                                                                                                                                                                                                                                                                                                                                                                           |
@@ -3728,9 +3742,9 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 
 | Ajuste                  | Tipo           | Por defecto | Qué hace                                                                                                                                                                                                                  |
 | ----------------------- | -------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `caveRegionCells`       | int, bloques   | `128`       | Cuánto mide de ancho una celda de región                                                                                                                                                                                  |
-| `caveRegionCellsY`      | int, bloques   | `64`        | Cuánto mide de alto una celda de región                                                                                                                                                                                   |
-| `caveRegionPlainWeight` | int            | `4`         | El peso del subsuelo llano, sin región, en el sorteo de cada celda. Un valor mayor deja más subsuelo sin ninguna región: con una sola región de peso 1, aproximadamente una quinta parte de las celdas la reciben |
+| `caveRegionCells`       | entero, bloques | `128`       | Cuánto mide de ancho una celda de región                                                                                                                                                                                  |
+| `caveRegionCellsY`      | entero, bloques | `64`        | Cuánto mide de alto una celda de región                                                                                                                                                                                   |
+| `caveRegionPlainWeight` | entero         | `4`         | El peso del subsuelo llano, sin región, en el sorteo de cada celda. Un valor mayor deja más subsuelo sin ninguna región: con una sola región de peso 1, aproximadamente una quinta parte de las celdas la reciben |
 
 `<namespace>/worldtemplates/*.json`
 
@@ -3824,21 +3838,21 @@ Describe algo que se genera. Cada entrada es una **forma** colocada mediante una
 }
 ```
 
-Solo `block` es obligatoria; todo lo demás puede omitirse y toma su valor por defecto. `blocks` sustituye a `block` cuando uno no basta y tiene su propio ejemplo más abajo.
+Solo `block` es obligatorio; todo lo demás puede omitirse y toma su valor por defecto. `blocks` sustituye a `block` cuando uno no basta y tiene su propio ejemplo más abajo.
 
 ### Qué coloca
 
 *entradas de worldgen*
 
-| Clave      | Obligatoria | Valor                                | Por defecto             | Qué hace                                                                                                    |
+| Clave      | Obligatorio | Valor                                | Por defecto             | Qué hace                                                                                                    |
 | ---------- | ----------- | ------------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `block`    | sí          | nombre de bloque                     |                         | Lo que se coloca                                                                                            |
-| `blocks`   | no          | lista de objetos                     | ninguno                 | Una lista con pesos, que se usa en lugar de un solo bloque. Ver abajo                                       |
-| `size`     | no          | int o rango                          | `8`                     | Cuántos bloques coloca un intento, o cómo de grande es una forma con radio                                  |
-| `attempts` | no          | int o rango                          | `8`                     | Cuántas veces lo intenta por chunk                                                                          |
-| `replace`  | no          | lista de nombres de bloque u objetos | `["minecraft:stone"]`   | Lo que puede sustituir. Ver abajo                                                                           |
+| `blocks`   | no          | lista de objetos                     | ninguno                 | Una lista con pesos, que se usa en lugar de un solo bloque. Véase más abajo                                       |
+| `size`     | no          | entero o rango                       | `8`                     | Cuántos bloques coloca un intento, o cómo de grande es una forma con radio                                  |
+| `attempts` | no          | entero o rango                       | `8`                     | Cuántas veces lo intenta por chunk                                                                          |
+| `replace`  | no          | lista de nombres de bloque u objetos | `["minecraft:stone"]`   | Lo que puede sustituir. Véase más abajo                                                                           |
 | `adjacent` | no          | lista de nombres de bloque u objetos | ninguno                 | Solo coloca donde uno de estos esté entre los 26 bloques que tocan el punto. Mismas formas que `replace`    |
-| `sparse`   | no          | boolean                              | `false`                 | Dispersa los bloques en lugar de apretarlos juntos                                                          |
+| `sparse`   | no          | booleano                             | `false`                 | Dispersa los bloques en lugar de apretarlos juntos                                                          |
 | `shape`    | no          | objeto                               | `{ "type": "cluster" }` | La forma que adopta. Consulta [Formas](#formas)                                                             |
 | `spread`   | no          | objeto                               | `{ "type": "even" }`    | Dónde se coloca. Consulta [Dispersiones](#dispersiones)                                                     |
 
@@ -3846,47 +3860,47 @@ Solo `block` es obligatoria; todo lo demás puede omitirse y toma su valor por d
 
 *entradas de worldgen*
 
-| Clave                    | Obligatoria | Valor                     | Por defecto        | Qué hace                                                                                                                                                                                                                                                                                                                                                                      |
+| Clave                    | Obligatorio | Valor                     | Por defecto        | Qué hace                                                                                                                                                                                                                                                                                                                                                                      |
 | ------------------------ | ----------- | ------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `minHeight`              | no          | int                       | `0`                | La y más baja en la que colocará                                                                                                                                                                                                                                                                                                                                              |
-| `maxHeight`              | no          | int                       | `64`               | La y más alta en la que colocará                                                                                                                                                                                                                                                                                                                                              |
+| `minHeight`              | no          | entero                    | `0`                | La y más baja en la que colocará                                                                                                                                                                                                                                                                                                                                              |
+| `maxHeight`              | no          | entero                    | `64`               | La y más alta en la que colocará                                                                                                                                                                                                                                                                                                                                              |
 | `dimensions`             | no          | lista de ids de dimensión | todas las dimensiones | En qué dimensiones se ejecuta                                                                                                                                                                                                                                                                                                                                              |
-| `dimensionsAreBlacklist` | no          | boolean                   | `false`            | Convierte esa lista en la de las que hay que evitar                                                                                                                                                                                                                                                                                                                           |
+| `dimensionsAreBlacklist` | no          | booleano                  | `false`            | Convierte esa lista en la de las que hay que evitar                                                                                                                                                                                                                                                                                                                           |
 | `biomes`                 | no          | lista de nombres de bioma | todos los biomas   | En qué biomas se ejecuta                                                                                                                                                                                                                                                                                                                                                      |
 | `biomeTypes`             | no          | lista de tipos de bioma   | ninguno            | Biomas por palabra de tipo, como `forest` o `nether`                                                                                                                                                                                                                                                                                                                          |
-| `biomesAreBlacklist`     | no          | boolean                   | `false`            | Convierte esas listas en las que hay que evitar                                                                                                                                                                                                                                                                                                                               |
-| `minTemperature`         | no          | float                     | `-100.0`           | El bioma más frío en el que se generará                                                                                                                                                                                                                                                                                                                                       |
-| `maxTemperature`         | no          | float                     | `100.0`            | El bioma más cálido en el que se generará                                                                                                                                                                                                                                                                                                                                     |
-| `minRainfall`            | no          | float                     | `-100.0`           | El bioma más seco en el que se generará                                                                                                                                                                                                                                                                                                                                       |
-| `maxRainfall`            | no          | float                     | `100.0`            | El bioma más húmedo en el que se generará                                                                                                                                                                                                                                                                                                                                     |
-| `minDistanceFromSpawn`   | no          | int, bloques              | `0`                | A qué distancia del punto de aparición del mundo empieza a generarse                                                                                                                                                                                                                                                                                                          |
+| `biomesAreBlacklist`     | no          | booleano                  | `false`            | Convierte esas listas en las que hay que evitar                                                                                                                                                                                                                                                                                                                               |
+| `minTemperature`         | no          | decimal                   | `-100.0`           | El bioma más frío en el que se generará                                                                                                                                                                                                                                                                                                                                       |
+| `maxTemperature`         | no          | decimal                   | `100.0`            | El bioma más cálido en el que se generará                                                                                                                                                                                                                                                                                                                                     |
+| `minRainfall`            | no          | decimal                   | `-100.0`           | El bioma más seco en el que se generará                                                                                                                                                                                                                                                                                                                                       |
+| `maxRainfall`            | no          | decimal                   | `100.0`            | El bioma más húmedo en el que se generará                                                                                                                                                                                                                                                                                                                                     |
+| `minDistanceFromSpawn`   | no          | entero, bloques           | `0`                | A qué distancia del punto de aparición del mundo empieza a generarse                                                                                                                                                                                                                                                                                                          |
 | `caveRegions`            | no          | lista de nombres de región | ninguno           | Solo se genera dentro de estas [regiones de cuevas](#regiones-de-cuevas)                                                                                                                                                                                                                                                                                                      |
 | `snap`                   | no          | `floor` o `ceiling`       | ninguno            | Antes mueve cada intento en vertical hasta el suelo o techo de cueva más cercano                                                                                                                                                                                                                                                                                              |
-| `snapDepth`              | no          | int                       | `0`                | Cuánto más allá de la superficie se mueve `snap`, hacia abajo desde un suelo y hacia arriba desde un techo. `0` se queda en el espacio abierto contra la superficie, `1` es el propio bloque de la superficie, `2` el que hay detrás. Lo que puede sobrescribir sigue rigiéndose por `replace`, así que así es como un pack coloca un bloque en bandas justo bajo el suelo en lugar de encima |
+| `snapDepth`              | no          | entero                    | `0`                | Cuánto más allá de la superficie se mueve `snap`, hacia abajo desde un suelo y hacia arriba desde un techo. `0` se queda en el espacio abierto contra la superficie, `1` es el propio bloque de la superficie, `2` el que hay detrás. Lo que puede sobrescribir sigue rigiéndose por `replace`, así que esta es la forma de que un pack coloque un bloque en bandas justo bajo el suelo en lugar de encima |
 
 ### Señales de superficie y seguidores
 
 *entradas de worldgen*
 
-| Clave             | Obligatoria | Valor                                | Por defecto             | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| Clave             | Obligatorio | Valor                                | Por defecto             | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | ----------------- | ----------- | ------------------------------------ | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `indicators`      | no          | lista de `block=weight`              | ninguno                 | Bloques dejados dispersos en la superficie sobre una veta que se generó, para que un jugador pueda saber qué hay bajo tierra; elígelos para que coincidan con el contenido de la veta. `empty=weight` deja un punto vacío. Una entrada sin peso, o con un peso menor que 1, se anota en el registro y se omite, y no se deja ninguna en las calles y edificios de una aldea o una ciudad                                                                                                                                                                                                                                                                                                                                                                                                       |
-| `indicatorCount`  | no          | int o rango                          | `1`                     | Cuántos puntos de superficie recibe cada veta generada                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `indicatorSpread` | no          | int, bloques                         | `0`                     | Cuánto más allá de la huella de la veta puede caer un indicador                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `then`            | no          | lista de `name=weight` u objetos     | ninguno                 | Entradas de worldgen que crecen a partir de esta justo después de generarse, unidas a ella: el origen del seguidor se fija justo fuera del borde de esta veta, en la dirección que indican `thenSpread` y `thenDepth`, de modo que ambas se tocan. Una entrada es `name=weight`, o un objeto con `name`, `weight` y sus propios `spread` y `depth` (int o rango) que sustituyen los de la veta solo para ese seguidor, de modo que una lista puede enviar una punta de diamante hacia abajo y una rama hacia un lado. Un nombre sin espacio de nombres se lee en el de este pack, `empty=weight` no pone nada en cola. Un seguidor conserva su propia forma, bloques, tamaño y `replace` pero se salta sus propios intentos, probabilidad, franja de altura y filtros de bioma, y puede llevar él mismo `then`, tan profundo como quiera el pack; una entrada que ya se generó en la misma cadena la detiene |
-| `thenCount`       | no          | int o rango                          | `1`                     | Cuántos seguidores distintos se eligen de esa lista por cada veta generada, cada entrada como mucho una vez, de modo que un número igual a la longitud de la lista hace crecer a todos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `thenSpread`      | no          | int, bloques                         | el radio de la forma    | Cuánto puede inclinarse hacia los lados la dirección en la que crece un seguidor, sorteado de menos este valor a más este valor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| `thenDepth`       | no          | int o rango                          | `0`                     | Cuánto se inclina la dirección hacia abajo (negativo) o hacia arriba. `0` sin inclinación lateral hace que el seguidor cuelgue recto hacia abajo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
-| `prospectAs`      | no          | string                               | el nombre del archivo   | Cómo nombra esta entrada un objeto de prospección en su lectura, p. ej. `Hematite`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `indicatorCount`  | no          | entero o rango                       | `1`                     | Cuántos puntos de superficie recibe cada veta generada                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `indicatorSpread` | no          | entero, bloques                      | `0`                     | Cuánto más allá de la huella de la veta puede caer un indicador                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `then`            | no          | lista de `name=weight` u objetos     | ninguno                 | Entradas de worldgen que crecen a partir de esta justo después de generarse, unidas a ella: el origen del seguidor se fija justo fuera del borde de esta veta, en la dirección que indican `thenSpread` y `thenDepth`, de modo que ambas se tocan. Una entrada es `name=weight`, o un objeto con `name`, `weight` y sus propios `spread` y `depth` (entero o rango) que sustituyen los de la veta solo para ese seguidor, de modo que una lista puede enviar una punta de diamante hacia abajo y una rama hacia un lado. Un nombre sin espacio de nombres se lee en el de este pack, `empty=weight` no pone nada en cola. Un seguidor conserva su propia forma, bloques, tamaño y `replace` pero se salta sus propios intentos, probabilidad, franja de altura y filtros de bioma, y puede llevar él mismo `then`, tan profundo como quiera el pack; una entrada que ya se generó en la misma cadena la detiene |
+| `thenCount`       | no          | entero o rango                       | `1`                     | Cuántos seguidores distintos se eligen de esa lista por cada veta generada, cada entrada como mucho una vez, de modo que un número igual a la longitud de la lista hace crecer a todos                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| `thenSpread`      | no          | entero, bloques                      | el radio de la forma    | Cuánto puede inclinarse hacia los lados la dirección en la que crece un seguidor, sorteado de menos este valor a más este valor                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `thenDepth`       | no          | entero o rango                       | `0`                     | Cuánto se inclina la dirección hacia abajo (negativo) o hacia arriba. `0` sin inclinación lateral hace que el seguidor cuelgue recto hacia abajo                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| `prospectAs`      | no          | cadena                               | el nombre del archivo   | Cómo nombra esta entrada un ítem de prospección en su lectura, p. ej. `Hematite`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 
 ### Retrogen y requisitos
 
 *entradas de worldgen*
 
-| Clave         | Obligatoria | Valor                                              | Por defecto            | Qué hace                                               |
+| Clave         | Obligatorio | Valor                                              | Por defecto            | Qué hace                                               |
 | ------------- | ----------- | -------------------------------------------------- | ---------------------- | ------------------------------------------------------ |
-| `retrogen`    | no          | boolean                                            | `false`                | También genera en chunks que ya existen                |
-| `retrogenKey` | no          | string                                             | la clave de la config  | Sustituye la clave de retrogen solo para esta entrada  |
+| `retrogen`    | no          | booleano                                           | `false`                | También genera en chunks que ya existen                |
+| `retrogenKey` | no          | cadena                                             | la clave de la configuración  | Sustituye la clave de retrogen solo para esta entrada  |
 | `requires`    | no          | lista de ids de mod o espacios de nombres de pack  | ninguno                | La entrada se omite salvo que estén presentes todos    |
 
 ### Bloques con peso
@@ -3904,11 +3918,11 @@ Solo `block` es obligatoria; todo lo demás puede omitirse y toma su valor por d
 }
 ```
 
-| Clave        | Obligatoria | Valor                            | Por defecto | Qué hace                                                                                  |
+| Clave        | Obligatorio | Valor                            | Por defecto | Qué hace                                                                                  |
 | ------------ | ----------- | -------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
 | `block`      | sí          | nombre de bloque                 |             | Lo que se coloca                                                                          |
-| `weight`     | no          | int                              | `1`         | Con qué frecuencia se elige este frente a los demás                                       |
-| `properties` | no          | objeto de propiedad a valor      | ninguno     | Propiedades del estado del bloque por nombre, para un estado distinto del predeterminado del bloque |
+| `weight`     | no          | entero                           | `1`         | Con qué frecuencia se elige este frente a los demás                                       |
+| `properties` | no          | objeto de propiedad a valor      | ninguno     | Propiedades del estado del bloque por nombre, para un estado distinto del estado por defecto del bloque |
 
 `block` sigue siendo obligatorio en el nivel superior del archivo incluso cuando se usa `blocks`; la primera entrada es un buen valor para poner ahí.
 
@@ -3970,12 +3984,12 @@ Una entrada de la lista `then` de una entrada de worldgen es un nombre con un pe
 }
 ```
 
-| Clave    | Obligatoria | Valor          | Por defecto                 | Qué hace                                                                                                          |
+| Clave    | Obligatorio | Valor          | Por defecto                 | Qué hace                                                                                                          |
 | -------- | ----------- | -------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `name`   | sí          | nombre de entrada |                          | La entrada de worldgen que crece a partir de esta. Un nombre sin espacio de nombres se lee en el de este pack     |
-| `weight` | no          | int            | `1`                         | Con qué frecuencia se elige este seguidor frente a los demás de la lista                                          |
-| `spread` | no          | int, bloques   | el `thenSpread` de la entrada | Cuánto puede inclinarse hacia los lados la dirección de este seguidor, solo para esta entrada                   |
-| `depth`  | no          | int o rango    | el `thenDepth` de la entrada | Cuánto se inclina hacia abajo, en negativo, o hacia arriba la dirección de este seguidor, solo para esta entrada |
+| `weight` | no          | entero         | `1`                         | Con qué frecuencia se elige este seguidor frente a los demás de la lista                                          |
+| `spread` | no          | entero, bloques | el `thenSpread` de la entrada | Cuánto puede inclinarse hacia los lados la dirección de este seguidor, solo para esta entrada                   |
+| `depth`  | no          | entero o rango | el `thenDepth` de la entrada | Cuánto se inclina hacia abajo, en negativo, o hacia arriba la dirección de este seguidor, solo para esta entrada |
 
 `name=weight` es la forma abreviada de un objeto con solo esos dos, y `empty=weight` no pone nada en cola. Como `spread` y `depth` son por entrada, una lista puede enviar una punta de diamante recta hacia abajo y una rama hacia un lado desde la misma veta.
 
@@ -4066,12 +4080,12 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | Clave           | Usada por                                | Valor                        | Por defecto                          | Qué hace                                                                                                                                                                         |
 | --------------- | ---------------------------------------- | ---------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`          | todos                                    | una de las formas anteriores | `cluster`                            | Qué forma                                                                                                                                                                        |
-| `radius`        | plate, geode, basin, spire, nodule, vent | int o rango                  | `6`                                  | Cuán ancha es                                                                                                                                                                    |
-| `height`        | plate, geode, basin, spire, vent, tree   | int o rango                  | `1`, `8` para geode, `5` para tree   | Cuán alta o gruesa es                                                                                                                                                            |
-| `width`         | geode                                    | int o rango                  | `12`                                 | La extensión total de la bolsa                                                                                                                                                   |
+| `radius`        | plate, geode, basin, spire, nodule, vent, belt | entero o rango         | `6`, `32` en belt                    | Cuán ancha es                                                                                                                                                                    |
+| `height`        | plate, geode, basin, spire, vent, tree   | entero o rango               | `1`, `8` para geode, `5` para tree   | Cuán alta o gruesa es                                                                                                                                                            |
+| `width`         | geode                                    | entero o rango               | `12`                                 | La extensión total de la bolsa                                                                                                                                                   |
 | `plane`         | plate, basin, spire, vent                | `circle`, `square`           | `circle`                             | Su huella                                                                                                                                                                        |
-| `slim`          | plate, largevein, nodule                 | boolean                      | `false`                              | Plate: una capa más fina. Largevein: ramas de un solo bloque. Nodule: cáscara hueca                                                                                              |
-| `hanging`       | spire, vent                              | boolean                      | `false`                              | Crece hacia abajo desde un techo en lugar de hacia arriba desde un suelo                                                                                                         |
+| `slim`          | plate, largevein, nodule                 | booleano                     | `false`                              | Plate: una capa más fina. Largevein: ramas de un solo bloque. Nodule: cáscara hueca                                                                                              |
+| `hanging`       | spire, vent                              | booleano                     | `false`                              | Crece hacia abajo desde un techo en lugar de hacia arriba desde un suelo                                                                                                         |
 | `taper`         | spire                                    | `straight`, `bell`, `needle` | `straight`                           | Cómo se reduce la anchura hacia la punta. `straight` se estrecha de manera uniforme, `bell` mantiene su anchura abajo y luego cae, `needle` se afina de inmediato hasta una punta larga |
 | `outline`       | geode                                    | nombre de bloque             | ninguno                              | El bloque de la corteza                                                                                                                                                          |
 | `fill`          | geode                                    | nombre de bloque             | ninguno                              | Lo que llena el centro. Si se omite, el centro queda hueco                                                                                                                       |
@@ -4080,7 +4094,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | `buddingChance` | geode                                    | 0.0 a 1.0                    | `0.083`                              | Cuántos de esos bloques del cuerpo brotan                                                                                                                                        |
 | `crystal`       | geode                                    | nombre de bloque             | ninguno                              | Crece en el hueco junto a un bloque `budding`, como un cúmulo de amatista                                                                                                        |
 | `crystalChance` | geode                                    | 0.0 a 1.0                    | `0.35`                               | En cuántos de esos puntos crece uno                                                                                                                                              |
-| `crack`         | geode                                    | 0.0 a 1.0                    | `0`                                  | La probabilidad de que una geoda esté abierta: un tubo desde el centro hacia fuera a través de todas las capas por un lado, relleno con `fill`. Las geodas de amatista del juego usan `0.95` |
+| `crack`         | geode                                    | 0.0 a 1.0                    | `0`                                  | La probabilidad de que una geoda esté agrietada: un tubo desde el centro hacia fuera a través de todas las capas por un lado, relleno con `fill`. Las geodas de amatista del juego usan `0.95` |
 
 ### Colocación
 
@@ -4089,14 +4103,14 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | Clave              | Usada por        | Valor                    | Por defecto               | Qué hace                                                                                                                                                                                                                            |
 | ------------------ | ---------------- | ------------------------ | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `surface`          | decoration, tree | lista de nombres de bloque | ninguno                 | Sobre qué se asentará                                                                                                                                                                                                               |
-| `seeSky`           | decoration       | boolean                  | `true`                    | Solo coloca donde el cielo es visible                                                                                                                                                                                               |
-| `checkStay`        | decoration       | boolean                  | `true`                    | Solo coloca donde el bloque sobreviviría                                                                                                                                                                                            |
-| `stackHeight`      | decoration       | int o rango              | `1`                       | Cuántos apilar unos encima de otros                                                                                                                                                                                                 |
-| `scatterX`         | decoration, tree | int                      | `8`                       | Cuánto se desplaza hacia los lados                                                                                                                                                                                                  |
-| `scatterY`         | decoration, tree | int                      | `4`                       | Cuánto se desplaza en vertical                                                                                                                                                                                                      |
-| `scatterZ`         | decoration, tree | int                      | `8`                       | Cuánto se desplaza hacia los lados                                                                                                                                                                                                  |
-| `rarity`           | cualquiera       | int                      | ninguno (`400` para belt) | Una colocación por cada tantos chunks. En un belt separa los belts entre sí; en cualquier otra forma condiciona toda la entrada, de modo que solo un chunk de cada tantos sortea siquiera sus `attempts`. `field` la ignora         |
-| `rarityIsPerChunk` | cualquiera       | boolean                  | `false`                   | Convierte `rarity` en cuántas colocaciones recibe cada chunk                                                                                                                                                                        |
+| `seeSky`           | decoration       | booleano                 | `true`                    | Solo coloca donde el cielo es visible                                                                                                                                                                                               |
+| `checkStay`        | decoration       | booleano                 | `true`                    | Solo coloca donde el bloque sobreviviría                                                                                                                                                                                            |
+| `stackHeight`      | decoration       | entero o rango           | `1`                       | Cuántos apilar unos encima de otros                                                                                                                                                                                                 |
+| `scatterX`         | decoration, tree | entero                   | `8`                       | Cuánto se desplaza hacia los lados                                                                                                                                                                                                  |
+| `scatterY`         | decoration, tree | entero                   | `4`                       | Cuánto se desplaza en vertical                                                                                                                                                                                                      |
+| `scatterZ`         | decoration, tree | entero                   | `8`                       | Cuánto se desplaza hacia los lados                                                                                                                                                                                                  |
+| `rarity`           | cualquiera       | entero                   | ninguno (`400` para belt) | Una colocación por cada tantos chunks. En un belt separa los belts entre sí; en cualquier otra forma condiciona toda la entrada, de modo que solo un chunk de cada tantos sortea siquiera sus `attempts`. `field` la ignora         |
+| `rarityIsPerChunk` | cualquiera       | booleano                 | `false`                   | Convierte `rarity` en cuántas colocaciones recibe cada chunk                                                                                                                                                                        |
 
 ### Árboles
 
@@ -4106,7 +4120,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | -------- | --------- | ---------------- | ----------- | ----------------------------- |
 | `log`    | tree      | nombre de bloque | ninguno     | El bloque del tronco          |
 | `leaves` | tree      | nombre de bloque | ninguno     | El bloque de las hojas        |
-| `vines`  | tree      | boolean          | `false`     | Cuelga enredaderas de las hojas |
+| `vines`  | tree      | booleano         | `false`     | Cuelga enredaderas de las hojas |
 
 Un `tree` sin `log` ni `leaves` no genera nada, y lo dice en el registro. Nombrar un `structure`, o varios en `structures`, planta esa plantilla en cada punto en lugar de hacer crecer un árbol, y entonces no hace falta `log` ni `leaves`; un árbol de plantilla lee `turns`, `mirrors`, `integrity`, `lootTable` y `locateAs` exactamente igual que un `imprint`.
 
@@ -4121,9 +4135,11 @@ Un `tree` sin `log` ni `leaves` no genera nada, y lo dice en el registro. Nombra
 | `lootTable`  | imprint, tree | `namespace:path`     | ninguno     | La tabla de botín con la que se llena cada cofre de la plantilla colocada la primera vez que se abre, y cualquier otro contenedor que admita una, entre ellos una caja de shulker o el cajón de un mod. Cubre `structure` y cada entrada de `structures`; cada cofre sortea su propia semilla |
 | `structures` | imprint, tree | lista                | ninguno     | Varias plantillas entre las que elegir, una colocada cada vez. Cada entrada es `{ "structure": "namespace:name", "weight": 3 }`, o un nombre sin más para probabilidades iguales. Sustituye a `structure`                                                                                       |
 | `turns`      | imprint, tree | lista                | cualquiera  | En qué sentido puede colocarse: `none`, `quarter`, `half`, `threequarter`. Las entradas pueden llevar un `weight`. Si se omite, los cuatro son igual de probables                                                                                                                               |
+| `turns[].turn` | imprint, tree | `none`, `quarter`, `half`, `threequarter` | ninguno | El giro que nombra una entrada de tipo objeto de `turns`, como en `{ "turn": "half", "weight": 2 }` |
+| `mirrors[].mirror` | imprint, tree | `none`, `leftright`, `frontback` | ninguno | El volteo que nombra una entrada de tipo objeto de `mirrors`, como en `{ "mirror": "leftright", "weight": 2 }` |
 | `mirrors`    | imprint, tree | lista                | ninguno     | Voltearla además: `none`, `leftright`, `frontback`, con `weight` opcional. Una entrada que nombra su propio peso se escribe `{ "mirror": "leftright", "weight": 2 }`, y una entrada de `turns` igual con `turn`                                                                                  |
-| `at`         | imprint       | dos ints, x y z      | ninguno     | Coloca exactamente una vez en esas coordenadas de bloque sobre la superficie, cuando se genera ese chunk, en lugar de por azar. Consulta [Estructuras en lugares exactos](#estructuras-en-lugares-exactos)                                                                                      |
-| `locateAs`   | imprint, tree | string               | ninguno     | Registra cada estructura que coloca esta entrada con ese nombre, de modo que `/rdplserver locate <name>` encuentre la más cercana. Consulta [Localizar estructuras colocadas](#localizar-estructuras-colocadas)                                                                                 |
+| `at`         | imprint       | dos enteros, x y z   | ninguno     | Coloca exactamente una vez en esas coordenadas de bloque sobre la superficie, cuando se genera ese chunk, en lugar de por azar. Consulta [Estructuras en lugares exactos](#estructuras-en-lugares-exactos)                                                                                      |
+| `locateAs`   | imprint, tree | cadena               | ninguno     | Registra cada estructura que coloca esta entrada con ese nombre, de modo que `/rdplserver locate <name>` encuentre la más cercana. Consulta [Localizar estructuras colocadas](#localizar-estructuras-colocadas)                                                                                 |
 
 Para una forma que ningún tipo integrado cubre, `imprint` es el camino: constrúyela como plantilla `.nbt` y colócala, con `structures` para variarla, `turns` y `mirrors` para girarla y `integrity` para disolverla en algo más tosco que el archivo que dibujaste.
 
@@ -4153,7 +4169,7 @@ Una entrada `imprint` con `"locateAs": "Crypt"` registra con ese nombre cada est
 | ----------- | ----------- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `field`     | field       | objeto                        | `{ "type": "speckle" }` | Cómo se calcula el campo. Mismas claves que el `field` de un grupo de dureza, descritas en [El campo](#el-campo): `speckle` con `chances` y `spread`, o `seeded` con `cell`, `seeds`, `reach`, `arms` y `armReach`                                                                |
 | `threshold` | field, vein | 0.0 a 1.0                     | `0.5` (`0.4` para vein) | Cuán fuerte debe ser el campo en un bloque para que se coloque. Más bajo llena más                                                                                                                                                                                             |
-| `fade`      | field       | int                           | `0`                     | Difumina en moteado la parte superior de la franja en lugar de terminarla de golpe: sobre esta cantidad de bloques de la parte alta del rango de altura, las probabilidades de colocación de cada bloque disminuyen paso a paso, el mismo aspecto que el motor da a `deepStone` donde se encuentra con el mundo de arriba |
+| `fade`      | field       | entero                        | `0`                     | Difumina en moteado la parte superior de la franja en lugar de terminarla de golpe: sobre esta cantidad de bloques de la parte alta del rango de altura, las probabilidades de colocación de cada bloque disminuyen paso a paso, el mismo aspecto que el motor da a `deepStone` donde se encuentra con el mundo de arriba |
 | `pattern`   | vein        | `default`, `banded` o `tube`  | `default`               | El aspecto del yacimiento: una masa deformada, capas apiladas cada pocos bloques, o tubos huecos que serpentean por la roca                                                                                                                                                     |
 | `density`   | vein        | 0.0 a 1.0                     | `1.0`                   | La proporción de bloques que cumplen los requisitos y que se colocan realmente, una moneda por bloque                                                                                                                                                                          |
 | `rich`      | vein        | nombre de bloque              | ninguno                 | Se coloca desde `richAt` hacia arriba en el rango del campo por encima de `threshold`, el corazón del yacimiento, en lugar de los bloques de la entrada                                                                                                                         |
@@ -4179,7 +4195,7 @@ Las claves van en un objeto `field` propio, no junto a `type`, ya que `type` en 
 
 *formas*
 
-Un `belt` es una bola mucho mayor que un chunk, que se usa para regiones de piedra y no para vetas de mena. Su `radius` es el tamaño de la bola, y cada chunk calcula por sí mismo dónde empiezan las bolas cercanas, a partir de la semilla del mundo y del nombre de la propia entrada, de modo que un belt sale entero se generen como se generen los chunks y nunca se escribe nada en un chunk vecino.
+Un `belt` es una bola mucho mayor que un chunk, que se usa para regiones de piedra y no para vetas de mena. Su `radius` es el tamaño de la bola (por defecto 32), y cada chunk calcula por sí mismo dónde empiezan las bolas cercanas, a partir de la semilla del mundo y del nombre de la propia entrada, de modo que un belt sale entero se generen como se generen los chunks y nunca se escribe nada en un chunk vecino.
 
 ```json
 {
@@ -4211,7 +4227,7 @@ Un `field` no coloca nada en un punto y lo coloca todo a la vez. En lugar de ele
 }
 ```
 
-| Clave       | Obligatoria | Valor      | Por defecto | Qué hace                                                                            |
+| Clave       | Obligatorio | Valor      | Por defecto | Qué hace                                                                            |
 | ----------- | ----------- | ---------- | ----------- | ----------------------------------------------------------------------------------- |
 | `threshold` | no          | 0.0 a 1.0  | `0.5`       | Cuánta intensidad debe tener el campo para que se coloque un bloque                 |
 | `field`     | sí          | objeto     | ninguno     | El mismo objeto que admite un grupo de dureza, con los mismos tipos `speckle` y `seeded` |
@@ -4258,16 +4274,16 @@ Se muestran todas las claves a la vez. Un archivo real escribe solo las que nece
 | Clave               | Usada por | Valor                    | Por defecto                      | Qué hace                                                      |
 | ------------------- | --------- | ------------------------ | -------------------------------- | ------------------------------------------------------------- |
 | `type`              | todos     | una de las dispersiones anteriores | `even`                 | Qué dispersión                                                |
-| `center`            | centered  | int                      | punto medio del rango de alturas | La altura en torno a la que se agrupa                         |
-| `range`             | centered  | int                      | la mitad del rango de alturas    | Hasta dónde llega desde esa altura                            |
+| `center`            | centered  | entero                   | punto medio del rango de alturas | La altura en torno a la que se agrupa                         |
+| `range`             | centered  | entero                   | la mitad del rango de alturas    | Hasta dónde llega desde esa altura                            |
 | `smoothness`        | centered  | 1 a 8                    | `2`                              | Cuántas tiradas se promedian. Cuanto más alto, más estrecha la franja |
-| `veinHeight`        | sprawl    | int                      | el rango de alturas              | Cuánto mide de alto una veta                                  |
-| `veinDiameter`      | sprawl    | int                      | `12`                             | Cuánto mide de ancho una veta                                 |
+| `veinHeight`        | sprawl    | entero                   | el rango de alturas              | Cuánto mide de alto una veta                                  |
+| `veinDiameter`      | sprawl    | entero                   | `12`                             | Cuánto mide de ancho una veta                                 |
 | `verticalDensity`   | sprawl    | 1 a 100                  | `16`                             | Cuán maciza es en vertical                                    |
 | `horizontalDensity` | sprawl    | 1 a 100                  | `32`                             | Cuán maciza es en horizontal                                  |
-| `offsetMin`         | terrain   | int                      | `0`                              | Desplazamiento mínimo respecto a la superficie                |
-| `offsetMax`         | terrain   | int                      | `offsetMin`                      | Desplazamiento máximo respecto a la superficie                |
-| `ceiling`           | cavern    | boolean                  | `false`                          | Se pega al techo de la cueva en lugar de al suelo             |
+| `offsetMin`         | terrain   | entero                   | `0`                              | Desplazamiento mínimo respecto a la superficie                |
+| `offsetMax`         | terrain   | entero                   | `offsetMin`                      | Desplazamiento máximo respecto a la superficie                |
+| `ceiling`           | cavern    | booleano                 | `false`                          | Se pega al techo de la cueva en lugar de al suelo             |
 
 ## Mapas de estructuras
 
@@ -4367,13 +4383,13 @@ Se muestran todas las claves a la vez. Un archivo real escribe solo las que nece
 | Clave        | Usada por | Valor                              | Por defecto      | Qué hace                                                                                                                                                                                                                                                                                                                                                                          |
 | ------------ | --------- | ---------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `type`       | todos     | `farm` o `template`                | `farm`           | Qué clase de parcela                                                                                                                                                                                                                                                                                                                                                              |
-| `weight`     | todos     | int                                | `3`              | Con qué frecuencia se elige esta parcela frente a las demás del pack                                                                                                                                                                                                                                                                                                              |
-| `leastCount` | todos     | int                                | `1`              | Mínimo por distrito: un distrito sitúa parcelas a lo largo de sus calles hasta un tope sorteado entre el menor `leastCount` y el mayor `mostCount` de las parcelas que puede construir, ambos aumentados en 16, o en una treintaidosava parte de `villagePlotsLeast` cuando esta sea mayor, mientras una ciudad crece. Las parcelas situadas detrás de otras parcelas no cuentan |
-| `mostCount`  | todos     | int                                | `4`              | El límite superior de ese sorteo                                                                                                                                                                                                                                                                                                                                                  |
-| `width`      | todos     | int                                | `7`              | Tamaño a lo ancho de la calle                                                                                                                                                                                                                                                                                                                                                     |
-| `height`     | todos     | int                                | `4`              | Altura despejada sobre el suelo                                                                                                                                                                                                                                                                                                                                                   |
-| `depth`      | todos     | int                                | `9`              | Tamaño en dirección opuesta a la calle                                                                                                                                                                                                                                                                                                                                            |
-| `apron`      | todos     | int                                | `2`              | Cuánto puede desviarse el suelo respecto al nivel de la calle bajo la parcela antes de que se rechace o se deslice a lo largo de su calle: esa cantidad de bloques de relleno bajo ella, o de corte en una elevación sobre ella, y no más que eso entre su esquina más alta y la más baja. Una parcela ancha en colinas necesita más. Si lo pones alto, la parcela se aterraza directamente en una pendiente, lo que en el lugar equivocado se come una montaña |
+| `weight`     | todos     | entero                             | `3`              | Con qué frecuencia se elige esta parcela frente a las demás del pack                                                                                                                                                                                                                                                                                                              |
+| `leastCount` | todos     | entero                             | `1`              | Mínimo por distrito: un distrito sitúa parcelas a lo largo de sus calles hasta un tope sorteado entre el menor `leastCount` y el mayor `mostCount` de las parcelas que puede construir, ambos aumentados en 16, o en una treintaidosava parte de `villagePlotsLeast` cuando esta sea mayor, mientras una ciudad crece. Las parcelas situadas detrás de otras parcelas no cuentan |
+| `mostCount`  | todos     | entero                             | `4`              | El límite superior de ese sorteo                                                                                                                                                                                                                                                                                                                                                  |
+| `width`      | todos     | entero                             | `7`              | Tamaño a lo ancho de la calle                                                                                                                                                                                                                                                                                                                                                     |
+| `height`     | todos     | entero                             | `4`              | Altura despejada sobre el suelo                                                                                                                                                                                                                                                                                                                                                   |
+| `depth`      | todos     | entero                             | `9`              | Tamaño en dirección opuesta a la calle                                                                                                                                                                                                                                                                                                                                            |
+| `apron`      | todos     | entero                             | `2`              | Cuánto puede desviarse el suelo respecto al nivel de la calle bajo la parcela antes de que se rechace o se deslice a lo largo de su calle: esa cantidad de bloques de relleno bajo ella, o de corte en una elevación sobre ella, y no más que eso entre su esquina más alta y la más baja. Una parcela ancha en colinas necesita más. Si lo pones alto, la parcela se aterraza directamente en una pendiente, lo que en el lugar equivocado se come una montaña |
 | `ground`     | todos     | nombre de bloque                   | `minecraft:dirt` | Lo que se compacta debajo en una pendiente                                                                                                                                                                                                                                                                                                                                        |
 | `requires`   | todos     | lista de ids de mod o espacios de nombres de pack | ninguno | La parcela se omite salvo que estén presentes todos                                                                                                                                                                                                                                                                                                                       |
 
@@ -4403,8 +4419,8 @@ Una `farm` es un campo descrito en lugar de programado: una parcela del tamaño 
 | `crops`    | farm      | lista de nombres de bloque | trigo              | Se planta uno por bloque, en una fase de crecimiento aleatoria |
 | `edge`     | farm      | nombre de bloque         | `minecraft:oak_log`  | El marco alrededor de la parcela                |
 | `soil`     | farm      | nombre de bloque         | `minecraft:farmland` | De qué están hechas las filas                   |
-| `water`    | farm      | boolean                  | `true`               | Pone un canal de agua entre las filas           |
-| `rowWidth` | farm      | int                      | `2`                  | Cuánto mide de ancho cada fila de tierra        |
+| `water`    | farm      | booleano                 | `true`               | Pone un canal de agua entre las filas           |
+| `rowWidth` | farm      | entero                   | `2`                  | Cuánto mide de ancho cada fila de tierra        |
 
 ### Construido a partir de plantillas
 
@@ -4439,11 +4455,11 @@ Una `template` cuya `structure` nombra uno de tus [mapas de estructuras](#mapas-
 | `structure`      | template  | `namespace:name` | ninguno        | La plantilla que se coloca, o uno de tus mapas de estructuras, que entonces fija el tamaño de la parcela                                          |
 | `integrity`      | template  | 1 a 100          | `100`          | Porcentaje de los bloques de la plantilla que aparecen                                                                                            |
 | `lootTable`      | template  | `namespace:path` | ninguno        | La tabla de botín con la que se rellena cada cofre de la plantilla colocada la primera vez que se abre. Una parcela que nombra un mapa de estructuras se deja tal cual |
-| `villagers`      | todos     | int              | `0`            | Cuántos habitantes genera la parcela                                                                                                              |
+| `villagers`      | todos     | entero           | `0`            | Cuántos habitantes genera la parcela                                                                                                              |
 | `villagerEntity` | todos     | `namespace:name` | un aldeano     | Quién vive allí, como una variante de entidad propia                                                                                              |
-| `villagerX`      | todos     | int              | `1`            | Dónde aparecen, a lo ancho de la parcela                                                                                                          |
-| `villagerY`      | todos     | int              | `1`            | Dónde aparecen, sobre el suelo                                                                                                                    |
-| `villagerZ`      | todos     | int              | `1`            | Dónde aparecen, hacia el interior de la parcela                                                                                                   |
+| `villagerX`      | todos     | entero           | `1`            | Dónde aparecen, a lo ancho de la parcela                                                                                                          |
+| `villagerY`      | todos     | entero           | `1`            | Dónde aparecen, sobre el suelo                                                                                                                    |
+| `villagerZ`      | todos     | entero           | `1`            | Dónde aparecen, hacia el interior de la parcela                                                                                                   |
 
 ## Mapas de trazado de ciudades
 
@@ -4496,7 +4512,7 @@ Un mapa de ciudad dibuja el plano de calles de una ciudad sobre una cuadrícula,
 | `"a": "alley"`                                                          | Una serie estrecha. Los edificios dan a ella, pero no conecta nada, la regla del callejón de siempre                                                                                                                                                                                                                                                                                                                                                                   |
 | `"J": "junction"`                                                       | Una celda de calle trazada en ambas direcciones, de modo que allí se levanta un cruce incluso donde el dibujo la atraviesa en un solo sentido. El brazo que la cruza mide una celda                                                                                                                                                                                                                                                                                    |
 | `"b": "bulb"`                                                           | Una celda de calle que termina en un fondo de saco. Cuando un mapa tiene una celda bulb, solo los extremos de calle situados en celdas bulb obtienen uno; un mapa sin ninguna da fondo de saco a tres de cada cuatro extremos muertos, sorteados según la semilla del mundo. Un fondo de saco solo se asienta donde no haya parcela, otra calle, vía férrea ni pieza central de plaza a su alcance: se encoge para ajustarse, hasta un poco más ancho que la calle, y un extremo sin espacio en ningún tamaño sigue siendo un extremo normal |
-| `"E": { "kind": "elevated", "height": 8 }`                              | Una celda de calle elevada sobre una plataforma `height` bloques, de 2 a 64, por encima del terreno más alto bajo su tramo de celdas elevadas contiguas, con una rampa de un bloque por fila en cada extremo. Un cruce de calles dentro del tramo se eleva con él, y las parcelas a lo largo de este permanecen en el suelo. Un tramo cuya plataforma o rampas alcanzarían una vía férrea o la pieza central de la plaza se queda a nivel, con una línea en el registro. Cualquier valor puede escribirse como objeto de este modo, con `kind` nombrando la palabra |
+| `"E": { "kind": "elevated", "height": 8 }`                              | Una celda de calle elevada sobre una plataforma situada `height` bloques (de 2 a 64) por encima del terreno más alto bajo su tramo de celdas elevadas contiguas, con una rampa de un bloque por fila en cada extremo. Un cruce de calles dentro del tramo se eleva con él, y las parcelas a lo largo de este permanecen en el suelo. Un tramo cuya plataforma o rampas alcanzarían una vía férrea o la pieza central de la plaza se queda a nivel, con una línea en el registro. Cualquier valor puede escribirse como objeto de este modo, con `kind` nombrando la palabra |
 | `"W": { "kind": "street", "settings": { "villagePathExtraWidth": 8 } }` | Una calle trazada y pavimentada con sus propias claves de calle, que prevalecen sobre las del mapa y las de la plantilla. Su ancho sigue a su propio `villagePathExtraWidth`, `villagePathSidewalkWidth` y línea, y su superficie, líneas y aceras siguen a sus propias claves de bloque, de modo que una avenida o un camino se dibuja con una marca propia. Una serie toma las claves de su primera celda que defina alguna. Por ancha o estrecha que sea, una calle dibujada sigue siendo una calle: nunca se toma por un callejón |
 | `"T": "mypack:tower"`                                                   | Una celda de parcela, trazada a partir de esa definición de parcela, centrada en la celda y orientada hacia la calle más cercana                                                                                                                                                                                                                                                                                                                                       |
 | `"T": ["mypack:a=3", "mypack:b=1"]`                                     | Lo mismo, sorteado por peso a partir de la semilla del mundo y la posición de la celda, de modo que el mismo mundo traza siempre la misma parcela allí                                                                                                                                                                                                                                                                                                                 |
@@ -4525,7 +4541,7 @@ Una ciudad continua no tiene borde. Con `villageCitySpacing` en `1`, cada distri
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `terrainAdaptation` | booleano | `false` | Traza las calles de ciudad propias de RDPL. Una ciudad continua lo necesita activado |
 | `villageCitySpacing` | entero, de 0 a 256 | `16` | `1` hace de cada distrito una ciudad, y eso es lo que vuelve continua la ciudad. Un número mayor siembra ciudades separadas que terminan en su borde |
@@ -4535,9 +4551,9 @@ Una ciudad continua no tiene borde. Con `villageCitySpacing` en `1`, cada distri
 
 Todos los demás ajustes de calles, desde los bloques de la calzada hasta farolas, puentes, túneles y alcantarillas, visten una ciudad continua como visten cualquier otra. `villagePlotsLeast` no tiene efecto, porque cada distrito ya es una ciudad entera. Un distrito cuyo plano contiene dos o menos parcelas y pozos queda vacío, como cualquier ciudad así de pequeña.
 
-**Cómo se encuentran las calles.** Cada distrito traza su cruce principal, las dos calles que se cruzan en su pozo, en el mismo lugar dentro del distrito. Por eso las calles del cruce de distritos vecinos se alinean en avenidas rectas que siguen por todo el mundo, y las calles que salen de cada plaza enlazan con las del distrito siguiente. El pozo de un distrito nunca se mueve, se tracen como se tracen sus vecinos.
+**Cómo se encuentran las calles.** Cada distrito traza su cruce principal, las dos calles que se cruzan en su pozo, en el mismo lugar dentro del distrito. Por eso las calles principales de los distritos vecinos se alinean en avenidas rectas que siguen por todo el mundo, y las calles que salen de cada plaza enlazan con las del distrito siguiente. El pozo de un distrito nunca se mueve, se tracen como se tracen sus vecinos.
 
-**Lo que cuesta.** Cada chunk de una ciudad continua está edificado, así que el terreno nuevo cuesta en todas partes lo que cuesta el centro de una gran ciudad: colocar los edificios e iluminarlos. Un jugador que vuela deprisa adelanta a la generación, y la tasa de ticks baja mientras se generan distritos nuevos. Pregenerar el terreno donde empiezan los jugadores, con `pregenOnNewWorld` o `/rdplserver pregen`, y una distancia de visión moderada lo mantienen a raya, pero los TPS siguen más bajos que en un mundo normal mientras los jugadores exploran terreno nuevo. La partida guardada crece con el terreno explorado, como cualquier terreno edificado. El juego guarda como mucho 1024 planos de distrito en memoria y vuelve a hacer a partir de la semilla, exactamente igual que antes, un plano que soltó cuando lo necesita de nuevo.
+**Lo que cuesta.** Cada chunk de una ciudad continua está edificado, así que el terreno nuevo cuesta en todas partes lo que cuesta el centro de una gran ciudad: colocar los edificios e iluminarlos. Un jugador que vuela deprisa adelanta a la generación, y la tasa de ticks baja mientras se generan distritos nuevos. Pregenerar el terreno donde empiezan los jugadores, con `pregenOnNewWorld` o `/rdplserver pregen`, y una distancia de visión moderada lo mantienen a raya, pero los TPS siguen más bajos que en un mundo normal mientras los jugadores exploran terreno nuevo. La partida guardada crece con el terreno explorado, como cualquier terreno edificado. El juego conserva como mucho 1024 planos de distrito en memoria y, cuando vuelve a necesitar uno que descartó, lo rehace a partir de la semilla, exactamente igual que antes.
 
 ## Retrogen
 
@@ -4556,8 +4572,8 @@ Todos los demás ajustes de calles, desde los bloques de la calzada hasta farola
 
 | Ajuste                | Tipo    | Por defecto | Qué hace                                                                                                                                                                                                                                                          |
 | --------------------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `retrogen`            | boolean | `false`     | Pone al día los chunks guardados antes de que existiera una entrada, para cada entrada de worldgen marcada con `"retrogen": true`. Desactivado, los chunks que ya existen se dejan como están. Los chunks se marcan al generarse en ambos casos, así que activarlo más tarde solo afecta a chunks anteriores al pack |
-| `adoptExistingChunks` | boolean | `false`     | Qué ocurre la primera vez que se ve un chunk antiguo: activado, se sella como si este pack ya lo hubiera generado y nunca se pone al día; desactivado, se pone al día como cualquier otro. Para rellenar un mundo existente, activa `retrogen` y desactiva esto |
+| `retrogen`            | booleano | `false`     | Pone al día los chunks guardados antes de que existiera una entrada, para cada entrada de worldgen marcada con `"retrogen": true`. Desactivado, los chunks que ya existen se dejan como están. Los chunks se marcan al generarse en ambos casos, así que activarlo más tarde solo afecta a chunks anteriores al pack |
+| `adoptExistingChunks` | booleano | `false`     | Qué ocurre la primera vez que se ve un chunk antiguo: activado, se sella como si este pack ya lo hubiera generado y nunca se pone al día; desactivado, se pone al día como cualquier otro. Para rellenar un mundo existente, activa `retrogen` y desactiva esto |
 
 Una entrada con `"retrogen": true` se genera en los chunks que se guardaron antes de añadirla. Cada chunk registra lo que ha recibido, así que nada se hace dos veces.
 
@@ -4637,22 +4653,22 @@ En un pack estos van en el bloque `settings` de una [plantilla de mundo](#planti
 
 | Clave                         | Qué hace                                                                                                                                                                                                                                 | Por qué fijarla                                                                  |
 | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `pregenOnNewWorld`            | Radio en chunks que se crea alrededor del punto de aparición antes de que juegue nadie. 12 es el mínimo y 0 significa ese mínimo y no nada, ya que el juego crea de todos modos 12 chunks alrededor del punto de aparición por su cuenta. Súbelo para llegar más lejos que el juego | Fija hasta dónde llega un pack más allá del terreno que el juego ya crea         |
+| `pregenOnNewWorld`            | Radio en chunks que se crea alrededor del punto de aparición antes de que nadie juegue. 12 es el mínimo y 0 significa ese mínimo y no nada, ya que el juego crea de todos modos 12 chunks alrededor del punto de aparición por su cuenta. Súbelo para llegar más lejos que el juego | Fija hasta dónde llega un pack más allá del terreno que el juego ya crea         |
 | `pregenDimensions`            | Qué dimensiones se crean, por id, en orden, cada una alrededor de su propio punto de aparición                                                                                                                                           | Añade el Nether, el End o tus propias dimensiones                                |
-| `pregenAllDimensions`         | Todas las dimensiones que tiene el servidor en lugar de una lista, primero el overworld y el resto por orden de id                                                                                                                       | Packs con muchas dimensiones. Cuentan las dimensiones de todos los mods, así que ojo con el tamaño |
-| `pregenDimensionsWhenEntered` | Estas se crean la primera vez que alguien pisa en ellas, reteniendo de nuevo a todos hasta terminar                                                                                                                                      | Dimensiones que la mayoría de los jugadores no visita; quienes nunca van no pagan nada |
+| `pregenAllDimensions`         | Todas las dimensiones que tiene el servidor en lugar de una lista, primero el Overworld y el resto por orden de id                                                                                                                       | Packs con muchas dimensiones. Cuentan las dimensiones de todos los mods, así que ojo con el tamaño |
+| `pregenDimensionsWhenEntered` | Estas se crean la primera vez que alguien pone un pie en ellas, reteniendo de nuevo a todos hasta terminar                                                                                                                                      | Dimensiones que la mayoría de los jugadores no visita; quienes nunca van no pagan nada |
 | `pregenToBorder`              | Rellena cada dimensión hasta su borde del mundo en lugar de un radio, centrado en el borde                                                                                                                                               | Mundos acotados                                                                  |
 | `pregenBorderLimit`           | Hasta dónde puede llegar un borde, en chunks en cada sentido, antes de que se rechace la ejecución. Solo en la configuración, nunca una clave de pack                                                                                    | Una protección contra una ejecución descontrolada; súbelo solo sabiendo el tiempo y el disco que permite |
 
 Ejecútala tú mismo antes de publicar, con el radio que vas a publicar, de principio a fin. Los chunks crecen con el cuadrado del radio, 63 en cada sentido son dieciséis mil chunks, 500 son más de un millón, así que la carpeta de regiones y el tiempo real de tu mundo de prueba son las cifras honestas que poner delante de los jugadores. No publiques un radio que nunca se ha ejecutado.
 
-### Cómo se comporta una partida
+### Cómo se comporta una ejecución
 
 *pregeneración*
 
 | Clave                  | Qué hace                                                                                                                                                                                                                                                                                                                                                                          | Por qué fijarla                                                  |
 | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `pregenResume`         | Una ejecución detenida o interrumpida continúa donde se quedó. La dimensión, el centro y el radio de la ejecución se escriben en la partida al empezar, y el recuento hasta el momento cada diez segundos, así que un cierre inesperado, un corte de luz o una salida a mitad de ejecución se reanudan a unos diez segundos de donde terminaron en la siguiente carga. Una ejecución detenida a propósito, por comando o por el perro guardián de bloqueos, se queda detenida | Ejecuciones largas en servidores; las pequeñas se reinician barato sin esto |
+| `pregenResume`         | Una ejecución detenida o interrumpida continúa donde se quedó. La dimensión, el centro y el radio de la ejecución se escriben en el guardado al empezar, y el recuento hasta el momento cada diez segundos, así que un cierre inesperado, un corte de luz o una salida a mitad de ejecución se reanudan a unos diez segundos de donde terminaron en la siguiente carga. Una ejecución detenida a propósito, por comando o por el vigilante de bloqueos, se queda detenida | Ejecuciones largas en servidores; las pequeñas se reinician sin apenas coste sin esto |
 | `pregenChunksInFlight` | Cuántos chunks pide la ejecución al juego a la vez. Más mantiene más ocupados los hilos de generación y al servidor menos receptivo para quien está retenido mirando                                                                                                                                                                                                              | Súbelo en un servidor vacío, bájalo en uno en el que se juega    |
 
 ### Qué ven los jugadores
@@ -4679,17 +4695,17 @@ Ejecútala tú mismo antes de publicar, con el radio que vas a publicar, de prin
 
 | Clave                   | Qué hace                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | Por qué fijarla                                                                  |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
-| `pregenBackup`          | Copia el mundo a una copia de seguridad intacta cuando termina la pregeneración, mientras los jugadores siguen retenidos. La generación se paga entonces una sola vez: un reinicio posterior, o un mundo nuevo con el mismo pack y semilla, restaura la copia en lugar de generar de nuevo, lo que es mucho más rápido que pregenerar dos veces. La copia se guarda fuera de la partida, en `rdpl-pristine/<world>` a su lado, para que las copias de otros mods no la barran y no aparezca en una carpeta que ellos gestionen. Una copia cuyos packs ya no coinciden con los cargados se descarta y se vuelve a guardar a partir del mundo actual, así que un cambio de pack nunca reinicia al mapa de otro | `false`                                                                          |
+| `pregenBackup`          | Guarda una copia de seguridad intacta del mundo cuando termina la pregeneración, mientras los jugadores siguen retenidos. La generación se paga entonces una sola vez: un reinicio posterior, o un mundo nuevo con el mismo pack y semilla, restaura la copia en lugar de generar de nuevo, lo que es mucho más rápido que pregenerar dos veces. La copia se guarda fuera de la partida, en `rdpl-pristine/<world>` a su lado, para que las copias de otros mods no la arrastren y no aparezca en una carpeta que ellos gestionen. Una copia cuyos packs ya no coinciden con los cargados se descarta y se vuelve a guardar a partir del mundo actual, así que un cambio de pack nunca restaura el mapa de otro | `false`                                                                          |
 | `pregenBackupSays`      | La línea a media pantalla que ven los jugadores mientras se hace esa copia, con el porcentaje a continuación. Vacía no muestra nada y la copia se hace en silencio                                                                                                                                                                                                                                                                                                                                                                                                                                                       | `Pack requested world backup`                                                    |
 | `resetSays`             | La línea a media pantalla que ven los jugadores mientras `/rdplserver reset` o el final de una ronda devuelve el mapa a su estado original. Vacía reinicia en silencio                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `Pack requested map reset`                                                       |
-| `resetSendsTo`          | Adónde se lleva a los jugadores en un reinicio: `spawn`, una posición como `x,y,z` o `x,z`, donde la altura es una por encima del nivel del mar, o cualquiera de ellas tras `dimension:` para enviarlos a otro mundo, la dimensión por id o como el `0`, `-1` o `1` de 1.12.2, que es como un reinicio deja a todos en un vestíbulo en lugar de de vuelta en la arena                                                                                                                                                                                                                                                      | `spawn`                                                                          |
+| `resetSendsTo`          | Adónde se lleva a los jugadores en un reinicio: `spawn`, una posición como `x,y,z` o `x,z`, donde la altura es una por encima del nivel del mar, o cualquiera de ellas tras `dimension:` para enviarlos a otro mundo, la dimensión por id o como el `0`, `-1` o `1` de 1.12.2, que es como un reinicio deja a todos en un vestíbulo en lugar de devolverlos a la arena                                                                                                                                                                                                                                                      | `spawn`                                                                          |
 | `resetRuns`             | Una función que se ejecuta tras un reinicio que ha limpiado el mapa, nombrada `namespace:path`. Esto es lo que vuelve a construir la arena, ya que un pack que creó su mapa con una función puede simplemente ejecutarla por segunda vez. Vacía no ejecuta nada                                                                                                                                                                                                                                                                                                                                                           | vacío                                                                            |
 | `resetClearsEntities`   | Elimina toda entidad que no sea un jugador. Mobs, ítems soltados y experiencia desaparecen, lo que deja el mapa como empezó                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              | `true`                                                                           |
 | `resetClearsScores`     | Devuelve a cero todo objetivo que guarda el pack, para que una partida nueva empiece desde cero. Los propios equipos se conservan                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | `true`                                                                           |
 | `resetClearsInventory`  | Vacía el inventario de cada jugador, armadura y mano secundaria incluidas, para que una ronda empiece con lo que reparte el mapa y no con lo que dejó la anterior. El `gives` de un bando se reparte de nuevo justo después                                                                                                                                                                                                                                                                                                                                                                                               | `false`                                                                          |
 | `resetClearsExperience` | Devuelve la experiencia de cada jugador al nivel cero                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | `false`                                                                          |
-| `spawnChunkRadius`      | A qué distancia del punto de aparición, en bloques, se mantienen cargados los chunks haya o no un jugador allí, redondeado a chunks enteros: `(blocks + 8) / 16` en cada sentido, así que el `128` por defecto mantiene 8. Al iniciarse un mundo, el overworld prepara un cuadrado 4 chunks más ancho en cada sentido que eso antes de que el servidor esté listo. `0` no prepara ni mantiene ninguno. RDPL los mantiene con sus propios tickets de chunk, así que en 1.21.1 la regla de juego `spawnChunkRadius` no hace nada mientras esta clave esté en vigor                                                                | Mantener en marcha una máquina o una granja en el punto de aparición, o desactivar los chunks de aparición con `0` |
-| `spawnChunkRadii`       | Un radio para el overworld escrito como `dimension=blocks`, como en `minecraft:overworld=64`, que sustituye a `spawnChunkRadius`. Solo el overworld tiene chunks de aparición, así que una entrada para cualquier otra dimensión no cambia nada                                                                                                                                                                                                                                                                                                                                                                           | Dimensionar la zona de aparición en un pack que fija sus radios por dimensión    |
+| `spawnChunkRadius`      | A qué distancia del punto de aparición, en bloques, se mantienen cargados los chunks haya o no un jugador allí, redondeado a chunks enteros: `(blocks + 8) / 16` en cada sentido, así que el `128` por defecto mantiene 8. Al iniciarse un mundo, el Overworld prepara un cuadrado 4 chunks más ancho en cada sentido que eso antes de que el servidor esté listo. `0` no prepara ni mantiene ninguno. RDPL los mantiene con sus propios tickets de chunk, así que en 1.21.1 la regla de juego `spawnChunkRadius` no hace nada mientras esta clave esté en vigor                                                                | Mantén en marcha una máquina o una granja en el punto de aparición, o desactiva los chunks de aparición con `0` |
+| `spawnChunkRadii`       | Un radio para el Overworld escrito como `dimension=blocks`, como en `minecraft:overworld=64`, que sustituye a `spawnChunkRadius`. Solo el Overworld tiene chunks de aparición, así que una entrada para cualquier otra dimensión no cambia nada                                                                                                                                                                                                                                                                                                                                                                           | Ajusta el tamaño de la zona de aparición en un pack que fija sus radios por dimensión |
 
 ---
 
@@ -4734,10 +4750,10 @@ Muestra una serie de páginas cuando un jugador entra en el mundo, antes de que 
 }
 ```
 
-| Clave      | Obligatoria | Valor                              | Por defecto | Qué hace                                                      |
+| Clave      | Obligatorio | Valor                              | Por defecto | Qué hace                                                      |
 | ---------- | ----------- | ---------------------------------- | ----------- | ------------------------------------------------------------- |
 | `pages`    | sí          | lista de páginas                   | ninguno     | Se muestran en orden. Un archivo sin páginas se rechaza con un error |
-| `once`     | no          | boolean                            | `false`     | Se reproduce una vez por jugador y mundo en lugar de en cada entrada |
+| `once`     | no          | booleano                           | `false`     | Se reproduce una vez por jugador y mundo en lugar de en cada entrada |
 | `music`    | no          | nombre de evento de sonido         | ninguno     | Una pista para toda la secuencia, iniciada con la primera página |
 | `requires` | no          | lista de ids de mod o espacios de nombres de pack | ninguno | La introducción se omite salvo que estén presentes todos |
 
@@ -4745,7 +4761,7 @@ Muestra una serie de páginas cuando un jugador entra en el mundo, antes de que 
 
 *introducción al mundo*
 
-| Clave         | Obligatoria | Valor                 | Por defecto                      | Qué hace                                                                                                                                                                                                             |
+| Clave         | Obligatorio | Valor                 | Por defecto                      | Qué hace                                                                                                                                                                                                             |
 | ------------- | ----------- | --------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `mode`        | no          | `scroll` o `static`   | `scroll`                         | Texto que se mueve, o texto que permanece quieto hasta que el jugador avanza                                                                                                                                         |
 | `text`        | no          | ruta a un archivo `.txt` | ninguno                       | Las palabras. Omítelo para una página que son solo imágenes                                                                                                                                                          |
@@ -4755,7 +4771,7 @@ Muestra una serie de páginas cuando un jugador entra en el mundo, antes de que 
 | `time`        | no          | segundos              | calculado a partir del texto     | Cuánto dura una página con desplazamiento, de principio a fin. En una página fija, o en la última página de cualquier clase, es el tiempo hasta que la página avanza sola, y sin él esperan al botón                  |
 | `direction`   | no          | `up` o `down`         | `up`                             | En qué sentido se desplaza el texto                                                                                                                                                                                  |
 | `textScale`   | no          | número                | `1.0`                            | Multiplica el tamaño de la fuente. Una página `static` ajusta su texto al ancho de la pantalla, menos un margen a cada lado, y cuando aun así pasaría por debajo de los botones su texto se dibuja más pequeño, hasta la mitad, hasta que cabe |
-| `settle`      | no          | boolean               | `false`                          | Termina con la última línea centrada en lugar de salir del todo de la pantalla                                                                                                                                       |
+| `settle`      | no          | booleano              | `false`                          | Termina con la última línea centrada en lugar de salir del todo de la pantalla                                                                                                                                       |
 
 ### Texto y tiempos
 
@@ -4811,13 +4827,13 @@ Las tablas y los bloques de código delimitados (entre líneas de ```) se dibuja
 
 Una página con desplazamiento pasa a la siguiente cuando se acaba su tiempo. La última página nunca avanza sola, espera. En la parte inferior hay **Next Page** y **Skip All**, o un solo **Continue to World** en la última página. Escape hace lo mismo que Skip All. Las páginas fijas centran todas las líneas. Las páginas con desplazamiento mantienen una columna fija, como hacen los créditos.
 
-En un jugador, el mundo se pausa tras la introducción, así que nada se acerca sigilosamente al jugador mientras lee. La única excepción es el terreno que aún se está creando cuando se abre la introducción: entonces la creación continúa tras las páginas, y el jugador permanece retenido como espectador hasta que continúa al mundo, aunque la ejecución termine antes. En un servidor el mundo sigue en marcha, y un cliente vanilla nunca ve la introducción y entra con normalidad. El saludo de bienvenida espera hasta que se cierran las páginas, para que no se pierda tras ellas.
+En el modo de un jugador, el mundo se pausa tras la introducción, así que nada se acerca sigilosamente al jugador mientras lee. La única excepción es el terreno que aún se está creando cuando se abre la introducción: entonces la creación continúa tras las páginas, y el jugador permanece retenido como espectador hasta que continúa al mundo, aunque la ejecución termine antes. En un servidor el mundo sigue en marcha, y un cliente vanilla nunca ve la introducción y entra con normalidad. El saludo de bienvenida espera hasta que se cierran las páginas, para que no se pierda tras ellas.
 
 `once` se recuerda en los datos guardados del jugador y sobrevive a la muerte. `/rdplserver intro` lo borra para quien lo ejecuta, de modo que la introducción se reproduce de nuevo la próxima vez que entre. No se repite en el acto, lo que evita que sea una vía de vuelta a la secuencia de entrada en mitad de una partida.
 
 Los fondos se estiran para llenar la ventana, así que una imagen 16:9 sirve para una ventana 16:9 y una cuadrada se ve aplastada. Recorta la imagen a la forma en lugar de confiar en el ajuste. `music` admite cualquier evento de sonido registrado, de vanilla o uno que tu propio pack añada mediante `sounds`. No se repite en bucle, así que una pista corta termina y deja silencio tras ella.
 
-Si más de un pack incluye una introducción, sus páginas se ejecutan una tras otra en el orden de los packs en lugar de ganar una. Restríngelas con `requires` si solo quieres una.
+Si más de un pack incluye una introducción, sus páginas se ejecutan una tras otra en el orden de los packs en lugar de ganar una. Limítalas con `requires` si solo quieres una.
 
 ## Equipos
 
@@ -4825,7 +4841,7 @@ Si más de un pack incluye una introducción, sus páginas se ejecutan una tras 
 
 `<namespace>/teams/*.json`
 
-El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es un bando.
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se acumulan. Cada archivo es un bando.
 
 Un bando es un equipo real en el marcador del propio juego, así que `/team list` lo ve, conserva a sus miembros a través de un guardado y una recarga, y un cliente sin este mod muestra los colores y las etiquetas de nombre igual que con cualquier equipo vanilla. La pertenencia es por nombre, de modo que cualquier cosa con nombre o UUID puede estar en un bando: un jugador, un zombi, un aldeano, un soporte para armadura.
 
@@ -4855,8 +4871,8 @@ Un bando es un equipo real en el marcador del propio juego, así que `/team list
 | `displayName` | texto   | el nombre         | Lo que se muestra a los jugadores en lugar del nombre                                                                                                                                                                                              |
 | `color`       | texto   | `white`           | Uno de los dieciséis colores de texto. Tiñe la etiqueta de nombre y es de lo que dependen las ranuras de barra lateral por equipo                                                                                                                  |
 | `prefix`      | texto   | vacío             | Se antepone al nombre de un miembro, después del color                                                                                                                                                                                             |
-| `suffix`      | texto   | vacío             | Se pospone al nombre de un miembro                                                                                                                                                                                                                 |
-| `scoreboard`  | boolean | `true`            | Si el bando figura como equipo en el marcador del juego. Desactivado, no crea ningún equipo: sus mobs llevan el color del bando en el nombre, nada les impide pelear entre sí y no se le asignan puntos, ya que la puntuación va por equipo       |
+| `suffix`      | texto   | vacío             | Se añade tras el nombre de un miembro                                                                                                                                                                                                                 |
+| `scoreboard`  | booleano | `true`            | Si el bando figura como equipo en el marcador del juego. Desactivado, no crea ningún equipo: sus mobs llevan el color del bando en el nombre, nada les impide pelear entre sí y no se le asignan puntos, ya que la puntuación va por equipo       |
 
 Un bando solo se pone en juego donde un pack lo pide: sin carpeta `teams` en ninguna parte el mod no añade ningún equipo, no escucha nada y no ofrece el comando. Un operador de servidor que edita un archivo puede ejecutar `/rdplserver reload` para poner el cambio en el mundo en marcha sin reiniciar.
 
@@ -4866,9 +4882,9 @@ Un bando solo se pone en juego donde un pack lo pide: sin carpeta `teams` en nin
 
 | Ajuste                  | Tipo    | Por defecto    | Qué hace                                                                                                                                                             |
 | ----------------------- | ------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `friendlyFire`          | boolean | `false`        | Si los miembros pueden hacerse daño entre sí. También es el valor por defecto de `mobFriendlyFire`                                                                   |
-| `mobFriendlyFire`       | boolean | `friendlyFire` | Si los mobs de un bando pueden dañar a su propio bando con explosiones y TNT lanzado, algo que el juego por sí solo nunca impide. Desactivado protege al bando; activado lo deja como lo tiene el juego |
-| `seeFriendlyInvisibles` | boolean | `true`         | Si los miembros se ven entre sí estando invisibles                                                                                                                   |
+| `friendlyFire`          | booleano | `false`        | Si los miembros pueden hacerse daño entre sí. También es el valor por defecto de `mobFriendlyFire`                                                                   |
+| `mobFriendlyFire`       | booleano | `friendlyFire` | Si los mobs de un bando pueden dañar a su propio bando con explosiones y TNT lanzado, algo que el juego por sí solo nunca impide. Desactivado protege al bando; activado lo deja como lo tiene el juego |
+| `seeFriendlyInvisibles` | booleano | `true`         | Si los miembros se ven entre sí estando invisibles                                                                                                                   |
 | `nameTags`              | texto   | `always`       | `always`, `never`, `hideForOtherTeams` o `hideForOwnTeam`, con cualquier combinación de mayúsculas y minúsculas                                                      |
 | `deathMessages`         | texto   | `always`       | Las mismas cuatro palabras, para quién recibe el aviso cuando muere un miembro                                                                                       |
 | `collision`             | texto   | `always`       | `always`, `never`, `pushOtherTeams` o `pushOwnTeam`, con cualquier combinación de mayúsculas y minúsculas                                                            |
@@ -4882,11 +4898,11 @@ Un bando solo se pone en juego donde un pack lo pide: sin carpeta `teams` en nin
 | `entities`  | lista   | vacío       | Ids de entidad cuyas apariciones se unen todas a este bando, como `minecraft:zombie` o una de las tuyas                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | `players`   | lista   | vacío       | Nombres de jugador que se unen a este bando al iniciar sesión                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `spawnBox`  | lista   | ninguno     | Seis números enteros, x y z a x y z. Todo lo que aparezca dentro se une, y las esquinas pueden darse en cualquier orden                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| `joinable`  | boolean | `true`      | Si un jugador puede unirse con `/rdplserver team join`. Ponlo en false para un bando que es solo de mobs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| `balance`   | boolean | `false`     | Si `/rdplserver team join` sin nombre puede poner aquí a un jugador. Entre los bandos que lo permiten se elige el que tenga menos jugadores                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `joinable`  | booleano | `true`      | Si un jugador puede unirse con `/rdplserver team join`. Ponlo en false para un bando que es solo de mobs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| `balance`   | booleano | `false`     | Si `/rdplserver team join` sin nombre puede poner aquí a un jugador. Entre los bandos que lo permiten se elige el que tenga menos jugadores                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | `picks`     | número  | `0`         | Cuántos miembros elige este bando al azar. En cada ronda abierta el bando deja volver a donde estaban a quienes eligió la última vez y elige de nuevo entre todo lo que nombra `picksFrom`; entre sorteos, un inicio de sesión o una aparición de ese conjunto ocupa de inmediato un puesto vacío. Para eso sirve: un jugador entre todos, en un bando propio                                                                                                                                                                                                                                                                                                                                                                      |
 | `picksFrom` | lista   | vacío       | De qué se hace el sorteo: `players` para todos los conectados, e ids de entidad para cada mob vivo de esa clase                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| `standIn`   | objeto  | ninguno     | Un mob que ocupa el bando mientras no haya ningún jugador en él: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` mantiene vivo uno de esa entidad en ese punto del overworld, invocándolo cuando falta, y lo retira en el momento en que un jugador se une al bando, de modo que una partida se juega contra la IA hasta que un jugador toma el papel. Se comprueba cada cinco segundos; el punto debe estar en terreno cargado. En una partida con vestíbulo (`opens.by: leader`) un sustituto solo se invoca mientras el vestíbulo espera y al abrirse la ronda, así que uno que cae permanece ausente durante el resto de la ronda y su final hasta que todos vuelven al vestíbulo; sin vestíbulo, un sustituto caído no se reemplaza mientras se desarrolla una ronda que termina con `ends.lastStanding` |
+| `standIn`   | objeto  | ninguno     | Un mob que ocupa el bando mientras no haya ningún jugador en él: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` mantiene vivo uno de esa entidad en ese punto del Overworld, invocándolo cuando falta, y lo retira en el momento en que un jugador se une al bando, de modo que una partida se juega contra la IA hasta que un jugador toma el papel. Se comprueba cada cinco segundos; el punto debe estar en terreno cargado. En una partida con vestíbulo (`opens.by: leader`) un sustituto solo se invoca mientras el vestíbulo espera y al abrirse la ronda, así que uno que cae permanece ausente durante el resto de la ronda y su final hasta que todos vuelven al vestíbulo; sin vestíbulo, un sustituto caído no se reemplaza mientras se desarrolla una ronda que termina con `ends.lastStanding` |
 
 Hay tres formas de unirse, y un bando puede usar las tres. `entities` nombra ids de entidad, y todo lo de ese tipo se une al aparecer, que es como un pack da bandos a los mobs sin tocar los mobs. `spawnBox` reclama un rincón del mundo, y todo lo que aparezca dentro se une, lo que conviene a una arena donde ambos bandos usan el mismo mob. `players` nombra jugadores directamente. Además de esas, un jugador puede unirse con `/rdplserver team join <name>` salvo que el bando ponga `joinable` en false, y salir con `/rdplserver team leave`.
 
@@ -4897,7 +4913,8 @@ Hay tres formas de unirse, y un bando puede usar las tres. `entities` nombra ids
 | Ajuste  | Tipo  | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                |
 | ------- | ----- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `gives` | lista | vacío       | Ítems que se colocan en el inventario de un jugador al unirse al bando, un nombre de ítem para uno o `{ "item", "count", "unbreakable" }` para más, o para uno que nunca se desgasta, en cualquier ranura libre y soltados a sus pies cuando no hay ninguna. Se reparten de nuevo tras un reinicio que vacía los inventarios (`resetClearsInventory`) |
-| `spawn` | texto | ninguno     | `x,y,z` en el overworld donde se coloca a los jugadores del bando al abrirse una ronda, para que cada bando empiece en su propio terreno; sin él se quedan donde los dejó el reinicio o el vestíbulo                                                                                                    |
+| `gives.unbreakable` | booleano | `false` | En la forma de objeto de una entrada de `gives`, hace que ese ítem nunca se desgaste |
+| `spawn` | texto | ninguno     | `x,y,z` en el Overworld donde se coloca a los jugadores del bando al abrirse una ronda, para que cada bando empiece en su propio terreno; sin él se quedan donde los dejó el reinicio o el vestíbulo                                                                                                    |
 
 ### El líder
 
@@ -4957,9 +4974,9 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 | `criterion`   | texto   | `dummy`                 | Lo que el juego cuenta por sí mismo. Uno desconocido se rechaza con una línea que lo indica                                                         |
 | `display`     | texto   | vacío                   | `sidebar`, `list`, `belowName` (también se admite `below_name`) o `sidebar.team.<color>`. Vacío no lo muestra en ningún sitio; no hay pantalla de marcador que abrir |
 | `render`      | texto   | el propio del criterio  | `integer` o `hearts`                                                                                                                                |
-| `teamTotals`  | boolean | `true`                  | Los puntos se anotan en una fila con el nombre del equipo del miembro                                                                               |
-| `individuals` | boolean | `false`                 | Los puntos se anotan también en una fila del propio miembro                                                                                         |
-| `carries`     | boolean | `false`                 | El objetivo sobrevive a un reinicio del mapa en lugar de borrarse con él. Un recuento de rondas ganadas de una partida es un ejemplo               |
+| `teamTotals`  | booleano | `true`                  | Los puntos se anotan en una fila con el nombre del equipo del miembro                                                                               |
+| `individuals` | booleano | `false`                 | Los puntos se anotan también en una fila del propio miembro                                                                                         |
+| `carries`     | booleano | `false`                 | El objetivo sobrevive a un reinicio del mapa en lugar de borrarse con él. Un recuento de rondas ganadas de una partida es un ejemplo               |
 | `awardsTo`    | texto   | vacío                   | Otro objetivo al que este concede un punto al terminar, al bando que iba en cabeza. La clasificación por niveles no concede nada                    |
 | `tiebreak` | booleano | `false` | Una ronda que termina con empate en cabeza sortea uno de los bandos empatados con el azar del mundo, registra el sorteo y lo premia como de costumbre. Una partida, un objetivo sin `awardsTo`, sortea igual y nombra al bando sorteado al principio de sus resultados |
 
@@ -4967,7 +4984,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 
 *puntuación*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `points.kill`    | objeto | vacío   | Id de entidad a puntos, que se acreditan al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador |
 | `points.death`   | entero    | `0`     | Puntos cada vez que muere un miembro, muera como muera. Pueden ser negativos |
@@ -4979,7 +4996,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 
 *puntuación*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `ends.atScore`      | entero     | `0`                                | La partida termina en el momento en que un bando alcanza esta puntuación. Con 0 nunca termina por puntuación |
 | `ends.afterMinutes` | entero     | `0`                                | La partida termina pasados estos minutos. Con 0 nunca termina por tiempo |
@@ -4994,7 +5011,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 
 *puntuación*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `ends.resets`              | booleano | `false`                       | Al terminar la ronda se reinicia el mapa, tal como describen `resetSays` y los demás ajustes de reinicio de [Plantillas de mundo](#plantillas-de-mundo), y luego se abre una ronda nueva |
 | `ends.intermissionSeconds` | entero     | `10`                          | Cuánto tiempo permanece la clasificación entre el final y el reinicio |
@@ -5005,8 +5022,9 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 
 *puntuación*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
+| `opens` | objeto | vacío | Agrupa los ajustes de vestíbulo siguientes, cada uno escrito dentro de él. Si falta, cada uno conserva su valor por defecto |
 | `opens.by`         | texto    | `auto`                                             | `auto` abre la ronda siguiente por sí solo, cinco segundos después del reinicio. `leader` mantiene el juego en un vestíbulo: tras el reinicio, y cuando el mundo se carga por primera vez, no se puntúa nada y no corre ningún reloj, los bandos pueden unirse y abandonarse libremente, y la ronda solo se abre cuando el líder de un bando, o un operador, ejecuta `/rdplserver round start`, y no mientras alguien siga leyendo la introducción del mundo; entonces corre la cuenta de cinco segundos, se hacen los sorteos y cada bando es colocado en su `spawn`. Mientras el mundo espera, hasta que termina la cuenta de cinco segundos, los jugadores se quedan donde están y no pueden romper, colocar, usar, golpear ni soltar nada ni reciben daño, y se les muestra la línea de espera cuando lo intentan, y todo lo demás que está vivo permanece quieto: sin IA, sin movimiento. Los comandos siguen funcionando, de modo que se puede uno unir a los bandos y empezar la ronda |
 | `opens.says`       | texto    | `Waiting for {leader} to start the round`          | Se muestra en mitad de la pantalla, como la bienvenida, a cada jugador que no es líder: al llegar al vestíbulo tras la introducción, una vez mostrada la bienvenida; cuando el vestíbulo se abre de nuevo tras una ronda; cada vez que cambia, al llegar o irse un líder; y cuando intentan algo que el vestíbulo rechaza. `{leader}` son los líderes de todos los bandos, o `a leader` mientras nadie lidera. Vacío no muestra nada |
 | `opens.leaderSays` | texto    | `Type /rdpl round start`                           | Se muestra del mismo modo y en los mismos momentos a un jugador que lidera un bando, en lugar de `opens.says`. Vacío no muestra nada |
@@ -5034,7 +5052,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `reset.lead`            | texto | `none`                                                                                    | Lo que hace `/rdplserver round reset` por el líder de un bando mientras hay una ronda en curso. `now` termina la ronda al instante y reinicia el mapa; `vote` convoca una votación; `none` no da al líder voz propia, de modo que el líder convoca una votación como cualquier otro jugador allí donde `players` lo permite. Un operador siempre reinicia al instante |
 | `reset.players`         | texto | `none`                                                                                    | `vote` permite que un jugador de cualquier bando convoque una votación con `/rdplserver round reset`. `none` deja el reinicio en manos del líder |
@@ -5056,7 +5074,7 @@ Todos los jugadores conectados de un bando votan, sea cual sea su bando, con `/r
 
 *puntuación*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `results.card`       | booleano | `false`                | Muestra la clasificación como tarjeta en lugar de como chat |
 | `results.title`      | texto    | el nombre y `results`  | El encabezado de la tarjeta |
@@ -5088,11 +5106,11 @@ Todos los jugadores conectados de un bando votan, sea cual sea su bando, con `/r
 | Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `turns.order` | texto | `fixed` | Quién juega cuándo, fijado al empezar cada vuelta. `fixed` mantiene el orden en que se vieron los bandos por primera vez, `random` baraja cada vuelta, `lowestFirst` empieza por la puntuación más baja en este objetivo y `lastWinner` empieza por el bando que ganó la última ronda, el resto en orden fijo |
-| `turns.seconds` | int | `60` | Cuánto dura un turno, al menos un segundo |
-| `turns.gapSeconds` | int | `3` | Una pausa entre turnos mientras todos los bandos esperan. 0 sigue sin pausa |
+| `turns.seconds` | entero | `60` | Cuánto dura un turno, al menos un segundo |
+| `turns.gapSeconds` | entero | `3` | Una pausa entre turnos mientras todos los bandos esperan. 0 sigue sin pausa |
 | `turns.held` | texto | `frozen` | Cómo espera un jugador su turno: `frozen` lo deja quieto y le impide golpear, picar, construir, usar o soltar, como hace el vestíbulo; `spectator` o `adventure` lo pone en ese modo de juego hasta su turno y luego le devuelve el suyo |
-| `turns.endsAtScore` | int | `0` | Los turnos terminan, y la ronda con ellos, en cuanto un bando alcanza esta puntuación en el objetivo. 0 nunca termina por puntuación |
-| `turns.cycles` | int | `0` | Los turnos terminan, y la ronda con ellos, tras este número de vueltas; una vuelta es un turno para cada bando en juego. 0 sigue hasta que otra cosa termine la ronda |
+| `turns.endsAtScore` | entero | `0` | Los turnos terminan, y la ronda con ellos, en cuanto un bando alcanza esta puntuación en el objetivo. 0 nunca termina por puntuación |
+| `turns.cycles` | entero | `0` | Los turnos terminan, y la ronda con ellos, tras este número de vueltas; una vuelta es un turno para cada bando en juego. 0 sigue hasta que otra cosa termine la ronda |
 | `turns.mobTags` | lista | vacío | Etiquetas de marcador que meten en los turnos a un mob sin equipo, un grupo por etiqueta |
 | `turns.mobTypes` | lista | vacío | IDs de entidad que meten en los turnos a un mob sin equipo, un grupo por ID |
 
@@ -5110,7 +5128,7 @@ Terminar por `endsAtScore` o `cycles` termina la ronda como cualquier otro final
 
 El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es un asalto.
 
-Un asalto es el tipo que el juego tiene desde la 1.14, librado sobre una de las aldeas del propio juego. Empieza cuando un jugador con el efecto `omen` está dentro de una aldea: el efecto se retira y aparece una barra de jefe para todos los jugadores a menos de `reach` del centro de la aldea. Pasados `waveDelay` ticks llega la primera oleada en un anillo alrededor de la aldea y avanza hacia el centro, atacando por el camino a jugadores, aldeanos y golems de hierro. Los asaltantes nunca se hieren ni se fijan como objetivo entre sí, así que una flecha perdida o un golpe entre dos de ellos no hace nada. La barra muestra la salud que le queda a la oleada, y cuenta los asaltantes cuando quedan dos o menos. Cuando una oleada ha desaparecido, la siguiente espera `waveDelay` ticks. Cuando ha desaparecido la última oleada y nada ha vuelto en dos segundos, el asalto se gana; cuando todos los aldeanos han muerto o la propia aldea ha desaparecido tras haber llegado una oleada, se pierde. En ambos casos la barra lo anuncia durante treinta segundos, y la función correspondiente se ejecuta como cada jugador al alcance.
+Un asalto es como el que el juego incluye desde 1.14, librado sobre una de las aldeas del propio juego. Empieza cuando un jugador con el efecto `omen` está dentro de una aldea: el efecto se retira y aparece una barra de jefe para todos los jugadores a menos de `reach` del centro de la aldea. Pasados `waveDelay` ticks llega la primera oleada en un anillo alrededor de la aldea y avanza hacia el centro, atacando por el camino a jugadores, aldeanos y golems de hierro. Los asaltantes nunca se hieren ni se fijan como objetivo entre sí, así que una flecha perdida o un golpe entre dos de ellos no hace nada. La barra muestra la salud que le queda a la oleada, y cuenta los asaltantes cuando quedan dos o menos. Cuando una oleada ha desaparecido, la siguiente espera `waveDelay` ticks. Cuando ha desaparecido la última oleada y nada ha vuelto en dos segundos, el asalto se gana; cuando todos los aldeanos han muerto o la propia aldea ha desaparecido tras haber llegado una oleada, se pierde. En ambos casos la barra lo anuncia durante treinta segundos, y la función correspondiente se ejecuta como cada jugador al alcance.
 
 Un asalto en curso se guarda con el mundo, y sus asaltantes retoman la marcha tras una recarga. Se detiene sin final en modo pacífico, pasados `timeout` ticks, o cuando no hay ningún punto alrededor de la aldea que pueda recibir una oleada. Una aldea es donde el juego guarda sus puntos de aldea, las camas, los puestos de trabajo y las campanas que reclaman los aldeanos: su centro es el punto medio de esos puntos, alcanza como mínimo 32 bloques a su alrededor, y sus aldeanos son los que están dentro de ese alcance y a cuatro bloques de la altura del centro. El `minecraft:bad_omen` del propio juego inicia primero el asalto del propio juego, por lo que un asalto nombra un efecto propio de su pack.
 
@@ -5138,7 +5156,7 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
 
 *asaltos*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `omen`          | nombre de efecto               | ninguno, obligatorio | El efecto que inicia el asalto cuando su portador está dentro de una aldea. Sirve cualquier efecto registrado, incluida una poción propia de un pack |
 | `name`          | texto               | `Raid`         | El título de la barra de jefe |
@@ -5149,17 +5167,17 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
 | `reach`         | entero                | `96`           | Los jugadores a esta cantidad de bloques del centro o menos ven la barra, y la función final se ejecuta como ellos. Un asaltante que se desvía dieciséis bloques más allá abandona el asalto |
 | `timeout`       | entero                | `48000`        | Ticks pasados los cuales un asalto sin terminar se detiene sin final. `0` nunca lo detiene |
 | `sound`         | nombre de sonido         | ninguno           | Se reproduce a cada jugador al alcance, desde el lado por el que llega la oleada, cada vez que llega una oleada |
-| `wins`          | función           | ninguna           | Se ejecuta como cada jugador al alcance cuando se gana el asalto |
-| `loses`         | función           | ninguna           | Se ejecuta como cada jugador al alcance cuando se pierde el asalto |
+| `wins`          | función           | ninguno           | Se ejecuta como cada jugador al alcance cuando se gana el asalto |
+| `loses`         | función           | ninguno           | Se ejecuta como cada jugador al alcance cuando se pierde el asalto |
 | `bell`          | nombre de bloque o lista | ninguno           | Otros bloques que suenan como una campana, cuando un jugador los usa y cada vez que llega una oleada. Un bloque de tipo `bell` suena sin necesidad de nombrarlo |
 
 ### Un grupo
 
 *asaltos*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `entity` | nombre de entidad               | ninguno, obligatorio | Lo que llega. Una variante de entidad conserva todo su comportamiento propio y gana la marcha |
+| `entity` | nombre de entidad               | ninguno, obligatorio | Lo que llega. Una variante de entidad conserva todo su comportamiento propio y se suma a la marcha |
 | `count`  | entero o `{ "min", "max" }` | `1`            | Cuántos llegan |
 
 ---
@@ -5170,9 +5188,9 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
 
 `<namespace>/cards/*.json`
 
-El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es una regla, y su id es `<namespace>:<nombre del archivo>`. Una regla espera a un disparador, comprueba su `when` y muestra una tarjeta a su audiencia; también puede ejecutar una función. Nada hace falta en el cliente: un jugador sin el mod recibe una tarjeta de esquina como líneas de chat y una tarjeta central como título.
+El nombre del archivo lo eliges tú, solo se lee la carpeta, y varios archivos se apilan. Cada archivo es una regla, y su id es `<namespace>:<file name>`. Una regla espera a un disparador, comprueba su `when` y muestra una tarjeta a su audiencia; también puede ejecutar una función. Nada hace falta en el cliente: un jugador sin el mod recibe una tarjeta de esquina como líneas de chat y una tarjeta central como título.
 
-Cada mensaje que dice el propio mod es una regla integrada, listada más abajo. Un pack cambia una escribiendo un archivo con ese id, `rdpl/cards/<nombre>.json`, que no necesita disparador: lo que omite se queda como está hoy, y `{text}` representa el mensaje que habría dicho el mod. Un pack que no escribe ninguna de ellas ve todos los mensajes como antes.
+Cada mensaje que dice el propio mod es una regla integrada, listada más abajo. Un pack cambia una escribiendo un archivo con ese id, `rdpl/cards/<name>.json`, que no necesita disparador: lo que omite se queda como está hoy, y `{text}` representa el mensaje que habría dicho el mod. Un pack que no escribe ninguna de ellas ve todos los mensajes como antes.
 
 ```json
 {
@@ -5197,7 +5215,7 @@ Cada mensaje que dice el propio mod es una regla integrada, listada más abajo. 
 }
 ```
 
-El segundo archivo, guardado como `rdpl/cards/gate_blocked.json`, convierte la línea roja de la barra de acción que muestra un portal cerrado en una tarjeta con un icono y una segunda línea, y la muestra como mucho una vez cada treinta segundos.
+El segundo archivo, guardado como `rdpl/cards/gate_blocked.json`, convierte la línea roja de la barra de acción que muestra una puerta cerrada en una tarjeta con un icono y una segunda línea, y la muestra como mucho una vez cada treinta segundos.
 
 ```json
 {
@@ -5243,7 +5261,7 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 
 *tarjetas*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `trigger`            | texto                               | ninguno, obligatorio | Uno de los disparadores de arriba. Una regla integrada no lleva ninguno |
 | `dimension`          | texto                               | ninguno           | Un id de dimensión como `minecraft:the_nether`; un id sin espacio de nombres se lee como `minecraft:`. Para `dimension_enter` es la dimensión en la que se entra; para cualquier otro disparador limita la regla a los jugadores de esa dimensión |
@@ -5281,7 +5299,7 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 
 *tarjetas*
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `title`      | texto    | ninguno             | La primera línea, dibujada más grande en una tarjeta central |
 | `lines`      | lista    | ninguno             | Hasta dieciséis líneas. Una regla necesita título o líneas, salvo una integrada. Se rellenan `{player}`, `{dim}`, `{biome}` y `{day}`; `{text}` es el mensaje integrado, y en una línea propia da todas las líneas de él |
@@ -5291,7 +5309,7 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 | `image`      | texto    | `saysImage`      | Un PNG de los recursos de cliente del pack, estirado sobre la tarjeta como fondo |
 | `background` | booleano | `saysBackground` | `false` suprime el panel, su borde y la franja de color; el texto conserva su sombra, y una `image` se sigue dibujando |
 | `font`       | texto    | `saysFont`       | La fuente con la que se dibuja el texto de la tarjeta, como `namespace:name`. Vacío usa la fuente RDPL |
-| `ticks`      | entero     | `160`            | Cuánto tiempo permanece la tarjeta, desvanecimiento incluido |
+| `ticks`      | entero     | `0`              | Cuánto tiempo permanece la tarjeta, desvanecimiento incluido. `0` mantiene los 160 habituales |
 | `audience`   | texto    | `player`         | Quién la ve: `player`, `everyone`, `dimension` (todos los de la dimensión del jugador) o `team` (el equipo del marcador del jugador) |
 | `repeat`     | texto    | `always`         | `always`, `once_per_player`, `once_per_world` o `once_per_session` (de nuevo después de que el jugador vuelva a iniciar sesión) |
 | `cooldown`   | entero     | `0`              | Segundos antes de que la regla se active de nuevo para el mismo jugador |
@@ -5299,7 +5317,7 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 
 Una tarjeta de esquina va al chat cuando `saysCard` está desactivado. Lo que se ha mostrado a un jugador se guarda con el jugador, así que sobrevive a la muerte y al cambio de dimensión; `once_per_world` se guarda con el mundo.
 
-La fuente RDPL, `resourcedatapackloader:rdpl`, es la predeterminada para todo el texto: tarjetas, mensajes Says, las notas de bienvenida y de espera, la introducción del mundo, y los propios menús, chat, HUD y descripciones emergentes del juego. Sus variantes en negrita y cursiva son `resourcedatapackloader:rdpl_bold` y `resourcedatapackloader:rdpl_italic`. La escritura de la mesa de encantamientos sigue siendo la del juego.
+La fuente RDPL, `resourcedatapackloader:rdpl`, es la que se usa por defecto para todo el texto: tarjetas, mensajes Says, las notas de bienvenida y de espera, la introducción del mundo, y los propios menús, chat, HUD y descripciones emergentes del juego. Sus variantes en negrita y cursiva son `resourcedatapackloader:rdpl_bold` y `resourcedatapackloader:rdpl_italic`. La escritura de la mesa de encantamientos sigue siendo la del juego.
 
 RDPL incluye estas fuentes y caracteres. El `font` de una tarjeta, nota o introducción puede nombrar una fuente RDPL por su nombre corto o por su id completo:
 
@@ -5321,8 +5339,8 @@ Los títulos y líneas de las tarjetas, los mensajes Says y las notas de bienven
 
 | Id | El mensaje | De dónde sale su texto |
 | --- | --- | --- |
-| `rdpl:gate_unlocked`    | Se abre un portal                                           | `unlockedMessage` en [Portales](#portales) |
-| `rdpl:gate_blocked`     | Un portal cerrado hace retroceder a un jugador, en la barra de acción            | `blockedMessage` en [Portales](#portales) |
+| `rdpl:gate_unlocked`    | Se abre una puerta                                           | `unlockedMessage` en [Puertas](#puertas) |
+| `rdpl:gate_blocked`     | Una puerta cerrada hace retroceder a un jugador, en la barra de acción            | `blockedMessage` en [Puertas](#puertas) |
 | `rdpl:team_joined`      | Un jugador se une a un bando                                           | el `displayName` del bando |
 | `rdpl:team_lead`        | El liderazgo de un bando pasa a un jugador                                        | `leadSays` en [Equipos](#equipos) |
 | `rdpl:team_picked`      | Un jugador es elegido para un bando                                           | el `displayName` del bando |
@@ -5370,14 +5388,14 @@ El nombre del archivo lo eliges tú, y varios archivos se suman. Un archivo nomb
 
 | Clave | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `audience` | texto | `all` | Quién oye una tirada que no nombra la suya: `self`, `team`, `all`, `radius <bloques>` o `silent`. Vale el primer pack que lo fija; uno posterior queda en el registro |
+| `audience` | texto | `all` | Quién oye una tirada que no nombra la suya: `self`, `team`, `all`, `radius <blocks>` o `silent`. Vale el primer pack que lo fija; uno posterior queda en el registro |
 | `dice` | objeto | vacío | Nombre del dado a un objeto de cara y peso. Una cara de peso 2 sale el doble que una de peso 1. Los pesos son números enteros desde 1 |
 | `decks` | objeto | vacío | Nombre del mazo a su lista de cartas, o a un objeto `{ "cards": [...], "reshuffle": false }`. `reshuffle` es `true` si no se indica: robar de un mazo vacío baraja todas las cartas y roba. Con `false` el mazo sigue vacío hasta `game deck shuffle` |
 | `says` | objeto | vacío | Clave de redacción a texto, que sustituye la redacción propia del mod en todos los idiomas. Las claves y sus marcadores están abajo |
 
 Un nombre de dado o de mazo pertenece al primer pack que lo carga. Otro pack con el mismo nombre, o con el nombre `coin`, queda fuera con un error en el registro. Un dado del pack se tira con `game die <name>` y muestra su cara; guardado como puntuación, cuenta como el puesto de la cara en el archivo, empezando en 1.
 
-Un mazo es una pila que se va agotando. `game deck draw <name>` roba una carta al azar de lo que queda, y nada vuelve hasta que el mazo vacío se baraja solo en la siguiente carta o `game deck shuffle <name>` devuelve todas las cartas. La pila se guarda con el mundo, así que un reinicio no la baraja.
+Un mazo es una pila que se va agotando. `game deck draw <name>` roba una carta al azar de lo que queda, y nada vuelve hasta que el mazo vacío se baraja solo al robar la siguiente carta o `game deck shuffle <name>` devuelve todas las cartas. La pila se guarda con el mundo, así que un reinicio no la baraja.
 
 Cada tirada usa el azar propio del mundo y se escribe en el registro con quién la hizo, qué hizo y qué salió. `game last` muestra las más recientes. Los resultados salen como líneas de chat normales construidas en el servidor, así que también los lee un jugador sin el mod. La notación de dados se lee como cantidad, `d`, caras y un modificador opcional: `3d8-2` son tres dados de ocho caras sumados, menos 2, y `d20` es un dado de veinte caras. El chat y el registro escriben la tirada con palabras, como «Boss tira 3 dados de ocho caras, menos 2: [2, 6, 7] = 13», y `{dice}` contiene esa redacción.
 
@@ -5403,7 +5421,7 @@ Cada tirada usa el azar propio del mundo y se escribe en el registro con quién 
 | `notturn`, `noturns` | ninguno |
 | `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` por orden |
 
-La redacción propia del mod está en sus archivos de idioma como `rdpl.game.<key>`, así que un paquete de recursos también puede cambiarla idioma por idioma.
+La redacción propia del mod está en sus archivos de idioma como `rdpl.game.<key>`, así que un pack de recursos también puede cambiarla idioma por idioma.
 
 ## Juegos de tablero
 
@@ -5514,7 +5532,7 @@ Todo lo que detiene o cambia la generación está agrupado, y cada grupo tiene u
 | `global`  | Gana la configuración. Las secciones del pack se ignoran |
 | `off`     | El grupo se desactiva por completo y ningún pack puede activarlo |
 
-Los grupos son `ores`, `biomes`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `replacements`, `villages`, `entities`, `chunks`, `blastPlaster`, `commands` y `server`.
+Los grupos son `ores`, `generators`, `biomes`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `replacements`, `villages`, `entities`, `chunks`, `blastPlaster`, `commands` y `server`.
 
 Los ajustes se resuelven **sección de bioma → plantilla de mundo → configuración**. El bloque `settings` de una plantilla de mundo usa los mismos nombres de clave que la configuración, de modo que un pack los establece igual que lo harías tú:
 
@@ -5540,7 +5558,7 @@ El archivo de configuración es `config/resourcedatapackloader-common.toml`. Cad
 
 *control*
 
-Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` del grupo decide si la última palabra la tiene un pack o la configuración. Un ajuste que un pack puede establecer aparece en el bloque `settings` de una plantilla de mundo con el mismo nombre; uno marcado como **solo configuración** se lee únicamente de la configuración, y si un pack lo escribe se avisa y se ignora. Los valores predeterminados son los de la configuración.
+Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` del grupo decide si la última palabra la tiene un pack o la configuración. Un ajuste que un pack puede establecer aparece en el bloque `settings` de una plantilla de mundo con el mismo nombre; uno marcado como **solo configuración** se lee únicamente de la configuración, y si un pack lo escribe se avisa y se ignora. Los valores por defecto son los de la configuración.
 
 ### Minerales
 
@@ -5569,7 +5587,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 
 `control.ores` decide este grupo. Bloqueo de la generación de minerales por mod y por tipo de mineral.
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `blockOres`                      | booleano         | `false`         | Impide que todos los mods, y el propio Minecraft, generen minerales. Solo siguen generando los mods de oreWhitelist. Un mineral es una característica colocada construida sobre la característica de mineral o de mineral disperso del juego, aquellas para las que 1.12.2 lanzaba su evento de minerales, lo que abarca los minerales de Minecraft y de la mayoría de los mods, la tierra, la grava y las variedades de piedra. Las entradas de worldgen propias de un pack nunca se bloquean, ni por esto ni por oreTypes |
 | `logBlockedOres`                 | booleano         | `true`          | Registra la primera vez que se rechaza cada mod y tipo de mineral |
@@ -5606,10 +5624,10 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 
 `control.biomes` decide este grupo. Bloqueo de biomas por mod y por nombre, y qué los sustituye.
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `logBlockedBiomes`                 | booleano         | `true`                    | Registra un recuento por mod de qué biomas se bloquearon |
-| `blockBiomes`                      | booleano         | `false`                   | Impide que se genere cualquier bioma salvo los de los mods de biomeWhitelist. Los biomas bloqueados pasan a ser el bioma vacío, o lo que nombren los roles y el respaldo de la plantilla de mundo. Bloquear todos los biomas mientras la plantilla de mundo es vacía, sin roles y con un valor predeterminado vacío, convierte las voidWorldDimensions en un mundo vacío |
+| `blockBiomes`                      | booleano         | `false`                   | Impide que se genere cualquier bioma salvo los de los mods de biomeWhitelist. Los biomas bloqueados pasan a ser el bioma vacío, o lo que nombren los roles y el respaldo de la plantilla de mundo. Bloquear todos los biomas mientras la plantilla de mundo es vacía, sin roles y con un valor por defecto vacío, convierte las voidWorldDimensions en un mundo vacío |
 | `biomeWhitelist`                   | lista de ids de mod | `["minecraft"]`           | Los mods cuyos biomas siguen generándose mientras `blockBiomes` está activado. Un bioma de pack usa el espacio de nombres del pack |
 | `biomeNames`                       | lista            | vacío                     | Biomas a los que se aplica, por id como minecraft:birch_forest o por el nombre que muestra el juego, como Bosque de abedules. Como lista negra se bloquean los tenga quien los tenga. Como lista blanca, un bioma listado sigue necesitando que su mod esté en biomeWhitelist mientras blockBiomes está activado |
 | `biomeNamesAreBlacklist`           | booleano         | `true`                    | Activado, los nombres de `biomeNames` se bloquean. Desactivado, solo se generan esos nombres |
@@ -5640,7 +5658,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 
 `control.generators` decide este grupo. Bloqueo de la generación del mundo de otros mods por mod y por lo que crea. Un generador es una característica colocada, propiedad del espacio de nombres de su id; las características del propio Minecraft, las de este mod y las entradas de worldgen de un pack nunca se bloquean.
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `blockWorldGenerators`                 | booleano                     | `false`                   | Impide que todos los mods generen mediante sus propias características colocadas, que es como los mods añaden islas de slime, cristales de cueva y cosas así. Solo siguen generando los mods de generatorWhitelist |
 | `generatorWhitelist`                   | lista de ids de mod             | `["minecraft"]`           | Los mods a los que se sigue permitiendo generar mientras `blockWorldGenerators` está activado |
@@ -5674,7 +5692,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 
 `control.replacements` decide este grupo. Sustitución de bloques en chunks que ya existen.
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `blockReplacements`                      | lista               | vacío   | Bloques que se cambian en los chunks al cargarse, escritos como bloque=bloque con un estado opcional a cada lado, como minecraft:andesite=minecraft:stone o minecraft:oak_log[axis=y]=minecraft:spruce_log[axis=y]. Cada chunk se procesa una vez, los nuevos incluidos |
 | `blockReplacementDimensions`             | lista               | vacío   | Las dimensiones a las que se aplica. Vacío significa todas |
@@ -5731,7 +5749,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 
 **Mezclar bloques.** Algunos ajustes de bloque admiten una mezcla en lugar de un solo bloque: bloques separados por comas, cada uno seguido de un espacio y un peso, como en `"minecraft:stone_bricks 3, minecraft:cobblestone 1"`. Un bloque sin peso cuenta una vez. Cada bloque colocado sortea la mezcla a partir de la semilla del mundo y de su posición, de modo que el mismo mundo siempre construye el mismo patrón. Los ajustes que admiten una mezcla son `villagePathVergeBlock`, `villagePathVergeWaterBlock`, `villagePathTunnelBlock`, `villagePathBridgeFrameBlock`, `villagePathBridgeFrameTopBlock`, `villageRailTunnelBlock`, `villageRailDeckBlock`, `villageRailSupportBlock`, `villageRailBarrierBlock`, `villageRailBridgeFrameBlock`, `villageRailBridgeFrameTopBlock`, `villageSubwayTunnelBlock`, `villageSubwayPlatformBlock`, `villageSubwayRailingBlock`, `villageSubwayBenchEndBlock` y `villageSewerMossBlock`. Todos los demás ajustes de bloque usan el primer bloque de una mezcla en todo momento.
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villagePathBlock`         | texto                  | vacío                  | La superficie de la calzada cuando terrainAdaptation traza calles de ciudad. Vacío mantiene el bloque que usaría el bioma: arenisca sobre arena, terracota sobre badlands, camino de tierra sobre tierra |
 | `villagePathExtraWidth`    | entero, 0 o más        | `0`                    | Bloques extra de ancho de calzada a cada lado además de los 3 habituales, cuando terrainAdaptation traza las calzadas. Ensancha las propias calles, de modo que los bloques entre ellas se retiran de las calzadas anchas |
@@ -5759,6 +5777,34 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 | `villageWellStructure`     | lista                  | vacío                  | Archivos de estructura colocados como pieza central de cada plaza, una entrada con peso por línea escrita nombre=peso como mypack:plaza_spire=3, sorteada una vez por plaza. Se centra en un cuadrado de seis bloques despejado y pavimentado con villagePathBlock, con su capa más baja sobre ese suelo. Vacío, la parte vacía, o una estructura que no se puede cargar construye allí el pozo del propio juego. Una entrada que no está escrita nombre=peso se omite |
 | `villagePathDeadEnds`      | lista                  | vacío                  | Cómo se cierra una calle que termina sin salida, una entrada por línea, sorteada por extremo: sidewalk pavimenta la fila final con el bloque de acera y barrier levanta villagePathBridgeBarrierBlock a lo largo de ella villagePathBridgeBarrierHeight de alto; cualquier otra entrada se ignora. Cierran solo un extremo que no ha hecho crecer una calle sin salida, un estilo cuyo bloque no está establecido queda fuera del sorteo, y el extremo de un callejón admite solo barrier. Vacío deja esos extremos abiertos |
 | `villagePathIntersects`    | lista                  | vacío                  | Diseños pintados en los cruces, nombrados por clave de registro de la carpeta `<namespace>/pathintersects/` de un pack. Una entrada pinta todos los cruces igual; varias se eligen por cruce según su peso |
+
+**Diseños de cruce.** `villagePathIntersects` nombra archivos que incluye un pack, cada uno un pequeño dibujo de lo que hay que pintar donde se encuentran los caminos, trazado como filas de caracteres sueltos, un carácter por bloque.
+
+`<namespace>/pathintersects/*.json`
+
+La ruta del archivo es la clave de registro del diseño, que `villagePathIntersects` nombra a continuación.
+
+```json
+{
+  "name": "Crosswalk",
+  "weight": 3,
+  "legend": { "w": "minecraft:quartz_block", "y": "minecraft:yellow_wool" },
+  "mouth": ["wwww", "....", "wwww"],
+  "corner": ["yy.", "y..", "..."]
+}
+```
+
+| Clave | Valor | Por defecto | Qué hace |
+| --- | --- | --- | --- |
+| `name` | cadena | el nombre del archivo | Una etiqueta para el diseño. No cambia cómo se pinta |
+| `weight` | entero, 1 o más | `1` | Proporción de cruces que gana este diseño cuando hay varios listados |
+| `legend` | objeto de un carácter a un bloque | ninguno | Los caracteres que pueden usar las filas además de los roles de abajo. Un carácter que ya es un rol se rechaza con una línea de registro |
+| `mouth` | lista de cadenas | ninguno | Filas pintadas en cada acceso, fuera del camino que se cruza. La primera fila es la más cercana al cruce y las demás avanzan hacia fuera. Los caracteres recorren el camino a lo ancho y se repiten donde una fila es más corta que la anchura del camino |
+| `corner` | lista de cadenas | ninguno | Filas pintadas dentro del propio cruce. La primera fila es la más cercana al borde del camino que se cruza, y dentro de una fila el primer carácter es el más cercano al borde del propio camino, avanzando hacia dentro. Una celda que el dibujo no alcanza se deja como está |
+
+Cinco caracteres son roles y no bloques, así que siguen lo que ya lleve puesto el camino: `r` es la superficie del camino, `l` la línea de borde, `s` la acera, `.` deja el bloque exactamente como estaba, y `c` está reservado y pinta la superficie del camino. Un rol cuyo bloque el pack nunca definió recurre a la superficie del camino, y cualquier otro carácter se busca en `legend`, recurriendo también a la superficie del camino. Un diseño sin `mouth` ni `corner` se descarta con una línea de registro.
+
+Qué diseño obtiene un cruce se calcula a partir de la semilla del mundo y de la posición del propio cruce, de modo que el mismo mundo siempre pinta los mismos cruces. Un diseño se pinta solo donde se encuentran tres o más calles, en un cruce o en la plaza de un pozo; dos calles que se encuentran se representan como un simple codo.
 
 #### Puentes y embarcaderos de aldea
 
@@ -5789,7 +5835,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villagePathSupportBlock`        | texto           | vacío                                      | La propia superficie donde el suelo es roca desnuda, y los pilares y patas bajo una calle sobre el agua. Vacío mantiene la grava de vanilla, arenisca en las ciudades del desierto |
 | `villagePathBridgeBlock`         | texto           | vacío                                      | El bloque con el que una calle o embarcadero cruza el agua. Vacío lo entarima con tablones de la madera de la aldea: acacia en una aldea de sabana, abeto en una aldea de taiga, roble en el resto |
@@ -5825,7 +5871,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villagePathTunnelBlock`      | texto           | vacío   | El bloque con el que se reviste una calle donde perfora una colina en lugar de abrirla en corte: las paredes a ambos lados de la perforación y el techo sobre ella. Vacío no perfora túneles y deja que la calle suba la colina |
 | `villagePathTunnelDepth`      | entero, 1 o más | `10`    | Cuánto terreno tiene que haber sobre la superficie de la calzada antes de que un tramo se perfore en lugar de abrirse en corte. Una elevación enterrada a esa profundidad durante doce filas o más se mantiene a nivel y se perfora, y sus accesos menos profundos se abren en corte; un montículo más corto se corta como antes. Solo cuenta una vez que `villagePathTunnelBlock` nombra un bloque |
@@ -5860,7 +5906,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villageSewerBlock`        | nombre de bloque     | vacío             | El bloque con el que se reviste una alcantarilla bajo las calles y callejones de una aldea: su suelo, sus dos paredes y su techo. Vacío no excava alcantarillas |
 | `villageSewerDepth`        | entero, 4 o más | `8`               | A qué profundidad bajo la propia superficie de una calle está el suelo de la alcantarilla. La alcantarilla sigue la calle bajo la que discurre, de modo que una calle que sube lleva una alcantarilla que sube. Requiere `villageSewerBlock` |
@@ -5923,10 +5969,10 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villageRailLines`               | entero, 0 o más       | `0`     | Cuántas líneas de ferrocarril atraviesan una ciudad, trazadas antes que cualquier calle para que la población crezca a su alrededor, cada una recorriendo toda la longitud de la ciudad. Con villageCitySpacing 1 cada distrito es una ciudad y lleva la suya. 0 no traza ninguna |
-| `villageRailSpacing`             | entero, 1 o más       | `48`    | Los menos bloques de terreno libre entre el lecho de una línea ferroviaria y el de la siguiente de la misma ciudad. 1 las traza a un bloque de distancia, que es como un pack construye una playa de vías de líneas paralelas |
+| `villageRailSpacing`             | entero, 1 o más       | `48`    | El mínimo de bloques de terreno libre entre el lecho de una línea ferroviaria y el de la siguiente de la misma ciudad. 1 las traza a un bloque de distancia, que es como un pack construye una playa de vías de líneas paralelas |
 | `villageRailDirection`           | texto                 | `any`   | En qué dirección corren las líneas: `ew` de este a oeste, `ns` de norte a sur, `any` lo sortea por ciudad. `e`, `w`, `n` y `s` se leen igual |
 | `villageRailWidth`               | entero, 3 o más       | `3`     | Lo mínimo que mide el lecho de la vía. `3` lleva una vía por el centro y `5` lleva dos; un lecho al que se piden más vías de las que caben se ensancha para contenerlas |
 | `villageRailBlock`               | bloque                | vacío   | La vía. Vacío traza raíles de vanilla, por los que ruedan las vagonetas; cualquier otro bloque se coloca tal cual |
@@ -6002,7 +6048,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villageSubwayLines`            | entero, 0 o más | `0`     | Cuántas líneas de ferrocarril subterráneo excava una ciudad. 0 no excava ninguna y no sortea nada, de modo que la ciudad se traza exactamente como sin ellas |
 | `villageSubwayDepth`            | entero, 6 o más | `24`    | A qué profundidad bajo la superficie está el lecho. La línea se nivela a partir del terreno que tiene encima, de modo que sigue el terreno a esa profundidad en lugar de correr a nivel |
@@ -6028,7 +6074,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 | `villageSubwayTail`             | entero, 0 o más | `48`    | Hasta dónde corre una línea más allá de las piezas propias de la ciudad antes de detenerse |
 | `villageSubwaySurfaces`         | entero, de 0 a 100  | `25`    | La probabilidad sobre cien de que una línea de metro suba a la superficie por un extremo y siga desde allí como un ferrocarril corriente, con túnel detrás y vía abierta delante. La subida lleva villageSubwayClimb filas por bloque, de modo que una línea profunda emplea un largo tramo en salir. 0 mantiene todos los metros enterrados en toda su longitud |
 
-**Salir a la superficie.** `villageSubwaySurfaces` es la probabilidad sobre cien de que una línea, en lugar de permanecer enterrada de extremo a extremo, suba a la superficie por un extremo y siga desde allí como un ferrocarril corriente: túnel detrás, vía abierta delante. La subida obedece a `villageSubwayClimb`, un bloque por esa cantidad de filas, de modo que una línea a `villageSubwayDepth` de profundidad emplea profundidad por ascenso (`villageSubwayDepth` por `villageSubwayClimb`) filas solo en la rampa y necesita un buen tramo más allá para que valga la pena; una línea sin sitio para ambas simplemente se queda bajo tierra. La subida no empieza más cerca que el extremo lejano de las calles bajo las que corre la línea, de modo que sale pasadas las calles de la ciudad en lugar de a través de ellas, y una parcela situada en el tramo que sube le cede el sitio. Las estaciones se reclaman una vez decidida la subida y se mantienen alejadas de la rampa. Con `villageSubwayTunnelBlock` vacío, la perforación, sus estaciones y sus escaleras se excavan sin revestir.
+**Salir a la superficie.** `villageSubwaySurfaces` es la probabilidad sobre cien de que una línea, en lugar de permanecer enterrada de extremo a extremo, suba a la superficie por un extremo y siga desde allí como un ferrocarril corriente: túnel detrás, vía abierta delante. La subida obedece a `villageSubwayClimb`, un bloque por esa cantidad de filas, de modo que una línea a `villageSubwayDepth` de profundidad emplea solo en la rampa `villageSubwayDepth` por `villageSubwayClimb` filas y necesita un buen tramo más allá para que valga la pena; una línea sin sitio para ambas simplemente se queda bajo tierra. La subida no empieza más cerca que el extremo lejano de las calles bajo las que corre la línea, de modo que sale pasadas las calles de la ciudad en lugar de a través de ellas, y una parcela situada en el tramo que sube le cede el sitio. Las estaciones se reclaman una vez decidida la subida y se mantienen alejadas de la rampa. Con `villageSubwayTunnelBlock` vacío, la perforación, sus estaciones y sus escaleras se excavan sin revestir.
 
 #### Estaciones de metro
 
@@ -6054,7 +6100,7 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villageSubwayStationLength` | entero, 0 o más | `0`                    | Cuántos bloques de largo tiene la cámara de una estación, centrada en la fila donde la línea pasa más cerca del pozo. 0 no construye ninguna estación |
 | `villageSubwayStationRun`    | entero, 0 o más | `0`                    | A cuántos bloques de distancia se sitúan más estaciones a lo largo de una línea, pasada la más cercana al primer pozo de la ciudad. 0 construye solo la del pozo |
@@ -6095,9 +6141,9 @@ Cada ajuste de abajo se lee a través de su grupo, así que la clave `control` d
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `villageRailLinks`             | true/false     | `false` | Enlaza ciudades vecinas cuyas primeras líneas se miran a través de una costura. Requiere `villageRailLines`, o `villageSubwayLines` en un pack sin líneas de superficie |
+| `villageRailLinks`             | verdadero o falso | `false` | Enlaza ciudades vecinas cuyas primeras líneas se miran a través de una costura. Requiere `villageRailLines`, o `villageSubwayLines` en un pack sin líneas de superficie |
 | `villageRailLinkLeast`         | entero, 0 o más | `128`   | El enlace más corto que se traza, ramal más tronco más ramal, en bloques |
 | `villageRailLinkMost`          | entero, 0 o más | `1024`  | El enlace más largo que se traza, ramal más tronco más ramal, en bloques |
 | `villageRailLinkBridgeMost`    | entero, 0 o más | `96`    | El puente más largo que puede necesitar un enlace. Un enlace sobre agua más ancha o un desnivel más profundo no se traza |
@@ -6157,7 +6203,7 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 }
 ```
 
-| Ajuste | Tipo | Predeterminado | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `villageDecor` | lista | vacío   | Decoración esparcida a lo largo de las calles de la ciudad, como pares nombre=peso que nombran worldgen de un pack, mypack:street_flowers=2. El nombre empty es la parte de puntos que se deja desnuda, y una entrada que no está escrita nombre=peso se omite. El arcén de cada lado de una calle sortea la lista cada villageDecorSpacing bloques, tres por defecto, sobre el suelo que haya allí a la altura que esté, pero no en un túnel, ni bajo una parcela, ni en una plaza, ni a menos de dos bloques de una puerta. Vacío no esparce nada |
 | `villageDecorSpacing` | entero, de 1 a 16 | `3` | El intervalo entre lugares de decoración a lo largo de cada lado de una calle, en bloques. Se limita de 1 a 16. Una plantilla más ancha que el espaciado puede invadir el lugar vecino |
@@ -6191,22 +6237,22 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.structures` decide este grupo. Estructuras vanilla desactivadas, su espaciado, separación, distancia de aparición, biomas, apariciones de mobs, fijaciones y adaptación del terreno.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `structureSpacing` | lista | vacía | A qué distancia se siembran las estructuras vanilla, en chunks, como entradas estructura=chunks: los nombres de 1.12.2 temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities y villages, o cualquier id de conjunto de estructuras, como pillager_outposts. En mineshafts el número indica un chunk de cada tantos; en strongholds es la distancia entre anillos. Las fortalezas del Nether conservan su propia cuadrícula, a la que el espaciado de netherbridges no llega |
-| `structureSeparation` | lista | vacía | Lo más cerca que pueden estar dos estructuras del mismo tipo, en chunks, como entradas estructura=chunks; en strongholds es la dispersión de los anillos. Los templos, las minas abandonadas y netherbridges conservan su propia separación, a la que esto no llega. En monuments, una separación igual de grande que el espaciado se reduce a uno menos que el espaciado, y el registro lo indica |
-| `structureMost` | lista | vacía | El máximo de aldeas que puede contener una dimensión, como villages=cantidad (por ejemplo villages=100); las demás estructuras no tienen tope: una vez fundadas tantas, ningún chunk funda otra, salvo los chunks fijados con structureAt. 0 o una entrada ausente no establece ningún límite |
-| `structureSpawners` | lista de `structure=entity` | vacía | Qué genera el spawner de una estructura vanilla, separado por comas para una elección aleatoria por spawner. Las cuatro que colocan uno son dungeons, mineshafts, nether fortresses y strongholds |
-| `structureMinDistanceFromSpawn` | lista | vacía | A qué distancia del punto de aparición del mundo empieza una estructura, en bloques, como entradas estructura=bloques. Se mide desde el punto de aparición del mundo; mientras un mundo nuevo aún lo está eligiendo, desde el worldSpawn del pack si hay uno, y si no desde el origen del mundo |
-| `structureBiomes` | lista | vacía | Dónde puede generarse una estructura, como entradas estructura=bioma,bioma con ids de bioma, los nombres que muestra el juego como Birch Forest, nombres vanilla sin espacio de nombres como desert, o tipos de bioma como SANDY |
-| `structureBiomesAreBlacklist` | lista de `structure=true` o `structure=false` | vacía | El sentido de la lista de biomas de cada estructura |
-| `structureSpawns` | lista | vacía | Los mobs que genera una estructura diga lo que diga el bioma, como entradas estructura=espaciodenombres:entidad:peso:mínimo:máximo, separadas por comas. La lista sustituye por completo la lista de mobs propia de la estructura, sea cual sea el tipo de cada mob; una lista vacía tras el = no genera nada |
-| `structureAt` | lista de `structure=x,z` | vacía | Fija una estructura en un punto exacto. Consulta [Estructuras en lugares exactos](#estructuras-en-lugares-exactos) |
+| `structureSpacing` | lista | vacío | A qué distancia se siembran las estructuras vanilla, en chunks, como entradas estructura=chunks: los nombres de 1.12.2 temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities y villages, o cualquier id de conjunto de estructuras, como pillager_outposts. En mineshafts el número indica un chunk de cada tantos; en strongholds es la distancia entre anillos. Las fortalezas del Nether conservan su propia cuadrícula, a la que el espaciado de netherbridges no llega |
+| `structureSeparation` | lista | vacío | Lo más cerca que pueden estar dos estructuras del mismo tipo, en chunks, como entradas estructura=chunks; en strongholds es la dispersión de los anillos. Los templos, las minas abandonadas y netherbridges conservan su propia separación, a la que esto no llega. En monuments, una separación igual de grande que el espaciado se reduce a uno menos que el espaciado, y el registro lo indica |
+| `structureMost` | lista | vacío | El máximo de aldeas que puede contener una dimensión, como villages=cantidad (por ejemplo villages=100); las demás estructuras no tienen tope: una vez fundadas tantas, ningún chunk funda otra, salvo los chunks fijados con structureAt. 0 o una entrada ausente no establece ningún límite |
+| `structureSpawners` | lista de `structure=entity` | vacío | Qué genera el spawner de una estructura vanilla, separado por comas para una elección aleatoria por spawner. Las cuatro que colocan uno son dungeons, mineshafts, nether fortresses y strongholds |
+| `structureMinDistanceFromSpawn` | lista | vacío | A qué distancia del punto de aparición del mundo empieza una estructura, en bloques, como entradas estructura=bloques. Se mide desde el punto de aparición del mundo; mientras un mundo nuevo aún lo está eligiendo, desde el worldSpawn del pack si hay uno, y si no desde el origen del mundo |
+| `structureBiomes` | lista | vacío | Dónde puede generarse una estructura, como entradas estructura=bioma,bioma con ids de bioma, los nombres que muestra el juego como Birch Forest, nombres vanilla sin espacio de nombres como desert, o tipos de bioma como SANDY |
+| `structureBiomesAreBlacklist` | lista de `structure=true` o `structure=false` | vacío | El sentido de la lista de biomas de cada estructura |
+| `structureSpawns` | lista | vacío | Los mobs que genera una estructura diga lo que diga el bioma, como entradas estructura=espaciodenombres:entidad:peso:mínimo:máximo, separadas por comas. La lista sustituye por completo la lista de mobs propia de la estructura, sea cual sea el tipo de cada mob; una lista vacía tras el = no genera nada |
+| `structureAt` | lista de `structure=x,z` | vacío | Fija una estructura en un punto exacto. Consulta [Estructuras en lugares exactos](#estructuras-en-lugares-exactos) |
 | `structureAdaptation` | lista | las mansiones `beard_thin`; las demás estructuras conservan su adaptación vanilla | Cómo se adapta el terreno a una estructura, como entradas estructura=modo con los modos none, bury, beard_thin, beard_box y encapsulate |
 | `terrainAdaptation` | booleano | `false` | Traza las calles de ciudad propias de RDPL, asentadas en el terreno en lugar de levantarse sobre pilotes en cada hondonada, y lee con ellas las opciones villagePath y villageRail. Cambia el terreno, así que un mundo creado con esto activado es distinto de uno creado sin ello. Las ciudades se siembran según indica villageCitySpacing, y con 0 no hay ninguna |
-| `villagePieces` | lista | vacía | Parcelas de aldea nombradas aquí, una por línea, por el id completo de un archivo de villages como mypack:smithy, por su nombre simple o por el nombre de la estructura que construye una parcela de plantilla. Mientras villagePiecesAreBlacklist esté activado, una estructura nombrada aquí también se deja vacía allí donde el juego la cargue, incluidas las casas de aldea del propio juego, como minecraft:village/plains/houses/plains_small_house_1 |
+| `villagePieces` | lista | vacío | Parcelas de aldea nombradas aquí, una por línea, por el id completo de un archivo de villages como mypack:smithy, por su nombre simple o por el nombre de la estructura que construye una parcela de plantilla. Mientras villagePiecesAreBlacklist esté activado, una estructura nombrada aquí también se deja vacía allí donde el juego la cargue, incluidas las casas de aldea del propio juego, como minecraft:village/plains/houses/plains_small_house_1 |
 | `villagePiecesAreBlacklist` | booleano | `true` | Activado, las parcelas de villagePieces quedan bloqueadas. Desactivado, solo se construyen esas parcelas |
-| `villageBlocks` | lista | vacía | Bloques con los que se construyen las parcelas de aldea, como pares original=sustituto, minecraft:cobblestone=mypack:ruby_brick. Cualquiera de los dos lados puede llevar un estado entre corchetes, y entonces el original debe coincidir exactamente. Un par puede añadir una probabilidad sobre 100, minecraft:cobblestone=minecraft:mossy_cobblestone,20, calculada a partir de la semilla del mundo en el punto donde se coloca el bloque, at=bloque para actuar solo donde se encuentre ese bloque, y under=bloque solo encima de él. Los pares sin probabilidad ni condición se aplican primero, de modo que un par condicional puede degradar su resultado. Rige las granjas y las casas de aldea del propio juego que construye una ciudad; las calles, los pozos, las farolas y las estructuras de tus parcelas de plantilla nunca se rigen por él. Vacío deja cada bloque tal como se coloca |
+| `villageBlocks` | lista | vacío | Bloques con los que se construyen las parcelas de aldea, como pares original=sustituto, minecraft:cobblestone=mypack:ruby_brick. Cualquiera de los dos lados puede llevar un estado entre corchetes, y entonces el original debe coincidir exactamente. Un par puede añadir una probabilidad sobre 100, minecraft:cobblestone=minecraft:mossy_cobblestone,20, calculada a partir de la semilla del mundo en el punto donde se coloca el bloque, at=bloque para actuar solo donde se encuentre ese bloque, y under=bloque solo encima de él. Los pares sin probabilidad ni condición se aplican primero, de modo que un par condicional puede degradar su resultado. Rige las granjas y las casas de aldea del propio juego que construye una ciudad; las calles, los pozos, las farolas y las estructuras de tus parcelas de plantilla nunca se rigen por él. Vacío deja cada bloque tal como se coloca |
 
 ### Aparición
 
@@ -6238,23 +6284,23 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.spawning` decide este grupo. Límites de aparición de mobs, tasas de aparición hostil y el tope de luz.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `surfaceDayMonsterRate` | número, de 0.0 a 4.0 | `1.0` | Multiplicador de la aparición hostil en la superficie de día, siendo `1.0` el valor vanilla, de modo que se puede desactivar la aparición diurna en la superficie sin tocar las cuevas |
 | `surfaceNightMonsterRate` | número, de 0.0 a 4.0 | `1.0` | Lo mismo para la superficie de noche |
 | `undergroundDayMonsterRate` | número, de 0.0 a 4.0 | `1.0` | Lo mismo bajo tierra de día |
 | `undergroundNightMonsterRate` | número, de 0.0 a 4.0 | `1.0` | Lo mismo bajo tierra de noche |
-| `monsterCap` | int, de -1 a 1000 | `-1` | Cuántos hostiles pueden estar cargados a la vez. En vanilla son 70, y `-1` lo deja como está |
-| `creatureCap` | int, de -1 a 1000 | `-1` | Lo mismo para los animales pasivos. En vanilla son 10 |
-| `ambientCap` | int, de -1 a 1000 | `-1` | Lo mismo para los murciélagos y similares. En vanilla son 15 |
-| `waterCreatureCap` | int, de -1 a 1000 | `-1` | Lo mismo para los calamares. En vanilla son 5 |
-| `monsterSpawnLight` | int, de -1 a 15 | `-1` | La luz de bloque más intensa en la que un mob hostil aún puede aparecer, además de las comprobaciones vanilla. -1 mantiene solo la regla vanilla. Los spawners no se ven afectados |
-| `threatItems` | lista | vacía | Ítems que aumentan el nivel de amenaza de un jugador, como entradas ítem=nivel,cantidad con un ,each o ,batch opcional al final, p. ej. minecraft:diamond_sword=5,1 o minecraft:diamond=1,16,batch. Each, el valor por defecto, suma el nivel por cada uno que se lleve, contando como máximo la cantidad indicada; batch suma el nivel una vez por cada tanda de esa cantidad. Una cantidad superior al tamaño de pila del ítem se recorta al tamaño de pila. Toda entidad cargada que lleve ítems es portadora: el inventario principal, la armadura y la mano secundaria de un jugador, una pila soltada, cualquier cosa con inventario de ítems como una mula con cofre o una vagoneta con cofre, y los ítems en mano y la armadura de otros mobs. Vacío desactiva el nivel de amenaza. Con `control.spawning` en `off`, los ajustes de amenaza de la configuración siguen aplicándose |
-| `threatLevels` | lista | vacía | Las puntuaciones a las que se entra en cada franja, en orden ascendente, de modo que `10, 25, 50` crea tres franjas. Vacío desactiva el nivel de amenaza |
-| `threatMost` | int, de -1 a 100000 | `-1` | Limita la puntuación. `-1` la deja sin límite |
+| `monsterCap` | entero, de -1 a 1000 | `-1` | Cuántos hostiles pueden estar cargados a la vez. En vanilla son 70, y `-1` lo deja como está |
+| `creatureCap` | entero, de -1 a 1000 | `-1` | Lo mismo para los animales pasivos. En vanilla son 10 |
+| `ambientCap` | entero, de -1 a 1000 | `-1` | Lo mismo para los murciélagos y similares. En vanilla son 15 |
+| `waterCreatureCap` | entero, de -1 a 1000 | `-1` | Lo mismo para los calamares. En vanilla son 5 |
+| `monsterSpawnLight` | entero, de -1 a 15 | `-1` | La luz de bloque más intensa en la que un mob hostil aún puede aparecer, además de las comprobaciones vanilla. -1 mantiene solo la regla vanilla. Los spawners no se ven afectados |
+| `threatItems` | lista | vacío | Ítems que aumentan el nivel de amenaza de un jugador, como entradas ítem=nivel,cantidad con un ,each o ,batch opcional al final, p. ej. minecraft:diamond_sword=5,1 o minecraft:diamond=1,16,batch. Each, el valor por defecto, suma el nivel por cada uno que se lleve, contando como máximo la cantidad indicada; batch suma el nivel una vez por cada tanda de esa cantidad. Una cantidad superior al tamaño de pila del ítem se recorta al tamaño de pila. Toda entidad cargada que lleve ítems es portadora: el inventario principal, la armadura y la mano secundaria de un jugador, una pila soltada, cualquier cosa con inventario de ítems como una mula con cofre o una vagoneta con cofre, y los ítems en mano y la armadura de otros mobs. Vacío desactiva el nivel de amenaza. Con `control.spawning` en `off`, los ajustes de amenaza de la configuración siguen aplicándose |
+| `threatLevels` | lista | vacío | Las puntuaciones a las que se entra en cada franja, en orden ascendente, de modo que `10, 25, 50` crea tres franjas. Vacío desactiva el nivel de amenaza |
+| `threatMost` | entero, de -1 a 100000 | `-1` | Limita la puntuación. `-1` la deja sin límite |
 | `threatSpawnRate` | número, de 0.0 a 8.0 | `1.0` | Escala la aparición hostil a menos de 128 bloques de un portador de la franja superior, además de las demás tasas, y las franjas inferiores reciben una parte proporcional |
 | `threatNotice` | número, de 0.0 a 64.0 | `0.0` | Cuántos bloques más lejos ven a un portador de la franja superior los mobs hostiles, incluidos los vanilla, repartido igualmente entre las franjas inferiores |
-| `threatSays` | lista de `band=message` | vacía | Las líneas que se muestran en amarillo cuando cambia la franja de un jugador, siendo la franja `0` la línea para cuando vuelve a bajar de la primera franja |
+| `threatSays` | lista de `band=message` | vacío | Las líneas que se muestran en amarillo cuando cambia la franja de un jugador, siendo la franja `0` la línea para cuando vuelve a bajar de la primera franja |
 
 ### Lecho de roca
 
@@ -6282,18 +6328,18 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.bedrock` decide este grupo. El lecho de roca plano y sus listas de dimensiones y biomas.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `flatBedrock` | booleano | `false` | Sustituye el lecho de roca irregular del fondo del mundo por capas planas. Solo en chunks nuevos, salvo que `flatBedrockRetrogen` esté activado |
 | `flatBedrockDimensions` | lista | `["minecraft:overworld"]` | Las dimensiones en las que aplanar. Vacío significa todas |
 | `flatBedrockDimensionsAreBlacklist` | booleano | `false` | Activado, el aplanado omite las dimensiones de la lista. Desactivado, solo se aplica a ellas |
-| `bedrockLayers` | int, de 1 a 5 | `1` | Cuántas capas de lecho de roca se conservan |
-| `flatBedrockBiomes` | lista de nombres de bioma | vacía | Los biomas en los que aplanar, por nombre descriptivo o de registro. Vacío significa todos los biomas |
+| `bedrockLayers` | entero, de 1 a 5 | `1` | Cuántas capas de lecho de roca se conservan |
+| `flatBedrockBiomes` | lista de nombres de bioma | vacío | Los biomas en los que aplanar, por nombre descriptivo o de registro. Vacío significa todos los biomas |
 | `flatBedrockBiomesAreBlacklist` | booleano | `false` | Activado, el aplanado omite los biomas de la lista. Desactivado, solo se aplica a ellos |
 | `flatBedrockRoof` | booleano | `false` | Aplana también el techo de lecho de roca, donde una dimensión lo tiene, como el techo del Nether |
 | `flatBedrockFiller` | bloque | vacío | Lo que sustituye al lecho de roca que se retira. Vacío elige según la dimensión: piedra, netherrack, piedra del End |
 | `flatBedrockFillers` | lista de `dimension=block` | `["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"]` | Un relleno por dimensión, que prevalece sobre `flatBedrockFiller` en las dimensiones nombradas |
-| `flatBedrockBiomeTypes` | lista | vacía | Tipos de bioma en los que aplanar el lecho de roca, junto con flatBedrockBiomes, por etiqueta de bioma como minecraft:is_ocean o por nombre de tipo de 1.12.2 como OCEAN. flatBedrockBiomesAreBlacklist también los abarca |
+| `flatBedrockBiomeTypes` | lista | vacío | Tipos de bioma en los que aplanar el lecho de roca, junto con flatBedrockBiomes, por etiqueta de bioma como minecraft:is_ocean o por nombre de tipo de 1.12.2 como OCEAN. flatBedrockBiomesAreBlacklist también los abarca |
 | `flatBedrockRetrogen` | booleano | `false` | Aplana también el lecho de roca de los chunks que ya existen. Cada chunk se procesa una vez y lo recuerda, y no se puede deshacer: el patrón original no se guarda en ningún sitio |
 | `flatBedrockRetrogenKey` | texto | `0000` | Cámbiala para que todos los chunks vuelvan a ser aptos para el aplanado del lecho de roca |
 
@@ -6318,14 +6364,14 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.entities` decide este grupo. El ritmo más lento de las entidades lejos de todos los jugadores.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `slowDistantEntities` | booleano | `true` | Procesa con menos frecuencia las entidades lejos de todos los jugadores. Nunca se deja nada sin procesar, solo se procesa a un ritmo más lento |
 | `slowedKinds` | lista | `["items", "experience"]` | Qué tipos reciben menos ticks: items, experience, projectiles, siendo estos últimos flechas, tridentes, bolas de nieve, huevos, pociones, frascos de experiencia y perlas de ender lanzados, y escupitajos de llama. Todo lo que piensa por sí mismo se ralentiza siempre, sin nombrarlo aquí: elige qué hacer a continuación con menos frecuencia, y aun así se mueve en cada tick. Las máquinas nunca se ralentizan |
-| `slowDistance` | int, de 64 a 4096 | `192` | A qué distancia del jugador más cercano, en bloques, se ralentiza un chunk. El juego deja de informar a un jugador de la mayoría de las entidades más allá de 64, así que nada por debajo de eso |
-| `slowRate` | int, de 1 a 20 | `4` | Un tick de cada tantos se da a un chunk ralentizado. 1 es no ralentizar en absoluto, 20 es una vez por segundo |
-| `neverSlowed` | lista | vacía | Entidades que se dejan en paz por lejos que estén, como espaciodenombres:nombre |
-| `slowRecheck` | int, de 1 a 100 | `20` | Cada cuántos ticks se vuelve a calcular la distancia al jugador más cercano. Cada jugador cuenta por sí mismo, así que alguien solo y lejos sigue teniendo su propio espacio tranquilo a su alrededor |
+| `slowDistance` | entero, de 64 a 4096 | `192` | A qué distancia del jugador más cercano, en bloques, se ralentiza un chunk. El juego deja de informar a un jugador de la mayoría de las entidades más allá de 64, así que nada por debajo de eso |
+| `slowRate` | entero, de 1 a 20 | `4` | Un tick de cada tantos se da a un chunk ralentizado. 1 es no ralentizar en absoluto, 20 es una vez por segundo |
+| `neverSlowed` | lista | vacío | Entidades que se dejan en paz por lejos que estén, como espaciodenombres:nombre |
+| `slowRecheck` | entero, de 1 a 100 | `20` | Cada cuántos ticks se vuelve a calcular la distancia al jugador más cercano. Cada jugador cuenta por sí mismo, así que alguien solo y lejos sigue teniendo su propio espacio tranquilo a su alrededor |
 
 ### Terreno, reservas y lo que dice el mod
 
@@ -6333,33 +6379,33 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.chunks` decide este grupo. El radio de chunks de aparición, la pregeneración, el retrogen y el reinicio, las líneas de bienvenida, la tarjeta de mensajes y los avisos emergentes del juego.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `retrogen` | booleano | `false` | Pone al día los chunks existentes con las entradas de worldgen que tengan \"retrogen\": true. Desactivado, los chunks que ya existen se dejan como están. Los chunks se marcan al generarse en ambos casos, así que activarlo más adelante solo afecta a los chunks anteriores al pack |
 | `adoptExistingChunks` | booleano | `false` | Trata los chunks que ya existen como si este pack los hubiera generado, marcándolos en lugar de dejarlos para el retrogen. Actívalo al sustituir un mod que ya generaba el mismo mineral, para que el retrogen nunca lo duplique. Las entradas de worldgen añadidas más tarde siguen aplicándose por retrogen en ellos |
 | `saysCard` | booleano | `false` | Muestra las líneas que dice este mod, la bienvenida, el aviso de creación de terreno que recibe un jugador que se une a mitad de una partida y el final de la partida (el progreso en curso se queda en la barra de acción), y las líneas de amenaza, como una tarjeta en la esquina inferior derecha en lugar de en el chat. La tarjeta se desliza al entrar, permanece ocho segundos y se desvanece, y se muestra también sobre una pantalla abierta |
 | `saysIcon` | texto | vacío | Un ítem dibujado en la tarjeta, p. ej. minecraft:compass. Vacío no dibuja ninguno |
 | `saysColor` | texto | vacío | El color de fondo de la tarjeta en hexadecimal, p. ej. 1E2630. Vacío usa un gris pizarra oscuro |
-| `saysImage` | texto | vacío | Un PNG de los assets de cliente del pack estirado sobre la tarjeta como fondo, p. ej. rubyworld:textures/gui/card.png, dibujado sobre el color. Vacío no dibuja ninguno |
-| `saysBackground` | booleano | `true` | Dibuja el panel, el borde y la franja de color de la tarjeta, y el fondo oscuro tras la bienvenida y las notas de retención. Desactivado deja solo el texto, que conserva su sombra, y saysImage si hay una definida |
+| `saysImage` | texto | vacío | Un PNG de los recursos de cliente del pack estirado sobre la tarjeta como fondo, p. ej. rubyworld:textures/gui/card.png, dibujado sobre el color. Vacío no dibuja ninguno |
+| `saysBackground` | booleano | `true` | Dibuja el panel, el borde y la franja de color de la tarjeta, y el fondo oscuro tras la bienvenida y las notas de espera. Desactivado deja solo el texto, que conserva su sombra, y saysImage si hay una definida |
 | `saysFont` | texto | vacío | Una fuente para el texto de la tarjeta, nombrada como espaciodenombres:nombre, p. ej. rubyworld:runes para el assets/rubyworld/font/runes.json del pack. Vacío usa la fuente de RDPL |
 | `toasts` | booleano | `false` | Muestra los avisos emergentes del juego, los pop-ups de la esquina superior derecha para logros, recetas desbloqueadas, consejos del tutorial y avisos del sistema, incluidos los de otros mods. Desactivado no muestra ninguno. Surte efecto en el siguiente mundo o servidor al que te unas. Una plantilla de mundo puede listar en su lugar los tipos que mostrar |
-| `pregenOnNewWorld` | int, de 0 a 8192 | `0` | A qué distancia alrededor del punto de aparición, en chunks, se crea el terreno de un mundo antes de que nadie lo juegue. El juego crea 12 chunks alrededor del punto de aparición por su cuenta, así que 12 es el mínimo y 0 significa ese mínimo y no nada: el terreno que el juego iba a crear de todos modos se adopta e ilumina en una sola pasada organizada en lugar de llegar a cuentagotas. Auméntalo para llegar más lejos que el juego |
+| `pregenOnNewWorld` | entero, de 0 a 8192 | `0` | A qué distancia alrededor del punto de aparición, en chunks, se crea el terreno de un mundo antes de que nadie lo juegue. El juego crea 12 chunks alrededor del punto de aparición por su cuenta, así que 12 es el mínimo y 0 significa ese mínimo y no nada: el terreno que el juego iba a crear de todos modos se adopta e ilumina en una sola pasada organizada en lugar de llegar a cuentagotas. Auméntalo para llegar más lejos que el juego |
 | `pregenToBorder` | booleano | `false` | Si el terreno de un mundo nuevo se crea hasta su borde del mundo en lugar de un número fijo de chunks, centrado en el borde en lugar de en el punto de aparición. Un mundo cuyo borde nunca se ha acercado no tiene borde al que llegar y se omite |
-| `pregenAllDimensions` | booleano | `false` | Crea el terreno de todas las dimensiones que contiene el servidor, incluidas las de mods, primero el mundo principal y el resto por orden de id, en lugar de solo las de pregenDimensions. Las nombradas en pregenDimensionsWhenEntered siguen quedando para su primer visitante |
+| `pregenAllDimensions` | booleano | `false` | Crea el terreno de todas las dimensiones que contiene el servidor, incluidas las de mods, primero el Overworld y el resto por orden de id, en lugar de solo las de pregenDimensions. Las nombradas en pregenDimensionsWhenEntered siguen quedando para su primer visitante       |
 | `pregenResume` | booleano | `false` | Si una ejecución detenida o interrumpida continúa donde se quedó la próxima vez que se cargue el mundo, en lugar de empezar de nuevo |
-| `pregenChunksInFlight` | int, de 1 a 512 | `32` | Cuántos chunks pide a la vez al juego una ejecución de creación de terreno. Más mantiene más ocupados los hilos de generación y el servidor responde peor a quien esté retenido mirando |
+| `pregenChunksInFlight` | entero, de 1 a 512 | `32` | Cuántos chunks pide a la vez al juego una ejecución de creación de terreno. Más mantiene más ocupados los hilos de generación y el servidor responde peor a quien esté retenido mirando |
 | `pregenBackup` | booleano | `false` | Copia el mundo a una copia de seguridad limpia cuando termina la pregeneración, mientras los jugadores siguen retenidos. La copia es lo que restauraría un reinicio, y una copia cuyos packs ya no coinciden se descarta y se vuelve a hacer |
 | `resetClearsEntities` | booleano | `true` | Elimina toda entidad que no sea un jugador cuando se reinicia el mapa |
 | `resetClearsScores` | booleano | `true` | Devuelve a cero todos los objetivos que guarda el pack cuando se reinicia el mapa, de modo que una nueva partida empiece desde cero. Los equipos en sí se conservan |
 | `resetClearsInventory` | booleano | `false` | Vacía el inventario de cada jugador, armadura y mano secundaria incluidas, cuando se reinicia el mapa |
 | `resetClearsExperience` | booleano | `false` | Devuelve la experiencia de cada jugador al nivel cero cuando se reinicia el mapa |
-| `spawnChunkRadius` | int, de 0 a 1024 | `128` | A qué distancia del punto de aparición, en bloques, se mantienen cargados los chunks haya o no un jugador allí, redondeado a chunks enteros como (bloques + 8) / 16 en cada dirección, de modo que 128 mantiene 8 chunks en cada dirección. Al iniciarse un mundo, el mundo principal prepara un cuadrado 4 chunks más ancho en cada dirección antes de que el servidor esté listo, 25 por 25 chunks con 128. 0 no prepara ni mantiene ninguno, así que la zona de aparición se descarga como cualquier otra. RDPL mantiene los chunks con sus propios tickets, así que en 1.21.1 la regla de juego spawnChunkRadius no hace nada mientras esta clave esté en vigor |
-| `spawnChunkRadii` | lista | vacía | Un radio para el mundo principal escrito como dimensión=bloques, como en minecraft:overworld=64, que prevalece sobre spawnChunkRadius. Solo el mundo principal tiene chunks de aparición, así que una entrada para cualquier otra dimensión no cambia nada |
+| `spawnChunkRadius` | entero, de 0 a 1024 | `128` | A qué distancia del punto de aparición, en bloques, se mantienen cargados los chunks haya o no un jugador allí, redondeado a chunks enteros como (bloques + 8) / 16 en cada dirección, de modo que 128 mantiene 8 chunks en cada dirección. Al iniciarse un mundo, el Overworld prepara un cuadrado 4 chunks más ancho en cada dirección antes de que el servidor esté listo, 25 por 25 chunks con 128. 0 no prepara ni mantiene ninguno, así que la zona de aparición se descarga como cualquier otra. RDPL mantiene los chunks con sus propios tickets, así que en 1.21.1 la regla de juego spawnChunkRadius no hace nada mientras esta clave esté en vigor       |
+| `spawnChunkRadii` | lista | vacío | Un radio para el Overworld escrito como dimensión=bloques, como en minecraft:overworld=64, que prevalece sobre spawnChunkRadius. Solo el Overworld tiene chunks de aparición, así que una entrada para cualquier otra dimensión no cambia nada             |
 | `welcomeSays` | lista | `[WELCOME]` | Líneas de bienvenida, mostradas en verde en cada inicio de sesión y tras la pregeneración. Una entrada simple es la línea para todas partes; una entrada dimensión=mensaje la sustituye para esa dimensión y además saluda a cada llegada allí, p. ej. minecraft:the_nether=Welcome to the Nether!. Un mensaje vacío tras el = silencia esa dimensión; una lista vacía no muestra nada. Con este valor por defecto habla en el idioma de cada jugador |
-| `pregenBorderLimit` | int, de 1 a 1875000 | `8192` | Lo más lejos que puede llegar un borde, en chunks en cada dirección, antes de que se rechace crear terreno hasta él. Está para evitar que un error se ejecute durante semanas, no para subirlo, y un pack no puede modificarlo. Un cuadrado de 8192 contiene 268 millones de chunks **Solo configuración.** |
+| `pregenBorderLimit` | entero, de 1 a 1875000 | `8192` | Lo más lejos que puede llegar un borde, en chunks en cada dirección, antes de que se rechace crear terreno hasta él. Está para evitar que un error se ejecute durante semanas, no para subirlo, y un pack no puede modificarlo. Un cuadrado de 8192 contiene 268 millones de chunks **Solo configuración.** |
 | `pregenDimensions` | lista | `["minecraft:overworld"]` | En qué dimensiones se crea el terreno de un mundo nuevo, por id, en el orden indicado, una tras otra |
-| `pregenDimensionsWhenEntered` | lista | vacía | Dimensiones cuyo terreno no se crea de antemano sino la primera vez que alguien pone un pie en ellas, con el mismo alcance, reteniendo a todos del mismo modo hasta que termina. Una nombrada aquí y en pregenDimensions simplemente se crea de antemano |
+| `pregenDimensionsWhenEntered` | lista | vacío | Dimensiones cuyo terreno no se crea de antemano sino la primera vez que alguien pone un pie en ellas, con el mismo alcance, reteniendo a todos del mismo modo hasta que termina. Una nombrada aquí y en pregenDimensions simplemente se crea de antemano |
 | `pregenRunningSays` | texto | `World pregeneration running, %d%% done` | El mensaje de progreso que ven los jugadores mientras se genera el mundo, donde %d es el porcentaje y un segundo %s la dimensión. Vacío no les dice nada. Con este valor por defecto habla en el idioma de cada jugador |
 | `pregenFinishedSays` | texto | `World pregeneration finished` | El mensaje que ven los jugadores cuando termina la generación. Vacío no les dice nada. Con este valor por defecto habla en el idioma de cada jugador |
 | `pregenStoppedSays` | texto | `World pregeneration stopped` | El mensaje que ven los jugadores cuando la generación se detiene antes de tiempo. Vacío no les dice nada. Con este valor por defecto habla en el idioma de cada jugador |
@@ -6391,14 +6437,14 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.voidWorld` decide este grupo. La generación de mundos vacíos y su plataforma.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `voidWorld` | booleano | `false` | Genera las dimensiones listadas como espacio vacío con una plataforma en el punto de aparición y nada vivo, mediante el preajuste generado para las tres vanilla y mediante los archivos de dimensión propios de un pack; cualquier otra dimensión listada se vacía a medida que se crea su terreno. La elección se guarda con el mundo cuando se crea, así que activarlo o desactivarlo más tarde deja un mundo existente como estaba |
 | `voidWorldDimensions` | lista | `["minecraft:overworld"]` | Qué dimensiones se hacen vacías, por id. Vacío significa ninguna, o todas las dimensiones cuando voidWorldDimensionsAreBlacklist está activado |
 | `voidWorldDimensionsAreBlacklist` | booleano | `false` | Activado, las dimensiones listadas son las que se dejan en paz |
 | `voidPlatformBlock` | bloque | `minecraft:stone` | De qué está hecha la plataforma |
-| `voidPlatformHeight` | int, de -2032 a 2031 | `64` | La y a la que se sitúa la plataforma del mundo vacío |
-| `voidPlatformSize` | int, 1 o más | `9` | Qué ancho tiene la plataforma, redondeado hacia abajo a un número impar para que quede centrada en el punto de aparición |
+| `voidPlatformHeight` | entero, de -2032 a 2031 | `64` | La y a la que se sitúa la plataforma del mundo vacío |
+| `voidPlatformSize` | entero, 1 o más | `9` | Qué ancho tiene la plataforma, redondeado hacia abajo a un número impar para que quede centrada en el punto de aparición |
 | `voidWorld` | texto | `default` | Generación de mundos vacíos y su plataforma [default\|global\|off] |
 
 ### El dragón
@@ -6415,7 +6461,7 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 }
 ```
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `dragonFight` | booleano | `true` | Si ocurre todo el conjunto o no: el dragón, su barra, los cristales, la fuente sobre la que se alza y la reaparición que iniciaría un jugador con cristales del End. Pertenece al grupo `structures` |
 
@@ -6461,31 +6507,31 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.terrain` decide este grupo. El nombre y la semilla del mundo al crearlo, generatorOptions, las regiones de cuevas, la altura de las nubes y las costuras entre mundos.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `worldSeed` | cadena | vacía | La semilla con la que se crea cada mundo nuevo, escrita tal como se teclearía: un número se usa tal cual, y cualquier otra cosa se convierte en uno como hace el juego. Un servidor dedicado crea también su mundo con ella y la escribe en `server.properties` como `level-seed`. Vacío deja la elección como está |
+| `worldSeed` | cadena | vacío | La semilla con la que se crea cada mundo nuevo, escrita tal como se teclearía: un número se usa tal cual, y cualquier otra cosa se convierte en uno como hace el juego. Un servidor dedicado crea también su mundo con ella y la escribe en `server.properties` como `level-seed`. Vacío deja la elección como está |
 | `worldName` | texto | vacío | Cómo se llama un mundo nuevo cuando se abre la pantalla para crearlo. Vacío lo deja con el nombre que le da el juego |
-| `worldType` | texto | vacío | El tipo de mundo sobre el que se construye el mundo con forma, uno de default, largebiomes, amplified o flat, con los nombres de 1.12.2 customized y default_1_1 leídos como default; flat es un mundo principal superplano construido a partir de las capas de generatorOptions, con las ciudades del pack encima. La forma que aparece más abajo (alturas, piedra profunda, nivel del mar, lecho de roca, vacío) se genera como un preajuste de mundo propio, listado en Tipo de mundo en la pantalla del mundo y elegido ahí sea cual sea el que se haya escogido. Un servidor dedicado lo escribe en `server.properties` como `level-type`, nombrando ese preajuste, o el preajuste propio del juego cuando no se da forma a nada, salvo que `level-type` ya nombre uno de los worldTypeExceptions. Vacío construye sobre default |
+| `worldType` | texto | vacío | El tipo de mundo sobre el que se construye el mundo con forma, uno de default, largebiomes, amplified o flat, con los nombres de 1.12.2 customized y default_1_1 leídos como default; flat es un Overworld superplano construido a partir de las capas de generatorOptions, con las ciudades del pack encima. La forma que aparece más abajo (alturas, piedra profunda, nivel del mar, lecho de roca, vacío) se genera como un preajuste de mundo propio, listado en Tipo de mundo en la pantalla del mundo y elegido ahí sea cual sea el que se haya escogido. Un servidor dedicado lo escribe en `server.properties` como `level-type`, nombrando ese preajuste, o el preajuste propio del juego cuando no se da forma a nada, salvo que `level-type` ya nombre uno de los worldTypeExceptions. Vacío construye sobre default       |
 | `worldTypeExceptions` | lista | `["flat", "debug_all_block_states"]` | Tipos de mundo que elige un jugador y que el preajuste generado deja en paz, como flat o debug_all_block_states. Vacío significa que se sustituye toda elección |
-| `generatorOptions` | texto | vacío | Los ajustes de terreno del mundo principal como un objeto JSON, las claves que escribía el tipo de mundo customized de 1.12.2. Se leen aquí: seaLevel, useLavaOceans, fixedBiome, y useCaves, useRavines, useDungeons, useLavaLakes, useStrongholds, useVillages, useMineShafts, useTemples, useMonuments y useMansions puestos en false. Con worldType flat son en cambio las capas, de abajo arriba, como el texto superplano de 1.12.2 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village o una lista de capas; el número tras las capas es el bioma, y village, biome_1, mineshaft, stronghold, oceanmonument, lava_lake y decoration después activan esas opciones. Solo se aplica a un mundo cuando se crea. Un servidor dedicado lo escribe en `server.properties` como `generator-settings`, las capas planas como el JSON plano del propio juego, salvo que `level-type` ya nombre uno de los worldTypeExceptions. Vacío deja el terreno como lo hace el tipo de mundo |
-| `worldMinHeight` | int, de -2032 a 2016 | `-64` | El bloque más bajo del mundo principal, un múltiplo de 16 hasta -2032. El fondo del propio juego es -64; más bajo crea un mundo profundo bajo el terreno vanilla, de piedra maciza hasta que la capa de worldgen la excava o noiseCaves hace descender las cuevas del juego. Solo se aplica mediante el preajuste generado |
-| `worldMaxHeight` | int, de -2016 a 2032 | `320` | El bloque por encima de la cima del mundo principal, un múltiplo de 16 hasta 2032, como máximo 4064 por encima de worldMinHeight. La cima del propio juego es 320; más alto deja cielo abierto sobre el terreno vanilla |
+| `generatorOptions` | texto | vacío | Los ajustes de terreno del Overworld como un objeto JSON, las claves que escribía el tipo de mundo customized de 1.12.2. Se leen aquí: seaLevel, useLavaOceans, fixedBiome, y useCaves, useRavines, useDungeons, useLavaLakes, useStrongholds, useVillages, useMineShafts, useTemples, useMonuments y useMansions puestos en false. Con worldType flat son en cambio las capas, de abajo arriba, como el texto superplano de 1.12.2 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village o una lista de capas; el número tras las capas es el bioma, y village, biome_1, mineshaft, stronghold, oceanmonument, lava_lake y decoration después activan esas opciones. Solo se aplica a un mundo cuando se crea. Un servidor dedicado lo escribe en `server.properties` como `generator-settings`, las capas planas como el JSON plano del propio juego, salvo que `level-type` ya nombre uno de los worldTypeExceptions. Vacío deja el terreno como lo hace el tipo de mundo       |
+| `worldMinHeight` | entero, de -2032 a 2016 | `-64` | El bloque más bajo del Overworld, un múltiplo de 16 hasta -2032. El fondo del propio juego es -64; más bajo crea un mundo profundo bajo el terreno vanilla, de piedra maciza hasta que la capa de worldgen la excava o noiseCaves hace descender las cuevas del juego. Solo se aplica mediante el preajuste generado       |
+| `worldMaxHeight` | entero, de -2016 a 2032 | `320` | El bloque por encima de la cima del Overworld, un múltiplo de 16 hasta 2032, como máximo 4064 por encima de worldMinHeight. La cima del propio juego es 320; más alto deja cielo abierto sobre el terreno vanilla       |
 | `deepStone` | texto | vacío | El bloque del que está hecho el mundo bajo el terreno vanilla cuando worldMinHeight baja de -64, como la deepslate propia de un pack. Se funde con la deepslate a lo largo de las ocho capas bajo -64 igual que la deepslate se funde con la piedra. Vacío mantiene la piedra |
 | `noiseCaves` | texto | `off` | Hasta dónde continúan las cuevas, túneles, fideos y acuíferos del juego cuando worldMinHeight baja de -64: off mantiene el mundo bajo el terreno vanilla como piedra profunda maciza para que la capa de worldgen la excave, deep los hace descender hasta el fondo con los lagos de lava trasladados a sus diez capas inferiores, world significa lo mismo en esta versión porque el terreno vanilla ya los tiene |
 | `worldSpawn` | texto | vacío | Dónde aparece cada mundo nuevo, escrito como x,z o x,y,z. Sin y se usa el nivel medio del suelo del mundo, uno por encima del nivel del mar, o la cima de las capas en un mundo plano, y el juego busca entonces un punto seguro donde apoyarse como hace con cualquier aparición. Solo se aplica a un mundo cuando se crea. Vacío deja la elección al juego |
-| `worldBorder` | int, de 0 a 60000000 | `0` | Qué ancho tiene, en bloques, el borde del mundo en cada mundo nuevo. Solo se aplica a un mundo cuando se crea. 0 deja el borde donde lo pone el juego |
-| `worldTime` | int, de -1 a 23999 | `-1` | Bloquea la hora del día del mundo principal, en ticks, la misma cifra que toma /time set, de modo que 18000 es medianoche. El reloj se detiene y no se mueve nunca: /time set no puede moverlo, el día sigue contándose por debajo, y quitar el ajuste devuelve esa hora. -1 deja correr el tiempo |
-| `caveRegionPlainWeight` | int, 0 o más | `4` | El peso del subsuelo simple, sin región, frente a los pesos propios de las regiones de cuevas. Más alto deja más subsuelo sin ninguna región |
-| `caveRegionCells` | int, 16 o más | `128` | Qué ancho tiene en bloques una celda de región de cuevas. Las regiones de cuevas de los packs se pintan sobre el subsuelo en celdas de aproximadamente este tamaño |
-| `caveRegionCellsY` | int, 16 o más | `64` | Qué alto tiene en bloques una celda de región de cuevas |
-| `worldGravity` | lista | vacía | Escala la gravedad, como multiplicador del valor vanilla donde 1.0 es sin cambios y 0.17 es similar a la Luna, para todas las entidades. Un valor simple abarca todas las dimensiones, y una entrada escrita como dimensión=valor abarca solo esa dimensión y prevalece sobre el valor simple. Vacío deja la gravedad como está |
-| `worldFallDamage` | lista | vacía | Escala el daño por caída del mismo modo, 0.5 lo reduce a la mitad y 2.0 lo duplica |
-| `worldJumpStrength` | lista | vacía | Escala la fuerza del salto del mismo modo, 1.5 salta una vez y media más alto |
-| `worldTerminalVelocity` | lista | vacía | Escala lo más rápido que cae un mob o jugador del mismo modo, 0.5 cae a la mitad de la velocidad máxima vanilla |
-| `weatherCeiling` | lista | vacía | La y más alta a la que llegan la lluvia y la nieve, como entradas dimensión=y. Un número simple abarca todas las dimensiones. Por encima no cae lluvia, no cuaja la nieve, no se llenan los calderos, no caen rayos y no se dibuja ninguna precipitación; por debajo el clima no cambia. El hielo depende de la temperatura y no de la precipitación, así que sigue formándose por encima de la línea. Vacío significa sin techo |
-| `cloudHeight` | lista | vacía | La y a la que se dibujan las nubes, como entradas dimensión=y. Un número simple abarca todas las dimensiones. Prevalece sobre el `cloudHeight` propio de una dimensión de pack. Vacío mantiene la altura de nubes del propio juego, 192 en el mundo principal |
-| `worldBelow` | lista | vacía | Apila otra dimensión bajo esta: al caer por el fondo del mundo te lleva a la dimensión nombrada, llegando bajo su techo en las mismas x y z, aún en caída. Las entradas se escriben como dimensión=destino, como minecraft:overworld=minecraft:the_nether para colgar el Nether bajo el mundo principal; un id simple abarca todas las dimensiones. Atravesarlo excavando requiere que el lecho de roca del suelo se omita, lo cual decide worldSeamBedrock. Vacío significa que el suelo sigue siendo el suelo |
-| `worldAbove` | lista | vacía | Lo mismo para el techo: al ascender por encima de la cima del mundo te lleva a la dimensión nombrada, llegando sobre su suelo. Se escribe igual que worldBelow |
+| `worldBorder` | entero, de 0 a 60000000 | `0` | Qué ancho tiene, en bloques, el borde del mundo en cada mundo nuevo. Solo se aplica a un mundo cuando se crea. 0 deja el borde donde lo pone el juego |
+| `worldTime` | entero, de -1 a 23999 | `-1` | Bloquea la hora del día del Overworld, en ticks, la misma cifra que toma /time set, de modo que 18000 es medianoche. El reloj se detiene y no se mueve nunca: /time set no puede moverlo, el día sigue contándose por debajo, y quitar el ajuste devuelve esa hora. -1 deja correr el tiempo       |
+| `caveRegionPlainWeight` | entero, 0 o más | `4` | El peso del subsuelo simple, sin región, frente a los pesos propios de las regiones de cuevas. Más alto deja más subsuelo sin ninguna región |
+| `caveRegionCells` | entero, 16 o más | `128` | Qué ancho tiene en bloques una celda de región de cuevas. Las regiones de cuevas de los packs se pintan sobre el subsuelo en celdas de aproximadamente este tamaño |
+| `caveRegionCellsY` | entero, 16 o más | `64` | Qué alto tiene en bloques una celda de región de cuevas |
+| `worldGravity` | lista | vacío | Escala la gravedad, como multiplicador del valor vanilla donde 1.0 es sin cambios y 0.17 es similar a la Luna, para todas las entidades. Un valor simple abarca todas las dimensiones, y una entrada escrita como dimensión=valor abarca solo esa dimensión y prevalece sobre el valor simple. Vacío deja la gravedad como está |
+| `worldFallDamage` | lista | vacío | Escala el daño por caída del mismo modo, 0.5 lo reduce a la mitad y 2.0 lo duplica |
+| `worldJumpStrength` | lista | vacío | Escala la fuerza del salto del mismo modo, 1.5 salta una vez y media más alto |
+| `worldTerminalVelocity` | lista | vacío | Escala lo más rápido que cae un mob o jugador del mismo modo, 0.5 cae a la mitad de la velocidad máxima vanilla |
+| `weatherCeiling` | lista | vacío | La y más alta a la que llegan la lluvia y la nieve, como entradas dimensión=y. Un número simple abarca todas las dimensiones. Por encima no cae lluvia, no cuaja la nieve, no se llenan los calderos, no caen rayos y no se dibuja ninguna precipitación; por debajo el clima no cambia. El hielo depende de la temperatura y no de la precipitación, así que sigue formándose por encima de la línea. Vacío significa sin techo |
+| `cloudHeight` | lista | vacío | La y a la que se dibujan las nubes, como entradas dimensión=y. Un número simple abarca todas las dimensiones. Prevalece sobre el `cloudHeight` propio de una dimensión de pack. Vacío mantiene la altura de nubes del propio juego, 192 en el Overworld       |
+| `worldBelow` | lista | vacío | Apila otra dimensión bajo esta: al caer por el fondo del mundo te lleva a la dimensión nombrada, llegando bajo su techo en las mismas x y z, aún en caída. Las entradas se escriben como dimensión=destino, como minecraft:overworld=minecraft:the_nether para colgar el Nether bajo el Overworld; un id simple abarca todas las dimensiones. Atravesarlo excavando requiere que el lecho de roca del suelo se omita, lo cual decide worldSeamBedrock. Vacío significa que el suelo sigue siendo el suelo       |
+| `worldAbove` | lista | vacío | Lo mismo para el techo: al ascender por encima de la cima del mundo te lleva a la dimensión nombrada, llegando sobre su suelo. Se escribe igual que worldBelow |
 | `worldSeamEntities` | booleano | `true` | Si los ítems soltados, los mobs y otras entidades cruzan también las costuras del mundo, o solo los jugadores. Los jinetes y las monturas cruzan de uno en uno |
 | `worldSeamBedrock` | booleano | `false` | Conserva de todos modos el lecho de roca en el límite de una costura. Desactivado, una dimensión cuyo suelo o techo lleva una costura worldBelow o worldAbove no genera lecho de roca allí, de modo que se pueda excavar el paso. Los chunks ya generados conservan lo que tengan |
 
@@ -6523,27 +6569,27 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.server` decide este grupo: las líneas de `server.properties` que un pack puede establecer, con el modo de juego, la dificultad y los comandos en un mundo abierto a LAN. En un servidor dedicado, cada valor que un pack fije aquí se escribe en `server.properties` al arrancar el servidor, de modo que el archivo refleja lo que está en vigor, y los que el servidor ya ha leído también se fijan en él. Un mundo de un jugador toma lo que tiene un servidor integrado, como indica cada fila. Vacío, o `-1` en un número, deja el valor propio del servidor, y con `control.server` en `off` cada línea queda tal como la tiene el servidor.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `worldGameMode` | texto | vacío | De qué modo se inicia cada mundo nuevo: survival, hardcore, creative, adventure o spectator. Hardcore es supervivencia en la que la muerte termina el mundo, para todo el mundo guardado, igual que la opción de la pantalla de mundo. Vacío lo deja como lo eligiera quien creó el mundo. La pantalla de mundo solo ofrece survival, hardcore y creative, así que adventure y spectator se establecen al crear el mundo. Un servidor dedicado pone cada mundo en el modo de su server.properties en cada arranque, así que allí el modo del pack se escribe en server.properties (gamemode y hardcore) antes de cargar el mundo |
 | `privacy` | booleano | `true` | Si la telemetría y los informes de chat del juego están desactivados: no se envía ningún evento de telemetría, el cliente no firma ningún mensaje de chat, el servidor no guarda sesión de chat ni la exige, así que ningún mensaje puede denunciarse. Un pack que lo omite recibe la opción de configuración `privacy` de la categoría `tweaks`. Surte efecto en el siguiente mundo o servidor al que se entre |
 | `worldLanCommands` | booleano | `true` | Si un jugador que abre un mundo de un jugador a LAN puede activar los comandos para todos los que se unan. `false` atenúa el botón Permitir comandos de la pantalla Abrir a LAN y lo mantiene desactivado, y el mundo se abre sin comandos se pidan como se pidan, `/publish` incluido |
-| `worldDifficulty` | lista | vacío | Bloquea la dificultad, una de peaceful, easy, normal o hard. Una dificultad suelta abarca todas las dimensiones, y una entrada escrita como dimensión=dificultad, como minecraft:the_nether=hard, abarca solo esa dimensión y prevalece sobre la suelta. El ajuste propio del mundo se deja como estaba y vuelve cuando se quita la entrada. Un servidor dedicado escribe la dificultad del mundo principal en `server.properties` como `difficulty`. Vacío la deja como se eligió |
+| `worldDifficulty` | lista | vacío | Bloquea la dificultad, una de peaceful, easy, normal o hard. Una dificultad suelta abarca todas las dimensiones, y una entrada escrita como dimensión=dificultad, como minecraft:the_nether=hard, abarca solo esa dimensión y prevalece sobre la suelta. El ajuste propio del mundo se deja como estaba y vuelve cuando se quita la entrada. Un servidor dedicado escribe la dificultad del Overworld en `server.properties` como `difficulty`. Vacío la deja como se eligió       |
 | `worldForceGameMode` | booleano | vacío | Si un jugador que se une vuelve a ponerse en el modo de juego del servidor cada vez, la línea `force-gamemode`. Un mundo abierto a LAN ya lo hace, y `false` lo detiene también allí |
 | `worldPvp` | booleano | vacío | Si los jugadores pueden hacerse daño entre sí, la línea `pvp`. Un mundo de un jugador también la toma |
 | `worldFlight` | booleano | vacío | Si un jugador que vuela en supervivencia se deja en paz en lugar de ser expulsado, la línea `allow-flight`. Un mundo de un jugador también la toma |
-| `worldSpawnProtection` | int, -1 o más | `-1` | Cuántos bloques alrededor del punto de aparición solo pueden construir los operadores, la línea `spawn-protection`, 0 para ninguno. Solo un servidor dedicado protege su punto de aparición |
+| `worldSpawnProtection` | entero, -1 o más | `-1` | Cuántos bloques alrededor del punto de aparición solo pueden construir los operadores, la línea `spawn-protection`, 0 para ninguno. Solo un servidor dedicado protege su punto de aparición |
 | `worldNether` | booleano | vacío | Si se puede entrar en el Nether, la línea `allow-nether`. `false` lo cierra también en un mundo de un jugador |
 | `worldCommandBlocks` | booleano | vacío | Si los bloques de comandos se ejecutan, la línea `enable-command-block`. Un mundo de un jugador ya los ejecuta, y `false` los desactiva también allí |
-| `worldIdleTimeout` | int, -1 o más | `-1` | Cuántos minutos puede un jugador estar inactivo antes de ser expulsado, la línea `player-idle-timeout`, 0 para nunca. Un mundo de un jugador también la toma |
+| `worldIdleTimeout` | entero, -1 o más | `-1` | Cuántos minutos puede un jugador estar inactivo antes de ser expulsado, la línea `player-idle-timeout`, 0 para nunca. Un mundo de un jugador también la toma |
 | `worldMotd` | texto | vacío | La línea que se muestra bajo el nombre del servidor en la lista de servidores, la línea `motd`. Un mundo de un jugador abierto a LAN la muestra en lugar del propietario y el nombre del mundo |
-| `worldMaxSize` | int, -1 a 29999984 | `-1` | Lo más lejos, en bloques desde el centro, que puede llegar jamás el borde del mundo, la línea `max-world-size`. Un mundo de un jugador también la toma |
+| `worldMaxSize` | entero, -1 a 29999984 | `-1` | Lo más lejos, en bloques desde el centro, que puede llegar jamás el borde del mundo, la línea `max-world-size`. Un mundo de un jugador también la toma |
 | `worldStructures` | booleano | vacío | Si un mundo nuevo genera estructuras, la línea `generate-structures` y la opción Generar estructuras de la pantalla de mundo. Solo se aplica a un mundo al crearse |
 | `worldSpawnMonsters` | booleano | vacío | Si aparecen mobs hostiles, la línea `spawn-monsters`. `false` los detiene también en un mundo de un jugador |
 | `worldSpawnAnimals` | booleano | vacío | Si aparecen animales, la línea `spawn-animals`. `false` los detiene también en un mundo de un jugador |
 | `worldSpawnNpcs` | booleano | vacío | Si aparecen aldeanos, la línea `spawn-npcs`. `false` los detiene también en un mundo de un jugador |
-| `worldViewDistance` | int, -1 a 32 | `-1` | A cuántos chunks de distancia envía un servidor dedicado el mundo a cada jugador, la línea `view-distance`. Un mundo de un jugador sigue en su lugar la distancia de renderizado |
-| `worldSimulationDistance` | int, -1 a 32 | `-1` | A cuántos chunks de distancia mantiene un servidor dedicado el mundo en funcionamiento alrededor de cada jugador, la línea `simulation-distance`. Un mundo de un jugador sigue en su lugar su propio ajuste |
+| `worldViewDistance` | entero, -1 a 32 | `-1` | A cuántos chunks de distancia envía un servidor dedicado el mundo a cada jugador, la línea `view-distance`. Un mundo de un jugador sigue en su lugar la distancia de renderizado |
+| `worldSimulationDistance` | entero, -1 a 32 | `-1` | A cuántos chunks de distancia mantiene un servidor dedicado el mundo en funcionamiento alrededor de cada jugador, la línea `simulation-distance`. Un mundo de un jugador sigue en su lugar su propio ajuste |
 
 ### Recetas
 
@@ -6568,7 +6614,7 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.recipes` decide este grupo. Bloqueo de recetas de fabricación y de horno y sus listas blancas. El bloqueo de hornos arrastra consigo las recetas del alto horno, el ahumador y la hoguera, ya que 1.12.2 guardaba todas las recetas de cocción en una única lista de horno. Las recetas de la cortapiedras y de herrería nunca se bloquean, ya que 1.12.2 no tenía ninguna.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `blockRecipes` | booleano | `false` | Elimina todas las recetas de fabricación excepto las de los mods de `recipeWhitelist`. Por defecto nada está exento, así que indica el espacio de nombres de tu propio pack para conservar sus recetas |
 | `recipeWhitelist` | lista de ids de mod | `["minecraft"]` | Los mods cuyas recetas de fabricación se conservan |
@@ -6588,11 +6634,11 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 `control.commands` decide este grupo. Quién puede ejecutar los comandos propios del mod: los niveles de permiso de goto.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
-| `gotoLevel` | int, 0 a 4 | `3` | El nivel de permiso necesario para /rdplserver goto <nombre>, que lleva a quien lo envía a la estructura más cercana. 3 es un operador, el nivel en el que está el resto del comando. 2 permite también que lo ejecute un bloque de comandos, de modo que un pack puede poner el salto en un botón o una placa de presión sin dar a nadie el resto del comando. 0 deja que cualquier jugador lo escriba. Las demás partes de /rdplserver siguen en 3 diga esto lo que diga |
-| `gotoNextLevel` | int, 0 a 4 | `3` | El nivel de permiso para /rdplserver goto <nombre> next, que pasa por alto la última a la que llevó a quien lo envía y busca otra. Misma escala que gotoLevel |
-| `gotoBackLevel` | int, 0 a 4 | `3` | El nivel de permiso para /rdplserver goto <nombre> back, que devuelve a quien lo envía a la anterior. Misma escala que gotoLevel |
+| `gotoLevel` | entero, 0 a 4 | `3` | El nivel de permiso necesario para /rdplserver goto <name>, que lleva a quien lo envía a la estructura más cercana. 3 es un operador, el nivel en el que está el resto del comando. 2 permite también que lo ejecute un bloque de comandos, de modo que un pack puede poner el salto en un botón o una placa de presión sin dar a nadie el resto del comando. 0 deja que cualquier jugador lo escriba. Las demás partes de /rdplserver siguen en 3 diga esto lo que diga |
+| `gotoNextLevel` | entero, 0 a 4 | `3` | El nivel de permiso para /rdplserver goto <name> next, que pasa por alto la última a la que llevó a quien lo envía y busca otra. Misma escala que gotoLevel |
+| `gotoBackLevel` | entero, 0 a 4 | `3` | El nivel de permiso para /rdplserver goto <name> back, que devuelve a quien lo envía a la anterior. Misma escala que gotoLevel |
 | `gotoPlaceLevels` | lista | vacío | Niveles de permiso para lugares concretos, como entradas nombre=nivel, una por línea, que sustituyen a los tres ajustes anteriores solo para ese lugar y en sus tres formas. El nombre es lo que escribirías tras goto, así que uno de vanilla como Village o Mansion, o un nombre que un pack registró para sus propias estructuras con locateAs. Misma escala: 3 un operador, 2 también un bloque de comandos, 0 cualquiera. Así un pack puede abrir el camino a sus propias ruinas mientras todas las estructuras de vanilla siguen cerradas, o al revés. Un nombre que nada ha registrado se ignora con una nota en el registro |
 
 ### Worldgen, solo configuración
@@ -6601,14 +6647,14 @@ Un tronco de una sola vía no tiene una segunda vía que dar al otro ramal, de m
 
 Estas claves de `worldgen` no pertenecen a ningún grupo y son exclusivas de la configuración.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `worldgenDebug` | booleano | `false` | Escribe en logs/rdpl.log las líneas de depuración a las que remiten otros mensajes, como qué pack sirvió un archivo y qué hizo cada comando. Muy detallado |
 | `worldTemplate` | texto | `auto` | Qué ajustes de plantilla de mundo se aplican. Un pack añade una en worldtemplates/*.json y tú la nombras aquí como namespace:name. 'auto' elige la plantilla del pack de mayor prioridad. Vacío no usa ninguna |
 | `tellWorldType` | booleano | `true` | Avisa en el chat a un jugador, al unirse a un mundo creado con el preajuste generado, de qué plantilla le dio forma. Un pack no puede establecerlo |
-| `worldBorderLimit` | int, 1 a 60000000 | `60000000` | El borde más ancho que un pack puede pedir mediante worldBorder. Un pack que pide más es rechazado y el borde se deja donde lo pone el juego. Un pack no puede establecerlo |
+| `worldBorderLimit` | entero, 1 a 60000000 | `60000000` | El borde más ancho que un pack puede pedir mediante worldBorder. Un pack que pide más es rechazado y el borde se deja donde lo pone el juego. Un pack no puede establecerlo |
 | `retrogenKey` | texto | `0000` | Cámbialo para que todos los chunks vuelvan a ser aptos para retrogen, en todas las entradas de worldgen. Las vetas nuevas se añaden encima de lo que ya hay |
-| `retrogenChunksPerTick` | int, 1 o más | `2` | Cuántos chunks ya generados se actualizan por tick. Más es más rápido pero provoca más tirones |
+| `retrogenChunksPerTick` | entero, 1 o más | `2` | Cuántos chunks ya generados se actualizan por tick. Más es más rápido pero provoca más tirones |
 
 ### La categoría `packs`
 
@@ -6616,7 +6662,7 @@ Estas claves de `worldgen` no pertenecen a ningún grupo y son exclusivas de la 
 
 Cómo se encuentran y se sirven las carpetas de packs. Solo configuración.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `rootDirectory` | texto | `rdploader` | Carpeta de la que se cargan los packs, relativa al directorio .minecraft. También funciona una ruta absoluta. Requiere reiniciar |
 | `overrideResourcePacks` | booleano | `true` | Inserta el pack de assets por encima de los packs de recursos seleccionados por el jugador y de los packs de datos propios del mundo. Un pack llamado RDPLO... siempre prevalece, RDPLN... nunca |
@@ -6630,7 +6676,7 @@ Cómo se encuentran y se sirven las carpetas de packs. Solo configuración.
 
 Bloques, ítems, fluidos y todo lo demás que definen los packs. Solo configuración.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `load` | booleano | `true` | Registra los bloques, ítems, fluidos, materiales y pestañas creativas que definen los packs, y carga sus exposiciones. Requiere reiniciar |
 | `vanillaClients` | booleano | `false` | Atiende a clientes vanilla sin modificar: no se registra nada de ningún pack, ni bloques, ítems, fluidos o pestañas creativas, y no se carga ninguna exposición, de modo que un cliente sin el mod puede unirse. Todo lo que vive solo en el servidor sigue aplicándose. Requiere reiniciar |
@@ -6642,14 +6688,14 @@ Bloques, ítems, fluidos y todo lo demás que definen los packs. Solo configurac
 | `entities` | booleano | `true` | Registra las variantes de entidad descritas en entities/*.json de los packs. Requiere reiniciar |
 | `overrides` | booleano | `true` | Aplica los archivos overrides/<namespace>/<name>.json, que cambian propiedades de bloques, ítems y tipos de poción que ya existen, de vanilla o de mods |
 | `disabled` | booleano | `true` | Aplica los archivos disabled/*.json, que sacan bloques e ítems del juego: sin pestaña creativa, entrada de JEI, receta, botín, intercambio, etiqueta, colocación, uso ni recogida, y los stacks de ellos se eliminan |
-| `hardness` | booleano | `true` | Aplica los archivos hardness/*.json, que dan a un grupo de bloques un multiplicador de tiempo de minado y de resistencia a las explosiones, tirado por posición de bloque |
+| `hardness` | booleano | `true` | Aplica los archivos hardness/*.json, que dan a un grupo de bloques un multiplicador de tiempo de minado y de resistencia a las explosiones, sorteado por posición de bloque |
 | `shovelPaths` | booleano | `true` | Deja que una pala convierta en camino los bloques marcados con behavesAs path, y que revierta un camino al agacharse |
 | `shovelPathBecomes` | texto | vacío | En qué convierte la pala esos bloques. Vacío usa el camino de tierra |
-| `shovelPathReverts` | texto | vacío | En qué devuelve un camino agacharse con una pala. Vacío usa tierra |
+| `shovelPathReverts` | texto | vacío | En qué vuelve a convertirse un camino al agacharse con una pala. Vacío usa tierra |
 | `hoeTilling` | booleano | `true` | Deja que una azada labre los bloques marcados con behavesAs till |
 | `hoeTillsInto` | texto | vacío | En qué convierte la azada esos bloques. Vacío usa tierra de cultivo |
-| `caneMaxHeight` | int, 1 a 255 | `3` | Hasta qué altura crece la caña de azúcar de vanilla. En vanilla es 3. Los bloques de caña definidos por packs usan su propia sección growth e ignoran esto |
-| `cactusMaxHeight` | int, 1 a 255 | `3` | Lo mismo para el cactus de vanilla |
+| `caneMaxHeight` | entero, 1 a 255 | `3` | Hasta qué altura crece la caña de azúcar de vanilla. En vanilla es 3. Los bloques de caña definidos por packs usan su propia sección growth e ignoran esto |
+| `cactusMaxHeight` | entero, 1 a 255 | `3` | Lo mismo para el cactus de vanilla |
 
 ### La categoría `data`
 
@@ -6657,7 +6703,7 @@ Bloques, ítems, fluidos y todo lo demás que definen los packs. Solo configurac
 
 Botín, funciones y nombres de registro. Solo configuración.
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `lootInjections` | booleano | `true` | Aplica los archivos loot_injections/*.json, que añaden pools a tablas de botín que ya existen en lugar de sustituir la tabla entera |
 | `playerLoot` | booleano | `true` | Aplica los archivos player_loot/*.json, que tiran una tabla de botín cuando muere un jugador y sueltan lo que produce, además del inventario o en lugar de él |
@@ -6672,14 +6718,14 @@ Botín, funciones y nombres de registro. Solo configuración.
 
 Pequeños cambios en el comportamiento de vanilla. Solo configuración, salvo `privacy`, que un pack también puede establecer; consulta [Extra: ajustes de vanilla](#extra-ajustes-de-vanilla).
 
-| Ajuste | Tipo | Valor por defecto | Qué hace |
+| Ajuste | Tipo | Por defecto | Qué hace |
 | --- | --- | --- | --- |
 | `promptLeafDecay` | booleano | `true` | Las hojas que pierden su árbol se desintegran en menos de un segundo en lugar de esperar a los ticks aleatorios |
 | `lenientPaths` | booleano | `true` | Se pueden hacer caminos bajo un bloque y se mantienen cuando se coloca uno encima |
 | `unbreakableSpawners` | booleano | `false` | Los spawners de mobs no se pueden minar ni volar. El modo creativo sigue quitándolos. Requiere reiniciar |
 | `experimentalWarning` | booleano | `false` | Muestra el aviso de ajustes experimentales del juego al crear o abrir un mundo. Desactivado lo responde como si hubieras pulsado continuar |
 | `privacy` | booleano | `true` | Desactiva la telemetría y los informes de chat del juego: no se envía ni se registra ningún evento de telemetría, el cliente no firma ningún mensaje de chat, el servidor no guarda sesión de chat ni la exige, así que ningún mensaje de nadie puede denunciarse, y el cliente no muestra el aviso emergente de que un servidor no aplica el chat seguro. Un pack puede establecerlo como `privacy` en los `settings` de una plantilla de mundo, dentro del grupo [Servidor](#servidor). Surte efecto en el siguiente mundo o servidor al que se entre |
-| `darkSplash` | booleano | `true` | Dibuja la pantalla de carga oscura con el logotipo del cargador de packs en lugar del del juego: el logotipo se cambia al crearse la pantalla, y la opción Logotipo monocromo del juego se activa si aún está desactivada, lo que surte efecto en el siguiente inicio. Desactivado deja la opción como está |
+| `darkSplash` | booleano | `true` | Dibuja la pantalla de carga oscura con el logotipo del loader en lugar del del juego: el logotipo se cambia al crearse la pantalla, y la opción Logotipo monocromo del juego se activa si aún está desactivada, lo que surte efecto en el siguiente inicio. Desactivado deja la opción como está |
 
 ---
 
@@ -6740,21 +6786,21 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
 | Clave | Valor | Qué hace |
 | --- | --- | --- |
 | `explosionMode` | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | Qué ocurre después del estallido |
-| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true o false | Qué explosiones se gestionan |
-| `processPlayerIgnitedTNT` | true o false | Si el TNT que encendió un jugador se gestiona con el resto |
+| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | verdadero o falso | Qué explosiones se gestionan |
+| `processPlayerIgnitedTNT` | verdadero o falso | Si el TNT que encendió un jugador se gestiona con el resto |
 | `customEntitiesToHeal` | lista de nombres de entidad | Explosiones de otros mods, nombradas como `modid:entity` |
-| `healFullTrees` | true o false | Un árbol alcanzado por una explosión se retira o se restaura entero, en lugar de cortarse a medias |
+| `healFullTrees` | verdadero o falso | Un árbol alcanzado por una explosión se retira o se restaura entero, en lugar de cortarse a medias |
 | `maxTreeSize` | número | El máximo de bloques que puede reclamar un árbol antes de dejarlo en paz |
 | `minimumTicksBeforeHeal`, `randomTickVar` | números | Cuánto tarda en empezar la reparación y cuán irregular es su ritmo |
-| `overrideBlocks` | true o false | Si la reparación sobrescribe lo que se haya construido desde entonces en el agujero |
-| `enableFakeTossedBlocks` | true o false | Los escombros que salen despedidos de la explosión |
-| `enableExplosionFlash` | true o false | El destello brillante en el momento de la explosión |
+| `overrideBlocks` | verdadero o falso | Si la reparación sobrescribe lo que se haya construido desde entonces en el agujero |
+| `enableFakeTossedBlocks` | verdadero o falso | Los escombros que salen despedidos de la explosión |
+| `enableExplosionFlash` | verdadero o falso | El destello brillante en el momento de la explosión |
 | `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | números | Cuánto dura el destello, cuánto brilla, cuántas partículas lanza y cuántas veces pulsa |
-| `enableExplosionSmoke` | true o false | La columna de humo posterior |
+| `enableExplosionSmoke` | verdadero o falso | La columna de humo posterior |
 | `explosionSmokeDuration`, `explosionSmokeParticleCount` | números | Cuánto persiste el humo y cuán denso es |
-| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true o false | Lo que deja tras de sí el TNT de un jugador |
-| `enableDropSuppression`, `dtSpecialDrops` | true o false | Los drops dentro de una explosión, y los drops propios de Dynamic Trees |
-| `preventMobDrops` | true o false | Si los mobs muertos por una explosión siguen soltando drops |
+| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | verdadero o falso | Lo que deja tras de sí el TNT de un jugador |
+| `enableDropSuppression`, `dtSpecialDrops` | verdadero o falso | Los drops dentro de una explosión, y los drops propios de Dynamic Trees |
+| `preventMobDrops` | verdadero o falso | Si los mobs muertos por una explosión siguen soltando drops |
 | `blockConversions` | lista de reglas | En qué se convierte un bloque volado en lugar de volver como era, de modo que una construcción se desgasta un paso por explosión |
 
 `blockConversions` decide en qué se convierte un bloque volado en lugar de volver como era. Una regla se lee `<source>=<result>[@chance]`: el origen es un id de bloque, o una etiqueta de bloque con un `#` inicial; el resultado es un id de bloque, o `nothing` para dejar el espacio vacío; la probabilidad va de 0.0 a 1.0 y por defecto es 1.0. Gana la primera regla que coincide, así que las reglas específicas van por encima de las generales, y un bloque que ya es el resultado de alguna regla nunca se vuelve a convertir: un muro cede un paso por explosión en lugar de desgastarse hasta desaparecer.
@@ -6840,7 +6886,7 @@ Todas las carpetas, con su ruta completa y un enlace a la sección que las descr
 | `/rdpl config unused` | ninguno | Archivos de opciones de `rdploader/config` que ya no define ningún pack instalado |
 | `/rdpl config prune` | ninguno | Elimina esos archivos |
 | `/rdpl pixelmap <namespace:path>` | ninguno | En qué resultó un [mapa de píxeles](#texturas-escritas-como-mapas-de-píxeles), carácter por carácter |
-| `/rdpl biome`, `biome list [all]` | ninguno | Todos los biomas que pueden generarse y su id; `all` incluye los que nada puede generar |
+| `/rdpl biome`, `biome list`, `biome list all` | ninguno | Todos los biomas que pueden generarse y su id; `all` incluye los que nada puede generar |
 | `/rdpl biome here` | ninguno | El bioma en el que estás: su nombre, id y número |
 | `/rdpl biome find <name>` | el del servidor | Enlazado. Se pasa palabra por palabra a `/rdplserver`, que decide, así que consulta la tabla de abajo |
 | `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | el del servidor | Enlazado. Se pasa palabra por palabra a `/rdplserver`, que decide, así que consulta la tabla de abajo |
@@ -6882,18 +6928,18 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia propia del ser
 | `/rdplserver biome here [player]` | 3 | El bioma en el que estás tú, o el jugador indicado: su nombre, id y número. La consola nombra a un jugador |
 | `/rdplserver biome find <name>` | 3 | El lugar más cercano, a menos de 6400 bloques, donde se genera un bioma que coincida con ese id o nombre mostrado: sus coordenadas y la distancia desde donde se ejecuta. Lo dice cuando no hay ninguno tan cerca, o cuando el nombre no coincide con ningún bioma. `/rdpl biome find` le reenvía |
 | `/rdplserver dimensions` | 3 | Todas las dimensiones, incluidas las que añadieron los packs |
-| `/rdplserver vein <entry> [radius]` | 3 | Dónde tiene sembradas sus vetas una entrada de worldgen de forma `vein` dentro de ese número de chunks (por defecto 8) desde donde se ejecuta, la más cercana primero, existan ya o no esos chunks. `/rdpl vein` le reenvía |
+| `/rdplserver vein <entry> [radius]` | 3 | Dónde tiene sembradas sus vetas una entrada de worldgen de forma `vein` dentro de ese número de chunks (de 1 a 64, por defecto 8) desde donde se ejecuta, la más cercana primero, existan ya o no esos chunks. `/rdpl vein` le reenvía |
 
-#### Comandos de portales
+#### Comandos de puertas
 
 *comandos de servidor*
 
 | Comando | Nivel | Qué hace |
 | --- | --- | --- |
-| `/rdplserver gate`, `gate list` | 3 | Todos los portales, su dimensión, su ámbito y si está abierto |
-| `/rdplserver gate check <player>` | 3 | Qué portales ha cruzado un jugador |
-| `/rdplserver gate grant <player> <gate>` | 3 | Abre un portal para un jugador |
-| `/rdplserver gate revoke <player> <gate>` | 3 | Lo cierra de nuevo |
+| `/rdplserver gate`, `gate list` | 3 | Todas las puertas, su dimensión, su ámbito y si está abierto |
+| `/rdplserver gate check <player>` | 3 | Qué puertas ha cruzado un jugador |
+| `/rdplserver gate grant <player> <gate>` | 3 | Abre una puerta para un jugador |
+| `/rdplserver gate revoke <player> <gate>` | 3 | La cierra de nuevo |
 
 #### Comandos de pregeneración
 
@@ -6957,9 +7003,11 @@ En un servidor dedicado, `/rdplserver` hace lo mismo con la copia propia del ser
 | `/rdplserver game board takeback <board>` | 0 | Pedir deshacer la última jugada, o aceptar la petición del otro bando |
 | `/rdplserver game board ai <board> <side> <level>` | 2 | Hacer que el ordenador juegue un bando a un nivel de 1 a 4, o devolverlo con 0 |
 | `/rdplserver game last [count]` | 0 | Las últimas tiradas, la más reciente primero: 10, o la cantidad indicada hasta 50 |
+| `/rdplserver game <roll> store <objective>` | el de la tirada | Escribe el número de la tirada en la puntuación propia del emisor en ese objetivo |
+| `/rdplserver game <roll> audience <who>` | el de la tirada | Sustituye la audiencia por defecto del pack para esa tirada, como se describe bajo la tabla |
 | `/rdplserver game pass` | 0 | Termina antes de tiempo el turno del bando de quien lo envía cuando un archivo de puntuación juega por turnos. Desde un bloque de comandos o la consola termina el turno de quien esté jugando |
 
-Cualquier tirada puede terminar con `store <objective>`, que escribe su número en la puntuación propia del remitente en ese objetivo, y con `audience <quién>`, que sustituye el valor por defecto del pack: `self`, `team` (el bando del remitente, o solo el remitente sin equipos), `all`, `radius <bloques>` (jugadores del mismo mundo a esa distancia) o `silent`, que solo guarda. `/rdpl game` se pasa a este comando.
+Cualquier tirada puede terminar con `store <objective>`, que escribe su número en la puntuación propia del remitente en ese objetivo, y con `audience <who>`, que sustituye el valor por defecto del pack: `self`, `team` (el bando del remitente, o solo el remitente sin equipos), `all`, `radius <blocks>` (jugadores del mismo mundo a esa distancia) o `silent`, que solo guarda. `/rdpl game` se pasa a este comando.
 
 ### Quién puede usar goto
 
@@ -6999,7 +7047,7 @@ Estos están en el grupo `commands`, así que `control.commands` en la configura
 
 *comandos*
 
-Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck shuffle`, `tiebreak`, `board start`, `board end` y `board ai`. `gameLevels` cambia cualquiera de ellos, como entradas `parte=nivel`, donde la parte es lo que sigue a `game`.
+Cada parte de `game` tiene su propio nivel: 0 para cada tirada, y 2 para `deck shuffle`, `tiebreak`, `board start`, `board end` y `board ai`. `gameLevels` cambia cualquiera de ellos, como entradas `part=level`, donde la parte es lo que sigue a `game`.
 
 `<namespace>/worldtemplates/*.json`
 
@@ -7051,18 +7099,18 @@ La escala es la de `goto`, y `4` cierra una parte a todos. El autocompletado con
 
 Pequeños cambios en el comportamiento de vanilla, cada uno activable en la categoría de configuración `tweaks`.
 
-| Opción | Valor por defecto | Qué hace |
+| Opción | Por defecto | Qué hace |
 | --- | --- | --- |
 | `promptLeafDecay` | activado | Las hojas que pierden su árbol se desintegran en menos de un segundo en lugar de esperar a los ticks aleatorios |
 | `lenientPaths` | activado | Se pueden hacer caminos bajo un bloque y se mantienen cuando se coloca uno encima |
 | `unbreakableSpawners` | desactivado | Los spawners de mobs no se pueden minar ni volar. El modo creativo sigue quitándolos. Necesita reiniciar |
 | `experimentalWarning` | desactivado | Muestra el aviso de ajustes experimentales del juego al crear o abrir un mundo. Desactivado lo responde como si hubieras pulsado continuar |
 | `privacy` | activado | Desactiva la telemetría y los informes de chat del juego; consulta [Conviene saber](#conviene-saber) |
-| `darkSplash` | activado | Pantalla de carga oscura con el logotipo del cargador de packs; la opción Logotipo monocromo del juego se activa para el siguiente inicio |
+| `darkSplash` | activado | Pantalla de carga oscura con el logotipo del loader; la opción Logotipo monocromo del juego se activa para el siguiente inicio |
 
 Otras cuatro están en la categoría `content` y no en `tweaks`:
 
-| Opción | Valor por defecto | Qué hace |
+| Opción | Por defecto | Qué hace |
 | --- | --- | --- |
 | `cactusMaxHeight` | `3` | Hasta qué altura crece el cactus de vanilla |
 | `caneMaxHeight` | `3` | Hasta qué altura crece la caña de azúcar de vanilla |
@@ -7075,7 +7123,7 @@ Otras cuatro están en la categoría `content` y no en `tweaks`:
 
 *extra: ajustes de vanilla*
 
-`unbreakableSpawners` da al bloque de spawner de mobs los números del lecho de roca, una dureza irrompible y una resistencia a las explosiones que nada supera. Un jugador no puede minar uno por buena que sea la pica, y ni los creepers, ni el TNT, ni una entidad de pack que `explodes` se llevarán uno. El modo creativo sigue quitándolos, exactamente como sigue quitando el lecho de roca, así que un autor de packs nunca queda excluido de su propia construcción. Requiere reiniciar, ya que los números del bloque se fijan al registrarse.
+`unbreakableSpawners` da al bloque de spawner de mobs los números del lecho de roca, una dureza irrompible y una resistencia a las explosiones que nada supera. Un jugador no puede minar uno por bueno que sea el pico, y ni los creepers, ni el TNT, ni una entidad de pack que `explodes` se llevarán uno. El modo creativo sigue quitándolos, exactamente como sigue quitando el lecho de roca, así que un autor de packs nunca queda excluido de su propia construcción. Requiere reiniciar, ya que los números del bloque se fijan al registrarse.
 
 **Es el bloque, no el spawner.** No hay un interruptor por spawner. La opción cambia `minecraft:spawner` en sí, así que alcanza a todos los spawners del mundo a la vez: las estructuras de vanilla que colocan uno, los que coloca cualquier mod y los que colocan tus propios packs. Un spawner dentro de una de tus plantillas `.nbt`, colocado por una entrada `imprint`, es un bloque de spawner corriente con su propia entidad de bloque, así que queda cubierto en cuanto la opción está activada.
 
@@ -7087,7 +7135,7 @@ Lo que un pack de 1.12.2 puede escribir y esta versión no lee, y por qué. Un p
 
 | Clave | Dónde | Por qué |
 | --- | --- | --- |
-| `meta` | bloques, ítems, worldgen, drops de bloques | Los ids no llevan metadatos desde la aplanación. El port pasa cada `name:meta` por los reparadores de datos del juego y descarta la clave |
+| `meta` | bloques, ítems, worldgen, drops de bloques | Los ids no llevan metadatos desde el aplanado. El port pasa cada `name:meta` por los reparadores de datos del juego y descarta la clave |
 | `oreDict` | bloques, ítems, horno, combustibles, filtros de almacenamiento de entidades | El diccionario de minerales ya no existe. El port lo convierte en `tags` de las etiquetas de convención, y el de un combustible o de una entrada de filtro de almacenamiento en `tag` |
 | `galacticraft` | variantes de entidad | No hay Galacticraft para esta versión, así que una variante no tiene nivel de cohete, depósito de combustible, carga ni carga útil que establecer |
 | `oreDictionary` | ajustes | El diccionario de minerales ya no existe, así que no quedan archivos de diccionario de minerales que desactivar. Las etiquetas hacen su trabajo, y el port las escribe a partir del `oreDict` de un pack |
@@ -7099,7 +7147,7 @@ Lo que un pack de 1.12.2 puede escribir y esta versión no lee, y por qué. Un p
 | `career` | intercambios, entidades | Sin carreras; nombra la profesión en sí. Un intercambio que nombra una profesión de vanilla de 1.12.2 con su carrera pasa a la profesión en que se convirtió esa carrera |
 | `gameLoopFunction` | reglas del juego | La regla del juego ya no existe; la etiqueta de función `#minecraft:tick` ejecuta una función cada tick, y el port escribe una |
 | `id` | biomas, dimensiones | Los biomas y las dimensiones se conocen por su ubicación de recurso, nunca por un número |
-| `suffix`, `keepLoaded` | dimensiones | La carpeta de guardado sigue el nombre de la dimensión. Solo el mundo principal tiene chunks de aparición, así que una dimensión que debe permanecer cargada toma un `forceload` |
+| `suffix`, `keepLoaded` | dimensiones | La carpeta de guardado sigue el nombre de la dimensión. Solo el Overworld tiene chunks de aparición, así que una dimensión que debe permanecer cargada toma un `forceload`       |
 | `baseHeight`, `heightVariation` | biomas | La altura del terreno pertenece a los ajustes de ruido, no al bioma |
 | `placement.villageSpawn` | biomas | Los aldeanos vienen con la propia estructura de la aldea |
 | `rubicWorld`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist`, `verticalCubeLoadDistance`, `cubeGCInterval`, `cubeGenMillisPerRound`, `cubesSentPerTick` | mundos rubic | El mundo rubic era la manera de 1.12.2 de superar un mundo de 256 bloques. Aquí, el `minHeight` y el `maxHeight` de una dimensión fijan su tamaño y el sistema de chunks lo transmite |
@@ -7124,7 +7172,7 @@ Lo que un pack de 1.12.2 puede escribir y esta versión no lee, y por qué. Un p
 | `loadingScreenPercent` | ajustes | La propia pantalla de carga del mundo del juego ya muestra cuánto del área de aparición está listo |
 | `disableOptimizations` | ajustes | Desactivaba las optimizaciones de pregeneración y generación de 1.12.2, escritas para ese motor y sin equivalente aquí |
 | `fixTinkersModelErrors` | ajustes | Silenciaba los errores de modelo que las versiones de 1.12.2 de Tinkers' Construct y Construct's Armory registraban para cada herramienta, pieza y pieza de armadura. El arreglo se metía en esas versiones, así que aquí no hay nada sobre lo que actuar |
-| criterios `achievement.` | puntuación, funciones | Los logros pasaron a ser avances, que no llevan puntuación que contar. Un criterio `stat.` se lee como la estadística en que se convirtió |
+| criterios `achievement.` | puntuación, funciones | Los achievements pasaron a ser logros, que no llevan puntuación que contar. Un criterio `stat.` se lee como la estadística en que se convirtió |
 | `toggledownfall`, `stats` | funciones | Los comandos ya no existen. `weather` nombra el clima que establecer, y `execute store` guarda el resultado de un comando |
 | `gamerule gameLoopFunction`, y una regla del juego inventada por un pack | funciones | El juego decide qué reglas del juego existen. El port convierte el `gameLoopFunction` de un archivo de reglas del juego en la etiqueta `#minecraft:tick`, pero una línea de comando que lo establece se conserva para que la quites tú |
 | un nombre con el valor de datos `-1` o `*` que se convirtió en varios bloques o ítems | funciones: `clear`, `testforblock`, `execute ... detect`, `fill ... replace`, `clone ... filtered` | Ahora una comprobación nombra un solo bloque o ítem. Nombra el que se quería, o una etiqueta como `#minecraft:wool` |
@@ -7134,7 +7182,7 @@ Lo que un pack de 1.12.2 puede escribir y esta versión no lee, y por qué. Un p
 | `exclusion` y `surface_level` en `aquifers` | ajustes de ruido, *desde 26.3* | 26.2 y anteriores incorporan ambos de serie, así que los del propio pack se descartan |
 | una entrada `spawn_target` que nombra algo que no sea un eje climático del `noise_router` | ajustes de ruido, *desde 26.3* | Un objetivo de aparición anterior cubre solo los cinco ejes climáticos, así que esa entrada se descarta |
 | vetas de mineral colocadas mediante `material_rule` | ajustes de ruido, *desde 26.3* | 26.2 no puede colocar vetas de mineral mediante una regla de material, así que se descartan |
-| el `count`, `thickness`, `weird_thickness_bias` o `start_vertical_radius_multiplier` propios de un tallador de cuevas | talladores, *desde 26.3* | 26.2 no puede establecerlos, así que se usa la forma de cueva de vanilla del mundo principal o del Nether |
+| el `count`, `thickness`, `weird_thickness_bias` o `start_vertical_radius_multiplier` propios de un tallador de cuevas | talladores, *desde 26.3* | 26.2 no puede establecerlos, así que se usa la forma de cueva de vanilla del Overworld o del Nether       |
 | `creature_world_gen_spawn_probability` como modificador, y un atributo que se añade al valor de su dimensión | biomas, *desde 26.3* | 26.2 toma un valor simple: se conserva la probabilidad de aparición por defecto, y el valor propio del bioma sustituye al de la dimensión |
 | desplazamientos x y z distintos, y `normalize` establecido en false | características colocadas, ruidos, *desde 26.3* | 26.2 dispersa ambos ejes en la misma cantidad, así que ambos usan el desplazamiento x, y siempre normaliza un ruido |
 | un tipo de característica que 26.2 no tiene, o una característica de 26.3 construida con bloques que no tiene | características, biomas, *desde 26.3* | Una característica así no coloca nada, y un bioma omite una característica colocada de 26.3 sin equivalente en 26.2 |
