@@ -825,6 +825,24 @@ Para `crop`, `flower`, `cane` y `vine`.
 | `damageAmount`    | no       | decimal, medios corazones | `1.0`        | Cuánto daño hace |
 | `breaksNeighbors` | no       | booleano            | `false`          | Rompe los bloques colocados a su lado, como el cactus |
 
+### Propagación
+
+*bloques*
+
+Para bloques `basic` y `ore`. Un bloque que nombra los bloques sobre los que se propaga se comporta como la hierba que se extiende sobre la tierra.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:coarse_dirt"]
+}
+```
+
+| Clave         | Obligatorio | Valor                    | Por defecto | Qué hace                                                                   |
+| ------------- | ----------- | ------------------------ | ----------- | -------------------------------------------------------------------------- |
+| `spreadsOnto` | no          | lista de nombres de bloque | ninguno     | Bloques sobre los que se propaga. El primero es en el que se vuelve a convertir |
+
+El bloque recibe ticks aleatorios y sigue a la hierba de vanilla. Donde la luz sobre él es 9 o más, hace cuatro intentos por tick en un punto al azar a hasta un bloque a cada lado y desde tres bloques por debajo hasta uno por encima. El punto se convierte en este bloque si es un bloque de la lista, la luz sobre el punto es 4 o más y el bloque que tiene encima bloquea como mucho 2 de luz. Donde la luz sobre él es menor que 4 y el bloque que tiene encima bloquea más de 2 de luz, vuelve a convertirse en el primer bloque de la lista. `minecraft:dirt` es solo tierra normal y `minecraft:coarse_dirt` es tierra gruesa.
+
 ### Brotes
 
 *bloques*
