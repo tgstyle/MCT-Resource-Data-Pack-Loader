@@ -3738,7 +3738,7 @@ An `ambience` block gives the dimension its own music, sounds and drifting parti
 
 With Galacticraft installed, a pack can put its own star systems, planets, moons, asteroid belts and space stations on the Galacticraft star map, and make a pack dimension a place a rocket flies to. Without Galacticraft all of it is skipped: the `celestial/` files are ignored and a dimension with a `galacticraft` block is not registered, and the log says so.
 
-A body's name on the map comes from the pack's lang file, under the key Galacticraft uses: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` or, for a station, `satellite.<name>`. An asteroid belt takes `planet.<name>` around a star and `moon.<name>` around a planet.
+A body's name on the map comes from the pack's lang file, under the key Galacticraft uses: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` or, for a station, `satellite.<name>`. A subsystem takes `planet.<name>`, and an asteroid belt takes `planet.<name>` around a star and `moon.<name>` around a planet or subsystem.
 
 ### Star systems and map-only bodies
 
@@ -3746,7 +3746,7 @@ A body's name on the map comes from the pack's lang file, under the key Galactic
 
 `<namespace>/celestial/*.json`
 
-A file here is either a star system or a planet or moon that sits on the map with nowhere to land.
+A file here is a star system, a subsystem, or a planet or moon that sits on the map with nowhere to land.
 
 ```json
 {
@@ -3777,15 +3777,37 @@ A file here is either a star system or a planet or moon that sits on the map wit
 }
 ```
 
-| Key           | Required     | Value                              | Default     | What it does                               |
-| ------------- | ------------ | ---------------------------------- | ----------- | ------------------------------------------ |
-| `kind`        | yes          | `system`, `planet`, `moon`         |             | What the file makes                        |
-| `galaxy`      | no           | string                             | `milky_way` | A system's galaxy                          |
-| `mapPosition` | for a system | `[x, y]` or `[x, y, z]`            |             | Where the system sits on the galaxy map    |
-| `star`        | no           | object of [map keys](#map-keys)    |             | The system's star, drawn at its center     |
-| `requires`    | no           | list of mod ids or pack namespaces | none        | The file is skipped unless all are present |
+```json
+{
+  "kind": "subsystem",
+  "name": "kindle",
+  "parent": "ember",
+  "relativeSize": 0.6,
+  "distance": 2.2,
+  "orbitTime": 6,
+  "galaxyspace": { "starType": "dwarf", "starColor": "red" }
+}
+```
 
-A planet or moon here takes the [map keys](#map-keys) with a `tier` default of `0`. Planets and moons go on the map after every system, so a planet may circle a system from the same pack.
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "kindle"
+}
+```
+
+| Key           | Required     | Value                                   | Default     | What it does                               |
+| ------------- | ------------ | --------------------------------------- | ----------- | ------------------------------------------ |
+| `kind`        | yes          | `system`, `planet`, `subsystem`, `moon` |             | What the file makes                        |
+| `galaxy`      | no           | string                                  | `milky_way` | A system's galaxy                          |
+| `mapPosition` | for a system | `[x, y]` or `[x, y, z]`                 |             | Where the system sits on the galaxy map    |
+| `star`        | no           | object of [map keys](#map-keys)         |             | The system's star, drawn at its center     |
+| `requires`    | no           | list of mod ids or pack namespaces      | none        | The file is skipped unless all are present |
+
+A planet, subsystem or moon here takes the [map keys](#map-keys) with a `tier` default of `0`. They go on the map after every system, subsystems first, then planets, then moons, so each may circle a body from the same pack.
+
+A subsystem is a second star circling the system's star. Galacticraft holds it as a planet, so it orbits like one, but the map draws it with the Sun icon, its tier is always `-1`, and it has no dimension, so no rocket flies there. Only a moon or an asteroid belt may name it as `parent`; a planet or space station that does is left off the map, and the log says why. With GalaxySpace, AsmodeusCore's map treats it as a star and draws the glow of its `galaxyspace` `starColor` around it.
 
 ### Map keys
 
@@ -3796,7 +3818,7 @@ Every body, whether a `celestial/` file, a system's `star` or a dimension's `gal
 | Key              | Required              | Value          | Default                                                        | What it does                                                                                                                                                                                                                                                                                                                       |
 | ---------------- | --------------------- | -------------- | -------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`           | no                    | string         | the file name                                                  | The body's name, which its lang key and every `parent` use                                                                                                                                                                                                                                                                         |
-| `parent`         | for a moon or station | name           | `sol` for a planet or belt                                     | The system a planet circles, the planet a moon circles, the planet or moon a station circles, or a system or planet for an asteroid belt                                                                                                                                                                                           |
+| `parent`         | for a moon or station | name           | `sol` for a planet, subsystem or belt                          | The system a planet or subsystem circles, the planet or subsystem a moon circles, the planet or moon a station circles, or a system, planet or subsystem for an asteroid belt                                                                                                                                                      |
 | `icon`           | no                    | texture path   | Galacticraft's Mars, Moon, Sun, asteroid or station icon       | The picture on the map                                                                                                                                                                                                                                                                                                             |
 | `relativeSize`   | no                    | float          | `1.0`, a moon or station `0.2667`                              | Its size on the map                                                                                                                                                                                                                                                                                                                |
 | `distance`       | no                    | float          | `1.0`, a moon `13`, a station `9`                              | How far out it circles                                                                                                                                                                                                                                                                                                             |
@@ -3920,7 +3942,7 @@ A dimension whose `galacticraft` block has `kind: "asteroids"` is an asteroid be
 }
 ```
 
-A belt's `parent` is a star system or a planet. Around a system it sits on the map as a planet does, and around a planet as a moon does. It takes every key of [the `galacticraft` block](#the-galacticraft-block) except these, which a belt ignores:
+A belt's `parent` is a star system, a planet or a subsystem. Around a system it sits on the map as a planet does, and around a planet or subsystem as a moon does. It takes every key of [the `galacticraft` block](#the-galacticraft-block) except these, which a belt ignores:
 
 | Key             | In a belt                                                                               |
 | --------------- | --------------------------------------------------------------------------------------- |
@@ -4072,7 +4094,7 @@ A dimension's `gravity` and `dayLength` are also what GalaxySpace shows for the 
 | `auraColor`         | no       | hex color                                                                                        | `starColor`'s color     | The color of the glow around a star on the GalaxySpace map, in place of the `starColor` color                                                                                     |
 | `habitableZone`     | no       | `[distance, width]`                                                                              | `[0, 0]`                | The band around a star the GalaxySpace map marks as habitable                                                                                                                     |
 
-`starType`, `starColor`, `auraColor` and `habitableZone` are read only in a system's `star`; the rest only in a planet or moon. GalaxySpace draws its storms per planet, so a pack's storm acts but shows no sky of its own.
+`starType`, `starColor`, `auraColor` and `habitableZone` are read only in a system's `star` or a subsystem, and `orbitEccentricity` and `orbitOffset` in a subsystem as well; the rest only in a planet or moon. GalaxySpace draws its storms per planet, so a pack's storm acts but shows no sky of its own.
 
 | `extraplanets` key | Required | Value                                                          | Default                                 | What it does                                                                                                                                     |
 | ------------------ | -------- | -------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

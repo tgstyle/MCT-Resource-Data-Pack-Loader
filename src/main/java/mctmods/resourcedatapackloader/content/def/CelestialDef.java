@@ -8,6 +8,7 @@ public final class CelestialDef {
     public static final String SYSTEM = "system";
     public static final String STAR = "star";
     public static final String PLANET = "planet";
+    public static final String SUBSYSTEM = "subsystem";
     public static final String MOON = "moon";
     public static final String ASTEROIDS = "asteroids";
     public static final String STATION = "station";

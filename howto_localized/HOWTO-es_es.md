@@ -3738,7 +3738,7 @@ Un bloque `ambience` da a la dimensión música, sonidos y partículas flotantes
 
 Con Galacticraft instalado, un pack puede poner sus propios sistemas estelares, planetas, lunas, cinturones de asteroides y estaciones espaciales en el mapa estelar de Galacticraft, y hacer que una dimensión del pack sea un lugar al que vuela un cohete. Sin Galacticraft se omite todo: los archivos de `celestial/` se ignoran y una dimensión con un bloque `galacticraft` no se registra, y el registro lo indica.
 
-El nombre de un cuerpo en el mapa sale del archivo de lang del pack, bajo la clave que usa Galacticraft: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` o, para una estación, `satellite.<name>`. Un cinturón de asteroides usa `planet.<name>` alrededor de una estrella y `moon.<name>` alrededor de un planeta.
+El nombre de un cuerpo en el mapa sale del archivo de lang del pack, bajo la clave que usa Galacticraft: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` o, para una estación, `satellite.<name>`. Un subsistema usa `planet.<name>`, y un cinturón de asteroides usa `planet.<name>` alrededor de una estrella y `moon.<name>` alrededor de un planeta o subsistema.
 
 ### Sistemas estelares y cuerpos solo de mapa
 
@@ -3746,7 +3746,7 @@ El nombre de un cuerpo en el mapa sale del archivo de lang del pack, bajo la cla
 
 `<namespace>/celestial/*.json`
 
-Un archivo aquí es un sistema estelar o un planeta o una luna que figura en el mapa sin ningún lugar donde aterrizar.
+Un archivo aquí es un sistema estelar, un subsistema, o un planeta o una luna que figura en el mapa sin ningún lugar donde aterrizar.
 
 ```json
 {
@@ -3777,15 +3777,37 @@ Un archivo aquí es un sistema estelar o un planeta o una luna que figura en el 
 }
 ```
 
+```json
+{
+  "kind": "subsystem",
+  "name": "kindle",
+  "parent": "ember",
+  "relativeSize": 0.6,
+  "distance": 2.2,
+  "orbitTime": 6,
+  "galaxyspace": { "starType": "dwarf", "starColor": "red" }
+}
+```
+
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "kindle"
+}
+```
+
 | Clave            | Obligatorio   | Valor                                             | Por defecto | Qué hace                                              |
 | ------------- | ------------- | ------------------------------------------------- | -------------- | ----------------------------------------------------- |
-| `kind`        | sí            | `system`, `planet`, `moon`                        |                | Qué crea el archivo                                   |
+| `kind`        | sí            | `system`, `planet`, `subsystem`, `moon`           |                | Qué crea el archivo                                   |
 | `galaxy`      | no            | cadena                                            | `milky_way`    | La galaxia de un sistema                              |
 | `mapPosition` | en un sistema | `[x, y]` o `[x, y, z]`                            |                | Dónde se sitúa el sistema en el mapa de la galaxia    |
 | `star`        | no            | objeto de [claves de mapa](#claves-de-mapa)       |                | La estrella del sistema, dibujada en su centro        |
 | `requires`    | no            | lista de ids de mod o espacios de nombres de pack | ninguno        | El archivo se omite a menos que estén presentes todos |
 
-Un planeta o una luna aquí admite las [claves de mapa](#claves-de-mapa) con un `tier` por defecto de `0`. Los planetas y las lunas se colocan en el mapa después de todos los sistemas, así que un planeta puede orbitar un sistema del mismo pack.
+Un planeta, un subsistema o una luna aquí admite las [claves de mapa](#claves-de-mapa) con un `tier` por defecto de `0`. Se colocan en el mapa después de todos los sistemas, primero los subsistemas, luego los planetas y luego las lunas, así que cada uno puede orbitar un cuerpo del mismo pack.
+
+Un subsistema es una segunda estrella que orbita la estrella del sistema. Galacticraft lo trata como un planeta, así que orbita como uno, pero el mapa lo dibuja con el icono del Sol, su `tier` es siempre `-1` y no tiene dimensión, así que ningún cohete vuela allí. Solo una luna o un cinturón de asteroides puede nombrarlo como `parent`; un planeta o una estación espacial que lo haga queda fuera del mapa, y el registro dice por qué. Con GalaxySpace, el mapa de AsmodeusCore lo trata como una estrella y dibuja a su alrededor el resplandor de su `starColor` de `galaxyspace`.
 
 ### Claves de mapa
 
@@ -3796,7 +3818,7 @@ Todo cuerpo, ya sea un archivo de `celestial/`, la `star` de un sistema o el blo
 | Clave               | Obligatorio            | Valor           | Por defecto                                                                   | Qué hace                                                                                                                                                                                                                                                                                                                                                              |
 | ---------------- | ---------------------- | --------------- | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`           | no                     | cadena          | el nombre del archivo                                                            | El nombre del cuerpo, que usan su clave de lang y todo `parent`                                                                                                                                                                                                                                                                                                       |
-| `parent`         | en una luna o estación | nombre          | `sol` para un planeta o cinturón                                                 | El sistema que orbita un planeta, el planeta que orbita una luna, el planeta o la luna que orbita una estación, o un sistema o un planeta para un cinturón de asteroides                                                                                                                                                                                              |
+| `parent`         | en una luna o estación | nombre          | `sol` para un planeta, subsistema o cinturón                                     | El sistema que orbita un planeta o subsistema, el planeta o subsistema que orbita una luna, el planeta o la luna que orbita una estación, o un sistema, planeta o subsistema para un cinturón de asteroides                                                                                                                                                           |
 | `icon`           | no                     | ruta de textura | el icono de Marte, la Luna, el Sol, asteroide o estación de Galacticraft         | La imagen en el mapa                                                                                                                                                                                                                                                                                                                                                  |
 | `relativeSize` | no                     | decimal           | `1.0`, una luna o estación `0.2667`                                              | Su tamaño en el mapa                                                                                                                                                                                                                                                                                                                                                  |
 | `distance`     | no                     | decimal           | `1.0`, una luna `13`, una estación `9`                                           | A qué distancia orbita                                                                                                                                                                                                                                                                                                                                                |
@@ -3920,7 +3942,7 @@ Una dimensión cuyo bloque `galacticraft` tiene `kind: "asteroids"` es un cintur
 }
 ```
 
-El `parent` de un cinturón es un sistema estelar o un planeta. Alrededor de un sistema figura en el mapa como un planeta, y alrededor de un planeta como una luna. Admite todas las claves del [bloque `galacticraft`](#el-bloque-galacticraft) salvo estas, que un cinturón ignora:
+El `parent` de un cinturón es un sistema estelar, un planeta o un subsistema. Alrededor de un sistema figura en el mapa como un planeta, y alrededor de un planeta o subsistema como una luna. Admite todas las claves del [bloque `galacticraft`](#el-bloque-galacticraft) salvo estas, que un cinturón ignora:
 
 | Clave           | En un cinturón                                                                                                        |
 | --------------- | --------------------------------------------------------------------------------------------------------------------- |
@@ -4072,7 +4094,7 @@ La `gravity` y la `dayLength` de una dimensión son también lo que GalaxySpace 
 | `auraColor`            | no          | color hexadecimal                                                                                | el color de `starColor`              | El color del halo que rodea a una estrella en el mapa de GalaxySpace, en lugar del color de `starColor`                                                                                                    |
 | `habitableZone`        | no          | `[distance, width]`                                                                              | `[0, 0]`                             | La banda alrededor de una estrella que el mapa de GalaxySpace marca como habitable                                                                                                                         |
 
-`starType`, `starColor`, `auraColor` y `habitableZone` se leen solo en la `star` de un sistema; el resto, solo en un planeta o una luna. GalaxySpace dibuja sus tormentas por planeta, así que la tormenta de un pack actúa pero no muestra un cielo propio.
+`starType`, `starColor`, `auraColor` y `habitableZone` se leen solo en la `star` de un sistema o en un subsistema, y `orbitEccentricity` y `orbitOffset` también en un subsistema; el resto, solo en un planeta o una luna. GalaxySpace dibuja sus tormentas por planeta, así que la tormenta de un pack actúa pero no muestra un cielo propio.
 
 | Clave de `extraplanets` | Obligatorio | Valor                                                             | Por defecto                                               | Qué hace                                                                                                                                                              |
 | ----------------------- | ----------- | -------------------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

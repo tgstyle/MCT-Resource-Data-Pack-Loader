@@ -3738,7 +3738,7 @@ Ein `ambience`-Block gibt der Dimension eigene Musik, eigene Geräusche und trei
 
 Ist Galacticraft installiert, kann ein Pack eigene Sternsysteme, Planeten, Monde, Asteroidengürtel und Raumstationen auf die Sternkarte von Galacticraft setzen und eine Pack-Dimension zu einem Ziel machen, das eine Rakete anfliegt. Ohne Galacticraft wird all das übersprungen: Die Dateien unter `celestial/` werden ignoriert, und eine Dimension mit `galacticraft`-Block wird nicht registriert; das Log vermerkt es.
 
-Den Namen auf der Karte holt sich ein Körper aus der Sprachdatei des Packs, unter dem Schlüssel, den Galacticraft verwendet: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` oder, bei einer Station, `satellite.<name>`. Ein Asteroidengürtel nimmt `planet.<name>` um einen Stern und `moon.<name>` um einen Planeten.
+Den Namen auf der Karte holt sich ein Körper aus der Sprachdatei des Packs, unter dem Schlüssel, den Galacticraft verwendet: `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` oder, bei einer Station, `satellite.<name>`. Ein Subsystem nimmt `planet.<name>`, ein Asteroidengürtel `planet.<name>` um einen Stern und `moon.<name>` um einen Planeten oder ein Subsystem.
 
 ### Sternsysteme und reine Kartenkörper
 
@@ -3746,7 +3746,7 @@ Den Namen auf der Karte holt sich ein Körper aus der Sprachdatei des Packs, unt
 
 `<namespace>/celestial/*.json`
 
-Eine Datei hier ist entweder ein Sternsystem oder ein Planet oder Mond, der auf der Karte steht, ohne dass man dort landen kann.
+Eine Datei hier ist ein Sternsystem, ein Subsystem oder ein Planet oder Mond, der auf der Karte steht, ohne dass man dort landen kann.
 
 ```json
 {
@@ -3777,15 +3777,37 @@ Eine Datei hier ist entweder ein Sternsystem oder ein Planet oder Mond, der auf 
 }
 ```
 
+```json
+{
+  "kind": "subsystem",
+  "name": "kindle",
+  "parent": "ember",
+  "relativeSize": 0.6,
+  "distance": 2.2,
+  "orbitTime": 6,
+  "galaxyspace": { "starType": "dwarf", "starColor": "red" }
+}
+```
+
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "kindle"
+}
+```
+
 | Schlüssel     | Pflicht          | Wert                                            | Standard    | Was er macht                                                |
 | ------------- | ---------------- | ----------------------------------------------- | ----------- | ----------------------------------------------------------- |
-| `kind`        | ja               | `system`, `planet`, `moon`                      |             | Was die Datei anlegt                                        |
+| `kind`        | ja               | `system`, `planet`, `subsystem`, `moon`         |             | Was die Datei anlegt                                        |
 | `galaxy`      | nein             | Text                                            | `milky_way` | Die Galaxie eines Systems                                   |
 | `mapPosition` | bei einem System | `[x, y]` oder `[x, y, z]`                       |             | Wo das System auf der Galaxiekarte liegt                    |
 | `star`        | nein             | Objekt mit [Kartenschlüsseln](#kartenschlüssel) |             | Der Stern des Systems, in seiner Mitte gezeichnet           |
 | `requires`    | nein             | Liste von Mod-IDs oder Pack-Namespaces          | keiner      | Die Datei wird übersprungen, wenn nicht alle vorhanden sind |
 
-Ein Planet oder Mond hier nimmt die [Kartenschlüssel](#kartenschlüssel), mit `tier` standardmäßig `0`. Planeten und Monde kommen nach allen Systemen auf die Karte, ein Planet darf also ein System aus demselben Pack umkreisen.
+Ein Planet, Subsystem oder Mond hier nimmt die [Kartenschlüssel](#kartenschlüssel), mit `tier` standardmäßig `0`. Sie kommen nach allen Systemen auf die Karte, erst die Subsysteme, dann die Planeten, dann die Monde, jeder darf also einen Körper aus demselben Pack umkreisen.
+
+Ein Subsystem ist ein zweiter Stern, der den Stern des Systems umkreist. Galacticraft führt es als Planeten, es kreist also wie einer, doch die Karte zeichnet es mit dem Sonnensymbol, sein `tier` ist immer `-1`, und es hat keine Dimension, also fliegt keine Rakete dorthin. Nur ein Mond oder ein Asteroidengürtel darf es als `parent` nennen; ein Planet oder eine Raumstation, die das tut, bleibt von der Karte, und das Log sagt, warum. Mit GalaxySpace behandelt die Karte von AsmodeusCore es als Stern und zeichnet den Schein seiner `galaxyspace`-`starColor` darum.
 
 ### Kartenschlüssel
 
@@ -3796,7 +3818,7 @@ Jeder Körper, ob Datei unter `celestial/`, `star` eines Systems oder `galacticr
 | Schlüssel        | Pflicht               | Wert           | Standard                                                                 | Was er macht                                                                                                                                                                                                                                                                                                                                                             |
 | ---------------- | --------------------- | -------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `name`           | nein                  | Text           | der Dateiname                                                            | Der Name des Körpers, den sein Sprachschlüssel und jedes `parent` verwenden                                                                                                                                                                                                                                                                                              |
-| `parent`         | bei Mond oder Station | Name           | `sol` bei Planet oder Gürtel                                             | Das System, das ein Planet umkreist, der Planet, den ein Mond umkreist, der Planet oder Mond, den eine Station umkreist, oder ein System oder Planet bei einem Asteroidengürtel                                                                                                                                                                                          |
+| `parent`         | bei Mond oder Station | Name           | `sol` bei Planet, Subsystem oder Gürtel                                  | Das System, das ein Planet oder Subsystem umkreist, der Planet oder das Subsystem, das ein Mond umkreist, der Planet oder Mond, den eine Station umkreist, oder ein System, Planet oder Subsystem bei einem Asteroidengürtel                                                                                                                                             |
 | `icon`           | nein                  | Texturpfad     | Galacticrafts Symbol für Mars, Mond, Sonne, Asteroid oder Station        | Das Bild auf der Karte                                                                                                                                                                                                                                                                                                                                                   |
 | `relativeSize`   | nein                  | float          | `1.0`, ein Mond oder eine Station `0.2667`                               | Seine Größe auf der Karte                                                                                                                                                                                                                                                                                                                                                |
 | `distance`       | nein                  | float          | `1.0`, ein Mond `13`, eine Station `9`                                   | Wie weit draußen er kreist                                                                                                                                                                                                                                                                                                                                               |
@@ -3920,7 +3942,7 @@ Eine Dimension, deren `galacticraft`-Block `kind: "asteroids"` hat, ist ein Aste
 }
 ```
 
-Das `parent` eines Gürtels ist ein Sternsystem oder ein Planet. Um ein System steht er auf der Karte wie ein Planet, um einen Planeten wie ein Mond. Er nimmt jeden Schlüssel aus [dem Block `galacticraft`](#der-block-galacticraft) außer diesen, die ein Gürtel ignoriert:
+Das `parent` eines Gürtels ist ein Sternsystem, ein Planet oder ein Subsystem. Um ein System steht er auf der Karte wie ein Planet, um einen Planeten oder ein Subsystem wie ein Mond. Er nimmt jeden Schlüssel aus [dem Block `galacticraft`](#der-block-galacticraft) außer diesen, die ein Gürtel ignoriert:
 
 | Schlüssel       | In einem Gürtel                                                                                       |
 | --------------- | ----------------------------------------------------------------------------------------------------- |
@@ -4072,7 +4094,7 @@ Zwei Galacticraft-Addons lesen mehr über einen Körper als Galacticraft selbst.
 | `auraColor`                | nein    | Hex-Farbe                                                                                           | die Farbe aus `starColor`    | Die Farbe des Leuchtens um einen Stern auf der GalaxySpace-Karte, anstelle der Farbe aus `starColor`                                                                                                                        |
 | `habitableZone`            | nein    | `[distance, width]`                                                                                 | `[0, 0]`                     | Der Gürtel um einen Stern, den die GalaxySpace-Karte als bewohnbar markiert                                                                                                                                                 |
 
-`starType`, `starColor`, `auraColor` und `habitableZone` werden nur im `star` eines Systems gelesen, alle übrigen nur in einem Planeten oder Mond. GalaxySpace zeichnet seine Stürme für jeden Planeten eigens, deshalb wirkt der Sturm eines Packs zwar, bringt aber keinen eigenen Himmel mit.
+`starType`, `starColor`, `auraColor` und `habitableZone` werden nur im `star` eines Systems oder in einem Subsystem gelesen, `orbitEccentricity` und `orbitOffset` auch in einem Subsystem, alle übrigen nur in einem Planeten oder Mond. GalaxySpace zeichnet seine Stürme für jeden Planeten eigens, deshalb wirkt der Sturm eines Packs zwar, bringt aber keinen eigenen Himmel mit.
 
 | Schlüssel in `extraplanets` | Pflicht | Wert                                                           | Standard                                        | Was er macht                                                                                                                                                                      |
 | --------------------------- | ------- | -------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

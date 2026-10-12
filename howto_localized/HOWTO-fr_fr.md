@@ -3738,7 +3738,7 @@ Un bloc `ambience` donne à la dimension sa propre musique, ses propres sons et 
 
 Avec Galacticraft installé, un pack peut placer ses propres systèmes stellaires, planètes, lunes, ceintures d'astéroïdes et stations spatiales sur la carte stellaire de Galacticraft, et faire d'une dimension de pack un lieu où une fusée peut se rendre. Sans Galacticraft, tout cela est ignoré : les fichiers `celestial/` ne sont pas lus et une dimension avec un bloc `galacticraft` n'est pas enregistrée, et le journal le signale.
 
-Le nom d'un corps sur la carte provient du fichier de langue du pack, sous la clé que Galacticraft utilise : `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` ou, pour une station, `satellite.<name>`. Une ceinture d'astéroïdes prend `planet.<name>` autour d'une étoile et `moon.<name>` autour d'une planète.
+Le nom d'un corps sur la carte provient du fichier de langue du pack, sous la clé que Galacticraft utilise : `solarsystem.<name>`, `star.<name>`, `planet.<name>`, `moon.<name>` ou, pour une station, `satellite.<name>`. Un sous-système prend `planet.<name>`, et une ceinture d'astéroïdes prend `planet.<name>` autour d'une étoile et `moon.<name>` autour d'une planète ou d'un sous-système.
 
 ### Systèmes stellaires et corps visibles uniquement sur la carte
 
@@ -3746,7 +3746,7 @@ Le nom d'un corps sur la carte provient du fichier de langue du pack, sous la cl
 
 `<namespace>/celestial/*.json`
 
-Un fichier de ce dossier est soit un système stellaire, soit une planète ou une lune qui figure sur la carte sans lieu où atterrir.
+Un fichier de ce dossier est un système stellaire, un sous-système, ou une planète ou une lune qui figure sur la carte sans lieu où atterrir.
 
 ```json
 {
@@ -3777,15 +3777,37 @@ Un fichier de ce dossier est soit un système stellaire, soit une planète ou un
 }
 ```
 
+```json
+{
+  "kind": "subsystem",
+  "name": "kindle",
+  "parent": "ember",
+  "relativeSize": 0.6,
+  "distance": 2.2,
+  "orbitTime": 6,
+  "galaxyspace": { "starType": "dwarf", "starColor": "red" }
+}
+```
+
+```json
+{
+  "kind": "moon",
+  "name": "clinker",
+  "parent": "kindle"
+}
+```
+
 | Clé           | Requis          | Valeur                                                     | Défaut      | Rôle                                                   |
 | ------------- | --------------- | ---------------------------------------------------------- | ----------- | ------------------------------------------------------ |
-| `kind`        | oui             | `system`, `planet`, `moon`                                 |             | Ce que crée le fichier                                 |
+| `kind`        | oui             | `system`, `planet`, `subsystem`, `moon`                    |             | Ce que crée le fichier                                 |
 | `galaxy`      | non             | texte                                                      | `milky_way` | La galaxie d'un système                                |
 | `mapPosition` | pour un système | `[x, y]` ou `[x, y, z]`                                    |             | Où le système se situe sur la carte de la galaxie      |
 | `star`        | non             | objet de [clés de carte](#clés-de-carte)                   |             | L'étoile du système, dessinée en son centre            |
 | `requires`    | non             | liste d'ids de mods ou de namespaces de packs              | aucun       | Le fichier est ignoré à moins que tous soient présents |
 
-Une planète ou une lune de ce dossier accepte les [clés de carte](#clés-de-carte) avec un `tier` par défaut de `0`. Les planètes et les lunes sont placées sur la carte après tous les systèmes, si bien qu'une planète peut orbiter autour d'un système du même pack.
+Une planète, un sous-système ou une lune de ce dossier accepte les [clés de carte](#clés-de-carte) avec un `tier` par défaut de `0`. Ils sont placés sur la carte après tous les systèmes, d'abord les sous-systèmes, puis les planètes, puis les lunes, si bien que chacun peut orbiter autour d'un corps du même pack.
+
+Un sous-système est une seconde étoile qui orbite autour de l'étoile du système. Galacticraft le traite comme une planète, il orbite donc comme elle, mais la carte le dessine avec l'icône du Soleil, son `tier` vaut toujours `-1`, et il n'a pas de dimension, si bien qu'aucune fusée ne s'y rend. Seule une lune ou une ceinture d'astéroïdes peut le nommer comme `parent` ; une planète ou une station spatiale qui le fait reste hors de la carte, et le journal dit pourquoi. Avec GalaxySpace, la carte d'AsmodeusCore le traite comme une étoile et dessine autour de lui le halo de sa `starColor` de `galaxyspace`.
 
 ### Clés de carte
 
@@ -3796,7 +3818,7 @@ Chaque corps, qu'il s'agisse d'un fichier `celestial/`, de l'objet `star` d'un s
 | Clé              | Requis                       | Valeur               | Défaut                                                                            | Rôle                                                                                                                                                                                                                                                                                                                                                  |
 | ---------------- | ---------------------------- | -------------------- | --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `name`           | non                          | texte                | le nom du fichier                                                                 | Le nom du corps, que sa clé de langue et chaque `parent` utilisent                                                                                                                                                                                                                                                                                    |
-| `parent`         | pour une lune ou une station | nom                  | `sol` pour une planète ou une ceinture                                            | Le système qu'orbite une planète, la planète qu'orbite une lune, la planète ou la lune qu'orbite une station, ou un système ou une planète pour une ceinture d'astéroïdes                                                                                                                                                                             |
+| `parent`         | pour une lune ou une station | nom                  | `sol` pour une planète, un sous-système ou une ceinture                           | Le système qu'orbite une planète ou un sous-système, la planète ou le sous-système qu'orbite une lune, la planète ou la lune qu'orbite une station, ou un système, une planète ou un sous-système pour une ceinture d'astéroïdes                                                                                                                      |
 | `icon`           | non                          | chemin de texture    | l'icône de Mars, de la Lune, du Soleil, d'astéroïde ou de station de Galacticraft | L'image sur la carte                                                                                                                                                                                                                                                                                                                                  |
 | `relativeSize`   | non                          | flottant             | `1.0`, une lune ou une station `0.2667`                                           | Sa taille sur la carte                                                                                                                                                                                                                                                                                                                                |
 | `distance`       | non                          | flottant             | `1.0`, une lune `13`, une station `9`                                             | À quelle distance il orbite                                                                                                                                                                                                                                                                                                                           |
@@ -3920,7 +3942,7 @@ Une dimension dont le bloc `galacticraft` contient `kind: "asteroids"` est une c
 }
 ```
 
-Le `parent` d'une ceinture est un système stellaire ou une planète. Autour d'un système, elle figure sur la carte comme une planète, et autour d'une planète comme une lune. Elle accepte toutes les clés du [bloc `galacticraft`](#le-bloc-galacticraft) sauf celles-ci, qu'une ceinture ignore :
+Le `parent` d'une ceinture est un système stellaire, une planète ou un sous-système. Autour d'un système, elle figure sur la carte comme une planète, et autour d'une planète ou d'un sous-système comme une lune. Elle accepte toutes les clés du [bloc `galacticraft`](#le-bloc-galacticraft) sauf celles-ci, qu'une ceinture ignore :
 
 | Clé             | Dans une ceinture                                                                                                           |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------- |
@@ -4072,7 +4094,7 @@ La `gravity` et la `dayLength` d'une dimension sont aussi ce que GalaxySpace aff
 | `auraColor`          | non    | couleur hexadécimale                                                                             | la couleur de `starColor`      | La couleur du halo autour d'une étoile sur la carte de GalaxySpace, à la place de celle de `starColor`                                                                                                                     |
 | `habitableZone`      | non    | `[distance, width]`                                                                              | `[0, 0]`                       | La bande autour d'une étoile que la carte de GalaxySpace marque comme habitable                                                                                                                                            |
 
-`starType`, `starColor`, `auraColor` et `habitableZone` ne sont lus que dans l'objet `star` d'un système ; les autres uniquement dans une planète ou une lune. GalaxySpace dessine ses tempêtes par planète : la tempête d'un pack agit donc, mais n'affiche aucun ciel propre.
+`starType`, `starColor`, `auraColor` et `habitableZone` ne sont lus que dans l'objet `star` d'un système ou dans un sous-système, et `orbitEccentricity` et `orbitOffset` aussi dans un sous-système ; les autres uniquement dans une planète ou une lune. GalaxySpace dessine ses tempêtes par planète : la tempête d'un pack agit donc, mais n'affiche aucun ciel propre.
 
 | Clé de `extraplanets` | Requis | Valeur                                                         | Défaut                                                         | Rôle                                                                                                                                                                    |
 | --------------------- | ------ | -------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

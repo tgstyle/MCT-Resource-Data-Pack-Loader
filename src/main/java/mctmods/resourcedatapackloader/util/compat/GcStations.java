@@ -52,6 +52,10 @@ final class GcStations {
     static boolean register(DimensionDef dimension, GalacticraftDef gc) {
         CelestialDef def = gc.body;
         Planet planet = GcCelestial.planet(def.parent);
+        if (GcCelestial.isSubsystem(planet)) {
+            ContentLog.LOGGER.error("Station {} orbits subsystem '{}', and only a moon or an asteroid belt may circle a subsystem", def.key, def.parent);
+            return false;
+        }
         Moon moon = planet == null ? GcCelestial.moon(def.parent) : null;
         CelestialBody home = planet == null ? moon : planet;
         Planet parent = moon == null ? planet : moon.getParentPlanet();

@@ -41,6 +41,7 @@ public final class GcCelestial {
     private static final Map<CelestialBody, Float> BELTS = new HashMap<>();
     private static final List<Integer> ROCKET_DIMENSIONS = new ArrayList<>();
     private static final Map<String, Integer> RADIATION = new HashMap<>();
+    private static final List<CelestialBody> SUBSYSTEMS = new ArrayList<>();
     private static final boolean GALAXY_SPACE = Loader.isModLoaded(ContentParserModPlanets.GALAXY_SPACE);
     private static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
     static final String PLANETS = "galacticraftplanets";
@@ -49,6 +50,8 @@ public final class GcCelestial {
     private GcCelestial() {}
 
     static boolean isBelt(@Nullable GalacticraftDef gc) { return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind); }
+
+    static boolean isSubsystem(@Nullable CelestialBody body) { return body != null && SUBSYSTEMS.contains(body); }
 
     @Nullable public static CelestialBody body(int dimension) { return BODIES.get(dimension); }
 
@@ -69,7 +72,7 @@ public final class GcCelestial {
         for (CelestialDef def : files) {
             if (CelestialDef.SYSTEM.equals(def.kind) && system(def)) { made.add("system " + def.name); }
         }
-        for (String kind : new String[] {CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS}) {
+        for (String kind : new String[] {CelestialDef.SUBSYSTEM, CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS}) {
             for (CelestialDef def : files) {
                 if (!kind.equals(def.kind)) { continue; }
                 missingMods(def, null);
@@ -143,7 +146,8 @@ public final class GcCelestial {
         else {
             SolarSystem parent = solarSystem(def.parent);
             if (parent == null) {
-                ContentLog.LOGGER.error("Planet {} circles '{}', which is no star system Galacticraft knows, so it is left off the map", def.key, def.parent);
+                if (isSubsystem(planet(def.parent))) { ContentLog.LOGGER.error("Celestial body {} is a {} circling subsystem '{}', and only a moon or an asteroid belt may circle a subsystem, so it is left off the map", def.key, def.kind, def.parent); }
+                else { ContentLog.LOGGER.error("Celestial body {} is a {} circling '{}', which is no star system Galacticraft knows, so it is left off the map", def.key, def.kind, def.parent); }
                 return null;
             }
             body = gs != null ? GsBodies.planet(def.name, parent) : new Planet(def.name).setParentSolarSystem(parent);
@@ -153,7 +157,11 @@ public final class GcCelestial {
             return null;
         }
         map(body, def);
-        if (gs != null) { GsBodies.body(body, gs, dayLength, gravity); }
+        if (CelestialDef.SUBSYSTEM.equals(def.kind)) {
+            if (GALAXY_SPACE) { GsBodies.subsystem(body, gs); }
+            SUBSYSTEMS.add(body);
+        }
+        else if (gs != null) { GsBodies.body(body, gs, dayLength, gravity); }
         return body;
     }
 

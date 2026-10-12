@@ -38,8 +38,8 @@ public final class ContentParserCelestial {
         if (json == null) { return null; }
         String kind = Settings.lower(JsonUtils.getString(json, "kind", ""));
         if (CelestialDef.SYSTEM.equals(kind)) { return system(key, json); }
-        if (!CelestialDef.PLANET.equals(kind) && !CelestialDef.MOON.equals(kind)) {
-            ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.MOON);
+        if (!CelestialDef.PLANET.equals(kind) && !CelestialDef.SUBSYSTEM.equals(kind) && !CelestialDef.MOON.equals(kind)) {
+            ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.SUBSYSTEM, CelestialDef.MOON);
             return null;
         }
         return body(key, json, kind, key.getPath(), 0, strings(json, "requires"));
@@ -157,13 +157,14 @@ public final class ContentParserCelestial {
                 ring,
                 Math.max(0.1F, JsonUtils.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
                 beltWidth,
-                CelestialDef.STAR.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
+                CelestialDef.STAR.equals(kind) || CelestialDef.SUBSYSTEM.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
                 "", 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
     }
 
     private static String icon(String kind) {
         switch (kind) {
-            case CelestialDef.STAR: return "sun";
+            case CelestialDef.STAR:
+            case CelestialDef.SUBSYSTEM: return "sun";
             case CelestialDef.MOON: return "moon";
             case CelestialDef.ASTEROIDS: return "asteroid";
             case CelestialDef.STATION: return "space_station";

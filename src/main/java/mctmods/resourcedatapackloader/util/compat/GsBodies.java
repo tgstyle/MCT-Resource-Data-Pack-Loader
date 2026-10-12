@@ -13,7 +13,6 @@ import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
 import micdoodle8.mods.galacticraft.api.galaxies.Moon;
 import micdoodle8.mods.galacticraft.api.galaxies.Planet;
 import micdoodle8.mods.galacticraft.api.galaxies.SolarSystem;
-import micdoodle8.mods.galacticraft.api.galaxies.Star;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Arrays;
@@ -41,11 +40,11 @@ final class GsBodies {
         BodiesRegistry.setPlanetData(body, gs.pressure, dayLength, gravity, gs.radiation);
         IAdvancedSpace.ClassBody bodyClass = gs.bodyClass == null ? null : IAdvancedSpace.ClassBody.valueOf(gs.bodyClass);
         if (bodyClass != null) { BodiesRegistry.setClassBody(body, bodyClass); }
-        BodiesRegistry.setOrbitData(body, body.getPhaseShift(), body.getRelativeSize(), body.getRelativeOrbitTime(), gs.eccentricityX, gs.eccentricityY, gs.offsetX, gs.offsetY);
+        orbit(body, gs);
         BodiesRegistry.registerBodyData(body, new BodiesData(bodyClass, Math.round(gs.pressure), gs.radiation));
     }
 
-    @SuppressWarnings("deprecation") static void star(Star star, GalaxySpaceDef gs) {
+    @SuppressWarnings("deprecation") static void star(CelestialBody star, GalaxySpaceDef gs) {
         BodiesData data = new BodiesData(IAdvancedSpace.TypeBody.STAR);
         if (gs.starType != null) { data.setStarType(IAdvancedSpace.StarType.valueOf(gs.starType)); }
         if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
@@ -53,6 +52,17 @@ final class GsBodies {
         BodiesRegistry.registerBodyData(star, data);
         GsStarAura.register(star, gs.auraColor);
     }
+
+    @SuppressWarnings("deprecation") static void subsystem(CelestialBody body, @Nullable GalaxySpaceDef gs) {
+        if (gs == null) {
+            BodiesRegistry.registerBodyData(body, new BodiesData(IAdvancedSpace.TypeBody.STAR));
+            return;
+        }
+        orbit(body, gs);
+        star(body, gs);
+    }
+
+    private static void orbit(CelestialBody body, GalaxySpaceDef gs) { BodiesRegistry.setOrbitData(body, body.getPhaseShift(), body.getRelativeSize(), body.getRelativeOrbitTime(), gs.eccentricityX, gs.eccentricityY, gs.offsetX, gs.offsetY); }
 
     static float thermal(@Nullable World world, @Nullable GalaxySpaceDef gs, float base) {
         if (world == null || gs == null || gs.thermalVariation <= 0.0F || !GSConfigCore.enableAdvancedThermalSystem) { return base; }
