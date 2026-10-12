@@ -45,8 +45,8 @@ final class GsBodies {
         BodiesRegistry.registerBodyData(body, new BodiesData(bodyClass, Math.round(gs.pressure), gs.radiation));
     }
 
-    static void star(Star star, GalaxySpaceDef gs) {
-        BodiesData data = new BodiesData(null, 0, false);
+    @SuppressWarnings("deprecation") static void star(Star star, GalaxySpaceDef gs) {
+        BodiesData data = new BodiesData(IAdvancedSpace.TypeBody.STAR);
         if (gs.starType != null) { data.setStarType(IAdvancedSpace.StarType.valueOf(gs.starType)); }
         if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
         data.setStarHabitableZone(gs.zoneDistance, gs.zoneSize);
