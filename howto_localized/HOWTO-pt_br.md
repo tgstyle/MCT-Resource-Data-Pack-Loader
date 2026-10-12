@@ -3884,7 +3884,7 @@ Apenas `block` é obrigatório; tudo o mais pode ser omitido e assume seu padrã
 | `maxHeight` | não | int | `64` | O maior y em que ela coloca |
 | `dimensions` | não | lista de ids de dimensões | todas as dimensões | Em quais dimensões ela roda |
 | `dimensionsAreBlacklist` | não | booleano | `false` | Transforma essa lista na das que devem ser evitadas |
-| `biomes` | não | lista de nomes de biomas | todos os biomas | Em quais biomas ela roda |
+| `biomes` | não | lista de nomes de biomas | todos os biomas | Em quais biomas ela roda. Um nome sem namespace é lido primeiro no namespace do pack e depois como `minecraft` |
 | `biomeTypes` | não | lista de tipos de biomas | nenhum | Biomas por palavra de tipo, como `forest` ou `nether` |
 | `biomesAreBlacklist` | não | booleano | `false` | Transforma essas listas nas das que devem ser evitadas |
 | `minTemperature` | não | float | `-100.0` | O bioma mais frio em que ela gera |

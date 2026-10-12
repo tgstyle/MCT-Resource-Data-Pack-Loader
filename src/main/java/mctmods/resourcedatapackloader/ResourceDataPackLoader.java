@@ -292,6 +292,7 @@ import java.util.Set;
         NeoForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
         NeoForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
         NeoForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(ContentWorldgen::onServerStarted);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onDeathWatch);
         NeoForge.EVENT_BUS.addListener(ContentEntities::onStruck);

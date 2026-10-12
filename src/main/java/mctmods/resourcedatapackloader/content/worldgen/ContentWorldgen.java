@@ -22,10 +22,14 @@ import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.TagKey;
@@ -35,6 +39,7 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -67,10 +72,22 @@ public final class ContentWorldgen {
         loaded = true;
         if (Config.worldgen.loadOff()) { return; }
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
-            if (ContentRegistry.reserved(key) || key.getPath().indexOf('/') >= 0) { return; }
+            if (ContentRegistry.reserved(key)) { return; }
+            if (key.getPath().indexOf('/') >= 0) {
+                if (namesBlock(contents)) { ContentLog.LOGGER.error("Worldgen definition {} sits in a subfolder of worldgen, which is not read. Move it to {}:worldgen/{}.json, with a name of its own", key, key.getNamespace(), key.getPath().substring(key.getPath().lastIndexOf('/') + 1)); }
+                return;
+            }
             WorldgenDef def = ContentWorldgenParser.parse(key, contents);
             if (def != null) { DEFS.put(key, def); }
         });
+    }
+
+    private static boolean namesBlock(String contents) {
+        try {
+            JsonElement parsed = JsonParser.parseString(contents);
+            return parsed.isJsonObject() && (parsed.getAsJsonObject().has("block") || parsed.getAsJsonObject().has("blocks"));
+        }
+        catch (RuntimeException ex) { return false; }
     }
 
     public static void generate() {
@@ -86,6 +103,20 @@ public final class ContentWorldgen {
         if (!ENTRIES.isEmpty()) { Summary.info("worldgen", "Generating " + ENTRIES.size() + " vein type(s) from packs"); }
         if (Config.worldgen.blockOres() && ENTRIES.isEmpty()) { ContentLog.LOGGER.warn("blockOres is on and no pack vein survived, so nothing will generate ore at all. Check the skipped entries above"); }
         ContentRetrogen.setup(ENTRIES.values());
+    }
+
+    public static void onServerStarted(ServerStartedEvent event) {
+        Registry<Biome> registry = event.getServer().registryAccess().registryOrThrow(Registries.BIOME);
+        for (Entry entry : ENTRIES.values()) {
+            int registered = 0;
+            for (ResourceLocation id : entry.biomes()) {
+                if (registry.containsKey(id)) { registered++; }
+                else { ContentLog.LOGGER.error("Worldgen {} names biome {}, which is not registered, leaving it out", entry.def().key(), id); }
+            }
+            if (!entry.biomes().isEmpty() && registered == 0 && entry.biomeTags().isEmpty() && !entry.def().biomesAreBlacklist()) {
+                ContentLog.LOGGER.error("Worldgen {} lists biomes but none of them is registered, so it generates nowhere", entry.def().key());
+            }
+        }
     }
 
     @Nullable public static Entry entry(ResourceLocation key) { return ENTRIES.get(key); }
@@ -256,7 +287,7 @@ public final class ContentWorldgen {
         }
         ContentPalette palette = new ContentPalette(states, weights, targets, exact, nearby, nearbyExact, surface);
         IContentShape shape = build(def, extra(def.shape().outline(), key), extra(def.shape().fill(), key), extra(def.shape().log(), key), extra(def.shape().leaves(), key));
-        return new Entry(def, palette, shape, ids(def, def.biomes(), String::trim, "biome"), biomeTags(def), ids(def, def.dimensions(), ContentFormats::dimensionId, "dimension"));
+        return new Entry(def, palette, shape, ids(def, def.biomes(), name -> biomeName(def, name), "biome"), biomeTags(def), ids(def, def.dimensions(), ContentFormats::dimensionId, "dimension"));
     }
 
     private static IContentShape build(WorldgenDef def, @Nullable BlockState outline, @Nullable BlockState fill, @Nullable BlockState log, @Nullable BlockState leaves) {
@@ -327,6 +358,14 @@ public final class ContentWorldgen {
 
     @Nullable private static BlockState state(String name, ResourceLocation key) {
         return name.isEmpty() ? null : state(ResourceLocation.tryParse(name), Map.of(), key);
+    }
+
+    private static String biomeName(WorldgenDef def, String entry) {
+        String name = entry.trim();
+        if (name.indexOf(':') >= 0) { return name; }
+        String own = def.key().getNamespace() + ":" + name;
+        ResourceLocation id = ResourceLocation.tryParse(own);
+        return id != null && ContentBiomes.def(id) != null ? own : name;
     }
 
     private static Set<ResourceLocation> ids(WorldgenDef def, List<String> entries, UnaryOperator<String> normalizer, String what) {

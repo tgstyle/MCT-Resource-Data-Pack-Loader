@@ -3884,7 +3884,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `maxHeight` | 否 | 整数  | `64` | 它会放置的最高 y 坐标 |
 | `dimensions` | 否 | 维度 id 列表 | 每个维度 | 它在哪些维度中运行 |
 | `dimensionsAreBlacklist` | 否 | 布尔值 | `false` | 把该列表变成需要避开的维度 |
-| `biomes` | 否 | 生物群系名称列表 | 每个生物群系 | 它在哪些生物群系中运行 |
+| `biomes` | 否 | 生物群系名称列表 | 每个生物群系 | 它在哪些生物群系中运行。不带命名空间的名称先按资源包自身的命名空间读取，再按 `minecraft` 读取 |
 | `biomeTypes` | 否 | 生物群系类型列表 | 无 | 按类型词指定生物群系，例如 `forest` 或 `nether` |
 | `biomesAreBlacklist` | 否 | 布尔值 | `false` | 把这些列表变成需要避开的 |
 | `minTemperature` | 否 | 浮点数 | `-100.0` | 它会生成的最冷生物群系 |
