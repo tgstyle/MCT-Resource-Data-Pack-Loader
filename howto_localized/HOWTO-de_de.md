@@ -3914,7 +3914,8 @@ Eine Dimension, deren `galacticraft`-Block `kind: "asteroids"` hat, ist ein Aste
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
-    "tier": 3
+    "tier": 3,
+    "beltWidth": 0.15
   }
 }
 ```
@@ -3927,6 +3928,12 @@ Das `parent` eines Gürtels ist ein Sternsystem oder ein Planet. Um ein System s
 | `landingHeight` | Die Landekapsel bestimmt ihre Höhe selbst                                                             |
 | `arrival`       | Die Landekapsel sucht den Asteroiden aus                                                              |
 | `dungeon`       | Ein Pack-Gürtel hat keine verlassenen Basen                                                           |
+
+Dazu nimmt ein Gürtel einen eigenen Schlüssel, den die Karte von Galacticraft wie die von AsmodeusCore zeichnet:
+
+| Schlüssel   | Pflicht | Wert  | Standard | Was er macht                                                                                                                                                                                                                                                                                                                                                          |
+| ----------- | ------- | ----- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beltWidth` | nein    | float | `0`      | Wie breit die Zone des Gürtels auf der Karte gezeichnet wird, in den Einheiten von `distance` und mittig auf seiner Bahn, umrandet und gefüllt in `ringColor`. `0` zeichnet die einfache Bahnlinie. Galacticrafts eigener Gürtel ist 0,08-mal so breit wie seine Entfernung gezeichnet. AsmodeusCores Karte zeigt die Zone nur, solange ihre Zonen eingeschaltet sind |
 
 Himmel, Schwerkraft, Zeit und Wetter kommen aus den eigenen Schlüsseln der Dimension, wie bei jedem Pack-Planeten. Fünf davon haben in einem Gürtel einen anderen Standard, passend zu Galacticrafts eigenem:
 

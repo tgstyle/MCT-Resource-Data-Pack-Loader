@@ -3914,7 +3914,8 @@ Una dimensión cuyo bloque `galacticraft` tiene `kind: "asteroids"` es un cintur
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
-    "tier": 3
+    "tier": 3,
+    "beltWidth": 0.15
   }
 }
 ```
@@ -3927,6 +3928,12 @@ El `parent` de un cinturón es un sistema estelar o un planeta. Alrededor de un 
 | `landingHeight` | La cápsula de entrada fija su propia altura                                                                           |
 | `arrival`       | La cápsula de entrada elige el asteroide                                                                              |
 | `dungeon`       | Un cinturón del pack no tiene bases abandonadas                                                                       |
+
+Además, un cinturón admite una clave propia, que dibujan tanto el mapa de Galacticraft como el de AsmodeusCore:
+
+| Clave       | Obligatorio | Valor   | Por defecto | Qué hace                                                                                                                                                                                                                                                                                                                                                           |
+| ----------- | ----------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `beltWidth` | no          | decimal | `0`         | El ancho con que se dibuja la zona del cinturón en el mapa, en las unidades de `distance` y centrada en su órbita, con borde y relleno de `ringColor`. `0` dibuja la línea de órbita simple. El cinturón propio de Galacticraft se dibuja con un ancho de 0,08 veces su distancia. El mapa de AsmodeusCore muestra la zona solo mientras sus zonas están activadas |
 
 El cielo, la gravedad, la hora y el clima son las claves propias de la dimensión, como en cualquier planeta de un pack. Cinco de ellas tienen un valor por defecto distinto en un cinturón, para ajustarse al de Galacticraft:
 

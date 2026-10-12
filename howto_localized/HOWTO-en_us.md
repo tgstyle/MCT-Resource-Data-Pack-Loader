@@ -3914,7 +3914,8 @@ A dimension whose `galacticraft` block has `kind: "asteroids"` is an asteroid be
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
-    "tier": 3
+    "tier": 3,
+    "beltWidth": 0.15
   }
 }
 ```
@@ -3927,6 +3928,12 @@ A belt's `parent` is a star system or a planet. Around a system it sits on the m
 | `landingHeight` | The entry pod sets its own height                                                       |
 | `arrival`       | The entry pod picks the asteroid                                                        |
 | `dungeon`       | A pack belt has no abandoned bases                                                      |
+
+A belt also takes one key of its own, which Galacticraft's map and AsmodeusCore's both draw:
+
+| Key         | Required | Value | Default | What it does                                                                                                                                                                                                                                                                                               |
+| ----------- | -------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beltWidth` | no       | float | `0`     | How wide the belt's zone is drawn on the map, in the units of `distance` and centered on its orbit, edged and filled in `ringColor`. `0` draws the plain orbit line. Galacticraft's own belt is drawn 0.08 times its distance wide. AsmodeusCore's map shows the zone only while its zones are switched on |
 
 The sky, gravity, time and weather are the dimension's own keys, as on any pack planet. Five of them default differently in a belt, to match Galacticraft's own:
 

@@ -3914,7 +3914,8 @@ Uma dimensão cujo bloco `galacticraft` tem `kind: "asteroids"` é um cinturão 
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
-    "tier": 3
+    "tier": 3,
+    "beltWidth": 0.15
   }
 }
 ```
@@ -3927,6 +3928,12 @@ O `parent` de um cinturão é um sistema estelar ou um planeta. Ao redor de um s
 | `landingHeight` | A cápsula de entrada define a sua própria altura                                                               |
 | `arrival`       | A cápsula de entrada escolhe o asteroide                                                                       |
 | `dungeon`       | Um cinturão de pacote não tem bases abandonadas                                                                |
+
+Um cinturão aceita também uma chave própria, que o mapa do Galacticraft e o do AsmodeusCore desenham:
+
+| Chave       | Obrigatória | Valor | Padrão | O que faz                                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | ----------- | ----- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beltWidth` | não         | float | `0`    | A largura com que a zona do cinturão é desenhada no mapa, nas unidades de `distance` e centrada na sua órbita, com borda e preenchimento em `ringColor`. `0` desenha só a linha da órbita. O cinturão do próprio Galacticraft é desenhado com 0,08 vez a sua distância de largura. O mapa do AsmodeusCore mostra a zona só enquanto as zonas dele estão ligadas |
 
 O céu, a gravidade, o tempo e o clima são as chaves da própria dimensão, como em qualquer planeta de pacote. Cinco delas têm padrões diferentes em um cinturão, para combinar com os do próprio Galacticraft:
 

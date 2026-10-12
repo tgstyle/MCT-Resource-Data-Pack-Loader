@@ -3914,7 +3914,8 @@ Une dimension dont le bloc `galacticraft` contient `kind: "asteroids"` est une c
     "name": "slag",
     "parent": "ember",
     "distance": 1.75,
-    "tier": 3
+    "tier": 3,
+    "beltWidth": 0.15
   }
 }
 ```
@@ -3927,6 +3928,12 @@ Le `parent` d'une ceinture est un système stellaire ou une planète. Autour d'u
 | `landingHeight` | La capsule d'entrée fixe sa propre altitude                                                                                 |
 | `arrival`       | La capsule d'entrée choisit l'astéroïde                                                                                     |
 | `dungeon`       | Une ceinture de pack n'a pas de bases abandonnées                                                                           |
+
+Une ceinture accepte aussi une clé qui lui est propre, que dessinent la carte de Galacticraft comme celle d'AsmodeusCore :
+
+| Clé         | Requis | Valeur   | Défaut | Rôle                                                                                                                                                                                                                                                                                                                                                |
+| ----------- | ------ | -------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `beltWidth` | non    | flottant | `0`    | La largeur de la zone de la ceinture dessinée sur la carte, dans les unités de `distance` et centrée sur son orbite, bordée et remplie de `ringColor`. `0` dessine la simple ligne d'orbite. La ceinture de Galacticraft est dessinée large de 0,08 fois sa distance. La carte d'AsmodeusCore n'affiche la zone que lorsque ses zones sont activées |
 
 Le ciel, la gravité, le temps et la météo sont les clés propres de la dimension, comme sur n'importe quelle planète de pack. Cinq d'entre eux ont une valeur par défaut différente dans une ceinture, afin de correspondre à celles de Galacticraft :
 

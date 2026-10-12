@@ -38,6 +38,7 @@ import javax.annotation.Nullable;
 public final class GcCelestial {
     static final ResourceLocation ROCKET_GUI = new ResourceLocation("galacticraftcore", "textures/gui/overworld_rocket_gui.png");
     private static final Map<Integer, CelestialBody> BODIES = new HashMap<>();
+    private static final Map<CelestialBody, Float> BELTS = new HashMap<>();
     private static final List<Integer> ROCKET_DIMENSIONS = new ArrayList<>();
     private static final Map<String, Integer> RADIATION = new HashMap<>();
     private static final boolean GALAXY_SPACE = Loader.isModLoaded(ContentParserModPlanets.GALAXY_SPACE);
@@ -50,6 +51,8 @@ public final class GcCelestial {
     static boolean isBelt(@Nullable GalacticraftDef gc) { return gc != null && CelestialDef.ASTEROIDS.equals(gc.body.kind); }
 
     @Nullable public static CelestialBody body(int dimension) { return BODIES.get(dimension); }
+
+    static float beltWidth(CelestialBody body) { return BELTS.getOrDefault(body, 0.0F); }
 
     @Nullable static DimensionType registeredType(int dimension) { return DimensionManager.isDimensionRegistered(dimension) ? DimensionManager.getProviderType(dimension) : null; }
 
@@ -206,6 +209,7 @@ public final class GcCelestial {
         }
         GalaxyRegistry.register(body);
         BODIES.put(dimension.id, body);
+        if (isBelt(gc) && gc.body.beltWidth > 0.0F) { BELTS.put(body, gc.body.beltWidth); }
         if (gc.extraPlanets != null && gc.extraPlanets.radiation >= 0) { RADIATION.put(body.getTranslationKey(), gc.extraPlanets.radiation); }
         return true;
     }

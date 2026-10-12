@@ -115,7 +115,7 @@ public final class ContentParserCelestial {
         JsonObject starJson = JsonUtils.getJsonObject(json, "star", new JsonObject());
         CelestialDef star = body(key, starJson, CelestialDef.STAR, name, -1, Collections.emptyList());
         if (star == null) { return null; }
-        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, -1,
+        return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, 0.0F, -1,
                 JsonUtils.getString(json, "galaxy", "milky_way").trim(),
                 at.get(0).getAsFloat(), at.get(1).getAsFloat(), at.size() > 2 ? at.get(2).getAsFloat() : 0.0F,
                 star, strings(json, "requires"), null);
@@ -141,6 +141,11 @@ public final class ContentParserCelestial {
             ContentLog.LOGGER.error("Celestial body {} is a {} and sets a ring, which only a planet or moon can have, ignoring it", key, kind);
             ring = null;
         }
+        float beltWidth = Math.max(0.0F, JsonUtils.getFloat(json, "beltWidth", 0.0F));
+        if (beltWidth > 0.0F && !CelestialDef.ASTEROIDS.equals(kind)) {
+            ContentLog.LOGGER.error("Celestial body {} is a {} and sets a beltWidth, which only an asteroid belt can have, ignoring it", key, kind);
+            beltWidth = 0.0F;
+        }
         return new CelestialDef(key, kind, name, parent,
                 new ResourceLocation(JsonUtils.getString(json, "icon", ICONS + icon(kind) + ".png").trim()),
                 JsonUtils.getFloat(json, "relativeSize", moon || station ? 0.2667F : 1.0F),
@@ -151,6 +156,7 @@ public final class ContentParserCelestial {
                 ContentTypes.color(JsonUtils.getString(json, "ringColor", RING), key + " ringColor"),
                 ring,
                 Math.max(0.1F, JsonUtils.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
+                beltWidth,
                 CelestialDef.STAR.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
                 "", 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
     }
