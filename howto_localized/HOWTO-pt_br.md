@@ -4048,7 +4048,7 @@ Dois complementos do Galacticraft leem de um corpo mais do que o Galacticraft l�
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
-    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "auraColor": "#FF7A30", "habitableZone": [1.2, 0.6] }
   }
 }
 ```
@@ -4069,9 +4069,10 @@ A `gravity` e o `dayLength` de uma dimensão também são o que o GalaxySpace mo
 | `weatherFrequency`     | não         | float                                                                                            | `1`                              | Com que frequência uma tempestade de raios atinge                                                                                                                                                  |
 | `starType`             | não         | `subdwarf`, `dwarf`, `subgiant`, `giant`, `supergiant`, `hypergiant`, `blackhole`                | nenhum                           | O tipo de uma estrela, mostrado no mapa do GalaxySpace                                                                                                                                             |
 | `starColor`            | não         | `brown`, `red`, `orange`, `yellow`, `white`, `lightblue`, `blue`, ou uma classe `M1` a `O3`      | nenhum                           | A classe de cor de uma estrela, mostrada no mapa do GalaxySpace                                                                                                                                    |
+| `auraColor`            | não         | cor hex                                                                                          | a cor de `starColor`             | A cor do brilho em volta de uma estrela no mapa do GalaxySpace, no lugar da cor de `starColor`                                                                                                     |
 | `habitableZone`        | não         | `[distance, width]`                                                                              | `[0, 0]`                         | A faixa ao redor de uma estrela que o mapa do GalaxySpace marca como habitável                                                                                                                     |
 
-`starType`, `starColor` e `habitableZone` são lidos apenas na `star` de um sistema; os demais, apenas em um planeta ou lua. O GalaxySpace desenha as suas tempestades por planeta, então a tempestade de um pacote age, mas não mostra um céu próprio.
+`starType`, `starColor`, `auraColor` e `habitableZone` são lidos apenas na `star` de um sistema; os demais, apenas em um planeta ou lua. O GalaxySpace desenha as suas tempestades por planeta, então a tempestade de um pacote age, mas não mostra um céu próprio.
 
 | Chave de `extraplanets` | Obrigatória | Valor                                                          | Padrão                                            | O que faz                                                                                                                                                      |
 | ----------------------- | ----------- | -------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |

@@ -4048,7 +4048,7 @@ Galacticraft 只在它自己的地形中建造地牢，所以 `dungeon` 只在�
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
-    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "auraColor": "#FF7A30", "habitableZone": [1.2, 0.6] }
   }
 }
 ```
@@ -4069,9 +4069,10 @@ Galacticraft 只在它自己的地形中建造地牢，所以 `dungeon` 只在�
 | `weatherFrequency`  | 否   | 浮点数                                                                                           | `1`            | 雷暴落雷的频率                                                                                                                              |
 | `starType`          | 否   | `subdwarf`、`dwarf`、`subgiant`、`giant`、`supergiant`、`hypergiant`、`blackhole`                | 无             | 恒星的类型，显示在 GalaxySpace 地图上                                                                                                       |
 | `starColor`         | 否   | `brown`、`red`、`orange`、`yellow`、`white`、`lightblue`、`blue`，或 `M1` 到 `O3` 的类别         | 无             | 恒星的颜色类别，显示在 GalaxySpace 地图上                                                                                                   |
+| `auraColor`         | 否   | 十六进制颜色                                                                                     | 同 `starColor` | 恒星在 GalaxySpace 地图上的光晕颜色，取代 `starColor` 给出的颜色                                                                            |
 | `habitableZone`     | 否   | `[distance, width]`                                                                              | `[0, 0]`       | GalaxySpace 地图标记为宜居的恒星周围区带                                                                                                    |
 
-`starType`、`starColor` 和 `habitableZone` 只在星系的 `star` 中读取；其余的只在行星或卫星中读取。GalaxySpace 按行星绘制它的风暴，所以资源包的风暴会起作用，但不会显示它自己的天空。
+`starType`、`starColor`、`auraColor` 和 `habitableZone` 只在星系的 `star` 中读取；其余的只在行星或卫星中读取。GalaxySpace 按行星绘制它的风暴，所以资源包的风暴会起作用，但不会显示它自己的天空。
 
 | `extraplanets` 键  | 必需 | 值                                                             | 默认值                              | 作用                                                                                                         |
 | ------------------ | ---- | -------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |

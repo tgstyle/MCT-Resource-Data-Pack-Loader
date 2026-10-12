@@ -4048,7 +4048,7 @@ Two Galacticraft add-ons read more about a body than Galacticraft does. A `galax
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
-    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "auraColor": "#FF7A30", "habitableZone": [1.2, 0.6] }
   }
 }
 ```
@@ -4069,9 +4069,10 @@ A dimension's `gravity` and `dayLength` are also what GalaxySpace shows for the 
 | `weatherFrequency`  | no       | float                                                                                            | `1`                     | How often a lightning storm strikes                                                                                                                                               |
 | `starType`          | no       | `subdwarf`, `dwarf`, `subgiant`, `giant`, `supergiant`, `hypergiant`, `blackhole`                | none                    | A star's type, shown on the GalaxySpace map                                                                                                                                       |
 | `starColor`         | no       | `brown`, `red`, `orange`, `yellow`, `white`, `lightblue`, `blue`, or a class `M1` to `O3`        | none                    | A star's color class, shown on the GalaxySpace map                                                                                                                                |
+| `auraColor`         | no       | hex color                                                                                        | `starColor`'s color     | The color of the glow around a star on the GalaxySpace map, in place of the `starColor` color                                                                                     |
 | `habitableZone`     | no       | `[distance, width]`                                                                              | `[0, 0]`                | The band around a star the GalaxySpace map marks as habitable                                                                                                                     |
 
-`starType`, `starColor` and `habitableZone` are read only in a system's `star`; the rest only in a planet or moon. GalaxySpace draws its storms per planet, so a pack's storm acts but shows no sky of its own.
+`starType`, `starColor`, `auraColor` and `habitableZone` are read only in a system's `star`; the rest only in a planet or moon. GalaxySpace draws its storms per planet, so a pack's storm acts but shows no sky of its own.
 
 | `extraplanets` key | Required | Value                                                          | Default                                 | What it does                                                                                                                                     |
 | ------------------ | -------- | -------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |

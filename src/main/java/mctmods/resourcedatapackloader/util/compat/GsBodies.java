@@ -51,6 +51,7 @@ final class GsBodies {
         if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
         data.setStarHabitableZone(gs.zoneDistance, gs.zoneSize);
         BodiesRegistry.registerBodyData(star, data);
+        GsStarAura.register(star, gs.auraColor);
     }
 
     static float thermal(@Nullable World world, @Nullable GalaxySpaceDef gs, float base) {

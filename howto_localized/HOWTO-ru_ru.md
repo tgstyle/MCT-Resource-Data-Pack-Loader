@@ -4048,7 +4048,7 @@ Galacticraft строит свои подземелья только в своё
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
-    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "auraColor": "#FF7A30", "habitableZone": [1.2, 0.6] }
   }
 }
 ```
@@ -4069,9 +4069,10 @@ Galacticraft строит свои подземелья только в своё
 | `weatherFrequency`   | нет   | float                                                                                            | `1`                    | Как часто бьёт молния в грозовую бурю                                                                                                                                                        |
 | `starType`           | нет   | `subdwarf`, `dwarf`, `subgiant`, `giant`, `supergiant`, `hypergiant`, `blackhole`                | нет                    | Тип звезды на карте GalaxySpace                                                                                                                                                              |
 | `starColor`          | нет   | `brown`, `red`, `orange`, `yellow`, `white`, `lightblue`, `blue` или класс от `M1` до `O3`       | нет                    | Цветовой класс звезды на карте GalaxySpace                                                                                                                                                   |
+| `auraColor`          | нет   | hex-цвет                                                                                         | цвет из `starColor`    | Цвет свечения вокруг звезды на карте GalaxySpace вместо цвета из `starColor`                                                                                                                 |
 | `habitableZone`      | нет   | `[distance, width]`                                                                              | `[0, 0]`               | Пояс вокруг звезды, который карта GalaxySpace отмечает как пригодный для жизни                                                                                                               |
 
-`starType`, `starColor` и `habitableZone` читаются только в `star` системы, остальные ключи — только в планете или луне. GalaxySpace рисует бури отдельно для каждой своей планеты, поэтому буря пака действует, но своего неба не получает.
+`starType`, `starColor`, `auraColor` и `habitableZone` читаются только в `star` системы, остальные ключи — только в планете или луне. GalaxySpace рисует бури отдельно для каждой своей планеты, поэтому буря пака действует, но своего неба не получает.
 
 | Ключ в `extraplanets` | Обяз. | Значение                                                       | По умолчанию                                | Что делает                                                                                                                            |
 | --------------------- | ----- | -------------------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |

@@ -8,6 +8,7 @@
   "client": [
     "MixinACPacketSimpleStationHome",
     "MixinACPacketSimpleStationLabel",
+    "MixinNewGuiCelestialSelectionAura",
     "MixinSkyProviderOverworldTextures"
   ],
   "server": []

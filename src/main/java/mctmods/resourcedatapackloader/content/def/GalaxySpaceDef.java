@@ -17,10 +17,11 @@ public final class GalaxySpaceDef {
     public final double weatherFrequency;
     @Nullable public final String starType;
     @Nullable public final String starColor;
+    public final int auraColor;
     public final float zoneDistance;
     public final float zoneSize;
 
-    public GalaxySpaceDef(float pressure, boolean radiation, @Nullable String bodyClass, float eccentricityX, float eccentricityY, float offsetX, float offsetY, boolean freezeBlocks, float thermalVariation, double solarWind, @Nullable String weather, double weatherFrequency, @Nullable String starType, @Nullable String starColor, float zoneDistance, float zoneSize) {
+    public GalaxySpaceDef(float pressure, boolean radiation, @Nullable String bodyClass, float eccentricityX, float eccentricityY, float offsetX, float offsetY, boolean freezeBlocks, float thermalVariation, double solarWind, @Nullable String weather, double weatherFrequency, @Nullable String starType, @Nullable String starColor, int auraColor, float zoneDistance, float zoneSize) {
         this.pressure = pressure;
         this.radiation = radiation;
         this.bodyClass = bodyClass;
@@ -35,6 +36,7 @@ public final class GalaxySpaceDef {
         this.weatherFrequency = weatherFrequency;
         this.starType = starType;
         this.starColor = starColor;
+        this.auraColor = auraColor;
         this.zoneDistance = zoneDistance;
         this.zoneSize = zoneSize;
     }

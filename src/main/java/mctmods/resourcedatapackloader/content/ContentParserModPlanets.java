@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.ExtraPlanetsDef;
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
+import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 
@@ -33,6 +35,7 @@ public final class ContentParserModPlanets {
         float[] offset = pair(key, json, "orbitOffset");
         float[] zone = pair(key, json, "habitableZone");
         String owner = "Celestial body " + key + " GalaxySpace";
+        String aura = JsonUtils.getString(json, "auraColor", "").trim();
         return new GalaxySpaceDef(Math.max(0.0F, JsonUtils.getFloat(json, "pressure", 0.0F)),
                 JsonUtils.getBoolean(json, "radiation", false),
                 Json.choice(json, "class", null, owner, CLASSES),
@@ -44,6 +47,7 @@ public final class ContentParserModPlanets {
                 Math.max(0.0F, JsonUtils.getFloat(json, "weatherFrequency", 1.0F)),
                 Json.choice(json, "starType", null, owner, STAR_TYPES),
                 Json.choice(json, "starColor", null, owner, STAR_COLORS),
+                aura.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(aura, owner + " auraColor") & 0xFFFFFF,
                 zone[0], zone[1]);
     }
 

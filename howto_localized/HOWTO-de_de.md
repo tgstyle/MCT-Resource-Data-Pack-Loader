@@ -4048,7 +4048,7 @@ Zwei Galacticraft-Addons lesen mehr über einen Körper als Galacticraft selbst.
   "mapPosition": [0.9, -0.5],
   "star": {
     "name": "ember",
-    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "habitableZone": [1.2, 0.6] }
+    "galaxyspace": { "starType": "subgiant", "starColor": "orange", "auraColor": "#FF7A30", "habitableZone": [1.2, 0.6] }
   }
 }
 ```
@@ -4069,9 +4069,10 @@ Zwei Galacticraft-Addons lesen mehr über einen Körper als Galacticraft selbst.
 | `weatherFrequency`         | nein    | float                                                                                               | `1`                          | Wie oft ein Gewittersturm einschlägt                                                                                                                                                                                        |
 | `starType`                 | nein    | `subdwarf`, `dwarf`, `subgiant`, `giant`, `supergiant`, `hypergiant`, `blackhole`                   | keiner                       | Der Typ eines Sterns, angezeigt auf der GalaxySpace-Karte                                                                                                                                                                   |
 | `starColor`                | nein    | `brown`, `red`, `orange`, `yellow`, `white`, `lightblue`, `blue` oder eine Klasse von `M1` bis `O3` | keine                        | Die Farbklasse eines Sterns, angezeigt auf der GalaxySpace-Karte                                                                                                                                                            |
+| `auraColor`                | nein    | Hex-Farbe                                                                                           | die Farbe aus `starColor`    | Die Farbe des Leuchtens um einen Stern auf der GalaxySpace-Karte, anstelle der Farbe aus `starColor`                                                                                                                        |
 | `habitableZone`            | nein    | `[distance, width]`                                                                                 | `[0, 0]`                     | Der Gürtel um einen Stern, den die GalaxySpace-Karte als bewohnbar markiert                                                                                                                                                 |
 
-`starType`, `starColor` und `habitableZone` werden nur im `star` eines Systems gelesen, alle übrigen nur in einem Planeten oder Mond. GalaxySpace zeichnet seine Stürme für jeden Planeten eigens, deshalb wirkt der Sturm eines Packs zwar, bringt aber keinen eigenen Himmel mit.
+`starType`, `starColor`, `auraColor` und `habitableZone` werden nur im `star` eines Systems gelesen, alle übrigen nur in einem Planeten oder Mond. GalaxySpace zeichnet seine Stürme für jeden Planeten eigens, deshalb wirkt der Sturm eines Packs zwar, bringt aber keinen eigenen Himmel mit.
 
 | Schlüssel in `extraplanets` | Pflicht | Wert                                                           | Standard                                        | Was er macht                                                                                                                                                                      |
 | --------------------------- | ------- | -------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
