@@ -32,6 +32,8 @@ public final class ContentWorldgenParser {
             ShapeDef.TREE, ShapeDef.VINES, ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING);
     private static final Set<String> KNOWN_SPREADS = Set.of(SpreadDef.EVEN, SpreadDef.CENTERED, SpreadDef.SPRAWL, SpreadDef.TERRAIN, SpreadDef.CAVERN, SpreadDef.SUBMERGED);
 
+    private static final List<String> SHAPE_ONLY_KEYS = List.of("rarity", "rarityIsPerChunk", "pattern", "threshold", "density", "taper", "rich", "poor");
+
     private ContentWorldgenParser() {}
 
     @Nullable public static WorldgenDef parse(ResourceLocation key, String contents) {
@@ -65,6 +67,9 @@ public final class ContentWorldgenParser {
         if (depth < 0) {
             ContentLog.LOGGER.error("Worldgen {} asks for snapDepth {}, which is below zero, so it stays at the surface", key, depth);
             depth = 0;
+        }
+        for (String misplaced : SHAPE_ONLY_KEYS) {
+            if (json.has(misplaced)) { ContentLog.LOGGER.error("Worldgen {} writes '{}' outside its shape object, where it is ignored", key, misplaced); }
         }
         return new WorldgenDef(key, block, weights(key, json),
                 ContentParser.amount(json, "size", 8, 1),

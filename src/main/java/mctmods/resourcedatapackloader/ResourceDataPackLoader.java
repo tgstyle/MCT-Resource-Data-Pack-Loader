@@ -289,6 +289,7 @@ import java.util.Set;
         MinecraftForge.EVENT_BUS.addListener(ContentHardness::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntityTicks::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(ContentEntitySpawns::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener(ContentWorldgen::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onEngagement);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onDeathWatch);
         MinecraftForge.EVENT_BUS.addListener(ContentEntities::onStruck);
