@@ -113,7 +113,8 @@ public final class ContentParser {
                 GsonHelper.getAsString(json, "openSound", "").trim(),
                 portal(key, json, null, true, false),
                 ContentParserContainers.container(key, json),
-                bell(json));
+                bell(json),
+                Collections.unmodifiableList(Json.strings(json, "spreadsOnto")));
     }
 
     private static String renderLayer(ResourceLocation key, JsonObject json) {

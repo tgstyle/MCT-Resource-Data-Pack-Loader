@@ -825,6 +825,24 @@ Für `crop`, `flower`, `cane` und `vine`.
 | `damageAmount`    | nein    | float, halbe Herzen  | `1.0`                | Wie sehr es verletzt                                                                                                                                 |
 | `breaksNeighbors` | nein    | boolean              | `false`              | Zerstört Blöcke, die daneben gesetzt werden, wie ein Kaktus                                                                                          |
 
+### Ausbreitung
+
+*blöcke*
+
+Für `basic`- und `ore`-Blöcke. Ein Block, der die Blöcke nennt, auf die er sich ausbreitet, verhält sich wie Gras, das sich auf Erde ausbreitet.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:coarse_dirt"]
+}
+```
+
+| Schlüssel     | Pflicht | Wert                    | Standard | Was er macht                                                             |
+| ------------- | ------- | ----------------------- | -------- | ------------------------------------------------------------------------ |
+| `spreadsOnto` | nein    | Liste von Blocknamen    | keiner   | Blöcke, auf die er sich ausbreitet. Der erste ist der, in den er zurückfällt |
+
+Der Block erhält Zufallsticks und folgt dem Vanilla-Gras. Wo das Licht über ihm 9 oder mehr beträgt, versucht er pro Tick viermal, eine zufällige Stelle bis zu einen Block seitlich und von drei Blöcken darunter bis einen darüber zu erreichen. Die Stelle wird zu diesem Block, wenn sie ein aufgeführter Block ist, das Licht darüber 4 oder mehr beträgt und der Block darüber höchstens 2 Licht blockiert. Wo das Licht über ihm unter 4 liegt und der Block darüber mehr als 2 Licht blockiert, wird er wieder zum ersten aufgeführten Block. `minecraft:dirt` ist nur gewöhnliche Erde, `minecraft:coarse_dirt` ist grobe Erde.
+
 ### Setzlinge
 
 *blöcke*

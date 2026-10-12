@@ -9,7 +9,7 @@ public record BlockDef(ResourceLocation key, String type, String material, Strin
                        int expDropMin, int expDropMax, float explosionResistanceDivisor, List<BlockVariant> variants, List<String> requires, String renderLayer, boolean opaque, boolean fullCube, int lightOpacity,
                        float slipperiness, @Nullable double[] bounds, int flammability, int fireSpread, String modelBlock, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor,
                        String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint,
-                       String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable PortalDef portal, @Nullable ContainerDef container, @Nullable BellDef bell) {
+                       String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable PortalDef portal, @Nullable ContainerDef container, @Nullable BellDef bell, List<String> spreadsOnto) {
     public static final String PARTICLE_NONE = "none";
     public static final String PARTICLE_FLAME = "flame";
     public static final String PARTICLE_COLORED = "colored";

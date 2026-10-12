@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.ContentStacks;
 import mctmods.resourcedatapackloader.content.def.AmountDef;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
+import mctmods.resourcedatapackloader.util.GrassSpread;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -54,6 +55,10 @@ import javax.annotation.Nullable;
     public static AmountDef expRange(BlockDef def) { return def.expDropMax() <= def.expDropMin() ? AmountDef.of(def.expDropMin()) : new AmountDef(def.expDropMin(), def.expDropMax()); }
 
     public BlockDef getDef() { return def; }
+
+    @Override public boolean isRandomlyTicking(@Nonnull BlockState state) { return !def.spreadsOnto().isEmpty(); }
+
+    @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) { GrassSpread.tick(level, pos, state, random, def.spreadsOnto(), def.key()); }
 
     @Override @Nonnull public VoxelShape getShape(@Nonnull BlockState state, @Nonnull BlockGetter level, @Nonnull BlockPos pos, @Nonnull CollisionContext context) { return shape == null ? super.getShape(state, level, pos, context) : shape; }
 
