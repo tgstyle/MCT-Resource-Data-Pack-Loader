@@ -125,6 +125,7 @@ public final class ContentDimensions {
         ContentDimensionTime.clockItem(natural);
         if (!made.isEmpty()) { Summary.info("dimensions.generated", "Generated " + made.size() + " dimension(s) with their types: " + String.join(", ", made)); }
         if (!applied.isEmpty()) { Summary.info("dimensions.existing", "Applied " + applied.size() + " dimension file(s) to existing dimensions: " + String.join(", ", applied)); }
+        ContentForeignDimensions.generate();
     }
 
     private static void existing(DimensionDef def) {

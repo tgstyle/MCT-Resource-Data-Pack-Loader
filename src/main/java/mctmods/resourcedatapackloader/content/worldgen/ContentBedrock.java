@@ -95,13 +95,14 @@ public final class ContentBedrock {
 
     static boolean bedrockApplies(String dimension) {
         if (!bedrockAsked()) { return false; }
-        return DimensionValues.listed(dimension, bedrockDimensions(),
-                ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist()));
+        return DimensionValues.listed(dimension, bedrockDimensions(), dimensionsAreBlacklist());
     }
+
+    static boolean dimensionsAreBlacklist() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockDimensionsAreBlacklist", Config.worldgen.flatBedrockDimensionsAreBlacklist()); }
 
     static int layers() { return Mth.clamp(ContentControl.number(ContentControl.BEDROCK, "bedrockLayers", Config.worldgen.bedrockLayers()), 1, ContentWorldShape.MAX_LAYERS); }
 
-    private static List<String> bedrockDimensions() { return ContentControl.list(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions()); }
+    static List<String> bedrockDimensions() { return ContentControl.list(ContentControl.BEDROCK, "flatBedrockDimensions", Config.worldgen.flatBedrockDimensions()); }
 
     private static boolean biomesAreBlacklist() { return ContentControl.flag(ContentControl.BEDROCK, "flatBedrockBiomesAreBlacklist", Config.worldgen.flatBedrockBiomesAreBlacklist()); }
 

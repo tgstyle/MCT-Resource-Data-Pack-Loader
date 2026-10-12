@@ -6351,7 +6351,7 @@ Um tronco de via única não tem segunda via para dar ao outro ramal, de modo qu
 | Configuração | Tipo | Padrão | O que faz |
 | --- | --- | --- | --- |
 | `flatBedrock` | booleano | `false` | Substitui a bedrock irregular do fundo do mundo por camadas planas. Só em chunks novos, a menos que `flatBedrockRetrogen` esteja ligado |
-| `flatBedrockDimensions` | lista | `["minecraft:overworld"]` | As dimensões em que aplainar. Vazio significa todas |
+| `flatBedrockDimensions` | lista | `["minecraft:overworld"]` | As dimensões em que aplainar, por id. Vazio significa todas. Uma dimensão que outro mod define em um arquivo de dimensão também funciona por id; uma criada em código registra um aviso e fica como está |
 | `flatBedrockDimensionsAreBlacklist` | booleano | `false` | Ligado, o aplainamento ignora as dimensões listadas. Desligado, vale apenas para elas |
 | `bedrockLayers` | int, 1 a 5 | `1` | Quantas camadas de bedrock restam |
 | `flatBedrockBiomes` | lista de nomes de bioma | vazio | Os biomas em que aplainar, pelo nome amigável ou de registro. Vazio significa todos os biomas |
@@ -6460,7 +6460,7 @@ Um tronco de via única não tem segunda via para dar ao outro ramal, de modo qu
 | Configuração | Tipo | Padrão | O que faz |
 | --- | --- | --- | --- |
 | `voidWorld` | booleano | `false` | Gera as dimensões listadas como espaço vazio com uma plataforma no ponto de spawn e nada vivo, pelo preset gerado para as três vanilla e pelos arquivos de dimensão próprios de um pacote; qualquer outra dimensão listada é esvaziada à medida que seu terreno é criado. A escolha é guardada com o mundo quando ele é criado, então ligar ou desligar depois deixa um mundo existente como estava |
-| `voidWorldDimensions` | lista | `["minecraft:overworld"]` | Quais dimensões se tornam vazias, por id. Vazio significa nenhuma, ou todas as dimensões quando voidWorldDimensionsAreBlacklist está ligado |
+| `voidWorldDimensions` | lista | `["minecraft:overworld"]` | Quais dimensões se tornam vazias, por id. Vazio significa nenhuma, ou todas as dimensões quando voidWorldDimensionsAreBlacklist está ligado. Uma dimensão que outro mod define em um arquivo de dimensão também funciona por id, por uma substituição gerada desse arquivo; uma criada em código registra um aviso e fica como está |
 | `voidWorldDimensionsAreBlacklist` | booleano | `false` | Ligado, as dimensões listadas são as deixadas em paz |
 | `voidPlatformBlock` | bloco | `minecraft:stone` | De que a plataforma é feita |
 | `voidPlatformHeight` | int, -2032 a 2031 | `64` | O y em que a plataforma do mundo vazio fica |
@@ -7180,7 +7180,7 @@ O que um pacote 1.12.2 pode escrever e esta versão não lê, e por quê. Um pac
 | `biomeSize`, `riverSize`, `dungeonChance`, `waterLakeChance`, `lavaLakeChance`, as chaves de tamanho, quantidade e altura de minérios e as chaves de escala de ruído de um `generatorOptions` personalizado | settings, dimensões | O tamanho dos biomas e a forma do terreno pertencem às noise settings, e a frequência com que uma feature ou um minério é colocado pertence à sua própria placed feature, então nenhum número isolado os alcança. Um `fixedBiome` numerado acima de 39 nomeia um bioma que esta versão não consegue mapear |
 | `useWaterLakes`, e `lake` e `dungeon` em um texto superflat | settings, dimensões | O jogo não tem lagos de água desde a 1.18. Masmorras em um mundo plano vêm com `decoration` e não sozinhas |
 | `inherit` como a fonte de `biomes` de uma dimensão `flat` ou `void` | dimensões | Um gerador plano guarda um único bioma, então tal dimensão usa o que o seu texto superflat nomeia, ou plains |
-| a dimensão de outro mod em `flatBedrockDimensions` ou `voidWorldDimensions` | settings | Bedrock e vazio são gravados no preset de mundo gerado e nos arquivos de dimensão do próprio pacote; uma dimensão que outro mod cria é construída a partir de arquivos próprios |
+| a dimensão de outro mod criada em código em `flatBedrockDimensions` ou `voidWorldDimensions` | settings | Bedrock e vazio são gravados no preset de mundo gerado, nos arquivos de dimensão do próprio pacote e, para uma dimensão que outro mod define em um arquivo de dimensão em `data/<namespace>/dimension`, em uma substituição gerada desse arquivo. Uma dimensão que outro mod cria em código fica fora de alcance: o RDPL registra um aviso com o nome dela e deixa o terreno como está |
 | o tipo de mundo de um mod, ou `debug_all_block_states`, como `worldType` | settings | Os tipos de mundo são presets de mundo agora, e o mundo moldado é construído sobre o padrão do próprio jogo, biomas grandes, amplificado ou ruído plano. Um mundo de depuração não tem terreno para moldar |
 | `pregenKeepLoaded`, `pregenPauseAbove`, `pregenMillisPerRound`, `pregenRelightSays`, `hurryWritesAbove` | pré-geração | Ajustavam o gravador de chunks e a passada de relight da 1.12.2. O sistema de chunks daqui ilumina o terreno enquanto o cria e grava no seu próprio ritmo |
 | `readCofhWorldFiles` | settings | O CoFH World e o seu formato de arquivo próprio não existem neste motor. Traduzir esses arquivos para um pacote, como a 1.12.2 já recomendava, continua sendo o caminho |

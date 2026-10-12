@@ -246,9 +246,11 @@ public final class LineCompat {
 
     public static Registry<?> carvers(RegistryAccess registries) { return registries.lookupOrThrow(Registries.CARVER); }
 
-    @Nullable public static JsonObject worldgenIn(String path) {
-        JsonObject json = GameData.json(Identifier.withDefaultNamespace(path));
-        if (json == null || !path.startsWith(NOISE_SETTINGS)) { return json; }
+    @Nullable public static JsonObject worldgenIn(String path) { return worldgenIn(Identifier.withDefaultNamespace(path)); }
+
+    @Nullable public static JsonObject worldgenIn(Identifier at) {
+        JsonObject json = GameData.json(at);
+        if (json == null || !at.getPath().startsWith(NOISE_SETTINGS)) { return json; }
         JsonElement rule = json.remove("material_rule");
         if (rule != null) { json.add("surface_rule", inlineRule(rule)); }
         JsonElement router = json.get("noise_router");

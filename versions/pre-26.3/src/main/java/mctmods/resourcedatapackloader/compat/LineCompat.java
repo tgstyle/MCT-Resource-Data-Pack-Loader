@@ -230,7 +230,9 @@ public final class LineCompat {
 
     public static Registry<?> carvers(RegistryAccess registries) { return registries.lookupOrThrow(Registries.CONFIGURED_CARVER); }
 
-    @Nullable public static JsonObject worldgenIn(String path) { return GameData.json(Identifier.withDefaultNamespace(path)); }
+    @Nullable public static JsonObject worldgenIn(String path) { return worldgenIn(Identifier.withDefaultNamespace(path)); }
+
+    @Nullable public static JsonObject worldgenIn(Identifier at) { return GameData.json(at); }
 
     public static JsonObject worldgenOut(@SuppressWarnings("unused") String path, JsonObject json) { return json; }
 
