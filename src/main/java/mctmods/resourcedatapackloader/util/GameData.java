@@ -11,6 +11,7 @@ import net.minecraft.server.packs.repository.ServerPacksSource;
 import net.minecraft.server.packs.resources.IoSupplier;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.forgespi.language.IModFileInfo;
+import net.minecraftforge.forgespi.language.IModInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -18,6 +19,9 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 public final class GameData {
@@ -34,6 +38,26 @@ public final class GameData {
     @Nullable public static JsonObject noiseSettings(String name) { return json(ResourceLocation.withDefaultNamespace("worldgen/noise_settings/" + name + PackManager.JSON_SUFFIX)); }
 
     public static boolean has(ResourceLocation at) { return read(at) != null; }
+
+    public static Set<String> modFiles(String folder) {
+        Set<String> found = new LinkedHashSet<>();
+        for (IModFileInfo info : ModList.get().getModFiles()) {
+            for (IModInfo mod : info.getMods()) {
+                String space = mod.getModId();
+                if (ResourceLocation.DEFAULT_NAMESPACE.equals(space)) { continue; }
+                Path root = info.getFile().findResource("data", space, folder);
+                if (!Files.isDirectory(root)) { continue; }
+                try (Stream<Path> walk = Files.walk(root)) {
+                    walk.filter(Files::isRegularFile).forEach(file -> {
+                        String name = root.relativize(file).toString().replace('\\', '/');
+                        if (name.endsWith(PackManager.JSON_SUFFIX)) { found.add(space + ":" + name.substring(0, name.length() - PackManager.JSON_SUFFIX.length())); }
+                    });
+                }
+                catch (IOException | RuntimeException unreadable) { ContentLog.LOGGER.debug("Could not list the {} folder of {}", folder, space, unreadable); }
+            }
+        }
+        return found;
+    }
 
     @Nullable private static JsonObject read(ResourceLocation at) { return ResourceLocation.DEFAULT_NAMESPACE.equals(at.getNamespace()) ? fromVanilla(at) : fromMod(at); }
 
