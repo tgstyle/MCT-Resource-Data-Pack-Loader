@@ -3886,7 +3886,7 @@ Seul `block` est requis ; tout le reste peut être omis et prend sa valeur par d
 | `maxHeight` | non | entier | `64` | Le y le plus haut où elle placera |
 | `dimensions` | non | liste d'ids de dimensions | toutes les dimensions | Les dimensions où elle s'exécute |
 | `dimensionsAreBlacklist` | non | booléen | `false` | Transforme cette liste en liste de celles à éviter |
-| `biomes` | non | liste de noms de biomes | tous les biomes | Les biomes où elle s'exécute |
+| `biomes` | non | liste de noms de biomes | tous les biomes | Les biomes où elle s'exécute. Un nom sans espace de noms est lu d'abord dans celui du pack, puis comme `minecraft` |
 | `biomeTypes` | non | liste de types de biomes | aucun | Les biomes par mot de type, comme `forest` ou `nether` |
 | `biomesAreBlacklist` | non | booléen | `false` | Transforme ces listes en listes de ceux à éviter |
 | `minTemperature` | non | flottant | `-100.0` | Le biome le plus froid où elle se générera |
