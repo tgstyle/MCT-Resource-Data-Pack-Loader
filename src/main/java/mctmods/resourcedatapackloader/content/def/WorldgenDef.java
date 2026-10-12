@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.WeightedPicks;
 import mctmods.resourcedatapackloader.content.interfaces.IContentShape;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBasin;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -121,15 +123,30 @@ public final class WorldgenDef {
         this.figure = states.isEmpty() ? null : build(new ContentPlacer(states, weights, targets, exact, nearby, nearbyExact), surface, outline, fill);
         this.biomeSet = new HashSet<>();
         for (String name : biomes) {
-            Biome found = Biomes.byName(name);
+            Biome found = Biomes.byName(name, registryName.getNamespace());
             if (found != null) { biomeSet.add(found); }
+            else { ContentLog.LOGGER.error("Worldgen {} names biome {}, which is not registered, leaving it out", registryName, name); }
+        }
+        List<BiomeDictionary.Type> resolved = new ArrayList<>(biomeTypes.size());
+        for (String name : biomeTypes) {
+            BiomeDictionary.Type type = knownType(name);
+            if (type == null) { ContentLog.LOGGER.error("Worldgen {} names biome type '{}', which no biome type answers to", registryName, name); }
+            else { resolved.add(type); }
+        }
+        if (!biomes.isEmpty() && biomeSet.isEmpty() && resolved.isEmpty() && !biomesAreBlacklist) {
+            ContentLog.LOGGER.error("Worldgen {} lists biomes but none of them is registered, so it generates nowhere", registryName);
         }
         this.caveRegionKeys = caveRegions.isEmpty() ? Collections.emptySet() : new HashSet<>(caveRegions);
         this.dimensionSet = dimensions.isEmpty() ? IntSets.EMPTY_SET : new IntOpenHashSet(dimensions);
-        if (biomeTypes.isEmpty()) { return; }
-        List<BiomeDictionary.Type> resolved = new ArrayList<>(biomeTypes.size());
-        for (String name : biomeTypes) { resolved.add(BiomeDictionary.Type.getType(name)); }
-        this.types = resolved;
+        if (!resolved.isEmpty()) { this.types = resolved; }
+    }
+
+    @Nullable private static BiomeDictionary.Type knownType(String name) {
+        String wanted = name.toUpperCase(Locale.ROOT);
+        for (BiomeDictionary.Type type : BiomeDictionary.Type.getAll()) {
+            if (type.getName().equals(wanted)) { return type; }
+        }
+        return null;
     }
 
     @Nullable public IContentShape getShape() { return figure; }

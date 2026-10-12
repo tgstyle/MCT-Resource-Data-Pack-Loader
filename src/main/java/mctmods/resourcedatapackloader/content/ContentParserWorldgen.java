@@ -30,6 +30,7 @@ public final class ContentParserWorldgen {
             ShapeDef.CLUSTER, ShapeDef.PLATE, ShapeDef.GEODE, ShapeDef.LARGEVEIN, ShapeDef.DECORATION, ShapeDef.TREE, ShapeDef.VINES,
             ShapeDef.BASIN, ShapeDef.SPIRE, ShapeDef.NODULE, ShapeDef.VENT, ShapeDef.IMPRINT, ShapeDef.BELT, ShapeDef.FIELD, ShapeDef.VEIN, ShapeDef.SPRING)));
 
+    private static final List<String> SHAPE_ONLY_KEYS = Collections.unmodifiableList(Arrays.asList("rarity", "rarityIsPerChunk", "pattern", "threshold", "density", "taper", "rich", "poor"));
     private static final List<String> SNAPS = Collections.unmodifiableList(Arrays.asList("floor", "ceiling"));
     private static final List<String> VILLAGE_TYPES = Collections.unmodifiableList(Arrays.asList(VillageDef.FARM, VillageDef.TEMPLATE));
     private static final List<String> PLANES = Collections.unmodifiableList(Arrays.asList(ShapeDef.CIRCLE, ShapeDef.SQUARE));
@@ -127,6 +128,9 @@ public final class ContentParserWorldgen {
             depth = 0;
         }
         made.snapDepth = made.snap.isEmpty() ? 0 : depth;
+        for (String misplaced : SHAPE_ONLY_KEYS) {
+            if (json.has(misplaced)) { ContentLog.LOGGER.error("Worldgen {} writes '{}' outside its shape object, where it is ignored", key, misplaced); }
+        }
         return made;
     }
 

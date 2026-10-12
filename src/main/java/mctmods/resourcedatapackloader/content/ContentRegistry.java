@@ -99,7 +99,11 @@ public final class ContentRegistry {
             if (def != null) { FLUID_DEFS.put(key, def); }
         });
         Json.eachFile(PackManager.WORLDGEN, "worldgen definition", (key, contents) -> {
-            if (ContentOwners.reserved(key) || key.getPath().indexOf('/') >= 0) { return; }
+            if (ContentOwners.reserved(key)) { return; }
+            if (key.getPath().indexOf('/') >= 0) {
+                ContentLog.LOGGER.error("Worldgen definition {} sits in a subfolder of worldgen, which is not read. Move it to {}:worldgen/{}.json, with a name of its own", key, key.getNamespace(), key.getPath().substring(key.getPath().lastIndexOf('/') + 1));
+                return;
+            }
             WorldgenDef def = ContentParserWorldgen.worldgen(key, contents);
             if (def != null) { WORLDGEN_DEFS.put(key, def); }
         });

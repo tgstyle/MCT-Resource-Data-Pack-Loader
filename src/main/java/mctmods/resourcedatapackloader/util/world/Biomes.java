@@ -15,4 +15,14 @@ public final class Biomes {
         ResourceLocation key = new ResourceLocation(name.trim());
         return Registries.find(ForgeRegistries.BIOMES, key);
     }
+
+    @Nullable public static Biome byName(String name, String namespace) {
+        if (name == null || name.trim().isEmpty()) { return null; }
+        String trimmed = name.trim();
+        if (trimmed.indexOf(':') < 0) {
+            Biome own = byName(namespace + ":" + trimmed);
+            if (own != null) { return own; }
+        }
+        return byName(trimmed);
+    }
 }
