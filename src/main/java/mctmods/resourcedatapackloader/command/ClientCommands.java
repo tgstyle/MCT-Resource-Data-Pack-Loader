@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.command;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -21,6 +22,7 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.client.event.RegisterClientCommandsEvent;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 public final class ClientCommands {
@@ -41,6 +43,9 @@ public final class ClientCommands {
         tree.then(Commands.literal("biome").then(Commands.literal("find").then(Commands.argument("rest", StringArgumentType.greedyString())
                 .suggests((context, suggestions) -> suggest("biome find", suggestions))
                 .executes(context -> forward("biome find " + StringArgumentType.getString(context, "rest"))))));
+        tree.then(Commands.literal("reload").then(Commands.argument("group", StringArgumentType.word())
+                .suggests((context, suggestions) -> SharedSuggestionProvider.suggest(ReloadGroups.names(), suggestions))
+                .executes(context -> reloadGroup(context, StringArgumentType.getString(context, "group")))));
         event.getDispatcher().register(tree);
     }
 
@@ -69,6 +74,25 @@ public final class ClientCommands {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) { return 0; }
         player.connection.sendCommand(SERVER + " " + rest);
+        return 1;
+    }
+
+    private static int reloadGroup(CommandContext<CommandSourceStack> context, String typed) {
+        CommandSourceStack source = context.getSource();
+        String group = typed.toLowerCase(Locale.ROOT);
+        CommandShared.ran(source, NAME, "reload " + group);
+        if (!ReloadGroups.names().contains(group)) { return CommandShared.refuse(source, CommandShared.tr("rdpl.command.nogroup", group, String.join(", ", ReloadGroups.names()))); }
+        long start = System.currentTimeMillis();
+        Minecraft minecraft = Minecraft.getInstance();
+        ReloadGroups.reload(minecraft, group).whenComplete((ignored, error) -> minecraft.execute(() -> {
+            if (error != null) {
+                ContentLog.LOGGER.error("/{} reload {} failed: {}", NAME, group, error);
+                CommandShared.refuse(source, CommandShared.tr("command.failed"));
+                return;
+            }
+            CommandShared.send(source, ChatFormatting.GREEN, CommandShared.tr("rdpl.command.reloadedgroup", group, CommandShared.elapsed(start)));
+            CommandShared.send(source, ChatFormatting.GRAY, CommandShared.tr("rdpl.command.groupnote"));
+        }));
         return 1;
     }
 
