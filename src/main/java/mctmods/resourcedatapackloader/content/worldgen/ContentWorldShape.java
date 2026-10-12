@@ -297,6 +297,15 @@ public final class ContentWorldShape {
             generator.add("settings", flat);
             return generator;
         }
+        empty(settings);
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX, settings.toString());
+        generator.addProperty("type", "minecraft:noise");
+        generator.add("biome_source", source);
+        generator.addProperty("settings", id.toString());
+        return generator;
+    }
+
+    static void empty(JsonObject settings) {
         JsonObject air = new JsonObject();
         air.addProperty("Name", "minecraft:air");
         settings.add("default_block", air);
@@ -309,11 +318,6 @@ public final class ContentWorldShape {
         surface.add("sequence", new JsonArray());
         settings.add("surface_rule", surface);
         GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
-        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX, settings.toString());
-        generator.addProperty("type", "minecraft:noise");
-        generator.add("biome_source", source);
-        generator.addProperty("settings", id.toString());
-        return generator;
     }
 
     private static JsonObject flat() {

@@ -35,7 +35,7 @@ public final class ContentVoidWorld {
 
     static List<String> voidDimensions() { return ContentControl.list(ContentControl.VOID, "voidWorldDimensions", Config.worldgen.voidWorldDimensions()); }
 
-    private static boolean voidBlacklist() { return ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist()); }
+    static boolean voidBlacklist() { return ContentControl.flag(ContentControl.VOID, "voidWorldDimensionsAreBlacklist", Config.worldgen.voidWorldDimensionsAreBlacklist()); }
 
     static boolean voidApplies(String dimension) { return voidApplies(dimension, voidAsked(), voidDimensions(), voidBlacklist()); }
 
