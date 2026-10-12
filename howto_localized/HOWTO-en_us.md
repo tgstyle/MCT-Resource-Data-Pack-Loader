@@ -859,6 +859,24 @@ For `crop`, `flower`, `cane` and `vine`.
 | `damageAmount`    | no       | float, half hearts | `1.0`   | How much it hurts                           |
 | `breaksNeighbors` | no       | boolean            | `false` | Breaks blocks placed beside it, like cactus |
 
+### Spreading
+
+*blocks*
+
+For `basic` and `ore` blocks. A block that names the blocks it spreads onto behaves like grass spreading onto dirt.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:dirt:1"]
+}
+```
+
+| Key           | Required | Value               | Default | What it does                                                          |
+| ------------- | -------- | ------------------- | ------- | --------------------------------------------------------------------- |
+| `spreadsOnto` | no       | list of block names | none    | Blocks it spreads onto. The first one is what it turns back into      |
+
+The block takes random ticks and follows vanilla grass. Where the light above it is 9 or more, it makes four tries per tick at a random spot up to one block to each side and from three blocks below to one above. The spot turns into this block if it is a listed block, the light above the spot is 4 or more and the block above it blocks no more than 2 light. Where the light above it is under 4 and the block above it blocks more than 2 light, it turns back into the first listed block. `minecraft:dirt` is plain dirt only; metadata goes in a third part, so `minecraft:dirt:1` is coarse dirt.
+
 ### Saplings
 
 *blocks*

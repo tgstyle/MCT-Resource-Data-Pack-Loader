@@ -859,6 +859,24 @@ Pour `crop`, `flower`, `cane` et `vine`.
 | `damageAmount`    | non         | flottant, demi-cœurs | `1.0`      | À quel point il blesse                             |
 | `breaksNeighbors` | non         | booléen           | `false`    | Casse les blocs placés à côté, comme le cactus     |
 
+### Propagation
+
+*blocs*
+
+Pour les blocs `basic` et `ore`. Un bloc qui nomme les blocs sur lesquels il se propage se comporte comme l'herbe qui gagne la terre.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:dirt:1"]
+}
+```
+
+| Clé           | Requis | Valeur                    | Défaut | Rôle                                                                      |
+| ------------- | ------ | ------------------------- | ------ | ------------------------------------------------------------------------- |
+| `spreadsOnto` | non    | liste de noms de blocs    | aucun  | Blocs sur lesquels il se propage. Le premier est celui en lequel il redevient |
+
+Le bloc reçoit des ticks aléatoires et suit l'herbe de vanilla. Là où la lumière au-dessus de lui vaut 9 ou plus, il fait quatre essais par tick sur un endroit au hasard, jusqu'à un bloc de chaque côté et de trois blocs en dessous à un au-dessus. L'endroit devient ce bloc s'il s'agit d'un bloc de la liste, si la lumière au-dessus de cet endroit vaut 4 ou plus et si le bloc qui s'y trouve bloque au plus 2 de lumière. Là où la lumière au-dessus de lui est inférieure à 4 et où le bloc au-dessus bloque plus de 2 de lumière, il redevient le premier bloc de la liste. `minecraft:dirt` désigne uniquement la terre simple ; les métadonnées forment la troisième partie, donc `minecraft:dirt:1` est la terre stérile.
+
 ### Pousses
 
 *blocs*

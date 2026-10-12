@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.item.ContentItemBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
+import mctmods.resourcedatapackloader.util.GrassSpread;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockStateContainer;
@@ -33,6 +34,7 @@ import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
+import java.util.Random;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -50,7 +52,10 @@ import javax.annotation.Nullable;
         if (def.soundType != null) { setSoundType(def.soundType); }
         setDefaultSlipperiness(def.slipperiness);
         setDefaultState(this.blockState.getBaseState().withProperty(this.variant, def.at(0).name));
+        setTickRandomly(!def.spreadsOnto.isEmpty());
     }
+
+    @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random random) { GrassSpread.tick(world, pos, state, random, def.spreadsOnto, def.registryName); }
 
     @Override @Nonnull protected BlockStateContainer createBlockState() { return BlockVariants.container(this); }
 

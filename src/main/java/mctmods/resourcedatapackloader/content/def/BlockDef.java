@@ -60,8 +60,9 @@ public final class BlockDef {
     public final String openSound;
     @Nullable public final ContainerDef container;
     @Nullable public final BellDef bell;
+    public final List<String> spreadsOnto;
 
-    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell) {
+    public BlockDef(ResourceLocation registryName, String type, Material material, MapColor mapColor, @Nullable SoundType soundType, String creativeTab, String harvestTool, int harvestToolLevel, boolean silkHarvest, int expDropMin, int expDropMax, float explosionResistanceDivisor, BlockVariant[] byMeta, List<BlockVariant> visible, List<String> requires, BlockRenderLayer renderLayer, boolean opaque, boolean fullCube, int lightOpacity, float slipperiness, @Nullable AxisAlignedBB bounds, int flammability, int fireSpread, String modelBlock, int modelMeta, boolean itemModelFromFile, String torchParticle, boolean torchSmoke, int torchColor, String cropSeed, String cropProduce, int cropMaxAge, @Nullable SaplingDef sapling, @Nullable PortalDef portal, @Nullable GrowthDef growth, List<String> plantTypes, List<String> behavesAs, String tint, String leafSapling, int leafSaplingChance, @Nullable ResourceLocation opensWith, String openSound, @Nullable ContainerDef container, @Nullable BellDef bell, List<String> spreadsOnto) {
         this.registryName = registryName;
         this.type = type;
         this.material = material;
@@ -106,6 +107,7 @@ public final class BlockDef {
         this.openSound = openSound;
         this.container = container;
         this.bell = bell;
+        this.spreadsOnto = spreadsOnto;
     }
 
     public BlockVariant at(int meta) { return byMeta[meta < 0 || meta >= byMeta.length ? 0 : meta]; }

@@ -859,6 +859,24 @@ Para `crop`, `flower`, `cane` e `vine`.
 | `damageAmount`    | não         | float, meios corações | `1.0`   | O quanto machuca                                 |
 | `breaksNeighbors` | não         | booleano              | `false` | Quebra blocos colocados ao lado, como o cacto    |
 
+### Propagação
+
+*blocos*
+
+Para blocos `basic` e `ore`. Um bloco que nomeia os blocos sobre os quais se espalha se comporta como a grama que se espalha sobre a terra.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:dirt:1"]
+}
+```
+
+| Chave         | Obrigatória | Valor                      | Padrão  | O que faz                                                                 |
+| ------------- | ----------- | -------------------------- | ------- | ------------------------------------------------------------------------- |
+| `spreadsOnto` | não         | lista de nomes de blocos   | nenhum  | Blocos sobre os quais se espalha. O primeiro é aquele em que ele volta a se transformar |
+
+O bloco recebe ticks aleatórios e segue a grama do vanilla. Onde a luz acima dele é 9 ou mais, ele faz quatro tentativas por tick em um ponto aleatório a até um bloco de cada lado e de três blocos abaixo até um acima. O ponto vira este bloco se for um bloco da lista, se a luz acima do ponto for 4 ou mais e se o bloco acima dele bloquear no máximo 2 de luz. Onde a luz acima dele é menor que 4 e o bloco acima bloqueia mais de 2 de luz, ele volta a ser o primeiro bloco da lista. `minecraft:dirt` é só terra comum; os metadados vão como terceira parte, então `minecraft:dirt:1` é terra grossa.
+
 ### Mudas
 
 *blocos*
