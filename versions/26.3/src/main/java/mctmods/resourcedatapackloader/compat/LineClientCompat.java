@@ -9,6 +9,8 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.client.model.Model;
 import net.minecraft.client.renderer.PostPass;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -20,6 +22,7 @@ import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
 import org.lwjgl.system.MemoryStack;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -35,6 +38,10 @@ public final class LineClientCompat {
         Vector3fc tint = camera.attributeProbe().getValue(EnvironmentAttributes.SKY_COLOR, partialTick);
         return new Vec3(tint.x(), tint.y(), tint.z());
     }
+
+    public static List<PreparableReloadListener> paletteListeners() { return List.of(Minecraft.getInstance().getPalettedTextureManager()); }
+
+    public static List<PreparableReloadListener> postEffectListeners() { return List.of(Minecraft.getInstance().gameRenderer); }
 
     public static InputConstants.Key keyV() { return InputConstants.Type.KEYBOARD.getOrCreate(InputConstants.KEY_V); }
 

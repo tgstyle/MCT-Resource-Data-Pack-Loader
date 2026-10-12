@@ -146,6 +146,7 @@
         "client.MixinClientLevelWind",
         "client.MixinParticleEngineWind",
         "client.IParticle",
+        "client.IParticleEngine",
         "client.MixinLevelRenderer",
         "client.MixinLevelRendererWeather",
         "client.MixinSkyRenderer",

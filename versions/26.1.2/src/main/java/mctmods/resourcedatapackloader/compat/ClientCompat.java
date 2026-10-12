@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.ChatComponent;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.server.packs.resources.PreparableReloadListener;
 import javax.annotation.Nullable;
 
 public final class ClientCompat {
@@ -23,4 +24,8 @@ public final class ClientCompat {
     public static RenderTarget mainTarget(Minecraft mc) { return mc.getMainRenderTarget(); }
 
     public static boolean depthZeroToOne() { return RenderSystem.getDevice().isZZeroToOne(); }
+
+    public static void allChanged(Minecraft mc) { mc.levelRenderer.allChanged(); }
+
+    public static PreparableReloadListener levelListener(Minecraft mc) { return mc.levelRenderer; }
 }
