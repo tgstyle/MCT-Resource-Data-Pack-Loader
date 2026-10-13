@@ -13,7 +13,6 @@ import mctmods.resourcedatapackloader.util.world.SeededRandom;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -61,7 +60,7 @@ public final class ContentPathIntersects {
         JsonObject json = Json.object(key, contents, "path intersect design");
         if (json == null) { return null; }
         Map<Character, String> legend = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "legend", new JsonObject()).entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "legend", new JsonObject()).entrySet()) {
             String symbol = entry.getKey().trim();
             if (symbol.length() != 1) {
                 ContentLog.LOGGER.error("Path intersect design {} legend symbol '{}' must be a single character, so it is left out", key, entry.getKey());
@@ -81,7 +80,7 @@ public final class ContentPathIntersects {
             ContentLog.LOGGER.error("Path intersect design {} draws neither a mouth nor a corner, so it is dropped", key);
             return null;
         }
-        return new PathIntersectDef(key, GsonHelper.getAsString(json, "name", key.getPath()), Math.max(1, GsonHelper.getAsInt(json, "weight", 1)), Map.copyOf(legend), mouth, corner);
+        return new PathIntersectDef(key, Json.getString(json, "name", key.getPath()), Math.max(1, Json.getInt(json, "weight", 1)), Map.copyOf(legend), mouth, corner);
     }
 
     private static void roles(ResourceLocation key, Map<Character, String> legend, List<String> rows, String part) {

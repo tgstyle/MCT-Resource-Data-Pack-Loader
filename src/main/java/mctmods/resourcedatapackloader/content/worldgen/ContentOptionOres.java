@@ -13,7 +13,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -177,14 +176,14 @@ final class ContentOptionOres {
         JsonObject placed = placed(path);
         JsonObject rarity = placed == null ? null : modifier(placed, "minecraft:rarity_filter");
         if (rarity == null) { return; }
-        rarity.addProperty("chance", Math.max(1, Math.round(GsonHelper.getAsInt(rarity, "chance", 1) * scale)));
+        rarity.addProperty("chance", Math.max(1, Math.round(Json.getInt(rarity, "chance", 1) * scale)));
         made.put(path, placed);
     }
 
     @Nullable private static JsonObject modifier(JsonObject placed, String type) {
         if (!placed.has("placement") || !placed.get("placement").isJsonArray()) { return null; }
         for (JsonElement modifier : placed.getAsJsonArray("placement")) {
-            if (modifier.isJsonObject() && type.equals(GsonHelper.getAsString(modifier.getAsJsonObject(), "type", ""))) { return modifier.getAsJsonObject(); }
+            if (modifier.isJsonObject() && type.equals(Json.getString(modifier.getAsJsonObject(), "type", ""))) { return modifier.getAsJsonObject(); }
         }
         return null;
     }

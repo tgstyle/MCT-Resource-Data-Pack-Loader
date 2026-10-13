@@ -15,7 +15,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -45,7 +44,7 @@ public final class ContentWorldIntro {
         JsonObject json = Json.object(key, contents, "world intro file");
         if (json == null) { return null; }
         List<IntroPageDef> pages = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "pages", new com.google.gson.JsonArray())) {
+        for (JsonElement element : Json.getJsonArray(json, "pages", new com.google.gson.JsonArray())) {
             if (!element.isJsonObject()) { continue; }
             IntroPageDef page = page(key, element.getAsJsonObject());
             if (page != null) { pages.add(page); }
@@ -54,32 +53,32 @@ public final class ContentWorldIntro {
             ContentLog.LOGGER.error("World intro {} names no pages, ignoring it", key);
             return null;
         }
-        String music = GsonHelper.getAsString(json, "music", "").trim();
+        String music = Json.getString(json, "music", "").trim();
         ResourceLocation track = music.isEmpty() ? null : ContentParser.location(music);
         if (!music.isEmpty() && track == null) { ContentLog.LOGGER.error("World intro {} names music '{}', which is not a sound id, so it plays silently", key, music); }
-        return new WorldIntroDef(key, GsonHelper.getAsBoolean(json, "once", false), track, List.copyOf(pages), Json.strings(json, "requires"));
+        return new WorldIntroDef(key, Json.getBoolean(json, "once", false), track, List.copyOf(pages), Json.strings(json, "requires"));
     }
 
     @Nullable private static IntroPageDef page(ResourceLocation key, JsonObject json) {
         List<ResourceLocation> backgrounds = new ArrayList<>();
-        String single = GsonHelper.getAsString(json, "background", "").trim();
+        String single = Json.getString(json, "background", "").trim();
         if (!single.isEmpty()) { location(key, single, backgrounds); }
         for (String name : Json.strings(json, "backgrounds")) { location(key, name, backgrounds); }
-        String mode = Settings.lower(GsonHelper.getAsString(json, "mode", IntroPageDef.SCROLL));
+        String mode = Settings.lower(Json.getString(json, "mode", IntroPageDef.SCROLL));
         if (!IntroPageDef.SCROLL.equals(mode) && !IntroPageDef.STATIC.equals(mode)) {
             ContentLog.LOGGER.error("World intro {} has a page with mode '{}', which is neither '{}' nor '{}', ignoring the page", key, mode, IntroPageDef.SCROLL, IntroPageDef.STATIC);
             return null;
         }
-        String direction = Settings.lower(GsonHelper.getAsString(json, "direction", IntroPageDef.UP));
+        String direction = Settings.lower(Json.getString(json, "direction", IntroPageDef.UP));
         if (!IntroPageDef.UP.equals(direction) && !IntroPageDef.DOWN.equals(direction)) {
             ContentLog.LOGGER.error("World intro {} has a page with direction '{}', which is neither '{}' nor '{}', taking '{}'", key, direction, IntroPageDef.UP, IntroPageDef.DOWN, IntroPageDef.UP);
             direction = IntroPageDef.UP;
         }
-        String text = GsonHelper.getAsString(json, "text", "").trim();
+        String text = Json.getString(json, "text", "").trim();
         ResourceLocation textAt = text.isEmpty() ? null : ContentParser.location(text);
         if (!text.isEmpty() && textAt == null) { ContentLog.LOGGER.error("World intro {} names text '{}', which is not a resource id, so the page shows none", key, text); }
-        return new IntroPageDef(List.copyOf(backgrounds), GsonHelper.getAsFloat(json, "interval", 5.0F), textAt, mode, GsonHelper.getAsFloat(json, "time", IntroPageDef.DERIVE), direction,
-                GsonHelper.getAsFloat(json, "textScale", 1.0F), GsonHelper.getAsBoolean(json, "settle", false));
+        return new IntroPageDef(List.copyOf(backgrounds), Json.getFloat(json, "interval", 5.0F), textAt, mode, Json.getFloat(json, "time", IntroPageDef.DERIVE), direction,
+                Json.getFloat(json, "textScale", 1.0F), Json.getBoolean(json, "settle", false));
     }
 
     private static void location(ResourceLocation key, String name, List<ResourceLocation> out) {

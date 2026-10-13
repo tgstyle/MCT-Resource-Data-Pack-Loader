@@ -1,13 +1,13 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.projectile.FishingHook;
 import net.minecraft.world.entity.vehicle.AbstractMinecartContainer;
@@ -69,6 +69,6 @@ public final class KilledName extends LootItemConditionalFunction {
             if (!value.tag.isEmpty()) { json.addProperty(TAG, value.tag); }
         }
 
-        @Override @Nonnull public KilledName deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootItemCondition[] conditions) { return new KilledName(conditions, GsonHelper.getAsString(json, FORMAT, "%s"), GsonHelper.getAsString(json, TAG, "")); }
+        @Override @Nonnull public KilledName deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootItemCondition[] conditions) { return new KilledName(conditions, Json.getString(json, FORMAT, "%s"), Json.getString(json, TAG, "")); }
     }
 }

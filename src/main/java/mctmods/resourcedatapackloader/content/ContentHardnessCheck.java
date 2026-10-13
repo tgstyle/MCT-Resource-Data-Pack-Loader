@@ -16,7 +16,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.random.WeightedEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -133,7 +132,7 @@ public final class ContentHardnessCheck {
 
     @Nullable private static JsonObject variants(InputStream stream) {
         JsonObject json = Json.GSON.fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), JsonObject.class);
-        return json == null || !json.has("variants") ? null : GsonHelper.getAsJsonObject(json, "variants");
+        return json == null || !json.has("variants") ? null : Json.getJsonObject(json, "variants");
     }
 
     private static int entries(JsonElement held) { return held.isJsonArray() ? held.getAsJsonArray().size() : 1; }

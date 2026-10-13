@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.SkyStoneDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.common.collect.MapMaker;
@@ -15,7 +16,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.biome.Climate;
@@ -89,7 +89,7 @@ public final class ContentSkyLand {
             ContentLog.LOGGER.info("skyStone names {}, but {} ends at {}, which leaves no sky above the vanilla terrain for it, so it does nothing", named, where, maxY);
             return null;
         }
-        JsonObject router = GsonHelper.getAsJsonObject(settings, "noise_router", null);
+        JsonObject router = Json.getJsonObject(settings, "noise_router", null);
         if (router == null || !router.has("final_density")) {
             ContentLog.LOGGER.error("The game's overworld noise could not be read for {}, so it gets no sky land", where);
             return null;
@@ -152,7 +152,7 @@ public final class ContentSkyLand {
         int at = 0;
         for (int i = 0; i < steps.size(); i++) {
             JsonElement rule = steps.get(i);
-            if (rule.isJsonObject() && "minecraft:above_preliminary_surface".equals(GsonHelper.getAsString(GsonHelper.getAsJsonObject(rule.getAsJsonObject(), "if_true", new JsonObject()), "type", ""))) { at = i + 1; }
+            if (rule.isJsonObject() && "minecraft:above_preliminary_surface".equals(Json.getString(Json.getJsonObject(rule.getAsJsonObject(), "if_true", new JsonObject()), "type", ""))) { at = i + 1; }
         }
         JsonObject above = WorldgenJson.yAbove(WorldgenJson.anchor("absolute", ContentWorldShape.VANILLA_MAX));
         for (Map.Entry<ResourceLocation, ResourceLocation> biome : ContentBiomes.skyStones().entrySet()) {

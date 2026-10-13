@@ -69,7 +69,7 @@ public final class ContentCityMaps {
         }
         Map<Character, CityMapDef.Cell> palette = new LinkedHashMap<>();
         if (json.has("palette")) {
-            for (Map.Entry<String, JsonElement> mark : GsonHelper.getAsJsonObject(json, "palette").entrySet()) {
+            for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(json, "palette").entrySet()) {
                 String symbol = mark.getKey().trim();
                 if (symbol.length() != 1 || symbol.charAt(0) == CityMapDef.OPEN_MARK) {
                     ContentLog.LOGGER.error("City map {} palette symbol '{}' must be a single character other than '{}', so the map is dropped", key, mark.getKey(), CityMapDef.OPEN_MARK);
@@ -90,7 +90,7 @@ public final class ContentCityMaps {
                 }
             }
         }
-        int cell = Mth.clamp(GsonHelper.getAsInt(json, "cell", CELL_USUAL), CELL_LEAST, CELL_MOST);
+        int cell = Mth.clamp(Json.getInt(json, "cell", CELL_USUAL), CELL_LEAST, CELL_MOST);
         JsonObject settings = null;
         if (json.has("settings")) {
             if (json.get("settings").isJsonObject()) {
@@ -109,12 +109,12 @@ public final class ContentCityMaps {
         int height = CityMapDef.LIFT;
         JsonObject roadKeys = null;
         if (value.isJsonArray()) {
-            for (JsonElement choice : value.getAsJsonArray()) { names.add(choice.getAsString().trim()); }
+            for (String choice : Json.texts(value.getAsJsonArray(), symbol)) { names.add(choice.trim()); }
         }
         else if (value.isJsonObject()) {
             JsonObject described = value.getAsJsonObject();
-            names.add(GsonHelper.getAsString(described, "kind", "").trim());
-            height = Mth.clamp(GsonHelper.getAsInt(described, "height", CityMapDef.LIFT), LIFT_LEAST, LIFT_MOST);
+            names.add(Json.getString(described, "kind", "").trim());
+            height = Mth.clamp(Json.getInt(described, "height", CityMapDef.LIFT), LIFT_LEAST, LIFT_MOST);
             if (GsonHelper.isObjectNode(described, "settings")) {
                 roadKeys = described.getAsJsonObject("settings");
                 for (String named : roadKeys.keySet()) {

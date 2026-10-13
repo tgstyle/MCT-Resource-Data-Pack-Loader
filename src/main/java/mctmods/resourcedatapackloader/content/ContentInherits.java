@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -27,7 +28,7 @@ public final class ContentInherits {
         Map<ResourceLocation, ResourceLocation> owners = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, String> entry : raw.entrySet()) {
             try {
-                JsonObject held = JsonParser.parseString(entry.getValue()).getAsJsonObject();
+                JsonObject held = Json.within(folder, entry.getKey(), () -> JsonParser.parseString(entry.getValue()).getAsJsonObject());
                 parsed.put(entry.getKey(), held);
                 JsonObject heldVariants = variantsOf(held);
                 if (heldVariants != null) {

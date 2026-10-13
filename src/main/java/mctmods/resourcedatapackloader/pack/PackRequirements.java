@@ -41,7 +41,10 @@ public final class PackRequirements {
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return; }
         Set<String> found = new LinkedHashSet<>();
-        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> collect(contents, found)); }
+        for (String folder : FOLDERS) { manager.forEach(folder, PackManager.JSON, (namespace, path, contents) -> Json.within("requirements file", namespace + ":" + path, () -> {
+            collect(contents, found);
+            return null;
+        })); }
         for (String modid : found) {
             if (modLoaded(modid) || manager.provides(modid)) { continue; }
             WANTED.add(modid);

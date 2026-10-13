@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.content.def.DropDef;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonDeserializationContext;
@@ -47,10 +48,10 @@ public final class DropRoll extends LootItemConditionalFunction {
         }
 
         @Override @Nonnull public DropRoll deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootItemCondition[] conditions) {
-            JsonArray bonus = GsonHelper.getAsJsonArray(json, BONUS_CHANCE, new JsonArray());
+            JsonArray bonus = Json.getJsonArray(json, BONUS_CHANCE, new JsonArray());
             int[] bonusChance = new int[bonus.size()];
             for (int i = 0; i < bonusChance.length; i++) { bonusChance[i] = GsonHelper.convertToInt(bonus.get(i), BONUS_CHANCE); }
-            return new DropRoll(conditions, GsonHelper.getAsInt(json, CHANCE, 100), bonusChance);
+            return new DropRoll(conditions, Json.getInt(json, CHANCE, 100), bonusChance);
         }
     }
 }

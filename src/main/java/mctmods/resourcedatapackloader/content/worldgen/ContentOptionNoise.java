@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -10,7 +11,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,14 +72,14 @@ final class ContentOptionNoise {
 
     private void run(JsonObject settings) {
         for (String root : ROOTS) {
-            JsonObject object = GsonHelper.getAsJsonObject(settings, root, null);
+            JsonObject object = Json.getJsonObject(settings, root, null);
             if (object == null) { continue; }
             for (String key : List.copyOf(object.keySet())) {
                 if (offset != 0 || CLIMATE_KEYS.contains(key)) { object.add(key, walk(object.get(key))); }
             }
         }
         if (offset == 0) { return; }
-        if (settings.has("sea_level")) { settings.addProperty("sea_level", GsonHelper.getAsInt(settings, "sea_level", 0) + offset); }
+        if (settings.has("sea_level")) { settings.addProperty("sea_level", Json.getInt(settings, "sea_level", 0) + offset); }
         for (String rule : List.of("surface_rule", "material_rule")) {
             if (settings.has(rule)) { anchors(settings.get(rule)); }
         }
@@ -98,7 +98,7 @@ final class ContentOptionNoise {
             if ("type".equals(key)) { continue; }
             object.add(key, "noise".equals(key) ? noise(object.get(key)) : walk(object.get(key)));
         }
-        String type = GsonHelper.getAsString(object, "type", "");
+        String type = Json.getString(object, "type", "");
         if ("minecraft:y_clamped_gradient".equals(type)) {
             raise(object, "from_y");
             raise(object, "to_y");

@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -122,7 +121,7 @@ public final class ContentOverrides {
     @Nullable private static OverrideDef read(ResourceLocation target, ResourceLocation source, String contents) {
         JsonObject json = Json.object(source, contents, "override file");
         if (json == null) { return null; }
-        String tool = json.has("harvestTool") ? Settings.lower(GsonHelper.getAsString(json, "harvestTool")) : null;
+        String tool = json.has("harvestTool") ? Settings.lower(Json.getString(json, "harvestTool")) : null;
         if (tool != null && !ContentToolTypes.HARVEST.contains(tool)) {
             ContentLog.LOGGER.error("Override file {} names harvestTool '{}', which is not one of {}, leaving the tool alone", source, tool, ContentToolTypes.HARVEST);
             tool = null;
@@ -138,10 +137,10 @@ public final class ContentOverrides {
         OverrideDef def = new OverrideDef(target, source,
                 floatOrNull(json, "hardness"), floatOrNull(json, "resistance"), floatOrNull(json, "slipperiness"),
                 intOrNull(json, "light"), intOrNull(json, "lightOpacity"), stringOrNull(json, "soundType"),
-                tool, Math.max(0, GsonHelper.getAsInt(json, "harvestToolLevel", 0)),
-                intOrNull(json, "flammability"), Math.max(0, GsonHelper.getAsInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
+                tool, Math.max(0, Json.getInt(json, "harvestToolLevel", 0)),
+                intOrNull(json, "flammability"), Math.max(0, Json.getInt(json, "fireSpread", DEFAULT_FIRE_SPREAD)),
                 intOrNull(json, "maxStackSize"), intOrNull(json, "maxDamage"), stringOrNull(json, "containerItem"),
-                effects, json.has("food") ? food(source, GsonHelper.getAsJsonObject(json, "food")) : null,
+                effects, json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
                 Json.strings(json, "requires"));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
@@ -150,7 +149,7 @@ public final class ContentOverrides {
         return def;
     }
 
-    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, GsonHelper.getAsInt(json, "heal", 1)), Math.max(0.0F, GsonHelper.getAsFloat(json, "saturation", 0.6F)), GsonHelper.getAsBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
+    private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) { return new OverrideDef.FoodDef(Math.max(0, Json.getInt(json, "heal", 1)), Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)), Json.getBoolean(json, "alwaysEdible", false), ContentParser.effects(source, json)); }
 
     private static boolean apply(OverrideDef def, Map<Block, Integer> lights) {
         boolean block = def.touchesBlock() && applyBlock(def, lights);
@@ -258,11 +257,11 @@ public final class ContentOverrides {
 
     public static void flammable(Block block, int ignite, int burn) { fire().rdpl$setFlammable(block, ignite, burn); }
 
-    @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsFloat(json, key) : null; }
+    @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? Json.getFloat(json, key) : null; }
 
-    @Nullable private static Integer intOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsInt(json, key) : null; }
+    @Nullable private static Integer intOrNull(JsonObject json, String key) { return json.has(key) ? Json.getInt(json, key) : null; }
 
-    @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? GsonHelper.getAsString(json, key) : null; }
+    @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? Json.getString(json, key) : null; }
 
     private record BlockSnapshot(float resistance, float friction, SoundType sound, float[] speeds, int[] lights) {
         static BlockSnapshot of(Block block) {
