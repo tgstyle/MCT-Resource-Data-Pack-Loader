@@ -12,7 +12,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
@@ -41,23 +40,23 @@ public final class ContentFuels {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "fuel file");
         if (json == null) { return; }
-        for (JsonElement element : JsonUtils.getJsonArray(json, "fuels")) {
+        for (JsonElement element : Json.getJsonArray(json, "fuels")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            int burnTime = JsonUtils.getInt(entry, "burnTime", 0);
+            int burnTime = Json.getInt(entry, "burnTime", 0);
             if (burnTime <= 0) {
                 ContentLog.LOGGER.error("A fuel in {} has no positive burnTime, skipping it", key);
                 continue;
             }
-            String oreDict = JsonUtils.getString(entry, "oreDict", "");
+            String oreDict = Json.getString(entry, "oreDict", "");
             if (!oreDict.isEmpty()) {
                 ENTRIES.add(new Entry(ItemStack.EMPTY, oreDict, burnTime));
                 continue;
             }
-            ItemStack stack = ContentStacks.parse(key, JsonUtils.getString(entry, "item", ""), 1);
+            ItemStack stack = ContentStacks.parse(key, Json.getString(entry, "item", ""), 1);
             if (stack.isEmpty()) { continue; }
             ENTRIES.add(new Entry(stack, "", burnTime));
         }

@@ -17,7 +17,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.common.collect.ImmutableList;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFire;
@@ -30,7 +29,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.potion.PotionType;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
@@ -71,12 +69,12 @@ public final class ContentOverrides {
             }
             ResourceLocation target = new ResourceLocation(path.substring(0, split), path.substring(split + 1));
             try {
-                OverrideDef def = read(target, source, contents);
+                OverrideDef def = Json.within("override file", source, () -> read(target, source, contents));
                 if (def == null) { return; }
                 OverrideDef previous = DEFS.put(target, def);
                 if (previous != null) { ContentLog.LOGGER.debug("Override for {} from {} replaces the one from {}", target, source, previous.source); }
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in override file {}, ignoring it: {}", source, ex.getMessage()); }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in override file {}, ignoring it: {}", source, ex.getMessage()); }
         });
         int applied = 0;
         for (OverrideDef def : DEFS.values()) {
@@ -97,14 +95,14 @@ public final class ContentOverrides {
                 intOrNull(json, "lightOpacity"),
                 stringOrNull(json, "soundType"),
                 stringOrNull(json, "harvestTool"),
-                JsonUtils.getInt(json, "harvestToolLevel", 0),
+                Json.getInt(json, "harvestToolLevel", 0),
                 intOrNull(json, "flammability"),
-                JsonUtils.getInt(json, "fireSpread", 5),
+                Json.getInt(json, "fireSpread", 5),
                 intOrNull(json, "maxStackSize"),
                 intOrNull(json, "maxDamage"),
                 stringOrNull(json, "containerItem"),
                 json.has("effects") ? effects(source, json) : null,
-                json.has("food") ? food(source, JsonUtils.getJsonObject(json, "food")) : null,
+                json.has("food") ? food(source, Json.getJsonObject(json, "food")) : null,
                 Json.strings(json, "requires"));
         if (!def.touchesBlock() && !def.touchesItem() && !def.touchesPotionType()) {
             ContentLog.LOGGER.error("Override file {} changes nothing it knows how to change, ignoring it", source);
@@ -219,22 +217,22 @@ public final class ContentOverrides {
 
     private static OverrideDef.FoodDef food(ResourceLocation source, JsonObject json) {
         return new OverrideDef.FoodDef(
-                Math.max(0, JsonUtils.getInt(json, "heal", 1)),
-                Math.max(0.0F, JsonUtils.getFloat(json, "saturation", 0.6F)),
-                JsonUtils.getBoolean(json, "alwaysEdible", false),
+                Math.max(0, Json.getInt(json, "heal", 1)),
+                Math.max(0.0F, Json.getFloat(json, "saturation", 0.6F)),
+                Json.getBoolean(json, "alwaysEdible", false),
                 readEffects(source, json));
     }
 
     private static List<PotionEffectDef> readEffects(ResourceLocation source, JsonObject json) {
         if (!json.has("effects")) { return Collections.emptyList(); }
-        return Collections.unmodifiableList(ContentParser.effects(source, JsonUtils.getJsonArray(json, "effects"), 3600, true));
+        return Collections.unmodifiableList(ContentParser.effects(source, Json.getJsonArray(json, "effects"), 3600, true));
     }
 
-    @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? JsonUtils.getFloat(json, key) : null; }
+    @Nullable private static Float floatOrNull(JsonObject json, String key) { return json.has(key) ? Json.getFloat(json, key) : null; }
 
-    @Nullable private static Integer intOrNull(JsonObject json, String key) { return json.has(key) ? JsonUtils.getInt(json, key) : null; }
+    @Nullable private static Integer intOrNull(JsonObject json, String key) { return json.has(key) ? Json.getInt(json, key) : null; }
 
-    @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? JsonUtils.getString(json, key) : null; }
+    @Nullable private static String stringOrNull(JsonObject json, String key) { return json.has(key) ? Json.getString(json, key) : null; }
 
     private static final class BlockSnapshot {
         private final float hardness;

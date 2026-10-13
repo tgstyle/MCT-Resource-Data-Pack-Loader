@@ -15,7 +15,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
@@ -49,17 +48,17 @@ public final class PlayerLoot {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        String table = JsonUtils.getString(json, TABLE, "");
+        String table = Json.getString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
             return;
         }
-        String mode = JsonUtils.getString(json, MODE, ADD);
+        String mode = Json.getString(json, MODE, ADD);
         if (!mode.equals(ADD) && !mode.equals(REPLACE)) {
             ContentLog.LOGGER.error("Player loot {} has mode '{}', which is neither '{}' nor '{}', ignoring it", key, mode, ADD, REPLACE);
             return;
         }
-        ENTRIES.add(new Entry(new ResourceLocation(table), mode.equals(REPLACE), JsonUtils.getBoolean(json, KEEP_INVENTORY, false), JsonUtils.getBoolean(json, DROP_LOOSE, false)));
+        ENTRIES.add(new Entry(new ResourceLocation(table), mode.equals(REPLACE), Json.getBoolean(json, KEEP_INVENTORY, false), Json.getBoolean(json, DROP_LOOSE, false)));
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST) public static void onPlayerDrops(PlayerDropsEvent event) { roll(event.getEntityPlayer(), event.getSource(), event.isRecentlyHit(), event.getDrops()); }

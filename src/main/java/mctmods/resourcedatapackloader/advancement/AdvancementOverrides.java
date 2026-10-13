@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.advancement;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 
 import com.google.gson.JsonParseException;
@@ -42,7 +43,7 @@ public final class AdvancementOverrides {
 
     @Nullable private static Advancement.Builder parse(ResourceLocation id, String contents) {
         try {
-            Advancement.Builder builder = JsonUtils.gsonDeserialize(AdvancementManager.GSON, contents, Advancement.Builder.class);
+            Advancement.Builder builder = Json.within("advancement", id, () -> JsonUtils.gsonDeserialize(AdvancementManager.GSON, contents, Advancement.Builder.class));
             if (builder == null && !quiet) { ContentLog.LOGGER.error("Advancement {} is empty or null, leaving the built-in one in place", id); }
             return builder;
         }

@@ -6,7 +6,6 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,8 +27,8 @@ public final class ContentTabs {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "creative tab");
         if (json == null) { return; }
-        String label = JsonUtils.getString(json, "label", key.getPath());
-        String icon = JsonUtils.getString(json, "icon", "");
+        String label = Json.getString(json, "label", key.getPath());
+        String icon = Json.getString(json, "icon", "");
         if (icon.isEmpty()) {
             ContentLog.LOGGER.error("Creative tab {} has no icon, it will fall back to the first block that uses it", key);
             return;

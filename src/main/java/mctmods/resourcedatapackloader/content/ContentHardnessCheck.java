@@ -15,7 +15,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.block.model.WeightedBakedModel;
 import net.minecraft.client.resources.IResource;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -123,7 +122,7 @@ public final class ContentHardnessCheck {
                 try (IResource open = one) {
                     JsonObject held = Json.GSON.fromJson(new InputStreamReader(open.getInputStream(), StandardCharsets.UTF_8), JsonObject.class);
                     if (held != null && held.has("variants")) {
-                        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(held, "variants").entrySet()) {
+                        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(held, "variants").entrySet()) {
                             says.append(' ').append(entry.getKey()).append('=').append(entry.getValue().isJsonArray() ? entry.getValue().getAsJsonArray().size() : 1);
                         }
                     }
@@ -144,7 +143,7 @@ public final class ContentHardnessCheck {
                 ContentLog.LOGGER.debug("  the file the pack serves has no variants block at all");
                 return;
             }
-            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "variants").entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "variants").entrySet()) {
                 JsonElement held = entry.getValue();
                 ContentLog.LOGGER.debug("  the file the pack serves lists {} entry/entries for '{}'", held.isJsonArray() ? held.getAsJsonArray().size() : 1, entry.getKey());
                 if (!held.isJsonArray()) { continue; }

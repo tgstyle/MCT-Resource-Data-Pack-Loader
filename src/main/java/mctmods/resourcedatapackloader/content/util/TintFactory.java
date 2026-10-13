@@ -1,10 +1,10 @@
 package mctmods.resourcedatapackloader.content.util;
 
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonObject;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.JsonUtils;
 import javax.annotation.Nullable;
 
 public final class TintFactory {
@@ -20,8 +20,8 @@ public final class TintFactory {
     }
 
     @Nullable public static TintFactory of(JsonObject json) {
-        Integer starts = json.has(FROM) ? color(JsonUtils.getString(json, FROM, "")) : Integer.valueOf(OPAQUE);
-        Integer ends = color(JsonUtils.getString(json, TO, ""));
+        Integer starts = json.has(FROM) ? color(Json.getString(json, FROM, "")) : Integer.valueOf(OPAQUE);
+        Integer ends = color(Json.getString(json, TO, ""));
         if (starts == null || ends == null) { return null; }
         return new TintFactory(starts, ends);
     }

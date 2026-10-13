@@ -181,7 +181,7 @@ public final class RecipeOverrides {
     private static boolean isRemoval(ResourceLocation key, String contents) {
         try {
             JsonObject json = JsonUtils.gsonDeserialize(Json.GSON, contents, JsonObject.class);
-            return json != null && JsonUtils.getBoolean(json, REMOVE, false);
+            return json != null && Json.getBoolean(json, REMOVE, false);
         }
         catch (IllegalArgumentException | JsonParseException ex) {
             logFailure(key, "checking whether it is a removal", ex);

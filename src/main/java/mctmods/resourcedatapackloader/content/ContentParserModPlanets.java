@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import java.util.Arrays;
@@ -30,21 +29,21 @@ public final class ContentParserModPlanets {
 
     @Nullable public static GalaxySpaceDef galaxySpace(ResourceLocation key, JsonObject body) {
         if (!body.has(GALAXY_SPACE)) { return null; }
-        JsonObject json = JsonUtils.getJsonObject(body, GALAXY_SPACE);
+        JsonObject json = Json.getJsonObject(body, GALAXY_SPACE);
         float[] eccentricity = pair(key, json, "orbitEccentricity");
         float[] offset = pair(key, json, "orbitOffset");
         float[] zone = pair(key, json, "habitableZone");
         String owner = "Celestial body " + key + " GalaxySpace";
-        String aura = JsonUtils.getString(json, "auraColor", "").trim();
-        return new GalaxySpaceDef(Math.max(0.0F, JsonUtils.getFloat(json, "pressure", 0.0F)),
-                JsonUtils.getBoolean(json, "radiation", false),
+        String aura = Json.getString(json, "auraColor", "").trim();
+        return new GalaxySpaceDef(Math.max(0.0F, Json.getFloat(json, "pressure", 0.0F)),
+                Json.getBoolean(json, "radiation", false),
                 Json.choice(json, "class", null, owner, CLASSES),
                 eccentricity[0], eccentricity[1], offset[0], offset[1],
-                JsonUtils.getBoolean(json, "freezeBlocks", true),
-                Math.max(0.0F, JsonUtils.getFloat(json, "thermalVariation", 0.0F)),
-                JsonUtils.getFloat(json, "solarWind", -1.0F),
+                Json.getBoolean(json, "freezeBlocks", true),
+                Math.max(0.0F, Json.getFloat(json, "thermalVariation", 0.0F)),
+                Json.getFloat(json, "solarWind", -1.0F),
                 Json.choice(json, "weather", null, owner, WEATHER),
-                Math.max(0.0F, JsonUtils.getFloat(json, "weatherFrequency", 1.0F)),
+                Math.max(0.0F, Json.getFloat(json, "weatherFrequency", 1.0F)),
                 Json.choice(json, "starType", null, owner, STAR_TYPES),
                 Json.choice(json, "starColor", null, owner, STAR_COLORS),
                 aura.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(aura, owner + " auraColor") & 0xFFFFFF,
@@ -53,23 +52,23 @@ public final class ContentParserModPlanets {
 
     @Nullable public static ExtraPlanetsDef extraPlanets(ResourceLocation key, JsonObject galacticraft) {
         if (!galacticraft.has(EXTRA_PLANETS)) { return null; }
-        JsonObject json = JsonUtils.getJsonObject(galacticraft, EXTRA_PLANETS);
-        float day = JsonUtils.getFloat(json, "temperatureDay", Float.NaN);
+        JsonObject json = Json.getJsonObject(galacticraft, EXTRA_PLANETS);
+        float day = Json.getFloat(json, "temperatureDay", Float.NaN);
         String lander = Json.choice(json, "lander", "", "Dimension " + key + " ExtraPlanets", LANDERS);
         return new ExtraPlanetsDef(level(json, "pressure"), level(json, "radiation"), day,
-                JsonUtils.getFloat(json, "temperatureNight", day),
+                Json.getFloat(json, "temperatureNight", day),
                 lander.isEmpty() ? null : lander);
     }
 
-    private static int level(JsonObject json, String member) { return json.has(member) ? MathHelper.clamp(JsonUtils.getInt(json, member), 0, 100) : -1; }
+    private static int level(JsonObject json, String member) { return json.has(member) ? MathHelper.clamp(Json.getInt(json, member), 0, 100) : -1; }
 
     private static float[] pair(ResourceLocation key, JsonObject json, String member) {
         if (!json.has(member)) { return new float[2]; }
-        JsonArray values = JsonUtils.getJsonArray(json, member);
+        JsonArray values = Json.getJsonArray(json, member);
         if (values.size() != 2) {
             ContentLog.LOGGER.error("Celestial body {} sets GalaxySpace {} to {}, which needs exactly two numbers, ignoring it", key, member, values);
             return new float[2];
         }
-        return new float[] {values.get(0).getAsFloat(), values.get(1).getAsFloat()};
+        return new float[] {Json.asFloat(values.get(0), member, 0.0F), Json.asFloat(values.get(1), member, 0.0F)};
     }
 }

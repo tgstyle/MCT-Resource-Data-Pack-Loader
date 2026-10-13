@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootPool;
 import net.minecraft.world.storage.loot.LootTable;
@@ -42,7 +41,7 @@ public final class LootInjections {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
-        String target = JsonUtils.getString(json, TARGET, "");
+        String target = Json.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
             return;
@@ -52,7 +51,7 @@ public final class LootInjections {
             return;
         }
         List<String> pools = BY_TABLE.computeIfAbsent(new ResourceLocation(target), k -> new ArrayList<>());
-        for (com.google.gson.JsonElement element : JsonUtils.getJsonArray(json, POOLS)) {
+        for (com.google.gson.JsonElement element : Json.getJsonArray(json, POOLS)) {
             pools.add(element.toString());
             count[0]++;
         }

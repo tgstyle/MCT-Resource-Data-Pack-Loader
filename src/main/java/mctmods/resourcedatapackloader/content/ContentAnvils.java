@@ -32,7 +32,6 @@ import net.minecraft.inventory.EntityEquipmentSlot;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.TextFormatting;
@@ -117,25 +116,25 @@ public final class ContentAnvils {
         }
         Map<String, Integer> enchantments = new LinkedHashMap<>();
         if (json.has("enchantments")) {
-            for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "enchantments").entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "enchantments").entrySet()) {
                 if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
                     ContentLog.LOGGER.error("Anvil work {} gives the enchantment {} something that is not a level, skipping it", key, entry.getKey());
                     continue;
                 }
-                enchantments.put(entry.getKey(), Math.max(1, entry.getValue().getAsInt()));
+                enchantments.put(entry.getKey(), Math.max(1, Json.asInt(entry.getValue(), entry.getKey(), 1)));
             }
         }
-        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), itemOf(json, "result"), countOf(json, "result"), Math.max(1, JsonUtils.getInt(json, "levels", 1)), enchantments, JsonUtils.getString(json, "grants", "").trim(), JsonUtils.getBoolean(json, "locks", false));
+        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), itemOf(json, "result"), countOf(json, "result"), Math.max(1, Json.getInt(json, "levels", 1)), enchantments, Json.getString(json, "grants", "").trim(), Json.getBoolean(json, "locks", false));
     }
 
     private static String itemOf(JsonObject json, String name) {
-        if (json.has(name) && json.get(name).isJsonObject()) { return JsonUtils.getString(JsonUtils.getJsonObject(json, name), "item", "").trim(); }
-        return JsonUtils.getString(json, name, "").trim();
+        if (json.has(name) && json.get(name).isJsonObject()) { return Json.getString(Json.getJsonObject(json, name), "item", "").trim(); }
+        return Json.getString(json, name, "").trim();
     }
 
     private static int countOf(JsonObject json, String name) {
         if (!json.has(name) || !json.get(name).isJsonObject()) { return 1; }
-        return Math.max(1, JsonUtils.getInt(JsonUtils.getJsonObject(json, name), "count", 1));
+        return Math.max(1, Json.getInt(Json.getJsonObject(json, name), "count", 1));
     }
 
     @Nullable private static AnvilDef holding(ItemStack held) {

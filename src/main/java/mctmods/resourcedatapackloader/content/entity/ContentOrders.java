@@ -28,7 +28,6 @@ import net.minecraft.tileentity.TileEntitySign;
 import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -79,11 +78,11 @@ public final class ContentOrders {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "order file");
         if (json == null) { return; }
-        if (json.has("stockName")) { stockName = JsonUtils.getString(json, "stockName").trim(); }
-        if (json.has("hire")) { hire = JsonUtils.getString(json, "hire").trim(); }
-        if (json.has("spawnCap")) { spawnCap = Math.max(0, JsonUtils.getInt(json, "spawnCap")); }
+        if (json.has("stockName")) { stockName = Json.getString(json, "stockName").trim(); }
+        if (json.has("hire")) { hire = Json.getString(json, "hire").trim(); }
+        if (json.has("spawnCap")) { spawnCap = Math.max(0, Json.getInt(json, "spawnCap")); }
         if (!json.has("orders")) { return; }
-        JsonArray list = JsonUtils.getJsonArray(json, "orders");
+        JsonArray list = Json.getJsonArray(json, "orders");
         for (int i = 0; i < list.size(); i++) {
             String name = key + "#" + i;
             OrderDef def = list.get(i).isJsonObject() ? order(name, list.get(i).getAsJsonObject()) : null;
@@ -94,13 +93,13 @@ public final class ContentOrders {
     }
 
     @Nullable private static OrderDef order(String name, JsonObject json) {
-        String named = JsonUtils.getString(json, "job", "");
+        String named = Json.getString(json, "job", "");
         OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
         if (job == null) {
             ContentLog.LOGGER.error("Order {} asks for the job '{}', which is not gather, mine, farm or haul, ignoring it", name, named);
             return null;
         }
-        String blocks = JsonUtils.getString(json, "blocks", "").trim();
+        String blocks = Json.getString(json, "blocks", "").trim();
         if (blocks.isEmpty() && job != OrderDef.Job.FARM) {
             ContentLog.LOGGER.error("Order {} names no ore dictionary name under blocks, and only a farm order works without one, ignoring it", name);
             return null;
@@ -110,17 +109,17 @@ public final class ContentOrders {
             ContentLog.LOGGER.error("Order {} names no takers, so no worker could ever take it, ignoring it", name);
             return null;
         }
-        String deliver = JsonUtils.getString(json, "deliver", "chest");
+        String deliver = Json.getString(json, "deliver", "chest");
         if (!"chest".equalsIgnoreCase(deliver) && !"self".equalsIgnoreCase(deliver)) { ContentLog.LOGGER.error("Order {} delivers to '{}', which is not chest or self, so it delivers to the chest", name, deliver); }
         int[] byTier = new int[0];
         if (json.has("areaByTier")) {
-            JsonArray tiers = JsonUtils.getJsonArray(json, "areaByTier");
+            JsonArray tiers = Json.getJsonArray(json, "areaByTier");
             byTier = new int[tiers.size()];
-            for (int t = 0; t < tiers.size(); t++) { byTier[t] = Math.max(1, tiers.get(t).getAsInt()); }
+            for (int t = 0; t < tiers.size(); t++) { byTier[t] = Math.max(1, Json.asInt(tiers.get(t), "tiers", 1)); }
         }
-        return new OrderDef(name, job, blocks, Math.max(1, JsonUtils.getInt(json, "area", 16)), byTier, "self".equalsIgnoreCase(deliver), Math.max(1, JsonUtils.getInt(json, "limit", 64)),
-                Math.max(0, JsonUtils.getInt(json, "standing", 0)), Math.max(1, JsonUtils.getInt(json, "workers", 1)), JsonUtils.getInt(json, "priority", 0), takers,
-                JsonUtils.getString(json, "sign", "").trim(), Math.max(0.01F, JsonUtils.getFloat(json, "speed", 1.0F)), JsonUtils.getString(json, "tool", "").trim());
+        return new OrderDef(name, job, blocks, Math.max(1, Json.getInt(json, "area", 16)), byTier, "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
+                Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
+                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim());
     }
 
     @Nullable static OrderDef def(String name) { return DEFS.get(name); }

@@ -88,7 +88,6 @@ import net.minecraft.entity.passive.EntityVillager;
 import net.minecraft.entity.passive.EntityWolf;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
@@ -236,7 +235,7 @@ public final class ContentTasks {
     public static List<TaskDef> parse(ResourceLocation key, JsonObject json) {
         if (!json.has("tasks")) { return Collections.emptyList(); }
         List<TaskDef> tasks = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, "tasks")) {
+        for (JsonElement element : Json.getJsonArray(json, "tasks")) {
             if (element.isJsonPrimitive()) {
                 String text = element.getAsString().trim();
                 if (!text.startsWith("-")) {
@@ -252,20 +251,20 @@ public final class ContentTasks {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            Kind kind = known(key, JsonUtils.getString(entry, "task", ""));
+            Kind kind = known(key, Json.getString(entry, "task", ""));
             if (kind == null) { continue; }
             if (!entry.has("priority")) {
                 ContentLog.LOGGER.error("Entity variant {} adds the task {} without a priority, so it is dropped; vanilla runs 0 first and its own tasks sit between 1 and 8", key, kind.name);
                 continue;
             }
-            tasks.add(new TaskDef(kind.name, false, Math.max(0, JsonUtils.getInt(entry, "priority")),
+            tasks.add(new TaskDef(kind.name, false, Math.max(0, Json.getInt(entry, "priority")),
                     number(entry, "speed"), number(entry, "nearSpeed"),
                     decimal(entry, "distance"), decimal(entry, "near"), decimal(entry, "chance"), decimal(entry, "leap"),
-                    entry.has("cooldown") ? Math.max(1, JsonUtils.getInt(entry, "cooldown")) : null,
-                    JsonUtils.getString(entry, "entity", ""), Json.strings(entry, "items"),
-                    JsonUtils.getBoolean(entry, "sight", true), JsonUtils.getBoolean(entry, "nearby", false), JsonUtils.getBoolean(entry, "help", false),
-                    JsonUtils.getBoolean(entry, "memory", false), JsonUtils.getBoolean(entry, "close", false), JsonUtils.getBoolean(entry, "nocturnal", false),
-                    JsonUtils.getBoolean(entry, "scared", false)));
+                    entry.has("cooldown") ? Math.max(1, Json.getInt(entry, "cooldown")) : null,
+                    Json.getString(entry, "entity", ""), Json.strings(entry, "items"),
+                    Json.getBoolean(entry, "sight", true), Json.getBoolean(entry, "nearby", false), Json.getBoolean(entry, "help", false),
+                    Json.getBoolean(entry, "memory", false), Json.getBoolean(entry, "close", false), Json.getBoolean(entry, "nocturnal", false),
+                    Json.getBoolean(entry, "scared", false)));
         }
         return tasks;
     }
@@ -276,9 +275,9 @@ public final class ContentTasks {
         return kind;
     }
 
-    @Nullable private static Double number(JsonObject json, String name) { return json.has(name) ? (Double) (double) JsonUtils.getFloat(json, name) : null; }
+    @Nullable private static Double number(JsonObject json, String name) { return json.has(name) ? (Double) (double) Json.getFloat(json, name) : null; }
 
-    @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? (Float) JsonUtils.getFloat(json, name) : null; }
+    @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? (Float) Json.getFloat(json, name) : null; }
 
     public static void apply(EntityLiving living, EntityVariantDef def) {
         if (def.tasks.isEmpty()) { return; }

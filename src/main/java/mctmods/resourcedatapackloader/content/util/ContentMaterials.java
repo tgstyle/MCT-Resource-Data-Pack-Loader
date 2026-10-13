@@ -15,7 +15,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.init.SoundEvents;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraftforge.common.util.EnumHelper;
@@ -43,24 +42,24 @@ public final class ContentMaterials {
         if (json == null) { return; }
         int[] reduction = {2, 5, 6, 2};
         if (json.has("reduction")) {
-            JsonArray array = JsonUtils.getJsonArray(json, "reduction");
+            JsonArray array = Json.getJsonArray(json, "reduction");
             if (array.size() != 4) { ContentLog.LOGGER.error("Reduction in {} needs four numbers, boots leggings chestplate helmet, using the defaults", key); }
             else {
-                for (int i = 0; i < 4; i++) { reduction[i] = array.get(i).getAsInt(); }
+                for (int i = 0; i < 4; i++) { reduction[i] = Json.asInt(array.get(i), "reduction", 0); }
             }
         }
         String name = key.getNamespace() + "_" + key.getPath().replace('/', '_');
         DEFS.put(key.toString(), new MaterialDef(key, name,
-                JsonUtils.getInt(json, "harvestLevel", 1),
-                JsonUtils.getInt(json, "durability", 250),
-                JsonUtils.getFloat(json, "efficiency", 6.0F),
-                JsonUtils.getFloat(json, "damage", 2.0F),
-                JsonUtils.getInt(json, "enchantability", 14),
+                Json.getInt(json, "harvestLevel", 1),
+                Json.getInt(json, "durability", 250),
+                Json.getFloat(json, "efficiency", 6.0F),
+                Json.getFloat(json, "damage", 2.0F),
+                Json.getInt(json, "enchantability", 14),
                 reduction,
-                JsonUtils.getFloat(json, "toughness", 0.0F),
-                JsonUtils.getString(json, "equipSound", "item.armor.equip_iron"),
-                JsonUtils.getString(json, "armorTexture", key.toString()),
-                JsonUtils.getString(json, "repairItem", ""),
+                Json.getFloat(json, "toughness", 0.0F),
+                Json.getString(json, "equipSound", "item.armor.equip_iron"),
+                Json.getString(json, "armorTexture", key.toString()),
+                Json.getString(json, "repairItem", ""),
                 Json.strings(json, "requires")));
     }
 

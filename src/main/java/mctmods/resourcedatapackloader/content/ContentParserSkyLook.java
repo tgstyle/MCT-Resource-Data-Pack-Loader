@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,12 +30,12 @@ public final class ContentParserSkyLook {
 
     private ContentParserSkyLook() {}
 
-    public static boolean samples(JsonObject sky) { return SAMPLE.equals(Settings.lower(JsonUtils.getString(sky, "fogColor", ""))); }
+    public static boolean samples(JsonObject sky) { return SAMPLE.equals(Settings.lower(Json.getString(sky, "fogColor", ""))); }
 
     @Nullable public static SkyLookDef look(ResourceLocation key, JsonObject sky, int cloudHeight, int cloudColor) {
         boolean sample = samples(sky);
         if (!sample && KEYS.stream().noneMatch(sky::has)) { return null; }
-        float cloudSpeed = JsonUtils.getFloat(sky, "cloudSpeed", 1.0F);
+        float cloudSpeed = Json.getFloat(sky, "cloudSpeed", 1.0F);
         return new SkyLookDef(sample,
                 unit(key, sky, "fogDensity", 0.0F),
                 unit(key, sky, "fogGroundWeight", GROUND_WEIGHT),
@@ -47,7 +46,7 @@ public final class ContentParserSkyLook {
                 layers(key, sky, cloudHeight, cloudSpeed, cloudColor),
                 unit(key, sky, "sunBrightness", 1.0F),
                 unit(key, sky, "moonBrightness", 1.0F),
-                sky.has("heat") ? heat(key, JsonUtils.getJsonObject(sky, "heat")) : null,
+                sky.has("heat") ? heat(key, Json.getJsonObject(sky, "heat")) : null,
                 color(key, sky, "snowColor"),
                 color(key, sky, "waterFogColor"),
                 color(key, sky, "lavaFogColor"),
@@ -55,21 +54,21 @@ public final class ContentParserSkyLook {
                 unit(key, sky, "starTwinkle", 0.0F),
                 color(key, sky, "lightningColor"),
                 skybox(key, sky),
-                sky.has("aurora") ? aurora(key, JsonUtils.getJsonObject(sky, "aurora")) : null,
-                JsonUtils.getBoolean(sky, "rainbow", false));
+                sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null,
+                Json.getBoolean(sky, "rainbow", false));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
         if (!sky.has("skybox")) { return null; }
-        JsonObject box = JsonUtils.getJsonObject(sky, "skybox");
-        if (box.has("panorama")) { return new SkyLookDef.Skybox(new ResourceLocation(JsonUtils.getString(box, "panorama").trim()), Collections.emptyList()); }
+        JsonObject box = Json.getJsonObject(sky, "skybox");
+        if (box.has("panorama")) { return new SkyLookDef.Skybox(new ResourceLocation(Json.getString(box, "panorama").trim()), Collections.emptyList()); }
         List<ResourceLocation> faces = new ArrayList<>();
         for (String face : FACES) {
             if (!box.has(face)) {
                 ContentLog.LOGGER.error("Dimension {} gives sky.skybox with no {} face and no panorama, so it draws no skybox", key, face);
                 return null;
             }
-            faces.add(new ResourceLocation(JsonUtils.getString(box, face).trim()));
+            faces.add(new ResourceLocation(Json.getString(box, face).trim()));
         }
         return new SkyLookDef.Skybox(null, Collections.unmodifiableList(faces));
     }
@@ -83,29 +82,29 @@ public final class ContentParserSkyLook {
     private static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
 
     private static int color(ResourceLocation key, JsonObject json, String member) {
-        String value = JsonUtils.getString(json, member, "").trim();
+        String value = Json.getString(json, member, "").trim();
         return value.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(value, key + " sky." + member) & 0xFFFFFF;
     }
 
     private static List<SkyLookDef.CloudLayer> layers(ResourceLocation key, JsonObject sky, int cloudHeight, float cloudSpeed, int cloudColor) {
         if (!sky.has("cloudLayers")) { return Collections.emptyList(); }
         List<SkyLookDef.CloudLayer> layers = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(sky, "cloudLayers")) {
-            JsonObject layer = JsonUtils.getJsonObject(element, "cloud layer");
-            String tint = JsonUtils.getString(layer, "color", "").trim();
-            layers.add(new SkyLookDef.CloudLayer(JsonUtils.getFloat(layer, "height", cloudHeight), JsonUtils.getFloat(layer, "speed", cloudSpeed), tint.isEmpty() ? cloudColor : ContentTypes.color(tint, key + " sky.cloudLayers") & 0xFFFFFF));
+        for (JsonElement element : Json.getJsonArray(sky, "cloudLayers")) {
+            JsonObject layer = Json.getJsonObject(element, "cloud layer");
+            String tint = Json.getString(layer, "color", "").trim();
+            layers.add(new SkyLookDef.CloudLayer(Json.getFloat(layer, "height", cloudHeight), Json.getFloat(layer, "speed", cloudSpeed), tint.isEmpty() ? cloudColor : ContentTypes.color(tint, key + " sky.cloudLayers") & 0xFFFFFF));
         }
         return Collections.unmodifiableList(layers);
     }
 
-    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) { return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), JsonUtils.getFloat(heat, "minTemperature", HOT), JsonUtils.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat)); }
+    private static SkyLookDef.Heat heat(ResourceLocation key, JsonObject heat) { return new SkyLookDef.Heat(unit(key, heat, "strength", HEAT_STRENGTH), Json.getFloat(heat, "minTemperature", HOT), Json.getBoolean(heat, "dayOnly", true), followsWorld(key, heat), startDistance(key, heat)); }
 
     private static boolean followsWorld(ResourceLocation key, JsonObject heat) {
         return WORLD.equals(Json.choice(heat, "mode", SCREEN, "Dimension " + key + " sky.heat", MODES));
     }
 
     private static float startDistance(ResourceLocation key, JsonObject heat) {
-        float value = JsonUtils.getFloat(heat, "startDistance", HEAT_START);
+        float value = Json.getFloat(heat, "startDistance", HEAT_START);
         if (value >= 0.0F) { return value; }
         ContentLog.LOGGER.error("Dimension {} gives sky.heat.startDistance {}, which is below zero, using {}", key, value, HEAT_START);
         return HEAT_START;

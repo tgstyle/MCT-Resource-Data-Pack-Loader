@@ -21,7 +21,6 @@ import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraftforge.event.terraingen.BiomeEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.BiomeManager;
@@ -96,57 +95,57 @@ public final class ContentBiomes {
         if (json == null) { return; }
         List<SpawnEntryDef> spawns = new ArrayList<>();
         if (json.has("spawns")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "spawns")) {
+            for (JsonElement element : Json.getJsonArray(json, "spawns")) {
                 if (!element.isJsonObject()) {
                     ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
                     continue;
                 }
                 JsonObject entry = element.getAsJsonObject();
-                String entity = JsonUtils.getString(entry, "entity", "");
+                String entity = Json.getString(entry, "entity", "");
                 if (entity.isEmpty()) {
                     ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
                     continue;
                 }
-                int min = Math.max(1, JsonUtils.getInt(entry, "min", 1));
-                spawns.add(new SpawnEntryDef(JsonUtils.getString(entry, "type", "creature"), entity,
-                        Math.max(1, JsonUtils.getInt(entry, "weight", 10)), min, Math.max(min, JsonUtils.getInt(entry, "max", min))));
+                int min = Math.max(1, Json.getInt(entry, "min", 1));
+                spawns.add(new SpawnEntryDef(Json.getString(entry, "type", "creature"), entity,
+                        Math.max(1, Json.getInt(entry, "weight", 10)), min, Math.max(min, Json.getInt(entry, "max", min))));
             }
         }
         Map<String, Integer> decoration = new LinkedHashMap<>();
-        JsonObject decorationJson = JsonUtils.getJsonObject(json, "decoration", new JsonObject());
+        JsonObject decorationJson = Json.getJsonObject(json, "decoration", new JsonObject());
         for (Map.Entry<String, JsonElement> entry : decorationJson.entrySet()) {
             if (!entry.getValue().isJsonPrimitive()) { continue; }
-            decoration.put(entry.getKey(), entry.getValue().getAsInt());
+            decoration.put(entry.getKey(), Json.asInt(entry.getValue(), entry.getKey(), 0));
         }
-        for (Map.Entry<String, JsonElement> entry : JsonUtils.getJsonObject(json, "spawnRates", new JsonObject()).entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "spawnRates", new JsonObject()).entrySet()) {
             if (RATE_KEYS.contains(entry.getKey())) { continue; }
             ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, entry.getKey(), RATE_KEYS);
         }
-        JsonObject placement = JsonUtils.getJsonObject(json, "placement", new JsonObject());
+        JsonObject placement = Json.getJsonObject(json, "placement", new JsonObject());
         DEFS.put(key, new BiomeDef(key,
-                JsonUtils.getString(json, "name", key.getPath()),
-                JsonUtils.getInt(json, "id", BiomeDef.AUTO_ID),
-                JsonUtils.getFloat(json, "temperature", 0.5F),
-                JsonUtils.getFloat(json, "rainfall", 0.5F),
-                JsonUtils.getFloat(json, "baseHeight", 0.1F),
-                JsonUtils.getFloat(json, "heightVariation", 0.2F),
-                JsonUtils.getBoolean(json, "snow", false),
-                JsonUtils.getBoolean(json, "rain", true),
-                ContentTypes.color(JsonUtils.getString(json, "waterColor", "FFFFFF"), key.toString()),
-                JsonUtils.getString(json, "baseBiome", ""),
-                JsonUtils.getString(json, "topBlock", ""),
-                JsonUtils.getString(json, "fillerBlock", ""),
-                JsonUtils.getString(json, "stoneBlock", ""),
+                Json.getString(json, "name", key.getPath()),
+                Json.getInt(json, "id", BiomeDef.AUTO_ID),
+                Json.getFloat(json, "temperature", 0.5F),
+                Json.getFloat(json, "rainfall", 0.5F),
+                Json.getFloat(json, "baseHeight", 0.1F),
+                Json.getFloat(json, "heightVariation", 0.2F),
+                Json.getBoolean(json, "snow", false),
+                Json.getBoolean(json, "rain", true),
+                ContentTypes.color(Json.getString(json, "waterColor", "FFFFFF"), key.toString()),
+                Json.getString(json, "baseBiome", ""),
+                Json.getString(json, "topBlock", ""),
+                Json.getString(json, "fillerBlock", ""),
+                Json.getString(json, "stoneBlock", ""),
                 Json.strings(json, "types"),
-                JsonUtils.getString(placement, "climate", ""),
-                Math.max(0, JsonUtils.getInt(placement, "weight", 10)),
-                JsonUtils.getBoolean(placement, "playerSpawn", false),
-                JsonUtils.getBoolean(placement, "villages", false),
-                JsonUtils.getBoolean(placement, "villageSpawn", true),
-                villageKind(JsonUtils.getString(json, "villageType", ""), key),
-                JsonUtils.getBoolean(placement, "strongholds", false),
+                Json.getString(placement, "climate", ""),
+                Math.max(0, Json.getInt(placement, "weight", 10)),
+                Json.getBoolean(placement, "playerSpawn", false),
+                Json.getBoolean(placement, "villages", false),
+                Json.getBoolean(placement, "villageSpawn", true),
+                villageKind(Json.getString(json, "villageType", ""), key),
+                Json.getBoolean(placement, "strongholds", false),
                 Collections.unmodifiableMap(decoration),
-                spawnChance(key, JsonUtils.getFloat(json, "spawnChance", 0.1F)),
+                spawnChance(key, Json.getFloat(json, "spawnChance", 0.1F)),
                 rate(json, "surfaceDay"),
                 rate(json, "surfaceNight"),
                 rate(json, "undergroundDay"),
@@ -155,10 +154,10 @@ public final class ContentBiomes {
                 color(json, "foliageColor", key),
                 color(json, "snowColor", key),
                 json.has("minHeight") || json.has("maxHeight"),
-                JsonUtils.getInt(json, "minHeight", Integer.MIN_VALUE),
-                JsonUtils.getInt(json, "maxHeight", Integer.MAX_VALUE),
+                Json.getInt(json, "minHeight", Integer.MIN_VALUE),
+                Json.getInt(json, "maxHeight", Integer.MAX_VALUE),
                 Json.strings(json, "replaces"),
-                JsonUtils.getBoolean(json, "keepDefaultSpawns", false),
+                Json.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
                 Json.strings(json, "requires"),
                 SkyStone.read(json, key)));
@@ -181,13 +180,13 @@ public final class ContentBiomes {
     }
 
     private static float rate(JsonObject json, String name) {
-        JsonObject rates = JsonUtils.getJsonObject(json, "spawnRates", new JsonObject());
-        return rates.has(name) ? Math.max(0.0F, JsonUtils.getFloat(rates, name)) : -1.0F;
+        JsonObject rates = Json.getJsonObject(json, "spawnRates", new JsonObject());
+        return rates.has(name) ? Math.max(0.0F, Json.getFloat(rates, name)) : -1.0F;
     }
 
     private static int color(JsonObject json, String name, ResourceLocation key) {
         if (!json.has(name)) { return ContentTypes.NO_COLOR; }
-        return ContentTypes.color(JsonUtils.getString(json, name, "FFFFFF"), key.toString());
+        return ContentTypes.color(Json.getString(json, name, "FFFFFF"), key.toString());
     }
 
     @SubscribeEvent(priority = EventPriority.LOWEST) public static void registerBiomes(RegistryEvent.Register<Biome> event) {

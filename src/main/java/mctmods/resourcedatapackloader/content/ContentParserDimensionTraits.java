@@ -13,7 +13,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.util.EnumParticleTypes;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -52,18 +51,18 @@ public final class ContentParserDimensionTraits {
     private ContentParserDimensionTraits() {}
 
     public static DimensionTraitsDef traits(ResourceLocation key, JsonObject json, boolean belt) {
-        JsonObject physics = JsonUtils.getJsonObject(json, "physics", new JsonObject());
-        JsonObject time = JsonUtils.getJsonObject(json, "time", new JsonObject());
-        JsonObject weather = JsonUtils.getJsonObject(json, "weather", new JsonObject());
-        JsonObject sky = JsonUtils.getJsonObject(json, "sky", new JsonObject());
+        JsonObject physics = Json.getJsonObject(json, "physics", new JsonObject());
+        JsonObject time = Json.getJsonObject(json, "time", new JsonObject());
+        JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
+        JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
         boolean still = belt && !time.has("dayLength") && !sky.has("fixedTime");
-        long day = still ? DimensionTraitsDef.NO_DAY : JsonUtils.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
+        long day = still ? DimensionTraitsDef.NO_DAY : Json.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
         if (!still && day <= 0L) {
             ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
             day = DimensionTraitsDef.VANILLA_DAY;
         }
-        boolean precipitation = JsonUtils.getBoolean(weather, "precipitation", true);
-        boolean alwaysRain = JsonUtils.getBoolean(weather, "alwaysRain", false);
+        boolean precipitation = Json.getBoolean(weather, "precipitation", true);
+        boolean alwaysRain = Json.getBoolean(weather, "alwaysRain", false);
         if (alwaysRain && !precipitation) {
             ContentLog.LOGGER.error("Dimension {} asks for alwaysRain with precipitation off, so it stays dry", key);
             alwaysRain = false;
@@ -74,38 +73,38 @@ public final class ContentParserDimensionTraits {
                 factor(key, physics, "arrowGravity"),
                 day,
                 precipitation,
-                JsonUtils.getBoolean(weather, "lightning", true),
-                JsonUtils.getBoolean(weather, "snow", true),
-                JsonUtils.getBoolean(weather, "freeze", true),
+                Json.getBoolean(weather, "lightning", true),
+                Json.getBoolean(weather, "snow", true),
+                Json.getBoolean(weather, "freeze", true),
                 alwaysRain,
-                weather.has("cycle") ? cycle(key, JsonUtils.getJsonObject(weather, "cycle")) : null,
-                weather.has("rain") || weather.has("wind") ? rain(key, JsonUtils.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, JsonUtils.getJsonObject(weather, "wind")) : null) : null,
+                weather.has("cycle") ? cycle(key, Json.getJsonObject(weather, "cycle")) : null,
+                weather.has("rain") || weather.has("wind") ? rain(key, Json.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, Json.getJsonObject(weather, "wind")) : null) : null,
                 sky(key, sky),
-                sky.has("moon") ? moon(JsonUtils.getJsonObject(sky, "moon")) : null,
-                json.has("ambience") ? ambience(key, JsonUtils.getJsonObject(json, "ambience")) : null);
+                sky.has("moon") ? moon(Json.getJsonObject(sky, "moon")) : null,
+                json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null);
     }
 
     private static DimensionTraitsDef.Moon moon(JsonObject moon) {
-        return new DimensionTraitsDef.Moon(new ResourceLocation(JsonUtils.getString(moon, "texture", MOON).trim()), Math.max(0.0F, JsonUtils.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
+        return new DimensionTraitsDef.Moon(new ResourceLocation(Json.getString(moon, "texture", MOON).trim()), Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
     }
 
     private static AmbienceDef ambience(ResourceLocation key, JsonObject json) {
         int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
-        String particle = JsonUtils.getString(json, "particle", "").trim();
+        String particle = Json.getString(json, "particle", "").trim();
         if (!particle.isEmpty() && EnumParticleTypes.getByName(particle) == null) {
             ContentLog.LOGGER.error("Dimension {} names the ambience particle '{}', which is no particle Minecraft knows, so it shows none", key, particle);
             particle = "";
         }
         return new AmbienceDef(sound(json, "music"), delay[0], delay[1], sound(json, "loopSound"),
-                JsonUtils.getString(json, "ambientSound", "").trim(),
+                Json.getString(json, "ambientSound", "").trim(),
                 chance(key, json, "soundChance", SOUND_CHANCE),
                 particle,
                 chance(key, json, "particleChance", PARTICLE_CHANCE),
-                json.has("particleColor") ? ContentTypes.color(JsonUtils.getString(json, "particleColor").trim(), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
+                json.has("particleColor") ? ContentTypes.color(Json.getString(json, "particleColor").trim(), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
     }
 
     @Nullable private static ResourceLocation sound(JsonObject json, String member) {
-        String name = JsonUtils.getString(json, member, "").trim();
+        String name = Json.getString(json, member, "").trim();
         return name.isEmpty() ? null : new ResourceLocation(name);
     }
 
@@ -114,21 +113,21 @@ public final class ContentParserDimensionTraits {
     }
 
     private static RainDef rain(ResourceLocation key, JsonObject json, @Nullable WindDef wind) {
-        String particle = Settings.lower(JsonUtils.getString(json, "particle", RAIN_PARTICLE));
+        String particle = Settings.lower(Json.getString(json, "particle", RAIN_PARTICLE));
         if (EnumParticleTypes.getByName(particle) == null) {
             ContentLog.LOGGER.error("Dimension {} names rain particle '{}', which is no particle Minecraft knows, using {}", key, particle, RAIN_PARTICLE);
             particle = RAIN_PARTICLE;
         }
         float angle = Json.ranged(json, "angle", 0.0F, 0.0F, MAX_ANGLE, "Dimension " + key + " rain");
         return new RainDef(particle,
-                new ResourceLocation(JsonUtils.getString(json, "sound", RAIN_SOUND).trim()),
-                Math.max(0.0F, JsonUtils.getFloat(json, "volume", 0.2F)),
-                Math.max(0, JsonUtils.getInt(json, "interval", 3)),
-                ContentTypes.color(JsonUtils.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
-                ContentTypes.color(JsonUtils.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
+                new ResourceLocation(Json.getString(json, "sound", RAIN_SOUND).trim()),
+                Math.max(0.0F, Json.getFloat(json, "volume", 0.2F)),
+                Math.max(0, Json.getInt(json, "interval", 3)),
+                ContentTypes.color(Json.getString(json, "color", WHITE).trim(), key + " rain color") & 0xFFFFFF,
+                ContentTypes.color(Json.getString(json, "snowColor", WHITE).trim(), key + " rain snowColor") & 0xFFFFFF,
                 angle,
-                JsonUtils.getFloat(json, "heading", 0.0F),
-                JsonUtils.getBoolean(json, "splashUpward", false),
+                Json.getFloat(json, "heading", 0.0F),
+                Json.getBoolean(json, "splashUpward", false),
                 wind);
     }
 
@@ -144,7 +143,7 @@ public final class ContentParserDimensionTraits {
 
     private static double factor(ResourceLocation key, JsonObject physics, String member) {
         if (!physics.has(member)) { return -1.0D; }
-        double value = JsonUtils.getFloat(physics, member);
+        double value = Json.getFloat(physics, member);
         if (value > 0.0D) { return value; }
         ContentLog.LOGGER.error("Dimension {} gives physics {} of {}, which is not above zero, ignoring it", key, member, value);
         return -1.0D;
@@ -159,7 +158,7 @@ public final class ContentParserDimensionTraits {
     }
 
     private static float strength(ResourceLocation key, JsonObject json, String member, float fallback) {
-        float strength = JsonUtils.getFloat(json, member, fallback);
+        float strength = Json.getFloat(json, member, fallback);
         if (strength > 0.0F && strength <= 1.0F) { return strength; }
         ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is not above 0 and at most 1, using {}", key, member, strength, fallback);
         return fallback;
@@ -171,11 +170,11 @@ public final class ContentParserDimensionTraits {
         int min;
         int max;
         if (value.isJsonArray() && value.getAsJsonArray().size() == 2) {
-            min = value.getAsJsonArray().get(0).getAsInt();
-            max = value.getAsJsonArray().get(1).getAsInt();
+            min = Json.asInt(value.getAsJsonArray().get(0), member, 0);
+            max = Json.asInt(value.getAsJsonArray().get(1), member, 0);
         }
         else if (value.isJsonPrimitive()) {
-            min = value.getAsInt();
+            min = Json.asInt(value, member, 0);
             max = min;
         }
         else {
@@ -191,32 +190,32 @@ public final class ContentParserDimensionTraits {
 
     @Nullable private static DimensionTraitsDef.Sky sky(ResourceLocation key, JsonObject sky) {
         if (!sky.has("sun") && !sky.has("moon") && !sky.has("bodies") && !sky.has("stars")) { return null; }
-        JsonObject sun = JsonUtils.getJsonObject(sky, "sun", new JsonObject());
-        JsonObject stars = JsonUtils.getJsonObject(sky, "stars", new JsonObject());
+        JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
+        JsonObject stars = Json.getJsonObject(sky, "stars", new JsonObject());
         List<DimensionTraitsDef.Body> bodies = null;
         if (sky.has("bodies")) {
             List<DimensionTraitsDef.Body> found = new ArrayList<>();
-            JsonArray list = JsonUtils.getJsonArray(sky, "bodies");
+            JsonArray list = Json.getJsonArray(sky, "bodies");
             for (JsonElement element : list) {
                 if (!element.isJsonObject() || !element.getAsJsonObject().has("texture")) {
                     ContentLog.LOGGER.error("Dimension {} lists a sky body {} with no texture, ignoring it", key, element);
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
-                String ringBody = JsonUtils.getString(body, "body", "").trim();
-                found.add(new DimensionTraitsDef.Body(new ResourceLocation(JsonUtils.getString(body, "texture").trim()),
-                        Math.max(0.0F, JsonUtils.getFloat(body, "size", 20.0F)),
-                        JsonUtils.getFloat(body, "angle", 180.0F),
-                        JsonUtils.getFloat(body, "tilt", 0.0F),
-                        JsonUtils.getBoolean(body, "followsTime", true),
+                String ringBody = Json.getString(body, "body", "").trim();
+                found.add(new DimensionTraitsDef.Body(new ResourceLocation(Json.getString(body, "texture").trim()),
+                        Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
+                        Json.getFloat(body, "angle", 180.0F),
+                        Json.getFloat(body, "tilt", 0.0F),
+                        Json.getBoolean(body, "followsTime", true),
                         ringBody.isEmpty() ? null : ringBody));
             }
             bodies = Collections.unmodifiableList(found);
         }
-        return new DimensionTraitsDef.Sky(new ResourceLocation(JsonUtils.getString(sun, "texture", SUN).trim()),
-                Math.max(0.0F, JsonUtils.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
+        return new DimensionTraitsDef.Sky(new ResourceLocation(Json.getString(sun, "texture", SUN).trim()),
+                Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)),
                 bodies,
-                Math.max(0, JsonUtils.getInt(stars, "count", STARS)),
-                Math.max(0.0F, JsonUtils.getFloat(stars, "size", STAR_SIZE)));
+                Math.max(0, Json.getInt(stars, "count", STARS)),
+                Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
     }
 }

@@ -26,7 +26,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registries;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityList;
 import net.minecraft.block.state.IBlockState;
@@ -119,10 +118,10 @@ public final class ContentRegistry {
             for (Map.Entry<ResourceLocation, String> entry : ContentCofhWorld.collect().entrySet()) {
                 if (WORLDGEN_DEFS.containsKey(entry.getKey())) { continue; }
                 try {
-                    WorldgenDef def = ContentParserWorldgen.worldgen(entry.getKey(), entry.getValue());
+                    WorldgenDef def = Json.within("CoFH World entry", entry.getKey(), () -> ContentParserWorldgen.worldgen(entry.getKey(), entry.getValue()));
                     if (def != null) { WORLDGEN_DEFS.put(entry.getKey(), def); }
                 }
-                catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in CoFH World entry {}, ignoring it: {}", entry.getKey(), ex.getMessage()); }
+                catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in CoFH World entry {}, ignoring it: {}", entry.getKey(), ex.getMessage()); }
             }
         }
         if (!BLOCK_DEFS.isEmpty() || !ITEM_DEFS.isEmpty() || !FLUID_DEFS.isEmpty() || !WORLDGEN_DEFS.isEmpty()) {
@@ -135,10 +134,10 @@ public final class ContentRegistry {
             ResourceLocation key = held.getKey();
             if (ContentOwners.reserved(key)) { continue; }
             try {
-                T def = parse.apply(key, held.getValue());
+                T def = Json.within(what + " definition", key, () -> parse.apply(key, held.getValue()));
                 if (def != null) { into.put(key, def); }
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in {} definition {}, ignoring it: {}", what, key, ex.getMessage()); }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in {} definition {}, ignoring it: {}", what, key, ex.getMessage()); }
         }
     }
 

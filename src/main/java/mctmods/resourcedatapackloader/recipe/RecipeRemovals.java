@@ -13,7 +13,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.IRecipe;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryModifiable;
@@ -71,7 +70,7 @@ public final class RecipeRemovals {
         }
     }
 
-    private static JsonArray array(JsonObject json, String member) { return json.has(member) ? JsonUtils.getJsonArray(json, member) : new JsonArray(); }
+    private static JsonArray array(JsonObject json, String member) { return json.has(member) ? Json.getJsonArray(json, member) : new JsonArray(); }
 
     private static boolean matches(ResourceLocation key, IRecipe recipe) {
         String name = key.toString();

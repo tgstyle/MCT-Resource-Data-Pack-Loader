@@ -72,9 +72,9 @@ public final class ContentParserWorlds {
             return null;
         }
         String axis = Json.choice(json, "axis", PortalFrameDef.VERTICAL, "Portal frame " + key, AXES);
-        PortalFrameDef frame = new PortalFrameDef(key, JsonUtils.getString(json, "name", key.getPath()), axis, legend, rows,
-                Math.max(PortalFrameDef.LEAST_WIDE, JsonUtils.getInt(json, "maxWidth", 21)),
-                Math.max(PortalFrameDef.LEAST_TALL, JsonUtils.getInt(json, "maxHeight", 21)));
+        PortalFrameDef frame = new PortalFrameDef(key, Json.getString(json, "name", key.getPath()), axis, legend, rows,
+                Math.max(PortalFrameDef.LEAST_WIDE, Json.getInt(json, "maxWidth", 21)),
+                Math.max(PortalFrameDef.LEAST_TALL, Json.getInt(json, "maxHeight", 21)));
         if (PortalShapes.spread(frame).isEmpty()) {
             ContentLog.LOGGER.error("Portal frame {} never leaves room for a player, who needs a hole {} across and {} up, so nothing could walk through it", key, PortalFrameDef.LEAST_WIDE, frame.leastTall());
             return null;
@@ -84,22 +84,22 @@ public final class ContentParserWorlds {
 
     @Nullable private static DimensionPortalDef dimensionPortal(ResourceLocation key, JsonObject json) {
         if (!json.has("portal")) { return null; }
-        JsonObject entry = JsonUtils.getJsonObject(json, "portal");
+        JsonObject entry = Json.getJsonObject(json, "portal");
         List<String> frames = strings(entry, "frames");
         if (frames.isEmpty()) {
             ContentLog.LOGGER.error("Dimension {} has a portal section naming no frames, so nothing could ever open it", key);
             return null;
         }
-        int color = ContentTypes.color(JsonUtils.getString(entry, "color", "#FFFFFF"), key + " portal color");
+        int color = ContentTypes.color(Json.getString(entry, "color", "#FFFFFF"), key + " portal color");
         String back = Json.choice(entry, "return", DimensionPortalDef.BUILT, "Dimension " + key + " portal", RETURNS);
-        PortalDef travel = ContentParser.portal(entry, JsonUtils.getInt(json, "id"), false, true);
-        return new DimensionPortalDef(frames, JsonUtils.getString(entry, "ignitedBy", "minecraft:flint_and_steel"), color, back, travel);
+        PortalDef travel = ContentParser.portal(entry, Json.getInt(json, "id"), false, true);
+        return new DimensionPortalDef(frames, Json.getString(entry, "ignitedBy", "minecraft:flint_and_steel"), color, back, travel);
     }
 
     private static Map<Character, IBlockState> legend(ResourceLocation key, JsonObject json, String forbidden, String what) {
         Map<Character, IBlockState> legend = new LinkedHashMap<>();
         if (!json.has("legend")) { return legend; }
-        JsonObject entry = JsonUtils.getJsonObject(json, "legend");
+        JsonObject entry = Json.getJsonObject(json, "legend");
         for (Map.Entry<String, JsonElement> mark : entry.entrySet()) {
             String symbol = mark.getKey().trim();
             if (symbol.length() != 1 || forbidden.indexOf(symbol.charAt(0)) >= 0) {
@@ -128,7 +128,7 @@ public final class ContentParserWorlds {
         List<String> corner = strings(json, "corner");
         roles(key, legend, mouth, "mouth");
         roles(key, legend, corner, "corner");
-        return new PathIntersectDef(Math.max(1, JsonUtils.getInt(json, "weight", 1)), legend, mouth.toArray(new String[0]), corner.toArray(new String[0]));
+        return new PathIntersectDef(Math.max(1, Json.getInt(json, "weight", 1)), legend, mouth.toArray(new String[0]), corner.toArray(new String[0]));
     }
 
     @Nullable public static StructureMapDef structureMap(ResourceLocation key, String contents) {
@@ -138,7 +138,7 @@ public final class ContentParserWorlds {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
             return null;
         }
-        JsonArray held = JsonUtils.getJsonArray(json, "layers");
+        JsonArray held = Json.getJsonArray(json, "layers");
         if (held.size() < 1 || held.size() > StructureMapDef.LIMIT) {
             ContentLog.LOGGER.error("Structure map {} has {} layer(s), the most being {}, so it is dropped", key, held.size(), StructureMapDef.LIMIT);
             return null;
@@ -152,12 +152,12 @@ public final class ContentParserWorlds {
             JsonObject entry = held.get(at).getAsJsonObject();
             Map<Character, List<PickDef>> palette = new LinkedHashMap<>();
             if (entry.has("palette")) {
-                for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(entry, "palette").entrySet()) {
+                for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(entry, "palette").entrySet()) {
                     String symbol = mark.getKey().trim();
                     if (badSymbol("Structure map " + key + " layer " + at, symbol, mark.getKey())) { return null; }
                     List<PickDef> picks = new ArrayList<>();
                     if (mark.getValue().isJsonArray()) {
-                        for (JsonElement choice : mark.getValue().getAsJsonArray()) { picks.add(weighted(choice.getAsString())); }
+                        for (String choice : Json.texts(mark.getValue().getAsJsonArray(), mark.getKey())) { picks.add(weighted(choice)); }
                     }
                     else { picks.add(weighted(mark.getValue().getAsString())); }
                     palette.put(symbol.charAt(0), Collections.unmodifiableList(picks));
@@ -171,19 +171,19 @@ public final class ContentParserWorlds {
             if (badRows("Structure map " + key + " layer " + at, rows, StructureMapDef.LIMIT, palette.keySet())) { return null; }
             layers[at] = new StructureMapDef.Layer(palette, rows.toArray(new String[0]));
         }
-        int ground = MathHelper.clamp(JsonUtils.getInt(json, "ground", 0), 0, layers.length - 1);
-        int cell = MathHelper.clamp(JsonUtils.getInt(json, "cell", 32), 1, 48);
-        int spacing = Math.max(0, JsonUtils.getInt(json, "spacing", 0));
-        int chance = MathHelper.clamp(JsonUtils.getInt(json, "chance", 100), 1, 100);
+        int ground = MathHelper.clamp(Json.getInt(json, "ground", 0), 0, layers.length - 1);
+        int cell = MathHelper.clamp(Json.getInt(json, "cell", 32), 1, 48);
+        int spacing = Math.max(0, Json.getInt(json, "spacing", 0));
+        int chance = MathHelper.clamp(Json.getInt(json, "chance", 100), 1, 100);
         int[] pinned = null;
         if (json.has("at")) {
-            JsonArray spot = JsonUtils.getJsonArray(json, "at");
-            if (spot.size() == 2) { pinned = new int[] { spot.get(0).getAsInt(), spot.get(1).getAsInt() }; }
+            JsonArray spot = Json.getJsonArray(json, "at");
+            if (spot.size() == 2) { pinned = new int[] { Json.asInt(spot.get(0), "at", 0), Json.asInt(spot.get(1), "at", 0) }; }
             else { ContentLog.LOGGER.error("Structure map {} pins 'at' with {} number(s) instead of x and z, so the pin is ignored", key, spot.size()); }
         }
         Set<Integer> dimensions = new LinkedHashSet<>();
         if (json.has("dimensions")) {
-            for (JsonElement dim : JsonUtils.getJsonArray(json, "dimensions")) { dimensions.add(dim.getAsInt()); }
+            dimensions.addAll(Json.ints(Json.getJsonArray(json, "dimensions"), "dimensions"));
         }
         StructureMapDef def = new StructureMapDef(key, cell, ground, spacing, chance, pinned, dimensions, layers);
         if (spacing > 0 && spacing * 16 < def.widest) {
@@ -199,19 +199,19 @@ public final class ContentParserWorlds {
         List<String> rows = strings(json, "map");
         Map<Character, CityMapDef.Cell> palette = new LinkedHashMap<>();
         if (json.has("palette")) {
-            for (Map.Entry<String, JsonElement> mark : JsonUtils.getJsonObject(json, "palette").entrySet()) {
+            for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(json, "palette").entrySet()) {
                 String symbol = mark.getKey().trim();
                 if (badSymbol("City map " + key, symbol, mark.getKey())) { return null; }
                 List<String> names = new ArrayList<>();
                 int height = CityMapDef.LIFT;
                 JsonObject roadKeys = null;
                 if (mark.getValue().isJsonArray()) {
-                    for (JsonElement choice : mark.getValue().getAsJsonArray()) { names.add(choice.getAsString().trim()); }
+                    for (String choice : Json.texts(mark.getValue().getAsJsonArray(), mark.getKey())) { names.add(choice.trim()); }
                 }
                 else if (mark.getValue().isJsonObject()) {
                     JsonObject described = mark.getValue().getAsJsonObject();
-                    names.add(JsonUtils.getString(described, "kind", "").trim());
-                    height = MathHelper.clamp(JsonUtils.getInt(described, "height", CityMapDef.LIFT), 2, 64);
+                    names.add(Json.getString(described, "kind", "").trim());
+                    height = MathHelper.clamp(Json.getInt(described, "height", CityMapDef.LIFT), 2, 64);
                     if (described.has("settings") && described.get("settings").isJsonObject()) {
                         roadKeys = described.getAsJsonObject("settings");
                         ContentControl.warnUnknown("City map " + key + " mark '" + symbol + "'", roadKeys);
@@ -240,7 +240,7 @@ public final class ContentParserWorlds {
             }
         }
         if (badRows("City map " + key, rows, CityMapDef.LIMIT, palette.keySet())) { return null; }
-        int cell = MathHelper.clamp(JsonUtils.getInt(json, "cell", 48), 8, 128);
+        int cell = MathHelper.clamp(Json.getInt(json, "cell", 48), 8, 128);
         JsonObject settings = null;
         if (json.has("settings")) {
             if (json.get("settings").isJsonObject()) {
@@ -284,7 +284,7 @@ public final class ContentParserWorlds {
         if (json == null) { return null; }
         Map<String, String> roles = new LinkedHashMap<>();
         if (json.has("roles")) {
-            JsonObject entry = JsonUtils.getJsonObject(json, "roles");
+            JsonObject entry = Json.getJsonObject(json, "roles");
             for (Map.Entry<String, JsonElement> role : entry.entrySet()) {
                 String name = Settings.lower(role.getKey());
                 if (!ContentWorldTemplates.knownRoles().containsKey(name)) {
@@ -300,14 +300,14 @@ public final class ContentParserWorlds {
         }
         List<Integer> dimensions = new ArrayList<>();
         if (json.has("dimensions")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "dimensions")) { dimensions.add(element.getAsInt()); }
+            dimensions.addAll(Json.ints(Json.getJsonArray(json, "dimensions"), "dimensions"));
         }
         return new WorldTemplateDef(key,
-                JsonUtils.getString(json, "name", key.getPath()),
-                JsonUtils.getString(json, "default", WorldTemplateDef.VOID),
+                Json.getString(json, "name", key.getPath()),
+                Json.getString(json, "default", WorldTemplateDef.VOID),
                 Collections.unmodifiableMap(roles),
                 structures(key, json),
-                json.has("settings") ? JsonUtils.getJsonObject(json, "settings") : null,
+                json.has("settings") ? Json.getJsonObject(json, "settings") : null,
                 Collections.unmodifiableList(dimensions),
                 strings(json, "requires"));
     }
@@ -317,7 +317,7 @@ public final class ContentParserWorlds {
         if (json == null) { return null; }
         List<IntroPageDef> pages = new ArrayList<>();
         if (json.has("pages")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "pages")) {
+            for (JsonElement element : Json.getJsonArray(json, "pages")) {
                 IntroPageDef page = introPage(key, element.getAsJsonObject());
                 if (page != null) { pages.add(page); }
             }
@@ -326,8 +326,8 @@ public final class ContentParserWorlds {
             ContentLog.LOGGER.error("World intro {} names no pages, ignoring it", key);
             return null;
         }
-        String music = JsonUtils.getString(json, "music", "").trim();
-        return new WorldIntroDef(JsonUtils.getBoolean(json, "once", false),
+        String music = Json.getString(json, "music", "").trim();
+        return new WorldIntroDef(Json.getBoolean(json, "once", false),
                 music.isEmpty() ? null : new ResourceLocation(music),
                 Collections.unmodifiableList(pages),
                 strings(json, "requires"));
@@ -335,24 +335,24 @@ public final class ContentParserWorlds {
 
     @Nullable private static IntroPageDef introPage(ResourceLocation key, JsonObject json) {
         List<ResourceLocation> backgrounds = new ArrayList<>();
-        String single = JsonUtils.getString(json, "background", "").trim();
+        String single = Json.getString(json, "background", "").trim();
         if (!single.isEmpty()) { backgrounds.add(new ResourceLocation(single)); }
         for (String name : strings(json, "backgrounds")) { backgrounds.add(new ResourceLocation(name)); }
-        String mode = Settings.lower(JsonUtils.getString(json, "mode", IntroPageDef.SCROLL));
+        String mode = Settings.lower(Json.getString(json, "mode", IntroPageDef.SCROLL));
         if (!IntroPageDef.SCROLL.equals(mode) && !IntroPageDef.STATIC.equals(mode)) {
             ContentLog.LOGGER.error("World intro {} has a page with mode '{}', which is neither '{}' nor '{}', ignoring the page", key, mode, IntroPageDef.SCROLL, IntroPageDef.STATIC);
             return null;
         }
         String direction = Json.choice(json, "direction", IntroPageDef.UP, "World intro " + key + " page", DIRECTIONS);
-        String text = JsonUtils.getString(json, "text", "").trim();
+        String text = Json.getString(json, "text", "").trim();
         return new IntroPageDef(Collections.unmodifiableList(backgrounds),
-                JsonUtils.getFloat(json, "interval", 5.0F),
+                Json.getFloat(json, "interval", 5.0F),
                 text.isEmpty() ? null : new ResourceLocation(text),
                 mode,
-                JsonUtils.getFloat(json, "time", IntroPageDef.DERIVE),
+                Json.getFloat(json, "time", IntroPageDef.DERIVE),
                 direction,
-                JsonUtils.getFloat(json, "textScale", 1.0F),
-                JsonUtils.getBoolean(json, "settle", false));
+                Json.getFloat(json, "textScale", 1.0F),
+                Json.getBoolean(json, "settle", false));
     }
 
     public static Map<Integer, Map<String, String>> gameRuleFile(ResourceLocation key, String contents) {
@@ -377,7 +377,7 @@ public final class ContentParserWorlds {
 
     private static Map<String, String> gameRules(ResourceLocation key, JsonObject json) {
         if (!json.has("gameRules")) { return Collections.emptyMap(); }
-        return Collections.unmodifiableMap(rules(key, JsonUtils.getJsonObject(json, "gameRules")));
+        return Collections.unmodifiableMap(rules(key, Json.getJsonObject(json, "gameRules")));
     }
 
     private static Map<String, String> rules(ResourceLocation key, JsonObject object) {
@@ -395,11 +395,11 @@ public final class ContentParserWorlds {
     @Nullable public static DimensionDef dimension(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "dimension");
         if (json == null) { return null; }
-        JsonObject terrain = JsonUtils.getJsonObject(json, "terrain", new JsonObject());
-        JsonObject biomes = JsonUtils.getJsonObject(json, "biomes", new JsonObject());
-        JsonObject sky = JsonUtils.getJsonObject(json, "sky", new JsonObject());
-        String skyColor = JsonUtils.getString(sky, "skyColor", "").trim();
-        String cloudColor = JsonUtils.getString(sky, "cloudColor", "").trim();
+        JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
+        JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
+        JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
+        String skyColor = Json.getString(sky, "skyColor", "").trim();
+        String cloudColor = Json.getString(sky, "cloudColor", "").trim();
         String owner = "Dimension " + key;
         String type = Json.choice(terrain, "type", DimensionDef.OVERWORLD, owner + " terrain", KNOWN_TERRAIN);
         List<String> biomeList = strings(biomes, "biomeList");
@@ -409,41 +409,41 @@ public final class ContentParserWorlds {
         String source = empty ? DimensionDef.INHERIT : chosen;
         GalacticraftDef galacticraft = ContentParserCelestial.galacticraft(key, json);
         boolean belt = galacticraft != null && CelestialDef.ASTEROIDS.equals(galacticraft.body.kind);
-        String fog = ContentParserSkyLook.samples(sky) ? "" : JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
-        int cloudHeight = JsonUtils.getInt(sky, "cloudHeight", 128);
+        String fog = ContentParserSkyLook.samples(sky) ? "" : Json.getString(sky, "fogColor", belt ? "000000" : "");
+        int cloudHeight = Json.getInt(sky, "cloudHeight", 128);
         int clouds = cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString());
         return new DimensionDef(key,
-                JsonUtils.getInt(json, "id"),
-                JsonUtils.getString(json, "suffix", "DIM_" + key.getPath()),
-                JsonUtils.getBoolean(json, "keepLoaded", false),
+                Json.getInt(json, "id"),
+                Json.getString(json, "suffix", "DIM_" + key.getPath()),
+                Json.getBoolean(json, "keepLoaded", false),
                 type,
-                JsonUtils.getString(terrain, "generatorOptions", ""),
-                JsonUtils.getBoolean(terrain, "structures", true),
+                Json.getString(terrain, "generatorOptions", ""),
+                Json.getBoolean(terrain, "structures", true),
                 source,
-                JsonUtils.getString(biomes, "biome", "minecraft:plains"),
+                Json.getString(biomes, "biome", "minecraft:plains"),
                 biomeList,
-                JsonUtils.getBoolean(sky, "hasSkyLight", true),
-                JsonUtils.getBoolean(sky, "surfaceWorld", true),
-                JsonUtils.getBoolean(sky, "respawn", true),
-                JsonUtils.getBoolean(sky, "spawning", true),
+                Json.getBoolean(sky, "hasSkyLight", true),
+                Json.getBoolean(sky, "surfaceWorld", true),
+                Json.getBoolean(sky, "respawn", true),
+                Json.getBoolean(sky, "spawning", true),
                 cloudHeight,
-                JsonUtils.getInt(sky, "groundLevel", 63),
-                JsonUtils.getFloat(sky, "movementFactor", 1.0F),
+                Json.getInt(sky, "groundLevel", 63),
+                Json.getFloat(sky, "movementFactor", 1.0F),
                 fog.isEmpty() ? -1 : ContentTypes.color(fog, key.toString()),
                 skyColor.isEmpty() ? -1 : ContentTypes.color(skyColor, key.toString()),
-                JsonUtils.getInt(sky, "fixedTime", -1),
-                JsonUtils.getBoolean(sky, "sunriseColors", !belt),
-                JsonUtils.getBoolean(sky, "nether", false),
-                JsonUtils.getBoolean(sky, "beds", true),
-                JsonUtils.getBoolean(sky, "waterVaporizes", false),
-                JsonUtils.getBoolean(sky, "showFog", false),
-                MathHelper.clamp(JsonUtils.getFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
-                JsonUtils.getFloat(sky, "starBrightness", -1.0F),
+                Json.getInt(sky, "fixedTime", -1),
+                Json.getBoolean(sky, "sunriseColors", !belt),
+                Json.getBoolean(sky, "nether", false),
+                Json.getBoolean(sky, "beds", true),
+                Json.getBoolean(sky, "waterVaporizes", false),
+                Json.getBoolean(sky, "showFog", false),
+                MathHelper.clamp(Json.getFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
+                Json.getFloat(sky, "starBrightness", -1.0F),
                 clouds,
-                JsonUtils.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
-                JsonUtils.getBoolean(sky, "renderSky", true),
-                JsonUtils.getBoolean(sky, "renderClouds", !belt),
-                JsonUtils.getBoolean(sky, "renderWeather", true),
+                Json.getInt(sky, "respawnDimension", Integer.MIN_VALUE),
+                Json.getBoolean(sky, "renderSky", true),
+                Json.getBoolean(sky, "renderClouds", !belt),
+                Json.getBoolean(sky, "renderWeather", true),
                 gameRules(key, json),
                 strings(json, "requires"),
                 dimensionPortal(key, json),
@@ -456,7 +456,7 @@ public final class ContentParserWorlds {
     private static Map<String, Boolean> structures(ResourceLocation key, JsonObject json) {
         Map<String, Boolean> settings = new LinkedHashMap<>();
         if (!json.has("structures")) { return Collections.unmodifiableMap(settings); }
-        JsonObject entry = JsonUtils.getJsonObject(json, "structures");
+        JsonObject entry = Json.getJsonObject(json, "structures");
         for (Map.Entry<String, JsonElement> value : entry.entrySet()) {
             String name = ContentStructures.normalize(value.getKey());
             if (ContentStructures.unknown(name)) {
@@ -472,24 +472,24 @@ public final class ContentParserWorlds {
         JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
         String scope = Json.choice(json, "scope", GateDef.PLAYER, "Gate " + key, SCOPES);
-        JsonObject unlock = JsonUtils.getJsonObject(json, "unlock", new JsonObject());
+        JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
         return new GateDef(key,
-                JsonUtils.getInt(json, "dimension"),
-                JsonUtils.getString(json, "name", key.getPath()),
+                Json.getInt(json, "dimension"),
+                Json.getString(json, "name", key.getPath()),
                 GateDef.GLOBAL.equals(scope),
-                JsonUtils.getBoolean(json, "open", false),
-                JsonUtils.getString(unlock, "craft", ""),
-                JsonUtils.getString(unlock, "consume", ""),
-                Math.max(1, JsonUtils.getInt(unlock, "consumeCount", 1)),
-                JsonUtils.getString(unlock, "hold", ""),
-                JsonUtils.getString(unlock, "advancement", ""),
-                JsonUtils.getString(unlock, "killed", ""),
-                Math.max(1, JsonUtils.getInt(unlock, "killedCount", 1)),
-                JsonUtils.getString(unlock, "killedDrops", ""),
+                Json.getBoolean(json, "open", false),
+                Json.getString(unlock, "craft", ""),
+                Json.getString(unlock, "consume", ""),
+                Math.max(1, Json.getInt(unlock, "consumeCount", 1)),
+                Json.getString(unlock, "hold", ""),
+                Json.getString(unlock, "advancement", ""),
+                Json.getString(unlock, "killed", ""),
+                Math.max(1, Json.getInt(unlock, "killedCount", 1)),
+                Json.getString(unlock, "killedDrops", ""),
                 strings(json, "portalBlocks"),
-                JsonUtils.getString(json, "blockedMessage", "You need %item% to enter %dim%"),
-                JsonUtils.getString(json, "unlockedMessage", "%dim% is now open"),
-                JsonUtils.getBoolean(json, "safeReturn", false),
+                Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"),
+                Json.getString(json, "unlockedMessage", "%dim% is now open"),
+                Json.getBoolean(json, "safeReturn", false),
                 strings(json, "requires"));
     }
 }

@@ -28,7 +28,6 @@ import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.potion.PotionHelper;
 import net.minecraft.potion.PotionType;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.common.brewing.BrewingRecipeRegistry;
 import net.minecraftforge.event.RegistryEvent;
@@ -77,33 +76,33 @@ public final class ContentPotions {
         if (json == null) { return; }
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
-            for (JsonElement element : JsonUtils.getJsonArray(json, "attributes")) {
+            for (JsonElement element : Json.getJsonArray(json, "attributes")) {
                 if (!element.isJsonObject()) {
                     ContentLog.LOGGER.error("An attribute in {} is not an object, skipping it", key);
                     continue;
                 }
                 JsonObject entry = element.getAsJsonObject();
-                String uuid = JsonUtils.getString(entry, "uuid", "");
+                String uuid = Json.getString(entry, "uuid", "");
                 if (uuid.isEmpty()) {
                     ContentLog.LOGGER.error("An attribute in {} has no uuid, skipping it. Generate one once and keep it, because it identifies the modifier", key);
                     continue;
                 }
-                attributes.add(new AttributeDef(JsonUtils.getString(entry, "attribute", ""), uuid,
-                        JsonUtils.getFloat(entry, "amount", 0.0F),
-                        JsonUtils.getInt(entry, "operation", 0)));
+                attributes.add(new AttributeDef(Json.getString(entry, "attribute", ""), uuid,
+                        Json.getFloat(entry, "amount", 0.0F),
+                        Json.getInt(entry, "operation", 0)));
             }
         }
-        JsonObject icon = JsonUtils.getJsonObject(json, "icon", new JsonObject());
+        JsonObject icon = Json.getJsonObject(json, "icon", new JsonObject());
         POTIONS.put(key, new PotionDef(key,
-                JsonUtils.getString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
-                JsonUtils.getBoolean(json, "badEffect", false),
-                JsonUtils.getBoolean(json, "beneficial", false),
-                ContentTypes.color(JsonUtils.getString(json, "color", "FFFFFF"), key.toString()),
-                JsonUtils.getInt(icon, "x", 0),
-                JsonUtils.getInt(icon, "y", 0),
-                JsonUtils.getString(json, "iconTexture", json.has("icon") ? "" : ResourceDataPackLoader.MOD_ID + ":" + ResourceDataPackLoader.ICON),
-                JsonUtils.getBoolean(json, "instant", false),
-                JsonUtils.getFloat(json, "effectiveness", 0.5F),
+                Json.getString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
+                Json.getBoolean(json, "badEffect", false),
+                Json.getBoolean(json, "beneficial", false),
+                ContentTypes.color(Json.getString(json, "color", "FFFFFF"), key.toString()),
+                Json.getInt(icon, "x", 0),
+                Json.getInt(icon, "y", 0),
+                Json.getString(json, "iconTexture", json.has("icon") ? "" : ResourceDataPackLoader.MOD_ID + ":" + ResourceDataPackLoader.ICON),
+                Json.getBoolean(json, "instant", false),
+                Json.getFloat(json, "effectiveness", 0.5F),
                 Collections.unmodifiableList(attributes),
                 strings(json, "requires")));
     }
@@ -111,13 +110,13 @@ public final class ContentPotions {
     private static void readType(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "potion type file");
         if (json == null) { return; }
-        List<PotionEffectDef> effects = ContentParser.effects(key, JsonUtils.getJsonArray(json, "effects"), 3600, true);
+        List<PotionEffectDef> effects = ContentParser.effects(key, Json.getJsonArray(json, "effects"), 3600, true);
         if (effects.isEmpty()) {
             ContentLog.LOGGER.error("Potion type {} has no usable effects, ignoring it", key);
             return;
         }
         TYPES.put(key, new PotionTypeDef(key,
-                JsonUtils.getString(json, "baseName", key.getNamespace() + "." + key.getPath()),
+                Json.getString(json, "baseName", key.getNamespace() + "." + key.getPath()),
                 Collections.unmodifiableList(effects),
                 strings(json, "requires")));
     }
@@ -125,18 +124,18 @@ public final class ContentPotions {
     private static void readBrewing(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "brewing file");
         if (json == null) { return; }
-        for (JsonElement element : JsonUtils.getJsonArray(json, "brewing")) {
+        for (JsonElement element : Json.getJsonArray(json, "brewing")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
             BrewingDef def = new BrewingDef(key,
-                    JsonUtils.getString(entry, "from", ""),
-                    JsonUtils.getString(entry, "to", ""),
-                    JsonUtils.getString(entry, "ingredient", ""),
-                    JsonUtils.getString(entry, "input", ""),
-                    JsonUtils.getString(entry, "output", ""),
+                    Json.getString(entry, "from", ""),
+                    Json.getString(entry, "to", ""),
+                    Json.getString(entry, "ingredient", ""),
+                    Json.getString(entry, "input", ""),
+                    Json.getString(entry, "output", ""),
                     strings(entry, "requires"));
             if (def.ingredient.isEmpty()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} has no ingredient, skipping it", key);

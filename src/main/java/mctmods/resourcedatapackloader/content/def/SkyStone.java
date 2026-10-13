@@ -5,7 +5,6 @@ import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonObject;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import javax.annotation.Nullable;
 
@@ -25,7 +24,7 @@ public final class SkyStone {
     }
 
     public static SkyStone read(JsonObject json, ResourceLocation key) {
-        return new SkyStone(JsonUtils.getString(json, "skyStone", ""), Json.bounded(json, "skyIslands", -1.0F, 1.0F, key), Json.bounded(json, "skyThickness", 0.0F, 8.0F, key), key);
+        return new SkyStone(Json.getString(json, "skyStone", ""), Json.bounded(json, "skyIslands", -1.0F, 1.0F, key), Json.bounded(json, "skyThickness", 0.0F, 8.0F, key), key);
     }
 
     public boolean shapes() { return !stone.isEmpty() || !Float.isNaN(islands) || !Float.isNaN(thickness); }

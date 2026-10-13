@@ -3,13 +3,13 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.def.ShapeDef;
 import mctmods.resourcedatapackloader.content.def.SpreadDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.math.MathHelper;
 import java.util.HashMap;
 import java.util.Locale;
@@ -44,7 +44,7 @@ final class ContentCofhFields {
     }
 
     static void spread(String name, JsonObject source, JsonObject out) {
-        String distribution = Settings.lower(JsonUtils.getString(source, "distribution", "uniform"));
+        String distribution = Settings.lower(Json.getString(source, "distribution", "uniform"));
         JsonObject spread = new JsonObject();
         switch (distribution) {
             case "gaussian":
@@ -78,7 +78,7 @@ final class ContentCofhFields {
         String surface = surfaced(distribution);
         if (surface != null) {
             spread.addProperty("type", surface);
-            if ("cave".equals(distribution) && "true".equalsIgnoreCase(JsonUtils.getString(source, "ceiling", "false"))) { spread.addProperty("ceiling", true); }
+            if ("cave".equals(distribution) && "true".equalsIgnoreCase(Json.getString(source, "ceiling", "false"))) { spread.addProperty("ceiling", true); }
             out.addProperty("minHeight", bound(source, "min-height", 0, true));
             out.addProperty("maxHeight", bound(source, "max-height", 256, false) - 1);
             out.add("spread", spread);
@@ -122,14 +122,14 @@ final class ContentCofhFields {
         if (element == null) { return ""; }
         if (element.isJsonArray()) { element = element.getAsJsonArray().size() == 0 ? null : element.getAsJsonArray().get(0); }
         if (element == null) { return ""; }
-        if (element.isJsonObject()) { return JsonUtils.getString(element.getAsJsonObject(), "value", ""); }
+        if (element.isJsonObject()) { return Json.getString(element.getAsJsonObject(), "value", ""); }
         return element.getAsString();
     }
 
     private static String named(JsonElement element) {
         if (!element.isJsonObject()) { return qualified(element.getAsString()); }
         JsonObject one = element.getAsJsonObject();
-        String name = JsonUtils.getString(one, "name", "");
+        String name = Json.getString(one, "name", "");
         if (name.isEmpty()) { return ""; }
         int meta = integer(one, "data", integer(one, "metadata", -1));
         return meta < 0 ? qualified(name) : qualified(name) + ":" + Math.min(15, meta);
@@ -213,7 +213,7 @@ final class ContentCofhFields {
     private static JsonObject entry(JsonObject one) {
         JsonObject properties = properties(one);
         int meta = properties.entrySet().isEmpty() ? MathHelper.clamp(integer(one, "data", integer(one, "metadata", 0)), 0, 15) : 0;
-        return weighted(qualified(JsonUtils.getString(one, "name", "")), meta, MathHelper.clamp(integer(one, "weight", 100), 1, 1000000), properties);
+        return weighted(qualified(Json.getString(one, "name", "")), meta, MathHelper.clamp(integer(one, "weight", 100), 1, 1000000), properties);
     }
 
     private static JsonObject properties(JsonObject one) {
@@ -254,12 +254,12 @@ final class ContentCofhFields {
         else { listed.add(held); }
         for (JsonElement element : listed) {
             boolean object = element.isJsonObject();
-            String raw = object ? JsonUtils.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
+            String raw = object ? Json.getString(element.getAsJsonObject(), "value", "") : element.getAsString();
             String mapped = TURN_NAMES.get(raw.trim().toUpperCase(Locale.ROOT));
             if (mapped == null) { continue; }
             JsonObject pick = new JsonObject();
             pick.addProperty(nameKey, mapped);
-            if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", JsonUtils.getInt(element.getAsJsonObject(), "weight", 1)); }
+            if (object && element.getAsJsonObject().has("weight")) { pick.addProperty("weight", Json.getInt(element.getAsJsonObject(), "weight", 1)); }
             out.add(pick);
         }
         return out;
@@ -287,7 +287,7 @@ final class ContentCofhFields {
         if (!material.isJsonObject()) { return new JsonPrimitive(qualified(material.getAsString())); }
         JsonObject one = material.getAsJsonObject();
         JsonObject out = new JsonObject();
-        out.addProperty("block", qualified(JsonUtils.getString(one, "name", "minecraft:stone")));
+        out.addProperty("block", qualified(Json.getString(one, "name", "minecraft:stone")));
         JsonObject properties = properties(one);
         if (!properties.entrySet().isEmpty()) {
             out.add("properties", properties);
@@ -302,10 +302,10 @@ final class ContentCofhFields {
         JsonElement dimension = source.get("dimension");
         if (dimension == null || !dimension.isJsonObject()) { return; }
         JsonObject one = dimension.getAsJsonObject();
-        JsonArray values = JsonUtils.getJsonArray(one, "value", new JsonArray());
+        JsonArray values = Json.getJsonArray(one, "value", new JsonArray());
         if (values.size() == 0) { return; }
         out.add("dimensions", values);
-        if ("blacklist".equalsIgnoreCase(JsonUtils.getString(one, "restriction", "whitelist"))) { out.addProperty("dimensionsAreBlacklist", true); }
+        if ("blacklist".equalsIgnoreCase(Json.getString(one, "restriction", "whitelist"))) { out.addProperty("dimensionsAreBlacklist", true); }
     }
 
     static void biomes(JsonObject source, JsonObject out) {
@@ -314,15 +314,15 @@ final class ContentCofhFields {
         JsonObject one = biome.getAsJsonObject();
         JsonArray names = new JsonArray();
         JsonArray types = new JsonArray();
-        for (JsonElement element : JsonUtils.getJsonArray(one, "value", new JsonArray())) {
+        for (JsonElement element : Json.getJsonArray(one, "value", new JsonArray())) {
             if (element.isJsonPrimitive()) { names.add(element.getAsString()); continue; }
             if (!element.isJsonObject()) { continue; }
             JsonObject value = element.getAsJsonObject();
-            if ("dictionary".equalsIgnoreCase(JsonUtils.getString(value, "type", ""))) { types.add(JsonUtils.getString(value, "entry", "").toUpperCase(Locale.ROOT)); }
-            else { names.add(JsonUtils.getString(value, "entry", JsonUtils.getString(value, "name", ""))); }
+            if ("dictionary".equalsIgnoreCase(Json.getString(value, "type", ""))) { types.add(Json.getString(value, "entry", "").toUpperCase(Locale.ROOT)); }
+            else { names.add(Json.getString(value, "entry", Json.getString(value, "name", ""))); }
         }
         if (names.size() > 0) { out.add("biomes", names); }
         if (types.size() > 0) { out.add("biomeTypes", types); }
-        if ((names.size() > 0 || types.size() > 0) && "blacklist".equalsIgnoreCase(JsonUtils.getString(one, "restriction", "whitelist"))) { out.addProperty("biomesAreBlacklist", true); }
+        if ((names.size() > 0 || types.size() > 0) && "blacklist".equalsIgnoreCase(Json.getString(one, "restriction", "whitelist"))) { out.addProperty("biomesAreBlacklist", true); }
     }
 }

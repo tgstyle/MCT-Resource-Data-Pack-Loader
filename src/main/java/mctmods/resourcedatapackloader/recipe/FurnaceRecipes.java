@@ -13,7 +13,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -42,14 +41,14 @@ public final class FurnaceRecipes {
     }
 
     private static void apply(ResourceLocation key, JsonObject json, int[] counts) {
-        if (json.has("remove")) { for (JsonElement element : JsonUtils.getJsonArray(json, "remove")) { counts[0] += remove(key, element); } }
-        if (json.has("add")) { for (JsonElement element : JsonUtils.getJsonArray(json, "add")) { if (add(key, element)) { counts[1]++; } } }
+        if (json.has("remove")) { for (JsonElement element : Json.getJsonArray(json, "remove")) { counts[0] += remove(key, element); } }
+        if (json.has("add")) { for (JsonElement element : Json.getJsonArray(json, "add")) { if (add(key, element)) { counts[1]++; } } }
     }
 
     private static int remove(ResourceLocation key, JsonElement element) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : null;
-        String result = json == null ? element.getAsString() : JsonUtils.getString(json, "result", "");
-        String input = json == null ? "" : JsonUtils.getString(json, "input", "");
+        String result = json == null ? element.getAsString() : Json.getString(json, "result", "");
+        String input = json == null ? "" : Json.getString(json, "input", "");
         ItemStack resultStack = result.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(key, result, 1);
         ItemStack inputStack = input.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(key, input, 1);
         if (resultStack.isEmpty() && inputStack.isEmpty()) {
@@ -82,21 +81,21 @@ public final class FurnaceRecipes {
             return false;
         }
         JsonObject json = element.getAsJsonObject();
-        String inputName = JsonUtils.getString(json, "input", "");
-        String outputName = JsonUtils.getString(json, "output", "");
+        String inputName = Json.getString(json, "input", "");
+        String outputName = Json.getString(json, "output", "");
         if (inputName.isEmpty() || outputName.isEmpty()) {
             ContentLog.LOGGER.error("An addition in {} needs both an input and an output, skipping it", key);
             return false;
         }
         ItemStack input = ContentStacks.parse(key, inputName, 1);
-        ItemStack output = ContentStacks.parse(key, outputName, JsonUtils.getInt(json, "count", 1));
+        ItemStack output = ContentStacks.parse(key, outputName, Json.getInt(json, "count", 1));
         if (input.isEmpty() || output.isEmpty()) { return false; }
         ItemStack existing = net.minecraft.item.crafting.FurnaceRecipes.instance().getSmeltingResult(input);
         if (!existing.isEmpty()) {
             ContentLog.LOGGER.info("Ignored the furnace addition {} -> {} in {}: its input already smelts into {}. Remove that recipe under remove to replace it", inputName, outputName, key, existing);
             return false;
         }
-        net.minecraft.item.crafting.FurnaceRecipes.instance().addSmeltingRecipe(input, output, JsonUtils.getFloat(json, "experience", 0.0F));
+        net.minecraft.item.crafting.FurnaceRecipes.instance().addSmeltingRecipe(input, output, Json.getFloat(json, "experience", 0.0F));
         return true;
     }
 }

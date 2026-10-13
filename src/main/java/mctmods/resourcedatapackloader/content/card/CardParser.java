@@ -8,7 +8,6 @@ import mctmods.resourcedatapackloader.util.Settings;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,41 +26,41 @@ final class CardParser {
         String key = id.toString();
         CardRule rule = new CardRule(key);
         boolean builtin = CardIds.ALL.contains(key);
-        rule.trigger = builtin ? CardRule.BUILTIN : Settings.lower(JsonUtils.getString(json, "trigger", ""));
+        rule.trigger = builtin ? CardRule.BUILTIN : Settings.lower(Json.getString(json, "trigger", ""));
         if (!builtin && !CardRule.TRIGGERS.contains(rule.trigger)) {
             ContentLog.LOGGER.error("Card rule {} has trigger '{}', which is not one of {}, so it is skipped", key, rule.trigger, CardRule.TRIGGERS);
             return null;
         }
-        rule.dimension = JsonUtils.getString(json, "dimension", "").trim();
+        rule.dimension = Json.getString(json, "dimension", "").trim();
         rule.biomes = Json.strings(json, "biomes");
         rule.structures = Json.strings(json, "structures");
-        rule.radius = Math.max(1, JsonUtils.getInt(json, "radius", DEFAULT_RADIUS));
-        rule.advancement = JsonUtils.getString(json, "advancement", "").trim();
-        rule.item = JsonUtils.getString(json, "item", "").trim();
-        rule.entity = JsonUtils.getString(json, "entity", "").trim();
-        rule.count = Math.max(1, JsonUtils.getInt(json, "count", 1));
-        rule.below = json.has("below") ? JsonUtils.getInt(json, "below") : null;
-        rule.above = json.has("above") ? JsonUtils.getInt(json, "above") : null;
-        rule.time = Math.floorMod(JsonUtils.getInt(json, "time", 0), TICKS_IN_DAY);
-        rule.day = json.has("day") ? Math.max(0L, JsonUtils.getInt(json, "day")) : -1L;
-        rule.minutes = Math.max(0, JsonUtils.getInt(json, "minutes", 0));
-        rule.objective = JsonUtils.getString(json, "objective", "").trim();
-        rule.score = JsonUtils.getInt(json, "score", 1);
-        if (json.has("when")) { rule.when = when(JsonUtils.getJsonObject(json, "when")); }
-        rule.title = json.has("title") ? JsonUtils.getString(json, "title") : null;
+        rule.radius = Math.max(1, Json.getInt(json, "radius", DEFAULT_RADIUS));
+        rule.advancement = Json.getString(json, "advancement", "").trim();
+        rule.item = Json.getString(json, "item", "").trim();
+        rule.entity = Json.getString(json, "entity", "").trim();
+        rule.count = Math.max(1, Json.getInt(json, "count", 1));
+        rule.below = json.has("below") ? Json.getInt(json, "below") : null;
+        rule.above = json.has("above") ? Json.getInt(json, "above") : null;
+        rule.time = Math.floorMod(Json.getInt(json, "time", 0), TICKS_IN_DAY);
+        rule.day = json.has("day") ? Math.max(0L, Json.getInt(json, "day")) : -1L;
+        rule.minutes = Math.max(0, Json.getInt(json, "minutes", 0));
+        rule.objective = Json.getString(json, "objective", "").trim();
+        rule.score = Json.getInt(json, "score", 1);
+        if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when")); }
+        rule.title = json.has("title") ? Json.getString(json, "title") : null;
         rule.lines = json.has("lines") ? lines(key, json) : null;
         rule.icon = optional(json, "icon");
         rule.color = optional(json, "color");
         rule.image = optional(json, "image");
-        rule.background = json.has("background") ? JsonUtils.getBoolean(json, "background") : null;
+        rule.background = json.has("background") ? Json.getBoolean(json, "background") : null;
         rule.font = optional(json, "font");
         String owner = "Card rule " + key;
         rule.style = Json.choice(json, "style", null, owner, CardLook.STYLES);
-        rule.ticks = Math.max(0, JsonUtils.getInt(json, "ticks", 0));
+        rule.ticks = Math.max(0, Json.getInt(json, "ticks", 0));
         rule.audience = Json.choice(json, "audience", CardRule.PLAYER, owner, CardRule.AUDIENCES);
         rule.repeat = Json.choice(json, "repeat", CardRule.ALWAYS, owner, CardRule.REPEATS);
-        rule.cooldown = Math.max(0, JsonUtils.getInt(json, "cooldown", 0));
-        rule.runs = JsonUtils.getString(json, "runs", "").trim();
+        rule.cooldown = Math.max(0, Json.getInt(json, "cooldown", 0));
+        rule.runs = Json.getString(json, "runs", "").trim();
         rule.requires = Json.strings(json, "requires");
         return missing(rule) ? null : rule;
     }
@@ -69,31 +68,31 @@ final class CardParser {
     private static CardWhen when(JsonObject json) {
         CardWhen when = new CardWhen();
         when.biomes = Json.strings(json, "biomes");
-        when.timeFrom = json.has("timeFrom") ? Math.floorMod(JsonUtils.getInt(json, "timeFrom"), TICKS_IN_DAY) : -1;
-        when.timeTo = json.has("timeTo") ? Math.floorMod(JsonUtils.getInt(json, "timeTo"), TICKS_IN_DAY) : -1;
-        when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, JsonUtils.getInt(json, "dayAtLeast")) : -1L;
-        when.advancement = JsonUtils.getString(json, "advancement", "").trim();
-        when.gameMode = JsonUtils.getString(json, "gameMode", "").trim();
-        when.team = JsonUtils.getString(json, "team", "").trim();
-        when.objective = JsonUtils.getString(json, "objective", "").trim();
-        when.scoreAtLeast = json.has("scoreAtLeast") ? JsonUtils.getInt(json, "scoreAtLeast") : null;
+        when.timeFrom = json.has("timeFrom") ? Math.floorMod(Json.getInt(json, "timeFrom"), TICKS_IN_DAY) : -1;
+        when.timeTo = json.has("timeTo") ? Math.floorMod(Json.getInt(json, "timeTo"), TICKS_IN_DAY) : -1;
+        when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;
+        when.advancement = Json.getString(json, "advancement", "").trim();
+        when.gameMode = Json.getString(json, "gameMode", "").trim();
+        when.team = Json.getString(json, "team", "").trim();
+        when.objective = Json.getString(json, "objective", "").trim();
+        when.scoreAtLeast = json.has("scoreAtLeast") ? Json.getInt(json, "scoreAtLeast") : null;
         return when;
     }
 
     private static List<String> lines(String key, JsonObject json) {
-        JsonArray array = JsonUtils.getJsonArray(json, "lines");
+        JsonArray array = Json.getJsonArray(json, "lines");
         List<String> lines = new ArrayList<>();
         for (JsonElement element : array) {
             if (!element.isJsonPrimitive()) {
                 ContentLog.LOGGER.error("Card rule {} has a line that is not text, skipping it", key);
                 continue;
             }
-            if (lines.size() < MOST_LINES) { lines.add(element.getAsString()); }
+            if (lines.size() < MOST_LINES) { lines.add(Json.asString(element, "lines", "")); }
         }
         return Collections.unmodifiableList(lines);
     }
 
-    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? JsonUtils.getString(json, member).trim() : null; }
+    @Nullable private static String optional(JsonObject json, String member) { return json.has(member) ? Json.getString(json, member).trim() : null; }
 
     private static boolean missing(CardRule rule) {
         String needs = needs(rule);

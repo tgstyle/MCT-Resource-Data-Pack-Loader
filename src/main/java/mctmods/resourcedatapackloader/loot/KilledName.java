@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.loot;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonObject;
@@ -8,7 +9,6 @@ import com.google.gson.JsonSerializationContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.conditions.LootCondition;
@@ -58,7 +58,7 @@ public class KilledName extends LootFunction {
         }
 
         @Override @Nonnull public KilledName deserialize(@Nonnull JsonObject json, @Nonnull JsonDeserializationContext context, @Nonnull LootCondition[] conditions) {
-            return new KilledName(conditions, JsonUtils.getString(json, "format", "%s"), JsonUtils.getString(json, "tag", ""));
+            return new KilledName(conditions, Json.getString(json, "format", "%s"), Json.getString(json, "tag", ""));
         }
     }
 }

@@ -9,7 +9,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -38,8 +37,8 @@ public final class RegistryRemaps {
     }
 
     private static int read(JsonObject json) {
-        ResourceLocation registry = new ResourceLocation(JsonUtils.getString(json, REGISTRY));
-        JsonObject mapping = JsonUtils.getJsonObject(json, MAPPING);
+        ResourceLocation registry = new ResourceLocation(Json.getString(json, REGISTRY));
+        JsonObject mapping = Json.getJsonObject(json, MAPPING);
         Map<ResourceLocation, ResourceLocation> target = REMAPS.computeIfAbsent(registry, k -> new HashMap<>());
         int count = 0;
         for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {

@@ -30,7 +30,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.util.EnumHand;
 import net.minecraft.world.GameType;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
@@ -397,39 +396,39 @@ public final class ContentHardness {
         }
         float[] mining = range(json, "miningTime");
         float[] blast = range(json, "blastResistance");
-        int buckets = MathHelper.clamp(JsonUtils.getInt(json, "buckets", 10), 1, 256);
+        int buckets = MathHelper.clamp(Json.getInt(json, "buckets", 10), 1, 256);
         IntRange heights = ContentParser.heights("Hardness group", key, json, 0, 255);
-        JsonObject adventure = JsonUtils.getJsonObject(json, "adventure", new JsonObject());
-        JsonObject becomes = JsonUtils.getJsonObject(json, "becomes", new JsonObject());
+        JsonObject adventure = Json.getJsonObject(json, "adventure", new JsonObject());
+        JsonObject becomes = Json.getJsonObject(json, "becomes", new JsonObject());
         return new HardnessDef(key, blocks, ContentParser.matches(key, json, "except"),
                 mining[0], mining[1], blast[0], blast[1], buckets,
                 heights.getMin(), heights.getMax(), strings(json, "requires"), field(json),
-                JsonUtils.getBoolean(json, "keeps", false), json.has("adventure"),
+                Json.getBoolean(json, "keeps", false), json.has("adventure"),
                 strings(adventure, "tools"), strings(adventure, "teams"), strings(adventure, "players"), strings(adventure, "entities"),
-                JsonUtils.getString(json, "advancement", "").trim(),
-                JsonUtils.getString(becomes, "advancement", "").trim(), JsonUtils.getString(becomes, "block", "").trim());
+                Json.getString(json, "advancement", "").trim(),
+                Json.getString(becomes, "advancement", "").trim(), Json.getString(becomes, "block", "").trim());
     }
 
     private static ContentField field(JsonObject json) {
         if (!json.has("field")) { return new ContentField(ContentField.CHANCES, ContentField.SPREAD); }
-        return fieldFrom(JsonUtils.getJsonObject(json, "field"));
+        return fieldFrom(Json.getJsonObject(json, "field"));
     }
 
     public static ContentField fieldFrom(JsonObject entry) {
-        if (!"seeded".equals(JsonUtils.getString(entry, "type", "speckle"))) { return new ContentField(chances(entry), JsonUtils.getFloat(entry, "spread", ContentField.SPREAD)); }
+        if (!"seeded".equals(Json.getString(entry, "type", "speckle"))) { return new ContentField(chances(entry), Json.getFloat(entry, "spread", ContentField.SPREAD)); }
         return new ContentField(
-                JsonUtils.getInt(entry, "cell", ContentField.CELL),
-                JsonUtils.getInt(entry, "seeds", ContentField.SEEDS),
-                JsonUtils.getFloat(entry, "reach", ContentField.REACH),
-                JsonUtils.getInt(entry, "arms", ContentField.ARMS),
-                JsonUtils.getFloat(entry, "armReach", ContentField.ARM_REACH));
+                Json.getInt(entry, "cell", ContentField.CELL),
+                Json.getInt(entry, "seeds", ContentField.SEEDS),
+                Json.getFloat(entry, "reach", ContentField.REACH),
+                Json.getInt(entry, "arms", ContentField.ARMS),
+                Json.getFloat(entry, "armReach", ContentField.ARM_REACH));
     }
 
     private static int[] chances(JsonObject json) {
         if (!json.has("chances")) { return ContentField.CHANCES; }
-        JsonArray held = JsonUtils.getJsonArray(json, "chances");
+        JsonArray held = Json.getJsonArray(json, "chances");
         int[] values = new int[held.size()];
-        for (int index = 0; index < values.length; index++) { values[index] = Math.max(0, held.get(index).getAsInt()); }
+        for (int index = 0; index < values.length; index++) { values[index] = Math.max(0, Json.asInt(held.get(index), "chances", 0)); }
         return values;
     }
 
@@ -438,11 +437,11 @@ public final class ContentHardness {
         JsonElement element = json.get(name);
         if (element.isJsonObject()) {
             JsonObject entry = element.getAsJsonObject();
-            float least = JsonUtils.getFloat(entry, "min", 1.0F);
-            float most = JsonUtils.getFloat(entry, "max", 1.0F);
+            float least = Json.getFloat(entry, "min", 1.0F);
+            float most = Json.getFloat(entry, "max", 1.0F);
             return new float[] { Math.min(least, most), Math.max(least, most) };
         }
-        float value = element.getAsFloat();
+        float value = Json.asFloat(element, name, 1.0F);
         return new float[] { value, value };
     }
 }

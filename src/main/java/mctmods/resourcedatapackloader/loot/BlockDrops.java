@@ -17,7 +17,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.block.Block;
 import net.minecraft.entity.item.EntityXPOrb;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.JsonUtils;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.world.BlockEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
@@ -91,7 +90,7 @@ public final class BlockDrops {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
-        String name = JsonUtils.getString(json, BLOCK, "");
+        String name = Json.getString(json, BLOCK, "");
         if (name.isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
             return;
@@ -106,7 +105,7 @@ public final class BlockDrops {
             return;
         }
         List<Drop> drops = new ArrayList<>();
-        for (JsonElement element : JsonUtils.getJsonArray(json, DROPS)) {
+        for (JsonElement element : Json.getJsonArray(json, DROPS)) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A drop in {} is not an object, skipping it", key);
                 continue;
@@ -118,22 +117,22 @@ public final class BlockDrops {
             ContentLog.LOGGER.error("Block drops {} has no usable drop, ignoring it", key);
             return;
         }
-        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(JsonUtils.getInt(json, META, -1), JsonUtils.getBoolean(json, REPLACE, false), JsonUtils.getString(json, ADVANCEMENT, "").trim(), drops));
+        BY_BLOCK.computeIfAbsent(block, k -> new ArrayList<>()).add(new Rule(Json.getInt(json, META, -1), Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), drops));
         count[0]++;
     }
 
     private static Drop drop(ResourceLocation key, JsonObject json) {
         boolean experience = json.has(EXPERIENCE);
-        ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, JsonUtils.getString(json, ITEM, ""), 1);
+        ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, Json.getString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }
         AmountDef count = amount(key, json, experience ? EXPERIENCE : COUNT);
         if (count == null) { return null; }
-        String silkTouch = Settings.lower(JsonUtils.getString(json, SILK_TOUCH, EITHER));
+        String silkTouch = Settings.lower(Json.getString(json, SILK_TOUCH, EITHER));
         if (!EITHER.equals(silkTouch) && !ONLY.equals(silkTouch) && !NEVER.equals(silkTouch)) {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
         }
-        return new Drop(item, experience, count, MathHelper.clamp(JsonUtils.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, JsonUtils.getInt(json, FORTUNE, 0)), silkTouch);
+        return new Drop(item, experience, count, MathHelper.clamp(Json.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, Json.getInt(json, FORTUNE, 0)), silkTouch);
     }
 
     @Nullable private static AmountDef amount(ResourceLocation key, JsonObject json, String name) {
