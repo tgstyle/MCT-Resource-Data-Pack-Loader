@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
-public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
+public record DimensionDef(Identifier key, String terrain, List<String> flatOptions, boolean structures, String biomeSource, String biome, List<PickDef> biomeList, int minHeight, int maxHeight, int seaLevel, boolean lavaOceans,
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
                            @Nullable Identifier respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options,
@@ -19,6 +19,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
     public static final String END = "end";
     public static final String SINGLE = "single";
     public static final String INHERIT = "inherit";
+    public static final String LIST = "list";
     public static final int UNSET = Integer.MIN_VALUE;
 
     public boolean gives(String option) { return given.contains(option); }

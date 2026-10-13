@@ -3112,7 +3112,8 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3209,8 +3210,9 @@ Qualquer `sun`, `moon`, `bodies` ou `stars` desenha o céu com [o renderizador p
 
 | Chave | Obrigatória | Valor | Padrão | O que faz |
 | ----- | ----------- | ----- | ------ | --------- |
-| `source` | não | `inherit`, `single` | `inherit` | `inherit` usa o mapa de biomas do próprio overworld, seja qual for o tipo de terreno, então uma dimensão `nether` ou `end` recebe os biomas do overworld em seu próprio solo; `single` usa um só bioma em todo lugar. Uma dimensão `flat` guarda um só bioma de qualquer modo, o de `single` ou o do seu texto superflat |
+| `source` | não | `inherit`, `single`, `list` | `inherit` | `inherit` usa o mapa de biomas do próprio overworld, seja qual for o tipo de terreno, então uma dimensão `nether` ou `end` recebe os biomas do overworld em seu próprio solo; `single` usa um só bioma em todo lugar, `list` distribui os biomas de `biomeList` pela dimensão em qualquer tipo de terreno, inclusive `flat`, `nether` e `end`. Fora isso, uma dimensão `flat` guarda um só bioma, o de `single` ou o do seu texto superflat |
 | `biome` | quando `single` | nome de bioma | `minecraft:plains` | Qual é esse bioma |
+| `biomeList` | quando `list` | lista de nomes de bioma ou objetos `{"biome", "weight"}` | nenhum | Os únicos biomas que `list` usa. Cada região tem cerca de 256 blocos de largura, com bordas arredondadas e irregulares, e recebe ao acaso, pela seed do mundo, um dos biomas da lista na proporção do seu `weight` (10 para um nome sozinho, como na definição de bioma), então com pesos iguais todos aparecem com frequência parecida; qualquer um pode fazer divisa com qualquer outro. Um nome que não é um bioma registrado vai para o log e é deixado de fora; se não sobrar nenhum, a dimensão usa `minecraft:plains` |
 
 ### O bloco `sky`
 

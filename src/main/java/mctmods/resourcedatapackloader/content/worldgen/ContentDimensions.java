@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
+import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -336,6 +337,18 @@ public final class ContentDimensions {
         if (DimensionDef.SINGLE.equals(def.biomeSource())) {
             source.addProperty("type", "minecraft:fixed");
             source.addProperty("biome", def.biome());
+        }
+        else if (DimensionDef.LIST.equals(def.biomeSource())) {
+            source.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + ContentListBiomes.ID);
+            JsonArray entries = new JsonArray();
+            for (PickDef pick : def.biomeList()) {
+                JsonObject entry = new JsonObject();
+                entry.addProperty("biome", pick.name());
+                entry.addProperty("weight", pick.weight());
+                entries.add(entry);
+            }
+            source.add("biomes", entries);
+            source.addProperty("dimension", dimension);
         }
         else {
             source.addProperty("type", "minecraft:multi_noise");

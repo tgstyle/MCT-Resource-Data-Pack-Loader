@@ -71,7 +71,9 @@ import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
+import net.minecraft.world.level.biome.BiomeResolver;
 import net.minecraft.world.level.biome.BiomeSource;
+import net.minecraft.world.level.biome.Climate;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.BellBlock;
@@ -358,6 +360,12 @@ public final class LineCompat {
         @Override @Nonnull public ChunkGeneratorStructureState createState(@Nonnull HolderLookup<StructureSet> lookup, @Nonnull RandomState random, long seed) { return ChunkGeneratorStructureState.createForFlat(random, seed, flat().getOrigin(random), biomeSource, structureSets(lookup)); }
 
         @Override @Nonnull public CompletableFuture<ChunkAccess> buildTerrain(@Nonnull ChunkAccess chunk, @Nonnull Blender blender, @Nonnull RandomState random, @Nonnull StructureManager structures, @Nonnull BiomeManager biomes, @Nullable WorldGenRegion carverRegion, @Nonnull Set<Holder<Biome>> possibleBiomes) { return flat().buildTerrain(chunk, blender, random, structures, biomes, carverRegion, possibleBiomes); }
+    }
+
+    public abstract static class ListSourceBase extends BiomeSource {
+        protected abstract Holder<Biome> biomeAt(int quartX, int quartZ);
+
+        @Override @Nonnull public BiomeResolver createResolver(@Nonnull Climate.Sampler sampler) { return (quartX, _, quartZ) -> biomeAt(quartX, quartZ); }
     }
 
     public interface BiomeEdit extends BiomeModifier {

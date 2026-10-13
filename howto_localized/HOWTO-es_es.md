@@ -3112,7 +3112,8 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3209,8 +3210,9 @@ Cualquier `sun`, `moon`, `bodies` o `stars` dibuja el cielo con [el renderizador
 
 | Clave    | Obligatorio   | Valor               | Por defecto        | Qué hace |
 | -------- | ------------- | ------------------- | ------------------ | -------- |
-| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` usa el mapa de biomas del propio Overworld sea cual sea el tipo de terreno, de modo que una dimensión `nether` o `end` recibe los biomas del Overworld sobre su propio suelo; `single` usa un solo bioma en todas partes. Una dimensión `flat` contiene un solo bioma en ambos casos, el de `single` o el de su texto de superplano |
+| `source` | no            | `inherit`, `single`, `list` | `inherit`          | `inherit` usa el mapa de biomas del propio Overworld sea cual sea el tipo de terreno, de modo que una dimensión `nether` o `end` recibe los biomas del Overworld sobre su propio suelo; `single` usa un solo bioma en todas partes, `list` reparte los biomas de `biomeList` por la dimensión con cualquier tipo de terreno, también `flat`, `nether` y `end`. En los demás casos una dimensión `flat` contiene un solo bioma, el de `single` o el de su texto de superplano |
 | `biome`  | con `single`  | nombre de bioma     | `minecraft:plains` | Cuál es ese bioma |
+| `biomeList` | con `list` | lista de nombres de bioma u objetos `{"biome", "weight"}` | ninguno | Los únicos biomas que usa `list`. Cada región mide unos 256 bloques de ancho, con bordes redondeados e irregulares, y recibe al azar, según la semilla del mundo, uno de los biomas de la lista en proporción a su `weight` (10 para un nombre solo, como en una definición de bioma), así que con pesos iguales todos son más o menos igual de frecuentes; cualquiera puede lindar con cualquier otro. Un nombre que no es un bioma registrado se anota en el registro y se omite; si no queda ninguno, la dimensión usa `minecraft:plains` |
 
 ### El bloque `sky`
 

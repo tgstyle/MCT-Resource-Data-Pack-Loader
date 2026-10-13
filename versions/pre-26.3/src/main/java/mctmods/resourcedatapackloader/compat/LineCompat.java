@@ -274,6 +274,12 @@ public final class LineCompat {
         @Override public void applyCarvers(@Nonnull WorldGenRegion level, long seed, @Nonnull RandomState random, @Nonnull BiomeManager biomes, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk) {}
     }
 
+    public abstract static class ListSourceBase extends BiomeSource {
+        protected abstract Holder<Biome> biomeAt(int quartX, int quartZ);
+
+        @Override @Nonnull public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, @Nonnull Climate.Sampler sampler) { return biomeAt(quartX, quartZ); }
+    }
+
     public interface BiomeEdit extends BiomeModifier {
         void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder);
 

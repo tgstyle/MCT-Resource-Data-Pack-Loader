@@ -3112,7 +3112,8 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3209,8 +3210,9 @@ Tout `sun`, `moon`, `bodies` ou `stars` dessine le ciel avec [le moteur de rendu
 
 | Clé | Requis | Valeur | Défaut | Rôle |
 | --- | --- | --- | --- | --- |
-| `source` | non | `inherit`, `single` | `inherit` | `inherit` utilise la carte de biomes de l'Overworld quel que soit le type de terrain : une dimension `nether` ou `end` reçoit donc les biomes de l'Overworld sur son propre sol ; `single` utilise un seul biome partout. Une dimension `flat` ne contient qu'un seul biome dans les deux cas, celui de `single` ou celui de son texte superflat |
+| `source` | non | `inherit`, `single`, `list` | `inherit` | `inherit` utilise la carte de biomes de l'Overworld quel que soit le type de terrain : une dimension `nether` ou `end` reçoit donc les biomes de l'Overworld sur son propre sol ; `single` utilise un seul biome partout, `list` répartit les biomes de `biomeList` dans la dimension quel que soit le type de terrain, `flat`, `nether` et `end` compris. Sinon, une dimension `flat` ne contient qu'un seul biome, celui de `single` ou celui de son texte superflat |
 | `biome` | quand `single` | nom de biome | `minecraft:plains` | Quel est ce biome |
+| `biomeList` | si `list` | liste de noms de biome ou d'objets `{"biome", "weight"}` | aucun | Les seuls biomes que `list` utilise. Chaque région fait environ 256 blocs de large, aux bords arrondis et irréguliers, et reçoit au hasard, d'après la graine du monde, l'un des biomes de la liste en proportion de son `weight` (10 pour un nom seul, comme pour une définition de biome) : à poids égaux, tous sont donc à peu près aussi fréquents, et n'importe lequel peut en border un autre. Un nom qui n'est pas un biome enregistré est consigné dans le journal et ignoré ; s'il n'en reste aucun, la dimension utilise `minecraft:plains` |
 
 ### Le bloc `sky`
 

@@ -43,6 +43,7 @@ import mctmods.resourcedatapackloader.content.entity.ContentOrders;
 import mctmods.resourcedatapackloader.content.entity.ContentMobExperience;
 import mctmods.resourcedatapackloader.content.entity.EntityStorage;
 import mctmods.resourcedatapackloader.content.extra.ContentVillagers;
+import mctmods.resourcedatapackloader.content.worldgen.ContentListBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPaths;
 import mctmods.resourcedatapackloader.content.worldgen.ContentProspect;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldScreen;
@@ -434,6 +435,7 @@ import java.util.Set;
     private void onRegisterCommands(RegisterCommandsEvent event) { ServerCommands.register(event.getDispatcher()); }
 
     private void beforeServerStart(ServerAboutToStartEvent event) {
+        ContentListBiomes.seed(event.getServer().getWorldGenSettings().options().seed());
         Path root = PackManager.get().getRoot();
         if (root == null) { return; }
         PackManager.get().scan(root);
