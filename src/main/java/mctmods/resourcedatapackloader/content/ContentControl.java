@@ -68,7 +68,7 @@ public final class ContentControl {
             "structureSpacing", "structureSpawners", "structureAdaptation", "terrainAdaptation", "gotoLevel",
             "gotoNextLevel", "gotoBackLevel", "gotoPlaceLevels", "gameLevels", "structureSpawns", "surfaceDayMonsterRate",
             "monsterSpawnLight", "threatItems", "threatLevels", "threatMost", "threatSpawnRate", "threatNotice",
-            "threatSays", "deepStone", "noiseCaves", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
+            "threatSays", "deepStone", "noiseCaves", "skyStone", "skyShape", "skyIslands", "skyThickness", "skyHeights", "skyAnimals", "caveRegionCells", "caveRegionCellsY", "caveRegionPlainWeight",
             "surfaceNightMonsterRate", "undergroundDayMonsterRate", "undergroundNightMonsterRate", "villageBlocks",
             "villageSubwayLines", "villageSubwayDepth", "villageSubwaySpacing", "villageSubwayDirection", "villageSubwayWidth", "villageSubwayBlock", "villageSubwayTrackSeat", "villageSubwayBedBlock", "villageSubwayTieBlock", "villageSubwayTieRun", "villageSubwayTracks", "villageSubwayTrackGap", "villageSubwayShoulderBlock", "villageSubwayShoulderWidth", "villageSubwayPowerBlock", "villageSubwayPowerBase", "villageSubwayPowerRun", "villageSubwayTunnelBlock", "villageSubwayTunnelLightBlock", "villageSubwayTunnelLightRun", "villageSubwayClimb", "villageSubwayTail", "villageSubwayStationLength", "villageSubwayStationRun", "villageSubwayPlatformWidth", "villageSubwayPlatformBlock", "villageSubwayRailingBlock", "villageSubwayBenchBlock", "villageSubwayBenchEndBlock", "villageSubwayBenchLength", "villageSubwaySurfaces", "villageSubwayStation", "villageSubwayStationFoot", "villageSubwayStationRepeat",
             "villageSewerBlock", "villageSewerDepth", "villageSewerHeight", "villageSewerWidth", "villageSewerWaterBlock", "villageSewerWalkBlock", "villageSewerLightBlock", "villageSewerLightRun", "villageSewerLadderBlock", "villageSewerCoverBlock", "villageSewerMossBlock", "villageSewerMossChance", "villageSewerVineBlock", "villageSewerVineChance", "villageSewerWellEntrance",
@@ -255,6 +255,20 @@ public final class ContentControl {
         JsonElement value = setting(group, key);
         if (value == null) { return fallback; }
         return texts(value, key, "a list of text values", fallback);
+    }
+
+    public static int[] numbers(String group, String key, int[] fallback) {
+        JsonElement value = setting(group, key);
+        if (value == null) { return fallback; }
+        if (!value.isJsonArray()) { return rejected(key, "a list of numbers", fallback); }
+        JsonArray array = value.getAsJsonArray();
+        int[] found = new int[array.size()];
+        for (int i = 0; i < found.length; i++) {
+            JsonElement entry = array.get(i);
+            if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isNumber()) { return rejected(key, "a list of numbers", fallback); }
+            found[i] = entry.getAsInt();
+        }
+        return found;
     }
 
     public static boolean notArray(String group, String key) { return !(setting(group, key) instanceof JsonArray); }

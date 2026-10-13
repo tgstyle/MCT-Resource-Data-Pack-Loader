@@ -3016,6 +3016,9 @@ Sur cette version, un biome est une entrée de pack de données, écrite pour vo
 | `topBlock` | non | nom de bloc | herbe | Le bloc de surface |
 | `fillerBlock` | non | nom de bloc | terre | Juste sous la surface |
 | `stoneBlock` | non | nom de bloc | pierre | L'essentiel du sol |
+| `skyStone` | non | nom de bloc | celui du monde | Le bloc de la terre du ciel dans ce biome, à la place du `skyStone` du monde. Utilisé seulement quand le `skyStone` du monde nomme un bloc |
+| `skyIslands` | non | nombre, -1.0 à 1.0 | celui du monde | À quel point la terre du ciel de ce biome se rassemble en îles, à la place du `skyIslands` du monde |
+| `skyThickness` | non | nombre, 0.0 à 8.0 | celui du monde | À quel point les îles du ciel de ce biome sont pleines, à la place du `skyThickness` du monde |
 | `waterColor` | non | couleur hexadécimale | `FFFFFF` | Teinte de l'eau |
 | `grassColor` | non | couleur hexadécimale | selon le climat | Teinte de l'herbe, à la place de la couleur que donneraient la température et les précipitations |
 | `foliageColor` | non | couleur hexadécimale | selon le climat | Teinte des feuilles, de la même manière |
@@ -3685,7 +3688,40 @@ L'Overworld peut être plus haut ou plus profond que ne le permet le jeu, et l'e
 | `deepStone` | nom de bloc | aucun | Le bloc dont est fait le monde sous le terrain vanilla quand le plancher descend sous -64, par exemple le deepslate propre à un pack. Il se fond dans le deepslate sur les huit couches sous -64, comme le deepslate se fond dans la pierre. Vide, il garde la pierre |
 | `noiseCaves` | `off`, `deep` ou `world` | `off` | Où les grottes, tunnels, nouilles et aquifères du jeu se poursuivent quand le plancher descend sous -64 : `off` garde le monde sous le terrain vanilla en pierre profonde pleine pour que la couche de worldgen la creuse, `deep` les prolonge jusqu'au plancher avec les lacs de lave déplacés dans ses dix couches du bas, `world` signifie la même chose sur cette version car le terrain vanilla en comporte déjà |
 
-Le monde profond est l'endroit où les entrées de worldgen, régions de grottes et groupes de dureté d'un pack font leur travail : `minHeight` et `maxHeight` sur une entrée descendent aussi bas que le plancher. Les éléments placés du jeu restent cantonnés au terrain vanilla : celui dont la hauteur se compte depuis le bas du monde, dont les diamants du jeu et la redstone basse, compte toujours depuis -64, et un placement qui tomberait sous -64 est écarté, comme dans un monde dont le plancher est -64. Les clés de ciel de 1.12.2, `deepRavines`, `oreVeins` et le monde rubic lui-même n'ont pas d'équivalent ici, puisque la génération de ce moteur couvre déjà tout, du plancher au plafond.
+Le monde profond est l'endroit où les entrées de worldgen, régions de grottes et groupes de dureté d'un pack font leur travail : `minHeight` et `maxHeight` sur une entrée descendent aussi bas que le plancher. Les éléments placés du jeu restent cantonnés au terrain vanilla : celui dont la hauteur se compte depuis le bas du monde, dont les diamants du jeu et la redstone basse, compte toujours depuis -64, et un placement qui tomberait sous -64 est écarté, comme dans un monde dont le plancher est -64. Les clés de 1.12.2 `deepRavines`, `oreVeins` et le monde rubic lui-même n'ont pas d'équivalent ici, puisque la génération de ce moteur couvre déjà tout, du plancher au plafond.
+
+## Terres du ciel
+
+*le monde*
+
+Quand `worldMaxHeight` dépasse 320, le ciel ouvert au-dessus du terrain vanilla peut être rempli d'une terre qui lui est propre. `skyStone` l'active, et le bruit de grottes du jeu la façonne : ce qui serait une grotte en bas est plein en haut, si bien que le ciel se rassemble en îles flottantes. Les clés se placent dans le bloc `settings` d'un modèle de monde ; une dimension de pack dont `maxHeight` dépasse 320 les prend aussi.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldMaxHeight": 1024,
+    "skyStone": "mypack:cloudstone",
+    "skyShape": "islands",
+    "skyIslands": 0.4,
+    "skyThickness": 3.0,
+    "skyHeights": [400, 900],
+    "skyAnimals": false
+  }
+}
+```
+
+| Clé            | Valeur                | Défaut    | Rôle                                                                                                                                                                                                                                                                                                                                   |
+| -------------- | --------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skyStone`     | nom de bloc           | aucun     | Le bloc dont est fait le ciel au-dessus du terrain vanilla quand `worldMaxHeight` dépasse 320, façonné en terre flottante par le bruit de grottes du jeu : ce qui est grotte en bas est île en haut. Le dessus et le remplissage viennent de la règle de surface de chaque biome. Vide laisse le ciel vide                             |
+| `skyShape`     | `islands` ou `caves`  | `islands` | En quoi le ciel au-dessus du terrain vanilla est façonné : `islands` pour de la terre flottante, ou `caves` pour de la roche pleine creusée de grottes. Utilisé seulement quand `skyStone` nomme un bloc                                                                                                                               |
+| `skyIslands`   | nombre, -1.0 à 1.0    | `0.5`     | À quel point le ciel se rassemble en îles, de -1 pour une terre presque continue à 1 pour un ciel vide. Plus bas étale la terre sur davantage de ciel, plus haut laisse des morceaux moins nombreux et plus petits. Utilisé seulement quand `skyStone` nomme un bloc et que `skyShape` vaut `islands`                                  |
+| `skyThickness` | nombre, 0.0 à 8.0     | `2.0`     | À quel point une île du ciel est pleine. Plus haut remplit les îles, plus bas les évide et fait disparaître leurs bords. Utilisé seulement quand `skyStone` nomme un bloc et que `skyShape` vaut `islands`                                                                                                                             |
+| `skyHeights`   | liste de deux nombres | vide      | Le bloc le plus bas et le plus haut que la terre du ciel peut atteindre. Vide remplit tout le monde au-dessus du terrain vanilla. Utilisé seulement quand `skyStone` nomme un bloc                                                                                                                                                     |
+| `skyAnimals`   | booléen               | `true`    | Si les mobs autres que les monstres apparaissent naturellement sur la terre du ciel au-dessus du terrain vanilla, les îles du ciel avant tout. `false` garde animaux, chauves-souris et tout autre mob qui n'est pas un monstre sur le sol en dessous. Les générateurs de monstres ne sont pas concernés. Une clé du groupe `spawning` |
+
+`skyStone` et `skyShape` acceptent aussi une liste : une valeur seule vaut pour toutes les dimensions, et une entrée écrite `dimension=value`, comme `mypack:skylands=caves`, ne règle que cette dimension. Les `skyStone`, `skyIslands` et `skyThickness` d'un fichier de biome changent la terre du ciel au-dessus de ce biome, et ceux d'une région de grottes la changent à l'intérieur de la région, avant ceux du biome ; une région de grottes n'atteint le ciel que là où son `maxHeight` dépasse 320. La terre du ciel ne commence jamais sous 320, et son sommet reste sous le plafond du monde. Les éléments de sol du jeu sous une île trouvent toujours le sol en dessous, et chaque île reçoit les plantes, les arbres et les animaux de son biome.
 
 ## Régions de grottes
 
@@ -3738,6 +3774,9 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `minHeight` | entier | le plancher du monde | Bas de la bande dans laquelle la région existe |
 | `maxHeight` | entier | `48` | Haut de cette bande. Une cellule dont le centre est hors de la bande ne choisit jamais la région |
 | `waterLevel` | entier | aucun | Fixe la nappe d'eau à l'intérieur de la région à cette hauteur, à la place des aquifères. Elle reste sous le niveau de la mer et au moins deux blocs au-dessus de la lave profonde |
+| `skyStone` | bloc | aucun | Le bloc de la terre du ciel à l'intérieur de la région, à la place du `skyStone` du biome et du monde |
+| `skyIslands` | -1.0 à 1.0 | celui du biome | À quel point la terre du ciel se rassemble en îles à l'intérieur de la région, avant le `skyIslands` du biome et du monde |
+| `skyThickness` | 0.0 à 8.0 | celui du biome | À quel point les îles du ciel sont pleines à l'intérieur de la région, avant le `skyThickness` du biome et du monde |
 | `dimensions` | liste d'ids de dimensions | toutes | Les dimensions où la région apparaît, y compris celles d'un pack. Une région dotée d'un `biome` ne l'affiche que là où les biomes sont placés selon le climat : l'Overworld, le Nether et une dimension de pack qui hérite des biomes de l'Overworld |
 | `floorCover` | bloc | aucun | Remplace le bloc supérieur des sols de grotte à l'intérieur de la région |
 | `floorChance` | 0.0 à 1.0 | `1.0` | La part du sol qui est recouverte |
@@ -6315,6 +6354,7 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 | `ambientCap` | entier, -1 à 1000 | `-1` | Idem pour les chauves-souris et consorts. Le vanilla est à 15 |
 | `waterCreatureCap` | entier, -1 à 1000 | `-1` | Idem pour les calmars. Le vanilla est à 5 |
 | `monsterSpawnLight` | entier, -1 à 15 | `-1` | La lumière de bloc la plus forte dans laquelle un monstre peut encore apparaître, en plus des vérifications vanilla. -1 ne garde que la règle vanilla. Les générateurs de monstres ne sont pas concernés |
+| `skyAnimals` | booléen | `true` | Si les mobs autres que les monstres apparaissent naturellement sur la terre du ciel au-dessus du terrain vanilla, les îles du ciel avant tout. `false` garde animaux, chauves-souris et tout autre mob qui n'est pas un monstre sur le sol en dessous. Les générateurs de monstres ne sont pas concernés |
 | `threatItems` | liste | vide | Objets qui augmentent le niveau de menace d'un joueur, sous forme d'entrées objet=niveau,nombre avec un ,each ou ,batch facultatif à la fin, p. ex. minecraft:diamond_sword=5,1 ou minecraft:diamond=1,16,batch. Each, le mode par défaut, ajoute le niveau pour chaque exemplaire porté, sans en compter plus que nombre ; batch ajoute le niveau une fois pour chaque nombre d'exemplaires portés. Un nombre supérieur à la taille de pile de l'objet est ramené à cette taille. Toute entité chargée qui détient des objets est un porteur : l'inventaire principal, l'armure et la main secondaire d'un joueur, une pile jetée au sol, tout ce qui possède un inventaire d'objets comme une mule avec coffre ou un wagonnet avec coffre, et les objets tenus et l'armure des autres créatures. Vide, le niveau de menace est désactivé. Avec `control.spawning` sur `off`, les réglages de menace propres à la configuration s'appliquent quand même |
 | `threatLevels` | liste | vide | Les scores qui font entrer dans chaque palier, par ordre croissant : `10, 25, 50` donne donc trois paliers. Vide, le niveau de menace est désactivé |
 | `threatMost` | entier, -1 à 100000 | `-1` | Plafonne le score. `-1` ne le plafonne pas |
@@ -6540,6 +6580,11 @@ Un tronc à voie unique n'a pas de seconde voie à donner à l'autre branche, si
 | `terrainOffset` | entier, 0 à 4064 | `0` | De combien de blocs vers le haut toute la fenêtre de terrain vanilla est décalée, un multiple de 16. Le niveau de la mer et les couches de surface suivent, les grottes, les filons et les profondeurs de biome suivent la terre décalée, et les éléments placés du jeu gardent leurs hauteurs. worldMaxHeight doit valoir au moins 320 plus le décalage, sinon il est refusé. Ne s'applique que par le preset généré |
 | `deepStone` | texte | vide | Le bloc dont est fait le monde sous le terrain vanilla quand worldMinHeight descend sous -64, comme l'ardoise des abîmes propre à un pack. Il se fond dans l'ardoise des abîmes sur les huit couches sous -64, comme celle-ci se fond dans la pierre. Vide, la pierre est conservée |
 | `noiseCaves` | texte | `off` | Où les grottes, tunnels, nouilles et aquifères du jeu se poursuivent quand worldMinHeight descend sous -64 : off garde le monde sous le terrain vanilla en pierre profonde pleine que la couche de worldgen creusera, deep les prolonge jusqu'au fond avec les lacs de lave déplacés dans ses dix couches du bas, world signifie la même chose dans cette version parce que le terrain vanilla les contient déjà |
+| `skyStone` | texte ou liste | vide | Le bloc dont est fait le ciel au-dessus du terrain vanilla quand worldMaxHeight dépasse 320, façonné en terre flottante par le bruit de grottes du jeu : ce qui est grotte en bas est île en haut. Le dessus et le remplissage viennent de la règle de surface de chaque biome. Vide laisse le ciel vide |
+| `skyShape` | texte ou liste | `islands` | En quoi le ciel au-dessus du terrain vanilla est façonné : islands pour de la terre flottante, ou caves pour de la roche pleine creusée de grottes. Utilisé seulement quand skyStone nomme un bloc |
+| `skyIslands` | nombre, -1.0 à 1.0 | `0.5` | À quel point le ciel se rassemble en îles, de -1 pour une terre presque continue à 1 pour un ciel vide. Plus bas étale la terre sur davantage de ciel, plus haut laisse des morceaux moins nombreux et plus petits. Utilisé seulement quand skyStone nomme un bloc et que skyShape vaut islands |
+| `skyThickness` | nombre, 0.0 à 8.0 | `2.0` | À quel point une île du ciel est pleine. Plus haut remplit les îles, plus bas les évide et fait disparaître leurs bords. Utilisé seulement quand skyStone nomme un bloc et que skyShape vaut islands |
+| `skyHeights` | liste | vide | Le bloc le plus bas et le plus haut qu'une île du ciel peut atteindre, en deux nombres. Vide remplit tout le monde au-dessus du terrain vanilla. Utilisé seulement quand skyStone nomme un bloc |
 | `worldSpawn` | texte | vide | L'endroit où chaque nouveau monde apparaît, écrit x,z ou x,y,z. Sans y, on utilise le niveau moyen du sol du monde, un bloc au-dessus du niveau de la mer, ou le sommet des couches dans un monde plat, et le jeu y trouve ensuite un appui sûr comme pour tout point d'apparition. Appliqué à un monde uniquement à sa création. Vide, le choix est laissé au jeu |
 | `worldBorder` | entier, 0 à 60000000 | `0` | La largeur, en blocs, de la bordure du monde dans chaque nouveau monde. Appliquée à un monde uniquement à sa création. 0 laisse la bordure là où le jeu la place |
 | `worldTime` | entier, -1 à 23999 | `-1` | Verrouille l'heure du jour de l'Overworld, en ticks, la même valeur que prend /time set : 18000 est donc minuit. L'horloge s'arrête et ne bouge plus : /time set ne peut pas la déplacer, le jour continue de compter en dessous, et retirer le réglage rend cette heure. -1 laisse le temps s'écouler |
@@ -7175,7 +7220,6 @@ Ce qu'un pack 1.12.2 peut écrire et que cette version ne lit pas, et pourquoi. 
 | `rubicWorld`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist`, `verticalCubeLoadDistance`, `cubeGCInterval`, `cubeGenMillisPerRound`, `cubesSentPerTick` | mondes rubic | Le monde rubic était la façon de la 1.12.2 de dépasser un monde de 256 blocs. Ici, les `minHeight` et `maxHeight` d'une dimension fixent sa taille et le système de chunks la diffuse en continu |
 | `rubicHeightLimit` | mondes rubic | Le plafond de hauteur du monde rubic a disparu avec lui ; les `minHeight` et `maxHeight` d'une dimension fixent sa taille à la place, sans plafond séparé à relever |
 | `regionCacheLimit` | mondes rubic | Son cache des fichiers de région ouverts propres à un monde rubic a disparu avec le monde rubic ; le système de chunks d'ici gère ses propres fichiers |
-| `skyStone`, `skyShape`, `skyIslands`, `skyThickness`, `skyHeights`, `skyAnimals` | le monde profond, biomes, régions de grottes | Les terres du ciel vivaient au-dessus de la fenêtre de terrain d'un monde rubic, et il n'y a pas de monde rubic pour les contenir |
 | `deepRavines`, `oreVeins` | le monde profond | Le terrain du moteur descend déjà sous y 0, avec ses propres ravins et de grands filons de minerai |
 | `riverSize`, `waterLakeChance` et les clés d'échelle de bruit d'un `generatorOptions` personnalisé | réglages | Les rivières et la forme du terrain relèvent des réglages de bruit, et le jeu n'a plus de lacs d'eau dont régler la taille, donc aucun nombre unique ne les atteint. Un `fixedBiome` numéroté au-dessus de 39 nomme un biome que cette version ne peut pas associer |
 | `terrainWorldTypes`, `terrainWorldTypesAreBlacklist` | réglages | Les types de monde sont ici des préréglages de monde, et un modèle de monde nomme le sien |

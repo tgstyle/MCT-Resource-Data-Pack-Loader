@@ -121,7 +121,7 @@ public final class ContentBiomes {
             JsonObject biome = build(def);
             if (biome == null) { continue; }
             GeneratedResources.put(PackType.SERVER_DATA, def.key().getNamespace(), WorldgenFiles.file(WorldgenFiles.BIOME, def.key().getPath()), biome.toString());
-            MADE.put(def.key(), new Made(def, block(def, def.topBlock(), "topBlock"), block(def, def.fillerBlock(), "fillerBlock"), block(def, def.stoneBlock(), "stoneBlock"), box(def)));
+            MADE.put(def.key(), new Made(def, block(def, def.topBlock(), "topBlock"), block(def, def.fillerBlock(), "fillerBlock"), block(def, def.stoneBlock(), "stoneBlock"), block(def, def.sky().stone(), "skyStone"), box(def)));
             tags(def);
         }
         for (Map.Entry<ResourceLocation, Set<String>> tag : TAGS.entrySet()) {
@@ -142,6 +142,16 @@ public final class ContentBiomes {
     }
 
     public static boolean any() { return !MADE.isEmpty(); }
+
+    public static Map<ResourceLocation, ResourceLocation> skyStones() {
+        Map<ResourceLocation, ResourceLocation> found = new LinkedHashMap<>();
+        for (Made made : MADE.values()) {
+            if (made.sky() != null) { found.put(made.def().key(), made.sky()); }
+        }
+        return found;
+    }
+
+    public static boolean shapesSky() { return MADE.values().stream().anyMatch(made -> made.def().sky().shapes()); }
 
     public static boolean packGround(BlockState state) { return packGround.contains(state.getBlock()); }
 
@@ -568,13 +578,13 @@ public final class ContentBiomes {
         if (name.isEmpty()) { return null; }
         ResourceLocation id = ResourceLocation.tryParse(name);
         if (id == null || Registered.find(ForgeRegistries.BLOCKS, id) == null) {
-            ContentLog.LOGGER.error("Biome {} names {} '{}', which is not a registered block, so the ground keeps the base biome's", def.key(), key, name);
+            ContentLog.LOGGER.error("Biome {} names {} '{}', which is not a registered block, so it does nothing", def.key(), key, name);
             return null;
         }
         return id;
     }
 
-    private record Made(BiomeDef def, @Nullable ResourceLocation top, @Nullable ResourceLocation filler, @Nullable ResourceLocation stone, @Nullable JsonObject point) {}
+    private record Made(BiomeDef def, @Nullable ResourceLocation top, @Nullable ResourceLocation filler, @Nullable ResourceLocation stone, @Nullable ResourceLocation sky, @Nullable JsonObject point) {}
 
     private record Band(int minHeight, int maxHeight, Set<String> replaces, Holder<Biome> biome) {}
 }

@@ -84,6 +84,8 @@
         "common.MixinRegionAquifer",
         "common.MixinRegionWaterGenerator",
         "common.MixinPlacedFeature",
+        "common.MixinPlacementContext",
+        "common.MixinNaturalSpawner",
         "common.MixinHeightRangePlacement",
         "common.MixinNearestAttackableTargetGoal",
         "common.INearestAttackableTargetGoal",
