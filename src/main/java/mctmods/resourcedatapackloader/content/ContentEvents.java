@@ -47,6 +47,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCoverFeature;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentFlatSource;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentListBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentShapeFeature;
@@ -97,6 +98,7 @@ public final class ContentEvents {
             helper.register(id(ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
         });
         event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(id(ContentFlatSource.ID), ContentFlatSource.CODEC));
+        event.register(Registries.BIOME_SOURCE, helper -> helper.register(id(ContentListBiomes.ID), ContentListBiomes.CODEC));
         event.register(Registries.STRUCTURE_TYPE, helper -> {
             helper.register(id(ContentStructureMaps.MAP_STRUCTURE), ContentMapStructure.TYPE);
             helper.register(id(ContentCity.STRUCTURE), ContentCityStructure.TYPE);

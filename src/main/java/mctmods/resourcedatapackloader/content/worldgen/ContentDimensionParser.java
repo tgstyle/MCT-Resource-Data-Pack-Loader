@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionPortalDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.PortalDef;
 import mctmods.resourcedatapackloader.content.def.RainDef;
 import mctmods.resourcedatapackloader.content.def.WindDef;
@@ -72,8 +73,13 @@ public final class ContentDimensionParser {
             type = DimensionDef.OVERWORLD;
         }
         String source = Settings.lower(GsonHelper.getAsString(biomes, "source", DimensionDef.INHERIT));
-        if (!DimensionDef.SINGLE.equals(source) && !DimensionDef.INHERIT.equals(source)) {
-            ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.INHERIT);
+        List<PickDef> biomeList = ContentWorldgenParser.picks(biomes, "biomeList", "biome", ContentListBiomes.WEIGHT);
+        if (!DimensionDef.SINGLE.equals(source) && !DimensionDef.INHERIT.equals(source) && !DimensionDef.LIST.equals(source)) {
+            ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {}, {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST, DimensionDef.INHERIT);
+            source = DimensionDef.INHERIT;
+        }
+        else if (DimensionDef.LIST.equals(source) && biomeList.isEmpty()) {
+            ContentLog.LOGGER.error("Dimension {} asks for biome source '{}' but gives no biomeList, using {}", key, source, DimensionDef.INHERIT);
             source = DimensionDef.INHERIT;
         }
         int minHeight = terrain.has("minHeight") ? GsonHelper.getAsInt(terrain, "minHeight") : DimensionDef.UNSET;
@@ -102,7 +108,7 @@ public final class ContentDimensionParser {
         ResourceLocation respawnDimension = respawn.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
         return new DimensionDef(key, type, flatOptions(terrain), GsonHelper.getAsBoolean(terrain, "structures", true), source,
-                GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), minHeight, maxHeight,
+                GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
                 options.has("seaLevel") ? GsonHelper.getAsInt(options, "seaLevel") : -1, GsonHelper.getAsBoolean(options, "useLavaOceans", false),
                 GsonHelper.getAsBoolean(sky, "hasSkyLight", true), GsonHelper.getAsBoolean(sky, "surfaceWorld", true), GsonHelper.getAsBoolean(sky, "spawning", true),
                 cloudHeight, Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),

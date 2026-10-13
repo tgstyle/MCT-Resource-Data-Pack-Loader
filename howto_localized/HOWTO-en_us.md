@@ -3110,7 +3110,8 @@ Every key, shown at once. A real file writes only the ones it needs.
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3207,8 +3208,9 @@ A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension'
 
 | Key      | Required      | Value               | Default            | What it does                                                                                                                                                                                                                                                                        |
 | -------- | ------------- | ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` uses the overworld's own biome map whatever the terrain type, so a `nether` or `end` dimension gets the overworld's biomes on its own ground; `single` uses one biome everywhere. A `flat` dimension holds one biome either way, the `single` one or its superflat text's |
+| `source` | no            | `inherit`, `single`, `list` | `inherit`          | `inherit` uses the overworld's own biome map whatever the terrain type, so a `nether` or `end` dimension gets the overworld's biomes on its own ground; `single` uses one biome everywhere, `list` spreads the biomes of `biomeList` across the dimension on every terrain type, `flat`, `nether` and `end` included. Otherwise a `flat` dimension holds one biome, the `single` one or its superflat text's |
 | `biome`  | when `single` | biome name          | `minecraft:plains` | Which biome that is                                                                                                                                                                                                                                                                 |
+| `biomeList` | when `list` | list of biome names or `{"biome", "weight"}` objects | none | The only biomes `list` uses. Each region is about 256 blocks across with rounded, irregular borders, and takes one of the listed biomes at random from the world seed in proportion to its `weight` (10 for a plain name, as for a biome definition), so equal weights make every biome about as common as the next; any one can border any other. A name that is no registered biome is logged and left out; with none left the dimension uses `minecraft:plains` |
 
 ### The `sky` block
 

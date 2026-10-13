@@ -3110,7 +3110,8 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3207,8 +3208,9 @@ Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigen
 
 | Schlüssel | Pflicht      | Wert                | Standard           | Was er macht                                                                                                                                                                                                                                                                                                                        |
 | --------- | ------------ | ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `source`  | nein         | `inherit`, `single` | `inherit`          | `inherit` nutzt die eigene Biomkarte der Oberwelt, egal welcher Geländetyp, eine Dimension vom Typ `nether` oder `end` bekommt also die Biome der Oberwelt auf ihrem eigenen Boden; `single` überall ein einziges Biom. Eine `flat`-Dimension hat so oder so ein einziges Biom, das von `single` oder das aus ihrem Superflach-Text |
+| `source`  | nein         | `inherit`, `single`, `list` | `inherit`          | `inherit` nutzt die eigene Biomkarte der Oberwelt, egal welcher Geländetyp, eine Dimension vom Typ `nether` oder `end` bekommt also die Biome der Oberwelt auf ihrem eigenen Boden; `single` überall ein einziges Biom, `list` verteilt die Biome aus `biomeList` bei jedem Geländetyp über die Dimension, auch bei `flat`, `nether` und `end`. Sonst hat eine `flat`-Dimension ein einziges Biom, das von `single` oder das aus ihrem Superflach-Text |
 | `biome`   | bei `single` | Biomname            | `minecraft:plains` | Welches Biom das ist                                                                                                                                                                                                                                                                                                                |
+| `biomeList` | bei `list` | Liste von Biomnamen oder `{"biome", "weight"}`-Objekten | keiner | Die einzigen Biome, die `list` verwendet. Jede Region ist etwa 256 Blöcke breit, mit runden, unregelmäßigen Rändern, und bekommt anhand des Weltseeds zufällig eines der Biome aus der Liste, im Verhältnis zu seinem `weight` (10 für einen bloßen Namen, wie bei einer Biomdefinition), sodass gleiche Gewichte alle etwa gleich häufig machen; jedes kann an jedes andere grenzen. Ein Name, der kein registriertes Biom ist, wird protokolliert und weggelassen; bleibt keines übrig, nutzt die Dimension `minecraft:plains` |
 
 ### Der Block `sky`
 

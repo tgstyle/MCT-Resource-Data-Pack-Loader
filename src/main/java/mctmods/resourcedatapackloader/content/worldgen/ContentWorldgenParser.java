@@ -297,14 +297,16 @@ public final class ContentWorldgenParser {
         return Json.strings(entry, "surface");
     }
 
-    public static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) {
+    public static List<PickDef> picks(JsonObject entry, String listKey, String nameKey) { return picks(entry, listKey, nameKey, 1); }
+
+    public static List<PickDef> picks(JsonObject entry, String listKey, String nameKey, int weight) {
         if (!entry.has(listKey)) { return List.of(); }
         List<PickDef> picked = new ArrayList<>();
         for (JsonElement element : GsonHelper.getAsJsonArray(entry, listKey)) {
-            if (element.isJsonPrimitive()) { picked.add(new PickDef(Settings.lower(element.getAsString()), 1)); }
+            if (element.isJsonPrimitive()) { picked.add(new PickDef(Settings.lower(element.getAsString()), weight)); }
             else if (element.isJsonObject()) {
                 JsonObject held = element.getAsJsonObject();
-                picked.add(new PickDef(Settings.lower(GsonHelper.getAsString(held, nameKey, "")),Math.max(1, GsonHelper.getAsInt(held, "weight", 1))));
+                picked.add(new PickDef(Settings.lower(GsonHelper.getAsString(held, nameKey, "")), Math.max(1, GsonHelper.getAsInt(held, "weight", weight))));
             }
         }
         return List.copyOf(picked);

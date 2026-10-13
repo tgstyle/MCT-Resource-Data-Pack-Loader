@@ -3110,7 +3110,8 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3207,8 +3208,9 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 
 | 键 | 必需 | 值 | 默认值 | 作用 |
 | --- | --- | --- | --- | --- |
-| `source` | 否 | `inherit`、`single` | `inherit` | `inherit` 无论地形类型如何都使用主世界自己的生物群系图，因此 `nether` 或 `end` 维度会在自己的地面上得到主世界的生物群系；`single` 在各处使用同一个生物群系。`flat` 维度无论哪种都只有一个生物群系，即 `single` 指定的那个或其超平坦文本所指的那个 |
+| `source` | 否 | `inherit`、`single`、`list` | `inherit` | `inherit` 无论地形类型如何都使用主世界自己的生物群系图，因此 `nether` 或 `end` 维度会在自己的地面上得到主世界的生物群系；`single` 在各处使用同一个生物群系，`list` 在任何地形类型下（包括 `flat`、`nether` 和 `end`）都把 `biomeList` 中的生物群系分布到整个维度。其他情况下 `flat` 维度只有一个生物群系，即 `single` 指定的那个或其超平坦文本所指的那个 |
 | `biome` | 使用 `single` 时 | 生物群系名称 | `minecraft:plains` | 是哪个生物群系 |
+| `biomeList` | 当为 `list` 时 | 生物群系名称或 `{"biome", "weight"}` 对象的列表 | 无 | `list` 唯一使用的生物群系。每个区域宽约 256 格，边界圆润而不规则，并按世界种子从列表中随机取一个生物群系，概率与其 `weight` 成正比（单写名称时为 10，与生物群系定义相同），因此权重相同时各生物群系出现频率大致相同；任意两个都可能相邻。不是已注册生物群系的名称会记入日志并被略过；若一个都不剩，该维度使用 `minecraft:plains` |
 
 ### `sky` 块
 
