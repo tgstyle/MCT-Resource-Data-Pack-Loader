@@ -3225,7 +3225,7 @@ Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própri
 | `spawning` | não | booleano | `true` | Se mobs surgem. Desligado, impede todo spawn, inclusive de spawners, seja o que for que o grupo `spawning` diga |
 | `nether` | não | booleano | `false` | Tratada como o Nether para portais e tetos |
 | `beds` | não | booleano | `true` | Desligado, as camas explodem |
-| `waterVaporizes` | não | booleano | `false` | A água evapora |
+| `waterVaporizes` | não | booleano | `false` | A água colocada evapora: baldes e dispensadores geram vapor em vez de água, gelo quebrado ou derretido não deixa nada, e a lava flui como no Nether. A água que já está no mundo ou gerada pelo terreno permanece |
 | `cloudHeight` | não | int | `128` | Onde ficam as nuvens. Uma configuração `cloudHeight` que nomeie esta dimensão, ou uma sem dimensão, vence esta |
 | `cloudColor` | não | cor hex | nenhum | Tonalidade das nuvens |
 | `cloudSpeed` | não | float | `1.0` | Com que velocidade as nuvens derivam. `0` as mantém paradas, um valor negativo as inverte |
