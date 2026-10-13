@@ -74,13 +74,13 @@ public final class CityLayout {
         if (components.isEmpty() || !(components.get(0) instanceof StructureVillagePieces.Start)) { return false; }
         StructureVillagePieces.Start startPiece = (StructureVillagePieces.Start) components.get(0);
         StructureBoundingBox well = startPiece.getBoundingBox();
-        Rotation turn = Turns.ALL[(int) (MathUtil.mix(world.getSeed(), well.minX, 7, well.minZ) & 3L)];
+        Rotation turn = turn(world, well);
         CityMapDef.Kind[][] grid = def.turned(turn);
         char[][] marks = def.turnedMarks(turn);
         int deep = grid.length;
         int wide = grid[0].length;
         List<int[]> plazaCells = plazaCells(grid);
-        int[] anchor = plazaCells.isEmpty() ? new int[] {wide / 2, deep / 2} : plazaCells.get(0);
+        int[] anchor = anchor(grid, plazaCells);
         int anchorX = anchor[0];
         int anchorZ = anchor[1];
         int cell = def.cell;
@@ -211,6 +211,26 @@ public final class CityLayout {
             }
         }
         return found;
+    }
+
+    private static Rotation turn(World world, StructureBoundingBox well) { return Turns.ALL[(int) (MathUtil.mix(world.getSeed(), well.minX, 7, well.minZ) & 3L)]; }
+
+    private static int[] anchor(CityMapDef.Kind[][] grid, List<int[]> plazaCells) { return plazaCells.isEmpty() ? new int[] {grid[0].length / 2, grid.length / 2} : plazaCells.get(0); }
+
+    public static List<StructureBoundingBox> plazas(World world, StructureBoundingBox well) {
+        List<StructureBoundingBox> boxes = new ArrayList<>();
+        CityMapDef def = wanted() ? ContentCityMaps.byName(named()) : null;
+        if (def == null) { return boxes; }
+        CityMapDef.Kind[][] grid = def.turned(turn(world, well));
+        List<int[]> plazaCells = plazaCells(grid);
+        int[] anchor = anchor(grid, plazaCells);
+        int cell = def.cell;
+        for (int[] at : plazaCells) {
+            int x = well.minX + (at[0] - anchor[0]) * cell;
+            int z = well.minZ + (at[1] - anchor[1]) * cell;
+            boxes.add(new StructureBoundingBox(x, 0, z, x + WELL - 1, 255, z + WELL - 1));
+        }
+        return boxes;
     }
 
     private static final class Lifts {

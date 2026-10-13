@@ -20,6 +20,7 @@ import java.util.Random;
 public final class BeardRailsFit {
     private static final int STRETCH = 32;
     private static final int COURSES = 2;
+    private static final int MOUTH = 4;
 
     private BeardRailsFit() {}
 
@@ -54,6 +55,7 @@ public final class BeardRailsFit {
         int clear = BeardRails.clear(sub);
         int reach = CityGrowth.march() + BeardRails.tail(sub) + STRETCH;
         List<Integer> placed = new ArrayList<>();
+        List<StructureBoundingBox> plazas = sub ? Collections.emptyList() : CityLayout.plazas(world, wellBox);
         for (int line = 0; line < lines; line++) {
             int side = line % 2 == 0 ? 1 : -1;
             int base = alongX ? wellZ : wellX;
@@ -68,6 +70,13 @@ public final class BeardRailsFit {
                     candidate += side * apart;
                     moved = true;
                 }
+                for (StructureBoundingBox plaza : plazas) {
+                    int off = offPlaza(plaza, alongX, base + candidate, side) - base;
+                    if (off == candidate) { continue; }
+                    ContentLog.LOGGER.debug("Railway line {} of the village at {}, {} rolled beside the drawn plaza at {}, {}, inside the {} row(s) a street needs to climb from the line to the plaza, so it is laid {} block(s) further out, at {} {}", line, wellX, wellZ, plaza.minX, plaza.minZ, BeardRails.MARGIN, Math.abs(off - candidate), alongX ? "z" : "x", base + off);
+                    candidate = off;
+                    moved = true;
+                }
             }
             placed.add(candidate);
             int center = line == 0 && BeardLinks.on() ? BeardLinks.lineCenter(world, wellBox, sub, base + candidate) : base + candidate;
@@ -78,6 +87,18 @@ public final class BeardRailsFit {
             ContentLog.LOGGER.debug("{} line {} of the village at {}, {} is laid {} at {} {}, {} wide, at least {} block(s) of ground from any other line of this village, before any street of the village", sub ? "Subway" : "Railway", line, wellX, wellZ, alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, BeardRails.width(sub), BeardRails.spacing(sub));
         }
         BeardLinks.extend(world, start, well, sub);
+    }
+
+    private static int offPlaza(StructureBoundingBox plaza, boolean alongX, int center, int side) {
+        int least = alongX ? plaza.minZ : plaza.minX;
+        int most = alongX ? plaza.maxZ : plaza.maxX;
+        int middle = least + (most - least + 1) / 2;
+        int mouth = ContentBeard.streetHalf() + 1 + MOUTH + BeardRoads.pathExtraWidth();
+        int low = Math.min(least - ContentBeard.plazaReach(), middle - mouth) - BeardRails.MARGIN;
+        int high = Math.max(most + ContentBeard.plazaReach(), middle + mouth) + BeardRails.MARGIN;
+        int half = BeardRails.half(false);
+        if (center + half < low || center - half > high) { return center; }
+        return side >= 0 ? high + half + 1 : low - half - 1;
     }
 
     private static void seekRoad(List<StructureComponent> components, List<StructureComponent> everyone, RailPiece rail, boolean alongX, int reach) {
