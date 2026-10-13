@@ -55,7 +55,8 @@ public final class ContentDimensionRules {
 
     public static BiomeProvider biomes(World world, DimensionDef def) {
         if (DimensionDef.INHERIT.equals(def.biomeSource)) { return new BiomeProvider(world.getWorldInfo()); }
-        Biome single = ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
+        if (DimensionDef.LIST.equals(def.biomeSource)) { return ContentListBiomes.provider(world.getWorldInfo(), def.biomeList); }
+        Biome single =ForgeRegistries.BIOMES.getValue(new ResourceLocation(def.biome));
         return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
     }
 

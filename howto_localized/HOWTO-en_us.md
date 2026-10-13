@@ -3365,7 +3365,8 @@ Every key, shown at once. A real file writes only the ones it needs.
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", "minecraft:forest", "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3459,10 +3460,11 @@ A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension'
 
 *dimensions*
 
-| Key      | Required      | Value               | Default            | What it does                                                            |
-| -------- | ------------- | ------------------- | ------------------ | ----------------------------------------------------------------------- |
-| `source` | no            | `inherit`, `single` | `inherit`          | `inherit` uses the normal biome map, `single` uses one biome everywhere |
-| `biome`  | when `single` | biome name          | `minecraft:plains` | Which biome that is                                                     |
+| Key         | Required      | Value                       | Default            | What it does                                                                                                                                                             |
+| ----------- | ------------- | --------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `source`    | no            | `inherit`, `single`, `list` | `inherit`          | `inherit` uses the normal biome map, `single` uses one biome everywhere, `list` spreads the biomes of `biomeList` across the dimension the way the normal biome map does |
+| `biome`     | when `single` | biome name                  | `minecraft:plains` | Which biome that is                                                                                                                                                      |
+| `biomeList` | when `list`   | list of biome names         | none               | The only biomes `list` uses, in regions of comparable size and variety to the normal map                                                                                 |
 
 ### The `sky` block
 

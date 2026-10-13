@@ -3365,7 +3365,8 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", "minecraft:forest", "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3459,10 +3460,11 @@ Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigen
 
 *dimensionen*
 
-| Schlüssel | Pflicht      | Wert                | Standard           | Was er macht                                                              |
-| --------- | ------------ | ------------------- | ------------------ | ------------------------------------------------------------------------- |
-| `source`  | nein         | `inherit`, `single` | `inherit`          | `inherit` nutzt die normale Biomkarte, `single` überall ein einziges Biom |
-| `biome`   | bei `single` | Biomname            | `minecraft:plains` | Welches Biom das ist                                                      |
+| Schlüssel   | Pflicht      | Wert                        | Standard           | Was er macht                                                                                                                                                                 |
+| ----------- | ------------ | --------------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source`    | nein         | `inherit`, `single`, `list` | `inherit`          | `inherit` nutzt die normale Biomkarte, `single` überall ein einziges Biom, `list` verteilt die Biome aus `biomeList` so über die Dimension, wie es die normale Biomkarte tut |
+| `biome`     | bei `single` | Biomname                    | `minecraft:plains` | Welches Biom das ist                                                                                                                                                         |
+| `biomeList` | bei `list`   | Liste von Biomnamen         | keiner             | Die einzigen Biome, die `list` verwendet, in Regionen vergleichbarer Größe und Vielfalt wie auf der normalen Karte                                                           |
 
 ### Der Block `sky`
 

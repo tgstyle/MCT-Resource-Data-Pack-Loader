@@ -3365,7 +3365,8 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
   },
   "biomes": {
     "source": "single",
-    "biome": "mypack:ruby_forest"
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", "minecraft:forest", "mypack:ruby_forest"]
   },
   "sky": {
     "hasSkyLight": true,
@@ -3459,10 +3460,11 @@ Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própri
 
 *dimensões*
 
-| Chave    | Obrigatória     | Valor               | Padrão             | O que faz                                                                        |
-| -------- | --------------- | ------------------- | ------------------ | -------------------------------------------------------------------------------- |
-| `source` | não             | `inherit`, `single` | `inherit`          | `inherit` usa o mapa de biomas normal, `single` usa um único bioma em toda parte |
-| `biome`  | quando `single` | nome de bioma       | `minecraft:plains` | Qual é esse bioma                                                                |
+| Chave       | Obrigatória     | Valor                       | Padrão             | O que faz                                                                                                                                                                  |
+| ----------- | --------------- | --------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source`    | não             | `inherit`, `single`, `list` | `inherit`          | `inherit` usa o mapa de biomas normal, `single` usa um único bioma em toda parte, `list` distribui os biomas de `biomeList` pela dimensão como o mapa de biomas normal faz |
+| `biome`     | quando `single` | nome de bioma               | `minecraft:plains` | Qual é esse bioma                                                                                                                                                          |
+| `biomeList` | quando `list`   | lista de nomes de bioma     | nenhum             | Os únicos biomas que `list` usa, em regiões de tamanho e variedade comparáveis às do mapa normal                                                                           |
 
 ### O bloco `sky`
 

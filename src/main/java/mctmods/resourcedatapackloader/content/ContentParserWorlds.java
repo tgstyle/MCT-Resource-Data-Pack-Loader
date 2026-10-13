@@ -34,7 +34,7 @@ public final class ContentParserWorlds {
     private static final List<String> AXES = Collections.unmodifiableList(Arrays.asList(PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH));
     private static final List<String> RETURNS = Collections.unmodifiableList(Arrays.asList(DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE));
     private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
-    private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT));
+    private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST));
     private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL));
     private static final String ROLES = "rlsc.";
 
@@ -402,7 +402,11 @@ public final class ContentParserWorlds {
         String cloudColor = JsonUtils.getString(sky, "cloudColor", "").trim();
         String owner = "Dimension " + key;
         String type = Json.choice(terrain, "type", DimensionDef.OVERWORLD, owner + " terrain", KNOWN_TERRAIN);
-        String source = Json.choice(biomes, "source", DimensionDef.INHERIT, owner + " biomes", SOURCES);
+        List<String> biomeList = strings(biomes, "biomeList");
+        String chosen = Json.choice(biomes, "source", DimensionDef.INHERIT, owner + " biomes", SOURCES);
+        boolean empty = DimensionDef.LIST.equals(chosen) && biomeList.isEmpty();
+        if (empty) { ContentLog.LOGGER.error("{} biomes asks for source '{}' but gives no biomeList, using {}", owner, chosen, DimensionDef.INHERIT); }
+        String source = empty ? DimensionDef.INHERIT : chosen;
         GalacticraftDef galacticraft = ContentParserCelestial.galacticraft(key, json);
         boolean belt = galacticraft != null && CelestialDef.ASTEROIDS.equals(galacticraft.body.kind);
         String fog = ContentParserSkyLook.samples(sky) ? "" : JsonUtils.getString(sky, "fogColor", belt ? "000000" : "");
@@ -417,6 +421,7 @@ public final class ContentParserWorlds {
                 JsonUtils.getBoolean(terrain, "structures", true),
                 source,
                 JsonUtils.getString(biomes, "biome", "minecraft:plains"),
+                biomeList,
                 JsonUtils.getBoolean(sky, "hasSkyLight", true),
                 JsonUtils.getBoolean(sky, "surfaceWorld", true),
                 JsonUtils.getBoolean(sky, "respawn", true),
