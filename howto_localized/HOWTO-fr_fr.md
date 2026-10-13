@@ -3442,7 +3442,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 
 Un fichier dont l'`id` est une dimension qui existe déjà, comme `0` pour l'Overworld, `-1` pour le Nether, `1` pour l'End ou une dimension qu'un autre mod enregistre, modifie cette dimension au lieu d'en ajouter une. Chaque clé que le fichier écrit s'y applique, et chaque clé qu'il omet garde le comportement propre de la dimension : ses données de niveau et ses chunks restent tels quels, et une sauvegarde existante continue de se charger.
 
-`terrain.type` remplace le générateur : les chunks générés à partir de là en sortent, et `generatorOptions` et `structures` s'appliquent avec lui ; sans `terrain.type`, ces deux clés sont ignorées et le journal le signale. Un bloc `biomes` change les biomes des chunks générés à partir de là. `suffix` est ignoré, car le dossier de sauvegarde reste celui de la dimension. La ligne `dimensions.existing` du résumé liste chaque fichier appliqué de cette façon.
+`terrain.type` remplace le générateur : les chunks générés à partir de là en sortent, et `generatorOptions` et `structures` s'appliquent avec lui (avec `overworld`, `generatorOptions` est l'objet JSON des [clés de generatorOptions](#les-clés-de-generatoroptions) ; un préréglage de monde superplat garde son propre format) ; sans `terrain.type`, ces deux clés sont ignorées et le journal le signale. Un bloc `biomes` change les biomes des chunks générés à partir de là. `suffix` est ignoré, car le dossier de sauvegarde reste celui de la dimension. La ligne `dimensions.existing` du résumé liste chaque fichier appliqué de cette façon.
 
 Un `sun` ou un `moon` qui ne définit que `texture` remplace l'image dans le ciel propre de la dimension, et la lune garde ses phases. Définir `bodies`, `stars`, `sun.size` ou `moon.size` remplace tout le ciel par [celui de RDPL](#le-moteur-de-rendu-du-ciel).
 
@@ -3453,7 +3453,7 @@ Un `sun` ou un `moon` qui ne définit que `texture` remplace l'image dans le cie
 | Clé                | Requis | Valeur                                       | Défaut      | Rôle                                                                         |
 | ------------------ | ------ | -------------------------------------------- | ----------- | ---------------------------------------------------------------------------- |
 | `type`             | non    | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Le générateur qui la construit                                               |
-| `generatorOptions` | non    | texte                                       | aucun       | La chaîne du générateur, telle qu'un préréglage de monde superplat l'utilise |
+| `generatorOptions` | non    | texte                                        | aucun       | La chaîne du générateur : avec `overworld`, le JSON de [ces clés](#les-clés-de-generatoroptions) ; avec `flat`, un préréglage de monde superplat |
 | `structures`       | non    | booléen                                      | `true`      | Si les structures vanilla se génèrent                                        |
 
 ### Le bloc `biomes`
@@ -3470,43 +3470,43 @@ Un `sun` ou un `moon` qui ne définit que `texture` remplace l'image dans le cie
 
 *dimensions*
 
-| Clé                | Requis | Valeur                           | Défaut  | Rôle                                                                                                                                   |
-| ------------------ | ------ | -------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | non    | booléen                          | `true`  | Si la lumière du jour y parvient                                                                                                       |
-| `surfaceWorld`     | non    | booléen                          | `true`  | Si les cartes et les boussoles se comportent comme dans l'Overworld                                                                    |
-| `respawn`          | non    | booléen                          | `true`  | Si les joueurs y réapparaissent                                                                                                        |
-| `respawnDimension` | non    | entier                           | aucun   | Où ils réapparaissent à la place                                                                                                       |
-| `spawning`         | non    | booléen                          | `true`  | Si les mobs y apparaissent                                                                                                             |
-| `nether`           | non    | booléen                          | `false` | Traitée comme le Nether pour les portails et les plafonds                                                                              |
-| `beds`             | non    | booléen                          | `true`  | Désactivé, les lits explosent                                                                                                          |
-| `waterVaporizes`   | non    | booléen                          | `false` | L'eau s'évapore                                                                                                                        |
-| `cloudHeight`      | non    | entier                           | `128`   | Où se situent les nuages                                                                                                               |
-| `cloudColor`       | non    | couleur hexadécimale             | aucun   | Teinte des nuages                                                                                                                      |
-| `cloudSpeed`       | non    | flottant                         | `1.0`   | Vitesse de dérive des nuages. `0` les immobilise, une valeur négative les fait aller en sens inverse                                   |
-| `cloudLayers`      | non    | liste d'objets                   | aucun   | Plusieurs couches de nuages. Voir [Brouillard, lumière, nuages et chaleur](#brouillard-lumière-nuages-et-chaleur)                      |
-| `groundLevel`      | non    | entier                           | `63`    | Niveau de la mer, utilisé pour l'horizon et les recherches de point d'apparition                                                       |
-| `movementFactor`   | non    | flottant                         | `1.0`   | Rapport de distance avec l'Overworld. Le Nether utilise 8                                                                              |
-| `fogColor`         | non    | couleur hexadécimale ou `sample` | aucun   | Teinte du brouillard à midi. Il s'assombrit la nuit comme le brouillard vanilla. `sample` mélange le ciel avec le sol autour du joueur |
-| `showFog`          | non    | booléen                          | `false` | Brouillard épais, comme dans le Nether                                                                                                 |
-| `fogDensity`       | non    | flottant, 0 à 1                  | `0.0`   | Épaisseur du brouillard. `0` conserve la distance vanilla, `1` la referme à 8 blocs                                                    |
-| `fogGroundWeight`  | non    | flottant, 0 à 1                  | `0.5`   | Avec `fogColor: sample`, le poids du sol par rapport au ciel                                                                           |
-| `skyColor`         | non    | couleur hexadécimale             | aucun   | Teinte du ciel à midi. Il s'assombrit la nuit et grisonne sous la pluie et l'orage comme le ciel vanilla                               |
-| `fixedTime`        | non    | entier, ticks                    | aucun   | Verrouille l'heure de la journée                                                                                                       |
-| `sunriseColors`    | non    | booléen                          | `true`  | Si le lever et le coucher du soleil sont teintés                                                                                       |
-| `ambientLight`     | non    | flottant, 0 à 1                  | `0.0`   | Lumière minimale partout                                                                                                               |
-| `lightSkyColor`    | non    | couleur hexadécimale             | aucun   | Teinte de la lumière du jour sur les blocs et les mobs                                                                                 |
-| `lightBlockColor`  | non    | couleur hexadécimale             | aucun   | Teinte de la lumière des torches et des autres sources de lumière de bloc                                                              |
-| `skyFactor`        | non    | flottant, 0 à 1                  | `1.0`   | Luminosité apparente de la lumière du jour. Dessinée uniquement côté client, donc l'apparition des mobs ne change pas                  |
-| `starBrightness`   | non    | flottant, 0 à 1                  | aucun   | Luminosité des étoiles                                                                                                                 |
-| `sunBrightness`    | non    | flottant, 0 à 1                  | `1.0`   | Luminosité avec laquelle le soleil est dessiné                                                                                         |
-| `moonBrightness`   | non    | flottant, 0 à 1                  | `1.0`   | Luminosité avec laquelle la lune est dessinée, et avec `bodies` tous les corps sauf le soleil                                          |
-| `heat`             | non    | objet                            | aucun   | Un mirage de chaleur sur la vue. Voir [Brouillard, lumière, nuages et chaleur](#brouillard-lumière-nuages-et-chaleur)                  |
-| `renderSky`        | non    | booléen                          | `true`  | Désactivé, rien ne dessine le ciel, le soleil, la lune ni les étoiles, ne laissant que la couleur du brouillard                        |
-| `renderClouds`     | non    | booléen                          | `true`  | Désactivé, aucun nuage n'est dessiné                                                                                                   |
-| `renderWeather`    | non    | booléen                          | `true`  | Désactivé, ni pluie ni neige ne sont dessinées                                                                                         |
-| `sun`              | non    | objet                            | aucun   | Votre propre soleil. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                                                    |
-| `bodies`           | non    | liste d'objets                   | aucun   | Planètes et lunes suspendues dans le ciel. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                              |
-| `stars`            | non    | objet                            | aucun   | Votre propre champ d'étoiles. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                                           |
+| Clé                | Requis | Valeur                           | Défaut  | Rôle                                                                                                                                                                                                                                              |
+| ------------------ | ------ | -------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | non    | booléen                          | `true`  | Si la lumière du jour y parvient                                                                                                                                                                                                                  |
+| `surfaceWorld`     | non    | booléen                          | `true`  | Si les cartes et les boussoles se comportent comme dans l'Overworld                                                                                                                                                                               |
+| `respawn`          | non    | booléen                          | `true`  | Si les joueurs y réapparaissent                                                                                                                                                                                                                   |
+| `respawnDimension` | non    | entier                           | aucun   | Où ils réapparaissent à la place                                                                                                                                                                                                                  |
+| `spawning`         | non    | booléen                          | `true`  | Si les mobs y apparaissent                                                                                                                                                                                                                        |
+| `nether`           | non    | booléen                          | `false` | Traitée comme le Nether pour les portails et les plafonds                                                                                                                                                                                         |
+| `beds`             | non    | booléen                          | `true`  | Désactivé, les lits explosent                                                                                                                                                                                                                     |
+| `waterVaporizes`   | non    | booléen                          | `false` | L'eau placée s'évapore : les seaux et les distributeurs produisent de la vapeur au lieu d'eau, la glace cassée ou fondue ne laisse rien, et la lave coule comme dans le Nether. L'eau déjà présente dans le monde ou générée par le terrain reste |
+| `cloudHeight`      | non    | entier                           | `128`   | Où se situent les nuages                                                                                                                                                                                                                          |
+| `cloudColor`       | non    | couleur hexadécimale             | aucun   | Teinte des nuages                                                                                                                                                                                                                                 |
+| `cloudSpeed`       | non    | flottant                         | `1.0`   | Vitesse de dérive des nuages. `0` les immobilise, une valeur négative les fait aller en sens inverse                                                                                                                                              |
+| `cloudLayers`      | non    | liste d'objets                   | aucun   | Plusieurs couches de nuages. Voir [Brouillard, lumière, nuages et chaleur](#brouillard-lumière-nuages-et-chaleur)                                                                                                                                 |
+| `groundLevel`      | non    | entier                           | `63`    | Niveau de la mer, utilisé pour l'horizon et les recherches de point d'apparition                                                                                                                                                                  |
+| `movementFactor`   | non    | flottant                         | `1.0`   | Rapport de distance avec l'Overworld. Le Nether utilise 8                                                                                                                                                                                         |
+| `fogColor`         | non    | couleur hexadécimale ou `sample` | aucun   | Teinte du brouillard à midi. Il s'assombrit la nuit comme le brouillard vanilla. `sample` mélange le ciel avec le sol autour du joueur                                                                                                            |
+| `showFog`          | non    | booléen                          | `false` | Brouillard épais, comme dans le Nether                                                                                                                                                                                                            |
+| `fogDensity`       | non    | flottant, 0 à 1                  | `0.0`   | Épaisseur du brouillard. `0` conserve la distance vanilla, `1` la referme à 8 blocs                                                                                                                                                               |
+| `fogGroundWeight`  | non    | flottant, 0 à 1                  | `0.5`   | Avec `fogColor: sample`, le poids du sol par rapport au ciel                                                                                                                                                                                      |
+| `skyColor`         | non    | couleur hexadécimale             | aucun   | Teinte du ciel à midi. Il s'assombrit la nuit et grisonne sous la pluie et l'orage comme le ciel vanilla                                                                                                                                          |
+| `fixedTime`        | non    | entier, ticks                    | aucun   | Verrouille l'heure de la journée                                                                                                                                                                                                                  |
+| `sunriseColors`    | non    | booléen                          | `true`  | Si le lever et le coucher du soleil sont teintés                                                                                                                                                                                                  |
+| `ambientLight`     | non    | flottant, 0 à 1                  | `0.0`   | Lumière minimale partout                                                                                                                                                                                                                          |
+| `lightSkyColor`    | non    | couleur hexadécimale             | aucun   | Teinte de la lumière du jour sur les blocs et les mobs                                                                                                                                                                                            |
+| `lightBlockColor`  | non    | couleur hexadécimale             | aucun   | Teinte de la lumière des torches et des autres sources de lumière de bloc                                                                                                                                                                         |
+| `skyFactor`        | non    | flottant, 0 à 1                  | `1.0`   | Luminosité apparente de la lumière du jour. Dessinée uniquement côté client, donc l'apparition des mobs ne change pas                                                                                                                             |
+| `starBrightness`   | non    | flottant, 0 à 1                  | aucun   | Luminosité des étoiles                                                                                                                                                                                                                            |
+| `sunBrightness`    | non    | flottant, 0 à 1                  | `1.0`   | Luminosité avec laquelle le soleil est dessiné                                                                                                                                                                                                    |
+| `moonBrightness`   | non    | flottant, 0 à 1                  | `1.0`   | Luminosité avec laquelle la lune est dessinée, et avec `bodies` tous les corps sauf le soleil                                                                                                                                                     |
+| `heat`             | non    | objet                            | aucun   | Un mirage de chaleur sur la vue. Voir [Brouillard, lumière, nuages et chaleur](#brouillard-lumière-nuages-et-chaleur)                                                                                                                             |
+| `renderSky`        | non    | booléen                          | `true`  | Désactivé, rien ne dessine le ciel, le soleil, la lune ni les étoiles, ne laissant que la couleur du brouillard                                                                                                                                   |
+| `renderClouds`     | non    | booléen                          | `true`  | Désactivé, aucun nuage n'est dessiné                                                                                                                                                                                                              |
+| `renderWeather`    | non    | booléen                          | `true`  | Désactivé, ni pluie ni neige ne sont dessinées                                                                                                                                                                                                    |
+| `sun`              | non    | objet                            | aucun   | Votre propre soleil. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                                                                                                                                                               |
+| `bodies`           | non    | liste d'objets                   | aucun   | Planètes et lunes suspendues dans le ciel. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                                                                                                                                         |
+| `stars`            | non    | objet                            | aucun   | Votre propre champ d'étoiles. Voir [Le moteur de rendu du ciel](#le-moteur-de-rendu-du-ciel)                                                                                                                                                      |
 
 ### Le moteur de rendu du ciel
 
@@ -7522,6 +7522,103 @@ Sur un monde Biomes O' Plenty, les mêmes réglages sont traduits dans les terme
 Il décide de deux choses par lui-même. Les rivières sortent de ses propres couches et n'ont aucun réglage, si bien que `riverSize` n'y signifie rien. Et l'emplacement réel des océans, des montagnes et des régions relève aussi de ses couches, accessibles seulement par `landScheme`, `tempScheme`, `rainScheme` et `biomeSize`, de sorte qu'un pack façonne ce monde dans les termes de ce mod plutôt que dans ceux du type de monde personnalisé. Un monde d'un seul biome reste du ressort d'un pack : bloquez tous les biomes et nommez celui que vous voulez comme `default` du modèle, ce qui fonctionne de la même façon sur son type de monde que sur n'importe quel autre.
 
 Tout le reste de ce que fait un pack, bloquer des biomes et des minerais, remplacer des blocs, la bedrock plate, le placement des structures, son propre worldgen, n'est jamais passé par ce texte de réglages et fonctionne de la même manière sur n'importe quel type de monde.
+
+#### Les clés de generatorOptions
+
+*chaque clé et sa valeur par défaut*
+
+`generatorOptions` est, pour l'Overworld, un objet JSON écrit sous forme de chaîne dont les guillemets sont échappés. Une clé qu'il omet garde la valeur par défaut indiquée ici. Il s'applique au type de terrain `overworld` d'une dimension et au type de monde `customized` ; un préréglage de monde superplat garde son propre format, que ce tableau ne couvre pas.
+
+```json
+{
+  "settings": {
+    "worldType": "customized",
+    "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
+  }
+}
+```
+
+| Clé                       | Type    | Défaut    | Rôle                                                                           |
+| ------------------------- | ------- | --------- | ------------------------------------------------------------------------------ |
+| `coordinateScale`         | décimal | `684.412` | Échelle horizontale du bruit principal du terrain                              |
+| `heightScale`             | décimal | `684.412` | Échelle verticale du bruit principal du terrain                                |
+| `upperLimitScale`         | décimal | `512.0`   | Échelle du bruit qui plafonne le terrain par le haut                           |
+| `lowerLimitScale`         | décimal | `512.0`   | Échelle du bruit qui borne le terrain par le bas                               |
+| `depthNoiseScaleX`        | décimal | `200.0`   | Échelle du bruit de profondeur selon x                                         |
+| `depthNoiseScaleZ`        | décimal | `200.0`   | Échelle du bruit de profondeur selon z                                         |
+| `depthNoiseScaleExponent` | décimal | `0.5`     | Exposant appliqué au bruit de profondeur                                       |
+| `mainNoiseScaleX`         | décimal | `80.0`    | Étirement du bruit principal selon x                                           |
+| `mainNoiseScaleY`         | décimal | `160.0`   | Étirement du bruit principal selon y                                           |
+| `mainNoiseScaleZ`         | décimal | `80.0`    | Étirement du bruit principal selon z                                           |
+| `baseSize`                | décimal | `8.5`     | Hauteur de base du terrain                                                     |
+| `stretchY`                | décimal | `12.0`    | Étirement vertical du terrain                                                  |
+| `seaLevel`                | entier  | `63`      | La hauteur Y jusqu'où les océans sont remplis                                  |
+| `useLavaOceans`           | booléen | `false`   | Remplit les océans de lave au lieu d'eau                                       |
+| `useWaterLakes`           | booléen | `true`    | Si les lacs d'eau se génèrent                                                  |
+| `waterLakeChance`         | entier  | `4`       | Probabilité des lacs d'eau, une sur tant ; plus c'est haut, plus c'est rare    |
+| `useLavaLakes`            | booléen | `true`    | Si les lacs de lave se génèrent                                                |
+| `lavaLakeChance`          | entier  | `80`      | Probabilité des lacs de lave, une sur tant ; plus c'est haut, plus c'est rare  |
+| `useCaves`                | booléen | `true`    | Si les grottes se génèrent                                                     |
+| `useRavines`              | booléen | `true`    | Si les ravins se génèrent                                                      |
+| `useDungeons`             | booléen | `true`    | Si les donjons se génèrent                                                     |
+| `dungeonChance`           | entier  | `8`       | Tentatives de donjon par chunk                                                 |
+| `useStrongholds`          | booléen | `true`    | Si les forteresses se génèrent                                                 |
+| `useVillages`             | booléen | `true`    | Si les villages se génèrent                                                    |
+| `useMineShafts`           | booléen | `true`    | Si les mines abandonnées se génèrent                                           |
+| `useTemples`              | booléen | `true`    | Si les temples, igloos et huttes de sorcière se génèrent                       |
+| `useMonuments`            | booléen | `true`    | Si les monuments océaniques se génèrent                                        |
+| `useMansions`             | booléen | `true`    | Si les manoirs se génèrent                                                     |
+| `biomeDepthWeight`        | décimal | `1.0`     | Poids de la hauteur de base propre à chaque biome                              |
+| `biomeDepthOffset`        | décimal | `0.0`     | Décalage ajouté à la hauteur de base de chaque biome                           |
+| `biomeScaleWeight`        | décimal | `1.0`     | Poids de la variation de hauteur propre à chaque biome                         |
+| `biomeScaleOffset`        | décimal | `0.0`     | Décalage ajouté à la variation de hauteur de chaque biome                      |
+| `fixedBiome`              | entier  | `-1`      | L'identifiant numérique de biome donné à chaque colonne ; -1 veut dire aucun   |
+| `biomeSize`               | entier  | `4`       | Taille des biomes en étapes de zoom, 4 normalement et 6 pour les grands biomes |
+| `riverSize`               | entier  | `4`       | Taille des rivières en étapes de zoom                                          |
+| `dirtSize`                | entier  | `33`      | Terre : taille du filon en blocs                                               |
+| `dirtCount`               | entier  | `10`      | Terre : filons par chunk                                                       |
+| `dirtMinHeight`           | entier  | `0`       | Terre : hauteur Y minimale                                                     |
+| `dirtMaxHeight`           | entier  | `256`     | Terre : hauteur Y maximale                                                     |
+| `gravelSize`              | entier  | `33`      | Gravier : taille du filon en blocs                                             |
+| `gravelCount`             | entier  | `8`       | Gravier : filons par chunk                                                     |
+| `gravelMinHeight`         | entier  | `0`       | Gravier : hauteur Y minimale                                                   |
+| `gravelMaxHeight`         | entier  | `256`     | Gravier : hauteur Y maximale                                                   |
+| `graniteSize`             | entier  | `33`      | Granit : taille du filon en blocs                                              |
+| `graniteCount`            | entier  | `10`      | Granit : filons par chunk                                                      |
+| `graniteMinHeight`        | entier  | `0`       | Granit : hauteur Y minimale                                                    |
+| `graniteMaxHeight`        | entier  | `80`      | Granit : hauteur Y maximale                                                    |
+| `dioriteSize`             | entier  | `33`      | Diorite : taille du filon en blocs                                             |
+| `dioriteCount`            | entier  | `10`      | Diorite : filons par chunk                                                     |
+| `dioriteMinHeight`        | entier  | `0`       | Diorite : hauteur Y minimale                                                   |
+| `dioriteMaxHeight`        | entier  | `80`      | Diorite : hauteur Y maximale                                                   |
+| `andesiteSize`            | entier  | `33`      | Andésite : taille du filon en blocs                                            |
+| `andesiteCount`           | entier  | `10`      | Andésite : filons par chunk                                                    |
+| `andesiteMinHeight`       | entier  | `0`       | Andésite : hauteur Y minimale                                                  |
+| `andesiteMaxHeight`       | entier  | `80`      | Andésite : hauteur Y maximale                                                  |
+| `coalSize`                | entier  | `17`      | Charbon : taille du filon en blocs                                             |
+| `coalCount`               | entier  | `20`      | Charbon : filons par chunk                                                     |
+| `coalMinHeight`           | entier  | `0`       | Charbon : hauteur Y minimale                                                   |
+| `coalMaxHeight`           | entier  | `128`     | Charbon : hauteur Y maximale                                                   |
+| `ironSize`                | entier  | `9`       | Fer : taille du filon en blocs                                                 |
+| `ironCount`               | entier  | `20`      | Fer : filons par chunk                                                         |
+| `ironMinHeight`           | entier  | `0`       | Fer : hauteur Y minimale                                                       |
+| `ironMaxHeight`           | entier  | `64`      | Fer : hauteur Y maximale                                                       |
+| `goldSize`                | entier  | `9`       | Or : taille du filon en blocs                                                  |
+| `goldCount`               | entier  | `2`       | Or : filons par chunk                                                          |
+| `goldMinHeight`           | entier  | `0`       | Or : hauteur Y minimale                                                        |
+| `goldMaxHeight`           | entier  | `32`      | Or : hauteur Y maximale                                                        |
+| `redstoneSize`            | entier  | `8`       | Redstone : taille du filon en blocs                                            |
+| `redstoneCount`           | entier  | `8`       | Redstone : filons par chunk                                                    |
+| `redstoneMinHeight`       | entier  | `0`       | Redstone : hauteur Y minimale                                                  |
+| `redstoneMaxHeight`       | entier  | `16`      | Redstone : hauteur Y maximale                                                  |
+| `diamondSize`             | entier  | `8`       | Diamant : taille du filon en blocs                                             |
+| `diamondCount`            | entier  | `1`       | Diamant : filons par chunk                                                     |
+| `diamondMinHeight`        | entier  | `0`       | Diamant : hauteur Y minimale                                                   |
+| `diamondMaxHeight`        | entier  | `16`      | Diamant : hauteur Y maximale                                                   |
+| `lapisSize`               | entier  | `7`       | Lapis-lazuli : taille du filon en blocs                                        |
+| `lapisCount`              | entier  | `1`       | Lapis-lazuli : filons par chunk                                                |
+| `lapisCenterHeight`       | entier  | `16`      | La hauteur Y autour de laquelle les filons de lapis-lazuli sont centrés        |
+| `lapisSpread`             | entier  | `16`      | Dispersion des filons de lapis-lazuli au-dessus et en dessous du centre        |
 
 ### Serveur
 

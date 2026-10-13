@@ -3442,7 +3442,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as que pre
 
 Um arquivo cujo `id` é uma dimensão que já existe, como `0` para o overworld, `-1` para o nether, `1` para o End ou uma dimensão que outro mod registra, altera essa dimensão em vez de adicionar uma nova. Cada chave que o arquivo escreve se aplica ali, e cada chave que ele omite mantém o comportamento próprio da dimensão, então os dados de nível e os chunks dela ficam como estão e um save existente continua carregando.
 
-`terrain.type` troca o gerador: os chunks gerados a partir de então saem dele, e `generatorOptions` e `structures` se aplicam junto com ele; sem `terrain.type`, essas duas são omitidas e o log avisa. Um bloco `biomes` muda os biomas dos chunks gerados a partir de então. `suffix` é ignorado, já que a pasta do save continua sendo a da própria dimensão. A linha `dimensions.existing` do resumo lista cada arquivo aplicado dessa forma.
+`terrain.type` troca o gerador: os chunks gerados a partir de então saem dele, e `generatorOptions` e `structures` se aplicam junto com ele (com `overworld`, `generatorOptions` é o objeto JSON das [chaves de generatorOptions](#as-chaves-de-generatoroptions); um preset de mundo superplano mantém seu próprio formato); sem `terrain.type`, essas duas são omitidas e o log avisa. Um bloco `biomes` muda os biomas dos chunks gerados a partir de então. `suffix` é ignorado, já que a pasta do save continua sendo a da própria dimensão. A linha `dimensions.existing` do resumo lista cada arquivo aplicado dessa forma.
 
 Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própria dimensão, e a lua mantém as suas fases. Definir `bodies`, `stars`, `sun.size` ou `moon.size` substitui o céu inteiro [pelo do RDPL](#o-renderizador-do-céu).
 
@@ -3453,7 +3453,7 @@ Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própri
 | Chave              | Obrigatória | Valor                                        | Padrão      | O que faz                                                           |
 | ------------------ | ----------- | -------------------------------------------- | ----------- | ------------------------------------------------------------------- |
 | `type`             | não         | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Qual gerador a constrói                                             |
-| `generatorOptions` | não         | texto                                        | nenhum      | O texto do gerador, como o de um preset de mundo superplano |
+| `generatorOptions` | não         | texto                                        | nenhum      | O texto do gerador: com `overworld`, o JSON destas [chaves](#as-chaves-de-generatoroptions); com `flat`, um preset de mundo superplano |
 | `structures`       | não         | booleano                                     | `true`      | Se as estruturas vanilla são geradas                                |
 
 ### O bloco `biomes`
@@ -3470,43 +3470,43 @@ Um `sun` ou um `moon` que define só `texture` troca a imagem no céu da própri
 
 *dimensões*
 
-| Chave              | Obrigatória | Valor                       | Padrão  | O que faz                                                                                                                            |
-| ------------------ | ----------- | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `hasSkyLight`      | não         | booleano                    | `true`  | Se a luz do dia chega até ela                                                                                                        |
-| `surfaceWorld`     | não         | booleano                    | `true`  | Se mapas e bússolas se comportam como no overworld                                                                                   |
-| `respawn`          | não         | booleano                    | `true`  | Se os jogadores renascem aqui                                                                                                        |
-| `respawnDimension` | não         | int                         | nenhum  | Onde renascem no lugar                                                                                                               |
-| `spawning`         | não         | booleano                    | `true`  | Se mobs surgem                                                                                                                       |
-| `nether`           | não         | booleano                    | `false` | Tratada como o nether para portais e tetos                                                                                           |
-| `beds`             | não         | booleano                    | `true`  | Desativado, as camas explodem                                                                                                        |
-| `waterVaporizes`   | não         | booleano                    | `false` | A água evapora                                                                                                                       |
-| `cloudHeight`      | não         | int                         | `128`   | Onde ficam as nuvens                                                                                                                 |
-| `cloudColor`       | não         | cor hex                     | nenhum  | Tonalidade das nuvens                                                                                                                |
-| `cloudSpeed`       | não         | float                       | `1.0`   | Com que velocidade as nuvens se deslocam. `0` as mantém paradas, um valor negativo as inverte                                        |
-| `cloudLayers`      | não         | lista de objetos            | nenhum  | Várias camadas de nuvens. Veja [Neblina, luz, nuvens e calor](#neblina-luz-nuvens-e-calor)                                           |
-| `groundLevel`      | não         | int                         | `63`    | Nível do mar, usado para o horizonte e as buscas de spawn                                                                            |
-| `movementFactor`   | não         | float                       | `1.0`   | Razão de distância para o overworld. O nether usa 8                                                                                  |
-| `fogColor`         | não         | cor hex ou `sample`         | nenhum  | Tonalidade da neblina ao meio-dia. Escurece à noite como a neblina do vanilla. `sample` mistura o céu com o solo ao redor do jogador |
-| `showFog`          | não         | booleano                    | `false` | Neblina espessa, como no nether                                                                                                      |
-| `fogDensity`       | não         | float, 0 a 1                | `0.0`   | Quão espessa é a neblina. `0` mantém a distância do vanilla, `1` a fecha em 8 blocos                                                 |
-| `fogGroundWeight`  | não         | float, 0 a 1                | `0.5`   | Com `fogColor: sample`, quanto o solo conta em relação ao céu                                                                        |
-| `skyColor`         | não         | cor hex                     | nenhum  | Tonalidade do céu ao meio-dia. Escurece à noite e fica cinza na chuva e na tempestade como o céu do vanilla                          |
-| `fixedTime`        | não         | int, ticks                  | nenhum  | Trava a hora do dia                                                                                                                  |
-| `sunriseColors`    | não         | booleano                    | `true`  | Se o nascer e o pôr do sol são tingidos                                                                                              |
-| `ambientLight`     | não         | float, 0 a 1                | `0.0`   | Luz mínima em toda parte                                                                                                             |
-| `lightSkyColor`    | não         | cor hex                     | nenhum  | Tonalidade da luz do dia em blocos e mobs                                                                                            |
-| `lightBlockColor`  | não         | cor hex                     | nenhum  | Tonalidade da luz de tochas e de outras luzes de blocos                                                                              |
-| `skyFactor`        | não         | float, 0 a 1                | `1.0`   | Quão brilhante a luz do dia parece. Desenhado apenas no cliente, então o spawn de mobs não muda                                      |
-| `starBrightness`   | não         | float, 0 a 1                | nenhum  | Quão brilhantes são as estrelas                                                                                                      |
-| `sunBrightness`    | não         | float, 0 a 1                | `1.0`   | Quão brilhante o sol é desenhado                                                                                                     |
-| `moonBrightness`   | não         | float, 0 a 1                | `1.0`   | Quão brilhante a lua é desenhada e, com `bodies`, todos os corpos exceto o sol                                                       |
-| `heat`             | não         | objeto                      | nenhum  | Uma distorção de calor sobre a visão. Veja [Neblina, luz, nuvens e calor](#neblina-luz-nuvens-e-calor)                               |
-| `renderSky`        | não         | booleano                    | `true`  | Desativado, nada desenha o céu, o sol, a lua ou as estrelas, restando a cor da neblina                                               |
-| `renderClouds`     | não         | booleano                    | `true`  | Desativado, nenhuma nuvem é desenhada                                                                                                |
-| `renderWeather`    | não         | booleano                    | `true`  | Desativado, nenhuma chuva ou neve é desenhada                                                                                        |
-| `sun`              | não         | objeto                      | nenhum  | O seu próprio sol. Veja [O renderizador do céu](#o-renderizador-do-céu)                                                              |
-| `bodies`           | não         | lista de objetos            | nenhum  | Planetas e luas pendurados no céu. Veja [O renderizador do céu](#o-renderizador-do-céu)                                              |
-| `stars`            | não         | objeto                      | nenhum  | O seu próprio campo de estrelas. Veja [O renderizador do céu](#o-renderizador-do-céu)                                                |
+| Chave              | Obrigatória | Valor                       | Padrão  | O que faz                                                                                                                                                                                                         |
+| ------------------ | ----------- | --------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | não         | booleano                    | `true`  | Se a luz do dia chega até ela                                                                                                                                                                                     |
+| `surfaceWorld`     | não         | booleano                    | `true`  | Se mapas e bússolas se comportam como no overworld                                                                                                                                                                |
+| `respawn`          | não         | booleano                    | `true`  | Se os jogadores renascem aqui                                                                                                                                                                                     |
+| `respawnDimension` | não         | int                         | nenhum  | Onde renascem no lugar                                                                                                                                                                                            |
+| `spawning`         | não         | booleano                    | `true`  | Se mobs surgem                                                                                                                                                                                                    |
+| `nether`           | não         | booleano                    | `false` | Tratada como o nether para portais e tetos                                                                                                                                                                        |
+| `beds`             | não         | booleano                    | `true`  | Desativado, as camas explodem                                                                                                                                                                                     |
+| `waterVaporizes`   | não         | booleano                    | `false` | A água colocada evapora: baldes e dispensadores geram vapor em vez de água, gelo quebrado ou derretido não deixa nada, e a lava flui como no Nether. A água que já está no mundo ou gerada pelo terreno permanece |
+| `cloudHeight`      | não         | int                         | `128`   | Onde ficam as nuvens                                                                                                                                                                                              |
+| `cloudColor`       | não         | cor hex                     | nenhum  | Tonalidade das nuvens                                                                                                                                                                                             |
+| `cloudSpeed`       | não         | float                       | `1.0`   | Com que velocidade as nuvens se deslocam. `0` as mantém paradas, um valor negativo as inverte                                                                                                                     |
+| `cloudLayers`      | não         | lista de objetos            | nenhum  | Várias camadas de nuvens. Veja [Neblina, luz, nuvens e calor](#neblina-luz-nuvens-e-calor)                                                                                                                        |
+| `groundLevel`      | não         | int                         | `63`    | Nível do mar, usado para o horizonte e as buscas de spawn                                                                                                                                                         |
+| `movementFactor`   | não         | float                       | `1.0`   | Razão de distância para o overworld. O nether usa 8                                                                                                                                                               |
+| `fogColor`         | não         | cor hex ou `sample`         | nenhum  | Tonalidade da neblina ao meio-dia. Escurece à noite como a neblina do vanilla. `sample` mistura o céu com o solo ao redor do jogador                                                                              |
+| `showFog`          | não         | booleano                    | `false` | Neblina espessa, como no nether                                                                                                                                                                                   |
+| `fogDensity`       | não         | float, 0 a 1                | `0.0`   | Quão espessa é a neblina. `0` mantém a distância do vanilla, `1` a fecha em 8 blocos                                                                                                                              |
+| `fogGroundWeight`  | não         | float, 0 a 1                | `0.5`   | Com `fogColor: sample`, quanto o solo conta em relação ao céu                                                                                                                                                     |
+| `skyColor`         | não         | cor hex                     | nenhum  | Tonalidade do céu ao meio-dia. Escurece à noite e fica cinza na chuva e na tempestade como o céu do vanilla                                                                                                       |
+| `fixedTime`        | não         | int, ticks                  | nenhum  | Trava a hora do dia                                                                                                                                                                                               |
+| `sunriseColors`    | não         | booleano                    | `true`  | Se o nascer e o pôr do sol são tingidos                                                                                                                                                                           |
+| `ambientLight`     | não         | float, 0 a 1                | `0.0`   | Luz mínima em toda parte                                                                                                                                                                                          |
+| `lightSkyColor`    | não         | cor hex                     | nenhum  | Tonalidade da luz do dia em blocos e mobs                                                                                                                                                                         |
+| `lightBlockColor`  | não         | cor hex                     | nenhum  | Tonalidade da luz de tochas e de outras luzes de blocos                                                                                                                                                           |
+| `skyFactor`        | não         | float, 0 a 1                | `1.0`   | Quão brilhante a luz do dia parece. Desenhado apenas no cliente, então o spawn de mobs não muda                                                                                                                   |
+| `starBrightness`   | não         | float, 0 a 1                | nenhum  | Quão brilhantes são as estrelas                                                                                                                                                                                   |
+| `sunBrightness`    | não         | float, 0 a 1                | `1.0`   | Quão brilhante o sol é desenhado                                                                                                                                                                                  |
+| `moonBrightness`   | não         | float, 0 a 1                | `1.0`   | Quão brilhante a lua é desenhada e, com `bodies`, todos os corpos exceto o sol                                                                                                                                    |
+| `heat`             | não         | objeto                      | nenhum  | Uma distorção de calor sobre a visão. Veja [Neblina, luz, nuvens e calor](#neblina-luz-nuvens-e-calor)                                                                                                            |
+| `renderSky`        | não         | booleano                    | `true`  | Desativado, nada desenha o céu, o sol, a lua ou as estrelas, restando a cor da neblina                                                                                                                            |
+| `renderClouds`     | não         | booleano                    | `true`  | Desativado, nenhuma nuvem é desenhada                                                                                                                                                                             |
+| `renderWeather`    | não         | booleano                    | `true`  | Desativado, nenhuma chuva ou neve é desenhada                                                                                                                                                                     |
+| `sun`              | não         | objeto                      | nenhum  | O seu próprio sol. Veja [O renderizador do céu](#o-renderizador-do-céu)                                                                                                                                           |
+| `bodies`           | não         | lista de objetos            | nenhum  | Planetas e luas pendurados no céu. Veja [O renderizador do céu](#o-renderizador-do-céu)                                                                                                                           |
+| `stars`            | não         | objeto                      | nenhum  | O seu próprio campo de estrelas. Veja [O renderizador do céu](#o-renderizador-do-céu)                                                                                                                             |
 
 ### O renderizador do céu
 
@@ -7522,6 +7522,103 @@ Em um mundo do Biomes O' Plenty, as mesmas configurações são convertidas nas 
 Duas coisas ele decide por conta própria. Os rios saem de suas próprias camadas e não têm configuração, então `riverSize` não significa nada ali. E onde oceanos, montanhas e regiões de fato ficam também são suas camadas, alcançáveis apenas por `landScheme`, `tempScheme`, `rainScheme` e `biomeSize`, então um pacote molda esse mundo nos termos desse mod e não nos do tipo de mundo customizado. Um mundo de um único bioma ainda é algo que um pacote pode fazer: bloqueie todos os biomas e nomeie o que quiser como o `default` do modelo de mundo, o que funciona no tipo de mundo dele da mesma forma que em qualquer outro.
 
 Tudo o mais que um pacote faz, bloquear biomas e minérios, substituir blocos, bedrock plana, posicionamento de estruturas, a própria geração de mundo, nunca passou por esse texto, e funciona da mesma forma em qualquer tipo de mundo.
+
+#### As chaves de generatorOptions
+
+*cada chave com seu padrão*
+
+`generatorOptions` é, para o overworld, um objeto JSON escrito como texto com as aspas escapadas. Uma chave que ele omite mantém o padrão indicado aqui. Vale para o tipo de terreno `overworld` de uma dimensão e para o tipo de mundo `customized`; um preset de mundo superplano mantém seu próprio formato, que esta tabela não cobre.
+
+```json
+{
+  "settings": {
+    "worldType": "customized",
+    "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
+  }
+}
+```
+
+| Chave                     | Tipo     | Padrão    | O que faz                                                                 |
+| ------------------------- | -------- | --------- | ------------------------------------------------------------------------- |
+| `coordinateScale`         | float    | `684.412` | Escala horizontal do ruído principal do terreno                           |
+| `heightScale`             | float    | `684.412` | Escala vertical do ruído principal do terreno                             |
+| `upperLimitScale`         | float    | `512.0`   | Escala do ruído que limita o terreno por cima                             |
+| `lowerLimitScale`         | float    | `512.0`   | Escala do ruído que limita o terreno por baixo                            |
+| `depthNoiseScaleX`        | float    | `200.0`   | Escala do ruído de profundidade em x                                      |
+| `depthNoiseScaleZ`        | float    | `200.0`   | Escala do ruído de profundidade em z                                      |
+| `depthNoiseScaleExponent` | float    | `0.5`     | Expoente do ruído de profundidade                                         |
+| `mainNoiseScaleX`         | float    | `80.0`    | Quanto o ruído principal é esticado em x                                  |
+| `mainNoiseScaleY`         | float    | `160.0`   | Quanto o ruído principal é esticado em y                                  |
+| `mainNoiseScaleZ`         | float    | `80.0`    | Quanto o ruído principal é esticado em z                                  |
+| `baseSize`                | float    | `8.5`     | Altura base do terreno                                                    |
+| `stretchY`                | float    | `12.0`    | Quanto o terreno é esticado na vertical                                   |
+| `seaLevel`                | int      | `63`      | A altura Y até onde os oceanos são preenchidos                            |
+| `useLavaOceans`           | booleano | `false`   | Preenche os oceanos com lava em vez de água                               |
+| `useWaterLakes`           | booleano | `true`    | Se lagos de água são gerados                                              |
+| `waterLakeChance`         | int      | `4`       | Chance de lagos de água, um em tantos; quanto maior, mais raro            |
+| `useLavaLakes`            | booleano | `true`    | Se lagos de lava são gerados                                              |
+| `lavaLakeChance`          | int      | `80`      | Chance de lagos de lava, um em tantos; quanto maior, mais raro            |
+| `useCaves`                | booleano | `true`    | Se cavernas são geradas                                                   |
+| `useRavines`              | booleano | `true`    | Se ravinas são geradas                                                    |
+| `useDungeons`             | booleano | `true`    | Se masmorras são geradas                                                  |
+| `dungeonChance`           | int      | `8`       | Tentativas de masmorra por chunk                                          |
+| `useStrongholds`          | booleano | `true`    | Se fortalezas são geradas                                                 |
+| `useVillages`             | booleano | `true`    | Se vilas são geradas                                                      |
+| `useMineShafts`           | booleano | `true`    | Se minas abandonadas são geradas                                          |
+| `useTemples`              | booleano | `true`    | Se templos, iglus e cabanas de bruxa são gerados                          |
+| `useMonuments`            | booleano | `true`    | Se monumentos oceânicos são gerados                                       |
+| `useMansions`             | booleano | `true`    | Se mansões florestais são geradas                                         |
+| `biomeDepthWeight`        | float    | `1.0`     | Peso da altura base própria de cada bioma                                 |
+| `biomeDepthOffset`        | float    | `0.0`     | Deslocamento somado à altura base de cada bioma                           |
+| `biomeScaleWeight`        | float    | `1.0`     | Peso da variação de altura própria de cada bioma                          |
+| `biomeScaleOffset`        | float    | `0.0`     | Deslocamento somado à variação de altura de cada bioma                    |
+| `fixedBiome`              | int      | `-1`      | O ID numérico de bioma que cada coluna recebe; -1 significa nenhum        |
+| `biomeSize`               | int      | `4`       | Tamanho dos biomas em passos de zoom, 4 normalmente e 6 em biomas grandes |
+| `riverSize`               | int      | `4`       | Tamanho dos rios em passos de zoom                                        |
+| `dirtSize`                | int      | `33`      | Terra: tamanho da veia em blocos                                          |
+| `dirtCount`               | int      | `10`      | Terra: veias por chunk                                                    |
+| `dirtMinHeight`           | int      | `0`       | Terra: altura Y mínima                                                    |
+| `dirtMaxHeight`           | int      | `256`     | Terra: altura Y máxima                                                    |
+| `gravelSize`              | int      | `33`      | Cascalho: tamanho da veia em blocos                                       |
+| `gravelCount`             | int      | `8`       | Cascalho: veias por chunk                                                 |
+| `gravelMinHeight`         | int      | `0`       | Cascalho: altura Y mínima                                                 |
+| `gravelMaxHeight`         | int      | `256`     | Cascalho: altura Y máxima                                                 |
+| `graniteSize`             | int      | `33`      | Granito: tamanho da veia em blocos                                        |
+| `graniteCount`            | int      | `10`      | Granito: veias por chunk                                                  |
+| `graniteMinHeight`        | int      | `0`       | Granito: altura Y mínima                                                  |
+| `graniteMaxHeight`        | int      | `80`      | Granito: altura Y máxima                                                  |
+| `dioriteSize`             | int      | `33`      | Diorito: tamanho da veia em blocos                                        |
+| `dioriteCount`            | int      | `10`      | Diorito: veias por chunk                                                  |
+| `dioriteMinHeight`        | int      | `0`       | Diorito: altura Y mínima                                                  |
+| `dioriteMaxHeight`        | int      | `80`      | Diorito: altura Y máxima                                                  |
+| `andesiteSize`            | int      | `33`      | Andesito: tamanho da veia em blocos                                       |
+| `andesiteCount`           | int      | `10`      | Andesito: veias por chunk                                                 |
+| `andesiteMinHeight`       | int      | `0`       | Andesito: altura Y mínima                                                 |
+| `andesiteMaxHeight`       | int      | `80`      | Andesito: altura Y máxima                                                 |
+| `coalSize`                | int      | `17`      | Carvão: tamanho da veia em blocos                                         |
+| `coalCount`               | int      | `20`      | Carvão: veias por chunk                                                   |
+| `coalMinHeight`           | int      | `0`       | Carvão: altura Y mínima                                                   |
+| `coalMaxHeight`           | int      | `128`     | Carvão: altura Y máxima                                                   |
+| `ironSize`                | int      | `9`       | Ferro: tamanho da veia em blocos                                          |
+| `ironCount`               | int      | `20`      | Ferro: veias por chunk                                                    |
+| `ironMinHeight`           | int      | `0`       | Ferro: altura Y mínima                                                    |
+| `ironMaxHeight`           | int      | `64`      | Ferro: altura Y máxima                                                    |
+| `goldSize`                | int      | `9`       | Ouro: tamanho da veia em blocos                                           |
+| `goldCount`               | int      | `2`       | Ouro: veias por chunk                                                     |
+| `goldMinHeight`           | int      | `0`       | Ouro: altura Y mínima                                                     |
+| `goldMaxHeight`           | int      | `32`      | Ouro: altura Y máxima                                                     |
+| `redstoneSize`            | int      | `8`       | Redstone: tamanho da veia em blocos                                       |
+| `redstoneCount`           | int      | `8`       | Redstone: veias por chunk                                                 |
+| `redstoneMinHeight`       | int      | `0`       | Redstone: altura Y mínima                                                 |
+| `redstoneMaxHeight`       | int      | `16`      | Redstone: altura Y máxima                                                 |
+| `diamondSize`             | int      | `8`       | Diamante: tamanho da veia em blocos                                       |
+| `diamondCount`            | int      | `1`       | Diamante: veias por chunk                                                 |
+| `diamondMinHeight`        | int      | `0`       | Diamante: altura Y mínima                                                 |
+| `diamondMaxHeight`        | int      | `16`      | Diamante: altura Y máxima                                                 |
+| `lapisSize`               | int      | `7`       | Lápis-lazúli: tamanho da veia em blocos                                   |
+| `lapisCount`              | int      | `1`       | Lápis-lazúli: veias por chunk                                             |
+| `lapisCenterHeight`       | int      | `16`      | A altura Y em que as veias de lápis-lazúli se centralizam                 |
+| `lapisSpread`             | int      | `16`      | Quanto as veias de lápis-lazúli se espalham acima e abaixo do centro      |
 
 ### Servidor
 

@@ -3442,7 +3442,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 
 A file whose `id` is a dimension that already exists, such as `0` for the overworld, `-1` for the nether, `1` for the End or a dimension another mod registers, changes that dimension instead of adding one. Every key the file writes applies there, and every key it leaves out keeps the dimension's own behavior, so its level data and chunks stay as they are and an existing save keeps loading.
 
-`terrain.type` swaps the generator, so chunks generated from then on come from it, and `generatorOptions` and `structures` apply along with it; without `terrain.type` those two are left out and the log says so. A `biomes` block changes the biomes of chunks generated from then on. `suffix` is ignored, since the save folder stays the dimension's own. The summary's `dimensions.existing` line lists every file applied this way.
+`terrain.type` swaps the generator, so chunks generated from then on come from it, and `generatorOptions` and `structures` apply along with it (for `overworld`, `generatorOptions` is the JSON object of [the generatorOptions keys](#the-generatoroptions-keys); a superflat preset keeps its own format); without `terrain.type` those two are left out and the log says so. A `biomes` block changes the biomes of chunks generated from then on. `suffix` is ignored, since the save folder stays the dimension's own. The summary's `dimensions.existing` line lists every file applied this way.
 
 A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension's own sky, and the moon keeps its phases. Setting `bodies`, `stars`, `sun.size` or `moon.size` replaces the whole sky with [RDPL's own](#the-sky-renderer).
 
@@ -3453,7 +3453,7 @@ A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension'
 | Key                | Required | Value                                        | Default     | What it does                                     |
 | ------------------ | -------- | -------------------------------------------- | ----------- | ------------------------------------------------ |
 | `type`             | no       | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Which generator builds it                        |
-| `generatorOptions` | no       | string                                       | none        | The generator string, as a superflat preset uses |
+| `generatorOptions` | no       | string                                       | none        | The generator string: for `overworld` the JSON of [these keys](#the-generatoroptions-keys), for `flat` a superflat preset |
 | `structures`       | no       | boolean                                      | `true`      | Whether vanilla structures generate              |
 
 ### The `biomes` block
@@ -3470,43 +3470,43 @@ A `sun` or `moon` that sets only a `texture` swaps the picture in the dimension'
 
 *dimensions*
 
-| Key                | Required | Value                 | Default | What it does                                                                                                         |
-| ------------------ | -------- | --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | no       | boolean               | `true`  | Whether daylight reaches it                                                                                          |
-| `surfaceWorld`     | no       | boolean               | `true`  | Whether maps and compasses behave as in the overworld                                                                |
-| `respawn`          | no       | boolean               | `true`  | Whether players respawn here                                                                                         |
-| `respawnDimension` | no       | int                   | none    | Where they respawn instead                                                                                           |
-| `spawning`         | no       | boolean               | `true`  | Whether mobs spawn                                                                                                   |
-| `nether`           | no       | boolean               | `false` | Treated as the nether for portals and ceilings                                                                       |
-| `beds`             | no       | boolean               | `true`  | Off, beds explode                                                                                                    |
-| `waterVaporizes`   | no       | boolean               | `false` | Water evaporates                                                                                                     |
-| `cloudHeight`      | no       | int                   | `128`   | Where clouds sit                                                                                                     |
-| `cloudColor`       | no       | hex color             | none    | Cloud tint                                                                                                           |
-| `cloudSpeed`       | no       | float                 | `1.0`   | How fast clouds drift. `0` holds them still, a negative value reverses them                                          |
-| `cloudLayers`      | no       | list of objects       | none    | Several cloud layers. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                                  |
-| `groundLevel`      | no       | int                   | `63`    | Sea level, used for the horizon and spawn searches                                                                   |
-| `movementFactor`   | no       | float                 | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                                   |
-| `fogColor`         | no       | hex color or `sample` | none    | Fog tint at noon. It darkens at night as vanilla fog does. `sample` blends the sky with the ground around the player |
-| `showFog`          | no       | boolean               | `false` | Thick fog, as in the nether                                                                                          |
-| `fogDensity`       | no       | float, 0 to 1         | `0.0`   | How thick the fog is. `0` keeps the vanilla distance, `1` closes it in to 8 blocks                                   |
-| `fogGroundWeight`  | no       | float, 0 to 1         | `0.5`   | With `fogColor: sample`, how much the ground counts against the sky                                                  |
-| `skyColor`         | no       | hex color             | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                          |
-| `fixedTime`        | no       | int, ticks            | none    | Locks the time of day                                                                                                |
-| `sunriseColors`    | no       | boolean               | `true`  | Whether sunrise and sunset are tinted                                                                                |
-| `ambientLight`     | no       | float, 0 to 1         | `0.0`   | Minimum light everywhere                                                                                             |
-| `lightSkyColor`    | no       | hex color             | none    | Tint of daylight on blocks and mobs                                                                                  |
-| `lightBlockColor`  | no       | hex color             | none    | Tint of torchlight and other block light                                                                             |
-| `skyFactor`        | no       | float, 0 to 1         | `1.0`   | How bright daylight looks. Drawn on the client only, so mob spawning does not change                                 |
-| `starBrightness`   | no       | float, 0 to 1         | none    | How bright the stars are                                                                                             |
-| `sunBrightness`    | no       | float, 0 to 1         | `1.0`   | How bright the sun is drawn                                                                                          |
-| `moonBrightness`   | no       | float, 0 to 1         | `1.0`   | How bright the moon is drawn, and with `bodies` every body but the sun                                               |
-| `heat`             | no       | object                | none    | A heat shimmer over the view. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                          |
-| `renderSky`        | no       | boolean               | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                                |
-| `renderClouds`     | no       | boolean               | `true`  | Off, no clouds are drawn                                                                                             |
-| `renderWeather`    | no       | boolean               | `true`  | Off, no rain or snow is drawn                                                                                        |
-| `sun`              | no       | object                | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                                              |
-| `bodies`           | no       | list of objects       | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                                         |
-| `stars`            | no       | object                | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                                                       |
+| Key                | Required | Value                 | Default | What it does                                                                                                                                                                                              |
+| ------------------ | -------- | --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | no       | boolean               | `true`  | Whether daylight reaches it                                                                                                                                                                               |
+| `surfaceWorld`     | no       | boolean               | `true`  | Whether maps and compasses behave as in the overworld                                                                                                                                                     |
+| `respawn`          | no       | boolean               | `true`  | Whether players respawn here                                                                                                                                                                              |
+| `respawnDimension` | no       | int                   | none    | Where they respawn instead                                                                                                                                                                                |
+| `spawning`         | no       | boolean               | `true`  | Whether mobs spawn                                                                                                                                                                                        |
+| `nether`           | no       | boolean               | `false` | Treated as the nether for portals and ceilings                                                                                                                                                            |
+| `beds`             | no       | boolean               | `true`  | Off, beds explode                                                                                                                                                                                         |
+| `waterVaporizes`   | no       | boolean               | `false` | Placed water vaporizes: buckets and dispensers make steam instead of water, broken or melted ice leaves nothing, and lava flows as in the Nether. Water already in the world or made by the terrain stays |
+| `cloudHeight`      | no       | int                   | `128`   | Where clouds sit                                                                                                                                                                                          |
+| `cloudColor`       | no       | hex color             | none    | Cloud tint                                                                                                                                                                                                |
+| `cloudSpeed`       | no       | float                 | `1.0`   | How fast clouds drift. `0` holds them still, a negative value reverses them                                                                                                                               |
+| `cloudLayers`      | no       | list of objects       | none    | Several cloud layers. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                                                                                                                       |
+| `groundLevel`      | no       | int                   | `63`    | Sea level, used for the horizon and spawn searches                                                                                                                                                        |
+| `movementFactor`   | no       | float                 | `1.0`   | Distance ratio to the overworld. The nether uses 8                                                                                                                                                        |
+| `fogColor`         | no       | hex color or `sample` | none    | Fog tint at noon. It darkens at night as vanilla fog does. `sample` blends the sky with the ground around the player                                                                                      |
+| `showFog`          | no       | boolean               | `false` | Thick fog, as in the nether                                                                                                                                                                               |
+| `fogDensity`       | no       | float, 0 to 1         | `0.0`   | How thick the fog is. `0` keeps the vanilla distance, `1` closes it in to 8 blocks                                                                                                                        |
+| `fogGroundWeight`  | no       | float, 0 to 1         | `0.5`   | With `fogColor: sample`, how much the ground counts against the sky                                                                                                                                       |
+| `skyColor`         | no       | hex color             | none    | Sky tint at noon. It darkens at night and grays in rain and thunder as the vanilla sky does                                                                                                               |
+| `fixedTime`        | no       | int, ticks            | none    | Locks the time of day                                                                                                                                                                                     |
+| `sunriseColors`    | no       | boolean               | `true`  | Whether sunrise and sunset are tinted                                                                                                                                                                     |
+| `ambientLight`     | no       | float, 0 to 1         | `0.0`   | Minimum light everywhere                                                                                                                                                                                  |
+| `lightSkyColor`    | no       | hex color             | none    | Tint of daylight on blocks and mobs                                                                                                                                                                       |
+| `lightBlockColor`  | no       | hex color             | none    | Tint of torchlight and other block light                                                                                                                                                                  |
+| `skyFactor`        | no       | float, 0 to 1         | `1.0`   | How bright daylight looks. Drawn on the client only, so mob spawning does not change                                                                                                                      |
+| `starBrightness`   | no       | float, 0 to 1         | none    | How bright the stars are                                                                                                                                                                                  |
+| `sunBrightness`    | no       | float, 0 to 1         | `1.0`   | How bright the sun is drawn                                                                                                                                                                               |
+| `moonBrightness`   | no       | float, 0 to 1         | `1.0`   | How bright the moon is drawn, and with `bodies` every body but the sun                                                                                                                                    |
+| `heat`             | no       | object                | none    | A heat shimmer over the view. See [Fog, light, clouds and heat](#fog-light-clouds-and-heat)                                                                                                               |
+| `renderSky`        | no       | boolean               | `true`  | Off, nothing draws the sky, sun, moon or stars, leaving the fog color                                                                                                                                     |
+| `renderClouds`     | no       | boolean               | `true`  | Off, no clouds are drawn                                                                                                                                                                                  |
+| `renderWeather`    | no       | boolean               | `true`  | Off, no rain or snow is drawn                                                                                                                                                                             |
+| `sun`              | no       | object                | none    | Your own sun. See [The sky renderer](#the-sky-renderer)                                                                                                                                                   |
+| `bodies`           | no       | list of objects       | none    | Planets and moons hung in the sky. See [The sky renderer](#the-sky-renderer)                                                                                                                              |
+| `stars`            | no       | object                | none    | Your own star field. See [The sky renderer](#the-sky-renderer)                                                                                                                                            |
 
 ### The sky renderer
 
@@ -7522,6 +7522,103 @@ On a Biomes O' Plenty world the same settings are turned into the words that mod
 Two things it decides for itself. Rivers come out of its own layers and have no setting, so `riverSize` means nothing there. And where oceans, mountains and regions actually sit is its layers too, reachable only through `landScheme`, `tempScheme`, `rainScheme` and `biomeSize`, so a pack shapes that world in that mod's terms rather than the customized world type's. A world of a single biome is still a pack's to make: block every biome and name the one you want as the template's `default`, which works the same on its world type as on any other.
 
 Everything else a pack does, blocking biomes and ores, replacing blocks, flat bedrock, structure placement, its own worldgen, never went through that string at all, and works the same on any world type.
+
+#### The generatorOptions keys
+
+*every key and its default*
+
+`generatorOptions` for the overworld is a JSON object written as an escaped string. A key it leaves out keeps the default listed here. It applies to the `overworld` terrain type of a dimension and to the `customized` world type, and a superflat preset keeps its own format, which this table does not cover.
+
+```json
+{
+  "settings": {
+    "worldType": "customized",
+    "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
+  }
+}
+```
+
+| Key                       | Type    | Default   | What it does                                                |
+| ------------------------- | ------- | --------- | ----------------------------------------------------------- |
+| `coordinateScale`         | float   | `684.412` | Horizontal scale of the main terrain noise                  |
+| `heightScale`             | float   | `684.412` | Vertical scale of the main terrain noise                    |
+| `upperLimitScale`         | float   | `512.0`   | Scale of the noise that caps the terrain from above         |
+| `lowerLimitScale`         | float   | `512.0`   | Scale of the noise that floors the terrain from below       |
+| `depthNoiseScaleX`        | float   | `200.0`   | Scale of the depth noise along x                            |
+| `depthNoiseScaleZ`        | float   | `200.0`   | Scale of the depth noise along z                            |
+| `depthNoiseScaleExponent` | float   | `0.5`     | Exponent applied to the depth noise                         |
+| `mainNoiseScaleX`         | float   | `80.0`    | How far the main noise is stretched along x                 |
+| `mainNoiseScaleY`         | float   | `160.0`   | How far the main noise is stretched along y                 |
+| `mainNoiseScaleZ`         | float   | `80.0`    | How far the main noise is stretched along z                 |
+| `baseSize`                | float   | `8.5`     | Base height of the terrain                                  |
+| `stretchY`                | float   | `12.0`    | How far the terrain is stretched vertically                 |
+| `seaLevel`                | int     | `63`      | The y level the oceans fill up to                           |
+| `useLavaOceans`           | boolean | `false`   | Fills the oceans with lava instead of water                 |
+| `useWaterLakes`           | boolean | `true`    | Whether water lakes generate                                |
+| `waterLakeChance`         | int     | `4`       | Water lake odds, one in this many; higher is rarer          |
+| `useLavaLakes`            | boolean | `true`    | Whether lava lakes generate                                 |
+| `lavaLakeChance`          | int     | `80`      | Lava lake odds, one in this many; higher is rarer           |
+| `useCaves`                | boolean | `true`    | Whether caves generate                                      |
+| `useRavines`              | boolean | `true`    | Whether ravines generate                                    |
+| `useDungeons`             | boolean | `true`    | Whether dungeons generate                                   |
+| `dungeonChance`           | int     | `8`       | Dungeon attempts per chunk                                  |
+| `useStrongholds`          | boolean | `true`    | Whether strongholds generate                                |
+| `useVillages`             | boolean | `true`    | Whether villages generate                                   |
+| `useMineShafts`           | boolean | `true`    | Whether mineshafts generate                                 |
+| `useTemples`              | boolean | `true`    | Whether temples, igloos and witch huts generate             |
+| `useMonuments`            | boolean | `true`    | Whether ocean monuments generate                            |
+| `useMansions`             | boolean | `true`    | Whether woodland mansions generate                          |
+| `biomeDepthWeight`        | float   | `1.0`     | Weight of each biome's own base height                      |
+| `biomeDepthOffset`        | float   | `0.0`     | Offset added to every biome's base height                   |
+| `biomeScaleWeight`        | float   | `1.0`     | Weight of each biome's own height variation                 |
+| `biomeScaleOffset`        | float   | `0.0`     | Offset added to every biome's height variation              |
+| `fixedBiome`              | int     | `-1`      | The numeric biome id every column gets; -1 means none       |
+| `biomeSize`               | int     | `4`       | Biome size in zoom steps, 4 normally and 6 for large biomes |
+| `riverSize`               | int     | `4`       | River size in zoom steps                                    |
+| `dirtSize`                | int     | `33`      | Dirt: vein size in blocks                                   |
+| `dirtCount`               | int     | `10`      | Dirt: veins per chunk                                       |
+| `dirtMinHeight`           | int     | `0`       | Dirt: lowest y level                                        |
+| `dirtMaxHeight`           | int     | `256`     | Dirt: highest y level                                       |
+| `gravelSize`              | int     | `33`      | Gravel: vein size in blocks                                 |
+| `gravelCount`             | int     | `8`       | Gravel: veins per chunk                                     |
+| `gravelMinHeight`         | int     | `0`       | Gravel: lowest y level                                      |
+| `gravelMaxHeight`         | int     | `256`     | Gravel: highest y level                                     |
+| `graniteSize`             | int     | `33`      | Granite: vein size in blocks                                |
+| `graniteCount`            | int     | `10`      | Granite: veins per chunk                                    |
+| `graniteMinHeight`        | int     | `0`       | Granite: lowest y level                                     |
+| `graniteMaxHeight`        | int     | `80`      | Granite: highest y level                                    |
+| `dioriteSize`             | int     | `33`      | Diorite: vein size in blocks                                |
+| `dioriteCount`            | int     | `10`      | Diorite: veins per chunk                                    |
+| `dioriteMinHeight`        | int     | `0`       | Diorite: lowest y level                                     |
+| `dioriteMaxHeight`        | int     | `80`      | Diorite: highest y level                                    |
+| `andesiteSize`            | int     | `33`      | Andesite: vein size in blocks                               |
+| `andesiteCount`           | int     | `10`      | Andesite: veins per chunk                                   |
+| `andesiteMinHeight`       | int     | `0`       | Andesite: lowest y level                                    |
+| `andesiteMaxHeight`       | int     | `80`      | Andesite: highest y level                                   |
+| `coalSize`                | int     | `17`      | Coal: vein size in blocks                                   |
+| `coalCount`               | int     | `20`      | Coal: veins per chunk                                       |
+| `coalMinHeight`           | int     | `0`       | Coal: lowest y level                                        |
+| `coalMaxHeight`           | int     | `128`     | Coal: highest y level                                       |
+| `ironSize`                | int     | `9`       | Iron: vein size in blocks                                   |
+| `ironCount`               | int     | `20`      | Iron: veins per chunk                                       |
+| `ironMinHeight`           | int     | `0`       | Iron: lowest y level                                        |
+| `ironMaxHeight`           | int     | `64`      | Iron: highest y level                                       |
+| `goldSize`                | int     | `9`       | Gold: vein size in blocks                                   |
+| `goldCount`               | int     | `2`       | Gold: veins per chunk                                       |
+| `goldMinHeight`           | int     | `0`       | Gold: lowest y level                                        |
+| `goldMaxHeight`           | int     | `32`      | Gold: highest y level                                       |
+| `redstoneSize`            | int     | `8`       | Redstone: vein size in blocks                               |
+| `redstoneCount`           | int     | `8`       | Redstone: veins per chunk                                   |
+| `redstoneMinHeight`       | int     | `0`       | Redstone: lowest y level                                    |
+| `redstoneMaxHeight`       | int     | `16`      | Redstone: highest y level                                   |
+| `diamondSize`             | int     | `8`       | Diamond: vein size in blocks                                |
+| `diamondCount`            | int     | `1`       | Diamond: veins per chunk                                    |
+| `diamondMinHeight`        | int     | `0`       | Diamond: lowest y level                                     |
+| `diamondMaxHeight`        | int     | `16`      | Diamond: highest y level                                    |
+| `lapisSize`               | int     | `7`       | Lapis: vein size in blocks                                  |
+| `lapisCount`              | int     | `1`       | Lapis: veins per chunk                                      |
+| `lapisCenterHeight`       | int     | `16`      | The y level lapis veins center on                           |
+| `lapisSpread`             | int     | `16`      | How far above and below the center lapis veins spread       |
 
 ### Server
 

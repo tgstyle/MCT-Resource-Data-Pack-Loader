@@ -3442,7 +3442,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 
 Eine Datei, deren `id` eine schon vorhandene Dimension ist, etwa `0` für die Oberwelt, `-1` für den Nether, `1` für das End oder eine Dimension, die ein anderer Mod registriert, ändert diese Dimension, statt eine neue hinzuzufügen. Jeder Schlüssel, den die Datei schreibt, gilt dort, und jeder, den sie weglässt, behält das Verhalten der Dimension. Ihre Level-Daten und Chunks bleiben also, wie sie sind, und ein bestehender Spielstand lädt weiter.
 
-`terrain.type` tauscht den Generator aus: Ab dann erzeugte Chunks kommen aus ihm, und `generatorOptions` und `structures` gelten mit ihm. Ohne `terrain.type` entfallen diese beiden, und das Log meldet es. Ein `biomes`-Block ändert die Biome der ab dann erzeugten Chunks. `suffix` wird ignoriert, denn der Speicherordner bleibt der der Dimension. Die Zeile `dimensions.existing` der Zusammenfassung listet jede so angewandte Datei.
+`terrain.type` tauscht den Generator aus: Ab dann erzeugte Chunks kommen aus ihm, und `generatorOptions` und `structures` gelten mit ihm (bei `overworld` ist `generatorOptions` das JSON-Objekt aus [den generatorOptions-Schlüsseln](#die-generatoroptions-schlüssel); eine Superflach-Vorlage behält ihr eigenes Format). Ohne `terrain.type` entfallen diese beiden, und das Log meldet es. Ein `biomes`-Block ändert die Biome der ab dann erzeugten Chunks. `suffix` wird ignoriert, denn der Speicherordner bleibt der der Dimension. Die Zeile `dimensions.existing` der Zusammenfassung listet jede so angewandte Datei.
 
 Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigenen Himmel der Dimension aus, und der Mond behält seine Phasen. `bodies`, `stars`, `sun.size` oder `moon.size` ersetzen den ganzen Himmel durch [den von RDPL](#der-himmelsrenderer).
 
@@ -3453,7 +3453,7 @@ Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigen
 | Schlüssel          | Pflicht | Wert                                         | Standard    | Was er macht                                                |
 | ------------------ | ------- | -------------------------------------------- | ----------- | ----------------------------------------------------------- |
 | `type`             | nein    | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Welcher Generator sie baut                                  |
-| `generatorOptions` | nein    | Text                                         | keiner      | Der Generator-Text, wie ihn eine Superflach-Vorlage nutzt |
+| `generatorOptions` | nein    | Text                                         | keiner      | Der Generator-Text: bei `overworld` das JSON mit [diesen Schlüsseln](#die-generatoroptions-schlüssel), bei `flat` eine Superflach-Vorlage |
 | `structures`       | nein    | boolean                                      | `true`      | Ob Vanilla-Strukturen generieren                            |
 
 ### Der Block `biomes`
@@ -3470,43 +3470,43 @@ Eine `sun` oder ein `moon`, die nur `texture` setzen, tauschen das Bild im eigen
 
 *dimensionen*
 
-| Schlüssel          | Pflicht | Wert                    | Standard | Was er macht                                                                                                                           |
-| ------------------ | ------- | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `hasSkyLight`      | nein    | boolean                 | `true`   | Ob Tageslicht sie erreicht                                                                                                             |
-| `surfaceWorld`     | nein    | boolean                 | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                              |
-| `respawn`          | nein    | boolean                 | `true`   | Ob Spieler hier respawnen                                                                                                              |
-| `respawnDimension` | nein    | int                     | keine    | Wo sie stattdessen respawnen                                                                                                           |
-| `spawning`         | nein    | boolean                 | `true`   | Ob Mobs spawnen                                                                                                                        |
-| `nether`           | nein    | boolean                 | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                                   |
-| `beds`             | nein    | boolean                 | `true`   | Aus explodieren Betten                                                                                                                 |
-| `waterVaporizes`   | nein    | boolean                 | `false`  | Wasser verdampft                                                                                                                       |
-| `cloudHeight`      | nein    | int                     | `128`    | Wo die Wolken hängen                                                                                                                   |
-| `cloudColor`       | nein    | Hex-Farbe               | keine    | Wolkenfärbung                                                                                                                          |
-| `cloudSpeed`       | nein    | float                   | `1.0`    | Wie schnell die Wolken ziehen. `0` hält sie still, ein negativer Wert kehrt die Richtung um                                            |
-| `cloudLayers`      | nein    | Liste von Objekten      | keine    | Mehrere Wolkenschichten. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                                         |
-| `groundLevel`      | nein    | int                     | `63`     | Meereshöhe, genutzt für den Horizont und die Spawnsuche                                                                                |
-| `movementFactor`   | nein    | float                   | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                                 |
-| `fogColor`         | nein    | Hex-Farbe oder `sample` | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler, wie es der Vanilla-Nebel tut. `sample` mischt den Himmel mit dem Boden um den Spieler |
-| `showFog`          | nein    | boolean                 | `false`  | Dichter Nebel, wie im Nether                                                                                                           |
-| `fogDensity`       | nein    | float, 0 bis 1          | `0.0`    | Wie dicht der Nebel ist. `0` lässt die Vanilla-Sichtweite, `1` zieht ihn bis auf 8 Blöcke heran                                        |
-| `fogGroundWeight`  | nein    | float, 0 bis 1          | `0.5`    | Bei `fogColor: sample`, wie stark der Boden gegenüber dem Himmel zählt                                                                 |
-| `skyColor`         | nein    | Hex-Farbe               | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                              |
-| `fixedTime`        | nein    | int, Ticks              | keine    | Hält die Tageszeit fest                                                                                                                |
-| `sunriseColors`    | nein    | boolean                 | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                         |
-| `ambientLight`     | nein    | float, 0 bis 1          | `0.0`    | Mindestlicht überall                                                                                                                   |
-| `lightSkyColor`    | nein    | Hex-Farbe               | keine    | Färbung des Tageslichts auf Blöcken und Mobs                                                                                           |
-| `lightBlockColor`  | nein    | Hex-Farbe               | keine    | Färbung von Fackel- und anderem Blocklicht                                                                                             |
-| `skyFactor`        | nein    | float, 0 bis 1          | `1.0`    | Wie hell das Tageslicht wirkt. Nur auf dem Client gezeichnet, das Spawnen von Mobs ändert sich nicht                                   |
-| `starBrightness`   | nein    | float, 0 bis 1          | keine    | Wie hell die Sterne sind                                                                                                               |
-| `sunBrightness`    | nein    | float, 0 bis 1          | `1.0`    | Wie hell die Sonne gezeichnet wird                                                                                                     |
-| `moonBrightness`   | nein    | float, 0 bis 1          | `1.0`    | Wie hell der Mond gezeichnet wird, mit `bodies` jeder Körper außer der Sonne                                                           |
-| `heat`             | nein    | Objekt                  | keiner   | Hitzeflimmern über dem Bild. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                                     |
-| `renderSky`        | nein    | boolean                 | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne – es bleibt die Nebelfarbe                                                      |
-| `renderClouds`     | nein    | boolean                 | `true`   | Aus werden keine Wolken gezeichnet                                                                                                     |
-| `renderWeather`    | nein    | boolean                 | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                          |
-| `sun`              | nein    | Objekt                  | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                                   |
-| `bodies`           | nein    | Liste von Objekten      | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                        |
-| `stars`            | nein    | Objekt                  | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                             |
+| Schlüssel          | Pflicht | Wert                    | Standard | Was er macht                                                                                                                                                                                                                                             |
+| ------------------ | ------- | ----------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight`      | nein    | boolean                 | `true`   | Ob Tageslicht sie erreicht                                                                                                                                                                                                                               |
+| `surfaceWorld`     | nein    | boolean                 | `true`   | Ob Karten und Kompasse sich wie in der Oberwelt verhalten                                                                                                                                                                                                |
+| `respawn`          | nein    | boolean                 | `true`   | Ob Spieler hier respawnen                                                                                                                                                                                                                                |
+| `respawnDimension` | nein    | int                     | keine    | Wo sie stattdessen respawnen                                                                                                                                                                                                                             |
+| `spawning`         | nein    | boolean                 | `true`   | Ob Mobs spawnen                                                                                                                                                                                                                                          |
+| `nether`           | nein    | boolean                 | `false`  | Wird für Portale und Decken wie der Nether behandelt                                                                                                                                                                                                     |
+| `beds`             | nein    | boolean                 | `true`   | Aus explodieren Betten                                                                                                                                                                                                                                   |
+| `waterVaporizes`   | nein    | boolean                 | `false`  | Platziertes Wasser verdampft: Eimer und Spender erzeugen Dampf statt Wasser, zerbrochenes oder geschmolzenes Eis hinterlässt nichts, und Lava fließt wie im Nether. Wasser, das bereits in der Welt liegt oder vom Gelände erzeugt wird, bleibt erhalten |
+| `cloudHeight`      | nein    | int                     | `128`    | Wo die Wolken hängen                                                                                                                                                                                                                                     |
+| `cloudColor`       | nein    | Hex-Farbe               | keine    | Wolkenfärbung                                                                                                                                                                                                                                            |
+| `cloudSpeed`       | nein    | float                   | `1.0`    | Wie schnell die Wolken ziehen. `0` hält sie still, ein negativer Wert kehrt die Richtung um                                                                                                                                                              |
+| `cloudLayers`      | nein    | Liste von Objekten      | keine    | Mehrere Wolkenschichten. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                                                                                                                                                           |
+| `groundLevel`      | nein    | int                     | `63`     | Meereshöhe, genutzt für den Horizont und die Spawnsuche                                                                                                                                                                                                  |
+| `movementFactor`   | nein    | float                   | `1.0`    | Entfernungsverhältnis zur Oberwelt. Der Nether nutzt 8                                                                                                                                                                                                   |
+| `fogColor`         | nein    | Hex-Farbe oder `sample` | keine    | Nebelfärbung am Mittag. Nachts wird sie dunkler, wie es der Vanilla-Nebel tut. `sample` mischt den Himmel mit dem Boden um den Spieler                                                                                                                   |
+| `showFog`          | nein    | boolean                 | `false`  | Dichter Nebel, wie im Nether                                                                                                                                                                                                                             |
+| `fogDensity`       | nein    | float, 0 bis 1          | `0.0`    | Wie dicht der Nebel ist. `0` lässt die Vanilla-Sichtweite, `1` zieht ihn bis auf 8 Blöcke heran                                                                                                                                                          |
+| `fogGroundWeight`  | nein    | float, 0 bis 1          | `0.5`    | Bei `fogColor: sample`, wie stark der Boden gegenüber dem Himmel zählt                                                                                                                                                                                   |
+| `skyColor`         | nein    | Hex-Farbe               | keine    | Himmelsfärbung am Mittag. Nachts wird sie dunkler, bei Regen und Gewitter grauer, wie beim Vanilla-Himmel                                                                                                                                                |
+| `fixedTime`        | nein    | int, Ticks              | keine    | Hält die Tageszeit fest                                                                                                                                                                                                                                  |
+| `sunriseColors`    | nein    | boolean                 | `true`   | Ob Sonnenauf- und -untergang eingefärbt werden                                                                                                                                                                                                           |
+| `ambientLight`     | nein    | float, 0 bis 1          | `0.0`    | Mindestlicht überall                                                                                                                                                                                                                                     |
+| `lightSkyColor`    | nein    | Hex-Farbe               | keine    | Färbung des Tageslichts auf Blöcken und Mobs                                                                                                                                                                                                             |
+| `lightBlockColor`  | nein    | Hex-Farbe               | keine    | Färbung von Fackel- und anderem Blocklicht                                                                                                                                                                                                               |
+| `skyFactor`        | nein    | float, 0 bis 1          | `1.0`    | Wie hell das Tageslicht wirkt. Nur auf dem Client gezeichnet, das Spawnen von Mobs ändert sich nicht                                                                                                                                                     |
+| `starBrightness`   | nein    | float, 0 bis 1          | keine    | Wie hell die Sterne sind                                                                                                                                                                                                                                 |
+| `sunBrightness`    | nein    | float, 0 bis 1          | `1.0`    | Wie hell die Sonne gezeichnet wird                                                                                                                                                                                                                       |
+| `moonBrightness`   | nein    | float, 0 bis 1          | `1.0`    | Wie hell der Mond gezeichnet wird, mit `bodies` jeder Körper außer der Sonne                                                                                                                                                                             |
+| `heat`             | nein    | Objekt                  | keiner   | Hitzeflimmern über dem Bild. Siehe [Nebel, Licht, Wolken und Hitze](#nebel-licht-wolken-und-hitze)                                                                                                                                                       |
+| `renderSky`        | nein    | boolean                 | `true`   | Aus zeichnet weder Himmel noch Sonne, Mond oder Sterne – es bleibt die Nebelfarbe                                                                                                                                                                        |
+| `renderClouds`     | nein    | boolean                 | `true`   | Aus werden keine Wolken gezeichnet                                                                                                                                                                                                                       |
+| `renderWeather`    | nein    | boolean                 | `true`   | Aus werden weder Regen noch Schnee gezeichnet                                                                                                                                                                                                            |
+| `sun`              | nein    | Objekt                  | keiner   | Eine eigene Sonne. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                                                                                                                                                     |
+| `bodies`           | nein    | Liste von Objekten      | keiner   | Planeten und Monde am Himmel. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                                                                                                                                          |
+| `stars`            | nein    | Objekt                  | keiner   | Ein eigenes Sternenfeld. Siehe [Der Himmelsrenderer](#der-himmelsrenderer)                                                                                                                                                                               |
 
 ### Der Himmelsrenderer
 
@@ -7522,6 +7522,103 @@ Auf einer Biomes-O'-Plenty-Welt werden dieselben Einstellungen in die Wörter ü
 Zwei Dinge entscheidet er selbst. Flüsse kommen aus seinen eigenen Schichten und haben keine Einstellung, `riverSize` bedeutet dort also nichts. Und wo Ozeane, Gebirge und Regionen tatsächlich liegen, sind ebenfalls seine Schichten, erreichbar nur über `landScheme`, `tempScheme`, `rainScheme` und `biomeSize` – ein Pack formt diese Welt also in den Begriffen dieses Mods statt in denen des Welttyps `customized`. Eine Welt aus einem einzigen Biom kann ein Pack trotzdem bauen: Blockiere jedes Biom und nenne das gewünschte als `default` der Vorlage, was auf seinem Welttyp genauso funktioniert wie auf jedem anderen.
 
 Alles andere, was ein Pack tut – Biome und Erze blockieren, Blöcke ersetzen, flaches Grundgestein, Strukturplatzierung, die eigene Weltgenerierung –, lief nie über diesen Text und funktioniert auf jedem Welttyp gleich.
+
+#### Die generatorOptions-Schlüssel
+
+*jeder Schlüssel mit seinem Standard*
+
+`generatorOptions` ist für die Oberwelt ein JSON-Objekt, das als maskierter Text geschrieben wird. Ein Schlüssel, den es weglässt, behält den hier genannten Standard. Es gilt für den Geländetyp `overworld` einer Dimension und für den Welttyp `customized`; eine Superflach-Vorlage behält ihr eigenes Format, das diese Tabelle nicht abdeckt.
+
+```json
+{
+  "settings": {
+    "worldType": "customized",
+    "generatorOptions": "{\"seaLevel\":40,\"useLavaOceans\":true}"
+  }
+}
+```
+
+| Schlüssel                 | Typ     | Standard  | Was er macht                                                    |
+| ------------------------- | ------- | --------- | --------------------------------------------------------------- |
+| `coordinateScale`         | float   | `684.412` | Horizontale Skalierung des Haupt-Geländerauschens               |
+| `heightScale`             | float   | `684.412` | Vertikale Skalierung des Haupt-Geländerauschens                 |
+| `upperLimitScale`         | float   | `512.0`   | Skalierung des Rauschens, das das Gelände nach oben begrenzt    |
+| `lowerLimitScale`         | float   | `512.0`   | Skalierung des Rauschens, das das Gelände nach unten begrenzt   |
+| `depthNoiseScaleX`        | float   | `200.0`   | Skalierung des Tiefenrauschens entlang x                        |
+| `depthNoiseScaleZ`        | float   | `200.0`   | Skalierung des Tiefenrauschens entlang z                        |
+| `depthNoiseScaleExponent` | float   | `0.5`     | Exponent des Tiefenrauschens                                    |
+| `mainNoiseScaleX`         | float   | `80.0`    | Wie weit das Hauptrauschen entlang x gestreckt wird             |
+| `mainNoiseScaleY`         | float   | `160.0`   | Wie weit das Hauptrauschen entlang y gestreckt wird             |
+| `mainNoiseScaleZ`         | float   | `80.0`    | Wie weit das Hauptrauschen entlang z gestreckt wird             |
+| `baseSize`                | float   | `8.5`     | Grundhöhe des Geländes                                          |
+| `stretchY`                | float   | `12.0`    | Wie weit das Gelände senkrecht gestreckt wird                   |
+| `seaLevel`                | int     | `63`      | Die Y-Höhe, bis zu der die Ozeane gefüllt sind                  |
+| `useLavaOceans`           | boolean | `false`   | Füllt die Ozeane mit Lava statt Wasser                          |
+| `useWaterLakes`           | boolean | `true`    | Ob Wasserseen generieren                                        |
+| `waterLakeChance`         | int     | `4`       | Chance für Wasserseen, eins zu so vielen; höher ist seltener    |
+| `useLavaLakes`            | boolean | `true`    | Ob Lavaseen generieren                                          |
+| `lavaLakeChance`          | int     | `80`      | Chance für Lavaseen, eins zu so vielen; höher ist seltener      |
+| `useCaves`                | boolean | `true`    | Ob Höhlen generieren                                            |
+| `useRavines`              | boolean | `true`    | Ob Schluchten generieren                                        |
+| `useDungeons`             | boolean | `true`    | Ob Verliese generieren                                          |
+| `dungeonChance`           | int     | `8`       | Verlies-Versuche pro Chunk                                      |
+| `useStrongholds`          | boolean | `true`    | Ob Festungen generieren                                         |
+| `useVillages`             | boolean | `true`    | Ob Dörfer generieren                                            |
+| `useMineShafts`           | boolean | `true`    | Ob Minenschächte generieren                                     |
+| `useTemples`              | boolean | `true`    | Ob Tempel, Iglus und Hexenhütten generieren                     |
+| `useMonuments`            | boolean | `true`    | Ob Ozeanmonumente generieren                                    |
+| `useMansions`             | boolean | `true`    | Ob Waldanwesen generieren                                       |
+| `biomeDepthWeight`        | float   | `1.0`     | Gewicht der eigenen Grundhöhe jedes Bioms                       |
+| `biomeDepthOffset`        | float   | `0.0`     | Versatz, der zur Grundhöhe jedes Bioms addiert wird             |
+| `biomeScaleWeight`        | float   | `1.0`     | Gewicht der eigenen Höhenvarianz jedes Bioms                    |
+| `biomeScaleOffset`        | float   | `0.0`     | Versatz, der zur Höhenvarianz jedes Bioms addiert wird          |
+| `fixedBiome`              | int     | `-1`      | Die numerische Biom-ID, die jede Spalte bekommt; -1 heißt keine |
+| `biomeSize`               | int     | `4`       | Biomgröße in Zoomstufen, normal 4 und bei großen Biomen 6       |
+| `riverSize`               | int     | `4`       | Flussgröße in Zoomstufen                                        |
+| `dirtSize`                | int     | `33`      | Erde: Aderngröße in Blöcken                                     |
+| `dirtCount`               | int     | `10`      | Erde: Adern pro Chunk                                           |
+| `dirtMinHeight`           | int     | `0`       | Erde: unterste Y-Höhe                                           |
+| `dirtMaxHeight`           | int     | `256`     | Erde: oberste Y-Höhe                                            |
+| `gravelSize`              | int     | `33`      | Kies: Aderngröße in Blöcken                                     |
+| `gravelCount`             | int     | `8`       | Kies: Adern pro Chunk                                           |
+| `gravelMinHeight`         | int     | `0`       | Kies: unterste Y-Höhe                                           |
+| `gravelMaxHeight`         | int     | `256`     | Kies: oberste Y-Höhe                                            |
+| `graniteSize`             | int     | `33`      | Granit: Aderngröße in Blöcken                                   |
+| `graniteCount`            | int     | `10`      | Granit: Adern pro Chunk                                         |
+| `graniteMinHeight`        | int     | `0`       | Granit: unterste Y-Höhe                                         |
+| `graniteMaxHeight`        | int     | `80`      | Granit: oberste Y-Höhe                                          |
+| `dioriteSize`             | int     | `33`      | Diorit: Aderngröße in Blöcken                                   |
+| `dioriteCount`            | int     | `10`      | Diorit: Adern pro Chunk                                         |
+| `dioriteMinHeight`        | int     | `0`       | Diorit: unterste Y-Höhe                                         |
+| `dioriteMaxHeight`        | int     | `80`      | Diorit: oberste Y-Höhe                                          |
+| `andesiteSize`            | int     | `33`      | Andesit: Aderngröße in Blöcken                                  |
+| `andesiteCount`           | int     | `10`      | Andesit: Adern pro Chunk                                        |
+| `andesiteMinHeight`       | int     | `0`       | Andesit: unterste Y-Höhe                                        |
+| `andesiteMaxHeight`       | int     | `80`      | Andesit: oberste Y-Höhe                                         |
+| `coalSize`                | int     | `17`      | Kohle: Aderngröße in Blöcken                                    |
+| `coalCount`               | int     | `20`      | Kohle: Adern pro Chunk                                          |
+| `coalMinHeight`           | int     | `0`       | Kohle: unterste Y-Höhe                                          |
+| `coalMaxHeight`           | int     | `128`     | Kohle: oberste Y-Höhe                                           |
+| `ironSize`                | int     | `9`       | Eisen: Aderngröße in Blöcken                                    |
+| `ironCount`               | int     | `20`      | Eisen: Adern pro Chunk                                          |
+| `ironMinHeight`           | int     | `0`       | Eisen: unterste Y-Höhe                                          |
+| `ironMaxHeight`           | int     | `64`      | Eisen: oberste Y-Höhe                                           |
+| `goldSize`                | int     | `9`       | Gold: Aderngröße in Blöcken                                     |
+| `goldCount`               | int     | `2`       | Gold: Adern pro Chunk                                           |
+| `goldMinHeight`           | int     | `0`       | Gold: unterste Y-Höhe                                           |
+| `goldMaxHeight`           | int     | `32`      | Gold: oberste Y-Höhe                                            |
+| `redstoneSize`            | int     | `8`       | Redstone: Aderngröße in Blöcken                                 |
+| `redstoneCount`           | int     | `8`       | Redstone: Adern pro Chunk                                       |
+| `redstoneMinHeight`       | int     | `0`       | Redstone: unterste Y-Höhe                                       |
+| `redstoneMaxHeight`       | int     | `16`      | Redstone: oberste Y-Höhe                                        |
+| `diamondSize`             | int     | `8`       | Diamant: Aderngröße in Blöcken                                  |
+| `diamondCount`            | int     | `1`       | Diamant: Adern pro Chunk                                        |
+| `diamondMinHeight`        | int     | `0`       | Diamant: unterste Y-Höhe                                        |
+| `diamondMaxHeight`        | int     | `16`      | Diamant: oberste Y-Höhe                                         |
+| `lapisSize`               | int     | `7`       | Lapis: Aderngröße in Blöcken                                    |
+| `lapisCount`              | int     | `1`       | Lapis: Adern pro Chunk                                          |
+| `lapisCenterHeight`       | int     | `16`      | Die Y-Höhe, um die Lapis-Adern zentriert liegen                 |
+| `lapisSpread`             | int     | `16`      | Wie weit die Lapis-Adern über und unter der Mitte streuen       |
 
 ### Server
 
