@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.util.ContentMaterials;
 import mctmods.resourcedatapackloader.content.util.ContentTints;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -38,16 +39,16 @@ final class ContentGeneratedItems {
 
     static void item(ContentRegistry.ItemEntry entry) {
         JsonObject model = model(entry.id());
-        if (entry.item() instanceof ContentPotionItem) { model.add("tints", ContentGenerated.arr(ContentGenerated.obj("type", "minecraft:potion", "default", POTION_DEFAULT))); }
+        if (entry.item() instanceof ContentPotionItem) { model.add("tints", Json.arr(Json.obj("type", "minecraft:potion", "default", POTION_DEFAULT))); }
         definition(entry.id(), model);
     }
 
     static void blockItem(ContentRegistry.BlockEntry entry) {
         Identifier id = entry.id();
         if (ContentBlockTypes.BANNER.equals(entry.def().type())) {
-            JsonObject transformation = ContentGenerated.obj("left_rotation", ContentGenerated.arr(0.0, 0.0, 0.0, 1.0), "right_rotation", ContentGenerated.arr(0.0, 0.0, 0.0, 1.0),
-                    "scale", ContentGenerated.arr(BANNER_SCALE, -BANNER_SCALE, -BANNER_SCALE), "translation", ContentGenerated.arr(0.5, 0.0, 0.5));
-            definition(id, ContentGenerated.obj("type", "minecraft:special", "base", itemModel(id), "model", ContentGenerated.obj("type", BANNER_RENDERER.toString(), "block", id.toString()), "transformation", transformation));
+            JsonObject transformation = Json.obj("left_rotation", Json.arr(0.0, 0.0, 0.0, 1.0), "right_rotation", Json.arr(0.0, 0.0, 0.0, 1.0),
+                    "scale", Json.arr(BANNER_SCALE, -BANNER_SCALE, -BANNER_SCALE), "translation", Json.arr(0.5, 0.0, 0.5));
+            definition(id, Json.obj("type", "minecraft:special", "base", itemModel(id), "model", Json.obj("type", BANNER_RENDERER.toString(), "block", id.toString()), "transformation", transformation));
             return;
         }
         JsonObject model = model(id);
@@ -55,7 +56,7 @@ final class ContentGeneratedItems {
         int fixed = tint.isEmpty() ? -1 : ContentTints.fixed(tint, id);
         if (fixed >= 0) {
             JsonArray tints = new JsonArray();
-            JsonObject constant = ContentGenerated.obj("type", "minecraft:constant", "value", ARGB.opaque(fixed));
+            JsonObject constant = Json.obj("type", "minecraft:constant", "value", ARGB.opaque(fixed));
             for (int index = tintLayers(Identifier.fromNamespaceAndPath(id.getNamespace(), "item/" + id.getPath())); index > 0; index--) { tints.add(constant.deepCopy()); }
             model.add("tints", tints);
         }
@@ -139,11 +140,11 @@ final class ContentGeneratedItems {
         Identifier id = made.bucketId();
         if (ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), "models/item/" + id.getPath() + PackManager.JSON_SUFFIX)) {
             JsonObject model = model(id);
-            model.add("tints", ContentGenerated.arr(ContentGenerated.obj("type", "minecraft:constant", "value", -1), ContentGenerated.obj("type", "neoforge:fluid_contents_tint")));
+            model.add("tints", Json.arr(Json.obj("type", "minecraft:constant", "value", -1), Json.obj("type", "neoforge:fluid_contents_tint")));
             definition(id, model);
             return;
         }
-        definition(id, ContentGenerated.obj("type", "neoforge:fluid_container", "textures", ContentGenerated.obj("base", "minecraft:item/bucket", "fluid", "neoforge:item/mask/bucket_fluid"), "fluid", made.def.id().toString()));
+        definition(id, Json.obj("type", "neoforge:fluid_container", "textures", Json.obj("base", "minecraft:item/bucket", "fluid", "neoforge:item/mask/bucket_fluid"), "fluid", made.def.id().toString()));
     }
 
     static void equipment() {
@@ -175,12 +176,12 @@ final class ContentGeneratedItems {
             GeneratedResources.putLater(PackType.CLIENT_RESOURCES, namespace, baby, () -> ContentBabyArmor.draw(asset.toString(), worn(namespace, outer), worn(namespace, inner)));
         }
         if (shipped || !layers.isEmpty()) { layers.add(BABY_LAYER, layer(asset)); }
-        if (!layers.isEmpty()) { ContentGenerated.asset(namespace, path, ContentGenerated.obj("layers", layers)); }
+        if (!layers.isEmpty()) { ContentGenerated.asset(namespace, path, Json.obj("layers", layers)); }
     }
 
     private static String equipmentTexture(String layer, Identifier asset) { return "textures/entity/equipment/" + layer + "/" + asset.getPath() + ".png"; }
 
-    private static JsonArray layer(Identifier asset) { return ContentGenerated.arr(ContentGenerated.obj("texture", asset.toString())); }
+    private static JsonArray layer(Identifier asset) { return Json.arr(Json.obj("texture", asset.toString())); }
 
     @Nullable private static byte[] worn(String namespace, String texture) {
         byte[] bytes = PackManager.get().bytes(PackType.CLIENT_RESOURCES, namespace, texture);
@@ -195,10 +196,10 @@ final class ContentGeneratedItems {
 
     private static String itemModel(Identifier id) { return id.getNamespace() + ":item/" + id.getPath(); }
 
-    private static JsonObject model(Identifier id) { return ContentGenerated.obj("type", "minecraft:model", "model", itemModel(id)); }
+    private static JsonObject model(Identifier id) { return Json.obj("type", "minecraft:model", "model", itemModel(id)); }
 
     private static void definition(Identifier id, JsonObject model) {
         String path = "items/" + id.getPath() + PackManager.JSON_SUFFIX;
-        if (!ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), path)) { ContentGenerated.asset(id.getNamespace(), path, ContentGenerated.obj("model", model)); }
+        if (!ContentGenerated.provided(PackType.CLIENT_RESOURCES, id.getNamespace(), path)) { ContentGenerated.asset(id.getNamespace(), path, Json.obj("model", model)); }
     }
 }

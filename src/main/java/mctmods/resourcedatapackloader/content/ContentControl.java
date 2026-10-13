@@ -102,7 +102,7 @@ public final class ContentControl {
             "privacy", "worldGameMode", "worldLanCommands", "worldForceGameMode", "worldPvp", "worldFlight", "worldSpawnProtection", "worldNether",
             "worldCommandBlocks", "worldIdleTimeout", "worldMotd", "worldMaxSize", "worldStructures", "worldSpawnMonsters", "worldSpawnAnimals",
             "worldSpawnNpcs", "worldViewDistance", "worldSimulationDistance", "worldGravity", "worldJumpStrength", "worldTerminalVelocity", "worldMaxHeight",
-            "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
+            "terrainOffset", "worldMinHeight", "worldName", "worldSeed", "worldSpawn", "worldTime", "worldType",
             "worldTypeExceptions");
     private static final Map<String, String[]> MODES = new ConcurrentHashMap<>();
     private static final Map<String, JsonElement> SETTINGS = new ConcurrentHashMap<>();

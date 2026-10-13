@@ -28,6 +28,7 @@ import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
@@ -173,6 +174,8 @@ public final class LineCompat {
             @Override @Nonnull public <T> Optional<HolderGetter<T>> lookup(@Nonnull ResourceKey<? extends Registry<? extends T>> registryKey) { return registries.<T>lookup(registryKey).map(getter -> getter); }
         });
     }
+
+    public static RegistryOps<JsonElement> worldgenOps() { return RegistryOps.create(JsonOps.INSTANCE, VanillaRegistries.createWorldLookup()); }
 
     public static ContextMap displayContext(HolderLookup.Provider registries) { return ContextMap.builder().set(SlotDisplayContext.REGISTRIES, registries instanceof RegistryAccess access ? access : null).buildAndValidate(SlotDisplayContext.CONTEXT); }
 

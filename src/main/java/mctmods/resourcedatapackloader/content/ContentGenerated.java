@@ -113,10 +113,10 @@ public final class ContentGenerated {
         String namespace = made.def.key().getNamespace();
         String name = made.def.key().getPath();
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "blockstates/" + name + PackManager.JSON_SUFFIX)) {
-            ContentGeneratedModels.blockstate(namespace, name, obj("variants", obj("", obj("model", namespace + ":block/" + name))));
+            ContentGeneratedModels.blockstate(namespace, name, Json.obj("variants", Json.obj("", Json.obj("model", namespace + ":block/" + name))));
         }
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/block/" + name + PackManager.JSON_SUFFIX)) {
-            asset(namespace, "models/block/" + name + PackManager.JSON_SUFFIX, obj("textures", obj("particle", made.def.still().toString())));
+            asset(namespace, "models/block/" + name + PackManager.JSON_SUFFIX, Json.obj("textures", Json.obj("particle", made.def.still().toString())));
         }
     }
 
@@ -130,13 +130,13 @@ public final class ContentGenerated {
             }
         }
         if (slots.isEmpty()) { return; }
-        JsonArray named = arr();
+        JsonArray named = Json.arr();
         for (String slot : slots) {
             named.add(slot);
-            if (ContainerDef.RING_SLOT.equals(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, obj("size", 2)); }
-            else if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, obj("validators", arr("curios:tag"))); }
+            if (ContainerDef.RING_SLOT.equals(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, Json.obj("size", 2)); }
+            else if (!CURIOS_PRESETS.contains(slot)) { data(ResourceDataPackLoader.MOD_ID, "curios/slots/" + slot + PackManager.JSON_SUFFIX, Json.obj("validators", Json.arr("curios:tag"))); }
         }
-        data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", obj("entities", arr("minecraft:player"), "slots", named));
+        data(ResourceDataPackLoader.MOD_ID, "curios/entities/worn.json", Json.obj("entities", Json.arr("minecraft:player"), "slots", named));
     }
 
     private static void item(ContentRegistry.ItemEntry entry, Map<String, Set<String>> itemTags) {
@@ -145,7 +145,7 @@ public final class ContentGenerated {
         ItemDef def = entry.def();
         if (!provided(PackType.CLIENT_RESOURCES, namespace, "models/item/" + name + PackManager.JSON_SUFFIX)) {
             String parent = def != null && "tool".equals(def.type()) ? ITEM_HANDHELD : ITEM_GENERATED;
-            asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, obj("parent", parent, "textures", obj("layer0", namespace + ":item/" + name)));
+            asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, Json.obj("parent", parent, "textures", Json.obj("layer0", namespace + ":item/" + name)));
         }
         ContentGeneratedItems.item(entry);
         if (entry.variant() != null) {
@@ -168,51 +168,51 @@ public final class ContentGenerated {
                 ContentCropBlock crop = (ContentCropBlock) entry.block();
                 String produce = ContentStacks.id(crop.produce());
                 String seed = ContentStacks.id(crop.seed());
-                pools.add(pool(arr(item(produce)), arr(grown)));
-                pools.add(pool(arr(item(seed)), arr(inverted(grown))));
-                pools.add(pool(arr(entryWith(seed, arr(setCount(0), obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", obj("extra", 3, "probability", (def.cropMaxAge() + 1) / (2.0 * def.cropMaxAge())))))), arr(grown)));
+                pools.add(pool(Json.arr(item(produce)), Json.arr(grown)));
+                pools.add(pool(Json.arr(item(seed)), Json.arr(inverted(grown))));
+                pools.add(pool(Json.arr(entryWith(seed, Json.arr(setCount(0), Json.obj("function", "minecraft:apply_bonus", "enchantment", "minecraft:fortune", "formula", "minecraft:binomial_with_bonus_count", "parameters", Json.obj("extra", 3, "probability", (def.cropMaxAge() + 1) / (2.0 * def.cropMaxAge())))))), Json.arr(grown)));
             }
             case ContentBlockTypes.LEAVES -> {
                 JsonObject silk = ContentFormats.silkTouch();
                 JsonObject shears = ContentFormats.shears();
-                pools.add(pool(arr(item(self)), arr(silk)));
-                pools.add(pool(arr(item(self)), arr(shears, inverted(silk))));
+                pools.add(pool(Json.arr(item(self)), Json.arr(silk)));
+                pools.add(pool(Json.arr(item(self)), Json.arr(shears, inverted(silk))));
                 Identifier sapling = ContentParser.location(def.leafSapling());
                 if (sapling != null && def.leafSaplingChance() > 0) {
                     double chance = def.leafSaplingChance() / 100.0;
-                    JsonObject bonus = obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", arr(chance, Math.min(1.0, chance + 0.02), Math.min(1.0, chance + 0.04), Math.min(1.0, chance + 0.06)));
-                    pools.add(pool(arr(entryWith(sapling.toString(), arr(json(DECAY)))), arr(inverted(silk), inverted(shears), bonus, json(SURVIVES))));
+                    JsonObject bonus = Json.obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", Json.arr(chance, Math.min(1.0, chance + 0.02), Math.min(1.0, chance + 0.04), Math.min(1.0, chance + 0.06)));
+                    pools.add(pool(Json.arr(entryWith(sapling.toString(), Json.arr(json(DECAY)))), Json.arr(inverted(silk), inverted(shears), bonus, json(SURVIVES))));
                 }
             }
-            case ContentBlockTypes.DOOR -> pools.add(pool(arr(item(self)), arr(stateCondition(entry, "half", "lower"), json(SURVIVES))));
+            case ContentBlockTypes.DOOR -> pools.add(pool(Json.arr(item(self)), Json.arr(stateCondition(entry, "half", "lower"), json(SURVIVES))));
             case ContentBlockTypes.SLAB -> {
                 JsonObject doubled = setCount(2);
-                doubled.add("conditions", arr(stateCondition(entry, "type", "double")));
-                pools.add(pool(arr(entryWith(self, arr(doubled, json(DECAY)))), arr(json(SURVIVES))));
+                doubled.add("conditions", Json.arr(stateCondition(entry, "type", "double")));
+                pools.add(pool(Json.arr(entryWith(self, Json.arr(doubled, json(DECAY)))), Json.arr(json(SURVIVES))));
             }
-            case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER -> pools.add(pool(arr(item(self)), arr(json(SURVIVES))));
+            case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER -> pools.add(pool(Json.arr(item(self)), Json.arr(json(SURVIVES))));
             case ContentBlockTypes.CANE, ContentBlockTypes.VINE -> {
                 boolean own = def.growth() == null || def.growth().drop().isEmpty();
                 String dropped = own ? self : def.growth().drop();
                 int count = def.growth() == null ? 1 : def.growth().dropCount();
-                JsonArray functions = count > 1 ? arr(setCount(count)) : arr();
+                JsonArray functions = count > 1 ? Json.arr(setCount(count)) : Json.arr();
                 if (own || !ContentBlockTypes.VINE.equals(type)) {
-                    pools.add(pool(arr(entryWith(dropped, functions)), arr(json(SURVIVES))));
+                    pools.add(pool(Json.arr(entryWith(dropped, functions)), Json.arr(json(SURVIVES))));
                     break;
                 }
                 JsonObject shears = ContentFormats.shears();
-                pools.add(pool(arr(item(self)), arr(shears)));
-                pools.add(pool(arr(entryWith(dropped, functions)), arr(inverted(shears), json(SURVIVES))));
+                pools.add(pool(Json.arr(item(self)), Json.arr(shears)));
+                pools.add(pool(Json.arr(entryWith(dropped, functions)), Json.arr(inverted(shears), json(SURVIVES))));
             }
             default -> {
                 boolean rolled = entry.block() instanceof ContentBlock || entry.block() instanceof ContentContainerBlock;
                 if (!rolled || variant.drops().isEmpty() || def.opensWith() != null) {
-                    pools.add(pool(arr(item(self)), arr(json(SURVIVES))));
+                    pools.add(pool(Json.arr(item(self)), Json.arr(json(SURVIVES))));
                     break;
                 }
                 JsonObject silk = ContentFormats.silkTouch();
-                if (def.silkHarvest()) { pools.add(pool(arr(item(self)), arr(silk))); }
-                JsonArray unsilked = def.silkHarvest() ? arr(inverted(silk), json(SURVIVES)) : arr(json(SURVIVES));
+                if (def.silkHarvest()) { pools.add(pool(Json.arr(item(self)), Json.arr(silk))); }
+                JsonArray unsilked = def.silkHarvest() ? Json.arr(inverted(silk), json(SURVIVES)) : Json.arr(json(SURVIVES));
                 JsonArray weighted = new JsonArray();
                 for (DropDef drop : variant.drops()) {
                     if (drop.isEntity() || drop.item() == null) { continue; }
@@ -221,31 +221,31 @@ public final class ContentGenerated {
                         dropped.addProperty("weight", drop.weight());
                         weighted.add(dropped);
                     }
-                    else { pools.add(pool(arr(dropped), unsilked)); }
+                    else { pools.add(pool(Json.arr(dropped), unsilked)); }
                 }
                 if (!weighted.isEmpty()) { pools.add(pool(weighted, unsilked)); }
             }
         }
-        return obj("type", "minecraft:block", "pools", pools);
+        return Json.obj("type", "minecraft:block", "pools", pools);
     }
 
     private static JsonArray dropFunctions(DropDef drop) {
         JsonArray functions = new JsonArray();
         if (!drop.amount().fixed() || drop.amount().least() != 1) {
-            JsonElement count = drop.amount().fixed() ? new JsonPrimitive(drop.amount().least()) : obj("type", "minecraft:uniform", "min", drop.amount().least(), "max", drop.amount().most());
+            JsonElement count = drop.amount().fixed() ? new JsonPrimitive(drop.amount().least()) : Json.obj("type", "minecraft:uniform", "min", drop.amount().least(), "max", drop.amount().most());
             functions.add(setCount(count));
         }
-        if (drop.chance() < 100 || drop.hasBonus()) { functions.add(obj("function", LootFunctions.DROP_ROLL.getId().toString(), "chance", drop.chance(), "bonusChance", arr(Arrays.stream(drop.bonusChance()).boxed().toArray()))); }
+        if (drop.chance() < 100 || drop.hasBonus()) { functions.add(Json.obj("function", LootFunctions.DROP_ROLL.getId().toString(), "chance", drop.chance(), "bonusChance", Json.arr(Arrays.stream(drop.bonusChance()).boxed().toArray()))); }
         return functions;
     }
 
     private static JsonObject pool(JsonArray entries, JsonArray conditions) {
-        JsonObject pool = obj("rolls", 1, "bonus_rolls", 0, "entries", entries);
+        JsonObject pool = Json.obj("rolls", 1, "bonus_rolls", 0, "entries", entries);
         if (!conditions.isEmpty()) { pool.add("conditions", conditions); }
         return pool;
     }
 
-    private static JsonObject item(String id) { return obj("type", "minecraft:item", "name", id); }
+    private static JsonObject item(String id) { return Json.obj("type", "minecraft:item", "name", id); }
 
     private static JsonObject entryWith(String id, JsonArray functions) {
         JsonObject entry = item(id);
@@ -255,11 +255,11 @@ public final class ContentGenerated {
 
     private static String lootPath(String name) { return ContentFormats.LOOT_FOLDER + "/blocks/" + name + PackManager.JSON_SUFFIX; }
 
-    private static JsonObject stateCondition(ContentRegistry.BlockEntry entry, String property, String value) { return obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", obj(property, value)); }
+    private static JsonObject stateCondition(ContentRegistry.BlockEntry entry, String property, String value) { return Json.obj("condition", "minecraft:block_state_property", "block", entry.id().toString(), "properties", Json.obj(property, value)); }
 
-    private static JsonObject setCount(Object count) { return obj("function", "minecraft:set_count", "count", count, "add", false); }
+    private static JsonObject setCount(Object count) { return Json.obj("function", "minecraft:set_count", "count", count, "add", false); }
 
-    private static JsonObject inverted(JsonObject term) { return obj("condition", "minecraft:inverted", "term", term); }
+    private static JsonObject inverted(JsonObject term) { return Json.obj("condition", "minecraft:inverted", "term", term); }
 
     private static void tagBlock(ContentRegistry.BlockEntry entry, Map<String, Set<String>> blockTags, Map<String, Set<String>> itemTags, boolean hasItem) {
         BlockDef def = entry.def();
@@ -369,7 +369,7 @@ public final class ContentGenerated {
             if (tag == null) { continue; }
             JsonArray values = new JsonArray();
             for (String value : tags.getOrDefault(name, Set.of())) { values.add(value); }
-            JsonObject file = obj("replace", false, "values", values);
+            JsonObject file = Json.obj("replace", false, "values", values);
             Set<String> gone = removed.get(name);
             if (gone != null) {
                 JsonArray remove = new JsonArray();
@@ -381,18 +381,18 @@ public final class ContentGenerated {
     }
 
     private static JsonObject tree(SaplingDef sapling) {
-        JsonArray decoratorList = arr();
-        if (sapling.vines()) { decoratorList.add(obj("type", "minecraft:leave_vine", "probability", 0.25)); }
-        JsonObject config = obj(
+        JsonArray decoratorList = Json.arr();
+        if (sapling.vines()) { decoratorList.add(Json.obj("type", "minecraft:leave_vine", "probability", 0.25)); }
+        JsonObject config = Json.obj(
                 "trunk_provider", WorldgenJson.simpleState(sapling.log()),
-                "trunk_placer", obj("type", LootFunctions.NAMESPACE + ":" + ContentTreeTrunk.NAME, "base_height", Math.max(1, sapling.height()), "height_rand_a", 2, "height_rand_b", 0),
+                "trunk_placer", Json.obj("type", LootFunctions.NAMESPACE + ":" + ContentTreeTrunk.NAME, "base_height", Math.max(1, sapling.height()), "height_rand_a", 2, "height_rand_b", 0),
                 "foliage_provider", WorldgenJson.simpleState(sapling.leaves()),
-                "foliage_placer", obj("type", "minecraft:blob_foliage_placer", "radius", 2, "offset", 0, "height", 3),
-                "minimum_size", obj("type", "minecraft:two_layers_feature_size", "limit", 1, "lower_size", 0, "upper_size", 1),
+                "foliage_placer", Json.obj("type", "minecraft:blob_foliage_placer", "radius", 2, "offset", 0, "height", 3),
+                "minimum_size", Json.obj("type", "minecraft:two_layers_feature_size", "limit", 1, "lower_size", 0, "upper_size", 1),
                 "ignore_vines", true,
                 "decorators", decoratorList,
                 "below_trunk_provider", WorldgenJson.belowTrunk());
-        return obj("type", "minecraft:tree", "config", config);
+        return Json.obj("type", "minecraft:tree", "config", config);
     }
 
     private static void potionIcons() {
@@ -403,13 +403,13 @@ public final class ContentGenerated {
             if (provided(PackType.CLIENT_RESOURCES, key.getNamespace(), path)) { continue; }
             String vanilla = def.iconTexture().isEmpty() ? sheetIcon(def) : null;
             if (vanilla != null) {
-                aliases.add(obj("type", "minecraft:single", "resource", "minecraft:mob_effect/" + vanilla, "sprite", key.getNamespace() + ":mob_effect/" + key.getPath()));
+                aliases.add(Json.obj("type", "minecraft:single", "resource", "minecraft:mob_effect/" + vanilla, "sprite", key.getNamespace() + ":mob_effect/" + key.getPath()));
                 continue;
             }
             byte[] icon = potionIcon(def);
             if (icon != null) { GeneratedResources.put(PackType.CLIENT_RESOURCES, key.getNamespace(), path, icon); }
         }
-        if (!aliases.isEmpty()) { asset(Identifier.DEFAULT_NAMESPACE, "atlases/gui.json", obj("sources", aliases)); }
+        if (!aliases.isEmpty()) { asset(Identifier.DEFAULT_NAMESPACE, "atlases/gui.json", Json.obj("sources", aliases)); }
     }
 
     @Nullable private static String sheetIcon(PotionDef def) {
@@ -434,23 +434,4 @@ public final class ContentGenerated {
 
     private static JsonObject json(String literal) { return JsonParser.parseString(literal).getAsJsonObject(); }
 
-    static JsonObject obj(Object... pairs) {
-        JsonObject json = new JsonObject();
-        for (int i = 0; i + 1 < pairs.length; i += 2) { json.add(String.valueOf(pairs[i]), element(pairs[i + 1])); }
-        return json;
-    }
-
-    static JsonArray arr(Object... values) {
-        JsonArray array = new JsonArray();
-        for (Object value : values) { array.add(element(value)); }
-        return array;
-    }
-
-    private static JsonElement element(Object value) {
-        if (value instanceof JsonElement held) { return held; }
-        if (value instanceof Boolean held) { return new JsonPrimitive(held); }
-        if (value instanceof Number held) { return new JsonPrimitive(held); }
-        if (value instanceof List<?> held) { return arr(held.toArray()); }
-        return new JsonPrimitive(String.valueOf(value));
-    }
 }

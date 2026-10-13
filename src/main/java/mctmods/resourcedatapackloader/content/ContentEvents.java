@@ -47,6 +47,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentFlatSource;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentListBiomes;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkTokens;
+import mctmods.resourcedatapackloader.content.worldgen.ContentOptionFeatures;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentMapStructure;
@@ -86,6 +87,7 @@ public final class ContentEvents {
         ContentFeatureTypes.register(event);
         event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
             helper.register(id(ContentOreControl.ID), ContentOreControl.CODEC);
+            helper.register(id(ContentOptionFeatures.ID), ContentOptionFeatures.CODEC);
             helper.register(id(ContentEntitySpawns.ID), ContentEntitySpawns.CODEC);
         });
         event.register(Registries.CHUNK_GENERATOR, helper -> helper.register(id(ContentFlatSource.ID), ContentFlatSource.CODEC));

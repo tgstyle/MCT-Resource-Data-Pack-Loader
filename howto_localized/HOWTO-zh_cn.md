@@ -3687,7 +3687,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `deepStone` | 方块名称 | 无 | 当底部低于 -64 时，原版地形之下的世界所用的方块，例如资源包自己的深板岩。它会在 -64 以下的八层中与深板岩渐变融合，就像深板岩与石头融合那样。留空则保持石头 |
 | `noiseCaves` | `off`、`deep` 或 `world` | `off` | 当底部低于 -64 时，游戏的洞穴、隧道、面条洞穴和含水层在何处延续：`off` 让原版地形之下保持为实心深层石头，交给世界生成层去挖掘；`deep` 让它们一直延伸到底部，并把熔岩湖移到最底下的十层；`world` 在此版本上意思相同，因为原版地形本来就有它们 |
 
-深层世界是资源包自己的世界生成条目、洞穴区域和硬度分组发挥作用的地方：条目上的 `minHeight` 和 `maxHeight` 可以一直延伸到底部。游戏自带的放置特征仍然局限于原版地形：高度从世界底部算起的特征，包括游戏的钻石和低处的红石，仍从 -64 算起，而会落到 -64 以下的放置会被省略，就像底部为 -64 的世界里那样。1.12.2 的天空键、`deepRavines`、`oreVeins`、`terrainOffset` 以及 rubic 世界本身在这里都没有对应项，因为此引擎自带的生成本来就能从底部延伸到顶部。
+深层世界是资源包自己的世界生成条目、洞穴区域和硬度分组发挥作用的地方：条目上的 `minHeight` 和 `maxHeight` 可以一直延伸到底部。游戏自带的放置特征仍然局限于原版地形：高度从世界底部算起的特征，包括游戏的钻石和低处的红石，仍从 -64 算起，而会落到 -64 以下的放置会被省略，就像底部为 -64 的世界里那样。1.12.2 的天空键、`deepRavines`、`oreVeins` 以及 rubic 世界本身在这里都没有对应项，因为此引擎自带的生成本来就能从底部延伸到顶部。
 
 ## 洞穴区域
 
@@ -6504,7 +6504,8 @@ xxoxoxx
     "worldTypeExceptions": ["flat", "debug_all_block_states"],
     "generatorOptions": {"seaLevel": 63, "useMansions": false},
     "worldMinHeight": -128,
-    "worldMaxHeight": 320,
+    "worldMaxHeight": 384,
+    "terrainOffset": 48,
     "deepStone": "minecraft:blackstone",
     "noiseCaves": "deep",
     "worldSpawn": "0,72,0",
@@ -6535,9 +6536,10 @@ xxoxoxx
 | `worldName`             | 文本               | 空                                | 打开创建世界的界面时新世界的名称。留空则保持游戏的默认命名 |
 | `worldType`             | 文本               | 空                                | 塑形后的世界所基于的世界类型，可选 default、largebiomes、amplified 或 flat，1.12.2 的名称 customized 和 default_1_1 按 default 读取；flat 是由 generatorOptions 的层构建的超平坦主世界，其上带有资源包的城市。下面的形态（高度、深层石头、海平面、基岩、虚空）会被生成为一个独立的世界预设，列在世界界面的“世界类型”下，并且无论之前选了什么，都会在那里被选中。专用服务器会将其作为 `level-type` 写入 `server.properties`，指向该预设；若没有任何塑形，则指向游戏自带的预设，除非 `level-type` 已经指向 worldTypeExceptions 中的某一项。留空则基于 default 构建 |
 | `worldTypeExceptions`   | 列表               | `["flat", "debug_all_block_states"]` | 玩家选择后，生成的预设不会去动的世界类型，例如 flat 或 debug_all_block_states。留空表示任何选择都会被替换 |
-| `generatorOptions`      | 文本               | 空                                | 主世界的地形设置，写成 JSON 对象，键为 1.12.2 的 customized 世界类型所写入的那些。此处读取：seaLevel、useLavaOceans、fixedBiome，以及设为 false 的 useCaves、useRavines、useDungeons、useLavaLakes、useStrongholds、useVillages、useMineShafts、useTemples、useMonuments 和 useMansions。在 worldType 为 flat 时，它改为表示各层，自下而上，写成 1.12.2 超平坦文本 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village 或一个层的列表；层之后的数字是生物群系，其后的 village、biome_1、mineshaft、stronghold、oceanmonument、lava_lake 和 decoration 会开启相应内容。仅在世界创建时应用。专用服务器会将其作为 `generator-settings` 写入 `server.properties`，平坦层则写成游戏自带的平坦 JSON，除非 `level-type` 已经指向 worldTypeExceptions 中的某一项。留空则保持世界类型生成的地形 |
+| `generatorOptions`      | 文本               | 空                                | 主世界的地形设置，写成 JSON 对象，键为 1.12.2 的 customized 世界类型所写入的那些。此处读取：seaLevel、useLavaOceans、fixedBiome，以及设为 false 的 useCaves、useRavines、useDungeons、useLavaLakes、useStrongholds、useVillages、useMineShafts、useTemples、useMonuments 和 useMansions。在 worldType 为 flat 时，它改为表示各层，自下而上，写成 1.12.2 超平坦文本 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village 或一个层的列表；层之后的数字是生物群系，其后的 village、biome_1、mineshaft、stronghold、oceanmonument、lava_lake 和 decoration 会开启相应内容。仅在世界创建时应用。专用服务器会将其作为 `generator-settings` 写入 `server.properties`，平坦层则写成游戏自带的平坦 JSON，除非 `level-type` 已经指向 worldTypeExceptions 中的某一项。留空则保持世界类型生成的地形。矿石键为 coalSize、coalCount、coalMinHeight 和 coalMaxHeight，iron、gold、redstone、diamond、dirt、gravel、granite、diorite 和 andesite 各有同样四个，青金石则是 lapisSize、lapisCount、lapisCenterHeight 和 lapisSpread。每个键的含义与 1.12.2 相同：该大小的矿脉，每区块这么多条，高度从最小值到最大值（不含），青金石围绕其中心高度向两侧散开。设置数量或高度会关闭游戏对该矿石的其余放置，但恶地的额外金矿脉除外，它只受大小影响；单独设置大小会改变它的每一条矿脉，只设数量或高度而不设大小则采用 1.12.2 的默认大小。dungeonChance 是每区块的地牢尝试次数，深层地牢按相同比例变化，lavaLakeChance 按默认值 80 缩放岩浆湖的稀有度，biomeSize 默认为 4（largebiomes 为 6），每一步将温度和植被噪声移动一个倍频。矿石、地牢和岩浆湖这些键只改动用生成的预设创建的世界所用的游戏自带特征：其他维度以及未用该预设创建的世界保持游戏原样 |
 | `worldMinHeight`        | 整数，-2032 到 2016 | `-64`                               | 主世界的最低方块，为 16 的倍数，最低到 -2032。游戏自己的底部是 -64；更低则会在原版地形之下形成深层世界，一直是实心石头，直到世界生成层将其雕刻，或 noiseCaves 把游戏的洞穴延伸下去。仅通过生成的预设应用 |
 | `worldMaxHeight`        | 整数，-2016 到 2032 | `320`                               | 主世界顶部之上的那个方块，为 16 的倍数，最高到 2032，比 worldMinHeight 至多高 4064。游戏自己的顶部是 320；更高则在原版地形之上留出开阔的天空 |
+| `terrainOffset` | 整数，0 到 4064 | `0` | 整个原版地形窗口向上平移多少个方块，为 16 的倍数。海平面和表层随之移动，洞穴、矿脉和生物群系深度跟随平移后的陆地，游戏自带的放置特征则保持原有高度。worldMaxHeight 必须不小于 320 加上平移量，否则该平移会被拒绝。只通过生成的预设生效 |
 | `deepStone`             | 文本               | 空                                | 当 worldMinHeight 低于 -64 时，原版地形之下的世界所用的方块，例如资源包自己的深板岩。它在 -64 以下的八层中渗入深板岩，就像深板岩渗入石头那样。留空则保持石头 |
 | `noiseCaves`            | 文本               | `off`                                | 当 worldMinHeight 低于 -64 时，游戏的洞穴、隧道、面条洞穴和含水层在哪里延续：off 让原版地形之下的世界保持为实心深层石头，留给世界生成层去雕刻；deep 把它们一直延伸到底层，岩浆湖移到其最底部的十层；world 在此版本上含义相同，因为原版地形本来就有它们 |
 | `worldSpawn`            | 文本               | 空                                | 每个新世界的出生位置，写成 x,z 或 x,y,z。不带 y 时使用世界的平均地面高度，即海平面上一格，在超平坦世界中则是各层的顶部，之后游戏会像对待任何出生点那样在那里寻找安全的落脚处。仅在世界创建时应用。留空则交由游戏决定 |
@@ -7177,9 +7179,9 @@ Blast Plaster 负责处理爆炸之后的行为：逐方块修复弹坑、感知
 | `regionCacheLimit` | Rubic 世界 | 它对 Rubic 世界自身已打开的区域文件所做的缓存，随 Rubic 世界一同消失；这里的区块系统自行管理其文件 |
 | `skyStone`、`skyShape`、`skyIslands`、`skyThickness`、`skyHeights`、`skyAnimals` | 深层世界、生物群系、洞穴区域 | 空岛位于 Rubic 世界的地形窗口之上，而现在没有 Rubic 世界来容纳它 |
 | `deepRavines`、`oreVeins` | 深层世界 | 引擎自身的地形已经延伸到 y 0 以下，并带有自己的峡谷和大型矿脉 |
-| `terrainOffset` | 设置 | 没有固定的原版窗口可供平移；维度的 `minHeight` 和 `maxHeight` 设定其底部和顶部 |
+| `riverSize`、`waterLakeChance` 以及自定义 `generatorOptions` 的噪声尺度键 | 设置 | 河流和陆地形状属于噪声设置，而游戏里已没有可供调整大小的水湖，因此没有哪一个数字能影响它们。编号大于 39 的 `fixedBiome` 所指的生物群系，本版本无法映射 |
 | `terrainWorldTypes`、`terrainWorldTypesAreBlacklist` | 设置 | 世界类型在这里就是世界预设，而世界模板会指定它自己的 |
-| `biomeSize`、`riverSize`、`dungeonChance`、`waterLakeChance`、`lavaLakeChance`、矿石大小、数量和高度键，以及自定义 `generatorOptions` 的噪声尺度键 | 设置、维度 | 生物群系大小和陆地形状属于噪声设置，特征或矿石的放置频率则属于其自身的放置特征，因此没有哪一个数字能影响它们。编号大于 39 的 `fixedBiome` 所指的生物群系，本版本无法映射 |
+| 维度自己 `generatorOptions` 里的矿石键、`dungeonChance`、`lavaLakeChance` 和 `biomeSize` | 设置、维度 | 只有主世界的设置会读取它们：矿石、地牢和岩浆湖的数字只改动用生成的预设创建的那一个世界所用的游戏自带特征，biomeSize 则移动主世界的气候噪声，因此维度自己的列表不会被读取 |
 | `useWaterLakes`，以及超平坦文本中的 `lake` 和 `dungeon` | 设置、维度 | 自 1.18 起游戏就没有水湖了。平坦世界上的刷怪房随 `decoration` 而来，而不会单独出现 |
 | 作为 `flat` 或 `void` 维度 `biomes` 来源的 `inherit` | 维度 | 平坦生成器只容纳一个生物群系，因此这样的维度采用其超平坦文本所指明的那一个，或平原 |
 | `flatBedrockDimensions` 或 `voidWorldDimensions` 中另一个模组在代码中创建的维度 | 设置 | 基岩和虚空会写入生成的世界预设、资源包自己的维度文件，以及对于其他模组在 `data/<命名空间>/dimension` 下的维度文件中定义的维度，为该文件生成的覆盖。其他模组在代码中创建的维度无法触及：RDPL 会记录一条带其名称的警告，并保持其地形不变 |

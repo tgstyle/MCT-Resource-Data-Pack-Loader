@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.types.ContentBlockTypes;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -45,72 +46,72 @@ public final class ContentGeneratedModels {
                 boolean swings = def.bell() == null || def.bell().swing();
                 for (String part : BELL_PARTS) { model(def, namespace, name + "_" + part, bellFrame(texture, part, swings)); }
                 if (swings) { model(def, namespace, name + "_body", bellBody(texture)); }
-                blockstate(namespace, name, ContentGenerated.obj("variants", bell(main)));
+                blockstate(namespace, name, Json.obj("variants", bell(main)));
             }
             case ContentBlockTypes.LOG -> {
                 String top = textureOr(namespace, name + "_top", texture);
                 model(def, namespace, name, column(def, texture, top, "cube_column"));
                 model(def, namespace, name + "_horizontal", column(def, texture, top, "cube_column_horizontal"));
-                blockstate(namespace, name, ContentGenerated.obj("variants", ContentGenerated.obj(
-                        "axis=x", ContentGenerated.obj("model", main + "_horizontal", "x", 90, "y", 90),
-                        "axis=y", ContentGenerated.obj("model", main),
-                        "axis=z", ContentGenerated.obj("model", main + "_horizontal", "x", 90))));
+                blockstate(namespace, name, Json.obj("variants", Json.obj(
+                        "axis=x", Json.obj("model", main + "_horizontal", "x", 90, "y", 90),
+                        "axis=y", Json.obj("model", main),
+                        "axis=z", Json.obj("model", main + "_horizontal", "x", 90))));
             }
             case ContentBlockTypes.SLAB -> {
                 model(def, namespace, name, sided(def, texture, "slab"));
                 model(def, namespace, name + "_top", sided(def, texture, "slab_top"));
                 model(def, namespace, name + "_double", cube(def, texture, "cube_all"));
-                blockstate(namespace, name, ContentGenerated.obj("variants", ContentGenerated.obj(
-                        "type=bottom", ContentGenerated.obj("model", main),
-                        "type=top", ContentGenerated.obj("model", main + "_top"),
-                        "type=double", ContentGenerated.obj("model", main + "_double"))));
+                blockstate(namespace, name, Json.obj("variants", Json.obj(
+                        "type=bottom", Json.obj("model", main),
+                        "type=top", Json.obj("model", main + "_top"),
+                        "type=double", Json.obj("model", main + "_double"))));
             }
             case ContentBlockTypes.STAIRS -> {
                 model(def, namespace, name, sided(def, texture, "stairs"));
                 model(def, namespace, name + "_inner", sided(def, texture, "inner_stairs"));
                 model(def, namespace, name + "_outer", sided(def, texture, "outer_stairs"));
-                blockstate(namespace, name, ContentGenerated.obj("variants", stairs(main)));
+                blockstate(namespace, name, Json.obj("variants", stairs(main)));
             }
             case ContentBlockTypes.FENCE -> {
                 model(def, namespace, name + "_post", textured(def, texture, "fence_post", "texture"));
                 model(def, namespace, name + "_side", textured(def, texture, "fence_side", "texture"));
                 model(def, namespace, name + "_inventory", textured(def, texture, "fence_inventory", "texture"));
-                blockstate(namespace, name, ContentGenerated.obj("multipart", ContentGenerated.arr(
-                        ContentGenerated.obj("apply", ContentGenerated.obj("model", main + "_post")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("north", "true"), "apply", ContentGenerated.obj("model", main + "_side", "uvlock", true)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("east", "true"), "apply", ContentGenerated.obj("model", main + "_side", "y", 90, "uvlock", true)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("south", "true"), "apply", ContentGenerated.obj("model", main + "_side", "y", 180, "uvlock", true)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("west", "true"), "apply", ContentGenerated.obj("model", main + "_side", "y", 270, "uvlock", true)))));
+                blockstate(namespace, name, Json.obj("multipart", Json.arr(
+                        Json.obj("apply", Json.obj("model", main + "_post")),
+                        Json.obj("when", Json.obj("north", "true"), "apply", Json.obj("model", main + "_side", "uvlock", true)),
+                        Json.obj("when", Json.obj("east", "true"), "apply", Json.obj("model", main + "_side", "y", 90, "uvlock", true)),
+                        Json.obj("when", Json.obj("south", "true"), "apply", Json.obj("model", main + "_side", "y", 180, "uvlock", true)),
+                        Json.obj("when", Json.obj("west", "true"), "apply", Json.obj("model", main + "_side", "y", 270, "uvlock", true)))));
             }
             case ContentBlockTypes.WALL -> {
                 model(def, namespace, name + "_post", textured(def, texture, "template_wall_post", "wall"));
                 model(def, namespace, name + "_side", textured(def, texture, "template_wall_side", "wall"));
                 model(def, namespace, name + "_side_tall", textured(def, texture, "template_wall_side_tall", "wall"));
                 model(def, namespace, name + "_inventory", textured(def, texture, "wall_inventory", "wall"));
-                JsonArray parts = ContentGenerated.arr(ContentGenerated.obj("when", ContentGenerated.obj("up", "true"), "apply", ContentGenerated.obj("model", main + "_post")));
+                JsonArray parts = Json.arr(Json.obj("when", Json.obj("up", "true"), "apply", Json.obj("model", main + "_post")));
                 for (int i = 0; i < 4; i++) {
                     String side = FACINGS[(i + 3) % 4];
-                    parts.add(ContentGenerated.obj("when", ContentGenerated.obj(side, "low"), "apply", rotated(main + "_side", i * 90, true)));
-                    parts.add(ContentGenerated.obj("when", ContentGenerated.obj(side, "tall"), "apply", rotated(main + "_side_tall", i * 90, true)));
+                    parts.add(Json.obj("when", Json.obj(side, "low"), "apply", rotated(main + "_side", i * 90, true)));
+                    parts.add(Json.obj("when", Json.obj(side, "tall"), "apply", rotated(main + "_side_tall", i * 90, true)));
                 }
-                blockstate(namespace, name, ContentGenerated.obj("multipart", parts));
+                blockstate(namespace, name, Json.obj("multipart", parts));
             }
             case ContentBlockTypes.PANE -> {
                 String edge = textureOr(namespace, name + "_top", texture);
                 for (String part : new String[] {"post", "side", "side_alt", "noside", "noside_alt"}) {
-                    JsonObject textures = part.startsWith("noside") ? ContentGenerated.obj("pane", texture) : ContentGenerated.obj("pane", texture, "edge", edge);
+                    JsonObject textures = part.startsWith("noside") ? Json.obj("pane", texture) : Json.obj("pane", texture, "edge", edge);
                     model(def, namespace, name + "_" + part, texture == null ? parented(parent(def), null) : parented(BLOCK + "template_glass_pane_" + part, textures));
                 }
-                blockstate(namespace, name, ContentGenerated.obj("multipart", ContentGenerated.arr(
-                        ContentGenerated.obj("apply", ContentGenerated.obj("model", main + "_post")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("north", "true"), "apply", ContentGenerated.obj("model", main + "_side")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("east", "true"), "apply", ContentGenerated.obj("model", main + "_side", "y", 90)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("south", "true"), "apply", ContentGenerated.obj("model", main + "_side_alt")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("west", "true"), "apply", ContentGenerated.obj("model", main + "_side_alt", "y", 90)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("north", "false"), "apply", ContentGenerated.obj("model", main + "_noside")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("east", "false"), "apply", ContentGenerated.obj("model", main + "_noside_alt")),
-                        ContentGenerated.obj("when", ContentGenerated.obj("south", "false"), "apply", ContentGenerated.obj("model", main + "_noside_alt", "y", 90)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("west", "false"), "apply", ContentGenerated.obj("model", main + "_noside", "y", 270)))));
+                blockstate(namespace, name, Json.obj("multipart", Json.arr(
+                        Json.obj("apply", Json.obj("model", main + "_post")),
+                        Json.obj("when", Json.obj("north", "true"), "apply", Json.obj("model", main + "_side")),
+                        Json.obj("when", Json.obj("east", "true"), "apply", Json.obj("model", main + "_side", "y", 90)),
+                        Json.obj("when", Json.obj("south", "true"), "apply", Json.obj("model", main + "_side_alt")),
+                        Json.obj("when", Json.obj("west", "true"), "apply", Json.obj("model", main + "_side_alt", "y", 90)),
+                        Json.obj("when", Json.obj("north", "false"), "apply", Json.obj("model", main + "_noside")),
+                        Json.obj("when", Json.obj("east", "false"), "apply", Json.obj("model", main + "_noside_alt")),
+                        Json.obj("when", Json.obj("south", "false"), "apply", Json.obj("model", main + "_noside_alt", "y", 90)),
+                        Json.obj("when", Json.obj("west", "false"), "apply", Json.obj("model", main + "_noside", "y", 270)))));
             }
             case ContentBlockTypes.DOOR -> {
                 String top = textureOr(namespace, name + "_top", texture);
@@ -121,7 +122,7 @@ public final class ContentGeneratedModels {
                     for (String hinge : new String[] {"left", "right"}) {
                         for (String open : new String[] {"false", "true"}) {
                             String suffix = "_" + part + "_" + hinge + ("true".equals(open) ? "_open" : "");
-                            model(def, namespace, name + suffix, parented(BLOCK + "door" + suffix, texture == null ? null : ContentGenerated.obj("top", top, "bottom", bottom)));
+                            model(def, namespace, name + suffix, parented(BLOCK + "door" + suffix, texture == null ? null : Json.obj("top", top, "bottom", bottom)));
                             for (int i = 0; i < 4; i++) {
                                 int turn = FACING_Y[i] + ("true".equals(open) ? ("left".equals(hinge) ? 90 : 270) : 0);
                                 variants.add("facing=" + FACINGS[i] + ",half=" + half + ",hinge=" + hinge + ",open=" + open, rotated(main + suffix, turn % 360, false));
@@ -129,7 +130,7 @@ public final class ContentGeneratedModels {
                         }
                     }
                 }
-                blockstate(namespace, name, ContentGenerated.obj("variants", variants));
+                blockstate(namespace, name, Json.obj("variants", variants));
             }
             case ContentBlockTypes.TRAPDOOR -> {
                 for (String part : new String[] {"bottom", "top", "open"}) { model(def, namespace, name + "_" + part, textured(def, texture, "template_orientable_trapdoor_" + part, "texture")); }
@@ -144,7 +145,7 @@ public final class ContentGeneratedModels {
                     flipped.addProperty("x", 180);
                     variants.add("facing=" + order[i] + ",half=top,open=true", flipped);
                 }
-                blockstate(namespace, name, ContentGenerated.obj("variants", variants));
+                blockstate(namespace, name, Json.obj("variants", variants));
             }
             case ContentBlockTypes.FENCE_GATE -> {
                 for (String part : new String[] {"", "_open", ContentTypes.WALL_SUFFIX, ContentTypes.WALL_SUFFIX + "_open"}) { model(def, namespace, name + part, textured(def, texture, "template_fence_gate" + part, "texture")); }
@@ -158,18 +159,18 @@ public final class ContentGeneratedModels {
                         }
                     }
                 }
-                blockstate(namespace, name, ContentGenerated.obj("variants", variants));
+                blockstate(namespace, name, Json.obj("variants", variants));
             }
             case ContentBlockTypes.LADDER -> {
-                model(def, namespace, name, parented(BLOCK + "ladder", texture == null ? null : ContentGenerated.obj("texture", texture, "particle", texture)));
-                blockstate(namespace, name, ContentGenerated.obj("variants", ContentGenerated.obj(
-                        "facing=north", ContentGenerated.obj("model", main),
-                        "facing=east", ContentGenerated.obj("model", main, "y", 90),
-                        "facing=south", ContentGenerated.obj("model", main, "y", 180),
-                        "facing=west", ContentGenerated.obj("model", main, "y", 270))));
+                model(def, namespace, name, parented(BLOCK + "ladder", texture == null ? null : Json.obj("texture", texture, "particle", texture)));
+                blockstate(namespace, name, Json.obj("variants", Json.obj(
+                        "facing=north", Json.obj("model", main),
+                        "facing=east", Json.obj("model", main, "y", 90),
+                        "facing=south", Json.obj("model", main, "y", 180),
+                        "facing=west", Json.obj("model", main, "y", 270))));
             }
             case ContentBlockTypes.BANNER -> {
-                model(def, namespace, name, ContentGenerated.obj("parent", BLOCK + "banner"));
+                model(def, namespace, name, Json.obj("parent", BLOCK + "banner"));
                 blockstate(namespace, name, singleVariant(main));
             }
             case ContentBlockTypes.TORCH -> {
@@ -180,11 +181,11 @@ public final class ContentGeneratedModels {
                 else {
                     String torch = texture(namespace, entry.variant().name());
                     model(def, namespace, name, textured(def, torch, "template_torch_wall", "torch"));
-                    blockstate(namespace, name, ContentGenerated.obj("variants", ContentGenerated.obj(
-                            "facing=east", ContentGenerated.obj("model", main),
-                            "facing=south", ContentGenerated.obj("model", main, "y", 90),
-                            "facing=west", ContentGenerated.obj("model", main, "y", 180),
-                            "facing=north", ContentGenerated.obj("model", main, "y", 270))));
+                    blockstate(namespace, name, Json.obj("variants", Json.obj(
+                            "facing=east", Json.obj("model", main),
+                            "facing=south", Json.obj("model", main, "y", 90),
+                            "facing=west", Json.obj("model", main, "y", 180),
+                            "facing=north", Json.obj("model", main, "y", 270))));
                 }
             }
             case ContentBlockTypes.CROP -> {
@@ -192,24 +193,24 @@ public final class ContentGeneratedModels {
                 int last = def.cropMaxAge();
                 for (int stage = 0; stage <= last; stage++) {
                     String stageTexture = textureOr(namespace, name + "_stage" + stage, texture);
-                    model(def, namespace, name + "_stage" + stage, parented(BLOCK + "crop", stageTexture == null ? null : ContentGenerated.obj("crop", stageTexture)));
+                    model(def, namespace, name + "_stage" + stage, parented(BLOCK + "crop", stageTexture == null ? null : Json.obj("crop", stageTexture)));
                 }
-                for (int age = 0; age <= 7; age++) { variants.add("age=" + age, ContentGenerated.obj("model", main + "_stage" + Math.min(age, last))); }
-                blockstate(namespace, name, ContentGenerated.obj("variants", variants));
+                for (int age = 0; age <= 7; age++) { variants.add("age=" + age, Json.obj("model", main + "_stage" + Math.min(age, last))); }
+                blockstate(namespace, name, Json.obj("variants", variants));
             }
             case ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE -> {
                 model(def, namespace, name, textured(def, texture, "cross", "cross"));
                 blockstate(namespace, name, singleVariant(main));
             }
             case ContentBlockTypes.VINE -> {
-                model(def, namespace, name, parented(BLOCK + "vine", texture == null ? null : ContentGenerated.obj("vine", texture, "particle", texture)));
-                blockstate(namespace, name, ContentGenerated.obj("multipart", ContentGenerated.arr(
-                        ContentGenerated.obj("when", ContentGenerated.obj("north", "true"), "apply", ContentGenerated.obj("model", main)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("east", "true"), "apply", ContentGenerated.obj("model", main, "y", 90)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("south", "true"), "apply", ContentGenerated.obj("model", main, "y", 180)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("west", "true"), "apply", ContentGenerated.obj("model", main, "y", 270)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("up", "true"), "apply", ContentGenerated.obj("model", main, "x", 270, "y", 90)),
-                        ContentGenerated.obj("when", ContentGenerated.obj("north", "false", "east", "false", "south", "false", "west", "false", "up", "false"), "apply", ContentGenerated.obj("model", main)))));
+                model(def, namespace, name, parented(BLOCK + "vine", texture == null ? null : Json.obj("vine", texture, "particle", texture)));
+                blockstate(namespace, name, Json.obj("multipart", Json.arr(
+                        Json.obj("when", Json.obj("north", "true"), "apply", Json.obj("model", main)),
+                        Json.obj("when", Json.obj("east", "true"), "apply", Json.obj("model", main, "y", 90)),
+                        Json.obj("when", Json.obj("south", "true"), "apply", Json.obj("model", main, "y", 180)),
+                        Json.obj("when", Json.obj("west", "true"), "apply", Json.obj("model", main, "y", 270)),
+                        Json.obj("when", Json.obj("up", "true"), "apply", Json.obj("model", main, "x", 270, "y", 90)),
+                        Json.obj("when", Json.obj("north", "false", "east", "false", "south", "false", "west", "false", "up", "false"), "apply", Json.obj("model", main)))));
             }
             case ContentBlockTypes.LEAVES -> {
                 model(def, namespace, name, cube(def, texture, "leaves"));
@@ -218,14 +219,14 @@ public final class ContentGeneratedModels {
             case ContentBlockTypes.PORTAL -> {
                 String face = texture == null ? "minecraft:block/nether_portal" : texture;
                 if (def.fullCube()) {
-                    model(def, namespace, name, parented(BLOCK + "cube_all", ContentGenerated.obj("all", face)));
+                    model(def, namespace, name, parented(BLOCK + "cube_all", Json.obj("all", face)));
                     blockstate(namespace, name, singleVariant(main));
                 }
                 else {
-                    model(def, namespace, name + "_x", portal(face, ContentGenerated.arr(0, 0, 6), ContentGenerated.arr(16, 16, 10), "north", "south"));
-                    model(def, namespace, name + "_z", portal(face, ContentGenerated.arr(6, 0, 0), ContentGenerated.arr(10, 16, 16), "east", "west"));
-                    model(def, namespace, name + "_flat", portal(face, ContentGenerated.arr(0, 6, 0), ContentGenerated.arr(16, 10, 16), "up", "down"));
-                    blockstate(namespace, name, ContentGenerated.obj("variants", ContentGenerated.obj("axis=x", ContentGenerated.obj("model", main + "_x"), "axis=z", ContentGenerated.obj("model", main + "_z"), "axis=y", ContentGenerated.obj("model", main + "_flat"))));
+                    model(def, namespace, name + "_x", portal(face, Json.arr(0, 0, 6), Json.arr(16, 16, 10), "north", "south"));
+                    model(def, namespace, name + "_z", portal(face, Json.arr(6, 0, 0), Json.arr(10, 16, 16), "east", "west"));
+                    model(def, namespace, name + "_flat", portal(face, Json.arr(0, 6, 0), Json.arr(16, 10, 16), "up", "down"));
+                    blockstate(namespace, name, Json.obj("variants", Json.obj("axis=x", Json.obj("model", main + "_x"), "axis=z", Json.obj("model", main + "_z"), "axis=y", Json.obj("model", main + "_flat"))));
                 }
             }
             default -> {
@@ -248,22 +249,22 @@ public final class ContentGeneratedModels {
     }
 
     private static JsonObject bellFrame(@Nullable String texture, String part, boolean swings) {
-        JsonObject model = ContentGenerated.obj("parent", swings ? BLOCK + "bell_" + part : "resourcedatapackloader:block/pack_bell_" + part + "_whole");
+        JsonObject model = Json.obj("parent", swings ? BLOCK + "bell_" + part : "resourcedatapackloader:block/pack_bell_" + part + "_whole");
         if (texture == null) { return model; }
-        model.add("textures", swings ? ContentGenerated.obj("bar", texture, "post", texture, "particle", texture)
-                : ContentGenerated.obj("bar", texture, "post", texture, "bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture));
+        model.add("textures", swings ? Json.obj("bar", texture, "post", texture, "particle", texture)
+                : Json.obj("bar", texture, "post", texture, "bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture));
         return model;
     }
 
     private static JsonObject bellBody(@Nullable String texture) {
-        JsonObject model = ContentGenerated.obj("parent", "resourcedatapackloader:block/pack_bell_body");
-        if (texture != null) { model.add("textures", ContentGenerated.obj("bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture)); }
+        JsonObject model = Json.obj("parent", "resourcedatapackloader:block/pack_bell_body");
+        if (texture != null) { model.add("textures", Json.obj("bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture)); }
         return model;
     }
 
     private static JsonObject bellItem(@Nullable String texture) {
-        JsonObject model = ContentGenerated.obj("parent", "resourcedatapackloader:block/pack_bell_item");
-        if (texture != null) { model.add("textures", ContentGenerated.obj("bar", texture, "post", texture, "bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture)); }
+        JsonObject model = Json.obj("parent", "resourcedatapackloader:block/pack_bell_item");
+        if (texture != null) { model.add("textures", Json.obj("bar", texture, "post", texture, "bell_side", texture, "bell_top", texture, "bell_bottom", texture, "particle", texture)); }
         return model;
     }
 
@@ -288,12 +289,12 @@ public final class ContentGeneratedModels {
     }
 
     private static JsonObject portal(String texture, JsonArray from, JsonArray to, String first, String second) {
-        JsonObject face = ContentGenerated.obj("uv", ContentGenerated.arr(0, 0, 16, 16), "texture", "#portal", "tintindex", 0);
-        return ContentGenerated.obj("textures", ContentGenerated.obj("particle", texture, "portal", texture), "elements", ContentGenerated.arr(ContentGenerated.obj("from", from, "to", to, "faces", ContentGenerated.obj(first, face, second, face.deepCopy()))));
+        JsonObject face = Json.obj("uv", Json.arr(0, 0, 16, 16), "texture", "#portal", "tintindex", 0);
+        return Json.obj("textures", Json.obj("particle", texture, "portal", texture), "elements", Json.arr(Json.obj("from", from, "to", to, "faces", Json.obj(first, face, second, face.deepCopy()))));
     }
 
     private static JsonObject rotated(String model, int y, boolean uvlock) {
-        JsonObject entry = ContentGenerated.obj("model", model);
+        JsonObject entry = Json.obj("model", model);
         if (y != 0) {
             entry.addProperty("y", y);
             if (uvlock) { entry.addProperty("uvlock", true); }
@@ -301,19 +302,19 @@ public final class ContentGeneratedModels {
         return entry;
     }
 
-    private static JsonObject parented(String parent, @Nullable JsonObject textures) { return textures == null ? ContentGenerated.obj("parent", parent) : ContentGenerated.obj("parent", parent, "textures", textures); }
+    private static JsonObject parented(String parent, @Nullable JsonObject textures) { return textures == null ? Json.obj("parent", parent) : Json.obj("parent", parent, "textures", textures); }
 
-    private static JsonObject singleVariant(String model) { return ContentGenerated.obj("variants", ContentGenerated.obj("", ContentGenerated.obj("model", model))); }
+    private static JsonObject singleVariant(String model) { return Json.obj("variants", Json.obj("", Json.obj("model", model))); }
 
     private static JsonObject cube(BlockDef def, @Nullable String texture, String template) { return textured(def, texture, template, "all"); }
 
-    private static JsonObject bottomTop(BlockDef def, @Nullable String side, @Nullable String top, @Nullable String bottom) { return side == null ? parented(parent(def), null) : parented(BLOCK + "cube_bottom_top", ContentGenerated.obj("bottom", bottom == null ? side : bottom, "top", top == null ? side : top, "side", side)); }
+    private static JsonObject bottomTop(BlockDef def, @Nullable String side, @Nullable String top, @Nullable String bottom) { return side == null ? parented(parent(def), null) : parented(BLOCK + "cube_bottom_top", Json.obj("bottom", bottom == null ? side : bottom, "top", top == null ? side : top, "side", side)); }
 
-    private static JsonObject column(BlockDef def, @Nullable String side, @Nullable String end, String template) { return side == null ? parented(parent(def), null) : parented(BLOCK + template, ContentGenerated.obj("end", end, "side", side)); }
+    private static JsonObject column(BlockDef def, @Nullable String side, @Nullable String end, String template) { return side == null ? parented(parent(def), null) : parented(BLOCK + template, Json.obj("end", end, "side", side)); }
 
-    private static JsonObject sided(BlockDef def, @Nullable String texture, String template) { return texture == null ? parented(parent(def), null) : parented(BLOCK + template, ContentGenerated.obj("bottom", texture, "top", texture, "side", texture)); }
+    private static JsonObject sided(BlockDef def, @Nullable String texture, String template) { return texture == null ? parented(parent(def), null) : parented(BLOCK + template, Json.obj("bottom", texture, "top", texture, "side", texture)); }
 
-    private static JsonObject textured(BlockDef def, @Nullable String texture, String template, String slot) { return texture == null ? parented(parent(def), null) : parented(BLOCK + template, ContentGenerated.obj(slot, texture)); }
+    private static JsonObject textured(BlockDef def, @Nullable String texture, String template, String slot) { return texture == null ? parented(parent(def), null) : parented(BLOCK + template, Json.obj(slot, texture)); }
 
     private static String parent(BlockDef def) {
         Identifier model = ContentParser.location(def.modelBlock());
@@ -323,28 +324,28 @@ public final class ContentGeneratedModels {
 
     private static JsonObject chestItem(BlockDef def, String main) {
         ContainerDef held = def.container();
-        if (held == null || !held.chestModel()) { return ContentGenerated.obj("parent", main); }
-        if (held.chestTexture() == null) { return ContentGenerated.obj("parent", "resourcedatapackloader:block/pack_chest"); }
+        if (held == null || !held.chestModel()) { return Json.obj("parent", main); }
+        if (held.chestTexture() == null) { return Json.obj("parent", "resourcedatapackloader:block/pack_chest"); }
         String path = held.chestTexture().getPath();
         if (path.startsWith("textures/")) { path = path.substring("textures/".length()); }
         if (path.endsWith(".png")) { path = path.substring(0, path.length() - ".png".length()); }
-        return ContentGenerated.obj("parent", "resourcedatapackloader:block/pack_chest", "textures", ContentGenerated.obj("texture", held.chestTexture().getNamespace() + ":" + path));
+        return Json.obj("parent", "resourcedatapackloader:block/pack_chest", "textures", Json.obj("texture", held.chestTexture().getNamespace() + ":" + path));
     }
 
     static void itemModel(BlockDef def, String namespace, String name, String type) {
         String main = namespace + ":block/" + name;
         JsonObject model = switch (type) {
-            case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> ContentGenerated.obj("parent", main + "_inventory");
-            case ContentBlockTypes.TRAPDOOR -> ContentGenerated.obj("parent", main + "_bottom");
-            case ContentBlockTypes.BANNER -> ContentGenerated.obj("parent", "minecraft:item/template_banner");
+            case ContentBlockTypes.FENCE, ContentBlockTypes.WALL -> Json.obj("parent", main + "_inventory");
+            case ContentBlockTypes.TRAPDOOR -> Json.obj("parent", main + "_bottom");
+            case ContentBlockTypes.BANNER -> Json.obj("parent", "minecraft:item/template_banner");
             case ContentBlockTypes.CONTAINER -> chestItem(def, main);
-            case ContentBlockTypes.PORTAL -> ContentGenerated.obj("parent", def.fullCube() ? main : main + "_x");
+            case ContentBlockTypes.PORTAL -> Json.obj("parent", def.fullCube() ? main : main + "_x");
             case ContentBlockTypes.BELL -> bellItem(texture(namespace, name));
             case ContentBlockTypes.DOOR, ContentBlockTypes.LADDER, ContentBlockTypes.TORCH, ContentBlockTypes.SAPLING, ContentBlockTypes.FLOWER, ContentBlockTypes.CANE, ContentBlockTypes.VINE, ContentBlockTypes.PANE -> {
                 String flat = ContentGenerated.provided(PackType.CLIENT_RESOURCES, namespace, "textures/item/" + name + ".png") ? namespace + ":item/" + name : texture(namespace, name);
-                yield flat == null ? ContentGenerated.obj("parent", main) : ContentGenerated.obj("parent", ContentGenerated.ITEM_GENERATED, "textures", ContentGenerated.obj("layer0", flat));
+                yield flat == null ? Json.obj("parent", main) : Json.obj("parent", ContentGenerated.ITEM_GENERATED, "textures", Json.obj("layer0", flat));
             }
-            default -> ContentGenerated.obj("parent", main);
+            default -> Json.obj("parent", main);
         };
         ContentGenerated.asset(namespace, "models/item/" + name + PackManager.JSON_SUFFIX, model);
     }
@@ -366,7 +367,7 @@ public final class ContentGeneratedModels {
     public static void forceTranslucent(JsonObject textures) {
         for (Map.Entry<String, JsonElement> entry : textures.entrySet()) {
             JsonElement value = entry.getValue();
-            if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { entry.setValue(ContentGenerated.obj("sprite", value.getAsString(), "force_translucent", true)); }
+            if (value.isJsonPrimitive() && !value.getAsString().startsWith("#")) { entry.setValue(Json.obj("sprite", value.getAsString(), "force_translucent", true)); }
         }
     }
 }

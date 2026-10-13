@@ -20,6 +20,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
@@ -155,6 +156,8 @@ public final class LineCompat {
     @Nullable public static <T> T param(LootContext context, ContextKey<T> key) { return context.getOptionalParameter(key); }
 
     public static RegistryOps<JsonElement> lootOps(LootTableLoadEvent event) { return RegistryOps.create(JsonOps.INSTANCE, event.getRegistries()); }
+
+    public static RegistryOps<JsonElement> worldgenOps() { return RegistryOps.create(JsonOps.INSTANCE, VanillaRegistries.createLookup()); }
 
     public static ContextMap displayContext(HolderLookup.Provider registries) { return new ContextMap.Builder().withParameter(SlotDisplayContext.REGISTRIES, registries).create(SlotDisplayContext.CONTEXT); }
 
