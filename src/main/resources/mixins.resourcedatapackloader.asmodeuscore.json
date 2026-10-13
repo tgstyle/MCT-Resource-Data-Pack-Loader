@@ -6,9 +6,11 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
   "client": [
+    "MixinACGuiCelestialSelectionNest",
     "MixinACPacketSimpleStationHome",
     "MixinACPacketSimpleStationLabel",
     "MixinNewGuiCelestialSelectionAura",
+    "MixinNewGuiCelestialSelectionNest",
     "MixinSkyProviderOverworldTextures"
   ],
   "server": []

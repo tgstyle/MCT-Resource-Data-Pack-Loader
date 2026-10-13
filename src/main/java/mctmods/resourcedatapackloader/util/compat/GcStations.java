@@ -92,7 +92,10 @@ final class GcStations {
         }
         GalaxyRegistry.register(body);
         Station made = new Station(dimension, body, home);
-        if (moon != null) { HOMES.put(body, new Home(moon)); }
+        if (moon != null) {
+            HOMES.put(body, new Home(moon));
+            GcNesting.nest(body, moon);
+        }
         BY_TYPE.put(dimension.id, made);
         BY_TYPE.put(fixed, made);
         STATIONS.add(made);

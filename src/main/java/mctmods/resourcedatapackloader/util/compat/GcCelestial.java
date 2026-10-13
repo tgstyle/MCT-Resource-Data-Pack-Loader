@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 import micdoodle8.mods.galacticraft.api.GalacticraftRegistry;
 import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
 import micdoodle8.mods.galacticraft.api.galaxies.GalaxyRegistry;
+import micdoodle8.mods.galacticraft.api.galaxies.IChildBody;
 import micdoodle8.mods.galacticraft.api.galaxies.Moon;
 import micdoodle8.mods.galacticraft.api.galaxies.Planet;
 import micdoodle8.mods.galacticraft.api.galaxies.Satellite;
@@ -31,6 +32,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -73,18 +76,21 @@ public final class GcCelestial {
             if (CelestialDef.SYSTEM.equals(def.kind) && system(def)) { made.add("system " + def.name); }
         }
         for (String kind : new String[] {CelestialDef.SUBSYSTEM, CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS}) {
+            List<CelestialDef> bodies = new ArrayList<>();
             for (CelestialDef def : files) {
-                if (!kind.equals(def.kind)) { continue; }
-                missingMods(def, null);
-                CelestialBody body = body(def, 0L, 0.0F);
-                if (body == null) { continue; }
-                GalaxyRegistry.register(body);
-                made.add(kind + " " + def.name);
+                if (kind.equals(def.kind)) { bodies.add(def); }
             }
+            Map<DimensionDef, GalacticraftDef> bodied = new LinkedHashMap<>();
             for (DimensionDef dimension : dimensions) {
                 GalacticraftDef gc = dimension.galacticraft;
-                if (gc != null && kind.equals(gc.body.kind) && dimension(dimension, gc)) { made.add(kind + " " + gc.body.name + " (dimension " + dimension.id + ")"); }
+                if (gc != null && kind.equals(gc.body.kind)) { bodied.put(dimension, gc); }
             }
+            int left;
+            do {
+                left = bodies.size() + bodied.size();
+                place(bodies, bodied, made, false);
+            } while (bodies.size() + bodied.size() < left);
+            place(bodies, bodied, made, true);
         }
         for (DimensionDef dimension : dimensions) {
             GalacticraftDef gc = dimension.galacticraft;
@@ -98,6 +104,30 @@ public final class GcCelestial {
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { GcRings.hook(); }
         if (!made.isEmpty()) { Summary.info("galacticraft", "Put " + made.size() + " pack body(ies) on the Galacticraft map: " + made); }
     }
+
+    private static void place(List<CelestialDef> bodies, Map<DimensionDef, GalacticraftDef> bodied, List<String> made, boolean last) {
+        for (Iterator<CelestialDef> it = bodies.iterator(); it.hasNext();) {
+            CelestialDef def = it.next();
+            if (!last && waits(def)) { continue; }
+            it.remove();
+            missingMods(def, null);
+            CelestialBody body = body(def, 0L, 0.0F);
+            if (body == null) { continue; }
+            GalaxyRegistry.register(body);
+            nest(body, def.parent);
+            made.add(def.kind + " " + def.name);
+        }
+        for (Iterator<Map.Entry<DimensionDef, GalacticraftDef>> it = bodied.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<DimensionDef, GalacticraftDef> entry = it.next();
+            DimensionDef dimension = entry.getKey();
+            GalacticraftDef gc = entry.getValue();
+            if (!last && waits(gc.body)) { continue; }
+            it.remove();
+            if (dimension(dimension, gc)) { made.add(gc.body.kind + " " + gc.body.name + " (dimension " + dimension.id + ")"); }
+        }
+    }
+
+    private static boolean waits(CelestialDef def) { return CelestialDef.MOON.equals(def.kind) && circled(def.parent) == null; }
 
     public static void stationRecipes() { if (stations) { GcStations.recipes(); } }
 
@@ -119,6 +149,7 @@ public final class GcCelestial {
                 return false;
             }
         }
+        if (GALAXY_SPACE) { GsBodies.galaxy(def.key, def.galaxy, def.galaxyImage); }
         SolarSystem system = new SolarSystem(def.name, def.galaxy).setMapPosition(new Vector3(def.mapX, def.mapY, def.mapZ));
         CelestialDef starDef = def.star == null ? def : def.star;
         missingMods(starDef, null);
@@ -135,10 +166,10 @@ public final class GcCelestial {
         GalaxySpaceDef gs = galaxySpace(def);
         CelestialBody body;
         if (CelestialDef.MOON.equals(def.kind) || CelestialDef.ASTEROIDS.equals(def.kind) && solarSystem(def.parent) == null) {
-            Planet parent = planet(def.parent);
+            Planet parent = circled(def.parent);
             if (parent == null) {
-                if (CelestialDef.MOON.equals(def.kind)) { ContentLog.LOGGER.error("Moon {} circles '{}', which is no planet Galacticraft knows, so it is left off the map", def.key, def.parent); }
-                else { ContentLog.LOGGER.error("Asteroid belt {} circles '{}', which is no star system or planet Galacticraft knows, so it is left off the map", def.key, def.parent); }
+                if (CelestialDef.MOON.equals(def.kind)) { ContentLog.LOGGER.error("Moon {} circles '{}', which is no planet or moon Galacticraft knows, so it is left off the map", def.key, def.parent); }
+                else { ContentLog.LOGGER.error("Asteroid belt {} circles '{}', which is no star system, planet or moon Galacticraft knows, so it is left off the map", def.key, def.parent); }
                 return null;
             }
             body = gs != null ? GsBodies.moon(def.name, parent) : new Moon(def.name).setParentPlanet(parent);
@@ -216,6 +247,7 @@ public final class GcCelestial {
             if (!ContentDimensions.register(dimension, provider)) { return false; }
         }
         GalaxyRegistry.register(body);
+        nest(body, gc.body.parent);
         BODIES.put(dimension.id, body);
         if (isBelt(gc) && gc.body.beltWidth > 0.0F) { BELTS.put(body, gc.body.beltWidth); }
         if (gc.extraPlanets != null && gc.extraPlanets.radiation >= 0) { RADIATION.put(body.getTranslationKey(), gc.extraPlanets.radiation); }
@@ -245,6 +277,19 @@ public final class GcCelestial {
             if (held.getName().equalsIgnoreCase(name) || held.getTranslationKey().equalsIgnoreCase(name)) { return held; }
         }
         return null;
+    }
+
+    @Nullable private static Planet circled(String name) {
+        Planet planet = planet(name);
+        if (planet != null) { return planet; }
+        Moon moon = moon(name);
+        return moon == null ? null : moon.getParentPlanet();
+    }
+
+    private static void nest(CelestialBody body, String parent) {
+        if (!(body instanceof IChildBody) || planet(parent) != null) { return; }
+        Moon moon = moon(parent);
+        if (moon != null) { GcNesting.nest(body, moon); }
     }
 
     @Nullable static Planet planet(String name) {

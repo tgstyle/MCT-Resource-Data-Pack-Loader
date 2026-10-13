@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.util.compat;
 
 import mctmods.resourcedatapackloader.content.def.GalaxySpaceDef;
+import mctmods.resourcedatapackloader.util.ContentLog;
 
 import asmodeuscore.api.dimension.IAdvancedSpace;
 import asmodeuscore.core.astronomy.BodiesData;
@@ -13,6 +14,7 @@ import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
 import micdoodle8.mods.galacticraft.api.galaxies.Moon;
 import micdoodle8.mods.galacticraft.api.galaxies.Planet;
 import micdoodle8.mods.galacticraft.api.galaxies.SolarSystem;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
 import java.util.Arrays;
@@ -21,8 +23,15 @@ import javax.annotation.Nullable;
 
 final class GsBodies {
     private static final float COLDEST = -9.102F;
+    private static final ResourceLocation GALAXY_TILE = new ResourceLocation("asmodeuscore", "textures/gui/galaxy/galaxy.milky_way.png");
 
     private GsBodies() {}
+
+    static void galaxy(ResourceLocation key, String name, @Nullable ResourceLocation image) {
+        BodiesRegistry.Galaxies held = BodiesRegistry.getGalaxy(name);
+        if (held == null) { BodiesRegistry.registerGalaxy(name, image == null ? GALAXY_TILE : image); }
+        else if (image != null && !image.equals(held.getImage())) { ContentLog.LOGGER.error("Star system {} gives galaxy '{}' the image {}, but that galaxy already has another, so the image is ignored", key, name, image); }
+    }
 
     static List<Class<? extends GcWorldProvider>> providers() { return Arrays.asList(GsWorldProvider.class, GsRainWorldProvider.class, GsStormWorldProvider.class, GsRainStormWorldProvider.class); }
 

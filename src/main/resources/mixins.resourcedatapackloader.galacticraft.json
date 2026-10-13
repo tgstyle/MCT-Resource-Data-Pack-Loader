@@ -18,6 +18,7 @@
   ],
   "client": [
     "MixinEntitySpaceshipBase",
+    "MixinGuiCelestialSelectionNest",
     "MixinGuiCelestialSelectionStationHome",
     "MixinPacketSimpleStationHome",
     "MixinPacketSimpleStationLabel",

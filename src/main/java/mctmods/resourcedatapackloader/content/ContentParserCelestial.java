@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 public final class ContentParserCelestial {
@@ -28,6 +29,7 @@ public final class ContentParserCelestial {
     private static final List<String> KINDS = Collections.unmodifiableList(Arrays.asList(CelestialDef.PLANET, CelestialDef.MOON, CelestialDef.ASTEROIDS, CelestialDef.STATION));
     private static final List<String> LANDINGS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.LANDER, GalacticraftDef.PARACHUTE, GalacticraftDef.BALLOONS));
     private static final List<String> ARRIVALS = Collections.unmodifiableList(Arrays.asList(GalacticraftDef.DEPARTURE, GalacticraftDef.SPAWN));
+    private static final Pattern GALAXY = Pattern.compile("[a-z0-9_]+");
     private static final String RING = "#19E599";
     private static final String ICONS = "galacticraftcore:textures/gui/celestialbodies/";
 
@@ -115,8 +117,14 @@ public final class ContentParserCelestial {
         JsonObject starJson = JsonUtils.getJsonObject(json, "star", new JsonObject());
         CelestialDef star = body(key, starJson, CelestialDef.STAR, name, -1, Collections.emptyList());
         if (star == null) { return null; }
+        String galaxy = JsonUtils.getString(json, "galaxy", "milky_way").trim().toLowerCase(Locale.ROOT);
+        if (!GALAXY.matcher(galaxy).matches()) {
+            ContentLog.LOGGER.error("Star system {} names galaxy '{}', which may hold only the letters a to z, digits and underscores, so it is left off the map", key, galaxy);
+            return null;
+        }
+        String image = JsonUtils.getString(json, "galaxyImage", "").trim();
         return new CelestialDef(key, CelestialDef.SYSTEM, name, "", star.icon, 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0, null, 0.0F, 0.0F, -1,
-                JsonUtils.getString(json, "galaxy", "milky_way").trim(),
+                galaxy, image.isEmpty() ? null : new ResourceLocation(image),
                 at.get(0).getAsFloat(), at.get(1).getAsFloat(), at.size() > 2 ? at.get(2).getAsFloat() : 0.0F,
                 star, strings(json, "requires"), null);
     }
@@ -158,7 +166,7 @@ public final class ContentParserCelestial {
                 Math.max(0.1F, JsonUtils.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)),
                 beltWidth,
                 CelestialDef.STAR.equals(kind) || CelestialDef.SUBSYSTEM.equals(kind) ? -1 : JsonUtils.getInt(json, "tier", tier),
-                "", 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
+                "", null, 0.0F, 0.0F, 0.0F, null, requires, ContentParserModPlanets.galaxySpace(key, json));
     }
 
     private static String icon(String kind) {
