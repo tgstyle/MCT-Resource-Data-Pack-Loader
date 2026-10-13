@@ -130,7 +130,8 @@ public final class ContentCityStructure extends Structure {
         for (Seated held : seated) { held.pieces().forEach(builder::addPiece); }
         int[] footprints = ContentCityStructurePlaza.footprints(claims, seated);
         int[] stations = ContentCityStructureStations.stations(rails.values());
-        for (Well well : wells) { ContentCityStructurePlaza.plaza(context, ground, plan, well, well == wells.getFirst(), footprints, stations, ContentCityStructurePlaza.streetsOver(well, laid), builder); }
+        List<Well> emitted = wells.stream().filter(well -> plan.emits(well.box())).toList();
+        for (Well well : emitted) { ContentCityStructurePlaza.plaza(context, ground, plan, well, well == emitted.getFirst(), footprints, stations, ContentCityStructurePlaza.streetsOver(well, laid), builder); }
         for (Map.Entry<CityPlan.Junction, Integer> crossing : levels.entrySet()) {
             CityPlan.Junction junction = crossing.getKey();
             if (!junction.alongX().covers(junction.alongZ().middle()) || !junction.alongZ().covers(junction.alongX().middle())) { continue; }

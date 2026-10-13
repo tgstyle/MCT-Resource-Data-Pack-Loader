@@ -33,17 +33,17 @@ public final class ContentCityStructurePlaza {
     static List<ContentCityStructure.Well> wells(GenerationContext context, CityGround ground, CityPlan plan, Map<CityPlan.Junction, Integer> levels) {
         List<ContentCityStructure.Well> found = new ArrayList<>();
         if (plan.plazas().isEmpty()) { ContentLog.LOGGER.debug("The district at {}, {} has no plaza: its streets run one way only", plan.originX(), plan.originZ()); }
+        boolean lone = plan.plazas().stream().filter(held -> emitted(plan, held)).count() == 1;
         for (CityPlan.Junction middle : plan.plazas()) {
             if (!middle.alongX().covers(middle.alongZ().middle()) || !middle.alongZ().covers(middle.alongX().middle())) {
                 ContentLog.LOGGER.debug("The district at {}, {} has no plaza at {}, {}: its streets do not cross there", plan.originX(), plan.originZ(), middle.alongZ().middle(), middle.alongX().middle());
                 continue;
             }
-            int x = (middle.fromX() + middle.toX()) / 2 - ContentCityWellPiece.SIZE / 2;
-            int z = (middle.fromZ() + middle.toZ()) / 2 - ContentCityWellPiece.SIZE / 2;
-            if (!plan.emits(x, z)) { continue; }
+            int x = wellX(middle);
+            int z = wellZ(middle);
             int level = CityPlan.wellGround(ground, x, z);
             levels.put(middle, level);
-            long placed = found.isEmpty() && plan.plazas().size() == 1 ? SeededRandom.salt(plan.originX(), plan.originZ()) : SeededRandom.salt(x, z);
+            long placed = lone && emitted(plan, middle) ? SeededRandom.salt(plan.originX(), plan.originZ()) : SeededRandom.salt(x, z);
             String named = ContentCity.wellStructure(RandomSource.create(context.seed() ^ ContentCityStructure.SALT ^ placed));
             Identifier template = named == null ? null : Identifier.tryParse(named);
             if (named != null && (template == null || context.structureTemplateManager().get(template).isEmpty())) {
@@ -56,6 +56,12 @@ public final class ContentCityStructurePlaza {
         }
         return found;
     }
+
+    private static int wellX(CityPlan.Junction middle) { return (middle.fromX() + middle.toX()) / 2 - ContentCityWellPiece.SIZE / 2; }
+
+    private static int wellZ(CityPlan.Junction middle) { return (middle.fromZ() + middle.toZ()) / 2 - ContentCityWellPiece.SIZE / 2; }
+
+    static boolean emitted(CityPlan plan, CityPlan.Junction middle) { return plan.emits(wellX(middle), wellZ(middle)); }
 
     static void plazaLevels(List<ContentCityStructure.Well> wells, Map<CityPlan.Junction, Integer> levels) {
         for (Map.Entry<CityPlan.Junction, Integer> crossing : levels.entrySet()) {

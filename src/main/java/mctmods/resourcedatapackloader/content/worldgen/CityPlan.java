@@ -206,7 +206,7 @@ public final class CityPlan {
     void apron(CityGround ground, Line line, int start, int[] profile) {
         boolean[] held = new boolean[profile.length];
         List<BoundingBox> wells = new ArrayList<>();
-        for (BoundingBox box : wellBoxes()) { if (emits(box.minX(), box.minZ())) { wells.add(box); } }
+        for (BoundingBox box : wellBoxes()) { if (emits(box)) { wells.add(box); } }
         List<Line> met = new ArrayList<>();
         for (Line other : crossing(line)) { if (line.covers(other.middle()) && other.covers(line.middle())) { met.add(other); } }
         Map<Junction, Integer> levels = apronLevels(ground, wells);
@@ -257,6 +257,8 @@ public final class CityPlan {
     }
 
     static int mouthReach(Line line) { return MOUTH + extraWidthOf(line); }
+
+    static int mouthReach() { return MOUTH + extraWidth(); }
 
     @Nullable static int[] mouth(Line line, Line other, int start, int span) {
         int reach = mouthReach(line);
@@ -319,6 +321,8 @@ public final class CityPlan {
         if (!mapped) { return true; }
         return x >= windowX && x < windowX + district() && z >= windowZ && z < windowZ + district();
     }
+
+    public boolean emits(BoundingBox box) { return emits(box.minX(), box.minZ()); }
 
     public boolean emitsAlong(Line line, int along) {
         if (!mapped) { return true; }
