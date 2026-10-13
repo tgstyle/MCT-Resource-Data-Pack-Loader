@@ -3018,6 +3018,9 @@ Um bioma é uma entrada de data pack nesta versão, escrita para você em `world
 | `topBlock` | não | nome de bloco | grama | O bloco da superfície |
 | `fillerBlock` | não | nome de bloco | terra | Logo abaixo da superfície |
 | `stoneBlock` | não | nome de bloco | pedra | A maior parte do solo |
+| `skyStone` | não | nome de bloco | o do mundo | O bloco da terra do céu neste bioma, no lugar do `skyStone` do mundo. Só vale quando o `skyStone` do mundo nomeia um bloco |
+| `skyIslands` | não | número, -1.0 a 1.0 | o do mundo | Com que facilidade a terra do céu neste bioma se junta em ilhas, no lugar do `skyIslands` do mundo |
+| `skyThickness` | não | número, 0.0 a 8.0 | o do mundo | O quanto as ilhas do céu neste bioma são sólidas, no lugar do `skyThickness` do mundo |
 | `waterColor` | não | cor hex | `FFFFFF` | Tonalidade da água |
 | `grassColor` | não | cor hex | do clima | Tonalidade da grama, no lugar da cor que a temperatura e a umidade dariam |
 | `foliageColor` | não | cor hex | do clima | Tonalidade das folhas, do mesmo modo |
@@ -3687,7 +3690,40 @@ O overworld pode ser mais alto ou mais profundo do que o jogo o faz, e o espaço
 | `deepStone` | nome de bloco | nenhum | O bloco de que é feito o mundo abaixo do terreno do vanilla quando o fundo vai abaixo de -64, como a ardósia abissal própria de um pacote. Ele se mistura à ardósia abissal ao longo das oito camadas abaixo de -64, como a ardósia abissal se mistura à pedra. Vazio mantém a pedra |
 | `noiseCaves` | `off`, `deep` ou `world` | `off` | Onde as cavernas, túneis, noodles e aquíferos do jogo continuam quando o fundo vai abaixo de -64: `off` mantém o mundo sob o terreno do vanilla como pedra profunda maciça para a camada de worldgen escavar, `deep` os leva até o fundo com os lagos de lava movidos para as dez camadas inferiores, `world` significa o mesmo nesta versão porque o terreno do vanilla já os tem |
 
-O mundo profundo é onde as entradas de worldgen, as regiões de cavernas e os grupos de dureza do próprio pacote fazem seu trabalho: `minHeight` e `maxHeight` em uma entrada alcançam tão fundo quanto o fundo do mundo vai. As características colocadas do próprio jogo ficam no terreno do vanilla: uma cuja altura conta a partir do fundo do mundo, entre elas os diamantes e a redstone inferior do jogo, ainda conta a partir de -64, e uma colocação que cairia abaixo de -64 é deixada de fora, como em um mundo cujo fundo é -64. As chaves de céu da 1.12.2, `deepRavines`, `oreVeins` e o próprio mundo rubic não têm equivalente aqui, já que a geração própria deste motor já alcança do fundo ao teto.
+O mundo profundo é onde as entradas de worldgen, as regiões de cavernas e os grupos de dureza do próprio pacote fazem seu trabalho: `minHeight` e `maxHeight` em uma entrada alcançam tão fundo quanto o fundo do mundo vai. As características colocadas do próprio jogo ficam no terreno do vanilla: uma cuja altura conta a partir do fundo do mundo, entre elas os diamantes e a redstone inferior do jogo, ainda conta a partir de -64, e uma colocação que cairia abaixo de -64 é deixada de fora, como em um mundo cujo fundo é -64. As chaves da 1.12.2 `deepRavines`, `oreVeins` e o próprio mundo rubic não têm equivalente aqui, já que a geração própria deste motor já alcança do fundo ao teto.
+
+## Terra do céu
+
+*o mundo*
+
+Com `worldMaxHeight` acima de 320, o céu aberto acima do terreno do vanilla pode ser preenchido com terra própria. `skyStone` a liga, e o ruído de cavernas do próprio jogo lhe dá forma: o que seria caverna embaixo é sólido em cima, e o céu se junta em ilhas flutuantes. As chaves vão no bloco `settings` de um modelo de mundo; uma dimensão do pacote com `maxHeight` acima de 320 também as aceita.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldMaxHeight": 1024,
+    "skyStone": "mypack:cloudstone",
+    "skyShape": "islands",
+    "skyIslands": 0.4,
+    "skyThickness": 3.0,
+    "skyHeights": [400, 900],
+    "skyAnimals": false
+  }
+}
+```
+
+| Chave          | Valor                 | Padrão    | O que faz                                                                                                                                                                                                                                                                                             |
+| -------------- | --------------------- | --------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skyStone`     | nome de bloco         | nenhum    | O bloco de que é feito o céu acima do terreno do vanilla quando `worldMaxHeight` passa de 320, moldado em terra flutuante pelo ruído de cavernas do jogo, de modo que o que é caverna embaixo é ilha em cima. O topo e o enchimento vêm da regra de superfície de cada bioma. Vazio deixa o céu vazio |
+| `skyShape`     | `islands` ou `caves`  | `islands` | No que o céu acima do terreno do vanilla é moldado: `islands` para terra flutuante, ou `caves` para rocha sólida atravessada por cavernas. Só vale quando `skyStone` nomeia um bloco                                                                                                                  |
+| `skyIslands`   | número, -1.0 a 1.0    | `0.5`     | Com que facilidade o céu se junta em ilhas, de -1 para terra quase contínua a 1 para céu vazio. Menor espalha a terra por mais do céu, maior deixa menos peças e menores. Só vale quando `skyStone` nomeia um bloco e `skyShape` é `islands`                                                          |
+| `skyThickness` | número, 0.0 a 8.0     | `2.0`     | O quanto uma ilha do céu é sólida. Maior preenche as ilhas, menor as esvazia e faz suas bordas sumirem. Só vale quando `skyStone` nomeia um bloco e `skyShape` é `islands`                                                                                                                            |
+| `skyHeights`   | lista de dois números | vazio     | O bloco mais baixo e o mais alto que a terra do céu pode alcançar. Vazio preenche o mundo todo acima do terreno do vanilla. Só vale quando `skyStone` nomeia um bloco                                                                                                                                 |
+| `skyAnimals`   | booleano              | `true`    | Se mobs que não são monstros nascem naturalmente na terra do céu acima do terreno do vanilla, as ilhas do céu acima de tudo. `false` mantém animais, morcegos e qualquer outro mob que não seja monstro no chão lá embaixo. Spawners não são afetados. Uma chave do grupo `spawning`                  |
+
+`skyStone` e `skyShape` também aceitam uma lista, em que um valor solto vale para todas as dimensões e uma entrada escrita como `dimension=value`, como `mypack:skylands=caves`, define só aquela dimensão. O `skyStone`, `skyIslands` e `skyThickness` de um arquivo de bioma mudam a terra do céu sobre esse bioma, e os de uma região de cavernas a mudam dentro da região, acima dos do bioma; uma região de cavernas só chega ao céu onde seu `maxHeight` passa de 320. A terra do céu nunca começa abaixo de 320, e seu topo fica abaixo do teto do mundo. As características de solo do jogo sob uma ilha continuam achando o chão lá embaixo, e cada ilha recebe as plantas, as árvores e os animais do seu bioma.
 
 ## Regiões de cavernas
 
@@ -3740,6 +3776,9 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `minHeight` | int | o fundo do mundo | Base da faixa em que a região existe |
 | `maxHeight` | int | `48` | Topo dessa faixa. Uma célula cujo centro fica fora da faixa nunca escolhe a região |
 | `waterLevel` | int | nenhum | Fixa o lençol freático dentro da região nesta altura, no lugar dos aquíferos dali. Ele fica abaixo do nível do mar e pelo menos dois blocos acima da lava profunda |
+| `skyStone` | bloco | nenhum | O bloco da terra do céu dentro da região, no lugar do `skyStone` do bioma e do mundo |
+| `skyIslands` | -1.0 a 1.0 | o do bioma | Com que facilidade a terra do céu dentro da região se junta em ilhas, acima do `skyIslands` do bioma e do mundo |
+| `skyThickness` | 0.0 a 8.0 | o do bioma | O quanto as ilhas do céu dentro da região são sólidas, acima do `skyThickness` do bioma e do mundo |
 | `dimensions` | lista de ids de dimensões | todas | Em quais dimensões a região aparece, incluindo as do próprio pacote. Uma região com `biome` só o mostra onde os biomas são colocados por clima: o overworld, o Nether e uma dimensão do pacote que herda os biomas do overworld |
 | `floorCover` | bloco | nenhum | Substitui o bloco do topo dos chãos de caverna dentro da região |
 | `floorChance` | 0.0 a 1.0 | `1.0` | Quanto do chão é coberto |
@@ -6317,6 +6356,7 @@ Um tronco de via única não tem segunda via para dar ao outro ramal, de modo qu
 | `ambientCap` | int, -1 a 1000 | `-1` | O mesmo para morcegos e afins. O vanilla é 15 |
 | `waterCreatureCap` | int, -1 a 1000 | `-1` | O mesmo para lulas. O vanilla é 5 |
 | `monsterSpawnLight` | int, -1 a 15 | `-1` | A luz de bloco mais forte em que um mob hostil ainda pode nascer, além das verificações vanilla. -1 mantém apenas a regra vanilla. Spawners não são afetados |
+| `skyAnimals` | booleano | `true` | Se mobs que não são monstros nascem naturalmente na terra do céu acima do terreno do vanilla, as ilhas do céu acima de tudo. `false` mantém animais, morcegos e qualquer outro mob que não seja monstro no chão lá embaixo. Spawners não são afetados |
 | `threatItems` | lista | vazio | Itens que elevam o nível de ameaça de um jogador, como entradas item=nível,quantidade com um ,each ou ,batch opcional no fim, por exemplo minecraft:diamond_sword=5,1 ou minecraft:diamond=1,16,batch. Each, o padrão, soma o nível por cada item carregado, contando no máximo a quantidade informada; batch soma o nível uma vez para cada grupo completo de quantidade itens carregados. Uma quantidade acima do tamanho da pilha do item é reduzida ao tamanho da pilha. Toda entidade carregada que leva itens é portadora: o inventário principal, a armadura e a mão secundária de um jogador, uma pilha largada, qualquer coisa com inventário de itens, como uma mula com baú ou um carrinho com baú, e os itens segurados e a armadura de outros mobs. Vazio desliga o nível de ameaça. Com `control.spawning` em `off`, as configurações de ameaça da própria config ainda valem |
 | `threatLevels` | lista | vazio | As pontuações em que cada faixa começa, crescentes, de modo que `10, 25, 50` forma três faixas. Vazio desliga o nível de ameaça |
 | `threatMost` | int, -1 a 100000 | `-1` | Limita a pontuação. `-1` deixa sem limite |
@@ -6542,6 +6582,11 @@ Um tronco de via única não tem segunda via para dar ao outro ramal, de modo qu
 | `terrainOffset` | int, 0 a 4064 | `0` | Quantos blocos para cima toda a janela de terreno do vanilla é deslocada, um múltiplo de 16. O nível do mar e as camadas de superfície vão junto, as cavernas, os veios e as profundidades de bioma seguem a terra deslocada, e as placed features do jogo mantêm suas alturas. worldMaxHeight precisa ser pelo menos 320 mais o deslocamento, ou ele é recusado. Só se aplica pelo preset gerado |
 | `deepStone` | texto | vazio | O bloco de que o mundo abaixo do terreno vanilla é feito quando worldMinHeight vai abaixo de -64, como a deepslate própria de um pacote. Mistura-se à deepslate ao longo das oito camadas abaixo de -64, como a deepslate se mistura à pedra. Vazio mantém pedra |
 | `noiseCaves` | texto | `off` | Onde as cavernas, túneis, noodles e aquíferos do jogo continuam quando worldMinHeight vai abaixo de -64: off mantém o mundo sob o terreno vanilla como pedra profunda maciça para a camada de worldgen escavar, deep os leva até o fundo, com os lagos de lava movidos para as dez camadas mais baixas, e world significa o mesmo nesta versão, porque o terreno vanilla já os tem |
+| `skyStone` | texto ou lista | vazio | O bloco de que é feito o céu acima do terreno do vanilla quando worldMaxHeight passa de 320, moldado em terra flutuante pelo ruído de cavernas do jogo, de modo que o que é caverna embaixo é ilha em cima. O topo e o enchimento vêm da regra de superfície de cada bioma. Vazio deixa o céu vazio |
+| `skyShape` | texto ou lista | `islands` | No que o céu acima do terreno do vanilla é moldado: islands para terra flutuante, ou caves para rocha sólida atravessada por cavernas. Só vale quando skyStone nomeia um bloco |
+| `skyIslands` | número, -1.0 a 1.0 | `0.5` | Com que facilidade o céu se junta em ilhas, de -1 para terra quase contínua a 1 para céu vazio. Menor espalha a terra por mais do céu, maior deixa menos peças e menores. Só vale quando skyStone nomeia um bloco e skyShape é islands |
+| `skyThickness` | número, 0.0 a 8.0 | `2.0` | O quanto uma ilha do céu é sólida. Maior preenche as ilhas, menor as esvazia e faz suas bordas sumirem. Só vale quando skyStone nomeia um bloco e skyShape é islands |
+| `skyHeights` | lista | vazio | O bloco mais baixo e o mais alto que uma ilha do céu pode alcançar, como dois números. Vazio preenche o mundo todo acima do terreno do vanilla. Só vale quando skyStone nomeia um bloco |
 | `worldSpawn` | texto | vazio | Onde todo mundo novo nasce, escrito como x,z ou x,y,z. Sem y, usa-se o nível médio do solo do mundo, uma unidade acima do nível do mar, ou o topo das camadas em um mundo flat, e o jogo então encontra um chão seguro ali, como faz com qualquer spawn. Aplicado a um mundo apenas quando ele é criado. Vazio deixa a escolha para o jogo |
 | `worldBorder` | int, 0 a 60000000 | `0` | A largura, em blocos, da borda do mundo em todo mundo novo. Aplicada a um mundo apenas quando ele é criado. 0 deixa a borda onde o jogo a coloca |
 | `worldTime` | int, -1 a 23999 | `-1` | Trava a hora do dia do overworld, em ticks, o mesmo valor que /time set aceita, então 18000 é meia-noite. O relógio para e nunca se move: /time set não consegue movê-lo, o dia continua contando por baixo, e remover a configuração devolve essa hora. -1 deixa o tempo correr |
@@ -7177,7 +7222,6 @@ O que um pacote 1.12.2 pode escrever e esta versão não lê, e por quê. Um pac
 | `rubicWorld`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist`, `verticalCubeLoadDistance`, `cubeGCInterval`, `cubeGenMillisPerRound`, `cubesSentPerTick` | mundos rubic | O mundo rubic era o jeito da 1.12.2 de passar de um mundo de 256 blocos. Aqui o `minHeight` e o `maxHeight` de uma dimensão definem o seu tamanho e o sistema de chunks o transmite |
 | `rubicHeightLimit` | mundos rubic | O teto de altura do mundo rubic se foi com ele; o `minHeight` e o `maxHeight` de uma dimensão definem o seu tamanho, sem um teto separado para elevar |
 | `regionCacheLimit` | mundos rubic | O seu cache dos arquivos de região abertos de um mundo rubic se foi com o mundo rubic; o sistema de chunks daqui gerencia os próprios arquivos |
-| `skyStone`, `skyShape`, `skyIslands`, `skyThickness`, `skyHeights`, `skyAnimals` | o mundo profundo, biomas, regiões de caverna | Terra no céu vivia acima da janela de terreno de um mundo rubic, e não há mundo rubic para abrigá-la |
 | `deepRavines`, `oreVeins` | o mundo profundo | O terreno do próprio motor já corre abaixo de y 0, com ravinas e grandes veios de minério próprios |
 | `riverSize`, `waterLakeChance` e as chaves de escala de ruído de um `generatorOptions` personalizado | settings | Os rios e a forma do terreno pertencem às noise settings, e o jogo não tem mais lagos de água cujo tamanho ajustar, então nenhum número isolado os alcança. Um `fixedBiome` numerado acima de 39 nomeia um bioma que esta versão não consegue mapear |
 | `terrainWorldTypes`, `terrainWorldTypesAreBlacklist` | settings | Os tipos de mundo são presets de mundo aqui, e um modelo de mundo nomeia as suas próprias |

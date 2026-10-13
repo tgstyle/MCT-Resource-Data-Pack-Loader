@@ -126,6 +126,7 @@ public final class ContentWorldShape {
 
     public static void generate() {
         ContentBedrock.forget();
+        ContentSkyLand.forget();
         presetId = null;
         presetName = null;
         flatSettings = null;
@@ -281,6 +282,7 @@ public final class ContentWorldShape {
         JsonObject settings = GameData.noiseSettings(vanillaSettings(shape, dimension));
         if (settings == null) { return null; }
         if (overworld) { shapeNoise(settings, shape); }
+        ContentSkyLand.Land land = overworld ? ContentSkyLand.raise(settings, shape.maxY(), dimension, "The overworld") : null;
         if (overworld && ContentOreControl.veinsBlocked(dimension)) {
             settings.addProperty("ore_veins_enabled", false);
             ContentLog.LOGGER.debug("The overworld's iron and copper ore veins are turned off by the ores group");
@@ -293,6 +295,7 @@ public final class ContentWorldShape {
         if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
         String settingsId = made(shape, IdNames.path(dimension) + "_noise", "worldgen/noise_settings", settings);
         if (overworld) { overworldNoise(Identifier.parse(settingsId)); }
+        if (land != null) { ContentSkyLand.remember(Identifier.parse(settingsId), land); }
         return settingsId;
     }
 

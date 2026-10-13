@@ -19,6 +19,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.network.chat.Component;
@@ -56,6 +57,7 @@ import net.minecraft.world.item.crafting.display.SlotDisplayContext;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.NaturalSpawner;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
@@ -83,8 +85,12 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.configurations.TreeConfiguration;
+import net.minecraft.world.level.levelgen.placement.PlacedFeature;
+import net.minecraft.world.level.levelgen.placement.PlacementContext;
+import net.minecraft.world.level.levelgen.placement.PlacementModifier;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
@@ -132,6 +138,34 @@ public final class LineCompat {
     public static final String GRADIENT_TO = "to_y";
 
     private LineCompat() {}
+
+    public static JsonObject densityPair(String type, JsonElement first, JsonElement second) {
+        JsonObject out = new JsonObject();
+        out.addProperty("type", type);
+        out.add("argument1", first);
+        out.add("argument2", second);
+        return out;
+    }
+
+    public static JsonObject densityOf(String type, JsonElement input) {
+        JsonObject out = new JsonObject();
+        out.addProperty("type", type);
+        out.add("argument", input);
+        return out;
+    }
+
+    public static JsonObject densityInterpolated(JsonElement input) { return densityOf("minecraft:interpolated", input); }
+
+    public static void skyPlace(WorldGenLevel level, ChunkGenerator generator, RandomSource random, PlacedFeature placed, BlockPos origin) {
+        PlacementContext context = new PlacementContext(level, generator, Optional.of(placed));
+        Stream<BlockPos> spots = Stream.of(origin);
+        for (PlacementModifier modifier : placed.placement()) { spots = spots.flatMap(spot -> modifier.getPositions(context, random, spot)); }
+        ConfiguredFeature<?, ?> feature = placed.feature().value();
+        int bottom = origin.getY();
+        spots.filter(spot -> spot.getY() > bottom && spot.getY() <= bottom + SectionPos.SECTION_SIZE).forEach(spot -> feature.place(level, generator, random, spot));
+    }
+
+    public static void herds(WorldGenLevel level, Holder<Biome> biome, @SuppressWarnings("unused") BlockPos at, ChunkPos chunk, RandomSource random) { NaturalSpawner.spawnMobsForChunkGeneration(level, biome, chunk, random); }
 
     public static void registerConfig(ModContainer container, IConfigSpec spec) { container.registerConfig(ModConfig.Type.COMMON, spec); }
 

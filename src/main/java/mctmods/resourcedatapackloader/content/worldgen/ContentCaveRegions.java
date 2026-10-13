@@ -11,6 +11,7 @@ import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
 import mctmods.resourcedatapackloader.content.def.BlockMatchDef;
 import mctmods.resourcedatapackloader.content.def.CaveRegionDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
+import mctmods.resourcedatapackloader.content.def.SkyStoneDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -64,6 +65,7 @@ import javax.annotation.Nullable;
 public final class ContentCaveRegions {
     public static final String COVER_FEATURE = "cover";
     public static final String STRUCTURE_FEATURE = "cave_structures";
+    public static final String SKY_FEATURE = "sky_stone";
     private static final Identifier DRIPSTONE = Identifier.withDefaultNamespace("dripstone_caves");
     private static final float UNREACHABLE = 2.0F;
     private static final int MEMO_LIMIT = 4096;
@@ -128,6 +130,7 @@ public final class ContentCaveRegions {
             ContentPalette palette = states.isEmpty() ? null : new ContentPalette(states, List.of(1, 1), Set.of(), Set.of(), Set.of(), Set.of(), Set.of());
             MADE.put(def.key(), new Made(def, point, cover, palette));
             if (cover != null) { writeFeature(def, COVER_FEATURE, "_cover", "local_modifications"); }
+            if (!def.sky().stone().isEmpty()) { writeFeature(def, SKY_FEATURE, "_sky", "top_layer_modification"); }
             if (def.hasStructures()) {
                 writeFeature(def, STRUCTURE_FEATURE, "_structures", "underground_structures");
                 structured++;
@@ -244,6 +247,18 @@ public final class ContentCaveRegions {
     @Nullable public static CaveRegionDef regionAt(ServerLevel level, BlockPos pos) {
         Bound bound = BOUND.get(level.getChunkSource().getGenerator().getBiomeSource());
         return bound == null ? null : regionAt(bound, QuartPos.fromBlock(pos.getX()), QuartPos.fromBlock(pos.getY()), QuartPos.fromBlock(pos.getZ()));
+    }
+
+    @Nullable public static CaveRegionDef regionAt(BiomeSource source, int quartX, int quartY, int quartZ) {
+        Bound bound = BOUND.get(source);
+        return bound == null ? null : regionAt(bound, quartX, quartY, quartZ);
+    }
+
+    public static boolean shapesSky() {
+        for (Made made : MADE.values()) {
+            if (made.def().sky().shapes()) { return true; }
+        }
+        return false;
     }
 
     public static boolean pinsWater(BiomeSource source) {
@@ -409,9 +424,6 @@ public final class ContentCaveRegions {
     @Nullable private static CaveRegionDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "cave region");
         if (json == null) { return null; }
-        for (String rubic : List.of("skyStone", "skyIslands", "skyThickness")) {
-            if (json.has(rubic)) { ContentLog.LOGGER.info("Cave region {} sets '{}', which was the rubic world's and is not read on this line", key, rubic); }
-        }
         int minHeight = json.has("minHeight") ? GsonHelper.getAsInt(json, "minHeight") : CaveRegionDef.WORLD_FLOOR;
         int maxHeight = GsonHelper.getAsInt(json, "maxHeight", 48);
         if (maxHeight < minHeight) {
@@ -438,7 +450,7 @@ public final class ContentCaveRegions {
                 GsonHelper.getAsString(json, "structureLoot", "").trim(), json.has("biome") ? biome(key, GsonHelper.getAsString(json, "biome", "")) : null, Json.strings(json, "requires"),
                 GsonHelper.getAsString(json, "ambientSound", "").trim(), Mth.clamp(GsonHelper.getAsFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
                 GsonHelper.getAsString(json, "particle", "").trim(), Mth.clamp(GsonHelper.getAsFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F),
-                json.has("waterLevel") ? GsonHelper.getAsInt(json, "waterLevel") : CaveRegionDef.NO_WATER);
+                json.has("waterLevel") ? GsonHelper.getAsInt(json, "waterLevel") : CaveRegionDef.NO_WATER, SkyStoneDef.read(json, key));
     }
 
     @Nullable private static Identifier biome(Identifier key, String written) {

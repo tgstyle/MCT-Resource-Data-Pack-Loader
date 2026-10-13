@@ -26,6 +26,7 @@ public final class ContentFeatureTypes {
     private static final Shape SHAPE = new Shape();
     private static final Cover COVER = new Cover();
     private static final CaveStructure CAVE_STRUCTURE = new CaveStructure();
+    private static final SkyStone SKY_STONE = new SkyStone();
 
     private ContentFeatureTypes() {}
 
@@ -34,6 +35,7 @@ public final class ContentFeatureTypes {
             helper.register(id(ContentWorldgen.SHAPE_FEATURE), SHAPE);
             helper.register(id(ContentCaveRegions.COVER_FEATURE), COVER);
             helper.register(id(ContentCaveRegions.STRUCTURE_FEATURE), CAVE_STRUCTURE);
+            helper.register(id(ContentCaveRegions.SKY_FEATURE), SKY_STONE);
         });
         event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
             helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.TYPE);
@@ -46,7 +48,7 @@ public final class ContentFeatureTypes {
 
     public static boolean foreign(PlacedFeature placed) {
         Feature<?> kind = placed.feature().value().feature();
-        return !(kind instanceof Shape || kind instanceof Cover || kind instanceof CaveStructure);
+        return !(kind instanceof Shape || kind instanceof Cover || kind instanceof CaveStructure || kind instanceof SkyStone);
     }
 
     public static boolean nonOre(PlacedFeature placed) {
@@ -74,6 +76,12 @@ public final class ContentFeatureTypes {
         private CaveStructure() { super(named("region")); }
 
         @Override public boolean place(@Nonnull FeaturePlaceContext<Named> context) { return ContentCaveStructureFeature.place(context.level(), context.origin(), context.config().id()); }
+    }
+
+    private static final class SkyStone extends Feature<Named> {
+        private SkyStone() { super(named("region")); }
+
+        @Override public boolean place(@Nonnull FeaturePlaceContext<Named> context) { return ContentSkyStoneFeature.place(context.level(), context.chunkGenerator(), context.origin(), context.config().id()); }
     }
 
     private static final class Spread extends PlacementModifier {

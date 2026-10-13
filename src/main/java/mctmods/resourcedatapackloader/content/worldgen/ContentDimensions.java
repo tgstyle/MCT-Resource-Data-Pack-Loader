@@ -301,6 +301,7 @@ public final class ContentDimensions {
         boolean grounded = overworldNoise && ContentBiomes.any();
         if (def.shapesNoise() || seamed || flatBedrock || veinless || grounded) {
             JsonObject settings = GameData.noiseSettings(vanillaSettings);
+            ContentSkyLand.Land land = null;
             if (settings != null) {
                 if (seamed) { ContentSeams.openBedrock(settings, dimension); }
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
@@ -311,6 +312,7 @@ public final class ContentDimensions {
                     noise.addProperty("min_y", def.minHeight());
                     noise.addProperty("height", def.maxHeight() - def.minHeight());
                     if (overworldNoise && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight(), ContentOptionNoise.Shifted.NONE); }
+                    land = overworldNoise ? ContentSkyLand.raise(settings, def.maxHeight(), dimension, "Dimension " + dimension) : null;
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
                 if (def.lavaOceans()) {
@@ -325,6 +327,7 @@ public final class ContentDimensions {
                 String settingsPath = "worldgen/noise_settings/" + id.getPath() + PackManager.JSON_SUFFIX;
                 GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), settingsPath, LineCompat.worldgenOut(settingsPath, settings).toString());
                 if (overworldNoise) { ContentWorldShape.overworldNoise(id); }
+                if (land != null) { ContentSkyLand.remember(id, land); }
                 settingsId = id.toString();
             }
         }

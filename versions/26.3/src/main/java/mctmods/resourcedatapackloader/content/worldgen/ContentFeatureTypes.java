@@ -27,6 +27,7 @@ public final class ContentFeatureTypes {
             helper.register(id(ContentWorldgen.SHAPE_FEATURE), Shape.CODEC);
             helper.register(id(ContentCaveRegions.COVER_FEATURE), Region.COVER);
             helper.register(id(ContentCaveRegions.STRUCTURE_FEATURE), Region.CAVE_STRUCTURE);
+            helper.register(id(ContentCaveRegions.SKY_FEATURE), Region.SKY_STONE);
         });
         event.register(Registries.STRUCTURE_PLACEMENT, helper -> {
             helper.register(id(ContentWorldgen.SPREAD_PLACEMENT), ContentStructureSpread.CODEC);
@@ -52,17 +53,30 @@ public final class ContentFeatureTypes {
         @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return ContentShapeFeature.place(level, random, origin, entry); }
     }
 
-    private enum Kind { COVER, CAVE_STRUCTURE }
+    private enum Kind { COVER, CAVE_STRUCTURE, SKY_STONE }
 
     private record Region(Identifier region, Kind kind) implements Feature {
         private static final MapCodec<Region> COVER = codecOf(Kind.COVER);
         private static final MapCodec<Region> CAVE_STRUCTURE = codecOf(Kind.CAVE_STRUCTURE);
+        private static final MapCodec<Region> SKY_STONE = codecOf(Kind.SKY_STONE);
 
         private static MapCodec<Region> codecOf(Kind kind) { return RecordCodecBuilder.mapCodec(instance -> instance.group(Identifier.CODEC.fieldOf("region").forGetter(Region::region)).apply(instance, region -> new Region(region, kind))); }
 
-        @Override @Nonnull public MapCodec<Region> codec() { return kind == Kind.COVER ? COVER : CAVE_STRUCTURE; }
+        @Override @Nonnull public MapCodec<Region> codec() {
+            return switch (kind) {
+                case COVER -> COVER;
+                case CAVE_STRUCTURE -> CAVE_STRUCTURE;
+                case SKY_STONE -> SKY_STONE;
+            };
+        }
 
-        @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) { return kind == Kind.COVER ? ContentCoverFeature.place(level, origin, region) : ContentCaveStructureFeature.place(level, origin, region); }
+        @Override public boolean place(@Nonnull WorldGenLevel level, @Nonnull ChunkGenerator generator, @Nonnull RandomSource random, @Nonnull BlockPos origin) {
+            return switch (kind) {
+                case COVER -> ContentCoverFeature.place(level, origin, region);
+                case CAVE_STRUCTURE -> ContentCaveStructureFeature.place(level, origin, region);
+                case SKY_STONE -> ContentSkyStoneFeature.place(level, generator, origin, region);
+            };
+        }
     }
 
     private record Spread(Identifier entry) implements PlacementModifier {

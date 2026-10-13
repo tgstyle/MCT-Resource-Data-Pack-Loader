@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
+import mctmods.resourcedatapackloader.content.def.SkyStoneDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -22,7 +23,7 @@ import javax.annotation.Nullable;
 public final class ContentBiomeParser {
     public static final Identifier PLAINS = Identifier.withDefaultNamespace("plains");
     private static final List<String> RATE_KEYS = List.of("surfaceDay", "surfaceNight", "undergroundDay", "undergroundNight");
-    private static final Set<String> RUBIC_KEYS = Set.of("id", "baseHeight", "heightVariation", "skyStone", "skyIslands", "skyThickness");
+    private static final Set<String> RUBIC_KEYS = Set.of("id", "baseHeight", "heightVariation");
     private static final Set<String> CATEGORIES = Set.of("monster", "creature", "ambient", "water_creature", "water_ambient", "underground_water_creature", "axolotls", "misc");
 
     private ContentBiomeParser() {}
@@ -31,7 +32,7 @@ public final class ContentBiomeParser {
         JsonObject json = Json.object(key, contents, "biome file");
         if (json == null) { return null; }
         for (String rubic : RUBIC_KEYS) {
-            if (json.has(rubic)) { ContentLog.LOGGER.info("Biome {} sets '{}', which this line does not read: terrain height is the noise settings' and the sky keys were the rubic world's", key, rubic); }
+            if (json.has(rubic)) { ContentLog.LOGGER.info("Biome {} sets '{}', which this line does not read: terrain height is the noise settings' and the id is the file's name", key, rubic); }
         }
         JsonObject placement = GsonHelper.getAsJsonObject(json, "placement", new JsonObject());
         if (placement.has("villageSpawn")) { ContentLog.LOGGER.info("Biome {} sets placement.villageSpawn, which this line does not read: villagers come with the village structure itself", key); }
@@ -54,6 +55,7 @@ public final class ContentBiomeParser {
                 GsonHelper.getAsString(json, "topBlock", "").trim(),
                 GsonHelper.getAsString(json, "fillerBlock", "").trim(),
                 GsonHelper.getAsString(json, "stoneBlock", "").trim(),
+                SkyStoneDef.read(json, key),
                 Json.strings(json, "types"),
                 Settings.lower(GsonHelper.getAsString(placement, "climate", "")),
                 Math.max(0, GsonHelper.getAsInt(placement, "weight", 10)),

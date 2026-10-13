@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.pack.port.Ids;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -38,6 +39,8 @@ public final class ContentTerrain {
             "savanna_rock", "mesa", "mesa_rock", "mesa_clear_rock");
     private static final String PLAINS = "minecraft:plains";
     private static final List<String> FLAT_TYPES = List.of("flat", "superflat");
+    private static final DimensionValues<String> SKY_STONES = new DimensionValues<>("skyStone", String::trim, "which is not a block name");
+    private static final DimensionValues<String> SKY_SHAPES = new DimensionValues<>("skyShape", Settings::lower, "which is not islands or caves");
 
     private ContentTerrain() {}
 
@@ -208,6 +211,27 @@ public final class ContentTerrain {
 
     public static String noiseCaves() { return text("noiseCaves", Config.worldgen.noiseCaves()); }
 
+    public static String skyStone(String dimension) { return scoped(SKY_STONES, "skyStone", Config.worldgen.skyStone(), dimension); }
+
+    public static String skyShape(String dimension) { return scoped(SKY_SHAPES, "skyShape", Config.worldgen.skyShape(), dimension); }
+
+    public static float skyIslands() { return ContentControl.off(ContentControl.TERRAIN) ? Config.worldgen.skyIslands() : ContentControl.decimal(ContentControl.TERRAIN, "skyIslands", Config.worldgen.skyIslands()); }
+
+    public static float skyThickness() { return ContentControl.off(ContentControl.TERRAIN) ? Config.worldgen.skyThickness() : ContentControl.decimal(ContentControl.TERRAIN, "skyThickness", Config.worldgen.skyThickness()); }
+
+    public static int[] skyHeights() {
+        List<String> written = Config.worldgen.skyHeights();
+        int[] configured = new int[written.size()];
+        try {
+            for (int i = 0; i < configured.length; i++) { configured[i] = Integer.parseInt(written.get(i).trim()); }
+        }
+        catch (NumberFormatException notNumber) {
+            ContentLog.LOGGER.error("skyHeights {} in the config holds something that is not a whole number, so it is left empty", written);
+            configured = new int[0];
+        }
+        return ContentControl.off(ContentControl.TERRAIN) ? configured : ContentControl.numbers(ContentControl.TERRAIN, "skyHeights", configured);
+    }
+
     public static String worldSpawn() { return text("worldSpawn", Config.worldgen.worldSpawn()); }
 
     public static int worldBorder() {
@@ -223,6 +247,12 @@ public final class ContentTerrain {
     public static int worldTime() { return number("worldTime", Config.worldgen.worldTime(), -1); }
 
     public static long lockedTime(Holder<WorldClock> clock) { return clock.is(WorldClocks.OVERWORLD) ? worldTime() : ContentDimensionTime.fixedTime(clock); }
+
+    private static String scoped(DimensionValues<String> values, String key, String fallback, String dimension) {
+        if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
+        String found = values.at(dimension, ContentControl.lines(ContentControl.TERRAIN, key, List.of(fallback)));
+        return found == null ? "" : found;
+    }
 
     private static int number(String key, int fallback, int off) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return off; }
