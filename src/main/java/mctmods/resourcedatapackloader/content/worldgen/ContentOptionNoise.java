@@ -107,11 +107,7 @@ final class ContentOptionNoise {
         else if ("minecraft:find_top_surface".equals(type) && offset != 0) {
             raise(object, "lower_bound");
             if (object.has("upper_bound")) {
-                JsonObject lifted = new JsonObject();
-                lifted.addProperty("type", "minecraft:add");
-                lifted.add("argument1", object.get("upper_bound"));
-                lifted.addProperty("argument2", (double) offset);
-                object.add("upper_bound", lifted);
+                object.add("upper_bound", LineCompat.densityPair("minecraft:add", object.get("upper_bound"), new JsonPrimitive((double) offset)));
             }
         }
         return object;
