@@ -23,6 +23,7 @@ import java.util.Locale;
 
 public final class ContentSpawning {
     private static final TemplateMemo<Integer> LIGHT_CAP = new TemplateMemo<>();
+    private static final TemplateMemo<Boolean> SKY_ANIMALS = new TemplateMemo<>();
     private static final TemplateMemo<float[]> RATES = new TemplateMemo<>();
     public static final String ANIMALS = "animals";
 
@@ -53,6 +54,10 @@ public final class ContentSpawning {
         boolean spawner = event.getSpawnType() == MobSpawnType.SPAWNER;
         if (!spawner && placed(event.getSpawnType())) { return; }
         Mob mob = event.getEntity();
+        if (!spawner && deniedAboveWindow(mob)) {
+            fail(event);
+            return;
+        }
         if (event.getSpawnType() == MobSpawnType.CHUNK_GENERATION) {
             if (ContentThreat.deniedAtGeneration(mob)) { fail(event); }
             return;
@@ -84,6 +89,11 @@ public final class ContentSpawning {
             return;
         }
         if (level.random.nextFloat() < rate - 1.0F) { event.setResult(MobSpawnEvent.PositionCheck.Result.SUCCEED); }
+    }
+
+    private static boolean deniedAboveWindow(Mob mob) {
+        if (mob instanceof Enemy || mob.getY() <= ContentWorldShape.VANILLA_MAX) { return false; }
+        return !SKY_ANIMALS.get(() -> ContentControl.flag(ContentControl.SPAWNING, "skyAnimals", Config.worldgen.skyAnimals()));
     }
 
     private static void fail(MobSpawnEvent.PositionCheck event) { event.setResult(MobSpawnEvent.PositionCheck.Result.FAIL); }

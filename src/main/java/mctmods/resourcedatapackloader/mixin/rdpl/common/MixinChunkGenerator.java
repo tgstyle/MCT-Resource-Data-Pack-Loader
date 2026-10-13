@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityTrees;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPopulateControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRoughGround;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSkyDecoration;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMaps;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureMost;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBedrock;
@@ -58,5 +59,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         ContentCityTrees.dressed(level, chunk.getPos(), structureManager);
         CityPlotSeams.pits(level, chunk.getPos(), structureManager);
         CityCrown.crowned(level, chunk.getPos(), structureManager);
+        ContentSkyDecoration.decorate(level, (ChunkGenerator) (Object) this, chunk);
     }
 }

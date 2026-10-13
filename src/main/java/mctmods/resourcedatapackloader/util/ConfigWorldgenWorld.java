@@ -36,6 +36,12 @@ public abstract class ConfigWorldgenWorld {
     private final ModConfigSpec.IntValue terrainOffset;
     private final ModConfigSpec.ConfigValue<String> deepStone;
     private final ModConfigSpec.ConfigValue<String> noiseCaves;
+    private final ModConfigSpec.ConfigValue<String> skyStone;
+    private final ModConfigSpec.ConfigValue<String> skyShape;
+    private final ModConfigSpec.DoubleValue skyIslands;
+    private final ModConfigSpec.DoubleValue skyThickness;
+    private final ModConfigSpec.ConfigValue<List<? extends String>> skyHeights;
+    private final ModConfigSpec.BooleanValue skyAnimals;
     private final ModConfigSpec.ConfigValue<String> worldSpawn;
     private final ModConfigSpec.IntValue worldBorder;
     private final ModConfigSpec.IntValue worldBorderLimit;
@@ -139,6 +145,11 @@ public abstract class ConfigWorldgenWorld {
         terrainOffset = builder.comment("How many blocks upward the whole vanilla terrain window is shifted, a multiple of 16. Sea level and the surface layers go with it, the caves and ore veins ride the shifted land, and the game's own placed features keep their heights. worldMaxHeight must stay at or above 320 plus the offset, or the shift is refused. 0 leaves the terrain where the game puts it [Default=0]").defineInRange("terrainOffset", 0, 0, 4064);
         deepStone = builder.comment("The block the world below the vanilla terrain is made of when worldMinHeight goes under -64, such as a pack's own deepslate. It blends into deepslate across the eight layers under -64 the way deepslate blends into stone. Empty keeps stone [Default=empty]").define("deepStone", "");
         noiseCaves = builder.comment("Where the game's caves, tunnels, noodles and aquifers carry on when worldMinHeight goes under -64: off keeps the world under the vanilla terrain solid deep stone for the worldgen layer to carve, deep carries them down to the floor with the lava lakes moved to its bottom ten layers, world means the same on this version because the vanilla terrain has them already [Default=off]").define("noiseCaves", "off");
+        skyStone = builder.comment("The block the sky above the vanilla terrain is made of when worldMaxHeight goes over 320, shaped into floating land by the game's own cave noise, so what is cave below is island above. The top and filler under it come from each biome's surface rule. Empty leaves the sky empty [Default=empty]").define("skyStone", "");
+        skyShape = builder.comment("What the sky above the vanilla terrain is shaped into: islands for floating land, or caves for solid rock with caves carved through it. Only used when skyStone names a block [Default=islands]").define("skyShape", "islands");
+        skyIslands = builder.comment("How readily the sky gathers into islands, from -1 for nearly unbroken land to 1 for empty sky. Lower spreads island over more of the sky, higher leaves fewer and smaller pieces. Only used when skyStone names a block and skyShape is islands [Default=0.5]").defineInRange("skyIslands", 0.5D, -1.0D, 1.0D);
+        skyThickness = builder.comment("How solid a sky island is. Higher fills islands out, lower hollows them and thins their edges away to nothing. Only used when skyStone names a block and skyShape is islands [Default=2.0]").defineInRange("skyThickness", 2.0D, 0.0D, 8.0D);
+        skyHeights = builder.comment("The lowest and highest block a sky island may reach, as two numbers. Empty fills the whole world above the vanilla terrain. Only used when skyStone names a block [Default=empty]").defineListAllowEmpty("skyHeights", List.of(), ConfigCore.BLANK, ConfigCore.IS_TEXT);
         worldSpawn = builder.comment("Where every new world spawns, written as x,z or x,y,z. Without a y the ground at that spot is used. Only applied to a world as it is created. Empty leaves the choice to the game [Default=empty]").define("worldSpawn", "");
         worldBorder = builder.comment("How far across, in blocks, the world border stands in every new world. Only applied to a world as it is created. 0 leaves the border where the game puts it [Default=0]").defineInRange("worldBorder", 0, 0, 60000000);
         worldBorderLimit = builder.comment("The widest border a pack is allowed to ask for through worldBorder. A pack asking for more is refused and the border is left where the game puts it. A pack cannot set this [Default=60000000]").defineInRange("worldBorderLimit", 60000000, 1, 60000000);
@@ -195,6 +206,7 @@ public abstract class ConfigWorldgenWorld {
         ambientCap = builder.comment("The same cap for ambient mobs such as bats. Vanilla is 15. -1 leaves it alone [Default=-1]").defineInRange("ambientCap", -1, -1, 1000);
         waterCreatureCap = builder.comment("The same cap for water mobs such as squid. Vanilla is 5. -1 leaves it alone [Default=-1]").defineInRange("waterCreatureCap", -1, -1, 1000);
         monsterSpawnLight = builder.comment("The brightest block light a hostile mob may still spawn in, on top of the vanilla checks. -1 keeps the vanilla rule alone. Spawners are not affected [Default=-1]").defineInRange("monsterSpawnLight", -1, -1, 15);
+        skyAnimals = builder.comment("Whether mobs other than monsters spawn naturally above the vanilla terrain, on the sky islands above all. Off keeps animals, bats and every other mob that is not a monster on the ground below. Spawners are not affected [Default=true]").define("skyAnimals", true);
         caveRegionPlainWeight = builder.comment("The weight of plain, region-less underground against the cave regions' own weights. Higher leaves more of the underground without any region [Default=4]").defineInRange("caveRegionPlainWeight", 4, 0, Integer.MAX_VALUE);
         caveRegionCells = builder.comment("How wide a cave region cell is in blocks. Cave regions from packs are painted over the underground in cells about this size [Default=128]").defineInRange("caveRegionCells", 128, 16, Integer.MAX_VALUE);
         caveRegionCellsY = builder.comment("How tall a cave region cell is in blocks [Default=64]").defineInRange("caveRegionCellsY", 64, 16, Integer.MAX_VALUE);
@@ -271,6 +283,18 @@ public abstract class ConfigWorldgenWorld {
     public String deepStone() { return ConfigCore.text(deepStone); }
 
     public String noiseCaves() { return ConfigCore.text(noiseCaves); }
+
+    public String skyStone() { return ConfigCore.text(skyStone); }
+
+    public String skyShape() { return ConfigCore.text(skyShape); }
+
+    public float skyIslands() { return ConfigCore.decimal(skyIslands); }
+
+    public float skyThickness() { return ConfigCore.decimal(skyThickness); }
+
+    public List<String> skyHeights() { return ConfigCore.strings(skyHeights); }
+
+    public boolean skyAnimals() { return ConfigCore.flag(skyAnimals); }
 
     public String worldSpawn() { return ConfigCore.text(worldSpawn); }
 

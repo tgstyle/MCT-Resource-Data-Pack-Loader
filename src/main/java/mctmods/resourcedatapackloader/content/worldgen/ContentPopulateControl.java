@@ -13,6 +13,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.carver.ConfiguredWorldCarver;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
@@ -139,6 +140,8 @@ public final class ContentPopulateControl {
         Bound held = bound.get(generator);
         return held != null && held.structures().contains(structure);
     }
+
+    public static boolean refusesPlacement(WorldGenLevel level, ChunkGenerator generator, PlacedFeature feature) { return ContentFlatSource.undecorated(generator) || ContentVoidWorld.voidRefuses(level, feature) || refuses(generator, feature) || ContentOreControl.refuses(generator, feature) || ContentGeneratorControl.refuses(generator, feature); }
 
     public static boolean refuses(ChunkGenerator generator, PlacedFeature feature) {
         Bound held = bound.get(generator);
