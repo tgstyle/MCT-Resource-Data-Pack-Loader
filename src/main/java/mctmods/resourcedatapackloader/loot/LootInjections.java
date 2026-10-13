@@ -14,7 +14,6 @@ import com.google.gson.JsonParseException;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
@@ -41,7 +40,7 @@ public final class LootInjections {
     }
 
     private static void read(ResourceLocation key, JsonObject json, int[] count) {
-        String target = GsonHelper.getAsString(json, TARGET, "");
+        String target = Json.getString(json, TARGET, "");
         if (target.isEmpty()) {
             ContentLog.LOGGER.error("Loot injection {} has no target table, ignoring it", key);
             return;
@@ -56,7 +55,7 @@ public final class LootInjections {
             return;
         }
         List<JsonElement> pools = BY_TABLE.computeIfAbsent(table, k -> new ArrayList<>());
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, POOLS)) {
+        for (JsonElement element : Json.getJsonArray(json, POOLS)) {
             pools.add(element);
             count[0]++;
         }

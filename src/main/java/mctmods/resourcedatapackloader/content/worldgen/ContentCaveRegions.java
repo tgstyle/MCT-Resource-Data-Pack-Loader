@@ -38,7 +38,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.WorldGenLevel;
@@ -189,7 +188,7 @@ public final class ContentCaveRegions {
             return null;
         }
         JsonObject biome = held.deepCopy();
-        JsonObject spawners = GsonHelper.getAsJsonObject(biome, "spawners", new JsonObject()).deepCopy();
+        JsonObject spawners = Json.getJsonObject(biome, "spawners", new JsonObject()).deepCopy();
         if (!def.keepDefaultSpawns() && !def.spawns().isEmpty()) {
             for (String category : new ArrayList<>(spawners.keySet())) { spawners.add(category, new JsonArray()); }
         }
@@ -198,7 +197,7 @@ public final class ContentCaveRegions {
                 ContentLog.LOGGER.error("Cave region {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
                 continue;
             }
-            JsonArray list = spawners.has(spawn.category()) ? GsonHelper.getAsJsonArray(spawners, spawn.category()) : new JsonArray();
+            JsonArray list = spawners.has(spawn.category()) ? Json.getJsonArray(spawners, spawn.category()) : new JsonArray();
             JsonObject entry = new JsonObject();
             entry.addProperty("type", spawn.entity().toString());
             entry.addProperty("weight", spawn.weight());
@@ -421,8 +420,8 @@ public final class ContentCaveRegions {
     @Nullable private static CaveRegionDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "cave region");
         if (json == null) { return null; }
-        int minHeight = json.has("minHeight") ? GsonHelper.getAsInt(json, "minHeight") : CaveRegionDef.WORLD_FLOOR;
-        int maxHeight = GsonHelper.getAsInt(json, "maxHeight", 48);
+        int minHeight = json.has("minHeight") ? Json.getInt(json, "minHeight") : CaveRegionDef.WORLD_FLOOR;
+        int maxHeight = Json.getInt(json, "maxHeight", 48);
         if (maxHeight < minHeight) {
             ContentLog.LOGGER.error("Cave region {} has maxHeight below minHeight, swapping them", key);
             int swap = minHeight;
@@ -430,24 +429,24 @@ public final class ContentCaveRegions {
             maxHeight = swap;
         }
         List<BlockMatchDef> replace = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "coverReplace", new JsonArray())) {
+        for (JsonElement element : Json.getJsonArray(json, "coverReplace", new JsonArray())) {
             BlockMatchDef match = ContentParser.match(key, element);
             if (match != null) { replace.add(match); }
         }
         List<PickDef> structures = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
+        for (JsonElement element : Json.getJsonArray(json, "structures", new JsonArray())) {
             if (element.isJsonPrimitive()) { structures.add(new PickDef(Settings.lower(element.getAsString()), 1)); }
-            else if (element.isJsonObject()) { structures.add(new PickDef(Settings.lower(GsonHelper.getAsString(element.getAsJsonObject(), "structure", "")),Math.max(1, GsonHelper.getAsInt(element.getAsJsonObject(), "weight", 1)))); }
+            else if (element.isJsonObject()) { structures.add(new PickDef(Settings.lower(Json.getString(element.getAsJsonObject(), "structure", "")),Math.max(1, Json.getInt(element.getAsJsonObject(), "weight", 1)))); }
         }
-        return new CaveRegionDef(key, Math.max(0, GsonHelper.getAsInt(json, "weight", 1)), minHeight, maxHeight, Json.strings(json, "dimensions"),
-                cover(key, json, "floorCover"), Mth.clamp(GsonHelper.getAsFloat(json, "floorChance", 1.0F), 0.0F, 1.0F),
-                cover(key, json, "ceilingCover"), Mth.clamp(GsonHelper.getAsFloat(json, "ceilingChance", 1.0F), 0.0F, 1.0F),
-                List.copyOf(replace), ContentBiomeParser.spawns(key, json, 8, 4), GsonHelper.getAsBoolean(json, "keepDefaultSpawns", false),
-                List.copyOf(structures), Mth.clamp(GsonHelper.getAsFloat(json, "structureChance", 1.0F), 0.0F, 1.0F),
-                GsonHelper.getAsString(json, "structureLoot", "").trim(), json.has("biome") ? biome(key, GsonHelper.getAsString(json, "biome", "")) : null, Json.strings(json, "requires"),
-                GsonHelper.getAsString(json, "ambientSound", "").trim(), Mth.clamp(GsonHelper.getAsFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
-                GsonHelper.getAsString(json, "particle", "").trim(), Mth.clamp(GsonHelper.getAsFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F),
-                json.has("waterLevel") ? GsonHelper.getAsInt(json, "waterLevel") : CaveRegionDef.NO_WATER, SkyStoneDef.read(json, key));
+        return new CaveRegionDef(key, Math.max(0, Json.getInt(json, "weight", 1)), minHeight, maxHeight, Json.strings(json, "dimensions"),
+                cover(key, json, "floorCover"), Mth.clamp(Json.getFloat(json, "floorChance", 1.0F), 0.0F, 1.0F),
+                cover(key, json, "ceilingCover"), Mth.clamp(Json.getFloat(json, "ceilingChance", 1.0F), 0.0F, 1.0F),
+                List.copyOf(replace), ContentBiomeParser.spawns(key, json, 8, 4), Json.getBoolean(json, "keepDefaultSpawns", false),
+                List.copyOf(structures), Mth.clamp(Json.getFloat(json, "structureChance", 1.0F), 0.0F, 1.0F),
+                Json.getString(json, "structureLoot", "").trim(), json.has("biome") ? biome(key, Json.getString(json, "biome", "")) : null, Json.strings(json, "requires"),
+                Json.getString(json, "ambientSound", "").trim(), Mth.clamp(Json.getFloat(json, "soundChance", 0.0111F), 0.0F, 1.0F),
+                Json.getString(json, "particle", "").trim(), Mth.clamp(Json.getFloat(json, "particleChance", 0.00625F), 0.0F, 1.0F),
+                json.has("waterLevel") ? Json.getInt(json, "waterLevel") : CaveRegionDef.NO_WATER, SkyStoneDef.read(json, key));
     }
 
     @Nullable private static ResourceLocation biome(ResourceLocation key, String written) {

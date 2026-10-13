@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
@@ -23,7 +24,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -121,16 +121,16 @@ public final class ContentStructureControl {
             if ((spacing ? SPACING_FIXED : SEPARATION_FIXED).contains(set.getPath())) { continue; }
             JsonObject json = set(set);
             if (json == null) { continue; }
-            JsonObject placement = GsonHelper.getAsJsonObject(json, "placement");
-            String type = GsonHelper.getAsString(placement, "type", "");
+            JsonObject placement = Json.getJsonObject(json, "placement");
+            String type = Json.getString(placement, "type", "");
             if (CONCENTRIC_RINGS.equals(type)) { placement.addProperty(spacing ? "distance" : "spread", value); }
             else if ("mineshafts".equals(set.getPath()) && spacing) { placement.addProperty("frequency", 1.0F / value); }
             else if (spacing) {
                 placement.addProperty("spacing", value);
-                if (GsonHelper.getAsInt(placement, "separation", 0) >= value) { placement.addProperty("separation", Math.max(0, value - 1)); }
+                if (Json.getInt(placement, "separation", 0) >= value) { placement.addProperty("separation", Math.max(0, value - 1)); }
             }
             else {
-                int apart = GsonHelper.getAsInt(placement, "spacing", 1);
+                int apart = Json.getInt(placement, "spacing", 1);
                 if (apart > value) { placement.addProperty("separation", value); }
                 else if ("ocean_monuments".equals(set.getPath())) {
                     ContentLog.LOGGER.warn("structureSpacing asks for monuments every {} chunk(s) while structureSeparation keeps them {} apart, which leaves the game no room to place one. Separation is brought down to {}", apart, value, apart - 1);
@@ -328,7 +328,7 @@ public final class ContentStructureControl {
         for (ResourceLocation structure : structures("temples".equals(parts[0]) ? "swamp_huts" : parts[0])) {
             JsonObject json = structure(structure);
             if (json == null) { continue; }
-            JsonObject own = GsonHelper.getAsJsonObject(json, "spawn_overrides", new JsonObject());
+            JsonObject own = Json.getJsonObject(json, "spawn_overrides", new JsonObject());
             JsonObject overrides = own.deepCopy();
             overrides.add("monster", override(own, listed));
             json.add("spawn_overrides", overrides);
@@ -338,7 +338,7 @@ public final class ContentStructureControl {
 
     private static JsonObject override(JsonObject own, JsonArray spawns) {
         JsonObject held = new JsonObject();
-        held.addProperty("bounding_box", GsonHelper.getAsString(GsonHelper.getAsJsonObject(own, "monster", new JsonObject()), "bounding_box", "piece"));
+        held.addProperty("bounding_box", Json.getString(Json.getJsonObject(own, "monster", new JsonObject()), "bounding_box", "piece"));
         held.add("spawns", spawns.deepCopy());
         return held;
     }
@@ -366,8 +366,8 @@ public final class ContentStructureControl {
     @Nullable private static JsonObject spread(ResourceLocation set, String key) {
         JsonObject json = set(set);
         if (json == null) { return null; }
-        JsonObject placement = GsonHelper.getAsJsonObject(json, "placement");
-        String type = GsonHelper.getAsString(placement, "type", "");
+        JsonObject placement = Json.getJsonObject(json, "placement");
+        String type = Json.getString(placement, "type", "");
         if (!RANDOM_SPREAD.equals(type) && !(ResourceDataPackLoader.MOD_ID + ":spread").equals(type)) {
             ContentLog.LOGGER.errorOnce(WARNED, key + set, "{} names {}, which is placed by {} rather than on a grid, so it cannot be pinned or held off spawn", key, set, type);
             return null;
@@ -379,8 +379,8 @@ public final class ContentStructureControl {
     @Nullable private static JsonObject rings(ResourceLocation set) {
         JsonObject json = set(set);
         if (json == null) { return null; }
-        JsonObject placement = GsonHelper.getAsJsonObject(json, "placement");
-        String type = GsonHelper.getAsString(placement, "type", "");
+        JsonObject placement = Json.getJsonObject(json, "placement");
+        String type = Json.getString(placement, "type", "");
         return CONCENTRIC_RINGS.equals(type) || RINGS.equals(type) ? placement : null;
     }
 
@@ -491,9 +491,9 @@ public final class ContentStructureControl {
         SET_MEMBERS.put(set, found);
         JsonObject json = GameData.json(WorldgenFiles.id(WorldgenFiles.STRUCTURE_SET, set));
         if (json == null) { return found; }
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "structures", new JsonArray())) {
+        for (JsonElement element : Json.getJsonArray(json, "structures", new JsonArray())) {
             if (!element.isJsonObject()) { continue; }
-            ResourceLocation structure = ResourceLocation.tryParse(GsonHelper.getAsString(element.getAsJsonObject(), "structure", ""));
+            ResourceLocation structure = ResourceLocation.tryParse(Json.getString(element.getAsJsonObject(), "structure", ""));
             if (structure != null) { found.add(structure); }
         }
         return found;

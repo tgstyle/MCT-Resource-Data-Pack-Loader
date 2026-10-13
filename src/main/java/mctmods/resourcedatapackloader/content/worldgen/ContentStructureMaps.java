@@ -20,7 +20,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -121,7 +120,7 @@ public final class ContentStructureMaps {
             ContentLog.LOGGER.error("Structure map {} has no layers, so it is dropped", key);
             return null;
         }
-        JsonArray held = GsonHelper.getAsJsonArray(json, "layers");
+        JsonArray held = Json.getJsonArray(json, "layers");
         if (held.isEmpty() || held.size() > StructureMapDef.LIMIT) {
             ContentLog.LOGGER.error("Structure map {} has {} layer(s), the most being {}, so it is dropped", key, held.size(), StructureMapDef.LIMIT);
             return null;
@@ -136,7 +135,7 @@ public final class ContentStructureMaps {
             }
             JsonObject entry = held.get(at).getAsJsonObject();
             Map<Character, List<PickDef>> palette = new LinkedHashMap<>();
-            for (Map.Entry<String, JsonElement> mark : GsonHelper.getAsJsonObject(entry, "palette", new JsonObject()).entrySet()) {
+            for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(entry, "palette", new JsonObject()).entrySet()) {
                 String symbol = mark.getKey().trim();
                 if (symbol.length() != 1 || symbol.charAt(0) == '.') {
                     ContentLog.LOGGER.error("Structure map {} layer {} palette symbol '{}' must be a single character other than '.', so the map is dropped", key, at, mark.getKey());
@@ -144,7 +143,7 @@ public final class ContentStructureMaps {
                 }
                 List<PickDef> picks = new ArrayList<>();
                 if (mark.getValue().isJsonArray()) {
-                    for (JsonElement choice : mark.getValue().getAsJsonArray()) { picks.add(weighted(choice.getAsString())); }
+                    for (String choice : Json.texts(mark.getValue().getAsJsonArray(), mark.getKey())) { picks.add(weighted(choice)); }
                 }
                 else { picks.add(weighted(mark.getValue().getAsString())); }
                 palette.put(symbol.charAt(0), List.copyOf(picks));
@@ -170,15 +169,15 @@ public final class ContentStructureMaps {
             deep = Math.max(deep, rows.size());
             layers.add(new StructureMapDef.Layer(Map.copyOf(palette), rows));
         }
-        int cell = Mth.clamp(GsonHelper.getAsInt(json, "cell", 32), 1, 48);
-        int spacing = Math.max(0, GsonHelper.getAsInt(json, "spacing", 0));
+        int cell = Mth.clamp(Json.getInt(json, "cell", 32), 1, 48);
+        int spacing = Math.max(0, Json.getInt(json, "spacing", 0));
         int[] pinned = null;
         if (json.has("at")) {
-            JsonArray spot = GsonHelper.getAsJsonArray(json, "at");
-            if (spot.size() == 2) { pinned = new int[] { spot.get(0).getAsInt(), spot.get(1).getAsInt() }; }
+            JsonArray spot = Json.getJsonArray(json, "at");
+            if (spot.size() == 2) { pinned = new int[] { Json.asInt(spot.get(0), "at", 0), Json.asInt(spot.get(1), "at", 0) }; }
             else { ContentLog.LOGGER.error("Structure map {} pins 'at' with {} number(s) instead of x and z, so the pin is ignored", key, spot.size()); }
         }
-        StructureMapDef def = new StructureMapDef(key, cell, Mth.clamp(GsonHelper.getAsInt(json, "ground", 0), 0, layers.size() - 1), spacing, Mth.clamp(GsonHelper.getAsInt(json, "chance", 100), 1, 100), pinned,
+        StructureMapDef def = new StructureMapDef(key, cell, Mth.clamp(Json.getInt(json, "ground", 0), 0, layers.size() - 1), spacing, Mth.clamp(Json.getInt(json, "chance", 100), 1, 100), pinned,
                 Json.strings(json, "dimensions"), List.copyOf(layers), wide, deep);
         if (spacing > 0 && spacing * 16 < def.widest()) {
             ContentLog.LOGGER.error("Structure map {} asks for a spacing of {} chunk(s) but spans {} block(s), so it is dropped rather than overlapping itself", key, spacing, def.widest());

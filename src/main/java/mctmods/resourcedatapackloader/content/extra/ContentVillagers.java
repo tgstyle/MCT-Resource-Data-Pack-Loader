@@ -23,7 +23,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MobSpawnType;
@@ -93,12 +92,12 @@ public final class ContentVillagers {
         JsonObject json = Json.object(key, contents, "villager file");
         if (json == null) { return; }
         if (json.has("careers")) { ContentLog.LOGGER.warn("Villager profession {} lists careers, which this line does not read. There are no careers now, so give each one its own villager file and name it in the trade's 'profession'", key); }
-        skin(key, "villager", GsonHelper.getAsString(json, "texture", "").trim());
-        skin(key, "zombie_villager", GsonHelper.getAsString(json, "zombieTexture", "").trim());
-        String jobSite = GsonHelper.getAsString(json, "jobSite", "").trim();
+        skin(key, "villager", Json.getString(json, "texture", "").trim());
+        skin(key, "zombie_villager", Json.getString(json, "zombieTexture", "").trim());
+        String jobSite = Json.getString(json, "jobSite", "").trim();
         VILLAGERS.put(key, new VillagerDef(key,
                 jobSite,
-                GsonHelper.getAsString(json, "workSound", "").trim(),
+                Json.getString(json, "workSound", "").trim(),
                 Json.strings(json, "requires")));
     }
 
@@ -115,13 +114,13 @@ public final class ContentVillagers {
     private static void readTrades(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "trade file");
         if (json == null) { return; }
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "trades")) {
+        for (JsonElement element : Json.getJsonArray(json, "trades")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            int level = GsonHelper.getAsInt(entry, "level", 1);
+            int level = Json.getInt(entry, "level", 1);
             if (level < 1) {
                 ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
                 continue;
@@ -130,8 +129,8 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.warn("A trade in {} has level {}, past the highest a villager reaches, so it joins level {}", key, level, HIGHEST_LEVEL);
                 level = HIGHEST_LEVEL;
             }
-            String profession = GsonHelper.getAsString(entry, "profession", "").trim();
-            String career = GsonHelper.getAsString(entry, "career", "").trim();
+            String profession = Json.getString(entry, "profession", "").trim();
+            String career = Json.getString(entry, "career", "").trim();
             if (!career.isEmpty() && CAREERED.contains(profession)) {
                 String moved = CAREERS.get(profession + "/" + career);
                 if (moved == null) {
@@ -153,17 +152,17 @@ public final class ContentVillagers {
             }
             TRADES.add(new TradeDef(key, profession,
                     level, buy, stack(entry, "buySecondary"), sell,
-                    Math.max(1, GsonHelper.getAsInt(entry, "maxUses", 12)),
-                    Math.max(0, GsonHelper.getAsInt(entry, "xp", 2)),
+                    Math.max(1, Json.getInt(entry, "maxUses", 12)),
+                    Math.max(0, Json.getInt(entry, "xp", 2)),
                     Json.strings(entry, "requires")));
         }
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
         if (!json.has(name)) { return new TradeStackDef("", 1, 1); }
-        JsonObject entry = GsonHelper.getAsJsonObject(json, name);
-        int min = Math.max(1, GsonHelper.getAsInt(entry, "min", 1));
-        return new TradeStackDef(GsonHelper.getAsString(entry, "item", ""), min, Math.max(min, GsonHelper.getAsInt(entry, "max", min)));
+        JsonObject entry = Json.getJsonObject(json, name);
+        int min = Math.max(1, Json.getInt(entry, "min", 1));
+        return new TradeStackDef(Json.getString(entry, "item", ""), min, Math.max(min, Json.getInt(entry, "max", min)));
     }
 
     public static void registerJobSites(RegisterEvent.RegisterHelper<PoiType> helper) {

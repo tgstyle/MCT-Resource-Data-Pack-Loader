@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -57,17 +56,17 @@ public final class FurnaceRecipes {
     }
 
     private static void read(ResourceLocation key, JsonObject json) {
-        if (json.has(REMOVE)) { for (JsonElement element : GsonHelper.getAsJsonArray(json, REMOVE)) { removal(key, element); } }
+        if (json.has(REMOVE)) { for (JsonElement element : Json.getJsonArray(json, REMOVE)) { removal(key, element); } }
         if (json.has(ADD)) {
             int index = 0;
-            for (JsonElement element : GsonHelper.getAsJsonArray(json, ADD)) { addition(key, element, index++); }
+            for (JsonElement element : Json.getJsonArray(json, ADD)) { addition(key, element, index++); }
         }
     }
 
     private static void removal(ResourceLocation key, JsonElement element) {
         JsonObject json = element.isJsonObject() ? element.getAsJsonObject() : null;
-        String result = json == null ? element.getAsString() : GsonHelper.getAsString(json, RESULT, "");
-        String input = json == null ? "" : GsonHelper.getAsString(json, INPUT, "");
+        String result = json == null ? element.getAsString() : Json.getString(json, RESULT, "");
+        String input = json == null ? "" : Json.getString(json, INPUT, "");
         Item resultItem = result.isEmpty() ? null : ContentStacks.find(key, result);
         Item inputItem = input.isEmpty() ? null : ContentStacks.find(key, input);
         if (resultItem == null && inputItem == null) {
@@ -83,17 +82,17 @@ public final class FurnaceRecipes {
             return;
         }
         JsonObject json = element.getAsJsonObject();
-        String inputName = GsonHelper.getAsString(json, INPUT, "");
-        String outputName = GsonHelper.getAsString(json, OUTPUT, "");
+        String inputName = Json.getString(json, INPUT, "");
+        String outputName = Json.getString(json, OUTPUT, "");
         if (inputName.isEmpty() || outputName.isEmpty()) {
             ContentLog.LOGGER.error("An addition in {} needs both an input and an output, skipping it", key);
             return;
         }
         Item input = ContentStacks.find(key, inputName);
-        ItemStack output = ContentStacks.parse(key, outputName, GsonHelper.getAsInt(json, COUNT, 1));
+        ItemStack output = ContentStacks.parse(key, outputName, Json.getInt(json, COUNT, 1));
         if (input == null || output.isEmpty()) { return; }
         ResourceLocation id = ResourceLocation.fromNamespaceAndPath(key.getNamespace(), PackManager.FURNACE + "/" + key.getPath() + "/" + index);
-        ADDITIONS.add(new Addition(id, input, output, GsonHelper.getAsFloat(json, EXPERIENCE, 0.0F), order++));
+        ADDITIONS.add(new Addition(id, input, output, Json.getFloat(json, EXPERIENCE, 0.0F), order++));
     }
 
     public static boolean resolvedAtLoad() {

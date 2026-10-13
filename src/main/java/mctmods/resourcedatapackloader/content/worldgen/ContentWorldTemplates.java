@@ -13,7 +13,6 @@ import mctmods.resourcedatapackloader.util.Summary;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -50,13 +49,13 @@ public final class ContentWorldTemplates {
     @Nullable private static WorldTemplateDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "world template");
         if (json == null) { return null; }
-        JsonObject settings = json.has("settings") ? GsonHelper.getAsJsonObject(json, "settings") : null;
-        return new WorldTemplateDef(key, GsonHelper.getAsString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), GsonHelper.getAsString(json, "fallback", GsonHelper.getAsString(json, "default", WorldTemplateDef.VOID)).trim(), roles(key, json), switches(json), Json.strings(json, "dimensions"));
+        JsonObject settings = json.has("settings") ? Json.getJsonObject(json, "settings") : null;
+        return new WorldTemplateDef(key, Json.getString(json, "name", key.getPath()), settings, Json.strings(json, "requires"), Json.getString(json, "fallback", Json.getString(json, "default", WorldTemplateDef.VOID)).trim(), roles(key, json), switches(json), Json.strings(json, "dimensions"));
     }
 
     private static Map<String, String> roles(ResourceLocation key, JsonObject json) {
         Map<String, String> out = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> role : GsonHelper.getAsJsonObject(json, "roles", new JsonObject()).entrySet()) {
+        for (Map.Entry<String, JsonElement> role : Json.getJsonObject(json, "roles", new JsonObject()).entrySet()) {
             String name = Settings.lower(role.getKey());
             if (!ROLES.contains(name)) {
                 ContentLog.LOGGER.error("World template {} names role '{}', which is not one of {}, ignoring it", key, role.getKey(), String.join(", ", ROLES));
@@ -74,7 +73,7 @@ public final class ContentWorldTemplates {
     private static Map<String, Boolean> switches(JsonObject json) {
         if (!json.has("structures")) { return Map.of(); }
         Map<String, Boolean> out = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "structures").entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "structures").entrySet()) {
             if (entry.getValue().isJsonPrimitive()) { out.put(Settings.lower(entry.getKey()),entry.getValue().getAsBoolean()); }
         }
         return Map.copyOf(out);

@@ -23,7 +23,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -87,11 +86,11 @@ public final class ContentOrders {
     private static void read(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "order file");
         if (json == null) { return; }
-        if (json.has("stockName")) { stockName = GsonHelper.getAsString(json, "stockName").trim(); }
-        if (json.has("hire")) { hire = GsonHelper.getAsString(json, "hire").trim(); }
-        if (json.has("spawnCap")) { spawnCap = Math.max(0, GsonHelper.getAsInt(json, "spawnCap")); }
+        if (json.has("stockName")) { stockName = Json.getString(json, "stockName").trim(); }
+        if (json.has("hire")) { hire = Json.getString(json, "hire").trim(); }
+        if (json.has("spawnCap")) { spawnCap = Math.max(0, Json.getInt(json, "spawnCap")); }
         if (!json.has("orders")) { return; }
-        JsonArray list = GsonHelper.getAsJsonArray(json, "orders");
+        JsonArray list = Json.getJsonArray(json, "orders");
         for (int i = 0; i < list.size(); i++) {
             String name = key + "#" + i;
             OrderDef def = list.get(i).isJsonObject() ? order(name, list.get(i).getAsJsonObject()) : null;
@@ -102,13 +101,13 @@ public final class ContentOrders {
     }
 
     @Nullable private static OrderDef order(String name, JsonObject json) {
-        String named = GsonHelper.getAsString(json, "job", "");
+        String named = Json.getString(json, "job", "");
         OrderDef.Job job = Enums.byName(OrderDef.Job.class, named);
         if (job == null) {
             ContentLog.LOGGER.error("Order {} asks for the job '{}', which is not gather, mine, farm or haul, ignoring it", name, named);
             return null;
         }
-        String blocks = GsonHelper.getAsString(json, "blocks", "").trim();
+        String blocks = Json.getString(json, "blocks", "").trim();
         if (blocks.isEmpty() && job != OrderDef.Job.FARM) {
             ContentLog.LOGGER.error("Order {} names no item tag under blocks, and only a farm order works without one, ignoring it", name);
             return null;
@@ -123,16 +122,16 @@ public final class ContentOrders {
             ContentLog.LOGGER.error("Order {} names no takers, so no worker could ever take it, ignoring it", name);
             return null;
         }
-        String deliver = GsonHelper.getAsString(json, "deliver", "chest");
+        String deliver = Json.getString(json, "deliver", "chest");
         if (!"chest".equalsIgnoreCase(deliver) && !"self".equalsIgnoreCase(deliver)) { ContentLog.LOGGER.error("Order {} delivers to '{}', which is not chest or self, so it delivers to the chest", name, deliver); }
         List<Integer> byTier = new ArrayList<>();
         if (json.has("areaByTier")) {
-            for (JsonElement radius : GsonHelper.getAsJsonArray(json, "areaByTier")) { byTier.add(Math.max(1, radius.getAsInt())); }
+            for (JsonElement radius : Json.getJsonArray(json, "areaByTier")) { byTier.add(Math.max(1, radius.getAsInt())); }
         }
         TagKey<Item> items = tag == null ? null : TagKey.create(Registries.ITEM, tag);
-        return new OrderDef(name, job, items, Math.max(1, GsonHelper.getAsInt(json, "area", 16)), List.copyOf(byTier), "self".equalsIgnoreCase(deliver), Math.max(1, GsonHelper.getAsInt(json, "limit", 64)),
-                Math.max(0, GsonHelper.getAsInt(json, "standing", 0)), Math.max(1, GsonHelper.getAsInt(json, "workers", 1)), GsonHelper.getAsInt(json, "priority", 0), takers,
-                GsonHelper.getAsString(json, "sign", "").trim(), Math.max(0.01F, GsonHelper.getAsFloat(json, "speed", 1.0F)), GsonHelper.getAsString(json, "tool", "").trim());
+        return new OrderDef(name, job, items, Math.max(1, Json.getInt(json, "area", 16)), List.copyOf(byTier), "self".equalsIgnoreCase(deliver), Math.max(1, Json.getInt(json, "limit", 64)),
+                Math.max(0, Json.getInt(json, "standing", 0)), Math.max(1, Json.getInt(json, "workers", 1)), Json.getInt(json, "priority", 0), takers,
+                Json.getString(json, "sign", "").trim(), Math.max(0.01F, Json.getFloat(json, "speed", 1.0F)), Json.getString(json, "tool", "").trim());
     }
 
     @Nullable static OrderDef def(String name) { return DEFS.get(name); }

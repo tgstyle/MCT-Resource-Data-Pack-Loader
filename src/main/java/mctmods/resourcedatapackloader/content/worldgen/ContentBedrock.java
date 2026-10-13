@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.TemplateMemo;
@@ -21,7 +22,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.WorldGenLevel;
@@ -68,7 +68,7 @@ public final class ContentBedrock {
             JsonObject flat;
             if (roof) { flat = WorldgenJson.condition(WorldgenJson.yAbove(WorldgenJson.anchor("below_top", layers - 1)), bedrock); }
             else { flat = WorldgenJson.condition(WorldgenJson.not(WorldgenJson.yAbove(WorldgenJson.anchor("above_bottom", layers))), bedrock); }
-            if (filler != null) { flat = WorldgenJson.sequence(List.of(flat, WorldgenJson.condition(GsonHelper.getAsJsonObject(entry, "if_true").deepCopy(), WorldgenJson.block(filler)))); }
+            if (filler != null) { flat = WorldgenJson.sequence(List.of(flat, WorldgenJson.condition(Json.getJsonObject(entry, "if_true").deepCopy(), WorldgenJson.block(filler)))); }
             List<String> biomes = bedrockBiomes();
             if (biomes.isEmpty()) {
                 sequence.set(index, flat);

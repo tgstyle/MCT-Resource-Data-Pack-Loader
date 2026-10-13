@@ -23,7 +23,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -69,24 +68,24 @@ public final class ContentGates {
     @Nullable private static GateDef parse(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
-        String scope = Settings.lower(GsonHelper.getAsString(json, "scope", GateDef.PLAYER));
+        String scope = Settings.lower(Json.getString(json, "scope", GateDef.PLAYER));
         if (!GateDef.PLAYER.equals(scope) && !GateDef.GLOBAL.equals(scope)) {
             ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.PLAYER);
             scope = GateDef.PLAYER;
         }
-        String named = GsonHelper.getAsString(json, "dimension", "").trim();
+        String named = Json.getString(json, "dimension", "").trim();
         ResourceLocation dimension = named.isEmpty() ? null : ResourceLocation.tryParse(ContentFormats.dimensionId(named));
         if (dimension == null) {
             ContentLog.LOGGER.error("Gate {} names dimension '{}', which is not a dimension id, so it guards nothing", key, named);
             return null;
         }
-        JsonObject unlock = GsonHelper.getAsJsonObject(json, "unlock", new JsonObject());
-        return new GateDef(key, dimension, GsonHelper.getAsString(json, "name", key.getPath()), GateDef.GLOBAL.equals(scope), GsonHelper.getAsBoolean(json, "open", false),
-                GsonHelper.getAsString(unlock, "craft", "").trim(), GsonHelper.getAsString(unlock, "consume", "").trim(), Math.max(1, GsonHelper.getAsInt(unlock, "consumeCount", 1)),
-                GsonHelper.getAsString(unlock, "hold", "").trim(), GsonHelper.getAsString(unlock, "advancement", "").trim(), GsonHelper.getAsString(unlock, "killed", "").trim(),
-                Math.max(1, GsonHelper.getAsInt(unlock, "killedCount", 1)), GsonHelper.getAsString(unlock, "killedDrops", "").trim(), Json.strings(json, "portalBlocks"),
-                GsonHelper.getAsString(json, "blockedMessage", "You need %item% to enter %dim%"), GsonHelper.getAsString(json, "unlockedMessage", "%dim% is now open"),
-                GsonHelper.getAsBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
+        JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
+        return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), GateDef.GLOBAL.equals(scope), Json.getBoolean(json, "open", false),
+                Json.getString(unlock, "craft", "").trim(), Json.getString(unlock, "consume", "").trim(), Math.max(1, Json.getInt(unlock, "consumeCount", 1)),
+                Json.getString(unlock, "hold", "").trim(), Json.getString(unlock, "advancement", "").trim(), Json.getString(unlock, "killed", "").trim(),
+                Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Json.strings(json, "portalBlocks"),
+                Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"), Json.getString(json, "unlockedMessage", "%dim% is now open"),
+                Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
     }
 
     public static boolean idle() { return BY_DIMENSION.isEmpty(); }
