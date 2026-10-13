@@ -3227,7 +3227,7 @@ Tout `sun`, `moon`, `bodies` ou `stars` dessine le ciel avec [le moteur de rendu
 | `spawning` | non | booléen | `true` | Si les mobs apparaissent. Désactivé, cela arrête toute apparition, générateurs compris, quoi que dise le groupe `spawning` |
 | `nether` | non | booléen | `false` | Traitée comme le Nether pour les portails et les plafonds |
 | `beds` | non | booléen | `true` | Désactivé, les lits explosent |
-| `waterVaporizes` | non | booléen | `false` | L'eau s'évapore |
+| `waterVaporizes` | non | booléen | `false` | L'eau placée s'évapore : les seaux et les distributeurs produisent de la vapeur au lieu d'eau, la glace cassée ou fondue ne laisse rien, et la lave coule comme dans le Nether. L'eau déjà présente dans le monde ou générée par le terrain reste |
 | `cloudHeight` | non | entier | `128` | Où se trouvent les nuages. Un réglage `cloudHeight` qui nomme cette dimension, ou un réglage sans nom, l'emporte sur cette clé |
 | `cloudColor` | non | couleur hexadécimale | aucun | Teinte des nuages |
 | `cloudSpeed` | non | flottant | `1.0` | À quelle vitesse les nuages dérivent. `0` les immobilise, une valeur négative les fait aller en sens inverse |
