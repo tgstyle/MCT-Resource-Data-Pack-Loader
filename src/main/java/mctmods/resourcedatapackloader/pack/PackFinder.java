@@ -43,8 +43,8 @@ public final class PackFinder implements RepositorySource {
     @Override public void loadPacks(@Nonnull Consumer<Pack> out) {
         ensureScanned();
         PackManager manager = PackManager.get();
-        if (manager.isEmpty()) { return; }
         if (GeneratedResources.holds()) { offerGenerated(out); }
+        if (manager.isEmpty()) { return; }
         if (manager.hasTier(false)) { offer(out, false); }
         if (manager.hasTier(true)) { offer(out, true); }
     }

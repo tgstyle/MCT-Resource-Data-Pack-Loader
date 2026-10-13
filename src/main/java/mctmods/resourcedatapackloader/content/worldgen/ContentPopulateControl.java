@@ -93,7 +93,8 @@ public final class ContentPopulateControl {
         Map<ChunkGenerator, Bound> next = level.dimension() == Level.OVERWORLD ? new IdentityHashMap<>() : new IdentityHashMap<>(bound);
         boolean templated = held.any() && (held.dimensions().isEmpty() || held.dimensions().contains(level.dimension().location().toString()));
         Set<String> options = optionsOff(level);
-        if (templated || !options.isEmpty()) { next.put(level.getChunkSource().getGenerator(), resolve(level, templated ? held : Off.NONE, options)); }
+        Set<PlacedFeature> tuned = ContentOptionFeatures.refused(level);
+        if (templated || !options.isEmpty() || !tuned.isEmpty()) { next.put(level.getChunkSource().getGenerator(), resolve(level, templated ? held : Off.NONE, options, tuned)); }
         bound = next;
     }
 
@@ -110,7 +111,7 @@ public final class ContentPopulateControl {
         return out;
     }
 
-    private static Bound resolve(ServerLevel level, Off held, Set<String> options) {
+    private static Bound resolve(ServerLevel level, Off held, Set<String> options, Set<PlacedFeature> tuned) {
         Set<String> featureNames = new LinkedHashSet<>(held.features());
         Set<String> carverNames = new LinkedHashSet<>(held.carvers());
         Set<String> structureNames = new LinkedHashSet<>(held.structures());
@@ -120,6 +121,7 @@ public final class ContentPopulateControl {
             if (STRUCTURE_SWITCHES.contains(key)) { structureNames.add(key); }
         }
         Set<PlacedFeature> features = Collections.newSetFromMap(new IdentityHashMap<>());
+        features.addAll(tuned);
         Registry<PlacedFeature> placed = level.registryAccess().registryOrThrow(Registries.PLACED_FEATURE);
         for (String path : featureNames) { placed.getOptional(ResourceLocation.withDefaultNamespace(path)).ifPresent(features::add); }
         Set<ConfiguredWorldCarver<?>> carvers = Collections.newSetFromMap(new IdentityHashMap<>());

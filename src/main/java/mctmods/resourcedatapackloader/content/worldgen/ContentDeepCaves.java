@@ -52,7 +52,7 @@ public final class ContentDeepCaves {
         return true;
     }
 
-    public static void deepen(JsonObject settings, ResourceLocation owner, int floor) {
+    static void deepen(JsonObject settings, ResourceLocation owner, int floor, ContentOptionNoise.Shifted shifted) {
         JsonObject router = GsonHelper.getAsJsonObject(settings, "noise_router", null);
         JsonObject noodle = GameData.json(WorldgenFiles.id(FOLDER, ResourceLocation.parse(VANILLA_NOODLE)));
         JsonObject spaghetti = GameData.json(WorldgenFiles.id(FOLDER, ResourceLocation.parse(VANILLA_SPAGHETTI)));
@@ -64,7 +64,7 @@ public final class ContentDeepCaves {
         rewrite(spaghetti, element -> spaghettiFloor(element, floor));
         String noodleId = put(owner, "noodle", noodle);
         String spaghettiId = put(owner, "spaghetti_2d", spaghetti);
-        router.add("final_density", rewrite(router.get("final_density"), element -> deepFloor(element, floor, noodleId, spaghettiId)));
+        router.add("final_density", rewrite(router.get("final_density"), element -> deepFloor(element, floor, shifted, noodleId, spaghettiId)));
         ContentLog.LOGGER.debug("The caves, tunnels and noodles of {} carry on down to {}, closing {} blocks above the floor, with the lava lakes {} blocks above it", owner, floor, SLIDE, LAVA_ABOVE_FLOOR);
     }
 
@@ -105,7 +105,7 @@ public final class ContentDeepCaves {
     }
 
     private static JsonElement spaghettiFloor(JsonElement element, int floor) {
-        JsonObject gradient = gradient(element, ContentWorldShape.VANILLA_MAX);
+        JsonObject gradient = gradient(element, ContentWorldShape.VANILLA_MIN, ContentWorldShape.VANILLA_MAX);
         if (gradient != null) {
             gradient.addProperty("from_y", floor);
             gradient.addProperty("to_y", floor + SPAGHETTI_SPAN);
@@ -113,21 +113,23 @@ public final class ContentDeepCaves {
         return element;
     }
 
-    private static JsonElement deepFloor(JsonElement element, int floor, String noodleId, String spaghettiId) {
-        JsonObject slide = gradient(element, ContentWorldShape.VANILLA_MIN + SLIDE);
+    private static JsonElement deepFloor(JsonElement element, int floor, ContentOptionNoise.Shifted shifted, String noodleId, String spaghettiId) {
+        int lifted = ContentWorldShape.VANILLA_MIN + shifted.offset();
+        JsonObject slide = gradient(element, lifted, lifted + SLIDE);
         if (slide != null) {
             slide.addProperty("from_y", floor);
             slide.addProperty("to_y", floor + SLIDE);
             return element;
         }
-        if (names(element, VANILLA_NOODLE)) { return new JsonPrimitive(noodleId); }
-        if (!names(element, VANILLA_SPAGHETTI)) { return element; }
+        if (names(element, shifted.route(VANILLA_NOODLE))) { return new JsonPrimitive(noodleId); }
+        String spaghetti = shifted.route(VANILLA_SPAGHETTI);
+        if (!names(element, spaghetti)) { return element; }
         JsonObject split = new JsonObject();
         split.addProperty("type", RANGE);
         split.addProperty("input", HEIGHT);
-        split.addProperty("min_inclusive", ContentWorldShape.VANILLA_MIN);
+        split.addProperty("min_inclusive", lifted);
         split.addProperty("max_exclusive", FAR_ABOVE);
-        split.addProperty("when_in_range", VANILLA_SPAGHETTI);
+        split.addProperty("when_in_range", spaghetti);
         split.addProperty("when_out_of_range", spaghettiId);
         return split;
     }
@@ -140,9 +142,9 @@ public final class ContentDeepCaves {
         return names(object.get("type"), type) ? object : null;
     }
 
-    @Nullable private static JsonObject gradient(JsonElement element, int toY) {
+    @Nullable private static JsonObject gradient(JsonElement element, int fromY, int toY) {
         JsonObject gradient = typed(element, GRADIENT);
-        if (gradient == null || GsonHelper.getAsInt(gradient, "from_y", 0) != ContentWorldShape.VANILLA_MIN || GsonHelper.getAsInt(gradient, "to_y", 0) != toY) { return null; }
+        if (gradient == null || GsonHelper.getAsInt(gradient, "from_y", 0) != fromY || GsonHelper.getAsInt(gradient, "to_y", 0) != toY) { return null; }
         return gradient;
     }
 }

@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -21,6 +22,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalInt;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -182,6 +184,23 @@ public final class ContentTerrain {
     public static int worldMinHeight() { return number("worldMinHeight", Config.worldgen.worldMinHeight(), ContentWorldShape.VANILLA_MIN); }
 
     public static int worldMaxHeight() { return number("worldMaxHeight", Config.worldgen.worldMaxHeight(), ContentWorldShape.VANILLA_MAX); }
+
+    public static int terrainOffset() { return number("terrainOffset", Config.worldgen.terrainOffset(), 0); }
+
+    public static OptionalInt optionNumber(JsonObject options, String key) {
+        if (!options.has(key) || !options.get(key).isJsonPrimitive()) { return OptionalInt.empty(); }
+        JsonPrimitive held = options.getAsJsonPrimitive(key);
+        if (held.isNumber() || held.isString()) {
+            try { return OptionalInt.of(held.getAsInt()); }
+            catch (NumberFormatException notANumber) { return notWhole(key, held); }
+        }
+        return notWhole(key, held);
+    }
+
+    private static OptionalInt notWhole(String key, JsonPrimitive held) {
+        ContentLog.LOGGER.error("generatorOptions sets '{}' to {}, which is not a whole number, so it is left out", key, held);
+        return OptionalInt.empty();
+    }
 
     public static String deepStone() { return text("deepStone", Config.worldgen.deepStone()); }
 

@@ -41,6 +41,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.LevelEvent;
@@ -52,6 +53,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 public final class ContentWorldShape {
@@ -87,13 +89,18 @@ public final class ContentWorldShape {
 
     @Nullable public static ResourceLocation presetId() { return presetId; }
 
-    @Nullable public static ResourceLocation serverPreset(String levelType) {
+    @Nullable public static Holder<WorldPreset> serverPreset(String levelType, Function<ResourceLocation, Holder<WorldPreset>> loaded) {
         if (presetId == null) { return null; }
         String named = levelType.trim();
+        Holder<WorldPreset> preset = loaded.apply(presetId);
+        if (preset == null) {
+            ContentLog.LOGGER.error("The packs ship the world preset {} ({}), but it is not in the loaded datapacks, so the world is made from the server's level-type '{}'", presetId, presetName, named);
+            return null;
+        }
         if (named.equals(presetId.toString()) || ContentTerrain.keeps(named)) { return null; }
         ContentLog.LOGGER.info("The server's level-type is '{}', but the packs ship the world preset {} ({}), so the world is made with that; name flat or debug_all_block_states as level-type to keep the game's own", named, presetId, presetName);
         overrode = presetId;
-        return presetId;
+        return preset;
     }
 
     @Nullable static String levelType() {
@@ -110,7 +117,7 @@ public final class ContentWorldShape {
     private record Shape(ResourceLocation id, String name, String[] base, int minY, int maxY, @Nullable String deepStone, int seaLevel, boolean lavaOceans, boolean deepCaves, @Nullable String fixedBiome) {
         boolean tall() { return minY != VANILLA_MIN || maxY != VANILLA_MAX; }
 
-        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || fixedBiome != null; }
+        boolean shapesOverworld() { return tall() || deepStone != null || seaLevel >= 0 || lavaOceans || fixedBiome != null || ContentOptionNoise.shapes() || ContentOptionFeatures.active(); }
 
         boolean flat() { return "flat".equals(base[0]); }
     }
@@ -126,6 +133,7 @@ public final class ContentWorldShape {
         UNVOIDED.clear();
         blockedToVoid = ContentBiomeControl.everythingBlocked();
         Shape shape = shape();
+        ContentOptionOres.generate(ContentTerrain.customizedOptions());
         if (blockedToVoid && !ContentControl.off(ContentControl.VOID)) { ContentLog.LOGGER.info("No biome survived blocking and the world template is void, so the void world dimensions are generated as a void world"); }
         boolean anything = shape.shapesOverworld() || !"normal".equals(shape.base()[0]) || ContentBiomes.placesBiomes(ContentBiomes.OVERWORLD, ContentBiomes.OVERWORLD) || ContentBiomes.placesBiomes(NETHER, NETHER) || ContentOreControl.veinsBlocked(ContentBiomes.OVERWORLD);
         JsonObject dimensions = new JsonObject();
@@ -191,7 +199,7 @@ public final class ContentWorldShape {
             lavaOceans = GsonHelper.getAsBoolean(options, "useLavaOceans", false);
             fixedBiome = options.has("fixedBiome") ? ContentTerrain.shippedBiome(GsonHelper.getAsString(options, "fixedBiome", "-1").trim()) : null;
             for (String key : options.keySet()) {
-                if (!OPTION_KEYS.contains(key) && !ContentPopulateControl.readsOption(key) && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read", key); }
+                if (!OPTION_KEYS.contains(key) && !ContentPopulateControl.readsOption(key) && ContentOptionOres.ignores(key) && ContentOptionNoise.ignores(key) && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read", key); }
             }
         }
         boolean deepCaves = ContentDeepCaves.carves(minY, "The overworld");
@@ -372,7 +380,6 @@ public final class ContentWorldShape {
         JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
-        if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ownId(shape, "overworld"), shape.minY()); }
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }
         if (shape.lavaOceans()) {
             JsonObject lava = new JsonObject();
@@ -382,6 +389,8 @@ public final class ContentWorldShape {
             lava.add("Properties", properties);
             settings.add("default_fluid", lava);
         }
+        ContentOptionNoise.Shifted shifted = ContentOptionNoise.apply(settings, shape.id(), "large_biomes".equals(shape.base()[0]), shape.maxY());
+        if (shape.deepCaves()) { ContentDeepCaves.deepen(settings, ownId(shape, "overworld"), shape.minY(), shifted); }
         if (shape.deepStone() == null) { return; }
         JsonObject gradient = new JsonObject();
         gradient.addProperty("type", "minecraft:vertical_gradient");
@@ -517,7 +526,7 @@ public final class ContentWorldShape {
 
     public static void overworldNoise(ResourceLocation settings) { SHAPED_OVERWORLD_NOISE.add(settings); }
 
-    private static boolean madeHere(ServerLevel level) {
+    static boolean madeHere(ServerLevel level) {
         ResourceKey<?> type = level.dimensionTypeRegistration().unwrapKey().orElse(null);
         if (type != null && MADE.contains(type.location())) { return true; }
         ChunkGenerator generator = level.getChunkSource().getGenerator();

@@ -4,8 +4,10 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSyntaxException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
@@ -27,6 +29,26 @@ public final class Json {
     private Json() {}
 
     public static JsonObject object(JsonObject parent, String key) { return GsonHelper.isObjectNode(parent, key) ? parent.getAsJsonObject(key) : new JsonObject(); }
+
+    public static JsonObject obj(Object... pairs) {
+        JsonObject json = new JsonObject();
+        for (int i = 0; i + 1 < pairs.length; i += 2) { json.add(String.valueOf(pairs[i]), element(pairs[i + 1])); }
+        return json;
+    }
+
+    public static JsonArray arr(Object... values) {
+        JsonArray array = new JsonArray();
+        for (Object value : values) { array.add(element(value)); }
+        return array;
+    }
+
+    private static JsonElement element(Object value) {
+        if (value instanceof JsonElement held) { return held; }
+        if (value instanceof Boolean held) { return new JsonPrimitive(held); }
+        if (value instanceof Number held) { return new JsonPrimitive(held); }
+        if (value instanceof List<?> held) { return arr(held.toArray()); }
+        return new JsonPrimitive(String.valueOf(value));
+    }
 
     @Nullable public static JsonObject object(ResourceLocation key, String contents, String kind) {
         JsonObject json = GSON.fromJson(contents, JsonObject.class);

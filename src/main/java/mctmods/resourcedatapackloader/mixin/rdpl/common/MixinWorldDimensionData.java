@@ -7,7 +7,6 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.levelgen.WorldDimensions;
 import net.minecraft.world.level.levelgen.presets.WorldPreset;
 import org.spongepowered.asm.mixin.Final;
@@ -21,10 +20,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
     @Shadow @Final private String levelType;
 
     @Inject(method = "create", at = @At("HEAD"), cancellable = true) private void rdpl$packPreset(RegistryAccess registryAccess, CallbackInfoReturnable<WorldDimensions> cir) {
-        ResourceLocation wanted = ContentWorldShape.serverPreset(levelType);
-        if (wanted == null) { return; }
         Registry<WorldPreset> registry = registryAccess.registryOrThrow(Registries.WORLD_PRESET);
-        Holder<WorldPreset> holder = registry.getHolder(ResourceKey.create(Registries.WORLD_PRESET, wanted)).orElse(null);
+        Holder<WorldPreset> holder = ContentWorldShape.serverPreset(levelType, id -> registry.getHolder(ResourceKey.create(Registries.WORLD_PRESET, id)).orElse(null));
         if (holder == null) { return; }
         cir.setReturnValue(holder.value().createWorldDimensions());
     }
