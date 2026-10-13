@@ -1,0 +1,7266 @@
+# Resource Data Pack Loader
+
+**Jedna složka, která přepíše cokoli, co poskytuje Minecraft nebo mód, definuje nový obsah z JSONu a řídí, co se generuje, v každém světě, na klientech i serverech, a hráči přitom nemusí nic zapínat.**
+
+Třináct funkčních příkladů. Kterýkoli z nich stačí vložit rovnou do `rdploader` a podívat se, jak je každý soubor napsaný.
+
+- [RDPLExamplePack.zip](../example/RDPLExamplePack.zip) používá téměř každý druh souboru, který loader čte: bloky, předměty, tekutinu, kartu kreativního režimu, biomy, šablonu světa, dimenzi za bránou, worldgen, lektvar a jeho vaření, vesničana a obchody, recepty, kořist, přepisy vanilla věcí, zvuk, pokrok a funkci. Jeho readme říká, co zkontrolovat ve hře.
+- [RDPLExampleOrePackVoid.zip](../example/RDPLExampleOrePackVoid.zip) udělá z Overworldu prázdnotu, v níž worldgen visí ve vzduchu, jeden tvar na každé výškové pásmo, takže je každý dobře vidět zvlášť.
+- [RDPLExampleVeinShapes.zip](../example/RDPLExampleVeinShapes.zip) vloží do obyčejného Overworldu tři rudné žíly, každou s jiným vzorem (prostý, pruhovaný a trubicový), každou s bohatou, běžnou a chudou úrovní a s několika značkovacími bloky na povrchu nad ní, podle kterých se dá prospektovat.
+- [RDPLExampleVeinShapesVoid.zip](../example/RDPLExampleVeinShapesVoid.zip) zavěsí stejné tři vzory žil do prázdnoty, takže je každý tvar vidět celý.
+- [RDPLExampleDeepWorld.zip](../example/RDPLExampleDeepWorld.zip) sníží dno Overworldu na -320, takže pod vanilla světem leží 256 bloků vygenerovaného světa: přechod do hlubinného kamene, andezit mizející z břidlice, jeskyně ze šumu samotné hry vedené až úplně dolů a tři oblasti jeskyní, kterými se dá sestupovat, každá s vlastní výzdobou a atmosférou.
+- [RDPLExampleContainers.zip](../example/RDPLExampleContainers.zip) přidává bloky a nošené předměty s inventářem, ve všech velikostech od tří slotů po největší povolenou, s tabulkou kořisti, modelem truhly obarveným z vanilla listu, každou texturou nakreslenou jako pixelová mapa a váčkem a brašnou, které lze nosit v Curios.
+- [RDPLExampleMegaCity32.zip](../example/RDPLExampleMegaCity32.zip) vytvoří svět typu Dokonalá rovina zcela vyskládaný městskými čtvrtěmi, vyrostlými na tisíc pozemků a připnutými k počátku souřadnic, s betonovými ulicemi, kanalizací pod nimi, dvěma linkami metra pod ní a železnicí vedoucí městem, a s rámovými budovami vysokými až 123 bloků.
+- [RDPLExampleMegaCity64.zip](../example/RDPLExampleMegaCity64.zip) je totéž město se světem zvednutým na 512 a mraky zvednutými na 384, se stromy v ulicích a rámovými věžemi vysokými až 251 bloků na pozemcích širokých 16, 32 a 64. Město nemá okraj: každá čtvrť světa je samostatné město, takže ulice pokračují, kamkoli jdeš.
+- [RDPLExampleCityCustomMap.zip](../example/RDPLExampleCityCustomMap.zip) kreslí totéž město z mapy města místo losování: jedna mřížka znaků po 48 blocích na buňku, s paletou pojmenovávající ulice, náměstí, uličky a vážené výběry budov, takže plán bloků je rozvržený ručně.
+- [MCTKamikazeDemo.zip](../example/MCTKamikazeDemo.zip) postaví proti sobě čtyři frakce v aréně z podloží pod trvalou nocí: každá strana je skutečný vanilla tým scoreboardu, ke kterému se její moby při spawnu připojí, strana získává bod za každého moba jiné strany, kterého zabije, kolo končí kartou po dvou minutách a zápas tvoří tři kola.
+- [RDPLExampleRaid.zip](../example/RDPLExampleRaid.zip) postaví plochý svět kolem jedné z vesnic hry a při připojení dá hráči Zlověstné znamení: pět vln vanilla illagerů, čarodějnici a vlastní nájezdníky, kapitány nájezdu, vrhače seker a ničitele balíčku, znamení a Hrdinu vesnice jako vlastní efekty balíčku s ikonami z pixelových map, vlastní zvon balíčku, nápoj, který znamení vrátí, a funkce, které nájezd ukončí.
+- [RDPLExampleGameHall.zip](../example/RDPLExampleGameHall.zip) udělá z plochého světa herní halu: vážené kostky z balíčku, balíček karet s moby, který se sám zamíchá, a balíček karet osudu, který zůstane prázdný, dokud se nezamíchá, kelímek na kostky, který po kliknutí pravým tlačítkem hodí 2k6, kostkový souboj proti bance hraný po tazích, který rovnost rozhodne losem, a šachy a dámu hrané s moby proti počítači.
+- [RDPLExampleColony.zip](../example/RDPLExampleColony.zip) po zavření úvodu sám postaví pracovní dvůr a zadá vesničanům všechny druhy zakázek: horníka, jehož dosah roste s krumpáčem, dřevorubce, který si nasekané dřevo nechává, farmáře, který udržuje stálou zásobu pšenice, a nosiče, který tahá dlažební kameny; každou zakázku otevírá cedule, nástroj, najmutí nebo zásobní truhla.
+
+Tento průvodce platí pro build 26.x, tedy pro 26.1.2, 26.2 a 26.3; všechny tři čtou stejné balíčky.
+
+---
+
+## Obsah
+
+**Začínáme**
+- [Co to je](#co-to-je)
+- [Kam patří soubory](#kam-patří-soubory)
+- [Čtení tabulek](#čtení-tabulek)
+- [Jediné pravidlo](#jediné-pravidlo)
+- [Organizace balíčků](#organizace-balíčků)
+- [Balíčky zdrojů: který vyhraje](#balíčky-zdrojů-který-vyhraje)
+
+**Jak fungují balíčky**
+- [Jak fungují definice](#jak-fungují-definice)
+- [Co můžeš přepsat](#co-můžeš-přepsat)
+- [Balíčky na straně serveru](#balíčky-na-straně-serveru)
+- [Přejmenování v registru](#přejmenování-v-registru)
+- [Mod API](#mod-api)
+- [Balíčky psané pro 1.12.2](#balíčky-psané-pro-1122)
+
+**Bloky a předměty**
+- [Bloky](#bloky)
+- [Kontejnery](#kontejnery)
+- [Zvony](#zvony)
+- [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury)
+- [Jak donutit vanillu zacházet s tvým blokem správně](#jak-donutit-vanillu-zacházet-s-tvým-blokem-správně)
+- [Předměty](#předměty)
+- [Tekutiny](#tekutiny)
+- [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy)
+- [Přepsání vlastností](#přepsání-vlastností)
+- [Skupiny tvrdosti](#skupiny-tvrdosti)
+
+**Výroba, kořist a obchod**
+- [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
+- [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva)
+- [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření)
+- [Práce s kovadlinou](#práce-s-kovadlinou)
+- [Dropy z bloků](#dropy-z-bloků)
+- [Kořist hráčů](#kořist-hráčů)
+- [Vesničané a obchody](#vesničané-a-obchody)
+
+**Tvorové a nebezpečí**
+- [Varianty entit](#varianty-entit)
+- [Zakázky](#zakázky)
+- [Expozice](#expozice)
+
+**Svět**
+- [Šablony světa](#šablony-světa)
+- [Herní pravidla](#herní-pravidla)
+- [Biomy](#biomy)
+- [Dimenze](#dimenze)
+- [Portály a brány](#portály-a-brány)
+- [Hluboký svět](#hluboký-svět)
+- [Oblasti jeskyní](#oblasti-jeskyní)
+
+**Generování světa**
+- [Položky worldgenu](#položky-worldgenu)
+- [Tvary](#tvary)
+- [Rozptyly](#rozptyly)
+- [Mapy struktur](#mapy-struktur)
+- [Pozemky vesnic](#pozemky-vesnic)
+- [Mapy rozložení měst](#mapy-rozložení-měst)
+- [Souvislé město](#souvislé-město)
+- [Retrogen](#retrogen)
+- [Předgenerování](#předgenerování)
+
+**Herní režimy**
+- [Úvod do světa](#úvod-do-světa)
+- [Týmy](#týmy)
+- [Bodování](#bodování)
+- [Nájezdy](#nájezdy)
+- [Karty](#karty)
+- [Kostky a balíčky karet](#kostky-a-balíčky-karet)
+
+**Ovládání**
+- [Vrstva ovládání](#vrstva-ovládání)
+- [Co dělá která skupina](#co-dělá-která-skupina)
+
+**Další módy**
+- [Integrace Blast Plaster](#integrace-blast-plaster)
+
+**Reference**
+- [Seznamy hodnot](#seznamy-hodnot)
+- [Seznam složek](#seznam-složek)
+- [Příkazy](#příkazy)
+- [Dobré vědět](#dobré-vědět)
+- [Když něco nefunguje](#když-něco-nefunguje)
+- [Bonus: úpravy vanilla hry](#bonus-úpravy-vanilla-hry)
+- [Klíče, které se nepřenesly](#klíče-které-se-nepřenesly)
+
+---
+
+# Začínáme
+
+## Co to je
+
+*začínáme*
+
+Resource Data Pack Loader (RDPL) čte jedinou složku, `rdploader`, a dělá tři věci:
+
+- **Přepisy.** Soubor ve složce nahradí ten, který by načetla hra nebo mód. Žádný přepínač, žádné nastavení pro jednotlivé světy, nic, co by hráči museli zapínat.
+- **Nový obsah.** Definice v JSONu registrují bloky, předměty, tekutiny, biomy, dimenze, lektvary a vesničany. Žádná Java, žádný jar.
+- **Ovládání.** Zablokuj generování rud, biomů, struktur nebo receptů, zploštěj podloží, nastav míru spawnu, vyprázdni Overworld, nastav výchozí hodnoty světa.
+
+## Kam patří soubory
+
+*začínáme*
+
+Balíček má dva kořeny, stejné dva jako vanilla balíček. `assets/` obsahuje to, co klient kreslí a slyší: modely, blockstaty, textury, jazykové soubory, zvuky a texty úvodu. `data/` obsahuje všechno ostatní: každou definici, kterou tento mód čte, a vanilla datové soubory, které balíček nahrazuje. Každá cesta v tomto průvodci je psána od namespace dál, takže `<namespace>/blocks/*.json` je na disku `data/mypack/blocks/ruby_ore.json` pro balíček s namespace `mypack` a `<namespace>/models/` je `assets/mypack/models/`. Každá sekce uvádí svou cestu znovu pod nadpisem.
+
+V `data/`:
+
+| Cesta | Co obsahuje |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `<namespace>/blocks/*.json` | Definice bloků. [Bloky](#bloky) |
+| `<namespace>/items/*.json` | Definice předmětů. [Předměty](#předměty) |
+| `<namespace>/fluids/*.json` | Tekutiny s blokem a kbelíkem. [Tekutiny](#tekutiny) |
+| `<namespace>/materials/*.json` | Materiály nástrojů a zbroje. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy) |
+| `<namespace>/tabs/*.json` | Karty kreativního režimu. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy) |
+| `<namespace>/sounds/*.json` | Zvukové události. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy) |
+| `<namespace>/biomes/*.json` | Definice biomů. [Biomy](#biomy) |
+| `<namespace>/worldgen/*.json` | Co se generuje a kde. [Položky worldgenu](#položky-worldgenu) |
+| `<namespace>/caveregions/*.json` | Pojmenované oblasti rozprostřené po podzemí. [Oblasti jeskyní](#oblasti-jeskyní) |
+| `<namespace>/dimensions/*.json` | Definice dimenzí. [Dimenze](#dimenze) |
+| `<namespace>/worldtemplates/*.json` | Nastavení celého světa v jednom souboru. [Šablony světa](#šablony-světa) |
+| `<namespace>/worldintro/*.json` | Stránky zobrazené, když hráč vstoupí do světa. [Úvod do světa](#úvod-do-světa) |
+| `<namespace>/gates/*.json` | Podmínky pro portály a dimenze. [Portály a brány](#portály-a-brány) |
+| `<namespace>/gamerules/*.json` | Herní pravidla pro nové světy. [Herní pravidla](#herní-pravidla) |
+| `<namespace>/teams/*.json` | Strany ve vanilla scoreboardu a to, co se k nim připojuje. [Týmy](#týmy) |
+| `<namespace>/scoring/*.json` | Cíle, body a způsob, jak zápas končí. [Bodování](#bodování) |
+| `<namespace>/raids/*.json` | Vlny, které přijdou na vesnici, když do ní hráč přinese znamení. [Nájezdy](#nájezdy) |
+| `<namespace>/entities/*.json` | Varianty entit postavené na již existujících entitách. [Varianty entit](#varianty-entit) |
+| `<namespace>/hardness/*.json` | Doba těžby a násobitele výbuchu pro skupiny bloků. [Skupiny tvrdosti](#skupiny-tvrdosti) |
+| `<namespace>/anvils/*.json` | Kouzla, která kovadlina dá pojmenovanému předmětu, pokrok, který tím hráč získá, a zámek do té doby. [Práce s kovadlinou](#práce-s-kovadlinou) |
+| `<namespace>/cards/*.json` | Karty na obrazovce zobrazené při spouštěči a zprávy, které říká sám tento mód. [Karty](#karty) |
+| `<namespace>/dice/*.json` | Kostky balíčku s váženými stěnami, balíčky karet, kdo uslyší hod a znění výsledků. [Kostky a balíčky karet](#kostky-a-balíčky-karet) |
+| `<namespace>/games/*.json` | Deskové hry hrané s moby jako figurkami: deska, figurky a jak se pohybují, a co výsledek vyplatí. [Deskové hry](#deskové-hry) |
+| `<namespace>/orders/*.json` | Práce, které varianty entit vykonávají pro hráče u truhly. [Zakázky](#zakázky) |
+| `<namespace>/exposures/*.json` | Nebezpečí, která ohrožují hráče poblíž pojmenovaných bloků, nesoucí pojmenované předměty nebo v pojmenovaných dimenzích. [Expozice](#expozice) |
+| `<namespace>/overrides/<target>/<name>.json` | Vlastnosti existujících bloků, předmětů a typů lektvarů, změněné na místě. [Přepsání vlastností](#přepsání-vlastností) |
+| `<namespace>/villages/*.json` | Pozemky, které může město nebo vesnice postavit. [Pozemky vesnic](#pozemky-vesnic) |
+| `<namespace>/pathintersects/*.json` | Vzory umístěné tam, kde se setkávají vesnické cesty. [Cesty vesnic](#cesty-vesnic) |
+| `<namespace>/structuremaps/*.json` | Šablony složené do jedné velké budovy na mřížce. [Mapy struktur](#mapy-struktur) |
+| `<namespace>/citymaps/*.json` | Nakreslený plán ulic, podle něhož se město rozloží místo losování. [Mapy rozložení měst](#mapy-rozložení-měst) |
+| `<namespace>/portalframes/*.json` | Rámy, které může hráč postavit a zapálit. [Rámy portálů](#rámy-portálů) |
+| `<namespace>/blastplaster/*.json` | Co Blast Plaster udělá po výbuchu, podle dimenze. [Integrace Blast Plaster](#integrace-blast-plaster) |
+| `<namespace>/structures/*.nbt` | Šablony pro sazenice, `imprint` a přepisy módů. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/recipes/*.json` | Výrobní recepty, přidané nebo nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/recipe_removals/*.json` | Recepty smazané podle názvu, namespace nebo výstupu. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/disabled/*.json` | Bloky a předměty vyřazené ze hry. [Zakázané bloky a předměty](#zakázané-bloky-a-předměty) |
+| `<namespace>/furnace/*.json` | Přidané a odebrané recepty pro pec. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva) |
+| `<namespace>/fuels/*.json` | Doby hoření. [Recepty pro pec a paliva](#recepty-pro-pec-a-paliva) |
+| `<namespace>/brewing/*.json` | Recepty pro varný stojan. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření) |
+| `<namespace>/potions/*.json` | Efekty lektvarů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření) |
+| `<namespace>/potion_types/*.json` | Lahvové lektvary sestavené z těchto efektů. [Lektvary, typy lektvarů a vaření](#lektvary-typy-lektvarů-a-vaření) |
+| `<namespace>/villagers/*.json` | Povolání vesničanů. [Vesničané a obchody](#vesničané-a-obchody) |
+| `<namespace>/trades/*.json` | Co povolání kupují a prodávají. [Vesničané a obchody](#vesničané-a-obchody) |
+| `<namespace>/loot_tables/*.json` | Tabulky kořisti, nahrazené. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/loot_injections/*.json` | Pool přidaný do již existující tabulky. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/block_drops/*.json` | Doplňkové nebo náhradní dropy pro bloky, které balíček nevlastní. [Dropy z bloků](#dropy-z-bloků) |
+| `<namespace>/player_loot/*.json` | Tabulka kořisti losovaná, když hráč zemře. [Kořist hráčů](#kořist-hráčů) |
+| `<namespace>/advancements/*.json` | Pokroky. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/functions/*.mcfunction` | Soubory funkcí. [Co můžeš přepsat](#co-můžeš-přepsat) |
+| `<namespace>/tags/<kind>/*.json` | Tagy, ve vlastním formátu hry. [Materiály, karty, zvuky, tagy](#materiály-karty-zvuky-tagy) |
+| `<namespace>/registry_remap/*.json` | Staré názvy přiřazené novým. [Přejmenování v registru](#přejmenování-v-registru) |
+
+V `assets/`:
+
+| Cesta | Co obsahuje |
+| ----------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `<namespace>/models/`, `<namespace>/blockstates/`, `<namespace>/textures/`, `<namespace>/lang/` | Obvyklé složky assetů. [Modely, stavy bloků a textury](#modely-stavy-bloků-a-textury) |
+| `<namespace>/sounds.json` | Index zvuků, který hra čte, vedle definic `sounds/` pod `data/` |
+| `<namespace>/texts/*.txt` | Prosté textové soubory, používané úvodem do světa. [Úvod do světa](#úvod-do-světa) |
+
+**1.21.1** pojmenovává vanilla datové složky v jednotném čísle: `loot_table/`, `recipe/`, `advancement/`, `function/`, `structure/`, `tags/item/`, `tags/block/`. Balíček může použít kterýkoli zápis; názvy v množném čísle výše se čtou jako jejich jednotné dvojice, takže jeden balíček obsluhuje obě verze.
+
+## Čtení tabulek
+
+*začínáme*
+
+Každý soubor je standardní JSON. Typická položka worldgenu:
+
+```json
+{
+  "blocks": [
+    { "block": "minecraft:magenta_wool", "weight": 80 },
+    { "block": "mypack:ruby_ore", "weight": 20 }
+  ],
+  "size": { "min": 4, "max": 12 },
+  "attempts": 12,
+  "maxTemperature": 0.5,
+  "sparse": true,
+  "replace": ["minecraft:stone", "minecraft:andesite"],
+  "dimensions": ["minecraft:overworld", "minecraft:the_nether"]
+}
+```
+
+Tabulky klíčů v tomto dokumentu uvádějí, zda je klíč povinný, co obsahuje a jaká je výchozí hodnota, když chybí. Nerozpoznané hodnoty se zapíšou do logu a nahradí se výchozí hodnotou, hru nezhroutí. Typy hodnot používané všude:
+
+| Když tabulka říká | Napíšeš |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| celé číslo | `8` |
+| celé číslo, ticky | `100` (20 ticků = 1 sekunda) |
+| celé číslo nebo rozsah | `8`, nebo `{ "min": 4, "max": 12 }` pro losování mezi nimi |
+| 0 až 15, 1 až 100 a podobně | celé číslo v těchto mezích |
+| desetinné číslo | `0.5` |
+| boolean | `true` nebo `false` |
+| řetězec | `"slova v uvozovkách"` |
+| název bloku, název předmětu | `"minecraft:stone"`. Stav bloku je název s `properties` vedle něj: `{ "block": "minecraft:oak_log", "properties": { "axis": "x" } }` |
+| `namespace:name` | `"mypack:ruby_ore"` |
+| název biomu, název zvuku, název karty | stejný tvar `namespace:name` v uvozovkách |
+| id dimenze | `"minecraft:overworld"`, `"minecraft:the_nether"`, `"minecraft:the_end"` nebo vlastní `"mypack:verdant"` balíčku. Čísla `0`, `-1` a `1` z 1.12.2 se stále berou jako tyto tři |
+| hexadecimální barva | šest hexadecimálních číslic, `"A0C8FF"`, `#` volitelné |
+| cesta k textuře | `"mypack:block/ruby_ore"` |
+| seznam celých čísel | `[4, 12]` |
+| seznam názvů bloků | `["minecraft:stone", "minecraft:andesite"]` |
+| seznam názvů biomů | `["minecraft:windswept_hills", "mypack:ruby_hills"]` |
+| seznam typů biomů | `["mountain", "forest"]`, slova typů uvedená v [Seznamy hodnot](#seznamy-hodnot), každé zastupuje tag biomu |
+| seznam id módů nebo namespace balíčků | `["quark", "mypack"]` |
+| seznam objektů | `[{ "potion": "minecraft:strength", "amplifier": 1 }]`, klíče podle tabulky daného objektu |
+| objekt | `{ "type": "cluster" }`, klíče podle jeho vlastní tabulky |
+| objekt role na biom, názvu varianty na variantu | klíče jsou to první, hodnoty to druhé: `{ "ocean": "mypack:ruby_ocean" }` |
+
+Většina definic také přijímá `requires`, seznam id módů nebo namespace balíčků, které musí být přítomné, jinak se soubor přeskočí.
+
+## Jediné pravidlo
+
+*začínáme*
+
+Otevři jar, najdi soubor, který chceš změnit, a zkopíruj jeho cestu od `assets` nebo `data` dál:
+
+```
+assets/minecraft/textures/block/iron_ore.png                 (v jaru Minecraftu)
+rdploader/assets/minecraft/textures/block/iron_ore.png       (tvůj přepis)
+
+data/minecraft/loot_tables/blocks/iron_ore.json              (v jaru Minecraftu)
+rdploader/data/minecraft/loot_tables/blocks/iron_ore.json    (tvůj přepis)
+```
+
+Cesta za `assets` nebo `data` je vždy shodná s cestou uvnitř jaru. Nic se nepřejmenovává ani nepřesouvá.
+
+## Organizace balíčků
+
+*začínáme*
+
+Volné soubory fungují pod `rdploader/assets/<namespace>/` a `rdploader/data/<namespace>/`. Seskupování funguje také, jako zip. Složka v `rdploader` nikdy není balíček: přeskočí se s varováním v logu, takže balíček zabal do zipu, než ho tam dáš. Při zipování vyber obsah a zabal ten, ne složku, která ho drží: zip, jehož nejvyšší úroveň je jedna složka obalující `assets` nebo `data`, se přeskočí a log to oznámí.
+
+```
+rdploader/assets/minecraft/textures/block/iron_ore.png
+rdploader/MyTextures.zip
+```
+
+**Balíčky ve špatné složce.** Při spuštění, před čtením `rdploader`, RDPL projde složku `resourcepacks` hry a složku `datapacks` každého světa (na dedikovaném serveru svět, který pojmenovává `level-name`) a každý zip balíčku RDPL, který najde, přesune do `rdploader`. Zip je balíček RDPL, když obsahuje definiční soubory RDPL, například `data/<namespace>/blocks/` nebo, z balíčku pro 1.12.2, `assets/<namespace>/blocks/`. Obyčejný balíček zdrojů nebo datový balíček zůstane, kde je. Zip, jehož název už `rdploader` obsahuje, zůstane na místě, stejně jako balíček RDPL ve složce; oba dostanou varování. Každý přesun se zapíše do `logs/rdpl.log`. Hra přesunutý balíček sama odebere ze seznamu balíčků zdrojů nebo z datových balíčků světa a RDPL ho odtud od té chvíle načítá z `rdploader`.
+
+**Priorita.** Když dva balíčky obsahují stejný soubor, přidej před názvy předponu `RDPL` a číslo; vyšší čísla se načítají později a vyhrávají:
+
+```
+rdploader/RDPL0 BaseTextures.zip
+rdploader/RDPL1 SeasonalTextures.zip
+rdploader/RDPL9 ModFixes.zip
+```
+
+Na velikosti písmen nezáleží; mezera, pomlčka nebo podtržítko za číslem je volitelné; předpona se v zobrazovaném názvu skrývá. Balíček bez předpony se načte první a prohraje s kterýmkoli číslovaným balíčkem. Priorita také řadí položky worldgenu, což je důležité, když jeden balíček pokládá bloky, které jiný nahrazuje.
+
+**Vypnutí balíčku** provedeš připojením `.disabled` k jeho názvu.
+
+**Jeden zip pro každou verzi.** Zip může nést složku `versions/<version>/` pro každou verzi Minecraftu, kterou obsluhuje: `versions/1.12.2/`, `versions/1.20.1/`, `versions/1.21.1/` a na 26.x přesnou verzi, na které běží, `versions/26.1.2/`, `versions/26.2/` nebo `versions/26.3/`. Každá je uspořádána jako kořen balíčku pro danou verzi, včetně `pack.mcmeta`. Soubor ve složce běžící verze se čte místo téže cesty v kořeni; kořen sdílí všechny verze a složka jiné verze se nikdy nečte. Dej do kořene to, co všechny verze čtou stejně, a do složky verze jen to, co se liší, a jeden zip se načte na všech čtyřech.
+
+**Balíčky se převádějí mezi verzemi.** Načtení balíčku napsaného pro jinou řadu ho při prvním načtení převede stejným způsobem a zapíše, co se změnilo, do jeho vlastní složky `versions/<version>/`, jak je uvedeno výše; děje se to automaticky při načtení, včetně načtení, které spustí `/rdpl reload` nebo `/rdplserver reload`, nikdy vlastním příkazem. Každá dvojice verzí se převádí oběma směry, takže balíček pro 1.12.2, 1.20.1, 1.21.1 nebo 26.x se načte na kterékoli z ostatních. Balíček pro 26.3 se načte i na každé řadě, na starších se čte přes formát 26.2, a starší balíček se načte na 26.3. Co jedna strana má a druhá neumí pojmout, se zahodí a log každé zahození jmenuje: při převodu z 26.3 dolů mimo jiné ladicí funkce hustoty, vlastní vyloučení a úroveň povrchu akvifer v balíčku a příkazy, které 26.2 nemá; při převodu nahoru na 26.3 `depth` a `offset` spawn targetu a klíče žil rudy v noise routeru. [Klíče, které se nepřenesly](#klíče-které-se-nepřenesly) je uvádí všechny.
+
+`pack.mcmeta` v kořeni zipu je vítaný, ale není potřeba: mód předkládá hře každý balíček pod jedním vlastním záznamem, s formátem balíčku, který hra očekává, takže balíček nikdy nezastará kvůli číslu formátu. Dej vedle něj `pack.png`, aby záznam složky dostal ikonu. Bez ní záznam ukazuje ikonu RDPL.
+
+## Balíčky zdrojů: který vyhraje
+
+*začínáme*
+
+Ve výchozím stavu soubory RDPL stojí nad balíčky zdrojů, které hráč vybere, takže je balíček zdrojů nemůže přepsat. Přidej za předponu `RDPL` písmeno `O` nebo `N` a rozhodni to pro každý balíček zvlášť:
+
+```
+rdploader/RDPLO Branding        vždy vyhrává; balíčky zdrojů se ho nemohou dotknout
+rdploader/RDPLN BaseTextures    balíček zdrojů ho může přepsat
+rdploader/RDPL1O Seasonal       priorita a přepis dohromady
+```
+
+Balíčky bez písmene se řídí volbou konfigurace `overrideResourcePacks`. `/rdpl list` označí balíčky, které přepisují. Písmeno musí ukončovat předponu (následuje mezera, pomlčka, podtržítko nebo nic), takže `RDPLOverhaul` je balíček pojmenovaný `Overhaul`, ne příznak `O`.
+
+Stejné úrovně platí pro datové balíčky. Balíček označený `N` leží pod datovými balíčky, které svět nese ve vlastní složce `datapacks`, a ten označený `O` leží nad nimi.
+
+---
+
+# Jak fungují balíčky
+
+## Jak fungují definice
+
+*jak fungují balíčky*
+
+Vedle složek, které přepisují soubory, existují složky, které popisují nové věci. Definiční soubor seskupuje jednu nebo více věcí jednoho druhu pod `variants` a každý klíč uvnitř `variants` je název v registru: `data/mypack/blocks/ore.json` s variantou zvanou `ruby_ore` zaregistruje `mypack:ruby_ore`. Název samotného souboru je jen seskupení a nic víc; jeden soubor může držet jeden blok nebo tucet, které sdílejí nastavení.
+
+Registrace probíhá s nejnižší prioritou, kterou loader nabízí, takže když skutečný mód zaregistruje stejný název, vyhraje mód a tvůj soubor se ignoruje. Nic zde nemůže mód nahradit.
+
+**Kde je hranice.** Cokoli, co potřebuje vlastní blokový objekt, obrazovku, inventář nebo vlastní logiku na každý tik, potřebuje skutečný mód, s jedinou výjimkou: typ [kontejner](#kontejnery), který nese inventář a vlastní obrazovku. Všechno, co je méně než to, je povolené.
+
+### Tvůj namespace je tvůj mód
+
+*jak fungují definice*
+
+Namespace, který zvolíš, je ze všech praktických hledisek id módu. Nic se nenačítá jako mód a v seznamu módů se nikdy neobjeví, ale všechno, co čte id módu, čte i to tvoje:
+
+- Názvy v registru jsou `mypack:ruby_ore`, přesně jako u módu, a zapisují se do každého uloženého světa, který je obsahuje.
+- Whitelisty rud, biomů a receptů v konfiguraci se podle něj řídí, takže `oreWhitelist = mypack` ponechá tvou rudu a bloky všech ostatních.
+- `/rdpl which`, `/rdplserver oregen` a reporty podle něj všechno seskupují.
+- JEI, tagy a vyhledávání jiných módů ho vidí stejným způsobem.
+
+Zvol tedy jeden název hned na začátku a nikdy ho neměň. Přejmenování namespace osiří všechno, co už je ve světě umístěné, stejně jako když mód změní své id; k nápravě existuje `registry_remap`.
+
+Funguje to oběma směry: `requires` přijímá namespace balíčku stejně ochotně jako id nainstalovaného módu, takže jeden balíček může záviset na jiném a přeskočit se, když není nainstalovaný.
+
+Mód nebo balíček pojmenovaný v `requires`, který není nainstalovaný, definici přeskočí: do `logs/rdpl.log` jde jeden řádek jmenující, co chybělo, a hra pokračuje. Pokud blok, který čekáš, není na kartě kreativního režimu, tento řádek logu je první místo, kam se podívat.
+
+`requires` přijímá jen holá id. Žádná syntaxe rozsahu verzí neexistuje, takže může říct, že mód musí být přítomný, ale ne jaká verze.
+
+Vlastní id módu, `resourcedatapackloader`, je rezervované. Definování obsahu pod ním se ignoruje a zapíše do logu, protože by si nárokovalo vlastnictví věcí, které tento mód registruje. Přepisování vlastních assetů tohoto módu je stále v pořádku, jen registrace obsahu tam ne.
+
+Každá tabulka níže se řídí konvencemi v [Čtení tabulek](#čtení-tabulek).
+
+Většina definic také přijímá `requires`, seznam id módů nebo namespace balíčků, které musí být přítomné, jinak se soubor přeskočí.
+
+### Možnosti balíčku
+
+*jak fungují definice*
+
+Každý klíč, který soubor voleb přijímá:
+
+```json
+{
+  "hide": false,
+  "enableTestingContent": true,
+  "enableLoserBlocks": {
+    "default": false,
+    "hide": true,
+    "description": "Registers the loser blocks"
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------------- | -------- | --------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| název volby | ano | boolean nebo objekt | | `true` nebo `false` je výchozí hodnota volby. Objekt nese tři klíče níže |
+| `hide` na nejvyšší úrovni | ne | boolean | `false` | Úplně vyřadí volby tohoto balíčku z obrazovky voleb i z generovaného souboru, zatímco dál řídí obsah podle svých výchozích hodnot |
+| `default` | ano | boolean | | Hodnota volby, dokud ji uživatel nezmění. Objekt bez booleanu `default` se ignoruje a vypíše se varování |
+| `hide` uvnitř volby | ne | boolean | `false` | Skryje tu jednu volbu, takže ji nelze přepnout a zůstane na výchozí hodnotě |
+| `description` | ne | řetězec | žádný | Zobrazí se pod názvem volby na obrazovce voleb |
+
+Balíček může nést složku `config` vedle svých `assets` a `data`, která obsahuje soubory JSON s volbami ano/ne a jejich výchozími hodnotami:
+
+    PackA.zip/config/options.json
+    { "enableTestingContent": true, "enableLoserBlocks": false }
+
+Soubor s `"hide": true` na nejvyšší úrovni úplně vyřadí volby daného balíčku z obrazovky voleb a z generovaného souboru, zatímco volby dál řídí obsah podle svých výchozích hodnot. Hodí se to ve dvou případech: pro obsah, který ještě není připravený k vydání, a pro šablonové balíčky, kde jsou volby mechanikou držící definice pohromadě, ne volbou, kterou by měl kdokoli dělat. K jejich zveřejnění klíč odstraň. Totéž funguje pro jednotlivé volby: `"hide": true` uvnitř objektu volby skryje jen tu jednu, takže hotový balíček může nést přepínač pro nedokončený obsah nebo šablonovou bránu, aniž by se kterýkoli zobrazil:
+
+    { "enablePackB": { "default": false, "hide": true } }
+
+Protože skrytou volbu nelze přepnout, ta skrytá s výchozí hodnotou true je prakticky vynucená jako zapnutá, pro obsah, který musí zůstat napojený přes mechaniku voleb, ale není volbou.
+
+Volba může být také objekt s popisem, zobrazeným pod jejím názvem na obrazovce voleb:
+
+    { "enableTestingContent": { "default": true, "description": "Zaregistruje testovací bloky a předměty" } }
+
+Při spuštění se soubory voleb balíčku stanou jedním skutečným konfiguračním souborem, který vlastní uživatel, pojmenovaným podle balíčku, `rdploader/config/PackA.json`, vytvořeným s výchozími hodnotami balíčku a sloučeným při aktualizacích balíčku, takže nové volby dorazí, aniž by se sáhlo na to, co uživatel už nastavil. Změny se projeví při dalším spuštění hry a tlačítko Pack Options na obrazovce výběru světa a vytváření světa je místo, kde je hráč přepíná. Volby patří jen pojmenovaným balíčkům, tedy zipům, protože vygenerovaný soubor je pojmenován podle balíčku; volné soubory pod `rdploader/assets` a `rdploader/data` nemají název balíčku a nenesou žádné volby, takže pokud potřebují přepínač, zabal volný obsah do pojmenovaného balíčku.
+
+`requires` kterékoli definice pak může pojmenovat volbu položkou `config:`: `"requires": ["config:enableTestingContent"]` zaregistruje tento obsah jen tehdy, když je volba true, přesně jako by ho přeskočil chybějící mód. Holý název zkontroluje soubor každého balíčku a všechny balíčky, které ho definují, se musí shodnout; `"config:PackA:enableTestingContent"` pojmenuje jeden balíček. Volba, kterou nedefinuje žádný balíček, se počítá jako false a jednou se na ni upozorní.
+
+Volba, která podmiňuje něco, s čím byl svět vytvořen, si svět pamatuje, zapsanou znovu při každém uložení světa. Změň ji a otevři svět znovu, a když změna zanechá obsah, který svět drží, nezaregistrovaný, svět se nejdřív zálohuje do složky `backups` samotné hry, přesně jako to dělá obrazovka Edit World; pokud záloha selže, svět se neotevře. První hráč v Overworldu se dozví, které volby se změnily, a že byla vytvořena kopie, když byla.
+
+Položka `file:` podmiňuje existenci souboru nebo složky ve složce hry, pro navázání obsahu na něco mimo vlastní balíčky RDPL, například balíček zdrojů jiného módu: `"requires": ["file:config/StarMaker/resources/0_jackspace2_celestialpack.zip"]` zaregistruje obsah jen tehdy, když je přesně tento soubor nainstalovaný. Cesta je relativní ke složce hry, vždy s lomítky dopředu, a nesmí obsahovat `..`.
+
+### Dědění definic
+
+*jak fungují definice*
+
+Definice bloku nebo předmětu může začít od jiné téhož druhu pomocí `"inherits"`, který pojmenuje registrační název kterékoli varianty, a pak přepsat, co se liší:
+
+    { "inherits": "mypack:ruby_ore",
+      "variants": { "sapphire_ore": { "hardness": 4.0 } } }
+
+Potomek zkopíruje všechny staty rodičovského souboru a pojmenované varianty, na pořadí souborů nikdy nezáleží, řetězce se řeší od rodiče a kruh nebo chybějící rodič se zapíše do logu a potomek zůstane tak, jak je napsaný. Pole, která potomek napíše, nahradí zděděnou hodnotu; vnořené vlastnosti variant se přepisují po jedné, ale seznamy jako `requires` se nahrazují celé, takže napiš celý požadovaný seznam. Bloky dědí jen z bloků a předměty jen z předmětů.
+
+### Šablony bloků a předmětů
+
+*jak fungují definice*
+
+Rodič může být čistá šablona, která nikdy nevstoupí do hry, protože dědění čte samotné soubory definic, ne to, co se zaregistrovalo. Podmiň šablonu skrytou volbou, která je vynuceně vypnutá, a nezaregistruje nic, zatímco její staty zůstanou dostupné pro dědění:
+
+`config/options.json`
+
+```json
+{
+  "templates": { "default": false, "hide": true, "description": "Never on, parents only" }
+}
+```
+
+`data/jacksmod/blocks/ore_template.json`
+
+```json
+{
+  "type": "ore",
+  "material": "rock",
+  "soundType": "stone",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "creativeTab": "jacksmod:tab",
+  "expDrop": { "min": 2, "max": 5 },
+  "requires": ["config:templates"],
+  "variants": {
+    "ore_template": { "hardness": 3.0, "resistance": 5.0 }
+  }
+}
+```
+
+`data/jacksmod/blocks/jacks_ore.json`
+
+```json
+{
+  "inherits": "jacksmod:ore_template",
+  "requires": [],
+  "variants": {
+    "jacks_ore": { "hardness": 4.0 }
+  }
+}
+```
+
+Šablona se nikdy nezaregistruje, zatímco `jacks_ore` se zaregistruje s materiálem, zvukem, nástrojem, kartou, dropy zkušeností a odolností šablony a přepíše jen tvrdost. Potomek musí napsat vlastní `requires`, zde vymazaný na prázdný seznam, protože jinak zdědí rodičův a zmizel by s ním.
+
+## Co můžeš přepsat
+
+*jak fungují balíčky*
+
+- **Cokoli ve složce assets módu**, textury, modely, stavy bloků, jazykové soubory, zvuky, fonty, úvodní hlášky, knihy průvodců, příručky
+- **Pokroky, tabulky kořisti, tagy a funkce**, na straně serveru, takže fungují i na dedikovaných serverech
+- **Recepty**, nahraď recept módu nebo přidej vlastní
+- **Šablony struktur**, soubory `.nbt`, které módy používají pro generované budovy, pod `<namespace>/structures/`
+- **Přejmenování v registru**, udrží staré světy funkční, když mód přejmenuje blok nebo předmět
+- **Odebrání receptů**, smaž recept na výrobu podle názvu, namespace nebo výstupu
+- **Zakázané bloky a předměty**, vyřaď ze hry libovolný blok nebo předmět, viz [Zakázané bloky a předměty](#zakázané-bloky-a-předměty)
+- **Vstřiky kořisti**, přidej pool do tabulky kořisti místo nahrazení celé
+- **Dropy z bloků**, přidej k tomu, co libovolný blok dropne při rozbití, nebo to nahraď, včetně zkušeností
+- **Kořist hráčů**, losuj tabulku kořisti, když hráč zemře, navíc k tomu, co nesl, nebo místo toho
+- **Vlastnosti existujících bloků, předmětů a lektvarů**, tvrdost, světlo, velikosti stacků, jídlo na čemkoli, efekty lektvaru, viz [Přepsání vlastností](#přepsání-vlastností)
+- **Recepty pro pec, doby hoření paliv, karty kreativního režimu a zvukové události**
+
+To, co blok dropne, je na této verzi jeho tabulka kořisti: chceš-li změnit, co dropne kámen, přilož `data/minecraft/loot_tables/blocks/stone.json`, a chceš-li k tomu přidat, aniž bys ji nahradil, použij vstřik kořisti nebo pravidlo [dropů z bloků](#dropy-z-bloků), které umí dát i zkušenosti.
+
+RDPL se hodí k nahrazení jednoho nebo dvou receptů a recepty pro vlastní obsah se mají přidávat v balíčku vedle něj. Pro plnou kontrolu nad recepty napříč modpackem jsou lepší volbou KubeJS a CraftTweaker a soubor zde stále nahrazuje originál celý, takže na změnu jedné ingredience nebo odebrání jedné položky kořisti použij je.
+
+## Balíčky na straně serveru
+
+*jak fungují balíčky*
+
+Balíček může žít jen na serveru, s hráči na čistých vanilla klientech, za jediné podmínky: **nic v něm nesmí nic registrovat**. Mód přijme jakéhokoli protějška; rozhoduje balíček. Vanilla klient hraje s registry, s nimiž byl dodán, takže balíček, který do nich přidává, musí být na obou stranách.
+
+| Stačí jen server | Potřebuje balíček i na klientovi |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `worldgen`, `worldtemplates`, `gamerules`, `structures`, `structuremaps`, `citymaps`, `villages`, `pathintersects`, `caveregions`, `biomes`, `dimensions` | `blocks`, `items`, `fluids`, `materials`, `containers` |
+| `recipes`, `recipe_removals`, `furnace`, `fuels`, `brewing`, `anvils`, `tags`, `disabled` | `potions`, `potion_types`, `sounds`, `tabs`, `exposures` |
+| `loot_tables`, `loot_injections`, `player_loot`, `advancements`, `functions` | `entities`, `villagers`, `portalframes` |
+| `gates`, `cards`, `trades`, `registry_remap`, `teams`, `scoring`, `raids`, `hardness`, `blastplaster` | `models`, `blockstates`, `textures`, `lang`, `worldintro`, `overrides` (klientské složky: bez klienta je vynech) |
+| celá vrstva ovládání, nastavení a předgenerování | |
+
+Pravý sloupec je tvrdá zarážka: bloky, předměty, typy entit, zvuky a efekty lektvarů, které vanilla klient nemá, mu nelze popsat a vlastní portál dimenze je jedním z bloků balíčku; expozice se načítají jen spolu s tímto obsahem. Levý sloupec funguje, protože všechno v něm buď běží zcela na straně serveru, dorazí ke klientovi jako položky datového balíčku, které vanilla už čte (biomy, oblasti jeskyní, typy dimenzí), nebo dorazí přes pakety, kterými vanilla už mluví (výsledný slot výroby plněný serverem, běžné pakety pokroků, odmítnutí bran ve stavových zprávách a podržení při předgenerování složené z vanilla paketů herního režimu, titulku a teleportu).
+
+Nastavení:
+
+1. Zapni `vanillaClients` v konfiguraci (kategorie `content`, vyžaduje restart). Prosadí pravý sloupec: tyto složky se při načtení přeskočí a každý přeskočený soubor se jmenuje v logu, takže uklouznutý soubor bloku se stane řádkem v logu místo odmítnutého připojení.
+2. Definice stejně nech mimo složky v pravém sloupci; přeskočené soubory jsou mrtvá váha. Tam, kde balíček odkazuje na předměty (`hold` brány, `killedDrops`, výstupy receptů, obchody), jmenuj jen předměty, které poskytuje vanilla nebo ostatní módy serveru na obou stranách. Biom, který jmenuje vlastní bloky země balíčku, si ponechá zemi základního biomu, a dimenze otevřená vlastním portálem potřebuje blok toho portálu, takže hráče tam pošli příkazem.
+3. Varianty entit jsou na této verzi samostatné typy entit, takže patří do pravého sloupce: se zapnutým `vanillaClients` se přeskočí, spolu s nimi i jejich spawny, a log je jmenuje.
+4. Nainstaluj na server jako obvykle, s Blast Plaster, který mód vyžaduje a který také nic neregistruje. Na počítače hráčů nejde nic; `/rdpl` pro ně existovat nebude.
+5. Otestuj jedním čistým připojením vanilla klienta téže verze. Selhání jsou hlasitá: připojení se odmítne hned u dveří, nerozbije se tiše později.
+6. Dvě přijaté kosmetické mezery: recepty přidané serverem se vyrobí, ale neobjeví se v knize receptů, a podržení, zatímco se tvoří země, je prosté podržení v režimu pozorovatele s postupem na liště akcí, bez mlhy a loga, které kreslí klient samotného módu.
+
+## Přejmenování v registru
+
+*jak fungují balíčky*
+
+`<namespace>/registry_remap/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Když mód přejmenuje jeden ze svých bloků nebo předmětů, světy uložené před přejmenováním je ztratí. Vlož sem soubor, který přiřadí starý název novému:
+
+```json
+{
+  "registry": "minecraft:item",
+  "mapping": { "oldmod:old_name": "newmod:new_name" }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --- | --- | --- | --- | --- |
+| `registry` | ano | název registru | žádný | Registr, ke kterému názvy patří. Názvy z 1.12.2 `minecraft:blocks`, `minecraft:items`, `minecraft:biomes`, `minecraft:enchantments`, `minecraft:potions`, `minecraft:potiontypes`, `minecraft:soundevents`, `minecraft:entities` a `minecraft:villagerprofessions` se čtou jako jejich moderní registry |
+| `mapping` | ano | objekt starého názvu na nový název | žádný | Každý starý název a název, který má nyní |
+
+Registr je ten, ke kterému záznam patří, pojmenovaný tak, jak ho nazývá hra: `minecraft:item`, `minecraft:block`, `minecraft:entity_type` a tak dále. Přejmenování se řetězí, takže mapování A na B a později B na C pošle A rovnou na C.
+
+## Mod API
+
+*jak fungují balíčky*
+
+Mód může nést obsah RDPL uvnitř vlastního jaru, takže nepotřebuje samostatný balíček. Vlož složku jménem `rdploader` do kořene jaru a rozlož ji přesně jako balíček:
+
+```
+thatmod.jar
+  META-INF/mods.toml                (1.21.1: META-INF/neoforge.mods.toml)
+  rdploader/data/thatmod/blocks/ruby_ore.json
+  rdploader/assets/thatmod/textures/block/ruby_ore.png
+```
+
+To, co mód dodává, je výchozí stav, ne přepis. Načítá se pod každým balíčkem ve složce balíčků, takže cokoli napíše autor balíčku, ho přebije, a mód smí dodávat jen soubory pod namespace, který deklaruje ve vlastním souboru módu. Soubory pod jakýmkoli jiným namespace se ignorují s varováním, stejně jako vnořená složka `rdploader` uvnitř namespace, takže mód nemůže tiše předefinovat obsah jiného módu ani autora balíčku.
+
+Každý mód, který ji dodává, dostane při prvním spatření záznam v `rdploader/config/mods.json`:
+
+```json
+{
+  "thatmod": {
+    "enabled": true,
+    "priority": -1
+  }
+}
+```
+
+| Pole | Hodnoty | Výchozí | Co dělá |
+| ---------- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `enabled` | `true` nebo `false` | `true` | Vypne obsah onoho módu, tak jako `.disabled` vypne balíček |
+| `priority` | `-1` nebo číslo | `-1` | `-1` drží mód pod každým balíčkem; jakékoli jiné číslo ho zařadí do běžného pořadí [priority](#organizace-balíčků) vedle číslovaných balíčků |
+
+Balíček módu se nikdy nezařadí do úrovně přepisu balíčků zdrojů, ať `overrideResourcePacks` říká cokoli, protože o to může požádat jen autor balíčku písmenem `O`. Log označuje balíčky módů a vypisuje balíčky od nejnižšího, takže se nic nenačte nepozorovaně.
+
+## Balíčky psané pro 1.12.2
+
+*jak fungují balíčky*
+
+Balíček vytvořený pro řadu 1.12.2 se načte tak, jak je. Loader ho pozná podle formátu v `pack.mcmeta`, podle definičních složek pod `assets/` bez `data/` vedle nich nebo podle souboru `.lang` a převede ho dopředu. Zip se převede jednou, uvnitř sebe: každý soubor, který tato verze čte jinak, se zapíše do složky `versions/1.20.1/` zipu (1.21.1: `versions/1.21.1/`) se vším níže už hotovým a soubory 1.12.2 v kořeni zůstanou, jak byly, takže tentýž zip se stále načte na 1.12.2, jak popisuje [jeden zip pro každou verzi](#organizace-balíčků). Převod označí složku, kterou zapíše, souborem `port.stamp` s verzí RDPL. Zip, který už složku této verze má, se čte skrz ni; když jeho `port.stamp` uvádí jinou verzi RDPL, převod složku zapíše znovu, nahradí v ní každý soubor a každý jmenuje v logu, a složka bez `port.stamp`, například taková, kterou napsal autor balíčku, se už nikdy nepřevádí. Soubory 1.12.2 v kořeni, které převod nahradil, jako definice pod `assets/`, soubory `.lang`, blockstaty a modely 1.12.2 a textury pod `textures/blocks/` a `textures/items/`, se na této verzi nečtou; čtou se jen kořenové soubory, které převod nechává beze změny, například zvuky. Zip se nejdřív zapíše do dočasného souboru a původní nahradí, až když je kompletní. Volné soubory pod `rdploader/assets` se nepřepisují; čtou se při každém skenování složky stejným převodem.
+
+- Definiční složky se přesouvají z `assets/<namespace>/` do `data/<namespace>/` a s nimi vanilla datové složky: recepty, tabulky kořisti, vstřiky kořisti, pokroky, funkce a struktury, přejmenované na jednotná čísla, která čte 1.21.1 (`recipe`, `loot_table`, `advancement`, `function`, `structure`, `tags/item`).
+- `textures/blocks/` a `textures/items/` se servírují jako `textures/block/` a `textures/item/`, v modelech, v pixelových mapách i v samotných souborech. Model předmětu v `models/item/<file>/<variant>.json` se servíruje jako `models/item/<variant>.json`.
+- Každé id s metadaty, `minecraft:wool:14` nebo `minecraft:dye:4`, projde datovými opravami samotné hry, stejným kódem, který aktualizuje svět z 1.12.2, takže vyjde jako blok nebo předmět, kterým se stalo: `minecraft:red_wool`, `minecraft:lapis_lazuli`. Stav bloku, který flattening přežil jako vlastnost, `minecraft:log:1` na `minecraft:oak_log` s `axis=y`, vyjde jako objekt `properties`. Vlastní id balíčku se řeší přes jeho vlastní definice: `mypack:materials:5` se stane variantou, jejíž `meta` bylo 5, a `mypack:ruby_ore` první variantou souboru, protože každá varianta je zde samostatný blok. Názvy entit a biomů se opravují stejně a čísla dimenzí se stanou id.
+- `variants` si ponechají své klíče; `meta` se zahodí a `oreDict` se stane `tags` přes mapování slovníku rud na konvenční tagy. Soubor `oredict/*.json` se stane jedním souborem tagu předmětů na každý název, který přidává nebo odebírá: odebrání `-name` skončí v seznamu `remove` tagu a odebrání `*` tag nahradí. Holé `creativeTab` převezme namespace balíčku a štítek vanilla karty z 1.12.2 jako `misc` se stane nejbližší vanilla kartou.
+- Soubor `.lang` se servíruje jako `.json`, který hra čte, s `tile.mypack:file.variant.name` jako `block.mypack.variant`, `item.` stejným způsobem, `itemGroup.x` jako `itemGroup.mypack.x`, `fluid.x` jako oba klíče tekutiny a vším ostatním tak, jak je napsáno.
+- Blockstate z 1.12.2 se neservíruje vůbec. Místo toho se čtou jeho textury a servírují se pod názvy, které generátor hledá, `textures/block/<variant>.png` s `_top` a `_bottom` tam, kde blockstate měl `end`, `top` nebo `bottom`, takže se blockstate a modely generují pro každou variantu tak, jak by se generovaly pro balíček psaný zde.
+- Recepty ztratí `data` a získají zploštěná id, `forge:ore_shaped` se stane `minecraft:crafting_shaped` s ingrediencemi `ore` jako `tag`, tabulky kořisti stejným způsobem ztratí `set_data` a `item` s `data` v pokroku se stane `items`. `background` pokroku se přesune z `textures/blocks/` do `textures/block/` a jeho ikona jmenuje předmět jako `id`.
+- Přenáší se i slovník Forge z 1.12.2 v receptu: typ ingredience `forge:ore_dict` nebo `minecraft:item` se zahodí, ingredience `minecraft:item_nbt` se stane `forge:nbt` (1.21.1: `neoforge:components`) s nbt proběhlým datovými opravami, `minecraft:item_exists` se stane `forge:item_exists` (1.21.1: každá podmínka dostane svůj název `neoforge` pod `neoforge:conditions`), předmět bez namespace převezme namespace receptu a `data` 32767 se stane seznamem všech variant. `#CONSTANT` z `_constants.json` módu se přenést nedá a log ji jmenuje. Všude, kde seznam jmenuje předměty, se `name:*` stane každou variantou, kterou předmět měl, a jedna hodnota vezme první; to platí pro výstupy `recipe_removals` a odebrání `furnace`, které se také přenášejí jako předměty. `item` nebo `with` kovadliny zapsané jako `name:*` se stane seznamem všech variant a odpovídá kterákoli z nich.
+- Tabulky kořisti přejmenované od 1.12.2 se přejmenují všude, kde je balíček jmenuje: cíl `loot_injections`, tabulka `player_loot` a záznam `loot_table` (1.21.1: jeho `value`), takže `minecraft:entities/zombie_pigman` se stane `minecraft:entities/zombified_piglin`. `killed_by_player` s `inverse` se stane podmínkou `inverted`, `entity_properties` s `on_fire` se stane predikátem `flags` a názvy `set_attributes` jako `generic.maxHealth` se stanou `generic.max_health` (1.21.1: operace dostane nový název a `name` modifikátoru se stane jeho `id`).
+- Přepis bloku z 1.12.2, který flattening rozdělil, například `overrides/minecraft/wool.json`, se čte jako přepis každého bloku, kterým se stal, všech šestnácti vln, protože 1.12.2 měnilo každou variantu najednou.
+- `gameLoopFunction` souboru herních pravidel se stane tagem funkce `#minecraft:tick`, zapsaným jako `data/minecraft/tags/function/tick.json`, protože herní pravidlo zmizelo. Čísla dimenzí balíčku se čtou přes jeho soubory `dimensions`, takže `"id": 7` v `dimensions/verdant.json` udělá ze 7 `mypack:verdant` všude, kde ji balíček jmenuje. Obě strany dvojice `villageBlocks` se opraví, šance se zachová a soubor `registry_remap` smí ponechat množná čísla 1.12.2 `minecraft:blocks` a `minecraft:items`.
+- Šablona světa, která vypíná všechny struktury, které 1.12.2 v dimenzi mělo, vypíná i struktury, které má jen tato verze: `ancient_cities`, `buried_treasures`, `ocean_ruins`, `pillager_outposts`, `ruined_portals`, `shipwrecks`, `trail_ruins` a `trial_chambers` v Overworldu a `nether_fossils` v Netheru. Nech jeden z názvů z 1.12.2 zapnutý a ostatní se nechají být. Klíče ovládání generátorů, `blockWorldGenerators` a jeho společníci, se z převedené šablony vynechají jedním řádkem v logu, protože je tady nic nečte. Vrstvy `generatorOptions` ploché šablony mají názvy bloků opravené stejně, takže `minecraft:grass` se stane `minecraft:grass_block`.
+- Funkce se přepisují řádek po řádku do syntaxe příkazů této verze. Id s datovými hodnotami procházejí týmiž datovými opravami, takže `give @p minecraft:wool 1 14` se stane `give @p minecraft:red_wool 1` a `give @p mypack:materials 1 5` dá variantu, jejíž `meta` bylo 5, a nbt předmětů, entit a bloků se opraví, jako by se opravovalo u světa (1.21.1: nbt předmětu se stane jeho komponentami). `testforblock`, `testfor` a `scoreboard players test` se stanou `execute if`, `execute <entity> <x> <y> <z> [detect ...]` se stane `execute as ... at @s [positioned ...] [if block ...] run`, `effect` převezme `give` a `clear`, `blockdata`, `entitydata` a `replaceitem` se stanou `data merge` a `item replace` a `scoreboard teams` a `scoreboard players tag` se stanou `team` a `tag`. Selektory vymění `score_X_min` a `score_X` za `scores`, `r` a `rm` za `distance`, `l` a `lm` za `level`, `m` za `gamemode`, `c` za `limit` a `sort` a `rx` a `ry` za `x_rotation` a `y_rotation`. Přenášejí se i čísla kouzel a efektů, názvy částic a zvuků, čísla herního režimu a obtížnosti, doba `weather` v sekundách a relativní `tp` jiné entity. Řádek, který převod přenést nedokáže, se změní v komentář (`# ` před řádkem) a log jmenuje soubor, řádek a důvod; funkce se stále načte, bez toho řádku, dokud se ručně neobnoví. `block_drops` se přenáší tak, jak je, jeho `meta` zapracované do názvu bloku nebo jeho `properties`.
+- Dno plochého světa v 1.12.2 leželo na y 0 a tato verze klade plochý svět od jeho dna na y -64, takže převod posouvá výšky dolů s ním. Tam, kde je `worldType` šablony světa `flat` nebo `superflat`, se její `worldSpawn` a `resetSendsTo` posunou o 64 dolů (na její `worldMinHeight`, pokud ji uvádí), a stejně tak výšky `spawn`, `standIn` `at` a `spawnBox` týmu a `opens.lobby` souboru bodování, když je plochá každá šablona světa, kterou balíček dodává. Dimenze balíčku s terénem `flat` posune svůj `groundLevel` a každou pozici, která tuto dimenzi jmenuje, stejným způsobem (o její `minHeight`, pokud ji má). Funkce neříkají, kde běží, takže když je Overworld balíčku plochý, každé absolutní y v jeho funkcích se posune o 64 dolů, včetně `y` selektoru, a log to řekne jednou; výšky `~` a `^` se nechají být. Svět s normálním terénem si ponechá všechny souřadnice, protože jeho povrch zůstává na úrovni moře.
+
+Log nese jeden souhrnný řádek na každý převedený balíček a řádek na každý soubor, který přesunul, vynechal nebo nemohl přenést, a každý klíč, který tato verze už nečte, je stále jmenován parserem, který na něj narazí. Převod je snaha podle možností, ne hotový balíček: přečti ty řádky a dokonči ručně to, co jmenují, počínaje každým řádkem příkazu, který změnil v komentář, a každou texturou, pro kterou nenašel název. Tyto opravy dělej v kořeni balíčku nebo v samostatném zipu, nikdy ve složce `versions/`, kterou převod zapsal: jiná verze RDPL tu složku zapíše znovu.
+
+---
+
+# Bloky a předměty
+
+## Bloky
+
+*bloky a předměty*
+
+`<namespace>/blocks/*.json`
+
+Každý klíč uvnitř `variants` je blok, registrovaný pod namespace balíčku: soubor obsahující `ruby_ore` a `deep_ruby_ore` zaregistruje `mypack:ruby_ore` a `mypack:deep_ruby_ore`, které sdílejí každé nastavení, jež soubor píše mimo `variants`. Název samotného souboru je jen seskupení.
+
+Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které potřebuje. Klíč označený pro jeden typ čte jen tento typ.
+
+```json
+{
+  "inherits": "mypack:ore_template",
+  "type": "ore",
+  "material": "rock",
+  "soundType": "stone",
+  "mapColor": "red",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "silkHarvest": true,
+  "opensWith": "mypack:ruby_key",
+  "openSound": "block.chest.open",
+  "expDrop": { "min": 3, "max": 7 },
+  "creativeTab": "mypack:tab",
+  "renderLayer": "solid",
+  "opaque": true,
+  "fullCube": true,
+  "lightOpacity": 255,
+  "slipperiness": 0.6,
+  "flammability": 0,
+  "fireSpread": 0,
+  "explosionResistanceDivisor": 1.0,
+  "modelBlock": "minecraft:stone",
+  "itemModel": "state",
+  "tint": "biome",
+  "plantTypes": ["plains", "crop"],
+  "behavesAs": ["till", "path"],
+  "bounds": [0.0, 0.0, 0.0, 1.0, 1.0, 1.0],
+  "requires": ["mypack"],
+  "particle": "colored",
+  "particleColor": "C0304A",
+  "smoke": true,
+  "leafSapling": "mypack:ruby_sapling",
+  "leafSaplingChance": 5,
+  "seed": "mypack:ruby_seed",
+  "produce": "mypack:ruby_fruit",
+  "maxAge": 7,
+  "growth": { "stages": 8, "growth": 10 },
+  "sapling": { "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves" },
+  "portal": { "dimension": "mypack:ruby_world" },
+  "variants": {
+    "ruby_ore": {
+      "hardness": 3.0,
+      "resistance": 5.0,
+      "light": 0,
+      "harvestLevel": 2,
+      "rarity": "rare",
+      "maxSize": 64,
+      "tags": ["forge:ores/ruby", "forge:ores"],
+      "drops": [
+        { "block": "mypack:ruby", "amount": { "min": 1, "max": 2 }, "bonusChance": [1, 2] }
+      ]
+    },
+    "deep_ruby_ore": {
+      "hardness": 4.5,
+      "resistance": 8.0,
+      "light": 3
+    }
+  }
+}
+```
+
+### Typy
+
+*bloky*
+
+| Typ | Co dostaneš |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `basic` | Obyčejný blok. Použije se, když `type` chybí |
+| `ore` | Dropne něco jiného než sám sebe, se štěstím a hedvábným dotekem |
+| `falling` | Padá jako písek nebo štěrk |
+| `slab` | Spodní, horní a dvojitá, a dvě se spojí v ruce |
+| `stairs` | Rohy a svahy vyřešené za tebe |
+| `fence` | Připojuje se k sousedům i k plotům z jiných módů |
+| `pane` | Připojuje se jako skleněné tabule |
+| `wall` | Připojuje se jako zídky z dlažebního kamene, s tvarem sloupku |
+| `door` | Vysoké dva bloky, otevírá se rukou a reaguje na redstone |
+| `trapdoor` | Výklopná klapka na horní nebo spodní straně bloku, otevíraná rukou nebo redstonem |
+| `fence_gate` | Branka v řadě plotu, otevíraná rukou nebo redstonem a snížená tam, kde se setkává se zdí |
+| `banner` | Praporec na sloupku nebo na zdi, šestnáct stojících natočení, nesoucí tvůj vlastní vzor |
+| `ladder` | Lze po něm lézt, umisťuje se na zeď |
+| `torch` | Umístění na zeď i na zem, s částicí. Vydává `light` varianty tak, jak je napsáno, takže pochodeň s `0` nesvítí |
+| `bell` | Zvon jako ten ve vesnicích hry: zvoní, když se použije na jeho bok, redstonem nebo když do něj narazí projektil, houpá se ve svém rámu a rozzáří poblíž nájezdníky. Jeho blockstate nese směr a způsob zavěšení |
+| `log` | Natáčí se k ploše, o kterou ho opíráš, a nese tag `minecraft:logs`, takže kácení stromů a Blast Plaster s ním zacházejí jako s kmenem |
+| `leaves` | Opadává, stříhá se, barví se a dropí sazenici, a nese tag `minecraft:leaves`. Ponechány `opaque` se kreslí plné, jako rychlé listí; nastav `"opaque": false`, aby bylo skrz ně vidět |
+| `sapling` | Vyroste ve strom nebo v jednu z tvých struktur |
+| `crop` | Roste po fázích, dropí semeno a produkt, pšeničná semínka a pšenici pro to, co soubor vynechá |
+| `flower` | Jednobloková rostlina stojící na půdě |
+| `cane` | Roste nahoru ve sloupci, jako rákos nebo kaktus |
+| `vine` | Šplhá a visí po stranách bloků. S `growth` roste dolů až do `maxHeight` a se `spread` se rozšiřuje do stran na sousední zdi; bez něj zůstane, jak byla umístěna |
+| `portal` | Pošle cokoli, co do něj vejde, do jiné dimenze |
+| `container` | Drží inventář, který hráč může otevřít, libovolné velikosti, a při prvním otevření se může naplnit z tabulky kořisti. Kreslí se jako obyčejný blok nebo jako truhla, podle toho, co balíček chce. Bez objektu `container` drží tři řady po devíti |
+
+### Klíče souboru
+
+*bloky*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------------------- | -------------- | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants` | ano | objekt názvu varianty na variantu | | Jeden blok na záznam. Klíč je jeho název v registru a pojmenovává jeho blockstate, modely, textury a jazykový klíč |
+| `type` | ne | jeden z typů výše | `basic` | Jaký tvar blok má |
+| `material` | ne | jeden z [materiálů bloků](#seznamy-hodnot) | `rock` | Blok se chová tak, jak se choval ten materiál v 1.12.2: zda po rozbití rukou něco dropne, jak s ním zacházejí písty, zda ho láva zapálí, zda ho tekoucí kapalina smyje a zda ho umístěný blok nahradí. `log` je vždy `wood`, `leaves` vždy `leaves`, `vine` `vine`, `torch` nebo `ladder` `circuits`, `crop` `plants` a `stairs` a `wall` se chovají podle svého `modelBlock` |
+| `soundType` | ne | jeden z [typů zvuku](#seznamy-hodnot) | `stone`; `wood` pro `log`, `plant` pro `leaves` a `crop`, u `stairs` a `wall` ten z `modelBlock` | Kroky, rozbíjení a pokládání |
+| `mapColor` | ne | jedna z [barev mapy](#seznamy-hodnot) | z materiálu | Jak vypadá na mapě |
+| `harvestTool` | ne | `pickaxe`, `axe`, `shovel`, `hoe`, `sword` | `pickaxe` | Jaký nástroj ho těží, zapsáno za tebe do tagů `mineable` hry; `sword` jde do `resourcedatapackloader:mineable/sword`, který těží vlastní nástroje `sword` balíčku. U dropů záleží jen u materiálu, který potřebuje nástroj. Stejně jako v 1.12.2 krumpáč těží `rock`, `iron` a `anvil` plnou rychlostí a sekera `wood`, `plants` a `vine`. Jakýkoli jiný název, například `shears`, se zapíše do logu a vynechá |
+| `harvestToolLevel` | ne | 0 až 4 | `0` | 0 dřevo, 1 kámen, 2 železo, 3 diamant, 4 netherit, zapsáno za tebe do tagů `needs_*_tool`. Blok `basic`, `ore`, `container`, `portal`, `fence`, `pane`, `log`, `falling`, `slab` nebo `wall` ho ignoruje a bere `harvestLevel` varianty, jako v 1.12.2 |
+| `silkHarvest` | ne | boolean | `true` | Zda hedvábný dotek vrátí samotný blok |
+| `opensWith` | ne | id předmětu | žádný | Udělá z bloku zamčenou schránku: rozbití dropne samotný blok a kliknutí pravým tlačítkem pojmenovaným předmětem jeden spotřebuje, přehraje zvuk rozbití bloku, vyplatí seznam `drops` varianty a blok odstraní. Jakékoli jiné kliknutí ukáže na liště akcí řádek `block.<pack>.<block>.locked` z jazykových souborů |
+| `openSound` | ne | název zvuku | zvuk rozbití | Co zamčená schránka přehraje při otevření místo zvuku rozbití. Název z 1.12.2 se stále čte, viz [názvy zvuků](#seznamy-hodnot) |
+| `expDrop` | ne | objekt s `min` a `max` | žádný | Zkušenosti, které vypadnou, když blok rozbije hráč nebo ho vykope mob balíčku, který sbírá zkušenosti; písty, voda a výbuchy žádné neupustí. Hedvábný dotek je odebere, jen když je zapnuté `silkHarvest` |
+| `creativeTab` | ne | název karty | žádný | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu) |
+| `renderLayer` | ne | `solid`, `cutout`, `cutout_mipped`, `translucent` | podle typu | Jak se kreslí. Na 26.x má účinek jen `translucent`; `solid`, `cutout` a `cutout_mipped` se přijímají, ale kreslí se stejně |
+| `opaque` | ne | boolean | `true` | Zda zcela blokuje výhled a světlo; výchozí je `false` pro kontejner s modelem truhly |
+| `fullCube` | ne | boolean | stejné jako `opaque` | Zda vyplňuje celý svůj prostor |
+| `lightOpacity` | ne | 0 až 255 | `255`, když je neprůhledný, jinak `0` | Kolik světla pohltí: 15 a více zastaví všechno a `0` pustí sluneční světlo rovnou skrz. `slab` si ponechá hodnotu samotné hry a kontejner s modelem truhly světlo propouští |
+| `slipperiness` | ne | desetinné číslo | `0.6` | Led má `0.98` |
+| `flammability` | ne | celé číslo | `0` | Jak ochotně ho oheň spaluje |
+| `fireSpread` | ne | celé číslo | `0` | Jak ochotně se z něj oheň šíří |
+| `explosionResistanceDivisor` | ne | desetinné číslo | `1.0` | Dělí `resistance` každé varianty proti výbuchům |
+| `modelBlock` | ne | název bloku | `minecraft:stone` | Blok, jehož model se vypůjčí, když tvůj nedodává žádnou texturu ani vlastní model |
+| `itemModel` | ne | `state`, `item` | `state` | `state` sleduje blockstate, `item` hledá vlastní soubor, `models/item/<name>.json` |
+| `tint` | ne | `biome`, `none` nebo hexadecimální barva | žádný | K zobrazení potřebuje v modelu `tintindex` |
+| `plantTypes` | ne | seznam [typů rostlin](#seznamy-hodnot) | žádný | Co se na něm dá sázet |
+| `behavesAs` | ne | seznam `till`, `path`, `bush`, `animals` | žádný | Vanilla chování, která převezme |
+| `bounds` | ne | seznam šesti čísel, 0 až 1 | celý blok | Kolizní box, jako `[x1, y1, z1, x2, y2, z2]` |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+| `particle` | jen pochodeň | `none`, `flame`, `colored` | `flame` | Částice nad pochodní |
+| `particleColor` | jen pochodeň | hexadecimální barva | `FFFFFF` | Použije se, když je `particle` `colored` |
+| `smoke` | jen pochodeň | boolean | `true` | Zda kouří |
+| `leafSapling` | jen listí | název bloku | žádný | Sazenice, kterou dropují |
+| `leafSaplingChance` | jen listí | celé číslo | `5` | Jeden z N listů jednu dropne |
+| `seed` | jen plodina | název předmětu | `minecraft:wheat_seeds` | Předmět, který ji sází, a to, co nezralá plodina dropne |
+| `produce` | jen plodina | název předmětu | `minecraft:wheat` | Co sklizeň vydá |
+| `maxAge` | jen plodina | celé číslo | `7` | Kolik růstových fází |
+| `growth` | jen rostliny | objekt | žádný | Viz [Růst](#růst) |
+| `sapling` | jen sazenice | objekt | žádný | Viz [Sazenice](#sazenice) |
+| `portal` | jen portál | objekt | žádný | Viz [Portály a brány](#portály-a-brány) |
+| `container` | jen kontejner | objekt | žádný | Viz [Kontejnery](#kontejnery) |
+| `bell` | jen zvon | objekt | žádný | Viz [Zvony](#zvony) |
+
+### Klíče variant
+
+*bloky*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------- | ----------- | ------------------------------------ | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hardness` | ne | desetinné číslo | `1.0` | Jak dlouho trvá ho rozbít. Obsidián má `50`, `-1` je nerozbitný |
+| `resistance` | ne | desetinné číslo | `5.0` | Odolnost proti výbuchu tak, jak ji čte 1.12.2: blok si ponechá tři pětiny hodnoty, takže `10` dá kameni jeho `6` |
+| `light` | ne | 0 až 15 | `0` | Vyzařované světlo |
+| `harvestLevel` | ne | 0 až 4 | `0` | Úroveň nástroje bloku `basic`, `ore`, `container`, `portal`, `fence`, `pane`, `log`, `falling`, `slab` nebo `wall`, místo `harvestToolLevel` souboru. Ostatní typy se řídí hodnotou souboru |
+| `rarity` | ne | `common`, `uncommon`, `rare`, `epic` | `common` | Barva názvu v popisku |
+| `maxSize` | ne | 1 až 64 | `64` | Velikost stacku |
+| `tags` | ne | seznam id tagů | žádný | Tagy bloků a předmětů, do kterých se tato varianta zapíše, například `forge:ores/ruby` na 1.20.1 nebo `c:ores/ruby` na 1.21.1. Soubory tagů se generují za tebe |
+| `drops` | ne | seznam dropů | dropne sám sebe | Co rozbití vydá |
+| `portal` | jen portál | objekt | ze souboru | Vlastní portál této varianty místo portálu souboru, zapsaný jako v [Portály a brány](#portály-a-brány). Soubor stále potřebuje vlastní |
+
+**Názvy jsou trvalé.** Klíč varianty se zapíše do každého uloženého světa, který ji obsahuje. Pozdější přejmenování promění umístěné bloky ve vzduch, pokud [přejmenování v registru](#přejmenování-v-registru) nepřiřadí starý název novému. Soubor může držet tolik variant, kolik chce; každá je samostatný blok a klíč `meta` z balíčku pro 1.12.2 se ignoruje s poznámkou v logu.
+
+### Dropy
+
+*bloky*
+
+```json
+{
+  "drops": [
+    { "block": "mypack:ruby", "amount": { "min": 1, "max": 3 }, "chance": 100, "guaranteed": true, "bonusChance": [1, 2, 3] },
+    { "block": "minecraft:coal", "amount": 1, "chance": 25 },
+    { "block": "minecraft:diamond", "weight": 1 },
+    { "block": "minecraft:emerald", "weight": 4 },
+    { "entity": "minecraft:silverfish", "amount": { "min": 1, "max": 2 }, "chance": 15 }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------------- | ------------------ | -------------------------------------- | -------------------------------------------------------------------------- |
+| `block` | jedno ze dvou | název bloku nebo předmětu | | Co vypadne |
+| `entity` | jedno ze dvou | název entity | | Entita vypuštěná při rozbití bloku, místo předmětu |
+| `amount` | ne | celé číslo nebo rozsah | `1` | Kolik |
+| `chance` | ne | 0 až 100 | `100`, nebo `0`, když je `guaranteed` vypnuté | Jak často k dropu vůbec dojde |
+| `weight` | ne | celé číslo | `0` | Nad nulou položka vstoupí do banku, který dá právě jeden drop. Viz níže |
+| `bonusChance` | ne | seznam celých čísel | žádný | Další dropy za každou úroveň Štěstí, jedna položka na úroveň |
+| `guaranteed` | ne | boolean | `true` | Starší zkratka pro `chance`. Zapnuto je `100`, vypnuto `0` |
+
+Každá položka bez `weight` se rozhoduje sama za sebe, takže blok se třemi takovými položkami může dropnout všechny tři, nebo žádnou. Dej položkám `weight` a přestanou být nezávislé: vytvoří jeden bank, z něhož se při každém rozbití bloku vybere právě jedna, přičemž šance odpovídají poměru vah. Ve výše uvedeném příkladu sdílejí diamant a smaragd bank v poměru jedna ku čtyřem, takže vždy vypadne jeden z nich a smaragd v pěti případech ze čtyř, zatímco rubín a uhlí se rozhodují zvlášť a rybenka je opět samostatná věc. Předměty a entity se sdružují odděleně, takže vážený předmět a vážená entita spolu nesoutěží.
+
+Záznam, který uvádí `entity`, vypustí jednu tam, kde blok stál, otočenou náhodným směrem, a moba dostane obvyklé spawnovací zacházení podle místní obtížnosti, takže přijde s výbavou a efekty, které by měl. `amount` rozhoduje kolik, `chance` jak často, `weight` ho zařadí do banku entit. Děje se to při rozbití bloku, ať se rozbil jakkoli, takže výbuch nebo píst je vypustí stejně jako krumpáč. `bonusChance` a štěstí entitě nic neříkají a ignorují se.
+
+Drop, který uvádí `block` i `entity`, použije entitu a napíše to do logu.
+
+Dropy se zapíšou do vygenerované tabulky kořisti, `loot_tables/blocks/<name>.json` pod namespace balíčku, pokud balíček nedodává vlastní na téže cestě; v tom případě blok používá soubor balíčku a `drops` se nečte.
+
+### Růst
+
+*bloky*
+
+Pro `crop`, `flower`, `cane` a `vine`.
+
+```json
+{
+  "growth": {
+    "stages": 8,
+    "spread": 1,
+    "maxHeight": 3,
+    "soil": ["minecraft:sand", "minecraft:red_sand"],
+    "drop": "mypack:reed",
+    "dropCount": 1,
+    "needsSky": false,
+    "needsWater": true,
+    "waterRange": 2,
+    "damage": false,
+    "damageAmount": 1.0,
+    "breaksNeighbors": false
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | ------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `stages` | ne | celé číslo | `16` | Růstové fáze, než je hotovo. Liána se pokusí vyrůst při jednom náhodném tiku z tolika |
+| `spread` | ne | celé číslo | `0` | Jak daleko se šíří na sousední bloky. Liána přestane sahat do stran, jakmile v dosahu dvou bloků od ní stojí tolik lián |
+| `maxHeight` | ne | celé číslo | `3` | Třtina a liána. Jak vysoký sloupec roste, nebo jak daleko liána visí dolů; liána s `1` neroste ani se nešíří |
+| `soil` | ne | seznam názvů bloků | obvyklá pro daný typ | Na čem stojí |
+| `drop` | ne | název předmětu | žádný | Třtina a liána. Co dropne při rozbití; květina dropne sama sebe |
+| `dropCount` | ne | celé číslo | `1` | Třtina a liána. Kolik |
+| `needsSky` | ne | boolean | `false` | Roste jen tam, kde je vidět obloha |
+| `needsWater` | ne | boolean | `false` | Roste jen poblíž vody |
+| `waterRange` | ne | celé číslo | `1` | Jak daleko smí ta voda být |
+| `damage` | ne | boolean | `false` | Zraňuje cokoli, co se jí dotkne |
+| `damageAmount` | ne | desetinné číslo, půlsrdce | `1.0` | Jak moc zraňuje |
+| `breaksNeighbors` | ne | boolean | `false` | Rozbíjí bloky umístěné vedle, jako kaktus |
+
+### Šíření
+
+*bloky*
+
+Pro bloky typu `basic` a `ore`. Blok, který uvádí bloky, na něž se šíří, se chová jako tráva šířící se na hlínu.
+
+```json
+{
+  "spreadsOnto": ["minecraft:dirt", "minecraft:coarse_dirt"]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ------------------- | ------- | --------------------------------------------------------------------- |
+| `spreadsOnto` | ne | seznam názvů bloků | žádný | Bloky, na něž se šíří. První z nich je to, na co se vrací zpět |
+
+Blok přijímá náhodné tiky a řídí se vanilla trávou. Kde je světlo nad ním 9 nebo víc, udělá na tik čtyři pokusy na náhodné místo až o jeden blok do každé strany a od tří bloků pod ním do jednoho nad ním. Místo se promění v tento blok, pokud je to uvedený blok, světlo nad místem je 4 nebo víc a blok nad ním blokuje nejvýše 2 světla. Kde je světlo nad ním pod 4 a blok nad ním blokuje víc než 2 světla, promění se zpět v první uvedený blok. `minecraft:dirt` je jen obyčejná hlína a `minecraft:coarse_dirt` je hrubá hlína.
+
+### Sazenice
+
+*bloky*
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "sapling": {
+    "soil": ["minecraft:grass_block", "minecraft:dirt"],
+    "stages": 3,
+    "chance": 5,
+    "light": 9,
+    "log": "mypack:ruby_log",
+    "leaves": "mypack:ruby_leaves",
+    "height": 5,
+    "vines": false,
+    "structure": "mypack:ruby_tree"
+  }
+}
+```
+
+Položka `structure` nahradí vygenerovaný strom některou z tvých šablon, což je způsob, jak postavit něco, co generátor nedokáže, a nic dalšího v bloku není potřeba psát. Uveď jich několik pod `structures` a sazenice si při každém vyrůstání vybere jednu, takže les není pořád tentýž strom dokola:
+
+```json
+{
+  "sapling": {
+    "structures": [
+      { "structure": "mypack:ruby_tree", "weight": 3 },
+      "mypack:tall_ruby_tree"
+    ]
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | ------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `soil` | ne | seznam názvů bloků | žádný | Na čem poroste |
+| `stages` | ne | celé číslo | `2` | Růstové fáze, než se stane stromem |
+| `chance` | ne | celé číslo | `7` | Jeden z N na náhodný tik |
+| `light` | ne | 0 až 15 | `9` | Potřebná úroveň světla |
+| `log` | ne | název bloku | `minecraft:oak_log` | Blok kmene |
+| `leaves` | ne | název bloku | `minecraft:oak_leaves` | Blok listí |
+| `height` | ne | celé číslo | `4` | Výška kmene |
+| `vines` | ne | boolean | `false` | Nechá z listí viset liány |
+| `structure` | ne | `namespace:name` | žádný | Vyroste v tuto šablonu místo vygenerovaného stromu |
+| `structures` | ne | seznam | žádný | Několik šablon, do nichž vyroste, při každém růstu se vybere jedna. Každý záznam je `{ "structure": "namespace:name", "weight": 3 }` nebo holý název pro stejné šance. Přebíjí `structure` |
+
+## Kontejnery
+
+*bloky a předměty*
+
+`<namespace>/blocks/*.json`, `<namespace>/items/*.json`
+
+```json
+{
+  "type": "container",
+  "material": "wood",
+  "creativeTab": "mypack:tab",
+  "container": {
+    "rows": 6,
+    "columns": 9,
+    "lootTable": "minecraft:chests/simple_dungeon",
+    "chestModel": true
+  },
+  "variants": { "crate": { "hardness": 2.5 } }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------ | --------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rows` | celé číslo | `3` | Kolik řad slotů, 1 až 9 |
+| `columns` | celé číslo | `9` | Kolik slotů v řadě, 1 až 12 |
+| `lootTable` | text | prázdný | Tabulka kořisti losovaná do bloku poprvé, když se cokoli dostane k jeho obsahu, hráč ho otevře, násypka, komparátor nebo jeho rozbití, přesně jako se plní truhla v dungeonu. Kontejner, který hráč umístí, ji nikdy nelosuje. Prázdná hodnota ho nechá začít prázdný |
+| `chestModel` | boolean nebo text | `false` | Kreslí se jako truhla s víkem, které se otevírá, místo jako obyčejný blok z tvé vlastní textury. `true` použije vanilla grafiku truhly; název textury jako `mypack:entity/chest/strongbox` použije místo toho tvůj vlastní list truhly, pro umístěný blok i pro předmět. Blok s modelem truhly má také `opaque` ve výchozím stavu `false`, jako vanilla truhla, takže se na bloku neodřízne světlo a truhla se nekreslí tmavá |
+| `guiTexture` | text | prázdný | Tvůj vlastní obrázek pozadí obrazovky. Prázdná hodnota ho nakreslí z vanilla obrazovky truhly v takové velikosti, jakou řady a sloupce potřebují |
+| `guiWidth` | celé číslo | žádný | Jak široká je obrazovka, kreslená od levého horního rohu toho obrázku čteného jako list 256 na 256, povinné s `guiTexture` |
+| `guiHeight` | celé číslo | žádný | Jak vysoká je obrazovka, povinné s `guiTexture` |
+| `curioSlot` | text | prázdný | Jen u předmětu: slot Curios, do kterého ho lze nasadit, `back`, `belt`, `body`, `charm`, `head`, `necklace`, `ring` nebo libovolný slot, který přidá jiný mód. Batoh obvykle bere `back`. Ignoruje se, přičemž všechno ostatní o předmětu dál funguje, když Curios není nainstalován. Klíč `bauble` z 1.12.2 se čte jako tento a bere názvy Baubles: `amulet` se stane `necklace`, `ring` dá dva sloty na prsten, `belt`, `head`, `body` a `charm` si ponechají názvy a `trinket` pasuje do každého z těchto slotů. Jakýkoli jiný název nechá předmět nenošený s chybovým řádkem |
+
+**Devět řad krát dvanáct je strop**, nejvíc, co obrazovka unese. Balíček, který žádá víc, se na něj ořízne s chybovým řádkem, který to říká. Jedno upozornění k nejvyšší: obrazovka s devíti řadami měří 276 pixelů a displej 1080 při měřítku GUI `auto` dává 270, takže se nahoře a dole ořízne o tři pixely; měřítko 3 ji ukáže celou.
+
+**Obrazovka se kreslí, nedodává.** Kontejner o devíti sloupcích nebo méně a šesti řadách nebo méně používá vanilla obrazovku truhly tak, jak je, takže vypadá přesně jako truhla té velikosti. Cokoli většího se při kreslení sestaví ze stejného obrázku, horní okraj, řada slotů opakovaná podle potřeby a spodek s hráčovým vlastním inventářem, takže balíček může žádat velikosti, které žádná vanilla obrazovka nepokrývá, aniž by dodával vlastní obrázek. `guiTexture` to všechno přebíjí tam, kde balíček chce vlastní vzhled, a pak `guiWidth` a `guiHeight` musí říct, jak je velký, jinak se použije nakreslený a chybový řádek to oznámí.
+
+**Co blok dělá.** Zachová obsah přes uložení a znovunačtení, dropne ho při rozbití, odpovídá komparátoru podle zaplnění a pamatuje si řady a sloupce, s nimiž vznikl, takže jejich pozdější změna v balíčku nechá kontejnery už ve světě tak, jak byly. Předmět kontejneru ani blok kontejneru nelze vložit do kontejneru. `chestModel` mu dává také zvuk otevření truhly a animaci víka; bez něj se blok kreslí ze své vlastní textury jako každý jiný blok, takže bedna, sud i skříňka fungují.
+
+**Barvení truhly.** List truhly je obyčejná textura, takže ji pixelová mapa dokáže přebarvit bez kreslení jediného pixelu: `extends` ji a dej jí `tint`, pak tu mapu pojmenuj v `chestModel`.
+
+```json
+{
+  "extends": "minecraft:textures/entity/chest/normal",
+  "tint": {
+    "from": "#241A12",
+    "to": "#D8BC80"
+  }
+}
+```
+
+**Předmět kontejneru je váček**, předmět typu `container` nesoucí stejný objekt `container` s `rows` a `columns`; otevře se pravým kliknutím a obsah si drží, i když mění majitele. Bez objektu `container` drží jednu řadu po devíti. Dej mu `curioSlot` a tam, kde je Curios nainstalován, půjde do toho slotu a klávesa ho otevře, aniž by se sundal, ve výchozím stavu `V`, přenastavitelná pod Resource Data Pack Loader v ovládání. Další stisk, když je nošený kontejner už otevřený, přejde na další, který neseš, a obtočí se, takže jsou dosažitelné všechny, které máš najednou na sobě. Klávesa se objeví jen tehdy, když je přítomno Curios, a všechno ostatní o předmětu, pravé kliknutí i jeho inventář, funguje, ať je, či není. Nositelnost váčku se za tebe zapíše do tagu Curios pro ten slot.
+
+**Tabulka kořisti se plní při prvním použití**, ne když se blok umístí, což ho činí užitečným ve struktuře: kdo ho otevře první, dostane výsledek losování, a stejně ho vylosuje i násypka nebo komparátor, který se k němu dostane dřív. Stejnou tabulku lze použít přes `lootTable` u tvaru otisku nebo pozemku vesnice, takže balíček může tyto bloky umisťovat při generování světa a stejně je zásobit.
+
+## Zvony
+
+*bloky*
+
+`<namespace>/blocks/*.json`
+
+```json
+{
+  "type": "bell",
+  "material": "iron",
+  "soundType": "metal",
+  "renderLayer": "cutout",
+  "creativeTab": "decorations",
+  "bell": {
+    "swing": true,
+    "sound": "minecraft:block.note_block.bell",
+    "resonateSound": "minecraft:block.note_block.chime"
+  },
+  "variants": { "village_bell": { "hardness": 5.0, "resistance": 30 } }
+}
+```
+
+A jeho blockstate, `assets/mypack/blockstates/village_bell.json`, klíčovaný podle `attachment` a `facing`:
+
+```json
+{
+  "variants": {
+    "attachment=floor,facing=north": { "model": "mypack:block/village_bell_floor" },
+    "attachment=floor,facing=east": { "model": "mypack:block/village_bell_floor", "y": 90 },
+    "attachment=floor,facing=south": { "model": "mypack:block/village_bell_floor", "y": 180 },
+    "attachment=floor,facing=west": { "model": "mypack:block/village_bell_floor", "y": 270 },
+    "attachment=ceiling,facing=north": { "model": "mypack:block/village_bell_ceiling" },
+    "attachment=ceiling,facing=east": { "model": "mypack:block/village_bell_ceiling", "y": 90 },
+    "attachment=ceiling,facing=south": { "model": "mypack:block/village_bell_ceiling", "y": 180 },
+    "attachment=ceiling,facing=west": { "model": "mypack:block/village_bell_ceiling", "y": 270 },
+    "attachment=single_wall,facing=east": { "model": "mypack:block/village_bell_wall" },
+    "attachment=single_wall,facing=south": { "model": "mypack:block/village_bell_wall", "y": 90 },
+    "attachment=single_wall,facing=west": { "model": "mypack:block/village_bell_wall", "y": 180 },
+    "attachment=single_wall,facing=north": { "model": "mypack:block/village_bell_wall", "y": 270 },
+    "attachment=double_wall,facing=east": { "model": "mypack:block/village_bell_between_walls" },
+    "attachment=double_wall,facing=south": { "model": "mypack:block/village_bell_between_walls", "y": 90 },
+    "attachment=double_wall,facing=west": { "model": "mypack:block/village_bell_between_walls", "y": 180 },
+    "attachment=double_wall,facing=north": { "model": "mypack:block/village_bell_between_walls", "y": 270 }
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------- | ---------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `swing` | boolean | `true` | Kreslí houpající se část z vlastního souboru modelu a houpe jí, když zvon zazvoní. `false` nakreslí celý zvon z modelů blockstate, bez jakékoli animace |
+| `sound` | název zvuku | `minecraft:block.note_block.bell` | Přehraje se, když zvon zazvoní. Prázdná hodnota zvoní tiše |
+| `resonateSound` | název zvuku | `minecraft:block.note_block.chime` | Přehraje se, když zvon rezonuje, protože jsou poblíž nájezdníci. Prázdná hodnota rezonuje tiše |
+
+**Visí tak, jako vanilla zvon.** Umístěný na vršek bloku stojí na zemi, otočený tak, jak se díváš; pod blokem visí ze stropu; u zdi visí z té zdi a mezi dvěma zdmi, když je plná i protější strana. Spadne, když zmizí to, co ho drží, a zvon mezi dvěma zdmi se stane zvonem na jedné zdi, když jedna z nich zmizí. Jeho hit box se řídí vanillou pro každý ze čtyř případů, takže `bounds` se nečte.
+
+**Co ho rozezvučí.** Použití na boku těla, pod trámem: u zvonu na zemi na dvou stěnách, přes které trám vede, u zvonu na zdi na dvou stěnách vedle zdi, u zvonu u stropu na libovolné straně. Vršek, spodek a cokoli nad tělem nedělají nic. Redstonový signál ho rozezvučí jednou při zapnutí a šíp, sněhová koule nebo jakýkoli jiný projektil ho rozezvučí, když zasáhne stranu, kterou by mohla zasáhnout ruka. Tělo se rozhoupe pryč od strany, na které bylo zasaženo, po dobu dvou a půl sekundy; redstonem se rozhoupe ve směru, kterým zvon směřuje.
+
+**Co dělá zazvonění.** Vesničané do 32 bloků ho uslyší a běží domů schovat se na patnáct sekund, tak jako je posílá vanilla zvon. Když je do 32 bloků nájezdník, zvon rezonuje čtvrt sekundy po zazvonění a o dvě sekundy později každý nájezdník do 48 bloků na tři sekundy září, s barevnými částicemi vedle zvonu na straně, na které každý stojí. Nájezdník je kdokoli, koho poslal [nájezd](#nájezdy), a illageři a čarodějnice samotné hry. Zvon tohoto typu je vesnický zvon pro každý nájezd: zazvoní při příchodu každé vlny, aniž by byl pojmenován v `bell` nájezdu.
+
+**Modely.** Zvon se klíčuje podle `attachment` a `facing`, celkem šestnáct stavů, a `powered` se z klíčů vynechává. Se zapnutým `swing` tyto modely kreslí jen rám a houpající se část je samostatný soubor modelu, `<namespace>:block/<name>_body`: mód ho načte podle té cesty a vykreslovač ho nakreslí, takže název si nevybíráš a v blockstate se nikdy neobjeví. Je modelován v prostoru bloku tam, kde tělo spočívá, a naklání se kolem bodu půl bloku dovnitř a tři čtvrtě bloku nahoru, jako ten vanilla. S vypnutým `swing` žádný model těla není a šestnáct modelů rámu nakreslí zvon celý. Model předmětu psaný pro ruku kreslí rám a tělo dohromady, takže zvon je v ruce vidět celý; chceš-li ho kreslit jinak, dodej `models/item/<name>.json`.
+
+**Houpání kreslí klient.** Zazvonění se k hráčům dostane jako událost bloku, takže dedikovaný server rozhoupe zvon všem, kdo mají tento mód, a hráč bez něj zvon jen slyší. Zvuky, rezonance i záře se dějí na serveru.
+
+## Modely, stavy bloků a textury
+
+*bloky a předměty*
+
+Definováním bloku nebo předmětu se registruje. Jak *vypadá*, je sada souborů assetů ve stejných složkách a ve stejném formátu, jaký hra používá, pod tvým vlastním namespace, a na této verzi je většina z nich napsána za tebe.
+
+```
+assets/mypack/textures/block/ruby_ore.png
+assets/mypack/textures/item/ruby.png
+assets/mypack/lang/en_us.json
+```
+
+**Dodej texturu a zbytek se vygeneruje.** Pro každý blok, jehož blockstate balíček nedodává, mód zapíše blockstate a modely, které typ potřebuje, ukazující na `textures/block/<name>.png`, kde `<name>` je klíč varianty, a pro každý předmět, který nemá `models/item/<name>.json`, model předmětu ukazující na `textures/item/<name>.png`. Blok, který nemá ani texturu, ani vlastní model, si půjčí vzhled `modelBlock`, ve výchozím stavu kámen, takže se nikdy nic nevykreslí jako fialovo-černý čtverec. Dodej vlastní `blockstates/<name>.json` a mód pro ten blok nevygeneruje nic a použije tvůj; totéž platí pro `models/item/<name>.json`.
+
+| Typ | Hledané soubory textur | Generováno z |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `basic`, `ore`, `falling` | `<name>`, s `<name>_top` a `<name>_bottom` pro horní a spodní stěnu tam, kde je balíček dodává | `cube_all`, nebo `cube_bottom_top`, když je přítomna horní nebo spodní textura |
+| `flower`, `sapling`, `cane`, `leaves`, `container` bez truhly | `<name>` | `cube_all`, `cross` nebo `leaves` |
+| `log` | `<name>` pro bok, `<name>_top` pro konce | `cube_column` |
+| `slab` | `<name>` | `slab`, `slab_top` a dvojitý `cube_all` |
+| `stairs` | `<name>` | `stairs`, `inner_stairs`, `outer_stairs`, všech čtyřicet stavů vypsáno |
+| `fence` | `<name>` | `fence_post` a `fence_side` jako multipart a `fence_inventory` pro ruku |
+| `wall` | `<name>` | šablony sloupku a strany zdi jako multipart a `wall_inventory` pro ruku |
+| `pane` | `<name>` pro tabuli, `<name>_top` pro hranu | pět šablon skleněné tabule jako multipart |
+| `door` | `<name>_top` a `<name>_bottom`, nebo `<name>` pro obojí | osm modelů dveří a jejich dvaatřicet stavů |
+| `trapdoor` | `<name>` | tři orientovatelné modely padacích dveří |
+| `fence_gate` | `<name>` | čtyři modely branky, zavřené a otevřené, ve zdi a mimo ni |
+| `ladder`, `vine`, `torch` | `<name>` | vlastní šablona hry pro každý |
+| `bell` | `<name>` | vlastní rámy zvonu hry jako `<name>_floor`, `<name>_ceiling`, `<name>_wall` a `<name>_between_walls`, `pack_bell_body` módu jako `<name>_body` a blockstate šestnácti stavů `attachment` a `facing` nad nimi |
+| `crop` | `<name>_stage0` až `<name>_stage<maxAge>`, nebo `<name>` pro všechny | jeden model `crop` na fázi, na ně namapované `age=0` až `7` |
+| `portal` | `<name>`, nebo textura netherového portálu | `cube_all` pro blok `fullCube`, jako je portálový blok v 1.12.2; tři portálové desky, jedna na osu, pro ten, který není, například rámový portál dimenze |
+| `banner` | vlastní list, viz [Praporce](#praporce) | model praporce hry |
+| `container` s `chestModel` | list truhly pojmenovaný v `chestModel` | model `pack_chest` módu |
+
+Každá textura se hledá pod `textures/block/` a název je klíč varianty, takže blok registrovaný jako `ruby_ore` chce `textures/block/ruby_ore.png` a nic dalšího se psát nemusí. Blok, jehož předmět se kreslí plochý, dveře, žebřík, pochodeň, sazenice, květina, rákos, liána nebo tabule, bere pro ruku `textures/item/<name>.png`, když existuje, a texturu bloku, když ne.
+
+**Předměty** berou `textures/item/<name>.png` a vygenerovaný model `item/generated`, nebo `item/handheld` pro nástroj. Dodej `models/item/<name>.json`, aby se kreslil jakkoli jinak.
+
+**Tekutiny** žádný model nepotřebují; jeden se vygeneruje z textur `still` a `flow`.
+
+**Blok s několika variantami je několik bloků.** Každý klíč pod `variants` se registruje zvlášť, takže každý má vlastní blockstate, vlastní modely a vlastní textury, pojmenované podle klíče. Neexistuje žádný sdílený blockstate nesoucí vlastnost `blocks` a nic v blockstate nemusí říkat, o kterou variantu jde: `blockstates/ruby_ore.json` patří rubínové rudě a `blockstates/deep_ruby_ore.json` té hluboké.
+
+### Psaní vlastních
+
+*modely, stavy bloků a textury*
+
+Všechno vygenerované lze nahradit. Blockstate, který balíček dodává, se použije tak, jak je, ve formátu samotné hry: vanilla `variants` klíčované podle vlastností bloku, nebo `multipart`. Vlastnosti jsou pro každý typ ty z hry: `axis` u kmene, `type` u desky, `facing`, `half` a `shape` u schodů, `facing`, `half`, `hinge` a `open` u dveří, `facing`, `half` a `open` u padacích dveří, `facing`, `in_wall` a `open` u branky, `age` u plodiny a rákosu, `stage` u sazenice, `north`, `east`, `south`, `west` u plotu nebo tabule s přidaným `up` u zdi a liány, `rotation` u stojícího praporce a `facing` u nástěnného, `axis` u portálu, `attachment` a `facing` u zvonu s vynechaným `powered` z klíčů. Blok `basic`, `ore`, `falling`, `leaves`, `flower` nebo `container` má jeden stav, klíčovaný `""`.
+
+Ukaž modely na rodiče, kteří berou textury, ne na hotové vanilla: `cube_all` bere `all`; `cube_column` `end` a `side`; `cross` `cross`; rodiče schodů `bottom`, `top` a `side`; `fence_post` a `fence_side` `texture`; `template_wall_post` a `template_wall_side` `wall`; šablony skleněné tabule `pane` a `edge`; rodiče dveří `top` a `bottom`; `template_orientable_trapdoor_*` a `template_fence_gate*` `texture`; `template_torch` `torch`; `crop` `crop`; `vine` a `ladder` svůj vlastní název. Model jmenující hotový vanilla model jako `oak_door_bottom_left` zdědí vanilla textury s sebou, ať blockstate říká cokoli.
+
+### Praporce
+
+*modely, stavy bloků a textury*
+
+Praporec je jediný typ, u kterého se tvar bloku a tvar části modelu rozcházejí, takže ho stojí za to popsat celý.
+
+**Registruje dva bloky.** Jedna definice ti dá stojící praporec pod tvým vlastním názvem a druhý blok s názvem `<name>_wall` pro ten visící. Oba potřebují blockstate; předmět dostane jen stojící a ten předmět rozhoduje, který ze dvou umístí: stojící, když klikneš na vršek bloku, a nástěnný, když klikneš na bok. Blok na zdi nikdy neumisťuješ přímo a nepotřebuje vlastní předmět.
+
+**Stojící se otáčí po šestnáctinách.** Jeho vlastnost je `rotation`, běžící od `0` do `15`, protože praporec se otáčí po šestnáctinách, ne po čtvrtinách. `y` blockstate přijímá jen 0, 90, 180 a 270, takže každá rotace ukazuje na malý vlastní model, který bere tvůj model praporce jako rodiče a otáčí ho pomocí `transform`:
+
+```json
+{
+  "variants": {
+    "rotation=0": { "model": "mypack:block/my_banner_rotation_0" },
+    "rotation=1": { "model": "mypack:block/my_banner_rotation_1" }
+  }
+}
+```
+
+```json
+{
+  "parent": "mypack:block/my_banner",
+  "transform": { "rotation": { "y": -22.5 }, "origin": "center" }
+}
+```
+
+…a tak dále do `15`, každý o `-22.5` stupně dál. Znaménko odpovídá praporcům samotné hry, které se otáčejí o mínus rotaci. Postav model směrem na jih, protože tam míří praporec umístěný hráčem, který se dívá na jih. Nástěnný blok je obyčejný blockstate s obvyklými čtyřmi záznamy `facing` na 0, 90, 180 a 270, protože na něm není nic zlomkového. Forge blockstate balíčku z 1.12.2 se přesně na tohle převede, když se balíček převádí.
+
+**Model je skoro dva bloky vysoký.** Praporec zabírá jeden blok pro umístění a kolizi, ale kreslí se daleko za ním, a model, který končí na vršku vlastního bloku, vypadá zakrněle. Proporce vanilly, v šestnáctinách bloku, stojí za to zkopírovat přesně:
+
+| Část | Od | Do |
+| ----------- | ------ | ------- |
+| Sloupek | `0` | `28` |
+| Příčka | `28` | `29.33` |
+| Látka | `2.67` | `29.33` |
+| Šířka látky | `1.33` | `14.67` |
+| Látka na zdi | `-13` | `13.67` |
+
+Stojící praporec tedy sahá do `29.33`, téměř dva bloky, a praporec na zdi visí třináct šestnáctin *pod* blokem, který ho drží. Prvky modelu mohou sahat od `-16` do `32`, takže se vejdou oba. Nástěnná podoba nemá sloupek ani příčku, jen látku.
+
+**Látka je dvakrát tak vysoká, jak je široká, a tvoje textura musí být také.** Ta stěna měří `13.33` krát `26.67`. Namapuješ-li na ni čtvercovou texturu, vzor se stlačí na polovinu výšky. Blokové textury samy nemohou být dvakrát tak vysoké, jak jsou široké, protože cokoli nečtvercového se čte jako animace, takže cesta okolo je větší čtvercový list s látkou v jeho části: soubor 32×32 s látkou jako oblastí 16×32, adresovanou jako `"uv": [0, 0, 8, 16]`, se sloupkem a příčkou v pruzích v prostoru vedle. Souřadnice UV vždy běží od 0 do 16, ať je rozlišení souboru jakékoli, takže stejná čísla fungují v jakékoli velikosti.
+
+**Jeho předmět chce vlastní model.** Předmět, který zdědí takto vysoký model, vyleze při obvyklém měřítku bloku ze svého slotu, takže dej `models/item/<name>.json` vlastní blok `display` se sníženým měřítkem a celým tvarem posunutým zpět do rámečku.
+
+**Bez blockstate se kreslí z listu.** Praporec, k němuž balíček nedodává blockstate, dostane vygenerovaný a vykreslovač praporců hry ho nakreslí v tvaru vanilla praporce z listu na `textures/entity/banner/<name>.png`, rozloženého tak, jak je ten vanilla. Toto je přídavek této verze; stojící i nástěnný blok o tom rozhodují každý svým blockstate.
+
+**Nemá žádné barvy ani vzory.** Praporec balíčku nenese seznam vrstev jako vanilla praporce. Vzor je textura, stejně jako vzhled dveří je jejich textura, a jedna definice je jeden praporec. Barvení a skládání vzorů na něj balíček nedokáže ovlivnit.
+
+**Bere `material`, který mu dáš.** Kamenný praporec se těží krumpáčem jako kámen, za který se prohlašuje.
+
+### Textury zapsané jako pixelové mapy
+
+*modely, stavy bloků a textury*
+
+Textura může být soubor JSON místo PNG. Dej ho tam, kam by šlo PNG, s `.json` na konci celého názvu, takže `textures/block/panel.png.json` odpovídá na každý požadavek na `textures/block/panel.png`. Nic dalšího se nemění: modely ukazují na `mypack:block/panel` jako vždy a atlas, mipmapy i animační `.mcmeta` fungují, protože to, co hra dostane, je stále PNG. Příkladový balíček nedodává jediné PNG; každá textura v něm je mapa.
+
+```json
+{
+  "extends": "mypack:textures/block/panel_template",
+  "size": "16x16",
+  "palette": { "s": "#EDE9E2", "d": "#C6C1B5", "e": "#9E988C", "p": "#F6F4EF" },
+  "tint": { "from": "#626669", "to": "#DBDFE2" },
+  "notes": {
+    "s": "the flat surface",
+    "d": "shadow inside the border",
+    "e": "the outer edge",
+    "p": "the raised panel"
+  },
+  "rows": [
+    "eeeeeeeeeeeeeeee",
+    "edddddddddddddde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edssssssssssssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edspppppppppssde",
+    "edssssssssssssde",
+    "edddddddddddddde",
+    "eeeeeeeeeeeeeeee"
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------- | ----------------- | --------------------------- | ------- | ------------------------------------------------------------------------ |
+| `size` | ano, nebo zděděné | `widthxheight` | | Kolik pixelů na šířku a na výšku |
+| `rows` | ano, nebo zděděné | seznam textů | | Jeden řetězec na řadu pixelů, jeden znak na pixel, shora dolů |
+| `palette` | ano, nebo zděděné | objekt | | Znak a k němu barva, `#RRGGBB` nebo `#AARRGGBB` |
+| `extends` | ne | jiná pixelová mapa | | Mapa, z níž tato vychází |
+| `tint` | ne | objekt s `from` a `to` | | Přebarví vše zděděné podél přechodu mezi dvěma barvami |
+| `notes` | ne | objekt | | Znak a k němu řádek říkající, k čemu slouží; dědí se a nikdy se nekreslí |
+
+**Není co deklarovat jako název.** Cesta samotného souboru je jeho název, přesně jako u PNG, takže mapa v `assets/mypack/textures/block/panel.png.json` je `mypack:block/panel` v modelu a mapa v `assets/mypack/textures/item/gem.png.json` je `mypack:item/gem` v modelu předmětu. Nic neukazuje na pixelovou mapu zvláštním způsobem; blok nebo předmět pojmenovává svou texturu tak, jak vždy, a nikdy se nedozví, kterou ze dvou dostal. Znamená to také, že složky bloků a předmětů zůstávají oddělené, jako u PNG: `textures/block/gem.png.json` a `textures/item/gem.png.json` jsou dvě různé textury a ukládají se do cache jako dva různé soubory.
+
+**Libovolná velikost**, až 4096 na stranu, a obě strany se nemusí shodovat. `16x16` je obyčejná stěna bloku, `16x32` je druh vysokého pruhu, který chce polovina dveří nebo animace. Velikost se kontroluje, ne odhaduje: dej jednu řadu na každý řádek pixelů a jeden znak na každý pixel napříč, jinak je mapa odmítnuta a log uvede řadu a co našel. Znak bez barvy v paletě zůstane průhledný, takže `.` nebo mezera je díra.
+
+**Šablony jsou jádro věci.** `extends` uvádí jinou pixelovou mapu, jako `namespace:path` nebo holou cestu ve stejném balíčku, a soubor, který ji rozšiřuje, zdědí její `size`, `rows` a `palette`. Cokoli uvede sám, vyhrává, a nemusí uvádět všechno, takže celá varianta může být hrstka barev:
+
+```json
+{
+  "extends": "mypack:textures/block/panel.png",
+  "palette": { "s": "#AA7EB1", "d": "#8B6292", "e": "#6B4A72", "p": "#C5A1CB" }
+}
+```
+
+To je kompletní druhá textura: stejný tvar v purpuru, a pokud se tvar v šabloně někdy překreslí, následují ho všechny varianty. Varianta může naopak uvést vlastní `rows` a ponechat paletu šablony, což je opačný způsob: stejné barvy v jiném vzoru. Dědičnost jde až osm úrovní hluboko, smyčka se zachytí a ohlásí a mapa uvádějící šablonu, kterou nikdo neposkytuje, se ohlásí, místo aby se vykreslila prázdná.
+
+**Která ze dvou textur je šablona**, se určuje podle toho, která z nich obsahuje víc rozlišení, ne podle toho, která byla nakreslena první. Varianta dává každému znaku jednu barvu, takže každý pixel, který šablona nazývá stejným znakem, vyjde ve variantě stejnou barvou. Ruda nakreslená na kameni proto nemůže zdědit `rows` kamene: kámen nazývá pozice teček obyčejným kamenem a nic, co varianta napíše, nerozdělí jeden znak na dva. Obrať to a funguje to. Nech šablonou být rudu, takže tóny kamene a tóny rudy mají každé své znaky, a druhá ruda jsou čtyři barvy:
+
+```json
+{
+  "extends": "mypack:textures/block/ore_template",
+  "palette": { "4": "#768291", "5": "#5E6977", "6": "#66717F", "7": "#848F9D" }
+}
+```
+
+Varianta, která opravdu chce jiný vzor, uvede vlastní `rows`, jak je uvedeno výše, a pak dědí jen paletu. To stojí za to, když jsou barvy podstatou a tvar je vedlejší; když je podstatou tvar, dej tvar do šablony a nech varianty uvádět barvy.
+
+**Šablona vůbec nemusí být textura.** Mapa se hře servíruje, jen když její cesta končí na `.png`, takže šablona v `textures/block/ore_template.json` je pro hru neviditelná a existuje čistě proto, aby se rozšiřovala, zatímco ta v `textures/block/ore_template.png.json` by odpovídala i na požadavky na `ore_template.png`. Pojmenuj sdílený tvar bez `.png` a nikdo se o něj nemůže zeptat omylem.
+
+**Šablona může být skutečný obrázek místo mapy.** Nasměruj `extends` na PNG, které poskytuje libovolný balíček nebo samotná hra, a paleta změní význam: klíče se stanou barvami, které už v tom obrázku jsou, hodnoty barvami, které se mají dosadit na jejich místo. Nic se nevektorizuje a nepíšou se žádné `rows`, takže balíček může přebarvit texturu vanilly nebo módu přímo tam, kde je:
+
+```json
+{
+  "extends": "minecraft:textures/block/coal_ore.png",
+  "palette": {
+    "#3F3F3F": "#C4353F",
+    "#343434": "#8E2029",
+    "#373737": "#A32A33",
+    "#454545": "#DE5F68"
+  }
+}
+```
+
+To je rubínová ruda v kameni samotné vanilly: čtyři tóny teček jsou vyměněny a každý další pixel zůstává, jak byl. Barva, kterou obrázek neobsahuje, prostě nikdy nesedí, a velikost se bere z obrázku, pokud žádnou neuvedeš, která se pak musí shodovat.
+
+`extends` upřednostňuje pixelovou mapu: hledá mapu na dané cestě jako první a k obrázku se vrací, jen když ji žádný balíček neposkytuje. Název, který není ani jedno, se ohlásí, místo aby se vykreslil prázdný. Stavba na obrázku je práce klienta, protože se čtou vlastní prostředky hry, takže ji dedikovaný server nikdy nedělá.
+
+**Šablonu lze obarvit místo přemalování.** `tint` uvádí dvě barvy a přebarví vše, co mapa zdědila, podél přechodu mezi nimi. Jas každé zděděné barvy je jejím místem na tomto přechodu, takže černá skončí na `from`, bílá na `to` a každý tón mezi nimi se míchá v poměru. Průhlednost zůstává beze změny. Díky tomu je šedotónová šablona plus dvě barvy kompletní varianta:
+
+```json
+{
+  "extends": "mypack:textures/item/materials/ingot.png",
+  "tint": { "from": "#626669", "to": "#DBDFE2" }
+}
+```
+
+`from` lze vynechat, a pak je černá a obarvení se stane obyčejným násobením, ve stejném tvaru jako `tintindex` při vykreslování. Rozdíl je v tom, že tohle se jednou nakreslí do PNG a uloží do cache, takže nestojí nic za snímek a dosáhne i na texturu, kterou nic neobarvuje, ale také nemůže sledovat biom tak, jak to umí `grass` nebo `foliage`.
+
+Šablona zůstává obyčejnou mapou: otevři ji, podívej se na ni a vykreslí se jako šeď, kterou je. Obě barvy přijímají `#RRGGBB`, `#AARRGGBB` nebo úvodní `0x` a hodnota, která není ani jedno, nechá mapu nenakreslenou, místo aby ji nakreslila špatnou barvou. Obarvení se dědí jako všechno ostatní a vyhrává první v řetězci, takže vlastní obarvení varianty přebije to, které rozšiřuje. Funguje i u obrazové šablony, kde se spouští po výměnách barev v paletě.
+
+**Obarvení je přechod mezi dvěma barvami**, takže se hodí jen pro texturu, jejíž tóny na jednom leží. Tvar se dvěma nesouvisejícími oblastmi, kámen rudy proti jejím tečkám, takový není a chce místo toho vypsanou paletu.
+
+**Vědět, co znaky šablony znamenají**, je ta nepříjemná část rozšiřování jedné, k čemuž slouží blok `notes` výše: znak a k němu krátký řádek, zděděný stejně jako paleta a nikdy nekreslený. Popiš znaky šablony a každý, kdo ji rozšiřuje, ví, které přepsat.
+
+`/rdpl pixelmap <namespace:path>` pak ohlásí, jaká mapa nakonec vyšla, což je spolehlivý způsob, jak napsat variantu, aniž bys otevíral každý soubor v řetězci:
+
+```
+oretest:textures/block/ruby_ore.png is 16x16
+  built from oretest:textures/block/ruby_ore.png.json
+  built from oretest:textures/block/gem_ore.png.json
+  rows come from oretest:textures/block/gem_ore.png.json
+  1  #C4353F  17 pixel(s)  set by ruby_ore.png.json  tělo rudy, většina každé hrudky
+  2  #8E2029   8 pixel(s)  set by ruby_ore.png.json  stín rudy, nejtmavší tón
+  a  #747474  86 pixel(s)  set by gem_ore.png.json   kámen, nejčastější tón
+```
+
+Každý znak je vypsán se svou barvou, kolik pixelů pokrývá, který soubor v řetězci ho nastavil a k čemu podle toho souboru slouží. Cesta může být zadána zkráceně, `mypack:block/panel`, nebo celá. Znak s 0 pixely je takový, který paleta jmenuje a řady nikdy nepoužívají, což je obvykle překlep v řadě.
+
+**Nakreslené obrázky se uchovávají na disku** v `rdploader/pixelmap-cache`, ve složce pro každý namespace a pojmenované podle textury s hashem jejího zdroje na konci. Hash pokrývá celý řetězec, samotnou mapu i každou šablonu nad ní, takže úprava šablony změní razítko každé varianty, která z ní dědí, a všechny se překreslí. Když se mapa překreslí, její starší soubory se smetou.
+
+Složka se také projde při každém skenování balíčků a každý obrázek, jehož mapu už žádný balíček neposkytuje, se smaže spolu s každou složkou, která zůstala prázdná. Přejmenuj texturu, odeber balíček, smaž mapu a její obrázek v cache zmizí s ní, místo aby tam zůstal napořád. Smazání celé složky nestojí nic než čas na jejich opětovné nakreslení a při skenování balíčků se přeskakuje, takže se nikdy nesplete s balíčkem.
+
+PNG vždy vyhrává. Pokud existují `panel.png` i `panel.png.json`, poskytne se PNG a mapa se nikdy nenakreslí, takže vygenerovanou texturu lze později nahradit namalovanou, aniž by se změnilo cokoli, co na ni ukazuje.
+
+**Tyto soubory nikdo nemusí psát ručně.** Repozitář dodává skripty pro celou cestu tam a zpět v `pixelmap/`: `png_to_pixelmap.py` převede jedno PNG na mapu, `convert_pack.py` to udělá pro každou texturu, kterou balíček obsahuje, a `verify_pack.py` nakreslí mapy převedeného balíčku a porovná je s PNG, z nichž vznikly, takže se převodu dá věřit, než se originály odloží.
+
+### Úskalí, která je dobré znát
+
+*modely, stavy bloků a textury*
+
+**Model jmenující hotový vanilla model zdědí i vanilla textury.** `torch`, `ladder`, `oak_door_bottom_left` a `wheat_stage0` všechny nesou vlastní textury, takže model, který na jeden ukazuje, dostane vzhled vanilly, ať vedle něj uvedeš cokoli. Rodičovské modely jako `cube_all`, `cross` a `crop` berou textury z modelu, který je jmenuje, a chovají se, stejně jako šablony dveří, padacích dveří a branek.
+
+**Názvy pocházejí z jazykového souboru.** Blok nebo předmět ukazuje surový klíč, dokud mu `lang/en_us.json` nedá název, a klíče jsou ty z hry: `block.mypack.ruby_ore` pro blok a předmět, který ho umisťuje, `item.mypack.ruby` pro předmět, `itemGroup.mypack.tab` pro kartu kreativního režimu, `fluid_type.mypack.molten_ruby` a `fluid.mypack.molten_ruby` pro tekutinu, `effect.mypack.ruby_sight` pro efekt lektvaru, `entity.mypack.angry_cow` pro variantu entity, `biome.mypack.ruby_forest` pro biom. Každý jednou; nic na této verzi nechce klíč psaný dvakrát.
+
+## Jak donutit vanillu zacházet s tvým blokem správně
+
+*bloky a předměty*
+
+Vanilla kontroluje své vlastní bloky podle identity na tuctu míst, takže blok z balíčku, který by evidentně měl fungovat, často nefunguje. Pokrývají to dva klíče.
+
+```json
+{
+  "material": "ground",
+  "plantTypes": ["plains", "crop"],
+  "behavesAs": ["till", "path"],
+  "variants": { "ruby_grass": { "hardness": 0.6 } }
+}
+```
+
+**`plantTypes`** vypisuje typy rostlin, které tvůj blok podporuje, takže na něm lze sázet sazenice, plodiny a květiny: `plains`, `desert`, `beach`, `cave`, `water`, `nether` a `crop`. **1.21.1** žádné typy rostlin nemá; tam `bush` v `behavesAs` dělá to, co dělalo `plains`, o zbytku rozhoduje seznam půd samotné rostliny a klíč se přečte a ignoruje.
+
+**`behavesAs`** způsobí, že vanilla zachází s tvým blokem jako s některým ze svých:
+
+| Hodnota | Co dělá |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `till` | Motyka ho promění v ornici, nebo v to, co pojmenovává `hoeTillsInto` v konfiguraci |
+| `path` | Lopata ho promění v cestičku, nebo v to, co pojmenovává `shovelPathBecomes` |
+| `bush` | Lze na něj sázet květiny, trávu a sazenice a zůstanou na něm, jako na hlíně. Totéž co `plains` v `plantTypes` |
+| `animals` | Zvířata se na něm spawnují za světla, stejně jako na trávě |
+
+## Předměty
+
+*bloky a předměty*
+
+`<namespace>/items/*.json`
+
+Každý klíč uvnitř `variants` je předmět, registrovaný pod namespace balíčku, takže soubor obsahující `ruby_apple` a `dried_ruby_apple` zaregistruje `mypack:ruby_apple` a `mypack:dried_ruby_apple`; název samotného souboru je jen seskupení. Model každého se vygeneruje z `textures/item/<name>.png`, pokud balíček nedodává `models/item/<name>.json`.
+
+Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které potřebuje. Klíč označený pro jeden typ čte jen tento typ.
+
+```json
+{
+  "inherits": "mypack:food_template",
+  "type": "food",
+  "creativeTab": "mypack:tab",
+  "material": "mypack:ruby",
+  "toolClass": "pickaxe",
+  "slot": "head",
+  "eat": true,
+  "alwaysEdible": false,
+  "useDuration": 32,
+  "attackSpeed": -2.4,
+  "cooldown": 40,
+  "rolls": "d6",
+  "container": "minecraft:glass_bottle",
+  "crop": "mypack:ruby_crop",
+  "soil": "minecraft:farmland",
+  "potionTypes": ["mypack:ruby_tonic"],
+  "requires": ["mypack"],
+  "variants": {
+    "ruby_apple": {
+      "maxSize": 64,
+      "rarity": "rare",
+      "healAmount": 6,
+      "saturation": 0.8,
+      "tags": ["forge:foods"],
+      "potion": "minecraft:speed,600,1"
+    },
+    "dried_ruby_apple": { "healAmount": 3, "saturation": 0.4 }
+  }
+}
+```
+
+### Typy předmětů
+
+*předměty*
+
+| Typ | Co dostaneš |
+| --------------- | --------------------------------------------------------------------------------- |
+| `basic` | Obyčejný předmět. Použije se, když `type` chybí |
+| `food` | Jí se, s hladem a sytostí |
+| `drink` | Pije se místo jedení, vrací prázdný kontejner |
+| `tool` | Krumpáč, sekera, lopata, motyka nebo meč z materiálu |
+| `armor` | Helma, hrudní plát, kalhoty nebo boty z materiálu |
+| `seed` | Zasadí jednu z tvých plodin |
+| `potion` | Při použití aplikuje tvé efekty lektvarů |
+| `potion_bottle` | Drží tvé typy lektvarů a ukazuje je na kartě kreativního režimu |
+| `container` | Váček: inventář nesený v ruce nebo nošený, viz [Kontejnery](#kontejnery) |
+
+`potion_bottle` uvádí, co může obsahovat, pomocí `potionTypes`, pole názvů typů lektvarů, například `["mypack:ruby_tonic"]`. Ten s prázdným seznamem nic nezaregistruje a log to oznámí.
+
+### Klíče souboru předmětu
+
+*předměty*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------- | ----------- | ----------------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `variants` | ano | objekt názvu varianty na variantu | | Jeden předmět na záznam. Klíč je jeho název v registru a pojmenovává jeho model, texturu a jazykový klíč |
+| `type` | ne | jeden z typů výše | `basic` | Jaký typ předmět má |
+| `creativeTab` | ne | název karty | žádný | Karta, na které se objeví, viz [Karty kreativního režimu](#karty-kreativního-režimu) |
+| `material` | tool, armor | název materiálu | žádný | Z kterého z tvých materiálů je vyroben |
+| `toolClass` | tool | `pickaxe`, `axe`, `shovel`, `sword` | žádný | Jaký je to nástroj. `sword` je nástroj z 1.12.2, ne vanilla meč: udeří za 3 plus `damage` materiálu, těží bloky, jejichž `harvestTool` je `sword`, bere těžební kouzla a ani nezametá, ani neřeže pavučiny |
+| `slot` | armor | `head`, `chest`, `legs`, `feet` | žádný | Kde se nosí. Fungují i `helmet`, `chestplate`, `leggings` a `boots` |
+| `eat` | food | boolean | `false` | Používá animaci jedení |
+| `alwaysEdible` | food | boolean | `false` | Lze sníst i při plné liště hladu |
+| `useDuration` | ne | celé číslo, ticky | `32` | Jak dlouho trvá použití |
+| `attackSpeed` | ne | desetinné číslo | podle třídy nástroje | U `tool` atribut rychlosti útoku, tak jako je u meče `-2.4` |
+| `cooldown` | ne | celé číslo, ticky | `0` | U `food`, `drink` a `potion`, jak dlouho předmět po spotřebování odmítá opětovné použití; u předmětu, který `rolls`, jak dlouho mezi hody |
+| `container` | drink | název předmětu | žádný | Co zůstane, například láhev. U předmětu `container` je tento klíč místo toho vlastním nastavením váčku, viz [Kontejnery](#kontejnery) |
+| `crop` | seed | název bloku | žádný | Plodina, kterou sází |
+| `soil` | seed | název bloku | `minecraft:farmland` | Na co ji lze zasadit |
+| `rolls` | ne | `coin`, `d6`, `2d6+1`, kostka nebo balíček | žádný | U obyčejného předmětu pravé kliknutí hodí tak, jako by to udělalo `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet) |
+| `passesTurn` | ne | boolean | `false` | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů) |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+### Klíče variant předmětů
+
+*předměty*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | ----------- | ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxSize` | ne | 1 až 64 | `64` | Velikost stacku |
+| `rarity` | ne | `common`, `uncommon`, `rare`, `epic` | `common` | Barva názvu v popisku |
+| `healAmount` | food | celé číslo, půlky kuřecích stehen | `0` | Obnovený hlad |
+| `saturation` | food | desetinné číslo | `0.0` | Obnovená sytost |
+| `tags` | ne | seznam id tagů | žádný | Tagy předmětů, do kterých se tato varianta zapíše; soubory tagů se generují za tebe |
+| `potion` | food, drink | `potion,duration,amplifier` | žádný | Efekt aplikovaný, když se varianta sní nebo vypije. Čtvrtá část, `true`, z něj udělá ambientní. Prospěšný efekt je v popisku pojmenován zeleně, následovaný zesílením římskými číslicemi, když je nad 0, a žádný efekt, který dává, neukazuje částice |
+
+## Tekutiny
+
+*bloky a předměty*
+
+`<namespace>/fluids/*.json`
+
+Cesta souboru je název bloku tekutiny v registru. `name` pojmenovává samotnou tekutinu, její kbelík a její jazykové klíče a je cestou souboru, pokud ho soubor nenastaví.
+
+```json
+{
+  "name": "molten_ruby",
+  "still": "mypack:block/molten_ruby_still",
+  "flow": "mypack:block/molten_ruby_flow",
+  "color": "C0304A",
+  "bucket": true,
+  "luminosity": 12,
+  "density": 2000,
+  "temperature": 1500,
+  "viscosity": 4000,
+  "gaseous": false,
+  "creativeTab": "mypack:tab",
+  "requires": ["mypack"],
+  "block": {
+    "material": "lava",
+    "flammability": 0,
+    "fireSpread": 0,
+    "quantaPerBlock": 8,
+    "potions": ["minecraft:wither,200,0"]
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ---------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `name` | ne | řetězec | název souboru | Název tekutiny a jejího kbelíku (`<name>_bucket`) v registru; blok si ponechá cestu souboru |
+| `still` | ne | cesta k textuře | vanilla klidná voda | Textura pro stojící tekutinu |
+| `flow` | ne | cesta k textuře | vanilla tekoucí voda | Textura pro tekoucí tekutinu |
+| `color` | ne | hexadecimální barva | žádný | Odstín aplikovaný na tyto textury. Na výchozích texturách vody se násobí modrou vody z 1.12.2, takže barva vybraná pro 1.12.2 vypadá tady stejně |
+| `bucket` | ne | boolean | `true` | Zaregistruje pro ni kbelík |
+| `luminosity` | ne | 0 až 15 | `0` | Vyzařované světlo |
+| `density` | ne | celé číslo | `1000` | Záporná hodnota plave nahoru, jako plyn |
+| `temperature` | ne | celé číslo, kelviny | `300` | Voda má 300, láva 1300 |
+| `viscosity` | ne | celé číslo | `1000` | Jak pomalu teče: tekutina se posune jednou za viskozita / 200 ticků. Voda má 1000, láva 6000 |
+| `gaseous` | ne | boolean | `false` | Zachází se s ní jako s plynem |
+| `creativeTab` | ne | název karty | žádný | Karta, na které se objeví kbelík |
+| `block` | ne | objekt | | Blok tekutiny. `material` (`water`): `water` lze plavat a utonout v ní, nese lodě, hasí hořící tvory, udržuje ornici vlhkou a vypaří se při vylití v Netheru; `lava` zapálí cokoli, co v ní stojí, nelze v ní plavat ani se utopit a používá zvuky lávového kbelíku; jakýkoli jiný materiál nedělá nic z toho. `flammability` (`0`) a `fireSpread` (`0`): jak ochotně oheň blok spaluje a šíří se z něj. `quantaPerBlock` (`0`, čteno jako 8): jak daleko teče od zdroje, o jeden blok méně, než je číslo, jako v 1.12.2; tekutiny zde dosahují 1, 2, 3 nebo 7 bloků, takže 4 a 5 tečou 3 bloky a 6 a víc teče 7 bloků. `potions` (žádný, seznam efektů dávaných všemu, co v ní stojí, každý zapsaný jako `potion,duration,amplifier` s volitelnou čtvrtou částí `true` pro ambientní) |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+## Materiály, karty, zvuky, tagy
+
+*bloky a předměty*
+
+`<namespace>/materials/*.json`
+
+Cesta souboru je název materiálu, který pak uvádí předmět nástroje nebo zbroje v `material`.
+
+Na 26.x si hodnoty existujícího materiálu brnění půjčí jen materiál s názvem `minecraft:leather`, `minecraft:chainmail`, `minecraft:iron`, `minecraft:gold`, `minecraft:diamond`, `minecraft:turtle`, `minecraft:netherite` nebo `minecraft:armadillo`; jakýkoli jiný název, včetně toho, který odpovídá vlastnímu materiálu jiného módu, z tohoto souboru místo toho sestaví vlastní materiál.
+
+```json
+{
+  "harvestLevel": 3,
+  "durability": 1200,
+  "efficiency": 9.0,
+  "damage": 3.5,
+  "enchantability": 18,
+  "repairItem": "mypack:ruby",
+  "reduction": [3, 6, 8, 3],
+  "toughness": 2.0,
+  "equipSound": "item.armor.equip_diamond",
+  "armorTexture": "mypack:ruby"
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ----------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `harvestLevel` | ne | 0 až 4 | `1` | Úroveň nástroje. 0 dřevo, 1 kámen, 2 železo, 3 diamant, 4 netherit |
+| `durability` | ne | celé číslo | `250` | Počet použití, než se rozbije |
+| `efficiency` | ne | desetinné číslo | `6.0` | Rychlost těžby. Diamant má 8 |
+| `damage` | ne | desetinné číslo | `2.0` | Bonus k poškození útokem |
+| `enchantability` | ne | celé číslo | `14` | Jak dobrá jsou kouzla. Zlato má 22 |
+| `repairItem` | ne | název předmětu | žádný | Čím se v kovadlině opravuje z něj vyrobený nástroj. Zbroj z něj vyrobená se takto neopravuje, jako v 1.12.2 |
+| `reduction` | ne | seznam čtyř celých čísel | `[2, 5, 6, 2]` | Body zbroje, v pořadí boty, kalhoty, hrudní plát, hlava |
+| `toughness` | ne | desetinné číslo | `0.0` | Houževnatost zbroje, jakou má diamant |
+| `equipSound` | ne | název zvuku | `item.armor.equip_iron` | Zvuk při nasazení zbroje |
+| `armorTexture` | ne | předpona textury | název souboru | Textura nošené zbroje, čtená z `textures/models/armor/<name>_layer_1.png` a `_layer_2.png` pod tím namespace |
+
+### Karty kreativního režimu
+
+*materiály, karty, zvuky, tagy*
+
+`<namespace>/tabs/*.json`
+
+Bloky, předměty a kbelíky jmenují svou kartu v `creativeTab`. Plné id, například `mypack:rubypack` nebo `minecraft:combat`, se použije tak, jak je napsáno. Holý název se čte tak, jak 1.12.2 četlo štítek karty: `buildingBlocks` jde do `minecraft:building_blocks`, `decorations` do `minecraft:functional_blocks`, `redstone` do `minecraft:redstone_blocks`, `transportation` a `tools` do `minecraft:tools_and_utilities`, `misc` a `materials` do `minecraft:ingredients`, `food` a `brewing` do `minecraft:food_and_drinks` a `combat` do `minecraft:combat` a jakýkoli jiný holý název je karta `<namespace>:<name>` v namespace souboru, který ji jmenuje. Karta, kterou nedeklaruje žádný soubor, se vytvoří za tebe, s názvem z `itemGroup.<namespace>.<name>` a ukazující první předmět v ní. Cesta souboru karty je název karty, pokud ji `label` nepřepíše.
+
+```json
+{ "label": "rubypack", "icon": "mypack:ruby" }
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------- | -------- | --------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `label` | ne | řetězec | název souboru | Id karty: bloky a předměty ji jmenují v `creativeTab` a zobrazený název pochází z `itemGroup.<namespace>.<label>` v jazykových souborech |
+| `icon` | ne | název předmětu | žádný | Předmět zobrazený na kartě |
+
+### Zvuky
+
+*materiály, karty, zvuky, tagy*
+
+`<namespace>/sounds/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Formát vanilla `sounds.json`, takže balíček může dodat vlastní zvuk. Soubor v této složce registruje zvukové události; klient stále čte zvuk přes vlastní `assets/<namespace>/sounds.json` balíčku, takže dodej obojí, index pod `assets` a události pod `data`.
+
+### Tagy
+
+*materiály, karty, zvuky, tagy*
+
+`<namespace>/tags/<kind>/*.json`
+
+Tagy jsou formát samotné hry ve složce samotné hry a balíček je dodává tak, jak by je dodal datový balíček: `tags/items/ores/ruby.json` (1.21.1: `tags/item/`) obsahující `{ "values": ["mypack:ruby_ore"] }` zařadí rudu do `mypack:ores/ruby` a soubor pod `data/forge/tags/items/ores/ruby.json` (1.21.1: `data/c/...`) přidává do sdíleného konvenčního tagu, který čte každý mód. Vlastní bloky a předměty balíčku jmenují své tagy místo toho v `tags` varianty a soubory se zapíšou za tebe; `harvestTool` a `harvestToolLevel` stejným způsobem zapíšou tagy `mineable` a `needs_*_tool`.
+
+Slovník rud z 1.12.2 je to, co nahradily tagy. Jeho názvy se mapují na konvenční tagy: `oreRuby` je `forge:ores/ruby` na 1.20.1 a `c:ores/ruby` na 1.21.1, `ingotCopper` je `ingots/copper`, `gemRuby` je `gems/ruby`, `dustX` je `dusts/x`, `nuggetX` je `nuggets/x`, `blockX` je `storage_blocks/x` a `logWood`, `plankWood` a `stickWood` jsou `minecraft:logs` a `minecraft:planks` samotné hry a konvenční `rods/wooden`. `"remove": [...]` souboru tagu vyjme z tagu jednotlivé záznamy a `"replace": true` s prázdným `"values": []` ho vyprázdní, takže tag z nižšího balíčku nebo z módu lze zkrátit nebo vyčistit. Chceš-li vyjmout předměty ze všech tagů najednou a ze hry, použij [Zakázané bloky a předměty](#zakázané-bloky-a-předměty).
+
+## Přepsání vlastností
+
+*bloky a předměty*
+
+`<namespace>/overrides/<target>/<name>.json`
+
+Cesta uvádí cíl: vše za `overrides/` je namespace a název bloku, předmětu nebo typu lektvaru, který se mění.
+
+Jinde balíček soubor nahrazuje nebo přidává. Přepsání neudělá ani jedno: mění vlastnosti bloku, předmětu nebo typu lektvaru, který už existuje, vanilla nebo z módu, aniž by se dotklo kteréhokoli z jeho souborů. Cesta uvádí cíl, takže `overrides/minecraft/stone.json` mění `minecraft:stone` a `overrides/tconstruct/<name>.json` mění stejným způsobem blok z toho módu.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "requires": ["tconstruct"],
+  "hardness": 0.1,
+  "resistance": 3.0,
+  "slipperiness": 0.98,
+  "light": 10,
+  "lightOpacity": 0,
+  "soundType": "glass",
+  "harvestTool": "pickaxe",
+  "harvestToolLevel": 2,
+  "flammability": 5,
+  "fireSpread": 5,
+  "maxStackSize": 16,
+  "maxDamage": 250,
+  "containerItem": "minecraft:bucket",
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1, "ambient": false, "showParticles": true }
+    ]
+  },
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0, "ambient": false, "showParticles": true }
+  ]
+}
+```
+
+### Vlastnosti bloků
+
+*přepsání vlastností*
+
+Každý klíč je volitelný a soubor mění jen to, co uvádí, takže soubor v `overrides/minecraft/stone.json` s pouhými `hardness`, `light` a `soundType` způsobí, že se kámen těží téměř okamžitě, září a zní jako sklo. Jeden soubor nese klíče bloku, předmětu i lektvaru dohromady. Tyto platí, když je cílem blok:
+
+| Klíč | Hodnota | Co dělá |
+| -------------- | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hardness` | desetinné číslo | Doba těžby, stejné číslo, jaké bere definice bloku. Bez `resistance` zvedne také odolnost proti výbuchu aspoň na stejnou hodnotu, jak to dělá 1.12.2 |
+| `resistance` | desetinné číslo | Odolnost proti výbuchu tak, jak ji čte 1.12.2: blok si ponechá tři pětiny hodnoty, takže `10` dá kameni jeho `6` |
+| `slipperiness` | desetinné číslo | `0.6` je obyčejná zem, `0.98` je led |
+| `light` | `0` až `15` | Vyzařované světlo |
+| `lightOpacity` | `0` až `15` | Kolik světla blok zastaví |
+| `soundType` | jeden z typů zvuku | Zvuky kroků, pokládání a rozbití |
+| `harvestTool` | `pickaxe`, `axe`, `shovel`, `hoe` nebo `sword` | Co ho těží rychle, zapsáno do tagů nástrojů; `harvestToolLevel`, výchozí `0`, nastavuje úroveň: 1 kámen, 2 železo, 3 diamant, 4 a víc netherit. Zda blok dropne bez správného nástroje, zůstává, jak ho blok má |
+| `flammability` | celé číslo | Jak ochotně shoří; `fireSpread`, výchozí `5`, jak ochotně se k němu oheň dostane |
+
+### Vlastnosti předmětů
+
+*přepsání vlastností*
+
+| Klíč | Hodnota | Co dělá |
+| --------------- | ----------- | ----------------------------------------------------- |
+| `maxStackSize` | `1` až `64` | Velikost stacku |
+| `maxDamage` | celé číslo | Odolnost |
+| `containerItem` | název předmětu | Zůstane v mřížce výroby, tak jako kbelík |
+| `food` | objekt | Udělá z předmětu poživatelný, viz níže |
+
+Název, který je zároveň blok i předmět, a to je každý umístitelný blok, přebírá obě skupiny z jednoho souboru:
+
+```json
+{
+  "hardness": 0.2,
+  "food": {
+    "heal": 4,
+    "saturation": 0.3,
+    "alwaysEdible": true,
+    "effects": [
+      { "potion": "minecraft:speed", "duration": 200, "amplifier": 1 }
+    ]
+  }
+}
+```
+
+Na `overrides/minecraft/oak_planks.json` to způsobí, že se prkna rozbíjejí zhruba tak rychle jako hlína, a umožní je jíst. `food` bere `heal` (`1`), `saturation` (`0.6`), `alwaysEdible` (`false`; `true` dovolí jíst při plné liště hladu) a `effects`, jejichž záznamy se píší přesně jako u typu lektvaru. Předmět, který už je jídlo, bere nové `heal`, `saturation` a `alwaysEdible`; `effects` u takového není podporováno a log to řekne. Když poživatelný předmět umisťuje blok, miř pro jedení na oblohu, protože míření na blok ho umístí: to je pořadí použití vanilly, ne chyba.
+
+### Efekty typů lektvarů
+
+*přepsání vlastností*
+
+`effects` na nejvyšší úrovni souboru přepíše seznam efektů typu lektvaru úplně:
+
+```json
+{
+  "effects": [
+    { "potion": "minecraft:levitation", "duration": 200, "amplifier": 0 }
+  ]
+}
+```
+
+V `overrides/minecraft/swiftness.json` dává Lektvar rychlosti nově Levitaci. Každá položka přijímá `potion` (povinné), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) a `showParticles` (`true`), stejně jako v `potion_types/`, a seznam nesmí být prázdný.
+
+### Další módy, znovunačtení a omezení
+
+*přepsání vlastností*
+
+Cíl, který vlastní jiný mód, by měl nést tento mód v `requires`, aby se soubor tiše přeskočil, když mód není nainstalován, místo aby se ohlásil jako chybějící cíl:
+
+```json
+{
+  "requires": ["tconstruct"],
+  "hardness": 1.0
+}
+```
+
+Přepsání jsou živá. Původní hodnoty se zapamatují před první změnou, takže vypnutí balíčku a spuštění `/rdplserver reload` vrátí všechno na původní stav, bez restartu; totéž se stane při každém vstupu do světa. Jeden soubor na cíl: když dva balíčky přepisují tutéž věc, soubor pozdějšího balíčku nahradí dřívější celý a log to řekne.
+
+Dvě omezení, která stojí za to znát. Blok nebo předmět, jehož vlastní kód vlastnost počítá, ignoruje pole za ní, takže se přepsání použije, ale nic nezmění; vanilla to dělá jen u odolnosti schodů proti výbuchu, ale módy to mohou dělat kdekoli. A předměty udělané poživatelnými fungují jen u předmětů bez vlastního chování pravého kliknutí: předmět, který už při použití něco dělá, to dělat nepřestane.
+
+Přepsání potřebují balíček i na klientovi, nejen na serveru, protože rychlost těžby, světlo i jedení se dějí na obrazovce hráče, takže nejsou pro balíčky na straně serveru. `overrides` v kategorii konfigurace `content` vypíná složku úplně.
+
+## Skupiny tvrdosti
+
+*bloky a předměty*
+
+`<namespace>/hardness/*.json`
+
+Cesta souboru uvádí skupinu v logu a nic jiného ji nečte, takže se více souborů skládá dohromady.
+
+Dává skupině bloků násobitel doby těžby, losovaný pro každou pozici bloku. Samotný blok se nikdy nemění: nic se neregistruje, nic se nezapisuje do světa a svět otevřený bez balíčku je obyčejná vanilla.
+
+```json
+{
+  "blocks": ["minecraft:stone"],
+  "except": [{ "block": "minecraft:oak_log", "properties": { "axis": "y" } }],
+  "miningTime": { "min": 1.0, "max": 20.0 },
+  "blastResistance": { "min": 1.0, "max": 4.0 },
+  "buckets": 10,
+  "minHeight": -64,
+  "maxHeight": 319,
+  "field": { "type": "speckle", "spread": 0.15 },
+  "keeps": false,
+  "adventure": { "tools": ["minecraft:iron_pickaxe"], "teams": ["red"], "players": [], "entities": ["mypack:digger"] },
+  "advancement": "mypack:deep_miner",
+  "becomes": { "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" },
+  "requires": ["mypack"]
+}
+```
+
+### Těžba a odstřely
+
+*skupiny tvrdosti*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | -------------------------------------- | ------------------ | --------------------------------------------------------------------------------------- |
+| `blocks` | ano | seznam názvů bloků nebo objektů | | Skupina. Stejné tvary jako `replace` worldgenu |
+| `except` | ne | seznam názvů bloků nebo objektů | žádný | Vyjmuto ze skupiny, ať říká `blocks` cokoli |
+| `miningTime` | ne | číslo, nebo objekt s `min` a `max` | `1.0` | Kolikrát déle se blok rozbíjí, pro hráče i pro mob s `digs` stejně |
+| `blastResistance` | ne | číslo, nebo objekt s `min` a `max` | `1.0` | Násobí odolnost bloku proti výbuchu |
+| `buckets` | ne | 1 až 256 | `10` | Na kolik kroků se rozsah dělí |
+| `minHeight` | ne | celé číslo | dno světa | Pod touto výškou je los nejtvrdším krokem |
+| `maxHeight` | ne | celé číslo | vrch světa | Nad touto výškou je los nejtvrdším krokem |
+| `field` | ne | objekt | viz níže | Tvar, do kterého se los shlukuje |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+Jediné číslo dá každému bloku ve skupině stejný násobitel a nic se nelosuje. Dvojice `min` a `max` losuje pro každou pozici: `max` tam, kde je pole prázdné, `min` uprostřed shluku a kroky mezi nimi určuje `buckets`.
+
+### Těžba v dobrodružném režimu a odemykání
+
+*skupiny tvrdosti*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ---------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `keeps` | ne | boolean | `false` | Blok zůstane na místě, když je vytěžen: dropy, zkušenosti, opotřebení nástroje i zvuk rozbití se stanou a blok tam stále je a lze ho těžit znovu, takže skupina je nekonečná žíla v tempu, které nastaví `miningTime`. Kreativní režim ho odstraní jako vždy |
+| `adventure` | ne | objekt | žádný | Kdo smí skupinu rozbíjet v dobrodružném režimu, kde se jinak nic nerozbíjí. `tools` uvádí předměty, z nichž jeden musí být v ruce, prázdný seznam znamená cokoli v ruce; `teams`, `players` a `entities` říkají kdo, tým jeho názvem, hráč jménem, mob id entity pro úkol `digs`, a všechny tři prázdné znamená kohokoli s nástrojem. Přežití a kreativní režim zůstávají nedotčeny |
+| `advancement` | ne | `namespace:path` | žádný | Skupina se hráči počítá, až když má tento pokrok. Dvě skupiny mohou uvádět tentýž blok, jedna s pokrokem a jedna bez, a vyhrává ta odemčená; hráč bez něj dostane obyčejnou skupinu, nebo vanillu, pokud žádná není. Moby nemají žádné pokroky, takže skupina s podmínkou se nikdy nedostane k úkolu `digs`, a odolnost proti výbuchu a losování textury, které nepatří žádnému hráči, pocházejí z obyčejné skupiny |
+| `becomes` | ne | objekt | žádný | Bloky skupiny se promění v jiný blok, v celém světě, v okamžiku, kdy kterýkoli hráč získá `advancement`: `{ "advancement": "mypack:deep_miner", "block": "mypack:rich_ore" }`. Hned se projde každý načtený chunk a chunk načtený nebo vytvořený později se projde při příchodu, takže starý blok je pryč nadobro. Dej novému bloku vlastní skupinu, abys změnil, jak se těží |
+
+### Toto pole
+
+*skupiny tvrdosti*
+
+Losování se neprovádí pro každý blok úplně samostatně, jinak by tvrdé a měkké bylo čistý šum bez jakéhokoli tvaru. `field` určuje, jaký tvar nabude, a `type` volí mezi dvěma způsoby, jak se tam dostat.
+
+```json
+{
+  "field": { "type": "speckle" }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------ | -------- | --------------------- | --------- | ------------------------------ |
+| `type` | ne | `speckle` nebo `seeded` | `speckle` | Který z obou níže se použije |
+
+#### speckle
+
+*toto pole*
+
+Každý blok losuje svůj vlastní krok a blok o jednu stěnu vedle může na něj předat slabší krok. Vznikají husté jemnozrnné tečky, většinou jednoblokové, tu a tam s větší skvrnou tam, kde se potkají. Z obou je blíž tomu, jaká je těžba v módu, od něhož si to půjčuje.
+
+```json
+{
+  "field": {
+    "type": "speckle",
+    "chances": [30, 30, 20, 20, 10, 10, 10, 10, 50],
+    "spread": 0.15
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------- | -------- | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `chances` | ne | seznam celých čísel, v promile | `[30, 30, 20, 20, 10, 10, 10, 10, 50]` | Jak často blok začíná na každém kroku, nejměkčí poslední. Cokoli zbyde, je nejtvrdší krok |
+| `spread` | ne | 0.0 až 1.0 | `0.15` | Jak často se krok přenáší na sousední blok, o jeden krok slabší nebo o tři |
+
+Seznam se čte od nejtvrdšího po nejměkčí, takže poslední položka je nejměkčí krok a první je o jeden krok nad nejtvrdším. Výchozí šance dávají dohromady 190 promile, takže asi osm bloků z deseti padne samo na nejtvrdší krok a `spread` některé z nich zjemní, takže na nejtvrdším kroku zůstanou asi sedm z deseti a zbytek je mezi nimi rozptýlen.
+
+#### seeded
+
+*toto pole*
+
+Zárodky leží na mřížce vypočítané ze světa a pozice a krok bloku vychází z toho, jak blízko je k nejbližšímu z nich. Vznikají méně, větší, kulatější skvrny, které se vzájemně prolínají, a mohou vyrůstat do ramen.
+
+```json
+{
+  "field": {
+    "type": "seeded",
+    "cell": 8,
+    "seeds": 1,
+    "reach": 3.0,
+    "arms": 0,
+    "armReach": 0.0
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | ------------- | ------- | ---------------------------------- |
+| `cell` | ne | celé číslo, bloky | `8` | Jak daleko jsou zárodky od sebe |
+| `seeds` | ne | 1 až 4 | `1` | Zárodky v každé buňce |
+| `reach` | ne | desetinné číslo, bloky | `3.0` | Jak daleko sahá vliv zárodku |
+| `arms` | ne | 0 až 6 | `0` | Ramena vyzařující z každého zárodku |
+| `armReach` | ne | desetinné číslo, bloky | `0.0` | Jak daleko ramena sahají |
+
+Když se `arms` vynechá, skvrny jsou kulaté. Dát zárodku ramena z něj udělá uzel s úponky a ramena ze sousedních uzlů se k sobě natahují, což je žíla spíš než kulatá skvrna. Drž `reach` nad polovinou `cell`, jinak se skvrny nemohou dotknout a dostaneš oddělené koule s ničím mezi nimi.
+
+### Zobrazení
+
+*skupiny tvrdosti*
+
+Násobitel sám o sobě není vidět. Aby hráč viděl, které bloky jsou tuhé, dej bloku blockstate s jednou variantou na každý bucket, všechny se stejnou váhou, vypsané od nejtvrdšího:
+
+```json
+{
+  "variants": {
+    "": [
+      { "model": "mypack:block/stone_step0", "weight": 1 },
+      { "model": "mypack:block/stone_step1", "weight": 1 }
+    ]
+  }
+}
+```
+
+Minecraft už vybírá variantu podle pozice bloku a skupina tvrdosti mu místo toho předá bucket, takže se textura a násobitel vždy shodují. Ukázkový balíček dělá přesně toto pro svůj rubínový kámen.
+
+Tři věci musí být správně a žádná z nich se při chybě sama neohlásí.
+
+**Přesně `buckets` položek, všechny se stejnou váhou.** Bucket se používá jako místo v seznamu, takže seznam jiné délky, nebo takový, kde se váhy liší, tiše ukazuje na špatnou texturu.
+
+**Název modelu s `block/` na začátku.** Blockstate v této verzi uvádí soubor modelu celý, takže `"model": "mypack:block/stone_step0"` čte `models/block/stone_step0.json`; holé `mypack:stone_step0` hledá `models/stone_step0.json`, který tam není, a položka se beze slova zahodí.
+
+**Stejný klíč, na který se hra ptá.** Blok s jediným stavem má klíč `""` a vanilla kámen je jeden z nich. Blok s vlastnostmi má klíč ze všech vlastností, takže přepsání pro kmen chce `axis=x`, `axis=y` a `axis=z`, každé s vlastním seznamem.
+
+Zapni `worldgenDebug` a každá skupina tvrdosti se při vstupu do světa zkontroluje proti svému upečenému modelu, přičemž se uvede blockstate, kolik variant přežilo, jakou texturu má každá z nich nakonec a které balíčky hra sloučila, aby se tam dostala. To je nejrychlejší způsob, jak najít kteroukoli ze tří věcí výše, a také varuje, když přepsání sdíleného blockstate změnilo stav, který skupina nikdy nepojmenovala.
+
+### Co nezasáhne
+
+*skupiny tvrdosti*
+
+Mění se jen vlastní těžba hráče. Stroje, které bloky rozbíjejí, čtou tvrdost bloku přímo a nejsou dotčeny. Bloky, které hráč umístí, se losují stejně jako jakékoli jiné, protože losování patří místu, ne bloku, a blok přenesený jinam přebírá to, co říká jeho nové místo.
+
+---
+
+# Výroba, kořist a obchod
+
+## Zakázané bloky a předměty
+
+*výroba, kořist a obchod*
+
+`<namespace>/disabled/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Vyřadí bloky a předměty ze hry, aniž by je odregistrovalo, takže světy si ponechají svá ID a smazáním souboru se vše vrátí. S obsahem vanilly, módů i balíčků se zachází stejně, včetně vlastních bloků a předmětů balíčku, a zakázaný blok zakáže i svůj předmět, stejně jako zakázaný předmět zakáže svůj blok.
+
+```json
+{
+  "requires": ["thermal"],
+  "names": ["thermal:tin_ore", "thermal:deepslate_tin_ore", "mekanism:salt*"],
+  "namespaces": ["bigreactors"],
+  "tags": ["forge:ores/tin"]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | ---------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `names` | ne | seznam názvů bloků a předmětů | žádný | Co je zakázáno. Název končící na `*` odpovídá každému názvu, který začíná zbytkem |
+| `namespaces` | ne | seznam id módů | žádný | Každý blok a předmět daného módu |
+| `tags` | ne | seznam názvů tagů | žádný | Každý předmět v tagu předmětů a každý blok v tagu bloků s tímto názvem, přičemž oba tagy zůstanou prázdné. Počáteční `#` je povolen |
+| `requires` | ne | seznam id módů | žádný | Soubor se přeskočí, pokud není načten každý z nich. Položky `config:` a `file:` fungují jako všude jinde |
+
+Zakázaný blok nebo předmět:
+
+- zmizí ze všech karet kreativního režimu i z karty vyhledávání a v JEI je skrytý
+- nemá žádný recept, který ho vyrábí nebo používá: odpadá každý recept každého typu, jehož výsledkem je, tedy výroba, pečení, řezání kamene i kování, a také každý recept se slotem, který může zaplnit jen on. Recept se slotem, který přijímá i něco jiného, zůstane a slot s tagem ho prostě ztratí spolu s tagem
+- je odebrán z každého tagu předmětů a bloků a místo toho je uveden v `resourcedatapackloader:disabled`
+- je odstraněn z každého losování kořisti, tedy z truhel, mobů i rybaření, z dropů bloků a z obchodů vesničanů i potulného obchodníka, a odhozený stack s ním zmizí
+- nelze ho položit, použít, jím máchnout ani sebrat a stack v ruce se smaže, jakmile to hráč zkusí
+- je smazán všude, kde se jeho stack objeví: z inventáře a truhly Endu hráče při přihlášení a poté každou sekundu, z jakéhokoli kontejneru, když ho hráč otevře, a z truhel a dalších inventářů při načtení jejich chunku
+- je odstraněn ze světa tam, kde je položen: při načtení chunku se každý jeho blok změní ve vzduch, a s ním i jeho blokový objekt
+
+Chceš-li umístěné bloky místo odstranění vyměnit za něco jiného, dej jim v šabloně světa řádek `blockReplacements`, například `thermal:tin_ore=minecraft:stone`, viz [Náhrady](#náhrady). Blok, který proces náhrady vymění, se nechá na něm. Recepty, které jiný mód drží uvnitř svých strojů, patří tomu módu a nedosáhne se na ně. Skrytí z karet kreativního režimu a z JEI se děje na klientovi, takže vanilla klient předmět stále vypíše. `content.disabled` v konfiguraci složku vypne.
+
+Chceš-li vyprázdnit tag, ale nechat jeho předměty ve hře, použij místo toho soubor tagu s `"replace": true` a prázdným `"values": []`, viz [Tagy](#tagy).
+
+## Recepty pro pec a paliva
+
+*výroba, kořist a obchod*
+
+`<namespace>/furnace/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Přidává a odebírá recepty pro pec. Odebrání odstraní i odpovídající recepty pro vysokou pec, udírnu a táborák, protože 1.12.2 držela všechny recepty pečení v jediném seznamu pece; přidání je jen recept pro pec.
+
+```json
+{
+  "remove": [
+    "minecraft:iron_ingot",
+    { "input": "minecraft:gold_ore" },
+    { "input": "minecraft:iron_ore", "result": "minecraft:iron_ingot" }
+  ],
+  "add": [
+    { "input": "mypack:ruby_ore", "output": "mypack:ruby", "count": 2, "experience": 1.0 }
+  ]
+}
+```
+
+Položky pod `add`:
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | --------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `input` | ano | název předmětu | žádný | Co vchází |
+| `output` | ano | název předmětu | žádný | Co vychází |
+| `count` | ne | celé číslo | `1` | Kolik kusů vychází |
+| `experience` | ne | číslo | `0.0` | Zkušenosti za každý vytavený předmět, nejvýše jeden bod: 1.0 nebo více dá jeden bod za každý vyjmutý předmět, takže `count` 2 dá dva. Železná ruda dává 0.7 |
+
+Přidání, jehož vstup už něco taví, se ignoruje a log pojmenuje recept, který v cestě stojí, stejně jako v 1.12.2; odeber ten recept ve stejném souboru nebo v dřívějším, a nahradíš ho.
+
+Položky pod `remove` jsou buď holý název předmětu, který odebere každý recept, jenž ho vyrábí, nebo objekt s `input`, `result` nebo oběma, který výběr zúží. Odebrání, které neuvádí ani jedno, se přeskočí a log to oznámí.
+
+Soubory se uplatňují v pořadí načtení, v každém souboru nejdřív odebrání a pak přidání. Odebrání v pozdějším souboru tedy odstraní i přidání z dřívějšího souboru, ale k přidání, které přijde po něm, nikdy nedosáhne. Přidání se počítá jako recept pro pec módu, jemuž patří jeho výstup, takže ho `blockFurnaceRecipes` a `blockedFurnaceMods` blokují jako každý jiný.
+
+`<namespace>/fuels/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+```json
+{
+  "fuels": [
+    { "item": "mypack:ruby_coal", "burnTime": 2400 },
+    { "tag": "forge:gems/ruby", "burnTime": 800 }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------- | -------------- | ---------- | ------- | ---------------------------- |
+| `item` | jedno ze dvou | název předmětu | žádný | Předmět, který hoří |
+| `tag` | jedno ze dvou | id tagu | žádný | Hoří všechno v tomto tagu |
+| `burnTime` | ano | celé číslo, ticky | `0` | Uhlí je 1600, prkno 300 |
+
+## Lektvary, typy lektvarů a vaření
+
+*výroba, kořist a obchod*
+
+`<namespace>/potions/*.json`
+
+Cesta k souboru je registrační název efektu, takže `mypack/potions/ruby_sight.json` zaregistruje `mypack:ruby_sight`, který pak pojmenuje typ lektvaru.
+
+```json
+{
+  "name": "effect.mypack.ruby_sight",
+  "color": "C0304A",
+  "badEffect": false,
+  "beneficial": true,
+  "instant": false,
+  "effectiveness": 0.5,
+  "attributes": [
+    { "attribute": "minecraft:generic.movement_speed", "uuid": "91AEAA56-376B-4498-935B-2F7F68070635", "amount": 0.2, "operation": 2 }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------------- | -------- | --------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `name` | ne | překladový klíč | `effect.<namespace>.<name>` | Co vidí hráč |
+| `color` | ne | hexadecimální barva | `FFFFFF` | Barva částic |
+| `badEffect` | ne | boolean | `false` | Počítá se jako škodlivý, takže ho fermentované pavoučí oko obrátí |
+| `beneficial` | ne | boolean | `false` | Zobrazí se jako dobrý efekt |
+| `instant` | ne | boolean | `false` | Uplatní se jednou místo postupně |
+| `effectiveness` | ne | desetinné číslo | `0.5` | Přijímá se, ale na žádné řadě nic nedělá: tato verze ho nikdy nečte a ani vanilla 1.12.2 `Potion.effectiveness` nikdy nečte |
+| `attributes` | ne | seznam objektů | žádný | `attribute` (id ve hře, například `minecraft:generic.movement_speed`), `uuid` (1.12.2 ho čte, tato verze ho ignoruje), `amount` (`0.0`), `operation` (`0`) |
+| `icon` | ne | objekt | žádný | `x` a `y`, sloupec a řádek ikony na stavovém listu z 1.12.2, každé `0`, pokud chybí. Čte se jen bez `iconTexture` |
+| `iconTexture` | ne | cesta k textuře | ikona RDPL, nebo žádná, je-li nastaveno `icon` | Obrázek, který balíček dodává, například `mypack:textures/effect/rage.png`, vykreslený celý jako ikona |
+
+Ikona efektu je textura `assets/<namespace>/textures/mob_effect/<name>.png`, 18 na 18 jako ta herní, a balíček, který ji dodá tam, vždy vyhraje. Jinak `iconTexture` uvádí obrázek, který balíček dodává a který se tam zkopíruje celý; samotné `icon` vybere ikonu vanilla efektu podle jejího místa na stavovém listu z 1.12.2, `x` napříč a `y` dolů od 0, například `{ "x": 2, "y": 1 }` pro zvýšený skok; a efekt, který neuvádí ani jedno, zobrazí ikonu RDPL.
+
+### Typy lektvarů
+
+*lektvary, typy lektvarů a vaření*
+
+`<namespace>/potion_types/*.json`
+
+Cesta k souboru je registrační název typu lektvaru, který pak pojmenuje předmět `potion_bottle` v `potionTypes`.
+
+```json
+{
+  "baseName": "ruby_sight",
+  "effects": [
+    { "potion": "mypack:ruby_sight", "duration": 3600, "amplifier": 0, "ambient": false, "showParticles": true }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | --------------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `baseName` | ne | řetězec | namespace a název | Pojmenuje lektvar: klíč lang `item.minecraft.potion.effect.<baseName>`, přičemž pro ostatní formy se místo `potion` použije `splash_potion`, `lingering_potion` nebo `tipped_arrow`. `potion_bottle`, který ho obsahuje, ukazuje stejný název a klíče `potion.effect.<baseName>` z balíčku pro 1.12.2 se převádějí |
+| `effects` | ano | seznam objektů | | Viz níže |
+
+Každý efekt přijímá `potion` (povinné), `duration` (`3600`), `amplifier` (`0`), `ambient` (`false`) a `showParticles` (`true`).
+
+### Vaření lektvarů
+
+*lektvary, typy lektvarů a vaření*
+
+`<namespace>/brewing/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+```json
+{
+  "brewing": [
+    { "input": "minecraft:potion", "ingredient": "mypack:ruby", "output": "mypack:ruby_potion", "requires": ["mypack"] },
+    { "from": "minecraft:awkward", "ingredient": "mypack:ruby", "to": "mypack:ruby_tonic" }
+  ]
+}
+```
+
+Každá položka je buď `input`, `ingredient` a `output`, což uvaří jeden předmět na druhý, nebo `from`, `ingredient` a `to`, což změní jeden typ lektvaru na jiný. `ingredient` je povinný v obou případech a položka přijímá i `requires`, takže lze přeskočit jeden recept, aniž by se přeskočil soubor.
+
+## Práce s kovadlinou
+
+*výroba, kořist a obchod*
+
+`<namespace>/anvils/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka a více souborů se sčítá. Každý soubor je jedna práce.
+
+Vlož pojmenovaný předmět do levého pole kovadliny a jeho předmět `with` do pravého a kovadlina nabídne levý předmět zpět s uvedenými kouzly, nebo jeho `result`, za uvedený počet úrovní; z každého se spotřebuje jeden kus, pokud počet nežádá víc, a zbytek stacku zůstane v kovadlině. Vyjmutí může také udělit advancement a předmět lze do jeho získání zablokovat před použitím: meč, kterým lze máchnout, až když je opracován.
+
+```json
+{
+  "item": "minecraft:iron_sword",
+  "with": "minecraft:wooden_sword",
+  "levels": 3,
+  "enchantments": { "minecraft:sharpness": 2 },
+  "grants": "mypack:sword_rite",
+  "locks": true
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------- | -------- | --------------------------------------------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `item` | ano | název předmětu, jejich seznam, nebo `{ "item", "count" }` | | Co vchází do levého pole, libovolný předmět ze seznamu, a kolik kusů jedna zakázka vezme, ve výchozím stavu jeden; zbytek stacku zůstane pro další. `{ "item": "minecraft:coal", "count": 8 }` s diamantovým `result` je osm uhlí za jeden diamant |
+| `with` | ano | název předmětu, jejich seznam, nebo `{ "item", "count" }` | | Co vchází do pravého pole, libovolný předmět ze seznamu, a kolik kusů se spotřebuje, ve výchozím stavu jeden: `{ "item": "minecraft:coal", "count": 10 }` chce stack nejméně o deseti kusech a vezme deset. Kovadlina se nikdy neozve kvůli osamělému předmětu, takže každá zakázka je dvojice |
+| `result` | ne | název předmětu, nebo `{ "item", "count" }` | levý předmět | Co vyjde místo levého předmětu a kolik kusů, ve výchozím stavu jeden, přičemž se zachovají tagy levého předmětu, takže nerozbitný železný krumpáč a deset uhlí se mohou vrátit jako nerozbitný diamantový. Kouzla se přidají na to, co vyjde |
+| `levels` | ne | celé číslo | `1` | Úrovně zkušeností, které zakázka stojí, nejméně 1 |
+| `enchantments` | ne | objekt názvu kouzla a úrovně | žádný | S čím se předmět vrátí. Úroveň, kterou už má v této výši nebo vyšší, se nechá být, a pokud není co zvýšit, kovadlina nenabídne nic, ledaže je nastaveno `grants` |
+| `grants` | ne | `namespace:path` | žádný | Advancement získaný ve chvíli, kdy se zakázka vyjme. Dodej ho pod `advancements/` s kritériem `impossible`, aby ho nezískalo nic jiného |
+| `locks` | ne | boolean | `false` | Dokud hráč nemá `grants`, předmětem se nedá na nic máchnout, použít ho ani s ním kopat; při vstupu do ruky se hráči řekne, na co čeká. Vložit ho do kovadliny je stále dovoleno, a tak se odemyká |
+
+Vlastní opravy a kombinace kovadliny zůstávají nedotčeny: toto reaguje jen tehdy, když levé pole obsahuje pojmenovaný předmět a pravé jeho `with`.
+
+Mob s `collectsExperience` tu utrácí své úrovně také. Dokud drží `item` v hlavní ruce a `with` ve vedlejší ruce a má dost `levels` na zaplacení, dojde ke kovadlině, popraskané kovadlině nebo poškozené kovadlině do 16 bloků do stran a 4 nahoru či dolů a zpracuje zakázku, jakmile je do 3 bloků: úrovně se mu odečtou stejně jako hráči, `with` se spotřebuje, kovadlina se opotřebuje jako pod hráčem a výsledek skončí v jeho hlavní ruce. Když přejde přes odhozený předmět, který nějaká zakázka uvádí pod `with`, zvedne ho do vedlejší ruky. `grants` a `locks` se týkají jen hráčů, takže mob nezíská nic z `grants` a žádný zámek ho nezadrží.
+
+## Dropy z bloků
+
+*výroba, kořist a obchod*
+
+`<namespace>/block_drops/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Tabulka kořisti bloku určuje, co z něj padne, ale dodání jedné přebírá celou tabulku a tabulka kořisti neumí dát zkušenosti. Pravidlo zde uvádí blok a to, co po jeho rozbití padne navíc k obvyklým dropům nebo místo nich, včetně zkušeností, a vlastní tabulku bloku nechává být.
+
+```json
+{
+  "block": "minecraft:stone",
+  "replace": false,
+  "advancement": "mypack:deep_miner",
+  "drops": [
+    { "item": "minecraft:diamond", "count": "1-2", "chance": 0.05, "fortune": 1, "silkTouch": "never" },
+    { "item": "minecraft:emerald", "silkTouch": "only" },
+    { "experience": "2-4", "chance": 0.5 }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | --------------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `block` | ano | id bloku | | Blok, který pravidlo sleduje |
+| `properties` | ne | objekt vlastnosti a hodnoty | žádný | Jen stavy s těmito hodnotami, například `{ "axis": "x" }` u kmene; bez toho každý stav. `meta` z 1.12.2 se nečte |
+| `replace` | ne | boolean | `false` | Zda se obvyklé dropy před losováním těchto zahodí |
+| `advancement` | ne | `namespace:path` | žádný | Pravidlo platí jen pro hráče, který má daný advancement, takže stejný blok může před ním dropnout jednu věc a po něm jinou |
+| `drops` | ano | seznam dropů | | Každý se losuje sám, když se blok rozbije |
+
+Každý drop:
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | ------------------------ | --------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `item` | ano, pokud není `experience` | id předmětu | | Co padá |
+| `experience` | ne | číslo nebo `low-high` | | Místo předmětu tolik zkušeností v podobě koulí, losovaných rovnoměrně v rozsahu. `chance` a `silkTouch` platí jako u předmětu |
+| `count` | ne | číslo nebo `low-high` | `1` | Kolik kusů, losováno rovnoměrně v rozsahu |
+| `chance` | ne | desetinné číslo | `1.0` | Šance, že drop vůbec nastane, přičemž `0.05` je jedno rozbití z dvaceti |
+| `fortune` | ne | celé číslo | `0` | Nejvýše tolik kusů navíc za každou úroveň Štěstěny na nástroji |
+| `silkTouch` | ne | `either`, `only` nebo `never` | `either` | Zda drop potřebuje sklizeň s Hedvábným dotykem, odmítá ji, nebo je mu to jedno. Je to ona, když hráč nástrojem s Hedvábným dotykem rozbije blok, který lze takto sklidit podle rozhodnutí 1.12.2: plný blok bez blokového objektu, nebo skleněné tabule, železné mříže, pavučiny a truhly Endu |
+
+Pravidla vidí každé rozbití, při němž padá kořist bloku, jako v 1.12.2: hráčovo, a také výbuchy, písty, tekoucí voda, moby a mob balíčku, který se blokem prokopává, a ty losují každé pravidlo bez `advancement`. Kde výbuch ztenčí vlastní dropy bloku, každý vylosovaný předmět přežije se stejnou pravděpodobností; zkušenosti se neztenčují. Pro jeden blok platí všechna pravidla najednou a `replace` v kterémkoli z nich nejdřív smaže obvyklé dropy.
+
+## Kořist hráčů
+
+*výroba, kořist a obchod*
+
+`<namespace>/player_loot/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Hra nedává hráčům žádnou vlastní tabulku kořisti: smrt odhodí jen inventář a neexistuje název tabulky, který by balíček mohl přepsat. RDPL ji přidává, losuje se, když hráč zemře:
+
+```json
+{
+  "table": "mypack:entities/player",
+  "mode": "add",
+  "rollOnKeepInventory": false,
+  "dropLoose": false
+}
+```
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| --------------------- | -------- | ------------------ | ------- | ----------------------------------------------------------------------------------- |
+| `table` | ano | název tabulky |  | Tabulka kořisti, která se losuje, když hráč zemře |
+| `mode` | ne | `add` nebo `replace` | `add` | Zda se předměty z tabulky přidají k inventáři, nebo zaujmou jeho místo |
+| `rollOnKeepInventory` | ne | boolean | `false` | Zda se tabulka vůbec losuje při smrti, při které se inventář zachoval |
+| `dropLoose` | ne | boolean | `false` | Zda se předměty dají přímo na zem místo přidání k dropům ze smrti |
+
+`add` odhodí předměty z tabulky vedle inventáře, což se hodí pro odměny za zabití. `replace` inventář zahodí a odhodí jen to, co tabulka vylosuje.
+
+Při vypnutém `rollOnKeepInventory` se při smrtech pod `keepInventory` (a při smrtech ve spectatoru, které inventář vždy zachovají) nelosuje nic. Zapnutí způsobí, že smrt zůstane na světech s ponechaným inventářem nákladná.
+
+Více souborů se sčítá, každý se vyhodnocuje sám za sebe. Pokud je kterákoli platná položka `replace`, inventář se před losováním jednou vyprázdní, takže položka `add` vedle ní se přesto uplatní.
+
+Tabulka je obyčejná tabulka kořisti hledaná podle názvu: může ležet v balíčku jako `loot_tables/entities/player.json`, být jakákoli vanilla nebo módová tabulka a dosáhnout na ni mohou `loot_injections`. Kontext kořisti: umírající hráč je okradená entita, zabiják (je-li nějaký) je zabíjející hráč a zdroj poškození je nastaven, takže `killed_by_player`, `entity_properties`, `random_chance_with_looting` a ostatní se chovají normálně.
+
+Jedna funkce kořisti je vlastní funkcí RDPL a lze ji použít v jakékoli tabulce s okradenou entitou: `rdpl:killed_name` pojmenuje odhozený předmět po oběti. `format` určuje zobrazený název (`%s` je oběť, ve výchozím stavu jen její jméno) a `tag` místo toho zapíše prosté jméno do řetězcového klíče NBT pro předměty, které si ho čtou samy.
+
+```json
+{ "item": "mypack:human_skull", "weight": 1,
+  "functions": [ { "function": "rdpl:killed_name", "format": "%s's Skull" } ] }
+```
+
+**Módy s hroby.** Vylosované předměty se připojí k obvyklým dropům ze smrti dřív, než je přečte kterýkoli mód s hroby, takže skončí v hrobě se vším ostatním (`replace` dá do hrobu místo inventáře obsah tabulky). Žádné nastavení není třeba.
+
+`dropLoose` obchází seznam dropů úplně: předměty se umístí přímo do světa, takže je módy s hroby nikdy nevidí; inventář jde do hrobu, předměty z tabulky leží na zemi pro zabijáka. Použij to pro kořist, která patří zabijákovi, ne hrobu oběti. Bez módu s hroby to mění málo. Upozornění: předměty existují dřív, než by cokoli dál po proudu mohlo dropy zrušit, takže položky, které nesmějí přežít zrušenou smrt, by to měly mít vypnuté.
+
+Nastavením `playerLoot` v kategorii `data` konfigurace na `false` složku úplně vypneš.
+
+## Vesničané a obchody
+
+*výroba, kořist a obchod*
+
+`<namespace>/villagers/*.json`
+
+Cesta k souboru je registrační název povolání, takže `mypack/villagers/jeweller.json` zaregistruje `mypack:jeweller`, které pak obchod pojmenuje v `profession`.
+
+```json
+{
+  "jobSite": "mypack:gem_bench",
+  "workSound": "minecraft:entity.villager.work_toolsmith"
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jobSite` | ne | název bloku | žádný | Blok, který si vesničan nárokuje, aby převzal toto povolání, jako kovářský stůl dělá z vesničana kováře nástrojů. Bez něj povolání nerozdává žádný blok: stejně jako v 1.12.2 dostane vesničan, který se zrodí nebo vyšlechtí, povolání náhodně, ponechá si ho, a bez bloku, u kterého by pracoval, nikdy nedoplní zásoby |
+| `workSound` | ne | název zvuku | žádný | Co přehrává při práci u toho bloku |
+
+Kariéry jsou nápad z 1.12.2, který hra už nemá: povolání je jedna sada obchodů, takže balíček, který měl dvě kariéry, dodá dva soubory vesničanů. Jak vesničan vypadá, je obyčejná textura, dodaná jako `assets/<namespace>/textures/entity/villager/profession/<name>.png` a `textures/entity/zombie_villager/profession/<name>.png`, přesně tam, kde hra drží své vlastní. Obchod, který uvádí vanilla povolání z 1.12.2 spolu s jeho `career`, například `minecraft:smith` s `armor`, jde k povolání, ve které se ta kariéra proměnila, zde `minecraft:armorer`. Soubory `texture` a `zombieTexture` z 1.12.2, celý skin dodaný balíčkem, se zkopírují do těchto dvou cest, pokud tam balíček nic nemá, a skin se vykreslí přes vlastní vesničanův.
+
+### Obchody
+
+*vesničané a obchody*
+
+`<namespace>/trades/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+```json
+{
+  "trades": [
+    {
+      "profession": "mypack:jeweller",
+      "level": 1,
+      "maxUses": 12,
+      "xp": 2,
+      "buy": { "item": "minecraft:emerald", "min": 2, "max": 4 },
+      "sell": { "item": "mypack:ruby", "min": 1 }
+    }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| `profession` | ano | název povolání | | Čí je tento obchod. Čte se i vanilla název z 1.12.2 s jeho `career`, viz výše |
+| `level` | ne | celé číslo | `1` | Na jakém stupni obchodů se objeví, od 1 do 5. Vyšší úroveň se přidá k úrovni 5, nejvyšší, které vesničan dosáhne |
+| `buy` | ano | stack | žádný | Co vesničan bere, zapsané jako stack (viz níže). Obchod bez předmětu k nákupu nebo prodeji se přeskočí |
+| `buySecondary` | ne | stack | žádný | Druhý předmět, který vesničan bere spolu s `buy`, zapsaný stejně |
+| `sell` | ano | stack | žádný | Co vesničan předává, zapsané jako stack (viz níže) |
+| `maxUses` | ne | celé číslo | `12` | Kolikrát lze použít, než se zamkne |
+| `xp` | ne | celé číslo | `2` | Zkušenosti, které vesničan získá za každý obchod směrem k další úrovni |
+
+Stack je `item` s `min` (`1`) a `max` (`min`), takže pevná cena je prostě `min`.
+
+---
+
+# Tvorové a nebezpečí
+
+## Varianty entit
+
+*tvorové a nebezpečí*
+
+`<namespace>/entities/*.json`
+
+Cesta k souboru je registrační název varianty, takže `mypack/entities/angry_cow.json` zaregistruje `mypack:angry_cow`, na což odkazují `becomes`, spawnovací vejce i uložení světa.
+
+Soubor v této složce vytvoří novou entitu z entity, která už existuje. Je to skutečná entita sama o sobě, s vlastním registračním názvem, vlastním názvem ve světě, vlastním spawnovacím vejcem a vlastní tabulkou kořisti, pokud jí ji dáš, postavená na chování jiné entity, a nikoli její náhrada. Na entitě, kterou kopíruje, se nic nemění.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "name": "Angry Cow",
+  "showName": false,
+  "texture": "mypack:textures/entity/angry_cow.png",
+  "lootTable": "mypack:entities/angry_cow",
+  "profession": "mypack:jeweller",
+  "baby": 0.05,
+  "becomes": [
+    { "variant": "mypack:angry_cow", "weight": 95 },
+    { "variant": "mypack:little_angry_cow", "weight": 5 }
+  ],
+  "sounds": { "ambient": "entity.cow.ambient", "hurt": "entity.cow.hurt", "death": "entity.cow.death", "target": "mypack:scream", "targetVaries": 3, "explode": "mypack:boom", "throw": "mypack:whoosh" },
+  "soundVolume": 1.0,
+  "soundPitch": 1.0,
+  "immuneTo": ["fall", "drown", "explosion", "magic", "cactus", "lava", "wither", "starve", "in_wall"],
+  "jumpMultiplier": 1.0,
+  "fallDamage": 1.0,
+  "maxFallHeight": 3,
+  "breathesUnderwater": false,
+  "swims": false,
+  "amphibious": false,
+  "waterSlowdown": 0.8,
+  "absorption": 0,
+  "experience": 3,
+  "creatureAttribute": "undefined",
+  "effects": [ { "potion": "minecraft:strength", "amplifier": 1 } ],
+  "despawns": true,
+  "despawnAfter": 600,
+  "noAI": false,
+  "leftHanded": false,
+  "fireproof": false,
+  "invulnerable": false,
+  "glowing": false,
+  "invisible": false,
+  "dropChance": 0.085,
+  "scale": 1.0,
+  "angryScale": 1.2,
+  "leashable": true,
+  "steerable": false,
+  "width": 0.9,
+  "height": 1.4,
+  "pathPriorities": { "WATER": 0.0, "LAVA": -1.0, "DANGER_FIRE": 8.0, "DOOR_WOOD_CLOSED": 0.0 },
+  "egg": { "primary": "AABBCC", "secondary": "112233" },
+  "attributes": {
+    "maxHealth": 20,
+    "movementSpeed": 0.32,
+    "attackDamage": 4,
+    "knockbackResistance": 0.0,
+    "followRange": 32,
+    "armor": 4
+  },
+  "hostile": true,
+  "targets": ["minecraft:player"],
+  "passive": false,
+  "persistent": false,
+  "silent": false,
+  "picksUpLoot": false,
+  "hideArmor": false,
+  "hideHeld": false,
+  "tint": "C0304A",
+  "tintParts": ["body", "armor", "held"],
+  "ignoresSpawnRules": false,
+  "throws": true,
+  "throwAmmo": 8,
+  "throwReload": 3,
+  "throwRetreat": 3,
+  "throwPower": 1.0,
+  "throwArc": 0.35,
+  "explodes": false,
+  "explosionPower": 3.0,
+  "explosionFuse": 30,
+  "explosionFire": false,
+  "equipment": {
+    "mainhand": "minecraft:tnt",
+    "offhand": "minecraft:shield",
+    "head": "minecraft:iron_helmet",
+    "chest": "minecraft:iron_chestplate",
+    "legs": "minecraft:iron_leggings",
+    "feet": "minecraft:iron_boots"
+  },
+  "spawns": [
+    { "creatureType": "creature", "weight": 4, "min": 1, "max": 2 }
+  ],
+  "biomes": ["minecraft:plains"],
+  "biomeTypes": ["plains"],
+  "trackingRange": 80,
+  "trackVelocity": true,
+  "trackingFrequency": 3,
+  "requires": ["mypack"]
+}
+```
+
+### Identita
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------------- | -------- | ---------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entity` | ano | `namespace:name` | žádný | Entita, na které se staví. Libovolná z jakéhokoli módu, pokud přijímá obyčejný konstruktor světa |
+| `name` | ne | řetězec | žádný | Jméno, které nese ve světě, ve zprávách o smrti a na svém vejci |
+| `showName` | ne | boolean | `false` | Zobrazit jméno, aniž by se na ni hráč díval |
+| `profession` | ne | `namespace:name` | náhodné | U vesničana obchod, který provozuje |
+| `baby` | ne | boolean nebo 0.0 až 1.0 | `false` | Jak často se zrodí mladá a zůstane taková. `true` je vždy, číslo je takový podíl z nich |
+| `becomes` | ne | seznam | žádný | Jiné varianty, na které se tato může při zrození proměnit, podle váhy. Viz níže |
+| `egg` | ne | boolean nebo objekt | `true` | Spawnovací vejce, obarvené jako vejce entity, kterou kopíruje. `{ "primary": "AABBCC", "secondary": "112233" }` zvolí vlastní barvy, `false` vejce vynechá. Na 26.x si vejce bez barev z balíčku ponechá vlastní texturu; vejce s barvami z balíčku se místo toho kreslí přes šablonovou texturu |
+| `egg.primary` | ne | řetězec | barva kopírované entity | Hexadecimální barva základu vejce, například `AABBCC`. Pokud chybí, vejce si ponechá barvu základu entity, kterou varianta kopíruje |
+| `egg.secondary` | ne | řetězec | barva kopírované entity | Hexadecimální barva skvrn vejce, například `112233`. Pokud chybí, vejce si ponechá barvu skvrn entity, kterou varianta kopíruje |
+| `becomes.variant` | ano | řetězec | žádný | V položce `becomes` zapsané jako objekt varianta, na kterou se změní, podle jejího registračního názvu. Položka může být i jen tento název. Ta, která nepojmenuje žádnou variantu, se přeskočí |
+| `keepsBaseBaby` | ne | boolean | `false` | Zda se spustí i vlastní losování mláděte u základu. Bez něj se varianta založená na zombie zrodí mladá, jen jak říká `baby`, bez dítěte z vlastního losování zombie a bez kuřecího jezdce |
+| `requires` | ne | seznam id módů nebo namespaců balíčků | žádný | Varianta se vynechá, pokud nejsou přítomny všechny |
+
+Varianta je samostatná třída, takže svět, který nějakou obsahuje, závisí na balíčku, který ji vytvořil, stejně jako závisí na módu. Odeber soubor a tvorové v tom světě zmizí s ním.
+
+**Jedno vejce nebo líheň dávající směs.** Varianta je samostatná třída, takže sama o sobě se vždy spawnuje přesně tak, jak říká. `becomes` je způsob, jak to balíček prolomí: seznam variant, na které se tato může při spawnu změnit, každá s váhou, rozhodnuto pro každého tvora zvlášť.
+
+```json
+{
+  "becomes": [
+    { "variant": "mypack:walker", "weight": 95 },
+    { "variant": "mypack:little_walker", "weight": 5 }
+  ]
+}
+```
+
+Položka je buď samotný název varianty, který váží `1`, nebo objekt s `variant` (povinné) a `weight` (`1`, nejméně `1`). Pojmenování sebe sama je způsob, jak zůstane, jaká je, a váhy jsou šance. Dej to na `mypack:walker` a jedno vejce a jedna položka spawnu dají většinou chodce a občas malého, tak jako zombie vejce dá tu a tam dítě. Stane se to ve chvíli, kdy tvor vstoupí do světa, takže to platí pro vejce, `/summon` i přirozený spawn, a tvor, který dorazí, je skutečný tvor zvolené varianty se vším, co ta varianta říká. Líheň je přísnější: losuje jen mezi variantami na stejném základním mobovi a ve stejném týmu jako varianta, na kterou je nastaven, takže líheň zombie dává zombie toho týmu a jejich mláďata, nikdy tvora jiného druhu nebo jiného týmu, tak jako vanilla líheň zombie zůstává líhní zombie. Varianta získaná tímto způsobem se znovu neproměňuje, takže dvě varianty se mohou navzájem uvádět, aniž by se točily dokola.
+
+**Kam patří `baby`.** Hra nemá vlastní zombie mládě: existuje jedna zombie, která při spawnu losuje, zda je dítě. `baby` říká jak často, takže `"baby": 0.05` je zvyk vanilly a `"baby": true` je vždy. Varianta nepřevezme navíc losování samotné zombie, takže se neobjeví žádné dítě ani kuřecí jezdec, o které `baby` nežádalo; `keepsBaseBaby` toto losování vrací. Jsou to dva způsoby, jak dosáhnout téhož, a co zvolit, záleží na rozdílu, který chceš: samotné `baby` dává jednu variantu, která je někdy mladá, `becomes` dává několik variant, které se liší čímkoli, a směs obou je v pořádku.
+
+### Vzhled
+
+*varianty entit*
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | -------------------------------------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
+| `texture` | ne | `namespace:textures/entity/<file>.png` | žádný | Vlastní skin, rozložený stejně jako u entity, kterou kopíruje |
+| `leftHanded` | ne | boolean | `false` | Drží zbraň v druhé ruce |
+| `glowing` | ne | boolean | `false` | Obrys vidět skrz zdi |
+| `invisible` | ne | boolean | `false` | Nevykresluje se, ačkoli její výbava ano |
+| `scale` | ne | desetinné číslo | `1.0` | Jak velká se vykresluje a jak velký je její hitbox |
+| `angryScale` | ne | desetinné číslo | `scale` | Velikost, na kterou se nafoukne, dokud má koho napadnout, a tři sekundy poté, co o cíl přijde |
+| `width` | ne | desetinné číslo | jako u základu | Šířka jejího hitboxu před použitím `scale` |
+| `height` | ne | desetinné číslo | jako u základu | Výška jejího hitboxu před použitím `scale` |
+| `bright` | ne | boolean | `false` | Vykresluje se na plné světlo, ať stojí kdekoli, jako v poledním slunci, takže ji nikdy nezatemní noc, stín ani jeskyně |
+| `hideArmor` | ne | boolean | `false` | Nosí brnění, aniž by se vykreslovalo |
+| `hideHeld` | ne | boolean | `false` | Totéž pro to, co drží |
+| `tint` | ne | hexadecimální barva | žádný | Obarví entitu při vykreslení |
+| `tintParts` | ne | seznam `body`, `armor`, `held` | `["body"]` | Kterých částí se odstín týká |
+
+`scale` mění model i hitbox na obou stranách, takže co vidíš, to můžeš trefit. Tvor, který si mění velikost sám, rostoucí zvíře nebo zombie, která je dítě, se škáluje kolem velikosti, kterou si zvolil, takže se oba nepotírají. `angryScale` ji nafoukne, dokud má cíl, a vrátí na `scale`, když o něj přijde. Protože se klientovi nikdy neřekne, co tvor loví, nese tuto zprávu příznak sprintu; nastavuje se u varianty, která používá `angryScale`, a u ničeho jiného, takže mód čtoucí sprint u tvých variant uvidí, že se mění. Růst pod nízkým stropem je možný, stejně jako u rostoucího slizounu, proto rozdíl drž mírný.
+
+`texture` se naváže místo té, kterou by entita normálně používala, ať dědí jakýkoli renderer, takže funguje pro entity z módů stejně jako pro entity vanilly. Musí odpovídat modelu, na který se kreslí, protože model je modelem základní entity: je to skin, ne nový tvar. Vrstvy si ponechávají vlastní textury, takže brnění stále vypadá jako brnění i na zombie s novým skinem.
+
+Brnění se vykresluje jen na entitě, jejíž renderer má vrstvu brnění, tedy na humanoidních mobech a vesničanech. Varianta krávy nebo pavouka může nést brnění a dostane jeho ochranu, ale nic ho nevykreslí, takže `armor` pod `attributes` je obvykle uspořádanější způsob, jak takového tvora zpevnit. `hideArmor` je pro opačný případ: humanoid, který má mít brnění ve svých slotech, kvůli ochraně nebo kvůli módu, který je čte, aniž by bylo vidět.
+
+### Jeho zvuky
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sounds` | ne | objekt | jako u základu | `ambient`, `hurt` a `death`, každý zaregistrovaná zvuková událost, přičemž název z 1.12.2 se stále čte, viz [názvy zvuků](#seznamy-hodnot). Tři další, pro které nemá základní zvuk: `target` se přehraje jednou pokaždé, když si vezme cíl, a `explode` je to, jak zní jeho výbuch, ať už se vyhodí do vzduchu pomocí `explodes`, nebo hází TNT pomocí `throws`. `throw` se přehraje, když cokoli hází pomocí `throws`, místo hodu sněhovou koulí nebo syčení doutnáku u TNT. `targetVaries` posune každé přehrání `target` nahoru nebo dolů o náhodnou hodnotu v rozsahu tolika půltónů, takže `3` se vychyluje o čtvrt oktávy na obě strany; `0` ho přehraje tak, jak je. Zvuk výbuchu se ozve místo vlastního zvuku hry |
+| `soundVolume` | ne | číslo | `1.0` | Jak hlasité ty zvuky jsou |
+| `soundPitch` | ne | číslo | `1.0` | Jak vysoko se přehrávají. Pod 1 je hlubší, nad 1 pisklavější |
+| `silent` | ne | boolean | `false` | Nevydává žádný zvuk |
+
+### Zdraví, poškození a efekty
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------- | -------- | ----------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `immuneTo` | ne | seznam typů poškození | žádný | Poškození, které odmítá, podle názvů z 1.12.2, `fall`, `drown`, `explosion`, `explosion.player`, `magic`, `indirectMagic`, `mob`, `player`, `inWall` a dalších, nebo podle id typu poškození. Viz [typy poškození](#seznamy-hodnot) |
+| `fallDamage` | ne | desetinné číslo | `1.0` | Násobí poškození, které způsobí pád. `0` poškození pádem odebere |
+| `absorption` | ne | desetinné číslo | `0` | Srdce navíc nad její zdraví |
+| `creatureAttribute` | ne | `undefined`, `undead`, `arthropod` nebo `illager` | jako u základu | Za co se počítá, takže Smite a léčivé lektvary s ní zacházejí odpovídajícím způsobem |
+| `effects` | ne | seznam objektů | žádný | Efekty, které má vždy: `{ "potion": "minecraft:strength", "amplifier": 1 }` |
+| `fireproof` | ne | boolean | `false` | Nikdy nechytí oheň, takže ji oheň ani láva nikdy nezraní a na denním světle nehoří |
+| `invulnerable` | ne | boolean | `false` | Nedostává poškození od ničeho kromě prázdnoty a kreativního režimu |
+| `attributes` | ne | objekt | žádný | `maxHealth`, `movementSpeed`, `attackDamage`, `attackSpeed`, `knockbackResistance`, `followRange`, `armor`. Atribut, který entita normálně nemá, jí je dán. `attackSpeed` je počet úderů za sekundu u bojovníka na blízko, `1` tak, jak ho má hra, takže `2` udeří dvakrát častěji |
+| `hurtResistance` | ne | celé číslo, ticky | `20` ze hry | Jak dlouho po zásahu ji nelze znovu zranit. Údery rychlejší než polovina této hodnoty se ztrácejí, takže rychlý útočník chce cíl s menší hodnotou |
+| `ignoresEffects` | ne | seznam názvů efektů | žádný | Efekty, které se na ni nikdy neuchytí, ať je uplatní kdokoli nebo cokoli: zásah, výbuch lektvaru, maják, šíp, `/effect`. `all` odmítne každý efekt, takže varianta začíná s čistým štítem. Její vlastní `effects` se na ni stále nasadí |
+
+### Pohyb
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `jumpMultiplier` | ne | desetinné číslo | `1.0` | O kolik výš skáče než entita, kterou kopíruje |
+| `maxFallHeight` | ne | celé číslo | jako u základu | Jak hluboko je ochotna sestoupit při hledání cesty |
+| `noAI` | ne | boolean | `false` | Stojí tam, kam je postavena, a nedělá nic |
+| `leashable` | ne | boolean | `false` | Lze ji vést na vodítku, i když to entita, kterou kopíruje, nikdy neuměla |
+| `steerable` | ne | boolean | `false` | Lze ji řídit, když se na ní jede |
+| `pathPriorities` | ne | objekt | žádný | Čím bude procházet, jako `WATER`, `LAVA`, `DANGER_FIRE`, `DOOR_WOOD_CLOSED` a ostatní herní typy cest, každý číslo, kde záporné znamená nikdy. `DANGER_CACTUS` a `DAMAGE_CACTUS` z 1.12.2 se čtou jako `DANGER_OTHER` a `DAMAGE_OTHER`, kam tato verze řadí kaktus spolu s keři sladkých bobulí |
+| `stepHeight` | ne | desetinné číslo, bloky | jako u základu | Jak vysoký schod vyjde bez skoku |
+| `climbs` | ne | boolean | jako u základu | Zapnuto: leze po každé zdi, do které narazí, jako pavouk, ať je její základ jakýkoli. Vypnuto: neleze po ničem, ani po žebříku, a pavouk zůstane na zemi |
+| `teleports` | ne | boolean | `true` | Zda se enderman nebo shulker smí teleportovat. Vypnuto zůstává, kde stojí, i na denním světle a ve vodě |
+| `walks` | ne | boolean | `false` | Králík chodí jako ostatní zvířata místo pohybu po skocích. Čte to jen králík |
+
+### Voda
+
+*varianty entit*
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| -------------------- | -------- | ------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `breathesUnderwater` | ne | boolean | `false` | Nikdy se neutopí a klesne ke dnu, kde chodí, místo aby plaval k hladině. Na zemi se stále orientuje, takže hluboká voda, ze které nevyjde, ho udrží |
+| `swims` | ne | boolean | `false` | Pohybuje se vodou jako chobotnice nebo strážce a nikdy se neutopí. Cestu hledá vodou, ne po zemi, takže patří do vody a mimo ni uvízne |
+| `amphibious` | ne | boolean | `false` | Chodí po souši a ve vodě plave správně, přičemž při vstupu do vody a výstupu z ní mění způsob hledání cesty. Nikdy se neutopí. Cokoli pronásledoval, zapomene na okraji vody, takže pokaždé, když ho překročí, na chvíli zaváhá |
+| `waterSlowdown` | ne | desetinné číslo | `0.8` | Jak moc ji voda zpomaluje. Vyšší je rychlejší |
+
+### Boj
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------------- | -------- | -------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hostile` | ne | boolean | `false` | Útočí na to, k čemu dosáhne, a brání se, když je zraněna. Nepřátelská varianta se pro hru počítá za monstrum, ať je její základ jakýkoli, takže ji drží limit monster. Mírná obtížnost ji odstraní, jen když je její základ monstrum; jakýkoli jiný základ zůstane, ale nemůže tam hráče zranit. Zahodí úkoly zvířat, se kterými základ přišel: rozmnožování, lákání, následování rodiče, majitele nebo vlastního druhu, sezení |
+| `targets` | ne | seznam názvů entit | hráč | Co hledá, dokud je nepřátelská. `minecraft:player` se chápe, i když hráč není zaregistrovaná entita |
+| `attackReach` | ne | desetinné číslo, bloky | podle její velikosti | Jak daleko sahá úder na blízko. Hra sahá dvojnásobek šířky, a proto zvětšený tvor zasáhne z větší dálky; toto to nastaví přímo |
+| `knockback` | ne | desetinné číslo | `0.4` u základu | Jak silně její údery odhazují. `0` neodhazuje vůbec |
+| `hitEffects` | ne | boolean | `true` | Zda na to, co zasáhne, nasadí efekt, který nasazuje entita, kterou kopíruje: wither u wither kostlivce, jed u jeskynního pavouka, hlad u husku. Vypnuto zasahuje jen poškozením |
+| `hitFire` | ne | boolean | `true` | Zda zapálí to, co zasáhne, když by to udělala entita, kterou kopíruje: hořící zombie, ohnivá koule blaze. Vypnuto nic, co udělá, nezačne oheň na jejím cíli |
+| `passive` | ne | boolean | `false` | Zastaví ji v útoku na cokoli, ať se normálně chová jakkoli |
+| `threatLeast` | ne | celé číslo | `0` | Nejnižší pásmo hrozby, ve kterém musí stát hráč nebo jiný nositel do 128 bloků, než se varianta spawnuje přirozeně. `0` se spawnuje jako obvykle |
+| `threatHostile` | ne | celé číslo | `0` | Nejnižší pásmo hrozby, ve kterém musí hráč stát, než za ním varianta vyrazí sama. Pod ním je varianta k tomuto hráči mírná, ačkoli se stále brání, když ji udeří. `0` útočí jako obvykle |
+
+`hostile` také odebere chování, které tvora nutilo utíkat: zvíře, které se hráčům vyhýbalo nebo panikařilo při zranění, nedělá ani jedno, jakmile je nepřátelské, protože jinak by utíkalo před tím, na co má útočit. Vyžaduje entitu, která chodí po zemi, protože používá stejné chování útoku, jaké vanilla dává svým vlastním mobům. Létající nebo plavající základ se zaloguje a nechá být. `passive` působí šířeji, ale zasahuje jen chování postavené tak, jak ho staví vanilla; mód, jehož nepřátelství je zapsáno v jeho vlastním ticku nebo kódu poškození, není něco, co by balíček mohl vymluvit.
+
+### Výbava, dropy a zkušenosti
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------------- | -------- | --------------------------- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lootTable` | ne | `namespace:entities/<name>` | jako u základu | Co z ní padá. Bez toho padá to, co padá z entity, kterou kopíruje |
+| `experience` | ne | celé číslo | jako u základu | Kolik zkušeností z ní padá |
+| `collectsExperience` | ne | boolean | `false` | Sbírá zkušenosti jako hráč: koule do osmi bloků k ní plují a berou se dotykem, Oprava na její výbavě se uplatní jako první a body se skládají do úrovní na hráčově vlastní křivce, zachované na mobovi přes uložení. To, co zabije, dropne své zkušenosti, jako by zabití provedl hráč, blok, který rozbije její úkol `digs`, dropne vlastní zkušenosti bloku a losování zkušeností z `block_drops` připadne i jí. Při smrti dropne sedm za úroveň až do sta, ledaže je zapnuto `keepInventory`. Cíle s kritériem `xp` nebo `level` nesou její celkovou hodnotu a úroveň na řádku pojmenovaném jejím UUID, takže je funkce čte pomocí `execute if score` nebo selektoru `scores={<objective>=N..}`. Své úrovně utrácí za práci s kovadlinou jako hráč, viz [Práce s kovadlinou](#práce-s-kovadlinou) |
+| `dropChance` | ne | 0 až 1 | `0` | Jak pravděpodobné je, že každý kus výbavy dropne |
+| `picksUpLoot` | ne | boolean | `false` | Sbírá to, přes co přejde |
+| `equipment` | ne | objekt | žádný | `mainhand`, `offhand`, `head`, `chest`, `legs`, `feet`, každý název předmětu. Na 26.x nosí mláďata mobů vlastní model brnění; když brnění z balíčku nemá vrstvy pro mláďata, RDPL místo toho překreslí dospělé brnění z balíčku na model mláděte |
+
+Varianta dropuje to, co dropuje entita, kterou kopíruje, protože tabulka kořisti je pevně v kódu té entity a nehledá se podle názvu. `lootTable` ji nasměruje na tvou vlastní tabulku, kterou pak dodáš v `loot_tables/entities/<name>.json` jako každou jinou.
+
+### Zvláštní chování
+
+*varianty entit*
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ------------ | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `digs` | ne | boolean | `false` | Prokope se vším, co stojí mezi ním a jeho cílem, nástrojem v ruce: lopatou hlínou, pískem a štěrkem, krumpáčem kamenem, sekerou dřevem, a jen tím, co materiál toho nástroje dokáže rozbít, takže dřevěný krumpáč nikdy neotevře železnou rudu a obsidián neotevře nic kromě diamantu. Blok trvá tak dlouho, jak by trval hráči s tím nástrojem, dropne, co by dropnul, a nástroj se opotřebuje. Nástroj mu dej pomocí `equipment`; holýma rukama nekope nic a nekope nic tam, kde je `mobGriefing` vypnuto. Nikdy nehledá cestu kolem: s cílem jde přímo na něj a prokope, co mu stojí v cestě, a kde nástroj blok neotevře, stojí a tlačí. Vyžaduje `hostile`. Své cíle bere, aniž by je musel vidět, protože to, k čemu se prokopává, je ze své podstaty za něčím |
+| `throws` | ne | boolean | `false` | Háže to, co drží, na svůj cíl z dálky, a je-li to TNT, zapálí ho a ustoupí. Vyžaduje `hostile` |
+| `throwAmmo` | ne | celé číslo | žádný | Kolik toho má k hození. Vynecháno, nikdy mu nedojde |
+| `throwReload` | ne | celé číslo, sekundy | `explosionFuse` | Jak dlouho zůstává jeho ruka prázdná, než sáhne po dalším |
+| `throwRetreat` | ne | celé číslo, sekundy | `explosionFuse` | Jak dlouho se po hodu drží stranou, než se vrátí |
+| `throwPower` | ne | desetinné číslo | `1.0` | Jak silně hází. Zdvojnásobení zhruba zdvojnásobí dosah |
+| `throwArc` | ne | desetinné číslo | `0.35` | Jak vysoko vrhá. Vyšší visí déle, blízko nuly je plochý hod, pod nulou hází dolů |
+| `throwReturns` | ne | boolean | `false` | To, co hodí, letí jako trojzubec: zasáhne za `attackDamage` varianty, nebo za 8 u základu bez něj, a pak se vrátí zpět do jeho ruky, jako ho Věrnost vrací trojzubci. Nikdy se nespotřebuje a míří se na cíl tak, jak míří kostlivec, rychleji s `throwPower` a s menším rozptylem na vyšších obtížnostech, a vrhač během letu stojí na místě, takže se na něj `throwAmmo`, `throwReload`, `throwRetreat` a `throwArc` nevztahují. TNT se hází jako vždy |
+| `explodes` | ne | boolean | `false` | Vyhodí se do vzduchu vedle svého cíle jako creeper. Vyžaduje `hostile` |
+| `explosionPower` | ne | číslo | `3.0` | Jak velký je výbuch. Creeper má 3, TNT má 4. Na základu creepera nebo ghasta zápis tohoto klíče nebo `explosionFuse` nastaví i vlastní výbuch základu bez `explodes`: velikost výbuchu a doutnák creepera, ohnivou kouli ghasta, každé v celých číslech, takže ghast, kterému je dáno jen `explosionFuse`, vybuchuje na 3 místo svého vlastního 1 |
+| `explosionFuse` | ne | celé číslo, ticky | `30` | Jak dlouho syčí, než vybuchne, a vlastní doutnák základu creepera |
+| `explosionFire` | ne | boolean | `false` | Zanechává požáry |
+| `charges` | ne | boolean | `false` | Řítí se na svůj cíl z dálky a při dotyku zasáhne silným odhozením, jako pustošič, pak odpočívá před dalším náběhem. Vyžaduje `hostile` |
+| `pounces` | ne | boolean | `false` | Skrčí se a pak skočí na svůj cíl obloukem a při dopadu udeří, jako liška. Vyžaduje `hostile` |
+| `sniffs` | ne | celé číslo, bloky | `0` | Slyší hráče pohybující se v tomto okruhu bloků, ať jsou za zdí nebo ne, a jde tam, kde je slyšel; plížícího se nebo stojícího hráče neslyší a toho, koho pak uvidí, se stane jeho cílem. `0` neposlouchá. Vyžaduje `hostile` |
+| `fleesWhenHurt` | ne | 0.0 až 1.0 | `0` | Přeruší boj a uteče před tím, s kým bojuje, dokud je jeho zdraví pod tímto zlomkem, a vrátí se, jakmile je nad ním. `0` nikdy neuteče. Vyžaduje `hostile` |
+| `sleepsByDay` | ne | boolean | `false` | Ve dne najde stín a stojí tam do noci nebo dokud na něj něco nezaútočí. Dokud odpočívá, leží na boku |
+| `home` | ne | celé číslo, bloky | `0` | Drží se v tomto počtu bloků kolem místa, kde poprvé stál, bloumá uvnitř a vrací se, když zabloudí. `0` se toulá volně |
+| `patrols` | ne | boolean | `false` | Prochází krajinu v dlouhých etapách s ostatními svého druhu, kteří následují vůdce, jako hlídka pillagerů. Skupina, která se spawnuje společně, si zvolí jednoho vůdce; ostatní se drží několik bloků od něj, a když vůdce zvolí cíl, zvolí ho všichni. Následovník, který o vůdce přijde, se ujme vedení sám. Vyžaduje `hostile` |
+| `swoops` | ne | boolean | `false` | Krouží nad svým cílem a střemhlav se jím prožene, přičemž při průletu udeří, jako fantom. Varianta dostane létajícího pomocníka, takže při lovu létá a v klidu přistane na zemi; potřebuje základ, který je tvor, například papoušek, ale netopýr ne. Vyžaduje `hostile` |
+| `gusts` | ne | boolean | `false` | Navine se a vypustí na svůj cíl z dálky poryv větru, který vše poblíž cíle odhodí zpět a nahoru, jako větrná střela breeze. Vyžaduje `hostile` |
+| `gustPower` | ne | desetinné číslo | `1.5` | Jak silně poryv odhazuje. Zásah od moba má 0.4, silné kouzlo odhození asi 1 |
+
+**Házení místo útoku.** `explodes` pošle tvora dovnitř, aby se vyhodil do vzduchu. `throws` je opačný temperament: drží si odstup, hází, co má v hlavní ruce, na to, s čím bojuje, a je-li to náhodou TNT, zapálí ho, hodí a ustoupí, zatímco hoří.
+
+```json
+{
+  "hostile": true,
+  "throws": true,
+  "explosionFuse": 50,
+  "equipment": { "mainhand": "minecraft:tnt" }
+}
+```
+
+Házením se jeho ruka vyprázdní, protože to hodil. Pak se drží stranou po dobu `throwRetreat`, po `throwReload` sáhne po dalším a obrátí se zpět na svůj cíl: smyčka hodit, ustoupit, přebít, přiblížit se. Dej mu `throwAmmo` a ta smyčka skončí, když počet dojde, přičemž jeho ruka zůstane navždy prázdná a převezme jeho obyčejný útok. Vynech `throwAmmo` a nikdy mu nedojde.
+
+Počet je zapsán do tvora, takže se nedoplní jen proto, že se chunk vyložil a znovu načetl. Cokoli, co není TNT, letí jako předmět a dopadne, takže sapér hážící kameny nebo shnilé maso je stejně snadný jako ten, co hází výbušniny.
+
+`explosionFuse` zůstává rozbuškou hozeného TNT a zastupuje kterýkoli časovač, který vynecháš, takže varianta napsaná před těmito klíči se chová přesně jako dřív.
+
+Jak samotný hod letí, určují `throwPower` a `throwArc`. První je násobitel odhozu, a protože odhoz už s vzdáleností roste, jeho zvýšení prodlouží dosah, aniž by se změnilo, jak dlouho hod visí ve vzduchu. Druhý je zvednutí a mění tvar: vysoké a hod přeletí zeď a nespěchá, blízko nuly se hází naplocho a dopadne téměř hned, pod nulou se hází dolů na něco pod sebou. Obojí nechává rozbušku na pokoji, takže vržená nálož a plochá vybuchnou stejný počet sekund po opuštění ruky, což rozhoduje, zda praskne nad hlavou, nebo dopadne první a čeká. Odkud bude házet, určuje jeho `followRange`, a jako obvykle se přiblíží, jakmile jsi blíž než tři bloky, takže je nebezpečný na dálku a v tvé tváři obyčejný.
+
+### Úkoly
+
+*varianty entit*
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ------- | -------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tasks` | ne | seznam | žádný | Jakýkoli úkol, který hra má, přidaný k variantě podle názvu s prioritou dle tvé volby, nebo odebraný z toho, co její základ měl. Seznam níže |
+
+**Jakýkoli úkol, který hra má.** Klíče výše jsou vlastní chování RDPL. `tasks` sahá za ně ke všem úkolům, které používá sama vanilla, na jakémkoli základu: položka je objekt, který uvádí `task` a jeho `priority` plus cokoli, co ten úkol čte; název za `-` zahodí každý úkol toho druhu, který základ měl. Priority běží od 0 jako první a vanilla si ponechává své mezi 1 a 8, takže úkol na 0 vyhraje nad vším, co základ dělá, a úkol na 9 běží, jen když nic jiného nechce.
+
+```json
+{
+  "entity": "minecraft:cow",
+  "tasks": [
+    "-wander",
+    { "task": "avoidEntity", "priority": 3, "entity": "minecraft:player", "distance": 8, "speed": 1.0, "nearSpeed": 1.4 },
+    { "task": "watchClosest", "priority": 6, "entity": "minecraft:wolf", "distance": 12 },
+    { "task": "wanderAvoidWater", "priority": 7, "speed": 0.8 }
+  ]
+}
+```
+
+Seznam se uplatní poté, co `hostile`, `passive` a výše uvedená chování odvedly svou práci, takže má poslední slovo. Úkoly, které hýbou tělem, se navzájem vylučují: jeden běží, jen když tvorem nehýbe nic, co je před ním v prioritě, a útok, se kterým monstrum přichází, sedí na 2, takže skok nebo útěk u zombie potřebuje prioritu 1, jinak se na něj nikdy nedostane; pavouk a vlk mají z téhož důvodu skok před útokem. Úkol, který základ už provozuje, se přidá podruhé a nenahradí se; nejdřív ten starý zahoď. Některé úkoly dávají smysl jen na základu, který má to, co ovládají: souboj s lukem potřebuje základ, který střílí, sezení potřebuje základ, který lze ochočit, a obchodování potřebuje vesničana. Požádáš-li o některý na základu, který ho nenese, log řekne, jaký základ potřebuje, a varianta se bez něj obejde. Vesničan v této verzi běží na herním mozku, ne na úkolech, takže řádky o vesničanech níže sahají jen na to, co mozek úkolům nechává.
+
+| Klíč | Typ | Výchozí | Co dělá |
+| ----------- | ------------------ | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `priority` | celé číslo | povinné | Kam se řadí mezi úkoly základu. Nižší běží první |
+| `speed` | číslo | obvyklé pro úkol | Jak rychle se pohybuje, dokud úkol běží, jako násobitel rychlosti chůze |
+| `nearSpeed` | číslo | `1.2` | `avoidEntity`: násobitel, jakmile je to, čemu se vyhýbá, blízko |
+| `distance` | číslo, bloky | obvyklé pro úkol | Jak daleko hledá, následuje, střílí nebo se drží stranou |
+| `near` | číslo, bloky | obvyklé pro úkol | `follow`, `followOwner`, `followOwnerFlying`: jak blízko přijde, než se zastaví |
+| `chance` | číslo | obvyklé pro úkol | `wander`: jedno losování za tolik ticků; `wanderAvoidWater`: pravděpodobnost, 0 až 1, že opustí úkryt; `watchClosest`, `watchClosest2`: pravděpodobnost, 0 až 1, že se v každém ticku podívá |
+| `leap` | číslo | `0.4` | `leapAtTarget`: jak vysoko skok sahá |
+| `cooldown` | celé číslo, ticky | `20` | `attackRanged`, `attackRangedBow`: ticky mezi výstřely |
+| `entity` | název entity | žádný | Kterou entitu úkol hledá, které se vyhýbá, kterou sleduje nebo s kterou se množí. `minecraft:player` se chápe |
+| `items` | seznam názvů předmětů | žádný | `tempt`: co hráč nabízí |
+| `sight` | boolean | `true` | `nearestAttackableTarget`, `targetNonTamed`: jen to, co vidí |
+| `nearby` | boolean | `false` | `nearestAttackableTarget`: jen to, co je v jeho vlastním dosahu sledování |
+| `help` | boolean | `false` | `hurtByTarget`: ostatní jeho druhu poblíž se přidají |
+| `memory` | boolean | `false` | `attackMelee`, `zombieAttack`: pronásleduje cíl, který ztratil z dohledu |
+| `close` | boolean | `false` | `openDoor`: zavře za sebou dveře |
+| `nocturnal` | boolean | `false` | `moveThroughVillage`: jen v noci |
+| `scared` | boolean | `false` | `tempt`: hráč, který se pohybuje příliš rychle, kouzlo zruší |
+
+Sloupec `List` říká, kde úkol žije. `tasks` je to, co tvor dělá; `targets` je to, jak si vybírá, na co zaútočí, a cílový úkol bez odpovídajícího útoku sám o sobě nedělá nic.
+
+| Úkol | Vyžaduje | Seznam | Čte | Co dělá |
+| ------------------------- | ------------------------------ | --------- | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| `attackMelee` | tvora chodícího po zemi | `tasks` | `speed`, `memory` | Dojde k cíli a udeří ho |
+| `attackRanged` | základ, který střílí | `tasks` | `speed`, `cooldown`, `distance` | Drží si odstup a střílí to, co střílí její základ |
+| `attackRangedBow` | monstrum, které střílí | `tasks` | `speed`, `cooldown`, `distance` | Souboj kostlivce s lukem: kličkuje, natahuje a vystřeluje |
+| `avoidEntity` | tvora chodícího po zemi | `tasks` | `entity`, `distance`, `speed`, `nearSpeed` | Uteče před pojmenovanou entitou, když se přiblíží do `distance` |
+| `beg` | vlka | `tasks` | `distance` | Žebrá u hráče, který nabízí jídlo |
+| `breakDoor` | libovolný základ | `tasks` | | Rozbíjí dřevěné dveře v cestě, na těžkou obtížnost |
+| `creeperSwell` | creepera | `tasks` | | Syčí a vybuchne u svého cíle |
+| `defendVillage` | železného golema | `targets` | | Jde po tom, kdo napadl vesničana |
+| `eatGrass` | libovolný základ | `tasks` | | Žere trávu, jako ovce |
+| `findEntityNearest` | libovolný základ | `targets` | `entity` | Zaměří nejbližší pojmenovanou entitu, jako slizoun nebo ghast |
+| `findEntityNearestPlayer` | libovolný základ | `targets` | | Zaměří nejbližšího hráče, ke kterému dosáhne |
+| `fleeSun` | tvora chodícího po zemi | `tasks` | `speed` | Hledá stín, když na něj svítí slunce |
+| `follow` | libovolný základ | `tasks` | `speed`, `near`, `distance` | Následuje ostatní svého druhu |
+| `followGolem` | vesničana | `tasks` | | Následuje železného golema, který nabízí mák |
+| `followOwner` | ochočitelný základ | `tasks` | `speed`, `near`, `distance` | Následuje svého majitele a teleportuje se za ním, když zůstane daleko pozadu |
+| `followOwnerFlying` | ochočitelný základ | `tasks` | `speed`, `near`, `distance` | Totéž, za letu |
+| `followParent` | zvíře | `tasks` | `speed` | Mládě se drží blízko dospělého svého druhu |
+| `harvestFarmland` | vesničana | `tasks` | `speed` | Sklízí zralé plodiny a znovu je sází |
+| `hurtByTarget` | tvora chodícího po zemi | `targets` | `help` | Brání se tomu, co ho zasáhlo |
+| `landOnOwnersShoulder` | papouška | `tasks` | | Sedí na rameni svého majitele |
+| `leapAtTarget` | libovolný základ | `tasks` | `leap` | Skočí na svůj cíl zblízka |
+| `llamaFollowCaravan` | lamu | `tasks` | `speed` | Zařadí se za vedenou lamu |
+| `lookAtTradePlayer` | vesničana | `tasks` | | Je otočen k hráči, se kterým obchoduje |
+| `lookAtVillager` | železného golema | `tasks` | | Tu a tam nabídne vesničanovi mák a podívá se na něj |
+| `lookIdle` | libovolný základ | `tasks` | | Tu a tam se rozhlédne |
+| `mate` | zvíře | `tasks` | `speed`, `entity` | Rozmnožuje se, když je zamilované, s vlastním druhem nebo s pojmenovanou `entity` |
+| `moveIndoors` | tvora chodícího po zemi | `tasks` | | Za soumraku jde dovnitř vesnického domu |
+| `moveThroughVillage` | tvora chodícího po zemi | `tasks` | `speed`, `nocturnal` | Prochází vesnické cesty od dveří ke dveřím |
+| `moveTowardsRestriction` | tvora chodícího po zemi | `tasks` | `speed` | Vrací se k svému domovskému místu, když zabloudí |
+| `moveTowardsTarget` | tvora chodícího po zemi | `tasks` | `speed`, `distance` | Přibližuje se k vzdálenému cíli |
+| `nearestAttackableTarget` | tvora chodícího po zemi | `targets` | `entity`, `sight`, `nearby` | Zaměří nejbližší pojmenovanou entitu |
+| `ocelotAttack` | libovolný základ | `tasks` | | Číhání a skok kočky |
+| `ocelotSit` | kočku | `tasks` | `speed` | Sedí na truhlách, postelích a rozsvícených pecích. Ochočení ocelotové se staly kočkami, takže toto bere základ kočky |
+| `openDoor` | libovolný základ | `tasks` | `close` | Otevírá dřevěné dveře, kterými prochází |
+| `ownerHurtByTarget` | ochočitelný základ | `targets` | | Jde po tom, co zasáhlo jeho majitele |
+| `ownerHurtTarget` | ochočitelný základ | `targets` | | Jde po tom, co zasáhl jeho majitel |
+| `panic` | tvora chodícího po zemi | `tasks` | `speed` | Utíká, když je zraněn nebo hoří |
+| `play` | vesničana | `tasks` | `speed` | Děti si spolu hrají na babu |
+| `restrictOpenDoor` | tvora chodícího po zemi | `tasks` | | V noci zůstává uvnitř vesnických dveří |
+| `restrictSun` | tvora chodícího po zemi | `tasks` | | Ve dne se drží stínu |
+| `runAroundLikeCrazy` | koně, osla, mulu nebo lamu | `tasks` | `speed` | Shazuje jezdce, kterému ještě nedůvěřuje |
+| `sit` | ochočitelný základ | `tasks` | | Sedí, když mu to je řečeno |
+| `skeletonRiders` | kostlivčího koně | `tasks` | | Přivolá kostlivčí jezdce, když se přiblíží hráč, past s koněm |
+| `swimming` | libovolný základ | `tasks` | | Drží hlavu nad vodou |
+| `targetNonTamed` | ochočitelný základ | `targets` | `entity`, `sight` | Zaměří pojmenovanou entitu, dokud ještě není ochočen |
+| `tempt` | tvora chodícího po zemi | `tasks` | `items`, `speed`, `scared` | Následuje hráče, který nabízí jeden z `items` |
+| `tradePlayer` | vesničana | `tasks` | | Stojí na místě, dokud obchoduje |
+| `villagerInteract` | vesničana | `tasks` | | Povídá si s ostatními vesničany |
+| `villagerMate` | vesničana | `tasks` | | Rozmnožuje se, když má vesnice místo |
+| `wander` | tvora chodícího po zemi | `tasks` | `speed`, `chance` | Bloumá |
+| `wanderAvoidWater` | tvora chodícího po zemi | `tasks` | `speed`, `chance` | Bloumá a vyhýbá se vodě |
+| `wanderAvoidWaterFlying` | tvora chodícího po zemi | `tasks` | `speed` | Bloumá vzduchem a posedává na stromech |
+| `watchClosest` | libovolný základ | `tasks` | `entity`, `distance`, `chance` | Dívá se na nejbližší pojmenovanou entitu, na hráče, pokud žádná není pojmenována |
+| `watchClosest2` | libovolný základ | `tasks` | `entity`, `distance`, `chance` | Totéž, udržované, dokud běží jiný úkol |
+| `zombieAttack` | zombie | `tasks` | `speed`, `memory` | Útok zombie se zvednutýma rukama |
+
+### Spawnování a mizení
+
+*varianty entit*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------- | -------- | ------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `despawns` | ne | boolean | `true` | Vypnuto zůstane, i když by se normálně odklidila |
+| `despawnAfter` | ne | celé číslo, sekundy | žádný | Tiše odejde, jakmile je ve světě tak dlouho, ať je kdokoli jakkoli daleko |
+| `persistent` | ne | boolean | `false` | Nikdy nezmizí |
+| `ignoresSpawnRules` | ne | boolean | `false` | Spawnuje se, kamkoli je postavena, a ignoruje zděděná pravidla |
+| `spawns` | ne | seznam objektů | žádný | `creatureType`, `weight`, `min` a `max`, stejný tvar jako používá biom; `weight` je ve výchozím stavu 8, `min` 1 a `max` 4. `creatureType` je jeden z [typů tvorů](#seznamy-hodnot), `creature`, pokud chybí, a vybírá seznam spawnů, ke kterému se položka připojí; položka s typem, který hra nezná, nepřidá nic |
+| `biomes` | ne | seznam názvů biomů | každý biom | Kam se tyto spawny přidají, podle id biomu nebo podle názvu, který 1.12.2 ukazovala u vanilla biomu, například `Extreme Hills`. Bez tohoto i `biomeTypes` je přijme každý biom, včetně Netheru a Endu, a biom, kterému odpovídají oba seznamy, vezme každý spawn jednou |
+| `biomeTypes` | ne | seznam typů biomů | žádný | Totéž, podle slova typu |
+
+**Tvor s výdrží.** `despawnAfter` počítá v sekundách od okamžiku, kdy tvor poprvé vstoupí do světa, a po uplynutí času ho tiše odebere: žádná smrt, žádné dropy, žádný zvuk, přesně jako by odešel pryč a byl odklizen. Hodiny jsou zapsány do samotného tvora, takže běží dál přes uložení a znovunačtení a nezačínají znovu pokaždé, když se chunk vrátí.
+
+Je to samostatná věc, ne postrčení pravidel, která řídí `despawns` a `persistent`. Ty dva rozhodují, zda hra smí tvora odklidit, protože je daleko od kohokoli; tohle je slib, že zmizí v daný čas bez ohledu na to. Tvor může být `persistent` a přesto mít výdrž, což chceš u něčeho přivolaného do boje nebo na událost, co by ji nemělo přežít.
+
+Hodiny běží na světovém čase, takže se zastaví, když nikdo nehraje, a nepočítají minuty, které chunk strávil vyložený.
+
+### Síť
+
+*varianty entit*
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ------------------- | -------- | ------- | ------- | ------------------------------------------------------------------------------------ |
+| `trackingRange` | ne | celé číslo | `80` | Jak daleko se klientovi o ní říká |
+| `trackVelocity` | ne | boolean | `true` | Posílat i její rychlost, nejen polohu. Vypnuto šetří provoz u věcí, které se sotva hýbou |
+| `trackingFrequency` | ne | celé číslo | `3` | Jak často, v ticích |
+
+### Úložiště
+
+*varianty entit*
+
+```json
+{
+  "entity": "minecraft:pig",
+  "name": "Pack Pig",
+  "storage": {
+    "items": {
+      "filter": [
+        { "item": "minecraft:coal", "max": 128 },
+        { "tag": "c:ingots/iron" }
+      ]
+    },
+    "fluid": {
+      "capacity": 16000,
+      "buckets": true,
+      "use": 5,
+      "filter": [
+        { "fluid": "minecraft:water", "max": 8000 }
+      ]
+    },
+    "energy": { "capacity": 100000, "transfer": 1000, "use": 20 },
+    "runsDry": "stops",
+    "dropsOnDeath": true
+  }
+}
+```
+
+`storage` dává variantě jakékoli entity sloty na předměty, nádrž na tekutinu a zásobník energie, každý jen tehdy, když je napsán jeho objekt. Každý se nabízí jako schopnost entity pro předměty, tekutiny nebo energii, takže se k němu dostane vše, co do entity přesouvá předměty, tekutinu nebo energii. Kde základní entita tuto schopnost sama obsluhuje, jako to dělá mob pro své ruce a brnění a kůň nebo vozík s truhlou pro svůj inventář, odpovídá úložiště balíčku místo ní, na každé straně. Hráč otevře obrazovku plížením a kliknutím pravým tlačítkem na entitu. Obsah se ukládá spolu s entitou.
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| -------------- | -------- | --------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `items` | ne | objekt | žádný | Dává entitě pole na předměty. Plocha jsou tři řady po 9: každý ukazatel tekutiny nebo energie zabere jednu řadu a pole zbytek, takže 1x9 s oběma ukazateli, 2x9 s jedním a 3x9 se žádným. Bez `items` se zobrazí jen ukazatele |
+| `fluid` | ne | objekt | žádný | Jedna nádrž na tekutinu |
+| `energy` | ne | objekt | žádný | Jeden zásobník Forge Energy |
+| `dropsOnDeath` | ne | boolean | `true` | Uložené předměty se rozsypou jako volné předměty tam, kde entita zemře. `false` je ztratí. Tekutina a energie se ztratí tak jako tak |
+| `runsDry` | ne | `stops`, `slows` nebo `hurts` | `stops` | Co se stane, dokud nemůže zaplatit plnou sekundu `use`. `stops`: přestane myslet a stojí, kde je, její úkoly, cíle a chování všechno ustanou, dokud se nedoplní, ačkoli stále padá a lze ji strkat. `slows`: pohybuje se poloviční rychlostí. `hurts`: každou sekundu utrží 1 poškození, jako při hladovění, takže ji `immuneTo` s `starve` ušetří |
+
+**Chod na to, co nese.** `use` na nádrži nebo zásobníku je provozní náklad: jednou za sekundu z něj entita tolik odebere, mimo `transfer`, `buckets` i filtry. Když některé z nich drží méně než plnou sekundu `use`, entita došla: nic dalšího se neodebírá, `runsDry` rozhodne, co se stane, a hned po doplnění se vrátí k normálu. Utrácí jen živý tvor; na základu, který není živý, jako vozík, `use` nedělá nic.
+
+`items`:
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| -------- | -------- | ---------------------- | ------- | ------------------------------------------------------ |
+| `filter` | ne | seznam položek filtru | žádný | Co pole přijímají. Bez něj přijímají cokoli |
+
+`fluid`:
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | ---------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `capacity` | ano | celé číslo, mB | žádný | Kolik nádrž pojme |
+| `filter` | ne | seznam položek filtru | žádný | Které tekutiny nádrž přijímá. Bez něj přijímá cokoli |
+| `buckets` | ne | boolean | `false` | Kliknutí pravým tlačítkem kbelíkem nebo jinou nádobou na tekutinu, bez plížení, ji vyprázdní do nádrže nebo naplní z nádrže. Kliknutí, které nepřesune žádnou tekutinu, se nechá entitě |
+| `use` | ne | celé číslo, mB za sekundu | `0` | Kolik z nádrže entita spotřebuje každou sekundu, co žije. `0` nestojí nic |
+
+`energy`:
+
+| Klíč | Povinný | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | ------------------ | -------- | --------------------------------------------------------------------- |
+| `capacity` | ano | celé číslo, FE | žádný | Kolik energie pojme |
+| `transfer` | ne | celé číslo, FE | bez omezení | Nejvíce energie přesunuté dovnitř nebo ven jednou operací |
+| `use` | ne | celé číslo, FE za sekundu | `0` | Kolik energie spotřebuje každou sekundu, co žije. `0` nestojí nic |
+
+Položka filtru. Rozhoduje první položka, která odpovídá, a cokoli, čemu žádná položka neodpovídá, se odmítne:
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------- | ---------------- | ----------- | ------- | ------------------------------------------------------------------------------------------ |
+| `item` | jedno ze tří | id předmětu | žádný | Předmět jako `namespace:name` |
+| `tag` | jedno ze tří | id tagu předmětů | žádný | Každý předmět pod tímto tagem, například `c:ingots/iron` |
+| `fluid` | jedno ze tří | id tekutiny | žádný | Tekutina podle svého id, například `minecraft:water`. Čte ji jen filtr tekutin |
+| `max` | ne | celé číslo | `0` | Nejvíce, co se z toho drží najednou, počítáno přes všechny sloty, nebo v mB u tekutiny. `0` je bez omezení |
+
+## Zakázky
+
+*tvorové a nebezpečí*
+
+`<namespace>/orders/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá. Soubor obsahuje seznam `orders` a vedle něj tři nastavení pro celý balíček; rozhoduje poslední přečtený soubor, který některé nastavuje, a balíček s nejvyšší prioritou se čte jako poslední.
+
+Zakázka je práce, kterou pro hráče vykonávají varianty entit uvedené jako její přijímatelé: kopou bloky, které uvádí, v její oblasti, nebo přenášejí její předměty z jiných truhel a nosí, co získají, do její truhly. Každý způsob zahájení funguje z klienta vanilly:
+
+- **Cedule.** Polož ceduli na truhlu nebo vedle ní a na první řádek napiš slovo `sign` zakázky. Zakázka se otevře u té truhly a druhý řádek cedule ukazuje, kolik předmětů je stále žádáno. Rozbití cedule nebo truhly ji zruší.
+- **Nástroj.** Klikni pravým tlačítkem na pracovníka, bez plížení, nástrojem druhu `tool` dané zakázky. Pracovník nástroj vezme, jakýkoli nástroj, který držel, se vrátí tobě a zakázku vykonává u nejbližší truhly v její oblasti.
+- **Zásobní truhla.** Pojmenuj truhlu `stockName` na kovadlině a polož ji. Každý předmět v jejím prvním řádku se udržuje doplněný na plný stack: pracovníci ho nosí z jiných truhel v oblasti první zakázky `haul` balíčku, pod přijímateli, prioritou a oblastí té zakázky.
+
+```json
+{
+  "stockName": "Stock",
+  "hire": "minecraft:emerald",
+  "spawnCap": 1,
+  "orders": [
+    {
+      "job": "mine",
+      "blocks": "c:ores/iron",
+      "sign": "Mine",
+      "tool": "pickaxe",
+      "areaByTier": [8, 16, 24, 32],
+      "limit": 64,
+      "workers": 2,
+      "priority": 1,
+      "speed": 1.5,
+      "takers": ["mypack:miner", "team:Red", "tag:digger"]
+    },
+    {
+      "job": "farm",
+      "blocks": "c:crops/wheat",
+      "sign": "Farm",
+      "tool": "hoe",
+      "standing": 64,
+      "takers": ["mypack:farmer"]
+    },
+    {
+      "job": "haul",
+      "blocks": "minecraft:logs",
+      "sign": "Haul",
+      "deliver": "chest",
+      "takers": ["mypack:porter"]
+    }
+  ]
+}
+```
+
+Nastavení vedle `orders`:
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --- | --- | --- | --- | --- |
+| `stockName` | ne | řetězec | `Stock` | Název, který z umístěné truhly dělá zásobní truhlu, porovnává se bez ohledu na velikost písmen. Prázdný zásobní truhly vypne |
+| `hire` | ne | název předmětu | žádný | Najme volného pracovníka: klikni na něj pravým tlačítkem s tímto předmětem, bez plížení, a je tvůj a předmět se spotřebuje. Volný pracovník nepatří žádnému hráči ani týmu |
+| `spawnCap` | ne | celé číslo | `1` | Kolik pracovníků smí jedna zakázka spawnovat u své truhly, když k ní žádný nepřijde. `0` nespawnuje žádného |
+
+Klíče zakázky:
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --- | --- | --- | --- | --- |
+| `job` | ano | `gather`, `mine`, `farm` nebo `haul` | | `gather` a `mine` kopou bloky, které uvádí `blocks`, jako samotný blok nebo jako to, co dropne, všude, kde je jedna strana otevřená do vzduchu nebo k bloku, který není plná krychle. `farm` sklízí plně vyrostlé plodiny a každou znovu zasadí z jejích vlastních semen. `haul` nosí předměty, které uvádí `blocks`, z jiných truhel a kontejnerů do truhly zakázky |
+| `blocks` | ano, kromě `farm` | id tagu předmětů | žádný | Co zakázka chce, jako tag předmětů, například `c:ores/iron`, `minecraft:logs` nebo `c:crops/wheat`. U zakázky `mine` se počítá i to, co dropne blok v tagu, takže `c:ores/iron` se plní surovým železem. U zakázky `farm` omezuje sklízené plodiny na ty, které to dropují |
+| `area` | ne | celé číslo | `16` | Jak daleko od truhly práce sahá, v blocích po každé ose |
+| `areaByTier` | ne | seznam celých čísel | žádný | Dosah podle úrovně sklizně nástroje pracovníka: první položka pro žádný nástroj nebo úroveň 0, pak jedna položka na úroveň a poslední položka pro každou úroveň za koncem. Přepíše `area` |
+| `deliver` | ne | `chest` nebo `self` | `chest` | `chest` přináší nasbírané do truhly zakázky. `self` to drží ve vlastním úložišti pracovníka a zakázka to počítá, jak se sbírá |
+| `limit` | ne | celé číslo | `64` | Kolik předmětů zakázka chce, než se uzavře |
+| `standing` | ne | celé číslo | `0` | Nad `0` se zakázka nikdy neuzavře: drží v truhle tolik svých předmětů a pracuje, kdykoli jich je méně. `limit` se pak nečte |
+| `workers` | ne | celé číslo | `1` | Nejvíce pracovníků na zakázce najednou |
+| `priority` | ne | celé číslo | `0` | Nečinný pracovník vezme nejdřív otevřenou zakázku s nejvyšší prioritou, pak nejbližší |
+| `takers` | ano | seznam | | Kdo na ní smí pracovat: název varianty, `team:<team>` pro kteréhokoli člena týmu skóre, nebo `tag:<tag>` pro kteroukoli entitu s tímto tagem |
+| `sign` | ne | řetězec | žádný | Slovo na prvním řádku cedule, které zakázku otevře, porovnává se bez ohledu na velikost písmen |
+| `speed` | ne | číslo | `1` | Násobí rychlost kopání pracovníka. `2` kope dvakrát rychleji než hráč se stejným nástrojem |
+| `tool` | ne | druh nástroje | žádný | Druh nástroje, například `pickaxe`, `axe`, `shovel` nebo `hoe`, který pravým kliknutím dá pracovníkovi tuto zakázku. Pracovník, jehož nástroj blok sklidit nedokáže, se vrátí k truhle pro nástroj tohoto druhu |
+
+**Jak pracovník pracuje.** Varianta, kterou uvádí příjemce, nebo každá varianta, je-li některý příjemce tým nebo tag, hledá práci jednou za sekundu, dokud je nečinná. Vezme nejlepší otevřenou zakázku, jejíž truhla je v její oblasti plus 32 bloků, rezervuje si ji; rezervace zanikne, když přestane pracovat, a vydrží přes uložení a znovunačtení. Kopání trvá stejně dlouho jako hráči s nástrojem pracovníka, včetně Účinnosti, a Štěstěna a Hedvábný dotyk se počítají k dropům. To, co vykope, jde do jeho položek `storage`, má-li je varianta, jinak do vedlejší ruky, nikdy na zem. Když už nic neunese, dojde k truhle a vloží vše dovnitř. Každý blok nástroj opotřebuje a pracovník, jehož nástroj se rozbije, se vrátí k truhle pro další stejného druhu, nebo si na minutu odpočine, není-li žádný. Pracovník při smrti dropne svůj nástroj a to, co má v rukou, a jeho úložiště se rozsype jednou, jak to úložiště dělá vždy. `mobGriefing` ho nezastaví, protože o práci požádal hráč.
+
+**Kdo pracuje pro koho.** Když je hráč, který zakázku otevře, v týmu skóre, berou ji jen pracovníci toho týmu. Jinak zakázka patří tomu hráči a pracovník patří prvnímu hráči, který mu dá práci, nástrojem, pomocí `hire` nebo převzetím zakázky toho hráče; od té chvíle pracuje jen na zakázkách tohoto hráče. Volný pracovník, kterého najme nebo mu dá nástroj hráč v týmu, se k tomu týmu přidá.
+
+**Spawn u truhly.** Zakázka, která deset sekund neměla pracovníka, spawnuje jednoho ze svých příjemců mezi variantami vedle své truhly, nejvýše do `spawnCap` pro tu zakázku. Pracovník, kterého spawnuje, patří týmu nebo hráči zakázky.
+
+## Expozice
+
+*tvorové a nebezpečí*
+
+`<namespace>/exposures/*.json`
+
+Cesta k souboru je název nebezpečí a jeho zpráva o smrti pochází z klíče lang `death.attack.rdpl.<file name>`. Expozice se načítají, jen když je `load` zapnuto a `vanillaClients` vypnuto.
+
+Nebezpečí definované balíčkem: pojmenované bloky, předměty a dimenze vystavují hráče, kteří stojí poblíž těch bloků, nosí ty předměty nebo se zdržují v těch dimenzích, po úrovních, přičemž každá úroveň uplatňuje efekty a pravidelné poškození. Nebezpečí lze také chytit od okolních mobů a hráčů, nebo padat s deštěm ([Nákaza a počasí](#nákaza-a-počasí)). Jeden soubor definuje jedno nebezpečí; několik jich běží vedle sebe.
+
+```json
+{
+  "blocks": [ "mypack:nuclear_waste=2", "mypack:uranium_ore" ],
+  "items": [ "mypack:nuclear_waste" ],
+  "dimensions": [ "minecraft:the_nether" ],
+  "immunity": "mypack:antirad",
+  "scanInterval": 20,
+  "range": 10,
+  "sourcesForNextLevel": 4,
+  "skipsCreative": true,
+  "levels": [
+    { "effect": "mypack:radiation_1", "damage": 4.0, "damageInterval": 160,
+      "effects": [ { "potion": "minecraft:nausea", "duration": 0, "amplifier": 0, "ambient": false, "showParticles": false },
+                   { "potion": "minecraft:hunger" } ] },
+    { "effect": "mypack:radiation_2", "damage": 8.0, "damageInterval": 120,
+      "effects": [ { "potion": "minecraft:nausea", "amplifier": 1 }, { "potion": "minecraft:hunger", "amplifier": 1 } ] }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------------------- | ---------------- | -------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| `blocks` | jeden z pěti | seznam `block` nebo `block=level` | | Bloky, které vystavují hráče stojícího poblíž. Bez úrovně znamená 1 |
+| `items` | jeden z pěti | seznam `item` nebo `item=level` | | Předměty, které vystavují hráče, jenž je nese nebo nosí |
+| `dimensions` | jeden z pěti | seznam `dim` nebo `dim=level` | | Id dimenzí, které vystavují každého hráče v nich |
+| `levels` | ano | seznam úrovní | | Žebříček závažnosti, první položka je úroveň 1. Hráč dostane nejvyšší úroveň, které kterýkoli zdroj dosáhne |
+| `immunity` | ne | název lektvaru | žádný | Efekt, jehož nositel není vystaven vůbec |
+| `scanInterval` | ne | ticky | `20` | Jak často se kontroluje okolí a inventář |
+| `range` | ne | bloky | `10` | Jak daleko sahá expozice bloku, jako koule |
+| `sourcesForNextLevel` | ne | celé číslo | `0` | Tolik blízkých zdrojů jedné úrovně ji posune o úroveň dál. `0` to vypne |
+| `skipsCreative` | ne | boolean | `true` | Hráči v kreativním režimu a v režimu pozorovatele zůstanou nedotčeni |
+
+### Úrovně
+
+*expozice*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | --------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `effect` | ano | název lektvaru | | Efekt, který úroveň na hráči označuje. Jeho přítomnost spouští poškození, takže by měl být takový, který balíček pro toto nebezpečí definuje |
+| `damage` | ne | půlsrdce | `0` | Poškození uštědřené každých `damageInterval` ticků, dokud úroveň platí. Ignoruje zbroj |
+| `damageInterval` | ne | ticky | `160` | Jak často poškození dopadne |
+| `effects` | ne | seznam efektů | žádný | Další efekty uplatněné současně, ve stejném tvaru jako u typů lektvarů. Bez `duration` se řídí oknem skenování |
+
+Efekty úrovně trvají o něco déle než do dalšího skenování, takže když hráč odejde, vyprchají samy. Zpráva o smrti způsobené poškozením z expozice se čte z `death.attack.rdpl.<file name>`, což zajišťují lang soubory balíčku.
+
+### Nákaza a počasí
+
+*expozice*
+
+Dva další zdroje, zapsané ve stejném souboru. Nositelé a vystavení nositelé předávají nebezpečí okolním příjemcům a déšť nebo bouřka vystavují hráče, na které padají.
+
+```json
+{
+  "carriers": [ "minecraft:zombie_villager=2" ],
+  "contagious": true,
+  "catchers": [ "minecraft:player", "minecraft:villager" ],
+  "contagionRange": 4,
+  "contagionChance": 0.1,
+  "contagionDuration": 1200,
+  "weather": [ "rain", "thunder=2" ],
+  "weatherDimensions": [ "minecraft:overworld" ],
+  "levels": [ { "effect": "mypack:sickness_1", "damage": 1.0 }, { "effect": "mypack:sickness_2", "damage": 2.0, "damageInterval": 80 } ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------- | --------------- | ---------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| `carriers` | jeden z pěti | seznam `entity` nebo `entity=level` | | Moby, nebo `minecraft:player`, které nebezpečí vždy předávají na dané úrovni. Bez úrovně platí 1 |
+| `contagious` | ne | boolean | `false` | Každý vystavený předává nebezpečí na úrovni, kterou drží |
+| `catchers` | ne | seznam názvů entit | `minecraft:player` | Kdo se může nakazit. Mob se nakazí jen od nositelů, nikdy z bloků, předmětů ani počasí |
+| `contagionRange` | ne | bloky | `4` | Jak daleko nositel dosáhne, jako koule |
+| `contagionChance` | ne | `0` až `1` | `0.1` | Šance, že se při každém skenování nositele nakazí každý příjemce v dosahu |
+| `contagionDuration` | ne | ticky | `1200` | Jak dlouho nakažené nebezpečí drží získanou úroveň. Nová nákaza spustí čas znovu |
+| `weather` | jeden z pěti | seznam `kind` nebo `kind=level` | | `rain` vystavuje hráče, na kterého prší: otevřená obloha nad hlavou v biomu, kde prší. `thunder` platí během bouře |
+| `weatherDimensions` | ne | seznam `dim` | každá dimenze | Id dimenzí, kde počasí vystavuje |
+
+Nakažené nebezpečí se ve skenování počítá jako další zdroj, vyhrává nejvyšší úroveň jako u každého jiného, a chrání proti němu i `immunity`. Nic se nešíří, dokud jsou `contagionRange` a `contagionChance` nad `0` a soubor nepojmenuje `carriers` nebo nenastaví `contagious`; moby se sledují jen tehdy, když to nějaký soubor požaduje.
+
+---
+
+# Svět
+
+## Šablony světa
+
+*svět*
+
+`<namespace>/worldtemplates/*.json`
+
+Cesta k souboru je název šablony, kterým ji lze v konfigurační volbě `worldTemplate` vybrat přímo.
+
+Shrne tvar světa do jednoho souboru, takže balíček dodá celý svět najednou a nemusí po hráči chtít nastavení tuctu konfiguračních voleb.
+
+```json
+{
+  "name": "Ruby World",
+  "default": "void",
+  "dimensions": ["minecraft:overworld"],
+  "settings": {
+    "voidWorld": true,
+    "flatBedrock": true,
+    "blockBiomes": true
+  },
+  "structures": {
+    "villages": false,
+    "mineshafts": false,
+    "strongholds": true
+  },
+  "roles": { "ocean": "mypack:ruby_ocean" }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | --------------------------------------------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name` | ne | řetězec | název souboru | Zobrazuje se v logu a ve zprávách |
+| `default` | ne | název biomu nebo `void` | `void` | Čím se vyplní biom, který blokování odebralo. `void` tam nechá biom prázdnoty. Biom, který není zaregistrován, se zaloguje a použije se prázdnota. `fallback` je tentýž klíč pod jiným jménem |
+| `roles` | ne | objekt role a biomu | žádný | Biomy, které vyplňují určité role: `ocean`, `river`, `beach`, `mushroom`, `swamp`, `hills`, `mountain`, `jungle`, `forest`, `savanna`, `sandy`, `mesa`, `snowy`, `wasteland`, `plains` a `water`, posuzované v tomto pořadí, ať je soubor píše v jakémkoli, takže zablokovaný biom, který je oceán i zasněžený, dostane roli oceánu. Role, která uvádí `void` nebo biom, který není zaregistrován, propadne k další. Role platí jen v `dimensions` šablony; jinde se zablokovaný biom stane prázdnotou |
+| `structures` | ne | objekt [názvu struktury](#seznamy-hodnot) a booleanu | žádný | Vanilla struktury zapnuté nebo vypnuté |
+| `settings` | ne | objekt | žádný | Hodnoty konfigurace, které šablona nastavuje |
+| `dimensions` | ne | seznam id dimenzí | každá dimenze | Na které dimenze se vztahuje |
+| `requires` | ne | seznam id módů nebo namespaců balíčků | žádný | Šablona se přeskočí, pokud nejsou přítomny všechny |
+
+`settings` používá stejné názvy klíčů jako konfigurace, takže se není třeba učit žádnou převodní tabulku.
+
+Která šablona je aktivní, rozhoduje volba konfigurace `worldTemplate`. Ponechána na `auto`, vyhrává balíček s nejvyšší prioritou, který nějakou dodává, ve stejném pořadí, jaké se drží u všeho ostatního; když šablonu dodává více balíčků, log pojmenuje všechny i tu, která platí, protože ostatní nedělají nic, včetně nastavení. Uvedení názvu šablony tam ji vybere přímo. Pět jich je vestavěných a lze je tak pojmenovat: `void`, `vanilla` (oceány, řeky, pláže, houboviště, bažiny a kopce zůstanou herní, všude jinde pláně), `ocean` (řeky a pláže zůstanou, všude jinde oceán), `plains` a `desert`. `auto` nikdy nevybere vestavěnou.
+
+**Jeden biom může stavět jinak.** Objekt `biomes` uvnitř `settings` drží vlastní nastavení vesnic pro pojmenovaný biom, takže pouštní vesnice klade pískovcové ulice tam, kde pláňová klade beton, aniž by každá byla samostatný balíček. Biom pojmenuj jeho id, `minecraft:desert`, jedním ze slov typů, která tento mód mapuje na tagy biomů (`sandy`, `snowy`, `desert`, `forest`, `jungle`, `mountain`, `ocean`, `swamp`, `hot`, `cold` a další), nebo vypsaným tagem, `#minecraft:is_forest`; přesné id se posuzuje před typy, takže obecné pravidlo lze pro jeden biom přepsat. Cokoli, co v sekci není pojmenováno, se vrací k obyčejnému nastavení nad ní.
+
+```json
+{
+  "settings": {
+    "villagePathBlock": "minecraft:black_concrete",
+    "villageSubwayTunnelBlock": "minecraft:stone_bricks",
+    "biomes": {
+      "sandy": {
+        "villagePathBlock": "minecraft:cut_sandstone",
+        "villageSubwayTunnelBlock": "minecraft:sandstone"
+      },
+      "minecraft:snowy_plains": {
+        "villageSubwayTunnelBlock": "minecraft:packed_ice"
+      }
+    }
+  }
+}
+```
+
+Odpovídá tomu každé nastavení bloku, které bere cesta, most, železnice, metro, stanice nebo kanalizace, a syntaxe vážené směsi funguje uvnitř sekce stejně jako vně. Biom se čte při stavbě kusu a bloky se berou znovu všude, kde země mění biom, takže cesta nebo železnice vedoucí z pouště mění materiál přímo na hranici. Řádek v logu při načtení světa říká, kolik sekcí balíček dodal, a pojmenuje je, a se zapnutým laděním každý biom říká, kterou sekci vzal, nebo že nevzal žádnou a čemu by odpovídal.
+
+## Herní pravidla
+
+*svět*
+
+`<namespace>/gamerules/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+```json
+{
+  "minecraft:overworld": {
+    "doFireTick": "false",
+    "keepInventory": "true",
+    "randomTickSpeed": "3"
+  },
+  "minecraft:the_nether": {
+    "doFireTick": "true"
+  }
+}
+```
+
+Každý klíč je id světa, kterému pravidla patří, `minecraft:overworld`, `minecraft:the_nether`, `minecraft:the_end`, vlastní id balíčku nebo to, co používá nějaký mód; čísla z 1.12.2 `0`, `-1` a `1` se stále berou jako vanilla trojice. Hodnoty jsou řetězce, jako v příkazu `/gamerule`, takže `"false"` a ne `false`. Uplatňují se na nové světy. Pravidlo, které soubor vynechá, hraje v tom světě s herní výchozí hodnotou, ne s hodnotou, kterou používá zbytek uložení, a klient s balíčkem čte stejná pravidla. Soubor dimenze nese tatáž pravidla místo toho v bloku `gameRules`, který se vždy uplatní jen na ten svět.
+
+## Biomy
+
+*svět*
+
+`<namespace>/biomes/*.json`
+
+Cesta k souboru je registrační název biomu, takže `mypack/biomes/ruby_forest.json` zaregistruje `mypack:ruby_forest`. `name` je jen to, co se ukazuje hráči, a `biome.mypack.ruby_forest` v souborech lang to říká v každém jazyce.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "name": "Ruby Forest",
+  "types": ["forest", "dense", "wet"],
+  "temperature": 0.7,
+  "rainfall": 0.8,
+  "rain": true,
+  "snow": false,
+  "topBlock": "mypack:ruby_grass",
+  "fillerBlock": "minecraft:dirt",
+  "stoneBlock": "mypack:ruby_stone",
+  "baseBiome": "minecraft:forest",
+  "waterColor": "8040A0",
+  "grassColor": "6BA33C",
+  "foliageColor": "4E8B2A",
+  "snowColor": "E8F0FF",
+  "decoration": {
+    "trees": 10,
+    "extratreechance": 10,
+    "flowers": 4,
+    "grass": 5,
+    "deadbush": 0,
+    "mushrooms": 1,
+    "bigmushrooms": 0,
+    "reeds": 10,
+    "cacti": 0,
+    "sand": 3,
+    "gravel": 1,
+    "clay": 1,
+    "waterlily": 0,
+    "falls": 1
+  },
+  "spawns": [
+    { "entity": "minecraft:sheep", "type": "creature", "weight": 12, "min": 2, "max": 4 }
+  ],
+  "keepDefaultSpawns": false,
+  "spawnChance": 0.1,
+  "spawnRates": { "surfaceDay": 0.0, "surfaceNight": 0.5, "undergroundDay": 2.0, "undergroundNight": 2.0 },
+  "placement": {
+    "climate": "warm",
+    "weight": 8,
+    "villages": true,
+    "strongholds": false,
+    "playerSpawn": true
+  },
+  "villageType": "oak",
+  "minHeight": 100,
+  "maxHeight": 156,
+  "replaces": ["minecraft:plains", "minecraft:forest"],
+  "requires": ["mypack"]
+}
+```
+
+### Biom
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------------------------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name` | ne | řetězec | název souboru | Název zobrazený hráči |
+| `types` | ne | seznam typů biomů | odhadnuto | Zapíše biom do tagů, za které tato slova typů stojí, například `forest`, `cold`, `wet` nebo `nether`, aby ho našly jiné módy. Pokud chybí, typy se odhadnou z biomu tak, jak je odhadovala hra: `forest` nebo `jungle` ze tří stromů a více, jinak `plains`, `hot`, `cold`, `wet` a `dry` z teploty a srážek, `sparse` nebo `dense` z počtu stromů, `snowy` ze `snow` a `sandy`, `mushroom` nebo `mesa` z písku, mycelia nebo terakoty na zemi |
+| `baseBiome` | ne | název biomu | `minecraft:plains` | Existující biom, ze kterého se kopírují nastavení. Ten, který není biomem dodaným hrou nebo módem, se zaloguje a použijí se pláně |
+| `requires` | ne | seznam id módů nebo namespaců balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+Biom je v této verzi položka datového balíčku, kterou za tebe zapíše pod `worldgen/biome/`, a terén pod ním patří nastavením šumu, ne biomu, a proto zde není žádné `baseHeight` ani `heightVariation`: tvar krajiny vzniká tím, kam biom klima umístí, jako u herních. `id` z 1.12.2 se přečte a ignoruje.
+
+### Podnebí
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `temperature` | ne | desetinné číslo | `0.5` | Pod 0.15 sněží, nad 1.0 je pouštní žár |
+| `rainfall` | ne | desetinné číslo, 0 až 1 | `0.5` | Jak je vlhký |
+| `rain` | ne | boolean | `true` | Zda se počasí vůbec děje |
+| `snow` | ne | boolean | `false` | Zda déšť padá jako sníh. Sníh padá jen tam, kde je teplota pod 0.15, a toto teplotu nemění, takže teplejší biom stále prší |
+
+### Povrch a barvy
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------- | -------- | ------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `topBlock` | ne | název bloku | tráva | Povrchový blok |
+| `fillerBlock` | ne | název bloku | hlína | Těsně pod povrchem |
+| `stoneBlock` | ne | název bloku | kámen | Většina země |
+| `skyStone` | ne | název bloku | jako ve světě | Blok nebeské země v tomto biomu, místo `skyStone` světa. Použije se, jen když `skyStone` světa uvádí blok |
+| `skyIslands` | ne | číslo, -1.0 až 1.0 | jako ve světě | Jak ochotně se nebeská země v tomto biomu shromažďuje do ostrovů, místo `skyIslands` světa |
+| `skyThickness` | ne | číslo, 0.0 až 8.0 | jako ve světě | Jak pevné jsou nebeské ostrovy v tomto biomu, místo `skyThickness` světa |
+| `waterColor` | ne | hexadecimální barva | `FFFFFF` | Odstín vody |
+| `grassColor` | ne | hexadecimální barva | podle klimatu | Odstín trávy, místo barvy, kterou by dala teplota a srážky |
+| `foliageColor` | ne | hexadecimální barva | podle klimatu | Odstín listí, stejným způsobem |
+| `snowColor` | ne | hexadecimální barva | jako v dimenzi | Odstín sněhu na zemi, přes `snowColor` dimenze |
+
+### Výzdoba a spawnování
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `decoration` | ne | objekt | jako u základního biomu | Počty na chunk, které mění to, co základní biom už umisťuje. Čtené názvy jsou `trees`, `flowers`, `grass`, `deadbush`, `mushrooms`, `bigmushrooms`, `reeds`, `cacti`, `sand`, `gravel`, `clay` a `waterlily`, plus přepínače `falls` (jezera a prameny), `pumpkins`, `desertwells`, `ice` (ledové hroty a ledové plochy), `fossils` a `rocks` (lesní balvany), kde jakákoli hodnota nad nulou ponechá vlastní četnost základního biomu a nula nebo méně prvek odebere, a `extratreechance`, procentní šance na jeden strom navíc, kde `0` odebere i strom navíc, o který základní biom losuje. Počet u druhu, který základní biom neumisťuje, nepřidá nic; pro to napiš položku worldgenu. Jakýkoli jiný název se zaloguje a ignoruje |
+| `spawns` | ne | seznam objektů | vanilla seznam | Viz níže |
+| `keepDefaultSpawns` | ne | boolean | `false` | Ponechat vanilla seznam vedle tvého |
+| `spawnChance` | ne | desetinné číslo, pod 1 | `0.1` | Jak pravděpodobné je umístění další tlupy při prvním vytvoření země. Hra losuje dál, dokud uspívá, takže 1 se nikdy nezastaví a plní svět, dokud nedojde místo. Cokoli na 0.99 nebo výš se odmítne a použije se 0.99 |
+| `spawnRates` | ne | objekt `surfaceDay`, `surfaceNight`, `undergroundDay`, `undergroundNight` a násobitele | žádný | Jak často se zde spawnují nepřátelské moby, místo globálních nastavení. Viz níže |
+
+Položka spawnu přijímá `entity` (povinné), `type` (`creature`, jedno z `monster`, `creature`, `ambient` nebo `water`, podtržítka v názvu jako `water_creature` jsou volitelná), `weight` (`10`), `min` (`1`) a `max` (`min`).
+
+`spawnRates` se týká jen nepřátelských mobů a ničeho jiného. Přijímá čtyři klíče a žádné další: `surfaceDay` a `surfaceNight` pro místa, kde je vidět nebe, `undergroundDay` a `undergroundNight` pro místa, kde ne. Každý je násobitelem toho, jak často se smí nepřátelský mob objevit: `1` je běžná četnost, `0` je zastaví úplně, hodnota pod 1 některé pokusy utlumí a hodnota nad 1 pustí pokusy, které by hra jinak odmítla, takže `2` znamená dvakrát tolik. Vynechaný klíč znamená, že biom nerozhoduje, a použije se globální nastavení pro daný čas a místo. Cokoli jiného zde zapsaného není klíč a ignoruje se, takže četnost pojmenovaná podle typu tvora nedělá vůbec nic.
+
+### Kde se generuje
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ---------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `placement` | ne | objekt | žádný | Kde se generuje. Viz níže |
+| `villageType` | ne | `oak`, `sandstone`, `acacia` nebo `spruce` | žádný | Z čeho je postavena vesnice stojící zde: pláňová, pouštní, savanová nebo tajgová vesnice. Prázdné postaví pláňovou, jako by klíč nebyl |
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ------------------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `climate` | ne | `icy`, `cool`, `medium`, `warm` nebo `desert` | žádný | Do kterého klimatického pásma patří, stejných pět, podle kterých se rozdělují vlastní biomy světa. Pokud chybí, má `weight` 0 nebo uvádí klima, které zde není, biom se zaregistruje, ale nikdy se neumístí, ledaže si o něj řeknou `roles` šablony, `biome` dimenze nebo výškový pás |
+| `weight` | ne | celé číslo | `10` | Jak často se vybírá proti sousedům v tom pásmu |
+| `villages` | ne | boolean | `false` | Smí se generovat vesnice |
+| `strongholds` | ne | boolean | `false` | Smí se generovat pevnosti |
+| `playerSpawn` | ne | boolean | `false` | Spawn světa smí být umístěn zde |
+
+### Výškové pásy
+
+*biomy*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ------------------- | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minHeight` | ne | celé číslo | žádný | Nejnižší y, kde tento biom přebírá vládu jako 3D biom. Nastavení kterékoli výšky z biomu udělá pásmo: sloupec si mimo něj ponechá vlastní biom a uvnitř něj hlásí každá buňka světa 4 na 4 na 4 tento |
+| `maxHeight` | ne | celé číslo | žádný | Nejvyšší y toho pásma |
+| `replaces` | ne | seznam názvů biomů | každý biom | Omezí pásmo na sloupce, jejichž vlastní biom je zde pojmenován, takže alpské pásmo může ležet nad horami a nad ničím jiným. Vlastní biom sloupce je ten na jeho povrchu. Bez `minHeight` nebo `maxHeight` nedělá nic |
+
+### Teplota podle výšky
+
+*biomy*
+
+**Teplota podle výšky.** Biom s výškou chladne, což dává sníh na vrcholky hor a zastavuje déšť nad určitou čarou. Tři klíče `terrain` tuto křivku posouvají, což záleží u dimenze, jejíž země leží daleko nad výškou nebo pod výškou, kterou hra předpokládá. Ponechány nenastavené, zůstává herní křivka, takže balíček, který je nechá být, nic nemění.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "biomeTemperatureCenterY": 80,
+    "biomeTemperatureHeightFactor": -0.00125,
+    "biomeTemperatureScaleMaxY": 320
+  }
+}
+```
+
+| Klíč | Hodnota | Výchozí | Co dělá |
+| ------------------------------ | ----- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `biomeTemperatureCenterY` | celé číslo | `80` | Výška, od které se křivka měří. V ní nebo pod ní biom hlásí svou vlastní `temperature` beze změny |
+| `biomeTemperatureHeightFactor` | desetinné číslo | `-0.00125` | O kolik se teplota mění na blok nad touto výškou, herních 0.05 na 40 bloků. Záporná s nadmořskou výškou chladne, kladná otepluje |
+| `biomeTemperatureScaleMaxY` | celé číslo | žádný | Výška, na které se křivka zastaví, aby svět vyšší než herní nechladl až ke stropu. Nenastaveno, křivka běží až na vrchol světa |
+
+## Dimenze
+
+*svět*
+
+`<namespace>/dimensions/*.json`
+
+Cesta k souboru je id dimenze, takže `mypack/dimensions/verdant.json` je `mypack:verdant`, což je to, co pojmenují portál, brána, soubor herních pravidel i `/execute in`. V této verzi neexistuje číselné id a `id` nebo `suffix` z 1.12.2 se přečte a ignoruje.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "requires": ["mypack"],
+  "terrain": {
+    "type": "overworld",
+    "minHeight": -64,
+    "maxHeight": 320,
+    "generatorOptions": { "seaLevel": 63, "useLavaOceans": false },
+    "structures": false
+  },
+  "biomes": {
+    "source": "single",
+    "biome": "mypack:ruby_forest",
+    "biomeList": ["minecraft:plains", { "biome": "minecraft:forest", "weight": 20 }, "mypack:ruby_forest"]
+  },
+  "sky": {
+    "hasSkyLight": true,
+    "surfaceWorld": true,
+    "respawn": true,
+    "respawnDimension": "minecraft:overworld",
+    "spawning": true,
+    "nether": false,
+    "beds": true,
+    "waterVaporizes": false,
+    "cloudHeight": 160,
+    "cloudColor": "5B3E6A",
+    "groundLevel": 63,
+    "movementFactor": 4.0,
+    "fogColor": "20102A",
+    "showFog": false,
+    "skyColor": "3B1E4A",
+    "fixedTime": 18000,
+    "sunriseColors": true,
+    "ambientLight": 0.1,
+    "starBrightness": 0.8,
+    "renderSky": true,
+    "renderClouds": true,
+    "renderWeather": true,
+    "sun": { "texture": "mypack:textures/environment/red_sun.png", "size": 18 },
+    "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png", "size": 20 },
+    "bodies": [
+      { "texture": "mypack:textures/environment/twin_moon.png", "size": 12, "angle": 150, "tilt": 20 },
+      { "texture": "mypack:textures/environment/home.png", "size": 6, "angle": 20, "tilt": 40, "followsTime": false }
+    ],
+    "stars": { "count": 6000, "size": 0.12 }
+  },
+  "physics": { "gravity": 0.4, "fallDamage": 0.5, "arrowGravity": 0.3 },
+  "time": { "dayLength": 36000 },
+  "weather": {
+    "precipitation": true,
+    "lightning": true,
+    "snow": false,
+    "freeze": false,
+    "alwaysRain": false,
+    "cycle": { "rainTicks": [1000, 4600], "clearTicks": [1000, 3000], "maxStrength": 0.6, "thunderTicks": [3600, 15600], "calmTicks": [12000, 60000], "thunderStrength": 1.0 },
+    "rain": { "particle": "minecraft:rain", "sound": "minecraft:weather.rain", "volume": 0.2, "interval": 3, "color": "#88AAFF", "snowColor": "#FFFFFF", "angle": 30, "heading": 90 },
+    "wind": { "gust": 15, "every": [200, 600], "swing": 30 }
+  },
+  "ambience": { "music": "mypack:music.ruby", "musicDelay": [1200, 3600], "loopSound": "mypack:ambient.ruby_wind", "ambientSound": "minecraft:ambient.cave", "soundChance": 0.0111, "particle": "minecraft:dust", "particleChance": 0.00625, "particleColor": "#FF4060" },
+  "gameRules": { "doMobSpawning": "false" }
+}
+```
+
+### Nejvyšší úroveň
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `gameRules` | ne | objekt | žádný | Pravidla, která platí jen zde |
+| `portal` | ne | objekt | žádný | Rám, který tuto dimenzi otevírá. Viz [Otevření dimenze rámem](#otevření-dimenze-rámem) |
+| `requires` | ne | seznam id módů nebo namespaců balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+Dimenze je v této verzi položka datového balíčku: typ dimenze a nastavení šumu se za tebe zapíšou pod namespace balíčku, takže vanilla klient se o ní dozví při připojení a cestuje tam jako do jakékoli jiné. Dimenze si drží vlastní složku uložení pod světem, pojmenovanou podle jejího id, a načítá se, dokud v ní někdo je nebo dokud `forceload` drží chunk.
+
+### Existující dimenze
+
+*dimenze*
+
+```json
+{
+  "sky": { "moon": { "texture": "mypack:textures/environment/pink_moon_phases.png" } },
+  "weather": { "alwaysRain": true }
+}
+```
+
+Soubor na `minecraft/dimensions/overworld.json`, `the_nether.json` nebo `the_end.json`, nebo na id dimenze, kterou přidává jiný mód nebo datový balíček, například `othermod/dimensions/caverns.json`, změní tu dimenzi místo přidání nové. Každý klíč, který soubor píše, se tam uplatní, a každý klíč, který vynechá, ponechá dimenzi její vlastní chování, takže její data úrovně a chunky zůstanou, jaké jsou, a stávající uložení se dál načítá.
+
+`terrain.type` vymění generátor, takže chunky vytvořené od té chvíle pocházejí z něj, a spolu s ním se uplatní `generatorOptions`, `structures` a blok `biomes`; bez `terrain.type` se tyto klíče vynechají a log to oznámí, protože biomy dimenze v této verzi patří jejímu generátoru. Klíče, které drží typ dimenze, například `hasSkyLight` nebo `ambientLight`, se zapíšou do vlastního typu dimenze. Dimenze z módu, která používá jeden ze sdílených herních typů nebo zapisuje svůj typ přímo, si typ ponechá, jaký je, a log to oznámí. Řádek `dimensions.existing` v souhrnu uvádí každý takto uplatněný soubor.
+
+Nastavení kteréhokoli z `sun`, `moon`, `bodies` nebo `stars` vykreslí oblohu [vlastním vykreslovačem RDPL](#vykreslovač-oblohy), který zachovává fáze měsíce. V této verzi mají všechny dimenze jedno společné počasí, takže `alwaysRain` v Overworldu drží toto počasí deštivé a v jakékoli jiné dimenzi prší jen tam.
+
+### Blok `terrain`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------ | -------- | -------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `type` | ne | `overworld`, `flat`, `void`, `nether`, `end` | `overworld` | Který z herních generátorů ji staví, s jeho nastavením šumu zkopírovaným a změněným klíči níže |
+| `minHeight` | ne | celé číslo, násobek 16 | podle typu | Dno dimenze. Nižší než u typu vytvoří hluboký svět pod terénem, viz [Hluboký svět](#hluboký-svět) |
+| `maxHeight` | ne | celé číslo, násobek 16 | podle typu | Blok nad jejím vrcholem |
+| `generatorOptions` | ne | objekt, text nebo seznam | žádný | Pro `overworld` a ostatní objekt, nebo jeho text tak, jak ho psala 1.12.2, s `seaLevel`, `useLavaOceans` a `useCaves`, `useRavines`, `useDungeons`, `useLavaLakes`, `useStrongholds`, `useVillages`, `useMineShafts`, `useTemples`, `useMonuments` a `useMansions` nastavenými na false, aby se z této dimenze vynechaly, a klíče tvaru terénu `coordinateScale`, `heightScale`, `upperLimitScale`, `lowerLimitScale`, `mainNoiseScaleX`, `mainNoiseScaleY`, `mainNoiseScaleZ`, `depthNoiseScaleX`, `depthNoiseScaleZ`, `depthNoiseScaleExponent`, `baseSize`, `stretchY`, `biomeDepthWeight`, `biomeDepthOffset`, `biomeScaleWeight` a `biomeScaleOffset`, které tvarují zemi této dimenze tak, jak je popisuje nastavení Overworldu. Klíče rud, `<ore>Size`, `<ore>Count`, `<ore>MinHeight` a `<ore>MaxHeight` pro coal, iron, gold, redstone, diamond, dirt, gravel, granite, diorite a andesite a `lapisSize`, `lapisCount`, `lapisCenterHeight` a `lapisSpread`, a `dungeonChance`, `lavaLakeChance`, `waterLakeChance` a `useWaterLakes` umisťují rudy, kobky a jezera této dimenze tak, jak je popisuje nastavení Overworldu, jen v této dimenzi; `biomeSize` a `riverSize` platí pro celý svět a čtou se jen z nastavení Overworldu. Pro `flat` vrstvy odspodu nahoru jako `"minecraft:bedrock"`, `"59*minecraft:stone"`, `"3*minecraft:dirt"`, `"minecraft:grass_block"`, což je i výchozí země, nebo text superflat z 1.12.2, jehož číslo biomu nastaví biom a jehož názvy `decoration`, `lava_lake` a struktur se čtou tak, jak je čte `generatorOptions` Overworldu |
+| `structures` | ne | boolean | `true` | Zda se generují vanilla struktury |
+
+### Blok `biomes`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------- | ------------- | ------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source` | ne | `inherit`, `single`, `list` | `inherit` | `inherit` používá vlastní mapu biomů Overworldu bez ohledu na typ terénu, takže dimenze `nether` nebo `end` dostane biomy Overworldu na své vlastní zemi; `single` používá všude jeden biom, `list` rozloží biomy z `biomeList` po dimenzi na každém typu terénu, včetně `flat`, `nether` a `end`. Jinak dimenze `flat` drží jeden biom, ten z `single` nebo ten z textu superflat |
+| `biome` | když `single` | název biomu | `minecraft:plains` | Který biom to je |
+| `biomeList` | když `list` | seznam názvů biomů nebo objektů `{"biome", "weight"}` | žádný | Jediné biomy, které `list` používá. Každá oblast má asi 256 bloků napříč se zaoblenými, nepravidelnými hranicemi a z jednoho z uvedených biomů si podle semene světa náhodně vezme jeden v poměru jeho `weight` (10 pro prostý název, jako u definice biomu), takže při stejných vahách je každý biom zhruba stejně běžný jako ten další; kterýkoli může sousedit s kterýmkoli. Název, který není zaregistrovaný biom, se zaloguje a vynechá; když nezbyde žádný, dimenze použije `minecraft:plains` |
+
+### Blok `sky`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------ | -------- | --------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hasSkyLight` | ne | boolean | `true` | Zda do ní proniká denní světlo |
+| `surfaceWorld` | ne | boolean | `true` | Zda se mapy a kompasy chovají jako v Overworldu |
+| `respawn` | ne | boolean | `true` | Zda se zde hráči znovu objevují |
+| `respawnDimension` | ne | id dimenze | žádný | Kde se místo toho znovu objevují |
+| `spawning` | ne | boolean | `true` | Zda se spawnují moby. Vypnuto zastaví každý spawn, včetně líhní, ať skupina `spawning` říká cokoli |
+| `nether` | ne | boolean | `false` | Pro portály a stropy se bere jako nether |
+| `beds` | ne | boolean | `true` | Při vypnutí postele explodují |
+| `waterVaporizes` | ne | boolean | `false` | Umístěná voda se vypaří: kbelíky a dispenzery vytvoří páru místo vody, rozbitý nebo roztavený led nezanechá nic a láva teče jako v Netheru. Voda, která už ve světě je nebo ji vytvořil terén, zůstává |
+| `cloudHeight` | ne | celé číslo | `128` | Kde leží mraky. Nastavení `cloudHeight` uvádějící tuto dimenzi, nebo holé, nad ním vyhrává |
+| `cloudColor` | ne | hexadecimální barva | žádný | Odstín mraků |
+| `cloudSpeed` | ne | desetinné číslo | `1.0` | Jak rychle mraky plují. `0` je drží na místě, záporná hodnota je obrací |
+| `cloudLayers` | ne | seznam objektů | žádný | Několik vrstev mraků. Viz [Mlha, světlo, mraky a žár](#mlha-světlo-mraky-a-žár) |
+| `groundLevel` | ne | celé číslo | `63` | Hladina moře, používaná pro obzor, pro hledání spawnu a pro místo, kde dopadne příchod bránou nebo pád nad prázdnotou |
+| `movementFactor` | ne | desetinné číslo | `1.0` | Poměr vzdáleností k Overworldu. Nether používá 8 |
+| `fogColor` | ne | hexadecimální barva nebo `sample` | žádný | Odstín mlhy v poledne. V noci tmavne jako vanilla mlha. `sample` smíchá oblohu se zemí kolem hráče |
+| `showFog` | ne | boolean | `false` | Hustá mlha jako v netheru |
+| `fogDensity` | ne | desetinné číslo, 0 až 1 | `0.0` | Jak hustá je mlha. `0` ponechá vanilla dohlednost, `1` ji stáhne na 8 bloků |
+| `fogGroundWeight` | ne | desetinné číslo, 0 až 1 | `0.5` | S `fogColor: sample` kolik váhy má země oproti obloze |
+| `skyColor` | ne | hexadecimální barva | žádný | Odstín oblohy v poledne. V noci tmavne a v dešti a při bouři šedne jako vanilla obloha |
+| `fixedTime` | ne | celé číslo, ticky | žádný | Zamkne denní dobu. Na 26.x se typ dimenze s pevným časem stane dimenzí bez denního cyklu vůbec; `time query` tam odpoví, že neexistují výchozí hodiny, a to je správně |
+| `sunriseColors` | ne | boolean | `true` | Zda jsou východ a západ slunce zabarveny |
+| `ambientLight` | ne | desetinné číslo, 0 až 1 | `0.0` | Minimální světlo všude |
+| `lightSkyColor` | ne | hexadecimální barva | žádný | Odstín denního světla na blocích a mobech |
+| `lightBlockColor` | ne | hexadecimální barva | žádný | Odstín světla pochodní a jiného světla bloků |
+| `skyFactor` | ne | desetinné číslo, 0 až 1 | `1.0` | Jak jasné denní světlo vypadá. Kreslí se jen na klientu, takže spawnování mobů se nemění |
+| `starBrightness` | ne | desetinné číslo, 0 až 1 | žádný | Jak jasné jsou hvězdy |
+| `sunBrightness` | ne | desetinné číslo, 0 až 1 | `1.0` | Jak jasně se kreslí slunce |
+| `moonBrightness` | ne | desetinné číslo, 0 až 1 | `1.0` | Jak jasně se kreslí měsíc, a s `bodies` každé těleso kromě slunce |
+| `heat` | ne | objekt | žádný | Žhavé chvění nad pohledem. Viz [Mlha, světlo, mraky a žár](#mlha-světlo-mraky-a-žár) |
+| `renderSky` | ne | boolean | `true` | Při vypnutí nekreslí nic z oblohy, slunce, měsíce ani hvězd a zbude barva mlhy |
+| `renderClouds` | ne | boolean | `true` | Při vypnutí se nekreslí žádné mraky |
+| `renderWeather` | ne | boolean | `true` | Při vypnutí se nekreslí déšť ani sníh |
+| `sun` | ne | objekt | žádný | Tvoje vlastní slunce. Viz [Vykreslovač oblohy](#vykreslovač-oblohy) |
+| `bodies` | ne | seznam objektů | žádný | Planety a měsíce zavěšené na obloze. Viz [Vykreslovač oblohy](#vykreslovač-oblohy) |
+| `stars` | ne | objekt | žádný | Tvoje vlastní hvězdné pole. Viz [Vykreslovač oblohy](#vykreslovač-oblohy) |
+
+### Vykreslovač oblohy
+
+*dimenze*
+
+Nastavení kteréhokoli z `sun`, `moon`, `bodies` nebo `stars` vymění vanilla oblohu za vlastní oblohu RDPL, která kreslí stejnou kopuli, záři východu a prázdnotu jako vanilla, ale slunce, další tělesa a hvězdy bere z balíčku. Kreslí se jen na klientu a dedikovaný server ji nikdy nenačte. `renderSky: false` stále vítězí a nekreslí nic a `renderClouds: false` je způsob, jak vytvořit oblohu bez mraků.
+
+Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším kromě slunce, takže prázdný seznam je obloha bez měsíce.
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `sun.texture` | ne | cesta k textuře | vanilla slunce | Obrázek slunce |
+| `sun.size` | ne | desetinné číslo | `30` | Polovina šířky slunce ze vzdálenosti 100. `0` ho skryje |
+| `moon.texture` | ne | cesta k textuře | vanilla měsíc | List osmi fází měsíce, čtyři vedle sebe a dvě pod sebou. Bez něj se kreslí vanilla měsíc |
+| `moon.size` | ne | desetinné číslo | `20` | Polovina šířky měsíce ze vzdálenosti 100. `0` ho skryje. S `bodies` se vynechá |
+| `bodies[].texture` | ano | cesta k textuře | | Obrázek tělesa |
+| `bodies[].size` | ne | desetinné číslo | `20` | Polovina jeho šířky ze vzdálenosti 100. Vanilla měsíc má `20` |
+| `bodies[].angle` | ne | desetinné číslo, stupně | `180` | Jak daleko po dráze slunce leží za sluncem. `180` je místo vanilla měsíce. Při vypnutém `followsTime` se měří od bodu přímo nad hlavou, takže `0` je zenit a `90` horizont |
+| `bodies[].tilt` | ne | desetinné číslo, stupně | `0` | Jak daleko leží od dráhy slunce, na sever nebo na jih |
+| `bodies[].followsTime` | ne | boolean | `true` | Při vypnutí visí nehybně na obloze, místo aby se otáčelo se sluncem |
+| `stars.count` | ne | celé číslo | `1500` | Kolik je hvězd |
+| `stars.size` | ne | desetinné číslo | `0.15` | Nejmenší hvězda; největší je o dvě třetiny větší |
+
+### Mlha, světlo, mraky a žár
+
+*dimenze*
+
+Tyto klíče leží v bloku `sky` vedle starších, které fungují dál jako dřív. Všechny se kreslí jen na klientu, takže je dedikovaný server ignoruje a žádné uložení se nemění.
+
+```json
+{
+  "sky": {
+    "fogColor": "sample",
+    "fogDensity": 0.4,
+    "fogGroundWeight": 0.6,
+    "lightSkyColor": "#FFD8A0",
+    "lightBlockColor": "#A0C0FF",
+    "skyFactor": 0.7,
+    "cloudSpeed": 2.0,
+    "cloudLayers": [
+      { "height": 140, "speed": 1.0, "color": "#FFFFFF" },
+      { "height": 220, "speed": -3.0, "color": "#C0A0FF" }
+    ],
+    "sunBrightness": 0.5,
+    "moonBrightness": 0.3,
+    "heat": { "strength": 0.1, "minTemperature": 1.5, "dayOnly": true, "mode": "world", "startDistance": 32 }
+  }
+}
+```
+
+`fogColor: "sample"` jednou za sekundu přečte horní bloky ve čtverci 33 na 33 bloků kolem hráče, nasvítí jejich barvy z mapy podle denní doby a smíchá je s barvou oblohy. Mlha se k novému vzorku plynule blíží. `fogDensity` funguje se vzorkovanou barvou mlhy, nastavenou i žádnou. Pod vodou, v lávě a při oslepení zůstává vanilla mlha.
+
+`lightSkyColor` a `lightBlockColor` zabarvují mapu světla, takže každý osvětlený blok i mob přijme odstín. `skyFactor` škáluje, jak jasné denní světlo vypadá, zatímco úroveň světla, kterou server počítá pro spawnování a plodiny, zůstává stejná.
+
+Bez `cloudLayers` mění `cloudSpeed` rychlost jediné vanilla vrstvy ve výšce `cloudHeight`. S `cloudLayers` je každá položka samostatná vrstva a `cloudHeight`, `cloudSpeed` a `cloudColor` doplní, co položka vynechá. `renderClouds: false` stále nekreslí žádné.
+
+`sunBrightness` a `moonBrightness` tlumí slunce a měsíc navíc k vanilla útlumu v dešti, ve vanilla obloze i ve vlastní z části [Vykreslovač oblohy](#vykreslovač-oblohy).
+
+`heat` položí na pohled vlnité chvění, dokud hráč stojí v biomu alespoň tak teplém jako `minTemperature`. Poušť má 2.0 a pláně 0.8. Chvění se během několika sekund zesiluje a slábne, pod vodou je vypnuté a nikdy nezkreslí držený předmět ani HUD.
+
+`mode` určuje, kam chvění dopadne. `screen` zkreslí pevný pás přes spodní část obrazovky, ať se hráč dívá kamkoli. `world` místo toho sleduje krajinu: terén blíž než `startDistance` bloků zůstane ostrý, chvění sílí směrem k vzdálenému okraji dohlednosti, kde se zavírá mlha, a obloha se nikdy nechvěje, ať se hráč dívá dolů, přímo nebo nahoru.
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------------- | -------- | ------------- | ------------- | -------------------------------------------------------------------- |
+| `cloudLayers[].height` | ne | desetinné číslo | `cloudHeight` | Kde vrstva leží |
+| `cloudLayers[].speed` | ne | desetinné číslo | `cloudSpeed` | Jak rychle pluje. `0` ji drží na místě, záporná hodnota ji obrací |
+| `cloudLayers[].color` | ne | hexadecimální barva | `cloudColor` | Její odstín |
+| `heat.strength` | ne | desetinné číslo, 0 až 1 | `0.1` | Jak silné je chvění |
+| `heat.minTemperature` | ne | desetinné číslo | `1.5` | Nejchladnější teplota biomu, při které se chvění objeví |
+| `heat.dayOnly` | ne | boolean | `true` | Při zapnutí chvění slábne s denním světlem a v noci zmizí |
+| `heat.mode` | ne | řetězec | `screen` | Kam chvění dopadne, `screen` nebo `world` |
+| `heat.startDistance` | ne | desetinné číslo | `32` | V režimu `world` v jaké vzdálenosti v blocích chvění začíná |
+
+### Sníh, tekutiny, hvězdy a blesky
+
+*dimenze*
+
+Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
+
+```json
+{
+  "sky": {
+    "snowColor": "#C8E0FF",
+    "waterFogColor": "#103040",
+    "lavaFogColor": "#802000",
+    "starColor": "#FFE0A0",
+    "starTwinkle": 0.5,
+    "lightningColor": "#A080FF"
+  }
+}
+```
+
+`snowColor` zabarvuje vrstvy sněhu a sněhové bloky na zemi. Vlastní `snowColor` biomu vítězí nad dimenzí a barvy se na hranicích biomů prolínají jako u trávy.
+
+`waterFogColor` a `lavaFogColor` nahrazují barvu mlhy, kterou kamera vidí pod vodou nebo v lávě. Noc, hloubka a noční vidění ji stále ztmavují nebo zesvětlují stejně jako vanilla barvu.
+
+Na 26.x se `waterFogColor` stane atributem prostředí `visual/water_fog_color` dané dimenze, takže biom, který si nastaví vlastní, jako to dělá bažina, si ho ponechá. Funguje i vanilla JSON biomu s `visual/water_fog_color` ve svých `attributes`.
+
+`starColor` zabarvuje hvězdy, ve vanilla obloze i ve vlastní z části [Vykreslovač oblohy](#vykreslovač-oblohy). `starTwinkle` je rozblikává: hvězdy se dělí do osmi skupin, z nichž každá tmavne a jasní vlastním tempem, a hodnota udává, jak hluboko ztmavnou, takže při `1` skupina ve svém nejnižším bodě úplně zhasne.
+
+`lightningColor` zabarvuje blesky.
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ------------- | ----------- | -------------------------------------------------------------- |
+| `snowColor` | ne | hexadecimální barva | bílá | Odstín vrstev sněhu a sněhových bloků |
+| `waterFogColor` | ne | hexadecimální barva | jako u biomu | Barva mlhy pod vodou |
+| `lavaFogColor` | ne | hexadecimální barva | `991A00` | Barva mlhy v lávě |
+| `starColor` | ne | hexadecimální barva | bílá | Odstín hvězd |
+| `starTwinkle` | ne | desetinné číslo, 0 až 1 | `0.0` | Jak hluboko hvězdy při blikání ztmavnou. `0` je drží klidné |
+| `lightningColor` | ne | hexadecimální barva | `737380` | Odstín blesku |
+
+### Skybox, polární záře a duha
+
+*dimenze*
+
+Tyto klíče leží také v bloku `sky` a také se kreslí jen na klientu.
+
+```json
+{
+  "sky": {
+    "skybox": {
+      "up": "mypack:textures/sky/up.png",
+      "down": "mypack:textures/sky/down.png",
+      "north": "mypack:textures/sky/north.png",
+      "east": "mypack:textures/sky/east.png",
+      "south": "mypack:textures/sky/south.png",
+      "west": "mypack:textures/sky/west.png"
+    },
+    "aurora": {
+      "color": "#40FF90",
+      "topColor": "#8040FF"
+    },
+    "rainbow": true
+  }
+}
+```
+
+`skybox` namaluje na oblohu tvoje vlastní obrázky, za záři východu, slunce, měsíc a hvězdy. Zadej všech šest stěn krychle jako plné cesty k texturám, rozložené tak, jak se krychle rozkládá: `up` navazuje na horní okraj `north`, `down` na jeho dolní okraj, `west` leží vlevo od něj a `east` vpravo, s `south` za `east`. Nebo zadej samotné `panorama`, jeden obrázek 2:1 omotaný kolem celé oblohy: jeho levý okraj směřuje na sever a běží po směru hodinových ručiček přes východ, jih a západ, jeho horní řádek je přímo nahoru a dolní přímo dolů. Skybox, kterému chybí stěna a nemá panorama, se vynechá a do logu přijde chyba.
+
+`aurora` zavěsí zářivé závěsy nízko nad severní oblohu v noci. Pomalu se vlní, se západem slunce se objevují a ve dne i v dešti zmizí. `color` je barva u jejich paty a `topColor` ta, do které nahoře přecházejí.
+
+`rainbow` ukáže duhu naproti slunci, jakmile ve dne přestane pršet. Mizí během dvou minut po skončení deště a nový příval ji smaže.
+
+Žádný vanilla klíč nedává dimenzi vlastní obrázky oblohy, polární záři ani duhu, takže tyto fungují stejně na každé verzi.
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | ------------ | -------- | ----------------------------------------------------------------------------- |
+| `skybox.<face>` | ne | cesta k textuře | žádný | Jedna stěna krychle: `up`, `down`, `north`, `east`, `south` nebo `west`. Zadej všech šest |
+| `skybox.panorama` | ne | cesta k textuře | žádný | Jeden obrázek omotaný kolem celé oblohy, použitý místo stěn |
+| `aurora.color` | ne | hexadecimální barva | `40FF90` | Barva u paty závěsů |
+| `aurora.topColor` | ne | hexadecimální barva | `8040FF` | Barva nahoře, kde závěsy mizí |
+| `rainbow` | ne | boolean | `false` | Zobrazí duhu po dešti |
+
+### Blok `physics`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------------- | -------- | -------------- | ----------------- | ----------------------------------------------------------------------- |
+| `gravity` | ne | desetinné číslo, nad 0 | `1.0` | Zrychlení pádu zde, jako násobitel vanilly. `0.17` odpovídá měsíci |
+| `fallDamage` | ne | desetinné číslo, nad 0 | `1.0` | Poškození pádem zde, jako násobitel |
+| `arrowGravity` | ne | desetinné číslo, nad 0 | podle `gravity` | Jak rychle zde šípy klesají, jako násobitel |
+
+Jsou to tytéž násobitele jako klíče šablony světa `worldGravity` a `worldFallDamage`, nastavené na dimenzi. Řádek `dimension=value` šablony světa pro tuto dimenzi stále vítězí; holá hodnota šablony světa se vztahuje jen na dimenze, které nenastavují nic vlastního.
+
+### Blok `time`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
+| `dayLength` | ne | celé číslo, ticky | `24000` | Jak dlouho tady trvá jeden den a noc. Fáze měsíce se stále otočí jednou za 24000 ticků |
+
+### Blok `weather`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------------- | -------- | ---------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| `precipitation` | ne | boolean | `true` | Při vypnutí tu nikdy neprší, nesněží ani nebouří |
+| `lightning` | ne | boolean | `true` | Při vypnutí přicházejí déšť a bouře bez blesků |
+| `snow` | ne | boolean | `true` | Při vypnutí sníh nikdy nezůstane ležet |
+| `freeze` | ne | boolean | `true` | Při vypnutí voda nikdy nezamrzne |
+| `alwaysRain` | ne | boolean | `false` | Při zapnutí tu prší neustále bez jasných období, přednostně před jakýmkoli `cycle`. Vynechá se při vypnutém `precipitation` |
+| `cycle.rainTicks` | ne | celé číslo nebo `[min, max]` | `[1000, 4600]` | Jak dlouho trvá příval |
+| `cycle.clearTicks` | ne | celé číslo nebo `[min, max]` | `[1000, 3000]` | Jak dlouho trvá sucho mezi přívaly |
+| `cycle.maxStrength` | ne | desetinné číslo, nad 0 až 1 | `0.6` | Nejsilnější, jaký příval bude. Každý příval kolísá mezi čtvrtinou této hodnoty a celou hodnotou |
+| `cycle.thunderTicks` | ne | celé číslo nebo `[min, max]` | žádný | Jak dlouho trvá bouřka. Bez něj cyklus nikdy nebouří |
+| `cycle.calmTicks` | ne | celé číslo nebo `[min, max]` | `[12000, 180000]` | Jak dlouho trvá klid mezi bouřkami |
+| `cycle.thunderStrength` | ne | desetinné číslo, nad 0 až 1 | `1` | Jak tmavá bouře bude. Blesky bijí jen nad `0.9` |
+| `rain.particle` | ne | id částice | `minecraft:rain` | Co cáká tam, kde déšť dopadá |
+| `rain.sound` | ne | název zvuku | `minecraft:weather.rain` | Zvuk deště |
+| `rain.volume` | ne | desetinné číslo | `0.2` | Jeho hlasitost, snížená na polovinu, když déšť padá nad tebou |
+| `rain.interval` | ne | celé číslo | `3` | Jak zřídka se zvuk přehrává; vyšší je řidší, `0` ho přehraje při každé příležitosti |
+| `rain.color` | ne | hexadecimální barva | `#FFFFFF` | Odstín padajícího deště |
+| `rain.snowColor` | ne | hexadecimální barva | `#FFFFFF` | Odstín padajícího sněhu |
+| `rain.angle` | ne | desetinné číslo, 0 až 180 | `0` | Stupně od svislice dolů: `90` fouká do strany, `180` stoupá přímo nahoru. Kreslí se nakloněný nejvýše o 75 stupňů |
+| `rain.heading` | ne | desetinné číslo, stupně | `0` | Kam fouká: `0` jih, `90` západ, `180` sever, `270` východ |
+| `rain.splashUpward` | ne | boolean | `false` | Při zapnutí déšť, který stoupá (`angle` nad `90`), stále cáká na zem a přehrává svůj zvuk |
+| `wind.gust` | ne | desetinné číslo, 0 až 90 | `15` | Stupně, které závan v maximu přidá k `angle`, nikdy za vodorovnou |
+| `wind.every` | ne | celé číslo nebo `[min, max]` | `[200, 600]` | Ticky od jednoho závanu k dalšímu |
+| `wind.swing` | ne | desetinné číslo, 0 až 180 | `30` | Stupně, o které závan vychýlí `heading` na jednu či druhou stranu |
+
+Blok `wind` dělá déšť poryvovým. Čas od času ho závan nakloní až o `gust` stupňů dál a vychýlí jeho směr až o `swing` stupňů na jednu stranu, přičemž se zesílí a utichne během čtyř sekund; závany přicházejí každých `every` ticků. Déšť i sníh se naklánějí s ním a okolní částice dimenze se unášejí tak, jak se déšť naklání, s poryvy i bez nich. Blok `wind` bez bloku `rain` dá dešti jeho výchozí hodnoty.
+
+Ostatní dimenze sdílejí déšť Overworldu. `cycle` dává této dimenzi vlastní počasí: přívaly přicházejí a odcházejí podle výše uvedených časování, ať Overworld dělá cokoli. S `thunderTicks` také bouří, na vlastních časováních; bouře, která potká příval, přivede příval na plnou sílu, ztmaví oblohu a při zapnutém `lightning` přinese blesky. `weatherCeiling` v [šabloně světa](#šablony-světa) stále omezuje, jak vysoko déšť sahá.
+
+Blok `rain` mění, jak déšť a sníh zde vypadají a znějí, s `cycle` i bez něj; bez něj vypadají a znějí jako vanilla.
+
+### Blok `ambience`
+
+*dimenze*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `music` | ne | název zvuku | žádný | Hudba přehrávaná zde místo obvyklých skladeb, i v kreativním režimu. Příchod starou skladbu utne |
+| `musicDelay` | ne | celé číslo nebo `[min, max]` | `[12000, 24000]` | Ticky ticha mezi dvěma skladbami |
+| `loopSound` | ne | název zvuku | žádný | Zvuk, který se opakuje, dokud tu jsi, při příchodu se zesiluje a při odchodu slábne |
+| `ambientSound` | ne | název zvuku | žádný | Zvuk přehrávaný tu a tam, zvuk doplňků biomu |
+| `soundChance` | ne | 0.0 až 1.0 | `0.0111` | Šance v každém ticku, že se `ambientSound` přehraje |
+| `particle` | ne | id částice | žádný | Částice unášená ve vzduchu kolem tebe, například `minecraft:ash`, `minecraft:white_ash`, `minecraft:crimson_spore` nebo `minecraft:dust` |
+| `particleChance` | ne | 0.0 až 1.0 | `0.00625` | Její hustota, počítaná tak, jak ji počítají moderní biomy: v každém ticku se zkusí asi 667 míst do 16 bloků a dalších 667 do 32 a každé, které není plný blok, ukáže částici s touto šancí |
+| `particleColor` | ne | hexadecimální barva | žádný | Odstín částice, která ho přijímá: `minecraft:dust` a `minecraft:entity_effect` |
+
+Blok `ambience` dává dimenzi vlastní hudbu, zvuky a unášené částice. Klíče se stanou atributy prostředí dimenze `minecraft:audio/background_music`, `minecraft:audio/ambient_sounds` a `minecraft:visual/ambient_particles`, položenými přes její biomy, takže se přehrávají a vypadají jako ve vanille a nastavení videa Částice je ztenčuje stejným způsobem. Vynechaný klíč nechá každému biomu jeho vlastní, takže funguje i vanilla JSON biomu s jeho atributy.
+
+## Portály a brány
+
+*svět*
+
+`<namespace>/blocks/*.json`
+
+Portál je obyčejná definice bloku, takže platí stejné pravidlo o cestě a každá varianta je blok portálu.
+
+Blok typu `portal` obsahuje sekci `portal`:
+
+```json
+{
+  "type": "portal",
+  "material": "portal",
+  "portal": {
+    "dimension": "mypack:ruby_world",
+    "returnDimension": "minecraft:overworld",
+    "gate": "mypack:ruby_gate",
+    "cooldown": 60,
+    "platform": true,
+    "platformBlock": "mypack:ruby_block",
+    "sound": "block.portal.travel",
+    "owned": true
+  },
+  "variants": { "ruby_portal": { "hardness": -1, "light": 11 } }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | ------------ | ---------------------- | ----------------------------------------------------------------------------------------------------- |
+| `dimension` | ano | id dimenze | | Kam tě pošle |
+| `returnDimension` | ne | id dimenze | `minecraft:overworld` | Kam tě pošle zpět |
+| `gate` | ne | název brány | žádný | Brána, která musí být otevřená, aby šlo projít |
+| `cooldown` | ne | celé číslo, ticky | `60` | Než ho může stejný hráč použít znovu |
+| `platform` | ne | boolean | `true` | Postavit při příchodu přistávací plošinu |
+| `platformBlock` | ne | název bloku | kámen | Z čeho je ta plošina |
+| `sound` | ne | název zvuku | žádný | Přehraje se při průchodu. Viz [názvy zvuků](#seznamy-hodnot) |
+| `owned` | ne | boolean | `true` | Smí ho používat jen ten, kdo ho postavil, a ti, které povolí. Portál s majitelem je také odolný proti výbuchům |
+| `walkIn` | ne | boolean | `false` | Do cíle se cestuje vstoupením do bloku, stejně jako u portálu do Netheru. Když je vypnuto, používá se ručně |
+
+### Rámy portálů
+
+*portály a brány*
+
+`<namespace>/portalframes/*.json`
+
+Cesta souboru je registrační název rámu, který pak dimenze uvádí v `frames`.
+
+Rám je obrázek toho, co musí hráč postavit, a nic víc: říká, které bloky tvoří okraj a kde je otvor, ale neříká nic o tom, kam portál vede. Je to záměr, protože dimenze si rám pouze nárokuje, nevlastní ho, a dvě dimenze si mohou nárokovat tentýž.
+
+```json
+{
+  "name": "Standing Gate",
+  "axis": "vertical",
+  "legend": { "q": "minecraft:quartz_block", "r": "mypack:ruby_block" },
+  "rows": [
+    "rqqqqr",
+    "q....q",
+    "*",
+    "rqqqqr"
+  ],
+  "maxWidth": 6,
+  "maxHeight": 9
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------------------------------- | ------------- | ------------------------------------------------------------------------------------------- |
+| `name` | ne | řetězec | název souboru | Název použitý v logu |
+| `axis` | ne | `vertical`, `horizontal` nebo `both` | `vertical` | Zda stojí svisle jako portál do Netheru, leží vodorovně jako portál do Endu, nebo může být obojí |
+| `legend` | ano | objekt přiřazující znakům bloky | žádný | Bloky, které smějí řádky používat. Název bloku se stavy se čte stejně jako všude jinde |
+| `rows` | ano | seznam řetězců | žádný | Obrázek, kreslený od horního řádku |
+| `maxWidth` | ne | celé číslo | `21` | Nejširší otvor, na který se může `*` roztáhnout |
+| `maxHeight` | ne | celé číslo | `21` | Nejvyšší otvor, na který se může `*` roztáhnout |
+
+Tři znaky nejsou bloky. `.` je otvor, ve kterém portál stojí, a rám bez něj je odmítnut. Mezera je buňka, na které rámu nezáleží, takže obklopení ve tvaru L se nakreslí tak, že se rohy nechají prázdné. `*` opakuje: řádek tvořený jen znakem `*` opakuje řádek nad sebou tolikrát, kolikrát to hráč postavil, a `*` uvnitř řádku stejným způsobem opakuje znak před ním. Může se opakovat i nulakrát, takže obrázek přečtený s vyškrtnutými všemi `*` je nejmenší věc, která se zapálí, a maxima v tabulce výše jsou největší. Obrázek bez `*` je přesný a hráč musí postavit přesně to a nic jiného.
+
+Svislý rám se najde na kterékoli vodorovné ose a v obou směrech, takže nezáleží na tom, kterým směrem stavitel stál. Vodorovný se najde ve všech čtyřech natočeních.
+
+**Jak velký smí být, určuje balíček.** `maxWidth` a `maxHeight` jsou největší otvor, na který se `*` roztáhne, a přijato je cokoli menšího až po minimum, takže balíček sám rozhoduje, zda jeho brána končí na vanilla hodnotě 21, nebo na 4. Minimum určuje velikost hráče: stojící rám je odmítnut, pokud jeho otvor nemůže mít alespoň 1 na šířku a 2 na výšku, plochý alespoň 1 na 1, a obrázek, který této velikosti nikdy nemůže dosáhnout, je při načítání odmítnut se záznamem v logu, místo aby vznikl rám, kterým nikdo neprojde.
+
+**Rám se hledá tím dráž, čím víc se může roztáhnout.** Pokud je v rámu řádkové `*` i sloupcové `*`, zkouší se každá kombinace až po obě maxima, takže rám roztažitelný oběma směry do 21 je 441 obrázků. Hledání se raději vzdá, než aby viselo, a uvede to v logu; to je znamení, že máš maximum snížit nebo jedno z roztažení vynechat.
+
+**Nic nebrání tomu, aby rámem byl obsidián zapálený pazourkem a ocelí, ale ten má přednost.** Rám se hledá dříve, než předmět provede vlastní činnost, takže takový rám otevře dimenzi balíčku tam, kde by stál portál do Netheru. Zvol jiný blok nebo jiný zapalovač, aby vanilla portál zůstal nedotčen.
+
+### Otevření dimenze rámem
+
+*portály a brány*
+
+`<namespace>/dimensions/*.json`
+
+Dimenze se otevírá přes rám tím, že obsahuje sekci `portal`. Rám a to, čím se zapaluje, společně určují dimenzi, takže jeden tvar rámu může vést na několik míst podle toho, čím byl zapálen.
+
+```json
+{
+  "portal": {
+    "frames": ["mypack:standing_gate"],
+    "ignitedBy": "minecraft:flint_and_steel",
+    "color": "#C77DFF",
+    "return": "built",
+    "gate": "mypack:ruby_gate",
+    "cooldown": 60,
+    "platform": true,
+    "sound": "block.portal.travel"
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| --------------- | -------- | --------------------------- | --------------------------- | ------------------------------------------------------------------ |
+| `frames` | ano | seznam názvů rámů | žádný | Rámy, které tuto dimenzi otevírají |
+| `ignitedBy` | ne | název předmětu | `minecraft:flint_and_steel` | Co hráč drží, aby rám zapálil |
+| `color` | ne | hexadecimální barva | bílá | Barva, kterou se portál vykreslí |
+| `return` | ne | `built`, `player` nebo `none` | `built` | Zda je cesta zpět zajištěna, postavena hráčem, nebo není vůbec |
+| `gate` | ne | název brány | žádný | Brána, která musí být otevřená, aby šlo projít |
+| `cooldown` | ne | celé číslo, ticky | `60` | Než může stejný hráč projít znovu |
+| `platform` | ne | boolean | `true` | Postavit při příchodu přistávací plošinu |
+| `platformBlock` | ne | název bloku | kámen | Z čeho je ta plošina vyrobena |
+| `sound` | ne | název zvuku | žádný | Přehraje se při průchodu. Viz [názvy zvuků](#seznamy-hodnot) |
+| `owned` | ne | boolean | `false` | Použít ho smí jen ten, kdo ho zapálil, a ti, kterým to dovolí |
+
+Blok, který stojí v otvoru, balíček nepíše. Dimenze se sekcí `portal` dostane vlastní, vykreslený herní texturou portálu pod `color`, do kterého se vchází a nepoužívá se rukou, a nerozbitný. Barva texturu násobí, stejně jako `tintindex`, takže `#C77DFF` zachová fialovou barvu Netheru a `#4CFFB0` ho promění v jedovatý. Pro portál, který vůbec není vanilla textura, napiš obyčejný blok `portal` s vlastní texturou, případně kreslenou jako [pixelová mapa](#textury-zapsané-jako-pixelové-mapy), kde může `tint` přecházet mezi dvěma barvami.
+
+`return` určuje, co se stane na druhé straně. `built` postaví stejný rám ve velikosti, kterou hráč postavil, a zapálí ho, což odpovídá chování vanilly. `player` nepostaví nic, ale dovolí zapálit tentýž rám tam, takže cestu domů je třeba najít a vytvořit. `none` rám v té dimenzi vůbec odmítne zapálit a cesta je jednosměrná.
+
+**Jeden rám, několik dimenzí.** Dvojice rámu a předmětu, který ho zapaluje, určuje dimenzi, takže stejný `standing_gate` zapálený pazourkem a ocelí a zapálený vlastním zapalovačem balíčku otevírá dvě různá místa, každé s vlastní barvou. Dvě dimenze, které si nárokují stejný rám *a* stejný předmět, jsou chyba balíčku: druhá je odmítnuta a oznámí to v logu, místo aby jedna z nich tiše zvítězila.
+
+Rozbití kteréhokoli bloku rámu portál zhasne, stejně jako ve vanille.
+
+### Brány
+
+*portály a brány*
+
+`<namespace>/gates/*.json`
+
+Cesta souboru je registrační název brány, který pak portál uvádí v `gate`.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "dimension": "mypack:ruby_world",
+  "name": "The Ruby Gate",
+  "scope": "player",
+  "open": false,
+  "unlock": {
+    "hold": "mypack:ruby_key",
+    "consume": "mypack:ruby",
+    "consumeCount": 4,
+    "craft": "mypack:ruby_pickaxe",
+    "advancement": "mypack:story/ruby",
+    "killed": "minecraft:wither",
+    "killedCount": 2,
+    "killedDrops": "mypack:ruby_key"
+  },
+  "unlockedMessage": "%dim% is now open",
+  "blockedMessage": "You need %item% to enter %dim%",
+  "safeReturn": true,
+  "portalBlocks": ["mypack:ruby_portal"],
+  "requires": ["mypack"]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | ---------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dimension` | ano | id dimenze | | Dimenze, kterou hlídá |
+| `name` | ne | řetězec | název souboru | Zobrazuje se hráči |
+| `scope` | ne | `player`, `global` | `player` | Jeden hráč po druhém, nebo celý svět najednou |
+| `open` | ne | boolean | `false` | Zda začíná otevřená |
+| `unlock` | ne | objekt | | Co ji otevře. Viz níže |
+| `unlockedMessage` | ne | řetězec | `%dim% is now open` | Zobrazí se, když se otevře |
+| `blockedMessage` | ne | řetězec | `You need %item% to enter %dim%` | Zobrazí se, když odmítne |
+| `safeReturn` | ne | boolean | `false` | Hráč, který je vrácen, se položí na bezpečné místo ve světě, který se pokusil opustit: vedle své postele nebo nabité kotvy oživení tam, pokud ještě stojí, jinak do spawnu toho světa |
+| `requires` | ne | seznam id módů nebo namespaců balíčků | žádný | Brána se přeskočí, pokud nejsou přítomny všechny |
+| `portalBlocks` | ne | seznam názvů bloků | každý portál | Omezí bránu na tyto bloky portálu, takže jedna dimenze může mít hlídané dveře a otevřené |
+
+`unlock` přijímá `hold` (předmět, který je třeba držet), `consume` s `consumeCount` (`1`), `craft` (předmět, který musel být vyroben), `advancement` a `killed` (název entity; brána se otevře tomu, kdo jednu zabije, takže boss může držet klíč ke světu) s `killedCount` (`1`), když jedna nestačí, počítáno za každého hráče zvlášť nebo za celý svět podle `scope`. Přidání `killedDrops` (název předmětu) způsobí, že započtená zabití položí tento předmět zabijákovi k nohám místo otevření brány a počítání začne znovu, takže klíč lze získat opakovaně a předat někomu, kdo o něj nebojoval; podmiň bránu předmětem `hold` nebo `consume` téhož předmětu, aby se z něj stal klíč. `%item%`, `%mob%` a `%dim%` se doplní za tebe. Klíč, který padá z moba, nepotřebuje nic zvláštního: dej mobovi drop a podmiň bránu pomocí `hold` nebo `consume`.
+
+Brány hlídají i herní vlastní dimenze: brána, jejíž `dimension` je `minecraft:the_nether`, stojí před každým portálem do Netheru.
+
+## Hluboký svět
+
+*svět*
+
+Overworld může být vyšší nebo hlubší, než ho dělá hra, a prostor, který se otevře pod terénem, se vyplní vlastním generováním. Dělají to čtyři klíče `terrain` v bloku `settings` šablony světa jako ostatní; dimenze balíčku to dělá pomocí `minHeight` a `maxHeight` ve vlastním `terrain`.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldMinHeight": -320,
+    "worldMaxHeight": 320,
+    "deepStone": "mypack:slate",
+    "noiseCaves": "deep"
+  }
+}
+```
+
+| Klíč | Hodnota | Výchozí | Co dělá |
+| ---------------- | ------------------------------------------------------------------ | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldMinHeight` | celé číslo, násobek 16, až do -2032 | `-64` | Nejnižší blok Overworldu. Herní dno je -64; nižší vytvoří hluboký svět pod vanilla terénem, plný kámen, dokud ho vrstva worldgenu nevyřeže nebo `noiseCaves` nesnese herní jeskyně dolů. Uplatní se jen přes vygenerovanou předvolbu, takže svět vytvořený před balíčkem si výšku ponechá |
+| `worldMaxHeight` | celé číslo, násobek 16, až do 2032 a nejvýše 4064 nad dnem | `320` | Blok nad vrcholem Overworldu. Herní vrchol je 320; vyšší nechá nad vanilla terénem otevřenou oblohu |
+| `deepStone` | název bloku | žádný | Blok, z něhož je svět pod vanilla terénem, když dno klesne pod -64, například vlastní břidlice balíčku. Přechází do břidlice přes osm vrstev pod -64, tak jako břidlice přechází do kamene. Prázdné ponechá kámen |
+| `noiseCaves` | `off`, `deep` nebo `world` | `off` | Kde herní jeskyně, tunely, nudle a aquifery pokračují, když dno klesne pod -64: `off` nechá svět pod vanilla terénem plný hlubokého kamene, který vyřeže vrstva worldgenu, `deep` je donese až ke dnu s lávovými jezery přesunutými do jeho spodních deseti vrstev, `world` znamená v této verzi totéž, protože vanilla terén je už má |
+
+Hluboký svět je místo, kde dělají svou práci položky worldgenu, oblasti jeskyní a skupiny tvrdosti balíčku: `minHeight` a `maxHeight` u položky sahají tak hluboko, kam sahá dno. Vlastní umístěné prvky hry zůstávají u vanilla terénu: ten, jehož výška se počítá od dna světa, mezi nimi herní diamanty a nižší redstone, se stále počítá od -64 a umístění, které by padlo pod -64, se vynechá, stejně jako ve světě, jehož dno je -64. Klíče z 1.12.2 `deepRavines`, `oreVeins` a samotný svět rubic tu nemají protějšek, protože generování tohoto enginu už sahá od dna ke stropu.
+
+## Nebeská země
+
+*svět*
+
+Při `worldMaxHeight` nad 320 lze otevřenou oblohu nad vanilla terénem zaplnit vlastní zemí. Zapíná ji `skyStone` a tvaruje ji herní vlastní šum jeskyní: co by dole byla jeskyně, je nahoře pevné, takže se obloha shlukuje do plovoucích ostrovů. Klíče patří do bloku `settings` šablony světa; dimenze balíčku s `maxHeight` nad 320 je přijímá také.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldMaxHeight": 1024,
+    "skyStone": "mypack:cloudstone",
+    "skyShape": "islands",
+    "skyIslands": 0.4,
+    "skyThickness": 3.0,
+    "skyHeights": [400, 900],
+    "skyAnimals": false
+  }
+}
+```
+
+| Klíč | Hodnota | Výchozí | Co dělá |
+| -------------- | -------------------- | --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skyStone` | název bloku | žádný | Blok, z něhož je nebe nad vanilla terénem, když `worldMaxHeight` přesáhne 320, tvarovaný do plovoucí země herním vlastním šumem jeskyní, takže co je dole jeskyně, je nahoře ostrov. Svrchní a podkladový blok pod ním pocházejí z povrchového pravidla každého biomu. Prázdné nechá oblohu prázdnou |
+| `skyShape` | `islands` nebo `caves` | `islands` | Do čeho se obloha nad vanilla terénem tvaruje: `islands` pro plovoucí zemi, nebo `caves` pro pevnou skálu s prokopanými jeskyněmi. Použije se, jen když `skyStone` uvádí blok |
+| `skyIslands` | číslo, -1.0 až 1.0 | `0.5` | Jak ochotně se obloha shlukuje do ostrovů, od -1 pro téměř souvislou zemi po 1 pro prázdnou oblohu. Nižší rozprostře zemi po větší části oblohy, vyšší nechá méně a menších kusů. Použije se, jen když `skyStone` uvádí blok a `skyShape` je `islands` |
+| `skyThickness` | číslo, 0.0 až 8.0 | `2.0` | Jak pevný je nebeský ostrov. Vyšší ostrovy vyplní, nižší je vyduté a jejich okraje ztenčí do ztracena. Použije se, jen když `skyStone` uvádí blok a `skyShape` je `islands` |
+| `skyHeights` | seznam dvou čísel | prázdný | Nejnižší a nejvyšší blok, kterého smí nebeská země dosáhnout. Prázdné vyplní celý svět nad vanilla terénem. Použije se, jen když `skyStone` uvádí blok |
+| `skyAnimals` | boolean | `true` | Zda se na nebeské zemi nad vanilla terénem, především na nebeských ostrovech, přirozeně spawnují jiné moby než monstra. `false` nechá zvířata, netopýry a každého jiného moba, který není monstrum, na zemi dole. Líhně to neovlivní. Klíč skupiny `spawning` |
+
+`skyStone` a `skyShape` přijímají také seznam, kde holá hodnota pokrývá každou dimenzi a položka zapsaná jako `dimension=value`, například `mypack:skylands=caves`, nastaví jen tu dimenzi. `skyStone`, `skyIslands` a `skyThickness` v souboru biomu mění nebeskou zemi nad tím biomem a v oblasti jeskyní ji mění uvnitř oblasti, nad biomem; oblast jeskyní dosáhne na oblohu jen tam, kde její `maxHeight` přesáhne 320. Nebeská země nikdy nezačíná pod 320 a její vrch zůstává mimo strop světa. Herní prvky země pod ostrovem stále najdou zem pod ním a každý ostrov dostane rostliny, stromy a zvířata svého biomu.
+
+## Oblasti jeskyní
+
+*svět*
+
+`<namespace>/caveregions/*.json`
+
+Cesta souboru je jméno oblasti, které pak položka worldgenu uvádí v `caveRegions`. Holé jméno tam převezme namespace samotné položky.
+
+Vymaluje pojmenované oblasti přes podzemí, protějšek herních jeskynních biomů v balíčku. Podzemí je rozděleno na zaoblené buňky, `caveRegionCells` bloků široké a `caveRegionCellsY` vysoké, oba klíče `terrain`, a každá buňka losuje jednu oblast, nebo žádnou, podle váhy. Vše, co oblast dělá, vychází deterministicky ze semene, takže chunky se navzájem shodují, aniž by se kdy zapisovalo přes hranici.
+
+### Soubory regionů
+
+*oblasti jeskyní*
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "weight": 3,
+  "minHeight": -56,
+  "maxHeight": 16,
+  "dimensions": ["minecraft:overworld"],
+  "biome": "minecraft:mushroom_fields",
+  "floorCover": "minecraft:mycelium",
+  "floorChance": 0.8,
+  "ceilingCover": "minecraft:brown_mushroom_block",
+  "ceilingChance": 0.3,
+  "coverReplace": ["minecraft:stone", "mypack:slate"],
+  "keepDefaultSpawns": false,
+  "spawns": [
+    { "entity": "minecraft:mooshroom", "type": "creature", "weight": 12, "min": 2, "max": 4 }
+  ],
+  "structures": [
+    { "structure": "mypack:cave_shrine", "weight": 3 },
+    "mypack:cave_well"
+  ],
+  "structureChance": 0.5,
+  "structureLoot": "minecraft:chests/simple_dungeon",
+  "ambientSound": "minecraft:block.water.ambient",
+  "soundChance": 0.02,
+  "particle": "minecraft:dripping_water",
+  "particleChance": 0.002
+}
+```
+
+| Klíč | Hodnota | Výchozí | Co dělá |
+| ------------------- | ---------------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `weight` | celé číslo | `1` | Podíl buněk, které oblast vyhraje. `0` ji vypne |
+| `minHeight` | celé číslo | dno světa | Spodek pásma, v němž oblast existuje |
+| `maxHeight` | celé číslo | `48` | Vrch toho pásma. Buňka, jejíž střed leží mimo pásmo, oblast nikdy nevybere |
+| `waterLevel` | celé číslo | žádný | Připne hladinu spodní vody uvnitř oblasti na tuto výšku, místo tamních aquiferů. Zůstává pod hladinou moře a nejméně dva bloky nad hlubinnou lávou |
+| `skyStone` | blok | žádný | Blok nebeské země uvnitř oblasti, místo `skyStone` biomu a světa |
+| `skyIslands` | -1.0 až 1.0 | jako u biomu | Jak ochotně se nebeská země uvnitř oblasti shlukuje do ostrovů, přes `skyIslands` biomu a světa |
+| `skyThickness` | 0.0 až 8.0 | jako u biomu | Jak pevné jsou nebeské ostrovy uvnitř oblasti, přes `skyThickness` biomu a světa |
+| `dimensions` | seznam id dimenzí | všechny | V kterých dimenzích se oblast objevuje, včetně dimenzí balíčku. Oblast s `biome` ho ukazuje jen tam, kde se biomy umisťují podle klimatu: v Overworldu, v Netheru a v dimenzi balíčku, která dědí biomy Overworldu |
+| `floorCover` | blok | žádný | Nahradí svrchní blok podlah jeskyní uvnitř oblasti |
+| `floorChance` | 0.0 až 1.0 | `1.0` | Kolik podlahy se pokryje |
+| `ceilingCover` | blok | žádný | Nahradí bloky stropů jeskyní uvnitř oblasti |
+| `ceilingChance` | 0.0 až 1.0 | `1.0` | Kolik stropu |
+| `coverReplace` | seznam bloků | herní základní kámen, rudy, dlážděný kámen, pískovec, terakota, enderit a obsidián | Co mohou pokryvy nahradit. Uvedený blok odpovídá jen sám sobě: `minecraft:stone` nepokryje i andezit, břidlici nebo tuf, takže uveď každý kámen, kterým podlaha může být |
+| `spawns` | seznam | žádný | Moby, které se spawnují uvnitř oblasti, stejné položky, jaké přijímá `spawns` biomu: `entity`, `type` (monster, creature, ambient nebo water), `weight` (`8`), `min` (`1`) a `max` (`4`) pro velikost skupiny. Místo, odkud je vidět nebe, se nechává biomu, stejně jako pokryvy |
+| `keepDefaultSpawns` | boolean | `false` | Ponechat vlastní seznam spawnů biomu vedle seznamu oblasti. Vypnuto seznam oblasti ten biomový uvnitř oblasti zcela nahradí |
+| `structures` | seznam | žádný | Struktura umístěná jednou na buňku oblasti, v srdci buňky, přichycená k podlaze jeskyně, tak jako hra dává jeskynnímu biomu jeho orientační bod. Položky jsou šablony `namespace:name`, nebo `{ "structure": "...", "weight": 3 }` pro volbu mezi několika |
+| `structureChance` | 0.0 až 1.0 | `1.0` | Šance, že každá buňka oblasti svou strukturu skutečně dostane |
+| `structureLoot` | `namespace:path` | žádný | Tabulka kořisti, ze které se každá truhla uvnitř umístěné struktury naplní při prvním otevření |
+| `biome` | název biomu | žádný | Biom, který oblast hlásí uvnitř svého objemu, zapsaný jako 3D biom. Dává oblasti vlastní barvy listí, trávy a vody, hudbu a okolní zvuky a umožňuje, aby ho četlo vanilla vážení spawnů. Povrch nad tím zůstává nedotčen, protože se zapisují jen buňky, které oblast zabírá. Pokud chybí, oblast si ponechá biom, který ji obklopuje, a přesto klade své pokryvy, struktury a spawny |
+| `requires` | seznam id módů nebo namespaců balíčků | žádný | Oblast se přeskočí, pokud nejsou přítomny všechny |
+| `ambientSound` | název zvuku | žádný | Zvuk přehrávaný tu a tam hráči stojícímu uvnitř oblasti, tak jako herní biomy přidávají vlastní jeskynní zvuky. Server ho posílá jen tomuto hráči |
+| `soundChance` | 0.0 až 1.0 | `0.0111` | Šance v každém ticku, že se `ambientSound` přehraje |
+| `particle` | název částice | žádný | Částice zobrazená kolem hráče uvnitř oblasti, jedna z herních částic, které nepřijímají vlastní nastavení, například `minecraft:dripping_water`, `minecraft:happy_villager` nebo `minecraft:underwater`. Název z 1.12.2 jako `dripWater` se převede spolu s balíčkem. Ukazuje ji jen vzduch uvnitř oblasti |
+| `particleChance` | 0.0 až 1.0 | `0.00625` | Hustota částic jako u biomů: v každém ticku se zkusí asi 667 míst do 16 bloků a každé ukáže částici s touto šancí |
+
+### Buňky
+
+*oblasti jeskyní*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------- | ----------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `caveRegionCells` | celé číslo, bloky | `128` | Jak široká je buňka oblasti |
+| `caveRegionCellsY` | celé číslo, bloky | `64` | Jak vysoká je buňka oblasti |
+| `caveRegionPlainWeight` | celé číslo | `4` | Váha obyčejného podzemí bez oblasti v losu každé buňky. Vyšší hodnota nechá víc podzemí bez jakékoli oblasti: u jedné oblasti s váhou 1 ji dostane asi pětina buněk |
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "caveRegionCells": 128,
+    "caveRegionCellsY": 64,
+    "caveRegionPlainWeight": 4
+  }
+}
+```
+
+Kolik podzemí zůstane obyčejného, určuje klíč `terrain` `caveRegionPlainWeight`, ve výchozím stavu `4`: u jediné oblasti s váhou 1 ji dostane asi pětina buněk. Pokryvy se uplatňují pod střechou, takže oblast sahající nad zem se na povrchu nikdy neukáže. Pokryvy fungují v každé jeskyni, ať ji vyhloubil jakýkoli generátor.
+
+### Prvky v oblasti
+
+*oblasti jeskyní*
+
+Prvky se napojují přes dva klíče na běžných [položkách worldgenu](#položky-worldgenu). `caveRegions` uvádí oblasti, ve kterých se položka smí generovat, kontrolováno na umístěné pozici, takže houby, krystaly nebo cokoli jiného se objeví jen uvnitř své oblasti. `snap` nejprve přesune každý pokus svisle k nejbližšímu povrchu jeskyně: `floor` pro věci, které stojí, `ceiling` pro věci, které visí. Oblast podobná krápníkové nepotřebuje žádné nové tvary:
+
+```json
+{
+  "block": "mypack:stone_spike",
+  "attempts": { "min": 4, "max": 8 },
+  "minHeight": -60,
+  "maxHeight": 40,
+  "caveRegions": ["dripstone"],
+  "snap": "ceiling",
+  "replace": ["minecraft:air"],
+  "shape": { "type": "spire", "radius": 1, "height": { "min": 2, "max": 6 }, "taper": "needle", "hanging": true }
+}
+```
+
+`replace` s hodnotou `minecraft:air` je důležité: to, přes co umístěný tvar zapisuje, se kontroluje proti `replace`, jehož výchozí hodnotou je kámen, takže cokoli stavěné do otevřeného prostoru jeskyně musí mít v seznamu vzduch. Stejná položka s `"snap": "floor"` a bez `hanging` vypěstuje odpovídající stalagmity. Filtr oblastí funguje s každým umístěným tvarem; `belt` a `field` umisťují podle vlastních pravidel a ignorují ho.
+
+---
+
+# Generování světa
+
+## Položky worldgenu
+
+*generování světa*
+
+`<namespace>/worldgen/*.json`
+
+Cesta souboru pojmenovává položku a tvary `belt`, `field` a `vein` z ní nasazují svůj šum, takže přejmenování souboru přesune to, co generuje.
+
+Popisuje něco, co se generuje. Každá položka je **tvar** umístěný **rozptylem**, filtrovaný tím, kde je povoleno.
+
+```json
+{
+  "block": "mypack:ruby_ore",
+  "blocks": [
+    { "block": "mypack:ruby_ore", "weight": 80 },
+    { "block": "minecraft:magenta_wool", "weight": 20 }
+  ],
+  "size": 8,
+  "attempts": 12,
+  "replace": ["minecraft:stone"],
+  "adjacent": ["minecraft:air"],
+  "minHeight": 8,
+  "maxHeight": 48,
+  "dimensions": ["minecraft:overworld"],
+  "dimensionsAreBlacklist": false,
+  "biomes": ["minecraft:windswept_hills"],
+  "biomeTypes": ["mountain"],
+  "biomesAreBlacklist": false,
+  "minTemperature": -100.0,
+  "maxTemperature": 100.0,
+  "minRainfall": -100.0,
+  "maxRainfall": 100.0,
+  "minDistanceFromSpawn": 0,
+  "sparse": false,
+  "retrogen": false,
+  "retrogenKey": "ruby_v1",
+  "caveRegions": ["dripstone"],
+  "snap": "floor",
+  "snapDepth": 0,
+  "indicators": ["mypack:iron_rock=3", "minecraft:gravel=1", "empty=4"],
+  "indicatorCount": { "min": 1, "max": 3 },
+  "indicatorSpread": 2,
+  "then": ["mypack:quartz_halo=2", "empty=1", { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }],
+  "thenCount": 1,
+  "thenSpread": 6,
+  "thenDepth": { "min": -8, "max": -2 },
+  "prospectAs": "Ruby",
+  "requires": ["quark"],
+  "shape": { "type": "cluster" },
+  "spread": { "type": "even" }
+}
+```
+
+Povinný je pouze `block`; vše ostatní lze vynechat a vezme se výchozí hodnota. `blocks` nahrazuje `block`, když jeden nestačí, a má níže vlastní příklad.
+
+### Co umisťuje
+
+*položky worldgenu*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | ------------------------------ | ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `block` | ano | název bloku | | Co se umisťuje |
+| `blocks` | ne | seznam objektů | žádný | Vážený seznam, použitý místo jednoho bloku. Viz níže |
+| `size` | ne | celé číslo nebo rozsah | `8` | Kolik bloků umístí jeden pokus, nebo jak velký je tvar s poloměrem |
+| `attempts` | ne | celé číslo nebo rozsah | `8` | Kolikrát na chunk se pokusí |
+| `replace` | ne | seznam názvů bloků nebo objektů | `["minecraft:stone"]` | Co smí nahradit. Viz níže |
+| `adjacent` | ne | seznam názvů bloků nebo objektů | žádný | Umísťuje jen tam, kde je mezi 26 bloky dotýkajícími se místa jeden z těchto. Stejné tvary jako u `replace` |
+| `sparse` | ne | boolean | `false` | Rozptýlí bloky místo jejich shlukování |
+| `shape` | ne | objekt | `{ "type": "cluster" }` | Podoba, kterou nabývá. Viz [Tvary](#tvary) |
+| `spread` | ne | objekt | `{ "type": "even" }` | Kam se umisťuje. Viz [Rozptyly](#rozptyly) |
+
+### Kde se smí generovat
+
+*položky worldgenu*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------------------ | -------- | --------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `minHeight` | ne | celé číslo | `0` | Nejnižší y, kam umístí |
+| `maxHeight` | ne | celé číslo | `64` | Nejvyšší y, kam umístí |
+| `dimensions` | ne | seznam id dimenzí | každá dimenze | V kterých dimenzích běží |
+| `dimensionsAreBlacklist` | ne | boolean | `false` | Změní tento seznam na ty, kterým se vyhnout |
+| `biomes` | ne | seznam názvů biomů | každý biom | V kterých biomech běží. Holý název se čte nejprve v namespace samotného balíčku, pak jako `minecraft` |
+| `biomeTypes` | ne | seznam typů biomů | žádný | Biomy podle slova typu, například `forest` nebo `nether` |
+| `biomesAreBlacklist` | ne | boolean | `false` | Změní tyto seznamy na ty, kterým se vyhnout |
+| `minTemperature` | ne | desetinné číslo | `-100.0` | Nejchladnější biom, v němž se bude generovat |
+| `maxTemperature` | ne | desetinné číslo | `100.0` | Nejteplejší biom, v němž se bude generovat |
+| `minRainfall` | ne | desetinné číslo | `-100.0` | Nejsušší biom, v němž se bude generovat |
+| `maxRainfall` | ne | desetinné číslo | `100.0` | Nejvlhčí biom, v němž se bude generovat |
+| `minDistanceFromSpawn` | ne | celé číslo, bloky | `0` | Jak daleko od spawnu světa, než začne |
+| `caveRegions` | ne | seznam názvů oblastí | žádný | Generovat jen uvnitř těchto [oblastí jeskyní](#oblasti-jeskyní) |
+| `snap` | ne | `floor` nebo `ceiling` | žádný | Nejdřív přesunout každý pokus svisle k nejbližší podlaze nebo stropu jeskyně |
+| `snapDepth` | ne | celé číslo | `0` | Jak daleko za povrch `snap` poté posune, dolů od podlahy a nahoru od stropu. `0` zůstane ve volném prostoru u povrchu, `1` je samotný povrchový blok, `2` ten za ním. Co smí přepsat, stále určuje `replace`, takže tak balíček vytvoří pás bloku těsně pod povrchem, ne na něm |
+
+### Povrchové stopy a následovníci
+
+*položky worldgenu*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------------- | -------- | -------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `indicators` | ne | seznam `block=weight` | žádný | Bloky rozeseté po povrchu nad vygenerovanou žílou, aby hráč poznal, co leží pod zemí; vyber je tak, aby odpovídaly obsahu žíly. `empty=weight` nechá místo holé. Položka bez váhy nebo s váhou pod 1 se zapíše do logu a vynechá se, a na ulicích a v budovách vesnice či města se žádná nepoloží |
+| `indicatorCount` | ne | celé číslo nebo rozsah | `1` | Kolik míst na povrchu dostane každá vygenerovaná žíla |
+| `indicatorSpread` | ne | celé číslo, bloky | `0` | Jak daleko za půdorys žíly smí ukazatel dopadnout |
+| `then` | ne | seznam `name=weight` nebo objektů | žádný | Položky worldgenu, které vyrostou z této hned po jejím vygenerování, k ní připojené: počátek následovníka je umístěn těsně za okraj této žíly, ve směru daném `thenSpread` a `thenDepth`, takže se dotýkají. Položka je `name=weight`, nebo objekt s `name`, `weight` a vlastním `spread` a `depth` (celé číslo nebo rozsah), které přepíší hodnoty žíly jen pro tohoto následovníka, takže jeden seznam může poslat diamantový hrot dolů a větev do strany. Holé jméno se čte v namespace tohoto balíčku, `empty=weight` nezařadí nic. Následovník si ponechává vlastní tvar, bloky, velikost a `replace`, ale přeskakuje vlastní pokusy, šanci, výškové pásmo a biomové brány a může sám nést `then`, jak hluboko balíček chce; položka, která už byla vygenerována ve stejném řetězci, jej zastaví |
+| `thenCount` | ne | celé číslo nebo rozsah | `1` | Kolik různých následovníků se z toho seznamu vybere na každou vygenerovanou žílu, každá položka nejvýše jednou, takže počet rovný délce seznamu vypěstuje všechny |
+| `thenSpread` | ne | celé číslo, bloky | poloměr tvaru | Jak daleko do strany se smí naklonit směr, ve kterém následovník roste, losováno od minus této hodnoty do plus této hodnoty |
+| `thenDepth` | ne | celé číslo nebo rozsah | `0` | Jak daleko dolů (záporné) nebo nahoru se směr naklání. `0` bez bočního náklonu pověsí následovníka rovně dolů |
+| `prospectAs` | ne | řetězec | název souboru | Jak tuto položku pojmenuje průzkumný předmět ve svém hlášení, např. `Hematite` |
+
+### Retrogen a požadavky
+
+*položky worldgenu*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | ---------------------------------- | ---------------- | ----------------------------------------------- |
+| `retrogen` | ne | boolean | `false` | Generuje také do chunků, které už existují |
+| `retrogenKey` | ne | řetězec | klíč z konfigurace | Přepíše klíč retrogenu jen pro tuto položku |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Položka se přeskočí, pokud nejsou přítomny všechny |
+
+### Vážené bloky
+
+*položky worldgenu*
+
+`blocks` nahrazuje `block`, když jedna položka nestačí. Váhy jsou relativní, takže 80 a 20 je čtyři ku jedné.
+
+```json
+{
+  "blocks": [
+    { "block": "minecraft:magenta_wool", "weight": 80 },
+    { "block": "minecraft:oak_log", "weight": 20, "properties": { "axis": "x" } }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------ | -------- | --------------------------- | ------- | -------------------------------------------------------------------------- |
+| `block` | ano | název bloku | | Co se umístí |
+| `weight` | ne | celé číslo | `1` | Jak často je tento vybrán oproti ostatním |
+| `properties` | ne | objekt vlastnosti a hodnoty | žádný | Vlastnosti stavu bloku podle názvu, pro jiný stav, než je výchozí stav bloku |
+
+`block` je na nejvyšší úrovni souboru stále povinný, i když se používá `blocks`; dobrou hodnotou je první položka.
+
+### Cíle nahrazení
+
+*položky worldgenu*
+
+`replace` je seznam a každá položka má jednu ze dvou forem.
+
+```json
+{
+  "replace": [
+    "minecraft:stone",
+    { "block": "minecraft:oak_log", "properties": { "axis": "y" } }
+  ]
+}
+```
+
+| Forma | Příklad | Co odpovídá |
+| ------ | ----------------------------------------------------------------- | ------------------------- |
+| Název | `"minecraft:stone"` | Každý stav toho bloku |
+| Objekt | `{ "block": "minecraft:oak_log", "properties": { "axis": "y" } }` | Jen ten stav |
+
+Název z 1.12.2 s metadaty na konci, `minecraft:stone:3`, odpovídá každému stavu bloku a zapíše to do logu, protože bloky, které nesly metadata, jsou dnes samostatné bloky: napiš `minecraft:diorite`. Pro generování ve volném prostoru použij `"minecraft:air"`.
+
+### Sousední bloky
+
+*položky worldgenu*
+
+`adjacent` přijímá stejné formy jako `replace` a přidává k němu druhou podmínku: místo se použije, jen když alespoň jeden z 26 bloků, které se ho dotýkají, tedy stěny, hrany i rohy, odpovídá seznamu. Když chybí, nic se nekontroluje.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:sandstone"],
+  "adjacent": ["minecraft:air"]
+}
+```
+
+Tím se síra umístí do pískovce jen tam, kde je už otevřený do jeskyně nebo na povrch, a zasypaný pískovec zůstane nedotčen. Sousedé v chuncích, které ještě neexistují, se berou jako neodpovídající a nečtou se, takže kontrola nikdy nezpůsobí vygenerování chunku.
+
+Respektuje ho každý tvar, protože je součástí rozhodování, zda lze vzít jediný blok. `geode` pojmenovává svou kůru a výplň zvlášť a ty dva se umisťují bez kontroly.
+
+Položka, která pojmenovává jen neregistrované bloky, se přeskočí s chybou, místo aby se generovala všude.
+
+### Položky následovníků
+
+*položky worldgenu*
+
+Položka v seznamu `then` položky worldgenu je jméno s váhou, nebo objekt, když tento následovník potřebuje vlastní směr.
+
+```json
+{
+  "then": [
+    "mypack:quartz_halo=2",
+    "empty=1",
+    { "name": "mypack:side_branch", "weight": 1, "spread": 4, "depth": 0 }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| -------- | -------- | ------------ | ------------------------ | ------------------------------------------------------------------------------------------- |
+| `name` | ano | název položky | | Položka worldgenu, která z této vyroste. Holé jméno se čte v namespace tohoto balíčku |
+| `weight` | ne | celé číslo | `1` | Jak často je tento následovník vybrán oproti ostatním v seznamu |
+| `spread` | ne | celé číslo, bloky | `thenSpread` položky | Jak daleko do strany se smí směr tohoto následovníka naklonit, jen pro tuto položku |
+| `depth` | ne | celé číslo nebo rozsah | `thenDepth` položky | Jak daleko dolů, záporně, nebo nahoru se směr tohoto následovníka naklání, jen pro tuto položku |
+
+`name=weight` je krátká forma objektu jen s těmito dvěma a `empty=weight` nezařadí nic. Protože `spread` a `depth` jsou na položku, může jeden seznam poslat diamantový hrot rovně dolů a větev do strany z téže žíly.
+
+## Tvary
+
+*generování světa*
+
+Blok `shape` s klíčem `type`. Klíče neuvedené u daného typu ten typ ignoruje.
+
+Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které potřebuje. Klíč označený pro jeden typ čte jen tento typ.
+
+```json
+{
+  "shape": {
+    "type": "geode",
+    "radius": 6,
+    "height": 8,
+    "width": 12,
+    "plane": "circle",
+    "slim": false,
+    "hanging": false,
+    "taper": "needle",
+    "outline": "minecraft:obsidian",
+    "fill": "minecraft:glowstone",
+    "surface": ["minecraft:grass_block"],
+    "seeSky": true,
+    "checkStay": true,
+    "stackHeight": 1,
+    "scatterX": 8,
+    "scatterY": 4,
+    "scatterZ": 8,
+    "log": "mypack:ruby_log",
+    "leaves": "mypack:ruby_leaves",
+    "vines": false,
+    "structure": "mypack:crypt",
+    "structures": [
+      { "structure": "mypack:crypt", "weight": 3 },
+      "mypack:shrine"
+    ],
+    "integrity": 100,
+    "lootTable": "minecraft:chests/simple_dungeon",
+    "turns": ["none", { "turn": "half", "weight": 2 }],
+    "mirrors": ["none", { "mirror": "leftright", "weight": 2 }],
+    "at": [1000, -500],
+    "locateAs": "Crypt",
+    "field": { "type": "speckle", "spread": 0.15 },
+    "threshold": 0.5,
+    "fade": 0,
+    "pattern": "banded",
+    "density": 0.8,
+    "rich": "mypack:rich_ruby_ore",
+    "poor": "mypack:poor_ruby_ore",
+    "rarity": 400,
+    "rarityIsPerChunk": false
+  }
+}
+```
+
+```json
+{
+  "shape": { "type": "tree", "log": "mypack:ruby_log", "leaves": "mypack:ruby_leaves", "height": { "min": 4, "max": 7 }, "surface": ["minecraft:grass_block"] }
+}
+```
+
+| Typ | Co vytváří |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cluster` | Výchozí shluk, žíla rudy. Používá `size` |
+| `largevein` | Dlouhá křivolaká žíla s větvemi. Používá `size` |
+| `plate` | Plochý disk |
+| `geode` | Dutá kapsa s kůrou |
+| `decoration` | Rozptyl po povrchu, například květiny nebo houby. Používá `size` |
+| `tree` | Celý strom |
+| `vines` | Liány na tom, co už tam je. Používá `size` |
+| `basin` | Mísa, která se k prostředku prohlubuje |
+| `spire` | Zužující se sloup |
+| `nodule` | Hrubá koule |
+| `vent` | Úzký sloup, který se zastaví, když na něco narazí |
+| `imprint` | Jedna z tvých šablon `.nbt`. Šablona, která se vejde do chunku, se posune tak, aby dopadla celá do právě stavěného chunku a nezasahovala do souseda, který ještě nevznikl, ať je otočená jakkoli; větší než chunk se umístí jen tam, kde okolní země už existuje |
+| `belt` | Shluk rozprostřený přes několik chunků, pro kamenné oblasti |
+| `field` | Žíly vypočítané pro každý blok najednou, sdílející svůj tvar se skupinami tvrdosti |
+| `vein` | Ložisko vypočítané jako šumové pole podle seedu kolem počátku, tak jak to dělá Immersive Geology: každý chunk zapíše svůj vlastní řez každé žíly, kterou zasahuje jejích 24 bloků dosahu, takže se nic nekaskáduje, a `/rdplserver vein` dokáže říct, kde žíla bude, než vznikne země. Používá `size`, `attempts`, `rarity` a výškové pásmo; `pattern` volí vzhled |
+| `spring` | Tekutina prosakující ze stěny jeskyně: umístí se tam, kde nahoře, dole a na třech stranách je skála a jedna strana je otevřená, a nastaví se jako tekoucí |
+
+### Velikost a tvar
+
+*tvary*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| --------------- | ---------------------------------------- | ---------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type` | všechny | jeden z tvarů výše | `cluster` | Který tvar |
+| `radius` | plate, geode, basin, spire, nodule, vent, belt | celé číslo nebo rozsah | `6`, `32` pro belt | Jak je široký |
+| `height` | plate, geode, basin, spire, vent, tree | celé číslo nebo rozsah | `1`, `8` pro geode, `5` pro tree | Jak je vysoký nebo tlustý |
+| `width` | geode | celé číslo nebo rozsah | `12` | Celková šířka kapsy |
+| `plane` | plate, basin, spire, vent | `circle`, `square` | `circle` | Jeho půdorys |
+| `slim` | plate, largevein, nodule | boolean | `false` | Plate: o vrstvu tenčí. Largevein: větve z jednoho bloku. Nodule: dutá skořápka |
+| `hanging` | spire, vent | boolean | `false` | Roste dolů ze stropu místo nahoru z podlahy |
+| `taper` | spire | `straight`, `bell`, `needle` | `straight` | Jak se šířka zmenšuje ke špičce. `straight` se zužuje rovnoměrně, `bell` drží šířku dole a pak klesá, `needle` se hned zužuje do dlouhého hrotu |
+| `outline` | geode | název bloku | žádný | Blok kůry |
+| `fill` | geode | název bloku | žádný | Čím je vyplněn střed. Když chybí, střed je dutý |
+| `middle` | geode | název bloku | žádný | Skořápka mezi tělem a `outline`, v amethystové geodě ze hry je to kalcit |
+| `budding` | geode | název bloku | žádný | Dosadí se za bloky těla, které přiléhají k dutému středu, jako pučící ametyst. Vyžaduje `fill` |
+| `buddingChance` | geode | 0.0 až 1.0 | `0.083` | Kolik z těchto bloků těla pučí |
+| `crystal` | geode | název bloku | žádný | Vyroste v dutině vedle bloku `budding`, jako ametystový shluk |
+| `crystalChance` | geode | 0.0 až 1.0 | `0.35` | Kolik z těchto míst jej vypěstuje |
+| `crack` | geode | 0.0 až 1.0 | `0` | Šance, že je geoda rozlomená: trubice od středu ven přes všechny vrstvy na jedné straně, vyplněná `fill`. Amethystové geody ze hry používají `0.95` |
+
+### Umístění
+
+*tvary*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ------------------ | ---------------- | ------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surface` | decoration, tree | seznam názvů bloků | žádný | Na čem bude stát |
+| `seeSky` | decoration | boolean | `true` | Umístí jen tam, kde je vidět obloha |
+| `checkStay` | decoration | boolean | `true` | Umístí jen tam, kde by blok přežil |
+| `stackHeight` | decoration | celé číslo nebo rozsah | `1` | Kolik jich naskládat na sebe |
+| `scatterX` | decoration, tree | celé číslo | `8` | Jak daleko se toulá do strany |
+| `scatterY` | decoration, tree | celé číslo | `4` | Jak daleko se toulá svisle |
+| `scatterZ` | decoration, tree | celé číslo | `8` | Jak daleko se toulá do strany |
+| `rarity` | libovolný | celé číslo | žádný (`400` pro belt) | Jedno umístění na tolik chunků. U belt to rozestupuje pásy; u jakéhokoli jiného tvaru to brání celé položce, takže jen jeden chunk z tolika vůbec losuje své `attempts`. `field` ho ignoruje |
+| `rarityIsPerChunk` | libovolný | boolean | `false` | Změní `rarity` na to, kolik umístění dostane každý chunk |
+
+### Stromy
+
+*tvary*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| -------- | ------- | ---------- | ------- | -------------------------- |
+| `log` | tree | název bloku | žádný | Blok kmene |
+| `leaves` | tree | název bloku | žádný | Blok listí |
+| `vines` | tree | boolean | `false` | Pověsí liány z listí |
+
+`tree` bez `log` nebo `leaves` nic nevygeneruje a uvede to v logu. Pokud pojmenuješ `structure`, nebo několik pod `structures`, na každém místě se místo pěstování stromu umístí tato šablona a pak není `log` ani `leaves` potřeba; šablonový strom čte `turns`, `mirrors`, `integrity`, `lootTable` a `locateAs` přesně jako `imprint`.
+
+### Umísťování šablon
+
+*tvary*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ------------ | ------------- | ----------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure` | imprint, tree | `namespace:name` | žádný | Šablona k umístění |
+| `integrity` | imprint, tree | 1 až 100 | `100` | Procento bloků šablony, které se skutečně objeví |
+| `lootTable` | imprint, tree | `namespace:path` | žádný | Tabulka kořisti, z níž se naplní každá truhla v umístěné šabloně při prvním otevření, i každý jiný kontejner, který ji přijímá, mimo jiné shulkerová bedna nebo bedna z módu. Pokrývá `structure` i každou položku `structures`; každá truhla losuje vlastní seed |
+| `structures` | imprint, tree | seznam | žádný | Několik šablon k výběru, pokaždé se umístí jedna. Každá položka je `{ "structure": "namespace:name", "weight": 3 }`, nebo holé jméno pro stejné šance. Přepisuje `structure` |
+| `turns` | imprint, tree | seznam | libovolný | Jakým směrem smí být umístěna: `none`, `quarter`, `half`, `threequarter`. Položky mohou nést `weight`. Když chybí, všechny čtyři jsou stejně pravděpodobné |
+| `turns[].turn` | imprint, tree | `none`, `quarter`, `half`, `threequarter` | žádný | Otočení, které pojmenovává objektová položka `turns`, jako v `{ "turn": "half", "weight": 2 }` |
+| `mirrors[].mirror` | imprint, tree | `none`, `leftright`, `frontback` | žádný | Převrácení, které pojmenovává objektová položka `mirrors`, jako v `{ "mirror": "leftright", "weight": 2 }` |
+| `mirrors` | imprint, tree | seznam | žádný | Převrátí ji také: `none`, `leftright`, `frontback`, s volitelnou `weight`. Položka s vlastní váhou se píše `{ "mirror": "leftright", "weight": 2 }` a položka `turns` stejně s `turn` |
+| `at` | imprint | dvě celá čísla, x a z | žádný | Umístí přesně jednou na těchto souřadnicích bloků na povrchu, když se ten chunk generuje, místo náhodou. Viz [Struktury na přesných místech](#struktury-na-přesných-místech) |
+| `locateAs` | imprint, tree | řetězec | žádný | Zaregistruje každou strukturu, kterou tato položka umístí, pod tímto jménem, takže `/rdplserver locate <name>` najde nejbližší. Viz [Hledání umístěných struktur](#hledání-umístěných-struktur) |
+
+Pro tvar, který nepokrývá žádný vestavěný typ, je cestou `imprint`: postav ho jako šablonu `.nbt` a umísti ji, s `structures` pro obměny, `turns` a `mirrors` pro otáčení a `integrity` pro rozpuštění do něčeho drsnějšího, než byl soubor, který jsi nakreslil.
+
+### Struktury na přesných místech
+
+*tvary*
+
+Vanilla struktury se připnou na přesná místa pomocí `structureAt` v nastavení `terrain`, jako položky `structure=x,z`, jedna na řádek: `"structureAt": ["villages=1000,-500"]`. **x a z jsou souřadnice bloků, ne chunků**, a struktura se generuje v chunku, který ten blok obsahuje. Když `terrainAdaptation` rozkládá vesnice jako městské ulice, studna připnuté vesnice stojí přímo na tom bloku, nebo co nejblíž, jak to její čtvrť dovolí, leží-li blok pár bloků od okraje čtvrti; jiné struktury a vesnice rozložené bez něj začnou tam, kde by je hra v tom chunku začala. Jedna položka na každou chtěnou instanci. Její rozestup, oddělení, minimální vzdálenost od spawnu i kontroly rovné země se všechny odsunou stranou, takže místo je věcí balíčku, a dva piny blíž než jeden chunk od sebe umístí dvě struktury do stejného chunku. Po založení se struktura usadí na zem ve svém chunku podle obvyklých pravidel.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------- | ----------------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structureAt` | seznam `structure=x,z` | žádný | Připne vanilla strukturu na přesné místo, jedna položka na každou chtěnou instanci. x a z jsou souřadnice bloků a struktura se generuje v chunku, který ten blok obsahuje; její rozestup, oddělení, minimální vzdálenost od spawnu i kontroly rovné země se všechny odsunou stranou |
+
+Položka `imprint` se připne stejně pomocí `"at": [x, z]` ve svém tvaru: umístí se přesně jednou na těchto souřadnicích na povrchu, když se ten chunk generuje, místo náhodou. Skládá se s `locateAs`, takže připnutou strukturu lze také najít.
+
+### Hledání umístěných struktur
+
+*tvary*
+
+Položka `imprint` s `"locateAs": "Crypt"` zaregistruje každou strukturu, kterou umístí, pod tímto jménem a `/rdplserver locate Crypt` pak ukáže na nejbližší z nich; jméno se nabízí v doplňování tabulátorem a `/rdplserver goto Crypt` tě tam přenese. Najít lze jen struktury, které už vznikly, protože struktury balíčku se umisťují náhodou při tvorbě chunků, ne na mřížce, kterou by hra mohla předvídat. Jména žijí v uložení světa, takže přežijí restarty a fungují na serverech. Jméno zaregistrované takto může dostat i vlastní oprávnění pomocí `gotoPlaceLevels`, takže balíček rozhoduje, kdo smí být přenesen k jeho vlastním strukturám, odděleně od těch vanilla.
+
+### Klíče polí a žil
+
+*tvary*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ----------- | ----------- | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `field` | field | objekt | `{ "type": "speckle" }` | Jak se pole počítá. Stejné klíče jako `field` skupiny tvrdosti, popsané v části [Toto pole](#toto-pole): `speckle` s `chances` a `spread`, nebo `seeded` s `cell`, `seeds`, `reach`, `arms` a `armReach` |
+| `threshold` | field, vein | 0.0 až 1.0 | `0.5` (`0.4` pro vein) | Jak silné musí pole v bloku být, aby se umístil. Nižší hodnota vyplní víc |
+| `fade` | field | celé číslo | `0` | Rozpráší vršek pásma místo rovného ukončení: na horních tolika blocích výškového rozsahu šance každého bloku na umístění postupně řídne, stejný vzhled, jaký engine dává `deepStone`, kde se setkává se světem nad ním |
+| `pattern` | vein | `default`, `banded` nebo `tube` | `default` | Vzhled ložiska: zprohýbaná skvrna, vrstvy naskládané každých pár bloků, nebo duté trubice vinoucí se skálou |
+| `density` | vein | 0.0 až 1.0 | `1.0` | Podíl kvalifikujících se bloků, které se skutečně umístí, mince na každý blok |
+| `rich` | vein | název bloku | žádný | Umístí se od `richAt` nahoru v rozsahu pole nad `threshold`, srdce ložiska, místo bloků položky |
+| `poor` | vein | název bloku | žádný | Umístí se v dolních dvou pětinách tohoto rozsahu, na okraji, místo bloků položky; střed tvoří vlastní bloky položky. Když chybí kterékoli patro, umístí se tam bloky položky |
+| `richAt` | vein | 0.0 až 1.0 | `0.88` | Kde v tom rozsahu bohaté patro začíná: `0.88` omezí bohatý blok na nejsilnější osminu ložiska, nižší číslo dělá bohaté jádro tlustší, `1.0` nenechá žádný bohatý blok |
+| `poorAt` | vein | 0.0 až 1.0 | `0.4` | Kde začínají vlastní bloky položky: pod touto hodnotou se umisťuje blok `poor`, takže `0.4` dává okraj z dolních dvou pětin a `0.0` žádný chudý okraj. Omezeno na `richAt` |
+
+Žíla `field` je jediný tvar, který popisuješ místo výběru. Běží na stejné mřížce, jakou používají skupiny tvrdosti, takže `seeded` s několika rameny dává uzly s úponky sahajícími k sousedům, což je žíla, ne skvrna, a `threshold` rozhoduje, kolik z ní je dost pevné k umístění:
+
+```json
+{
+  "shape": {
+    "type": "field",
+    "threshold": 0.4,
+    "field": { "type": "seeded", "cell": 10, "reach": 6.0, "arms": 3, "armReach": 5.0 }
+  }
+}
+```
+
+Klíče patří do vlastního objektu `field`, ne vedle `type`, protože `type` u tvaru už říká `field`.
+
+### Pásy
+
+*tvary*
+
+`belt` je koule mnohem větší než jeden chunk, používaná pro kamenné oblasti, ne pro rudné žíly. Jeho `radius` je velikost koule (výchozí 32) a každý chunk si sám spočítá, kde začínají koule v jeho okolí, ze seedu světa a jména samotné položky, takže pás vyjde celý bez ohledu na to, jak se chunky generují, a nikdy se nic nezapisuje do sousedního chunku.
+
+```json
+{
+  "shape": { "type": "belt", "radius": 32, "rarity": 400 }
+}
+```
+
+Belt ignoruje `attempts` a `spread`, protože se umisťuje na chunk, ne na pokus. `minHeight` a `maxHeight` jsou pásmo, ve kterém leží středy, a koule sahá o `radius` za to pásmo. `replace` rozhoduje, co pohltí, `biomes` a limity teploty a srážek se kontrolují ve středu, takže pás se objeví buď celý, nebo vůbec, místo aby byl na okraji biomu useknut.
+
+Cena roste s třetí mocninou `radius` a nízké `rarity` ji násobí, proto začni s výchozími hodnotami a poloměr zvyšuj pomalu.
+
+### Pole
+
+*tvary*
+
+`field` neumisťuje nic v bodě a všechno najednou. Místo výběru místa a stavění tvaru kolem něj klade otázku každému bloku v chunku, v mezích `minHeight` a `maxHeight`, a umisťuje tam, kde je odpověď alespoň `threshold`. Otázka je táž, jakou kladou skupiny tvrdosti, takže obojí popisuje stejné žíly a balíček může vytvořit skupinu a položku, které se shodují.
+
+```json
+{
+  "block": "mypack:sulfur_ore",
+  "replace": ["minecraft:stone"],
+  "minHeight": 8,
+  "maxHeight": 48,
+  "shape": {
+    "type": "field",
+    "threshold": 0.6,
+    "field": { "type": "speckle", "spread": 0.15 }
+  }
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------- |
+| `threshold` | ne | 0.0 až 1.0 | `0.5` | Jak silné musí pole být, než se blok umístí |
+| `field` | ano | objekt | žádný | Stejný objekt, jaký přijímá skupina tvrdosti, se stejnými typy `speckle` a `seeded` |
+
+Nízký `threshold` vezme většinu pole a dává široké žíly, vysoký vezme jen střed každého shluku a dává malé roztroušené kapsy. S `speckle` dostaneš mnoho drobných skvrn, se `seeded` kulatější plochy, nebo, jakmile má ramena, uzly s úponky sahajícími mezi nimi.
+
+Stejně jako belt field ignoruje `attempts` a `spread`, protože se ptá na chunk, ne na pokus, a nikdy nezapisuje do sousedního chunku. Počítá se ze seedu světa a jména samotné položky, takže stejný seed dává vždy stejné žíly a dvě položky s různými jmény se nikdy nepřekryjí. `replace`, `adjacent`, `biomes` a limity podnebí platí jako obvykle.
+
+## Rozptyly
+
+*generování světa*
+
+Blok `spread` s klíčem `type`.
+
+Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které potřebuje. Klíč označený pro jeden typ čte jen tento typ.
+
+```json
+{
+  "spread": {
+    "type": "centered",
+    "center": 32,
+    "range": 12,
+    "smoothness": 3,
+    "veinHeight": 24,
+    "veinDiameter": 12,
+    "verticalDensity": 16,
+    "horizontalDensity": 32,
+    "offsetMin": 0,
+    "offsetMax": 2,
+    "ceiling": false
+  }
+}
+```
+
+| Typ | Kam věci umisťuje |
+| ----------- | ------------------------------------------------------ |
+| `even` | Kamkoli mezi výškami, rovnoměrně. Výchozí |
+| `centered` | Vážený k jedné výšce, s rostoucí vzdáleností řídne |
+| `sprawl` | Fraktální žíly rozprostřené přes rozsah výšek |
+| `terrain` | Po povrchu |
+| `cavern` | Na podlahy jeskyní nebo stropy |
+| `submerged` | Pod vodou nebo jinou tekutinou |
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ------------------- | -------- | ------------------------ | ---------------------------- | ----------------------------------------------------- |
+| `type` | všechny | jeden z výše uvedených rozptylů | `even` | Který rozptyl |
+| `center` | centered | celé číslo | střed rozsahu výšek | Výška, kolem které se shlukuje |
+| `range` | centered | celé číslo | polovina rozsahu výšek | Jak daleko od té výšky sahá |
+| `smoothness` | centered | 1 až 8 | `2` | Kolik hodů se průměruje. Vyšší hodnota je užší pásmo |
+| `veinHeight` | sprawl | celé číslo | rozsah výšek | Jak vysoká je jedna žíla |
+| `veinDiameter` | sprawl | celé číslo | `12` | Jak široká je jedna žíla |
+| `verticalDensity` | sprawl | 1 až 100 | `16` | Jak pevná je svisle |
+| `horizontalDensity` | sprawl | 1 až 100 | `32` | Jak pevná je vodorovně |
+| `offsetMin` | terrain | celé číslo | `0` | Nejnižší odsazení od povrchu |
+| `offsetMax` | terrain | celé číslo | `offsetMin` | Nejvyšší odsazení od povrchu |
+| `ceiling` | cavern | boolean | `false` | Přichytit ke stropu jeskyně místo k podlaze |
+
+## Mapy struktur
+
+*generování světa*
+
+Mapa struktur skládá šablony do jedné pojmenované budovy na mřížce, daleko za limit 48 bloků jednoho souboru `.nbt`. Každá vrstva se kreslí jako řádky jednotlivých znaků, jeden znak na buňku, a naskládá se o jednu výšku buňky nad vrstvu před ní. Nejvýše 8 vrstev po 8 × 8 buňkách, což při výchozí buňce 32 dává 256 bloků na stranu.
+
+`<namespace>/structuremaps/*.json`
+
+```json
+{
+  "cell": 32,
+  "ground": 0,
+  "spacing": 64,
+  "chance": 25,
+  "layers": [
+    {
+      "palette": { "a": "mypack:keep_base", "b": ["mypack:wall=3", "mypack:wall_broken=1"] },
+      "map": ["aba",
+              "b.b",
+              "aba"]
+    },
+    {
+      "palette": { "a": "mypack:keep_top" },
+      "map": [".a.",
+              "...",
+              ".a."]
+    }
+  ]
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------ | --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell` | číslo | `32` | Rozteč mřížky v blocích, nejvýše 48. Šablona menší než buňka sedí v rohu buňky, takže kusy v plné velikosti na sebe bezešvě navazují |
+| `ground` | číslo | `0` | Která vrstva leží podlahou na povrchu terénu. Vrstvy před ní se zahlubují dolů, takhle budova získá sklepy |
+| `at` | dvě čísla | žádný | Připne jednu kopii na přesné souřadnice bloků, tak jako `structureAt` připíná vesnici |
+| `spacing` | číslo | `0` | Rozptýlí kopie po mřížce s odstupem tolika chunků, rozkolísaném ze seedu světa. `0` nerozptýlí žádnou, takže mapa jen s `at` se postaví právě jednou |
+| `chance` | číslo | `100` | Procento míst mřížky, na kterých se kopie postaví |
+| `dimensions` | seznam id dimenzí | všechny | Kde smí mapa stavět, včetně vlastních dimenzí balíčku |
+| `layers` | seznam | žádný | Vrstvy odspodu nahoru, každá se `palette` a `map` |
+
+Paleta pojmenovává šablony registrovým klíčem ze složky `<namespace>/structures/` balíčku.
+
+| Hodnota | Co dělá |
+| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"a": "mypack:keep"` | Každá buňka `a` té vrstvy umístí tuto šablonu |
+| `"a": ["mypack:wall=3", "mypack:broken=1"]` | Každá buňka `a` losuje ze seznamu podle váhy, ze seedu světa a místa buňky, takže dvě kopie budovy se liší, ale stejný svět vždy postaví stejnou |
+| `.` | Prázdná buňka, nic se neumístí |
+
+Každá kopie losuje jedno ze čtyř natočení ze seedu světa a celá budova se otočí společně, včetně šablon, takže zdi, které se setkávají přes buňky, se stále setkávají; mapa se otáčí, ale nikdy nezrcadlí. Zemní vrstva leží podlahou na vzorkovaném povrchu terénu pod středem budovy a celá mapa sdílí tuto jedinou výšku. Rozptýlená mapa je pro hru samostatná struktura, umístěná přes sadu struktur, která se pro tebe napíše, takže každý chunk postaví jen svůj řez mřížky a budova přes mnoho chunků vznikne bez kaskádového generování, v jakémkoli pořadí se chunky načtou. [Pozemek vesnice](#pozemky-vesnic) typu `template` může také pojmenovat mapu jako svou `structure`, čímž se složená stavba stane městskou budovou.
+
+## Pozemky vesnic
+
+*generování světa*
+
+`<namespace>/villages/*.json`
+
+Cesta souboru je jméno pozemku, na které se pak může odkazovat `villagePieces`, aby ho ponechalo nebo vyřadilo.
+
+Soubor v této složce přidává kus, který mohou stavět města a vesnice balíčku. Dva druhy, volí se pomocí `type`.
+
+Každý klíč, ukázaný najednou. Skutečný soubor obsahuje jen ty, které potřebuje. Klíč označený pro jeden typ čte jen tento typ.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "leastCount": 1,
+  "mostCount": 4,
+  "width": 7,
+  "height": 4,
+  "depth": 9,
+  "apron": 2,
+  "crops": ["simplecorn:corn", "minecraft:wheat"],
+  "edge": "minecraft:oak_log",
+  "soil": "minecraft:farmland",
+  "water": true,
+  "rowWidth": 2,
+  "structure": "mypack:blacksmith_shed",
+  "integrity": 100,
+  "lootTable": "minecraft:chests/village/village_toolsmith",
+  "villagers": 2,
+  "villagerEntity": "mypack:jeweller",
+  "villagerX": 1,
+  "villagerY": 1,
+  "villagerZ": 1,
+  "ground": "minecraft:dirt",
+  "requires": ["mypack"]
+}
+```
+
+### Každý pozemek
+
+*pozemky vesnic*
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ------------ | ------- | ---------------------------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type` | všechny | `farm` nebo `template` | `farm` | Který druh pozemku |
+| `weight` | všechny | celé číslo | `3` | Jak často se tento pozemek vybere oproti ostatním v balíčku |
+| `leastCount` | všechny | celé číslo | `1` | Nejméně na čtvrť: čtvrť usadí pozemky podél svých ulic až do stropu losovaného mezi nejnižším `leastCount` a nejvyšším `mostCount` z pozemků, které smí stavět, oba zvýšené o 16, nebo o jednu třicetinu `villagePlotsLeast`, je-li to víc, zatímco město roste. Pozemky za jinými pozemky se nepočítají |
+| `mostCount` | všechny | celé číslo | `4` | Horní hranice toho losování |
+| `width` | všechny | celé číslo | `7` | Velikost napříč ulicí |
+| `height` | všechny | celé číslo | `4` | Výška vyklizená nad zemí |
+| `depth` | všechny | celé číslo | `9` | Velikost směrem od ulice |
+| `apron` | všechny | celé číslo | `2` | Jak daleko smí být země pod pozemkem mimo úroveň ulice, než je pozemek odmítnut nebo posunut podél své ulice: tolik bloků násypu pod ním, nebo zářezu do vyvýšeniny nad ním, a mezi jeho nejvyšším a nejnižším rohem ne víc než to. Široký pozemek v kopcích potřebuje víc. Nastav to vysoko a pozemek se terasovitě zařízne rovnou do svahu, což na špatném místě sní horu |
+| `ground` | všechny | název bloku | `minecraft:dirt` | Co se ubije pod pozemek na svahu |
+| `requires` | všechny | seznam id módů nebo namespace balíčků | žádný | Pozemek se vynechá, pokud nejsou přítomny všechny |
+
+Pozemky stavějí města balíčku podél svých ulic a každý šablonový pozemek se také přidává k vesnicím ze hry jako jeden z jejich domů, vstupem uprostřed své přední strany. Bez jakýchkoli souborů pozemků město staví domy vesnic ze hry pro typ vesnice biomu každé čtvrti. `weight` rozhoduje, který z tvých pozemků se vybere, když ulice o nějaký požádá, a `villagePieces` v nastavení `villages` pojmenovává pozemky, které šablona ponechává, jako `mypack:smithy`, `smithy` nebo strukturu, kterou pozemek staví. Jak se samy ulice rozkládají, zdobí, přemosťují, vedou tunely a opatřují kolejemi, určují nastavení `village*` v části [Co dělá která skupina](#co-dělá-která-skupina).
+
+### Farmy
+
+*pozemky vesnic*
+
+`farm` je pole popsané, ne kódované: pozemek v požadované velikosti, obroubený blokem, vyplněný řadami půdy oddělenými vodními kanály, osázený plodinou vybranou pro každý blok z tvého seznamu.
+
+```json
+{
+  "type": "farm",
+  "weight": 3,
+  "width": 7,
+  "depth": 9,
+  "crops": ["simplecorn:corn"],
+  "edge": "minecraft:oak_log",
+  "water": true,
+  "rowWidth": 2
+}
+```
+
+| Klíč | Používá | Hodnota | Výchozí | Co dělá |
+| ---------- | ------- | ------------------- | -------------------- | ----------------------------------------------- |
+| `crops` | farm | seznam názvů bloků | pšenice | Sází se po jednom na blok, v náhodné růstové fázi |
+| `edge` | farm | název bloku | `minecraft:oak_log` | Rám kolem pozemku |
+| `soil` | farm | název bloku | `minecraft:farmland` | Z čeho jsou řady |
+| `water` | farm | boolean | `true` | Vložit mezi řady vodní kanál |
+| `rowWidth` | farm | celé číslo | `2` | Jak široká je každá řada půdy |
+
+### Sestaveno ze šablon
+
+*pozemky vesnic*
+
+`template` místo toho umístí jednu z tvých struktur `.nbt`, natočenou čelem k ulici.
+
+```json
+{
+  "type": "template",
+  "weight": 2,
+  "width": 9,
+  "height": 6,
+  "depth": 9,
+  "structure": "mypack:blacksmith_shed"
+}
+```
+
+Pozemek `template`, jehož `structure` pojmenovává jednu z tvých [map struktur](#mapy-struktur), umístí jako pozemek celý složený celek. Velikost pozemku pak vychází z mapy, tedy z jejího půdorysu a naskládaných vrstev krát buňka, takže se `width`, `height`, `depth` a `integrity` nečtou. Vrstvy před `ground` mapy se zahloubí jako sklepy a vážené buňky palety se stále losují pro každou budovu zvlášť, takže se dvě věže ze stejné mapy mohou lišit.
+
+```json
+{
+  "type": "template",
+  "weight": 2,
+  "structure": "mypack:castle",
+  "villagers": 4
+}
+```
+
+| Klíč | Použito u | Hodnota | Výchozí | Co dělá |
+| ---------------- | -------- | ---------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structure` | template | `namespace:name` | žádný | Šablona, která se umístí, nebo jedna z tvých map struktur, která pak určí velikost pozemku |
+| `integrity` | template | 1 až 100 | `100` | Procento bloků šablony, které se objeví |
+| `lootTable` | template | `namespace:path` | žádná | Tabulka kořisti, z níž se naplní každá truhla uvnitř umístěné šablony při prvním otevření. Pozemek, který pojmenovává mapu struktur, se nechává být |
+| `villagers` | všechny | celé číslo | `0` | Kolik lidí pozemek spawnuje |
+| `villagerEntity` | všechny | `namespace:name` | vesničan | Kdo tam bydlí, například tvoje vlastní varianta entity |
+| `villagerX` | všechny | celé číslo | `1` | Kde se objeví, napříč pozemkem |
+| `villagerY` | všechny | celé číslo | `1` | Kde se objeví, nad podlahou |
+| `villagerZ` | všechny | celé číslo | `1` | Kde se objeví, do hloubky pozemku |
+
+## Mapy rozložení měst
+
+*generování světa*
+
+Mapa města nakreslí plán ulic města na mřížku, jeden znak na buňku, a město se rozloží podle výkresu místo losování. Ulice, náměstí a pozemky vzniknou ze stejných kusů, jaké používá losované město, takže každá volba ulic, most, tunel, metro, kanalizace, lampa i středový prvek náměstí platí beze změny. Světová šablona mapu pojmenuje v `villageLayout`.
+
+`<namespace>/citymaps/*.json`
+
+```json
+{
+  "cell": 48,
+  "settings": { "villagePathCenterBlock": "minecraft:red_concrete" },
+  "palette": {
+    "#": "street",
+    "+": "plaza",
+    "a": "alley",
+    "T": ["mypack:tower_blue=1", "mypack:tower_gray=1"],
+    "B": "mypack:block",
+    "s": ["mypack:shop_blue=2", "mypack:shop_gray=1"],
+    "g": "grow",
+    "J": "junction",
+    "b": "bulb",
+    "E": { "kind": "elevated", "height": 8 },
+    "W": { "kind": "street", "settings": { "villagePathExtraWidth": 8, "villagePathSidewalkWidth": 3 } }
+  },
+  "map": [
+    "sss#BBB#sss",
+    "sgs#BgB#sgs",
+    "###+###+###",
+    "BBB#TTT#BBB",
+    "BgB#TgT#BgB",
+    "###+###+###",
+    "sss#BBB#sss"
+  ]
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cell` | číslo | `48` | Rozteč mřížky v blocích, 8 až 128. Ulice vedou středem svých buněk v šířce ulic balíčku a pozemky jsou ve svých buňkách vystředěné, takže buňka potřebuje nejširší pozemek plus místo na průčelí k ulici |
+| `palette` | objekt | žádný | Co která postava klade, uvedeno níže |
+| `map` | seznam | žádný | Řádky, nejvýše 64 × 64 buněk. Řádek kratší než nejširší je za svým koncem otevřený |
+| `settings` | objekt | žádný | Nastavení města jen pro tuto mapu, pod jmény, která používá světová šablona, například `villagePathCenterBlock`. Přebíjejí nastavení šablony a vlastní nastavení biomu přebíjí je |
+
+| Hodnota | Co dělá |
+| ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `"#": "street"` | Souvislý pás ulicových buněk podél řádku nebo sloupce se stane jednou ulicí v šířce balíčku. Kde pás řádku kříží pás sloupce, vykreslí se křižovatka jako každá jiná. Osamělá ulicová buňka bez pásu v obou osách se položí jako krátký pahýl podél řádku |
+| `"+": "plaza"` | Náměstí se středovým prvkem. Pásy procházejí buňkami náměstí, takže se ulice na náměstí setkávají, a náměstí na křížení postaví svůj středový prvek `villageWellStructure` doprostřed křižovatky jako kruhový objezd. První náměstí v souboru je vlastní střed města, který připíná mapu k místu, kde město vzniká; mapa bez něj je tam vystředěna |
+| `"a": "alley"` | Úzký pás. Budovy k němu čelí, ale nic nepropojuje, pravidlo uliček jako obvykle |
+| `"J": "junction"` | Ulicová buňka položená v obou směrech, takže tam stojí křižovatka i tam, kde výkres vede jen jedním směrem. Rameno napříč ní je dlouhé jednu buňku |
+| `"b": "bulb"` | Ulicová buňka, která končí slepou ulicí s obratištěm. Jakmile má mapa buňku bulb, dostanou obratiště jen konce ulic ležící v buňkách bulb; mapa bez ní dá obratiště třem slepým koncům ze čtyř, losováno ze seedu světa. Obratiště se usadí jen tam, kde v jeho dosahu nestojí žádný pozemek, jiná ulice, železnice ani středový prvek náměstí: zmenší se, aby se vešlo, až na o něco víc než šířku ulice, a konec, pro který není místo v žádné velikosti, zůstane obyčejným koncem |
+| `"E": { "kind": "elevated", "height": 8 }` | Ulicová buňka vyzdvižená na násyp o `height` blocích, 2 až 64, nad nejvyšší zemí pod úsekem spojených vyvýšených buněk, s rampou o jednom bloku na řádek na každém konci. Křížící se ulice uvnitř úseku stoupá s ním a pozemky podél ní zůstávají na zemi. Úsek, jehož vozovka nebo rampy by dosáhly na železnici nebo na středový prvek náměstí, zůstane v úrovni terénu a do logu se zapíše řádek. Takto jako objekt lze napsat jakoukoli hodnotu, slovo pojmenovává `kind` |
+| `"W": { "kind": "street", "settings": { "villagePathExtraWidth": 8 } }` | Ulice položená a vydlážděná vlastními klíči ulic, které přebíjejí klíče mapy i šablony. Její šířka se řídí vlastními `villagePathExtraWidth`, `villagePathSidewalkWidth` a čárou a její povrch, čáry a chodníky vlastními klíči bloků, takže třída nebo ulička se kreslí s vlastním značením. Pás přebírá klíče své první buňky, která nějaké nastavuje. Ať je jakkoli široká či úzká, nakreslená ulice zůstává ulicí: nikdy se nebere za uličku |
+| `"T": "mypack:tower"` | Buňka pozemku, položená podle definice toho pozemku, vystředěná v buňce a čelem k nejbližší ulici |
+| `"T": ["mypack:a=3", "mypack:b=1"]` | Totéž, losované podle váhy ze seedu světa a místa buňky, takže stejný svět tam vždy položí stejný pozemek |
+| `"g": "grow"` | Přenechá se losovanému rozložení, které takové buňky vyplní a šíří se z mapy ven |
+| `.` nebo `open` | Volná země, nic se neklade |
+
+Každá mapa losuje jedno ze čtyř natočení ze seedu světa a otočí se celá, takže se plán čte stejně z kterékoli strany. Ulice se kladou první, takže pozemek, který by se překrýval s ulicí nebo jiným pozemkem, zůstane otevřený a do logu se zapíše řádek, a jméno pozemku, které žádný balíček neposkytuje, nechá její buňku otevřenou stejným způsobem. Mapa nemění, jak se kusy zdobí: klíče ulic, `villageBlocks`, lampy i středový prvek náměstí se čtou jako u losovaného města.
+
+## Souvislé město
+
+*generování světa*
+
+Souvislé město nemá okraj. Při `villageCitySpacing` rovném `1` je každá čtvrť světa vlastním městem: náměstí se studnou uprostřed a ulicemi z něj, které navazují na ulice okolních čtvrtí. Město se generuje všude, kam hráči zajdou, bez volné krajiny mezi městy.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "terrainAdaptation": true,
+    "villageCitySpacing": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villagePlotsMost": 0,
+    "villagePlotsBackRow": true
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | --------------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `terrainAdaptation` | boolean | `false` | Klade vlastní městské ulice RDPL. Souvislé město ho potřebuje zapnuté |
+| `villageCitySpacing` | celé číslo, 0 až 256 | `16` | `1` udělá z každé čtvrti město, čímž se město stane souvislým. Vyšší číslo zasévá oddělená města, která na svém okraji končí |
+| `villageBlockSizes` | seznam `size=weight` | prázdný | Jak hluboké jsou bloky domů mezi rovnoběžnými ulicemi, losováno jednou na čtvrť, takže město mísí jemné a hrubé mřížky |
+| `villagePlotsMost` | celé číslo, 0 nebo víc | `0` | Nejvíc pozemků, které čtvrť usadí. 0 nenastaví žádný strop |
+| `villagePlotsBackRow` | boolean | `true` | Usadí pozemek za každý pozemek, který čelí ulici, takže se zastaví i vnitřek každého bloku domů |
+
+Každé další nastavení ulic, od bloků vozovky po lampy, mosty, tunely a kanalizaci, zdobí souvislé město tak, jak zdobí jakékoli jiné. `villagePlotsLeast` nemá žádný účinek, protože každá čtvrť je už celé město. Čtvrť, jejíž plán obsahuje dva nebo méně pozemků a studní, zůstane prázdná, jako každé tak malé město.
+
+**Jak se ulice setkávají.** Každá čtvrť klade svůj hlavní kříž, dvě ulice, které se kříží u její studny, na stejném místě uvnitř čtvrti. Příčné ulice sousedních čtvrtí se proto spojí do přímých tříd, které pokračují dál přes svět, a ulice z každého náměstí navazují na ulice následující čtvrti. Studna čtvrti se nikdy nehne, ať jsou její sousedé rozloženi jakkoli.
+
+**Co to stojí.** Každý chunk souvislého města je zastavěn, takže nová země stojí všude to, co střed velkého města: umístění budov a jejich osvětlení. Hráč, který rychle letí, generování předežene a tick rate klesne, zatímco se generují nové čtvrti. Předgenerování země, na které hráči začínají, pomocí `pregenOnNewWorld` nebo `/rdplserver pregen` a mírný dohled to drží na uzdě, ale TPS zůstane nižší než v běžném světě, dokud hráči prozkoumávají novou zemi. Uložení roste s prozkoumanou zemí, jako každá zastavěná krajina. Hra drží v paměti nejvýše 1024 plánů čtvrtí a plán, který pustila, vytvoří znovu ze seedu, přesně jako předtím, když ho příště potřebuje.
+
+## Retrogen
+
+*generování světa*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "retrogen": true,
+    "adoptExistingChunks": false
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `retrogen` | boolean | `false` | Dožene chunky uložené dřív, než položka vznikla, u každé položky worldgenu označené `"retrogen": true`. Vypnuto: chunky, které už existují, se nechají být. Chunky se označují při generování tak či tak, takže pozdější zapnutí se dotkne jen chunků starších než balíček |
+| `adoptExistingChunks` | boolean | `false` | Co se stane při prvním spatření starého chunku: zapnuto, označí se, jako by ho tento balíček už vygeneroval, a nikdy se nedožene; vypnuto, dožene se jako každý jiný. Chceš-li vyplnit existující svět, zapni `retrogen` a tohle vypni |
+
+Položka s `"retrogen": true` se vygeneruje do chunků, které byly uloženy dřív, než jsi ji přidal. Každý chunk si zaznamenává, co už dostal, takže se nic neprovede dvakrát.
+
+Příznak položky ji jen označí jako způsobilou. Dohánění zapíná nastavení `retrogen`, které může balíček nastavit v bloku `settings` nebo hráč v konfiguraci, a ve výchozím stavu je vypnuté. Vedle něj `adoptExistingChunks` rozhoduje, co se stane při prvním spatření starého chunku: zapnuto, chunk se označí, jako by ho tento balíček už vygeneroval, a nikdy se nedožene; vypnuto, dožene se jako každý jiný. Zapnutí `retrogen` při zapnutém `adoptExistingChunks` nic nedělá, protože každý starý chunk je odepsán dřív, než se dostane do fronty. Chceš-li vyplnit existující svět, zapni `retrogen` a vypni `adoptExistingChunks` společně. `retrogenChunksPerTick` v konfiguraci, výchozí `2`, říká, kolik starých chunků se dožene za tick.
+
+```json
+{
+  "block": "mypack:ruby_ore",
+  "size": 8,
+  "attempts": 12,
+  "minHeight": 8,
+  "maxHeight": 48,
+  "retrogen": true,
+  "retrogenKey": "ruby_v1"
+}
+```
+
+Změna `retrogenKey` v konfiguraci udělá z každého chunku znovu způsobilý chunk, což přidá nové žíly přes staré, takže se hustota zdvojnásobí. To je záměrné a je to důvod, proč je klíč ruční.
+
+## Předgenerování
+
+*generování světa*
+
+Vytvoření terénu světa předem, aby při hraní nikdo negeneroval chunky: žádné zpoždění chunků, známá velikost na disku a jedno čekání na začátku místo sekaného první hodiny.
+
+Prvních 12 chunků kolem spawnu se vždy zpracuje, ať balíček nebo konfigurace říká cokoli, protože přesně tolik hra vytvoří sama, než se kdokoli připojí. `pregenOnNewWorld` určuje, jak dál sáhnout, a příkaz spustí jedno ručně.
+
+`/rdplserver pregen <radius>` vytvoří každý chunk v tolika chuncích od místa, kde se spustí. `status` říká, jak daleko to je, a `stop` to ukončí. Země se žádá od chunkového systému samotné hry, po `pregenChunksInFlight` chuncích najednou, vždy po jednom souboru regionu o 32 × 32 chuncích, regiony se berou v kruzích od středu a chunky celého regionu po Hilbertově křivce, přičemž každý region je dokončen dřív, než se začne další, a vrací se osvětlená a dokončená, takže potom není žádný průchod osvětlením, který by bylo třeba spustit.
+
+Zatímco běh probíhá, všichni jsou zadrženi: změněni na pozorovatele, drženi na místě, s pulzující čárou uprostřed obrazovky a postupem na action baru, s oblohou zastavenou kolem sebe, se všemi tvory a stroji ve všech dimenzích zmrazenými a s časem a počasím vytvářené dimenze držených tam, kde byly. Režim, v němž každý hráč přišel, se zapíše na hráče ve chvíli, kdy je zadržen, takže uložení uprostřed běhu, pád ani opětovné připojení nikoho neponechá uvězněného jako pozorovatele; konec běhu vrátí přesně režim, který vzal, nebo `worldGameMode` balíčku, je-li nastaven, a přežití pro `hardcore`. Klient s módem vidí během zadržení zamlžený pohled a potom logo, které se zjevuje; vanilla klient vidí obyčejné zadržení. Jak daleko byla každá dimenze vytvořena, se ukládá ve světě, takže dokončený svět už nikdy neběží znovu. Konec se oznámí všem dřív, než se pořídí záloha světa, a běh spuštěný z konzole nebo příkazového bloku tam hlásí své počty.
+
+V balíčku patří tyto klíče do bloku `settings` [světové šablony](#šablony-světa), jako každý jiný klíč `chunks`. Zobrazeny jsou všechny, jen `pregenBorderLimit` chybí, protože ten drží jen konfigurace:
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "pregenOnNewWorld": 63,
+    "pregenDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "pregenAllDimensions": false,
+    "pregenDimensionsWhenEntered": ["minecraft:the_end"],
+    "pregenToBorder": false,
+    "pregenResume": true,
+    "pregenChunksInFlight": 32,
+    "pregenRunningSays": "Building your world, %d%% done",
+    "pregenFinishedSays": "Your world is ready",
+    "pregenStoppedSays": "World building stopped",
+    "pregenSpectatingSays": "Spectating until the world is ready",
+    "pregenLogo": "center",
+    "pregenBackup": true,
+    "pregenBackupSays": "Pack requested world backup",
+    "resetSays": "Pack requested map reset",
+    "resetSendsTo": "spawn",
+    "resetRuns": "",
+    "resetClearsEntities": true,
+    "resetClearsScores": true,
+    "resetClearsInventory": true,
+    "resetClearsExperience": true,
+    "spawnChunkRadius": 128,
+    "spawnChunkRadii": ["minecraft:overworld=64"],
+    "welcomeSays": ["Welcome to Ruby World!", "minecraft:the_nether=Welcome to the Nether!"],
+    "saysCard": true,
+    "saysIcon": "minecraft:compass",
+    "saysColor": "1E2630",
+    "saysImage": "rubyworld:textures/gui/card.png",
+    "saysBackground": true,
+    "saysFont": "rubyworld:runes",
+    "toasts": ["advancements"]
+  }
+}
+```
+
+### Co se vytváří
+
+*předgenerování*
+
+| Klíč | Co dělá | Proč to nastavit |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `pregenOnNewWorld` | Poloměr v chuncích vytvořený kolem spawnu, než kdo začne hrát. 12 je spodní mez a 0 znamená tuto mez, ne nic, protože hra tak jako tak vytvoří 12 chunků kolem spawnu sama. Zvyš ho, abys sáhl dál než hra | Určuje, jak daleko balíček sahá za zemi, kterou hra vytvoří už sama |
+| `pregenDimensions` | Které dimenze se vytvoří, podle id, v pořadí, každá kolem vlastního spawnu | Přidej Nether, End nebo vlastní dimenze |
+| `pregenAllDimensions` | Každá dimenze, kterou server drží, místo seznamu, nejdřív Overworld a zbytek v pořadí id | Balíčky s mnoha dimenzemi. Počítají se dimenze všech módů, takže pozor na velikost |
+| `pregenDimensionsWhenEntered` | Tyto se vytvoří poprvé, když do nich někdo vstoupí, a všichni jsou znovu zadrženi, dokud to neskončí | Dimenze, které většina hráčů nenavštíví; ti, kdo nikdy nepřijdou, neplatí nic |
+| `pregenToBorder` | Vyplní každou dimenzi až k hranici světa místo poloměru, vystředěnou na hranici | Ohraničené světy |
+| `pregenBorderLimit` | Jak daleko smí hranice sahat, v chuncích na každou stranu, než se běh odmítne. Jen konfigurace, nikdy klíč balíčku | Pojistka proti utečenému běhu; zvyš ho, jen když znáš čas a disk, které dovolí |
+
+Spusť ho sám před vydáním, s poloměrem, který se bude vydávat, od začátku do konce. Chunky rostou se čtvercem poloměru, 63 na každou stranu je šestnáct tisíc chunků, 500 je přes milion, takže složka regionů tvého zkušebního světa a čas na hodinách jsou poctivá čísla, která dát hráčům před oči. Nevydávej poloměr, který nikdy neběžel.
+
+### Jak se běh chová
+
+*předgenerování*
+
+| Klíč | Co dělá | Proč to nastavit |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `pregenResume` | Zastavený nebo přerušený běh naváže tam, kde přestal. Dimenze, střed a poloměr běhu se zapíšou do uložení při jeho začátku a dosavadní počet každých deset sekund, takže pád, výpadek proudu i ukončení uprostřed běhu se při příštím načtení všechny obnoví zhruba deset sekund od místa, kde skončily. Běh zastavený záměrně, příkazem nebo hlídacím psem uvíznutí, zůstane zastaven | Dlouhé běhy na serverech; malé běhy se bez něj restartují levně |
+| `pregenChunksInFlight` | Kolik chunků běh žádá od hry najednou. Víc drží generovací vlákna zaneprázdněnější a server méně citlivý vůči tomu, kdo je zadržen a dívá se | Na prázdném serveru zvyš, na serveru, na kterém se hraje, sniž |
+
+### Co se hráčům zobrazí
+
+*předgenerování*
+
+| Klíč | Co dělá | Proč to nastavit |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `pregenRunningSays`, `pregenFinishedSays`, `pregenStoppedSays` | Zprávy pro jednotlivé fáze. První smí obsahovat `%d` pro procento a za ním `%s` pro jméno dimenze, nebo `%1$d` a `%2$s` pro umístění v libovolném pořadí. Ponechané ve výchozím stavu mluví jazykem každého hráče | Přeformuluj je hlasem svého balíčku, pojmenuj dimenzi, když se jich vytváří víc, nebo je umlč |
+| `pregenSpectatingSays` | Řádek zadržení uprostřed obrazovky, zatímco se tvoří země. Ponechaný ve výchozím stavu mluví jazykem každého hráče; prázdný nezobrazí nic | Drž ho pod asi pětatřiceti znaky, jinak ho malá okna oříznou |
+| `pregenLogo` | Kde stojí logo po dokončení předgenerování: `left`, `center` nebo `right`, nad textem uprostřed obrazovky, zobrazené na několik sekund a pak mizí spolu s mlhou | Zobrazuje se vždy; neznámé slovo se čte jako `center` |
+| `welcomeSays` | Zelené přivítání, zobrazené při každém přihlášení a po předgenerování. Holá položka je řádek pro všude; položka `dimension=message` ho pro tu dimenzi přepíše a také přivítá každý příchod tam, např. `"minecraft:the_nether=Welcome to the Nether!"`. Dimenze se smí napsat i jako `0`, `-1` nebo `1` z 1.12.2 a nikdo, kdo přijde, zatímco se tvoří země, není přivítán. Prázdná zpráva za `=` tu dimenzi umlčí; prázdný seznam nezobrazí nic. Ponechané ve výchozím stavu mluví jazykem každého hráče | Jeden holý řádek pojmenuje tvůj balíček; přidej řádky pro dimenze, abys každý svět laděl. Drž řádky pod asi pětatřiceti znaky |
+| `saysCard` | Zobrazí řádky, které tento mód říká, tedy uvítání, poznámku o tvorbě země pro hráče připojeného uprostřed běhu a konec běhu (postup běhu zůstává na action baru) a řádky hrozeb, jako kartu v pravém dolním rohu místo v chatu. Karta se vsune, zůstane osm sekund a zmizí a zobrazí se i přes otevřenou obrazovku | Zapni, když je chat rušný nebo když se mají řádky číst jako součást světa, ne jako tlachání |
+| `saysIcon` | Předmět nakreslený na kartě, např. `minecraft:compass`. Prázdné žádný nenakreslí | Dej kartě znak svého balíčku |
+| `saysColor` | Barva pozadí karty jako hex, např. `1E2630`. Prázdné použije tmavou břidlici | Slaď s paletou svého balíčku |
+| `saysImage` | PNG z klientských assetů balíčku, např. `rubyworld:textures/gui/card.png`, roztažené přes kartu jako její pozadí a nakreslené přes barvu. Prázdné žádné nenakreslí | Dej kartě malovaný panel; drž obrázek široký a nízký, roztáhne se na cokoli, co text potřebuje |
+| `saysBackground` | Nakreslí panel karty, její ohraničení a barevný pruh a tmavé pozadí za uvítáním a poznámkami uprostřed obrazovky, zatímco je hráč zadržen. Vypnuto zbude jen text, který si ponechá stín, a `saysImage`, je-li nastaven | Nech řádky vznášet se nad světem, nebo nech malovaný `saysImage` stát samostatně |
+| `saysFont` | Písmo, jímž se kreslí text karty, zadané jako `namespace:name`, např. `rubyworld:runes`. Prázdné použije písmo RDPL, `resourcedatapackloader:rdpl`. Soubor, který pojmenovává, je popsán v části Karty | Dej kartě vlastní písmo svého balíčku |
+| `toasts` | Které z toastů hry, tedy vyskakovacích oken v pravém horním rohu, se zobrazují. `true` zobrazí všechny a `false` žádný; seznam zobrazí jen druhy, které jmenuje: `advancements`, `recipes` pro odemčené recepty, `tutorial` pro nápovědy, `system` pro vlastní oznámení hry a `other` pro každý toast, který ostatní nepokrývají, například z jiných módů. Výchozí nezobrazí žádný. Klient hráče si hodnotu vezme při připojení | Ponech `["advancements"]`, když tvůj balíček vede hráče pokroky a ostatní překážejí |
+
+### Záloha a reset mapy
+
+*předgenerování*
+
+| Klíč | Co dělá | Proč to nastavit |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------- |
+| `pregenBackup` | Zkopíruje svět do čisté zálohy po dokončení předgenerování, zatímco jsou hráči stále zadrženi. Generování se pak platí jednou: pozdější reset nebo nový svět na stejném balíčku a seedu obnoví kopii místo opětovného generování, což je mnohem rychlejší než dvojí předgenerování. Kopie se drží mimo uložení, v `rdpl-pristine/<world>` vedle něj, takže ji zálohy jiných módů nezametou a nezobrazí se ve složce, kterou spravují. Kopie, jejíž balíčky už neodpovídají načteným, se zahodí a znovu se udělá ze světa, který se má po ruce, takže změna balíčku nikdy neresetuje na cizí mapu | `false` |
+| `pregenBackupSays` | Řádek uprostřed obrazovky, který hráči vidí, zatímco se kopie vytváří, s procentem za ním. Prázdné nezobrazí nic a kopie se vytváří tiše | `Pack requested world backup` |
+| `resetSays` | Řádek uprostřed obrazovky, který hráči vidí, zatímco `/rdplserver reset` nebo konec kola vrací mapu zpět. Prázdné resetuje tiše | `Pack requested map reset` |
+| `resetSendsTo` | Kam se hráči po resetu umístí: `spawn`, pozice jako `x,y,z` nebo `x,z`, kde výška je o jedna nad hladinou moře, nebo kterákoli z nich za `dimension:`, aby byli posláni do jiného světa, dimenze podle id nebo jako `0`, `-1` či `1` z 1.12.2, čímž reset vysadí všechny v lobby, ne zpět na arénu | `spawn` |
+| `resetRuns` | Funkce spuštěná poté, co reset vyčistil mapu, pojmenovaná `namespace:path`. Tohle znovu staví arénu, protože balíček, který mapu vytvořil z funkce, ji může jednoduše spustit podruhé. Prázdné nespustí nic | prázdný |
+| `resetClearsEntities` | Odstraní každou entitu, která není hráč. Odejdou mobové, odhozené předměty i zkušenosti, což nechá mapu tak, jak začala | `true` |
+| `resetClearsScores` | Nastaví každý cíl, který balíček vede, zpět na nic, takže nový zápas začíná od nuly. Samotné týmy se ponechají | `true` |
+| `resetClearsInventory` | Vyprázdní inventář každého hráče, včetně brnění a druhé ruky, takže kolo začíná tím, co rozdá mapa, ne tím, co zbylo po minulém. `gives` strany se hned poté rozdá znovu | `false` |
+| `resetClearsExperience` | Nastaví zkušenosti každého hráče zpět na úroveň nula | `false` |
+| `spawnChunkRadius` | Jak daleko od bodu spawnu, v blocích, se chunky drží načtené, ať tam hráč je, nebo ne, zaokrouhleno na celé chunky: `(blocks + 8) / 16` na každou stranu, takže výchozí `128` drží 8. Při startu světa Overworld připraví čtverec o 4 chunky širší na každou stranu, než je server připraven. `0` nepřipraví ani nedrží žádné. RDPL je drží vlastními chunkovými tickety, takže na 1.21.1 herní pravidlo `spawnChunkRadius` nedělá nic, dokud je tento klíč v platnosti | Drž stroj nebo farmu u spawnu v chodu, nebo vypni spawnové chunky pomocí `0` |
+| `spawnChunkRadii` | Poloměr pro Overworld zapsaný jako `dimension=blocks`, jako v `minecraft:overworld=64`, který přepisuje `spawnChunkRadius`. Spawnové chunky má jen Overworld, takže položka pro jinou dimenzi nic nemění | Dimenzuj oblast spawnu v balíčku, který nastavuje poloměry podle dimenze |
+
+---
+
+# Herní režimy
+
+## Úvod do světa
+
+*herní režimy*
+
+`<namespace>/worldintro/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka. Spustí se každý úvod, který balíček dodává, v pořadí balíčků.
+
+Ukáže řadu stránek, když hráč vstoupí do světa, než převezme ovládání. Posouvající se text nad obrázkem, titulní karta, prezentace, nebo všechno tři za sebou.
+
+```json
+{
+  "once": true,
+  "music": "minecraft:music.credits",
+  "requires": ["mypack"],
+  "pages": [
+    {
+      "background": "mypack:textures/gui/sunrise.png",
+      "text": "mypack:texts/opening.txt",
+      "mode": "scroll",
+      "time": 14.0,
+      "direction": "up",
+      "textScale": 3.0,
+      "settle": true
+    },
+    {
+      "backgrounds": [
+        "mypack:textures/gui/logo_a.png",
+        "mypack:textures/gui/logo_b.png"
+      ],
+      "interval": 4.0,
+      "text": "mypack:texts/title.txt",
+      "mode": "static",
+      "textScale": 2.0
+    }
+  ]
+}
+```
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ---------- | -------- | ---------------------------------- | ------- | ------------------------------------------------------------- |
+| `pages` | ano | seznam stránek | žádný | Ukazují se v pořadí. Soubor bez stránek se odmítne s chybou |
+| `once` | ne | boolean | `false` | Přehraje se jednou pro hráče a svět místo při každém připojení |
+| `music` | ne | název zvukové události | žádný | Jedna skladba pro celý průběh, spuštěná s první stránkou |
+| `requires` | ne | seznam id módů nebo namespace balíčků | žádný | Úvod se přeskočí, pokud nejsou přítomny všechny |
+
+### Stránky
+
+*úvod do světa*
+
+| Klíč | Povinné | Hodnota | Výchozí | Co dělá |
+| ------------- | -------- | --------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `mode` | ne | `scroll` nebo `static` | `scroll` | Text, který se pohybuje, nebo text, který stojí, dokud hráč nepokročí dál |
+| `text` | ne | cesta k souboru `.txt` | žádný | Slova. Vynech ho u stránky, která je jen z obrázků |
+| `background` | ne | cesta k textuře | dlaždicové pozadí hlíny | Jedno pozadí |
+| `backgrounds` | ne | seznam cest k texturám | žádný | Několik, střídají se. Přidávají se k `background`, pokud zadáš obojí |
+| `interval` | ne | sekundy | `5.0` | Jak dlouho se drží každé pozadí, když je jich víc |
+| `time` | ne | sekundy | vypočteno z textu | Jak dlouho trvá posouvající se stránka od začátku do konce. U statické stránky, nebo u poslední stránky jakéhokoli druhu, je to doba, než stránka sama přejde dál, a bez něj čekají na tlačítko |
+| `direction` | ne | `up` nebo `down` | `up` | Kterým směrem se posouvající text pohybuje |
+| `textScale` | ne | číslo | `1.0` | Násobí velikost písma. Stránka `static` zalamuje text na šířku obrazovky, zmenšenou o okraj na každé straně, a když by text přesto zasahoval pod tlačítka, nakreslí se menší, nejvýš na polovinu, dokud se nevejde |
+| `settle` | ne | boolean | `false` | Skončí s posledním řádkem uprostřed místo toho, aby úplně odjel z obrazovky |
+
+### Text a časování
+
+*úvod do světa*
+
+Textové soubory patří do `assets/<namespace>/texts/*.txt`. Prostý text, jeden odstavec na řádek, a prázdné řádky zůstanou prázdnými řádky. Soubor `.md` se čte stejně a oba druhy berou formátování níže. `PLAYERNAME` se nahradí jménem hráče, stejnou substitucí jako vanilla závěrečné titulky.
+
+`time` určuje, jak dlouho stránka trvá, takže stejná stránka trvá stejně dlouho, ať obsahuje jeden řádek, nebo dvacet. Rychlost čtení ladíš tím, kolik toho na stránku dáš. Vynech `time` a stránka běží stejnou rychlostí jako vanilla titulky, kde víc textu prostě trvá déle.
+
+### Formátování textu
+
+*úvod do světa*
+
+Texty úvodu berou Markdown. Soubor bez značek se zobrazí přesně jako prostý text.
+
+```
+# The Long Night
+## Chapter one
+Welcome, **PLAYERNAME**. The *old roads* are ~~open~~ closed; type `/spawn` to go back.
+- Find the **lighthouse**
+- Keep the fire lit; a long item wraps under its own text, not under the bullet
+  - A nested item
+1. Gather wood
+2. Build the gate
+> The keeper wrote this before the storm.
+---
+![The lighthouse](mypack:textures/gui/lighthouse.png)
+See [the map](https://example.com/map) for the way, and \*this\* stays plain.
+```
+
+| Značka | Zápis | Zobrazí se jako |
+| ------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Nadpis | `# `, `## `, `### ` na začátku řádku | Tučně a větší: dvakrát, jeden a půlkrát a jeden a čtvrtkrát větší než text, zarovnáno jako běžný text |
+| Tučné | `**text**` | Tučný řez písma |
+| Kurzíva | `*text*` | Kurzívní řez písma |
+| Tučná kurzíva | `***text***` | Tučný řez, nakloněný |
+| Přeškrtnuté | `~~text~~` | Přeškrtnuto |
+| Kód | `` `text` `` | Podbarveno tyrkysově |
+| Odkaz | `[text](url)` | Samotný text, podtržený; nedá se kliknout |
+| Runové | `{runic}text{/runic}` | Text v runové šifře, `resourcedatapackloader:rdpl_runic`, zatímco zbytek řádku si drží své písmo; tučné a kurzíva uvnitř berou tučný a kurzívní řez šifry. Funguje v nadpisech, položkách seznamu i citacích a neuzavřené `{runic}` se zobrazí tak, jak je napsáno |
+| Odrážka | `- ` nebo `* ` na začátku řádku | Odrážka, zalomené řádky odsazené pod text; dvě mezery před značkou ji zanoří o úroveň |
+| Číslovaný | `1. ` na začátku řádku | Číslo tak, jak je napsáno, odsazené stejně |
+| Citace | `> ` na začátku řádku | Odsazeno a ztlumeno |
+| Čára | `---` na samostatném řádku | Vodorovná čára přes šířku textu |
+| Obrázek | `![alt](namespace:textures/....png)` na samostatném řádku | Obrázek zmenšený na šířku textu se zachováním tvaru; alternativní text se ukáže, pokud ho nejde přečíst |
+| Escape | `\` před značkou, např. `\*` | Značka jako obyčejný znak |
+
+Tabulky a bloky kódu v ohraničení (mezi řádky ```) se kreslí jako prostý text, se všemi značkami. Vypočtený čas posouvající se stránky i zmenšení statické stránky, aby se vešla, počítají s výškou po rozložení, včetně obrázků. Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou vložené značky od tučné po runovou, každá jeden řádek.
+
+### Jak se hraje
+
+*úvod do světa*
+
+Posouvající se stránka přejde na další, když vyprší její čas. Poslední stránka nepostupuje sama, čeká. Dole jsou **Next Page** a **Skip All**, nebo na poslední stránce jediné **Continue to World**. Escape dělá totéž co Skip All. Statické stránky centrují každý řádek. Posouvající se stránky drží pevný sloupec, jako titulky.
+
+V režimu pro jednoho hráče se svět za úvodem pozastaví, takže se na hráče nic nepodplíží, zatímco čte. Jedinou výjimkou je terén, který se ještě vytváří, když se úvod otevře: tvorba pak pokračuje za stránkami a hráč zůstane zadržen jako pozorovatel, dokud nepokračuje do světa, i když běh skončí dřív. Na serveru svět běží dál a vanilla klient úvod nikdy nevidí a připojí se jako obvykle. Uvítání čeká, až se stránky zavřou, takže se za nimi neztratí.
+
+`once` se pamatuje v uložených datech hráče a přežije smrt. `/rdplserver intro` ho pro toho, kdo ho spustí, smaže, takže se úvod přehraje při jeho dalším připojení. Na místě se znovu nepřehraje, takže se nedá použít jako cesta zpět do úvodní sekvence uprostřed hry.
+
+Pozadí se roztahují, aby vyplnila okno, takže obrázek 16:9 sedí do okna 16:9 a čtvercový vypadá zmáčknutě. Obrázek ořízni do tvaru, nespoléhej na přizpůsobení. `music` bere jakoukoli registrovanou zvukovou událost, vanilla nebo takovou, kterou tvůj balíček přidá přes `sounds`. Neopakuje se, takže krátká skladba skončí a za sebou nechá ticho.
+
+Pokud úvod dodává víc než jeden balíček, jejich stránky běží za sebou v pořadí balíčků, nevyhrává jediný. Chceš-li jen jeden, omez je pomocí `requires`.
+
+## Týmy
+
+*herní režimy*
+
+`<namespace>/teams/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jedna strana.
+
+Strana je skutečný tým na tabulce skóre samotné hry, takže ji vidí `/team list`, uchová si své členy přes uložení a znovunačtení a klient bez tohoto módu ukazuje barvy a jmenovky stejně jako u kteréhokoli vanilla týmu. Členství je podle jména, takže na straně může být cokoli se jménem nebo UUID: hráč, zombie, vesničan, stojan na brnění.
+
+```json
+{
+  "name": "red",
+  "displayName": "Red Team",
+  "color": "red",
+  "friendlyFire": false,
+  "joinable": false,
+  "entities": ["mypack:zombie_a", "mypack:sapper_a"],
+  "picks": 0,
+  "picksFrom": ["players"],
+  "gives": ["minecraft:iron_pickaxe", { "item": "minecraft:bread", "count": 8 }],
+  "standIn": { "entity": "mypack:herobrine", "at": "23,31,0" },
+  "leadRuns": "mypack:lead_chosen"
+}
+```
+
+### Strana
+
+*týmy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------- | ------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name` | text | název souboru | Jméno týmu na tabulce skóre, 1 až 16 znaků. Podle něj jednají `/team` a ostatní soubory |
+| `displayName` | text | jméno | Co se hráčům ukazuje místo jména |
+| `color` | text | `white` | Jedna ze šestnácti barev textu. Zabarví jmenovku a podle ní se řídí postranní sloty pro jednotlivé týmy |
+| `prefix` | text | prázdný | Vloží se před jméno člena, za barvu |
+| `suffix` | text | prázdný | Vloží se za jméno člena |
+| `scoreboard` | boolean | `true` | Zda strana stojí jako tým na tabulce skóre hry. Vypnuto nenasadí žádný tým: její mobové místo toho nosí barvu strany ve jménu, nic jim nebrání, aby spolu bojovali, a nepřistávají na ní žádné body, protože bodování jde podle týmu |
+
+Strana je nasazena jen tam, kde o ni balíček požádá: bez složky `teams` kdekoli mód nepřidá žádný tým, na nic nenaslouchá a nenabízí příkaz. Operátor serveru, který soubor upraví, může spustit `/rdplserver reload`, aby změnu nasadil do běžícího světa bez restartu.
+
+### Boj a viditelnost
+
+*týmy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------- | ------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `friendlyFire` | boolean | `false` | Zda se členové mohou zraňovat navzájem. Také výchozí hodnota `mobFriendlyFire` |
+| `mobFriendlyFire` | boolean | `friendlyFire` | Zda mobové strany mohou zranit vlastní stranu výbuchy a hozeným TNT, což samotná hra nikdy nezastaví. Vypnuto stranu ušetří; zapnuto to nechá tak, jak to hra má |
+| `seeFriendlyInvisibles` | boolean | `true` | Zda se členové vidí navzájem, i když jsou neviditelní |
+| `nameTags` | text | `always` | `always`, `never`, `hideForOtherTeams` nebo `hideForOwnTeam`, na velikosti písmen nezáleží |
+| `deathMessages` | text | `always` | Stejná čtyři slova, pro to, komu se oznámí, že člen zemřel |
+| `collision` | text | `always` | `always`, `never`, `pushOtherTeams` nebo `pushOwnTeam`, na velikosti písmen nezáleží |
+
+### Kdo se připojí
+
+*týmy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `entities` | seznam | prázdný | Id entit, jejichž každý spawn se připojí k této straně, například `minecraft:zombie` nebo jedna z tvých vlastních |
+| `players` | seznam | prázdný | Jména hráčů, kteří se k této straně připojí při přihlášení |
+| `spawnBox` | seznam | žádný | Šest celých čísel, x y z až x y z. Cokoli, co se spawnuje uvnitř, se připojí, a rohy lze zadat v kterémkoli pořadí |
+| `joinable` | boolean | `true` | Zda se hráč smí připojit pomocí `/rdplserver team join`. Nastav na false pro stranu jen pro moby |
+| `balance` | boolean | `false` | Zda smí `/rdplserver team join` bez jména umístit hráče sem. Mezi stranami, které to dovolují, se vybere ta s nejméně hráči |
+| `picks` | číslo | `0` | Kolik členů tato strana losuje náhodně. Na začátku každého kola strana nechá poslední vylosované vrátit se tam, kde stáli, a znovu losuje ze všeho, co `picksFrom` jmenuje; mezi losováními přihlášení nebo spawn z tohoto fondu okamžitě zaplní prázdné místo. Slouží k tomu, aby jeden hráč z celku byl na vlastní straně |
+| `picksFrom` | seznam | prázdný | Z čeho se losuje: `players` pro všechny online a id entit pro každého živého moba toho druhu |
+| `standIn` | objekt | žádný | Mob, který drží stranu, dokud na ní není žádný hráč: `{ "entity": "mypack:herobrine", "at": "23,31,0" }` udržuje jednu takovou entitu naživu na tom místě v Overworldu, přivolá ji, když chybí, a odstraní ji ve chvíli, kdy se ke straně připojí hráč, takže hra běží proti AI, dokud roli nepřevezme hráč. Kontroluje se každých pět sekund; místo musí být v načteném terénu. Ve hře s lobby (`opens.by: leader`) se zástupný mob přivolá jen zatímco lobby čeká a při otevírání kola, takže ten, který padne, zůstane pryč po zbytek kola a jeho konec, dokud nejsou všichni zpět v lobby; bez lobby se padlý zástupný mob nenahrazuje, dokud běží kolo, které končí na `ends.lastStanding` |
+
+Tři způsoby, jak se připojit, a strana smí použít všechny. `entities` pojmenovává id entit a cokoli toho typu se připojí při spawnu, čímž balíček dává mobům strany, aniž by se jich dotkl. `spawnBox` si nárokuje kout světa a cokoli, co se spawnuje uvnitř, se připojí, což se hodí na arénu, kde obě strany používají stejného moba. `players` pojmenovává hráče přímo. Kromě toho se hráč může připojit pomocí `/rdplserver team join <name>`, pokud strana nenastaví `joinable` na false, a odejít pomocí `/rdplserver team leave`.
+
+### Startovní výbava a spawn
+
+*týmy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------- | ---- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gives` | seznam | prázdný | Předměty vložené do inventáře hráče, když se připojí ke straně: název předmětu pro jeden nebo `{ "item", "count", "unbreakable" }` pro víc, nebo pro takový, který se nikdy neopotřebuje, do libovolného volného slotu a upuštěné k jeho nohám, když žádný není. Rozdá se znovu po resetu, který vyčistí inventáře (`resetClearsInventory`) |
+| `gives.unbreakable` | boolean | `false` | V objektovém tvaru položky `gives` způsobí, že se ten předmět nikdy neopotřebuje |
+| `spawn` | text | žádný | `x,y,z` v Overworldu, kam se hráči strany umístí při otevření kola, takže každá strana začíná na vlastním terénu; bez něj zůstanou tam, kde je nechal reset nebo lobby |
+
+### Vedoucí
+
+*týmy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------- | ---- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lead` | text | `none` | Jak se vybírá vedoucí strany: `none`, `first` pro toho, kdo se ke straně připojil nejdřív z těch online, takže se předává v pořadí připojení, zatímco je někdo pryč, a vrací se s ním; dostane o tom zprávu, když přijde, po úvodu a po zadržení, a znovu, když se vedení přenese na něj, `topScore` pro toho, kdo je nejvýš v cíli, který jmenuje `leadOn`, `appointed` pro hráče, kterého jmenuje `leadIs`, `vote` pro toho, koho členové zvolí, nebo `claim` pro toho, kdo si ho nárokuje první. Vedoucí je jen označení a barva a nic víc: nepřináší žádnou moc, takže vedoucí, který se odhlásí, nic nerozbije |
+| `leadOn` | text | prázdný | Se `topScore` cíl, podle něhož se členové řadí. Počítá se znovu při každém čtení, takže sleduje skóre |
+| `leadIs` | text | prázdný | S `appointed` hráč, který vede |
+| `leadSays` | text | `You are the current round leader` | Řekne se hráči, když k němu vedení přijde: při příchodu na stranu, kterou vede, při nárokování, nebo když na něj přejde vedení `first`, kdy nese, kdo odešel. `{side}` je zobrazované jméno strany; prázdné neřekne nic |
+| `leadRuns` | text | prázdný | Funkce, `namespace:path`, spuštěná jednou pokaždé, když vedení přejde na hráče: první vedoucí i každé další předání. Běží jako vedoucí, na jeho pozici, s oprávněním, které má funkce odměňující pokrok, takže `@s` je vedoucí. Kontroluje se každou sekundu; u vedoucího, který je offline, se spustí, až bude příště online. Restart rozhodne o vedoucím znovu |
+
+## Bodování
+
+*herní režimy*
+
+`<namespace>/scoring/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jeden cíl.
+
+Cíl je skutečný cíl na tabulce skóre samotné hry, takže ho čte `/scoreboard players list` a uchová si své skóre přes uložení. `criterion` je to, co hra počítá sama: `dummy` pro skóre, kterým hýbe jen tento balíček, nebo `deathCount`, `playerKillCount`, `totalKillCount`, `health`, `air`, `armor`, `food`, `level`, `xp`, `trigger`, nebo jakákoli statistika zapsaná tak, jak ji bere `/scoreboard`, například `minecraft.custom:minecraft.jump`. Statistika z 1.12.2, například `stat.jump`, se čte jako ta, kterou se stala.
+
+```json
+{
+  "name": "kaboom",
+  "displayName": "Kills",
+  "criterion": "dummy",
+  "display": "sidebar",
+  "teamTotals": true,
+  "tiebreak": true,
+  "points": {
+    "kill": { "mypack:zombie_a": 1, "mypack:zombie_b": 1 },
+    "death": -1
+  },
+  "opens": { "by": "leader", "lobby": "0,64,0" },
+  "ends": {
+    "afterMinutes": 10
+  },
+  "results": {
+    "card": true,
+    "title": "Final standings",
+    "icon": "minecraft:tnt",
+    "seconds": 15
+  }
+}
+```
+
+### Cíl
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------- | ------- | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name` | text | název souboru | Jméno cíle na tabulce skóre, 1 až 16 znaků |
+| `displayName` | text | jméno | Co se hráčům ukazuje místo jména |
+| `criterion` | text | `dummy` | Co hra počítá sama. Neznámé se odmítne s řádkem, který to říká |
+| `display` | text | prázdný | `sidebar`, `list`, `belowName` (přijímá se i `below_name`) nebo `sidebar.team.<color>`. Prázdné ho nezobrazí nikde; není žádná obrazovka tabulky skóre, kterou by šlo otevřít |
+| `render` | text | vlastní hodnota kritéria | `integer` nebo `hearts` |
+| `teamTotals` | boolean | `true` | Body přistanou na řádku pojmenovaném podle týmu člena |
+| `individuals` | boolean | `false` | Body přistanou i na řádku pro samotného člena |
+| `carries` | boolean | `false` | Cíl přežije reset mapy místo toho, aby se s ním smazal. Zápasová bilance výher kol je jeden z nich |
+| `awardsTo` | text | prázdný | Jiný cíl, kterému tento předá bod, když skončí, straně, která vedla. Pořadí úrovní nic nerozdává |
+| `tiebreak` | boolean | `false` | Kolo, které skončí nahoře nerozhodně, vylosuje jednu z remizujících stran náhodou světa, losování zapíše do logu a udělí ji jako obvykle. Zápas, cíl bez `awardsTo`, losuje stejně a jmenuje vylosovanou stranu na začátku svých výsledků |
+
+### Body
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `points.kill` | objekt | prázdný | Id entity na body, připsané straně zabijáka. `minecraft:player` boduje zabití hráče |
+| `points.death` | celé číslo | `0` | Body, kdykoli člen zemře, ať už jakkoli. Může být záporné |
+| `points.ownKill` | celé číslo | `0` | Body za zabití člena vlastní strany zabijáka, místo hodnoty `kill`. 0 za to nebodují nic; záporné číslo je trest |
+
+`points` je to, co tento mód přidává nad to, co hra počítá, přivedené do téhož cíle, takže ho `/scoreboard` pořád čte. `kill` má hodnotu tolika bodů za každé zabité id entity, připsaných straně zabijáka; `death` má hodnotu tolika bodů, kdykoli zemře člen strany, a může být záporné. S `teamTotals` body dopadají na řádek pojmenovaný podle týmu, díky čemuž postranní panel ukáže čtyři strany místo řádku pro každého moba. `individuals` přidá i řádek pro každého člena a je ve výchozím stavu vypnuté, protože řádek na UUID moba působí jako šum.
+
+### Jak kolo končí
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------- | ------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ends.atScore` | celé číslo | `0` | Zápas skončí ve chvíli, kdy některá strana dosáhne této hodnoty. Při 0 zápas na skóre nikdy nekončí |
+| `ends.afterMinutes` | celé číslo | `0` | Zápas skončí po tolika minutách. 0 nikdy nekončí na čas |
+| `ends.afterRounds` | celé číslo | `0` | Pro cíl, jemuž jiný cíl předává `awardsTo`: zápas skončí, jakmile bylo celkem uděleno tolik kol, ať je vzal kdokoli. 0 nikdy nekončí na kola |
+| `ends.lastStanding` | boolean | `false` | Kolo skončí, když zůstane stát jen jedna strana. Stranami ve hře jsou ty, které mají hráče nebo živého moba při otevírání kola, nejméně dvě; hráč, který zemře, je venku, zpět jako pozorovatel, dokud kolo neskončí, a strana, jejíž hráči jsou všichni venku nebo pryč a jejíž mobové jsou všichni mrtví, padla. Strana, která zůstane stát, kolo vyhraje a `awardsTo` ho pro ni zaznamená bez ohledu na skóre. S `resets` a `opens.by: leader` se hra pak vrátí do lobby. `standIn` strany se znovu nepřivolá, dokud takové kolo běží |
+| `ends.outSays` | text | `You are out until the round ends` | Co se řekne vyřazenému hráči. Prázdné neřekne nic |
+| `ends.locksTeams` | boolean | `true` | Připojení ke straně během běžícího kola počká, dokud kolo neskončí, takže nikdo nespadne do bodovaného kola uprostřed |
+
+`ends` ukončí zápas, buď ve chvíli, kdy strana dosáhne `atScore`, nebo po uplynutí `afterMinutes`. Pořadí se pak zobrazí, seřazené samotnou hrou: jako chat, nebo jako karta, pokud o ni `results` žádá. Hráč bez tohoto módu dostane stejné pořadí jako řádky chatu, takže nikdo nezůstane bez výsledku. S `resets` je tento konec koncem kola: pořadí zůstane stát po `intermissionSeconds`, zatímco se na action baru odpočítává pauza, mapa se resetuje na uvítání a další kolo se otevře po pětisekundovém odpočtu. `awardsTo` předá kolo straně, která vedla, v cíli, který `carries` přes reset. Přenášený cíl může skončit sám -- `atScore` pro nejlepší z několika, `afterRounds` pro pevný počet -- a jeho stav se vymaže při následujícím resetu, takže se otevře nový zápas.
+
+### Mezi koly
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------- | ------- | ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ends.resets` | boolean | `false` | Konec kola resetuje mapu, jak popisují `resetSays` a další nastavení resetu v části [Šablony světa](#šablony-světa), a poté se otevře nové kolo |
+| `ends.intermissionSeconds` | celé číslo | `10` | Jak dlouho stojí pořadí mezi koncem a resetem |
+| `ends.intermissionSays` | text | `Round cooldown {seconds}` | Zobrazuje se na action baru každou sekundu pauzy po skončení kola, přičemž `{seconds}` odpočítává do resetu. Prázdné nezobrazí nic |
+| `ends.startsSays` | text | `Round starting in {seconds}` | Zobrazuje se na action baru během pětisekundového odpočtu, který po resetu otevírá další kolo, přičemž `{seconds}` odpočítává. Prázdné nezobrazí nic |
+
+### Lobby
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------ | ------- | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `opens` | objekt | prázdný | Obsahuje níže uvedená nastavení lobby, každé zapsané uvnitř něj. Když chybí, každé z nich si ponechá výchozí hodnotu |
+| `opens.by` | text | `auto` | `auto` otevře další kolo samo, pět sekund po resetu. `leader` místo toho drží hru v lobby: po resetu a při prvním načtení světa se nic nebodá a neběží žádné hodiny, strany se lze volně připojovat i je opouštět a kolo se otevře, až když vedoucí strany, nebo operátor, spustí `/rdplserver round start`, a ne dokud někdo čte úvod do světa; pak běží pětisekundový odpočet, provedou se losování a každá strana je umístěna na svůj `spawn`. Dokud svět čeká, do konce pětisekundového odpočtu, hráči zůstávají, kde stojí, a nemohou nic rozbít, položit, použít, udeřit ani upustit a nedostávají žádné poškození, přičemž při pokusu vidí řádek čekání, a každá další živá bytost stojí na místě: žádná AI, žádný pohyb. Příkazy stále fungují, takže se lze připojit ke stranám a spustit kolo |
+| `opens.says` | text | `Waiting for {leader} to start the round` | Probliká uprostřed obrazovky, jako uvítání, každému hráči, který nevede: když dorazí do lobby po úvodu, jakmile se zobrazilo uvítání; když se lobby po kole znovu otevře; kdykoli se změní, jak vedoucí přichází a odchází; a když zkusí něco, co lobby odmítá. `{leader}` jsou vedoucí všech stran, nebo `a leader`, dokud nikdo nevede. Prázdné nezobrazí nic |
+| `opens.leaderSays` | text | `Type /rdpl round start` | Probliká stejným způsobem a ve stejných chvílích hráči, který vede stranu, místo `opens.says`. Prázdné nezobrazí nic |
+| `opens.lobby` | text | žádný | `x,y,z` v Overworldu, nebo `dimension:x,y,z` v jiném světě, například `minecraft:the_nether:0,64,0`, kde všichni čekají, dokud lobby drží: každý hráč a každý živý mob na straně je postaven na kruh kolem toho místa, každý čelem ke středu, takže stojí a zírají na sebe. Každý dostane oblouk široký jako on sám plus dva bloky, aby se žádný nepřekrýval s jiným, a kruh roste, jak jich přibývá; rozloží se znovu, kdykoli se k němu někdo přidá nebo ho opustí. Výška je podlaha, na které stojí, nalezená do tří bloků na obě strany. Hráči a mobové přecházejí do toho světa a zpět přímo, bez postaveného portálu. Když se kolo otevře, hráči jdou na `spawn` své strany a mob, který ještě stojí, je vrácen tam, kde byl, ve svém vlastním světě |
+| `opens.lobbyJoins` | boolean | `false` | Hráče, který se přihlásí uprostřed kola, umístí do lobby jako pozorovatele, dokud kolo neskončí, místo tam, kde se odhlásil. Vyžaduje `opens.lobby` |
+| `opens.joinsSays` | text | `Round is in progress, you can join after it ends` | Co se jim řekne. Prázdné neřekne nic |
+
+### Resetování kola
+
+*bodování*
+
+```json
+{
+  "name": "wall",
+  "opens": { "by": "leader" },
+  "ends": { "lastStanding": true, "resets": true },
+  "reset": {
+    "lead": "now",
+    "players": "vote",
+    "teams": ["miners", "raiders"],
+    "passPercent": 51,
+    "voteSeconds": 30,
+    "cooldownSeconds": 60
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------- | ---- | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `reset.lead` | text | `none` | Co dělá `/rdplserver round reset` pro vedoucího strany, zatímco kolo běží. `now` kolo ukončí hned a resetuje mapu; `vote` místo toho svolá hlasování; `none` nedá vedoucímu žádné vlastní slovo, takže vedoucí svolává hlasování jako každý jiný hráč tam, kde to `players` dovoluje. Operátor resetuje vždy hned |
+| `reset.players` | text | `none` | `vote` dovolí hráči na kterékoli straně svolat hlasování pomocí `/rdplserver round reset`. `none` nechá resetování na vedoucím |
+| `reset.teams` | seznam | prázdný | Strany, jejichž hráči smějí svolat hlasování. Prázdné jsou všechny strany |
+| `reset.passPercent` | celé číslo | `51` | Podíl hlasujících, 1 až 100, kteří musí hlasovat ano, aby se kolo resetovalo. `51` je víc než polovina, `100` jsou všichni |
+| `reset.voteSeconds` | celé číslo | `30` | Jak dlouho hlasování běží, nejméně pět sekund. Skončí dřív, jakmile je jeho výsledek jistý |
+| `reset.cooldownSeconds` | celé číslo | `60` | Jak dlouho po neúspěšném hlasování, než lze svolat další. Vedoucí s `now` jím není zdržen |
+| `reset.leadSays` | text | `{player} reset the round` | Řekne se všem, když se kolo resetuje hned, přičemž `{player}` je ten, kdo ho resetoval. Prázdné neřekne nic |
+| `reset.voteSays` | text | `{player} calls a vote to reset the round: /rdpl round vote yes or no, {seconds} seconds` | Řekne se všem, když je svoláno hlasování, přičemž `{player}` je ten, kdo ho svolal. Prázdné neřekne nic |
+| `reset.tallySays` | text | `Reset the round? {yes} yes, {no} no, {seconds}` | Zobrazuje se na action baru každou sekundu hlasování, přičemž `{seconds}` odpočítává. Prázdné nezobrazí nic |
+| `reset.passSays` | text | `The vote passed, so the round is reset` | Řekne se všem, když hlasování projde. Prázdné neřekne nic |
+| `reset.failSays` | text | `The vote failed, so the round goes on` | Řekne se všem, když hlasování selže. Prázdné neřekne nic |
+
+Reset utne kolo tam, kde stojí. Pořadí se ukáže pod `The round was reset`, kolo nikomu nepřipadne, pauza odpočítává a mapa se resetuje, jako by kolo skončilo s `ends.resets`, zpět do lobby tam, kde je `opens.by` rovno `leader`. Funguje bez ohledu na to, zda by kolo někdy skončilo samo, ale ne v lobby, během odpočtu, který kolo otevírá, ani poté, co kolo skončilo a jeho reset je na cestě; hlasování, které tehdy ještě běží, se zahodí.
+
+Hlasuje každý online hráč na straně, ať je na jaké, pomocí `/rdplserver round vote yes` nebo `no`, a může svůj hlas měnit, dokud hlasování běží. Kdo hlasování svolá, hlasoval ano, a hráč, který nehlasoval, když čas vyprší, se počítá jako ne. V balíčku se stranami hráč na žádné nehlasuje ani nesvolává; v balíčku bez stran to dělá každý online hráč. Použije se první soubor skóre, jehož `reset` někomu dovoluje resetovat.
+
+### Výsledky
+
+*bodování*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------- | ------- | ---------------------- | ------------------------------------------------ |
+| `results.card` | boolean | `false` | Ukáže pořadí jako kartu místo chatu |
+| `results.title` | text | jméno a `results` | Nadpis karty |
+| `results.icon` | text | prázdný | Předmět nakreslený na kartě, např. `minecraft:tnt` |
+| `results.image` | text | prázdný | Obrázek nakreslený na kartě místo předmětu |
+| `results.background` | text | tmavá břidlice | Barva pozadí karty |
+| `results.seconds` | celé číslo | `8` | Jak dlouho karta stojí, nejméně jednu sekundu |
+
+### Střídání tahů
+
+*bodování*
+
+```json
+{
+  "name": "duel",
+  "displayName": "Duel",
+  "turns": {
+    "order": "lowestFirst",
+    "seconds": 45,
+    "gapSeconds": 3,
+    "held": "frozen",
+    "endsAtScore": 10,
+    "cycles": 5,
+    "mobTypes": ["minecraft:zombie"]
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --- | --- | --- | --- |
+| `turns.order` | text | `fixed` | Kdo je kdy na řadě, určeno na začátku každého cyklu. `fixed` drží pořadí, v jakém byly strany poprvé spatřeny, `random` míchá každý cyklus, `lowestFirst` začíná s nejnižším skóre v tomto cíli a `lastWinner` začíná stranou, která vyhrála poslední kolo, ostatní v pevném pořadí |
+| `turns.seconds` | celé číslo | `60` | Jak dlouho tah trvá, nejméně jednu sekundu |
+| `turns.gapSeconds` | celé číslo | `3` | Pauza mezi tahy, zatímco všechny strany čekají. 0 jde rovnou dál |
+| `turns.held` | text | `frozen` | Jak hráč čeká na svůj tah: `frozen` ho postaví na místo a zabrání mu v úderech, kopání, stavění, používání i upouštění, jako lobby; `spectator` nebo `adventure` ho do tohoto herního režimu dá, dokud nepřijde na řadu, a pak mu vrátí jeho vlastní |
+| `turns.endsAtScore` | celé číslo | `0` | Tahy skončí, a s nimi kolo, jakmile strana dosáhne této hodnoty v cíli. 0 nikdy nekončí na skóre |
+| `turns.cycles` | celé číslo | `0` | Tahy skončí, a s nimi kolo, po tolika cyklech, přičemž cyklus je jeden tah každé strany ve hře. 0 běží, dokud kolo neukončí něco jiného |
+| `turns.mobTags` | seznam | prázdný | Tagy tabulky skóre, které zapojí do tahů mob bez týmu, jedna skupina na tag |
+| `turns.mobTypes` | seznam | prázdný | Id entit, které zapojí do tahů mob bez týmu, jedna skupina na id |
+
+`turns` způsobí, že se strany během kola střídají v tazích. Každý tým je jedna strana; bez týmů je každý hráč sám o sobě stranou a mob v týmu jde s ním. Zatímco má tah jedna strana, všechny ostatní čekají: její hráči tak, jak říká `held`, její mobové zmrazení na místě tak, jak je drží lobby. Strana, v níž nikdo není ve hře nebo jejíž všichni hráči jsou vyřazeni, se přeskočí.
+
+Každý tah se oznámí v chatu a jeho hodiny odpočítávají na action baru. Strana, která je na tahu, dostane v chatu varování se zvonkem při zbývajících 10 sekundách a znovu při 3. `/rdplserver game pass` nebo pravý klik předmětem s `passesTurn` ukončí tah předčasně: hráč předá jen tah vlastní strany a příkazový blok nebo konzole předá toho, kdo je na tahu.
+
+Konec na `endsAtScore` nebo `cycles` ukončí kolo jako jakýkoli jiný konec: ukáže se pořadí, platí `awardsTo` a `tiebreak` a `ends.resets` resetuje mapu. Tahy se střídají jen podle prvního souboru skóre s `turns`. Znění určují klíče `turn`, `turnclock`, `turnwarn`, `turnout`, `turnpass`, `turngap`, `notturn` a `noturns`, které může změnit `says` souboru kostek.
+
+## Nájezdy
+
+*herní režimy*
+
+`<namespace>/raids/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jeden nájezd.
+
+Nájezd je druh, jaký hra má od 1.14, svedený nad jednou z vesnic samotné hry. Začíná, když je hráč nesoucí efekt `omen` uvnitř vesnice: efekt se odebere a každému hráči v dosahu `reach` od středu vesnice se zobrazí boss bar. Po `waveDelay` ticích dorazí první vlna na kruhu kolem vesnice a pochoduje ke středu, přičemž cestou útočí na hráče, vesničany a železné golemy. Nájezdníci si navzájem nikdy neubližují ani se nezaměřují, takže zbloudilý šíp nebo rána mezi dvěma z nich nic nedělá. Lišta ukazuje zdraví, které vlně zbývá, a počítá nájezdníky, jakmile zbývají dva nebo méně. Jakmile vlna zmizí, další čeká `waveDelay` ticků. Když zmizí poslední vlna a dvě sekundy se nic nevrátilo, nájezd je vyhrán; když je každý vesničan mrtvý nebo vesnice sama zmizí poté, co vlna přišla, je prohrán. V obou případech to lišta říká třicet sekund a odpovídající funkce se spustí jako každý hráč v dosahu.
+
+Probíhající nájezd se ukládá se světem a jeho nájezdníci po opětovném načtení znovu vyrazí na pochod. Skončí bez závěru v klidném režimu, po `timeout` ticích nebo když žádné místo kolem vesnice nemůže vlnu přijmout. Vesnice je místo, kde hra drží své body vesnice, postele, pracovní bloky a zvony, které si vesničané přivlastňují: její střed je prostředek těch bodů, sahá nejméně 32 bloků kolem něj a její vesničané jsou ti v tomto dosahu a do čtyř bloků od výšky středu. Vlastní `minecraft:bad_omen` hry spouští nejdřív vlastní nájezd hry, takže nájezd pojmenovává efekt vlastního balíčku.
+
+Zatímco je vlna ve vesnici, její vesničané běží domů a zůstávají tam, jako když zazvoní zvon hry. Nájezdníci rozbíjejí dřevěné dveře, které jim stojí v cestě, aby se k nim dostali, dvanáct sekund na dveře, na obtížnosti normální a těžká, zatímco je zapnuté `mobGriefing`; železné dveře vydrží. Blok typu `bell` je vesnický zvon, kdekoli stojí, a zvoní, jak popisuje část [Zvony](#zvony); `bell` nájezdu pojmenovává libovolný jiný blok, který má zvonit jako zvon. Každý zvon ve vesnici zazvoní, když vlna dorazí, a pojmenovaný blok zazvoní také, když ho hráč použije: vesničané do 48 bloků se schovají na patnáct sekund a nájezdníci do 48 bloků září tři. `minecraft:bell` ve vesnicích hry už stojí a lze ho pojmenovat a zvoní dál i způsobem hry; vlastní zvonový blok balíčku se do vesnice umístí přes strukturu NBT, jako pozemek nebo jako středový prvek náměstí.
+
+```json
+{
+  "omen": "mypack:bad_omen",
+  "name": "Raid",
+  "color": "red",
+  "waveDelay": 300,
+  "spawnDistance": 32,
+  "sound": "mypack:raid_horn",
+  "wins": "mypack:raid_won",
+  "loses": "mypack:raid_lost",
+  "bell": "minecraft:bell",
+  "waves": [
+    [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
+    [ { "entity": "minecraft:evoker" }, { "entity": "minecraft:vindicator", "count": 4 } ]
+  ]
+}
+```
+
+### Nájezd
+
+*nájezdy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------- | ------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `omen` | název efektu | žádný, povinné | Efekt, který nájezd spustí, když je jeho nositel uvnitř vesnice. Postačí jakýkoli registrovaný efekt, včetně lektvaru vlastního balíčku |
+| `name` | text | `Raid` | Titulek boss baru |
+| `color` | text | `red` | Barva lišty: `pink`, `blue`, `red`, `green`, `yellow`, `purple` nebo `white` |
+| `waves` | seznam vln | žádný, povinné | Každá vlna je seznam skupin a vlny přicházejí v pořadí |
+| `waveDelay` | celé číslo | `300` | Ticky před první vlnou a mezi koncem vlny a další |
+| `spawnDistance` | celé číslo | `32` | Jak daleko od středu vesnice vlna dorazí. První pokusy jsou na dvojnásobku, pak na této hodnotě, pak uvnitř vesnice |
+| `reach` | celé číslo | `96` | Hráči do tolika bloků od středu vidí lištu a závěrečná funkce se spustí jako oni. Nájezdník, který zabloudí šestnáct bloků za ni, nájezd opouští |
+| `timeout` | celé číslo | `48000` | Ticky, po nichž nedokončený nájezd skončí bez závěru. `0` ho nikdy nezastaví |
+| `sound` | název zvuku | žádný | Přehraje se každému hráči v dosahu, ze strany, odkud vlna přichází, když každá vlna dorazí |
+| `wins` | funkce | žádný | Spustí se jako každý hráč v dosahu, když je nájezd vyhrán |
+| `loses` | funkce | žádný | Spustí se jako každý hráč v dosahu, když je nájezd prohrán |
+| `bell` | název bloku nebo seznam | žádný | Další bloky, které zvoní jako zvon, když je hráč použije a kdykoli dorazí vlna. Blok typu `bell` zvoní, i když není pojmenován |
+
+### Jedna skupina
+
+*nájezdy*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------- | ------------------------- | -------------- | ------------------------------------------------------------------------------- |
+| `entity` | název entity | žádný, povinné | Co přichází. Varianta entity si ponechá veškeré své chování a získá pochod |
+| `count` | celé číslo nebo `{ "min", "max" }` | `1` | Kolik jich přijde |
+
+---
+
+## Karty
+
+*herní režimy*
+
+`<namespace>/cards/*.json`
+
+Název souboru si zvolíš sám, čte se jen složka, a více souborů se skládá. Každý soubor je jedno pravidlo a jeho id je `<namespace>:<file name>`. Pravidlo čeká na spouštěč, zkontroluje své `when` a ukáže kartu svému publiku; může také spustit funkci. Na klientovi nemusí být nic: hráč bez módu dostane rohovou kartu jako řádky chatu a středovou kartu jako titulek.
+
+Každá zpráva, kterou tento mód říká sám, je vestavěné pravidlo, uvedené níže. Balíček jedno změní napsáním souboru s tímto id, `rdpl/cards/<name>.json`, který nepotřebuje žádný spouštěč: co vynechá, zůstane tak, jak je dnes, a `{text}` zastupuje zprávu, kterou by mód řekl. Balíček, který žádné z nich nepíše, vidí každou zprávu jako dřív.
+
+```json
+{
+  "trigger": "biome_enter",
+  "biomes": ["minecraft:desert", "#minecraft:is_badlands"],
+  "title": "The Dry Lands",
+  "lines": ["Day {day}, {player}.", "Water is scarce from here on."],
+  "style": "center",
+  "image": "mypack:textures/gui/desert_card.png",
+  "color": "3A2A10",
+  "ticks": 120,
+  "when": { "timeFrom": 0, "timeTo": 12000 },
+  "repeat": "once_per_player"
+}
+```
+
+```json
+{
+  "lines": ["{text}", "Speak to the gatekeeper for more."],
+  "icon": "minecraft:ender_eye",
+  "cooldown": 30
+}
+```
+
+Druhý soubor, uložený jako `rdpl/cards/gate_blocked.json`, změní červený řádek na action baru, který ukazuje zavřená brána, na kartu s ikonou a druhým řádkem a ukáže ji nejvýš jednou za třicet sekund.
+
+```json
+{
+  "trigger": "first_join",
+  "title": "Ruby World",
+  "lines": ["Welcome, {player}."],
+  "style": "center",
+  "background": false,
+  "font": "mypack:runes"
+}
+```
+
+Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu za sebou, jen s textem a jeho stínem, nakresleným písmem balíčku.
+
+### Spouštěče
+
+*karty*
+
+| Spouštěč | Vyžaduje | Spustí se, když |
+| ----------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `command` | nic | Spustí se `/rdplserver card <rule> [players]`. Příkaz přeskočí `when`, `repeat` a `cooldown` a stále spouští `runs`. Takto lze ukázat jakékoli pravidlo, ať má jakýkoli spouštěč |
+| `first_join` | nic | Hráč se poprvé připojí do světa |
+| `dimension_enter` | `dimension` | Hráč dorazí do této dimenze |
+| `biome_enter` | `biomes` | Hráč vejde do jednoho z těchto biomů odjinud |
+| `structure_enter` | `structures` | Hráč vejde do jedné z těchto struktur zvenčí |
+| `advancement` | `advancement` | Hráč získá tento pokrok |
+| `time_of_day` | `time` | Denní hodiny projdou tímto tickem, `0` až `23999`, zatímco jsou hráči v dimenzi. Hodiny nastavené příkazem nebo postelí se nepočítají |
+| `day` | nic, nebo `day` | V dimenzi začne nový den; s `day` jen tento den |
+| `craft` | `item` | Hráč vyrobí tento předmět |
+| `pickup` | `item` | Hráč zvedne tento předmět |
+| `kill` | `entity` | Hráč zabije tuto entitu, nebo `count`-tou z nich |
+| `respawn` | nic | Hráč se po smrti znovu zrodí |
+| `death` | nic | Hráč zemře |
+| `y_level` | `below` nebo `above` | Hráč klesne pod tuto výšku nebo vystoupí nad ni |
+| `play_time` | `minutes` | Čas hráče ve světě dosáhne tolika minut, počítáno od zavření úvodu do světa, nebo od připojení, když se mu žádný úvod nezobrazuje |
+| `score` | `objective` | Skóre hráče v tomto cíli dosáhne `score` |
+
+Biom, struktura, výška, herní čas a skóre se kontrolují jednou za sekundu u každého hráče a spouštějí se při změně zvenčí dovnitř, nikdy při první kontrole po připojení. Pravidlo `time_of_day` nebo `day`, jehož publikum není `player`, se spustí jednou pro dimenzi místo jednou pro každého hráče v ní.
+
+Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa, počká a ukáže se, až se úvod zavře, ať je její spouštěč jakýkoli, včetně `command`. Zahodí se, pokud hráč do té doby odejde.
+
+### Nastavení spouštěčů
+
+*karty*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------- | ---------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger` | text | žádný, povinné | Jeden ze spouštěčů výše. Vestavěné pravidlo žádný nebere |
+| `dimension` | text | žádný | Id dimenze, například `minecraft:the_nether`; id bez namespace se čte jako `minecraft:`. U `dimension_enter` je to ta, do které se vstoupilo; u každého jiného spouštěče omezuje pravidlo na hráče v té dimenzi |
+| `biomes` | seznam | žádný | Id biomů, například `minecraft:desert`, nebo `#tag` pro tag biomů, například `#minecraft:is_ocean` |
+| `structures` | seznam | žádný | Id struktur, například `minecraft:village_plains`, nebo `#tag` pro tag struktur, například `#minecraft:village`, které se počítají, zatímco je hráč uvnitř některého jejich kusu; nebo jméno struktury, kterou balíček umisťuje přes `structures`, které se počítá do vzdálenosti `radius` od místa, kde byla umístěna |
+| `radius` | celé číslo | `32` | Jak blízko se počítá jako uvnitř vlastní struktury balíčku |
+| `advancement` | text | žádný | Id pokroku |
+| `item` | text | žádný | Předmět, zapsaný jako jinde v balíčku, například `minecraft:diamond_sword` |
+| `entity` | text | žádný | Id entity, například `minecraft:zombie` |
+| `count` | celé číslo | `1` | Pro `kill`: kolik zabití je potřeba. Počet začíná znovu po spuštění pravidla |
+| `below`, `above` | celé číslo | žádný | Pro `y_level`: výška, pod kterou nebo nad kterou se jde |
+| `time` | celé číslo | `0` | Pro `time_of_day`: tick dne |
+| `day` | celé číslo | žádný | Pro `day`: jediný den, kdy se spustit. Bez něj každý den |
+| `minutes` | celé číslo | žádný | Pro `play_time` |
+| `objective`, `score` | text, celé číslo | žádný, `1` | Pro `score`: cíl a hodnota, které je třeba dosáhnout |
+| `requires` | seznam id módů nebo namespace balíčků | žádný | Soubor se přeskočí, pokud nejsou přítomny všechny |
+
+### Kdy
+
+*karty*
+
+`when` obsahuje podmínky, které musí všechny platit ve chvíli, kdy se spouštěč spustí.
+
+| Nastavení | Typ | Co kontroluje |
+| --------------------------- | --------- | ------------------------------------------------------------------------------------------- |
+| `biomes` | seznam | Hráč stojí v jednom z těchto biomů, zapsaných jako u spouštěče |
+| `timeFrom`, `timeTo` | celé číslo | Denní hodiny jsou uvnitř tohoto okna, které může přesahovat půlnoc, například `13000` až `1000` |
+| `dayAtLeast` | celé číslo | Číslo dne je alespoň toto |
+| `advancement` | text | Hráč má tento pokrok |
+| `gameMode` | text | Hráč je v tomto herním režimu: `survival`, `creative`, `adventure` nebo `spectator` |
+| `team` | text | Hráč je v tomto týmu tabulky skóre |
+| `objective`, `scoreAtLeast` | text, celé číslo | Skóre hráče v cíli je alespoň toto |
+
+### Karta
+
+*karty*
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------ | ------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title` | text | žádný | První řádek, na středové kartě kreslený větší |
+| `lines` | seznam | žádný | Až šestnáct řádků. Pravidlo potřebuje titulek nebo řádky, kromě vestavěného. Doplní se `{player}`, `{dim}`, `{biome}` a `{day}`; `{text}` je vestavěná zpráva a na samostatném řádku dá všechny její řádky |
+| `style` | text | `corner` | `corner` je karta vpravo dole, kterou ukazuje `saysCard`; `center` je karta uprostřed obrazovky; `chat` jsou řádky chatu; `bar` je action bar |
+| `icon` | text | `saysIcon` | Předmět nakreslený na rohové kartě. Prázdný nenakreslí žádný |
+| `color` | text | `saysColor` | Barva pozadí karty jako hex |
+| `image` | text | `saysImage` | PNG z klientských prostředků balíčku, roztažený přes kartu jako její pozadí |
+| `background` | boolean | `saysBackground` | `false` zahodí panel, jeho okraj a barevný pruh; text si drží stín a `image` se stále kreslí |
+| `font` | text | `saysFont` | Písmo, jímž se kreslí text karty, jako `namespace:name`. Prázdné používá písmo RDPL |
+| `ticks` | celé číslo | `0` | Jak dlouho karta zůstává, včetně mizení. `0` ponechá standardních 160 |
+| `audience` | text | `player` | Kdo ji vidí: `player`, `everyone`, `dimension` (všichni v dimenzi hráče) nebo `team` (tým hráče na tabulce skóre) |
+| `repeat` | text | `always` | `always`, `once_per_player`, `once_per_world` nebo `once_per_session` (znovu po opětovném přihlášení hráče) |
+| `cooldown` | celé číslo | `0` | Sekundy, než se pravidlo znovu spustí pro stejného hráče |
+| `runs` | text | žádný | Funkce spuštěná jako hráč, když se pravidlo spustí |
+
+Rohová karta jde do chatu, když je `saysCard` vypnuté. Co bylo hráči ukázáno, se ukládá u hráče, takže to přežije smrt i přesun mezi dimenzemi; `once_per_world` se ukládá u světa.
+
+Písmo RDPL, `resourcedatapackloader:rdpl`, je výchozí pro veškerý text: karty, zprávy Says, uvítání a zadržovací poznámky, úvod do světa i vlastní nabídky hry, chat, HUD a popisky. Jeho tučný a kurzívní řez jsou `resourcedatapackloader:rdpl_bold` a `resourcedatapackloader:rdpl_italic`. Písmo kouzelnického stolu zůstává takové, jaké má hra.
+
+RDPL dodává tato písma a znaky. `font` karty, poznámky nebo úvodu může pojmenovat písmo RDPL krátkým názvem, nebo jeho plným id:
+
+| Název | Co kreslí |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl` (nebo `resourcedatapackloader:rdpl`) | Písmo RDPL, s cyrilicí (U+0400 až U+04FF) a runovou abecedou (U+16A0 až U+16F8) |
+| `rdpl_runic` (nebo `resourcedatapackloader:rdpl_runic`) | Runová šifra: písmena A až Z a a až z se kreslí jako runy a každý jiný znak se kreslí písmem RDPL. Tučný úsek se kreslí v `rdpl_runic_bold` a kurzívní v `rdpl_runic_italic` |
+| Runy, U+16A0 až U+16F8 | Zapsané jako samotné runové znaky (ᚠ ᚢ ᚦ ᚨ ᚱ ᚲ), v jakémkoli textu, který písmo RDPL kreslí, včetně chatu; tučné a kurzívní úseky si drží svůj řez |
+
+Písmo karty je definice písma v `assets/<namespace>/font/<name>.json`, ve stejném formátu jako vlastní písma hry, a karta se přizpůsobí šířkám tohoto písma. Poskytovatel `bitmap`, jehož `file` je `<namespace>:font/<name>.png` a jehož `chars` je šestnáct řádků `ascii.png` hry, čte stejné PNG, jaké používá sestavení pro 1.12.2 v `assets/<namespace>/textures/font/<name>.png`, takže jeden balíček kreslí stejné písmo na všech třech verzích. `minecraft:default` pojmenovává písmo hry. Písmo, které nemá žádný balíček, se vrátí k písmu hry s jedním varováním v `rdpl.log`.
+
+Balíček změní písmo RDPL dodáním vlastního `assets/resourcedatapackloader/font/rdpl.json` nebo PNG pod `assets/resourcedatapackloader/textures/font/`, z nichž se kreslí; obojí ho nahradí všude, včetně textu hry. Text hry používá písmo RDPL, protože mód dodává `assets/minecraft/font/default.json` s písmem RDPL na prvním místě a vlastními písmy hry za ním pro každý jiný znak. `assets/minecraft/font/default.json` balíčku se čte před tím od módu, takže kopie vanilla souboru vrátí textu hry jeho vlastní písmo; vlastní text RDPL si ponechá písmo RDPL, pokud `saysFont` není `minecraft:default`.
+
+Titulky a řádky karet, zprávy Says a uvítací a zadržovací poznámky berou vložené značky z tabulky v části Úvod do světa, Formátování textu: tučné, kurzívu, tučnou kurzívu, přeškrtnutí, kód, odkazy a runové úseky. Tučný úsek se kreslí v řezu `_bold` písma a kurzívní v řezu `_italic`; u písma bez tohoto řezu úsek převezme tučný nebo kurzívní styl hry a karta se přizpůsobí úsekům, jak se kreslí. Hráči bez módu dostanou stejné značky jako formátování chatu a runový úsek jako jeho prosté písmena.
+
+### Vestavěná pravidla
+
+*karty*
+
+| Id | Zpráva | Odkud pochází její text |
+| ----------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `rdpl:gate_unlocked` | Brána se otevře | `unlockedMessage` v [Brány](#brány) |
+| `rdpl:gate_blocked` | Zavřená brána hráče vrátí, na action baru | `blockedMessage` v [Brány](#brány) |
+| `rdpl:team_joined` | Hráč se připojí ke straně | `displayName` strany |
+| `rdpl:team_lead` | Vedení strany přejde na hráče | `leadSays` v [Týmy](#týmy) |
+| `rdpl:team_picked` | Hráč je vybrán pro stranu | `displayName` strany |
+| `rdpl:team_round_ended` | Kolo skončilo, takže se hráč přesune na stranu | `displayName` strany |
+| `rdpl:lobby_joins` | Hráč, který se přihlásí uprostřed kola, je poslán do lobby | `opens.joinsSays` v [Lobby](#lobby) |
+| `rdpl:lobby_note` | Řádek lobby uprostřed obrazovky | `opens.says`, `opens.leaderSays` v [Lobby](#lobby) |
+| `rdpl:scoring_results` | Pořadí na konci kola, každému hráči | `results.card`, `results.title`, `results.icon`, `results.image`, `results.background`, `results.seconds` v [Výsledky](#výsledky) |
+| `rdpl:scoring_out` | Vyřazený hráč | `ends.outSays` v [Jak kolo končí](#jak-kolo-končí) |
+| `rdpl:reset_lead` | Vedoucí resetuje kolo | `reset.leadSays` v [Resetování kola](#resetování-kola) |
+| `rdpl:reset_vote` | Je svoláno hlasování o resetu | `reset.voteSays` |
+| `rdpl:reset_pass` | Hlasování projde | `reset.passSays` |
+| `rdpl:reset_fail` | Hlasování neprojde | `reset.failSays` |
+| `rdpl:anvil_waits` | Práce kovadliny čeká na pokrok | [Práce s kovadlinou](#práce-s-kovadlinou) |
+| `rdpl:threat` | Změní se pásmo hrozby hráče | `threatSays` |
+| `rdpl:prospect` | Každý řádek, který hlásí nález při průzkumu | nález |
+| `rdpl:prospect_none` | Průzkum nic nenašel | jazykový soubor |
+| `rdpl:board_result` | Skončí desková hra | jazykový soubor |
+| `rdpl:pregen_ended` | Předgenerování skončí nebo se zastaví | `pregenFinishedSays`, `pregenStoppedSays` v [Předgenerování](#předgenerování) |
+| `rdpl:pregen_running` | Řádek průběhu, který hráč vidí při připojení během předgenerování | `pregenRunningSays` |
+
+`welcomeSays` není pravidlo a drží si své logo; pravidlo `first_join` nebo `dimension_enter` se k němu přidá. Odpočty a součty kola na action baru zůstávají takové, jak je určují jejich nastavení.
+
+## Kostky a balíčky karet
+
+*herní režimy*
+
+`<namespace>/dice/*.json`
+
+Název souboru si zvolíš sám a více souborů se sčítá. Soubor pojmenovává kostky, jejichž stěny mají váhy, balíčky karet, ze kterých se táhne bez vracení, dále kdo ve výchozím stavu slyší hod a znění výsledků. Samotné hody se provádějí příkazem [`/rdplserver game`](#hry) a libovolným předmětem s [`rolls`](#klíče-souboru-předmětu).
+
+```json
+{
+  "audience": "all",
+  "dice": {
+    "fate": { "plus": 1, "blank": 2, "minus": 1 }
+  },
+  "decks": {
+    "mobs": ["Creeper", "Zombie", "Skeleton", "Enderman"]
+  },
+  "says": {
+    "coin": "{player} tosses the old coin: {result}"
+  }
+}
+```
+
+| Klíč | Typ | Výchozí | Co dělá |
+| --- | --- | --- | --- |
+| `audience` | text | `all` | Kdo slyší hod, který nepojmenovává vlastní publikum: `self`, `team`, `all`, `radius <blocks>` nebo `silent`. Vyhrává první balíček, který ho nastaví; pozdější se zapíše do logu |
+| `dice` | objekt | prázdný | Název kostky na objekt stěny a váhy. Stěna s váhou 2 padá dvakrát tak často jako stěna s váhou 1. Váhy jsou celá čísla 1 nebo víc |
+| `decks` | objekt | prázdný | Název balíčku karet na jeho seznam karet, nebo na objekt `{ "cards": [...], "reshuffle": false }`. `reshuffle` je `true`, pokud není nastaveno jinak: tah z prázdného balíčku zamíchá všechny karty a táhne. S `false` zůstane balíček prázdný až do `game deck shuffle` |
+| `says` | objekt | prázdný | Klíč znění na text, použitý místo vlastního znění módu ve všech jazycích. Klíče a jejich zástupné značky jsou níže |
+
+Název kostky nebo balíčku karet patří prvnímu balíčku, který ho načte. Jiný balíček se stejným názvem nebo s názvem `coin` se vynechá a v logu se objeví chyba. Kostka z balíčku se hází příkazem `game die <name>` a ukáže svou stěnu; uložena jako skóre se počítá jako pořadí stěny v souboru, počínaje 1.
+
+Balíček karet je hromádka, která ubývá. `game deck draw <name>` vezme jednu náhodnou kartu z toho, co zbylo, a nic se nevrací, dokud se prázdný balíček sám nezamíchá při dalším tahu nebo dokud `game deck shuffle <name>` nevrátí všechny karty. Hromádka se ukládá se světem, takže restart ji nezamíchá znovu.
+
+Každý hod používá vlastní náhodu světa a zapisuje se do logu s tím, kdo ho provedl, co provedl a co padlo. `game last` ukáže nejnovější z nich. Výsledky se posílají jako běžné řádky chatu sestavené na serveru, takže je přečte i hráč bez módu. Zápis kostek se čte jako počet, `d`, počet stěn a volitelný modifikátor: `3d8-2` jsou tři osmistěnné kostky sečtené dohromady minus 2 a `d20` je jedna dvacetistěnná kostka. Chat i log hod vypíšou slovy, například „Boss hodil 3 osmistěnnými kostkami, minus 2: [2, 6, 7] = 13“, a `{dice}` obsahuje právě toto znění.
+
+| Klíč znění | Zástupné značky |
+| --- | --- |
+| `coin`, `pickplayer`, `pickteam` | `{player}`, `{result}` |
+| `heads`, `tails`, `lastnone`, `nobody`, `notallowed`, `usage` | žádné |
+| `die` | `{player}`, `{dice}`, `{sides}`, `{result}` |
+| `packdie` | `{player}`, `{die}`, `{result}` |
+| `dice` | `{player}`, `{dice}`, `{rolls}`, `{result}` |
+| `advantage`, `disadvantage` | `{player}`, `{dice}`, `{first}`, `{second}`, `{result}` |
+| `pickmember` | `{player}`, `{team}`, `{result}` |
+| `draw`, `reshuffled` | `{player}`, `{deck}`, `{result}`, `{left}` |
+| `shuffle` | `{player}`, `{deck}`, `{left}` |
+| `left`, `empty`, `nodeck` | `{deck}` a `{left}` pro `left` |
+| `teamroll` | `{member}`, `{dice}`, `{result}` |
+| `teamrollwin` | `{result}`, `{score}` |
+| `tiebreak` | `{objective}`, `{sides}`, `{result}` |
+| `notie`, `noobjective` | `{objective}` |
+| `turn`, `turnclock`, `turnwarn` | `{group}`, `{seconds}` |
+| `turnout`, `turnpass` | `{group}` |
+| `turngap` | `{seconds}` |
+| `notturn`, `noturns` | žádné |
+| `badsides`, `badroll`, `badaudience`, `nodie`, `noteam` | `{sides}`, `{roll}`, `{audience}`, `{name}`, `{team}` v tomto pořadí |
+
+Vlastní znění módu je v jeho jazykových souborech jako `rdpl.game.<key>`, takže ho balíček zdrojů může měnit také po jednotlivých jazycích.
+
+## Deskové hry
+
+*herní režimy*
+
+`<namespace>/games/*.json`
+
+Soubor je jedna desková hra pojmenovaná podle názvu souboru. Určuje herní desku, obě strany, figury a jejich tahy, výchozí postavení i to, co výsledek vyplatí. `game board start <game> <board>` postaví desku tam, kde stojí odesílatel, nebo na zadané pozici: pole se kladou o jeden blok níž, sloupce vedou na východ a řady na jih a každá figura je mob podle volby balíčku, držený na místě, tichý a nezranitelný, pojmenovaný podle své strany. Sebraná figura stojí vedle desky.
+
+```json
+{
+  "name": "Chess",
+  "board": { "files": 8, "ranks": 8, "light": "minecraft:quartz_block", "dark": "minecraft:coal_block" },
+  "sides": [
+    { "name": "White", "color": "white" },
+    { "name": "Black", "color": "dark_gray" }
+  ],
+  "pieces": {
+    "pawn": {
+      "letter": "p", "value": 1, "mobs": ["minecraft:snow_golem", "minecraft:zombie"],
+      "moves": [
+        { "steps": [[0, 1]], "captures": "never", "firstRange": 2 },
+        { "steps": [[-1, 1], [1, 1]], "captures": "only" }
+      ],
+      "enPassant": true, "promotes": ["queen", "rook", "bishop", "knight"]
+    },
+    "knight": {
+      "letter": "n", "value": 3, "mobs": ["minecraft:horse", "minecraft:skeleton_horse"],
+      "moves": [{ "steps": [[1, 2], [2, 1], [2, -1], [1, -2], [-1, -2], [-2, -1], [-2, 1], [-1, 2]] }]
+    },
+    "bishop": {
+      "letter": "b", "value": 3, "mobs": ["minecraft:villager", "minecraft:witch"],
+      "moves": [{ "steps": [[1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "rook": {
+      "letter": "r", "value": 5, "mobs": ["minecraft:iron_golem", "minecraft:wither_skeleton"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1]], "slides": true }]
+    },
+    "queen": {
+      "letter": "q", "value": 9, "mobs": ["minecraft:polar_bear", "minecraft:blaze"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]], "slides": true }]
+    },
+    "king": {
+      "letter": "k", "value": 0, "royal": true, "castles": "rook", "mobs": ["minecraft:evoker", "minecraft:vindicator"],
+      "moves": [{ "steps": [[1, 0], [0, 1], [-1, 0], [0, -1], [1, 1], [1, -1], [-1, -1], [-1, 1]] }]
+    }
+  },
+  "setup": ["RNBQKBNR", "PPPPPPPP", "........", "........", "........", "........", "pppppppp", "rnbqkbnr"],
+  "rules": { "quietDraw": 100, "repeatDraw": 3 },
+  "clock": { "minutes": 10, "addSeconds": 2 },
+  "ai": 2,
+  "result": { "objective": "boardwins", "win": 3, "draw": 1, "loss": -1 }
+}
+```
+
+| Klíč | Typ | Výchozí | Co dělá |
+| --- | --- | --- | --- |
+| `name` | text | název souboru | Jméno zobrazené v chatu a u výsledku |
+| `board` | objekt | 8 × 8 | `files` a `ranks`, každé 2 až 16, a stavy bloků `light` a `dark` položené pod pole. Když chybí, země zůstane, jaká je |
+| `sides` | seznam | `White`, `Black` | Dva objekty `name` a `color`, barva chatu. První strana táhne první a staví z velkých písmen |
+| `pieces` | objekt | žádný | Název figury na objekt klíčů figury níže |
+| `setup` | seznam | žádný | Jeden text na řadu, řada 1 první. Písmeno figury ji položí, velké pro první stranu a malé pro druhou, a `.` nechá pole prázdné |
+| `rules` | objekt | žádný | `mustCapture`, `chainCaptures`, `quietDraw` a `repeatDraw`, níže |
+| `clock` | objekt | žádný | `minutes` pro každou stranu a `addSeconds` přidané po každém tahu. Strana, jíž vyprší čas, prohrává |
+| `ai` | číslo | `2` | Úroveň počítače, 1 až 4, pro stranu, kterou nikdo nedrží |
+| `result` | objekt | žádný | `objective` vyplacený na konci hry, s body `win`, `draw` a `loss`, 1, 0 a 0, když chybí |
+| `quiet` | true nebo false | `false` | Vynechá z chatu řádky tahů, výběrů a šachů. Odmítnutí a výsledek se stále posílají a každý tah se stále zapisuje do `logs/rdpl.log` |
+
+| Klíč figury | Typ | Co dělá |
+| --- | --- | --- |
+| `letter` | text | Písmeno použité v `setup` a v `game board show` |
+| `value` | číslo | Její cena pro počítač |
+| `mobs` | seznam | Mob pro každou stranu, první strana první. `mob` dává jednoho pro obě |
+| `moves` | seznam | Kroky jako objekty: `steps`, seznam odsazení `[file, rank]` viděných od vlastního konce strany; `slides`, pro pokračování, dokud nenarazí; `captures`, `both` (výchozí), `never`, `only` nebo `hop`, který přeskočí figuru druhé strany na prázdné pole za ní a vezme ji; a `firstRange`, kolik kroků smí udělat při prvním tahu |
+| `royal` | true nebo false | Strana prohrává, když je tato figura v matu, a žádný tah ji nesmí nechat napadenou. Bez královské figury strana, která zůstane bez tahu, prohrává |
+| `enPassant` | true nebo false | Smí vzít figuru, která právě přeskočila dvě pole kolem ní |
+| `castles` | text | Partnerská figura: tato figura se posune o dvě pole k nepohnutému partnerovi, který ji přeskočí |
+| `promotes` | seznam | Čím se smí stát na vzdálené řadě. Použije se první, pokud tah nejmenuje jinou |
+
+| Pravidlo | Co dělá |
+| --- | --- |
+| `mustCapture` | Strana, která může brát, musí brát |
+| `chainCaptures` | Po braní skokem pokračuje stejná figura v braní, dokud může |
+| `quietDraw` | Kolik tahů v řadě, počítáno za obě strany, smí uplynout bez braní nebo tahu figury, která může být proměněna, než je hra remíza. 0 nikdy nekončí remízou |
+| `repeatDraw` | Hra je remíza, když se stejná pozice se stejnou stranou na tahu objeví tolikrát; 3 je šachové trojnásobné opakování. Počítají se jen pozice od posledního braní nebo tahu figury, která může být proměněna. 0 nikdy nekončí remízou |
+
+Strana patří prvnímu hráči, který klikne pravým tlačítkem na některou její figuru, nebo jeho týmu na výsledkové tabuli, pokud v nějakém je, takže ji pak může hrát kterýkoli člen. Stranu, kterou nikdo neovládá, hraje počítač, jakmile je druhá strana na tahu, nebo ihned, když pro ni `game board ai` nastaví úroveň; počítač přemýšlí mimo vlákno serveru a svůj tah provede na něm. Pravým tlačítkem na figuru zobrazíš, kam může jít, a pak pravým tlačítkem na pole nebo figuru druhé strany tam táhneš. `game board move` dělá totéž podle názvů polí, například `e2 e4`, s názvem figury na konci pro proměnu. Když tah proměňuje a `promotes` uvádí víc než jednu figuru, hráč si vybere z klikacích voleb v chatu; první se zahraje, pokud do 10 sekund nepřijde žádná volba nebo hráč klikne místo toho na desku. Počítač vybere tu, kterou považuje za nejlepší. Figura, která bere, nejprve udeří sebranou švihem, zablikáním poranění a zvukem úderu, ale bez poškození, a sebraná figura se pak přesune do své řady vedle desky.
+
+`game board resign` hru vzdá. `game board draw` nabídne remízu, kterou druhá strana přijme stejným příkazem; počítač ji odmítne, když stojí lépe. `game board takeback` požádá o vrácení posledního tahu žadatele a druhá strana souhlasí stejným příkazem; proti počítači se vrátí okamžitě.
+
+Deska se v uložených datech světa uchovává jako seznam tahů. Při načtení světa nebo opětovném načtení balíčku se pozice přehraje z tohoto seznamu, figury se vrátí tak, aby odpovídaly, a každá starší figura desky se odstraní.
+
+Na konci `result` vyplatí držiteli každé strany do jejího cíle (objective), jako řádek hráče nebo týmu. Výsledek dostanou hráči poblíž desky a ti, kdo drží stranu, jako karta `rdpl:board_result`, pokud ji nastavuje soubor karet, a jinak jako řádek chatu. Znění je v jazykových souborech módu jako `rdpl.game.board.<key>`.
+
+---
+
+# Ovládání
+
+## Vrstva ovládání
+
+*ovládání*
+
+Vše, co generování zastavuje nebo mění, je rozděleno do skupin a každá skupina má v kategorii `control` konfigurace jeden klíč se třemi hodnotami:
+
+| Hodnota   | Co znamená                                                       |
+| --------- | -------------------------------------------------------- |
+| `default` | Rozhoduje balíček. Hodnoty konfigurace jsou záložní              |
+| `global`  | Vyhrává konfigurace. Sekce balíčků se ignorují                   |
+| `off`     | Skupina je zcela vypnutá a žádný balíček ji nemůže zapnout       |
+
+Skupiny jsou `ores`, `generators`, `biomes`, `structures`, `spawning`, `bedrock`, `voidWorld`, `recipes`, `terrain`, `replacements`, `villages`, `entities`, `chunks`, `blastPlaster`, `commands` a `server`.
+
+Nastavení se řeší **sekce biomu → světová šablona → konfigurace**. Blok `settings` světové šablony používá stejné názvy klíčů jako konfigurace, takže je balíček nastavuje stejným způsobem jako ty:
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "monsterCap": 40,
+    "flatBedrock": true,
+    "worldGameMode": "creative",
+    "oreWhitelist": ["minecraft", "mypack"],
+    "pregenOnNewWorld": 63
+  }
+}
+```
+
+Když je `control` skupiny na `default`, tyto hodnoty vyhrávají, na `global` se ignorují a na `off` celá skupina nedělá nic, ať balíček říká cokoli. Klíč, který šablona jmenuje a který nic nečte, je jednou zmíněn varováním v logu, stejně jako klíč v sekci `biomes`, který není nastavením vesnice.
+
+Soubor konfigurace je `config/resourcedatapackloader-common.toml`. Každý klíč níže tam nese stejné jméno pod svou kategorií a seznam se zapisuje jako seznam TOML, který používá formát konfigurace hry.
+
+## Co dělá která skupina
+
+*ovládání*
+
+Každé nastavení níže se čte přes svou skupinu, takže klíč `control` skupiny rozhoduje, zda poslední slovo mají balíček, nebo konfigurace. Nastavení, které smí balíček nastavit, se objeví v bloku `settings` světové šablony pod stejným jménem; to označené **jen konfigurace** se čte pouze z konfigurace a balíček, který ho zapíše, je varován a ignorován. Výchozí hodnoty jsou ty z konfigurace.
+
+### Rudy
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockOres": true,
+    "logBlockedOres": true,
+    "oreWhitelist": ["minecraft", "mypack"],
+    "prospectItems": ["minecraft:compass=iron_vein|coal_seam", "mypack:dowsing_rod=*,12"],
+    "prospectItemsAreBlacklist": false,
+    "prospectDrops": false,
+    "prospectSlow": 2,
+    "prospectWear": 2,
+    "oreTypes": ["COAL", "IRON"],
+    "oreTypesAreBlacklist": true,
+    "blockOreDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "blockOreDimensionsAreBlacklist": false
+  }
+}
+```
+
+`control.ores` rozhoduje o této skupině. Blokování generování rud podle módu a podle typu rudy.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------------- | --------------- | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockOres` | boolean | `false` | Zabrání každému módu i samotnému Minecraftu generovat rudy. Generovat dál smějí jen módy v oreWhitelist. Ruda je umístěný prvek postavený na prvku rudy nebo rozptýlené rudy hry, tedy těch, pro které 1.12.2 vyvolávalo svou událost rudy, což pokrývá rudy Minecraftu a většiny módů, hlínu, štěrk a druhy kamene. Vlastní položky worldgenu balíčku se nikdy neblokují, ani tímto, ani oreTypes |
+| `logBlockedOres` | boolean | `true` | Zapíše do logu, kdy je poprvé odmítnut každý mód a typ rudy |
+| `oreWhitelist` | seznam id módů | `["minecraft"]` | Módy, které smějí generovat rudy, i když je `blockOres` zapnuté |
+| `prospectItems` | seznam | prázdný | Předměty, které při rozbití bloku plížícím se hráčem prozkoumávají položky worldgenu tvaru žíly, jako item=entry\|entry[,radius in chunks] nebo item=*[,radius], např. minecraft:compass=iron_vein\|coal_seam nebo mypack:rod=*,12. Hlášení jmenuje rudu a světovou stranu |
+| `prospectItemsAreBlacklist` | boolean | `false` | Zapnuto: seznam každého předmětu obsahuje záznamy, které nečte |
+| `prospectDrops` | boolean | `false` | Zapnuto: z bloku rozbitého v režimu průzkumu stále padají předměty a zkušenosti. Vypnuto: vzorek přijde nazmar |
+| `prospectSlow` | celé číslo, 1 až 100 | `2` | Kolikrát déle trvá plížícímu se hráči s označeným předmětem rozbití bloku. `1` je normální rychlost |
+| `prospectWear` | celé číslo, 2 až 1000 | `2` | Kolikanásobek běžného opotřebení stojí nástroj rozbití při průzkumu. `2`, dvojnásobek, je nejnižší povolená hodnota a předmět bez výdrže neplatí nic |
+| `oreTypes` | seznam | prázdný | Typy rud, na které se to vztahuje, ať je generuje kdokoli a ať whitelist říká cokoli. Známé typy: COAL, IRON, COPPER, GOLD, REDSTONE, DIAMOND, LAPIS, EMERALD, QUARTZ, DIRT, GRAVEL, DIORITE, GRANITE, ANDESITE, TUFF, CLAY, SILVERFISH, CUSTOM pro jakoukoli jinou rudu |
+| `oreTypesAreBlacklist` | boolean | `true` | Zapnuto: typy v `oreTypes` jsou blokované. Vypnuto: generují se jen tyto typy |
+| `blockOreDimensions` | seznam | prázdný | Dimenze, na které se blokování rud vztahuje, přičemž prázdné znamená všechny. Dimenze mimo rozsah se nedotkne vůbec, takže tam rudy jiného módu generují, zatímco Overworld zůstává blokovaný |
+| `blockOreDimensionsAreBlacklist` | boolean | `false` | Zapnuto: uvedené dimenze zůstanou nedotčené |
+
+### Biomy
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "logBlockedBiomes": true,
+    "blockBiomes": true,
+    "biomeWhitelist": ["minecraft", "mypack"],
+    "biomeNames": ["minecraft:badlands", "minecraft:wooded_badlands"],
+    "biomeNamesAreBlacklist": true,
+    "blockBiomeDimensions": ["minecraft:overworld"],
+    "blockBiomeDimensionsAreBlacklist": false
+  }
+}
+```
+
+`control.biomes` rozhoduje o této skupině. Blokování biomů podle módu a podle jména a to, čím se nahradí.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------------------------------- | --------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `logBlockedBiomes` | boolean | `true` | Zapíše do logu počet zablokovaných biomů za mód |
+| `blockBiomes` | boolean | `false` | Zabrání generování každého biomu kromě biomů módů v biomeWhitelist. Blokované biomy se stanou biomem prázdnoty, nebo tím, co určují role a záložní biom světové šablony. Blokování každého biomu, zatímco je světová šablona prázdná, bez rolí a s výchozí prázdnotou, udělá z voidWorldDimensions svět prázdnoty |
+| `biomeWhitelist` | seznam id módů | `["minecraft"]` | Módy, jejichž biomy se stále generují, i když je `blockBiomes` zapnuté. Biom balíčku používá namespace balíčku |
+| `biomeNames` | seznam | prázdný | Biomy, na které se to vztahuje, podle id, např. minecraft:birch_forest, nebo podle jména, které hra ukazuje, např. Březový les. Jako blacklist jsou blokovány, ať patří komukoli. Jako whitelist biom na seznamu stále potřebuje svůj mód v biomeWhitelist, dokud je blockBiomes zapnuté |
+| `biomeNamesAreBlacklist` | boolean | `true` | Zapnuto: jména v `biomeNames` jsou blokována. Vypnuto: generují se jen tato jména |
+| `blockBiomeDimensions` | seznam | `["minecraft:overworld"]` | Dimenze, na které se blokování biomů vztahuje. Prázdné znamená všechny |
+| `blockBiomeDimensionsAreBlacklist` | boolean | `false` | Zapnuto: blokování uvedené dimenze přeskočí. Vypnuto: vztahuje se jen na ně |
+
+### Generátory
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockWorldGenerators": true,
+    "generatorWhitelist": ["minecraft", "mypack"],
+    "blockedGenerators": ["tconstruct"],
+    "blockGeneratorDimensions": ["minecraft:overworld"],
+    "blockGeneratorDimensionsAreBlacklist": false,
+    "generatorTypes": ["ores", "lakes"],
+    "generatorTypesAreBlacklist": true,
+    "generatorTypeMap": ["mymod=ores", "sky_island=structures"],
+    "logBlockedGenerators": true
+  }
+}
+```
+
+`control.generators` rozhoduje o této skupině. Blokování worldgenu jiných módů podle módu a podle toho, co vytváří. Generátor je umístěný prvek, který vlastní namespace jeho id; vlastní prvky Minecraftu, prvky tohoto módu a položky worldgenu balíčku se nikdy neblokují.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------------------- | --------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockWorldGenerators` | boolean | `false` | Zabrání každému módu generovat přes jeho vlastní umístěné prvky, čímž módy přidávají slizové ostrovy, jeskynní krystaly a podobně. Generují se jen módy v generatorWhitelist |
+| `generatorWhitelist` | seznam id módů | `["minecraft"]` | Módy, které smějí generovat, i když je `blockWorldGenerators` zapnuté |
+| `blockedGenerators` | seznam id módů nebo částí id | prázdný | Jednotlivé generátory blokované napřímo, ať whitelist říká cokoli, podle id módu nebo části id umístěného prvku |
+| `blockGeneratorDimensions` | seznam | `["minecraft:overworld"]` | Dimenze, na které se blokování generátorů vztahuje. Prázdné znamená všechny |
+| `blockGeneratorDimensionsAreBlacklist` | boolean | `false` | Zapnuto: blokování uvedené dimenze přeskočí. Vypnuto: vztahuje se jen na ně |
+| `generatorTypes` | seznam | prázdný | Typy, na které se to vztahuje, ať generátor vlastní kdokoli a ať whitelist říká cokoli: `ores`, `structures`, `flora`, `lakes`, `terrain`, nebo `unknown` pro ty, kterým nic neodpovídalo. Typ se určuje podle slov v id prvku, takže `crystal_ore` jsou rudy a `slime_island` jsou struktury |
+| `generatorTypesAreBlacklist` | boolean | `true` | Zapnuto: typy v `generatorTypes` jsou blokované. Vypnuto: generují se jen tyto typy |
+| `generatorTypeMap` | seznam `pattern=type` | prázdný | Typy pro generátory, které id nepopisuje, přičemž pattern je id módu nebo část id prvku, např. mymod=ores. Namapované položky se kontrolují před vestavěnými slovy, takže opraví i ten, který slova přečetla špatně |
+| `logBlockedGenerators` | boolean | `true` | Zapíše do logu každý generátor s typem, který dostal, když je poprvé zablokován. `/rdplserver generators` ukazuje průběžné součty podle módu a typu |
+
+### Náhrady
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockReplacements": ["minecraft:andesite=minecraft:stone", "minecraft:oak_log[axis=y]=minecraft:spruce_log[axis=y]"],
+    "blockReplacementDimensions": ["minecraft:overworld"],
+    "blockReplacementDimensionsAreBlacklist": false,
+    "blockReplacementMinHeight": -64,
+    "blockReplacementMaxHeight": 128,
+    "blockReplacementKey": "cleanup_v1",
+    "logBlockReplacements": true
+  }
+}
+```
+
+`control.replacements` rozhoduje o této skupině. Nahrazování bloků v chuncích, které už existují.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------------------------------------- | ------------------ | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockReplacements` | seznam | prázdný | Bloky vyměněné v chuncích při jejich načtení, zapsané jako block=block s volitelným stavem na kterékoli straně, např. minecraft:andesite=minecraft:stone nebo minecraft:oak_log[axis=y]=minecraft:spruce_log[axis=y]. Každý chunk se zpracuje jednou, i nové |
+| `blockReplacementDimensions` | seznam | prázdný | Dimenze, na které se to vztahuje. Prázdné znamená všechny |
+| `blockReplacementDimensionsAreBlacklist` | boolean | `false` | Zapnuto: nahrazování uvedené dimenze přeskočí. Vypnuto: vztahuje se jen na ně |
+| `blockReplacementMinHeight` | celé číslo, -2032 až 2031 | `-64` | Nejnižší y, na které se dívá |
+| `blockReplacementMaxHeight` | celé číslo, -2032 až 2031 | `319` | Nejvyšší y, na které se dívá |
+| `blockReplacementKey` | řetězec | `0000` | Změň ho a každý chunk projde nahrazováním znovu |
+| `logBlockReplacements` | boolean | `true` | Zapíše do logu, kdy se poprvé provede každá náhrada, a součet, když svět dožene |
+
+### Vesnice a města
+
+*co dělá která skupina*
+
+`control.villages` rozhoduje o této skupině. Ulice měst a vesnic, které balíček klade: jejich tvar, výzdoba, mosty, tunely, koleje, pozemky a náměstí.
+
+#### Cesty vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villagePathBlock": "minecraft:stone_bricks",
+    "villagePathExtraWidth": 1,
+    "villageBlockSizes": ["32=3", "64=1"],
+    "villageCitySpacing": 4,
+    "villagePathAlleyBlock": "minecraft:gravel",
+    "villagePathAlleyChance": 25,
+    "villagePathMinimumWidth": 0,
+    "villagePathFlatRun": 6,
+    "villagePlotsLeast": 12,
+    "villagePlotsMost": 30,
+    "villagePlotsBackRow": true,
+    "villageTieStreets": true,
+    "villageLayout": "mypack:downtown",
+    "villagePathCenterBlock": "minecraft:quartz_block",
+    "villagePathCenterDash": 2,
+    "villagePathLineBlock": "minecraft:smooth_stone_slab",
+    "villagePathSidewalkBlock": "minecraft:stone_bricks",
+    "villagePathSidewalkWidth": 2,
+    "villagePathLampBlock": "minecraft:iron_bars",
+    "villagePathLampHeight": 3,
+    "villagePathLampTopBlock": "minecraft:player_head",
+    "villagePathLampSideBlock": "",
+    "villagePathLampStructure": "",
+    "villageWellStructure": ["mypack:plaza_spire=3", "mypack:fountain=1", "empty=1"],
+    "villagePathDeadEnds": ["barrier", "sidewalk"],
+    "villagePathIntersects": ["mypack:crosswalk"]
+  }
+}
+```
+
+**Míchání bloků.** Některá nastavení bloků berou místo jednoho bloku směs: bloky oddělené čárkami, za každým mezera a váha, jako v `"minecraft:stone_bricks 3, minecraft:cobblestone 1"`. Blok bez váhy se počítá jednou. Každý položený blok losuje směs ze seedu světa a svého místa, takže stejný svět vždy postaví stejný vzor. Směs berou nastavení `villagePathVergeBlock`, `villagePathVergeWaterBlock`, `villagePathTunnelBlock`, `villagePathBridgeFrameBlock`, `villagePathBridgeFrameTopBlock`, `villageRailTunnelBlock`, `villageRailDeckBlock`, `villageRailSupportBlock`, `villageRailBarrierBlock`, `villageRailBridgeFrameBlock`, `villageRailBridgeFrameTopBlock`, `villageSubwayTunnelBlock`, `villageSubwayPlatformBlock`, `villageSubwayRailingBlock`, `villageSubwayBenchEndBlock` a `villageSewerMossBlock`. Každé další nastavení bloku používá celou dobu první blok ze směsi.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------- | --------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathBlock` | text | prázdný | Povrch vozovky, když terrainAdaptation klade městské cesty. Prázdné ponechá blok, který by použil biom: pískovec nad pískem, terakota v pustině, udusaná cesta nad zemí |
+| `villagePathExtraWidth` | celé číslo, 0 nebo víc | `0` | Bloky šířky vozovky navíc na každé straně nad obvyklé 3, když terrainAdaptation klade cesty. Rozšiřuje samotné ulice, takže bloky domů mezi nimi ustupují od širokých vozovek |
+| `villageBlockSizes` | seznam `size=weight` | prázdný | Jak hluboké jsou bloky domů mezi rovnoběžnými ulicemi města, losováno jednou na čtvrť z polohy jejího náměstí. Prázdné nastaví každý blok na největší pozemek, který balíček dodává |
+| `villageCitySpacing` | celé číslo, 0 až 256 | `16` | Jak daleko od sebe se zasévají městské čtvrti, ve čtvrtích dimenzovaných podle pozemků (dvojnásobek největšího pozemku plus náměstí a ulice na každé straně, zaokrouhleno nahoru na 16 bloků, nejméně 96): jedna čtvrť v každém čtverci o tolika čtvrtích nese město a při 1 je jím každá čtvrť, náměstí se studnou uprostřed a ulicemi z něj, které navazují na ulice další čtvrti. 0 nezasévá žádné. Když ho balíček nenastaví, nastaví ho `structureSpacing` villages=chunky, nejméně 9 chunků. Čtverec založí své město na své nejplošší čtvrti, nejvýš 10 bloků od nejvyššího bodu k nejnižšímu, v biomu vesnice (vybírá je `structureBiomes` villages=) a ne tam, kde by mohlo začít lesní sídlo; `structureSeparation`, `structureMinDistanceFromSpawn` a `structureMost` villages= drží města od sebe tak, jak držely vesnice, a `structureAt` villages=x,z zakládá města jen tam, kam je připne. Město roste jen na čtvrti v dosahu své první studny, jejichž země stoupá nejvýš o 6 bloků a zůstává nad čarou vody, a město o dvou nebo méně pozemcích a studnách se nepostaví |
+| `villagePathAlleyBlock` | blok | prázdný | Povrch uličky, cesty příliš úzké, než aby nesla čáry a chodníky. Ulička vede mezi chodníky ulic, které potkává, a žádný nenese, a kde se setkává s ulicí, nenamaluje se přechod. Prázdné klade uličky z bloku vozovky |
+| `villagePathAlleyChance` | celé číslo, 0 nebo víc | `0` | Procentní šance, že se ulice položí jako ulička místo v plné šířce. 0 neklade žádné uličky |
+| `villagePathMinimumWidth` | celé číslo, 0 nebo víc | `0` | Nejužší povolená ulice. Ulice, která by se položila užší, se nepoloží vůbec a čtvrť se rozloží kolem mezery. 0 nikdy neodmítne |
+| `villagePathFlatRun` | celé číslo, 0 nebo víc | `6` | Ulice drží každý sklon alespoň tolik bloků, než udělají stupeň, ukotveno k souřadnicím světa, aby se úseky shodovaly napříč kusy. 0 nebo 1 nechá ulici stupňovat každý blok |
+| `villagePlotsLeast` | celé číslo, 0 nebo víc | `0` | Na kolik pozemků město vyroste: čtvrti se přidávají prstenec po prstenci kolem středu, dokud nemají alespoň tolik, nikdy víc než villagePlotsMost. 0 položí samotnou středovou čtvrť |
+| `villagePlotsMost` | celé číslo, 0 nebo víc | `0` | Nejvíc pozemků, které město smí mít: růst se zastaví před čtvrtí, která by to překročila, a žádná čtvrť jich neusadí víc, a čtvrť, která to dosáhne, vynechá uličky, kterým žádný pozemek nečelí. 0 nenastaví žádný strop |
+| `villagePlotsBackRow` | boolean | `true` | Až vesnice vyroste, druhý průchod usadí pozemek přímo za každý pozemek, který čelí ulici, otočený k ní, se stejným losem a stejným testem místa, takže vnitřek bloku domů mezi dvěma ulicemi je zastavěn, ne holý |
+| `villageTieStreets` | boolean | `true` | Zapnuto: čtvrť, která nemůže napojit své ulice na stávající vesnici, dostane přímou spojovací ulici vedenou k nejbližší ulici, se kterou lícuje. Vypnuto: taková čtvrť se zase stáhne |
+| `villageLayout` | text | prázdný | Mapa města rozložená místo plánování čtvrti, pojmenovaná jako mypack:downtown a čtená ze složky citymaps toho balíčku. Prázdné plánuje čtvrť jako obvykle |
+| `villagePathCenterBlock` | blok | prázdný | Středová čára uprostřed vozovky. Prázdné nenakreslí žádnou |
+| `villagePathCenterDash` | celé číslo, 0 nebo víc | `0` | Přerušuje tu čáru: N bloků čáry, pak jeden vozovky. Ukotveno k souřadnicím světa, takže čárky jednoho kusu vozovky pokračují do dalšího. `0` ji nechá souvislou |
+| `villagePathLineBlock` | blok | prázdný | Okrajové čáry mezi vozovkou a chodníkem. Prázdné nenakreslí žádné |
+| `villagePathSidewalkBlock` | blok | prázdný | Chodníky, položené v úrovni vozovky vně okrajových čar. Prázdné neklade žádné |
+| `villagePathSidewalkWidth` | celé číslo, 0 nebo víc | `2` | Jak široký je každý chodník, jakmile je nastaveno `villagePathSidewalkBlock` |
+| `villagePathLampBlock` | text | `minecraft:oak_fence` | Blok, z něhož se staví sloup lampy podél ulice, naskládaný villagePathLampHeight vysoko na obrubníku. Ulice nebo ulička jich má jeden na každém konci, jeden tam, kde na ni navazuje jiná ulice, a jeden každých 7 až 12 bloků mezi tím, na své nižší straně a na druhé jen tam, kde na to je místo, a obratiště jimi lemuje svůj okraj. Žádný nestojí na mostě, v tunelu ani do dvou bloků od dveří. Prázdné nestaví žádné sloupy lamp |
+| `villagePathLampHeight` | celé číslo, 1 nebo víc | `3` | Kolik bloků vysoko sloup stojí před svou hlavou |
+| `villagePathLampTopBlock` | blok | `minecraft:black_wool` | Hlava na vrcholu sloupu. Prázdné ji nechá holou |
+| `villagePathLampSideBlock` | blok | `minecraft:torch` | Světlo zavěšené na každé straně hlavy, směřující ven. Prázdné nezavěsí žádné |
+| `villagePathLampStructure` | text | prázdný | Soubor struktury umístěný jako celá lampa místo skládání tří bloků lampy, pojmenovaný `mypack:street_lamp` a čtený ze složky `structures` toho balíčku. Vystředí se na místo lampy s nejnižší vrstvou na obrubníku a bloky, které položí, jsou drženy, aby je nic jiného nepřepsalo. Prázdné skládá bloky |
+| `villageWellStructure` | seznam | prázdný | Soubory struktur umístěné jako středový prvek každého náměstí, jedna vážená položka na řádek zapsaná name=weight, např. mypack:plaza_spire=3, losovaná jednou na náměstí. Vystředí se na šest bloků velký čtverec vyčištěný a vydlážděný blokem villagePathBlock, s nejnižší vrstvou na té podlaze. Prázdné, prázdný podíl nebo struktura, kterou nelze načíst, postaví místo toho vlastní studnu hry. Položka nezapsaná jako name=weight se vynechá |
+| `villagePathDeadEnds` | seznam | prázdný | Jak se uzavře ulice, která slepě končí, jedna položka na řádek, losováno na konec: sidewalk dlážděním koncové řady blokem chodníku a barrier postavením villagePathBridgeBarrierBlock podél ní villagePathBridgeBarrierHeight vysoko; jakákoli jiná položka se ignoruje. Uzavírají jen konec, který nevyrostl v obratiště, styl, jehož blok není nastaven, vypadne z losování a konec uličky bere jen barrier. Prázdné nechá takové konce otevřené |
+| `villagePathIntersects` | seznam | prázdný | Návrhy malované na křižovatkách, pojmenované registrovým klíčem ze složky `<namespace>/pathintersects/` balíčku. Jedna položka maluje každou křižovatku stejně; víc se vybírá podle váhy pro každou křižovatku |
+
+**Návrhy křižovatek.** `villagePathIntersects` jmenuje soubory, které balíček dodává, každý je malý obrázek toho, co malovat tam, kde se cesty setkávají, nakreslený jako řádky jednotlivých znaků, jeden znak na blok.
+
+`<namespace>/pathintersects/*.json`
+
+Cesta souboru je klíč návrhu v registru, který pak pojmenovává `villagePathIntersects`.
+
+```json
+{
+  "name": "Crosswalk",
+  "weight": 3,
+  "legend": { "w": "minecraft:quartz_block", "y": "minecraft:yellow_wool" },
+  "mouth": ["wwww", "....", "wwww"],
+  "corner": ["yy.", "y..", "..."]
+}
+```
+
+| Klíč | Hodnota | Výchozí | Co dělá |
+| --- | --- | --- | --- |
+| `name` | řetězec | název souboru | Popisek návrhu. Nemění, jak se návrh maluje |
+| `weight` | celé číslo, 1 a víc | `1` | Podíl křižovatek, které tento návrh vyhraje, když je jich uvedeno víc |
+| `legend` | objekt znaku na blok | žádný | Znaky, které smějí řádky používat nad rámec rolí níže. Znak, který už je rolí, se odmítne s řádkem v logu |
+| `mouth` | seznam řetězců | žádný | Řádky malované na každém příjezdu, vně křížící se vozovky. První řádek je ten nejbližší křižovatce a ostatní pokračují směrem ven. Znaky vedou napříč vozovkou a opakují se, kde je řádek kratší, než je vozovka široká |
+| `corner` | seznam řetězců | žádný | Řádky malované uvnitř samotné křižovatky. První řádek je ten nejbližší okraji křížící se vozovky a v řádku je první znak ten nejbližší okraji vlastní vozovky, pokračujíc dovnitř. Buňka, kterou obrázek nedosahuje, se nechá být |
+
+Pět znaků jsou role, ne bloky, takže se řídí tím, čím je vozovka už opatřena: `r` je povrch vozovky, `l` okrajová čára, `s` chodník, `.` nechá blok přesně tak, jak byl, a `c` je rezervováno a maluje povrch vozovky. Role, jejíž blok balíček nikdy nenastavil, se vrátí k povrchu vozovky, a jakýkoli jiný znak se hledá v `legend` a také se vrací k povrchu vozovky. Návrh bez `mouth` i `corner` se zahodí s řádkem v logu.
+
+Který návrh křižovatka dostane, se počítá ze seedu světa a z pozice samotné křižovatky, takže stejný svět vždy namaluje stejné křižovatky. Návrh se maluje jen tam, kde se potkají tři nebo více ulic, na křižovatce nebo na náměstí u studny; dvě ulice, které se potkají, se vykreslí jako prosté koleno.
+
+#### Mosty a mola vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villagePathSupportBlock": "minecraft:gravel",
+    "villagePathBridgeBlock": "minecraft:oak_planks",
+    "villagePathBridgeSidewalkBlock": "minecraft:oak_planks",
+    "villagePathBridgeBarrierBlock": "minecraft:oak_fence",
+    "villagePathBridgeBarrierHeight": 1,
+    "villagePathBridgeDrop": 3,
+    "villagePathVergeBlock": "",
+    "villagePathVergeWaterBlock": "minecraft:oak_planks",
+    "villagePathBridgeFrameBlock": "minecraft:stone_bricks",
+    "villagePathBridgeFrameTopBlock": "minecraft:smooth_stone_slab",
+    "villagePathBridgeFrameHeight": 4,
+    "villagePathBridgeFrameRun": 24,
+    "villagePathBridgeFrameLeast": 24,
+    "villagePathPiers": ["railed", "pilings", "boardwalk"],
+    "villagePathPierCargo": ["minecraft:chest=3", "mypack:crate=2,3", "empty=4"],
+    "villagePathPierLoot": "resourcedatapackloader:chests/pier_cargo"
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------------- | -------------- | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathSupportBlock` | text | prázdný | Samotný povrch tam, kde je země holá skála, a pilíře a nohy pod ulicí nad vodou. Prázdné ponechá vanilla štěrk, v pouštních městech pískovec |
+| `villagePathBridgeBlock` | text | prázdný | Blok, jímž ulice nebo molo překračuje vodu. Prázdné ho opatří mostovkou z prken dřeva vesnice: akácie ve vesnici v savaně, smrk ve vesnici v tajze, dub jinde |
+| `villagePathBridgeSidewalkBlock` | blok | prázdný | Opatří chodník mostovkou, kde cesta překračuje vodu. Prázdné přenese přes vodu běžný blok chodníku |
+| `villagePathBridgeBarrierBlock` | blok | prázdný | Zábrany naskládané podél obou okrajů mostovky. Žádná nestojí tam, kde mostovka spočívá na zemi. Prázdné nepostaví žádné |
+| `villagePathBridgeBarrierHeight` | celé číslo, 1 nebo víc | `1` | Kolik bloků vysoko ty zábrany stojí |
+| `villagePathBridgeDrop` | celé číslo, 0 nebo víc | `0` | Jak daleko musí sklon cesty stát od země, než se propast pod ní přemostí místo vyplnění plnou hmotou. `0` drží cesty na zemi: přemosťují vodu a nic jiného. `3` je pravidlo, které sleduje železniční estakáda. Tohle posouvá sklon, nejen výzdobu |
+| `villagePathVergeBlock` | text | prázdný | Blok, jímž se vyplní země vedle ulice a pod pozemkem tam, kde město musí vytvořit pevninu: žlábky mezi pozemky a násyp k ulici přes mezeru, který se místo toho opatří mostovkou z villagePathBridgeBlock, kde je tam ulice mostem. Prázdné následuje zem, na které stojí, tedy písek, terakotu, štěrk nebo hlínu s trávou nahoře tam, kde by byla hlína |
+| `villagePathVergeWaterBlock` | blok | `minecraft:oak_planks` | Čím se ten násyp stane tam, kde stojí nad vodou, aby okraj vynesený na jezero nebyl sloupem hlíny. Opatří i kamenný práh zbylý nad vodou |
+| `villagePathBridgeFrameBlock` | blok | prázdný | Horní rám nad dlouhým mostem: sloup po každé straně mostovky a trám napříč nahoře. Každý rám nese pilíř dolů k zemi pod mostovkou a na řadě, na které stojí, se nezvedá žádný sloup lampy. Prázdné nepostaví žádný |
+| `villagePathBridgeFrameTopBlock` | blok | prázdný | Trám napříč nahoře toho rámu. Prázdné použije `villagePathBridgeFrameBlock` |
+| `villagePathBridgeFrameHeight` | celé číslo, 1 nebo víc | `4` | Kolik bloků volné výšky rám nechává nad mostovkou, přičemž trám leží o blok nad tím |
+| `villagePathBridgeFrameRun` | celé číslo, 1 nebo víc | `24` | Kolik řad od sebe rámy stojí, když je most dost dlouhý na několik. Rozloží se souměrně kolem středu přemostěného úseku |
+| `villagePathBridgeFrameLeast` | celé číslo, 1 nebo víc | `24` | Nejkratší přemostěný úsek, který dostane rám vůbec. Kratší most zůstane prostý |
+| `villagePathPiers` | seznam | prázdný | Styly mol pro ulici, která slepě končí nad vodou: přemostěný konec se stane molem místo mostu do ničeho. Styly jsou railed, pilings a boardwalk; víc položek losuje jednu na molo. Prázdné nechá takový konec prostým mostem |
+| `villagePathPierCargo` | seznam | prázdný | Náklad postavený podél vnitřní strany zábradlí mola, jako položky block=weight, block=weight,height pro jeho naskládání, nebo empty=weight pro podíl nechaný volný. Blok smí nést svůj stav v závorkách a ten, který má směr, se obrátí ke středu mola. Výška, která není 1 až 8, stojí jeden blok. Každá další řada losuje seznam na každé straně. Prázdné nechá mola holá |
+| `villagePathPierLoot` | text | `resourcedatapackloader:chests/pier_cargo` | Tabulka kořisti, z níž se plní bloky nákladu s inventářem, losovaná při prvním otevření. Balíček smí vestavěnou tabulku nahradit dodáním vlastní tabulky kořisti pod tím jménem. Prázdné je nechá prázdné |
+
+#### Tunely vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villagePathTunnelBlock": "minecraft:stone_bricks",
+    "villagePathTunnelDepth": 10,
+    "villagePathTunnelLightBlock": "minecraft:sea_lantern",
+    "villagePathTunnelLightRun": 8
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------------- | -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villagePathTunnelBlock` | text | prázdný | Blok, jímž je ulice obložena tam, kde se zavrtává do kopce místo jeho prořezání: stěny po obou stranách průrazu a strop nad ním. Prázdné neprorazí žádné tunely a nechá ulici vyšplhat na kopec |
+| `villagePathTunnelDepth` | celé číslo, 1 nebo víc | `10` | Kolik země musí stát nad povrchem vozovky, než se úsek prorazí místo prořezání. Vyvýšenina pohřbená tak hluboko po dvanáct řad nebo víc se drží vodorovně a prorazí se, její mělčí přístupy se prořežou; kratší hrbol se prořízne jako dřív. Počítá se, až když `villagePathTunnelBlock` pojmenuje blok |
+| `villagePathTunnelLightBlock` | blok | prázdný | Světlo zasazené do stropu tunelu podél jeho středové čáry. Prázdná hodnota nepoloží žádné světlo |
+| `villagePathTunnelLightRun` | celé číslo, 1 nebo víc | `8` | Po kolika blocích jsou ta světla. Ukotveno k souřadnicím světa, takže světla jednoho kusu vozovky pokračují do dalšího; tunel příliš krátký, aby dosáhl na některé z těch míst, se rozsvítí jednou, uprostřed |
+
+#### Kanalizace vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageSewerBlock": "minecraft:stone_bricks",
+    "villageSewerDepth": 8,
+    "villageSewerHeight": 3,
+    "villageSewerWidth": 5,
+    "villageSewerWaterBlock": "minecraft:water",
+    "villageSewerWalkBlock": "minecraft:chiseled_stone_bricks",
+    "villageSewerLightBlock": "minecraft:glowstone",
+    "villageSewerLightRun": 8,
+    "villageSewerLadderBlock": "minecraft:ladder",
+    "villageSewerCoverBlock": "minecraft:iron_trapdoor",
+    "villageSewerMossBlock": "minecraft:mossy_cobblestone",
+    "villageSewerMossChance": 30,
+    "villageSewerVineBlock": "minecraft:vine",
+    "villageSewerVineChance": 20,
+    "villageSewerWellEntrance": true
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------- | -------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `villageSewerBlock` | název bloku | prázdný | Blok, jímž je obložena kanalizace pod ulicemi a uličkami vesnice: její podlaha, dvě stěny a strop. Prázdné nekopá žádné kanalizace |
+| `villageSewerDepth` | celé číslo, 4 nebo víc | `8` | Jak hluboko pod vlastním povrchem ulice leží podlaha kanalizace. Kanalizace sleduje ulici, pod kterou vede, takže stoupající ulice nese stoupající kanalizaci. Vyžaduje `villageSewerBlock` |
+| `villageSewerHeight` | celé číslo, 2 nebo víc | `3` | Kolik bloků volné výšky stojí nad chodníkem |
+| `villageSewerWidth` | celé číslo, 3 nebo víc | `5` | Jak široká kanalizace je, počítáno napříč včetně dvou stěn. Sudé číslo se zaokrouhlí nahoru, aby kanál zůstal uprostřed |
+| `villageSewerWaterBlock` | název bloku | `minecraft:water` | Co vyplňuje kanál uprostřed. Prázdné nechá kanál suchý |
+| `villageSewerWalkBlock` | název bloku | prázdný | Čím je povrch chodníků po obou stranách kanálu. Prázdné chodí po obkladovém bloku |
+| `villageSewerLightBlock` | název bloku | prázdný | Blok zasazený do stropu nad kanálem jako světlo. Prázdná hodnota nepoloží žádné světlo |
+| `villageSewerLightRun` | celé číslo, 1 nebo víc | `8` | Po kolika blocích jsou ta světla. Ukotveno k souřadnicím světa, takže světla jednoho kusu vozovky pokračují do dalšího |
+| `villageSewerLadderBlock` | text | prázdný | Blok, po němž se šachtou průlezu šplhá, položený dolů šachtou od ulice ke stropu kanalizace. Prázdné nechá šachtu otevřenou |
+| `villageSewerCoverBlock` | název bloku | prázdný | Blok, který zakrývá průlez, zasazený zarovno do ulice ve směru východ–západ všude, kde na ni navazuje ulice nebo ulička, a na náměstí, kde ta ulice kříží smyčku kanalizace. Obvyklou volbou jsou dřevěné padací dveře: železné berou signál redstonu a hráč je nemůže otevřít rukou, což mu kanalizaci uzavře. Prázdné nechá ústí šachty otevřené |
+| `villageSewerMossBlock` | název bloku | prázdný | Druhý blok, mísený tu a tam do obkladu, například mechem obrostlý kámen mezi obyčejným. Prázdné obloží kanalizaci celou dobu jedním blokem |
+| `villageSewerMossChance` | 0 až 100 | `25` | Jaké procento obkladových bloků vyjde jako ten druhý blok. Losováno pro každou pozici bloku ze seedu světa, takže stejná kanalizace vyjde vždy stejně |
+| `villageSewerVineBlock` | název bloku | prázdný | Blok zavěšený na vnitřní straně stěn kanalizace tu a tam, například liány. Přichytí se ke které stěně, u níž stojí. Prázdné nezavěsí nic |
+| `villageSewerVineChance` | 0 až 100 | `20` | Jaké procento buněk vedle stěny ho nese. Losováno pro každou pozici bloku ze seedu světa, takže stejná kanalizace visí vždy stejně |
+| `villageSewerWellEntrance` | boolean | `true` | Smyčka kanalizace pod kruhem náměstí kolem studny, kterou prochází kanalizace každé ulice, a průlez na náměstí dolů na smyčku na každé straně, kde ji kříží ulice ve směru východ–západ, takže kanalizace tvoří jeden propojený systém se vstupem ve středu města. Vypnuto: kanalizace každé ulice končí u studny a náměstí nemá cestu dolů |
+
+**Kanalizace.** Pojmenování `villageSewerBlock` vykope kanalizaci pod každou ulicí a uličkou, `villageSewerDepth` bloků pod vlastním povrchem té ulice. Není to samostatná síť: sleduje ulice, takže kamkoli vedou ony, vede kanalizace, stoupá tam, kde stoupají ony, a dvě kanalizace se setkají pod křižovatkou, protože se setkávají ulice nad nimi; kde ulice nebo ulička končí o jinou, její kanalizace pokračuje pod ní, aby se k ní připojila. Obratiště a úsek vedený po mostě žádnou nemají. Průřez tvoří obložená podlaha, kanál uprostřed vyplněný `villageSewerWaterBlock`, chodník po obou stranách s povrchem z `villageSewerWalkBlock`, `villageSewerHeight` bloků volné výšky a obložený strop, `villageSewerWidth` široký napříč včetně dvou stěn, a `villageSewerLightBlock` zasadí světlo do stropu nad kanálem každých `villageSewerLightRun` bloků. Kde průraz metra prochází hloubkou kanalizace, pod ulicí nebo vedle ní, je kanalizace v těch místech zazděna a případná kolej tam zůstane nedotčena. Kanalizace ulice končí u smyčky kolem studny, když je `villageSewerWellEntrance` zapnuté, a u samotné studny, když je vypnuté. Kanalizace nikdy nevystoupí tak daleko, aby narušila ulici nad sebou, a úsek, kde mezi ulicí a dnem světa není místo, se přeskočí, místo aby se tam vtěsnal.
+
+#### Železnice vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailSpacing": 48,
+    "villageRailDirection": "ew",
+    "villageRailWidth": 3,
+    "villageRailBlock": "minecraft:rail",
+    "villageRailTrackSeat": "auto",
+    "villageRailBedBlock": "minecraft:gravel",
+    "villageRailTieBlock": "minecraft:spruce_planks",
+    "villageRailTieRun": 2,
+    "villageRailTracks": 2,
+    "villageRailTrackGap": 2,
+    "villageRailShoulderBlock": "minecraft:gravel",
+    "villageRailShoulderWidth": 1,
+    "villageRailPowerBlock": "minecraft:powered_rail",
+    "villageRailPowerBase": "minecraft:redstone_block",
+    "villageRailPowerRun": 16,
+    "villageRailClimb": 8,
+    "villageRailTail": 48,
+    "villageRailSupportBlock": "minecraft:oak_log",
+    "villageRailDeckBlock": "minecraft:oak_planks",
+    "villageRailBarrierBlock": "minecraft:oak_fence",
+    "villageRailBridgeFrameBlock": "minecraft:stone_bricks",
+    "villageRailBridgeFrameTopBlock": "minecraft:smooth_stone_slab",
+    "villageRailBridgeFrameHeight": 4,
+    "villageRailBridgeFrameRun": 24,
+    "villageRailBridgeFrameLeast": 24,
+    "villageRailTunnelBlock": "minecraft:stone_bricks",
+    "villageRailTunnelDepth": 6,
+    "villageRailTunnelLightBlock": "minecraft:glowstone",
+    "villageRailTunnelLightRun": 8
+  }
+}
+```
+
+| Nastavení                        | Typ                  | Výchozí | Co dělá                                                                                                                                                                                                                                                                                                                                                     |
+| -------------------------------- | -------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageRailLines` | celé číslo, 0 nebo víc | `0` | Kolik železničních tratí vede městem, položených před jakoukoli ulicí, aby město vyrostlo kolem nich, každá po celé délce města. Při villageCitySpacing 1 je každá čtvrť městem a nese vlastní. 0 nepoloží žádné |
+| `villageRailSpacing` | celé číslo, 1 nebo víc | `48` | Nejméně bloků volné země mezi ložem jedné železniční tratě a další téhož města. 1 je položí o blok od sebe, čímž balíček staví seřaďovací nádraží rovnoběžných tratí |
+| `villageRailDirection` | text | `any` | Kterým směrem tratě vedou: `ew` východ–západ, `ns` sever–jih, `any` losuje pro každé město. `e`, `w`, `n` a `s` se čtou stejně |
+| `villageRailWidth` | celé číslo, 3 nebo víc | `3` | Nejméně, jak široké je kolejové lože. `3` nese jednu kolej uprostřed a `5` dvě; lože, od něhož se žádá víc kolejí, než se vejde, se rozšíří, aby je pojalo |
+| `villageRailBlock`               | blok                 | prázdný | Kolej. Prázdný položí vanilla kolejnice, po kterých jezdí důlní vozíky; jakýkoli jiný blok se položí tak, jak je                                                                                                                                                                                                                                              |
+| `villageRailTrackSeat`           | `auto`, `on` nebo `in` | `auto` | Kde je kolej umístěna. `auto` usadí blok kolejnice na lože a každý jiný blok zasadí zarovno do povrchu lože; `on` ji vždy položí na lože; `in` ji vždy zasadí do lože. Kolej zasazená do lože je způsob, jak balíček položí vzhled koleje ze železných bloků nebo desek místo kolejnic pro důlní vozíky, a úrovňový přejezd pak vede zarovno skrz dlažbu          |
+| `villageRailBedBlock`            | blok                 | prázdný | Lože pod kolejí. Prázdný položí štěrk                                                                                                                                                                                                                                                                                                                       |
+| `villageRailTieBlock` | text | prázdný | Pražec položený přes lože každých villageRailTieRun řad. Prázdné položí dubová prkna |
+| `villageRailTieRun` | celé číslo, 1 nebo víc | `2` | Kolik řad od sebe pražce leží |
+| `villageRailTracks` | celé číslo, 0 nebo víc | `0` | Kolik kolejí lože nese, vedle sebe a o `villageRailTrackGap` od sebe. **Lože se rozšíří, aby je pojalo všechny**, takže tři koleje sdílejí jedno lože místo toho, aby se staly třemi tratěmi. `0` položí jednu kolej na lože užší než pět a dvě na širší |
+| `villageRailTrackGap` | celé číslo, 2 nebo víc | `2` | Jak daleko od sebe jsou koleje na loži, od středu ke středu. `2`, nejméně, co je povoleno, nechá mezi nimi jeden blok lože, což je to, co jim brání zatočit do sebe tak, jak to dělají dotýkající se kolejnice |
+| `villageRailShoulderBlock`       | blok                 | prázdný | Upraví nejvzdálenější sloupce lože, údržbovou stezku vedle koleje a odpověď železnice na chodník u cesty. Prázdný nepoloží žádnou                                                                                                                                                                                                                           |
+| `villageRailShoulderWidth` | celé číslo, 0 nebo víc | `1` | Kolik sloupců široké ta úprava je na každé straně, přidáno vně `villageRailWidth`. Vyžaduje `villageRailShoulderBlock` |
+| `villageRailPowerBlock`          | blok                 | prázdný | Napájená kolej zasazená do trati každých `villageRailPowerRun` řad. Prázdný použije vanilla zrychlovací kolejnici; blok, který není kolejnice, se tam prostě položí                                                                                                                                                                                          |
+| `villageRailPowerBase`           | blok                 | prázdný | Co leží pod napájenou kolejí, aby ji napájelo. Prázdný použije redstonový blok                                                                                                                                                                                                                                                                           |
+| `villageRailPowerRun` | celé číslo, 0 nebo víc | `0` | Každých tolik řad se do tratě z vanilla kolejnic zasadí napájená kolejnice nad redstonovým blokem, aby vozík jel dál. `0` nenapájí žádnou a jakákoli trať kromě vanilla kolejnic to ignoruje |
+| `villageRailClimb` | celé číslo, 1 nebo víc | `8` | Kolik řad vede trať vodorovně na každý blok, který stoupá nebo klesá. `1` ji sklopí tak prudce jako cestu |
+| `villageRailTail` | celé číslo, 0 nebo víc | `48` | Jak daleko železniční trať pokračuje za poslední čtvrtí města na kterémkoli konci |
+| `villageRailSupportBlock` | text | prázdný | Blok sloupu pod estakádou, kde trať vede přes vodu nebo propast. Prázdné použije dubové kmeny |
+| `villageRailDeckBlock` | text | prázdný | Mostovka, na které estakáda nese lože. Prázdné použije dubová prkna |
+| `villageRailBarrierBlock`        | blok                 | prázdný | Zábrany podél obou okrajů mostovky estakády. Prázdný nepostaví žádné                                                                                                                                                                                                                                                                                        |
+| `villageRailBridgeFrameBlock`    | blok                 | prázdný | Horní rám nad dlouhou estakádou: sloup po každé straně mostovky a trám napříč nahoře. Každá řada, která ho nese, nese také své podpůrné sloupy dolů k loži. Prázdný nepostaví žádný                                                                                                                                                                          |
+| `villageRailBridgeFrameTopBlock` | blok                 | prázdný | Trám napříč nahoře toho rámu. Prázdný použije `villageRailBridgeFrameBlock`                                                                                                                                                                                                                                                                                 |
+| `villageRailBridgeFrameHeight` | celé číslo, 2 nebo víc | `4` | Kolik bloků volné výšky rám nechává nad mostovkou, přičemž trám leží o blok nad tím |
+| `villageRailBridgeFrameRun` | celé číslo, 2 nebo víc | `24` | Kolik řad od sebe rámy stojí, když je estakáda dost dlouhá na několik |
+| `villageRailBridgeFrameLeast` | celé číslo, 2 nebo víc | `24` | Nejkratší estakáda, která dostane rám vůbec. Kratší estakáda zůstane prostá |
+| `villageRailTunnelBlock` | text | prázdný | Blok, jímž je železniční trať obložena tam, kde se zavrtává do kopce místo jeho přelezení. Prázdné neprorazí žádné tunely |
+| `villageRailTunnelDepth` | celé číslo, 1 nebo víc | `6` | Kolik země musí stát nad ložem, než se úsek prorazí místo prořezání. Vyžaduje `villageRailTunnelBlock` |
+| `villageRailTunnelLightBlock`    | blok                 | prázdný | Světlo zasazené do stropu železničního tunelu podél jeho středové čáry. Prázdná hodnota nepoloží žádné světlo                                                                                                                                                                                                                                                               |
+| `villageRailTunnelLightRun` | celé číslo, 1 nebo víc | `8` | Po kolika blocích jsou ta světla tunelu, ukotvená k souřadnicím světa, aby se kusy shodovaly |
+
+**Kudy trať vede.** Tratě vedou rovnoběžně, v ose, kterou jmenuje `villageRailDirection`, a rozmísťují se od první studny města postupně, nejdřív na jednu stranu, pak na druhou, přičemž každá drží alespoň `villageRailSpacing` bloků země mezi svým ložem a ložem další tratě. Železnice začíná mimo náměstí a pozemky kolem něj a odsune se stranou všude, kde by ležela podél ulice; metro začíná na řadě studny a odsune se na nejbližší ulici do `villageSubwaySpacing`, takže vede pod cestou. Trať se klade před pozemky, takže žádný pozemek nestojí na otevřené trati, a vede po celé délce města a o `villageRailTail` za jeho poslední čtvrť na kterémkoli konci, přičemž se zastaví sedm bloků před jakýmkoli jiným městem v cestě. Každá čtvrť, kterou prochází, klade svůj vlastní úsek, ať tam město vyrostlo, nebo ne.
+
+**Sklon.** Železnice nestoupá jako ulice. Její lože sleduje zem vyhlazenou na dlouhém úseku a mění úroveň nejvýš o jeden blok každých `villageRailClimb` řad; metro sleduje zem o `villageSubwayDepth` pod sebou a trať, která tuto hloubku nikde po své délce nedrží, nad šesti bloky místa, které její obklad potřebuje nad dnem světa, se nepoloží vůbec. Kde zem klesá o víc než tři bloky nebo ji kryje voda, trať vede po estakádě: mostovka z `villageRailDeckBlock` s kolejí na ní nebo v ní a bez pražců či úpravy okraje, na sloupech z `villageRailSupportBlock` pod oběma okraji každé čtyři řady, přičemž každý sloup jde dolů k pevné zemi nejvýš 24 bloků. Kde zem stoupá, trať se prořízne, nebo se prorazí pomocí `villageRailTunnelBlock`, jakmile země nad ložem stojí `villageRailTunnelDepth` hluboko po dvanáct řad nebo víc; průraz pokračuje, dokud jej ještě zastřešuje blok země. Otevřený zářez s vodou do tří bloků od něj se obezdí obkladem tunelu až k vodě a země vedle lože se dosype tam, kde klesá. Čtyři bloky jsou po celé trati nad ložem držené volné. Estakáda leží v jedné výšce od konce ke konci a lože po obou stranách vystoupá, aby se s tou výškou setkalo; kde se držení estakády vodorovně a rychlost stoupání neshodují, vyhrává vodorovnost a rampa vedle ní může stupňovat dřív, než říká `villageRailClimb`. Estakáda o `villageRailBridgeFrameLeast` řadách nebo víc nese horní rámy, jakmile `villageRailBridgeFrameBlock` pojmenuje blok, po `villageRailBridgeFrameRun` řadách a souměrně rozložené kolem středu estakády, a každá řada, která jeden nese, nese i své podpůrné sloupy. Řada, kde ulice kříží trať, zůstane bez rámu.
+
+**Křížení.** Ulice kříží trať přímo skrz. V místě křížení se trať drží vodorovně přes ulici a o řadu za ní na obě strany a ulice se sklopí k trati, nikdy naopak, a vystoupá na tu úroveň svým vlastním sklonem. Dlažba si ponechá povrch a kolej vede přes ni o blok výš, nebo zarovno v ní, když `villageRailTrackSeat` zasazuje kolej do lože, takže vozík přejede ulici a vesničan přejde kolej. Trať proražená pod ulicí, která stojí šest bloků nebo víc nad ní, se nekříží vůbec: ulice si drží vlastní sklon a vede přes tunel. Ta výška se čte ze země ulice vyhlazené tak, aby stoupala nejvýš o blok na řadu, dřív než ji jakékoli křížení, studna nebo železnice drží.
+
+**Prahy dveří.** Schod před každými dveřmi pozemku se dosype zemí tam, kde země klesá, a kamenný schod ponechaný nad vodou se opatří `villagePathVergeWaterBlock`.
+
+**Kolej.** Když je `villageRailBlock` prázdný, kolej tvoří vanilla kolejnice otočená podél trati a `villageRailPowerRun` nastavuje napájenou kolejnici, zapnutou, nad redstonovým blokem každých tolik řad, aby vozík projel celou trať; kolej zasazená do lože nenese žádné napájené kolejnice. Balíček, který chce železné bloky, mříže nebo cokoli jiného, je pojmenuje místo toho: blok s osou, například kmen, se otočí podél trati a jakýkoli jiný se položí tak, jak stojí. Každý blok koleje, metra, stanice i kanalizace smí nést svůj stav v závorkách a Míchání bloků výše jmenuje nastavení, ze kterých se vážená směs losuje blok po bloku.
+
+#### Metro vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageSubwayLines": 0,
+    "villageSubwayDepth": 24,
+    "villageSubwaySpacing": 64,
+    "villageSubwayDirection": "any",
+    "villageSubwayWidth": 5,
+    "villageSubwayBlock": "",
+    "villageSubwayTrackSeat": "auto",
+    "villageSubwayBedBlock": "minecraft:gravel",
+    "villageSubwayTieBlock": "minecraft:spruce_planks",
+    "villageSubwayTieRun": 2,
+    "villageSubwayTracks": 2,
+    "villageSubwayTrackGap": 2,
+    "villageSubwayShoulderBlock": "",
+    "villageSubwayShoulderWidth": 1,
+    "villageSubwayPowerBlock": "",
+    "villageSubwayPowerBase": "minecraft:redstone_block",
+    "villageSubwayPowerRun": 16,
+    "villageSubwayTunnelBlock": "minecraft:stone_bricks",
+    "villageSubwayTunnelLightBlock": "minecraft:glowstone",
+    "villageSubwayTunnelLightRun": 8,
+    "villageSubwayClimb": 8,
+    "villageSubwayTail": 48,
+    "villageSubwaySurfaces": 25
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------------------- | -------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageSubwayLines` | celé číslo, 0 nebo víc | `0` | Kolik podzemních železničních tratí město vykope. 0 nevykope žádné a nelosuje nic, takže město je rozloženo přesně tak, jako by bylo bez nich |
+| `villageSubwayDepth` | celé číslo, 6 nebo víc | `24` | Jak hluboko pod povrchem leží lože. Trať se sklání podle země nad ní, takže sleduje krajinu v té hloubce, místo aby vedla vodorovně |
+| `villageSubwaySpacing` | celé číslo, 1 nebo víc | `64` | Jak daleko od sebe se drží tratě metra jednoho města |
+| `villageSubwayDirection` | text | `any` | Kterým směrem tratě metra vedou: ew východ–západ, ns sever–jih, nebo any pro losování na město |
+| `villageSubwayWidth` | celé číslo, 3 nebo víc | `3` | Jak široké je lože, před úpravou okrajů |
+| `villageSubwayBlock` | blok | prázdný | Blok koleje. Prázdné položí vanilla kolejnice |
+| `villageSubwayTrackSeat` | řetězec | `auto` | Zda je kolej na loži, v něm, nebo `auto`, aby rozhodl blok |
+| `villageSubwayBedBlock` | blok | prázdný | Blok, z něhož je lože. Prázdné použije štěrk |
+| `villageSubwayTieBlock` | blok | prázdný | Blok položený přes lože jako pražce. Prázdné použije prkna |
+| `villageSubwayTieRun` | celé číslo, 1 nebo víc | `2` | Po kolika blocích se kladou pražce |
+| `villageSubwayTracks` | celé číslo, 0 nebo víc | `0` | Kolik rovnoběžných kolejí lože nese. 0 vezme tolik, kolik šířka dovolí |
+| `villageSubwayTrackGap` | celé číslo, 2 nebo víc | `2` | Jak daleko od sebe jsou rovnoběžné koleje |
+| `villageSubwayShoulderBlock` | blok | prázdný | Blok po obou stranách lože. Prázdné nevytvoří žádnou krajnici |
+| `villageSubwayShoulderWidth` | celé číslo, 0 nebo víc | `1` | Jak široká je krajnice |
+| `villageSubwayPowerBlock` | blok | prázdný | Blok napájené koleje. Prázdné použije vanilla napájenou kolejnici |
+| `villageSubwayPowerBase` | blok | prázdný | Blok umístěný pod napájenou kolej, aby ji poháněl. Prázdné použije redstonový blok |
+| `villageSubwayPowerRun` | celé číslo, 0 nebo víc | `0` | Po kolika blocích se kladou napájené koleje. 0 žádné nepoloží |
+| `villageSubwayTunnelBlock` | text | prázdný | Blok, jímž je průraz obložen: stěny po obou stranách a strop nad ním. Prázdné vykope průraz a jeho stanice bez obkladu |
+| `villageSubwayTunnelLightBlock` | blok | prázdný | Blok zasazený do stropu tunelu jako světlo. Prázdné žádná světla neosadí |
+| `villageSubwayTunnelLightRun` | celé číslo, 1 nebo víc | `8` | Po kolika blocích jsou ta světla, ukotvená k souřadnicím světa, aby se kusy shodovaly |
+| `villageSubwayClimb` | celé číslo, 1 nebo víc | `8` | Kolik bloků trať vede, než smí stoupnout nebo klesnout o jeden blok |
+| `villageSubwayTail` | celé číslo, 0 nebo víc | `48` | Jak daleko za vlastními kusy města trať vede, než se zastaví |
+| `villageSubwaySurfaces` | celé číslo, 0 až 100 | `25` | Šance ze sta, že trať metra na jednom konci vystoupí na povrch a odtud pokračuje jako obyčejná železnice, tunel za sebou a otevřená kolej před sebou. Stoupání zabere villageSubwayClimb řad na blok, takže hluboká trať stráví výstupem dlouhý úsek. Při 0 zůstane každé metro po celé délce pod zemí |
+
+**Výstup ven.** `villageSubwaySurfaces` je šance ze sta, že trať, místo aby zůstala pohřbená od konce ke konci, na jednom konci vystoupí na povrch a odtud pokračuje jako obyčejná železnice: tunel za sebou, otevřená kolej před sebou. Stoupání se řídí `villageSubwayClimb`, jeden blok na tolik řad, takže trať hluboká `villageSubwayDepth` stráví na samotné rampě hloubku krát stoupání řad a potřebuje za ní slušný úsek, aby si to jméno zasloužila; trať, která nemá místo na obojí, zůstane prostě pod zemí. Stoupání začíná nejdřív na vzdáleném konci ulic, pod nimiž trať vede, takže vystoupí za ulicemi města, ne skrz ně, a pozemek stojící na úseku, který stoupá, mu uvolní místo. Stanice se zabírají, jakmile je stoupání rozhodnuto, a drží se mimo rampu. Když je `villageSubwayTunnelBlock` prázdné, průraz, jeho stanice a schody se kopou bez obkladu.
+
+#### Stanice metra
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageSubwayStationLength": 16,
+    "villageSubwayStationRun": 0,
+    "villageSubwayPlatformWidth": 3,
+    "villageSubwayPlatformBlock": "minecraft:mossy_stone_bricks",
+    "villageSubwayRailingBlock": "minecraft:iron_bars",
+    "villageSubwayBenchBlock": "minecraft:oak_stairs",
+    "villageSubwayBenchEndBlock": "minecraft:oak_log",
+    "villageSubwayBenchLength": 5,
+    "villageSubwayStation": "mypack:subway_station",
+    "villageSubwayStationFoot": 4,
+    "villageSubwayStationRepeat": 12
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------------------------- | -------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageSubwayStationLength` | celé číslo, 0 nebo více | `0` | Jak dlouhá je komora stanice v blocích, vystředěná na řadě, kde trasa vede nejblíž ke studni. 0 nestaví žádné stanice |
+| `villageSubwayStationRun` | celé číslo, 0 nebo více | `0` | V jakém odstupu v blocích leží další stanice podél trasy, za tou, která je nejblíž první studni města. 0 staví jen stanici u studně |
+| `villageSubwayPlatformWidth` | celé číslo, 0 nebo více | `3` | O kolik se komora rozšíří na obě strany od dna tunelu, aby vzniklo nástupiště |
+| `villageSubwayPlatformBlock` | blok | prázdný | Blok, jímž je nástupiště vydlážděno. Prázdná hodnota použije ostění tunelu |
+| `villageSubwayRailingBlock` | blok | `minecraft:iron_bars` | Blok, z něhož je zábradlí kolem horního konce schodů stanice tam, kde ústí do ulice, aby nikdo nespadl do šachty. Prázdná hodnota nechá horní konec bez zábradlí |
+| `villageSubwayBenchBlock` | blok | `minecraft:oak_stairs` | Sedák laviček na nástupišti stanice a vedle horního konce schodů. Blok schodů se otočí od trati a vypadá jako lavička; funguje jakýkoli blok. Prázdná hodnota lavičky vynechá |
+| `villageSubwayBenchEndBlock` | blok | `minecraft:oak_log` | Područky na obou koncích lavičky ve stanici. Prázdná hodnota nechá sedák na obou koncích holý |
+| `villageSubwayBenchLength` | celé číslo, 0 až 32 | `5` | Jak dlouhá je lavička ve stanici, včetně područek. `0` lavičky vynechá |
+| `villageSubwayStation` | text | prázdný | Struktura ze složky struktur balíčku, která slouží jako stanice: její šachta, schody a vstup z ulice. Postav ji ručně ve světě, ulož ji konstrukčním blokem a zkopíruj soubor do balíčku: pevné buňky se položí a vzdušné buňky se vykopou, takže tvar je přímo stavba a ne její popis. Prázdná hodnota nestaví žádné stanice a název, který nejde načíst, zapíše jednu chybu do logu a nestaví nic |
+| `villageSubwayStationFoot` | celé číslo, 0 až 64 | `4` | Kolik vrstev na dně stavby stanice se položí jednou, před částí, která se opakuje. Je tu podlaha a průchod ven na nástupiště |
+| `villageSubwayStationRepeat` | celé číslo, 0 až 64 | `12` | Kolik vrstev stavby stanice se opakuje, takže jedna stavba vyhoví jakékoli hloubce: šachta roste o celé kopie tohoto pásu a chodba pohltí zbytek. Musí to být celá otáčka schodů, jinak na sebe schodiště nenavážou. `0` stavbu nikdy nezvětšuje |
+
+**Stanice.** Trasa metra dostane stanice jen tehdy, když `villageSubwayStation` pojmenovává stavbu, která se načte: je-li prázdný, není žádná komora, žádné schody ani vstup a název, který nejde načíst, zapíše jednu chybu do logu a nestaví nic. Pokud je stavba pojmenována a jsou nastaveny `villageSubwayStationLength` a `villageSubwayPlatformWidth`, dostane trasa stanici na řadě první studně města a další každých `villageSubwayStationRun` bloků podél ní. Každá se posune až o 48 bloků na obě strany, aby našla místo pro svou stavbu u ulice, která vede podél trati po celou délku toho místa, mimo každou ulici, studnu a náměstí a nejméně o délku stanice plus sedm bloků od už zabrané stanice; pozemek stojící na tom místě ustoupí a stanice bez takového místa se vynechá. Trasa, která žádnou stanici nemá, neotevře žádnou komoru, takže nikdy nemá komoru bez vstupu. Komora je po celé délce vodorovná: dno rozšířené o `villageSubwayPlatformWidth` na každou stranu, vydlážděné `villageSubwayPlatformBlock`, se stěnami a stropem z ostění tunelu, osvětlené podle `villageSubwayTunnelLightBlock` a `villageSubwayTunnelLightRun` samotného tunelu a na obou koncích uzavřené příčnou stěnou přes ražený profil. Z nástupiště vede chodba ke stavbě stanice, která vystoupá k ulici vedle cesty, nikdy ne pod ní; stavba vyjde na úrovni nejbližší ulice do osmi bloků, tedy úrovni, kterou ta ulice drží na zemi, ne na jakékoli nástavbě či rampě nad ní, nebo na výšce terénu, kde ulice není, a při stavbě města se vynechá, když je ta úroveň méně než tři bloky nad nástupištěm, kde stavba nezvládne stoupání ani po zvětšení, nebo kde by chodba k nástupišti přesáhla 32 bloků; log řekne, který případ nastal. Terén mezi touto ulicí a stavbou se srovná na stejnou výšku, kde klesá, se zasype, a nad hlavou se vyčistí, takže se do stanice vstupuje z cesty. Na nástupišti stojí lavička z `villageSubwayBenchBlock` s područkami z `villageSubwayBenchEndBlock`, dlouhá `villageSubwayBenchLength`.
+
+**Ruční stavba stanice.** `villageSubwayStation` pojmenovává soubor struktury, který slouží jako stanice; tak balíček dodá tvar, který někdo postavil, místo tvaru popsaného v nastavení. Postav ji ve světě, ulož ji pomocí konstrukčního bloku (o velikosti, která pokryje celou stanici včetně vzduchu, se zapnutým „Zahrnout entity“), zkopíruj soubor ze složky světa `generated/<namespace>/structures/` do složky balíčku `<namespace>/structures/` a umísti ji s balíčkem. Tam, kde je stanice otevřená, použij vzduch, ne konstrukční void: její bloky se položí tak, jak byly postaveny, buňky z houby se stanou ostěním tunelu, vzdušné buňky se vykopou a cokoli, co v ní stojí, vozík nebo stojan na brnění, přijde s ní. Usadí se od rohu místa stanice. Jedna stavba vyhoví jakékoli hloubce, protože její střed se opakuje: `villageSubwayStationFoot` vrstev se položí jednou dole a nese podlahu a průchod na nástupiště, pak se skládají celé kopie dalších `villageSubwayStationRepeat` vrstev, dokud stavba nedosáhne ulice. Ten pás musí být celá otáčka schodů, jinak se schodiště nesejdou tam, kde se dvě kopie spojí. Od průchodu dolů na nástupiště vede chodba vysoká dva bloky, která se tam, kde je pokles příliš dlouhý na přímý průchod, stáčí zpět podél komory; terén nad hlavou stavby se vyčistí osm bloků nahoru, na úrovni ulice otvor obepíná zábradlí z `villageSubwayRailingBlock` a vedle stojí lavička. Stavba, kterou nejde načíst, nestaví stanici nikde a zapíše jednu chybu do logu; stanice, kterou její stavba nedokáže přivést k ulici, se při plánování města vynechá, bez komory, a log řekne proč. Stavba nese vlastní vstup na ulici.
+
+#### Železniční spojení
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageRailLines": 1,
+    "villageRailLinks": true,
+    "villageRailLinkLeast": 128,
+    "villageRailLinkMost": 1024,
+    "villageRailLinkBridgeMost": 96,
+    "villageRailLinkTunnelMost": 192,
+    "villageRailLinkStation": "both",
+    "villageRailLinkStationLength": 16,
+    "villageRailLinkPlatformWidth": 3,
+    "villageRailLinkPlatformBlock": "minecraft:stone_bricks"
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------------------ | -------------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageRailLinks` | true/false | `false` | Spojí sousední města, jejichž první tratě k sobě přes švík míří. Vyžaduje `villageRailLines`, nebo `villageSubwayLines` u balíčku bez povrchových tratí |
+| `villageRailLinkLeast` | celé číslo, 0 nebo více | `128` | Nejkratší položené spojení, odbočka plus hlavní trať plus odbočka, v blocích |
+| `villageRailLinkMost` | celé číslo, 0 nebo více | `1024` | Nejdelší položené spojení, odbočka plus hlavní trať plus odbočka, v blocích |
+| `villageRailLinkBridgeMost` | celé číslo, 0 nebo více | `96` | Nejdelší most, který spojení může potřebovat. Spojení přes širší vodu nebo hlubší propast se nepoloží |
+| `villageRailLinkTunnelMost` | celé číslo, 0 nebo více | `192` | Nejdelší tunel, který spojení může potřebovat tam, kde `villageRailTunnelBlock` razí tunely. Spojení, které by muselo razit dál, se nepoloží |
+| `villageRailLinkStation` | text | `both` | Stanice na každé odbočce těsně před hlavní tratí: `both` položí nástupiště po obou stranách trati, `one` jedno nástupiště vlevo od vlaku přijíždějícího k hlavní trati, `none` nestaví žádné |
+| `villageRailLinkStationLength` | celé číslo, 0 nebo více | `16` | Kolik řad dlouhá jsou nástupiště stanice. `0` nestaví žádné stanice |
+| `villageRailLinkPlatformWidth` | celé číslo, 0 nebo více | `3` | Kolik bloků široké je každé nástupiště |
+| `villageRailLinkPlatformBlock` | blok | prázdný | Blok, z něhož jsou nástupiště postavena. Prázdná hodnota použije kamenné cihly |
+
+**Co je spojení.** Železniční spojení spojují sousední města do jedné sítě. Města vznikají po jednom v buňce městské mřížky (`villageCitySpacing`) a spojení vede podél švu mezi dvěma buňkami: první trať každého města pokračuje za svým koncem jako odbočka, rovně až ke švu, a potkává hlavní trať položenou podél švu v pravém úhlu. Hlavní trať vede od jedné odbočky k druhé a nikdy za žádnou z nich. Vyžaduje `villageRailLines`, nebo `villageSubwayLines` u balíčku bez povrchových tratí, a ve výchozím stavu je vypnutá.
+
+**Která města se spojí.** Dvě města se spojí jen tehdy, když stojí v sousedních buňkách, jejich první tratě vedou v ose, která přechází švem mezi nimi, a celé spojení, měřené od studně ke studni podél trati, je dlouhé mezi `villageRailLinkLeast` a `villageRailLinkMost` bloky. Každá část rozhodnutí se odvozuje ze seedu a z poloh obou měst, takže vyjde stejně, ať vznikne nejdřív které město nebo chunk. Spojení, které nejde postavit celé, se nepoloží vůbec, nikdy ne napůl: takové, které by potřebovalo delší most nebo tunel, než nastavení dovolují, sahalo by za hranici světa, narazilo by na lesní sídlo, stálo by dvě města blíž, než dovoluje `structureSeparation`, nebo by přivedlo spoj příliš blízko k rohu buněk. Hlavní trať se položí jen k městu, které opravdu vzniklo: když soused zastaví limit jako `structureMost`, nebo je příliš malý, než aby ho šlo ponechat, nepostaví se ani jedna polovina hlavní trati, ani odbočka za koncem vlastní trati města. Připnutá města se spojují stejně, jedno na buňku; buňka s dvěma připnutími nespojí ani jedno. Ostatní města se při růstu drží stranou od odbočky a hlavní trati spojení tak, jak se drží stranou od sebe.
+
+**Sklon.** Odbočky a hlavní tratě jsou železniční tratě a stejně jako trať města se upravují do sklonu, přemosťují, razí se pod nimi tunely a křižují se, a to s `villageRailClimb` a nastavením estakád a tunelů výše. Tam, kde se odbočka potkává s hlavní tratí, leží obě vodorovně, a stejně tak stanice vedle nich.
+
+**Křižovatka.** Odbočka se napojuje jen na nejbližší kolej hlavní trati. Ta kolej je přerušena tam, kde se s ní potkává střed odbočky, levá kolej odbočky do ní zatáčí doleva a její pravá kolej doprava a vzdálená kolej vede rovně skrz. Se dvěma kolejemi, hlavní trať nahoře a odbočka přicházející zdola:
+
+```
+xxxxxxx
+ooooooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+`x` je železniční spodek a `o` je kolej. Kde by obě odbočky dorazily do pár bloků od sebe, první trať druhého města se posune, aby se srovnala s první, a obě se místo toho potkají v křižovatce: každá odbočka ústí jen do své nejbližší koleje přesně jako výše, obě koleje hlavní trati jsou přerušeny ve středu odbočky a žádná kolej nekříží jinou:
+
+```
+ xoxox
+xxoxoxx
+oooxooo
+xxxxxxx
+oooxooo
+xxoxoxx
+ xoxox
+```
+
+Hlavní trať s jedinou kolejí nemá druhou kolej, kterou by dala druhé odbočce, takže spojení, jehož odbočky by se čelně potkaly nad jedinou kolejí, se nepoloží. S jedinou kolejí koleje odbočky zatáčí do koleje hlavní trati doleva a kolej hlavní trati za tou zatáčkou o ni končí. Zatáčky se nastavují s pevnými tvary, takže vanilla kolejnice zatáčí tam, kde je křižovatka nakreslena, a nikde jinde.
+
+**Stanice.** Poslední řady odbočky před křižovatkou jsou stanice: nástupiště z `villageRailLinkPlatformBlock` v rovině s kolejí, ohrazená po vnější hraně `villageSubwayRailingBlock`, s lavičkou z `villageSubwayBenchBlock` v půli každého nástupiště.
+
+**Metro.** U balíčku jen s tratěmi metra nese spojení první trať metra města. Trať vystoupá ze země k hlavní trati s rampou dlouhou `villageSubwayDepth` krát `villageSubwayClimb` řad a na povrchu dosáhne stanice a křižovatky; město tohoto druhu se spojí jen na jedné straně, na té s kratším spojením, a hlavní trať je povrchová železnice postavená podle nastavení `villageRail`. Kde odbočka nemá pro tu rampu a svou stanici místo, hlavní trať místo toho sestoupí k metru: celé spojení, odbočky i hlavní trať, zůstane pod zemí v hloubce `villageSubwayDepth`, postaví se podle nastavení `villageSubway` a potkává se ve stejné křižovatce, bez stanice.
+
+#### Výzdoba vesnic
+
+*vesnice a města*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "villageDecor": ["mypack:street_flowers=2", "mypack:street_tree=1", "empty=3"],
+    "villageDecorSpacing": 3
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | ---- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `villageDecor` | seznam | prázdný | Výzdoba rozprostřená podél městských ulic, jako dvojice název=váha pojmenovávající worldgen z balíčku, mypack:street_flowers=2. Název empty je podíl míst, která zůstanou holá, a položka nezapsaná jako název=váha se vynechá. Každých villageDecorSpacing bloků krajnice na každé straně ulice hází seznam na zem, jak vysoko tam stojí, ale ne v tunelu, pod pozemkem, na náměstí ani do dvou bloků od dveří. Prázdný seznam nerozmístí nic |
+| `villageDecorSpacing` | celé číslo, 1 až 16 | `3` | Rozestup mezi místy výzdoby podél každé strany ulice, v blocích. Omezeno na 1 až 16. Šablona širší než rozestup může zatlačit na souseda |
+
+### Struktury
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "structureSpacing": ["temples=24", "monuments=40", "mineshafts=200"],
+    "structureSeparation": ["monuments=12"],
+    "structureMost": ["villages=100"],
+    "structureSpawners": ["dungeons=minecraft:zombie,minecraft:husk"],
+    "structureMinDistanceFromSpawn": ["strongholds=1000"],
+    "structureBiomes": ["temples=minecraft:desert,SANDY"],
+    "structureBiomesAreBlacklist": ["temples=false"],
+    "structureSpawns": ["temples=minecraft:witch:1:1:1", "monuments="],
+    "structureAt": ["villages=1000,-500"],
+    "structureAdaptation": ["villages=beard_thin", "mansions=bury", "monuments=none"],
+    "terrainAdaptation": true,
+    "villagePieces": ["mypack:smithy", "minecraft:village/plains/houses/plains_small_house_1"],
+    "villagePiecesAreBlacklist": true,
+    "villageBlocks": ["minecraft:cobblestone=mypack:ruby_brick", "minecraft:cobblestone=minecraft:mossy_cobblestone,20", "minecraft:oak_planks=minecraft:sandstone,100,under=minecraft:sand"]
+  }
+}
+```
+
+`control.structures` rozhoduje o této skupině. Vypnuté vanilla struktury, jejich rozestup, oddělení, vzdálenost od spawnu, biomy, spawny, připnutí a přizpůsobení terénu.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `structureSpacing` | seznam | prázdný | Jak daleko od sebe se vanilla struktury seedují, v chuncích, jako položky struktura=chunky: názvy z 1.12.2 temples, monuments, mansions, mineshafts, strongholds, netherbridges, endcities a villages, nebo id jakékoli sady struktur, třeba pillager_outposts. U mineshafts je číslo jeden chunk z tolika; u strongholds je to vzdálenost prstenců. Netherové pevnosti mají vlastní mřížku, kterou rozestup netherbridges neovlivní |
+| `structureSeparation` | seznam | prázdný | Nejmenší vzdálenost dvou struktur, v chuncích, jako položky struktura=chunky; u strongholds je to rozptyl prstenců. Temples, mineshafts a netherbridges mají vlastní oddělení, které se tím neovlivní. U monuments se oddělení stejně velké jako rozestup sníží na rozestup minus jedna a log to uvede |
+| `structureMost` | seznam | prázdný | Nejvíc vesnic, které smí dimenze mít, jako villages=počet (například villages=100); jiné struktury omezeny nejsou: jakmile vznikne tolik vesnic, žádný další chunk další nezaloží, kromě chunků připnutých pomocí structureAt. 0 nebo chybějící položka limit nenastaví |
+| `structureSpawners` | seznam `structure=entity` | prázdný | Co spawnuje líheň uvnitř vanilla struktury, oddělené čárkami pro náhodný výběr na každou líheň. Líheň umisťují čtyři: dungeons, mineshafts, nether fortresses a strongholds |
+| `structureMinDistanceFromSpawn` | seznam | prázdný | Jak daleko od spawnu světa struktura začíná, v blocích, jako položky struktura=bloky. Měří se od spawn bodu světa; dokud ho nový svět ještě vybírá, od worldSpawn balíčku, je-li nastaven, jinak od počátku světa |
+| `structureBiomes` | seznam | prázdný | Kde se struktura smí generovat, jako položky struktura=biom,biom pojmenovávající id biomů, názvy, které hra zobrazuje, třeba Březový les, holé vanilla názvy jako desert, nebo typy biomů jako SANDY |
+| `structureBiomesAreBlacklist` | seznam `structure=true` nebo `structure=false` | prázdný | Směr seznamu biomů každé struktury |
+| `structureSpawns` | seznam | prázdný | Moby, které struktura spawnuje, ať biom říká cokoli, jako položky struktura=namespace:entita:váha:nejméně:nejvíce, oddělené čárkami. Seznam nahradí celý vlastní seznam mobů struktury, ať jde o jakýkoli druh moba; prázdný seznam za = nespawnuje nic |
+| `structureAt` | seznam `structure=x,z` | prázdný | Připne strukturu na přesné místo. Viz [Struktury na přesných místech](#struktury-na-přesných-místech) |
+| `structureAdaptation` | seznam | mansions `beard_thin`; každá jiná struktura si ponechá své vanilla přizpůsobení | Jak se terén struktuře přizpůsobí, jako položky struktura=režim s režimy none, bury, beard_thin, beard_box a encapsulate |
+| `terrainAdaptation` | boolean | `false` | Položí vlastní městské ulice RDPL, usazené do terénu místo stání na pilotech nad každou prohlubní, a spolu s nimi načte volby villagePath a villageRail. Mění terén, takže svět vytvořený se zapnutou volbou se liší od světa bez ní. Města se seedují tak, jak určuje villageCitySpacing, a při 0 žádná nevzniknou |
+| `villagePieces` | seznam | prázdný | Pozemky vesnic pojmenované zde, jeden na řádek, úplným id souboru vesnic jako mypack:smithy, holým názvem, nebo názvem struktury, kterou staví pozemek ze šablony. Je-li villagePiecesAreBlacklist zapnuto, struktura pojmenovaná zde zůstane prázdná všude, kde ji hra načte, včetně vlastních vesnických domů hry, třeba minecraft:village/plains/houses/plains_small_house_1 |
+| `villagePiecesAreBlacklist` | boolean | `true` | Zapnuto: pozemky ve villagePieces jsou zablokovány. Vypnuto: staví se jen tyto pozemky |
+| `villageBlocks` | seznam | prázdný | Bloky, z nichž se stavějí pozemky vesnic, jako dvojice původní=náhrada, minecraft:cobblestone=mypack:ruby_brick. Obě strany mohou nést stav v hranatých závorkách, kterému se původní blok musí přesně shodovat. Dvojice může přidat šanci ze 100, minecraft:cobblestone=minecraft:mossy_cobblestone,20, vážící se ze seedu světa tam, kde se blok pokládá, at=blok pro pravidlo jen tam, kde ten blok stojí, a under=blok jen nad ním. Dvojice bez šance či podmínky se použijí první, takže podmíněná dvojice může zvětrat jejich výsledek. Řídí farmy a vlastní vesnické domy hry, které město staví; ulice, studny, lampy a struktury tvých šablon pozemků se nikdy neřídí. Prázdný seznam nechá každý blok tak, jak byl položen |
+
+### Spawnování
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "surfaceDayMonsterRate": 0.0,
+    "surfaceNightMonsterRate": 1.0,
+    "undergroundDayMonsterRate": 1.0,
+    "undergroundNightMonsterRate": 1.0,
+    "monsterCap": 40,
+    "creatureCap": 10,
+    "ambientCap": 15,
+    "waterCreatureCap": 5,
+    "monsterSpawnLight": 0,
+    "threatItems": ["minecraft:diamond_sword=5,1", "minecraft:diamond=1,16,batch"],
+    "threatLevels": [10, 25, 50],
+    "threatMost": -1,
+    "threatSpawnRate": 2.0,
+    "threatNotice": 16.0,
+    "threatSays": ["1=Something out there has taken notice of you.", "0=The world loses interest in you."]
+  }
+}
+```
+
+`control.spawning` rozhoduje o této skupině. Limity spawnování mobů, míra spawnování nepřátel a strop světla.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------------- | ---------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surfaceDayMonsterRate` | desetinné číslo, 0.0 až 4.0 | `1.0` | Násobitel spawnování nepřátel na povrchu ve dne, kde `1.0` je vanilla, takže spawnování na povrchu za denního světla jde vypnout bez zásahu do jeskyní |
+| `surfaceNightMonsterRate` | desetinné číslo, 0.0 až 4.0 | `1.0` | Totéž pro povrch v noci |
+| `undergroundDayMonsterRate` | desetinné číslo, 0.0 až 4.0 | `1.0` | Totéž pod zemí ve dne |
+| `undergroundNightMonsterRate` | desetinné číslo, 0.0 až 4.0 | `1.0` | Totéž pod zemí v noci |
+| `monsterCap` | celé číslo, -1 až 1000 | `-1` | Kolik nepřátel může být načteno najednou. Vanilla je 70 a `-1` to nechá být |
+| `creatureCap` | celé číslo, -1 až 1000 | `-1` | Totéž pro pasivní zvířata. Vanilla je 10 |
+| `ambientCap` | celé číslo, -1 až 1000 | `-1` | Totéž pro netopýry a podobné. Vanilla je 15 |
+| `waterCreatureCap` | celé číslo, -1 až 1000 | `-1` | Totéž pro sépie. Vanilla je 5 |
+| `monsterSpawnLight` | celé číslo, -1 až 15 | `-1` | Nejjasnější světlo bloku, v němž se nepřátelský mob ještě smí spawnovat, navíc ke kontrolám vanilly. -1 ponechá samotné pravidlo vanilly. Líhně to neovlivní |
+| `skyAnimals` | boolean | `true` | Zda se jiné moby než monstra spawnují přirozeně na nebeské zemi nad vanilla terénem, především na nebeských ostrovech. `false` nechá zvířata, netopýry a každého jiného moba, který není monstrum, na zemi pod nimi. Líhně to neovlivní |
+| `threatItems` | seznam | prázdný | Předměty, které zvyšují úroveň hrozby hráče, jako položky předmět=úroveň,počet s volitelným ,each nebo ,batch na konci, např. minecraft:diamond_sword=5,1 nebo minecraft:diamond=1,16,batch. Each, výchozí, přičte úroveň za každý držený kus, počítaje nejvýš počet z nich; batch přičte úroveň jednou za každý držený počet. Počet nad velikostí stacku předmětu se zkrátí na velikost stacku. Nositelem je každá načtená entita držící předměty: hlavní inventář hráče, brnění a druhá ruka, odhozený stack, cokoli s inventářem předmětů, jako mula s truhlou nebo vozík s truhlou, a držené předměty a brnění jiných mobů. Prázdný seznam hrozbu vypne. Při `control.spawning` nastaveném na `off` stále platí vlastní nastavení hrozby z konfigurace |
+| `threatLevels` | seznam | prázdný | Skóre, při kterém se vstupuje do každého pásma, ve vzestupném pořadí, takže `10, 25, 50` dělá tři pásma. Prázdný seznam hrozbu vypne |
+| `threatMost` | celé číslo, -1 až 100000 | `-1` | Omezí skóre. `-1` ho nechá bez omezení |
+| `threatSpawnRate` | desetinné číslo, 0.0 až 8.0 | `1.0` | Škáluje spawnování nepřátel do 128 bloků od nositele ve vrchním pásmu, navíc k ostatním mírám, přičemž nižší pásma dostanou úměrný podíl |
+| `threatNotice` | desetinné číslo, 0.0 až 64.0 | `0.0` | O kolik bloků dál nepřátelští mobové, včetně vanilla, vidí nositele ve vrchním pásmu, opět rozdělené mezi nižší pásma |
+| `threatSays` | seznam `band=message` | prázdný | Řádky zobrazené žlutě, když se změní hráčovo vlastní pásmo, přičemž pásmo `0` je řádek pro pokles zpět pod první pásmo |
+
+### Podloží
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "flatBedrock": true,
+    "flatBedrockDimensions": ["minecraft:overworld", "minecraft:the_nether"],
+    "flatBedrockDimensionsAreBlacklist": false,
+    "bedrockLayers": 1,
+    "flatBedrockBiomes": ["minecraft:plains"],
+    "flatBedrockBiomesAreBlacklist": true,
+    "flatBedrockRoof": true,
+    "flatBedrockFiller": "minecraft:cobblestone",
+    "flatBedrockFillers": ["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"],
+    "flatBedrockBiomeTypes": ["minecraft:is_ocean"],
+    "flatBedrockRetrogen": true
+  }
+}
+```
+
+`control.bedrock` rozhoduje o této skupině. Plochá skála a její seznamy dimenzí a biomů.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `flatBedrock` | boolean | `false` | Nahradí zubaté podloží na dně světa plochými vrstvami. Jen nové chunky, pokud není zapnuto `flatBedrockRetrogen` |
+| `flatBedrockDimensions` | seznam | `["minecraft:overworld"]` | Dimenze, v nichž se podloží zplošťuje, podle id. Prázdný seznam znamená všechny. Dimenze, kterou definuje jiný mód v souboru dimenze, funguje také podle id; dimenze vytvořená v kódu zapíše varování do logu a zůstane beze změny |
+| `flatBedrockDimensionsAreBlacklist` | boolean | `false` | Zapnuto: zplošťování vynechá uvedené dimenze. Vypnuto: platí jen pro ně |
+| `bedrockLayers` | celé číslo, 1 až 5 | `1` | Kolik vrstev podloží zůstane |
+| `flatBedrockBiomes` | seznam názvů biomů | prázdný | Biomy, v nichž se podloží zplošťuje, podle přátelského nebo registrového názvu. Prázdný seznam znamená každý biom |
+| `flatBedrockBiomesAreBlacklist` | boolean | `false` | Zapnuto: zplošťování vynechá uvedené biomy. Vypnuto: platí jen pro ně |
+| `flatBedrockRoof` | boolean | `false` | Zploští i strop z podloží, kde ho dimenze má, třeba strop Netheru |
+| `flatBedrockFiller` | blok | prázdný | Čím se nahradí odebrané podloží. Prázdná hodnota vybírá podle dimenze: kámen, netherová suť, enderit |
+| `flatBedrockFillers` | seznam `dimension=block` | `["minecraft:the_nether=minecraft:netherrack", "minecraft:the_end=minecraft:end_stone"]` | Výplň pro jednotlivé dimenze, která pro uvedené dimenze přepíše `flatBedrockFiller` |
+| `flatBedrockBiomeTypes` | seznam | prázdný | Typy biomů, v nichž se podloží zplošťuje, vedle flatBedrockBiomes, podle tagu biomu jako minecraft:is_ocean nebo podle názvu typu z 1.12.2 jako OCEAN. Vztahuje se na ně i flatBedrockBiomesAreBlacklist |
+| `flatBedrockRetrogen` | boolean | `false` | Zploští podloží i v chuncích, které už existují. Každý chunk se zpracuje jednou a pamatuje si to, a nejde to vrátit zpět: původní vzor se nikam neukládá |
+| `flatBedrockRetrogenKey` | text | `0000` | Změň ho, aby byl každý chunk znovu způsobilý ke zploštění podloží |
+
+### Pomalé tikání ve vzdálenosti
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "slowDistantEntities": true,
+    "slowedKinds": ["items", "experience", "projectiles"],
+    "slowDistance": 192,
+    "slowRate": 4,
+    "neverSlowed": ["minecraft:armor_stand"],
+    "slowRecheck": 20
+  }
+}
+```
+
+`control.entities` rozhoduje o této skupině. Pomalejší tempo entit daleko od všech hráčů.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | --------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `slowDistantEntities` | boolean | `true` | Tikat entity daleko od všech hráčů méně často. Nic se nikdy nenechá bez tiků, jen tiká pomaleji |
+| `slowedKinds` | seznam | `["items", "experience"]` | Které druhy dostávají méně tiků: items, experience, projectiles, přičemž poslední jsou šípy, trojzubce, hozené sněhové koule, vejce, lektvary, lahvičky zaklínání a ender perly a plivance lam. Cokoli, co samo přemýšlí, se vždy zpomalí místo toho, aniž by to zde bylo uvedeno: rozhoduje se o dalším kroku méně často a stále se hýbe každý tik. Stroje se nikdy nezpomalují |
+| `slowDistance` | celé číslo, 64 až 4096 | `192` | Jak daleko od nejbližšího hráče, v blocích, se chunk zpomalí. Hra přestane hráči hlásit většinu entit za 64, takže pod tuto hodnotu nelze jít |
+| `slowRate` | celé číslo, 1 až 20 | `4` | Jeden tik z tolika se dá zpomalenému chunku. 1 znamená žádné zpomalení, 20 jednou za sekundu |
+| `neverSlowed` | seznam | prázdný | Entity, které se nikdy nezpomalují, ať jsou jakkoli daleko, jako namespace:název |
+| `slowRecheck` | celé číslo, 1 až 100 | `20` | Jak často, v tikách, se znovu zjišťuje vzdálenost k nejbližšímu hráči. Každý hráč se počítá sám za sebe, takže i někdo osamělý daleko má kolem sebe vlastní klidný prostor |
+
+### Pevnina, držení a co říká mód
+
+*co dělá která skupina*
+
+`control.chunks` rozhoduje o této skupině. Poloměr spawn chunků, předgenerování, retrogen a reset, uvítací řádky, karta hlášek a oznámení hry.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------------- | ----------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `retrogen` | boolean | `false` | Dohnat existující chunky u položek worldgenu s \"retrogen\": true. Vypnuto: chunky, které už existují, se nechají být. Chunky se při generování značí tak či tak, takže pozdější zapnutí se dotkne jen chunků starších než balíček |
+| `adoptExistingChunks` | boolean | `false` | Zacházet s chunky, které už existují, jako by je vygeneroval tento balíček, tedy je označit, místo aby se nechaly retrogenu. Zapni to při nahrazování módu, který už stejnou rudu generoval, aby ji retrogen nikdy nezdvojil. Položky worldgenu přidané později se do nich stále retrogenují |
+| `saysCard` | boolean | `false` | Zobrazit řádky, které tento mód říká, tedy uvítání, poznámku o tvorbě terénu pro hráče připojeného uprostřed běhu a konec běhu (průběh zůstává na liště akcí), a řádky o hrozbě, jako kartu v pravém dolním rohu místo v chatu. Karta se vsune, zůstane osm sekund a zmizí a zobrazí se i přes otevřenou obrazovku |
+| `saysIcon` | text | prázdný | Předmět vykreslený na kartě, např. minecraft:compass. Prázdná hodnota nevykreslí žádný |
+| `saysColor` | text | prázdný | Barva pozadí karty jako hex, např. 1E2630. Prázdná hodnota použije tmavou břidlicovou |
+| `saysImage` | text | prázdný | PNG z klientských assetů balíčku roztažené přes kartu jako její pozadí, např. rubyworld:textures/gui/card.png, vykreslené přes barvu. Prázdná hodnota nevykreslí nic |
+| `saysBackground` | boolean | `true` | Vykreslit panel karty, ohraničení a barevný pruh a tmavé pozadí za uvítáním a poznámkami o držení. Vypnuto zůstane jen text, který si ponechá stín, a saysImage, pokud je nastaven |
+| `saysFont` | text | prázdný | Písmo textu karty, pojmenované jako namespace:název, např. rubyworld:runes pro assets/rubyworld/font/runes.json balíčku. Prázdná hodnota použije písmo RDPL |
+| `toasts` | boolean | `false` | Zobrazovat oznámení hry, vyskakovací okna v pravém horním rohu pro úspěchy, odemčené recepty, rady z tutoriálu a systémová oznámení, včetně oznámení jiných módů. Vypnuto nezobrazí žádná. Projeví se při příštím připojení do světa nebo na server. Šablona světa může místo toho vypsat druhy, které se zobrazí |
+| `pregenOnNewWorld` | celé číslo, 0 až 8192 | `0` | Jak daleko kolem spawnu, v chuncích, se novému světu vytvoří terén dřív, než v něm někdo hraje. Hra si sama vytvoří 12 chunků kolem spawnu, takže 12 je spodní mez a 0 znamená tuto mez, ne nic: terén, který hra stejně měla vytvořit, se převezme a osvětlí v jednom uspořádaném průchodu místo postupného přicházení. Zvyš hodnotu, pokud chceš sáhnout dál, než sahá hra sama |
+| `pregenToBorder` | boolean | `false` | Zda se novému světu vytvoří terén až k hranici světa místo pevného počtu chunků, vystředěně na hranici místo na spawn. Svět, jehož hranice nebyla nikdy přisunuta, nemá hranici k dosažení a přeskočí se |
+| `pregenAllDimensions` | boolean | `false` | Vytvořit terén každé dimenze, kterou server drží, včetně módových, nejdřív Overworld a zbytek v pořadí id, místo jen těch v pregenDimensions. Ty uvedené v pregenDimensionsWhenEntered se stále nechají pro prvního návštěvníka |
+| `pregenResume` | boolean | `false` | Zda běh, který byl zastaven nebo přerušen, navazuje tam, kde přestal, při příštím načtení světa, místo aby začal znovu |
+| `pregenChunksInFlight` | celé číslo, 1 až 512 | `32` | Kolik chunků si běh tvorby terénu vyžádá od hry najednou. Víc udrží generovací vlákna zaneprázdněnější a server méně odpovídá tomu, kdo je držen a sleduje |
+| `pregenBackup` | boolean | `false` | Zkopíruje svět do nedotčené zálohy, jakmile předgenerování skončí, zatímco hráči jsou stále drženi. Kopie je to, co by reset obnovil, a kopie, jejíž balíčky už neodpovídají, se zahodí a vytvoří znovu |
+| `resetClearsEntities` | boolean | `true` | Odstranit každou entitu, která není hráč, když se mapa resetuje |
+| `resetClearsScores` | boolean | `true` | Vrátit každý cíl, který balíček vede, na nulu při resetu mapy, aby nový zápas začínal od nuly. Samotné týmy se zachovají |
+| `resetClearsInventory` | boolean | `false` | Vyprázdnit inventář každého hráče, včetně brnění a druhé ruky, když se mapa resetuje |
+| `resetClearsExperience` | boolean | `false` | Vrátit zkušenosti každého hráče na úroveň nula, když se mapa resetuje |
+| `spawnChunkRadius` | celé číslo, 0 až 1024 | `128` | Jak daleko od spawn bodu, v blocích, se chunky drží načtené, ať je tam hráč, nebo ne, zaokrouhleno na celé chunky jako (bloky + 8) / 16 na každou stranu, takže 128 drží 8 chunků na každou stranu. Při startu světa připraví Overworld čtverec o 4 chunky širší na každou stranu dřív, než je server připraven, při 128 tedy 25 krát 25 chunků. 0 nepřipraví ani nedrží žádné, takže oblast spawnu se uvolní jako kdekoli jinde. RDPL drží chunky vlastními tickety, takže na 1.21.1 herní pravidlo spawnChunkRadius nedělá nic, dokud je tento klíč v platnosti |
+| `spawnChunkRadii` | seznam | prázdný | Poloměr pro Overworld zapsaný jako dimenze=bloky, jako v minecraft:overworld=64, který přepíše spawnChunkRadius. Spawn chunky má jen Overworld, takže položka pro jakoukoli jinou dimenzi nic nemění |
+| `welcomeSays` | seznam | `[WELCOME]` | Uvítací řádky, zobrazené zeleně při každém přihlášení a po předgenerování. Holá položka je řádek pro všude; položka dimenze=zpráva ji pro tu dimenzi přepíše a také vítá každý příchod tam, např. minecraft:the_nether=Vítej v Netheru!. Prázdná zpráva za = tu dimenzi ztiší; prázdný seznam nezobrazí nic. Ponechán na této výchozí hodnotě mluví jazykem každého hráče |
+| `pregenBorderLimit` | celé číslo, 1 až 1875000 | `8192` | Nejdál, kam smí hranice sahat, v chuncích na obě strany, než se tvorba terénu až k ní odmítne. Je tu, aby zastavilo chybu běžící týdny, ne aby se zvyšovala, a balíček ji nastavit nemůže. Čtverec 8192 má 268 milionů chunků **Jen konfigurace.** |
+| `pregenDimensions` | seznam | `["minecraft:overworld"]` | V kterých dimenzích se novému světu vytvoří terén, podle id, v zadaném pořadí, jedna po druhé |
+| `pregenDimensionsWhenEntered` | seznam | prázdný | Dimenze, jejichž terén se nevytváří předem, ale až když do nich poprvé někdo vstoupí, ve stejném dosahu, přičemž všichni jsou drženi stejným způsobem, dokud není hotovo. Dimenze uvedená zde i v pregenDimensions se prostě vytvoří předem |
+| `pregenRunningSays` | text | `World pregeneration running, %d%% done` | Zpráva o průběhu, kterou hráči vidí při generování světa, kde %d je procento a druhé %s dimenze. Prázdná hodnota jim neřekne nic. Ponechána na této výchozí hodnotě mluví jazykem každého hráče |
+| `pregenFinishedSays` | text | `World pregeneration finished` | Zpráva, kterou hráči vidí, když generování skončí. Prázdná hodnota jim neřekne nic. Ponechána na této výchozí hodnotě mluví jazykem každého hráče |
+| `pregenStoppedSays` | text | `World pregeneration stopped` | Zpráva, kterou hráči vidí, když se generování předčasně zastaví. Prázdná hodnota jim neřekne nic. Ponechána na této výchozí hodnotě mluví jazykem každého hráče |
+| `pregenSpectatingSays` | text | `Spectating until the world is ready` | Zpráva uprostřed obrazovky, kterou hráči vidí, zatímco jsou během generování světa drženi v režimu pozorovatele. Prázdná hodnota nezobrazí nic. Ponechána na této výchozí hodnotě mluví jazykem každého hráče |
+| `pregenLogo` | text | `center` | Kde logo stojí, když předgenerování skončí: left, center nebo right, nad textem uprostřed obrazovky. Zobrazuje se vždy; neznámé slovo se čte jako center |
+| `pregenBackupSays` | text | `Pack requested world backup` | Zpráva uprostřed obrazovky, kterou hráči vidí, zatímco se tato záloha kopíruje. Prázdná hodnota nezobrazí nic |
+| `resetSays` | text | `Pack requested map reset` | Řádek uprostřed obrazovky, který se hráčům zobrazí, zatímco /rdpl reset vrací mapu zpět. Prázdná hodnota resetuje potichu |
+| `resetSendsTo` | text | `spawn` | Kam se hráči po resetu umístí: spawn, pozice jako x,y,z, nebo dimenze:x,y,z, aby byli posláni do jiného světa |
+| `resetRuns` | text | prázdný | Funkce spuštěná poté, co reset vyčistil mapu, pojmenovaná namespace:cesta. Prázdná hodnota nespustí nic |
+
+### Prázdný svět
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "voidWorld": true,
+    "voidWorldDimensions": ["minecraft:overworld"],
+    "voidWorldDimensionsAreBlacklist": false,
+    "voidPlatformBlock": "minecraft:stone",
+    "voidPlatformHeight": 64,
+    "voidPlatformSize": 5
+  }
+}
+```
+
+`control.voidWorld` rozhoduje o této skupině. Generování prázdného světa a jeho plošina.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------------------- | ------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `voidWorld` | boolean | `false` | Vygeneruje uvedené dimenze jako prázdný prostor s plošinou v spawn bodu a bez čehokoli živého, přes vygenerovanou předvolbu pro tři vanilla dimenze a přes vlastní soubory dimenzí balíčku; jakákoli jiná uvedená dimenze se vyprázdní při tvorbě terénu. Volba se uchová se světem při jeho vytvoření, takže její pozdější zapnutí nebo vypnutí nechá existující svět tak, jak byl |
+| `voidWorldDimensions` | seznam | `["minecraft:overworld"]` | Které dimenze se stanou prázdnými, podle id. Prázdný seznam znamená žádné, nebo každou dimenzi, je-li zapnuto voidWorldDimensionsAreBlacklist. Dimenze, kterou definuje jiný mód v souboru dimenze, funguje také podle id, přes vygenerované přepsání toho souboru; dimenze vytvořená v kódu zapíše varování do logu a zůstane beze změny |
+| `voidWorldDimensionsAreBlacklist` | boolean | `false` | Zapnuto: uvedené dimenze zůstanou nedotčené |
+| `voidPlatformBlock` | blok | `minecraft:stone` | Z čeho je plošina vyrobena |
+| `voidPlatformHeight` | celé číslo, -2032 až 2031 | `64` | Souřadnice y, na níž plošina prázdného světa stojí |
+| `voidPlatformSize` | celé číslo, 1 nebo více | `9` | Jak je plošina široká, zaokrouhleno dolů na liché číslo, aby ležela vystředěně na spawnu |
+| `voidWorld` | text | `default` | Generování prázdného světa a jeho plošina [default\|global\|off] |
+
+### Drak
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "dragonFight": true
+  }
+}
+```
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dragonFight` | boolean | `true` | Zda se to celé vůbec děje: drak, jeho lišta, krystaly, fontána, na které stojí, a znovuzrození, které hráč spustí pomocí end krystalů. Patří do skupiny `structures` |
+
+`dragonFight` patří do skupiny `structures` a rozhoduje, zda se to celé vůbec děje: drak, jeho lišta, krystaly, fontána, na které stojí, a znovuzrození, které hráč spustí pomocí end krystalů. Vyprázdněný End ho vynechá, pokud ho balíček nepožaduje, a běžný End ho má, pokud balíček neřekne jinak, takže se vyplatí nastavit `dragonFight` oběma směry.
+
+### Terén
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldSeed": "Hollow Ridge",
+    "worldName": "Ruby World",
+    "worldType": "largebiomes",
+    "worldTypeExceptions": ["flat", "debug_all_block_states"],
+    "generatorOptions": {"seaLevel": 63, "useMansions": false},
+    "worldMinHeight": -128,
+    "worldMaxHeight": 384,
+    "terrainOffset": 48,
+    "deepStone": "minecraft:blackstone",
+    "noiseCaves": "deep",
+    "worldSpawn": "0,72,0",
+    "worldBorder": 4096,
+    "worldTime": 6000,
+    "caveRegionPlainWeight": 4,
+    "caveRegionCells": 128,
+    "caveRegionCellsY": 64,
+    "worldGravity": ["0.17", "minecraft:overworld=1.0"],
+    "worldFallDamage": ["0.17"],
+    "worldJumpStrength": ["1.0"],
+    "worldTerminalVelocity": ["1.0"],
+    "weatherCeiling": ["minecraft:overworld=128"],
+    "cloudHeight": ["minecraft:overworld=384"],
+    "worldBelow": ["minecraft:overworld=minecraft:the_nether"],
+    "worldAbove": ["minecraft:the_nether=minecraft:overworld"],
+    "worldSeamEntities": true,
+    "worldSeamBedrock": false
+  }
+}
+```
+
+`control.terrain` rozhoduje o této skupině. Název a seed světa při vytvoření, generatorOptions, oblasti jeskyní, výška mraků a švy mezi světy.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------- | ------------------ | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldSeed` | řetězec | prázdný | Seed, s nímž se vytváří každý nový svět, zapsaný tak, jak by se napsal: číslo se použije tak, jak je, a cokoli jiného se na číslo převede tak, jak to dělá hra. Dedikovaný server s ním vytváří svět také a zapisuje ho do `server.properties` jako `level-seed`. Prázdná hodnota nechá výběr být |
+| `worldName` | text | prázdný | Jak se nový svět jmenuje, když se otevře obrazovka pro jeho vytvoření. Prázdná hodnota ho nechá tak, jak ho pojmenuje hra |
+| `worldType` | text | prázdný | Typ světa, na kterém se tvarovaný svět staví, jeden z default, largebiomes, amplified nebo flat, přičemž názvy z 1.12.2 customized a default_1_1 se čtou jako default; flat je Overworld typu Dokonalá rovina postavený z vrstev generatorOptions, s městy balíčku na něm. Tvar níže (výšky, hluboký kámen, hladina moře, podloží, prázdno) se generuje jako vlastní předvolba světa, uvedená pod Typ světa na obrazovce světa a zvolená tam, ať bylo vybráno cokoli. Dedikovaný server ji zapisuje do `server.properties` jako `level-type` s názvem této předvolby, nebo vlastní předvolby hry, když se nic netvaruje, ledaže `level-type` už pojmenovává jednu z worldTypeExceptions. Prázdná hodnota staví na default |
+| `worldTypeExceptions` | seznam | `["flat", "debug_all_block_states"]` | Typy světa, které hráč zvolí a které se vygenerovaná předvolba nedotkne, jako flat nebo debug_all_block_states. Prázdný seznam znamená, že se nahradí každá volba |
+| `generatorOptions` | text | prázdný | Nastavení terénu Overworldu jako objekt JSON, klíče, které psal typ světa customized z 1.12.2. Čtou se zde: seaLevel, useLavaOceans, fixedBiome a useCaves, useRavines, useDungeons, useLavaLakes, useStrongholds, useVillages, useMineShafts, useTemples, useMonuments a useMansions nastavené na false. S worldType flat jsou to místo toho vrstvy, odspodu nahoru, jako superplochý text z 1.12.2 3;minecraft:bedrock,59*minecraft:stone,4*minecraft:dirt,minecraft:grass_block;1;village nebo seznam vrstev; číslo za vrstvami je biom a village, biome_1, mineshaft, stronghold, oceanmonument, lava_lake a decoration za ním je zapínají. Použije se na svět jen při jeho vytvoření. Dedikovaný server ho zapisuje do `server.properties` jako `generator-settings`, ploché vrstvy jako vlastní plochý JSON hry, ledaže `level-type` už pojmenovává jednu z worldTypeExceptions. Prázdná hodnota nechá terén tak, jak ho vytvoří typ světa. Klíče rud jsou coalSize, coalCount, coalMinHeight a coalMaxHeight, tytéž čtyři pro iron, gold, redstone, diamond, dirt, gravel, granite, diorite a andesite a lapisSize, lapisCount, lapisCenterHeight a lapisSpread pro lapis. Každý znamená to, co znamenal v 1.12.2: žílu té velikosti, tolik žil na chunk, na souřadnici y od minima až po maximum, to ne včetně, lapis kolem svého středu s rozptylem na obě strany. Nastavení počtu nebo výšky vypne ostatní umístění té rudy ve hře, kromě dalších zlatých žil v pustině, které mění jen velikost; samotná velikost změní velikost každé její žíly a počet nebo výška bez velikosti použije výchozí velikost z 1.12.2. dungeonChance je počet pokusů o kobku na chunk, s hlubokými kobkami v poměru, lavaLakeChance škáluje, jak vzácná jsou lávová jezera oproti výchozím 80, a biomeSize, ve výchozím stavu 4 a 6 pro largebiomes, posouvá šum teploty a vegetace o jednu oktávu na krok. Klíče tvaru terénu znamenají to, co znamenaly v 1.12.2, a při svých výchozích hodnotách z 1.12.2 nechají zemi tak, jak ji hra vytvoří: coordinateScale a heightScale, po 684.412, určují, jak široce a jak vysoko se šum terénu vzorkuje, upperLimitScale a lowerLimitScale, po 512, a mainNoiseScaleX, mainNoiseScaleY a mainNoiseScaleZ, 80, 160 a 80, jej dělí, baseSize, 8.5, biomeDepthWeight, 1, a biomeDepthOffset, 0, zvedají nebo snižují zemi, stretchY, 12, biomeScaleWeight, 1, a biomeScaleOffset, 0, natahují nebo zplošťují její kopce a depthNoiseScaleX a depthNoiseScaleZ, po 200, určují velikost šumu hloubky z 1.12.2, který zapíná kterýkoli z těchto klíčů a který při výchozím baseSize posouvá povrch až o 2.4 bloku dolů nebo 0.85 nahoru; depthNoiseScaleExponent se čte a nic nemění, jako v 1.12.2. riverSize, ve výchozím stavu 4, posouvá šum řek o jednu oktávu na krok. waterLakeChance přidává vodní jezera mimo poušť, jedno z tolika chunků pod zemí a jedno zhruba ze čtyř třetin tolika na povrchu, ledaže je useWaterLakes false. Klíče rud, kobek a jezer přetvářejí vlastní prvky hry jen pro svět vytvořený s vygenerovanou předvolbou: jiná dimenze a svět vytvořený bez předvolby si ponechají prvky hry |
+| `worldMinHeight` | celé číslo, -2032 až 2016 | `-64` | Nejnižší blok Overworldu, násobek 16 dolů až k -2032. Vlastní dno hry je -64; nižší vytvoří hluboký svět pod vanilla terénem, plný kamene, dokud ho vrstva worldgenu nevykope nebo noiseCaves nepřenese jeskyně hry dolů. Použije se jen přes vygenerovanou předvolbu |
+| `worldMaxHeight` | celé číslo, -2016 až 2032 | `320` | Blok nad vrcholem Overworldu, násobek 16 nahoru až k 2032, nejvýš 4064 nad worldMinHeight. Vlastní vrchol hry je 320; vyšší nechá nad vanilla terénem otevřenou oblohu |
+| `terrainOffset` | celé číslo, 0 až 4064 | `0` | O kolik bloků nahoru se posune celé okno vanilla terénu, násobek 16. Hladina moře a povrchové vrstvy jdou s ním a jeskyně, rudné žíly a hloubky biomů následují posunutou zem, zatímco vlastní umisťované prvky hry si drží své výšky. worldMaxHeight musí zůstat na 320 plus posun nebo výše, jinak se posun odmítne. Použije se jen přes vygenerovanou předvolbu |
+| `deepStone` | text | prázdný | Blok, z něhož je svět pod vanilla terénem vyroben, když worldMinHeight klesne pod -64, třeba vlastní břidlice balíčku. Splývá s břidlicí přes osm vrstev pod -64 tak, jak břidlice splývá s kamenem. Prázdná hodnota ponechá kámen |
+| `noiseCaves` | text | `off` | Kde pokračují jeskyně, tunely, nudle a aquifery hry, když worldMinHeight klesne pod -64: off ponechá svět pod vanilla terénem jako pevný hluboký kámen, aby ho vrstva worldgenu vykopala, deep je nese dolů až na dno s lávovými jezery přesunutými do jeho spodních deseti vrstev, world znamená totéž na této verzi, protože vanilla terén je už má |
+| `skyStone` | text nebo seznam | prázdný | Blok, z něhož je obloha nad vanilla terénem vyrobena, když worldMaxHeight přesáhne 320, tvarovaný do plovoucí země vlastním šumem jeskyní hry, takže co je dole jeskyně, je nahoře ostrov. Vrch a výplň pod ním pocházejí z povrchového pravidla každého biomu. Prázdná hodnota nechá oblohu prázdnou |
+| `skyShape` | text nebo seznam | `islands` | Do čeho se obloha nad vanilla terénem tvaruje: islands pro plovoucí zemi, nebo caves pro pevnou skálu s prokopanými jeskyněmi. Používá se jen tehdy, když skyStone pojmenovává blok |
+| `skyIslands` | float, -1.0 až 1.0 | `0.5` | Jak ochotně se obloha shlukuje do ostrovů, od -1 pro téměř nepřerušenou zemi po 1 pro prázdnou oblohu. Nižší rozprostře zemi po větší části oblohy, vyšší nechá méně a menších kusů. Používá se jen tehdy, když skyStone pojmenovává blok a skyShape je islands |
+| `skyThickness` | float, 0.0 až 8.0 | `2.0` | Jak pevný je nebeský ostrov. Vyšší ostrovy vyplní, nižší je vyduté a ztenčí jejich okraje do ztracena. Používá se jen tehdy, když skyStone pojmenovává blok a skyShape je islands |
+| `skyHeights` | seznam | prázdný | Nejnižší a nejvyšší blok, kam může nebeský ostrov sahat, jako dvě čísla. Prázdný seznam vyplní celý svět nad vanilla terénem. Používá se jen tehdy, když skyStone pojmenovává blok |
+| `worldSpawn` | text | prázdný | Kde se spawnuje každý nový svět, zapsáno jako x,z nebo x,y,z. Bez y se použije průměrná úroveň země světa, o jeden nad hladinou moře, nebo vrch vrstev u plochého světa, a hra tam pak najde bezpečnou oporu jako u jakéhokoli spawnu. Použije se na svět jen při jeho vytvoření. Prázdná hodnota nechá výběr na hře |
+| `worldBorder` | celé číslo, 0 až 60000000 | `0` | Jak široce, v blocích, stojí hranice světa v každém novém světě. Použije se na svět jen při jeho vytvoření. 0 nechá hranici tam, kam ji dá hra |
+| `worldTime` | celé číslo, -1 až 23999 | `-1` | Zamkne denní dobu Overworldu, v tikách, stejné číslo, jaké bere /time set, takže 18000 je půlnoc. Hodiny se zastaví a nehnou se: /time set je nepřesune, den se pod tím dál počítá a odebrání nastavení ten čas vrátí. -1 nechá čas běžet |
+| `caveRegionPlainWeight` | celé číslo, 0 nebo více | `4` | Váha obyčejného podzemí bez oblasti oproti vlastním vahám oblastí jeskyní. Vyšší nechá víc podzemí bez jakékoli oblasti |
+| `caveRegionCells` | celé číslo, 16 nebo více | `128` | Jak široká je buňka oblasti jeskyní v blocích. Oblasti jeskyní z balíčků se přes podzemí malují v buňkách zhruba této velikosti |
+| `caveRegionCellsY` | celé číslo, 16 nebo více | `64` | Jak vysoká je buňka oblasti jeskyní v blocích |
+| `worldGravity` | seznam | prázdný | Škáluje gravitaci jako násobitel vanilly, kde 1.0 je beze změny a 0.17 odpovídá Měsíci, pro každou entitu. Holá hodnota se týká každé dimenze a položka zapsaná jako dimenze=hodnota se týká jen té dimenze a má přednost před holou. Prázdný seznam nechá gravitaci být |
+| `worldFallDamage` | seznam | prázdný | Škáluje poškození pádem stejně, 0.5 ho snižuje na polovinu a 2.0 zdvojnásobuje |
+| `worldJumpStrength` | seznam | prázdný | Škáluje sílu skoku stejně, 1.5 skáče o polovinu výš |
+| `worldTerminalVelocity` | seznam | prázdný | Škáluje nejvyšší rychlost, jakou mob nebo hráč padá, stejně, 0.5 padá poloviční maximální rychlostí vanilly |
+| `weatherCeiling` | seznam | prázdný | Nejvyšší y, kam déšť a sníh sahají, jako položky dimenze=y. Holé číslo se týká každé dimenze. Nad ním déšť nepadá, sníh se neusazuje, kotle se neplní, blesky neudeřují a nevykresluje se žádné srážky; pod ním je počasí beze změny. Led závisí na teplotě, ne na srážkách, takže se nad čárou stále tvoří. Prázdný seznam znamená žádný strop |
+| `cloudHeight` | seznam | prázdný | Souřadnice y, v níž se vykreslují mraky, jako položky dimenze=y. Holé číslo se týká každé dimenze. Má přednost před vlastním `cloudHeight` dimenze z balíčku. Prázdný seznam ponechá vlastní výšku mraků hry, v Overworldu 192 |
+| `worldBelow` | seznam | prázdný | Položí jinou dimenzi pod tuto: vypadnutí ze dna světa tě přenese do pojmenované dimenze, kde přijdeš pod její strop na stejném x a z, stále padající. Položky se píšou jako dimenze=cíl, například minecraft:overworld=minecraft:the_nether, aby Nether visel pod Overworldem; holé id se týká každé dimenze. Prokopání vyžaduje, aby podloží podlahy zůstalo vynecháno, což určuje worldSeamBedrock. Prázdný seznam znamená, že podlaha zůstane podlahou |
+| `worldAbove` | seznam | prázdný | Totéž pro strop: vystoupání nad vrchol světa tě přenese do pojmenované dimenze, kde přijdeš nad její podlahu. Píše se stejně jako worldBelow |
+| `worldSeamEntities` | boolean | `true` | Zda přes švy světa jezdí také odhozené předměty, mobové a jiné entity, nebo jen hráči. Jezdci a jejich zvířata přecházejí po jednom |
+| `worldSeamBedrock` | boolean | `false` | Ponechat podloží na hranici švu přesto. Vypnuto: dimenze, jejíž podlaha nebo strop nese šev worldBelow nebo worldAbove, tam podloží negeneruje, takže jde cesta skrz prokopat. Už vygenerované chunky si ponechají, co mají |
+
+### Server
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "worldGameMode": "creative",
+    "worldDifficulty": ["normal", "minecraft:the_nether=hard"],
+    "worldLanCommands": false,
+    "privacy": true,
+    "worldForceGameMode": true,
+    "worldPvp": false,
+    "worldFlight": true,
+    "worldSpawnProtection": 0,
+    "worldNether": false,
+    "worldCommandBlocks": true,
+    "worldIdleTimeout": 30,
+    "worldMotd": "Ruby World",
+    "worldMaxSize": 10000,
+    "worldStructures": true,
+    "worldSpawnMonsters": true,
+    "worldSpawnAnimals": true,
+    "worldSpawnNpcs": false,
+    "worldViewDistance": 12,
+    "worldSimulationDistance": 8
+  }
+}
+```
+
+`control.server` rozhoduje o této skupině: řádcích `server.properties`, které smí balíček nastavit, s herním režimem, obtížností a příkazy ve světě otevřeném do LAN. Na dedikovaném serveru se každá hodnota, kterou zde balíček nastaví, zapíše při startu serveru do `server.properties`, takže soubor uvádí, co platí, a ty, které server už přečetl, se nastaví i na něm. Svět pro jednoho hráče přebírá to, co má integrovaný server, jak říká každý řádek. Prázdná hodnota, nebo `-1` u čísla, ponechá hodnotu samotného serveru, a když je `control.server` na `off`, zůstane každý řádek tak, jak ho server má.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------------- | ------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldGameMode` | text | prázdný | Jakým způsobem se začíná každý nový svět, jeden z survival, hardcore, creative, adventure nebo spectator. Hardcore je survival, kde smrt ukončí svět, pro celé uložení, stejně jako volba na obrazovce světa. Prázdná hodnota to nechá tak, jak zvolil ten, kdo svět vytvořil. Obrazovka světa nabízí jen survival, hardcore a creative, takže adventure a spectator se nastavují při vytvoření světa. Dedikovaný server nastaví každý svět na režim ze svého server.properties při každém startu, takže se tam režim balíčku zapíše do server.properties (gamemode a hardcore) před načtením světa |
+| `privacy` | boolean | `true` | Zda jsou telemetrie hry a hlášení chatu vypnuty: neodešle se žádná telemetrická událost, klient nepodepisuje žádnou zprávu chatu, server nevede žádnou relaci chatu a nevyžaduje ji, takže nelze nahlásit žádnou zprávu. Balíček, který ji vynechá, dostane volbu konfigurace `privacy` z kategorie `tweaks`. Projeví se při příštím připojení do světa nebo na server |
+| `worldLanCommands` | boolean | `true` | Zda hráč, který otevře svět pro jednoho hráče do LAN, smí zapnout příkazy pro všechny, kdo se připojí. `false` zašedí tlačítko Povolit cheaty na obrazovce Otevřít do LAN a drží ho vypnuté a svět se otevře bez příkazů, ať se o ně žádá jakkoli, včetně `/publish` |
+| `worldDifficulty` | seznam | prázdný | Zamkne obtížnost, jednu z peaceful, easy, normal nebo hard. Holá obtížnost se týká každé dimenze a položka zapsaná jako dimenze=obtížnost, například minecraft:the_nether=hard, se týká jen té dimenze a má přednost před holou. Vlastní nastavení světa zůstane, jak bylo, a po odebrání položky se vrátí. Dedikovaný server zapisuje obtížnost Overworldu do `server.properties` jako `difficulty`. Prázdný seznam ji nechá, jak byla zvolena |
+| `worldForceGameMode` | boolean | prázdný | Zda se hráč, který se připojí, pokaždé vrátí do herního režimu serveru, řádek `force-gamemode`. Svět otevřený do LAN to už dělá a `false` to zastaví i tam |
+| `worldPvp` | boolean | prázdný | Zda si hráči mohou ublížit, řádek `pvp`. Přebírá to i svět pro jednoho hráče |
+| `worldFlight` | boolean | prázdný | Zda se hráč létající v survivalu zůstane ve hře, místo aby byl vyhozen, řádek `allow-flight`. Přebírá to i svět pro jednoho hráče |
+| `worldSpawnProtection` | celé číslo, -1 nebo více | `-1` | Kolik bloků kolem spawn bodu smějí stavět jen operátoři, řádek `spawn-protection`, 0 pro žádné. Svůj spawn chrání jen dedikovaný server |
+| `worldNether` | boolean | prázdný | Zda lze vstoupit do Netheru, řádek `allow-nether`. `false` ho zavře i ve světě pro jednoho hráče |
+| `worldCommandBlocks` | boolean | prázdný | Zda příkazové bloky běží, řádek `enable-command-block`. Svět pro jednoho hráče je už spouští a `false` je tam také vypne |
+| `worldIdleTimeout` | celé číslo, -1 nebo více | `-1` | Kolik minut smí hráč nečinně stát, než je vyhozen, řádek `player-idle-timeout`, 0 pro nikdy. Přebírá to i svět pro jednoho hráče |
+| `worldMotd` | text | prázdný | Řádek zobrazený pod názvem serveru v seznamu serverů, řádek `motd`. Svět pro jednoho hráče otevřený do LAN ho zobrazí místo majitele a názvu světa |
+| `worldMaxSize` | celé číslo, -1 až 29999984 | `-1` | Nejdál, v blocích od středu, kam smí hranice světa kdy sahat, řádek `max-world-size`. Přebírá to i svět pro jednoho hráče |
+| `worldStructures` | boolean | prázdný | Zda nový svět generuje struktury, řádek `generate-structures` a volba Generovat struktury na obrazovce světa. Použije se na svět jen při jeho vytvoření |
+| `worldSpawnMonsters` | boolean | prázdný | Zda se spawnují nepřátelští mobové, řádek `spawn-monsters`. `false` je zastaví i ve světě pro jednoho hráče |
+| `worldSpawnAnimals` | boolean | prázdný | Zda se spawnují zvířata, řádek `spawn-animals`. `false` je zastaví i ve světě pro jednoho hráče |
+| `worldSpawnNpcs` | boolean | prázdný | Zda se spawnují vesničané, řádek `spawn-npcs`. `false` je zastaví i ve světě pro jednoho hráče |
+| `worldViewDistance` | celé číslo, -1 až 32 | `-1` | Do kolika chunků daleko posílá dedikovaný server svět každému hráči, řádek `view-distance`. Svět pro jednoho hráče se místo toho řídí vykreslovací vzdáleností |
+| `worldSimulationDistance` | celé číslo, -1 až 32 | `-1` | Do kolika chunků daleko drží dedikovaný server svět tikající kolem každého hráče, řádek `simulation-distance`. Svět pro jednoho hráče se místo toho řídí vlastním nastavením |
+
+### Recepty
+
+*co dělá která skupina*
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "blockRecipes": true,
+    "recipeWhitelist": ["minecraft", "mypack"],
+    "blockedRecipeMods": ["tconstruct"],
+    "recipeMatch": "recipe",
+    "blockFurnaceRecipes": true,
+    "furnaceWhitelist": ["minecraft", "mypack"],
+    "blockedFurnaceMods": ["tconstruct"],
+    "logBlockedRecipes": true
+  }
+}
+```
+
+`control.recipes` rozhoduje o této skupině. Blokování receptů na výrobu a v peci a jejich seznamy povolených. Blokování pece bere s sebou i recepty tavicí pece, udírny a ohniště, protože 1.12.2 držela všechny recepty vaření v jednom seznamu pece. Recepty řezačky kamene a kovářského stolu se nikdy neblokují, protože je 1.12.2 neměla.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | ---------------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `blockRecipes` | boolean | `false` | Odstraní všechny recepty na výrobu kromě těch módů v `recipeWhitelist`. Ve výchozím stavu nic není vyňato, takže uveď namespace vlastního balíčku, aby si recepty ponechal |
+| `recipeWhitelist` | seznam id módů | `["minecraft"]` | Módy, jejichž recepty na výrobu přežijí |
+| `blockedRecipeMods` | seznam id módů | prázdný | Módy, jejichž recepty na výrobu se odstraní rovnou, ať seznam povolených říká cokoli |
+| `recipeMatch` | `recipe`, `output` nebo `both` | `recipe` | Odkud se čte id módu při blokování receptů na výrobu: z vlastního názvu receptu, z předmětu, který vyrábí, nebo z obojího, což blokuje, když se shoduje kterékoli, a ušetří, když je kterékoli na seznamu povolených |
+| `blockFurnaceRecipes` | boolean | `false` | Totéž pro recepty pece, přičemž mód se čte z vyráběného předmětu |
+| `furnaceWhitelist` | seznam id módů | `["minecraft"]` | Módy, jejichž recepty pece přežijí |
+| `blockedFurnaceMods` | seznam id módů | prázdný | Módy, jejichž recepty pece se odstraní rovnou |
+| `logBlockedRecipes` | boolean | `true` | Zapíše do logu počet zablokovaných receptů podle módu |
+| `furnace` | boolean | `true` | Použít soubory furnace/*.json, které přidávají a odebírají recepty tavení v peci **Jen konfigurace.** |
+| `removals` | boolean | `true` | Použít soubory recipe_removals/*.json, které mažou recepty na výrobu podle názvu, namespace nebo výstupu **Jen konfigurace.** |
+| `skipMissingItems` | boolean | `true` | Přeskočit recepty, které používají neregistrovaný předmět, místo aby selhaly. Počet se zapíše do logu jednou **Jen konfigurace.** |
+
+### Příkazy
+
+*co dělá která skupina*
+
+`control.commands` rozhoduje o této skupině. Kdo smí spouštět příkazy samotného módu: úrovně oprávnění pro goto.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------- | ----------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gotoLevel` | celé číslo, 0 až 4 | `3` | Úroveň oprávnění potřebná pro /rdplserver goto <name>, který odnese odesílatele k nejbližšímu. 3 je operátor, úroveň, na níž stojí každá další část příkazu. 2 dovolí spustit příkaz i příkazovému bloku, takže balíček může skok umístit na tlačítko nebo tlakovou desku, aniž by někomu dal zbytek příkazu. 0 dovolí psát ho každému hráči. Ostatní části /rdplserver zůstávají na 3, ať toto říká cokoli |
+| `gotoNextLevel` | celé číslo, 0 až 4 | `3` | Úroveň oprávnění pro /rdplserver goto <name> next, který přeskočí to, k čemu naposledy odesílatele odnesl, a najde jiné. Stejná stupnice jako gotoLevel |
+| `gotoBackLevel` | celé číslo, 0 až 4 | `3` | Úroveň oprávnění pro /rdplserver goto <name> back, který vrátí odesílatele k předchozímu. Stejná stupnice jako gotoLevel |
+| `gotoPlaceLevels` | seznam | prázdný | Úrovně oprávnění pro jednotlivá místa, jako položky název=úroveň, jedna na řádek, které přepíšou tři nastavení výše jen pro to místo a ve všech jeho třech podobách. Název je to, co bys napsal za goto, tedy vanilla jako Village nebo Mansion, nebo název, který balíček zaregistroval pro své struktury pomocí locateAs. Stejná stupnice: 3 operátor, 2 i příkazový blok, 0 kdokoli. Balíček pak může otevřít cestu ke svým ruinám, zatímco každá vanilla struktura zůstane zavřená, nebo naopak. Název, který nic nezaregistrovalo, se ignoruje s poznámkou v logu |
+
+### Worldgen, jen konfigurace
+
+*co dělá která skupina*
+
+Tyto klíče `worldgen` nepatří do žádné skupiny a patří jen konfiguraci.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ----------------------- | ------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `worldgenDebug` | boolean | `false` | Zapisovat ladicí řádky, na které odkazují jiné zprávy, do logs/rdpl.log, například který balíček dodal soubor a co každý příkaz udělal. Velmi upovídané |
+| `worldTemplate` | text | `auto` | Nastavení, které šablony světa platí. Balíček ji přidá v worldtemplates/*.json a ty ji tady pojmenuješ jako namespace:název. 'auto' vybere šablonu z balíčku s nejvyšší prioritou. Prázdná hodnota nepoužije žádnou |
+| `tellWorldType` | boolean | `true` | Říct hráči v chatu, když se připojí do světa vytvořeného s vygenerovanou předvolbou, která šablona jej utvářela. Balíček to nastavit nemůže |
+| `worldBorderLimit` | celé číslo, 1 až 60000000 | `60000000` | Nejširší hranice, o kterou smí balíček požádat přes worldBorder. Balíček, který žádá o víc, je odmítnut a hranice zůstane tam, kam ji dá hra. Balíček to nastavit nemůže |
+| `retrogenKey` | text | `0000` | Změň to, aby byl každý chunk znovu způsobilý k retrogenu, pro každou položku worldgenu. Nové žíly se přidají na vrch toho, co tam už je |
+| `retrogenChunksPerTick` | celé číslo, 1 nebo více | `2` | Kolik už vygenerovaných chunků se dožene za tik. Vyšší je rychlejší, ale víc sekává |
+
+### Kategorie `packs`
+
+*co dělá která skupina*
+
+Jak se najdou a servírují složky balíčků. Jen konfigurace.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| -------------------------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `rootDirectory` | text | `rdploader` | Složka, z níž se balíčky načítají, relativně k adresáři .minecraft. Funguje i absolutní cesta. Vyžaduje restart |
+| `overrideResourcePacks` | boolean | `true` | Vloží balíček assetů nad hráčem vybrané balíčky zdrojů a nad datové balíčky světa. Balíček pojmenovaný RDPLO... vždy přepíše, RDPLN... nikdy |
+| `warnOnCaseMismatch` | boolean | `true` | Varovat, když se soubor shoduje jen proto, že souborový systém nerozlišuje velikost písmen. Takové balíčky se na Linuxu rozbijí |
+| `logContents` | boolean | `false` | Zapsat do logu každý nalezený balíček a kolik souborů poskytuje |
+| `traceUnresolvedVariables` | boolean | `false` | Zapsat do logu stack trace při prvním vyžádání souboru s '#' v názvu, s uvedením toho, co o něj požádalo |
+
+### Kategorie `content`
+
+*co dělá která skupina*
+
+Bloky, předměty, tekutiny a vše ostatní, co balíčky definují. Jen konfigurace.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ------------------- | ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `load` | boolean | `true` | Zaregistrovat bloky, předměty, tekutiny, materiály a karty kreativního režimu, které balíčky definují, a načíst jejich expozice. Vyžaduje restart |
+| `vanillaClients` | boolean | `false` | Obsluhovat obyčejné vanilla klienty: nic ze žádného balíčku se nezaregistruje, žádné bloky, předměty, tekutiny ani karty kreativního režimu, a nenačtou se žádné expozice, takže se může připojit klient bez módu. Vše, co žije jen na serveru, platí dál. Vyžaduje restart |
+| `sounds` | boolean | `true` | Zaregistrovat zvukové události pojmenované v sounds/*.json, aby balíčky mohly dodávat vlastní zvuk |
+| `fuels` | boolean | `true` | Použít soubory fuels/*.json, které dávají předmětům dobu hoření v peci |
+| `potions` | boolean | `true` | Zaregistrovat efekty lektvarů a typy lektvarů popsané v potions/*.json a potion_types/*.json v balíčcích. Vyžaduje restart |
+| `brewing` | boolean | `true` | Použít soubory brewing/*.json, které přidávají recepty pro varný stojan |
+| `villagers` | boolean | `true` | Zaregistrovat povolání vesničanů popsaná ve villagers/*.json a použít obchody v trades/*.json. Vyžaduje restart |
+| `entities` | boolean | `true` | Zaregistrovat varianty entit popsané v entities/*.json v balíčcích. Vyžaduje restart |
+| `overrides` | boolean | `true` | Použít soubory overrides/<namespace>/<name>.json, které mění vlastnosti už existujících bloků, předmětů a typů lektvarů, vanilla i módových |
+| `disabled` | boolean | `true` | Použít soubory disabled/*.json, které vyřadí bloky a předměty ze hry: žádná karta kreativního režimu, položka JEI, recept, kořist, obchod, tag, pokládání, použití ani sebrání a jejich stacky se smažou |
+| `hardness` | boolean | `true` | Použít soubory hardness/*.json, které dávají skupině bloků čas těžby a násobitel odolnosti proti výbuchu, losované podle polohy bloku |
+| `shovelPaths` | boolean | `true` | Nechat lopatu měnit bloky označené behavesAs path na cestu a při plížení cestu vracet zpět |
+| `shovelPathBecomes` | text | prázdný | Na co lopata tyto bloky změní. Prázdná hodnota použije hliněnou cestu |
+| `shovelPathReverts` | text | prázdný | Na co plížení s lopatou cestu změní zpět. Prázdná hodnota použije hlínu |
+| `hoeTilling` | boolean | `true` | Nechat motyku kypřit bloky označené behavesAs till |
+| `hoeTillsInto` | text | prázdný | Na co motyka tyto bloky změní. Prázdná hodnota použije ornou půdu |
+| `caneMaxHeight` | celé číslo, 1 až 255 | `3` | Jak vysoko roste vanilla cukrová třtina. Vanilla je 3. Bloky třtiny definované balíčkem používají vlastní sekci růstu a toto ignorují |
+| `cactusMaxHeight` | celé číslo, 1 až 255 | `3` | Totéž pro vanilla kaktus |
+
+### Kategorie `data`
+
+*co dělá která skupina*
+
+Kořist, funkce a názvy v registru. Jen konfigurace.
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| ---------------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `lootInjections` | boolean | `true` | Použít soubory loot_injections/*.json, které přidávají fondy do už existujících tabulek kořisti místo nahrazení celé tabulky |
+| `playerLoot` | boolean | `true` | Použít soubory player_loot/*.json, které losují tabulku kořisti, když hráč zemře, a odhodí, co vytvoří, navíc k inventáři nebo místo něj |
+| `registryRemaps` | boolean | `true` | Použít soubory registry_remap, které přejmenují položku registru, aby světy uložené před přejmenováním udržely své bloky a předměty místo jejich ztráty |
+| `anvils` | boolean | `true` | Použít soubory anvils/*.json, které nechají kovadlinu dát předmětu pojmenovaná zakletí za cenu úrovní, získat úspěch při jeho vzetí a držet předmět zpět před použitím, dokud se tak nestane |
+| `blockDrops` | boolean | `true` | Použít soubory block_drops/*.json, které přidávají k tomu, co blok odhodí při rozbití, nebo to nahrazují, včetně zkušeností, pro bloky, které balíček nevlastní |
+| `functions` | boolean | `true` | Načíst soubory .mcfunction z balíčků, aby fungovaly v každém světě |
+
+### Kategorie `tweaks`
+
+*co dělá která skupina*
+
+Drobné změny toho, jak se chová vanilla. Jen konfigurace, kromě `privacy`, které může nastavit i balíček; viz [Bonus: úpravy vanilla hry](#bonus-úpravy-vanilla-hry).
+
+| Nastavení | Typ | Výchozí | Co dělá |
+| --------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `promptLeafDecay` | boolean | `true` | Listy, které přijdou o svůj strom, zmizí do sekundy místo čekání na náhodné tiky |
+| `lenientPaths` | boolean | `true` | Cesty lze vytvořit pod blokem a zůstanou tam, i když se nad ně něco položí |
+| `unbreakableSpawners` | boolean | `false` | Líhně mobů nelze vytěžit ani vyhodit do vzduchu. Kreativní režim je stále odstraní. Vyžaduje restart |
+| `experimentalWarning` | boolean | `false` | Zobrazit varování hry o experimentálních nastaveních při vytvoření nebo otevření světa. Vypnuto na ně odpoví, jako bys klikl na pokračovat |
+| `privacy` | boolean | `true` | Vypnout telemetrii hry a hlášení chatu: neodešle se ani nezaloguje žádná telemetrická událost, klient nepodepisuje žádnou zprávu chatu, server nevede žádnou relaci chatu a nevyžaduje ji, takže nelze nahlásit žádnou zprávu, kterou kdokoli pošle, a klient nezobrazí žádné upozornění, že server nevynucuje zabezpečený chat. Balíček ji může nastavit jako `privacy` v `settings` šablony světa, ve skupině [Server](#server). Projeví se při příštím připojení do světa nebo na server |
+| `darkSplash` | boolean | `true` | Vykreslit načítací obrazovku tmavě s logem zavaděče balíčků místo loga hry: logo se vymění při vytváření obrazovky a vlastní volba hry Monochromatické logo se zapne, pokud je ještě vypnutá, což se projeví při příštím spuštění. Vypnuto volbu ponechá, jak je |
+
+---
+
+# Další módy
+
+## Integrace Blast Plaster
+
+*další módy*
+
+`<namespace>/blastplaster/*.json`
+
+Název souboru si volíš sám, čte se jen složka a více souborů se skládá.
+
+Blast Plaster řeší chování po výbuchu: hojení kráterů blok po bloku, kácení s ohledem na stromy, řízení dropů. Sám o sobě čte jednu globální konfiguraci. Řízen z balíčku odpovídá **pro každou dimenzi zvlášť** a balíček dodá rozhodnutí místo toho, aby hráče nutil upravovat konfiguraci. Bez souborů balíčku, nebo bez nainstalovaného Blast Plasteru, zde nic nefunguje a složka se přeskočí s řádkem v logu.
+
+Klíče zapsané na nejvyšší úrovni souboru platí všude; blok `dimensions` je pro jednu dimenzi podle id přepíše. Cokoli balíček nikdy neuvede, si ponechá, co říká konfigurace samotného Blast Plasteru, takže balíček nastaví hrstku toho, na čem mu záleží, a zbytek nechá být.
+
+Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
+
+```json
+{
+  "explosionMode": "EJECT_DROPS",
+  "healCreepers": true,
+  "healNonPlayerTNT": true,
+  "healWither": true,
+  "healAll": false,
+  "processPlayerIgnitedTNT": false,
+  "customEntitiesToHeal": ["icbmclassic:missile"],
+  "healFullTrees": true,
+  "maxTreeSize": 400,
+  "minimumTicksBeforeHeal": 200,
+  "randomTickVar": 20,
+  "overrideBlocks": false,
+  "enableFakeTossedBlocks": true,
+  "enableExplosionFlash": true,
+  "explosionFlashDuration": 10,
+  "explosionFlashLightLevel": 15,
+  "explosionFlashParticleCount": 40,
+  "explosionFlashPulses": 2,
+  "enableExplosionSmoke": true,
+  "explosionSmokeDuration": 100,
+  "explosionSmokeParticleCount": 30,
+  "playerTNTAlwaysDrops": false,
+  "playerTNTDropFullBlocks": false,
+  "enableDropSuppression": true,
+  "dtSpecialDrops": true,
+  "preventMobDrops": false,
+  "blockConversions": ["minecraft:stone=minecraft:cobblestone@0.75", "#minecraft:logs=minecraft:stripped_oak_log@0.5"],
+  "dimensions": {
+    "minecraft:the_nether": { "explosionMode": "HEAL", "minimumTicksBeforeHeal": 200 },
+    "minecraft:the_end": { "enableExplosionSmoke": false }
+  }
+}
+```
+
+`explosionMode` je hlavní přepínač: `HEAL` obnoví kráter v čase, `EJECT_DROPS` nechá díru a vyhodí zhruba třetinu bloků (vanilkové chování), `VISUAL_TOSS` nechá díru a nevyhodí nic. Při řízení z balíčku je výchozí `EJECT_DROPS` (ne `HEAL` z Blast Plasteru), takže nenastavená instalace se chová jako vanilla.
+
+| Klíč | Hodnota | Co dělá |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `explosionMode` | `HEAL`, `EJECT_DROPS`, `VISUAL_TOSS` | Co se stane po výbuchu |
+| `healCreepers`, `healNonPlayerTNT`, `healWither`, `healAll` | true nebo false | Které výbuchy se vůbec řeší |
+| `processPlayerIgnitedTNT` | true nebo false | Zda se TNT zapálené hráčem řeší spolu s ostatními |
+| `customEntitiesToHeal` | seznam názvů entit | Výbuchy z jiných módů, zapsané jako `modid:entity` |
+| `healFullTrees` | true nebo false | Strom zasažený výbuchem se odebere nebo obnoví celý, místo aby se prostřihl |
+| `maxTreeSize` | číslo | Nejvíc bloků, které si jeden strom smí nárokovat, než se nechá na pokoji |
+| `minimumTicksBeforeHeal`, `randomTickVar` | čísla | Jak dlouho před začátkem hojení a jak nerovnoměrné je jeho tempo |
+| `overrideBlocks` | true nebo false | Zda hojení přepíše to, co bylo mezitím v díře postaveno |
+| `enableFakeTossedBlocks` | true nebo false | Trosky, které z výbuchu létají |
+| `enableExplosionFlash` | true nebo false | Jasný záblesk v okamžiku výbuchu |
+| `explosionFlashDuration`, `explosionFlashLightLevel`, `explosionFlashParticleCount`, `explosionFlashPulses` | čísla | Jak dlouho záblesk trvá, jak jasně hoří, kolik částic vyšle a kolikrát pulzuje |
+| `enableExplosionSmoke` | true nebo false | Sloup kouře potom |
+| `explosionSmokeDuration`, `explosionSmokeParticleCount` | čísla | Jak dlouho kouř setrvává a jak hustý je |
+| `playerTNTAlwaysDrops`, `playerTNTDropFullBlocks` | true nebo false | Co po sobě zanechá hráčovo vlastní TNT |
+| `enableDropSuppression`, `dtSpecialDrops` | true nebo false | Dropy uvnitř výbuchu a vlastní dropy Dynamic Trees |
+| `preventMobDrops` | true nebo false | Zda moby zabité výbuchem stále dropují |
+| `blockConversions` | seznam pravidel | Na co se vybuchlý blok změní, místo aby se vrátil, jaký byl, takže stavba se s každým výbuchem opotřebuje o jeden krok |
+
+`blockConversions` rozhoduje, na co se vybuchlý blok změní, místo aby se vrátil, jaký byl. Pravidlo se čte `<source>=<result>[@chance]`: zdrojem je id bloku nebo tag bloku s úvodním `#`; výsledkem je id bloku, nebo `nothing`, aby prostor zůstal prázdný; šance se pohybuje od 0.0 do 1.0 a výchozí je 1.0. Vyhrává první odpovídající pravidlo, takže konkrétní pravidla patří nad široká, a blok, který už je výsledkem nějakého pravidla, se už nikdy nepřevádí: zeď přijde s každým výbuchem o jeden krok, místo aby se rozpadla na nic.
+
+**Zcela vanilkový vzhled:** `EJECT_DROPS` plus `healFullTrees`, `enableFakeTossedBlocks`, `enableExplosionFlash`, `enableExplosionSmoke`, `preventMobDrops` a `playerTNTAlwaysDrops`, vše vypnuté. Každý klíč lze nastavit pro jednotlivou dimenzi.
+
+**Vanilkoví klienti** neuvidí nic neobvyklého. Záblesk je jediná funkce, která umisťuje blok, takže s nastaveným `vanillaClients` se vynutí jeho vypnutí; vše ostatní jsou částice a předměty, kterým obyčejný klient rozumí.
+
+Nejsou to klíče balíčku: ladicí logování Blast Plasteru a jeho párování kmenů s listím (určení stromu musí být jedna odpověď pro celou hru). Obojí zůstává ve vlastní konfiguraci Blast Plasteru.
+
+---
+
+# Referenční přehled
+
+## Seznamy hodnot
+
+*reference*
+
+### Přijímané názvy
+
+*seznamy hodnot*
+
+Toto jsou názvy, které parser přijímá všude, kde tabulky výše říkají „jeden z materiálů“ a podobně. Cokoli nerozpoznaného se zaloguje a nahradí výchozí hodnotou.
+
+**Materiály bloků.** `air`, `grass`, `ground`, `wood`, `rock`, `iron`, `anvil`, `water`, `lava`, `leaves`, `plants`, `vine`, `sponge`, `cloth`, `fire`, `sand`, `circuits`, `carpet`, `glass`, `redstone_light`, `tnt`, `coral`, `ice`, `packed_ice`, `snow`, `crafted_snow`, `cactus`, `clay`, `gourd`, `dragon_egg`, `portal`, `cake`, `web`, `piston`, `barrier`, `structure_void`. Hra sama už materiály nemá; každý název dělá to, co ten materiál dělal v 1.12.2: určuje barvu na mapě, zda blok potřebuje nástroj, aby cokoli odhodil, jak s ním zacházejí písty, zda ho láva zapálí, zda ho tekutina odplaví a zda ho položený blok nahradí.
+
+**Typy zvuků.** `wood`, `ground`, `plant`, `stone`, `metal`, `glass`, `cloth`, `sand`, `snow`, `ladder`, `anvil`, `slime`.
+
+**Barvy mapy.** `air`, `grass`, `sand`, `cloth`, `tnt`, `ice`, `iron`, `foliage`, `snow`, `clay`, `dirt`, `stone`, `water`, `wood`, `quartz`, `adobe`, `magenta`, `light_blue`, `yellow`, `lime`, `pink`, `gray`, `silver`, `cyan`, `purple`, `blue`, `brown`, `green`, `red`, `black`, `gold`, `diamond`, `lapis`, `emerald`, `obsidian`, `netherrack`.
+
+**Vrstvy vykreslování.** `solid`, `cutout`, `cutout_mipped`, `translucent`. Když zůstane prázdné, blok si vybere vrstvu podle svého typu.
+
+**Vzácnosti.** `common`, `uncommon`, `rare`, `epic`.
+
+**Částice pochodní.** `none`, `flame`, `colored`. `colored` používá `particleColor`.
+
+**Třídy nástrojů.** `pickaxe`, `axe`, `shovel`, `hoe`, `sword`.
+
+**Sloty zbroje.** `head` nebo `helmet`, `chest` nebo `chestplate`, `legs` nebo `leggings`, `feet` nebo `boots`.
+
+**Odstíny.** `biome`, `none` nebo šestimístná hexadecimální barva. Barvy kdekoli v definici jsou hexadecimální, s úvodním `#` nebo bez něj.
+
+**Chování** pro `behavesAs`. `till`, `path`, `bush`, `animals`.
+
+**Typy rostlin** pro `plantTypes`. `plains`, `desert`, `beach`, `cave`, `water`, `nether`, `crop`. Jen 1.20.1; 1.21.1 klíč přečte a ignoruje.
+
+**Typy biomů**, slova, která zastupují tag biomu všude, kde tabulka říká „seznam typů biomů“, v `biomeTypes`, v `types` biomu, v `roles` šablony a v sekci `biomes`: `ocean`, `deepocean`, `beach`, `river`, `mountain`, `mesa`, `hills`, `coniferous`, `jungle`, `forest`, `savanna`, `overworld`, `nether`, `end`, `hot`, `cold`, `sparse`, `dense`, `wet`, `dry`, `spooky`, `dead`, `lush`, `mushroom`, `magical`, `rare`, `plateau`, `modified`, `water`, `desert`, `plains`, `swamp`, `sandy`, `snowy`, `wasteland`, `void`. Vanilla slova se mapují na tagy `minecraft:is_*` a ostatní na konvenční tagy, `forge:is_*` na 1.20.1 a `c:is_*` na 1.21.1. Vypsaný tag, `minecraft:is_forest` nebo `#minecraft:is_forest`, se vezme tak, jak je. Na velikosti písmen nezáleží, takže `FOREST` z 1.12.2 se čte dál.
+
+**Role** pro `roles` šablony světa. Libovolné slovo typu biomu výše: každé pojmenovává biom, který vyplní biomy nesoucí tento tag poté, co je blokování odstranilo, takže `"ocean": "mypack:ruby_ocean"` dá rubínový oceán všude, kde byl oceán zablokován.
+
+**Struktury** pro `structures` šablony světa a pro vlastní seznamy skupiny `structures`: názvy z 1.12.2 `villages`, `mineshafts`, `strongholds`, `temples`, `monuments`, `mansions`, `netherbridges` a `endcities`, nebo libovolná sada struktur, kterou dodává hra či mód, například `pillager_outposts`, `ancient_cities`, `trail_ruins`, `shipwrecks`, `ocean_ruins`, `ruined_portals`, `nether_fossils`, `buried_treasures`, `desert_pyramids`, `jungle_temples`, `igloos`, `swamp_huts`, `woodland_mansions`, `ocean_monuments`, `nether_complexes`, `end_cities`. Název z 1.12.2 se čte jako sady, které zastupoval, takže `temples` jsou dohromady pyramidy, džunglové chrámy, iglú a bažinné chýše. Čtou se i názvy populate z 1.12.2, jako části světa této verze, které zastupují: `caves` jeskynní carvery (šumové jeskyně jsou `noiseCaves`), `ravines` kaňony, `dungeons` místnosti s monstry, `lavalakes` lávová jezera, `netherlava` otevřené lávové prameny Netheru, `fire` ohnivé plochy Netheru, `glowstone` jeho svítivý kámen, `ice` zamrzlou vrchní vrstvu a `animals` zvířata umístěná při tvorbě chunku. `waterlakes` se přijímá a nic nedělá, protože tato verze vodní jezera nemá.
+
+**Typy tvorů** pro spawny a míry biomů. `creature`, `monster`, `ambient`, `water`. Spawn varianty entity bere také další seznamy této verze podle názvu, například `water_ambient` nebo `underground_water_creature`.
+
+**Typy rud** pro `oreTypes`. `COAL`, `IRON`, `COPPER`, `GOLD`, `REDSTONE`, `DIAMOND`, `LAPIS`, `EMERALD`, `QUARTZ`, `DIRT`, `GRAVEL`, `DIORITE`, `GRANITE`, `ANDESITE`, `TUFF`, `CLAY`, `SILVERFISH`, `CUSTOM` pro jakoukoli jinou rudu.
+
+**Typy poškození** pro `immuneTo` varianty entity, v jakékoli velikosti písmen a s podtržítky či bez nich. Názvy z 1.12.2, každý pokrývá to, co tam: `inFire` (i ohniště), `onFire` (i ohnivá koule, kterou nikdo nevystřelil), `lava`, `hotFloor`, `inWall` (i hranice světa), `cramming`, `drown`, `starve`, `cactus`, `fall`, `flyIntoWall`, `outOfWorld` (i `/kill`), `generic`, `magic`, `indirectMagic`, `wither`, `anvil`, `fallingBlock`, `dragonBreath`, `fireworks`, `lightningBolt`, `thorns`, `arrow`, `fireball`, `thrown`, `mob` pro úder tvora, plivanec lamy, střelu shulkera nebo lebku witheru, `player` pro úder hráče, `explosion` pro výbuch, který nikdo nespustil, třeba postel, a `explosion.player` pro výbuch, který spustil tvor nebo hráč, creeper či zapálené TNT. Poškození této verze má také vlastní názvy: `fire` pro oba druhy hoření, `lightning`, `void`, `freeze`, `dryOut` a `sweetBerry`. Cokoli jiného se čte jako id typu poškození, `minecraft:sonic_boom` nebo vlastní id módu.
+
+**Názvy zvuků** pro `sounds` varianty entity, `openSound` zamykatelné schránky a `sound` portálu: libovolná registrovaná zvuková událost, hry, módu nebo taková, kterou balíček přidá přes `sounds`. Název z 1.12.2 se čte jako název, který ten zvuk má nyní, takže `entity.endermen.scream` přehraje `entity.enderman.scream`, `block.cloth.step` přehraje `block.wool.step`, `entity.small_slime.squish` přehraje `entity.slime.squish_small` a `record.cat` přehraje `music_disc.cat`. Čtyři papouščí napodobeniny, které tato verze zrušila, endermana, ledního medvěda, vlka a zombie pigmana, nepřehrají nic.
+
+## Seznam složek
+
+*reference*
+
+Každá složka s plnou cestou a odkazem na sekci, která ji popisuje, je v [Kam patří soubory](#kam-patří-soubory).
+
+## Příkazy
+
+*reference*
+
+### Tvoje vlastní příkazy
+
+*příkazy*
+
+`/rdpl` běží na tvém vlastním počítači a nepotřebuje žádná oprávnění, protože vše, čeho se dotýká, je tvé. Znovunačtení znovu prohledá složku, kterou vlastníš, a obnoví tvé vlastní zdroje; nedosáhne na žádný server, takže kopie serveru se načte znovu pomocí `/rdplserver reload`. Ve hře pro jednoho hráče jsou oba jeden počítač, takže `/rdpl reload` také znovu použije tvá [přepsání vlastností](#přepsání-vlastností) a znovu postaví tvé týmy.
+
+| Příkaz | Úroveň | Co dělá |
+| -------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------------- |
+| `/rdpl list` | žádná | Každý načtený balíček, jeho priorita a co obsahuje. Kliknutím na balíček v něm vyhledáš soubor |
+| `/rdpl which <namespace:path>` | žádná | Který balíček poskytuje daný soubor a které balíčky zastiňuje |
+| `/rdpl reload` | žádná | Znovu prohledat složku a znovu načíst vše, včetně vlastního znovunačtení zdrojů hry |
+| `/rdpl unused` | žádná | Soubory ve tvých balíčcích, které si zatím nikdo nevyžádal, obvykle překlep v cestě |
+| `/rdpl config unused` | žádná | Soubory voleb v `rdploader/config`, které už žádný nainstalovaný balíček nedefinuje |
+| `/rdpl config prune` | žádná | Tyto soubory smazat |
+| `/rdpl pixelmap <namespace:path>` | žádná | Co z [pixelové mapy](#textury-zapsané-jako-pixelové-mapy) vzešlo, znak po znaku |
+| `/rdpl biome`, `biome list`, `biome list all` | žádná | Každý biom, který se může generovat, a jeho id; `all` zahrnuje i ty, které nic nemůže vygenerovat |
+| `/rdpl biome here` | žádná | Biom, ve kterém stojíš: jeho název, id a číslo |
+| `/rdpl biome find <name>` | serverová | Propojeno. Předá se slovo od slova do `/rdplserver`, které rozhoduje, viz tabulka níže |
+| `/rdpl locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen`, `game` | serverová | Propojeno. Předá se slovo od slova do `/rdplserver`, které rozhoduje, viz tabulka níže |
+
+**Které serverové podpříkazy jsou propojené a proč ostatní ne.** `locate`, `goto`, `vein`, `gate`, `pregen`, `intro`, `team`, `round`, `dimensions`, `oregen` a `game` mohou znamenat jedině serverové, protože jen server zná svět, jeho hráče a jeho kola, takže je `/rdpl` předá dál. Ve hře pro jednoho hráče doplňování tabulátorem po kterémkoli z nich nabídne to, co by nabídlo `/rdplserver`; na serveru nabízí `goto` názvy vanilla struktur. Ostatní, `reload`, `list`, `which`, `unused`, `config`, `pixelmap` a `biome`, si ponechají vlastní význam týkající se tvých balíčků a tvého klienta. O propojeném příkazu rozhoduje vlastní kontrola oprávnění serveru, takže klient ji nemůže obejít ani dostat vymyšlenou odpověď.
+
+**Každodenní úpravy:** F3+T znovu načte textury, modely a jazykové soubory a `/reload` data serveru. `/rdpl reload` použij, když soubor *přidáš* nebo *smažeš*, protože to mění, co složka obsahuje.
+
+### Příkazy serveru
+
+*příkazy*
+
+Na dedikovaném serveru dělá `/rdplserver` totéž pro vlastní kopii složky na serveru. Sloupec Úroveň je úroveň oprávnění, kterou odesílatel potřebuje: `3` je operátor, `2` připouští i příkazové bloky, `0` je kterýkoli hráč a `4` je nad operátorem a nedosáhne na nikoho.
+
+#### Balíčky a soubory
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| --------------------------------------- | ----- | ------------------------------------------------------------------------------------------- |
+| `/rdplserver reload` | 3 | Znovu prohledat složku serveru a znovu načíst vše, pak znovu postavit týmy a cíle |
+| `/rdplserver list` | 3 | Každý balíček, který server načetl, jeho priorita a co obsahuje |
+| `/rdplserver which <namespace:path>` | 3 | Který balíček poskytuje daný soubor a které balíčky zastiňuje |
+| `/rdplserver unused` | 3 | Soubory v balíčcích serveru, které si zatím nikdo nevyžádal |
+| `/rdplserver config unused` | 3 | Soubory voleb v `rdploader/config`, které už žádný nainstalovaný balíček nedefinuje |
+| `/rdplserver config prune` | 3 | Tyto soubory smazat |
+| `/rdplserver pixelmap <namespace:path>` | 3 | Co z pixelové mapy vzešlo |
+
+#### Svět a generování
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| ----------------------------------- | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver oregen` | 3 | Průběžné součty generování rud, které bylo zablokováno, podle módu a typu |
+| `/rdplserver generators` | 3 | Průběžné součty generátorů světa, které byly zablokovány, podle módu a typu |
+| `/rdplserver biome list [all]` | 3 | Každý biom, který se může na serveru generovat, s jeho číslem, id a názvem; `all` zahrnuje i ty, které nic nemůže vygenerovat |
+| `/rdplserver biome` | 3 | Biom, ve kterém stojíš, a co s ním balíček dělá: jeho id, číslo a název, zda je `blockBiomes` zapnuto a která šablona světa je aktivní, a povrch, blok pod ním a kámen na y 40 |
+| `/rdplserver biome here [player]` | 3 | Biom, ve kterém stojíš ty, nebo uvedený hráč: jeho název, id a číslo. Konzole hráče pojmenuje |
+| `/rdplserver biome find <name>` | 3 | Nejbližší místo do 6400 bloků, kde se generuje biom odpovídající tomuto id nebo zobrazenému názvu: jeho souřadnice a vzdálenost od místa, kde se příkaz spustil. Řekne to, když žádné není tak blízko, nebo když název neodpovídá žádnému biomu. Předává se do něj `/rdpl biome find` |
+| `/rdplserver dimensions` | 3 | Každá dimenze, včetně těch, které přidaly balíčky |
+| `/rdplserver vein <entry> [radius]` | 3 | Kde má položka worldgenu tvaru `vein` podle seedu své žíly do vzdálenosti tolika chunků (1 až 64, výchozí 8) od místa spuštění, od nejbližší, ať tyto chunky už existují, nebo ne. `/rdpl vein` na něj přesměrovává |
+
+#### Příkazy bran
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| ----------------------------------------- | ----- | ----------------------------------------------------------- |
+| `/rdplserver gate`, `gate list` | 3 | Každá brána, její dimenze, její rozsah a zda je otevřená |
+| `/rdplserver gate check <player>` | 3 | Kterými branami hráč prošel |
+| `/rdplserver gate grant <player> <gate>` | 3 | Otevře bránu hráči |
+| `/rdplserver gate revoke <player> <gate>` | 3 | Znovu ji zavře |
+
+#### Příkazy předgenerování
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| ----------------------------- | ----- | ------------------------------------------------------------------------------------------------ |
+| `/rdplserver pregen <radius>` | 3 | Vytvořit každý chunk v tolika chuncích od místa, kde se příkaz spustil. Viz [Předgenerování](#předgenerování) |
+| `/rdplserver pregen status` | 3 | Jak daleko běh pokročil |
+| `/rdplserver pregen stop` | 3 | Ukončit ho |
+
+#### Hráči, týmy a kola
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| ---------------------------------------------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver intro` | 0 | Nechat úvod do světa přehrát znovu při tvém příštím připojení. Smí ho spustit kterýkoli hráč a vždy vymaže jen svůj vlastní; odmítne se, když žádný balíček úvod nemá |
+| `/rdplserver team`, `team join [name]`, `team leave`, `team vote <player>`, `team claim` | 0 | Strany, které balíček postavil, a cesty na ně a z nich, nabízené jen tehdy, když balíček strany staví, viz [Týmy](#týmy) |
+| `/rdplserver round start`, `round reset`, `round vote yes`, `round vote no` | 0 | Spustit kolo, které balíček drží v lobby, resetovat probíhající kolo nebo svolat hlasování o něm a hlasovat v něm, jak bodování balíčku dovoluje, a kolo spouští jen hráč; hráčům se nabízí jen tehdy, když balíček vede skóre, viz [Bodování](#bodování) |
+| `/rdplserver card <rule> [players]` | 2 | Ukáže [pravidlo karty](#karty) uvedeným hráčům, nebo tobě, podle jeho id nebo názvu souboru. `when`, `repeat` a `cooldown` se přeskočí |
+| `/rdplserver reset` | 3 | Vrátí mapu do stavu, v jakém ji nechává konec kola: všichni jsou zadrženi, entity smeteny, skóre vymazáno, spuštěno `resetRuns`, hráči přesunuti na `resetSendsTo` a propuštěni a otevře se kolo s úvodním počtem, jak popisují nastavení resetu v části [Předgenerování](#předgenerování). Z `/rdpl` se nepředává |
+
+#### Cestování na místa
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| ----------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/rdplserver locate <name>` | 3 | Nejbližší struktura, kterou balíček umístil pod tímto názvem `locateAs` |
+| `/rdplserver goto <structure>` | `gotoLevel`, `3` | Odnese tě k nejbližší, kde ještě nikdo nebyl, a hledá, aniž by cestou generoval terén. Místo, které balíček zaregistroval pomocí `locateAs`, je nejbližší umístěné, navštívené či ne. `temple` znamená každý rozptýlený prvek: pouštní a džunglové chrámy, chýše čarodějnic a iglú. Odmítne se, dokud se tvoří terén |
+| `/rdplserver goto <structure> next` | `gotoNextLevel`, `3` | Odnese tě dál k nejbližší, ke které tě tato relace ještě nepřenesla, ať už byla dříve navštívena, nebo ne. Ta do osmi chunků od tebe se přeskočí; u místa balíčku je to nejbližší dál než 128 bloků |
+| `/rdplserver goto <structure> back` | `gotoBackLevel`, `3` | Odnese tě k té před ní, zpět přes místa, kam tě tato relace poslala |
+| `/rdplserver goto <biome>` | `gotoLevel`, `3` | Odnese tě na nejbližší místo v tom biomu, pojmenovaném jeho id, například `minecraft:river`, a přistaneš na jeho povrchu; `next` a `back` fungují jako u struktury. Funkce nebo příkazový blok smí spustit jakékoli `goto` na úrovni 2 |
+
+#### Hry
+
+*příkazy serveru*
+
+| Příkaz | Úroveň | Co dělá |
+| --- | --- | --- |
+| `/rdplserver game coin` | 0 | Hodit mincí. Líc se počítá jako 1, rub jako 0 |
+| `/rdplserver game die <sides>` | 0 | Hodit jednou kostkou o 2 až 1000 stranách |
+| `/rdplserver game die <name>` | 0 | Hodit [kostkou balíčku](#kostky-a-balíčky-karet) podle jejích vah |
+| `/rdplserver game dice <roll>` | 0 | Hodit nejvýš 100 kostkami a sečíst je, například `2d6`, `d20` nebo `3d8-2`. Zobrazí se každá kostka |
+| `/rdplserver game advantage [roll]`, `disadvantage [roll]` | 0 | Hodit dvakrát a ponechat vyšší, nebo nižší, součet. Hod je `1d20`, když se vynechá |
+| `/rdplserver game pick player` | 0 | Vybrat náhodně jednoho online hráče |
+| `/rdplserver game pick team [team]` | 0 | Vybrat náhodně jeden tým z tabule, nebo jednoho online člena uvedeného týmu |
+| `/rdplserver game deck draw <name>` | 0 | Vytáhnout kartu z toho, co zbylo z balíčku karet definovaného balíčkem |
+| `/rdplserver game deck left <name>` | 0 | Kolik karet v balíčku zbývá |
+| `/rdplserver game deck shuffle <name>` | 2 | Vrátit všechny karty zpět |
+| `/rdplserver game teamroll [roll]` | 0 | Každý na straně odesílatele hází a vyhrává nejvyšší hod, remíza se rozlosuje. Bez týmů hází odesílatel sám |
+| `/rdplserver game tiebreak [objective]` | 2 | Rozlosovat jednu ze stran, které jsou nahoře u cíle vyrovnané: uvedený cíl, jinak první bodovací cíl s `tiebreak`, jinak první |
+| `/rdplserver game board list` | 0 | Každá deska ve světě, s její hrou, pozicí a stavem |
+| `/rdplserver game board start <game> <board> [x y z]` | 2 | Postavit desku tam, kde odesílatel stojí, nebo na zadané pozici, a rozmístit její figury |
+| `/rdplserver game board end <board>` | 2 | Odstranit desku a její figury |
+| `/rdplserver game board show <board>` | 0 | Pozice jako písmena, řada po řadě, s tím, kdo drží kterou stranu, jejím časem a tím, kdo je na tahu |
+| `/rdplserver game board move <board> <from> <to> [piece]` | 0 | Přesunout figuru podle názvů polí, například `e2 e4`, s figurou, v kterou se promění povýšení |
+| `/rdplserver game board resign <board>` | 0 | Vzdát hru |
+| `/rdplserver game board draw <board>` | 0 | Nabídnout remízu, nebo přijmout nabídku druhé strany |
+| `/rdplserver game board takeback <board>` | 0 | Požádat o vrácení posledního tahu, nebo souhlasit se žádostí druhé strany |
+| `/rdplserver game board ai <board> <side> <level>` | 2 | Nechat počítač hrát za stranu na úrovni 1 až 4, nebo 0 pro vrácení zpět |
+| `/rdplserver game <roll> store <objective>` | úroveň hodu | Zapíše číslo hodu do vlastního skóre odesílatele na tom cíli |
+| `/rdplserver game <roll> audience <who>` | úroveň hodu | Přepíše výchozí publikum balíčku pro ten hod, jak je popsáno pod tabulkou |
+| `/rdplserver game last [count]` | 0 | Poslední hody, nejnovější první: 10, nebo zadaný počet do 50 |
+| `/rdplserver game pass` | 0 | Předčasně ukončit tah strany odesílatele tam, kde se soubor bodování střídá po tazích. Z příkazového bloku nebo konzole ukončí tah toho, kdo je právě na tahu |
+
+Každý hod může končit na `store <objective>`, které zapíše jeho číslo do vlastního skóre odesílatele v daném cíli, a na `audience <who>`, které přepíše výchozí hodnotu balíčku: `self`, `team` (strana odesílatele, nebo jen odesílatel, pokud nejsou týmy), `all`, `radius <blocks>` (hráči ve stejném světě v dané vzdálenosti) nebo `silent`, které jen ukládá. `/rdpl game` se sem předává.
+
+### Kdo smí používat goto
+
+*příkazy*
+
+**Otevření `goto`.** Každá část `/rdplserver` vyžaduje operátora, úroveň 3, kromě `intro`, `team` a `round`, které smí spustit kterýkoli hráč, jako je má 1.12.2, a `game`, jehož části mají [vlastní úrovně](#kdo-smí-používat-game). Tři podoby `goto` jsou jediná věc, o které rozhoduje balíček: každá nese vlastní úroveň oprávnění, kterou balíček nebo konfigurace může snížit, odděleně od ostatních dvou i od zbytku příkazu. Balíček, který chce, aby byl `reset` dostupný hráčům, ho dá na příkazový blok nebo do funkce, která běží na úrovni 3.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gotoLevel": 3,
+    "gotoNextLevel": 2,
+    "gotoBackLevel": 3,
+    "gotoPlaceLevels": ["Crypt=2", "Waystone=0", "Mansion=4"]
+  }
+}
+```
+
+| Nastavení | Co řídí |
+| ----------------- | ----------------------------------- |
+| `gotoLevel` | `goto <structure>` |
+| `gotoNextLevel` | `goto <structure> next` |
+| `gotoBackLevel` | `goto <structure> back` |
+| `gotoPlaceLevels` | Jedno pojmenované místo, ve všech třech tvarech |
+
+Hodnota je úroveň oprávnění, kterou odesílatel potřebuje. Výchozí je `3` (operátor). `2` připouští i příkazové bloky, takže balíček může skok umístit na tlačítko nebo tlakovou desku, aniž by odkryl zbytek `/rdplserver`. `0` ho otevře každému hráči. Tato tři nastavení jsou nezávislá: například `next` otevřené příkazovým blokům pro prohlídku vesnice, zatímco `back` zůstane jen pro operátory. Hodnota pod 0 se počítá jako 0 a nad 4 jako 4 a operátorovi se samotné `goto` nabízí vždy, ať nastavení říkají cokoli.
+
+`gotoPlaceLevels` přepíše tři nastavení pro jednotlivá místa, jako položky `name=level`, jako v příkladu výše. Název je cokoli, co bys napsal za `goto`: vanilla jako `village` nebo `mansion`, nebo název zaregistrovaný pomocí `locateAs` u položky `imprint`. Při shodě se nerozlišuje velikost písmen. Úroveň `4` je nad operátorem a to místo všem zavře, což je způsob, jak skrýt jedno místo, zatímco zbytek `goto` je otevřený.
+
+Položka nastaví jednu úroveň pro všechny tři podoby toho místa. Místo, které není uvedeno, se vrátí ke třem nastavením výše a nezaregistrovaný název se nikdy neshoduje. Doplňování tabulátorem se řídí stejnými pravidly, takže po `goto` se odesílateli nabídnou jen místa, kam může být skutečně odnesen.
+
+Tato nastavení jsou ve skupině `commands`, takže o tom, zda je balíček vůbec smí nastavit, rozhoduje `control.commands` v konfiguraci, a `off` tam nechá vše na úrovni operátora, ať balíček žádá cokoli.
+
+### Kdo smí používat game
+
+*příkazy*
+
+Každá část `game` má vlastní úroveň: 0 pro každý hod a 2 pro `deck shuffle`, `tiebreak`, `board start`, `board end` a `board ai`. `gameLevels` změní kteroukoli z nich, jako položky `part=level`, kde část je to, co následuje za `game`.
+
+`<namespace>/worldtemplates/*.json`
+
+```json
+{
+  "settings": {
+    "gameLevels": ["coin=0", "deck draw=0", "deck shuffle=3", "tiebreak=4"]
+  }
+}
+```
+
+| Nastavení | Co řídí |
+| --- | --- |
+| `gameLevels` | Jedna část `game`: `coin`, `die`, `dice`, `advantage`, `disadvantage`, `pick`, `deck draw`, `deck shuffle`, `deck left`, `teamroll`, `tiebreak`, `last`, `pass` nebo `board` a jeho akce, například `board move` |
+
+Stupnice je stejná jako u `goto` a `4` uzavře část všem. Doplňování tabulátorem nabízí jen části, které smí odesílatel spustit. `gameLevels` je ve skupině `commands` spolu s nastaveními `goto`.
+
+## Dobré vědět
+
+*reference*
+
+- KubeJS a CraftTweaker běží po RDPL, takže jejich změny stále vyhrávají.
+- Recepty, tabulky kořisti, advancementy a funkce jsou zde vlastní datové soubory hry, takže `/reload` převezme úpravu a `/rdpl reload` nový soubor.
+- Struktura, která už byla vygenerována, zůstává načtená, dokud svět neopustíš.
+- Na velikosti písmen v názvu souboru záleží. Pokud velikost písmen tvého souboru neodpovídá tomu, o co hra žádala, RDPL ho stále načte, ale varuje tě, protože na Linuxu by se vůbec nenašel.
+- Vlož do `rdploader` soubor `pack.png`, aby balíček dostal ikonu. Bez něj se zobrazí ikona RDPL.
+- Složku lze přesunout nebo přejmenovat volbou `rootDirectory` v `config/resourcedatapackloader-common.toml`. Funguje i absolutní cesta a vyžaduje restart.
+- Model, který pojmenovává hotový vanilla model, zdědí i textury vanilly. Rodičovské modely jako `cube_all` a `cross` berou své textury z modelu, který je pojmenovává, a jsou v pořádku.
+- Telemetrie hry a hlášení chatu jsou vypnuty, dokud je zapnuto `privacy` v kategorii `tweaks`, což je ve výchozím stavu: nic se neodesílá, žádná zpráva chatu se nepodepisuje, server s módem nevede pro nikoho relaci chatu a připojení k serveru, který nevynucuje zabezpečený chat, nezobrazí žádné upozornění.
+- Změněná volba balíčku se pamatuje ve světě, který mění; když změna nechá ve světě obsah neregistrovaný, svět se před dalším otevřením zazálohuje do složky `backups` hry a zůstane zavřený, pokud záloha selže.
+
+## Když něco nefunguje
+
+*reference*
+
+**Nejdřív se podívej do `logs/rdpl.log`.** Vše, co RDPL dělá, jde sem a ne do hlavního logu. Advancementy, tabulky kořisti, recepty, funkce, struktury i každý kus obsahu se zapisují s balíčkem, ze kterého pocházejí, a cokoli chybně utvořeného se zapíše i s důvodem.
+
+**U textur a dalších assetů je to jiné.** Žádají se příliš často na to, aby se zapisovaly jednotlivě, proto `/rdpl unused` vypíše soubory ve tvých balíčcích, o které nikdo nepožádal. Spusť to, až se hra dočte. Soubor se správnou cestou je vždy vyžádán, takže cokoli ve výpisu je obvykle překlep, ale pamatuj, že některé soubory se načítají, jen když jsou potřeba, například jazyky jiné než ten, ve kterém hraješ.
+
+**Zip bez adresáře `assets` nebo `data` uvnitř se přeskočí,** stejně jako každá složka v `rdploader`, a log to řekne. Stejně se přeskočí zip, jehož nejvyšší úroveň je jedna složka, která je obaluje.
+
+**`/rdpl which minecraft:textures/block/stone.png`** ti přesně řekne, který balíček soubor poskytuje a co zastiňuje.
+
+**Balíček psaný pro 1.12.2 se čte přes dopřednou konverzi.** Viz [Balíčky psané pro 1.12.2](#balíčky-psané-pro-1122); log pojmenuje každý soubor, který přesunula, vynechala nebo nedokázala převést.
+
+## Bonus: úpravy vanilla hry
+
+*reference*
+
+Drobné změny chování vanilla hry, každá se zapíná v kategorii konfigurace `tweaks`.
+
+| Volba | Výchozí | Co dělá |
+| --------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `promptLeafDecay` | zapnuto | Listy, které přijdou o svůj strom, zmizí do sekundy místo čekání na náhodné tiky |
+| `lenientPaths` | zapnuto | Cesty lze vytvořit pod blokem a zůstanou tam, i když se nad ně něco položí |
+| `unbreakableSpawners` | vypnuto | Líhně mobů nelze vytěžit ani vyhodit do vzduchu. Kreativní režim je stále odstraní. Vyžaduje restart |
+| `experimentalWarning` | vypnuto | Zobrazit varování hry o experimentálních nastaveních při vytvoření nebo otevření světa. Vypnuto na ně odpoví, jako bys klikl na pokračovat |
+| `privacy` | zapnuto | Vypne telemetrii hry a hlášení chatu; viz [Dobré vědět](#dobré-vědět) |
+| `darkSplash` | zapnuto | Tmavá načítací obrazovka s logem zavaděče balíčků; volba hry Monochromatické logo se zapne pro příští spuštění |
+
+Další čtyři jsou v kategorii `content`, ne v `tweaks`:
+
+| Volba | Výchozí | Co dělá |
+| ----------------- | ------- | ----------------------------------------------------------------------------------- |
+| `cactusMaxHeight` | `3` | Jak vysoko roste vanilla kaktus |
+| `caneMaxHeight` | `3` | Jak vysoko roste vanilla cukrová třtina |
+| `shovelPaths` | zapnuto | Lopata změní bloky označené `behavesAs` path na pěšinu a plížení ji vrátí zpět |
+| `hoeTilling` | zapnuto | Motyka kypří bloky označené `behavesAs` till |
+
+**Nic z toho se balíčku netýká.** Tyto volby mění jen vlastní kaktus, třtinu, listy a cesty Minecraftu. Blok, který tvůj balíček definuje s `"type": "cane"`, nese vlastní sekci `growth` a roste do jakékoli výšky, kterou mu dáš, ať je nainstalováno cokoli jiného.
+
+### Nerozbitné líhně
+
+*bonus: úpravy vanilla hry*
+
+`unbreakableSpawners` dá bloku líhně mobů čísla podloží, nerozbitnou tvrdost a odolnost proti výbuchu, kterou nic nepřežije. Hráč ho nevytěží, ať je krumpáč jakkoli dobrý, a ani creepery, TNT, ani entita balíčku s `explodes` ho nevyřadí. Kreativní režim je stále odstraňuje, přesně jako stále odstraňuje podloží, takže autor balíčku není nikdy vyřazen z vlastní stavby. Vyžaduje restart, protože čísla bloku se nastavují při jeho registraci.
+
+**Je to blok, ne líheň.** Přepínač pro jednotlivé líhně neexistuje. Volba mění samotný `minecraft:spawner`, takže zasáhne každou líheň ve světě najednou: vanilla struktury, které nějakou umisťují, jakoukoli, kterou umístí mód, a jakoukoli, kterou umístí tvé vlastní balíčky. Líheň uvnitř jedné z tvých šablon `.nbt`, umístěná položkou `imprint`, je obyčejný blok líhně nesoucí vlastní blokový objekt, takže je pokryt ve chvíli, kdy je volba zapnutá.
+
+## Klíče, které se nepřenesly
+
+*reference*
+
+Co může balíček pro 1.12.2 napsat, co tato verze nečte, a proč. Balíček, který takový klíč napíše, se stále načte; klíč nedělá nic. Řádek s poznámkou *zatím nepřevedeno* byl přidán do 1.12.2 poté, co byla ta část převedena, a ještě přijde. Každý další řádek nelze, nebo není třeba, na tomto enginu převést. Řádek s poznámkou *od 26.3* je to, co může balíček pro 26.3 napsat a starší formát to pojmout nemůže, a řádek s poznámkou *do 26.3* je to, co může napsat starší balíček a 26.3 to pojmout nemůže; log každý takový prvek jmenuje, když se zahodí. Tabulka se udržuje aktuální, jak se řady posouvají.
+
+| Klíč | Kde | Proč |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `meta` | bloky, předměty, worldgen, dropy z bloků | Id po zploštění nenesou metadata. Konverze provede každé `name:meta` přes datové opravy hry a klíč zahodí |
+| `oreDict` | bloky, předměty, pec, paliva, filtry úložiště entit | Slovník rud je pryč. Konverze ho změní na `tags` s konvenčními tagy a položku paliva nebo filtru úložiště na `tag` |
+| `galacticraft` | varianty entit | Pro tuto verzi žádný Galacticraft neexistuje, takže varianta nemá raketový stupeň, palivovou nádrž, náklad ani užitečné zatížení k nastavení |
+| `oreDictionary` | nastavení | Slovník rud je pryč, takže nezbývají žádné soubory slovníku rud k vypnutí. Jeho práci dělají tagy a konverze je zapisuje z `oreDict` balíčku |
+| `modelMeta` | bloky | Modely se generují pro každou variantu, takže není žádné metadato, podle něhož by se mapovaly |
+| `disableOverrides`, `tolerateMissingInAdvancements` | nastavení | Datový balíček nahradí vanilla recept nebo advancement tím, že dodá jeden pod stejným názvem |
+| `#CONSTANT` názvy předmětů | recepty | Konstanty receptů žily v `_constants.json` módu pro 1.12.2, který žádný balíček nenese a žádný mód této verze nemá. Pojmenuj předmět nebo tag, který konstanta zastupovala |
+| `harvestTool` jiné než `pickaxe`, `axe`, `shovel`, `hoe` a `sword` | přepsání vlastností | Nástroje zde těží podle tagů bloků a jen těchto pět jeden má. Třída nástrojů vymyšlená módem pro 1.12.2 nemá tag, který by šlo napsat, takže nástroje bloku zůstanou nedotčeny a log to řekne |
+| `careers` | vesničané | Od 1.14 žádné kariéry neexistují, takže se každá kariéra stane vlastním souborem vesničana |
+| `career` | obchody, entity | Žádné kariéry; pojmenuj samotné povolání. Obchod, který pojmenovává vanilla povolání z 1.12.2 se svou kariérou, přejde k povolání, kterým se ta kariéra stala |
+| `gameLoopFunction` | herní pravidla | Herní pravidlo je pryč; tag funkcí `#minecraft:tick` spouští funkci každý tik a konverze ji zapíše |
+| `id` | biomy, dimenze | Biomy a dimenze se poznají podle svého umístění zdroje, nikdy podle čísla |
+| `suffix`, `keepLoaded` | dimenze | Složka uložení se řídí názvem dimenze. Spawn chunky má jen Overworld, takže dimenze, která musí zůstat načtená, bere `forceload` |
+| `baseHeight`, `heightVariation` | biomy | Výška terénu patří k nastavení šumu, ne k biomu |
+| `placement.villageSpawn` | biomy | Vesničané přicházejí se samotnou strukturou vesnice |
+| `rubicWorld`, `rubicWorldDimensions`, `rubicWorldDimensionsAreBlacklist`, `verticalCubeLoadDistance`, `cubeGCInterval`, `cubeGenMillisPerRound`, `cubesSentPerTick` | světy Rubic | Svět Rubic byl způsob z 1.12.2, jak překonat svět o 256 blocích. Zde velikost dimenze určují její `minHeight` a `maxHeight` a systém chunků ji streamuje |
+| `rubicHeightLimit` | světy Rubic | Výškový strop světa Rubic zmizel s ním; velikost dimenze místo toho určují její `minHeight` a `maxHeight`, bez samostatného stropu ke zvyšování |
+| `regionCacheLimit` | světy Rubic | Jeho mezipaměť vlastních otevřených souborů regionů světa Rubic zmizela se světem Rubic; systém chunků zde spravuje vlastní soubory |
+| `deepRavines`, `oreVeins` | hluboký svět | Vlastní terén enginu už běží pod y 0, s vlastními roklemi a velkými rudnými žílami |
+| `fixedBiome` s číslem nad 39 v customized `generatorOptions` | nastavení | Pojmenovává biom, který tato verze nedokáže namapovat |
+| `terrainWorldTypes`, `terrainWorldTypesAreBlacklist` | nastavení | Typy světa jsou zde předvolby světa a šablona světa pojmenovává vlastní || `lake` a `dungeon` v superplochém textu | nastavení, dimenze | Hra nemá vodní jezera od 1.18 a vrací je jen waterLakeChance Overworldu. Kobky na plochém světě přicházejí s `decoration`, ne samostatně |
+| `inherit` jako zdroj `biomes` dimenze `flat` nebo `void` | dimenze | Plochý generátor drží jediný biom, takže taková dimenze bere ten, který pojmenovává její superplochý text, nebo plains |
+| dimenze jiného módu definovaná v kódu ve `flatBedrockDimensions` nebo `voidWorldDimensions` | nastavení | Podloží a prázdno se zapisují do vygenerované předvolby světa, do vlastních souborů dimenzí balíčku a, u dimenze, kterou jiný mód definuje v souboru dimenze pod `data/<namespace>/dimension`, do vygenerovaného přepsání toho souboru. Dimenze, kterou jiný mód vytvoří v kódu, je mimo dosah: RDPL zapíše varování, které ji pojmenuje, a její terén nechá být |
+| typ světa z módu, nebo `debug_all_block_states`, jako `worldType` | nastavení | Typy světa jsou nyní předvolby světa a tvarovaný svět se staví na vlastním výchozím, velkých biomech, amplified nebo plochém šumu hry. Ladicí svět nemá žádný terén k tvarování |
+| `pregenKeepLoaded`, `pregenPauseAbove`, `pregenMillisPerRound`, `pregenRelightSays`, `hurryWritesAbove` | předgenerování | Ladily zapisovač chunků a průchod přesvětlení z 1.12.2. Systém chunků zde osvětluje zemi při její tvorbě a zapisuje podle vlastního rozvrhu |
+| `readCofhWorldFiles` | nastavení | CoFH World a jeho formát souborů na tomto enginu neexistují. Cestou na tento engine zůstává převod těch souborů do balíčku, jak už doporučovala 1.12.2 |
+| `name:meta` v `villagePathLamp*` | vesnice | Id nenesou metadata, takže se blok lampy zapisuje se stavem v hranatých závorkách a data bloku ve složených závorkách se stále čtou |
+| `harvestTool` pojmenovávající `shears` nebo třídu módového nástroje | bloky | Nástroj zde čte tagy bloků, ne název třídy, takže na žádný nic neodpovídá. Pojmenuj vlastní tag bloku módového nástroje pod `tags` varianty |
+| štítek karty jiného módu v `creativeTab` | bloky, předměty, tekutiny | Karta se nyní pozná podle svého id, takže holý štítek se čte jako karta vlastního balíčku. Pojmenuj kartu módu jejím id, například `modid:main` |
+| `/rdpl reload <group>` | příkazy | Hra znovu načítá všechny zdroje najednou, takže textury, modely, jazyky, zvuky a shadery nelze znovu načíst samostatně. `/rdpl reload` nebo F3+T je načte všechny |
+| `modernChestPlacement` | úpravy vanilla hry | Hra páruje truhly tímto způsobem od 1.13: truhla se spojí s jednotlivou truhlou vedle sebe, jen když obě směřují stejným směrem, a plížení ji nechá jednotlivou |
+| `loadingScreenPercent` | nastavení | Vlastní načítací obrazovka světa hry už ukazuje, kolik oblasti spawnu je připraveno |
+| `disableOptimizations` | nastavení | Vypínala optimalizace předgenerování a generování z 1.12.2, které byly psány pro ten engine a nemají zde protějšek |
+| `fixTinkersModelErrors` | nastavení | Tlumila chyby modelů, které verze 1.12.2 Tinkers' Construct a Construct's Armory zapisovaly pro každý nástroj, součást a kus brnění. Oprava zasahovala do těch verzí, takže zde není na co působit |
+| kritéria `achievement.` | bodování, funkce | Úspěchy se staly advancementy, které nevedou žádné skóre k počítání. Kritérium `stat.` se čte jako statistika, kterou se stalo |
+| `toggledownfall`, `stats` | funkce | Příkazy jsou pryč. `weather` pojmenovává počasí, které se má nastavit, a `execute store` uchová výsledek příkazu |
+| `gamerule gameLoopFunction` a herní pravidlo, které si balíček vymyslel | funkce | O tom, která herní pravidla existují, rozhoduje hra. Konverze změní `gameLoopFunction` souboru herních pravidel na tag `#minecraft:tick`, ale příkazový řádek, který ji nastavuje, se ponechá, abys ho odstranil |
+| název s datovou hodnotou `-1` nebo `*`, který se stal několika bloky nebo předměty | funkce: `clear`, `testforblock`, `execute ... detect`, `fill ... replace`, `clone ... filtered` | Jeden test nyní pojmenovává jeden blok nebo předmět. Pojmenuj ten zamýšlený, nebo tag jako `#minecraft:wool` |
+| stav bloku zapsaný jako dvojice `name=value`, který není celým stavem bloku z 1.12.2, a datová hodnota u bloku nebo předmětu jiného módu | funkce | Datové opravy znají jen celé stavy z 1.12.2 a metadata jiného módu nemají zploštělý název, na který by přešla |
+| částice `footstep` a `take`, `locate Temple`, `spreadplayers` s více než jedním cílem | funkce | Částice jsou pryč, chrám jsou nyní čtyři struktury a `spreadplayers` bere jeden cílový argument |
+| `debug_functions` | nastavení šumu, *od 26.3* | 26.2 a starší nemají ladicí funkce hustoty, takže se seznam zahodí |
+| `exclusion` a `surface_level` v `aquifers` | nastavení šumu, *od 26.3* | 26.2 a starší mají obojí zabudované, takže se vlastní hodnoty balíčku zahodí |
+| položka `spawn_target`, která jmenuje cokoli jiného než klimatickou osu `noise_router` | nastavení šumu, *od 26.3* | Starší spawn target pokrývá jen pět klimatických os, takže se taková položka zahodí |
+| žíly rudy umístěné přes `material_rule` | nastavení šumu, *od 26.3* | 26.2 neumí umísťovat žíly rudy přes pravidlo materiálu, takže se zahodí |
+| vlastní `count`, `thickness`, `weird_thickness_bias` nebo `start_vertical_radius_multiplier` jeskynního carveru | carvery, *od 26.3* | 26.2 je nastavit neumí, takže se použije tvar jeskyní vanilla Overworldu nebo Netheru |
+| `creature_world_gen_spawn_probability` jako modifikátor a atribut, který se připojí k hodnotě své dimenze | biomy, *od 26.3* | 26.2 bere prostou hodnotu: výchozí šance na spawn se ponechá a vlastní hodnota biomu nahradí hodnotu dimenze |
+| odlišné posuny x a z a `normalize` nastavené na false | umístěné prvky, šumy, *od 26.3* | 26.2 rozptyluje obě osy o stejnou hodnotu, takže obě použijí posun x, a šum vždy normalizuje |
+| typ prvku, který 26.2 nemá, nebo prvek z 26.3 postavený z bloků, které nemá | prvky, biomy, *od 26.3* | Takový prvek nic neumístí a biom vynechá umístěný prvek z 26.3, který nemá protějšek v 26.2 |
+| `straw_bed_rule` a `destroy_on_leave` v pravidle postele | atributy prostředí, *od 26.3* | 26.2 nemá ani jedno pravidlo, takže se obě zahodí |
+| předmět s počtem nebo komponentami mezi ozdobami květináče | datové soubory, funkce, *od 26.3* | 26.2 čte prostý předmět, takže se počet a komponenty zahodí |
+| `compute`, `posteffect`, `item fill`, `item override` a `execute if slots` a animace `swing` | funkce, *od 26.3* | 26.2 žádný z těchto příkazů nemá, takže se řádek zahodí; řádek `swing` se ponechá a provede se jako prosté mávnutí |
+| `shade_direction_override` jiné než `up` a `trim_overrides` | modely, assety vybavení, *od 26.3* | 26.2 takový prvek stínuje normálně a palety zdobení pro jednotlivé vybavení čte z `override_armor_assets` materiálu zdobení |
+| komponenty na uvařeném předmětu a tag nebo seznam předmětů, ze kterých se vaří | recepty vaření, *od 26.3* | Recept vaření v 26.2 nemůže jmenovat ani jedno: komponenty se zahodí a recept vařící z tagu nebo seznamu se zahodí celý |
+| poskytovatel čísla, pro který 26.2 nemá tvar, a záložní hodnota jiná než 0 | tabulky kořisti, predikáty, modifikátory předmětů, *od 26.3* | Poskytovatel se změní na 0 a chybějící skóre nebo uložené číslo se vrátí k 0 |
+| test podmínky bloku jiný než `blocks` a `state`, sada id tam, kde 26.2 čte jedno, tag predikátů nebo modifikátorů předmětů a mapa průzkumníka ke jmenovaným strukturám | tabulky kořisti, predikáty, modifikátory předmětů, *od 26.3* | Test se zahodí, ponechá se jen první id, tag se čte jako jedno id, které jmenuje, a mapa vede ke struktuře s pokladem |
+| `depth` a `offset` ve `spawn_target` a spawn target zaměřený na osu `noise_router` zapsanou přímo | nastavení šumu, *do 26.3* | Spawn target z 26.3 nemůže držet ani jedno, takže se zahodí |
+| `ore_veins_enabled` a `vein_toggle`, `vein_ridged` a `vein_gap` v `noise_router` | nastavení šumu, *do 26.3* | 26.3 nevytváří žádné žíly rudy přes noise router, takže se zahodí |
+| `replaceable` a `lava_level` | carvery, *do 26.3* | 26.3 nechává obojí na nastavení šumu, takže vlastní hodnoty carveru se zahodí |
+| posun šumu podél y a záporná amplituda oktávy | funkce hustoty, šumy, *do 26.3* | Šum v 26.3 se nemůže posouvat podél y a místo toho používá velikost amplitudy |
+| `override_armor_assets` a odstín `map_color` | materiály zdobení, modely předmětů, *do 26.3* | 26.3 čte palety zdobení pro jednotlivé vybavení z `trim_overrides` každého assetu vybavení a `map_color` odstranilo, takže se tento odstín vrátí k výchozí barvě |

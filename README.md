@@ -10,7 +10,7 @@ once per loader.
 This mod moves the line. New content is a JSON file, one folder applies to every
 world, and a pack written once loads on Minecraft 1.12.2, 1.20.1, 1.21.1 and 26.x.
 
-- [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md), the full manual for each version (English, Deutsch, Русский, 简体中文, Español, Português (Brasil), Français)
+- [HOWTO.md](https://github.com/tgstyle/MCT-Resource-Data-Pack-Loader/blob/1.12.2-1.0-Release/HOWTO.md), the full manual for each version (English, Deutsch, Русский, 简体中文, Español, Português (Brasil), Français, Čeština, Italiano, 日本語, 한국어, Português (Portugal), Українська, 繁體中文)
 - [Discord](https://discord.gg/ujY2mV9)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/mct-resource-data-pack-loader)
 - [Modrinth](https://modrinth.com/mod/mct-resource-data-pack-loader)
