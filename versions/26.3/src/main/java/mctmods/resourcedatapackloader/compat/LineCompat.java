@@ -154,6 +154,7 @@ public final class LineCompat {
     public static final String DENSITY_GRADIENT = "minecraft:gradient";
     public static final String GRADIENT_FROM = "from_coordinate";
     public static final String GRADIENT_TO = "to_coordinate";
+    public static final String DENSITY_INPUT = "input";
     private static final String NOISE_SETTINGS = "worldgen/noise_settings/";
     private static final String CARVERS = "worldgen/carver/";
 
@@ -170,9 +171,11 @@ public final class LineCompat {
     public static JsonObject densityOf(String type, JsonElement input) {
         JsonObject out = new JsonObject();
         out.addProperty("type", type);
-        out.add("input", input);
+        out.add(DENSITY_INPUT, input);
         return out;
     }
+
+    public static String densitySeed(Identifier id) { return id.toString(); }
 
     public static JsonObject densityInterpolated(JsonElement input) {
         JsonObject out = densityOf("minecraft:interpolated", input);

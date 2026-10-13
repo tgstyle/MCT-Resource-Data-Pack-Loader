@@ -41,6 +41,9 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCityRailPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityStructure;
 import mctmods.resourcedatapackloader.content.worldgen.ContentCityWellPiece;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPlotPoolElement;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLegacyFactorFunction;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLegacyNoiseFunction;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLegacyOffsetFunction;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyLand;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyLandFunction;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
@@ -59,6 +62,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldShape;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
+import mctmods.resourcedatapackloader.util.LegacyTerrainShape;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -87,7 +91,12 @@ public final class ContentEvents {
 
     public static void onRegister(RegisterEvent event) {
         ContentFeatureTypes.register(event);
-        event.register(Registries.DENSITY_FUNCTION_TYPE, helper -> helper.register(id(ContentSkyLand.FUNCTION), ContentSkyLandFunction.CODEC));
+        event.register(Registries.DENSITY_FUNCTION_TYPE, helper -> {
+            helper.register(id(ContentSkyLand.FUNCTION), ContentSkyLandFunction.CODEC);
+            helper.register(id(LegacyTerrainShape.NOISE_FUNCTION), ContentLegacyNoiseFunction.CODEC);
+            helper.register(id(LegacyTerrainShape.FACTOR_FUNCTION), ContentLegacyFactorFunction.CODEC);
+            helper.register(id(LegacyTerrainShape.OFFSET_FUNCTION), ContentLegacyOffsetFunction.CODEC);
+        });
         event.register(NeoForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, helper -> {
             helper.register(id(ContentOreControl.ID), ContentOreControl.CODEC);
             helper.register(id(ContentOptionFeatures.ID), ContentOptionFeatures.CODEC);

@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -27,6 +28,9 @@ final class ContentOptionOres {
     private static final String DUNGEONS = "dungeonChance";
     private static final String LAVA_LAKES = "lavaLakeChance";
     private static final int LAVA_BASE = 80;
+    private static final String WATER_LAKES = "waterLakeChance";
+    private static final double SURFACE_SHARE = 0.75D;
+    private static final int LEGACY_TOP = 255;
     private static final Set<String> KEPT = Set.of("ore_gold_extra");
     private static final List<Ore> ORES = List.of(
             new Ore("coal", 17, 20, 0, 128, false, List.of("ore_coal_upper", "ore_coal_lower")),
@@ -54,22 +58,31 @@ final class ContentOptionOres {
     }
 
     static boolean ignores(String key) {
-        if (DUNGEONS.equals(key) || LAVA_LAKES.equals(key)) { return false; }
+        if (DUNGEONS.equals(key) || LAVA_LAKES.equals(key) || WATER_LAKES.equals(key)) { return false; }
         for (Ore ore : ORES) {
             if (ore.sizeKey().equals(key) || ore.countKey().equals(key) || ore.lowKey().equals(key) || ore.highKey().equals(key)) { return false; }
         }
         return true;
     }
 
-    static void generate(@Nullable JsonObject options) {
+    static void generate(@Nullable JsonObject options) { tune(Level.OVERWORLD.identifier(), options); }
+
+    static void dimension(Identifier key, @Nullable JsonObject options) {
+        if (tune(key, options)) { ContentLog.LOGGER.info("Dimension {} places its own ores, dungeons and lakes from the generatorOptions lines above", key); }
+    }
+
+    private static boolean tune(Identifier owner, @Nullable JsonObject options) {
         Map<String, JsonObject> made = new LinkedHashMap<>();
+        Map<String, JsonObject> added = new LinkedHashMap<>();
         Set<String> dropped = new LinkedHashSet<>();
         if (options != null) {
             for (Ore ore : ORES) { ore(ore, options, made, dropped); }
             dungeons(options, made, dropped);
             lavaLakes(options, made);
+            waterLakes(options, added);
         }
-        ContentOptionFeatures.publish(built(made), dropped);
+        ContentOptionFeatures.publish(owner, built(made), dropped, built(added));
+        return !made.isEmpty() || !dropped.isEmpty() || !added.isEmpty();
     }
 
     private static Map<String, Holder<PlacedFeature>> built(Map<String, JsonObject> made) {
@@ -104,6 +117,37 @@ final class ContentOptionOres {
         retuneRarity("lake_lava_underground", scale, made);
         retuneRarity("lake_lava_surface", scale * scale, made);
         ContentLog.LOGGER.info("generatorOptions lavaLakeChance {} scales the underground lava lakes by {} and the surface ones by {} of the game's own rarity", lakes.getAsInt(), scale, scale * scale);
+    }
+
+    private static void waterLakes(JsonObject options, Map<String, JsonObject> added) {
+        OptionalInt lakes = ContentTerrain.optionNumber(options, WATER_LAKES);
+        if (lakes.isEmpty() || !Json.getBoolean(options, "useWaterLakes", true)) { return; }
+        if (lakes.getAsInt() < 1) {
+            ContentLog.LOGGER.error("generatorOptions waterLakeChance is {}, which must be at least 1, so no water lakes are added", lakes.getAsInt());
+            return;
+        }
+        JsonObject placed = placed(ContentOptionFeatures.ANCHOR);
+        JsonObject lake = placed == null ? null : ContentOptionFeatures.inline(ContentOptionFeatures.ANCHOR, placed);
+        if (lake == null) { return; }
+        JsonObject config = lake.has("config") && lake.get("config").isJsonObject() ? lake.getAsJsonObject("config") : lake;
+        fill(config, "fluid", "minecraft:water");
+        fill(config, "barrier", "minecraft:air");
+        int surface = Math.max(1, (int) Math.round(lakes.getAsInt() / SURFACE_SHARE));
+        JsonObject height = Json.obj("type", "minecraft:uniform", "min_inclusive", Json.obj("absolute", 0), "max_inclusive", Json.obj("absolute", LEGACY_TOP));
+        added.put("lake_water_underground", Json.obj("feature", lake, "placement", Json.arr(rarity(lakes.getAsInt()), Json.obj("type", "minecraft:in_square"), Json.obj("type", "minecraft:height_range", "height", height), Json.obj("type", "minecraft:biome"))));
+        added.put("lake_water_surface", Json.obj("feature", lake.deepCopy(), "placement", Json.arr(rarity(surface), Json.obj("type", "minecraft:in_square"), Json.obj("type", "minecraft:heightmap", "heightmap", "WORLD_SURFACE_WG"), Json.obj("type", "minecraft:biome"))));
+        ContentLog.LOGGER.info("generatorOptions waterLakeChance {} adds water lakes outside the desert, one in {} chunks underground and one in {} on the surface", lakes.getAsInt(), lakes.getAsInt(), surface);
+    }
+
+    private static JsonObject rarity(int chance) { return Json.obj("type", "minecraft:rarity_filter", "chance", chance); }
+
+    private static void fill(JsonObject config, String key, String block) {
+        if (!config.has(key) || !config.get(key).isJsonObject()) { return; }
+        JsonObject held = config.getAsJsonObject(key);
+        JsonObject state = held.has("state") && held.get("state").isJsonObject() ? held.getAsJsonObject("state") : held;
+        state.addProperty(state.has("Name") ? "Name" : "id", block);
+        state.remove("Properties");
+        state.remove("properties");
     }
 
     private static void ore(Ore ore, JsonObject options, Map<String, JsonObject> made, Set<String> dropped) {

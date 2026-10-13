@@ -21,12 +21,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 import net.neoforged.neoforge.common.world.BiomeModifier;
 import net.neoforged.neoforge.common.world.ModifiableBiomeInfo;
 import java.util.Collections;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,15 +38,22 @@ import javax.annotation.Nullable;
 public record ContentOptionFeatures() implements LineCompat.BiomeEdit {
     public static final String ID = "option_features";
     public static final MapCodec<ContentOptionFeatures> CODEC = MapCodec.unit(new ContentOptionFeatures());
-    private static volatile Map<String, Holder<PlacedFeature>> copies = Map.of();
-    private static volatile Set<String> dropped = Set.of();
+    static final String ANCHOR = "lake_lava_surface";
+    private static final Identifier WORLD = Level.OVERWORLD.identifier();
+    private static volatile Map<Identifier, Tuned> tuned = Map.of();
 
-    static boolean active() { return !copies.isEmpty() || !dropped.isEmpty(); }
+    private record Tuned(Map<String, Holder<PlacedFeature>> copies, Set<String> dropped, List<Holder<PlacedFeature>> added) {
+        boolean any() { return !copies.isEmpty() || !dropped.isEmpty() || !added.isEmpty(); }
+    }
 
-    static void publish(Map<String, Holder<PlacedFeature>> made, Set<String> silenced) {
-        copies = Map.copyOf(made);
-        dropped = Set.copyOf(silenced);
-        if (made.isEmpty()) { return; }
+    static boolean active() { return tuned.containsKey(WORLD); }
+
+    static void publish(Identifier owner, Map<String, Holder<PlacedFeature>> made, Set<String> silenced, Map<String, Holder<PlacedFeature>> extra) {
+        Map<Identifier, Tuned> next = WORLD.equals(owner) ? new LinkedHashMap<>() : new LinkedHashMap<>(tuned);
+        Tuned set = new Tuned(Map.copyOf(made), Set.copyOf(silenced), List.copyOf(extra.values()));
+        if (set.any()) { next.put(owner, set); }
+        tuned = Map.copyOf(next);
+        if (made.isEmpty() && extra.isEmpty()) { return; }
         JsonObject modifier = new JsonObject();
         modifier.addProperty("type", ResourceDataPackLoader.MOD_ID + ":" + ID);
         GeneratedResources.put(PackType.SERVER_DATA, ResourceDataPackLoader.MOD_ID, ContentFormats.BIOME_MODIFIERS + "/" + ID + PackManager.JSON_SUFFIX, modifier.toString());
@@ -74,25 +83,36 @@ public record ContentOptionFeatures() implements LineCompat.BiomeEdit {
 
     static Set<PlacedFeature> refused(ServerLevel level) {
         Set<PlacedFeature> out = Collections.newSetFromMap(new IdentityHashMap<>());
-        if (level.dimension() == Level.OVERWORLD && ContentWorldShape.madeHere(level)) {
-            Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);
-            for (String path : copies.keySet()) { placed.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(out::add); }
-            for (String path : dropped) { placed.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(out::add); }
-            return out;
+        Identifier here = level.dimension() != Level.OVERWORLD ? level.dimension().identifier() : ContentWorldShape.madeHere(level) ? WORLD : null;
+        Registry<PlacedFeature> placed = level.registryAccess().lookupOrThrow(Registries.PLACED_FEATURE);
+        for (Map.Entry<Identifier, Tuned> entry : tuned.entrySet()) {
+            Tuned set = entry.getValue();
+            if (here != null && here.equals(entry.getKey())) {
+                for (String path : set.copies().keySet()) { placed.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(out::add); }
+                for (String path : set.dropped()) { placed.getOptional(Identifier.withDefaultNamespace(path)).ifPresent(out::add); }
+            }
+            else {
+                for (Holder<PlacedFeature> copy : set.copies().values()) { out.add(copy.value()); }
+                for (Holder<PlacedFeature> extra : set.added()) { out.add(extra.value()); }
+            }
         }
-        for (Holder<PlacedFeature> copy : copies.values()) { out.add(copy.value()); }
         return out;
     }
 
     @Override public void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder) {
-        Map<String, Holder<PlacedFeature>> held = copies;
+        Map<Identifier, Tuned> held = tuned;
         if (phase != Phase.ADD || held.isEmpty()) { return; }
+        boolean desert = biome.is(Biomes.DESERT);
         for (GenerationStep.Decoration step : GenerationStep.Decoration.values()) {
             List<Holder<PlacedFeature>> features = builder.getGenerationSettings().getFeatures(step);
             for (Holder<PlacedFeature> feature : List.copyOf(features)) {
                 Identifier id = feature.unwrapKey().map(ResourceKey::identifier).orElse(null);
-                Holder<PlacedFeature> copy = id == null || !Identifier.DEFAULT_NAMESPACE.equals(id.getNamespace()) ? null : held.get(id.getPath());
-                if (copy != null) { features.add(copy); }
+                if (id == null || !Identifier.DEFAULT_NAMESPACE.equals(id.getNamespace())) { continue; }
+                for (Tuned set : held.values()) {
+                    Holder<PlacedFeature> copy = set.copies().get(id.getPath());
+                    if (copy != null) { features.add(copy); }
+                    if (!desert && ANCHOR.equals(id.getPath())) { features.addAll(set.added()); }
+                }
             }
         }
     }

@@ -2,10 +2,14 @@ package mctmods.resourcedatapackloader.compat;
 
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeNoise;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
+import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.LegacyTerrainShape;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.mojang.datafixers.Products;
@@ -136,6 +140,7 @@ public final class LineCompat {
     public static final String DENSITY_GRADIENT = "minecraft:y_clamped_gradient";
     public static final String GRADIENT_FROM = "from_y";
     public static final String GRADIENT_TO = "to_y";
+    public static final String DENSITY_INPUT = "argument";
 
     private LineCompat() {}
 
@@ -150,8 +155,18 @@ public final class LineCompat {
     public static JsonObject densityOf(String type, JsonElement input) {
         JsonObject out = new JsonObject();
         out.addProperty("type", type);
-        out.add("argument", input);
+        out.add(DENSITY_INPUT, input);
         return out;
+    }
+
+    public static String densitySeed(Identifier id) {
+        JsonObject noise = new JsonObject();
+        noise.addProperty("firstOctave", 1 - LegacyTerrainShape.DEPTH_OCTAVES);
+        JsonArray amplitudes = new JsonArray();
+        for (int octave = 0; octave < LegacyTerrainShape.DEPTH_OCTAVES; octave++) { amplitudes.add(1.0D); }
+        noise.add("amplitudes", amplitudes);
+        GeneratedResources.put(PackType.SERVER_DATA, id.getNamespace(), WorldgenFiles.file("worldgen/noise", id.getPath()), noise.toString());
+        return id.toString();
     }
 
     public static JsonObject densityInterpolated(JsonElement input) { return densityOf("minecraft:interpolated", input); }
