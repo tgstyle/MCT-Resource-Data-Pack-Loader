@@ -11,7 +11,6 @@ import mctmods.resourcedatapackloader.util.Settings;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -34,67 +33,67 @@ public final class ContentBiomeParser {
         for (String rubic : RUBIC_KEYS) {
             if (json.has(rubic)) { ContentLog.LOGGER.info("Biome {} sets '{}', which this line does not read: terrain height is the noise settings' and the id is the file's name", key, rubic); }
         }
-        JsonObject placement = GsonHelper.getAsJsonObject(json, "placement", new JsonObject());
+        JsonObject placement = Json.getJsonObject(json, "placement", new JsonObject());
         if (placement.has("villageSpawn")) { ContentLog.LOGGER.info("Biome {} sets placement.villageSpawn, which this line does not read: villagers come with the village structure itself", key); }
-        JsonObject rates = GsonHelper.getAsJsonObject(json, "spawnRates", new JsonObject());
+        JsonObject rates = Json.getJsonObject(json, "spawnRates", new JsonObject());
         for (String rate : rates.keySet()) {
             if (!RATE_KEYS.contains(rate)) { ContentLog.LOGGER.error("Biome {} sets the spawn rate '{}', which is not one of {}, so it does nothing. These are how often hostile mobs spawn, not creature types", key, rate, RATE_KEYS); }
         }
-        Identifier base = ContentParser.location(GsonHelper.getAsString(json, "baseBiome", ""));
+        Identifier base = ContentParser.location(Json.getString(json, "baseBiome", ""));
         Map<String, Integer> decoration = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "decoration", new JsonObject()).entrySet()) {
-            if (entry.getValue().isJsonPrimitive()) { decoration.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue().getAsInt()); }
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "decoration", new JsonObject()).entrySet()) {
+            if (entry.getValue().isJsonPrimitive()) { decoration.put(entry.getKey().toLowerCase(Locale.ROOT), Json.asInt(entry.getValue(), entry.getKey(), 0)); }
         }
-        return new BiomeDef(key, GsonHelper.getAsString(json, "name", key.getPath()).trim(),
-                GsonHelper.getAsFloat(json, "temperature", 0.5F),
-                GsonHelper.getAsFloat(json, "rainfall", 0.5F),
-                GsonHelper.getAsBoolean(json, "rain", true),
-                GsonHelper.getAsBoolean(json, "snow", false),
+        return new BiomeDef(key, Json.getString(json, "name", key.getPath()).trim(),
+                Json.getFloat(json, "temperature", 0.5F),
+                Json.getFloat(json, "rainfall", 0.5F),
+                Json.getBoolean(json, "rain", true),
+                Json.getBoolean(json, "snow", false),
                 color(json, "waterColor", key), color(json, "grassColor", key), color(json, "foliageColor", key), color(json, "snowColor", key),
                 base == null ? PLAINS : base,
-                GsonHelper.getAsString(json, "topBlock", "").trim(),
-                GsonHelper.getAsString(json, "fillerBlock", "").trim(),
-                GsonHelper.getAsString(json, "stoneBlock", "").trim(),
+                Json.getString(json, "topBlock", "").trim(),
+                Json.getString(json, "fillerBlock", "").trim(),
+                Json.getString(json, "stoneBlock", "").trim(),
                 SkyStoneDef.read(json, key),
                 Json.strings(json, "types"),
-                Settings.lower(GsonHelper.getAsString(placement, "climate", "")),
-                Math.max(0, GsonHelper.getAsInt(placement, "weight", 10)),
-                GsonHelper.getAsBoolean(placement, "playerSpawn", false),
-                GsonHelper.getAsBoolean(placement, "villages", false),
-                Settings.lower(GsonHelper.getAsString(json, "villageType", "")),
-                GsonHelper.getAsBoolean(placement, "strongholds", false),
+                Settings.lower(Json.getString(placement, "climate", "")),
+                Math.max(0, Json.getInt(placement, "weight", 10)),
+                Json.getBoolean(placement, "playerSpawn", false),
+                Json.getBoolean(placement, "villages", false),
+                Settings.lower(Json.getString(json, "villageType", "")),
+                Json.getBoolean(placement, "strongholds", false),
                 Map.copyOf(decoration),
-                spawnChance(key, GsonHelper.getAsFloat(json, "spawnChance", 0.1F)),
+                spawnChance(key, Json.getFloat(json, "spawnChance", 0.1F)),
                 rate(rates, "surfaceDay"), rate(rates, "surfaceNight"), rate(rates, "undergroundDay"), rate(rates, "undergroundNight"),
-                GsonHelper.getAsBoolean(json, "keepDefaultSpawns", false),
+                Json.getBoolean(json, "keepDefaultSpawns", false),
                 spawns(key, json, 10, 0),
                 json.has("minHeight") || json.has("maxHeight"),
-                GsonHelper.getAsInt(json, "minHeight", Integer.MIN_VALUE),
-                GsonHelper.getAsInt(json, "maxHeight", Integer.MAX_VALUE),
+                Json.getInt(json, "minHeight", Integer.MIN_VALUE),
+                Json.getInt(json, "maxHeight", Integer.MAX_VALUE),
                 Json.strings(json, "replaces"), Json.strings(json, "requires"));
     }
 
     public static List<BiomeSpawnDef> spawns(Identifier key, JsonObject json, int weight, int max) {
         if (!json.has("spawns")) { return List.of(); }
         List<BiomeSpawnDef> spawns = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "spawns")) {
+        for (JsonElement element : Json.getJsonArray(json, "spawns")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A spawn entry in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            Identifier entity = ContentParser.location(GsonHelper.getAsString(entry, "entity", ""));
+            Identifier entity = ContentParser.location(Json.getString(entry, "entity", ""));
             if (entity == null) {
                 ContentLog.LOGGER.error("A spawn entry in {} names no entity, skipping it", key);
                 continue;
             }
-            String category = category(GsonHelper.getAsString(entry, "type", "creature"));
+            String category = category(Json.getString(entry, "type", "creature"));
             if (category == null) {
-                ContentLog.LOGGER.error("A spawn entry in {} has creature type '{}', which is not one of monster, creature, ambient or water, skipping it", key, GsonHelper.getAsString(entry, "type", ""));
+                ContentLog.LOGGER.error("A spawn entry in {} has creature type '{}', which is not one of monster, creature, ambient or water, skipping it", key, Json.getString(entry, "type", ""));
                 continue;
             }
-            int min = Math.max(1, GsonHelper.getAsInt(entry, "min", 1));
-            spawns.add(new BiomeSpawnDef(entity, category, Math.max(1, GsonHelper.getAsInt(entry, "weight", weight)), min, Math.max(min, GsonHelper.getAsInt(entry, "max", Math.max(min, max)))));
+            int min = Math.max(1, Json.getInt(entry, "min", 1));
+            spawns.add(new BiomeSpawnDef(entity, category, Math.max(1, Json.getInt(entry, "weight", weight)), min, Math.max(min, Json.getInt(entry, "max", Math.max(min, max)))));
         }
         return List.copyOf(spawns);
     }
@@ -114,10 +113,10 @@ public final class ContentBiomeParser {
         return 0.99F;
     }
 
-    private static float rate(JsonObject rates, String name) { return rates.has(name) ? Math.max(0.0F, GsonHelper.getAsFloat(rates, name)) : BiomeDef.NO_RATE; }
+    private static float rate(JsonObject rates, String name) { return rates.has(name) ? Math.max(0.0F, Json.getFloat(rates, name)) : BiomeDef.NO_RATE; }
 
     private static int color(JsonObject json, String name, Identifier key) {
         if (!json.has(name)) { return BiomeDef.NO_COLOR; }
-        return ContentParser.color(GsonHelper.getAsString(json, name, ""), key);
+        return ContentParser.color(Json.getString(json, name, ""), key);
     }
 }

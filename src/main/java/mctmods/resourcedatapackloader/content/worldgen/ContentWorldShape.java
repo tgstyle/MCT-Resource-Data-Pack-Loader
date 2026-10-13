@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.IdNames;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Lang;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -33,7 +34,6 @@ import net.minecraft.server.dedicated.DedicatedServerSettings;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -198,9 +198,9 @@ public final class ContentWorldShape {
         String fixedBiome = null;
         JsonObject options = "flat".equals(base[0]) ? null : ContentTerrain.customizedOptions();
         if (options != null) {
-            seaLevel = GsonHelper.getAsInt(options, "seaLevel", -1);
-            lavaOceans = GsonHelper.getAsBoolean(options, "useLavaOceans", false);
-            fixedBiome = options.has("fixedBiome") ? ContentTerrain.shippedBiome(GsonHelper.getAsString(options, "fixedBiome", "-1").trim()) : null;
+            seaLevel = Json.getInt(options, "seaLevel", -1);
+            lavaOceans = Json.getBoolean(options, "useLavaOceans", false);
+            fixedBiome = options.has("fixedBiome") ? ContentTerrain.shippedBiome(Json.getString(options, "fixedBiome", "-1").trim()) : null;
             for (String key : options.keySet()) {
                 if (!OPTION_KEYS.contains(key) && !ContentPopulateControl.readsOption(key) && ContentOptionOres.ignores(key) && ContentOptionNoise.ignores(key) && WARNED.add("generatorOptions." + key)) { ContentLog.LOGGER.info("generatorOptions sets '{}', which this version does not read", key); }
             }
@@ -331,7 +331,7 @@ public final class ContentWorldShape {
         surface.addProperty("type", "minecraft:sequence");
         surface.add("sequence", new JsonArray());
         settings.add("surface_rule", surface);
-        GsonHelper.getAsJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
+        Json.getJsonObject(settings, "noise_router").addProperty("final_density", 1.0D);
     }
 
     private static JsonObject flat() {
@@ -384,7 +384,7 @@ public final class ContentWorldShape {
     private static Identifier ownId(Shape shape, String suffix) { return shape.id().withSuffix("_" + suffix); }
 
     private static void shapeNoise(JsonObject settings, Shape shape) {
-        JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
+        JsonObject noise = Json.getJsonObject(settings, "noise");
         noise.addProperty("min_y", shape.minY());
         noise.addProperty("height", shape.maxY() - shape.minY());
         if (shape.seaLevel() >= 0) { settings.addProperty("sea_level", shape.seaLevel()); }

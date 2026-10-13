@@ -10,7 +10,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import java.awt.image.BufferedImage;
@@ -128,7 +127,7 @@ public final class ContentPixelMaps {
                 ContentLog.LOGGER.error("Pixel map {}:{} is empty, so nothing is drawn", where, at);
                 return null;
             }
-            for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, PALETTE, new JsonObject()).entrySet()) {
                 if (palette.containsKey(entry.getKey())) { continue; }
                 if (!entry.getValue().isJsonPrimitive()) {
                     ContentLog.LOGGER.error("Pixel map {}:{} gives the palette key '{}' something other than a color, so nothing is drawn", where, at, entry.getKey());
@@ -137,12 +136,12 @@ public final class ContentPixelMaps {
                 palette.put(entry.getKey(), entry.getValue().getAsString());
                 from.put(entry.getKey(), where + ":" + at);
             }
-            for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, NOTES, new JsonObject()).entrySet()) {
+            for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, NOTES, new JsonObject()).entrySet()) {
                 if (!notes.containsKey(entry.getKey()) && entry.getValue().isJsonPrimitive()) { notes.put(entry.getKey(), entry.getValue().getAsString()); }
             }
             if (rows == null && json.has(ROWS)) {
                 rowsFrom = where + ":" + at;
-                JsonArray listed = GsonHelper.getAsJsonArray(json, ROWS);
+                JsonArray listed = Json.getJsonArray(json, ROWS);
                 rows = new ArrayList<>(listed.size());
                 for (JsonElement row : listed) {
                     if (!row.isJsonPrimitive()) {
@@ -153,21 +152,21 @@ public final class ContentPixelMaps {
                 }
             }
             if (tint == null && json.has(TINT)) {
-                JsonObject asked = GsonHelper.getAsJsonObject(json, TINT);
+                JsonObject asked = Json.getJsonObject(json, TINT);
                 tint = TintFactory.of(asked);
                 if (tint == null) {
-                    ContentLog.LOGGER.error("Pixel map {}:{} tints from '{}' to '{}', and both must be #RRGGBB or #AARRGGBB, so nothing is drawn", where, at, GsonHelper.getAsString(asked, TintFactory.FROM, ""), GsonHelper.getAsString(asked, TintFactory.TO, ""));
+                    ContentLog.LOGGER.error("Pixel map {}:{} tints from '{}' to '{}', and both must be #RRGGBB or #AARRGGBB, so nothing is drawn", where, at, Json.getString(asked, TintFactory.FROM, ""), Json.getString(asked, TintFactory.TO, ""));
                     return null;
                 }
             }
             if (size == null && json.has(SIZE)) {
-                size = size(GsonHelper.getAsString(json, SIZE, ""));
+                size = size(Json.getString(json, SIZE, ""));
                 if (size == null) {
-                    ContentLog.LOGGER.error("Pixel map {}:{} has the size '{}', which is not written as widthxheight such as 16x16 or 16x32, so nothing is drawn", where, at, GsonHelper.getAsString(json, SIZE, ""));
+                    ContentLog.LOGGER.error("Pixel map {}:{} has the size '{}', which is not written as widthxheight such as 16x16 or 16x32, so nothing is drawn", where, at, Json.getString(json, SIZE, ""));
                     return null;
                 }
             }
-            String next = GsonHelper.getAsString(json, EXTENDS, "");
+            String next = Json.getString(json, EXTENDS, "");
             if (next.isEmpty()) { break; }
             int colon = next.indexOf(':');
             String nextWhere = colon < 0 ? where : next.substring(0, colon);

@@ -23,7 +23,7 @@ public final class ContentParserContainers {
     private ContentParserContainers() {}
 
     static String remainder(JsonObject json) {
-        String named = GsonHelper.getAsString(json, "containerItem", "").trim();
+        String named = Json.getString(json, "containerItem", "").trim();
         if (!named.isEmpty()) { return named; }
         return Json.text(json, "container", "");
     }
@@ -39,18 +39,18 @@ public final class ContentParserContainers {
 
     @Nullable static ContainerDef container(Identifier key, JsonObject json) {
         if (!json.has("container")) { return null; }
-        JsonObject held = GsonHelper.getAsJsonObject(json, "container");
-        int askedRows = GsonHelper.getAsInt(held, "rows", 3);
-        int askedColumns = GsonHelper.getAsInt(held, "columns", 9);
+        JsonObject held = Json.getJsonObject(json, "container");
+        int askedRows = Json.getInt(held, "rows", 3);
+        int askedColumns = Json.getInt(held, "columns", 9);
         int rows = Mth.clamp(askedRows, 1, ContainerDef.MOST_ROWS);
         int columns = Mth.clamp(askedColumns, 1, ContainerDef.MOST_COLUMNS);
         if (askedRows != rows || askedColumns != columns) {
             ContentLog.LOGGER.error("The container on {} asks for {} by {}, which is past the largest a screen can show, so it is cut to {} by {}", key, askedColumns, askedRows, columns, rows);
         }
-        String named = Settings.lower(GsonHelper.getAsString(held, "guiTexture", ""));
+        String named = Settings.lower(Json.getString(held, "guiTexture", ""));
         Identifier texture = named.isEmpty() ? null : Identifier.tryParse(named);
-        int wide = GsonHelper.getAsInt(held, "guiWidth", 0);
-        int tall = GsonHelper.getAsInt(held, "guiHeight", 0);
+        int wide = Json.getInt(held, "guiWidth", 0);
+        int tall = Json.getInt(held, "guiHeight", 0);
         if (texture != null && (wide <= 0 || tall <= 0)) {
             ContentLog.LOGGER.error("The container on {} names a guiTexture without a guiWidth and guiHeight, so the drawn background is used instead", key);
             texture = null;
@@ -58,14 +58,14 @@ public final class ContentParserContainers {
         JsonElement asked = chestModel(held);
         boolean chest = asked != null;
         Identifier sheet = chest && asked.getAsJsonPrimitive().isString() ? sheetOf(Settings.lower(asked.getAsString()), key) : null;
-        return new ContainerDef(rows, columns, Settings.lower(GsonHelper.getAsString(held, "lootTable", "")),
+        return new ContainerDef(rows, columns, Settings.lower(Json.getString(held, "lootTable", "")),
                 chest, sheet, texture, wide, tall, curioSlot(key, held));
     }
 
     private static String curioSlot(Identifier key, JsonObject held) {
-        String asked = Settings.lower(GsonHelper.getAsString(held, "curioSlot", ""));
+        String asked = Settings.lower(Json.getString(held, "curioSlot", ""));
         if (!asked.isEmpty()) { return asked; }
-        String old = Settings.lower(GsonHelper.getAsString(held, "bauble", ""));
+        String old = Settings.lower(Json.getString(held, "bauble", ""));
         if (old.isEmpty()) { return ""; }
         String mapped = BAUBLE_SLOTS.get(old);
         if (mapped == null) {

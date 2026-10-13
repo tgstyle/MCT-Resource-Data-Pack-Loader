@@ -23,7 +23,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.item.Item;
@@ -77,27 +76,27 @@ public final class ContentPotions {
         if (json == null) { return; }
         List<AttributeDef> attributes = new ArrayList<>();
         if (json.has("attributes")) {
-            for (JsonElement element : GsonHelper.getAsJsonArray(json, "attributes")) {
+            for (JsonElement element : Json.getJsonArray(json, "attributes")) {
                 if (!element.isJsonObject()) {
                     ContentLog.LOGGER.error("An attribute in {} is not an object, skipping it", key);
                     continue;
                 }
                 JsonObject entry = element.getAsJsonObject();
-                attributes.add(new AttributeDef(GsonHelper.getAsString(entry, "attribute", ""),
-                        GsonHelper.getAsFloat(entry, "amount", 0.0F),
-                        GsonHelper.getAsInt(entry, "operation", 0)));
+                attributes.add(new AttributeDef(Json.getString(entry, "attribute", ""),
+                        Json.getFloat(entry, "amount", 0.0F),
+                        Json.getInt(entry, "operation", 0)));
             }
         }
-        JsonObject icon = GsonHelper.getAsJsonObject(json, ICON, new JsonObject());
+        JsonObject icon = Json.getJsonObject(json, ICON, new JsonObject());
         POTIONS.put(key, new PotionDef(key,
-                GsonHelper.getAsString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
-                GsonHelper.getAsBoolean(json, "badEffect", false),
-                GsonHelper.getAsBoolean(json, "beneficial", false),
-                ContentParser.color(GsonHelper.getAsString(json, "color", "FFFFFF"), key.toString()),
-                GsonHelper.getAsInt(icon, "x", 0),
-                GsonHelper.getAsInt(icon, "y", 0),
-                GsonHelper.getAsString(json, "iconTexture", json.has(ICON) ? "" : FallbackIcon.TEXTURE),
-                GsonHelper.getAsBoolean(json, "instant", false),
+                Json.getString(json, "name", "effect." + key.getNamespace() + "." + key.getPath()),
+                Json.getBoolean(json, "badEffect", false),
+                Json.getBoolean(json, "beneficial", false),
+                ContentParser.color(Json.getString(json, "color", "FFFFFF"), key.toString()),
+                Json.getInt(icon, "x", 0),
+                Json.getInt(icon, "y", 0),
+                Json.getString(json, "iconTexture", json.has(ICON) ? "" : FallbackIcon.TEXTURE),
+                Json.getBoolean(json, "instant", false),
                 Collections.unmodifiableList(attributes),
                 Json.strings(json, "requires")));
     }
@@ -111,7 +110,7 @@ public final class ContentPotions {
             return;
         }
         TYPES.put(key, new PotionTypeDef(key,
-                GsonHelper.getAsString(json, "baseName", key.getNamespace() + "." + key.getPath()),
+                Json.getString(json, "baseName", key.getNamespace() + "." + key.getPath()),
                 effects,
                 Json.strings(json, "requires")));
     }
@@ -119,18 +118,18 @@ public final class ContentPotions {
     private static void readBrewing(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "brewing file");
         if (json == null) { return; }
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "brewing")) {
+        for (JsonElement element : Json.getJsonArray(json, "brewing")) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
             BrewingDef def = new BrewingDef(key,
-                    GsonHelper.getAsString(entry, "from", ""),
-                    GsonHelper.getAsString(entry, "to", ""),
-                    GsonHelper.getAsString(entry, "ingredient", ""),
-                    GsonHelper.getAsString(entry, "input", ""),
-                    GsonHelper.getAsString(entry, "output", ""),
+                    Json.getString(entry, "from", ""),
+                    Json.getString(entry, "to", ""),
+                    Json.getString(entry, "ingredient", ""),
+                    Json.getString(entry, "input", ""),
+                    Json.getString(entry, "output", ""),
                     Json.strings(entry, "requires"));
             if (def.ingredient().isEmpty()) {
                 ContentLog.LOGGER.error("A brewing recipe in {} has no ingredient, skipping it", key);

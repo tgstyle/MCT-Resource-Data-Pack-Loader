@@ -23,7 +23,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElement;
 import net.minecraft.world.level.levelgen.structure.pools.StructureTemplatePool;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.block.Rotation;
@@ -219,12 +218,12 @@ public final class ContentVillages {
     @Nullable private static VillageDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "village plot");
         if (json == null) { return null; }
-        String type = Settings.lower(GsonHelper.getAsString(json, "type", VillageDef.FARM));
+        String type = Settings.lower(Json.getString(json, "type", VillageDef.FARM));
         if (!VillageDef.FARM.equals(type) && !VillageDef.TEMPLATE.equals(type)) {
             ContentLog.LOGGER.error("Village plot {} asks for type '{}', which is not {} or {}, so {} stands in", key, type, VillageDef.FARM, VillageDef.TEMPLATE, VillageDef.FARM);
             type = VillageDef.FARM;
         }
-        String structure = GsonHelper.getAsString(json, "structure", "");
+        String structure = Json.getString(json, "structure", "");
         if (VillageDef.TEMPLATE.equals(type) && structure.isEmpty()) {
             ContentLog.LOGGER.error("Village plot {} is a template but names no structure, so it is dropped", key);
             return null;
@@ -234,27 +233,27 @@ public final class ContentVillages {
             return null;
         }
         return grown(new VillageDef(key, type,
-                Math.max(1, GsonHelper.getAsInt(json, "weight", 3)),
-                Math.max(0, GsonHelper.getAsInt(json, "leastCount", 1)),
-                Math.max(0, GsonHelper.getAsInt(json, "mostCount", 4)),
-                Math.max(3, GsonHelper.getAsInt(json, "width", 7)),
-                Math.max(1, GsonHelper.getAsInt(json, "height", 4)),
-                Math.max(3, GsonHelper.getAsInt(json, "depth", 9)),
-                Math.max(0, GsonHelper.getAsInt(json, "apron", 2)),
+                Math.max(1, Json.getInt(json, "weight", 3)),
+                Math.max(0, Json.getInt(json, "leastCount", 1)),
+                Math.max(0, Json.getInt(json, "mostCount", 4)),
+                Math.max(3, Json.getInt(json, "width", 7)),
+                Math.max(1, Json.getInt(json, "height", 4)),
+                Math.max(3, Json.getInt(json, "depth", 9)),
+                Math.max(0, Json.getInt(json, "apron", 2)),
                 Json.strings(json, "crops"),
-                GsonHelper.getAsString(json, "edge", "minecraft:oak_log"),
-                GsonHelper.getAsString(json, "soil", "minecraft:farmland"),
-                GsonHelper.getAsBoolean(json, "water", true),
-                Math.max(1, GsonHelper.getAsInt(json, "rowWidth", 2)),
+                Json.getString(json, "edge", "minecraft:oak_log"),
+                Json.getString(json, "soil", "minecraft:farmland"),
+                Json.getBoolean(json, "water", true),
+                Math.max(1, Json.getInt(json, "rowWidth", 2)),
                 structure,
-                GsonHelper.getAsString(json, "ground", "minecraft:dirt"),
-                Mth.clamp(GsonHelper.getAsInt(json, "integrity", ShapeDef.FULL_INTEGRITY), 1, ShapeDef.FULL_INTEGRITY),
-                GsonHelper.getAsString(json, "lootTable", ""),
-                Math.max(0, GsonHelper.getAsInt(json, "villagers", 0)),
-                GsonHelper.getAsString(json, "villagerEntity", ""),
-                GsonHelper.getAsInt(json, "villagerX", 1),
-                GsonHelper.getAsInt(json, "villagerY", 1),
-                GsonHelper.getAsInt(json, "villagerZ", 1),
+                Json.getString(json, "ground", "minecraft:dirt"),
+                Mth.clamp(Json.getInt(json, "integrity", ShapeDef.FULL_INTEGRITY), 1, ShapeDef.FULL_INTEGRITY),
+                Json.getString(json, "lootTable", ""),
+                Math.max(0, Json.getInt(json, "villagers", 0)),
+                Json.getString(json, "villagerEntity", ""),
+                Json.getInt(json, "villagerX", 1),
+                Json.getInt(json, "villagerY", 1),
+                Json.getInt(json, "villagerZ", 1),
                 Json.strings(json, "requires")), null);
     }
 }

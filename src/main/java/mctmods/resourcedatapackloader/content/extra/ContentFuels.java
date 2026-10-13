@@ -13,7 +13,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,19 +40,19 @@ public final class ContentFuels {
     private static void read(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "fuel file");
         if (json == null) { return; }
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, FUELS)) {
+        for (JsonElement element : Json.getJsonArray(json, FUELS)) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A fuel in {} is not an object, skipping it", key);
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            int burnTime = GsonHelper.getAsInt(entry, "burnTime", 0);
+            int burnTime = Json.getInt(entry, "burnTime", 0);
             if (burnTime <= 0) {
                 ContentLog.LOGGER.error("A fuel in {} has no positive burnTime, skipping it", key);
                 continue;
             }
             if (entry.has(ORE_DICT)) { ContentLog.LOGGER.warn("A fuel in {} uses '{}', which this line does not read. Name an item tag under '{}' instead, such as c:ingots/copper or forge:ingots/copper", key, ORE_DICT, TAG); }
-            String tag = GsonHelper.getAsString(entry, TAG, "").trim();
+            String tag = Json.getString(entry, TAG, "").trim();
             if (!tag.isEmpty()) {
                 Identifier name = Identifier.tryParse(tag);
                 if (name == null) {
@@ -63,7 +62,7 @@ public final class ContentFuels {
                 ENTRIES.add(new Entry(null, TagKey.create(Registries.ITEM, name), burnTime));
                 continue;
             }
-            Item item = ContentStacks.find(key, GsonHelper.getAsString(entry, "item", ""));
+            Item item = ContentStacks.find(key, Json.getString(entry, "item", ""));
             if (item == null) { continue; }
             ENTRIES.add(new Entry(item, null, burnTime));
         }

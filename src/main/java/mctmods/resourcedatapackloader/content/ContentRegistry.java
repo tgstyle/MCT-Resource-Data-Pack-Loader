@@ -22,7 +22,6 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Registered;
 import mctmods.resourcedatapackloader.util.Summary;
 
-import com.google.gson.JsonParseException;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -76,18 +75,18 @@ public final class ContentRegistry {
         for (Map.Entry<Identifier, String> held : ContentInherits.collect(PackManager.BLOCKS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
-                BlockDef def = ContentParser.block(held.getKey(), held.getValue());
+                BlockDef def = Json.within("block definition", held.getKey(), () -> ContentParser.block(held.getKey(), held.getValue()));
                 if (def != null) { BLOCK_DEFS.put(held.getKey(), def); }
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in block definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
         }
         for (Map.Entry<Identifier, String> held : ContentInherits.collect(PackManager.ITEMS).entrySet()) {
             if (reserved(held.getKey())) { continue; }
             try {
-                ItemDef def = ContentParser.item(held.getKey(), held.getValue());
+                ItemDef def = Json.within("item definition", held.getKey(), () -> ContentParser.item(held.getKey(), held.getValue()));
                 if (def != null) { ITEM_DEFS.put(held.getKey(), def); }
             }
-            catch (IllegalArgumentException | JsonParseException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
+            catch (RuntimeException ex) { ContentLog.LOGGER.error("Parsing error in item definition {}, ignoring it: {}", held.getKey(), ex.getMessage()); }
         }
         Json.eachFile(PackManager.FLUIDS, "fluid definition", (key, contents) -> {
             if (reserved(key)) { return; }

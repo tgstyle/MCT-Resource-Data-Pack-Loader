@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -12,7 +13,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Aquifer;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
@@ -54,7 +54,7 @@ public final class ContentDeepCaves {
     }
 
     static void deepen(JsonObject settings, Identifier owner, int floor, ContentOptionNoise.Shifted shifted) {
-        JsonObject router = GsonHelper.getAsJsonObject(settings, "noise_router", null);
+        JsonObject router = Json.getJsonObject(settings, "noise_router", null);
         JsonObject noodle = GameData.json(WorldgenFiles.id(FOLDER, Identifier.parse(VANILLA_NOODLE)));
         JsonObject spaghetti = GameData.json(WorldgenFiles.id(FOLDER, Identifier.parse(VANILLA_SPAGHETTI)));
         if (router == null || !router.has("final_density") || noodle == null || spaghetti == null) {
@@ -101,7 +101,7 @@ public final class ContentDeepCaves {
 
     private static JsonElement noodleFloor(JsonElement element, int floor) {
         JsonObject range = typed(element, RANGE);
-        if (range != null && names(range.get("input"), HEIGHT) && GsonHelper.getAsDouble(range, "min_inclusive", 0.0D) == ContentWorldShape.VANILLA_MIN + NOODLES_ABOVE_FLOOR) { range.addProperty("min_inclusive", floor + NOODLES_ABOVE_FLOOR); }
+        if (range != null && names(range.get("input"), HEIGHT) && Json.getDouble(range, "min_inclusive", 0.0D) == ContentWorldShape.VANILLA_MIN + NOODLES_ABOVE_FLOOR) { range.addProperty("min_inclusive", floor + NOODLES_ABOVE_FLOOR); }
         return element;
     }
 
@@ -145,7 +145,7 @@ public final class ContentDeepCaves {
 
     @Nullable private static JsonObject gradient(JsonElement element, int fromY, int toY) {
         JsonObject gradient = typed(element, GRADIENT);
-        if (gradient == null || !"y".equals(GsonHelper.getAsString(gradient, "axis", "y")) || GsonHelper.getAsInt(gradient, LineCompat.GRADIENT_FROM, 0) != fromY || GsonHelper.getAsInt(gradient, LineCompat.GRADIENT_TO, 0) != toY) { return null; }
+        if (gradient == null || !"y".equals(Json.getString(gradient, "axis", "y")) || Json.getInt(gradient, LineCompat.GRADIENT_FROM, 0) != fromY || Json.getInt(gradient, LineCompat.GRADIENT_TO, 0) != toY) { return null; }
         return gradient;
     }
 }

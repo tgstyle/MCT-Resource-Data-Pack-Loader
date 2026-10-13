@@ -15,7 +15,6 @@ import mctmods.resourcedatapackloader.util.Settings;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySelector;
@@ -240,7 +239,7 @@ public final class ContentTasks {
     public static List<TaskDef> parse(Identifier key, JsonObject json) {
         if (!json.has("tasks")) { return List.of(); }
         List<TaskDef> tasks = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "tasks")) {
+        for (JsonElement element : Json.getJsonArray(json, "tasks")) {
             if (element.isJsonPrimitive()) {
                 String text = element.getAsString().trim();
                 if (!text.startsWith("-")) {
@@ -256,20 +255,20 @@ public final class ContentTasks {
                 continue;
             }
             JsonObject entry = element.getAsJsonObject();
-            Kind kind = known(key, GsonHelper.getAsString(entry, "task", ""));
+            Kind kind = known(key, Json.getString(entry, "task", ""));
             if (kind == null) { continue; }
             if (!entry.has("priority")) {
                 ContentLog.LOGGER.error("Entity variant {} adds the task {} without a priority, so it is dropped; vanilla runs 0 first and its own tasks sit between 1 and 8", key, kind.name());
                 continue;
             }
-            tasks.add(new TaskDef(kind.name(), false, Math.max(0, GsonHelper.getAsInt(entry, "priority")),
+            tasks.add(new TaskDef(kind.name(), false, Math.max(0, Json.getInt(entry, "priority")),
                     number(entry, "speed"), number(entry, "nearSpeed"),
                     decimal(entry, "distance"), decimal(entry, "near"), decimal(entry, "chance"), decimal(entry, "leap"),
-                    entry.has("cooldown") ? Math.max(1, GsonHelper.getAsInt(entry, "cooldown")) : null,
-                    GsonHelper.getAsString(entry, "entity", "").trim(), Json.strings(entry, "items"),
-                    GsonHelper.getAsBoolean(entry, "sight", true), GsonHelper.getAsBoolean(entry, "nearby", false), GsonHelper.getAsBoolean(entry, "help", false),
-                    GsonHelper.getAsBoolean(entry, "memory", false), GsonHelper.getAsBoolean(entry, "close", false), GsonHelper.getAsBoolean(entry, "nocturnal", false),
-                    GsonHelper.getAsBoolean(entry, "scared", false)));
+                    entry.has("cooldown") ? Math.max(1, Json.getInt(entry, "cooldown")) : null,
+                    Json.getString(entry, "entity", "").trim(), Json.strings(entry, "items"),
+                    Json.getBoolean(entry, "sight", true), Json.getBoolean(entry, "nearby", false), Json.getBoolean(entry, "help", false),
+                    Json.getBoolean(entry, "memory", false), Json.getBoolean(entry, "close", false), Json.getBoolean(entry, "nocturnal", false),
+                    Json.getBoolean(entry, "scared", false)));
         }
         return tasks;
     }
@@ -280,9 +279,9 @@ public final class ContentTasks {
         return kind;
     }
 
-    @Nullable private static Double number(JsonObject json, String name) { return json.has(name) ? (double) GsonHelper.getAsFloat(json, name) : null; }
+    @Nullable private static Double number(JsonObject json, String name) { return json.has(name) ? (double) Json.getFloat(json, name) : null; }
 
-    @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? GsonHelper.getAsFloat(json, name) : null; }
+    @Nullable private static Float decimal(JsonObject json, String name) { return json.has(name) ? Json.getFloat(json, name) : null; }
 
     public static void apply(Mob mob, EntityVariantDef def) {
         if (def.tasks().isEmpty()) { return; }

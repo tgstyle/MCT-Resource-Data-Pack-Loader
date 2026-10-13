@@ -10,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import java.util.LinkedHashSet;
@@ -50,11 +49,11 @@ public final class RecipeRemovals {
         }
     }
 
-    private static JsonArray array(JsonObject json, String member) { return json.has(member) ? GsonHelper.getAsJsonArray(json, member) : new JsonArray(); }
+    private static JsonArray array(JsonObject json, String member) { return json.has(member) ? Json.getJsonArray(json, member) : new JsonArray(); }
 
     public static boolean isRemoval(JsonElement json) {
         if (!json.isJsonObject()) { return false; }
-        try { return GsonHelper.getAsBoolean(json.getAsJsonObject(), REMOVE, false); }
+        try { return Json.getBoolean(json.getAsJsonObject(), REMOVE, false); }
         catch (RuntimeException notBoolean) { return false; }
     }
 

@@ -18,7 +18,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -61,17 +60,17 @@ public final class ContentDimensionParser {
     @Nullable public static DimensionDef parse(Identifier key, String contents) {
         JsonObject json = Json.object(key, contents, "dimension");
         if (json == null) { return null; }
-        JsonObject terrain = GsonHelper.getAsJsonObject(json, "terrain", new JsonObject());
-        JsonObject biomes = GsonHelper.getAsJsonObject(json, "biomes", new JsonObject());
-        JsonObject sky = GsonHelper.getAsJsonObject(json, "sky", new JsonObject());
+        JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
+        JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
+        JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
         if (json.has("id")) { ContentLog.LOGGER.debug("Dimension {} names an id, which this line does not use, the dimension being {} everywhere", key, key); }
         if (json.has("keepLoaded")) { ContentLog.LOGGER.debug("Dimension {} asks to be kept loaded, which this line leaves to forceload", key); }
-        String type = Settings.lower(GsonHelper.getAsString(terrain, "type", DimensionDef.OVERWORLD));
+        String type = Settings.lower(Json.getString(terrain, "type", DimensionDef.OVERWORLD));
         if (!KNOWN_TERRAIN.contains(type)) {
             ContentLog.LOGGER.error("Dimension {} asks for terrain '{}', which is not one of {}, using {}", key, type, KNOWN_TERRAIN, DimensionDef.OVERWORLD);
             type = DimensionDef.OVERWORLD;
         }
-        String source = Settings.lower(GsonHelper.getAsString(biomes, "source", DimensionDef.INHERIT));
+        String source = Settings.lower(Json.getString(biomes, "source", DimensionDef.INHERIT));
         List<PickDef> biomeList = ContentWorldgenParser.picks(biomes, "biomeList", "biome", ContentListBiomes.WEIGHT);
         if (!DimensionDef.SINGLE.equals(source) && !DimensionDef.INHERIT.equals(source) && !DimensionDef.LIST.equals(source)) {
             ContentLog.LOGGER.error("Dimension {} asks for biome source '{}', which is not {}, {} or {}, using {}", key, source, DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST, DimensionDef.INHERIT);
@@ -81,8 +80,8 @@ public final class ContentDimensionParser {
             ContentLog.LOGGER.error("Dimension {} asks for biome source '{}' but gives no biomeList, using {}", key, source, DimensionDef.INHERIT);
             source = DimensionDef.INHERIT;
         }
-        int minHeight = terrain.has("minHeight") ? GsonHelper.getAsInt(terrain, "minHeight") : DimensionDef.UNSET;
-        int maxHeight = terrain.has("maxHeight") ? GsonHelper.getAsInt(terrain, "maxHeight") : DimensionDef.UNSET;
+        int minHeight = terrain.has("minHeight") ? Json.getInt(terrain, "minHeight") : DimensionDef.UNSET;
+        int maxHeight = terrain.has("maxHeight") ? Json.getInt(terrain, "maxHeight") : DimensionDef.UNSET;
         if ((minHeight == DimensionDef.UNSET) != (maxHeight == DimensionDef.UNSET)) {
             ContentLog.LOGGER.error("Dimension {} names only one of minHeight and maxHeight, so both are left to the terrain type", key);
             minHeight = DimensionDef.UNSET;
@@ -98,65 +97,65 @@ public final class ContentDimensionParser {
             }
         }
         JsonObject options = customized(key, terrain);
-        String fog = ContentParserSkyLook.samples(sky) ? "" : GsonHelper.getAsString(sky, "fogColor", "").trim();
-        String skyColor = GsonHelper.getAsString(sky, "skyColor", "").trim();
-        String cloudColor = GsonHelper.getAsString(sky, "cloudColor", "").trim();
-        int cloudHeight = GsonHelper.getAsInt(sky, "cloudHeight", CLOUD_HEIGHT);
+        String fog = ContentParserSkyLook.samples(sky) ? "" : Json.getString(sky, "fogColor", "").trim();
+        String skyColor = Json.getString(sky, "skyColor", "").trim();
+        String cloudColor = Json.getString(sky, "cloudColor", "").trim();
+        int cloudHeight = Json.getInt(sky, "cloudHeight", CLOUD_HEIGHT);
         int clouds = cloudColor.isEmpty() ? -1 : ContentParser.color(cloudColor, key + " cloudColor") & 0xFFFFFF;
-        String respawn = GsonHelper.getAsString(sky, "respawnDimension", "").trim();
+        String respawn = Json.getString(sky, "respawnDimension", "").trim();
         Identifier respawnDimension = respawn.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
-        return new DimensionDef(key, type, flatOptions(terrain), GsonHelper.getAsBoolean(terrain, "structures", true), source,
-                GsonHelper.getAsString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
-                options.has("seaLevel") ? GsonHelper.getAsInt(options, "seaLevel") : -1, GsonHelper.getAsBoolean(options, "useLavaOceans", false),
-                GsonHelper.getAsBoolean(sky, "hasSkyLight", true), GsonHelper.getAsBoolean(sky, "surfaceWorld", true), GsonHelper.getAsBoolean(sky, "spawning", true),
-                cloudHeight, Math.max(1.0E-5D, GsonHelper.getAsDouble(sky, "movementFactor", 1.0D)),
+        return new DimensionDef(key, type, flatOptions(terrain), Json.getBoolean(terrain, "structures", true), source,
+                Json.getString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
+                options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1, Json.getBoolean(options, "useLavaOceans", false),
+                Json.getBoolean(sky, "hasSkyLight", true), Json.getBoolean(sky, "surfaceWorld", true), Json.getBoolean(sky, "spawning", true),
+                cloudHeight, Math.max(1.0E-5D, Json.getDouble(sky, "movementFactor", 1.0D)),
                 fog.isEmpty() ? -1 : ContentParser.color(fog, key + " fogColor") & 0xFFFFFF, skyColor.isEmpty() ? -1 : ContentParser.color(skyColor, key + " skyColor") & 0xFFFFFF,
-                clouds, GsonHelper.getAsLong(sky, "fixedTime", -1L),
-                GsonHelper.getAsBoolean(sky, "sunriseColors", true), GsonHelper.getAsBoolean(sky, "nether", false), GsonHelper.getAsBoolean(sky, "beds", true),
-                GsonHelper.getAsBoolean(sky, "waterVaporizes", false), GsonHelper.getAsBoolean(sky, "showFog", false), Mth.clamp(GsonHelper.getAsFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
-                GsonHelper.getAsFloat(sky, "starBrightness", -1.0F), GsonHelper.getAsBoolean(sky, "renderSky", true), GsonHelper.getAsBoolean(sky, "renderClouds", true),
-                GsonHelper.getAsBoolean(sky, "renderWeather", true), respawnDimension, GsonHelper.getAsBoolean(sky, "respawn", true),
-                GsonHelper.getAsInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json),
+                clouds, Json.getLong(sky, "fixedTime", -1L),
+                Json.getBoolean(sky, "sunriseColors", true), Json.getBoolean(sky, "nether", false), Json.getBoolean(sky, "beds", true),
+                Json.getBoolean(sky, "waterVaporizes", false), Json.getBoolean(sky, "showFog", false), Mth.clamp(Json.getFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
+                Json.getFloat(sky, "starBrightness", -1.0F), Json.getBoolean(sky, "renderSky", true), Json.getBoolean(sky, "renderClouds", true),
+                Json.getBoolean(sky, "renderWeather", true), respawnDimension, Json.getBoolean(sky, "respawn", true),
+                Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json),
                 ContentParserSkyLook.look(key, sky, cloudHeight, clouds), Json.paths(json));
     }
 
     private static DimensionTraitsDef traits(Identifier key, JsonObject json) {
-        JsonObject physics = GsonHelper.getAsJsonObject(json, "physics", new JsonObject());
-        JsonObject time = GsonHelper.getAsJsonObject(json, "time", new JsonObject());
-        JsonObject weather = GsonHelper.getAsJsonObject(json, "weather", new JsonObject());
-        long day = GsonHelper.getAsInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
+        JsonObject physics = Json.getJsonObject(json, "physics", new JsonObject());
+        JsonObject time = Json.getJsonObject(json, "time", new JsonObject());
+        JsonObject weather = Json.getJsonObject(json, "weather", new JsonObject());
+        long day = Json.getInt(time, "dayLength", (int) DimensionTraitsDef.VANILLA_DAY);
         if (day <= 0L) {
             ContentLog.LOGGER.error("Dimension {} gives a dayLength of {}, which is not above zero, using {}", key, day, DimensionTraitsDef.VANILLA_DAY);
             day = DimensionTraitsDef.VANILLA_DAY;
         }
-        boolean precipitation = GsonHelper.getAsBoolean(weather, "precipitation", true);
-        boolean alwaysRain = GsonHelper.getAsBoolean(weather, "alwaysRain", false);
+        boolean precipitation = Json.getBoolean(weather, "precipitation", true);
+        boolean alwaysRain = Json.getBoolean(weather, "alwaysRain", false);
         if (alwaysRain && !precipitation) {
             ContentLog.LOGGER.error("Dimension {} asks for alwaysRain with precipitation off, so it stays dry", key);
             alwaysRain = false;
         }
-        JsonObject sky = GsonHelper.getAsJsonObject(json, "sky", new JsonObject());
+        JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());
         return new DimensionTraitsDef(factor(key, physics, "gravity"), factor(key, physics, "fallDamage"), factor(key, physics, "arrowGravity"), day,
-                precipitation, GsonHelper.getAsBoolean(weather, "lightning", true), GsonHelper.getAsBoolean(weather, "snow", true),
-                GsonHelper.getAsBoolean(weather, "freeze", true), alwaysRain, weather.has("cycle") ? cycle(key, GsonHelper.getAsJsonObject(weather, "cycle")) : null,
-                weather.has("rain") || weather.has("wind") ? rain(key, GsonHelper.getAsJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, GsonHelper.getAsJsonObject(weather, "wind")) : null) : null, sky(key, sky),
-                sky.has("moon") ? moon(key, GsonHelper.getAsJsonObject(sky, "moon")) : null, json.has("ambience") ? ambience(key, GsonHelper.getAsJsonObject(json, "ambience")) : null);
+                precipitation, Json.getBoolean(weather, "lightning", true), Json.getBoolean(weather, "snow", true),
+                Json.getBoolean(weather, "freeze", true), alwaysRain, weather.has("cycle") ? cycle(key, Json.getJsonObject(weather, "cycle")) : null,
+                weather.has("rain") || weather.has("wind") ? rain(key, Json.getJsonObject(weather, "rain", new JsonObject()), weather.has("wind") ? wind(key, Json.getJsonObject(weather, "wind")) : null) : null, sky(key, sky),
+                sky.has("moon") ? moon(key, Json.getJsonObject(sky, "moon")) : null, json.has("ambience") ? ambience(key, Json.getJsonObject(json, "ambience")) : null);
     }
 
     private static DimensionTraitsDef.Moon moon(Identifier key, JsonObject moon) {
-        return new DimensionTraitsDef.Moon(moon.has("texture") ? texture(key, GsonHelper.getAsString(moon, "texture")) : null, Math.max(0.0F, GsonHelper.getAsFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
+        return new DimensionTraitsDef.Moon(moon.has("texture") ? texture(key, Json.getString(moon, "texture")) : null, Math.max(0.0F, Json.getFloat(moon, "size", DimensionTraitsDef.VANILLA_MOON)));
     }
 
     private static AmbienceDef ambience(Identifier key, JsonObject json) {
         int[] delay = span(key, json, AMBIENCE, "musicDelay", MUSIC_LOW, MUSIC_HIGH);
         return new AmbienceDef(id(key, json, "music"), delay[0], delay[1], id(key, json, "loopSound"), id(key, json, "ambientSound"), ranged(key, json, AMBIENCE, "soundChance", SOUND_CHANCE, 1.0F),
                 id(key, json, "particle"), ranged(key, json, AMBIENCE, "particleChance", PARTICLE_CHANCE, 1.0F),
-                json.has("particleColor") ? ContentParser.color(GsonHelper.getAsString(json, "particleColor"), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
+                json.has("particleColor") ? ContentParser.color(Json.getString(json, "particleColor"), key + " ambience particleColor") & 0xFFFFFF : AmbienceDef.NO_COLOR);
     }
 
     @Nullable private static Identifier id(Identifier key, JsonObject json, String member) {
-        String name = GsonHelper.getAsString(json, member, "").trim();
+        String name = Json.getString(json, member, "").trim();
         if (name.isEmpty()) { return null; }
         Identifier id = Identifier.tryParse(Settings.lower(name));
         if (id == null) { ContentLog.LOGGER.error("Dimension {} gives an ambience {} of '{}', which is no id, ignoring it", key, member, name); }
@@ -164,7 +163,7 @@ public final class ContentDimensionParser {
     }
 
     private static float ranged(Identifier key, JsonObject json, String block, String member, float fallback, float most) {
-        float value = GsonHelper.getAsFloat(json, member, fallback);
+        float value = Json.getFloat(json, member, fallback);
         if (value >= 0.0F && value <= most) { return value; }
         ContentLog.LOGGER.error("Dimension {} gives {} {} of {}, which is not from 0 to {}, using {}", key, block, member, value, most, fallback);
         return fallback;
@@ -172,27 +171,27 @@ public final class ContentDimensionParser {
 
     @Nullable private static DimensionTraitsDef.Sky sky(Identifier key, JsonObject sky) {
         if (!sky.has("sun") && !sky.has("moon") && !sky.has("bodies") && !sky.has("stars")) { return null; }
-        JsonObject sun = GsonHelper.getAsJsonObject(sky, "sun", new JsonObject());
-        JsonObject stars = GsonHelper.getAsJsonObject(sky, "stars", new JsonObject());
+        JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
+        JsonObject stars = Json.getJsonObject(sky, "stars", new JsonObject());
         List<DimensionTraitsDef.Body> bodies = null;
         if (sky.has("bodies")) {
             List<DimensionTraitsDef.Body> found = new ArrayList<>();
-            for (JsonElement element : GsonHelper.getAsJsonArray(sky, "bodies")) {
+            for (JsonElement element : Json.getJsonArray(sky, "bodies")) {
                 if (!element.isJsonObject() || !element.getAsJsonObject().has("texture")) {
                     ContentLog.LOGGER.error("Dimension {} lists a sky body {} with no texture, ignoring it", key, element);
                     continue;
                 }
                 JsonObject body = element.getAsJsonObject();
-                Identifier texture = texture(key, GsonHelper.getAsString(body, "texture"));
+                Identifier texture = texture(key, Json.getString(body, "texture"));
                 if (texture == null) { continue; }
-                found.add(new DimensionTraitsDef.Body(texture, Math.max(0.0F, GsonHelper.getAsFloat(body, "size", 20.0F)),
-                        GsonHelper.getAsFloat(body, "angle", 180.0F), GsonHelper.getAsFloat(body, "tilt", 0.0F), GsonHelper.getAsBoolean(body, "followsTime", true)));
+                found.add(new DimensionTraitsDef.Body(texture, Math.max(0.0F, Json.getFloat(body, "size", 20.0F)),
+                        Json.getFloat(body, "angle", 180.0F), Json.getFloat(body, "tilt", 0.0F), Json.getBoolean(body, "followsTime", true)));
             }
             bodies = List.copyOf(found);
         }
-        Identifier sunTexture = texture(key, GsonHelper.getAsString(sun, "texture", SUN));
-        return new DimensionTraitsDef.Sky(sunTexture == null ? Identifier.parse(SUN) : sunTexture, Math.max(0.0F, GsonHelper.getAsFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
-                Math.max(0, GsonHelper.getAsInt(stars, "count", STARS)), Math.max(0.0F, GsonHelper.getAsFloat(stars, "size", STAR_SIZE)));
+        Identifier sunTexture = texture(key, Json.getString(sun, "texture", SUN));
+        return new DimensionTraitsDef.Sky(sunTexture == null ? Identifier.parse(SUN) : sunTexture, Math.max(0.0F, Json.getFloat(sun, "size", DimensionTraitsDef.VANILLA_SUN)), bodies,
+                Math.max(0, Json.getInt(stars, "count", STARS)), Math.max(0.0F, Json.getFloat(stars, "size", STAR_SIZE)));
     }
 
     @Nullable private static Identifier texture(Identifier key, String named) {
@@ -203,7 +202,7 @@ public final class ContentDimensionParser {
 
     private static double factor(Identifier key, JsonObject physics, String member) {
         if (!physics.has(member)) { return -1.0D; }
-        double value = GsonHelper.getAsFloat(physics, member);
+        double value = Json.getFloat(physics, member);
         if (value > 0.0D) { return value; }
         ContentLog.LOGGER.error("Dimension {} gives physics {} of {}, which is not above zero, ignoring it", key, member, value);
         return -1.0D;
@@ -219,31 +218,31 @@ public final class ContentDimensionParser {
     }
 
     private static float strength(Identifier key, JsonObject json, String member, float fallback) {
-        float strength = GsonHelper.getAsFloat(json, member, fallback);
+        float strength = Json.getFloat(json, member, fallback);
         if (strength > 0.0F && strength <= 1.0F) { return strength; }
         ContentLog.LOGGER.error("Dimension {} gives a weather cycle {} of {}, which is not above 0 and at most 1, using {}", key, member, strength, fallback);
         return fallback;
     }
 
     private static RainDef rain(Identifier key, JsonObject json, @Nullable WindDef wind) {
-        Identifier particle = Identifier.tryParse(Settings.lower(GsonHelper.getAsString(json, "particle", RAIN_PARTICLE)));
+        Identifier particle = Identifier.tryParse(Settings.lower(Json.getString(json, "particle", RAIN_PARTICLE)));
         if (particle == null) {
             ContentLog.LOGGER.error("Dimension {} names a rain particle that is no particle id, using {}", key, RAIN_PARTICLE);
             particle = Identifier.parse(RAIN_PARTICLE);
         }
-        Identifier sound = Identifier.tryParse(Settings.lower(GsonHelper.getAsString(json, "sound", RAIN_SOUND)));
+        Identifier sound = Identifier.tryParse(Settings.lower(Json.getString(json, "sound", RAIN_SOUND)));
         if (sound == null) {
             ContentLog.LOGGER.error("Dimension {} names a rain sound that is no sound id, using {}", key, RAIN_SOUND);
             sound = Identifier.parse(RAIN_SOUND);
         }
-        float angle = GsonHelper.getAsFloat(json, "angle", 0.0F);
+        float angle = Json.getFloat(json, "angle", 0.0F);
         if (angle < 0.0F || angle > MAX_ANGLE) {
             ContentLog.LOGGER.error("Dimension {} gives a rain angle of {}, which is not from 0 to 180, using 0", key, angle);
             angle = 0.0F;
         }
-        return new RainDef(particle, sound, Math.max(0.0F, GsonHelper.getAsFloat(json, "volume", 0.2F)), Math.max(0, GsonHelper.getAsInt(json, "interval", 3)),
-                ContentParser.color(GsonHelper.getAsString(json, "color", WHITE), key + " rain color"),
-                ContentParser.color(GsonHelper.getAsString(json, "snowColor", WHITE), key + " rain snowColor"), angle, GsonHelper.getAsFloat(json, "heading", 0.0F), GsonHelper.getAsBoolean(json, "splashUpward", false), wind);
+        return new RainDef(particle, sound, Math.max(0.0F, Json.getFloat(json, "volume", 0.2F)), Math.max(0, Json.getInt(json, "interval", 3)),
+                ContentParser.color(Json.getString(json, "color", WHITE), key + " rain color"),
+                ContentParser.color(Json.getString(json, "snowColor", WHITE), key + " rain snowColor"), angle, Json.getFloat(json, "heading", 0.0F), Json.getBoolean(json, "splashUpward", false), wind);
     }
 
     private static WindDef wind(Identifier key, JsonObject json) {
@@ -257,11 +256,11 @@ public final class ContentDimensionParser {
         int min;
         int max;
         if (value.isJsonArray() && value.getAsJsonArray().size() == 2) {
-            min = value.getAsJsonArray().get(0).getAsInt();
-            max = value.getAsJsonArray().get(1).getAsInt();
+            min = Json.asInt(value.getAsJsonArray().get(0), member, 0);
+            max = Json.asInt(value.getAsJsonArray().get(1), member, 0);
         }
         else if (value.isJsonPrimitive()) {
-            min = value.getAsInt();
+            min = Json.asInt(value, member, 0);
             max = min;
         }
         else {
@@ -277,20 +276,20 @@ public final class ContentDimensionParser {
 
     @Nullable private static DimensionPortalDef portal(Identifier key, JsonObject json) {
         if (!json.has("portal")) { return null; }
-        JsonObject entry = GsonHelper.getAsJsonObject(json, "portal");
+        JsonObject entry = Json.getJsonObject(json, "portal");
         List<String> frames = Json.strings(entry, "frames");
         if (frames.isEmpty()) {
             ContentLog.LOGGER.error("Dimension {} has a portal section naming no frames, so nothing could ever open it", key);
             return null;
         }
-        int color = ContentParser.color(GsonHelper.getAsString(entry, "color", WHITE), key + " portal color");
-        String back = Settings.lower(GsonHelper.getAsString(entry, "return", DimensionPortalDef.BUILT));
+        int color = ContentParser.color(Json.getString(entry, "color", WHITE), key + " portal color");
+        String back = Settings.lower(Json.getString(entry, "return", DimensionPortalDef.BUILT));
         if (!DimensionPortalDef.BUILT.equals(back) && !DimensionPortalDef.PLAYER.equals(back) && !DimensionPortalDef.NONE.equals(back)) {
             ContentLog.LOGGER.error("Dimension {} asks for a return of '{}', which is none of {}, {} or {}, building one instead", key, back, DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE);
             back = DimensionPortalDef.BUILT;
         }
         PortalDef travel = ContentParser.portal(key, json, key, false, true);
-        return travel == null ? null : new DimensionPortalDef(frames, GsonHelper.getAsString(entry, "ignitedBy", "minecraft:flint_and_steel").trim(), color, back, travel);
+        return travel == null ? null : new DimensionPortalDef(frames, Json.getString(entry, "ignitedBy", "minecraft:flint_and_steel").trim(), color, back, travel);
     }
 
     private static List<String> flatOptions(JsonObject terrain) {
@@ -316,7 +315,7 @@ public final class ContentDimensionParser {
     private static Map<String, String> gameRules(Identifier key, JsonObject json) {
         if (!json.has("gameRules")) { return Map.of(); }
         Map<String, String> found = new LinkedHashMap<>();
-        rules(key, GsonHelper.getAsJsonObject(json, "gameRules"), found);
+        rules(key, Json.getJsonObject(json, "gameRules"), found);
         return Map.copyOf(found);
     }
 

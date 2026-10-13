@@ -31,7 +31,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -295,9 +294,9 @@ public final class ContentBiomes {
         for (JsonElement element : outer) {
             if (!element.isJsonObject()) { continue; }
             JsonObject rule = element.getAsJsonObject();
-            if (!"minecraft:above_preliminary_surface".equals(GsonHelper.getAsString(GsonHelper.getAsJsonObject(rule, "if_true", new JsonObject()), "type", ""))) { continue; }
-            JsonObject then = GsonHelper.getAsJsonObject(rule, "then_run", new JsonObject());
-            if (then.has("sequence")) { inner = GsonHelper.getAsJsonArray(then, "sequence"); }
+            if (!"minecraft:above_preliminary_surface".equals(Json.getString(Json.getJsonObject(rule, "if_true", new JsonObject()), "type", ""))) { continue; }
+            JsonObject then = Json.getJsonObject(rule, "then_run", new JsonObject());
+            if (then.has("sequence")) { inner = Json.getJsonArray(then, "sequence"); }
         }
         for (Made made : MADE.values()) {
             List<String> self = List.of(made.def().key().toString());
@@ -315,7 +314,7 @@ public final class ContentBiomes {
     }
 
     public static void spawnTargets(JsonObject settings) {
-        JsonArray targets = settings.has(SPAWN_TARGET) ? GsonHelper.getAsJsonArray(settings, SPAWN_TARGET) : new JsonArray();
+        JsonArray targets = settings.has(SPAWN_TARGET) ? Json.getJsonArray(settings, SPAWN_TARGET) : new JsonArray();
         int added = 0;
         for (Made made : MADE.values()) {
             if (!made.def().playerSpawn() || made.point() == null) { continue; }
@@ -339,14 +338,14 @@ public final class ContentBiomes {
         biome.addProperty("temperature", def.temperature());
         biome.addProperty("downfall", def.rainfall());
         biome.addProperty("has_precipitation", def.rain());
-        JsonObject effects = GsonHelper.getAsJsonObject(biome, "effects", new JsonObject());
+        JsonObject effects = Json.getJsonObject(biome, "effects", new JsonObject());
         color(effects, "water_color", def.waterColor());
         color(effects, "grass_color", def.grassColor());
         color(effects, "foliage_color", def.foliageColor());
         biome.add("effects", effects);
-        biome.add("spawners", spawners(def, GsonHelper.getAsJsonObject(biome, "spawners", new JsonObject())));
+        biome.add("spawners", spawners(def, Json.getJsonObject(biome, "spawners", new JsonObject())));
         biome.addProperty("creature_spawn_probability", def.spawnChance());
-        biome.add("features", decorate(def, GsonHelper.getAsJsonArray(biome, "features", new JsonArray())));
+        biome.add("features", decorate(def, Json.getJsonArray(biome, "features", new JsonArray())));
         return biome;
     }
 
@@ -362,7 +361,7 @@ public final class ContentBiomes {
                 ContentLog.LOGGER.error("Biome {} spawns '{}', which is not a registered entity, leaving it out", def.key(), spawn.entity());
                 continue;
             }
-            JsonArray list = out.has(spawn.category()) ? GsonHelper.getAsJsonArray(out, spawn.category()) : new JsonArray();
+            JsonArray list = out.has(spawn.category()) ? Json.getJsonArray(out, spawn.category()) : new JsonArray();
             JsonObject entry = new JsonObject();
             entry.addProperty("type", spawn.entity().toString());
             entry.addProperty("weight", spawn.weight());
@@ -435,12 +434,12 @@ public final class ContentBiomes {
         Identifier feature = Identifier.tryParse(id);
         JsonObject placed = feature == null ? null : GameData.json(WorldgenFiles.id(WorldgenFiles.PLACED_FEATURE, feature));
         if (placed == null) { return id; }
-        for (JsonElement modifier : GsonHelper.getAsJsonArray(placed, "placement", new JsonArray())) {
-            if (!modifier.isJsonObject() || !"minecraft:count".equals(GsonHelper.getAsString(modifier.getAsJsonObject(), "type", ""))) { continue; }
+        for (JsonElement modifier : Json.getJsonArray(placed, "placement", new JsonArray())) {
+            if (!modifier.isJsonObject() || !"minecraft:count".equals(Json.getString(modifier.getAsJsonObject(), "type", ""))) { continue; }
             JsonElement count = modifier.getAsJsonObject().get("count");
-            if (count == null || !count.isJsonObject() || !"minecraft:weighted_list".equals(GsonHelper.getAsString(count.getAsJsonObject(), "type", ""))) { return id; }
+            if (count == null || !count.isJsonObject() || !"minecraft:weighted_list".equals(Json.getString(count.getAsJsonObject(), "type", ""))) { return id; }
             int least = Integer.MAX_VALUE;
-            for (JsonElement entry : GsonHelper.getAsJsonArray(count.getAsJsonObject(), "distribution", new JsonArray())) {
+            for (JsonElement entry : Json.getJsonArray(count.getAsJsonObject(), "distribution", new JsonArray())) {
                 JsonElement data = entry.isJsonObject() ? entry.getAsJsonObject().get("data") : null;
                 if (data == null || !data.isJsonPrimitive() || !data.getAsJsonPrimitive().isNumber()) { return id; }
                 least = Math.min(least, data.getAsInt());
@@ -471,11 +470,11 @@ public final class ContentBiomes {
             return null;
         }
         JsonObject out = placed.deepCopy();
-        JsonArray placement = out.has("placement") ? GsonHelper.getAsJsonArray(out, "placement") : new JsonArray();
+        JsonArray placement = out.has("placement") ? Json.getJsonArray(out, "placement") : new JsonArray();
         int at = -1;
         for (int index = 0; index < placement.size(); index++) {
             JsonElement modifier = placement.get(index);
-            if (modifier.isJsonObject() && HEAD_MODIFIERS.contains(GsonHelper.getAsString(modifier.getAsJsonObject(), "type", ""))) {
+            if (modifier.isJsonObject() && HEAD_MODIFIERS.contains(Json.getString(modifier.getAsJsonObject(), "type", ""))) {
                 at = index;
                 break;
             }

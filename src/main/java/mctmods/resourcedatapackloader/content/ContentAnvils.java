@@ -112,24 +112,24 @@ public final class ContentAnvils {
             return null;
         }
         Map<String, Integer> enchantments = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> entry : GsonHelper.getAsJsonObject(json, "enchantments", new JsonObject()).entrySet()) {
+        for (Map.Entry<String, JsonElement> entry : Json.getJsonObject(json, "enchantments", new JsonObject()).entrySet()) {
             if (!entry.getValue().isJsonPrimitive() || !entry.getValue().getAsJsonPrimitive().isNumber()) {
                 ContentLog.LOGGER.error("Anvil work {} gives the enchantment {} something that is not a level, skipping it", key, entry.getKey());
                 continue;
             }
-            enchantments.put(Settings.lower(entry.getKey()),Mth.clamp(entry.getValue().getAsInt(), 1, MOST_LEVEL));
+            enchantments.put(Settings.lower(entry.getKey()),Mth.clamp(Json.asInt(entry.getValue(), entry.getKey(), 1), 1, MOST_LEVEL));
         }
-        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), resultOf(json), countOf(json, "result"), Math.max(1, GsonHelper.getAsInt(json, "levels", 1)),
-                enchantments, GsonHelper.getAsString(json, "grants", "").trim(), GsonHelper.getAsBoolean(json, "locks", false));
+        return new AnvilDef(key, item, countOf(json, "item"), with, countOf(json, "with"), resultOf(json), countOf(json, "result"), Math.max(1, Json.getInt(json, "levels", 1)),
+                enchantments, Json.getString(json, "grants", "").trim(), Json.getBoolean(json, "locks", false));
     }
 
     private static String resultOf(JsonObject json) {
-        if (GsonHelper.isObjectNode(json, "result")) { return GsonHelper.getAsString(GsonHelper.getAsJsonObject(json, "result"), "item", "").trim(); }
-        return GsonHelper.getAsString(json, "result", "").trim();
+        if (GsonHelper.isObjectNode(json, "result")) { return Json.getString(Json.getJsonObject(json, "result"), "item", "").trim(); }
+        return Json.getString(json, "result", "").trim();
     }
 
     private static List<String> itemsOf(JsonObject json, String name) {
-        JsonObject holder = GsonHelper.isObjectNode(json, name) ? GsonHelper.getAsJsonObject(json, name) : json;
+        JsonObject holder = GsonHelper.isObjectNode(json, name) ? Json.getJsonObject(json, name) : json;
         String field = holder == json ? name : "item";
         if (GsonHelper.isArrayNode(holder, field)) {
             List<String> names = new ArrayList<>();
@@ -138,7 +138,7 @@ public final class ContentAnvils {
             }
             return names;
         }
-        String single = GsonHelper.getAsString(holder, field, "").trim();
+        String single = Json.getString(holder, field, "").trim();
         return single.isEmpty() ? List.of() : List.of(single);
     }
 
@@ -163,7 +163,7 @@ public final class ContentAnvils {
 
     private static int countOf(JsonObject json, String name) {
         if (!GsonHelper.isObjectNode(json, name)) { return 1; }
-        return Math.max(1, GsonHelper.getAsInt(GsonHelper.getAsJsonObject(json, name), "count", 1));
+        return Math.max(1, Json.getInt(Json.getJsonObject(json, name), "count", 1));
     }
 
     @Nullable private static AnvilDef holding(ItemStack held) {

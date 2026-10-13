@@ -12,7 +12,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -38,9 +37,9 @@ public final class RegistryRemaps {
     }
 
     private static int read(JsonObject json) {
-        String named = GsonHelper.getAsString(json, REGISTRY);
+        String named = Json.getString(json, REGISTRY);
         Identifier registry = Identifier.parse(LEGACY_REGISTRIES.getOrDefault(named, named));
-        JsonObject mapping = GsonHelper.getAsJsonObject(json, MAPPING);
+        JsonObject mapping = Json.getJsonObject(json, MAPPING);
         Map<Identifier, Identifier> target = REMAPS.computeIfAbsent(registry, _ -> new HashMap<>());
         int count = 0;
         for (Map.Entry<String, JsonElement> entry : mapping.entrySet()) {

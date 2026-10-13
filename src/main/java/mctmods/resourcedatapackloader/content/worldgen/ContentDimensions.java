@@ -28,7 +28,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
@@ -308,7 +307,7 @@ public final class ContentDimensions {
                 if (grounded) { ContentBiomes.surface(settings); }
                 if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
                 if (def.shapesHeight()) {
-                    JsonObject noise = GsonHelper.getAsJsonObject(settings, "noise");
+                    JsonObject noise = Json.getJsonObject(settings, "noise");
                     noise.addProperty("min_y", def.minHeight());
                     noise.addProperty("height", def.maxHeight() - def.minHeight());
                     if (overworldNoise && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight(), ContentOptionNoise.Shifted.NONE); }

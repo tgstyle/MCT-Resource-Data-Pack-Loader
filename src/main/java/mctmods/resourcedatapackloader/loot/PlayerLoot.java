@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -51,7 +50,7 @@ public final class PlayerLoot {
     }
 
     private static void read(Identifier key, JsonObject json) {
-        String table = GsonHelper.getAsString(json, TABLE, "");
+        String table = Json.getString(json, TABLE, "");
         if (table.isEmpty()) {
             ContentLog.LOGGER.error("Player loot {} has no table, ignoring it", key);
             return;
@@ -61,12 +60,12 @@ public final class PlayerLoot {
             ContentLog.LOGGER.error("Player loot {} names the table '{}', which is not a valid id, ignoring it", key, table);
             return;
         }
-        String mode = GsonHelper.getAsString(json, MODE, ADD);
+        String mode = Json.getString(json, MODE, ADD);
         if (!mode.equals(ADD) && !mode.equals(REPLACE)) {
             ContentLog.LOGGER.error("Player loot {} has mode '{}', which is neither '{}' nor '{}', ignoring it", key, mode, ADD, REPLACE);
             return;
         }
-        ENTRIES.add(new Entry(ResourceKey.create(Registries.LOOT_TABLE, named), mode.equals(REPLACE), GsonHelper.getAsBoolean(json, KEEP_INVENTORY, false), GsonHelper.getAsBoolean(json, DROP_LOOSE, false)));
+        ENTRIES.add(new Entry(ResourceKey.create(Registries.LOOT_TABLE, named), mode.equals(REPLACE), Json.getBoolean(json, KEEP_INVENTORY, false), Json.getBoolean(json, DROP_LOOSE, false)));
     }
 
     public static void onDrops(LivingDropsEvent event) {

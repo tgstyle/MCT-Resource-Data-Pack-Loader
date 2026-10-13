@@ -29,7 +29,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.ExperienceOrb;
@@ -94,7 +93,7 @@ public final class BlockDrops extends LineCompat.Modifier {
     }
 
     private static void read(Identifier key, JsonObject json, int[] count) {
-        if (GsonHelper.getAsString(json, "block", "").isEmpty()) {
+        if (Json.getString(json, "block", "").isEmpty()) {
             ContentLog.LOGGER.error("Block drops {} names no block, ignoring it", key);
             return;
         }
@@ -110,7 +109,7 @@ public final class BlockDrops extends LineCompat.Modifier {
             return;
         }
         List<Drop> drops = new ArrayList<>();
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, DROPS)) {
+        for (JsonElement element : Json.getJsonArray(json, DROPS)) {
             if (!element.isJsonObject()) {
                 ContentLog.LOGGER.error("A drop in {} is not an object, skipping it", key);
                 continue;
@@ -123,22 +122,22 @@ public final class BlockDrops extends LineCompat.Modifier {
             return;
         }
         List<BlockState> states = match.properties().isEmpty() ? null : ContentStates.matching(block, match.properties(), key);
-        BY_BLOCK.computeIfAbsent(block, _ -> new ArrayList<>()).add(new Rule(states, GsonHelper.getAsBoolean(json, REPLACE, false), GsonHelper.getAsString(json, ADVANCEMENT, "").trim(), drops));
+        BY_BLOCK.computeIfAbsent(block, _ -> new ArrayList<>()).add(new Rule(states, Json.getBoolean(json, REPLACE, false), Json.getString(json, ADVANCEMENT, "").trim(), drops));
         count[0]++;
     }
 
     @Nullable private static Drop drop(Identifier key, JsonObject json) {
         boolean experience = json.has(EXPERIENCE);
-        ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, GsonHelper.getAsString(json, ITEM, ""), 1);
+        ItemStack item = experience ? ItemStack.EMPTY : ContentStacks.parse(key, Json.getString(json, ITEM, ""), 1);
         if (!experience && item.isEmpty()) { return null; }
         AmountDef count = amount(key, json, experience ? EXPERIENCE : COUNT);
         if (count == null) { return null; }
-        String silkTouch = Settings.lower(GsonHelper.getAsString(json, SILK_TOUCH, EITHER));
+        String silkTouch = Settings.lower(Json.getString(json, SILK_TOUCH, EITHER));
         if (!EITHER.equals(silkTouch) && !ONLY.equals(silkTouch) && !NEVER.equals(silkTouch)) {
             ContentLog.LOGGER.error("Drop silkTouch '{}' in {} is not either, only or never, skipping the drop", silkTouch, key);
             return null;
         }
-        return new Drop(item, experience, count, Mth.clamp(GsonHelper.getAsFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, GsonHelper.getAsInt(json, FORTUNE, 0)), silkTouch);
+        return new Drop(item, experience, count, Mth.clamp(Json.getFloat(json, CHANCE, 1.0F), 0.0F, 1.0F), Math.max(0, Json.getInt(json, FORTUNE, 0)), silkTouch);
     }
 
     @Nullable private static AmountDef amount(Identifier key, JsonObject json, String name) {

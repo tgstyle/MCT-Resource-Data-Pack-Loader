@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.DimensionValues;
 import mctmods.resourcedatapackloader.util.GameData;
+import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
 import mctmods.resourcedatapackloader.util.Summary;
 
@@ -19,7 +20,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.biome.Biome;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import java.util.LinkedHashMap;
@@ -151,8 +151,8 @@ public final class ContentBiomeControl {
         if (!visited.add(tag)) { return found; }
         JsonObject json = GameData.json(WorldgenFiles.id(ContentFormats.BIOME_TAGS, tag));
         if (json == null) { return found; }
-        for (JsonElement element : GsonHelper.getAsJsonArray(json, "values", new JsonArray())) {
-            String value = element.isJsonObject() ? GsonHelper.getAsString(element.getAsJsonObject(), "id", "") : element.getAsString();
+        for (JsonElement element : Json.getJsonArray(json, "values", new JsonArray())) {
+            String value = element.isJsonObject() ? Json.getString(element.getAsJsonObject(), "id", "") : element.getAsString();
             if (value.startsWith("#")) {
                 Identifier nested = Identifier.tryParse(value.substring(1));
                 if (nested != null) { found.addAll(collect(nested, visited)); }

@@ -18,7 +18,6 @@ import com.google.gson.JsonObject;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
-import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -55,7 +54,7 @@ public final class ContentPortalFrames {
         JsonObject json = Json.object(key, contents, "portal frame file");
         if (json == null) { return null; }
         Map<Character, BlockMatchDef> legend = new LinkedHashMap<>();
-        for (Map.Entry<String, JsonElement> mark : GsonHelper.getAsJsonObject(json, "legend", new JsonObject()).entrySet()) {
+        for (Map.Entry<String, JsonElement> mark : Json.getJsonObject(json, "legend", new JsonObject()).entrySet()) {
             String symbol = mark.getKey().trim();
             if (symbol.length() != 1 || symbol.charAt(0) == PortalFrameDef.HOLE || symbol.charAt(0) == PortalFrameDef.REPEAT || symbol.charAt(0) == PortalFrameDef.SKIP) {
                 ContentLog.LOGGER.error("Portal frame {} legend symbol '{}' must be a single character other than '.', '*' and a space", key, mark.getKey());
@@ -91,13 +90,13 @@ public final class ContentPortalFrames {
             ContentLog.LOGGER.error("Portal frame {} has no '{}' in it, so nothing would ever stand inside it", key, PortalFrameDef.HOLE);
             return null;
         }
-        String axis = Settings.lower(GsonHelper.getAsString(json, "axis", PortalFrameDef.VERTICAL));
+        String axis = Settings.lower(Json.getString(json, "axis", PortalFrameDef.VERTICAL));
         if (!PortalFrameDef.VERTICAL.equals(axis) && !PortalFrameDef.HORIZONTAL.equals(axis) && !PortalFrameDef.BOTH.equals(axis)) {
             ContentLog.LOGGER.error("Portal frame {} asks for axis '{}', which is none of {}, {} or {}, standing it up instead", key, axis, PortalFrameDef.VERTICAL, PortalFrameDef.HORIZONTAL, PortalFrameDef.BOTH);
             axis = PortalFrameDef.VERTICAL;
         }
-        PortalFrameDef frame = new PortalFrameDef(key, GsonHelper.getAsString(json, "name", key.getPath()), axis, Map.copyOf(legend), rows,
-                Math.max(PortalFrameDef.LEAST_WIDE, GsonHelper.getAsInt(json, "maxWidth", 21)), Math.max(PortalFrameDef.LEAST_TALL, GsonHelper.getAsInt(json, "maxHeight", 21)));
+        PortalFrameDef frame = new PortalFrameDef(key, Json.getString(json, "name", key.getPath()), axis, Map.copyOf(legend), rows,
+                Math.max(PortalFrameDef.LEAST_WIDE, Json.getInt(json, "maxWidth", 21)), Math.max(PortalFrameDef.LEAST_TALL, Json.getInt(json, "maxHeight", 21)));
         if (PortalShapes.spread(frame).isEmpty()) {
             ContentLog.LOGGER.error("Portal frame {} never leaves room for a player, who needs a hole {} across and {} up, so nothing could walk through it", key, PortalFrameDef.LEAST_WIDE, frame.leastTall());
             return null;
