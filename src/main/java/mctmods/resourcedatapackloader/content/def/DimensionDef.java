@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.LegacyTerrainShape;
+
 import com.google.gson.JsonObject;
 import net.minecraft.resources.ResourceLocation;
 import java.util.List;
@@ -26,7 +28,7 @@ public record DimensionDef(ResourceLocation key, String terrain, List<String> fl
 
     public boolean shapesHeight() { return minHeight != UNSET && maxHeight != UNSET; }
 
-    public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans; }
+    public boolean shapesNoise() { return shapesHeight() || seaLevel >= 0 || lavaOceans || LegacyTerrainShape.of(options).any(); }
 
     public boolean hasEffects() { return cloudHeight >= 0 || fogColor >= 0 || showFog || !sunriseColors || !renderSky || !renderClouds || !renderWeather || !surfaceWorld || traits.sky() != null || traits.rain() != null || look != null; }
 
