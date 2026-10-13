@@ -29,6 +29,8 @@
         "common.INoiseBasedChunkGenerator",
         "common.IFluidStatus",
         "common.INoiseChunk",
+        "common.IBlendedNoise",
+        "common.INormalNoise",
         "common.ISurfaceSystem",
         "common.ILevel",
         "common.MixinIOWorker",

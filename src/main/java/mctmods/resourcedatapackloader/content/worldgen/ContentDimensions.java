@@ -192,6 +192,7 @@ public final class ContentDimensions {
         boolean overworldNoise = !DimensionDef.NETHER.equals(def.terrain()) && !DimensionDef.END.equals(def.terrain());
         String vanillaSettings = overworldNoise ? "overworld" : DimensionDef.NETHER.equals(def.terrain()) ? "nether" : "end";
         String settingsId = "minecraft:" + vanillaSettings;
+        if (overworldNoise) { ContentOptionOres.dimension(def.key(), def.options()); }
         boolean seamed = ContentSeams.opensFloor(dimension) || ContentSeams.opensCeiling(dimension);
         boolean flatBedrock = ContentBedrock.bedrockApplies(dimension);
         boolean veinless = overworldNoise && ContentOreControl.veinsBlocked(dimension);
@@ -204,11 +205,12 @@ public final class ContentDimensions {
                 if (veinless) { settings.addProperty("ore_veins_enabled", false); }
                 if (grounded) { ContentBiomes.surface(settings); }
                 if (flatBedrock) { ContentBedrock.flattenBedrock(settings, dimension); }
+                ContentOptionNoise.Shifted shifted = overworldNoise ? ContentOptionNoise.dimension(settings, def.key(), def.options()) : ContentOptionNoise.Shifted.NONE;
                 if (def.shapesHeight()) {
                     JsonObject noise = Json.getJsonObject(settings, "noise");
                     noise.addProperty("min_y", def.minHeight());
                     noise.addProperty("height", def.maxHeight() - def.minHeight());
-                    if (overworldNoise && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight(), ContentOptionNoise.Shifted.NONE); }
+                    if (overworldNoise && ContentDeepCaves.carves(def.minHeight(), "Dimension " + dimension)) { ContentDeepCaves.deepen(settings, def.key(), def.minHeight(), shifted); }
                     land = overworldNoise ? ContentSkyLand.raise(settings, def.maxHeight(), dimension, "Dimension " + dimension) : null;
                 }
                 if (def.seaLevel() >= 0) { settings.addProperty("sea_level", def.seaLevel()); }
