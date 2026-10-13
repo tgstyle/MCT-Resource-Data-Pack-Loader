@@ -127,7 +127,7 @@ public final class ContentCityStructureSite {
     private static Map<CityPlan.Line, CityPlan.Line> pulls(GenerationContext context, CityGround ground, CityPlan plan, Map<CityPlan.Line, CityPlan.Line> reached) {
         Grading grading = grading(context, ground, plan);
         Map<CityPlan.Line, CityPlan.Line> pulled = new HashMap<>();
-        BoundingBox heart = grading.wells().isEmpty() ? null : grading.wells().get(0).box();
+        BoundingBox heart = grading.wells().stream().map(ContentCityStructure.Well::box).filter(plan::emits).findFirst().orElse(null);
         int middleX = heart == null ? plan.windowX() + CityPlan.district() / 2 : (heart.minX() + heart.maxX()) / 2;
         int middleZ = heart == null ? plan.windowZ() + CityPlan.district() / 2 : (heart.minZ() + heart.maxZ()) / 2;
         for (CityPlan.Line line : CityLines.of(plan)) {

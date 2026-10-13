@@ -114,7 +114,7 @@ final class CityLayout {
         pierOut(ground, drawing, alongX, alongZ, false);
         List<Line> drawnRows = alongX.subList(0, drawnX);
         List<Line> drawnColumns = alongZ.subList(0, drawnZ);
-        List<Junction> plazas = mapPlazas(map, grid, originX, originZ, windowX, windowZ, drawnRows, drawnColumns, full);
+        List<Junction> plazas = mapPlazas(map, grid, originX, originZ, drawnRows, drawnColumns, full);
         String type = ground.villageStyle(windowX + CityPlan.district() / 2, windowZ + CityPlan.district() / 2);
         List<Plot> found = new ArrayList<>(CityPlanPlots.mapPlots(seed, map, marks, grid, originX, originZ, drawnRows, drawnColumns));
         if (town != null && CityGrowth.tooSmall(ground, map, cityX, cityZ, centered, town)) { return null; }
@@ -207,16 +207,6 @@ final class CityLayout {
     }
 
     static int pinSlack(CityMapDef map) { return CityDistricts.pinnedAt().isEmpty() ? 0 : (Math.max(map.blocksWide(), map.blocksDeep()) + CityPlan.district() - 1) / CityPlan.district() + 1; }
-
-    static List<Junction> mapPlazas(CityMapDef map, CityMapDef.Kind[][] grid, int originX, int originZ, int windowX, int windowZ, List<Line> rows, List<Line> columns, int full) {
-        List<Junction> found = new ArrayList<>();
-        for (Junction plaza : mapPlazas(map, grid, originX, originZ, rows, columns, full)) {
-            int midX = plaza.alongZ().middle();
-            int midZ = plaza.alongX().middle();
-            if (midX >= windowX && midX < windowX + CityPlan.district() && midZ >= windowZ && midZ < windowZ + CityPlan.district()) { found.add(plaza); }
-        }
-        return List.copyOf(found);
-    }
 
     static List<Junction> mapPlazas(CityMapDef map, CityMapDef.Kind[][] grid, int originX, int originZ, List<Line> rows, List<Line> columns, int full) {
         List<Junction> found = new ArrayList<>();

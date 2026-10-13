@@ -28,6 +28,7 @@ public final class CityRailsFit {
         int clear = CityRails.clear(sub);
         int well = town.wellAcross(alongX);
         List<Integer> placed = new ArrayList<>();
+        List<BoundingBox> plazas = sub ? List.of() : CityLayout.mapWells(town);
         for (int line = 0; line < lines; line++) {
             int side = line % 2 == 0 ? 1 : -1;
             int rolled = side * (clear + (line / 2) * apart + roll.nextInt(Math.max(1, spacing / 2)));
@@ -41,12 +42,30 @@ public final class CityRailsFit {
                     candidate += side * apart;
                     moved = true;
                 }
+                for (BoundingBox plaza : plazas) {
+                    int off = offPlaza(plaza, alongX, well + candidate, side, half) - well;
+                    if (off == candidate) { continue; }
+                    ContentLog.LOGGER.debug("Railway line {} of the city at {}, {} rolled beside the drawn plaza at {}, {}, inside the {} row(s) a street needs to climb from the line to the plaza, so it is laid {} block(s) further out, at {} {}", line, town.wellX(), town.wellZ(), plaza.minX(), plaza.minZ(), CityRails.MARGIN, Math.abs(off - candidate), alongX ? "z" : "x", well + off);
+                    candidate = off;
+                    moved = true;
+                }
             }
             placed.add(candidate);
             int center = well + candidate;
             found.add(new CityPlan.Rail(center - half, width, alongX, sub, Integer.MIN_VALUE, Integer.MAX_VALUE, town.key()));
             ContentLog.LOGGER.debug("{} line {} of the city at {}, {} is laid {} at {} {}, {} wide, at least {} block(s) of ground from any other line of this city, before any street of the city", sub ? "Subway" : "Railway", line, town.wellX(), town.wellZ(), alongX ? "east to west" : "north to south", alongX ? "z" : "x", center, width, spacing);
         }
+    }
+
+    private static int offPlaza(BoundingBox plaza, boolean alongX, int center, int side, int half) {
+        int least = alongX ? plaza.minZ() : plaza.minX();
+        int most = alongX ? plaza.maxZ() : plaza.maxX();
+        int middle = least + ContentCityWellPiece.SIZE / 2;
+        int mouth = CityRails.halfWidth(CityPlan.fullWidth()) + 1 + CityPlan.mouthReach();
+        int low = Math.min(least - CityPlan.plazaReach(), middle - mouth) - CityRails.MARGIN;
+        int high = Math.max(most + CityPlan.plazaReach(), middle + mouth) + CityRails.MARGIN;
+        if (center + half < low || center - half > high) { return center; }
+        return side >= 0 ? high + half + 1 : low - half - 1;
     }
 
     static int seekRoad(CityGround ground, CityPlan.Town town, List<CityPlan.Rail> mine, CityPlan.Rail rail, int reach) {
