@@ -12,12 +12,12 @@ import mctmods.resourcedatapackloader.content.rubic.worldgen.interfaces.ICubeGen
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSeams;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
-import mctmods.resourcedatapackloader.mixin.rdpl.common.IGameRegistry;
 import mctmods.resourcedatapackloader.util.Box;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Coords;
+import mctmods.resourcedatapackloader.util.FmlWorldgen;
 import mctmods.resourcedatapackloader.util.compat.CompatHandler;
-import mctmods.resourcedatapackloader.util.compat.GcRubicWorldgen;
+import mctmods.resourcedatapackloader.util.compat.GcPlanetWorldgen;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.entity.EnumCreatureType;
@@ -284,19 +284,10 @@ public class VanillaCompatibilityGenerator implements ICubeGenerator {
     }
 
     private void applyModGenerators(int x, int z, World world, IChunkGenerator vanillaGen, IChunkProvider provider) {
-        List<IWorldGenerator> generators = IGameRegistry.getSortedGeneratorList();
-        if (generators == null) {
-            IGameRegistry.computeGenerators();
-            generators = IGameRegistry.getSortedGeneratorList();
-            assert generators != null;
-        }
-        long worldSeed = world.getSeed();
-        Random fmlRandom = new Random(worldSeed);
-        long xSeed = fmlRandom.nextLong() >> 2 + 1L;
-        long zSeed = fmlRandom.nextLong() >> 2 + 1L;
-        long chunkSeed = (xSeed * x + zSeed * z) ^ worldSeed;
-        for (IWorldGenerator generator : generators) {
-            if (GcRubicWorldgen.blocks(world, generator)) { continue; }
+        long chunkSeed = FmlWorldgen.chunkSeed(world, x, z);
+        Random fmlRandom = new Random();
+        for (IWorldGenerator generator : FmlWorldgen.sorted()) {
+            if (GcPlanetWorldgen.blocks(world, generator)) { continue; }
             fmlRandom.setSeed(chunkSeed);
             try {
                 CompatHandler.beforeGenerate(world);

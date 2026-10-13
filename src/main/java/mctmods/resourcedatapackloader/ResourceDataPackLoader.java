@@ -43,7 +43,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPristine;
 import mctmods.resourcedatapackloader.content.worldgen.ContentProspect;
 import mctmods.resourcedatapackloader.util.compat.CbmpRubicParts;
 import mctmods.resourcedatapackloader.util.compat.CmsRubicSpawns;
-import mctmods.resourcedatapackloader.util.compat.GcRubicWorldgen;
+import mctmods.resourcedatapackloader.util.compat.GcPlanetWorldgen;
 import mctmods.resourcedatapackloader.util.compat.StreamsRubicValleys;
 import mctmods.resourcedatapackloader.util.compat.ThutRubicLifts;
 import mctmods.resourcedatapackloader.content.def.WorldgenDef;
@@ -229,7 +229,7 @@ public class ResourceDataPackLoader {
         CmsRubicSpawns.register();
         CbmpRubicParts.register();
         StreamsRubicValleys.register();
-        GcRubicWorldgen.register();
+        GcPlanetWorldgen.register();
         ThutRubicLifts.register();
         MinecraftForge.EVENT_BUS.register(ContentPaths.class);
         if (ContentGeneratorControl.enabled()) { ContentGeneratorControl.load(); }
