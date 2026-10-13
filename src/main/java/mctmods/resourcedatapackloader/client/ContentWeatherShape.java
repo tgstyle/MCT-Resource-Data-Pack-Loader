@@ -57,8 +57,9 @@ public final class ContentWeatherShape {
             float halfX = sizeX[index] / 2.0F;
             float halfZ = sizeZ[index] / 2.0F;
             int ground = level.getHeight(Heightmap.Types.MOTION_BLOCKING, column.x(), column.z());
-            float shiftTop = column.topY() - ground;
-            float shiftBottom = column.bottomY() - ground;
+            int lightY = Math.max(ground, Mth.floor(camera.y));
+            float shiftTop = column.topY() - lightY;
+            float shiftBottom = column.bottomY() - lightY;
             float top = (float) (column.topY() - camera.y);
             float bottom = (float) (column.bottomY() - camera.y);
             float scroll = upward ? -column.vOffset() : column.vOffset();
