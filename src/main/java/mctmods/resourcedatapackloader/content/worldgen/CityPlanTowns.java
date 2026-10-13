@@ -39,7 +39,7 @@ final class CityPlanTowns {
         if (raw != null && raw.town() != null) {
             CityDistricts.siteAhead(ground, CityRails.reaches(ground, raw.town()));
             Function<Rail, CityRails.Bed> beds = rail -> CityRails.bed(ground, rail);
-            return shortOfLinks(raw.withRails(withLinks(ground, raw.town(), CityRails.fitted(ground, raw.town()), districtX, districtZ)).clearOfRails(ground, beds), beds);
+            return shortOfLinks(raw.withRails(withLinks(ground, raw, raw.town(), CityRails.fitted(ground, raw.town()), districtX, districtZ)).clearOfRails(ground, beds), beds);
         }
         List<Town> towns = townsNear(ground, districtX, districtZ);
         List<int[]> reaches = new ArrayList<>();
@@ -64,18 +64,42 @@ final class CityPlanTowns {
         return tied.isEmpty() ? made : made.clearOfRails(ground, rail -> CityRails.bed(ground, rail));
     }
 
-    private static List<Rail> withLinks(CityGround ground, Town town, List<Rail> own, int districtX, int districtZ) {
-        List<Rail> held = new ArrayList<>(railsThrough(own, districtX, districtZ));
+    private static List<Rail> withLinks(CityGround ground, CityPlan raw, Town town, List<Rail> own, int districtX, int districtZ) {
+        List<Rail> held = new ArrayList<>(railsNear(raw, own, districtX, districtZ));
         if (!CityLinks.on()) { return List.copyOf(held); }
         for (Town near : townsNear(ground, districtX, districtZ)) {
             if (near.key() == town.key()) { continue; }
-            for (Rail rail : railsThrough(CityLinks.linkRails(CityRails.staged(ground, near)), districtX, districtZ)) {
+            for (Rail rail : railsNear(raw, CityLinks.linkRails(CityRails.staged(ground, near)), districtX, districtZ)) {
                 if (held.contains(rail)) { continue; }
                 held.add(rail);
                 ContentLog.LOGGER.debug("The district at {}, {} of the city at {}, {} keeps clear of the railway link of the city at {}, {} that runs through it", CityPlan.windowOf(districtX, true), CityPlan.windowOf(districtZ, false), town.wellX(), town.wellZ(), near.wellX(), near.wellZ());
             }
         }
         return List.copyOf(held);
+    }
+
+    private static List<Rail> railsNear(@Nullable CityPlan raw, List<Rail> rails, int districtX, int districtZ) {
+        List<Rail> through = railsThrough(rails, districtX, districtZ);
+        if (raw == null || !raw.mapped()) { return through; }
+        List<Line> lines = CityLines.of(raw);
+        List<Rail> found = new ArrayList<>();
+        for (Rail rail : rails) {
+            if (through.contains(rail) || meetsLine(rail, lines)) { found.add(rail); }
+        }
+        return List.copyOf(found);
+    }
+
+    private static boolean meetsLine(Rail rail, List<Line> lines) {
+        int half = CityRails.halfOf(rail);
+        for (Line line : lines) {
+            boolean same = line.alongX() == rail.alongX();
+            int alongLow = same ? line.from() : line.at();
+            int alongHigh = same ? line.to() : line.last();
+            int acrossLow = same ? line.at() : line.from();
+            int acrossHigh = same ? line.last() : line.to();
+            if (rail.from() <= alongHigh && rail.to() >= alongLow && rail.middle() - half <= acrossHigh && rail.middle() + half >= acrossLow) { return true; }
+        }
+        return false;
     }
 
     private static CityPlan shortOfLinks(CityPlan plan, Function<Rail, CityRails.Bed> beds) {
@@ -132,7 +156,7 @@ final class CityPlanTowns {
     static boolean laysStreet(CityGround ground, Town town, List<Rail> mine, Function<Rail, CityRails.Bed> beds, int districtX, int districtZ, boolean alongX, int center) {
         CityPlan raw = raw(ground, districtX, districtZ);
         if (raw == null || raw.town() == null || raw.town().key() != town.key()) { return false; }
-        CityPlan plan = shortOfLinks(raw.withRails(withLinks(ground, town, mine, districtX, districtZ)).clearOfRails(ground, beds), beds);
+        CityPlan plan = shortOfLinks(raw.withRails(withLinks(ground, raw, town, mine, districtX, districtZ)).clearOfRails(ground, beds), beds);
         for (Line line : alongX ? plan.alongX : plan.alongZ) {
             if (!line.alley() && line.at() <= center && center <= line.last()) { return true; }
         }
