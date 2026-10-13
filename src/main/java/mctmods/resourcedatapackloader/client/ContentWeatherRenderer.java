@@ -138,8 +138,8 @@ public final class ContentWeatherRenderer {
             b = snowBlue;
         }
         if (upward) { scroll = -scroll; }
-        double shiftTop = top - ground;
-        double shiftBottom = bottom - ground;
+        double shiftTop = top - lightY;
+        double shiftBottom = bottom - lightY;
         builder.vertex(x - camX - halfX + 0.5D + slantX * shiftTop, top - camY, z - camZ - halfZ + 0.5D + slantZ * shiftTop).uv(u, bottom * 0.25F + scroll).color(r, g, b, alpha).uv2(light).endVertex();
         builder.vertex(x - camX + halfX + 0.5D + slantX * shiftTop, top - camY, z - camZ + halfZ + 0.5D + slantZ * shiftTop).uv(u + 1.0F, bottom * 0.25F + scroll).color(r, g, b, alpha).uv2(light).endVertex();
         builder.vertex(x - camX + halfX + 0.5D + slantX * shiftBottom, bottom - camY, z - camZ + halfZ + 0.5D + slantZ * shiftBottom).uv(u + 1.0F, top * 0.25F + scroll).color(r, g, b, alpha).uv2(light).endVertex();
