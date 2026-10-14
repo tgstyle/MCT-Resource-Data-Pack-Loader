@@ -3516,20 +3516,32 @@ Définir l'un des éléments `sun`, `moon`, `bodies` ou `stars` remplace le ciel
 
 Sans `bodies`, la lune vanilla et ses phases restent. Avec `bodies`, la liste contient tout ce qui n'est pas le soleil : une liste vide donne donc un ciel sans lune.
 
-| Clé                    | Requis | Valeur            | Défaut            | Rôle                                                                                                                                                                                                                                                    |
-| ---------------------- | ------ | ----------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sun.texture`          | non    | chemin de texture | le soleil vanilla | L'image du soleil                                                                                                                                                                                                                                       |
-| `sun.size`             | non    | flottant          | `30`              | La moitié de la largeur du soleil à une distance de 100. `0` le masque                                                                                                                                                                                  |
-| `moon.texture`         | non    | chemin de texture | la lune vanilla   | L'image de la lune : une planche de ses huit phases, quatre en largeur et deux en hauteur, comme `moon_phases.png` en vanilla |
-| `moon.size`            | non    | flottant          | `20`              | La moitié de la largeur de la lune à une distance de 100. `0` la masque. Ignoré avec `bodies` |
-| `bodies[].texture`     | oui    | chemin de texture |                   | L'image du corps                                                                                                                                                                                                                                        |
-| `bodies[].size`        | non    | flottant          | `20`              | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20`                                                                                                                                                                                |
-| `bodies[].angle`       | non    | flottant, degrés  | `180`             | Sa distance le long de la trajectoire du soleil, derrière celui-ci. `180` est l'endroit où se trouve la lune vanilla. Avec `followsTime` désactivé, elle se mesure depuis le point juste au-dessus de la tête, donc `0` est le zénith et `90` l'horizon |
-| `bodies[].tilt`        | non    | flottant, degrés  | `0`               | De combien il s'écarte de la trajectoire du soleil, vers le nord ou le sud. `angle` suit la trajectoire, `tilt` la traverse                                                                                                                                                                              |
-| `bodies[].body`        | non    | nom               | aucun             | Un corps céleste du pack, par son nom ou le nom de son fichier. S'il définit un `ring`, le même anneau est dessiné autour de ce corps, derrière et devant                                                                                               |
-| `bodies[].followsTime` | non    | booléen           | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                             |
-| `stars.count`          | non    | entier            | `1500`            | Le nombre d'étoiles                                                                                                                                                                                                                                     |
-| `stars.size`           | non    | flottant          | `0.15`            | La plus petite étoile ; la plus grande est encore deux tiers plus grosse                                                                                                                                                                                |
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` teinte le soleil et `sun.auraColor` dépose autour de lui une lueur douce, une brume solaire. Toutes deux s'estompent avec la pluie et `sunBrightness`, comme le soleil. Elles fonctionnent dans le ciel vanilla d'une [dimension existante](#dimensions-existantes), dans le ciel de l'Overworld d'AsmodeusCore et sur un [corps céleste de Galacticraft](#corps-célestes-de-galacticraft) comme dans le ciel propre à RDPL, et une [plage horaire](#le-bloc-time) peut les modifier pendant une partie de la journée.
+
+| Clé                    | Requis | Valeur               | Défaut            | Rôle                                                                                                                                                                                                                                                    |
+| ---------------------- | ------ | -------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | non    | chemin de texture    | le soleil vanilla | L'image du soleil                                                                                                                                                                                                                                       |
+| `sun.size`             | non    | flottant             | `30`              | La moitié de la largeur du soleil à une distance de 100. `0` le masque                                                                                                                                                                                  |
+| `sun.color`            | non    | couleur hexadécimale | blanc             | Teinte du soleil                                                                                                                                                                                                                                        |
+| `sun.auraColor`        | non    | couleur hexadécimale | aucun             | Couleur de la lueur autour du soleil. Sans elle, il n'y a pas de lueur                                                                                                                                                                                  |
+| `moon.texture`         | non    | chemin de texture    | la lune vanilla   | L'image de la lune : une planche de ses huit phases, quatre en largeur et deux en hauteur, comme `moon_phases.png` en vanilla                                                                                                                           |
+| `moon.size`            | non    | flottant             | `20`              | La moitié de la largeur de la lune à une distance de 100. `0` la masque. Ignoré avec `bodies`                                                                                                                                                           |
+| `bodies[].texture`     | oui    | chemin de texture    |                   | L'image du corps                                                                                                                                                                                                                                        |
+| `bodies[].size`        | non    | flottant             | `20`              | La moitié de sa largeur à une distance de 100. La lune vanilla vaut `20`                                                                                                                                                                                |
+| `bodies[].angle`       | non    | flottant, degrés     | `180`             | Sa distance le long de la trajectoire du soleil, derrière celui-ci. `180` est l'endroit où se trouve la lune vanilla. Avec `followsTime` désactivé, elle se mesure depuis le point juste au-dessus de la tête, donc `0` est le zénith et `90` l'horizon |
+| `bodies[].tilt`        | non    | flottant, degrés     | `0`               | De combien il s'écarte de la trajectoire du soleil, vers le nord ou le sud. `angle` suit la trajectoire, `tilt` la traverse                                                                                                                             |
+| `bodies[].body`        | non    | nom                  | aucun             | Un corps céleste du pack, par son nom ou le nom de son fichier. S'il définit un `ring`, le même anneau est dessiné autour de ce corps, derrière et devant                                                                                               |
+| `bodies[].followsTime` | non    | booléen              | `true`            | Désactivé, il reste immobile dans le ciel au lieu de tourner avec le soleil                                                                                                                                                                             |
+| `stars.count`          | non    | entier               | `1500`            | Le nombre d'étoiles                                                                                                                                                                                                                                     |
+| `stars.size`           | non    | flottant             | `0.15`            | La plus petite étoile ; la plus grande est encore deux tiers plus grosse                                                                                                                                                                                |
 
 ### Brouillard, lumière, nuages et chaleur
 
@@ -3675,9 +3687,36 @@ Ce sont les mêmes multiplicateurs que dans [Physique du monde](#physique-du-mon
 
 *dimensions*
 
-| Clé         | Requis | Valeur        | Défaut  | Rôle                                                                                              |
-| ----------- | ------ | ------------- | ------- | ------------------------------------------------------------------------------------------------- |
-| `dayLength` | non    | entier, ticks | `24000` | Durée d'un jour et d'une nuit ici. La phase de la lune fait toujours un tour tous les 24000 ticks |
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` modifie quelques clés de `sky` et de `weather` pendant une partie de chaque journée : ici du brouillard la nuit, un brouillard plus léger et un soleil rouge voilé vers l'aube, et de la pluie seulement la nuit. `from` et `to` sont des heures du jour sur l'échelle habituelle de 24000 ticks, où 0 est le lever du soleil, 6000 midi, 12000 le coucher du soleil et 18000 minuit, et elles s'étirent avec `dayLength` : 13000 tombe donc toujours juste après le coucher du soleil. Une plage dont le `from` est plus grand que son `to` passe minuit. Quand des plages se chevauchent, la première de la liste l'emporte. Avec `fixedTime`, l'heure du jour ne bouge jamais : une plage s'applique donc toujours ou jamais.
+
+Les changements de brouillard et de soleil se fondent en une ou deux secondes quand une plage commence et finit. En dehors de toutes les plages, les clés propres à la dimension s'appliquent.
+
+| Clé                               | Requis | Valeur                           | Défaut                | Rôle                                                                                              |
+| --------------------------------- | ------ | -------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------- |
+| `dayLength`                       | non    | entier, ticks                    | `24000`               | Durée d'un jour et d'une nuit ici. La phase de la lune fait toujours un tour tous les 24000 ticks |
+| `windows[].from`                  | oui    | entier, 0 à 24000                |                       | Heure du jour où la plage commence                                                                |
+| `windows[].to`                    | oui    | entier, 0 à 24000                |                       | Heure du jour où elle finit                                                                       |
+| `windows[].sky.fogDensity`        | non    | flottant, 0 à 1                  | celle de la dimension | [`fogDensity`](#le-bloc-sky) pendant la plage                                                     |
+| `windows[].sky.fogColor`          | non    | couleur hexadécimale ou `sample` | celle de la dimension | [`fogColor`](#le-bloc-sky) pendant la plage                                                       |
+| `windows[].sky.sun.color`         | non    | couleur hexadécimale             | celle de la dimension | [`sun.color`](#le-moteur-de-rendu-du-ciel) pendant la plage                                       |
+| `windows[].sky.sun.auraColor`     | non    | couleur hexadécimale             | celle de la dimension | [`sun.auraColor`](#le-moteur-de-rendu-du-ciel) pendant la plage                                   |
+| `windows[].weather.precipitation` | non    | `false`                          | celle de la dimension | Désactivé, la pluie et les orages s'éteignent et ne reviennent pas pendant la plage               |
+| `windows[].weather.alwaysRain`    | non    | booléen                          | celle de la dimension | [`alwaysRain`](#le-bloc-weather) pendant la plage                                                 |
+
+Toute autre clé dans une plage est ignorée avec une erreur dans le log, tout comme `precipitation: true` ou `alwaysRain: true` dans une dimension dont `precipitation` est désactivé.
 
 ### Le bloc `weather`
 
@@ -3711,7 +3750,7 @@ Ce sont les mêmes multiplicateurs que dans [Physique du monde](#physique-du-mon
 
 Un bloc `wind` rend la pluie rafaleuse. De temps à autre, une rafale l'incline jusqu'à `gust` degrés de plus et fait pivoter sa direction jusqu'à `swing` degrés d'un côté ; elle enfle puis retombe en moins de quatre secondes, et les rafales reviennent tous les `every` ticks. La pluie et la neige s'inclinent avec elle, et les particules d'ambiance de la dimension dérivent du côté où penche la pluie, avec ou sans rafales. Un bloc `wind` sans bloc `rain` donne à la pluie ses valeurs par défaut.
 
-Les autres dimensions partagent la pluie de l'Overworld. Un `cycle` donne à celle-ci une météo propre : les averses vont et viennent selon les durées ci-dessus, quoi que fasse l'Overworld. Avec `thunderTicks`, elle connaît aussi des orages, selon ses propres durées ; un orage qui rencontre une averse porte l'averse à pleine intensité, assombrit le ciel et, avec `lightning` activé, amène la foudre. `weatherCeiling` dans un [modèle de monde](#modèles-de-monde) plafonne toujours l'altitude que la pluie atteint.
+Les autres dimensions partagent la pluie de l'Overworld. Un `cycle` donne à celle-ci une météo propre : les averses vont et viennent selon les durées ci-dessus, quoi que fasse l'Overworld. Avec `thunderTicks`, elle connaît aussi des orages, selon ses propres durées ; un orage qui rencontre une averse porte l'averse à pleine intensité, assombrit le ciel et, avec `lightning` activé, amène la foudre. `weatherCeiling` dans un [modèle de monde](#modèles-de-monde) plafonne toujours l'altitude que la pluie atteint. Une [plage horaire](#le-bloc-time) avec `precipitation: false` limite la pluie au reste de la journée : une averse qui tombe déjà s'éteint en quelques secondes et le temps attend la fin de la plage ; une plage avec `alwaysRain` fait pleuvoir à verse pendant sa partie de la journée.
 
 Un bloc `rain` change l'aspect et le son de la pluie et de la neige ici, avec ou sans `cycle` ; sans lui, ils ont l'aspect et le son vanilla. Il fonctionne de la même façon sur une planète ou une lune de Galacticraft.
 

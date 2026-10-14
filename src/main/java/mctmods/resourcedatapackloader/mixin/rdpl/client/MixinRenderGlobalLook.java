@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyExtras;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderers;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStars;
@@ -8,19 +9,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.util.ResourceLocation;
 import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(RenderGlobal.class) public abstract class MixinRenderGlobalLook {
+    @Shadow @Final private static ResourceLocation SUN_TEXTURES;
     @Shadow private WorldClient world;
 
-    @ModifyArg(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;color(FFFF)V", ordinal = 0), index = 3) private float rdpl$dimSun(float alpha) { return alpha * ContentSkyRenderers.sun(world); }
+    @Inject(method = "renderSky(FI)V", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/RenderGlobal;SUN_TEXTURES:Lnet/minecraft/util/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private void rdpl$sunHaze(float partialTicks, int pass, CallbackInfo ci) { ContentSkyRenderers.sunHaze(world, SUN_TEXTURES, (1.0F - world.getRainStrength(partialTicks)) * ContentSkyRenderers.sun(world), DimensionTraitsDef.VANILLA_SUN, false); }
 
     @Redirect(method = "renderSky(FI)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/GlStateManager;color(FFFF)V", ordinal = 1)) private void rdpl$tintStars(float colorRed, float colorGreen, float colorBlue, float colorAlpha) {
         if (ContentStars.keepsVanilla(world)) {

@@ -12,7 +12,8 @@ import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;import javax.annotation.Nullable;
+import java.util.List;
+import javax.annotation.Nullable;
 
 public final class ContentParserSkyLook {
     public static final String SAMPLE = "sample";
@@ -20,7 +21,8 @@ public final class ContentParserSkyLook {
     private static final List<String> FACES = Arrays.asList("up", "down", "north", "east", "south", "west");
     private static final int AURORA = 0x40FF90;
     private static final int AURORA_TOP = 0x8040FF;
-    private static final float GROUND_WEIGHT = 0.5F;
+    private static final List<String> HAZE = Arrays.asList("color", "auraColor");
+    public static final float GROUND_WEIGHT = 0.5F;
     private static final float HOT = 1.5F;
     private static final float HEAT_STRENGTH = 0.1F;
     private static final float HEAT_START = 32.0F;
@@ -34,7 +36,8 @@ public final class ContentParserSkyLook {
 
     @Nullable public static SkyLookDef look(ResourceLocation key, JsonObject sky, int cloudHeight, int cloudColor) {
         boolean sample = samples(sky);
-        if (!sample && KEYS.stream().noneMatch(sky::has)) { return null; }
+        JsonObject sun = Json.getJsonObject(sky, "sun", new JsonObject());
+        if (!sample && KEYS.stream().noneMatch(sky::has) && HAZE.stream().noneMatch(sun::has)) { return null; }
         float cloudSpeed = Json.getFloat(sky, "cloudSpeed", 1.0F);
         return new SkyLookDef(sample,
                 unit(key, sky, "fogDensity", 0.0F),
@@ -55,7 +58,9 @@ public final class ContentParserSkyLook {
                 color(key, sky, "lightningColor"),
                 skybox(key, sky),
                 sky.has("aurora") ? aurora(key, Json.getJsonObject(sky, "aurora")) : null,
-                Json.getBoolean(sky, "rainbow", false));
+                Json.getBoolean(sky, "rainbow", false),
+                color(key, sun, "color"),
+                color(key, sun, "auraColor"));
     }
 
     @Nullable private static SkyLookDef.Skybox skybox(ResourceLocation key, JsonObject sky) {
@@ -79,9 +84,9 @@ public final class ContentParserSkyLook {
         return new SkyLookDef.Aurora(color == SkyLookDef.UNSET ? AURORA : color, top == SkyLookDef.UNSET ? AURORA_TOP : top);
     }
 
-    private static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
+    static float unit(ResourceLocation key, JsonObject json, String member, float fallback) { return Json.ranged(json, member, fallback, 0.0F, 1.0F, "Dimension " + key + " sky"); }
 
-    private static int color(ResourceLocation key, JsonObject json, String member) {
+    static int color(ResourceLocation key, JsonObject json, String member) {
         String value = Json.getString(json, member, "").trim();
         return value.isEmpty() ? SkyLookDef.UNSET : ContentTypes.color(value, key + " sky." + member) & 0xFFFFFF;
     }

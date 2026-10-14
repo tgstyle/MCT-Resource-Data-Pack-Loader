@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
+import mctmods.resourcedatapackloader.content.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.util.Colors;
@@ -61,14 +62,16 @@ import javax.annotation.Nullable;
     @SubscribeEvent public static void onTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) { return; }
         Minecraft mc = Minecraft.getMinecraft();
-        SkyLookDef look = look(mc.world);
+        ContentWindowLook.tick(mc.world);
+        DimensionDef def = ContentDimensions.of(mc.world);
+        SkyLookDef look = def == null ? null : def.look;
         Entity camera = mc.getRenderViewEntity();
-        if (look == null || !look.sampleFog || camera == null) {
+        if (def == null || camera == null || !(look != null && look.sampleFog || ContentWindowLook.samples(def))) {
             target = null;
             current = null;
             return;
         }
-        if (target == null || mc.world.getTotalWorldTime() % INTERVAL == 0L) { target = sample(mc.world, camera, look.fogGroundWeight); }
+        if (target == null || mc.world.getTotalWorldTime() % INTERVAL == 0L) { target = sample(mc.world, camera, look == null ? ContentParserSkyLook.GROUND_WEIGHT : look.fogGroundWeight); }
         current = current == null ? target : current.add(target.subtract(current).scale(EASE));
     }
 
@@ -98,12 +101,14 @@ import javax.annotation.Nullable;
     }
 
     @SubscribeEvent public static void onFog(EntityViewRenderEvent.RenderFogEvent event) {
-        SkyLookDef look = look(Minecraft.getMinecraft().world);
-        if (look == null || look.fogDensity <= 0.0F || event.getState().getMaterial().isLiquid()) { return; }
+        World world = Minecraft.getMinecraft().world;
+        SkyLookDef look = look(world);
+        float density = ContentWindowLook.fogDensity(world, look == null ? 0.0F : look.fogDensity);
+        if (density <= 0.0F || event.getState().getMaterial().isLiquid()) { return; }
         Entity entity = event.getEntity();
         if (entity instanceof EntityLivingBase && ((EntityLivingBase) entity).isPotionActive(MobEffects.BLINDNESS)) { return; }
         float far = event.getFarPlaneDistance();
-        float end = far + (NEAR - far) * look.fogDensity;
+        float end = far + (NEAR - far) * density;
         GlStateManager.setFog(GlStateManager.FogMode.LINEAR);
         GlStateManager.setFogStart(event.getFogMode() == -1 ? 0.0F : end * START);
         GlStateManager.setFogEnd(end);

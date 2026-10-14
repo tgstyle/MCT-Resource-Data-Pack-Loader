@@ -3516,20 +3516,32 @@ Impostare uno qualsiasi tra `sun`, `moon`, `bodies` o `stars` sostituisce il cie
 
 Senza `bodies` restano la luna vanilla e le sue fasi. Con `bodies`, l'elenco comprende tutto tranne il sole, quindi un elenco vuoto è un cielo senza luna.
 
-| Chiave | Obbligatorio | Valore | Predefinito | Cosa fa |
-| ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `sun.texture` | no | percorso della texture | il sole vanilla | L'immagine del sole |
-| `sun.size` | no | decimale | `30` | Metà della larghezza del sole a una distanza di 100. `0` lo nasconde |
-| `moon.texture` | no | percorso della texture | la luna vanilla | L'immagine della luna: una tavola delle sue otto fasi, quattro in orizzontale e due in verticale, come `moon_phases.png` vanilla |
-| `moon.size` | no | decimale | `20` | Metà della larghezza della luna a una distanza di 100. `0` la nasconde. Omesso con `bodies` |
-| `bodies[].texture` | sì | percorso della texture | | L'immagine del corpo |
-| `bodies[].size` | no | decimale | `20` | Metà della sua larghezza a una distanza di 100. La luna vanilla è `20` |
-| `bodies[].angle` | no | decimale, gradi | `180` | A che distanza lungo il percorso del sole si trova dietro il sole. `180` è dove sta la luna vanilla. Con `followsTime` disattivato si misura dallo zenit, quindi `0` è lo zenit e `90` l'orizzonte |
-| `bodies[].tilt` | no | decimale, gradi | `0` | Di quanto si trova fuori dal percorso del sole, a nord o a sud. `angle` corre lungo il percorso, `tilt` di traverso |
-| `bodies[].body` | no | nome | nessuno | Un corpo celeste del pack, per nome o per nome del file. Se imposta un `ring`, lo stesso anello viene disegnato attorno a questo corpo, dietro e davanti a esso |
-| `bodies[].followsTime` | no | booleano | `true` | Se disattivato, resta fermo nel cielo invece di girare con il sole |
-| `stars.count` | no | intero | `1500` | Quante stelle |
-| `stars.size` | no | decimale | `0.15` | La stella più piccola; la più grande è due terzi più grande ancora |
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tinge il sole e `sun.auraColor` stende attorno a esso un bagliore morbido, una foschia solare. Entrambi si attenuano con la pioggia e con `sunBrightness`, come il sole. Funzionano nel cielo vanilla di una [dimensione esistente](#dimensioni-esistenti), nel cielo dell'Overworld di AsmodeusCore e su un [corpo celeste di Galacticraft](#corpi-celesti-di-galacticraft), oltre che nel cielo proprio di RDPL, e una [finestra temporale](#il-blocco-time) può cambiarli per una parte della giornata.
+
+| Chiave                 | Obbligatorio | Valore                 | Predefinito     | Cosa fa                                                                                                                                                                                            |
+| ---------------------- | ------------ | ---------------------- | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sun.texture`          | no           | percorso della texture | il sole vanilla | L'immagine del sole                                                                                                                                                                                |
+| `sun.size`             | no           | decimale               | `30`            | Metà della larghezza del sole a una distanza di 100. `0` lo nasconde                                                                                                                               |
+| `sun.color`            | no           | colore esadecimale     | bianco          | Tinta del sole                                                                                                                                                                                     |
+| `sun.auraColor`        | no           | colore esadecimale     | nessuno         | Colore del bagliore attorno al sole. Senza di esso non c'è bagliore                                                                                                                                |
+| `moon.texture`         | no           | percorso della texture | la luna vanilla | L'immagine della luna: una tavola delle sue otto fasi, quattro in orizzontale e due in verticale, come `moon_phases.png` vanilla                                                                   |
+| `moon.size`            | no           | decimale               | `20`            | Metà della larghezza della luna a una distanza di 100. `0` la nasconde. Omesso con `bodies`                                                                                                        |
+| `bodies[].texture`     | sì           | percorso della texture |                 | L'immagine del corpo                                                                                                                                                                               |
+| `bodies[].size`        | no           | decimale               | `20`            | Metà della sua larghezza a una distanza di 100. La luna vanilla è `20`                                                                                                                             |
+| `bodies[].angle`       | no           | decimale, gradi        | `180`           | A che distanza lungo il percorso del sole si trova dietro il sole. `180` è dove sta la luna vanilla. Con `followsTime` disattivato si misura dallo zenit, quindi `0` è lo zenit e `90` l'orizzonte |
+| `bodies[].tilt`        | no           | decimale, gradi        | `0`             | Di quanto si trova fuori dal percorso del sole, a nord o a sud. `angle` corre lungo il percorso, `tilt` di traverso                                                                                |
+| `bodies[].body`        | no           | nome                   | nessuno         | Un corpo celeste del pack, per nome o per nome del file. Se imposta un `ring`, lo stesso anello viene disegnato attorno a questo corpo, dietro e davanti a esso                                    |
+| `bodies[].followsTime` | no           | booleano               | `true`          | Se disattivato, resta fermo nel cielo invece di girare con il sole                                                                                                                                 |
+| `stars.count`          | no           | intero                 | `1500`          | Quante stelle                                                                                                                                                                                      |
+| `stars.size`           | no           | decimale               | `0.15`          | La stella più piccola; la più grande è due terzi più grande ancora                                                                                                                                 |
 
 ### Nebbia, luce, nuvole e calore
 
@@ -3675,9 +3687,36 @@ Sono gli stessi moltiplicatori di [Fisica del mondo](#fisica-del-mondo), imposta
 
 *dimensioni*
 
-| Chiave | Obbligatorio | Valore | Predefinito | Cosa fa |
-| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
-| `dayLength` | no | intero, tick | `24000` | Quanto dura qui un giorno con la sua notte. La fase lunare continua a girare una volta ogni 24000 tick |
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` cambia alcune chiavi di `sky` e `weather` per una parte di ogni giornata: qui nebbia di notte, una nebbia più leggera e un sole rosso e velato intorno all'alba, e pioggia solo di notte. `from` e `to` sono orari del giorno sulla consueta scala di 24000 tick, dove 0 è l'alba, 6000 mezzogiorno, 12000 il tramonto e 18000 mezzanotte, e si allungano con `dayLength`, quindi 13000 cade sempre subito dopo il tramonto. Una finestra con `from` maggiore di `to` prosegue oltre la mezzanotte. Dove le finestre si sovrappongono, vale la prima dell'elenco. Con `fixedTime` l'ora del giorno non si muove mai, quindi una finestra o vale sempre o non vale mai.
+
+I cambiamenti di nebbia e di sole sfumano in uno o due secondi quando una finestra inizia e finisce. Fuori da tutte le finestre valgono le chiavi proprie della dimensione.
+
+| Chiave                            | Obbligatorio | Valore                        | Predefinito             | Cosa fa                                                                                                |
+| --------------------------------- | ------------ | ----------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------ |
+| `dayLength`                       | no           | intero, tick                  | `24000`                 | Quanto dura qui un giorno con la sua notte. La fase lunare continua a girare una volta ogni 24000 tick |
+| `windows[].from`                  | sì           | intero, da 0 a 24000          |                         | Ora del giorno in cui la finestra inizia                                                               |
+| `windows[].to`                    | sì           | intero, da 0 a 24000          |                         | Ora del giorno in cui finisce                                                                          |
+| `windows[].sky.fogDensity`        | no           | decimale, da 0 a 1            | quello della dimensione | [`fogDensity`](#il-blocco-sky) durante la finestra                                                     |
+| `windows[].sky.fogColor`          | no           | colore esadecimale o `sample` | quello della dimensione | [`fogColor`](#il-blocco-sky) durante la finestra                                                       |
+| `windows[].sky.sun.color`         | no           | colore esadecimale            | quello della dimensione | [`sun.color`](#il-renderer-del-cielo) durante la finestra                                              |
+| `windows[].sky.sun.auraColor`     | no           | colore esadecimale            | quello della dimensione | [`sun.auraColor`](#il-renderer-del-cielo) durante la finestra                                          |
+| `windows[].weather.precipitation` | no           | `false`                       | quello della dimensione | Se disattivato, pioggia e temporali si spengono e restano assenti per la durata della finestra         |
+| `windows[].weather.alwaysRain`    | no           | booleano                      | quello della dimensione | [`alwaysRain`](#il-blocco-weather) durante la finestra                                                 |
+
+Qualsiasi altra chiave in una finestra viene ignorata con un errore nel log, così come `precipitation: true` o `alwaysRain: true` in una dimensione con `precipitation` disattivato.
 
 ### Il blocco `weather`
 
@@ -3711,7 +3750,7 @@ Sono gli stessi moltiplicatori di [Fisica del mondo](#fisica-del-mondo), imposta
 
 Un blocco `wind` rende la pioggia a raffiche. Di tanto in tanto una raffica la inclina fino a `gust` gradi in più e sposta la sua direzione fino a `swing` gradi da un lato, salendo e spegnendosi nell'arco di quattro secondi; le raffiche arrivano a distanza di `every` tick. Pioggia e neve si inclinano con essa, e le particelle ambientali della dimensione scorrono nella direzione in cui si inclina la pioggia, con o senza raffiche. Un blocco `wind` senza un blocco `rain` dà alla pioggia i suoi valori predefiniti.
 
-Le altre dimensioni condividono la pioggia dell'overworld. Un `cycle` dà a questa un meteo tutto suo: gli acquazzoni vanno e vengono con i tempi indicati sopra, qualunque cosa faccia l'overworld. Con `thunderTicks` ci sono anche i temporali, con tempi propri; un temporale che incontra un acquazzone porta l'acquazzone alla piena intensità, scurisce il cielo e, con `lightning` attivo, porta i fulmini. `weatherCeiling` in un [modello di mondo](#modelli-di-mondo) continua a limitare fin dove arriva la pioggia.
+Le altre dimensioni condividono la pioggia dell'overworld. Un `cycle` dà a questa un meteo tutto suo: gli acquazzoni vanno e vengono con i tempi indicati sopra, qualunque cosa faccia l'overworld. Con `thunderTicks` ci sono anche i temporali, con tempi propri; un temporale che incontra un acquazzone porta l'acquazzone alla piena intensità, scurisce il cielo e, con `lightning` attivo, porta i fulmini. `weatherCeiling` in un [modello di mondo](#modelli-di-mondo) continua a limitare fin dove arriva la pioggia. Una [finestra temporale](#il-blocco-time) con `precipitation: false` tiene la pioggia al resto della giornata: un acquazzone già in corso si spegne in pochi secondi e il tempo aspetta che la finestra finisca; una con `alwaysRain` fa piovere a dirotto per la sua parte della giornata.
 
 Un blocco `rain` cambia aspetto e suono di pioggia e neve qui, con o senza `cycle`; senza di esso hanno l'aspetto e il suono vanilla. Funziona allo stesso modo su un pianeta o una luna di Galacticraft.
 

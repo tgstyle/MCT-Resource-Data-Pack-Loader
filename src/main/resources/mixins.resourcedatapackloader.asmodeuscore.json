@@ -11,6 +11,7 @@
     "MixinACPacketSimpleStationLabel",
     "MixinNewGuiCelestialSelectionAura",
     "MixinNewGuiCelestialSelectionNest",
+    "MixinSkyProviderBaseSun",
     "MixinSkyProviderOverworldTextures"
   ],
   "server": []

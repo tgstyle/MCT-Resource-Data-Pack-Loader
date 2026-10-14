@@ -412,6 +412,7 @@ public final class ContentParserWorlds {
         String fog = ContentParserSkyLook.samples(sky) ? "" : Json.getString(sky, "fogColor", belt ? "000000" : "");
         int cloudHeight = Json.getInt(sky, "cloudHeight", 128);
         int clouds = cloudColor.isEmpty() ? -1 : ContentTypes.color(cloudColor, key.toString());
+        DimensionTraitsDef traits = ContentParserDimensionTraits.traits(key, json, belt);
         return new DimensionDef(key,
                 Json.getInt(json, "id"),
                 Json.getString(json, "suffix", "DIM_" + key.getPath()),
@@ -448,8 +449,9 @@ public final class ContentParserWorlds {
                 strings(json, "requires"),
                 dimensionPortal(key, json),
                 galacticraft,
-                ContentParserDimensionTraits.traits(key, json, belt),
+                traits,
                 ContentParserSkyLook.look(key, sky, cloudHeight, clouds),
+                ContentParserTimeWindows.windows(key, json, traits.precipitation),
                 Json.paths(json));
     }
 

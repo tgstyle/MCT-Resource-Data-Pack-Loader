@@ -3516,16 +3516,28 @@ Definir qualquer um entre `sun`, `moon`, `bodies` ou `stars` troca o céu do van
 
 Sem `bodies`, a lua do vanilla e as suas fases permanecem. Com `bodies`, a lista é tudo o que não for o sol, então uma lista vazia é um céu sem lua.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tinge o sol e `sun.auraColor` espalha ao redor dele um brilho suave, uma névoa solar. Ambos se atenuam com a chuva e com `sunBrightness`, como o sol. Funcionam no céu do vanilla de uma [dimensão existente](#dimensões-existentes), no céu do Overworld do AsmodeusCore e em um [corpo do Galacticraft](#corpos-do-galacticraft), além de no céu próprio do RDPL, e uma [janela de tempo](#o-bloco-time) pode alterá-los por parte do dia.
+
 | Chave                  | Obrigatória | Valor              | Padrão           | O que faz                                                                                                                                                                                                         |
 | ---------------------- | ----------- | ------------------ | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sun.texture`          | não         | caminho de textura | o sol do vanilla | A imagem do sol                                                                                                                                                                                                   |
 | `sun.size`             | não         | float              | `30`             | Metade da largura do sol a uma distância de 100. `0` o oculta                                                                                                                                                     |
-| `moon.texture`         | não         | caminho de textura | a lua do vanilla | A imagem da lua: uma folha com as suas oito fases, quatro na largura e duas na altura, como o `moon_phases.png` do vanilla |
-| `moon.size`            | não         | float              | `20`             | Metade da largura da lua a uma distância de 100. `0` a oculta. Com `bodies`, não é usado |
+| `sun.color`            | não         | cor hex            | branco           | Tonalidade do sol                                                                                                                                                                                                 |
+| `sun.auraColor`        | não         | cor hex            | nenhum           | Cor do brilho ao redor do sol. Sem ela, não há brilho                                                                                                                                                             |
+| `moon.texture`         | não         | caminho de textura | a lua do vanilla | A imagem da lua: uma folha com as suas oito fases, quatro na largura e duas na altura, como o `moon_phases.png` do vanilla                                                                                        |
+| `moon.size`            | não         | float              | `20`             | Metade da largura da lua a uma distância de 100. `0` a oculta. Com `bodies`, não é usado                                                                                                                          |
 | `bodies[].texture`     | sim         | caminho de textura |                  | A imagem do corpo                                                                                                                                                                                                 |
 | `bodies[].size`        | não         | float              | `20`             | Metade da sua largura a uma distância de 100. A lua do vanilla é `20`                                                                                                                                             |
 | `bodies[].angle`       | não         | float, graus       | `180`            | Quão adiante na trajetória do sol ele fica, atrás do sol. `180` é onde está a lua do vanilla. Com `followsTime` desativado, é medido a partir do ponto diretamente acima, então `0` é o zênite e `90` o horizonte |
-| `bodies[].tilt`        | não         | float, graus       | `0`              | Quão afastado da trajetória do sol ele fica, para o norte ou o sul. `angle` corre ao longo da trajetória, `tilt` a atravessa                                                                                                                                                |
+| `bodies[].tilt`        | não         | float, graus       | `0`              | Quão afastado da trajetória do sol ele fica, para o norte ou o sul. `angle` corre ao longo da trajetória, `tilt` a atravessa                                                                                      |
 | `bodies[].body`        | não         | nome               | nenhum           | Um corpo celeste do pacote, pelo nome ou pelo nome do arquivo. Se definir um `ring`, o mesmo anel é desenhado ao redor deste corpo, por trás e pela frente                                                        |
 | `bodies[].followsTime` | não         | booleano           | `true`           | Desativado, ele fica parado no céu em vez de girar com o sol                                                                                                                                                      |
 | `stars.count`          | não         | int                | `1500`           | Quantas estrelas                                                                                                                                                                                                  |
@@ -3675,9 +3687,36 @@ São os mesmos multiplicadores de [Física do mundo](#física-do-mundo), definid
 
 *dimensões*
 
-| Chave       | Obrigatória | Valor      | Padrão  | O que faz                                                                                |
-| ----------- | ----------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
-| `dayLength` | não         | int, ticks | `24000` | Quanto dura um dia e uma noite aqui. A fase da lua ainda gira uma vez a cada 24000 ticks |
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` altera algumas chaves de `sky` e `weather` por parte de cada dia: aqui, neblina à noite, uma neblina mais leve e um sol vermelho e enevoado perto do amanhecer, e chuva só à noite. `from` e `to` são horas do dia na escala usual de 24000 ticks, em que 0 é o nascer do sol, 6000 o meio-dia, 12000 o pôr do sol e 18000 a meia-noite, e se esticam com `dayLength`, então 13000 é sempre logo depois do pôr do sol. Uma janela cujo `from` é maior que o `to` atravessa a meia-noite. Onde as janelas se sobrepõem, vale a primeira da lista. Com `fixedTime` a hora do dia nunca se move, então uma janela sempre vale ou nunca vale.
+
+As mudanças de neblina e de sol se misturam em um ou dois segundos quando uma janela começa e termina. Fora de todas as janelas, valem as chaves da própria dimensão.
+
+| Chave                             | Obrigatória | Valor               | Padrão        | O que faz                                                                                |
+| --------------------------------- | ----------- | ------------------- | ------------- | ---------------------------------------------------------------------------------------- |
+| `dayLength`                       | não         | int, ticks          | `24000`       | Quanto dura um dia e uma noite aqui. A fase da lua ainda gira uma vez a cada 24000 ticks |
+| `windows[].from`                  | sim         | int, 0 a 24000      |               | Hora do dia em que a janela começa                                                       |
+| `windows[].to`                    | sim         | int, 0 a 24000      |               | Hora do dia em que ela termina                                                           |
+| `windows[].sky.fogDensity`        | não         | float, 0 a 1        | a da dimensão | [`fogDensity`](#o-bloco-sky) durante a janela                                            |
+| `windows[].sky.fogColor`          | não         | cor hex ou `sample` | a da dimensão | [`fogColor`](#o-bloco-sky) durante a janela                                              |
+| `windows[].sky.sun.color`         | não         | cor hex             | a da dimensão | [`sun.color`](#o-renderizador-do-céu) durante a janela                                   |
+| `windows[].sky.sun.auraColor`     | não         | cor hex             | a da dimensão | [`sun.auraColor`](#o-renderizador-do-céu) durante a janela                               |
+| `windows[].weather.precipitation` | não         | `false`             | a da dimensão | Desativado, a chuva e as tempestades se dissipam e não voltam durante a janela           |
+| `windows[].weather.alwaysRain`    | não         | booleano            | a da dimensão | [`alwaysRain`](#o-bloco-weather) durante a janela                                        |
+
+Qualquer outra chave em uma janela é ignorada com um erro no log, assim como `precipitation: true` ou `alwaysRain: true` em uma dimensão cujo `precipitation` está desativado.
 
 ### O bloco `weather`
 
@@ -3711,7 +3750,7 @@ São os mesmos multiplicadores de [Física do mundo](#física-do-mundo), definid
 
 Um bloco `wind` deixa a chuva com rajadas. De vez em quando, uma rajada a inclina até `gust` graus a mais e desvia sua direção até `swing` graus para um lado; ela cresce e se desfaz em até quatro segundos, e as rajadas vêm a cada `every` ticks. A chuva e a neve se inclinam junto, e as partículas de ambiente da dimensão derivam para onde a chuva se inclina, com ou sem rajadas. Um bloco `wind` sem bloco `rain` dá à chuva os valores padrão.
 
-As outras dimensões compartilham a chuva do overworld. Um `cycle` dá a esta um clima próprio: aguaceiros vêm e vão nos tempos acima, seja o que for que o overworld esteja fazendo. Com `thunderTicks` ela também tem tempestades, em tempos próprios; uma tempestade que encontra um aguaceiro leva o aguaceiro à força total, escurece o céu e, com `lightning` ativado, traz raios. `weatherCeiling` em um [modelo de mundo](#modelos-de-mundo) ainda limita a altura que a chuva alcança.
+As outras dimensões compartilham a chuva do overworld. Um `cycle` dá a esta um clima próprio: aguaceiros vêm e vão nos tempos acima, seja o que for que o overworld esteja fazendo. Com `thunderTicks` ela também tem tempestades, em tempos próprios; uma tempestade que encontra um aguaceiro leva o aguaceiro à força total, escurece o céu e, com `lightning` ativado, traz raios. `weatherCeiling` em um [modelo de mundo](#modelos-de-mundo) ainda limita a altura que a chuva alcança. Uma [janela de tempo](#o-bloco-time) com `precipitation: false` deixa a chuva para o resto do dia: um temporal que já está caindo se dissipa em poucos segundos e o clima espera a janela terminar; uma com `alwaysRain` faz chover a cântaros na sua parte do dia.
 
 Um bloco `rain` muda o aspecto e o som da chuva e da neve aqui, com ou sem um `cycle`; sem um, elas têm o aspecto e o som do vanilla. Funciona do mesmo modo em um planeta ou lua do Galacticraft.
 

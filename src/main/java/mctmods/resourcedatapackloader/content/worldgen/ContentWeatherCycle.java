@@ -38,6 +38,14 @@ final class ContentWeatherCycle {
         world.rainingStrength = Math.max(world.rainingStrength, MathHelper.clamp(world.prevRainingStrength + RAIN_STEP, 0.0F, 1.0F));
     }
 
+    static void dry(World world) {
+        if (world.isRemote) { return; }
+        world.prevRainingStrength = world.rainingStrength;
+        world.rainingStrength = Math.max(0.0F, world.rainingStrength - RAIN_STEP);
+        world.prevThunderingStrength = world.thunderingStrength;
+        world.thunderingStrength = Math.max(0.0F, world.thunderingStrength - THUNDER_STEP);
+    }
+
     void tick(World world, DimensionTraitsDef.Cycle cycle) {
         if (world.isRemote) { return; }
         Random random = world.rand;

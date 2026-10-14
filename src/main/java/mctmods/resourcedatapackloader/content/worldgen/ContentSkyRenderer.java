@@ -71,9 +71,9 @@ import javax.annotation.Nullable;
         GlStateManager.pushMatrix();
         GlStateManager.rotate(turn, 1.0F, 0.0F, 0.0F);
         if (sky.sunSize > 0.0F) {
-            GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.sun(world));
+            ContentSkyRenderers.sunHaze(world, sky.sunTexture, clear * ContentSkyRenderers.sun(world), sky.sunSize, false);
             mc.renderEngine.bindTexture(sky.sunTexture);
-            quad(buffer, tessellator, sky.sunSize);
+            ContentSkyRenderers.quad(sky.sunSize);
         }
         GlStateManager.color(1.0F, 1.0F, 1.0F, clear * ContentSkyRenderers.moon(world));
         if (sky.bodies == null && moonSize > 0.0F) { moon(world, mc, buffer, tessellator); }
@@ -90,7 +90,7 @@ import javax.annotation.Nullable;
                     RingQuads.sky(ring, body.size, false);
                 }
                 mc.renderEngine.bindTexture(body.texture);
-                quad(buffer, tessellator, body.size);
+                ContentSkyRenderers.quad(body.size);
                 if (ring != null) {
                     RingQuads.sky(ring, body.size, true);
                     GlStateManager.tryBlendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
@@ -169,15 +169,6 @@ import javax.annotation.Nullable;
         buffer.pos(size, -100.0D, size).tex(left, bottom).endVertex();
         buffer.pos(size, -100.0D, -size).tex(left, top).endVertex();
         buffer.pos(-size, -100.0D, -size).tex(right, top).endVertex();
-        tessellator.draw();
-    }
-
-    private static void quad(BufferBuilder buffer, Tessellator tessellator, float size) {
-        buffer.begin(GL11.GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        buffer.pos(-size, 100.0D, -size).tex(0.0D, 0.0D).endVertex();
-        buffer.pos(size, 100.0D, -size).tex(1.0D, 0.0D).endVertex();
-        buffer.pos(size, 100.0D, size).tex(1.0D, 1.0D).endVertex();
-        buffer.pos(-size, 100.0D, size).tex(0.0D, 1.0D).endVertex();
         tessellator.draw();
     }
 

@@ -74,7 +74,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
         return ContentDimensionRules.color(def.cloudColor);
     }
 
-    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && !def.look.plainLight()) { ContentDimensionRules.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
+    @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRules.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
 
     @Override @Nonnull public float[] getLightBrightnessTable() {
         if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
@@ -108,7 +108,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override public void updateWeather() {
         if (def == null) { super.updateWeather(); }
-        else { ContentDimensionRules.weather(world, def.traits, weatherCycle, super::updateWeather); }
+        else { ContentDimensionRules.weather(world, def, weatherCycle, super::updateWeather); }
     }
 
     @Nullable public RainDef rain() { return def == null ? null : def.traits.rain; }
@@ -145,9 +145,9 @@ public class ContentWorldProvider extends WorldProviderSurface {
     }
 
     @Override @SideOnly(Side.CLIENT) @Nonnull public Vec3d getFogColor(float celestialAngle, float partialTicks) {
-        if (def != null && def.look != null && def.look.sampleFog) { return ContentFogSampler.color(super.getFogColor(celestialAngle, partialTicks)); }
-        if (def == null || def.fogColor < 0) { return super.getFogColor(celestialAngle, partialTicks); }
-        return ContentDimensionRules.fogColor(def.fogColor, celestialAngle);
+        if (def != null && def.look != null && def.look.sampleFog) { return ContentWindowLook.fogColor(world, ContentFogSampler.color(super.getFogColor(celestialAngle, partialTicks)), celestialAngle); }
+        if (def == null || def.fogColor < 0) { return ContentWindowLook.fogColor(world, super.getFogColor(celestialAngle, partialTicks), celestialAngle); }
+        return ContentWindowLook.fogColor(world, ContentDimensionRules.fogColor(def.fogColor, celestialAngle), celestialAngle);
     }
 
     @Override @Nonnull public String getSaveFolder() { return def == null ? "DIM" + getDimension() : def.suffix; }

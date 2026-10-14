@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.AmbienceDef;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
+import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderer;
 import mctmods.resourcedatapackloader.util.Colors;
 
@@ -82,9 +83,12 @@ public final class ContentDimensionRules {
         return time < 12300L || time > 23850L;
     }
 
-    static void weather(World world, DimensionTraitsDef traits, ContentWeatherCycle cycle, Runnable own) {
+    static void weather(World world, DimensionDef def, ContentWeatherCycle cycle, Runnable own) {
+        DimensionTraitsDef traits = def.traits;
+        TimeWindowDef window = ContentTimeWindows.active(world, def);
         if (!traits.precipitation) { ContentWeatherCycle.clear(world); }
-        else if (traits.alwaysRain) {
+        else if (window != null && window.holdsDry()) { ContentWeatherCycle.dry(world); }
+        else if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain : traits.alwaysRain) {
             own.run();
             ContentWeatherCycle.pour(world);
         }
@@ -159,7 +163,7 @@ public final class ContentDimensionRules {
     public static void existingWeather(World world, Runnable own) {
         DimensionDef def = ContentDimensions.overlay(world);
         if (def == null) { own.run(); }
-        else { weather(world, def.traits, CYCLES.computeIfAbsent(world, held -> new ContentWeatherCycle()), own); }
+        else { weather(world, def, CYCLES.computeIfAbsent(world, held -> new ContentWeatherCycle()), own); }
     }
 
     public static boolean existingFreezes(World world, boolean own) {
@@ -227,8 +231,8 @@ public final class ContentDimensionRules {
     @SideOnly(Side.CLIENT) public static Vec3d existingFogColor(World world, float celestialAngle, Vec3d own) {
         DimensionDef def = ContentDimensions.overlay(world);
         if (def == null) { return own; }
-        if (def.look != null && def.look.sampleFog) { return ContentFogSampler.color(own); }
-        return def.fogColor >= 0 ? fogColor(def.fogColor, celestialAngle) : own;
+        if (def.look != null && def.look.sampleFog) { return ContentWindowLook.fogColor(world, ContentFogSampler.color(own), celestialAngle); }
+        return ContentWindowLook.fogColor(world, def.fogColor >= 0 ? fogColor(def.fogColor, celestialAngle) : own, celestialAngle);
     }
 
     @SideOnly(Side.CLIENT) public static float existingStarBrightness(World world, float own) {
@@ -238,7 +242,8 @@ public final class ContentDimensionRules {
 
     @SideOnly(Side.CLIENT) public static float existingFogLight(World world, float own) {
         DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.fogColor >= 0 ? 1.0F : own;
+        if (def == null) { return own; }
+        return def.fogColor >= 0 ? 1.0F : own + (1.0F - own) * ContentWindowLook.colorFog(world);
     }
 
     @SideOnly(Side.CLIENT) @Nullable public static float[] existingSunrise(World world, @Nullable float[] own) {
@@ -261,7 +266,7 @@ public final class ContentDimensionRules {
 
     @SideOnly(Side.CLIENT) public static void existingLightmap(World world, float partialTicks, float sunBrightness, float skyLight, float blockLight, float[] colors) {
         DimensionDef def = ContentDimensions.overlay(world);
-        if (def != null && def.look != null && !def.look.plainLight()) { lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); }
+        if (def != null && def.look != null && def.look.tintsLight()) { lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); }
     }
 
     @SideOnly(Side.CLIENT) @Nullable public static MusicTicker.MusicType existingMusic(World world, @Nullable MusicTicker.MusicType own) {

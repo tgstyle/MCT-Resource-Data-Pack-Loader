@@ -53,9 +53,10 @@ public final class DimensionDef {
     @Nullable public final GalacticraftDef galacticraft;
     public final DimensionTraitsDef traits;
     @Nullable public final SkyLookDef look;
+    public final List<TimeWindowDef> windows;
     private final Set<String> given;
 
-    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, Set<String> given) {
+    public DimensionDef(ResourceLocation registryName, int id, String suffix, boolean keepLoaded, String terrain, String generatorOptions, boolean structures, String biomeSource, String biome, List<String> biomeList, boolean hasSkyLight, boolean surfaceWorld, boolean respawn, boolean spawning, int cloudHeight, int groundLevel, double movementFactor, int fogColor, int skyColor, int fixedTime, boolean sunriseColors, boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, int cloudColor, int respawnDimension, boolean renderSky, boolean renderClouds, boolean renderWeather, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, @Nullable GalacticraftDef galacticraft, DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, Set<String> given) {
         this.registryName = registryName;
         this.id = id;
         this.suffix = suffix;
@@ -94,6 +95,7 @@ public final class DimensionDef {
         this.galacticraft = galacticraft;
         this.traits = traits;
         this.look = look;
+        this.windows = windows;
         this.given = given;
     }
 

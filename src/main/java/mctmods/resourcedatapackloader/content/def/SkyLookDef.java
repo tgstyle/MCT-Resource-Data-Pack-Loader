@@ -26,8 +26,10 @@ public final class SkyLookDef {
     @Nullable public final Skybox skybox;
     @Nullable public final Aurora aurora;
     public final boolean rainbow;
+    public final int sunColor;
+    public final int sunAuraColor;
 
-    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow) {
+    public SkyLookDef(boolean sampleFog, float fogDensity, float fogGroundWeight, int lightSkyColor, int lightBlockColor, float skyFactor, float cloudSpeed, List<CloudLayer> cloudLayers, float sunBrightness, float moonBrightness, @Nullable Heat heat, int snowColor, int waterFogColor, int lavaFogColor, int starColor, float starTwinkle, int lightningColor, @Nullable Skybox skybox, @Nullable Aurora aurora, boolean rainbow, int sunColor, int sunAuraColor) {
         this.sampleFog = sampleFog;
         this.fogDensity = fogDensity;
         this.fogGroundWeight = fogGroundWeight;
@@ -48,11 +50,13 @@ public final class SkyLookDef {
         this.skybox = skybox;
         this.aurora = aurora;
         this.rainbow = rainbow;
+        this.sunColor = sunColor;
+        this.sunAuraColor = sunAuraColor;
     }
 
     public boolean tintsStars() { return starColor != UNSET || starTwinkle > 0.0F; }
 
-    public boolean plainLight() { return lightSkyColor == UNSET && lightBlockColor == UNSET && skyFactor >= 1.0F; }
+    public boolean tintsLight() { return lightSkyColor != UNSET || lightBlockColor != UNSET || skyFactor < 1.0F; }
 
     public boolean movesClouds() { return cloudSpeed != 1.0F || !cloudLayers.isEmpty(); }
 
