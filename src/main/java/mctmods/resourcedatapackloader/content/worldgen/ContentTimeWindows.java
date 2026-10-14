@@ -7,16 +7,19 @@ import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
-final class ContentTimeWindows {
+public final class ContentTimeWindows {
     private static final long STILL = 12000L;
 
     private ContentTimeWindows() {}
 
-    private static long dayTick(World world, DimensionDef def) {
-        long length = def.traits.dayLength;
+    public static long clock(World world, @Nullable DimensionDef def) {
+        long length = def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits.dayLength;
         if (length == DimensionTraitsDef.NO_DAY) { return STILL; }
-        return Math.floorMod(world.getWorldTime(), length) * DimensionTraitsDef.VANILLA_DAY / length;
+        long time = def != null && def.fixedTime >= 0 ? def.fixedTime : world.getWorldTime();
+        return Math.floorDiv(time * DimensionTraitsDef.VANILLA_DAY, length);
     }
+
+    private static long dayTick(World world, DimensionDef def) { return Math.floorMod(clock(world, def), DimensionTraitsDef.VANILLA_DAY); }
 
     @Nullable static TimeWindowDef active(World world, DimensionDef def) {
         if (def.windows.isEmpty()) { return null; }

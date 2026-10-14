@@ -2,6 +2,8 @@ package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -25,6 +27,7 @@ public final class CardScan {
     private static final String PLAY_FROM = "rdplPlayFrom";
     private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
     private static final Map<Integer, Long> CLOCKS = new HashMap<>();
+    private static final Map<Integer, Long> SCALED = new HashMap<>();
     private static int ticks;
 
     private CardScan() {}
@@ -71,16 +74,19 @@ public final class CardScan {
             int dimension = world.provider.getDimension();
             if (world.playerEntities.isEmpty()) {
                 CLOCKS.remove(dimension);
+                SCALED.remove(dimension);
                 continue;
             }
             long now = world.getWorldTime();
+            long scaled = ContentTimeWindows.clock(world, ContentDimensions.of(world));
             Long before = CLOCKS.put(dimension, now);
-            if (before == null || now <= before) { continue; }
+            Long scaledBefore = SCALED.put(dimension, scaled);
+            if (before == null || scaledBefore == null || now <= before) { continue; }
             List<EntityPlayerMP> here = new ArrayList<>();
             for (EntityPlayer one : world.playerEntities) {
                 if (one instanceof EntityPlayerMP) { here.add((EntityPlayerMP) one); }
             }
-            if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, before, now); }
+            if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, scaledBefore, scaled); }
             long day = now / DimensionTraitsDef.VANILLA_DAY;
             if (day == before / DimensionTraitsDef.VANILLA_DAY) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
