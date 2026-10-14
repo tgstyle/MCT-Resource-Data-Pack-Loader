@@ -2,7 +2,9 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeatherCycle;
 
@@ -27,13 +29,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private final ContentWeatherCycle rdpl$weatherCycle = new ContentWeatherCycle();
 
     @WrapOperation(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;canHaveWeather()Z")) private boolean rdpl$ownWeather(ServerLevel level, Operation<Boolean> original) {
+        DimensionDef def = ContentDimensions.def(level);
         DimensionTraitsDef traits = ContentWeather.traits(level);
         DimensionTraitsDef.Cycle cycle = traits.cycle();
         if (!traits.precipitation()) {
             ContentWeatherCycle.clear(level);
             return false;
         }
-        if (traits.alwaysRain()) { return ContentWeatherCycle.pour(level, original.call(level)); }
+        TimeWindowDef window = def == null ? null : ContentTimeWindows.active(level, def);
+        if (window != null && window.holdsDry()) {
+            ContentWeatherCycle.dry(level);
+            return false;
+        }
+        if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain() : traits.alwaysRain()) { return ContentWeatherCycle.pour(level, original.call(level)); }
         if (cycle != null) {
             rdpl$weatherCycle.tick(level, cycle);
             return false;

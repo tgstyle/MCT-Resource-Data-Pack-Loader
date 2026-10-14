@@ -32,6 +32,10 @@ public final class ContentSkyShapes {
     public static final int PANORAMA_VERTICES = LATITUDES * LONGITUDES * 4;
     public static final int AURORA_VERTICES = 2 * AURORA_STEPS * 4;
     public static final int BOW_VERTICES = (BOW_RADII.length - 1) * BOW_STEPS * 4;
+    private static final float AURA_REACH = 1.5F;
+    private static final int AURA_STEPS = 32;
+    public static final int AURA_VERTICES = AURA_STEPS / 2 * 4;
+    private static final int WHITE = 0xFFFFFF;
     private static final long RAINBOW_TICKS = 2400L;
     private static final float RAINBOW_FADE = 600.0F;
     private static int wetWorld;
@@ -142,6 +146,19 @@ public final class ContentSkyShapes {
         float flat = Mth.cos(up) * SIZE;
         float alpha = top ? 0.0F : strength * 0.8F * Mth.sin(along * Mth.PI) * (0.6F + 0.4F * Mth.sin(time * 0.11F + step * 0.9F + band * 0.7F));
         return colored(out, at, Mth.sin(around) * flat, Mth.sin(up) * SIZE, -Mth.cos(around) * flat, top ? aurora.topColor() : aurora.color(), alpha);
+    }
+
+    public static float[] aura() {
+        float[] out = new float[AURA_VERTICES * COLORED];
+        int at = 0;
+        for (int step = 0; step < AURA_STEPS; step += 2) {
+            at = colored(out, at, 0.0F, 0.0F, 0.0F, WHITE, 1.0F);
+            for (int corner = step; corner < step + 3; corner++) {
+                float around = corner * Mth.TWO_PI / AURA_STEPS;
+                at = colored(out, at, Mth.cos(around) * AURA_REACH, 0.0F, Mth.sin(around) * AURA_REACH, WHITE, 0.0F);
+            }
+        }
+        return out;
     }
 
     public static float[] bow(float sunAngle, float strength) {

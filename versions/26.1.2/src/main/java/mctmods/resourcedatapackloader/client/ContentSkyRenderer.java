@@ -36,6 +36,7 @@ import javax.annotation.Nullable;
 public final class ContentSkyRenderer {
     private static final Map<DimensionTraitsDef.Sky, ContentSkyRenderer> RENDERERS = new IdentityHashMap<>();
     private static final int PHASES = 8;
+    private static final float[] UNTINTED = {1.0F, 1.0F, 1.0F};
     @Nullable private static GpuBuffer quadBuffer;
     @Nullable private static GpuBuffer phaseBuffer;
     private final RenderSystem.AutoStorageIndexBuffer quadIndices = RenderSystem.getSequentialBuffer(VertexFormat.Mode.QUADS);
@@ -62,7 +63,7 @@ public final class ContentSkyRenderer {
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotation(sunAngle));
-        if (sky.sunSize() > 0.0F) { quad(poseStack, sky.sunTexture(), sky.sunSize(), rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
+        if (sky.sunSize() > 0.0F) { sun(poseStack, rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level)); }
         poseStack.popPose();
         if (sky.bodies() == null) {
             if (moonSize > 0.0F) {
@@ -95,17 +96,23 @@ public final class ContentSkyRenderer {
         poseStack.popPose();
     }
 
+    private void sun(PoseStack poseStack, float rainBrightness) {
+        if (quadBuffer == null) { quadBuffer = corners(); }
+        float[] tint = ContentSkyExtras.underSun(poseStack, sky.sunSize(), rainBrightness, Minecraft.getInstance().getTextureManager().getTexture(sky.sunTexture()), quadBuffer);
+        draw(poseStack, sky.sunTexture(), sky.sunSize(), tint == null ? UNTINTED : tint, rainBrightness, quadBuffer, 0);
+    }
+
     private void quad(PoseStack poseStack, Identifier texture, float size, float rainBrightness) {
         if (quadBuffer == null) { quadBuffer = corners(); }
-        draw(poseStack, texture, size, rainBrightness, quadBuffer, 0);
+        draw(poseStack, texture, size, UNTINTED, rainBrightness, quadBuffer, 0);
     }
 
     private void phase(PoseStack poseStack, Identifier texture, int phase, float rainBrightness) {
         if (phaseBuffer == null) { phaseBuffer = phases(); }
-        draw(poseStack, texture, moonSize, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4);
+        draw(poseStack, texture, moonSize, UNTINTED, rainBrightness, phaseBuffer, Math.floorMod(phase, PHASES) * 4);
     }
 
-    private void draw(PoseStack poseStack, Identifier texture, float size, float rainBrightness, GpuBuffer vertices, int baseVertex) {
+    private void draw(PoseStack poseStack, Identifier texture, float size, float[] tint, float rainBrightness, GpuBuffer vertices, int baseVertex) {
         RenderTarget target = Minecraft.getInstance().getMainRenderTarget();
         GpuTextureView color = target.getColorTextureView();
         if (color == null) { return; }
@@ -115,7 +122,7 @@ public final class ContentSkyRenderer {
         modelView.mul(poseStack.last().pose());
         modelView.translate(0.0F, ContentSkyShapes.SIZE, 0.0F);
         modelView.scale(size, 1.0F, size);
-        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(modelView, new Vector4f(1.0F, 1.0F, 1.0F, rainBrightness), new Vector3f(), new Matrix4f());
+        GpuBufferSlice transforms = RenderSystem.getDynamicUniforms().writeTransform(modelView, new Vector4f(tint[0], tint[1], tint[2], rainBrightness), new Vector3f(), new Matrix4f());
         try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL sky body", color, OptionalInt.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
             pass.setPipeline(RenderPipelines.CELESTIAL);
             RenderSystem.bindDefaultUniforms(pass);

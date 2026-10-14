@@ -10,6 +10,7 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.ColorTargetState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.BlendFactor;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.GpuTextureView;
@@ -32,7 +33,10 @@ import javax.annotation.Nullable;
 public final class ContentSkyExtras {
     private static final RenderPipeline BOX = RenderPipelines.CELESTIAL.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sky_box")).withColorTargetState(ColorTargetState.DEFAULT).withCull(false).build();
     private static final RenderPipeline GLOW = RenderPipelines.SUNRISE_SUNSET.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sky_glow")).withColorTargetState(new ColorTargetState(BlendFunction.OVERLAY)).withPrimitiveTopology(PrimitiveTopology.QUADS).withCull(false).build();
+    private static final RenderPipeline AURA = RenderPipelines.SUNRISE_SUNSET.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sun_aura")).withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.SRC_ALPHA, BlendFactor.ONE_MINUS_SRC_ALPHA, BlendFactor.ONE, BlendFactor.ZERO))).withPrimitiveTopology(PrimitiveTopology.QUADS).withCull(false).build();
+    private static final RenderPipeline SHADE = RenderPipelines.CELESTIAL.toBuilder().withLocation(ResourceDataPackLoader.id("pipeline/sun_shade")).withColorTargetState(new ColorTargetState(new BlendFunction(BlendFactor.ZERO, BlendFactor.ONE_MINUS_SRC_COLOR))).build();
     private static final RenderSystem.AutoStorageIndexBuffer QUAD_INDICES = RenderSystem.getSequentialBuffer(PrimitiveTopology.QUADS);
+    @Nullable private static GpuBuffer sunAura;
     @Nullable private static GpuBuffer box;
     @Nullable private static GpuBuffer panorama;
     @Nullable private static GpuBuffer aurora;
@@ -108,6 +112,43 @@ public final class ContentSkyExtras {
                 pass.drawIndexed(ContentSkyShapes.BOW_VERTICES / 4 * 6, 1, 0, 0, 0);
             }
         }
+    }
+
+    @Nullable public static float[] underSun(PoseStack poseStack, float size, float fade, AbstractTexture image, GpuBuffer vertices) {
+        ClientLevel level = Minecraft.getInstance().level;
+        RenderTarget target = Minecraft.getInstance().gameRenderer.mainRenderTarget();
+        GpuTextureView color = target.getColorTextureView();
+        float[] aura = ContentWindowLook.aura(level, fade);
+        float[] tint = ContentWindowLook.sunTint(level);
+        if (color == null || aura == null && tint == null) { return tint; }
+        if (aura != null && sunAura == null) { sunAura = colored(null, "RDPL sun aura", ContentSkyShapes.aura()); }
+        Matrix4fStack modelView = RenderSystem.getModelViewStack();
+        modelView.pushMatrix();
+        modelView.mul(poseStack.last().pose());
+        modelView.translate(0.0F, ContentSkyShapes.SIZE, 0.0F);
+        modelView.scale(size, 1.0F, size);
+        Matrix4f placed = new Matrix4f(modelView);
+        modelView.popMatrix();
+        GpuBufferSlice glow = aura == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(aura[0], aura[1], aura[2], aura[3]));
+        GpuBufferSlice shade = tint == null ? null : RenderSystem.getDynamicUniforms().writeTransform(placed, new Vector4f(fade, fade, fade, 1.0F));
+        try (RenderPass pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(() -> "RDPL sun haze", color, Optional.empty(), target.getDepthTextureView(), OptionalDouble.empty())) {
+            RenderSystem.bindDefaultUniforms(pass);
+            pass.setIndexBuffer(QUAD_INDICES.getBuffer(ContentSkyShapes.AURA_VERTICES / 4 * 6), QUAD_INDICES.type());
+            if (glow != null && sunAura != null) {
+                pass.setPipeline(AURA);
+                pass.setUniform("DynamicTransforms", glow);
+                pass.setVertexBuffer(0, sunAura.slice());
+                pass.drawIndexed(ContentSkyShapes.AURA_VERTICES / 4 * 6, 1, 0, 0, 0);
+            }
+            if (shade != null) {
+                pass.setPipeline(SHADE);
+                pass.setUniform("DynamicTransforms", shade);
+                texture(pass, image);
+                pass.setVertexBuffer(0, vertices.slice());
+                pass.drawIndexed(6, 1, 0, 0, 0);
+            }
+        }
+        return tint;
     }
 
     private static void texture(RenderPass pass, AbstractTexture image) { pass.bindTexture("Sampler0", image.getTextureView(), image.getSampler()); }

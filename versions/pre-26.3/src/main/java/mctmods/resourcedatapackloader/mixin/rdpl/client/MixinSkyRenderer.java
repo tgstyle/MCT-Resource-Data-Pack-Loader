@@ -1,14 +1,19 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.client;
 
+import mctmods.resourcedatapackloader.client.ContentFogSampler;
 import mctmods.resourcedatapackloader.client.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.client.ContentStarField;
 import mctmods.resourcedatapackloader.client.ContentStars;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SkyRenderer;
+import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.world.level.MoonPhase;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +21,12 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(SkyRenderer.class) public abstract class MixinSkyRenderer {
+    @Shadow @Final private TextureAtlas celestialsAtlas;
+    @Shadow @Final private GpuBuffer sunBuffer;
+
     @Shadow protected abstract void renderMoon(MoonPhase moonPhase, float rainBrightness, PoseStack poseStack);
+
+    @Inject(method = "renderSun(FLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD")) private void rdpl$underSun(float rainBrightness, PoseStack poseStack, CallbackInfo ci) { ContentSkyExtras.underSun(poseStack, DimensionTraitsDef.VANILLA_SUN, rainBrightness * ContentFogSampler.sun(Minecraft.getInstance().level), celestialsAtlas, sunBuffer); }
 
     @Inject(method = "renderSkyDisc(I)V", at = @At("TAIL")) private void rdpl$skybox(int skyColor, CallbackInfo ci) { ContentSkyExtras.backdrop(); }
 

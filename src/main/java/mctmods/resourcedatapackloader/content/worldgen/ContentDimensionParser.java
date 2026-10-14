@@ -105,6 +105,7 @@ public final class ContentDimensionParser {
         String respawn = Json.getString(sky, "respawnDimension", "").trim();
         Identifier respawnDimension = respawn.isEmpty() ? null : Identifier.tryParse(ContentFormats.dimensionId(respawn));
         if (!respawn.isEmpty() && respawnDimension == null) { ContentLog.LOGGER.error("Dimension {} names respawnDimension '{}', which is not a dimension id, so respawns stay where the game puts them", key, respawn); }
+        DimensionTraitsDef traits = traits(key, json);
         return new DimensionDef(key, type, flatOptions(terrain), Json.getBoolean(terrain, "structures", true), source,
                 Json.getString(biomes, "biome", "minecraft:plains").trim(), biomeList, minHeight, maxHeight,
                 options.has("seaLevel") ? Json.getInt(options, "seaLevel") : -1, Json.getBoolean(options, "useLavaOceans", false),
@@ -116,8 +117,8 @@ public final class ContentDimensionParser {
                 Json.getBoolean(sky, "waterVaporizes", false), Json.getBoolean(sky, "showFog", false), Mth.clamp(Json.getFloat(sky, "ambientLight", 0.0F), 0.0F, 1.0F),
                 Json.getFloat(sky, "starBrightness", -1.0F), Json.getBoolean(sky, "renderSky", true), Json.getBoolean(sky, "renderClouds", true),
                 Json.getBoolean(sky, "renderWeather", true), respawnDimension, Json.getBoolean(sky, "respawn", true),
-                Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits(key, json),
-                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), Json.paths(json));
+                Json.getInt(sky, "groundLevel", 63), gameRules(key, json), Json.strings(json, "requires"), portal(key, json), options, traits,
+                ContentParserSkyLook.look(key, sky, cloudHeight, clouds), ContentParserTimeWindows.windows(key, json, traits.precipitation()), Json.paths(json));
     }
 
     private static DimensionTraitsDef traits(Identifier key, JsonObject json) {

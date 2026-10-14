@@ -13,7 +13,7 @@ public record DimensionDef(Identifier key, String terrain, List<String> flatOpti
                            boolean hasSkyLight, boolean surfaceWorld, boolean spawning, int cloudHeight, double movementFactor, int fogColor, int skyColor, int cloudColor, long fixedTime, boolean sunriseColors,
                            boolean nether, boolean beds, boolean waterVaporizes, boolean showFog, float ambientLight, float starBrightness, boolean renderSky, boolean renderClouds, boolean renderWeather,
                            @Nullable Identifier respawnDimension, boolean respawn, int groundLevel, Map<String, String> gameRules, List<String> requires, @Nullable DimensionPortalDef portal, JsonObject options,
-                           DimensionTraitsDef traits, @Nullable SkyLookDef look, Set<String> given) {
+                           DimensionTraitsDef traits, @Nullable SkyLookDef look, List<TimeWindowDef> windows, Set<String> given) {
     public static final String OVERWORLD = "overworld";
     public static final String FLAT = "flat";
     public static final String VOID = "void";
