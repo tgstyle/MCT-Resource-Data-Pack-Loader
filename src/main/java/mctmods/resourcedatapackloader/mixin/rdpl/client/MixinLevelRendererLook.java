@@ -3,9 +3,15 @@ package mctmods.resourcedatapackloader.mixin.rdpl.client;
 import mctmods.resourcedatapackloader.client.ContentDimensionEffects;
 import mctmods.resourcedatapackloader.client.ContentSkyExtras;
 import mctmods.resourcedatapackloader.client.ContentStars;
+import mctmods.resourcedatapackloader.client.ContentSunHaze;
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -28,6 +34,13 @@ import javax.annotation.Nullable;
     @Shadow @Nullable private ClientLevel level;
 
     @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;setShaderColor(FFFF)V", ordinal = 2), index = 3) private float rdpl$dimSun(float alpha) { return alpha * ContentDimensionEffects.sun(level); }
+
+    @Inject(method = "renderSky", at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/LevelRenderer;SUN_LOCATION:Lnet/minecraft/resources/ResourceLocation;", opcode = Opcodes.GETSTATIC)) private void rdpl$sunAura(Matrix4f frustumMatrix, Matrix4f projectionMatrix, float partialTick, Camera camera, boolean isFoggy, Runnable skyFogSetup, CallbackInfo ci) { if (level != null) { ContentSunHaze.aura(level, ContentSunHaze.sunPose(level, frustumMatrix, partialTick), RenderSystem.getShaderColor()[3], DimensionTraitsDef.VANILLA_SUN); } }
+
+    @WrapOperation(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/BufferUploader;drawWithShader(Lcom/mojang/blaze3d/vertex/MeshData;)V", ordinal = 1)) private void rdpl$sunTint(MeshData meshData, Operation<Void> original, @Local(argsOnly = true, ordinal = 0) Matrix4f frustumMatrix, @Local(argsOnly = true) float partialTick) {
+        if (level == null) { original.call(meshData); }
+        else { ContentSunHaze.sun(level, ContentSunHaze.sunPose(level, frustumMatrix, partialTick), RenderSystem.getShaderColor()[3], DimensionTraitsDef.VANILLA_SUN, () -> original.call(meshData)); }
+    }
 
     @Redirect(method = "renderSky", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/VertexBuffer;drawWithShader(Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;Lnet/minecraft/client/renderer/ShaderInstance;)V", ordinal = 1)) private void rdpl$tintStars(VertexBuffer buffer, Matrix4f modelViewMatrix, Matrix4f projectionMatrix, ShaderInstance shader) {
         if (level == null || ContentStars.keepsVanilla(level)) {

@@ -41,6 +41,14 @@ public final class ContentWeatherCycle {
         return false;
     }
 
+    public static void dry(Level level) {
+        if (level.isClientSide()) { return; }
+        level.oRainLevel = level.rainLevel;
+        level.rainLevel = Math.max(0.0F, level.rainLevel - THUNDER_STEP);
+        level.oThunderLevel = level.thunderLevel;
+        level.thunderLevel = Math.max(0.0F, level.thunderLevel - THUNDER_STEP);
+    }
+
     public void tick(Level level, DimensionTraitsDef.Cycle cycle) {
         if (level.isClientSide()) { return; }
         RandomSource random = level.random;

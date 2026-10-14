@@ -96,9 +96,11 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     @Override @Nonnull public Vec3 getBrightnessDependentFogColor(@Nonnull Vec3 color, float brightness) {
         SkyLookDef look = look();
-        Vec3 own = def == null || def.fogColor() < 0 ? base.getBrightnessDependentFogColor(color, brightness) : DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(def.fogColor()), brightness);
-        return look != null && look.sampleFog() ? ContentFogSampler.color(own) : own;
+        Vec3 own = def == null || def.fogColor() < 0 ? base.getBrightnessDependentFogColor(color, brightness) : litFog(def.fogColor(), brightness);
+        return ContentWindowLook.fogColor(def, look != null && look.sampleFog() ? ContentFogSampler.color(own) : own, brightness);
     }
+
+    static Vec3 litFog(int rgb, float brightness) { return DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(rgb), brightness); }
 
     @Override public float getCloudHeight() {
         SkyLookDef.CloudLayer layer = drawing;
@@ -108,7 +110,10 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     @Override public void adjustLightmapColors(@Nonnull ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, int pixelY, @Nonnull Vector3f colors) {
         base.adjustLightmapColors(level, partialTicks, skyDarken, blockLightRedFlicker, skyLight, pixelX, pixelY, colors);
         SkyLookDef look = look();
-        if (look == null || look.plainLight() || forceBrightLightmap()) { return; }
+        if (look != null && look.tintsLight() && !forceBrightLightmap()) { tintLight(level, look, partialTicks, skyDarken, blockLightRedFlicker, skyLight, pixelX, colors); }
+    }
+
+    private static void tintLight(ClientLevel level, SkyLookDef look, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, Vector3f colors) {
         float block = LightTexture.getBrightness(level.dimensionType(), pixelX) * blockLightRedFlicker;
         float sky = skyLight * look.skyFactor();
         float skyRed = sky * Mth.lerp(SKY_FLOOR, skyDarken, 1.0F);

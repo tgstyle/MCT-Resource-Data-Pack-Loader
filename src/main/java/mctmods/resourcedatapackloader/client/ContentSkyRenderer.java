@@ -66,13 +66,19 @@ final class ContentSkyRenderer {
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         poseStack.pushPose();
         float clear = 1.0F - level.getRainLevel(partialTick);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.sun(level));
+        float sunAlpha = clear * ContentDimensionEffects.sun(level);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, sunAlpha);
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         float turn = level.getTimeOfDay(partialTick) * 360.0F;
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees(turn));
-        if (sky.sunSize() > 0.0F) { quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize()); }
+        if (sky.sunSize() > 0.0F) {
+            Matrix4f pose = poseStack.last().pose();
+            ContentSunHaze.aura(level, pose, sunAlpha, sky.sunSize());
+            RenderSystem.setShaderTexture(0, sky.sunTexture());
+            ContentSunHaze.sun(level, pose, sunAlpha, sky.sunSize(), () -> ContentSunHaze.quad(pose, sky.sunSize()));
+        }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
         if (sky.bodies() == null && moonSize > 0.0F) { moon(poseStack.last().pose(), level.getMoonPhase()); }
         poseStack.popPose();
@@ -158,12 +164,7 @@ final class ContentSkyRenderer {
 
     private static void quad(Matrix4f pose, ResourceLocation texture, float size) {
         RenderSystem.setShaderTexture(0, texture);
-        BufferBuilder buffer = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        buffer.addVertex(pose, -size, SIZE, -size).setUv(0.0F, 0.0F);
-        buffer.addVertex(pose, size, SIZE, -size).setUv(1.0F, 0.0F);
-        buffer.addVertex(pose, size, SIZE, size).setUv(1.0F, 1.0F);
-        buffer.addVertex(pose, -size, SIZE, size).setUv(0.0F, 1.0F);
-        BufferUploader.drawWithShader(buffer.buildOrThrow());
+        ContentSunHaze.quad(pose, size);
     }
 
     private static void draw(VertexBuffer buffer, PoseStack poseStack, Matrix4f projection, @Nullable ShaderInstance shader) {

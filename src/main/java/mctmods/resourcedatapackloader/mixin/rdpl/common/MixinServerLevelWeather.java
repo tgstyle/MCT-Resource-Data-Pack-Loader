@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeatherCycle;
 
@@ -31,11 +34,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         ServerLevel level = (ServerLevel) (Object) this;
         DimensionTraitsDef traits = ContentWeather.traits(level);
         DimensionTraitsDef.Cycle cycle = traits.cycle();
+        TimeWindowDef window = ContentTimeWindows.active(level, ContentDimensions.def(level));
         if (!traits.precipitation()) {
             ContentWeatherCycle.clear(level);
             return false;
         }
-        if (traits.alwaysRain()) { return ContentWeatherCycle.pour(level, serverLevelData, original.call(type)); }
+        if (window != null && window.holdsDry()) {
+            ContentWeatherCycle.dry(level);
+            return false;
+        }
+        if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain() : traits.alwaysRain()) { return ContentWeatherCycle.pour(level, serverLevelData, original.call(type)); }
         if (cycle != null) {
             rdpl$weatherCycle.tick(level, cycle);
             return false;
