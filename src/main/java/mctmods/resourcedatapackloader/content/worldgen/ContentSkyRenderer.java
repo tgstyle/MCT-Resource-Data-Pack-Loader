@@ -23,7 +23,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 import org.lwjgl.opengl.GL11;
 import javax.annotation.Nullable;
 
-@SideOnly(Side.CLIENT) final class ContentSkyRenderer extends IRenderHandler {
+@SideOnly(Side.CLIENT) public final class ContentSkyRenderer extends IRenderHandler {
     private static final ResourceLocation MOON_PHASES = new ResourceLocation("textures/environment/moon_phases.png");
     private final DimensionTraitsDef.Sky sky;
     private final ResourceLocation moonTexture;

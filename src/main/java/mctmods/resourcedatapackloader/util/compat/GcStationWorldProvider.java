@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderers;
 
 import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
@@ -64,6 +65,7 @@ public class GcStationWorldProvider extends WorldProviderOverworldOrbit {
         setSkyRenderer(new SkyProviderOrbit(station.home.getBodyIcon(), true, true));
         setSpinDeltaPerTick(getSpinManager().getSpinRate());
         ContentSkyRenderers.apply(this, station.def);
+        if (getSkyRenderer() instanceof ContentSkyRenderer) { setSkyRenderer(new GcStationPlanetSky(getSkyRenderer(), station.home.getBodyIcon())); }
         if (getCloudRenderer() == null) { setCloudRenderer(new CloudRenderer()); }
     }
 }
