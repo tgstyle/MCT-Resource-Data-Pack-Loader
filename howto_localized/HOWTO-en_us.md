@@ -3265,10 +3265,22 @@ Setting any of `sun`, `moon`, `bodies` or `stars` swaps the vanilla sky for RDPL
 
 Without `bodies` the vanilla moon and its phases stay. With `bodies`, the list is everything besides the sun, so an empty list is a sky with no moon.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tints the sun and `sun.auraColor` lays a soft glow around it, a sun haze. Both fade with rain and `sunBrightness` as the sun does. They work in the vanilla sky of an [existing dimension](#existing-dimensions) as well as in RDPL's own, and a [time window](#the-time-block) can change them for part of the day.
+
 | Key                    | Required | Value          | Default         | What it does                                                                                                                                                                                     |
 | ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `sun.texture`          | no       | texture path   | the vanilla sun | The sun's picture                                                                                                                                                                                |
 | `sun.size`             | no       | float          | `30`            | Half the sun's width at a distance of 100. `0` hides it                                                                                                                                          |
+| `sun.color`            | no       | hex color      | white           | Tint of the sun                                                                                                                                                                                  |
+| `sun.auraColor`        | no       | hex color      | none            | Color of the glow around the sun. Without it there is no glow                                                                                                                                    |
 | `moon.texture`         | no       | texture path   | vanilla's moon  | A sheet of the moon's eight phases, four across and two down. Without it the vanilla moon is drawn                                                                                        |
 | `moon.size`            | no       | float          | `20`            | Half the moon's width at a distance of 100. `0` hides it. Left out with `bodies`                                                                                                                 |
 | `bodies[].texture`     | yes      | texture path   |                 | The body's picture                                                                                                                                                                               |
@@ -3425,9 +3437,36 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 
 *dimensions*
 
-| Key         | Required | Value      | Default | What it does                                                                             |
-| ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
-| `dayLength` | no       | int, ticks | `24000` | How long one day and night lasts here. The moon phase still turns once every 24000 ticks |
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` changes a few `sky` and `weather` keys for part of each day: here fog at night, a lighter fog and a hazy red sun around dawn, and rain only at night. `from` and `to` are times of day on the usual 24000-tick scale, where 0 is sunrise, 6000 noon, 12000 sunset and 18000 midnight, and they stretch with `dayLength`, so 13000 is always just after sunset. A window whose `from` is larger than its `to` runs past midnight. Where windows overlap, the first one in the list counts. With `fixedTime` the time of day never moves, so a window either always applies or never does.
+
+Fog and sun changes fade in and out over a second or two when a window begins and ends. Outside every window, the dimension's own keys apply.
+
+| Key                               | Required | Value                 | Default         | What it does                                                                             |
+| --------------------------------- | -------- | --------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `dayLength`                       | no       | int, ticks            | `24000`         | How long one day and night lasts here. The moon phase still turns once every 24000 ticks |
+| `windows[].from`                  | yes      | int, 0 to 24000       |                 | Time of day the window begins                                                            |
+| `windows[].to`                    | yes      | int, 0 to 24000       |                 | Time of day it ends                                                                      |
+| `windows[].sky.fogDensity`        | no       | float, 0 to 1         | the dimension's | [`fogDensity`](#the-sky-block) during the window                                         |
+| `windows[].sky.fogColor`          | no       | hex color or `sample` | the dimension's | [`fogColor`](#the-sky-block) during the window                                           |
+| `windows[].sky.sun.color`         | no       | hex color             | the dimension's | [`sun.color`](#the-sky-renderer) during the window                                       |
+| `windows[].sky.sun.auraColor`     | no       | hex color             | the dimension's | [`sun.auraColor`](#the-sky-renderer) during the window                                   |
+| `windows[].weather.precipitation` | no       | `false`               | the dimension's | Off, rain and storms die away and hold off for the window                                |
+| `windows[].weather.alwaysRain`    | no       | boolean               | the dimension's | [`alwaysRain`](#the-weather-block) during the window                                     |
+
+Any other key in a window is ignored with an error in the log, and so is `precipitation: true` or `alwaysRain: true` in a dimension whose `precipitation` is off.
 
 ### The `weather` block
 
@@ -3461,7 +3500,7 @@ These are the same multipliers as the world template keys `worldGravity` and `wo
 
 A `wind` block makes the rain gusty. Now and then a gust leans it up to `gust` degrees further and swings its heading up to `swing` degrees to one side, rising and dying away within four seconds; the gusts come `every` ticks apart. Rain and snow lean with it, and the dimension's ambient particles drift the way the rain leans, with or without gusts. A `wind` block without a `rain` block gives the rain its defaults.
 
-Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, whatever the overworld is doing. With `thunderTicks` it storms as well, on timings of its own; a storm that meets a shower brings the shower to full strength, darkens the sky and, with `lightning` on, brings lightning. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches.
+Other dimensions share the overworld's rain. A `cycle` gives this one weather of its own: showers come and go on the timings above, whatever the overworld is doing. With `thunderTicks` it storms as well, on timings of its own; a storm that meets a shower brings the shower to full strength, darkens the sky and, with `lightning` on, brings lightning. `weatherCeiling` in a [world template](#world-templates) still caps how high rain reaches. A [time window](#the-time-block) with `precipitation: false` keeps rain to the rest of the day: a shower already falling dies away over a few seconds and the weather waits until the window ends, and one with `alwaysRain` makes it pour for its part of the day.
 
 A `rain` block changes how rain and snow look and sound here, with or without a `cycle`; without one they look and sound as vanilla's.
 

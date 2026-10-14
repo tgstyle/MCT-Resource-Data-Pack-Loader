@@ -3265,10 +3265,22 @@ Definir qualquer um entre `sun`, `moon`, `bodies` ou `stars` troca o céu vanill
 
 Sem `bodies`, a lua vanilla e suas fases permanecem. Com `bodies`, a lista é tudo além do sol, então uma lista vazia é um céu sem lua.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tinge o sol e `sun.auraColor` coloca ao redor dele um brilho suave, uma névoa solar. Os dois se atenuam com a chuva e com `sunBrightness`, como o sol. Funcionam no céu vanilla de uma [dimensão existente](#dimensões-existentes) e também no céu próprio do RDPL, e uma [janela de tempo](#o-bloco-time) pode alterá-los durante uma parte do dia.
+
 | Chave | Obrigatória | Valor | Padrão | O que faz |
 | ----- | ----------- | ----- | ------ | --------- |
 | `sun.texture` | não | caminho de textura | o sol vanilla | A imagem do sol |
 | `sun.size` | não | float | `30` | Metade da largura do sol a uma distância de 100. `0` o esconde |
+| `sun.color` | não | cor hex | branco | Tonalidade do sol |
+| `sun.auraColor` | não | cor hex | nenhum | Cor do brilho ao redor do sol. Sem ela, não há brilho |
 | `moon.texture` | não | caminho de textura | a lua do vanilla | Uma folha com as oito fases da lua, quatro na largura e duas na altura. Sem ela, a lua do vanilla é desenhada |
 | `moon.size` | não | float | `20` | Metade da largura da lua a uma distância de 100. `0` a oculta. Com `bodies`, não é usado |
 | `bodies[].texture` | sim | caminho de textura | | A imagem do corpo |
@@ -3425,9 +3437,36 @@ São os mesmos multiplicadores que as chaves de modelo de mundo `worldGravity` e
 
 *dimensões*
 
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` muda algumas chaves de `sky` e `weather` durante uma parte de cada dia: aqui neblina à noite, uma neblina mais leve e um sol vermelho enevoado perto do amanhecer, e chuva só à noite. `from` e `to` são horas do dia na escala habitual de 24000 ticks, em que 0 é o nascer do sol, 6000 o meio-dia, 12000 o pôr do sol e 18000 a meia-noite, e se esticam com `dayLength`, então 13000 fica sempre logo depois do pôr do sol. Uma janela cujo `from` é maior que o `to` atravessa a meia-noite. Onde as janelas se sobrepõem, vale a primeira da lista. Com `fixedTime` a hora do dia nunca avança, então uma janela ou sempre se aplica, ou nunca.
+
+As mudanças de neblina e de sol aparecem e somem aos poucos, em um ou dois segundos, quando uma janela começa e termina. Fora de todas as janelas, valem as chaves da própria dimensão.
+
 | Chave | Obrigatória | Valor | Padrão | O que faz |
 | --- | --- | --- | --- | --- |
 | `dayLength` | não | int, ticks | `24000` | Quanto dura um dia e uma noite aqui. A fase da lua ainda completa um ciclo a cada 24000 ticks |
+| `windows[].from` | sim | int, 0 a 24000 | | Hora do dia em que a janela começa |
+| `windows[].to` | sim | int, 0 a 24000 | | Hora do dia em que termina |
+| `windows[].sky.fogDensity` | não | float, 0 a 1 | o da dimensão | [`fogDensity`](#o-bloco-sky) durante a janela |
+| `windows[].sky.fogColor` | não | cor hex ou `sample` | o da dimensão | [`fogColor`](#o-bloco-sky) durante a janela |
+| `windows[].sky.sun.color` | não | cor hex | o da dimensão | [`sun.color`](#o-renderizador-do-céu) durante a janela |
+| `windows[].sky.sun.auraColor` | não | cor hex | o da dimensão | [`sun.auraColor`](#o-renderizador-do-céu) durante a janela |
+| `windows[].weather.precipitation` | não | `false` | o da dimensão | Desligado, a chuva e as tempestades somem e não voltam durante a janela |
+| `windows[].weather.alwaysRain` | não | booleano | o da dimensão | [`alwaysRain`](#o-bloco-weather) durante a janela |
+
+Qualquer outra chave em uma janela é ignorada com um erro no log, assim como `precipitation: true` ou `alwaysRain: true` em uma dimensão cujo `precipitation` está desligado.
 
 ### O bloco `weather`
 
@@ -3461,7 +3500,7 @@ São os mesmos multiplicadores que as chaves de modelo de mundo `worldGravity` e
 
 Um bloco `wind` deixa a chuva com rajadas. De vez em quando, uma rajada a inclina até `gust` graus a mais e desvia sua direção até `swing` graus para um lado; ela cresce e se desfaz em até quatro segundos, e as rajadas vêm a cada `every` ticks. A chuva e a neve se inclinam junto, e as partículas de ambiente da dimensão derivam para onde a chuva se inclina, com ou sem rajadas. Um bloco `wind` sem bloco `rain` dá à chuva os valores padrão.
 
-As outras dimensões compartilham a chuva do overworld. Um `cycle` dá a esta dimensão um clima próprio: as pancadas de chuva vêm e vão nos tempos acima, não importa o que o overworld esteja fazendo. Com `thunderTicks` ela também tem tempestades, em tempos próprios; uma tempestade que encontra uma pancada leva a pancada à força máxima, escurece o céu e, com `lightning` ligado, traz raios. O `weatherCeiling` em um [modelo de mundo](#modelos-de-mundo) ainda limita a altura até onde a chuva chega.
+As outras dimensões compartilham a chuva do overworld. Um `cycle` dá a esta dimensão um clima próprio: as pancadas de chuva vêm e vão nos tempos acima, não importa o que o overworld esteja fazendo. Com `thunderTicks` ela também tem tempestades, em tempos próprios; uma tempestade que encontra uma pancada leva a pancada à força máxima, escurece o céu e, com `lightning` ligado, traz raios. O `weatherCeiling` em um [modelo de mundo](#modelos-de-mundo) ainda limita a altura até onde a chuva chega. Uma [janela de tempo](#o-bloco-time) com `precipitation: false` deixa a chuva só para o resto do dia: uma pancada que já está caindo some em poucos segundos e o clima espera até a janela terminar; uma com `alwaysRain` faz chover forte durante a sua parte do dia.
 
 Um bloco `rain` muda a aparência e o som da chuva e da neve aqui, com ou sem `cycle`; sem ele, têm a aparência e o som do vanilla.
 

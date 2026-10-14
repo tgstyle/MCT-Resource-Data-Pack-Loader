@@ -7,11 +7,18 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.util.RainSplash;
 import mctmods.resourcedatapackloader.util.Rgb;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.resources.ResourceLocation;
@@ -20,6 +27,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.RegisterDimensionSpecialEffectsEvent;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import java.util.List;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -31,6 +40,9 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     private static final Vector3f BOSS_SHADE = new Vector3f(0.7F, 0.6F, 0.6F);
     private static final Vector3f GRAY = new Vector3f(0.75F, 0.75F, 0.75F);
     private static final DimensionSpecialEffects DAYLIT = new OverworldEffects();
+    private static final float AURA_ALPHA = 0.5F;
+    private static final float AURA_REACH = 1.5F;
+    private static final int AURA_STEPS = 32;
     @Nullable private final DimensionDef def;
     private final DimensionSpecialEffects base;
     @Nullable private final ContentSkyRenderer sky;
@@ -96,8 +108,44 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
 
     @Override @Nonnull public Vec3 getBrightnessDependentFogColor(@Nonnull Vec3 color, float brightness) {
         SkyLookDef look = look();
-        Vec3 own = def == null || def.fogColor() < 0 ? base.getBrightnessDependentFogColor(color, brightness) : DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(def.fogColor()), brightness);
-        return look != null && look.sampleFog() ? ContentFogSampler.color(own) : own;
+        Vec3 own = def == null || def.fogColor() < 0 ? base.getBrightnessDependentFogColor(color, brightness) : litFog(def.fogColor(), brightness);
+        return ContentWindowLook.fogColor(def, look != null && look.sampleFog() ? ContentFogSampler.color(own) : own, brightness);
+    }
+
+    static Vec3 litFog(int rgb, float brightness) { return DAYLIT.getBrightnessDependentFogColor(Vec3.fromRGB24(rgb), brightness); }
+
+    public static void sunHaze(@Nullable ClientLevel level, float alpha, float size, Matrix4f pose, ResourceLocation texture) {
+        int[] blend = {GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB), GL11.glGetInteger(GL14.GL_BLEND_DST_RGB), GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA), GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA)};
+        float[] aura = ContentWindowLook.aura(level);
+        if (aura != null && aura[3] > 0.0F) {
+            aura(pose, aura, alpha * aura[3] * AURA_ALPHA, size);
+            RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
+        }
+        float[] tint = ContentWindowLook.sunTint(level);
+        if (tint == null) {
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
+            return;
+        }
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.ZERO, GlStateManager.DestFactor.ONE_MINUS_SRC_COLOR);
+        RenderSystem.setShaderColor(alpha, alpha, alpha, 1.0F);
+        ContentSkyRenderer.quad(pose, texture, size);
+        RenderSystem.blendFuncSeparate(blend[0], blend[1], blend[2], blend[3]);
+        RenderSystem.setShaderColor(tint[0], tint[1], tint[2], alpha);
+    }
+
+    private static void aura(Matrix4f pose, float[] aura, float alpha, float size) {
+        float wide = size * AURA_REACH;
+        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.defaultBlendFunc();
+        BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.TRIANGLE_FAN, DefaultVertexFormat.POSITION_COLOR);
+        buffer.vertex(pose, 0.0F, SkyMesh.SIZE, 0.0F).color(aura[0], aura[1], aura[2], alpha).endVertex();
+        for (int step = 0; step <= AURA_STEPS; step++) {
+            float at = step * ((float) Math.PI * 2.0F) / AURA_STEPS;
+            buffer.vertex(pose, Mth.cos(at) * wide, SkyMesh.SIZE, Mth.sin(at) * wide).color(aura[0], aura[1], aura[2], 0.0F).endVertex();
+        }
+        BufferUploader.drawWithShader(buffer.end());
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
     }
 
     @Override public float getCloudHeight() {
@@ -108,7 +156,10 @@ public final class ContentDimensionEffects extends DimensionSpecialEffects {
     @Override public void adjustLightmapColors(@Nonnull ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, int pixelY, @Nonnull Vector3f colors) {
         base.adjustLightmapColors(level, partialTicks, skyDarken, blockLightRedFlicker, skyLight, pixelX, pixelY, colors);
         SkyLookDef look = look();
-        if (look == null || look.plainLight() || forceBrightLightmap()) { return; }
+        if (look != null && look.tintsLight() && !forceBrightLightmap()) { tint(look, level, partialTicks, skyDarken, blockLightRedFlicker, skyLight, pixelX, colors); }
+    }
+
+    private static void tint(SkyLookDef look, ClientLevel level, float partialTicks, float skyDarken, float blockLightRedFlicker, float skyLight, int pixelX, Vector3f colors) {
         float block = LightTexture.getBrightness(level.dimensionType(), pixelX) * blockLightRedFlicker;
         float sky = skyLight * look.skyFactor();
         float skyRed = sky * Mth.lerp(SKY_FLOOR, skyDarken, 1.0F);

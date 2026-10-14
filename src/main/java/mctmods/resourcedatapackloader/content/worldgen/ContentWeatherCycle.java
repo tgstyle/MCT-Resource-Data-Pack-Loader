@@ -11,6 +11,7 @@ import net.minecraft.world.level.storage.ServerLevelData;
 public final class ContentWeatherCycle {
     private static final float STEP = 0.004F;
     private static final float THUNDER_STEP = 0.01F;
+    private static final float RAIN_STEP = 0.01F;
     private static final int RAIN_HOLD = 12000;
     private boolean started;
     private boolean raining;
@@ -35,10 +36,17 @@ public final class ContentWeatherCycle {
             return true;
         }
         level.oRainLevel = level.rainLevel;
-        level.rainLevel = Mth.clamp(level.rainLevel + THUNDER_STEP, 0.0F, 1.0F);
+        level.rainLevel = Mth.clamp(level.rainLevel + RAIN_STEP, 0.0F, 1.0F);
         level.oThunderLevel = level.thunderLevel;
         level.thunderLevel = Mth.clamp(level.thunderLevel + (level.getLevelData().isThundering() ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
         return false;
+    }
+
+    public static void dry(Level level) {
+        level.oRainLevel = level.rainLevel;
+        level.rainLevel = Math.max(0.0F, level.rainLevel - RAIN_STEP);
+        level.oThunderLevel = level.thunderLevel;
+        level.thunderLevel = Math.max(0.0F, level.thunderLevel - THUNDER_STEP);
     }
 
     public void tick(Level level, DimensionTraitsDef.Cycle cycle) {

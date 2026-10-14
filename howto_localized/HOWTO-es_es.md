@@ -3265,10 +3265,22 @@ Establecer cualquiera de `sun`, `moon`, `bodies` o `stars` cambia el cielo de va
 
 Sin `bodies` se conservan la luna de vanilla y sus fases. Con `bodies`, la lista es todo lo que hay además del sol, así que una lista vacía es un cielo sin luna.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tiñe el sol y `sun.auraColor` extiende a su alrededor un resplandor suave, una bruma solar. Ambos se atenúan con la lluvia y con `sunBrightness`, igual que el sol. Funcionan en el cielo de vanilla de una [dimensión existente](#dimensiones-existentes) y en el propio de RDPL, y una [ventana de tiempo](#el-bloque-time) puede cambiarlos durante una parte del día.
+
 | Clave                  | Obligatorio | Valor              | Por defecto       | Qué hace |
 | ---------------------- | ----------- | ------------------ | ----------------- | -------- |
 | `sun.texture`          | no          | ruta de textura    | el sol de vanilla | La imagen del sol |
 | `sun.size`             | no          | decimal            | `30`              | La mitad del ancho del sol a una distancia de 100. `0` lo oculta |
+| `sun.color` | no | color hexadecimal | blanco | Tinte del sol |
+| `sun.auraColor` | no | color hexadecimal | ninguno | Color del resplandor alrededor del sol. Sin él no hay resplandor |
 | `moon.texture`         | no          | ruta de textura    | la luna de vanilla | Una hoja con las ocho fases de la luna, cuatro a lo ancho y dos a lo alto. Sin ella se dibuja la luna de vanilla |
 | `moon.size`            | no          | decimal            | `20`              | La mitad del ancho de la luna a una distancia de 100. `0` la oculta. Con `bodies` no se usa |
 | `bodies[].texture`     | sí          | ruta de textura    |                   | La imagen del cuerpo |
@@ -3425,9 +3437,36 @@ Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravit
 
 *dimensiones*
 
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` cambia unas pocas claves de `sky` y `weather` durante una parte de cada día: aquí niebla de noche, una niebla más ligera y un sol rojizo y brumoso hacia el amanecer, y lluvia solo de noche. `from` y `to` son horas del día en la escala habitual de 24000 ticks, donde 0 es el amanecer, 6000 el mediodía, 12000 el atardecer y 18000 la medianoche, y se estiran con `dayLength`, así que 13000 siempre queda justo después del atardecer. Una ventana cuyo `from` es mayor que su `to` pasa de la medianoche. Donde las ventanas se solapan, cuenta la primera de la lista. Con `fixedTime` la hora del día nunca avanza, así que una ventana se aplica siempre o nunca.
+
+Los cambios de niebla y de sol se funden al entrar y al salir en uno o dos segundos cuando una ventana empieza y termina. Fuera de todas las ventanas se aplican las claves propias de la dimensión.
+
 | Clave       | Obligatorio | Valor      | Por defecto | Qué hace                                                                                         |
 | ----------- | ----------- | ---------- | ----------- | ------------------------------------------------------------------------------------------------ |
 | `dayLength` | no          | entero, ticks | `24000`     | Cuánto dura aquí un día con su noche. La fase lunar sigue completando un ciclo cada 24000 ticks |
+| `windows[].from` | sí | entero, 0 a 24000 | | Hora del día en que empieza la ventana |
+| `windows[].to` | sí | entero, 0 a 24000 | | Hora del día en que termina |
+| `windows[].sky.fogDensity` | no | decimal, 0 a 1 | la de la dimensión | [`fogDensity`](#el-bloque-sky) durante la ventana |
+| `windows[].sky.fogColor` | no | color hexadecimal o `sample` | la de la dimensión | [`fogColor`](#el-bloque-sky) durante la ventana |
+| `windows[].sky.sun.color` | no | color hexadecimal | la de la dimensión | [`sun.color`](#el-renderizador-del-cielo) durante la ventana |
+| `windows[].sky.sun.auraColor` | no | color hexadecimal | la de la dimensión | [`sun.auraColor`](#el-renderizador-del-cielo) durante la ventana |
+| `windows[].weather.precipitation` | no | `false` | la de la dimensión | Desactivado, la lluvia y las tormentas se apagan y no vuelven durante la ventana |
+| `windows[].weather.alwaysRain` | no | booleano | la de la dimensión | [`alwaysRain`](#el-bloque-weather) durante la ventana |
+
+Cualquier otra clave de una ventana se ignora con un error en el registro, y lo mismo ocurre con `precipitation: true` o `alwaysRain: true` en una dimensión cuyo `precipitation` está desactivado.
 
 ### El bloque `weather`
 
@@ -3461,7 +3500,7 @@ Son los mismos multiplicadores que las claves de plantilla de mundo `worldGravit
 
 Un bloque `wind` vuelve racheada la lluvia. De vez en cuando, una ráfaga la inclina hasta `gust` grados más y desvía su rumbo hasta `swing` grados hacia un lado; crece y se apaga en menos de cuatro segundos, y las ráfagas llegan cada `every` ticks. La lluvia y la nieve se inclinan con ella, y las partículas ambientales de la dimensión derivan hacia donde se inclina la lluvia, haya ráfagas o no. Un bloque `wind` sin bloque `rain` deja la lluvia con sus valores por defecto.
 
-Las demás dimensiones comparten la lluvia del Overworld. Un `cycle` da a esta dimensión un clima propio: los chubascos van y vienen según los tiempos indicados arriba, haga lo que haga el Overworld. Con `thunderTicks` también hay tormentas, con tiempos propios; una tormenta que coincide con un chubasco lo lleva a su máxima intensidad, oscurece el cielo y, con `lightning` activado, trae rayos. `weatherCeiling` en una [plantilla de mundo](#plantillas-de-mundo) sigue limitando hasta qué altura llega la lluvia.
+Las demás dimensiones comparten la lluvia del Overworld. Un `cycle` da a esta dimensión un clima propio: los chubascos van y vienen según los tiempos indicados arriba, haga lo que haga el Overworld. Con `thunderTicks` también hay tormentas, con tiempos propios; una tormenta que coincide con un chubasco lo lleva a su máxima intensidad, oscurece el cielo y, con `lightning` activado, trae rayos. `weatherCeiling` en una [plantilla de mundo](#plantillas-de-mundo) sigue limitando hasta qué altura llega la lluvia. Una [ventana de tiempo](#el-bloque-time) con `precipitation: false` deja la lluvia solo para el resto del día: un chubasco que ya cae se apaga en unos segundos y el clima espera a que termine la ventana; una con `alwaysRain` hace que llueva a cántaros durante su parte del día.
 
 Un bloque `rain` cambia el aspecto y el sonido de la lluvia y la nieve aquí, con o sin `cycle`; sin él se ven y suenan como en vanilla.
 

@@ -3265,10 +3265,22 @@ Definir qualquer um de `sun`, `moon`, `bodies` ou `stars` troca o céu vanilla p
 
 Sem `bodies`, a lua vanilla e as suas fases mantêm-se. Com `bodies`, a lista é tudo exceto o sol, pelo que uma lista vazia é um céu sem lua.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` tinge o sol e `sun.auraColor` coloca à volta dele um brilho suave, uma névoa solar. Ambos se atenuam com a chuva e com `sunBrightness`, tal como o sol. Funcionam no céu vanilla de uma [dimensão existente](#dimensões-existentes) e também no céu próprio do RDPL, e uma [janela de tempo](#o-bloco-time) pode alterá-los durante uma parte do dia.
+
 | Chave | Obrigatório | Valor | Predefinição | O que faz |
 | ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `sun.texture`          | não | caminho da textura | o sol vanilla | A imagem do sol |
 | `sun.size`             | não | número decimal | `30` | Metade da largura do sol a uma distância de 100. `0` esconde-o |
+| `sun.color` | não | cor hexadecimal | branco | Tonalidade do sol |
+| `sun.auraColor` | não | cor hexadecimal | nenhum | Cor do brilho à volta do sol. Sem ela, não há brilho |
 | `moon.texture` | não | caminho da textura | a lua vanilla | Uma folha das oito fases da lua, quatro na horizontal e duas na vertical. Sem ela desenha-se a lua vanilla |
 | `moon.size`            | não | número decimal | `20` | Metade da largura da lua a uma distância de 100. `0` esconde-a. Ignorado com `bodies` |
 | `bodies[].texture`     | sim | caminho da textura | | A imagem do corpo |
@@ -3425,9 +3437,36 @@ Estes são os mesmos multiplicadores que as chaves `worldGravity` e `worldFallDa
 
 *dimensões*
 
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` altera algumas chaves de `sky` e `weather` durante uma parte de cada dia: aqui nevoeiro à noite, um nevoeiro mais leve e um sol vermelho enevoado perto do amanhecer, e chuva apenas à noite. `from` e `to` são horas do dia na escala habitual de 24000 ticks, em que 0 é o nascer do sol, 6000 o meio-dia, 12000 o pôr do sol e 18000 a meia-noite, e esticam-se com `dayLength`, pelo que 13000 fica sempre logo a seguir ao pôr do sol. Uma janela cujo `from` é maior do que o `to` passa a meia-noite. Onde as janelas se sobrepõem, conta a primeira da lista. Com `fixedTime` a hora do dia nunca avança, pelo que uma janela ou se aplica sempre, ou nunca.
+
+As alterações de nevoeiro e de sol surgem e desvanecem-se gradualmente, ao longo de um ou dois segundos, quando uma janela começa e termina. Fora de todas as janelas, aplicam-se as chaves da própria dimensão.
+
 | Chave | Obrigatório | Valor | Predefinição | O que faz |
 | ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
 | `dayLength` | não | número inteiro, ticks | `24000` | Quanto dura aqui um dia e uma noite. A fase da lua continua a mudar uma vez a cada 24000 ticks |
+| `windows[].from` | sim | número inteiro, 0 a 24000 | | Hora do dia em que a janela começa |
+| `windows[].to` | sim | número inteiro, 0 a 24000 | | Hora do dia em que termina |
+| `windows[].sky.fogDensity` | não | número decimal, 0 a 1 | o da dimensão | [`fogDensity`](#o-bloco-sky) durante a janela |
+| `windows[].sky.fogColor` | não | cor hexadecimal ou `sample` | o da dimensão | [`fogColor`](#o-bloco-sky) durante a janela |
+| `windows[].sky.sun.color` | não | cor hexadecimal | o da dimensão | [`sun.color`](#o-renderizador-do-céu) durante a janela |
+| `windows[].sky.sun.auraColor` | não | cor hexadecimal | o da dimensão | [`sun.auraColor`](#o-renderizador-do-céu) durante a janela |
+| `windows[].weather.precipitation` | não | `false` | o da dimensão | Desligado, a chuva e as tempestades desvanecem-se e não regressam durante a janela |
+| `windows[].weather.alwaysRain` | não | booleano | o da dimensão | [`alwaysRain`](#o-bloco-weather) durante a janela |
+
+Qualquer outra chave numa janela é ignorada com um erro no registo, tal como `precipitation: true` ou `alwaysRain: true` numa dimensão cujo `precipitation` esteja desativado.
 
 ### O bloco `weather`
 
@@ -3461,7 +3500,7 @@ Estes são os mesmos multiplicadores que as chaves `worldGravity` e `worldFallDa
 
 Um bloco `wind` torna a chuva rajada. De vez em quando, uma rajada inclina-a até `gust` graus mais e desvia a sua direção até `swing` graus para um lado, intensificando-se e desvanecendo em quatro segundos; as rajadas surgem com `every` ticks de intervalo. A chuva e a neve inclinam-se com ela, e as partículas ambiente da dimensão derivam no sentido para onde a chuva se inclina, com ou sem rajadas. Um bloco `wind` sem bloco `rain` dá à chuva as suas predefinições.
 
-As outras dimensões partilham a chuva da Superfície. Um `cycle` dá a esta uma meteorologia própria: as aguaceiras vêm e vão segundo os tempos acima, faça a Superfície o que fizer. Com `thunderTicks` também há tempestades, com tempos próprios; uma tempestade que encontre uma aguaceira leva-a à força máxima, escurece o céu e, com `lightning` ativado, traz relâmpagos. `weatherCeiling` num [modelo de mundo](#modelos-de-mundo) continua a limitar a altura a que a chuva chega.
+As outras dimensões partilham a chuva da Superfície. Um `cycle` dá a esta uma meteorologia própria: as aguaceiras vêm e vão segundo os tempos acima, faça a Superfície o que fizer. Com `thunderTicks` também há tempestades, com tempos próprios; uma tempestade que encontre uma aguaceira leva-a à força máxima, escurece o céu e, com `lightning` ativado, traz relâmpagos. `weatherCeiling` num [modelo de mundo](#modelos-de-mundo) continua a limitar a altura a que a chuva chega. Uma [janela de tempo](#o-bloco-time) com `precipitation: false` deixa a chuva apenas para o resto do dia: uma aguaceira que já esteja a cair desvanece-se em poucos segundos e a meteorologia espera até a janela terminar; uma com `alwaysRain` faz chover torrencialmente durante a sua parte do dia.
 
 Um bloco `rain` muda o aspeto e o som da chuva e da neve aqui, com ou sem `cycle`; sem um, têm o aspeto e o som do vanilla.
 

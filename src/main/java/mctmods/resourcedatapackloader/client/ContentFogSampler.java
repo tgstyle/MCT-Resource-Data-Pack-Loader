@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.client;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentParserSkyLook;
 import mctmods.resourcedatapackloader.util.Rgb;
 
 import com.mojang.blaze3d.shaders.FogShape;
@@ -63,9 +64,11 @@ public final class ContentFogSampler {
         if (event.phase != TickEvent.Phase.END) { return; }
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
-        SkyLookDef look = look(level);
+        ContentWindowLook.tick(level);
+        DimensionDef def = ContentDimensions.def(level);
+        SkyLookDef look = def == null ? null : def.look();
         Entity camera = mc.getCameraEntity();
-        if (level == null || look == null || !look.sampleFog() || camera == null) {
+        if (level == null || def == null || camera == null || !(look != null && look.sampleFog() || ContentWindowLook.samples(def))) {
             sampledIn = null;
             target = null;
             current = null;
@@ -76,7 +79,7 @@ public final class ContentFogSampler {
             target = null;
             current = null;
         }
-        if (target == null || level.getGameTime() % INTERVAL == 0L) { target = sample(level, camera, look.fogGroundWeight()); }
+        if (target == null || level.getGameTime() % INTERVAL == 0L) { target = sample(level, camera, look == null ? ContentParserSkyLook.GROUND_WEIGHT : look.fogGroundWeight()); }
         current = current == null ? target : current.add(target.subtract(current).scale(EASE));
     }
 
@@ -106,11 +109,13 @@ public final class ContentFogSampler {
     }
 
     public static void onFog(ViewportEvent.RenderFog event) {
-        SkyLookDef look = look(Minecraft.getInstance().level);
-        if (look == null || look.fogDensity() <= 0.0F || event.getType() != FogType.NONE) { return; }
+        ClientLevel level = Minecraft.getInstance().level;
+        SkyLookDef look = look(level);
+        float density = ContentWindowLook.fogDensity(level, look == null ? 0.0F : look.fogDensity());
+        if (density <= 0.0F || event.getType() != FogType.NONE) { return; }
         if (event.getCamera().getEntity() instanceof LivingEntity living && (living.hasEffect(MobEffects.BLINDNESS) || living.hasEffect(MobEffects.DARKNESS))) { return; }
         float far = event.getFarPlaneDistance();
-        float end = far + (NEAR - far) * look.fogDensity();
+        float end = far + (NEAR - far) * density;
         event.setNearPlaneDistance(event.getMode() == FogRenderer.FogMode.FOG_SKY ? 0.0F : end * START);
         event.setFarPlaneDistance(end);
         event.setFogShape(FogShape.SPHERE);

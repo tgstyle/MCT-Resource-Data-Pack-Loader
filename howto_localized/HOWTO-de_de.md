@@ -3265,10 +3265,22 @@ Sobald `sun`, `moon`, `bodies` oder `stars` gesetzt ist, ersetzt RDPL den Vanill
 
 Ohne `bodies` bleiben der Vanilla-Mond und seine Phasen. Mit `bodies` ist die Liste alles außer der Sonne, eine leere Liste ist also ein Himmel ohne Mond.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` färbt die Sonne ein, und `sun.auraColor` legt einen sanften Schein um sie, einen Sonnendunst. Beide blenden mit Regen und `sunBrightness` aus, so wie die Sonne selbst. Sie wirken im Vanilla-Himmel einer [bestehenden Dimension](#bestehende-dimensionen) ebenso wie im eigenen Himmel von RDPL, und ein [Zeitfenster](#der-block-time) kann sie für einen Teil des Tages ändern.
+
 | Schlüssel              | Pflicht | Wert        | Standard          | Was er macht                                                                                                                                                                                       |
 | ---------------------- | ------- | ----------- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sun.texture`          | nein    | Texturpfad  | die Vanilla-Sonne | Das Bild der Sonne                                                                                                                                                                                 |
 | `sun.size`             | nein    | float       | `30`              | Halbe Breite der Sonne auf 100 Blöcke Abstand. `0` blendet sie aus                                                                                                                                 |
+| `sun.color`            | nein    | Hex-Farbe   | weiß              | Färbung der Sonne                                                                                                                                                                                  |
+| `sun.auraColor`        | nein    | Hex-Farbe   | keine             | Farbe des Scheins um die Sonne. Ohne sie gibt es keinen Schein                                                                                                                                     |
 | `moon.texture`         | nein    | Texturpfad  | der Vanilla-Mond  | Ein Blatt mit den acht Mondphasen, vier nebeneinander und zwei untereinander. Ohne sie wird der Vanilla-Mond gezeichnet                                                                            |
 | `moon.size`            | nein    | float       | `20`              | Halbe Breite des Mondes auf 100 Blöcke Abstand. `0` blendet ihn aus. Mit `bodies` entfällt er                                                                                                      |
 | `bodies[].texture`     | ja      | Texturpfad  |                   | Das Bild des Körpers                                                                                                                                                                               |
@@ -3425,9 +3437,36 @@ Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity
 
 *dimensionen*
 
-| Schlüssel   | Pflicht | Wert       | Standard | Was er macht                                                                               |
-| ----------- | ------- | ---------- | -------- | ------------------------------------------------------------------------------------------ |
-| `dayLength` | nein    | int, Ticks | `24000`  | Wie lange hier ein Tag mit Nacht dauert. Die Mondphase wechselt weiterhin alle 24000 Ticks |
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` ändert einige `sky`- und `weather`-Schlüssel für einen Teil jedes Tages: hier Nebel in der Nacht, ein leichterer Nebel und eine rötlich verschleierte Sonne um die Morgendämmerung und Regen nur nachts. `from` und `to` sind Tageszeiten auf der üblichen 24000-Tick-Skala, auf der 0 der Sonnenaufgang ist, 6000 Mittag, 12000 Sonnenuntergang und 18000 Mitternacht; sie dehnen sich mit `dayLength`, 13000 liegt also immer kurz nach Sonnenuntergang. Ein Fenster, dessen `from` größer ist als sein `to`, läuft über Mitternacht hinaus. Wo sich Fenster überlappen, zählt das erste der Liste. Mit `fixedTime` rückt die Tageszeit nie weiter, ein Fenster gilt also entweder immer oder nie.
+
+Änderungen an Nebel und Sonne werden beim Beginn und Ende eines Fensters innerhalb von ein, zwei Sekunden ein- und ausgeblendet. Außerhalb aller Fenster gelten die eigenen Schlüssel der Dimension.
+
+| Schlüssel                         | Pflicht | Wert                    | Standard          | Was er macht                                                                               |
+| --------------------------------- | ------- | ----------------------- | ----------------- | ------------------------------------------------------------------------------------------ |
+| `dayLength`                       | nein    | int, Ticks              | `24000`           | Wie lange hier ein Tag mit Nacht dauert. Die Mondphase wechselt weiterhin alle 24000 Ticks |
+| `windows[].from`                  | ja      | int, 0 bis 24000        |                   | Tageszeit, zu der das Fenster beginnt                                                      |
+| `windows[].to`                    | ja      | int, 0 bis 24000        |                   | Tageszeit, zu der es endet                                                                 |
+| `windows[].sky.fogDensity`        | nein    | float, 0 bis 1          | die der Dimension | [`fogDensity`](#der-block-sky) während des Fensters                                        |
+| `windows[].sky.fogColor`          | nein    | Hex-Farbe oder `sample` | die der Dimension | [`fogColor`](#der-block-sky) während des Fensters                                          |
+| `windows[].sky.sun.color`         | nein    | Hex-Farbe               | die der Dimension | [`sun.color`](#der-himmelsrenderer) während des Fensters                                   |
+| `windows[].sky.sun.auraColor`     | nein    | Hex-Farbe               | die der Dimension | [`sun.auraColor`](#der-himmelsrenderer) während des Fensters                               |
+| `windows[].weather.precipitation` | nein    | `false`                 | die der Dimension | Aus klingen Regen und Gewitter ab und bleiben für die Dauer des Fensters aus               |
+| `windows[].weather.alwaysRain`    | nein    | boolean                 | die der Dimension | [`alwaysRain`](#der-block-weather) während des Fensters                                    |
+
+Jeder andere Schlüssel in einem Fenster wird mit einem Fehler im Log ignoriert, ebenso `precipitation: true` oder `alwaysRain: true` in einer Dimension, deren `precipitation` aus ist.
 
 ### Der Block `weather`
 
@@ -3461,7 +3500,7 @@ Das sind dieselben Multiplikatoren wie die Weltvorlagen-Schlüssel `worldGravity
 
 Ein `wind`-Block macht den Regen böig. Hin und wieder neigt ihn eine Böe um bis zu `gust` Grad stärker und schwenkt seine Richtung um bis zu `swing` Grad zur Seite; sie schwillt an und flaut binnen vier Sekunden wieder ab, und die Böen kommen im Abstand von `every` Ticks. Regen und Schnee neigen sich mit, und die Umgebungspartikel der Dimension treiben dorthin, wohin der Regen sich neigt, mit oder ohne Böen. Ein `wind`-Block ohne `rain`-Block gibt dem Regen seine Standardwerte.
 
-Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, egal was die Oberwelt gerade tut. Mit `thunderTicks` gibt es auch Gewitter, nach eigenen Zeiten; trifft ein Gewitter auf einen Schauer, schwillt der Schauer zu voller Stärke an, der Himmel verdunkelt sich, und mit `lightning` an schlagen Blitze ein. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht.
+Andere Dimensionen teilen sich den Regen der Oberwelt. Ein `cycle` gibt dieser Dimension eigenes Wetter: Schauer kommen und gehen nach den Zeiten oben, egal was die Oberwelt gerade tut. Mit `thunderTicks` gibt es auch Gewitter, nach eigenen Zeiten; trifft ein Gewitter auf einen Schauer, schwillt der Schauer zu voller Stärke an, der Himmel verdunkelt sich, und mit `lightning` an schlagen Blitze ein. `weatherCeiling` in einer [Weltvorlage](#weltvorlagen) begrenzt weiterhin, wie hoch Regen reicht. Ein [Zeitfenster](#der-block-time) mit `precipitation: false` hält den Regen auf den Rest des Tages beschränkt: Ein Schauer, der gerade fällt, klingt binnen weniger Sekunden ab, und das Wetter wartet, bis das Fenster endet; eines mit `alwaysRain` lässt es in seinem Teil des Tages durchgehend regnen.
 
 Ein `rain`-Block ändert, wie Regen und Schnee hier aussehen und klingen, mit oder ohne `cycle`; ohne ihn sehen sie aus und klingen wie in Vanilla.
 

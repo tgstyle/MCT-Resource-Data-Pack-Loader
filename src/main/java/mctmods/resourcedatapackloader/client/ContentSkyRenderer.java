@@ -62,13 +62,15 @@ final class ContentSkyRenderer {
         RenderSystem.blendFuncSeparate(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE, GlStateManager.SourceFactor.ONE, GlStateManager.DestFactor.ZERO);
         poseStack.pushPose();
         float clear = 1.0F - level.getRainLevel(partialTick);
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.sun(level));
         poseStack.mulPose(Axis.YP.rotationDegrees(-90.0F));
         float turn = level.getTimeOfDay(partialTick) * 360.0F;
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         poseStack.pushPose();
         poseStack.mulPose(Axis.XP.rotationDegrees(turn));
-        if (sky.sunSize() > 0.0F) { quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize()); }
+        if (sky.sunSize() > 0.0F) {
+            ContentDimensionEffects.sunHaze(level, clear * ContentDimensionEffects.sun(level), sky.sunSize(), poseStack.last().pose(), sky.sunTexture());
+            quad(poseStack.last().pose(), sky.sunTexture(), sky.sunSize());
+        }
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, clear * ContentDimensionEffects.moon(level));
         if (sky.bodies() == null && moonSize > 0.0F) { moon(poseStack.last().pose(), level.getMoonPhase()); }
         poseStack.popPose();
@@ -152,7 +154,7 @@ final class ContentSkyRenderer {
         BufferUploader.drawWithShader(buffer.end());
     }
 
-    private static void quad(Matrix4f pose, ResourceLocation texture, float size) {
+    static void quad(Matrix4f pose, ResourceLocation texture, float size) {
         RenderSystem.setShaderTexture(0, texture);
         BufferBuilder buffer = SkyMesh.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
         buffer.vertex(pose, -size, SIZE, -size).uv(0.0F, 0.0F).endVertex();

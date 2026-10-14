@@ -3265,10 +3265,22 @@ Nastavení kteréhokoli z `sun`, `moon`, `bodies` nebo `stars` vymění vanilla 
 
 Bez `bodies` zůstává vanilla měsíc s fázemi. S `bodies` je seznam vším kromě slunce, takže prázdný seznam je obloha bez měsíce.
 
+```json
+{
+  "sky": {
+    "sun": { "color": "#FFB070", "auraColor": "#FF7A30" }
+  }
+}
+```
+
+`sun.color` obarví slunce a `sun.auraColor` kolem něj rozlije jemnou záři, sluneční závoj. Obojí slábne s deštěm a `sunBrightness` stejně jako slunce. Funguje ve vanilla obloze [existující dimenze](#existující-dimenze) stejně jako v oblozích RDPL a [časové okno](#blok-time) je může na část dne změnit.
+
 | Klíč | Povinné | Hodnota | Výchozí | Co dělá |
 | ---------------------- | -------- | -------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `sun.texture` | ne | cesta k textuře | vanilla slunce | Obrázek slunce |
 | `sun.size` | ne | desetinné číslo | `30` | Polovina šířky slunce ze vzdálenosti 100. `0` ho skryje |
+| `sun.color` | ne | hexadecimální barva | bílá | Odstín slunce |
+| `sun.auraColor` | ne | hexadecimální barva | žádný | Barva záře kolem slunce. Bez ní žádná záře není |
 | `moon.texture` | ne | cesta k textuře | vanilla měsíc | List osmi fází měsíce, čtyři vedle sebe a dvě pod sebou. Bez něj se kreslí vanilla měsíc |
 | `moon.size` | ne | desetinné číslo | `20` | Polovina šířky měsíce ze vzdálenosti 100. `0` ho skryje. S `bodies` se vynechá |
 | `bodies[].texture` | ano | cesta k textuře | | Obrázek tělesa |
@@ -3425,9 +3437,36 @@ Jsou to tytéž násobitele jako klíče šablony světa `worldGravity` a `world
 
 *dimenze*
 
+```json
+{
+  "time": {
+    "dayLength": 36000,
+    "windows": [
+      { "from": 13000, "to": 23000, "sky": { "fogDensity": 0.6, "fogColor": "#9AA4B0" } },
+      { "from": 23000, "to": 2000, "sky": { "fogDensity": 0.35, "sun": { "color": "#FF9050", "auraColor": "#FF5020" } } },
+      { "from": 2000, "to": 13000, "weather": { "precipitation": false } }
+    ]
+  }
+}
+```
+
+`windows` mění několik klíčů `sky` a `weather` pro část každého dne: tady mlhu v noci, řidší mlhu a zamlžené rudé slunce kolem svítání a déšť jen v noci. `from` a `to` jsou denní doby na obvyklé stupnici 24000 ticků, kde 0 je východ slunce, 6000 poledne, 12000 západ slunce a 18000 půlnoc; roztahují se s `dayLength`, takže 13000 je vždy hned po západu slunce. Okno, jehož `from` je větší než `to`, přesahuje půlnoc. Kde se okna překrývají, platí první v seznamu. S `fixedTime` se denní doba nikdy nehýbe, takže okno buď platí vždy, nebo nikdy.
+
+Změny mlhy a slunce se při začátku a konci okna plynule prolínají během sekundy či dvou. Mimo všechna okna platí vlastní klíče dimenze.
+
 | Klíč | Povinné | Hodnota | Výchozí | Co dělá |
 | ----------- | -------- | ---------- | ------- | ---------------------------------------------------------------------------------------- |
 | `dayLength` | ne | celé číslo, ticky | `24000` | Jak dlouho tady trvá jeden den a noc. Fáze měsíce se stále otočí jednou za 24000 ticků |
+| `windows[].from` | ano | celé číslo, 0 až 24000 | | Denní doba, kdy okno začíná |
+| `windows[].to` | ano | celé číslo, 0 až 24000 | | Denní doba, kdy končí |
+| `windows[].sky.fogDensity` | ne | desetinné číslo, 0 až 1 | hodnota dimenze | [`fogDensity`](#blok-sky) během okna |
+| `windows[].sky.fogColor` | ne | hexadecimální barva nebo `sample` | hodnota dimenze | [`fogColor`](#blok-sky) během okna |
+| `windows[].sky.sun.color` | ne | hexadecimální barva | hodnota dimenze | [`sun.color`](#vykreslovač-oblohy) během okna |
+| `windows[].sky.sun.auraColor` | ne | hexadecimální barva | hodnota dimenze | [`sun.auraColor`](#vykreslovač-oblohy) během okna |
+| `windows[].weather.precipitation` | ne | `false` | hodnota dimenze | Vypnuto, déšť a bouře utichnou a po dobu okna se nevrátí |
+| `windows[].weather.alwaysRain` | ne | boolean | hodnota dimenze | [`alwaysRain`](#blok-weather) během okna |
+
+Jakýkoli jiný klíč v okně se ignoruje a do logu se zapíše chyba; stejně tak `precipitation: true` nebo `alwaysRain: true` v dimenzi, která má `precipitation` vypnuté.
 
 ### Blok `weather`
 
@@ -3461,7 +3500,7 @@ Jsou to tytéž násobitele jako klíče šablony světa `worldGravity` a `world
 
 Blok `wind` dělá déšť poryvovým. Čas od času ho závan nakloní až o `gust` stupňů dál a vychýlí jeho směr až o `swing` stupňů na jednu stranu, přičemž se zesílí a utichne během čtyř sekund; závany přicházejí každých `every` ticků. Déšť i sníh se naklánějí s ním a okolní částice dimenze se unášejí tak, jak se déšť naklání, s poryvy i bez nich. Blok `wind` bez bloku `rain` dá dešti jeho výchozí hodnoty.
 
-Ostatní dimenze sdílejí déšť Overworldu. `cycle` dává této dimenzi vlastní počasí: přívaly přicházejí a odcházejí podle výše uvedených časování, ať Overworld dělá cokoli. S `thunderTicks` také bouří, na vlastních časováních; bouře, která potká příval, přivede příval na plnou sílu, ztmaví oblohu a při zapnutém `lightning` přinese blesky. `weatherCeiling` v [šabloně světa](#šablony-světa) stále omezuje, jak vysoko déšť sahá.
+Ostatní dimenze sdílejí déšť Overworldu. `cycle` dává této dimenzi vlastní počasí: přívaly přicházejí a odcházejí podle výše uvedených časování, ať Overworld dělá cokoli. S `thunderTicks` také bouří, na vlastních časováních; bouře, která potká příval, přivede příval na plnou sílu, ztmaví oblohu a při zapnutém `lightning` přinese blesky. `weatherCeiling` v [šabloně světa](#šablony-světa) stále omezuje, jak vysoko déšť sahá. [Časové okno](#blok-time) s `precipitation: false` omezí déšť na zbytek dne: příval, který právě padá, během několika sekund utichne a počasí čeká, dokud okno neskončí; okno s `alwaysRain` způsobí, že ve své části dne leje.
 
 Blok `rain` mění, jak déšť a sníh zde vypadají a znějí, s `cycle` i bez něj; bez něj vypadají a znějí jako vanilla.
 
