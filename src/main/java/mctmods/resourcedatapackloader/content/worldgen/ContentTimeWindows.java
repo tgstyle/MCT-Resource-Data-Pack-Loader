@@ -10,11 +10,13 @@ import javax.annotation.Nullable;
 public final class ContentTimeWindows {
     private ContentTimeWindows() {}
 
-    private static long dayTick(Level level, DimensionDef def) {
-        long length = def.traits().dayLength();
-        long time = def.fixedTime() >= 0L ? def.fixedTime() : level.getOverworldClockTime();
-        return Math.floorMod(time, length) * DimensionTraitsDef.VANILLA_DAY / length;
+    public static long clock(Level level, @Nullable DimensionDef def) {
+        long length = def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits().dayLength();
+        long time = def != null && def.fixedTime() >= 0L ? def.fixedTime() : level.getOverworldClockTime();
+        return Math.floorDiv(time * DimensionTraitsDef.VANILLA_DAY, length);
     }
+
+    private static long dayTick(Level level, DimensionDef def) { return Math.floorMod(clock(level, def), DimensionTraitsDef.VANILLA_DAY); }
 
     @Nullable public static TimeWindowDef active(Level level, DimensionDef def) {
         if (def.windows().isEmpty()) { return null; }

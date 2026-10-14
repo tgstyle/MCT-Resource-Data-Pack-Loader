@@ -1,6 +1,9 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 
 import net.minecraft.nbt.CompoundTag;
@@ -23,6 +26,7 @@ public final class CardScan {
     private static final String PLAY_FROM = "rdplPlayFrom";
     private static final Map<UUID, Map<String, Boolean>> INSIDE = new HashMap<>();
     private static final Map<ResourceKey<Level>, Long> CLOCKS = new HashMap<>();
+    private static final Map<ResourceKey<Level>, Long> SCALED = new HashMap<>();
     private static int ticks;
 
     private CardScan() {}
@@ -69,12 +73,15 @@ public final class CardScan {
             List<ServerPlayer> here = level.players();
             if (here.isEmpty()) {
                 CLOCKS.remove(level.dimension());
+                SCALED.remove(level.dimension());
                 continue;
             }
             long now = level.getOverworldClockTime();
+            long scaled = ContentTimeWindows.clock(level, ContentDimensions.def(level));
             Long before = CLOCKS.put(level.dimension(), now);
-            if (before == null || now <= before) { continue; }
-            if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, before, now); }
+            Long scaledBefore = SCALED.put(level.dimension(), scaled);
+            if (before == null || scaledBefore == null || now <= before) { continue; }
+            if (now - before <= EVERY * 2L) { crossings(CardRules.on(CardRule.TIME_OF_DAY), here, scaledBefore, scaled); }
             long day = now / SharedConstants.TICKS_PER_GAME_DAY;
             if (day == before / SharedConstants.TICKS_PER_GAME_DAY) { continue; }
             for (CardRule rule : CardRules.on(CardRule.DAY)) {
@@ -85,8 +92,8 @@ public final class CardScan {
 
     private static void crossings(List<CardRule> rules, List<ServerPlayer> here, long before, long now) {
         for (CardRule rule : rules) {
-            long next = before - before % SharedConstants.TICKS_PER_GAME_DAY + rule.time;
-            if (next <= before) { next += SharedConstants.TICKS_PER_GAME_DAY; }
+            long next = before - before % DimensionTraitsDef.VANILLA_DAY + rule.time;
+            if (next <= before) { next += DimensionTraitsDef.VANILLA_DAY; }
             if (next <= now) { fireAll(rule, here); }
         }
     }
