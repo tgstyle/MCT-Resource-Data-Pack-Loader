@@ -62,6 +62,14 @@ public final class GcCelestial {
 
     @Nullable static DimensionType registeredType(int dimension) { return DimensionManager.isDimensionRegistered(dimension) ? DimensionManager.getProviderType(dimension) : null; }
 
+    public static boolean holds(int dimension) { return GalaxyRegistry.getCelestialBodyFromDimensionID(dimension) != null || stationType(dimension); }
+
+    public static boolean stationType(int dimension) {
+        for (Satellite satellite : GalaxyRegistry.getSatellites()) {
+            if (satellite.getDimensionID() == dimension || satellite.getDimensionIdStatic() == dimension) { return true; }
+        }
+        return false;
+    }
 
     public static void register(List<CelestialDef> files, List<DimensionDef> dimensions) {
         GcTeleport teleport = new GcTeleport();

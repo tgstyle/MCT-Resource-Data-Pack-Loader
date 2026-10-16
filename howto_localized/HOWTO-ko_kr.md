@@ -3442,6 +3442,8 @@ Galacticraft의 `EntitySpaceshipBase`나 ExtraPlanets의 `EntityElectricSpaceshi
 
 `id`가 이미 있는 차원인 파일은 차원을 새로 추가하는 대신 그 차원을 변경합니다. 오버월드의 `0`, 네더의 `-1`, 엔드의 `1`, 다른 모드가 등록한 차원이 모두 해당합니다. 파일에 적은 키는 모두 그곳에 적용되고, 적지 않은 키는 차원의 원래 동작을 유지하므로 레벨 데이터와 청크는 그대로이며 기존 세이브도 계속 로드됩니다.
 
+Galacticraft가 로드된 상태에서는 Galacticraft와 그 애드온이 지도에 추가하는 행성과 위성도 존재하는 것으로 계산됩니다. Galacticraft는 월드가 시작될 때에야 이것들을 등록하지만, `-28`은 달을 바꿉니다. 우주 정거장의 차원 유형은 그 유형의 정거장 전부를 바꾸고 다른 것은 바꾸지 않습니다. `-27`은 오버월드의 정거장을 다루며, 계속 로드된 상태로 두는 정거장은 `-26`이고 이것은 별도의 파일이 필요합니다. 정거장 하나의 고유 ID는 월드마다 정해지므로 지정할 수 없고, 정거장 유형 파일의 `keepLoaded`는 아무 효과도 없습니다.
+
 `terrain.type`은 생성기를 바꾸므로, 그 이후에 생성되는 청크는 새 생성기가 만듭니다. `generatorOptions`와 `structures`도 함께 적용됩니다(`overworld`의 `generatorOptions`는 [generatorOptions 키](#generatoroptions-키)의 JSON 객체이며, 슈퍼플랫 프리셋은 자체 형식을 유지합니다). `terrain.type`이 없으면 이 둘은 무시되고 로그에 그렇게 기록됩니다. `biomes` 블록은 그 이후에 생성되는 청크의 생물 군계를 바꿉니다. 저장 폴더는 차원 고유의 것을 그대로 쓰므로 `suffix`는 무시됩니다. 요약의 `dimensions.existing` 줄에 이렇게 적용된 파일이 모두 나열됩니다.
 
 `texture`만 설정한 `sun` 또는 `moon`은 차원 고유의 하늘에서 그림만 바꾸며, 달은 위상을 유지합니다. `bodies`, `stars`, `sun.size`, `moon.size`를 설정하면 하늘 전체가 [RDPL 자체 렌더러](#하늘-렌더러)로 대체됩니다.

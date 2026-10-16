@@ -282,7 +282,10 @@ public class ResourceDataPackLoader {
         }
     }
 
-    @Mod.EventHandler public void interModComms(FMLInterModComms.IMCEvent event) { ContentCelestial.register(); }
+    @Mod.EventHandler public void interModComms(FMLInterModComms.IMCEvent event) {
+        ContentDimensions.settle();
+        ContentCelestial.register();
+    }
 
     @Mod.EventHandler public void postInit(FMLPostInitializationEvent event) {
         ContentEntityTypes.registerLate();

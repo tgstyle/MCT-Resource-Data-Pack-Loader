@@ -21,7 +21,13 @@ public final class ContentCelestial {
 
     private ContentCelestial() {}
 
-    public static boolean orbits(DimensionDef def) { return def.galacticraft != null && Loader.isModLoaded(GALACTICRAFT); }
+    public static boolean present() { return Loader.isModLoaded(GALACTICRAFT); }
+
+    public static boolean orbits(DimensionDef def) { return def.galacticraft != null && present(); }
+
+    static boolean holds(int dimension) { return present() && GcCelestial.holds(dimension); }
+
+    static boolean stationType(int dimension) { return present() && GcCelestial.stationType(dimension); }
 
     public static void defer(DimensionDef def) { BODIED.add(def); }
 
@@ -34,7 +40,7 @@ public final class ContentCelestial {
             CelestialDef def = ContentParserCelestial.celestial(key, contents);
             if (def != null && ContentRegistry.available(def.requires, key)) { bodies.add(def); }
         });
-        if (!Loader.isModLoaded(GALACTICRAFT)) {
+        if (!present()) {
             if (!bodies.isEmpty()) { ContentLog.LOGGER.info("Galacticraft is not loaded, so the {} pack star system(s) and body(ies) under celestial/ stay off any map", bodies.size()); }
             return;
         }
@@ -42,13 +48,13 @@ public final class ContentCelestial {
     }
 
     public static void loadComplete() {
-        if (BODIED.isEmpty() || !Loader.isModLoaded(GALACTICRAFT)) { return; }
+        if (BODIED.isEmpty() || !present()) { return; }
         GcCelestial.extraPlanetsRadiation();
         GcCelestial.stationRecipes();
     }
 
     public static void serverStarted() {
-        if (BODIED.isEmpty() || !Loader.isModLoaded(GALACTICRAFT)) { return; }
+        if (BODIED.isEmpty() || !present()) { return; }
         GcCelestial.nameDimensions();
         GcCelestial.extraPlanetsRadiation();
     }
