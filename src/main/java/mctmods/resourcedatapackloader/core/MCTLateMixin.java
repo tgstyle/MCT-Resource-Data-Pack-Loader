@@ -44,6 +44,7 @@ import java.util.function.BooleanSupplier;
         QUEUED.put("galacticraft", () -> Loader.isModLoaded("galacticraftcore"));
         QUEUED.put("asmodeuscore", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("asmodeuscore"));
         QUEUED.put("extraplanets", () -> Loader.isModLoaded("extraplanets"));
+        QUEUED.put("galaxyspace", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("galaxyspace"));
         QUEUED.put("pulsar", MCTLateMixin::pulsarPresent);
     }
 

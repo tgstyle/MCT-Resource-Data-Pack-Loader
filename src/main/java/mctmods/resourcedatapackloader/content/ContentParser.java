@@ -116,7 +116,8 @@ public final class ContentParser {
                 Json.getString(json, "openSound", "").trim(),
                 ContentParserContainers.container(key, json),
                 bell(json),
-                Collections.unmodifiableList(strings(json, "spreadsOnto")));
+                Collections.unmodifiableList(strings(json, "spreadsOnto")),
+                Json.getBoolean(json, "needsOxygen", true));
     }
 
     @Nullable private static BellDef bell(JsonObject json) {
