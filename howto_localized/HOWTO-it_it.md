@@ -3240,6 +3240,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
   "skyStone": "minecraft:end_stone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3331,6 +3332,29 @@ Una voce di spawn accetta `entity` (obbligatorio), `type` (`creature`, uno dei [
 | `skyStone`     | no           | nome del blocco         | l'impostazione del mondo | Il blocco di cui sono fatte le isole nel cielo sotto la superficie dove si applica questo bioma. Su una fascia, `topBlock` e `fillerBlock` dipingono con esso la superficie dell'isola, quindi una fascia è il modo di dare a un tratto di cielo isole tutte sue                                                                                                      |
 | `skyIslands`   | no           | decimale, da `-1` a `1` | l'impostazione del mondo | La soglia delle isole dove si applica questo bioma. Più è bassa, più terra si raccoglie                                                                                                                                                                                                                                                                               |
 | `skyThickness` | no           | decimale, da `0` a `8`  | l'impostazione del mondo | Quanto sono solide le isole dove si applica questo bioma                                                                                                                                                                                                                                                                                                              |
+
+### Crateri
+
+*biomi*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Un oggetto `craters` scava conche rotonde nel terreno ovunque si trovi questo bioma, come la Luna è piena di crateri. Senza di esso il bioma non ne ha. I crateri fanno parte del terreno così come viene generato la prima volta, sono collocati a partire dal seed del mondo, e il terreno che esiste già mantiene ciò che aveva. Un cratere è intero o assente, mai tagliato al confine di un chunk: se se ne formi uno vicino a un villaggio si decide la prima volta che viene generato uno dei suoi chunk e viene conservato nel salvataggio, così ogni chunk successivo si adegua, anche dopo un riavvio. Funzionano in ogni dimensione in cui compare il bioma, che sia una dimensione di tipo overworld, il Nether, l'End o un mondo piatto, sia nelle dimensioni proprie di un pack sia in quelle di vanilla, e non richiedono nessun'altra mod.
+
+Il bioma al centro di un cratere decide se si forma e quanto è grande, quindi un cratere vicino al bordo del bioma si spinge un poco nel bioma accanto. La conca è scavata dalla superficie del terreno verso il basso, più profonda al centro e con una salita ripida fino al bordo, poi il passaggio di superficie del terreno ripassa sul fondo. Dove quel passaggio stende il terreno del bioma, come in una dimensione di tipo overworld, lo coprono il `topBlock` e il `fillerBlock` del bioma; il Nether, l'End e una dimensione piatta non ne stendono, quindi lì il fondo è la pietra o lo strato sottostante. Sott'acqua o sotto la lava la conca si riempie di quel liquido. Un cratere non scava mai attraverso l'ultimo blocco solido di una colonna.
+
+Un cratere non si forma mai entro 12 blocchi da un villaggio, dalle sue strade, dalle vie della città e dai collegamenti ferroviari, compresi quelli che deve ancora posare, né da una [mappa delle strutture](#mappe-delle-strutture), così che stiano sul terreno per cui sono stati pianificati. Vale per i villaggi dei generatori di vanilla, Biomes O' Plenty e Realistic Terrain Generation.
+
+| Chiave      | Obbligatorio | Valore                 | Predefinito | Cosa fa                                                                                              |
+| ----------- | ------------ | ---------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `chance`    | no           | decimale, da `0` a `1` | `0.1`       | Quanto è probabile che ogni chunk contenga il centro di un cratere. `0` disattiva i crateri          |
+| `minRadius` | no           | intero, da `2` a `64`  | `8`         | Il raggio minimo di un cratere, in blocchi                                                           |
+| `maxRadius` | no           | intero, da `2` a `64`  | `16`        | Il massimo, mai sotto `minRadius`. Ogni cratere sceglie il proprio raggio in modo uniforme fra i due |
+| `depth`     | no           | intero, da `1` a `32`  | `6`         | Quanti blocchi è profondo il centro della conca. Verso il bordo diventa meno profonda                |
 
 ### Temperatura in base all'altezza
 

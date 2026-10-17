@@ -3240,6 +3240,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "skyStone": "minecraft:end_stone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3331,6 +3332,29 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 | `skyStone`     | no          | nombre de bloque          | el ajuste del mundo | El bloque del que se hacen las islas flotantes bajo su superficie donde se aplica este bioma. En una franja, `topBlock` y `fillerBlock` pintan con él la superficie de la isla, así que una franja es la forma de dar a un tramo de cielo sus propias islas                                                                                                                            |
 | `skyIslands`   | no          | decimal, `-1` a `1`       | el ajuste del mundo | El umbral de las islas donde se aplica este bioma. Cuanto más bajo, más tierra reúne                                                                                                                                                                                                                                                                                                   |
 | `skyThickness` | no          | decimal, `0` a `8`        | el ajuste del mundo | Lo sólidas que son las islas donde se aplica este bioma                                                                                                                                                                                                                                                                                                                                |
+
+### Cráteres
+
+*biomas*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Un objeto `craters` hunde cuencos redondos en el suelo allí donde esté este bioma, como la Luna está llena de cráteres. Sin él, el bioma no tiene ninguno. Los cráteres forman parte del terreno tal como se genera por primera vez, se colocan a partir de la semilla del mundo, y el terreno que ya existe conserva lo que tenía. Un cráter está entero o no está, nunca cortado por el límite de un chunk: si se forma uno cerca de una aldea se decide la primera vez que se genera cualquiera de sus chunks y se guarda en la partida, de modo que todos los chunks posteriores coinciden, también tras reiniciar. Funcionan en todas las dimensiones en las que aparece el bioma, sea una del mundo principal, del Nether, del End o plana, tanto en las dimensiones propias de un pack como en las de vanilla, y no necesitan ningún otro mod.
+
+El bioma en el centro de un cráter decide si se forma y de qué tamaño es, así que un cráter cerca del borde del bioma se adentra un poco en el bioma vecino. El cuenco se excava desde la superficie del suelo hacia abajo, más hondo en el centro y subiendo de forma empinada hasta el borde, y después la pasada de superficie del terreno recorre el fondo. Donde esa pasada coloca suelo de bioma, como en un mundo principal, lo cubren el `topBlock` y el `fillerBlock` del bioma; el Nether, el End y una dimensión plana no colocan ninguno, así que allí el fondo es la piedra o la capa que hay debajo. Bajo el agua o la lava, el cuenco se llena de ese líquido. Un cráter nunca excava a través del último bloque sólido de una columna.
+
+Un cráter nunca se forma a menos de 12 bloques de una aldea, sus caminos, las calles de la ciudad y los enlaces ferroviarios, incluidos los que aún tiene que colocar, ni de un [mapa de estructuras](#mapas-de-estructuras), de modo que se levantan sobre el terreno para el que se planearon. Eso vale para las aldeas de los generadores de vanilla, Biomes O' Plenty y Realistic Terrain Generation.
+
+| Clave       | Obligatorio | Valor              | Por defecto | Qué hace                                                                                             |
+| ----------- | ----------- | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `chance`    | no          | decimal, `0` a `1` | `0.1`       | Con qué probabilidad cada chunk contiene el centro de un cráter. `0` desactiva los cráteres          |
+| `minRadius` | no          | entero, `2` a `64` | `8`         | El radio mínimo de un cráter, en bloques                                                             |
+| `maxRadius` | no          | entero, `2` a `64` | `16`        | El máximo, nunca por debajo de `minRadius`. Cada cráter elige su radio de forma uniforme entre ambos |
+| `depth`     | no          | entero, `1` a `32` | `6`         | Cuántos bloques de profundidad tiene el centro del cuenco. Hacia el borde es menos hondo             |
 
 ### Temperatura según la altura
 

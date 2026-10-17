@@ -11,4 +11,5 @@ import java.util.Random;
     @Accessor("world") void rdpl$setWorld(World world);
     @Accessor("rand") Random rdpl$rand();
     @Accessor("range") void rdpl$setRange(int range);
+    @Accessor("range") int rdpl$getRange();
 }

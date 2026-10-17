@@ -28,6 +28,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 public class ContentStructureMaps {
@@ -53,38 +54,58 @@ public class ContentStructureMaps {
 
     public static void place(World world, int chunkX, int chunkZ) {
         if (DEFS.isEmpty() || !(world instanceof WorldServer)) { return; }
-        int dimension = world.provider.getDimension();
         StructureBoundingBox window = new StructureBoundingBox(chunkX * 16 + OFFSET, GenHeights.floor(world, 0), chunkZ * 16 + OFFSET, chunkX * 16 + OFFSET + 15, GenHeights.ceiling(world, CompatHandler.VANILLA_HEIGHT) - 1, chunkZ * 16 + OFFSET + 15);
+        sites(world, window, (def, seed, originX, originZ) -> {
+            slices(world, def, seed, originX, originZ, window);
+            return false;
+        });
+    }
+
+    public static boolean claims(World world, StructureBoundingBox area, Predicate<StructureBoundingBox> hit) {
+        if (DEFS.isEmpty()) { return false; }
+        return sites(world, area, (def, seed, originX, originZ) -> hit.test(footprint(def, seed, originX, originZ)));
+    }
+
+    private interface ISite { boolean at(StructureMapDef def, long seed, int originX, int originZ); }
+
+    private static boolean sites(World world, StructureBoundingBox area, ISite site) {
+        int dimension = world.provider.getDimension();
         for (StructureMapDef def : DEFS.values()) {
             if (!def.allowsDimension(dimension)) { continue; }
-            if (def.at != null) {
-                long seed = MathUtil.mix(world.getSeed() ^ def.key.hashCode(), def.at[0], 0, def.at[1]);
-                slices(world, def, seed, def.at[0], def.at[1], window);
-            }
+            if (def.at != null && site.at(def, MathUtil.mix(world.getSeed() ^ def.key.hashCode(), def.at[0], 0, def.at[1]), def.at[0], def.at[1])) { return true; }
             if (def.spacing <= 0) { continue; }
             int pitch = def.spacing * 16;
-            for (int gridX = Math.floorDiv(window.minX - def.widest, pitch); gridX <= Math.floorDiv(window.maxX, pitch); gridX++) {
-                for (int gridZ = Math.floorDiv(window.minZ - def.widest, pitch); gridZ <= Math.floorDiv(window.maxZ, pitch); gridZ++) {
+            for (int gridX = Math.floorDiv(area.minX - def.widest, pitch); gridX <= Math.floorDiv(area.maxX, pitch); gridX++) {
+                for (int gridZ = Math.floorDiv(area.minZ - def.widest, pitch); gridZ <= Math.floorDiv(area.maxZ, pitch); gridZ++) {
                     long seed = MathUtil.mix(world.getSeed() ^ def.key.hashCode(), gridX, 1, gridZ);
                     if (Math.floorMod(seed >>> 16, 100) >= def.chance) { continue; }
                     int give = Math.max(1, pitch - def.widest);
                     int originX = gridX * pitch + (int) Math.floorMod(seed, give);
                     int originZ = gridZ * pitch + (int) Math.floorMod(seed >>> 40, give);
-                    slices(world, def, seed, originX, originZ, window);
+                    if (site.at(def, seed, originX, originZ)) { return true; }
                 }
             }
         }
+        return false;
     }
 
-    private static void slices(World world, StructureMapDef def, long seed, int originX, int originZ, StructureBoundingBox window) {
-        Rotation turn = Turns.ALL[(int) Math.floorMod(seed >>> 8, Turns.ALL.length)];
+    private static Rotation turn(long seed) { return Turns.ALL[(int) Math.floorMod(seed >>> 8, Turns.ALL.length)]; }
+
+    private static StructureBoundingBox footprint(StructureMapDef def, long seed, int originX, int originZ) {
+        Rotation turn = turn(seed);
         boolean swapped = turn == Rotation.CLOCKWISE_90 || turn == Rotation.COUNTERCLOCKWISE_90;
         int wide = def.cellsWide * def.cell;
         int deep = def.cellsDeep * def.cell;
         int spanX = swapped ? deep : wide;
         int spanZ = swapped ? wide : deep;
-        if (originX + spanX - 1 < window.minX || originX > window.maxX || originZ + spanZ - 1 < window.minZ || originZ > window.maxZ) { return; }
-        int anchor = BeardSurface.surfaceAt(world, originX + spanX / 2, originZ + spanZ / 2);
+        return new StructureBoundingBox(originX, 0, originZ, originX + spanX - 1, 0, originZ + spanZ - 1);
+    }
+
+    private static void slices(World world, StructureMapDef def, long seed, int originX, int originZ, StructureBoundingBox window) {
+        Rotation turn = turn(seed);
+        StructureBoundingBox footprint = footprint(def, seed, originX, originZ);
+        if (!footprint.intersectsWith(window.minX, window.minZ, window.maxX, window.maxZ)) { return; }
+        int anchor = BeardSurface.surfaceAt(world, originX + footprint.getXSize() / 2, originZ + footprint.getZSize() / 2);
         if (anchor < 0) { anchor = world.getSeaLevel() - 1; }
         int base = anchor + 1 - def.ground * def.cell;
         int placedCells = cells(world, def, seed, turn, originX, base, originZ, window);

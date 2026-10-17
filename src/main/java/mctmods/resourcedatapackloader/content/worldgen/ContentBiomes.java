@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentOwners;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
+import mctmods.resourcedatapackloader.content.def.CraterDef;
 import mctmods.resourcedatapackloader.content.def.SkyStone;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
@@ -19,6 +20,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.ChunkPrimer;
 import net.minecraftforge.event.terraingen.BiomeEvent;
+import net.minecraftforge.event.terraingen.ChunkGeneratorEvent;
 import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraft.util.ResourceLocation;
@@ -51,6 +53,8 @@ public final class ContentBiomes {
         ((ContentBiome) event.getBiome()).applyDecoration(event.getNewBiomeDecorator());
     }
 
+    @SubscribeEvent public static void onSurface(ChunkGeneratorEvent.ReplaceBiomeBlocks event) { ContentCraters.carve(event.getWorld(), event.getGen(), event.getX(), event.getZ(), event.getPrimer()); }
+
     public static void replaceStone(ChunkPrimer primer, Biome[] biomes) {
         if (biomes == null) { return; }
         for (int x = 0; x < 16; x++) {
@@ -74,6 +78,14 @@ public final class ContentBiomes {
             if (!Float.isNaN(def.sky.islands)) { lowest = Math.min(lowest, def.sky.islands); }
         }
         return lowest;
+    }
+
+    static int widestCrater() {
+        int widest = 0;
+        for (BiomeDef def : DEFS.values()) {
+            if (def.craters != null) { widest = Math.max(widest, def.craters.maxRadius); }
+        }
+        return widest;
     }
 
     private ContentBiomes() {}
@@ -160,7 +172,8 @@ public final class ContentBiomes {
                 Json.getBoolean(json, "keepDefaultSpawns", false),
                 Collections.unmodifiableList(spawns),
                 Json.strings(json, "requires"),
-                SkyStone.read(json, key)));
+                SkyStone.read(json, key),
+                CraterDef.read(json, key)));
     }
 
     private static int villageKind(String written, ResourceLocation key) {

@@ -3240,6 +3240,7 @@ Všechny klíče najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
   "skyStone": "minecraft:end_stone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3331,6 +3332,29 @@ Položka spawnu přijímá `entity` (povinné), `type` (`creature`, jeden z [typ
 | `skyStone`     | ne      | název bloku                  | nastavení světa | Blok, z něhož jsou pod povrchem vyrobeny nebeské ostrovy tam, kde se tento biom uplatní. U pásu s ním `topBlock` a `fillerBlock` natírají povrch ostrova, takže pás je způsob, jak dát jednomu úseku nebe vlastní ostrovy                                                                                   |
 | `skyIslands`   | ne      | desetinné číslo, `-1` až `1` | nastavení světa | Práh ostrovů tam, kde se tento biom uplatní. Nižší hodnota shromáždí víc země                                                                                                                                                                                                                               |
 | `skyThickness` | ne      | desetinné číslo, `0` až `8`  | nastavení světa | Jak pevné jsou ostrovy tam, kde se tento biom uplatní                                                                                                                                                                                                                                                       |
+
+### Krátery
+
+*biomy*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Objekt `craters` vtlačí do země kulaté mísy všude, kde tento biom leží, podobně jako je rozeklaný povrch Měsíce. Bez něj biom žádné krátery nemá. Krátery jsou součástí země, jak se poprvé vytvoří, rozmísťují se podle seedu světa a už existující země zůstává, jaká byla. Kráter je buď celý, nebo vůbec, nikdy není přeříznutý hranicí chunku: zda se kráter poblíž vesnice vytvoří, se rozhodne při prvním vytvoření kteréhokoli z jeho chunků a uloží se do savu, takže se s tím shodnou i všechny pozdější chunky, i po restartu. Fungují v každé dimenzi, v níž se biom objevuje, v overworldu, netheru, Endu i v plochém světě, ve vlastních dimenzích packu i ve vanilla, a nepotřebují žádný další mód.
+
+O tom, zda kráter vznikne a jak je velký, rozhoduje biom ve středu kráteru, takže kráter u okraje biomu zasahuje kousek do sousedního biomu. Mísa se vykope od povrchu země dolů, uprostřed je nejhlubší a ke kraji prudce stoupá, a pak přes dno projde povrchový průchod země. Kde tento průchod pokládá půdu biomu, jako v overworldu, kryje ji `topBlock` a `fillerBlock` biomu; nether, End a plochá dimenze žádnou nepokládají, takže dnem je tam kámen nebo vrstva pod ním. Pod vodou nebo lávou se mísa naplní touto kapalinou. Kráter nikdy neprokope poslední pevný blok sloupce.
+
+Kráter nikdy nevznikne do 12 bloků od vesnice, jejích cest, městských ulic a železničních spojů, včetně těch, které ještě musí položit, ani od [mapy struktur](#mapy-struktur), takže stojí na zemi, pro kterou byly naplánovány. Platí to pro vesnice generátorů vanilla, Biomes O' Plenty a Realistic Terrain Generation.
+
+| Klíč        | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                  |
+| ----------- | ------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `chance`    | ne      | desetinné číslo, `0` až `1` | `0.1`   | S jakou pravděpodobností každý chunk obsahuje střed kráteru. `0` krátery vypne           |
+| `minRadius` | ne      | celé číslo, `2` až `64`     | `8`     | Nejmenší poloměr kráteru v blocích                                                       |
+| `maxRadius` | ne      | celé číslo, `2` až `64`     | `16`    | Největší, nikdy ne pod `minRadius`. Každý kráter si vybere poloměr rovnoměrně mezi oběma |
+| `depth`     | ne      | celé číslo, `1` až `32`     | `6`     | Kolik bloků hluboko je střed mísy. Ke kraji se zmenšuje                                  |
 
 ### Teplota podle výšky
 

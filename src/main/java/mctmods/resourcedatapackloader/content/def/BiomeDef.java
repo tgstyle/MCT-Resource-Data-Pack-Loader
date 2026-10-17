@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.def;
 import net.minecraft.util.ResourceLocation;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 public final class BiomeDef {
     public static final int AUTO_ID = -1;
@@ -45,8 +46,9 @@ public final class BiomeDef {
     public final List<SpawnEntryDef> spawns;
     public final List<String> requires;
     public final SkyStone sky;
+    @Nullable public final CraterDef craters;
 
-    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, int snowColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, SkyStone sky) {
+    public BiomeDef(ResourceLocation registryName, String name, int id, float temperature, float rainfall, float baseHeight, float heightVariation, boolean snow, boolean rain, int waterColor, String baseBiome, String topBlock, String fillerBlock, String stoneBlock, List<String> types, String climate, int weight, boolean spawnBiome, boolean villageBiome, boolean villageSpawn, int villageType, boolean strongholdBiome, Map<String, Integer> decoration, float spawnChance, float surfaceDayMonsterRate, float surfaceNightMonsterRate, float undergroundDayMonsterRate, float undergroundNightMonsterRate, int grassColor, int foliageColor, int snowColor, boolean banded, int minHeight, int maxHeight, List<String> replaces, boolean keepDefaultSpawns, List<SpawnEntryDef> spawns, List<String> requires, SkyStone sky, @Nullable CraterDef craters) {
         this.registryName = registryName;
         this.name = name;
         this.id = id;
@@ -86,6 +88,7 @@ public final class BiomeDef {
         this.spawns = spawns;
         this.requires = requires;
         this.sky = sky;
+        this.craters = craters;
     }
 
     public boolean isAutoId() { return id == AUTO_ID; }

@@ -9,4 +9,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(ChunkGeneratorOverworld.class) public interface IChunkGeneratorBeardFields {
     @Accessor("woodlandMansionGenerator") WoodlandMansion rdpl$mansions();
     @Accessor("villageGenerator") MapGenVillage rdpl$villages();
+    @Accessor("mapFeaturesEnabled") boolean rdpl$features();
 }

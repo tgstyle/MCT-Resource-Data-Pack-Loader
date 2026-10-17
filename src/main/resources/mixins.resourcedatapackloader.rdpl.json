@@ -94,6 +94,7 @@
     "common.MixinChunkDressing",
     "common.MixinChunkEntities",
     "common.MixinChunkGeneratorEnd",
+    "common.MixinChunkGeneratorFlat",
     "common.MixinChunkGeneratorHell",
     "common.MixinChunkGeneratorOverworld",
     "common.MixinChunkLight",

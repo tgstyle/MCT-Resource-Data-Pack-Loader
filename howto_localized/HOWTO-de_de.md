@@ -3240,6 +3240,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "skyStone": "minecraft:end_stone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3331,6 +3332,29 @@ Bei `spawnRates` geht es ausschließlich um feindliche Mobs, um sonst nichts. Es
 | `skyStone`     | nein    | Blockname           | die Welteinstellung | Der Block, aus dem Himmelsinseln unter ihrer Oberfläche bestehen, wo dieses Biom gilt. Bei einem Band bemalen `topBlock` und `fillerBlock` die Inseloberfläche damit, ein Band ist also der Weg zu einem eigenen Stück Himmel                                                                                                                                 |
 | `skyIslands`   | nein    | float, `-1` bis `1` | die Welteinstellung | Die Inselschwelle, wo dieses Biom gilt. Niedriger sammelt mehr Land                                                                                                                                                                                                                                                                                           |
 | `skyThickness` | nein    | float, `0` bis `8`  | die Welteinstellung | Wie massiv die Inseln sind, wo dieses Biom gilt                                                                                                                                                                                                                                                                                                               |
+
+### Krater
+
+*biome*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Ein `craters`-Objekt drückt überall dort, wo dieses Biom liegt, runde Mulden in den Boden, so wie der Mond von Kratern übersät ist. Ohne es hat das Biom keine. Krater gehören zum Land, wie es zum ersten Mal erzeugt wird, und werden anhand des Weltseeds gesetzt; Land, das schon existiert, behält, was es hatte. Ein Krater ist ganz oder gar nicht da, nie an einer Chunkgrenze abgeschnitten: Ob ein Krater in der Nähe eines Dorfs entsteht, wird beim ersten Erzeugen eines seiner Chunks entschieden und im Spielstand gespeichert, sodass sich jeder spätere Chunk daran hält, auch nach einem Neustart. Sie funktionieren in jeder Dimension, in der das Biom vorkommt, in einer Oberwelt, im Nether, im Ende oder in einer flachen Welt, in den eigenen Dimensionen eines Packs wie in den Vanilla-Dimensionen, und brauchen keine andere Mod.
+
+Das Biom in der Mitte eines Kraters entscheidet, ob er entsteht und wie groß er wird, daher reicht ein Krater am Rand des Bioms ein Stück in das Nachbarbiom hinein. Die Mulde wird von der Bodenoberfläche aus nach unten gegraben, in der Mitte am tiefsten und zum Rand hin steil ansteigend; danach läuft der Oberflächendurchgang des Landes über den Grund. Wo dieser Durchgang Biomboden legt, wie in einer Oberwelt, bedecken `topBlock` und `fillerBlock` des Bioms ihn; der Nether, das Ende und eine flache Dimension legen keinen, dort ist der Grund also der Stein oder die Schicht darunter. Unter Wasser oder Lava füllt sich die Mulde mit dieser Flüssigkeit. Ein Krater gräbt nie durch den letzten festen Block einer Spalte.
+
+Ein Krater entsteht nie innerhalb von 12 Blöcken um ein Dorf, seine Straßen, die Stadtstraßen und Bahnverbindungen eingeschlossen, auch die, die noch gelegt werden müssen, oder um eine [Strukturkarte](#strukturkarten), damit sie auf dem Boden stehen, für den sie geplant wurden. Das gilt für die Dörfer der Generatoren von Vanilla, Biomes O' Plenty und Realistic Terrain Generation.
+
+| Schlüssel   | Pflicht | Wert               | Standard | Was er macht                                                                                       |
+| ----------- | ------- | ------------------ | -------- | -------------------------------------------------------------------------------------------------- |
+| `chance`    | nein    | float, `0` bis `1` | `0.1`    | Wie wahrscheinlich jeder Chunk die Mitte eines Kraters enthält. `0` schaltet Krater ab             |
+| `minRadius` | nein    | int, `2` bis `64`  | `8`      | Der kleinste Kraterradius in Blöcken                                                               |
+| `maxRadius` | nein    | int, `2` bis `64`  | `16`     | Der größte, nie unter `minRadius`. Jeder Krater wählt seinen Radius gleichverteilt zwischen beiden |
+| `depth`     | nein    | int, `1` bis `32`  | `6`      | Wie viele Blöcke tief die Mitte der Mulde ist. Zum Rand hin wird sie flacher                       |
 
 ### Temperatur nach Höhe
 

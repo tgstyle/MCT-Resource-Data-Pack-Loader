@@ -3240,6 +3240,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "skyStone": "minecraft:end_stone",
   "skyIslands": 0.2,
   "skyThickness": 2.0,
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3331,6 +3332,29 @@ Uma entrada de spawn aceita `entity` (obrigatória), `type` (`creature`, um dos 
 | `skyStone`     | não         | nome de bloco              | a definição do mundo | O bloco de que as ilhas flutuantes são feitas, sob a superfície, onde este bioma se aplica. Numa faixa, `topBlock` e `fillerBlock` pintam com ele a superfície da ilha, pelo que uma faixa é a forma de dar a um troço de céu ilhas só suas                                                                                                        |
 | `skyIslands`   | não         | número decimal, `-1` a `1` | a definição do mundo | O limiar das ilhas onde este bioma se aplica. Quanto mais baixo, mais terra se junta                                                                                                                                                                                                                                                               |
 | `skyThickness` | não         | número decimal, `0` a `8`  | a definição do mundo | Quão sólidas são as ilhas onde este bioma se aplica                                                                                                                                                                                                                                                                                                |
+
+### Crateras
+
+*biomas*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Um objeto `craters` abre bacias redondas no solo onde quer que este bioma esteja, como a Lua é cheia de crateras. Sem ele, o bioma não tem nenhuma. As crateras fazem parte do terreno como é gerado pela primeira vez, colocadas a partir da seed do mundo, e o terreno que já existe mantém o que tinha. Uma cratera existe inteira ou não existe, nunca cortada no limite de um chunk: se uma cratera perto de uma aldeia se forma é decidido na primeira vez que qualquer um dos seus chunks é gerado e fica guardado no save, pelo que todos os chunks seguintes concordam, mesmo depois de reiniciar. Funcionam em todas as dimensões em que o bioma aparece, seja uma do mundo principal, do Nether, do End ou plana, tanto nas dimensões próprias de um pack como nas do vanilla, e não precisam de nenhum outro mod.
+
+O bioma no meio de uma cratera decide se ela se forma e de que tamanho é, por isso uma cratera junto ao limite do bioma avança um pouco no bioma vizinho. A bacia é escavada da superfície do solo para baixo, mais funda no meio e subindo de forma íngreme até à borda, e depois a passagem de superfície do terreno corre por cima do fundo. Onde essa passagem coloca solo de bioma, como no mundo principal, o `topBlock` e o `fillerBlock` do bioma cobrem-no; o Nether, o End e uma dimensão plana não colocam nenhum, por isso aí o fundo é a pedra ou a camada por baixo. Debaixo de água ou de lava, a bacia enche-se desse líquido. Uma cratera nunca escava através do último bloco sólido de uma coluna.
+
+Uma cratera nunca se forma a menos de 12 blocos de uma aldeia, das suas estradas, das ruas da cidade e das ligações ferroviárias, incluindo as que ainda faltam colocar, nem de um [mapa de estruturas](#mapas-de-estruturas), para que fiquem sobre o terreno para o qual foram planeados. Isto vale para as aldeias dos geradores do vanilla, do Biomes O' Plenty e do Realistic Terrain Generation.
+
+| Chave       | Obrigatório | Valor                      | Predefinição | O que faz                                                                                         |
+| ----------- | ----------- | -------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| `chance`    | não         | número decimal, `0` a `1`  | `0.1`        | Qual a probabilidade de cada chunk conter o centro de uma cratera. `0` desliga as crateras        |
+| `minRadius` | não         | número inteiro, `2` a `64` | `8`          | O menor raio de cratera, em blocos                                                                |
+| `maxRadius` | não         | número inteiro, `2` a `64` | `16`         | O maior, nunca abaixo de `minRadius`. Cada cratera escolhe o raio de forma uniforme entre os dois |
+| `depth`     | não         | número inteiro, `1` a `32` | `6`          | Quantos blocos de profundidade tem o meio da bacia. Em direção à borda fica mais rasa             |
 
 ### Temperatura por altura
 

@@ -405,17 +405,20 @@ public final class ContentStructureSearch implements WorldWorkerManager.IWorker 
     }
 
     @Nullable private static MapGenStructure villages(World world) {
-        IChunkGenerator maker = makerOf(world);
-        if (maker == null) { return null; }
-        MapGenVillage shell = null;
-        if (maker instanceof ChunkGeneratorOverworld) { shell = ((IChunkGeneratorBeardFields) maker).rdpl$villages(); }
-        else if (maker instanceof ChunkGeneratorFlat) {
-            MapGenStructure flat = ((IChunkGeneratorFlatFields) maker).rdpl$structures().get("Village");
-            if (flat instanceof MapGenVillage) { shell = (MapGenVillage) flat; }
-        }
+        MapGenVillage shell = villageShell(makerOf(world));
         if (shell == null) { return null; }
         MapGenStructure found = theRealOne(shell);
         return found instanceof MapGenVillage ? found : null;
+    }
+
+    @Nullable static MapGenVillage villageShell(@Nullable IChunkGenerator maker) {
+        if (maker instanceof ChunkGeneratorOverworld) {
+            IChunkGeneratorBeardFields fields = (IChunkGeneratorBeardFields) maker;
+            return fields.rdpl$features() ? fields.rdpl$villages() : null;
+        }
+        if (!(maker instanceof ChunkGeneratorFlat)) { return null; }
+        MapGenStructure flat = ((IChunkGeneratorFlatFields) maker).rdpl$structures().get("Village");
+        return flat instanceof MapGenVillage ? (MapGenVillage) flat : null;
     }
 
     public static MapGenStructure theRealOne(MapGenStructure wrapper) {

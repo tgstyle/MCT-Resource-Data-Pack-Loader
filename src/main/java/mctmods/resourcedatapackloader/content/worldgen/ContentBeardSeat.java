@@ -30,7 +30,7 @@ public final class ContentBeardSeat {
     static final Map<String, Mode> MODES = new LinkedHashMap<>();
     private static boolean modesLoaded;
     private static boolean applying;
-    private static final ChunkPrimer UNUSED = new ChunkPrimer();
+    static final ChunkPrimer UNUSED = new ChunkPrimer();
     static {
         for (int z = 0; z < SIZE; z++) {
             for (int x = 0; x < SIZE; x++) {
