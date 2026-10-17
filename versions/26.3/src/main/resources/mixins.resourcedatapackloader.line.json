@@ -12,7 +12,8 @@
         "common.MixinAdvancementLoadTask",
         "common.MixinReloadableServerResources",
         "common.MixinNoiseChunk",
-        "common.MixinFeaturePlacer"
+        "common.MixinFeaturePlacer",
+        "common.MixinMaterialRuleContext"
     ],
     "injectors": {
         "defaultRequire": 1

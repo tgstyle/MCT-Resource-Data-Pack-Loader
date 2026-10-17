@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.compat;
 
 import mctmods.resourcedatapackloader.content.extra.ContentFuels;
 import mctmods.resourcedatapackloader.content.extra.ContentPotions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCraters;
 import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IBiomeNoise;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.ISurfaceSystem;
@@ -261,6 +262,8 @@ public final class LineCompat {
         return (x, y, z) -> source.getNoiseBiome(x, y, z, sampler);
     }
 
+    public static StructureStart founded(Holder<Structure> structure, ServerLevel level, ChunkGenerator generator, RandomState random, long seed, ChunkPos pos) { return structure.value().generate(structure, level.dimension(), level.registryAccess(), generator, generator.getBiomeSource(), random, templates(level.getServer()), seed, pos, 0, level, structure.value().biomes()::contains); }
+
     public static BiomeManager withBiomes(BiomeManager manager, INoiseBiomes biomes) { return manager.withDifferentSource(biomes::at); }
 
     public static IBergNoise bergNoise(RandomState random) {
@@ -319,7 +322,7 @@ public final class LineCompat {
 
         @Override @Nonnull public ChunkGeneratorStructureState createState(@Nonnull HolderLookup<StructureSet> lookup, @Nonnull RandomState random, long seed) { return ChunkGeneratorStructureState.createForFlat(random, seed, biomeSource, structureSets(lookup)); }
 
-        @Override public void buildSurface(@Nonnull WorldGenRegion level, @Nonnull StructureManager structures, @Nonnull RandomState random, @Nonnull ChunkAccess chunk) {}
+        @Override public void buildSurface(@Nonnull WorldGenRegion level, @Nonnull StructureManager structures, @Nonnull RandomState random, @Nonnull ChunkAccess chunk) { ContentCraters.carveFlat(level, chunk); }
 
         @Override @Nonnull public CompletableFuture<ChunkAccess> fillFromNoise(@Nonnull Blender blender, @Nonnull RandomState random, @Nonnull StructureManager structures, @Nonnull ChunkAccess chunk) { return flat().fillFromNoise(blender, random, structures, chunk); }
 

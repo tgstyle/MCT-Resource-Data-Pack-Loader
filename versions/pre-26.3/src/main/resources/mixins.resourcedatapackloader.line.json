@@ -11,7 +11,8 @@
         "common.INoiseChunk",
         "common.INormalNoise",
         "common.MixinAquifer",
-        "common.MixinPlacedFeature"
+        "common.MixinPlacedFeature",
+        "common.MixinSurfaceRulesContext"
     ],
     "injectors": {
         "defaultRequire": 1

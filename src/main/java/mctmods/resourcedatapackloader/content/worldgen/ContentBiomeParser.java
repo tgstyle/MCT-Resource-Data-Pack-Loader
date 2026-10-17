@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.worldgen;
 import mctmods.resourcedatapackloader.content.ContentParser;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
+import mctmods.resourcedatapackloader.content.def.CraterDef;
 import mctmods.resourcedatapackloader.content.def.SkyStoneDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -70,7 +71,7 @@ public final class ContentBiomeParser {
                 json.has("minHeight") || json.has("maxHeight"),
                 Json.getInt(json, "minHeight", Integer.MIN_VALUE),
                 Json.getInt(json, "maxHeight", Integer.MAX_VALUE),
-                Json.strings(json, "replaces"), Json.strings(json, "requires"));
+                Json.strings(json, "replaces"), Json.strings(json, "requires"), CraterDef.read(json, key));
     }
 
     public static List<BiomeSpawnDef> spawns(Identifier key, JsonObject json, int weight, int max) {

@@ -2981,6 +2981,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3068,6 +3069,29 @@ A spawn entry takes `entity` (required), `type` (`creature`, one of `monster`, `
 | `minHeight` | no       | int                 | none        | Lowest y this biome takes over as a 3D biome. Setting either height turns the biome into a band: the column keeps its own biome outside it, and inside it every 4 by 4 by 4 cell of the world reports this one               |
 | `maxHeight` | no       | int                 | none        | Highest y of that band                                                                                                                                                                                                       |
 | `replaces`  | no       | list of biome names | every biome | Restricts the band to columns whose own biome is named here, so an alpine band can sit over mountains and nothing else. The column's own biome is the one at its surface. Without `minHeight` or `maxHeight` it does nothing |
+
+### Craters
+
+*biomes*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+A `craters` object presses round bowls into the ground wherever this biome is, the way the Moon is cratered. Without it the biome has none. Craters are part of the land as it is first made, placed from the world seed, and land that already exists keeps what it had. A crater is whole or absent, never cut off at a chunk border: whether one near a village forms is settled the first time any of its chunks is made and kept in the save, so every later chunk of it agrees, after a restart too. They work in every dimension the biome appears in, an overworld, nether, End or flat one, a pack's own dimensions and the vanilla ones alike, and need no other mod.
+
+The biome at a crater's middle decides whether it forms and how big it is, so a crater near the biome's edge reaches a little way into the biome beside it. The bowl is dug from the ground's surface down, deepest in the middle and rising steeply to the rim, and the land's own surface pass then runs over the floor, so the floor gets the grass, sand or stone the biome lays there. A flat dimension lays none, so there the floor is the layer beneath. Under water or lava the bowl fills with that liquid. A crater never digs through a column's last solid block.
+
+A crater never forms within 12 blocks of a village, its buildings, city streets, plots and railway links included, the links it has still to lay as well, or of a [structure map](#structure-maps), so they stand on the ground they were planned for.
+
+| Key         | Required | Value             | Default | What it does                                                                              |
+| ----------- | -------- | ----------------- | ------- | ----------------------------------------------------------------------------------------- |
+| `chance`    | no       | float, `0` to `1` | `0.1`   | How likely each chunk is to hold a crater's middle. `0` turns craters off                 |
+| `minRadius` | no       | int, `2` to `64`  | `8`     | The smallest crater radius, in blocks                                                     |
+| `maxRadius` | no       | int, `2` to `64`  | `16`    | The largest, never below `minRadius`. Each crater picks its radius evenly between the two |
+| `depth`     | no       | int, `1` to `32`  | `6`     | How many blocks deep the middle of the bowl is. Toward the rim it grows shallower         |
 
 ### Temperature by height
 

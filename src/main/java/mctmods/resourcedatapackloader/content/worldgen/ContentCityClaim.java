@@ -61,14 +61,32 @@ public final class ContentCityClaim {
 
     private ContentCityClaim() {}
 
-    public static boolean outside(CityGround ground, ChunkGenerator generator, RandomState random, RegistryAccess registries, int x, int z) {
-        if (ContentCity.idle()) { return true; }
+    private static boolean cityHolds(CityGround ground, ChunkGenerator generator, RandomState random, RegistryAccess registries, int x, int z) {
+        if (ContentCity.idle()) { return false; }
         Structure city = registries.lookupOrThrow(Registries.STRUCTURE).getValue(CITY);
-        if (city == null) { return true; }
+        if (city == null) { return false; }
         CityPlan plan = CityPlan.of(ground, CityPlan.districtOf(x, true), CityPlan.districtOf(z, false));
-        if (plan == null) { return true; }
+        if (plan == null) { return false; }
         Holder<Biome> biome = LineCompat.noiseBiomes(generator.getBiomeSource(), random).at(QuartPos.fromBlock(plan.windowX()), QuartPos.fromBlock(generator.getSeaLevel()), QuartPos.fromBlock(plan.windowZ()));
-        return !city.biomes().contains(biome);
+        return city.biomes().contains(biome);
+    }
+
+    public static boolean claims(CityGround ground, ChunkGenerator generator, RandomState random, RegistryAccess registries, BoundingBox box, Predicate<BoundingBox> near) {
+        if (ContentCity.idle()) { return false; }
+        for (CityRails.Laid laid : CityRails.railways(ground, box.minX(), box.minZ(), box.maxX(), box.maxZ())) {
+            if (!laid.rail().subway() && near.test(laid.rail().box())) { return true; }
+        }
+        return first(ground, box.minX(), box.maxX(), box.minZ(), box.maxZ(), plan -> cityHolds(ground, generator, random, registries, plan.windowX(), plan.windowZ()) && laysNear(plan, near) ? plan : null) != null;
+    }
+
+    private static boolean laysNear(CityPlan plan, Predicate<BoundingBox> near) {
+        for (CityPlan.Line line : CityLines.of(plan)) {
+            if (near.test(line.box())) { return true; }
+        }
+        for (CityPlan.Plot plot : plan.plots()) {
+            if (near.test(plot.box())) { return true; }
+        }
+        return false;
     }
 
     public static boolean overrides(StructureStart start, long seed, ChunkGenerator generator, RandomState random, RegistryAccess registries) {
@@ -93,7 +111,7 @@ public final class ContentCityClaim {
             for (int districtZ = CityPlan.districtOf(minZ, false); districtZ <= CityPlan.districtOf(maxZ, false); districtZ++) {
                 int windowX = CityPlan.windowOf(districtX, true);
                 int windowZ = CityPlan.windowOf(districtZ, false);
-                if (!outside(ground, generator, random, registries, windowX, windowZ)) { return new int[] {windowX, windowZ}; }
+                if (cityHolds(ground, generator, random, registries, windowX, windowZ)) { return new int[] {windowX, windowZ}; }
             }
         }
         return null;

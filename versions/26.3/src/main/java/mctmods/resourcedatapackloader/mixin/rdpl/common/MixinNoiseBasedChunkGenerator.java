@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.interfaces.IMarkedNoise;
 import mctmods.resourcedatapackloader.content.worldgen.CityDeckBeard;
+import mctmods.resourcedatapackloader.content.worldgen.ContentCraters;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDeepCaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPopulateControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
@@ -13,6 +14,7 @@ import net.minecraft.core.Holder;
 import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.level.StructureManager;
+import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.block.Blocks;
@@ -43,11 +45,18 @@ import java.util.Set;
         if (picker != null) { cir.setReturnValue(picker); }
     }
 
-    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$markFill(ChunkAccess chunk, StructureManager structureManager, Blender blender, RandomState randomState, NoiseSettings noiseSettings, CallbackInfoReturnable<NoiseChunk> cir, @Local Beardifier beardifier) { ((IMarkedNoise) cir.getReturnValue()).rdpl$mark(ContentVoidWorld.voidEmpties(structureManager), beardifier instanceof CityDeckBeard city ? city : null); }
+    @Inject(method = "createNoiseChunk", at = @At("RETURN")) private void rdpl$markFill(ChunkAccess chunk, StructureManager structureManager, Blender blender, RandomState randomState, NoiseSettings noiseSettings, CallbackInfoReturnable<NoiseChunk> cir, @Local Beardifier beardifier) { ((IMarkedNoise) cir.getReturnValue()).rdpl$mark(ContentVoidWorld.voidEmpties(structureManager), beardifier instanceof CityDeckBeard city ? city : null, ((IStructureManager) structureManager).rdpl$getLevel() instanceof WorldGenLevel level ? level : null); }
 
     @Inject(method = "doFill", at = @At("HEAD"), cancellable = true) private void rdpl$voidFill(NoiseChunk noiseChunk, ChunkAccess chunk, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
 
-    @Inject(method = "buildSurface", at = @At("HEAD"), cancellable = true) private void rdpl$voidSurface(ChunkAccess protoChunk, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, Set<Holder<Biome>> possibleBiomes, MaterialRule materialRule, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
+    @Inject(method = "buildSurface", at = @At("HEAD"), cancellable = true) private void rdpl$surface(ChunkAccess protoChunk, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, Set<Holder<Biome>> possibleBiomes, MaterialRule materialRule, CallbackInfo ci) {
+        IMarkedNoise marked = (IMarkedNoise) noiseChunk;
+        WorldGenLevel level = marked.rdpl$level();
+        if (marked.rdpl$voided()) { ci.cancel(); }
+        else if (level != null) { ContentCraters.carve(level, protoChunk); }
+    }
+
+    @Inject(method = "buildSurface", at = @At("RETURN")) private void rdpl$surfaced(ChunkAccess protoChunk, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, Set<Holder<Biome>> possibleBiomes, MaterialRule materialRule, CallbackInfo ci) { ContentCraters.surfaced(); }
 
     @Inject(method = "generateCarvers", at = @At("HEAD"), cancellable = true) private void rdpl$voidCarvers(ChunkAccess chunk, Blender blender, NoiseChunk noiseChunk, RandomState randomState, BiomeManager biomeManager, WorldGenRegion carverBiomeRegion, MaterialRule materialRule, CallbackInfo ci) { if (((IMarkedNoise) noiseChunk).rdpl$voided()) { ci.cancel(); } }
 

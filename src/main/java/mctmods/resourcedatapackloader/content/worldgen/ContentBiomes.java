@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.def.BiomeSpawnDef;
+import mctmods.resourcedatapackloader.content.def.CraterDef;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.pack.GeneratedResources;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -50,6 +51,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 import javax.annotation.Nullable;
@@ -97,6 +99,7 @@ public final class ContentBiomes {
     private static final Map<Identifier, Set<String>> TAGS = new LinkedHashMap<>();
     private static final Map<BiomeSource, List<Band>> HEIGHT_BANDS = Collections.synchronizedMap(new WeakHashMap<>());
     private static boolean loaded;
+    private static int craterReach;
 
     private ContentBiomes() {}
 
@@ -123,6 +126,7 @@ public final class ContentBiomes {
             MADE.put(def.key(), new Made(def, block(def, def.topBlock(), "topBlock"), block(def, def.fillerBlock(), "fillerBlock"), block(def, def.stoneBlock(), "stoneBlock"), block(def, def.sky().stone(), "skyStone"), box(def)));
             tags(def);
         }
+        craterReach = (MADE.values().stream().map(made -> made.def().craters()).filter(Objects::nonNull).mapToInt(CraterDef::maxRadius).max().orElse(0) + 15) >> 4;
         for (Map.Entry<Identifier, Set<String>> tag : TAGS.entrySet()) {
             JsonObject json = new JsonObject();
             json.addProperty("replace", false);
@@ -216,6 +220,8 @@ public final class ContentBiomes {
         Made made = MADE.get(key);
         return made == null ? null : made.def();
     }
+
+    static int craterReach() { return craterReach; }
 
     @Nullable public static String villageKind(Identifier key) {
         BiomeDef def = def(key);

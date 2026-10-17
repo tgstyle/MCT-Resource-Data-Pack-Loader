@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentCraters;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDeepCaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPopulateControl;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
@@ -30,7 +31,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
     @Inject(method = "doFill", at = @At("HEAD"), cancellable = true) private void rdpl$voidFill(Blender blender, StructureManager structureManager, RandomState randomState, ChunkAccess centerChunk, int cellMinY, int cellCountY, CallbackInfoReturnable<ChunkAccess> cir) { if (ContentVoidWorld.voidEmpties(structureManager)) { cir.setReturnValue(centerChunk); } }
 
-    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("HEAD"), cancellable = true) private void rdpl$voidSurface(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk, CallbackInfo ci) { if (ContentVoidWorld.voidEmpties(structureManager)) { ci.cancel(); } }
+    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("HEAD"), cancellable = true) private void rdpl$surface(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk, CallbackInfo ci) {
+        if (ContentVoidWorld.voidEmpties(structureManager)) { ci.cancel(); }
+        else { ContentCraters.carve(region, protoChunk); }
+    }
+
+    @Inject(method = "buildSurface(Lnet/minecraft/server/level/WorldGenRegion;Lnet/minecraft/world/level/StructureManager;Lnet/minecraft/world/level/levelgen/RandomState;Lnet/minecraft/world/level/chunk/ChunkAccess;)V", at = @At("RETURN")) private void rdpl$surfaced(WorldGenRegion region, StructureManager structureManager, RandomState randomState, ChunkAccess protoChunk, CallbackInfo ci) { ContentCraters.surfaced(); }
 
     @Redirect(method = "applyCarvers", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/levelgen/carver/ConfiguredWorldCarver;isStartChunk(Lnet/minecraft/util/RandomSource;)Z")) private boolean rdpl$carves(ConfiguredWorldCarver<?> carver, RandomSource random) { return ContentPopulateControl.carves((ChunkGenerator) (Object) this, carver) && carver.isStartChunk(random); }
 

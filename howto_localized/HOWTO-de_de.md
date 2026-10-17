@@ -2981,6 +2981,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3068,6 +3069,29 @@ Bei `spawnRates` geht es ausschließlich um feindliche Mobs, um sonst nichts. Es
 | `minHeight` | nein    | int                 | keiner     | Unterste y-Höhe, ab der dieses Biom als 3D-Biom übernimmt. Wird eine der beiden Höhen gesetzt, wird das Biom zu einem Band: außerhalb behält die Säule ihr eigenes Biom, innerhalb meldet jede 4 mal 4 mal 4 große Zelle der Welt dieses         |
 | `maxHeight` | nein    | int                 | keiner     | Oberste y-Höhe dieses Bandes                                                                                                                                                                                                                     |
 | `replaces`  | nein    | Liste von Biomnamen | jedes Biom | Beschränkt das Band auf Säulen, deren eigenes Biom hier genannt ist, ein Alpenband kann also über Bergen liegen und sonst nirgends. Das eigene Biom einer Säule ist das an ihrer Oberfläche. Ohne `minHeight` oder `maxHeight` bewirkt es nichts |
+
+### Krater
+
+*biome*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Ein `craters`-Objekt drückt überall dort, wo dieses Biom liegt, runde Mulden in den Boden, so wie der Mond von Kratern übersät ist. Ohne es hat das Biom keine. Krater gehören zum Land, wie es zum ersten Mal erzeugt wird, und werden anhand des Weltseeds gesetzt; Land, das schon existiert, behält, was es hatte. Ein Krater ist ganz oder gar nicht da, nie an einer Chunkgrenze abgeschnitten: Ob ein Krater in der Nähe eines Dorfs entsteht, wird beim ersten Erzeugen eines seiner Chunks entschieden und im Spielstand gespeichert, sodass sich jeder spätere Chunk daran hält, auch nach einem Neustart. Sie funktionieren in jeder Dimension, in der das Biom vorkommt, in einer Oberwelt, im Nether, im Ende oder in einer flachen Welt, in den eigenen Dimensionen eines Packs wie in den Vanilla-Dimensionen, und brauchen keine andere Mod.
+
+Das Biom in der Mitte eines Kraters entscheidet, ob er entsteht und wie groß er wird, daher reicht ein Krater am Rand des Bioms ein Stück in das Nachbarbiom hinein. Die Mulde wird von der Bodenoberfläche aus nach unten gegraben, in der Mitte am tiefsten und zum Rand hin steil ansteigend; danach läuft der Oberflächendurchgang des Landes über den Grund, sodass der Grund das Gras, den Sand oder den Stein bekommt, den das Biom dort legt. Eine flache Dimension legt keinen, dort ist der Grund also die Schicht darunter. Unter Wasser oder Lava füllt sich die Mulde mit dieser Flüssigkeit. Ein Krater gräbt nie durch den letzten festen Block einer Spalte.
+
+Ein Krater entsteht nie innerhalb von 12 Blöcken um ein Dorf, seine Gebäude, die Stadtstraßen, Grundstücke und Bahnverbindungen eingeschlossen, auch die, die noch gelegt werden müssen, oder um eine [Strukturkarte](#strukturkarten), damit sie auf dem Boden stehen, für den sie geplant wurden.
+
+| Schlüssel   | Pflicht | Wert               | Standard | Was er macht                                                                                       |
+| ----------- | ------- | ------------------ | -------- | -------------------------------------------------------------------------------------------------- |
+| `chance`    | nein    | float, `0` bis `1` | `0.1`    | Wie wahrscheinlich jeder Chunk die Mitte eines Kraters enthält. `0` schaltet Krater ab             |
+| `minRadius` | nein    | int, `2` bis `64`  | `8`      | Der kleinste Kraterradius in Blöcken                                                               |
+| `maxRadius` | nein    | int, `2` bis `64`  | `16`     | Der größte, nie unter `minRadius`. Jeder Krater wählt seinen Radius gleichverteilt zwischen beiden |
+| `depth`     | nein    | int, `1` bis `32`  | `6`      | Wie viele Blöcke tief die Mitte der Mulde ist. Zum Rand hin wird sie flacher                       |
 
 ### Temperatur nach Höhe
 

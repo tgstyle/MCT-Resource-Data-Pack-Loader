@@ -2981,6 +2981,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3068,6 +3069,29 @@ Uma entrada de spawn aceita `entity` (obrigatória), `type` (`creature`, um entr
 | `minHeight` | não         | int                      | nenhum          | O menor y em que este bioma assume o controle como um bioma 3D. Definir qualquer uma das alturas transforma o bioma em uma faixa: a coluna mantém seu próprio bioma fora dela, e dentro dela cada célula de 4 por 4 por 4 do mundo informa este |
 | `maxHeight` | não         | int                      | nenhum          | O maior y dessa faixa                                                                                                                                                                                                                           |
 | `replaces`  | não         | lista de nomes de biomas | todos os biomas | Restringe a faixa às colunas cujo próprio bioma é nomeado aqui, de modo que uma faixa alpina possa ficar sobre montanhas e nada mais. O bioma próprio da coluna é o da sua superfície. Sem `minHeight` ou `maxHeight`, não faz nada             |
+
+### Crateras
+
+*biomas*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Um objeto `craters` abre bacias redondas no solo onde quer que este bioma esteja, como a Lua é cheia de crateras. Sem ele, o bioma não tem nenhuma. As crateras fazem parte do terreno como ele é gerado pela primeira vez, colocadas a partir da seed do mundo, e o terreno que já existe mantém o que tinha. Uma cratera existe inteira ou não existe, nunca cortada na divisa de um chunk: se uma cratera perto de uma vila se forma é decidido na primeira vez que qualquer um de seus chunks é gerado e fica guardado no save, então todo chunk posterior concorda, inclusive depois de reiniciar. Elas funcionam em toda dimensão em que o bioma aparece, seja uma do mundo principal, do Nether, do End ou plana, tanto nas dimensões próprias de um pack quanto nas do vanilla, e não precisam de nenhum outro mod.
+
+O bioma no meio de uma cratera decide se ela se forma e de que tamanho é, então uma cratera perto da borda do bioma avança um pouco no bioma vizinho. A bacia é cavada da superfície do solo para baixo, mais funda no meio e subindo de forma íngreme até a borda, e depois a passada de superfície do terreno passa por cima do fundo, então o fundo recebe a grama, a areia ou a pedra que o bioma coloca ali. Uma dimensão plana não coloca nenhuma, então ali o fundo é a camada abaixo. Debaixo d'água ou de lava, a bacia se enche desse líquido. Uma cratera nunca cava através do último bloco sólido de uma coluna.
+
+Uma cratera nunca se forma a menos de 12 blocos de uma vila, seus edifícios, as ruas da cidade, os lotes e as ligações ferroviárias, incluindo as que ainda faltam colocar, nem de um [mapa de estruturas](#mapas-de-estruturas), para que fiquem sobre o terreno para o qual foram planejados.
+
+| Chave       | Obrigatória | Valor            | Padrão | O que faz                                                                                         |
+| ----------- | ----------- | ---------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| `chance`    | não         | float, `0` a `1` | `0.1`  | Qual a probabilidade de cada chunk conter o centro de uma cratera. `0` desliga as crateras        |
+| `minRadius` | não         | int, `2` a `64`  | `8`    | O menor raio de cratera, em blocos                                                                |
+| `maxRadius` | não         | int, `2` a `64`  | `16`   | O maior, nunca abaixo de `minRadius`. Cada cratera escolhe o raio de forma uniforme entre os dois |
+| `depth`     | não         | int, `1` a `32`  | `6`    | Quantos blocos de profundidade tem o meio da bacia. Em direção à borda ela fica mais rasa         |
 
 ### Temperatura por altura
 

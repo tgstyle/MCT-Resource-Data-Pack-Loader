@@ -2981,6 +2981,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3068,6 +3069,29 @@ Une entrée d'apparition accepte `entity` (requis), `type` (`creature`, l'un de 
 | `minHeight` | non    | entier                  | aucun           | Le y le plus bas à partir duquel ce biome prend le relais comme biome 3D. Définir l'une ou l'autre hauteur transforme le biome en bande : la colonne garde son propre biome en dehors de la bande, et à l'intérieur, chaque cellule de 4 par 4 par 4 du monde indique celui-ci |
 | `maxHeight` | non    | entier                  | aucun           | Le y le plus haut de cette bande                                                                                                                                                                                                                                               |
 | `replaces`  | non    | liste de noms de biomes | tous les biomes | Restreint la bande aux colonnes dont le biome propre est nommé ici, de sorte qu'une bande alpine puisse recouvrir des montagnes et rien d'autre. Le biome propre d'une colonne est celui de sa surface. Sans `minHeight` ni `maxHeight`, elle ne fait rien                     |
+
+### Cratères
+
+*biomes*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Un objet `craters` creuse des cuvettes rondes dans le sol partout où ce biome se trouve, comme la Lune est criblée de cratères. Sans lui, le biome n'en a aucun. Les cratères font partie du terrain tel qu'il est généré la première fois, placés à partir de la seed du monde, et le terrain qui existe déjà garde ce qu'il avait. Un cratère est entier ou absent, jamais coupé à la limite d'un chunk : la formation d'un cratère près d'un village se décide la première fois que l'un de ses chunks est généré et reste enregistrée dans la sauvegarde, si bien que tous les chunks suivants s'y conforment, y compris après un redémarrage. Ils fonctionnent dans toutes les dimensions où le biome apparaît, une dimension de type surface, le Nether, l'End ou un monde plat, aussi bien les dimensions propres à un pack que celles de vanilla, et n'ont besoin d'aucun autre mod.
+
+Le biome au centre d'un cratère décide s'il se forme et de quelle taille il est, donc un cratère près du bord du biome empiète un peu sur le biome voisin. La cuvette est creusée depuis la surface du sol vers le bas, plus profonde au centre et remontant en pente raide jusqu'au bord, puis la passe de surface du terrain repasse sur le fond, de sorte que le fond reçoit l'herbe, le sable ou la pierre que le biome y pose. Une dimension plate n'en pose pas, donc le fond y est la couche en dessous. Sous l'eau ou la lave, la cuvette se remplit de ce liquide. Un cratère ne creuse jamais à travers le dernier bloc solide d'une colonne.
+
+Un cratère ne se forme jamais à moins de 12 blocs d'un village, de ses bâtiments, des rues de la ville, des parcelles et des liaisons ferroviaires, y compris celles qu'il lui reste à poser, ni d'une [carte de structures](#cartes-de-structures), afin qu'ils se dressent sur le terrain pour lequel ils ont été prévus.
+
+| Clé         | Requis | Valeur              | Défaut | Rôle                                                                                                             |
+| ----------- | ------ | ------------------- | ------ | ---------------------------------------------------------------------------------------------------------------- |
+| `chance`    | non    | flottant, `0` à `1` | `0.1`  | La probabilité que chaque chunk contienne le centre d'un cratère. `0` désactive les cratères                     |
+| `minRadius` | non    | entier, `2` à `64`  | `8`    | Le plus petit rayon de cratère, en blocs                                                                         |
+| `maxRadius` | non    | entier, `2` à `64`  | `16`   | Le plus grand, jamais inférieur à `minRadius`. Chaque cratère choisit son rayon de façon uniforme entre les deux |
+| `depth`     | non    | entier, `1` à `32`  | `6`    | De combien de blocs de profondeur est le centre de la cuvette. Vers le bord, elle devient moins profonde         |
 
 ### Température selon l'altitude
 

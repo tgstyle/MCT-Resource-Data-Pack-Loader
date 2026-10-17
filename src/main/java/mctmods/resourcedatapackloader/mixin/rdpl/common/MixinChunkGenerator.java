@@ -38,7 +38,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (ContentPopulateControl.refusesStructure((ChunkGenerator) (Object) this, selected.structure().value()) || ContentStructureMost.refuses(selected.structure().value(), structureManager, registryAccess, sourceChunkPos) || ContentVoidWorld.voidRefuses(((IStructureManager) structureManager).rdpl$getLevel(), selected.structure().value()) || ContentStructureMaps.refuses(((IStructureManager) structureManager).rdpl$getLevel(), selected.structure().value())) { cir.setReturnValue(false); }
     }
 
-    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE"), ordinal = 0) private StructureStart rdpl$cityGround(StructureStart start, StructureSet.StructureSelectionEntry selected, StructureManager structureManager, RegistryAccess registryAccess, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed) { return ContentCityClaim.overrides(start, seed, (ChunkGenerator) (Object) this, randomState, registryAccess) || ContentRoughGround.refuses(start, seed, (ChunkGenerator) (Object) this, randomState, registryAccess) ? StructureStart.INVALID_START : start; }
+    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE"), ordinal = 0) private StructureStart rdpl$cityGround(StructureStart start, StructureSet.StructureSelectionEntry selected, StructureManager structureManager, RegistryAccess registryAccess, RandomState randomState, StructureTemplateManager structureTemplateManager, long seed) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
+        return ContentCityClaim.overrides(start, seed, generator, randomState, registryAccess) || ContentRoughGround.refuses(start, seed, generator, randomState, registryAccess) ? StructureStart.INVALID_START : start;
+    }
 
     @Inject(method = "tryGenerateStructure", at = @At("RETURN")) private void rdpl$founded(CallbackInfoReturnable<Boolean> cir, @Local(argsOnly = true) StructureSet.StructureSelectionEntry selected, @Local(argsOnly = true) StructureManager structureManager, @Local(argsOnly = true) RegistryAccess registryAccess, @Local(argsOnly = true) ChunkPos sourceChunkPos) {
         ContentPregen.worldgenMoved();

@@ -103,6 +103,7 @@ import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.Noises;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.blending.Blender;
+import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.feature.Feature;
 import net.minecraft.world.level.levelgen.feature.TreeFeature;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
@@ -277,6 +278,8 @@ public final class LineCompat {
     public static List<StructureStart> starts(StructureManager structures, ChunkPos chunk, Predicate<Structure> matcher) { return structures.startsForStructure(chunk.x(), chunk.z(), matcher); }
 
     public static INoiseBiomes noiseBiomes(BiomeSource source, RandomState random) { return source.createUncachedResolver(random)::getNoiseBiome; }
+
+    public static StructureStart founded(Holder<Structure> structure, ServerLevel level, ChunkGenerator generator, RandomState random, long seed, ChunkPos pos) { return structure.value().generate(structure, level.dimension(), level.registryAccess(), generator, generator.getBiomeSource(), random.createClimateSampler(SamplerContext.builder().enableCaches().build()), random, templates(level.getServer()), seed, pos, 0, level, structure.value().biomes()::contains); }
 
     public static BiomeManager withBiomes(BiomeManager manager, INoiseBiomes biomes) { return manager.withDifferentSource(biomes::at); }
 

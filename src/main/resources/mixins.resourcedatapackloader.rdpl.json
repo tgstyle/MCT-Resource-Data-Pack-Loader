@@ -68,6 +68,7 @@
         "common.IStructureManager",
         "common.IMinecraftServer",
         "common.MixinChunkGenerator",
+        "common.MixinFlatLevelSource",
         "common.MixinChunkAccess",
         "common.MixinLevelChunkRemoval",
         "common.MixinStructureStart",
