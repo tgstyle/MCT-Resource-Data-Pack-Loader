@@ -38,7 +38,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
         if (ContentPopulateControl.refusesStructure((ChunkGenerator) (Object) this, structureSelectionEntry.structure().value()) || ContentStructureMost.refuses(structureSelectionEntry.structure().value(), structureManager, registryAccess, chunkPos) || ContentVoidWorld.voidRefuses(((IStructureManager) structureManager).rdpl$getLevel(), structureSelectionEntry.structure().value()) || ContentStructureMaps.refuses(((IStructureManager) structureManager).rdpl$getLevel(), structureSelectionEntry.structure().value())) { cir.setReturnValue(false); }
     }
 
-    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE")) private StructureStart rdpl$cityGround(StructureStart structurestart, StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed) { return ContentCityClaim.overrides(structurestart, seed, (ChunkGenerator) (Object) this, random, registryAccess) || ContentRoughGround.refuses(structurestart, seed, (ChunkGenerator) (Object) this, random, registryAccess) ? StructureStart.INVALID_START : structurestart; }
+    @ModifyVariable(method = "tryGenerateStructure", at = @At("STORE")) private StructureStart rdpl$cityGround(StructureStart structurestart, StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed) {
+        ChunkGenerator generator = (ChunkGenerator) (Object) this;
+        return ContentCityClaim.overrides(structurestart, seed, generator, random, registryAccess) || ContentRoughGround.refuses(structurestart, seed, generator, random, registryAccess) ? StructureStart.INVALID_START : structurestart;
+    }
 
     @Inject(method = "tryGenerateStructure", at = @At("RETURN")) private void rdpl$founded(StructureSet.StructureSelectionEntry structureSelectionEntry, StructureManager structureManager, RegistryAccess registryAccess, RandomState random, StructureTemplateManager structureTemplateManager, long seed, ChunkAccess chunk, ChunkPos chunkPos, SectionPos sectionPos, CallbackInfoReturnable<Boolean> cir) {
         ContentPregen.worldgenMoved();

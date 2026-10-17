@@ -113,7 +113,7 @@ public final class ContentFlatSource extends NoiseBasedChunkGenerator {
 
     @Override @Nonnull protected Codec<? extends ChunkGenerator> codec() { return CODEC; }
 
-    @Override public void buildSurface(@Nonnull WorldGenRegion level, @Nonnull StructureManager structures, @Nonnull RandomState random, @Nonnull ChunkAccess chunk) {}
+    @Override public void buildSurface(@Nonnull WorldGenRegion level, @Nonnull StructureManager structures, @Nonnull RandomState random, @Nonnull ChunkAccess chunk) { ContentCraters.carveFlat(level, chunk); }
 
     @Override public int getSpawnHeight(@Nonnull LevelHeightAccessor level) { return flat.getSpawnHeight(level); }
 

@@ -2979,6 +2979,7 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3066,6 +3067,29 @@ Uma entrada de spawn aceita `entity` (obrigatório), `type` (`creature`, um de `
 | `minHeight` | não         | número inteiro          | nenhum          | O y mais baixo que este bioma assume como bioma 3D. Definir qualquer das alturas transforma o bioma numa faixa: a coluna mantém o seu bioma fora dela, e dentro dela cada célula de 4 por 4 por 4 do mundo comunica este           |
 | `maxHeight` | não         | número inteiro          | nenhum          | O y mais alto dessa faixa                                                                                                                                                                                                          |
 | `replaces`  | não         | lista de nomes de bioma | todos os biomas | Restringe a faixa às colunas cujo bioma próprio está nomeado aqui, para que uma faixa alpina possa ficar sobre montanhas e nada mais. O bioma próprio da coluna é o da sua superfície. Sem `minHeight` ou `maxHeight` não faz nada |
+
+### Crateras
+
+*biomas*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Um objeto `craters` abre bacias redondas no solo onde quer que este bioma esteja, como a Lua é cheia de crateras. Sem ele, o bioma não tem nenhuma. As crateras fazem parte do terreno como é gerado pela primeira vez, colocadas a partir da seed do mundo, e o terreno que já existe mantém o que tinha. Uma cratera existe inteira ou não existe, nunca cortada no limite de um chunk: se uma cratera perto de uma aldeia se forma é decidido na primeira vez que qualquer um dos seus chunks é gerado e fica guardado no save, pelo que todos os chunks seguintes concordam, mesmo depois de reiniciar. Funcionam em todas as dimensões em que o bioma aparece, seja uma do mundo principal, do Nether, do End ou plana, tanto nas dimensões próprias de um pack como nas do vanilla, e não precisam de nenhum outro mod.
+
+O bioma no meio de uma cratera decide se ela se forma e de que tamanho é, por isso uma cratera junto ao limite do bioma avança um pouco no bioma vizinho. A bacia é escavada da superfície do solo para baixo, mais funda no meio e subindo de forma íngreme até à borda, e depois a passagem de superfície do terreno corre por cima do fundo, por isso o fundo recebe a relva, a areia ou a pedra que o bioma aí coloca. Uma dimensão plana não coloca nenhuma, por isso aí o fundo é a camada por baixo. Debaixo de água ou de lava, a bacia enche-se desse líquido. Uma cratera nunca escava através do último bloco sólido de uma coluna.
+
+Uma cratera nunca se forma a menos de 12 blocos de uma aldeia, dos seus edifícios, das ruas da cidade, dos lotes e das ligações ferroviárias, incluindo as que ainda faltam colocar, nem de um [mapa de estruturas](#mapas-de-estruturas), para que fiquem sobre o terreno para o qual foram planeados.
+
+| Chave       | Obrigatório | Valor                      | Predefinição | O que faz                                                                                         |
+| ----------- | ----------- | -------------------------- | ------------ | ------------------------------------------------------------------------------------------------- |
+| `chance`    | não         | número decimal, `0` a `1`  | `0.1`        | Qual a probabilidade de cada chunk conter o centro de uma cratera. `0` desliga as crateras        |
+| `minRadius` | não         | número inteiro, `2` a `64` | `8`          | O menor raio de cratera, em blocos                                                                |
+| `maxRadius` | não         | número inteiro, `2` a `64` | `16`         | O maior, nunca abaixo de `minRadius`. Cada cratera escolhe o raio de forma uniforme entre os dois |
+| `depth`     | não         | número inteiro, `1` a `32` | `6`          | Quantos blocos de profundidade tem o meio da bacia. Em direção à borda fica mais rasa             |
 
 ### Temperatura por altura
 
