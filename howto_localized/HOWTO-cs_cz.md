@@ -2979,6 +2979,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3066,6 +3067,29 @@ Položka spawnu přijímá `entity` (povinné), `type` (`creature`, jedno z `mon
 | `minHeight` | ne      | celé číslo         | žádný      | Nejnižší y, kde tento biom přebírá vládu jako 3D biom. Nastavení kterékoli výšky z biomu udělá pásmo: sloupec si mimo něj ponechá vlastní biom a uvnitř něj hlásí každá buňka světa 4 na 4 na 4 tento                |
 | `maxHeight` | ne      | celé číslo         | žádný      | Nejvyšší y toho pásma                                                                                                                                                                                                |
 | `replaces`  | ne      | seznam názvů biomů | každý biom | Omezí pásmo na sloupce, jejichž vlastní biom je zde pojmenován, takže alpské pásmo může ležet nad horami a nad ničím jiným. Vlastní biom sloupce je ten na jeho povrchu. Bez `minHeight` nebo `maxHeight` nedělá nic |
+
+### Krátery
+
+*biomy*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Objekt `craters` vtlačí do země kulaté mísy všude, kde tento biom leží, podobně jako je rozeklaný povrch Měsíce. Bez něj biom žádné krátery nemá. Krátery jsou součástí země, jak se poprvé vytvoří, rozmísťují se podle seedu světa a už existující země zůstává, jaká byla. Kráter je buď celý, nebo vůbec, nikdy není přeříznutý hranicí chunku: zda se kráter poblíž vesnice vytvoří, se rozhodne při prvním vytvoření kteréhokoli z jeho chunků a uloží se do savu, takže se s tím shodnou i všechny pozdější chunky, i po restartu. Fungují v každé dimenzi, v níž se biom objevuje, v overworldu, netheru, Endu i v plochém světě, ve vlastních dimenzích packu i ve vanilla, a nepotřebují žádný další mód.
+
+O tom, zda kráter vznikne a jak je velký, rozhoduje biom ve středu kráteru, takže kráter u okraje biomu zasahuje kousek do sousedního biomu. Mísa se vykope od povrchu země dolů, uprostřed je nejhlubší a ke kraji prudce stoupá, a pak přes dno projde povrchový průchod země, takže dno dostane trávu, písek nebo kámen, které tam biom klade. Plochá dimenze žádné neklade, takže dnem je tam vrstva pod ním. Pod vodou nebo lávou se mísa naplní touto kapalinou. Kráter nikdy neprokope poslední pevný blok sloupce.
+
+Kráter nikdy nevznikne do 12 bloků od vesnice, jejích budov, městských ulic, parcel a železničních spojů, včetně těch, které ještě musí položit, ani od [mapy struktur](#mapy-struktur), takže stojí na zemi, pro kterou byly naplánovány.
+
+| Klíč        | Povinné | Hodnota                     | Výchozí | Co dělá                                                                                  |
+| ----------- | ------- | --------------------------- | ------- | ---------------------------------------------------------------------------------------- |
+| `chance`    | ne      | desetinné číslo, `0` až `1` | `0.1`   | S jakou pravděpodobností každý chunk obsahuje střed kráteru. `0` krátery vypne           |
+| `minRadius` | ne      | celé číslo, `2` až `64`     | `8`     | Nejmenší poloměr kráteru v blocích                                                       |
+| `maxRadius` | ne      | celé číslo, `2` až `64`     | `16`    | Největší, nikdy ne pod `minRadius`. Každý kráter si vybere poloměr rovnoměrně mezi oběma |
+| `depth`     | ne      | celé číslo, `1` až `32`     | `6`     | Kolik bloků hluboko je střed mísy. Ke kraji se zmenšuje                                  |
 
 ### Teplota podle výšky
 

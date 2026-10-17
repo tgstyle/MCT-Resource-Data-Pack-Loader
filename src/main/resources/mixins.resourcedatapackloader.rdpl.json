@@ -64,6 +64,8 @@
         "common.IStructureManager",
         "common.IMinecraftServer",
         "common.MixinChunkGenerator",
+        "common.MixinFlatLevelSource",
+        "common.MixinSurfaceRulesContext",
         "common.MixinStructureStart",
         "common.MixinWorldGenRegion",
         "common.MixinDataLayerStorageMap",

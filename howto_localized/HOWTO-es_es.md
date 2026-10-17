@@ -2979,6 +2979,7 @@ Todas las claves, mostradas a la vez. Un archivo real escribe solo las que neces
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3066,6 +3067,29 @@ Una entrada de aparición admite `entity` (obligatoria), `type` (`creature`, uno
 | `minHeight` | no          | entero                    | ninguno          | La y más baja desde la que este bioma toma el control como bioma 3D. Establecer cualquiera de las dos alturas convierte el bioma en una franja: la columna conserva su propio bioma fuera de ella, y dentro cada celda de 4 por 4 por 4 del mundo informa de este |
 | `maxHeight` | no          | entero                    | ninguno          | La y más alta de esa franja                                                                                                                                                                                                                                       |
 | `replaces`  | no          | lista de nombres de bioma | todos los biomas | Restringe la franja a las columnas cuyo propio bioma figura aquí, de modo que una franja alpina pueda quedar sobre las montañas y nada más. El bioma propio de la columna es el de su superficie. Sin `minHeight` ni `maxHeight` no hace nada                     |
+
+### Cráteres
+
+*biomas*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Un objeto `craters` hunde cuencos redondos en el suelo allí donde esté este bioma, como la Luna está llena de cráteres. Sin él, el bioma no tiene ninguno. Los cráteres forman parte del terreno tal como se genera por primera vez, se colocan a partir de la semilla del mundo, y el terreno que ya existe conserva lo que tenía. Un cráter está entero o no está, nunca cortado por el límite de un chunk: si se forma uno cerca de una aldea se decide la primera vez que se genera cualquiera de sus chunks y se guarda en la partida, de modo que todos los chunks posteriores coinciden, también tras reiniciar. Funcionan en todas las dimensiones en las que aparece el bioma, sea una del mundo principal, del Nether, del End o plana, tanto en las dimensiones propias de un pack como en las de vanilla, y no necesitan ningún otro mod.
+
+El bioma en el centro de un cráter decide si se forma y de qué tamaño es, así que un cráter cerca del borde del bioma se adentra un poco en el bioma vecino. El cuenco se excava desde la superficie del suelo hacia abajo, más hondo en el centro y subiendo de forma empinada hasta el borde, y después la pasada de superficie del terreno recorre el fondo, así que el fondo recibe la hierba, la arena o la piedra que el bioma coloca allí. Una dimensión plana no coloca ninguna, así que allí el fondo es la capa que hay debajo. Bajo el agua o la lava, el cuenco se llena de ese líquido. Un cráter nunca excava a través del último bloque sólido de una columna.
+
+Un cráter nunca se forma a menos de 12 bloques de una aldea, sus edificios, las calles de la ciudad, las parcelas y los enlaces ferroviarios, incluidos los que aún tiene que colocar, ni de un [mapa de estructuras](#mapas-de-estructuras), de modo que se levantan sobre el terreno para el que se planearon.
+
+| Clave       | Obligatorio | Valor              | Por defecto | Qué hace                                                                                             |
+| ----------- | ----------- | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `chance`    | no          | decimal, `0` a `1` | `0.1`       | Con qué probabilidad cada chunk contiene el centro de un cráter. `0` desactiva los cráteres          |
+| `minRadius` | no          | entero, `2` a `64` | `8`         | El radio mínimo de un cráter, en bloques                                                             |
+| `maxRadius` | no          | entero, `2` a `64` | `16`        | El máximo, nunca por debajo de `minRadius`. Cada cráter elige su radio de forma uniforme entre ambos |
+| `depth`     | no          | entero, `1` a `32` | `6`         | Cuántos bloques de profundidad tiene el centro del cuenco. Hacia el borde es menos hondo             |
 
 ### Temperatura según la altura
 

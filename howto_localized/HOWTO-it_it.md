@@ -2979,6 +2979,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
   "minHeight": 100,
   "maxHeight": 156,
   "replaces": ["minecraft:plains", "minecraft:forest"],
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 },
   "requires": ["mypack"]
 }
 ```
@@ -3066,6 +3067,29 @@ Una voce di spawn accetta `entity` (obbligatorio), `type` (`creature`, uno tra `
 | `minHeight` | no           | intero                  | nessuno     | La y più bassa su cui questo bioma subentra come bioma 3D. Impostare una delle due altezze trasforma il bioma in una fascia: la colonna mantiene il proprio bioma fuori da essa, e dentro ogni cella di 4 per 4 per 4 del mondo riporta questo |
 | `maxHeight` | no           | intero                  | nessuno     | La y più alta di quella fascia                                                                                                                                                                                                                 |
 | `replaces`  | no           | elenco di nomi di biomi | ogni bioma  | Limita la fascia alle colonne il cui bioma è nominato qui, così una fascia alpina può stare sopra le montagne e nient'altro. Il bioma della colonna è quello alla sua superficie. Senza `minHeight` o `maxHeight` non fa nulla                 |
+
+### Crateri
+
+*biomi*
+
+```json
+{
+  "craters": { "chance": 0.1, "minRadius": 8, "maxRadius": 16, "depth": 6 }
+}
+```
+
+Un oggetto `craters` scava conche rotonde nel terreno ovunque si trovi questo bioma, come la Luna è piena di crateri. Senza di esso il bioma non ne ha. I crateri fanno parte del terreno così come viene generato la prima volta, sono collocati a partire dal seed del mondo, e il terreno che esiste già mantiene ciò che aveva. Un cratere è intero o assente, mai tagliato al confine di un chunk: se se ne formi uno vicino a un villaggio si decide la prima volta che viene generato uno dei suoi chunk e viene conservato nel salvataggio, così ogni chunk successivo si adegua, anche dopo un riavvio. Funzionano in ogni dimensione in cui compare il bioma, che sia una dimensione di tipo overworld, il Nether, l'End o un mondo piatto, sia nelle dimensioni proprie di un pack sia in quelle di vanilla, e non richiedono nessun'altra mod.
+
+Il bioma al centro di un cratere decide se si forma e quanto è grande, quindi un cratere vicino al bordo del bioma si spinge un poco nel bioma accanto. La conca è scavata dalla superficie del terreno verso il basso, più profonda al centro e con una salita ripida fino al bordo, poi il passaggio di superficie del terreno ripassa sul fondo, che così riceve l'erba, la sabbia o la pietra che il bioma vi stende. Una dimensione piatta non ne stende, quindi lì il fondo è lo strato sottostante. Sott'acqua o sotto la lava la conca si riempie di quel liquido. Un cratere non scava mai attraverso l'ultimo blocco solido di una colonna.
+
+Un cratere non si forma mai entro 12 blocchi da un villaggio, dai suoi edifici, dalle vie della città, dai lotti e dai collegamenti ferroviari, compresi quelli che deve ancora posare, né da una [mappa delle strutture](#mappe-delle-strutture), così che stiano sul terreno per cui sono stati pianificati.
+
+| Chiave      | Obbligatorio | Valore                 | Predefinito | Cosa fa                                                                                              |
+| ----------- | ------------ | ---------------------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `chance`    | no           | decimale, da `0` a `1` | `0.1`       | Quanto è probabile che ogni chunk contenga il centro di un cratere. `0` disattiva i crateri          |
+| `minRadius` | no           | intero, da `2` a `64`  | `8`         | Il raggio minimo di un cratere, in blocchi                                                           |
+| `maxRadius` | no           | intero, da `2` a `64`  | `16`        | Il massimo, mai sotto `minRadius`. Ogni cratere sceglie il proprio raggio in modo uniforme fra i due |
+| `depth`     | no           | intero, da `1` a `32`  | `6`         | Quanti blocchi è profondo il centro della conca. Verso il bordo diventa meno profonda                |
 
 ### Temperatura in base all'altezza
 
