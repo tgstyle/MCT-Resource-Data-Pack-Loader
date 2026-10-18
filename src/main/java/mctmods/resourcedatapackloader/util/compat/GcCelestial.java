@@ -45,7 +45,7 @@ public final class GcCelestial {
     private static final List<Integer> ROCKET_DIMENSIONS = new ArrayList<>();
     private static final Map<String, Integer> RADIATION = new HashMap<>();
     private static final List<CelestialBody> SUBSYSTEMS = new ArrayList<>();
-    private static final boolean GALAXY_SPACE = Loader.isModLoaded(ContentParserModPlanets.GALAXY_SPACE);
+    static final boolean GALAXY_SPACE = Loader.isModLoaded(ContentParserModPlanets.GALAXY_SPACE);
     private static final boolean EXTRA_PLANETS = Loader.isModLoaded(ContentParserModPlanets.EXTRA_PLANETS);
     static final String PLANETS = "galacticraftplanets";
     private static boolean stations;

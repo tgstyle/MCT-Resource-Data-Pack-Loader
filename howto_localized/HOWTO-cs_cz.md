@@ -4188,6 +4188,56 @@ Dva doplňky Galacticraftu čtou o tělese víc, než čte Galacticraft. Objekt 
 | `temperatureNight`  | ne      | desetinné číslo                                                | `temperatureDay`                              | Tepelná úroveň v noci                                                                                                                              |
 | `lander`            | ne      | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | lander z Galacticraftu                        | Lander ExtraPlanets, ve kterém hráč sestupuje, pokud má `landing` hodnotu `lander`                                                                 |
 
+### Změna těles z jiných modů
+
+*tělesa Galacticraftu*
+
+`<namespace>/celestial/*.json`
+
+Soubor s `kind` `override` mění, jak na mapě vypadá těleso, které už zaregistroval Galacticraft nebo jiný mod, místo aby přidával nové. Použije se, až se načtou všechny mody, takže zasáhne i vlastní planety Galacticraftu, které dokončují nastavení pozdě. Bez Galacticraftu se soubor přeskočí.
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| Klíč          | Povinné | Hodnota                                       | Výchozí                                  | Co dělá                                                                                                                                   |
+| ------------- | ------- | --------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | ano     | `override`                                    |                                          | Udělá ze souboru změnu již existujícího tělesa                                                                                            |
+| `body`        | ano     | překladový klíč                               |                                          | Těleso, které se mění, ve tvaru klíče Galacticraftu, například `star.sol` nebo `planet.saturn`                                            |
+| `icon`        | ne      | cesta k textuře                               | vlastní obrázek tělesa                   | Obrázek na mapě                                                                                                                           |
+| `ring`        | ne      | cesta k textuře                               | vlastní prstenec tělesa, pokud nějaký má | Jen planeta nebo měsíc. Obrázek samotného prstence ve tvaru, který přijímá klíč mapy `ring`. Kreslí se místo prstence, který těleso už má |
+| `ringSize`    | ne      | desetinné číslo                               | `2.5`                                    | Šířka prstence jako násobek šířky tělesa na mapě                                                                                          |
+| `galaxyspace` | ne      | objekt                                        |                                          | `starType`, `starColor` a `auraColor`, čtené jako v části [GalaxySpace a ExtraPlanets](#galaxyspace-a-extraplanets). Vyžadují GalaxySpace |
+| `requires`    | ne      | seznam ID modů nebo jmenných prostorů balíčků | žádný                                    | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                         |
+
+`body` je klíč názvu tělesa: `star.<name>` pro hlavní hvězdu soustavy, `planet.<name>`, `moon.<name>` nebo `satellite.<name>`. Vlastní tělesa Galacticraftu jsou `star.sol`, `planet.overworld`, `planet.mercury`, `planet.venus`, `planet.mars`, `planet.jupiter`, `planet.saturn`, `planet.uranus`, `planet.neptune`, `planet.asteroids` (modul Asteroids), `moon.moon` a `satellite.spacestation.overworld`. Na velikosti písmen nezáleží, takže `planet.saturn` najde i `Saturn` z ExtraPlanets. Změní se každé těleso s tímto klíčem a klíč, který neodpovídá žádnému, se zapíše do logu jako chyba. `starType` a `starColor` hvězdy nahradí jen tyto hodnoty a zbytek toho, co o ní GalaxySpace drží, například obyvatelnou zónu, ponechají.
+
+Název tělesa a text jeho informačního panelu se tu nenastavují. Pocházejí z lang klíčů `<type>.<name>` a `gui.message.<name>.<line>.<0 or 1>.name`, kde řádek je `daynightcycle`, `surfacegravity`, `surfacecomposition`, `atmosphere` nebo `meansurfacetemp`. Lang soubor v balíčku je přepíše stejně jako cokoli jiného. Na rozdíl od `body` si lang klíč zachovává velikost písmen, s jakou mod těleso zaregistroval: Mercury z ExtraPlanets je `planet.Mercury`.
+
+Co se kde ukáže:
+
+| Změna    | Mapa Galacticraftu | Mapa GalaxySpace                              | Mapa ExtraPlanets                              |
+| -------- | ------------------ | --------------------------------------------- | ---------------------------------------------- |
+| `icon`   | ano                | ano, a seznam galaxií čte ikonu hlavní hvězdy | ano                                            |
+| aura     | ne                 | ano                                           | ne                                             |
+| prstenec | ano                | ano, místo prstence, který kreslí GalaxySpace | ano, místo prstence, který kreslí ExtraPlanets |
+
+Některé věci override nechává, jak jsou: popis tělesa na mapách GalaxySpace a ExtraPlanets, který si počítají z vlastních dat, auru černé díry, která zůstává neviditelná, a barvu čáry oběžné dráhy. Prstenec nelze odebrat, jen nahradit. Oblohu, kterou hráč vidí uvnitř dimenze jiného modu, kreslí ten mod, takže ji zasáhne jen soubor balíčku na stejné cestě k assetu jako vlastní textura modu.
+
 ## Portály a brány
 
 *svět*

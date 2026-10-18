@@ -4188,6 +4188,56 @@ A dimension's `gravity` and `dayLength` are also what GalaxySpace shows for the 
 | `temperatureNight` | no       | float                                                          | `temperatureDay`                        | The thermal level by night                                                                                                                       |
 | `lander`           | no       | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | Galacticraft's lander                   | The ExtraPlanets lander a player comes down in, where `landing` is `lander`                                                                      |
 
+### Changing another mod's bodies
+
+*galacticraft bodies*
+
+`<namespace>/celestial/*.json`
+
+A file with `kind` `override` changes how a body that Galacticraft or another mod already registered looks on the map, instead of adding one. It applies once every mod has loaded, so it also reaches Galacticraft's own planets, which finish their setup late. Without Galacticraft the file is skipped.
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| Key           | Required | Value                              | Default                | What it does                                                                                                                                    |
+| ------------- | -------- | ---------------------------------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | yes      | `override`                         |                        | Makes the file a change to a body that already exists                                                                                           |
+| `body`        | yes      | translation key                    |                        | The body to change, in Galacticraft's key form, such as `star.sol` or `planet.saturn`                                                           |
+| `icon`        | no       | texture path                       | the body's own         | The picture on the map                                                                                                                          |
+| `ring`        | no       | texture path                       | the body's own, if any | A planet or moon only. A picture of the ring alone, in the form the `ring` map key takes. It is drawn in place of any ring the body already has |
+| `ringSize`    | no       | float                              | `2.5`                  | The ring's width as a multiple of the body's width on the map                                                                                   |
+| `galaxyspace` | no       | object                             |                        | `starType`, `starColor` and `auraColor`, read as in [GalaxySpace and ExtraPlanets](#galaxyspace-and-extraplanets). They need GalaxySpace        |
+| `requires`    | no       | list of mod ids or pack namespaces | none                   | The file is skipped unless all are present                                                                                                      |
+
+The `body` is the key of the body's name: `star.<name>` for a system's main star, `planet.<name>`, `moon.<name>` or `satellite.<name>`. Galacticraft's own bodies are `star.sol`, `planet.overworld`, `planet.mercury`, `planet.venus`, `planet.mars`, `planet.jupiter`, `planet.saturn`, `planet.uranus`, `planet.neptune`, `planet.asteroids` (Asteroids module), `moon.moon` and `satellite.spacestation.overworld`. Case does not matter, so `planet.saturn` also finds ExtraPlanets' `Saturn`. Every body with that key is changed, and a key that matches none is logged as an error. A star's `starType` and `starColor` replace only those values and keep the rest of what GalaxySpace holds for it, such as its habitable zone.
+
+A body's name and the text of its info panel are not set here. They come from the lang keys `<type>.<name>` and `gui.message.<name>.<line>.<0 or 1>.name`, where the line is `daynightcycle`, `surfacegravity`, `surfacecomposition`, `atmosphere` or `meansurfacetemp`. A lang file in the pack overrides them as it does any other. Unlike `body`, a lang key keeps the case the mod registered the body with: ExtraPlanets' Mercury is `planet.Mercury`.
+
+What shows where:
+
+| Change | Galacticraft map | GalaxySpace map                                     | ExtraPlanets map                             |
+| ------ | ---------------- | --------------------------------------------------- | -------------------------------------------- |
+| `icon` | yes              | yes, and the galaxy list reads the main star's icon | yes                                          |
+| aura   | no               | yes                                                 | no                                           |
+| ring   | yes              | yes, in place of the ring GalaxySpace draws         | yes, in place of the ring ExtraPlanets draws |
+
+An override leaves a few things as they are: the description of a body on the GalaxySpace and ExtraPlanets maps, which they work out from their own data, a black hole's aura, which stays invisible, and the color of the orbit line. A ring cannot be taken away, only replaced. The sky a player sees inside another mod's dimension is drawn by that mod, so only a pack file at the same asset path as the mod's own texture reaches it.
+
 ## Portals and gates
 
 *the world*

@@ -40,8 +40,9 @@ public final class ContentParserCelestial {
         if (json == null) { return null; }
         String kind = Settings.lower(Json.getString(json, "kind", ""));
         if (CelestialDef.SYSTEM.equals(kind)) { return system(key, json); }
+        if (CelestialDef.OVERRIDE.equals(kind)) { return override(key, json); }
         if (!CelestialDef.PLANET.equals(kind) && !CelestialDef.SUBSYSTEM.equals(kind) && !CelestialDef.MOON.equals(kind)) {
-            ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.SUBSYSTEM, CelestialDef.MOON);
+            ContentLog.LOGGER.error("Celestial body {} is of kind '{}', which is none of {}, {}, {}, {} or {}, so it is left off the map", key, kind, CelestialDef.SYSTEM, CelestialDef.PLANET, CelestialDef.SUBSYSTEM, CelestialDef.MOON, CelestialDef.OVERRIDE);
             return null;
         }
         return body(key, json, kind, key.getPath(), 0, strings(json, "requires"));
@@ -101,6 +102,19 @@ public final class ContentParserCelestial {
             found.put(entry.getKey().trim(), count.getAsInt());
         }
         return Collections.unmodifiableMap(found);
+    }
+
+    @Nullable private static CelestialDef override(ResourceLocation key, JsonObject json) {
+        String body = Json.getString(json, "body", "").trim();
+        if (body.isEmpty()) {
+            ContentLog.LOGGER.error("Celestial override {} names no body, so it changes nothing", key);
+            return null;
+        }
+        String icon = Json.getString(json, "icon", "").trim();
+        String ring = Json.getString(json, "ring", "").trim();
+        return new CelestialDef(key, CelestialDef.OVERRIDE, body, "", icon.isEmpty() ? null : new ResourceLocation(icon), 1.0F, 1.0F, 1.0F, 1.0F, 0.0F, 0,
+                ring.isEmpty() ? null : new ResourceLocation(ring), Math.max(0.1F, Json.getFloat(json, "ringSize", BodyRings.DEFAULT_SIZE)), 0.0F, -1,
+                "", null, 0.0F, 0.0F, 0.0F, null, strings(json, "requires"), ContentParserModPlanets.galaxySpace(key, json));
     }
 
     @Nullable private static CelestialDef system(ResourceLocation key, JsonObject json) {

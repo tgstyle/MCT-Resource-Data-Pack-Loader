@@ -12,11 +12,12 @@ public final class CelestialDef {
     public static final String MOON = "moon";
     public static final String ASTEROIDS = "asteroids";
     public static final String STATION = "station";
+    public static final String OVERRIDE = "override";
     public final ResourceLocation key;
     public final String kind;
     public final String name;
     public final String parent;
-    public final ResourceLocation icon;
+    @Nullable public final ResourceLocation icon;
     public final float relativeSize;
     public final float distance;
     public final float scaledDistance;
@@ -36,7 +37,7 @@ public final class CelestialDef {
     public final List<String> requires;
     @Nullable public final GalaxySpaceDef galaxySpace;
 
-    public CelestialDef(ResourceLocation key, String kind, String name, String parent, ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, @Nullable ResourceLocation ring, float ringSize, float beltWidth, int tier, String galaxy, @Nullable ResourceLocation galaxyImage, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
+    public CelestialDef(ResourceLocation key, String kind, String name, String parent, @Nullable ResourceLocation icon, float relativeSize, float distance, float scaledDistance, float orbitTime, float phaseShift, int ringColor, @Nullable ResourceLocation ring, float ringSize, float beltWidth, int tier, String galaxy, @Nullable ResourceLocation galaxyImage, float mapX, float mapY, float mapZ, @Nullable CelestialDef star, List<String> requires, @Nullable GalaxySpaceDef galaxySpace) {
         this.key = key;
         this.kind = kind;
         this.name = name;

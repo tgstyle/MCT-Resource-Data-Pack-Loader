@@ -4188,6 +4188,56 @@ Galacticraft 只在它自己的地形中建造地牢，所以 `dungeon` 只在�
 | `temperatureNight` | 否   | 浮点数                                                         | `temperatureDay`                    | 夜间的热等级                                                                                                 |
 | `lander`           | 否   | `general`、`jupiter`、`saturn`、`mercury`、`neptune`、`uranus` | Galacticraft 的着陆器               | 在 `landing` 为 `lander` 时，玩家乘坐降落的 ExtraPlanets 着陆器                                              |
 
+### 修改其他模组的天体
+
+*Galacticraft 天体*
+
+`<namespace>/celestial/*.json`
+
+`kind` 为 `override` 的文件不是新增天体，而是修改 Galacticraft 或其他模组已经注册的天体在地图上的外观。它在所有模组加载完毕后才应用，因此也能作用于较晚完成设置的 Galacticraft 自带行星。没有 Galacticraft 时，该文件会被跳过。
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| 键            | 必需 | 值                             | 默认值               | 作用                                                                                                                                  |
+| ------------- | ---- | ------------------------------ | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | 是   | `override`                     |                      | 使该文件成为对已有天体的修改                                                                                                          |
+| `body`        | 是   | 翻译键                         |                      | 要修改的天体，采用 Galacticraft 的键格式，例如 `star.sol` 或 `planet.saturn`                                                          |
+| `icon`        | 否   | 纹理路径                       | 天体自带的           | 地图上的图片                                                                                                                          |
+| `ring`        | 否   | 纹理路径                       | 天体自带的（如果有） | 仅限行星或卫星。只含光环的图片，格式与地图的 `ring` 键相同。它会取代天体已有的任何光环                                                |
+| `ringSize`    | 否   | 浮点数                         | `2.5`                | 光环的宽度，为天体在地图上宽度的倍数                                                                                                  |
+| `galaxyspace` | 否   | 对象                           |                      | `starType`、`starColor` 和 `auraColor`，读取方式与 [GalaxySpace 与 ExtraPlanets](#galaxyspace-与-extraplanets) 相同。需要 GalaxySpace |
+| `requires`    | 否   | 模组 ID 或资源包命名空间的列表 | 无                   | 除非全部存在，否则跳过该文件                                                                                                          |
+
+`body` 是天体名称的键：系统主恒星为 `star.<name>`，其余为 `planet.<name>`、`moon.<name>` 或 `satellite.<name>`。Galacticraft 自带的天体是 `star.sol`、`planet.overworld`、`planet.mercury`、`planet.venus`、`planet.mars`、`planet.jupiter`、`planet.saturn`、`planet.uranus`、`planet.neptune`、`planet.asteroids`（Asteroids 模块）、`moon.moon` 和 `satellite.spacestation.overworld`。不区分大小写，因此 `planet.saturn` 也会匹配 ExtraPlanets 的 `Saturn`。每个带有该键的天体都会被修改，没有匹配任何天体的键会记录为错误。恒星的 `starType` 和 `starColor` 只替换这两个值，GalaxySpace 为它保存的其余内容（例如宜居带）保持不变。
+
+天体的名称和信息面板的文字不在这里设置。它们来自 lang 键 `<type>.<name>` 和 `gui.message.<name>.<line>.<0 or 1>.name`，其中 line 是 `daynightcycle`、`surfacegravity`、`surfacecomposition`、`atmosphere` 或 `meansurfacetemp`。资源包中的 lang 文件会像覆盖其他内容一样覆盖它们。与 `body` 不同，lang 键会保留模组注册该天体时使用的大小写：ExtraPlanets 的水星是 `planet.Mercury`。
+
+各处显示的内容：
+
+| 修改   | Galacticraft 地图 | GalaxySpace 地图                | ExtraPlanets 地图                |
+| ------ | ----------------- | ------------------------------- | -------------------------------- |
+| `icon` | 是                | 是，星系列表读取主恒星的图标    | 是                               |
+| 光晕   | 否                | 是                              | 否                               |
+| 光环   | 是                | 是，取代 GalaxySpace 绘制的光环 | 是，取代 ExtraPlanets 绘制的光环 |
+
+override 有几样东西不会改动：GalaxySpace 和 ExtraPlanets 地图上天体的描述（它们根据自己的数据推算）、始终不可见的黑洞光晕，以及轨道线的颜色。光环不能被移除，只能被替换。玩家在其他模组的维度内看到的天空由该模组绘制，因此只有与该模组自身纹理资源路径相同的资源包文件才能影响它。
+
 ## 传送门与闸门
 
 *世界*

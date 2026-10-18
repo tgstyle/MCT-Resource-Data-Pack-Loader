@@ -4188,6 +4188,56 @@ O `gravity` e o `dayLength` de uma dimensão são também o que o GalaxySpace mo
 | `temperatureNight`      | não         | número decimal                                                 | `temperatureDay`                                  | O nível térmico de noite                                                                                                                                     |
 | `lander`                | não         | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | o módulo de aterragem do Galacticraft             | O módulo de aterragem do ExtraPlanets em que um jogador desce, onde `landing` é `lander`                                                                     |
 
+### Alterar os corpos de outro mod
+
+*corpos do Galacticraft*
+
+`<namespace>/celestial/*.json`
+
+Um ficheiro com `kind` `override` altera o aspeto no mapa de um corpo que o Galacticraft ou outro mod já registou, em vez de acrescentar um. É aplicado depois de todos os mods carregarem, pelo que também chega aos planetas do próprio Galacticraft, que terminam a configuração tarde. Sem o Galacticraft, o ficheiro é ignorado.
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| Chave         | Obrigatório | Valor                                     | Predefinição                 | O que faz                                                                                                                                            |
+| ------------- | ----------- | ----------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | sim         | `override`                                |                              | Faz do ficheiro uma alteração a um corpo que já existe                                                                                               |
+| `body`        | sim         | chave de tradução                         |                              | O corpo a alterar, na forma de chave do Galacticraft, como `star.sol` ou `planet.saturn`                                                             |
+| `icon`        | não         | caminho da textura                        | o do próprio corpo           | A imagem no mapa                                                                                                                                     |
+| `ring`        | não         | caminho da textura                        | o do próprio corpo, se tiver | Apenas planeta ou lua. Uma imagem só do anel, na forma que a chave de mapa `ring` aceita. É desenhada no lugar de qualquer anel que o corpo já tenha |
+| `ringSize`    | não         | número decimal                            | `2.5`                        | A largura do anel como múltiplo da largura do corpo no mapa                                                                                          |
+| `galaxyspace` | não         | objeto                                    |                              | `starType`, `starColor` e `auraColor`, lidos como em [GalaxySpace e ExtraPlanets](#galaxyspace-e-extraplanets). Precisam do GalaxySpace              |
+| `requires`    | não         | lista de ids de mod ou namespaces de pack | nenhum                       | O ficheiro é ignorado a menos que todos estejam presentes                                                                                            |
+
+O `body` é a chave do nome do corpo: `star.<name>` para a estrela principal de um sistema, `planet.<name>`, `moon.<name>` ou `satellite.<name>`. Os corpos do próprio Galacticraft são `star.sol`, `planet.overworld`, `planet.mercury`, `planet.venus`, `planet.mars`, `planet.jupiter`, `planet.saturn`, `planet.uranus`, `planet.neptune`, `planet.asteroids` (módulo Asteroids), `moon.moon` e `satellite.spacestation.overworld`. Maiúsculas e minúsculas não importam, pelo que `planet.saturn` também encontra o `Saturn` do ExtraPlanets. Todo o corpo com essa chave é alterado, e uma chave que não corresponde a nenhum é registada como erro. O `starType` e o `starColor` de uma estrela substituem apenas esses valores e mantêm o resto do que o GalaxySpace guarda dela, como a zona habitável.
+
+O nome de um corpo e o texto do seu painel de informação não são definidos aqui. Vêm das chaves de lang `<type>.<name>` e `gui.message.<name>.<line>.<0 or 1>.name`, em que a linha é `daynightcycle`, `surfacegravity`, `surfacecomposition`, `atmosphere` ou `meansurfacetemp`. Um ficheiro de lang no pack substitui-as como qualquer outro. Ao contrário de `body`, uma chave de lang mantém as maiúsculas e minúsculas com que o mod registou o corpo: o Mercury do ExtraPlanets é `planet.Mercury`.
+
+O que aparece onde:
+
+| Alteração | Mapa do Galacticraft | Mapa do GalaxySpace                                        | Mapa do ExtraPlanets                             |
+| --------- | -------------------- | ---------------------------------------------------------- | ------------------------------------------------ |
+| `icon`    | sim                  | sim, e a lista de galáxias lê o ícone da estrela principal | sim                                              |
+| aura      | não                  | sim                                                        | não                                              |
+| anel      | sim                  | sim, no lugar do anel que o GalaxySpace desenha            | sim, no lugar do anel que o ExtraPlanets desenha |
+
+Um override deixa algumas coisas como estão: a descrição de um corpo nos mapas do GalaxySpace e do ExtraPlanets, que eles calculam a partir dos próprios dados, a aura de um buraco negro, que continua invisível, e a cor da linha da órbita. Um anel não pode ser removido, apenas substituído. O céu que um jogador vê dentro da dimensão de outro mod é desenhado por esse mod, pelo que só um ficheiro do pack no mesmo caminho de asset da textura do próprio mod o alcança.
+
 ## Portais e passagens
 
 *o mundo*

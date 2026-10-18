@@ -14,6 +14,7 @@ import micdoodle8.mods.galacticraft.api.galaxies.CelestialBody;
 import micdoodle8.mods.galacticraft.api.galaxies.Moon;
 import micdoodle8.mods.galacticraft.api.galaxies.Planet;
 import micdoodle8.mods.galacticraft.api.galaxies.SolarSystem;
+import micdoodle8.mods.galacticraft.api.galaxies.Star;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
@@ -60,6 +61,21 @@ final class GsBodies {
         data.setStarHabitableZone(gs.zoneDistance, gs.zoneSize);
         BodiesRegistry.registerBodyData(star, data);
         GsStarAura.register(star, gs.auraColor);
+    }
+
+    @SuppressWarnings("deprecation") static void override(CelestialBody body, GalaxySpaceDef gs) {
+        if (!(body instanceof Star)) {
+            ContentLog.LOGGER.error("Celestial override sets galaxyspace keys on {}, which is not a star, so they do nothing", body.getTranslationKey());
+            return;
+        }
+        BodiesData data = BodiesRegistry.getData(body);
+        if (data == null) {
+            data = new BodiesData(IAdvancedSpace.TypeBody.STAR);
+            BodiesRegistry.registerBodyData(body, data);
+        }
+        if (gs.starType != null) { data.setStarType(IAdvancedSpace.StarType.valueOf(gs.starType)); }
+        if (gs.starColor != null) { data.setStarColor(IAdvancedSpace.StarColor.valueOf(gs.starColor)); }
+        GsStarAura.register(body, gs.auraColor);
     }
 
     @SuppressWarnings("deprecation") static void subsystem(CelestialBody body, @Nullable GalaxySpaceDef gs) {

@@ -4188,6 +4188,56 @@ Galacticraft 애드온 두 개는 Galacticraft보다 천체에 대해 더 많은
 | `temperatureNight` | 아니요 | 소수                                                           | `temperatureDay`                         | 밤의 열 레벨                                                                                                                  |
 | `lander`           | 아니요 | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | Galacticraft의 착륙선                    | `landing`이 `lander`일 때 플레이어가 타고 내려오는 ExtraPlanets 착륙선                                                        |
 
+### 다른 모드의 천체 변경하기
+
+*Galacticraft 천체*
+
+`<namespace>/celestial/*.json`
+
+`kind`가 `override`인 파일은 천체를 새로 추가하는 대신, Galacticraft나 다른 모드가 이미 등록한 천체가 지도에서 보이는 모습을 바꿉니다. 모든 모드가 로드된 뒤에 적용되므로, 설정을 늦게 마치는 Galacticraft 자체의 행성에도 닿습니다. Galacticraft가 없으면 파일은 건너뜁니다.
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| 키            | 필수   | 값                                | 기본값                    | 설명                                                                                                                                            |
+| ------------- | ------ | --------------------------------- | ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | 예     | `override`                        |                           | 파일을 이미 있는 천체에 대한 변경으로 만듭니다                                                                                                  |
+| `body`        | 예     | 번역 키                           |                           | 변경할 천체로, `star.sol`이나 `planet.saturn`처럼 Galacticraft의 키 형식입니다                                                                  |
+| `icon`        | 아니요 | 텍스처 경로                       | 천체 자체의 것            | 지도에 보이는 그림                                                                                                                              |
+| `ring`        | 아니요 | 텍스처 경로                       | 천체 자체의 것(있는 경우) | 행성이나 위성만 해당합니다. 고리만 그린 그림으로, 지도의 `ring` 키가 받는 형식입니다. 천체에 이미 있는 고리 대신 그려집니다                     |
+| `ringSize`    | 아니요 | 소수                              | `2.5`                     | 지도에서 천체 너비에 대한 배수로 나타낸 고리의 너비                                                                                             |
+| `galaxyspace` | 아니요 | 객체                              |                           | `starType`, `starColor`, `auraColor`로, [GalaxySpace와 ExtraPlanets](#galaxyspace와-extraplanets)에서와 같게 읽습니다. GalaxySpace가 필요합니다 |
+| `requires`    | 아니요 | 모드 ID 또는 팩 네임스페이스 목록 | 없음                      | 모두 있지 않으면 파일을 건너뜁니다                                                                                                              |
+
+`body`는 천체 이름의 키입니다. 항성계의 주성은 `star.<name>`, 그 밖에는 `planet.<name>`, `moon.<name>`, `satellite.<name>`입니다. Galacticraft 자체의 천체는 `star.sol`, `planet.overworld`, `planet.mercury`, `planet.venus`, `planet.mars`, `planet.jupiter`, `planet.saturn`, `planet.uranus`, `planet.neptune`, `planet.asteroids`(Asteroids 모듈), `moon.moon`, `satellite.spacestation.overworld`입니다. 대소문자는 구분하지 않으므로 `planet.saturn`은 ExtraPlanets의 `Saturn`도 찾습니다. 그 키를 가진 천체는 모두 바뀌고, 어느 것과도 맞지 않는 키는 오류로 기록됩니다. 항성의 `starType`과 `starColor`는 해당 값만 바꾸고, 생명체 거주 가능 영역처럼 GalaxySpace가 그 항성에 대해 갖고 있는 나머지는 그대로 둡니다.
+
+천체의 이름과 정보 패널의 글은 여기서 설정하지 않습니다. 둘은 lang 키 `<type>.<name>`과 `gui.message.<name>.<line>.<0 or 1>.name`에서 오며, line은 `daynightcycle`, `surfacegravity`, `surfacecomposition`, `atmosphere`, `meansurfacetemp` 중 하나입니다. 팩의 lang 파일은 다른 것과 마찬가지로 이를 덮어씁니다. `body`와 달리 lang 키는 모드가 천체를 등록한 대소문자를 그대로 유지합니다. ExtraPlanets의 Mercury는 `planet.Mercury`입니다.
+
+어디에 무엇이 보이는지:
+
+| 변경   | Galacticraft 지도 | GalaxySpace 지도                                | ExtraPlanets 지도                   |
+| ------ | ----------------- | ----------------------------------------------- | ----------------------------------- |
+| `icon` | 예                | 예, 그리고 은하 목록은 주성의 아이콘을 읽습니다 | 예                                  |
+| 오라   | 아니요            | 예                                              | 아니요                              |
+| 고리   | 예                | 예, GalaxySpace가 그리는 고리 대신              | 예, ExtraPlanets가 그리는 고리 대신 |
+
+override가 그대로 두는 것이 몇 가지 있습니다. GalaxySpace와 ExtraPlanets 지도의 천체 설명(각자 자기 데이터로 계산합니다), 보이지 않는 채로 남는 블랙홀의 오라, 궤도선의 색입니다. 고리는 없앨 수 없고 바꿀 수만 있습니다. 플레이어가 다른 모드의 차원 안에서 보는 하늘은 그 모드가 그리므로, 모드 자체 텍스처와 같은 에셋 경로에 둔 팩 파일만 닿습니다.
+
 ## 포털과 게이트
 
 *월드*

@@ -4188,6 +4188,56 @@ Galacticraftの2つのアドオンは、Galacticraftより多くの天体の情�
 | `temperatureNight`  | いいえ | 小数                                                           | `temperatureDay`                           | 夜の温度レベル                                                                                                                              |
 | `lander`            | いいえ | `general`、`jupiter`、`saturn`、`mercury`、`neptune`、`uranus` | Galacticraftのランダー                     | `landing` が `lander` の場合に、プレイヤーが降りてくるExtraPlanetsのランダー                                                                |
 
+### 他のModの天体を変更する
+
+*Galacticraftの天体*
+
+`<namespace>/celestial/*.json`
+
+`kind` が `override` のファイルは、天体を新しく追加する代わりに、Galacticraftや他のModがすでに登録した天体のマップ上の見た目を変更します。すべてのModが読み込まれたあとに適用されるため、セットアップが遅れて終わるGalacticraft自身の惑星にも届きます。Galacticraftがない場合、このファイルはスキップされます。
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| キー          | 必須   | 値                                    | デフォルト               | 説明                                                                                                                                       |
+| ------------- | ------ | ------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `kind`        | はい   | `override`                            |                          | ファイルを、すでに存在する天体への変更にします                                                                                             |
+| `body`        | はい   | 翻訳キー                              |                          | 変更する天体。`star.sol` や `planet.saturn` のようなGalacticraftのキー形式で指定します                                                     |
+| `icon`        | いいえ | テクスチャのパス                      | 天体自身のもの           | マップ上の画像                                                                                                                             |
+| `ring`        | いいえ | テクスチャのパス                      | 天体自身のもの（あれば） | 惑星か衛星のみ。環だけの画像で、マップの `ring` キーが取る形式です。天体にすでにある環の代わりに描かれます                                 |
+| `ringSize`    | いいえ | 小数                                  | `2.5`                    | 環の幅。マップ上の天体の幅に対する倍率です                                                                                                 |
+| `galaxyspace` | いいえ | オブジェクト                          |                          | `starType`、`starColor`、`auraColor`。[GalaxySpaceとExtraPlanets](#galaxyspaceとextraplanets)と同じように読まれます。GalaxySpaceが必要です |
+| `requires`    | いいえ | ModのIDまたはパックの名前空間のリスト | なし                     | すべてがそろっていない限り、ファイルはスキップされます                                                                                     |
+
+`body` は天体名のキーです。系の主星は `star.<name>`、そのほかは `planet.<name>`、`moon.<name>`、`satellite.<name>` です。Galacticraft自身の天体は `star.sol`、`planet.overworld`、`planet.mercury`、`planet.venus`、`planet.mars`、`planet.jupiter`、`planet.saturn`、`planet.uranus`、`planet.neptune`、`planet.asteroids`（Asteroidsモジュール）、`moon.moon`、`satellite.spacestation.overworld` です。大文字と小文字は区別されないため、`planet.saturn` はExtraPlanetsの `Saturn` も対象にします。そのキーを持つ天体はすべて変更され、どれにも一致しないキーはエラーとして記録されます。恒星の `starType` と `starColor` はその値だけを置き換え、居住可能領域など、GalaxySpaceが保持しているそれ以外の内容はそのまま残ります。
+
+天体の名前と情報パネルの文章は、ここでは設定しません。langキー `<type>.<name>` と `gui.message.<name>.<line>.<0 or 1>.name` から取られ、line は `daynightcycle`、`surfacegravity`、`surfacecomposition`、`atmosphere`、`meansurfacetemp` のいずれかです。パック内のlangファイルは、ほかのものと同じようにこれらを上書きします。`body` と違い、langキーはModが天体を登録したときの大文字小文字をそのまま保ちます。ExtraPlanetsのMercuryは `planet.Mercury` です。
+
+どこに何が表示されるか:
+
+| 変更   | Galacticraftのマップ | GalaxySpaceのマップ                         | ExtraPlanetsのマップ                         |
+| ------ | -------------------- | ------------------------------------------- | -------------------------------------------- |
+| `icon` | はい                 | はい。銀河の一覧は主星のアイコンを読みます  | はい                                         |
+| オーラ | いいえ               | はい                                        | いいえ                                       |
+| 環     | はい                 | はい。GalaxySpaceが描く環の代わりになります | はい。ExtraPlanetsが描く環の代わりになります |
+
+overrideが変更しないものがいくつかあります。GalaxySpaceとExtraPlanetsのマップにある天体の説明（それぞれ自身のデータから算出します）、見えないままのブラックホールのオーラ、軌道線の色です。環は取り除けず、置き換えることしかできません。プレイヤーが他のModのディメンション内で見る空はそのModが描くため、届くのは、Mod自身のテクスチャと同じアセットパスに置いたパックのファイルだけです。
+
 ## ポータルとゲート
 
 *ワールド*

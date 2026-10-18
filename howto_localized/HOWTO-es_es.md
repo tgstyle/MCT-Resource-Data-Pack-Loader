@@ -4188,6 +4188,56 @@ La `gravity` y la `dayLength` de una dimensión son también lo que GalaxySpace 
 | `temperatureNight`      | no          | decimal                                                        | `temperatureDay`                                             | El nivel térmico de noche                                                                                                                                             |
 | `lander`                | no          | `general`, `jupiter`, `saturn`, `mercury`, `neptune`, `uranus` | el módulo de aterrizaje de Galacticraft                      | El módulo de aterrizaje de ExtraPlanets en el que desciende un jugador, donde `landing` es `lander`                                                                   |
 
+### Cambiar los cuerpos de otro mod
+
+*cuerpos de galacticraft*
+
+`<namespace>/celestial/*.json`
+
+Un archivo con `kind` `override` cambia el aspecto en el mapa de un cuerpo que Galacticraft u otro mod ya registró, en lugar de añadir uno nuevo. Se aplica cuando todos los mods han cargado, así que alcanza también a los planetas propios de Galacticraft, que terminan su configuración tarde. Sin Galacticraft, el archivo se omite.
+
+```json
+{
+  "kind": "override",
+  "body": "star.sol",
+  "icon": "mypack:textures/gui/celestialbodies/sun.png",
+  "galaxyspace": { "starType": "giant", "starColor": "orange", "auraColor": "#FF7A30" }
+}
+```
+
+```json
+{
+  "kind": "override",
+  "body": "planet.saturn",
+  "ring": "mypack:textures/gui/saturn_ring.png",
+  "ringSize": 3
+}
+```
+
+| Clave         | Obligatorio | Valor                                    | Por defecto                       | Qué hace                                                                                                                                                                   |
+| ------------- | ----------- | ---------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `kind`        | sí          | `override`                               |                                   | Convierte el archivo en un cambio a un cuerpo que ya existe                                                                                                                |
+| `body`        | sí          | clave de traducción                      |                                   | El cuerpo que se cambia, en la forma de clave de Galacticraft, como `star.sol` o `planet.saturn`                                                                           |
+| `icon`        | no          | ruta de textura                          | la propia del cuerpo              | La imagen en el mapa                                                                                                                                                       |
+| `ring`        | no          | ruta de textura                          | la propia del cuerpo, si la tiene | Solo para un planeta o una luna. Una imagen del anillo solo, en la forma que admite la clave de mapa `ring`. Se dibuja en lugar de cualquier anillo que el cuerpo ya tenga |
+| `ringSize`    | no          | decimal                                  | `2.5`                             | La anchura del anillo como múltiplo de la anchura del cuerpo en el mapa                                                                                                    |
+| `galaxyspace` | no          | objeto                                   |                                   | `starType`, `starColor` y `auraColor`, que se leen como en [GalaxySpace y ExtraPlanets](#galaxyspace-y-extraplanets). Necesitan GalaxySpace                                |
+| `requires`    | no          | lista de ids de mod o namespaces de pack | ninguno                           | El archivo se omite salvo que estén presentes todos                                                                                                                        |
+
+El `body` es la clave del nombre del cuerpo: `star.<name>` para la estrella principal de un sistema, `planet.<name>`, `moon.<name>` o `satellite.<name>`. Los cuerpos propios de Galacticraft son `star.sol`, `planet.overworld`, `planet.mercury`, `planet.venus`, `planet.mars`, `planet.jupiter`, `planet.saturn`, `planet.uranus`, `planet.neptune`, `planet.asteroids` (módulo Asteroids), `moon.moon` y `satellite.spacestation.overworld`. No se distingue entre mayúsculas y minúsculas, así que `planet.saturn` también encuentra el `Saturn` de ExtraPlanets. Se cambian todos los cuerpos con esa clave, y una clave que no coincide con ninguno se registra como error. El `starType` y el `starColor` de una estrella sustituyen solo esos valores y conservan el resto de lo que GalaxySpace guarda de ella, como su zona habitable.
+
+El nombre de un cuerpo y el texto de su panel de información no se establecen aquí. Vienen de las claves de lang `<type>.<name>` y `gui.message.<name>.<line>.<0 or 1>.name`, donde la línea es `daynightcycle`, `surfacegravity`, `surfacecomposition`, `atmosphere` o `meansurfacetemp`. Un archivo de lang del pack las sobrescribe como cualquier otra. A diferencia de `body`, una clave de lang conserva las mayúsculas y minúsculas con que el mod registró el cuerpo: el Mercury de ExtraPlanets es `planet.Mercury`.
+
+Qué se ve y dónde:
+
+| Cambio | Mapa de Galacticraft | Mapa de GalaxySpace                                              | Mapa de ExtraPlanets                            |
+| ------ | -------------------- | ---------------------------------------------------------------- | ----------------------------------------------- |
+| `icon` | sí                   | sí, y la lista de galaxias lee el icono de la estrella principal | sí                                              |
+| aura   | no                   | sí                                                               | no                                              |
+| anillo | sí                   | sí, en lugar del anillo que dibuja GalaxySpace                   | sí, en lugar del anillo que dibuja ExtraPlanets |
+
+Un override deja algunas cosas como están: la descripción de un cuerpo en los mapas de GalaxySpace y ExtraPlanets, que ellos calculan con sus propios datos, el aura de un agujero negro, que sigue invisible, y el color de la línea de la órbita. Un anillo no se puede quitar, solo sustituir. El cielo que un jugador ve dentro de la dimensión de otro mod lo dibuja ese mod, así que solo lo alcanza un archivo del pack en la misma ruta de asset que la textura del propio mod.
+
 ## Portales y puertas
 
 *el mundo*

@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.mixin.extraplanets;
 
+import mctmods.resourcedatapackloader.util.BodyRings;
 import mctmods.resourcedatapackloader.util.compat.GcWorldProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.client.handlers.MainHandlerClient;
+import micdoodle8.mods.galacticraft.api.event.client.CelestialBodyRenderEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
@@ -22,5 +24,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         if (!Config.PRESSURE || player == null || !(player.world.provider instanceof GcWorldProvider)) { return; }
         int pressure = ((GcWorldProvider) player.world.provider).extraPlanetsPressure();
         if (pressure > 0 || pressure == 0 && !Config.HIDE_RADIATION_PRESSURE_HUD) { showPressureHUD(pressure); }
+    }
+
+    @Inject(method = "onRenderPlanetPost(Lmicdoodle8/mods/galacticraft/api/event/client/CelestialBodyRenderEvent$Post;)V", at = @At("HEAD"), cancellable = true, remap = false) private void rdpl$overriddenRing(CelestialBodyRenderEvent.Post event, CallbackInfo ci) {
+        if (BodyRings.overrides(event.celestialBody.getName())) { ci.cancel(); }
     }
 }
