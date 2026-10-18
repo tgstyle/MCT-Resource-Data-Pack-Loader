@@ -47,6 +47,7 @@ public final class ContentGenerated {
     private static final Set<String> CURIOS_PRESETS = Set.of("back", "belt", "body", "bracelet", "charm", "curio", "hands", "head", "necklace", "ring");
     private static final List<String> BAUBLES_SLOTS = List.of("necklace", "ring", "belt", "head", "body", "charm");
     private static final int SHEET_COLUMNS = 8;
+    private static final int FORTUNE_BONUS = 2;
     private static final String[] STATUS_SHEET = {"speed", "slowness", "haste", "mining_fatigue", "strength", "weakness", "poison", "regeneration", "invisibility", "hunger", "jump_boost", "nausea", "night_vision", "blindness", "resistance", "fire_resistance", "water_breathing", "wither", "absorption", "levitation", "glowing", "luck", "unluck", "health_boost"};
 
     private ContentGenerated() {}
@@ -180,9 +181,15 @@ public final class ContentGenerated {
                 pools.add(pool(Json.arr(item(self)), Json.arr(silk)));
                 pools.add(pool(Json.arr(item(self)), Json.arr(shears, inverted(silk))));
                 ResourceLocation sapling = ContentParser.location(def.leafSapling());
-                if (sapling != null && def.leafSaplingChance() > 0) {
-                    double chance = def.leafSaplingChance() / 100.0;
-                    JsonObject bonus = Json.obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", Json.arr(chance, Math.min(1.0, chance + 0.02), Math.min(1.0, chance + 0.04), Math.min(1.0, chance + 0.06)));
+                if (sapling != null) {
+                    JsonArray chances = new JsonArray();
+                    int percent = def.leafSaplingChance();
+                    chances.add(Math.min(100, percent) / 100.0);
+                    while (percent < 100) {
+                        percent += FORTUNE_BONUS;
+                        chances.add(Math.min(100, percent) / 100.0);
+                    }
+                    JsonObject bonus = Json.obj("condition", "minecraft:table_bonus", "enchantment", "minecraft:fortune", "chances", chances);
                     pools.add(pool(Json.arr(entryWith(sapling.toString(), Json.arr(json(DECAY)))), Json.arr(inverted(silk), inverted(shears), bonus, json(SURVIVES))));
                 }
             }
