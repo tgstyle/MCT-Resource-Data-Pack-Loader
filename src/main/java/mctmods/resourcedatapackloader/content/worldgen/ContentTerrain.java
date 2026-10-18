@@ -248,6 +248,8 @@ public final class ContentTerrain {
 
     public static long lockedTime(Holder<WorldClock> clock) { return clock.is(WorldClocks.OVERWORLD) ? worldTime() : ContentDimensionTime.fixedTime(clock); }
 
+    public static long overworldLock(@Nullable Holder<WorldClock> clock) { return clock != null && clock.is(WorldClocks.OVERWORLD) ? worldTime() : -1L; }
+
     private static String scoped(DimensionValues<String> values, String key, String fallback, String dimension) {
         if (ContentControl.off(ContentControl.TERRAIN)) { return ""; }
         String found = values.at(dimension, ContentControl.lines(ContentControl.TERRAIN, key, List.of(fallback)));

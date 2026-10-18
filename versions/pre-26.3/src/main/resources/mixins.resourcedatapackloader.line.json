@@ -13,6 +13,7 @@
         "common.MixinAquifer",
         "common.MixinLevelStorageSource",
         "common.MixinPlacedFeature",
+        "common.MixinServerClockAdvance",
         "common.MixinSurfaceRulesContext"
     ],
     "injectors": {
