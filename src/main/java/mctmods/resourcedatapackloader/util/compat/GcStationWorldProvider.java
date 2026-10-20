@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.util.compat;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentDimensionRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSkyRenderers;
 
@@ -42,6 +43,8 @@ public class GcStationWorldProvider extends WorldProviderOverworldOrbit {
 
     @Override public long getDayLength() { return station == null ? super.getDayLength() : station.def.traits.dayLength; }
 
+    @Override @Nonnull public float[] getLightBrightnessTable() { return ContentDimensionRules.lightBrightness(station == null ? null : station.def, super.getLightBrightnessTable()); }
+
     @Override @SideOnly(Side.CLIENT) public float getStarBrightness(float partialTicks) {
         if (station == null || station.def.starBrightness < 0.0F) { return super.getStarBrightness(partialTicks); }
         return station.def.starBrightness;
@@ -65,7 +68,7 @@ public class GcStationWorldProvider extends WorldProviderOverworldOrbit {
         setSkyRenderer(new SkyProviderOrbit(station.home.getBodyIcon(), true, true));
         setSpinDeltaPerTick(getSpinManager().getSpinRate());
         ContentSkyRenderers.apply(this, station.def);
-        if (getSkyRenderer() instanceof ContentSkyRenderer) { setSkyRenderer(new GcStationPlanetSky(getSkyRenderer(), station.home.getBodyIcon())); }
+        if (getSkyRenderer() instanceof ContentSkyRenderer) { setSkyRenderer(new GcStationPlanetSky(((ContentSkyRenderer) getSkyRenderer()).withoutFloor(), station.home.getBodyIcon())); }
         if (getCloudRenderer() == null) { setCloudRenderer(new CloudRenderer()); }
     }
 }

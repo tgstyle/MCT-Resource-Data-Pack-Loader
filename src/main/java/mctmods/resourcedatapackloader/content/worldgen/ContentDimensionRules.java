@@ -61,6 +61,13 @@ public final class ContentDimensionRules {
         return new BiomeProviderSingle(single == null ? Biomes.PLAINS : single);
     }
 
+    public static float[] lightBrightness(@Nullable DimensionDef def, float[] own) {
+        if (def == null || def.ambientLight <= 0.0F) { return own; }
+        float[] table = new float[16];
+        lightTable(def.ambientLight, table);
+        return table;
+    }
+
     public static void lightTable(float ambient, float[] table) {
         for (int level = 0; level <= 15; level++) {
             float fade = 1.0F - level / 15.0F;

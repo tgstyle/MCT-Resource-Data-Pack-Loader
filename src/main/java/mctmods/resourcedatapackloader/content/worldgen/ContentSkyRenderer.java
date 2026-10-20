@@ -30,12 +30,18 @@ import javax.annotation.Nullable;
     private final float moonSize;
     private final ContentStars starField;
     private int lists = -1;
+    private boolean floor = true;
 
     ContentSkyRenderer(DimensionTraitsDef.Sky sky, @Nullable DimensionTraitsDef.Moon moon) {
         this.sky = sky;
         moonTexture = moon == null ? MOON_PHASES : moon.texture;
         moonSize = moon == null ? DimensionTraitsDef.VANILLA_MOON : moon.size;
         starField = new ContentStars(sky.starCount, sky.starSize);
+    }
+
+    public ContentSkyRenderer withoutFloor() {
+        floor = false;
+        return this;
     }
 
     @Override public void render(float partialTicks, WorldClient world, Minecraft mc) {
@@ -113,15 +119,17 @@ import javax.annotation.Nullable;
         GlStateManager.popMatrix();
         ContentSkyExtras.overlay(world, partialTicks);
         GlStateManager.disableTexture2D();
-        GlStateManager.color(0.0F, 0.0F, 0.0F);
-        double below = viewer.getPositionEyes(partialTicks).y - world.getHorizon();
-        if (below < 0.0D) { voidBox(buffer, tessellator, lists, below); }
-        if (world.provider.isSkyColored()) { GlStateManager.color(red * 0.2F + 0.04F, green * 0.2F + 0.04F, blue * 0.6F + 0.1F); }
-        else { GlStateManager.color(red, green, blue); }
-        GlStateManager.pushMatrix();
-        GlStateManager.translate(0.0F, -((float) (below - 16.0D)), 0.0F);
-        GlStateManager.callList(lists + 1);
-        GlStateManager.popMatrix();
+        if (floor) {
+            GlStateManager.color(0.0F, 0.0F, 0.0F);
+            double below = viewer.getPositionEyes(partialTicks).y - world.getHorizon();
+            if (below < 0.0D) { voidBox(buffer, tessellator, lists, below); }
+            if (world.provider.isSkyColored()) { GlStateManager.color(red * 0.2F + 0.04F, green * 0.2F + 0.04F, blue * 0.6F + 0.1F); }
+            else { GlStateManager.color(red, green, blue); }
+            GlStateManager.pushMatrix();
+            GlStateManager.translate(0.0F, -((float) (below - 16.0D)), 0.0F);
+            GlStateManager.callList(lists + 1);
+            GlStateManager.popMatrix();
+        }
         GlStateManager.enableTexture2D();
         GlStateManager.depthMask(true);
     }

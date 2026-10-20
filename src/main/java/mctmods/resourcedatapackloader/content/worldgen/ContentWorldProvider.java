@@ -76,12 +76,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
 
     @Override @SideOnly(Side.CLIENT) public void getLightmapColors(float partialTicks, float sunBrightness, float skyLight, float blockLight, @Nonnull float[] colors) { if (def != null && def.look != null && def.look.tintsLight()) { ContentDimensionRules.lightmap(def.look, partialTicks, sunBrightness, skyLight, blockLight, colors); } }
 
-    @Override @Nonnull public float[] getLightBrightnessTable() {
-        if (def == null || def.ambientLight <= 0.0F) { return super.getLightBrightnessTable(); }
-        float[] table = new float[16];
-        ContentDimensionRules.lightTable(def.ambientLight, table);
-        return table;
-    }
+    @Override @Nonnull public float[] getLightBrightnessTable() { return ContentDimensionRules.lightBrightness(def, super.getLightBrightnessTable()); }
 
     @Override public boolean canRespawnHere() { return def != null && def.respawn; }
 
