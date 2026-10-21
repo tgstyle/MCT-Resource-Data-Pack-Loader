@@ -5113,6 +5113,7 @@ Un objectif est un vrai objectif du tableau des scores du jeu lui-même : `/scor
 | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `points.kill`    | objet  | vide   | Id d'entité vers points, crédités au camp du tueur. `minecraft:player` donne des points pour un joueur tué                                 |
 | `points.death`   | entier | `0`    | Points à chaque mort d'un membre, quelle qu'en soit la cause. Peut être négatif                                                            |
+| `points.raid`    | booléen | `false` | Reprend les `points` de chaque [raid](#raids) gagné : chaque joueur à portée en reçoit autant, sur la ligne de son camp et, avec `individuals`, sur la sienne |
 | `points.ownKill` | entier | `0`    | Points pour la mort d'un membre du camp du tueur, à la place de la valeur de `kill`. 0 ne marque rien ; un nombre négatif est une pénalité |
 
 `points` est ce que ce mod ajoute à ce que le jeu compte, injecté dans le même objectif pour que `/scoreboard` le lise toujours. `kill` vaut tant de points par id d'entité tuée, crédités au camp du tueur ; `death` vaut tant de points chaque fois qu'un membre d'un camp meurt, et peut être négatif. Avec `teamTotals`, les points vont sur une ligne portant le nom de l'équipe, ce qui permet à la barre latérale d'afficher quatre camps plutôt qu'une ligne par mob. `individuals` ajoute en plus une ligne par membre ; il est désactivé par défaut, car une ligne par UUID de mob n'est que du bruit.
@@ -5269,6 +5270,8 @@ Tant qu'une vague est sur le village, ses villageois courent chez eux et y reste
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5294,6 +5297,8 @@ Tant qu'une vague est sur le village, ses villageois courent chez eux et y reste
 | `sound`         | nom de son           | aucun         | Joué à chaque joueur à portée, depuis le côté d'où vient la vague, à l'arrivée de chaque vague                                                                                     |
 | `wins`          | fonction             | aucun         | S'exécute en tant que chaque joueur à portée quand le raid est gagné                                                                                                               |
 | `loses`         | fonction             | aucun         | S'exécute en tant que chaque joueur à portée quand le raid est perdu                                                                                                               |
+| `points`        | entier | `0`            | Points crédités à chaque joueur à portée quand le raid est gagné, dans chaque objectif dont `points.raid` est activé. Une défaite ne rapporte rien |
+| `loot`          | table de butin | aucun  | Une table de butin tirée une fois pour chaque joueur à portée quand le raid est gagné. Les objets vont dans son inventaire, ou tombent à ses pieds s'il est plein |
 | `bell`          | nom de bloc ou liste | aucun         | Autres blocs qui sonnent comme une cloche, quand un joueur les utilise et à chaque arrivée de vague. Un bloc de type `bell` sonne sans être nommé                                  |
 
 ### Un groupe

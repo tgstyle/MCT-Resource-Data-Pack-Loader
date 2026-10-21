@@ -5113,6 +5113,7 @@ Un obiettivo è un vero obiettivo sullo scoreboard del gioco, quindi `/scoreboar
 | ---------------- | ------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | oggetto JSON | vuoto       | Id di entità e punti, accreditati al lato di chi uccide. `minecraft:player` assegna punti per l'uccisione di un giocatore                    |
 | `points.death`   | intero       | `0`         | Punti ogni volta che muore un membro, comunque sia morto. Può essere negativo                                                                |
+| `points.raid`    | booleano | `false` | Raccoglie i `points` di ogni [incursione](#incursioni) vinta: ogni giocatore a portata ne riceve altrettanti, sulla riga del proprio lato e, con `individuals`, anche sulla propria |
 | `points.ownKill` | intero       | `0`         | Punti per un'uccisione del lato dello stesso uccisore, al posto del valore di `kill`. 0 non assegna nulla; un numero negativo è una penalità |
 
 `points` è ciò che questa mod aggiunge a ciò che il gioco conta, inserito nello stesso obiettivo così `/scoreboard` lo legge ancora. `kill` vale tanti punti per id di entità uccisa, accreditati al lato di chi uccide; `death` vale tanti punti ogni volta che muore un membro di un lato, e può essere negativo. Con `teamTotals` i punti vanno su una riga con il nome della squadra, ed è ciò che permette alla barra laterale di mostrare quattro lati anziché una riga per ogni mob. `individuals` aggiunge anche una riga per membro, ed è disattivato di default perché una riga per UUID di mob appare come rumore.
@@ -5269,6 +5270,8 @@ Mentre un'ondata è sul villaggio, i suoi villici corrono a casa e ci restano, c
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5294,6 +5297,8 @@ Mentre un'ondata è sul villaggio, i suoi villici corrono a casa e ci restano, c
 | `sound`         | nome del suono           | nessuno               | Riprodotto a ogni giocatore nel raggio, dal lato da cui arriva l'ondata, all'arrivo di ogni ondata                                                                                                    |
 | `wins`          | funzione                 | nessuno               | Eseguita come ogni giocatore nel raggio quando l'incursione è vinta                                                                                                                                   |
 | `loses`         | funzione                 | nessuno               | Eseguita come ogni giocatore nel raggio quando l'incursione è persa                                                                                                                                   |
+| `points`        | intero | `0`            | Punti accreditati a ogni giocatore a portata quando l'incursione è vinta, in ogni obiettivo che ha `points.raid` attivo. Una sconfitta non paga nulla |
+| `loot`          | loot table | nessuno    | Una loot table assegnata una volta a ogni giocatore a portata quando l'incursione è vinta. Gli oggetti vanno nel suo inventario, oppure cadono ai suoi piedi se è pieno |
 | `bell`          | nome del blocco o elenco | nessuno               | Altri blocchi che suonano come una campana, quando un giocatore li usa e ogni volta che arriva un'ondata. Un blocco di tipo `bell` suona senza essere indicato                                        |
 
 ### Un gruppo
