@@ -37,6 +37,9 @@ public final class ContentParserWorlds {
     private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
     private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST));
     private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM));
+    private static final List<String> TEAMLESS = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.REFUSE));
+    private static final List<String> TALLIES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.TEAM));
+    private static final List<String> STANDINGS = Collections.unmodifiableList(Arrays.asList(GateDef.ALONE, GateDef.WITH));
     private static final String ROLES = "rlsc.";
 
     private ContentParserWorlds() {}
@@ -474,12 +477,14 @@ public final class ContentParserWorlds {
     @Nullable public static GateDef gate(ResourceLocation key, String contents) {
         JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
-        String scope = Json.choice(json, "scope", GateDef.PLAYER, "Gate " + key, SCOPES);
+        String owner = "Gate " + key;
+        String scope = Json.choice(json, "scope", GateDef.PLAYER, owner, SCOPES);
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
         return new GateDef(key,
                 Json.getInt(json, "dimension"),
                 Json.getString(json, "name", key.getPath()),
                 scope,
+                Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS),
                 Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", ""),
                 Json.getString(unlock, "consume", ""),
@@ -489,7 +494,9 @@ public final class ContentParserWorlds {
                 Json.getString(unlock, "killed", ""),
                 Math.max(1, Json.getInt(unlock, "killedCount", 1)),
                 Json.getString(unlock, "killedDrops", ""),
+                Json.choice(unlock, "killedTally", GateDef.PLAYER, owner, TALLIES),
                 Standing.parse(unlock),
+                Json.choice(unlock, "teamAndScore", GateDef.ALONE, owner, STANDINGS),
                 strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"),
                 Json.getString(json, "unlockedMessage", "%dim% is now open"),

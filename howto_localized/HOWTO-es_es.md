@@ -4383,6 +4383,7 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
   "dimension": 12,
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -4393,9 +4394,11 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4410,6 +4413,7 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
 | `dimension`       | sí          | entero                                            |                                  | La dimensión que protege                                                                                               |
 | `name`            | no          | cadena                                            | el nombre del archivo            | Se muestra al jugador                                                                                                  |
 | `scope`           | no          | `player`, `global`, `team`                        | `player`                         | Un jugador cada vez, todo el mundo a la vez, o todo el equipo de quien la abre                                         |
+| `teamless`        | no          | `player`, `refuse`                                | `player`                         | Con el ámbito `team`, qué recibe un jugador sin equipo: un desbloqueo propio o el rechazo                              |
 | `open`            | no          | booleano                                          | `false`                          | Si empieza abierta                                                                                                     |
 | `unlock`          | no          | objeto                                            |                                  | Lo que la abre. Véase más abajo                                                                                        |
 | `unlockedMessage` | no          | cadena                                            | `%dim% is now open`              | Se muestra cuando se abre                                                                                              |
@@ -4418,7 +4422,7 @@ Todas las claves a la vez. Un archivo real escribe solo las que necesita.
 | `requires`        | no          | lista de ids de mod o espacios de nombres de pack | ninguno                          | La puerta se omite salvo que estén presentes todos                                                                     |
 | `portalBlocks`    | no          | lista de nombres de bloque                        | todos los portales               | Limita la puerta a estos bloques de portal, de modo que una dimensión pueda tener una entrada protegida y otra abierta |
 
-`unlock` admite `hold` (un ítem que debe sostenerse), `consume` con `consumeCount` (`1`), `craft` (un ítem que debe haberse fabricado), `advancement` y `killed` (un nombre de entidad; la puerta se abre para quien mate una, de modo que un jefe puede guardar la llave de un mundo) con `killedCount` (`1`) cuando una no basta, contabilizado por jugador o para todo el mundo según indique el ámbito. Añadir `killedDrops` (un nombre de ítem) hace que las muertes contadas dejen ese ítem a los pies de quien mató en lugar de abrir la puerta, y reinicia la cuenta, de modo que una llave puede volver a ganarse y entregarse a alguien que nunca peleó por ella; condiciona la puerta con `hold` o `consume` del mismo ítem para convertirlo en la llave. `%item%`, `%mob%` y `%dim%` se rellenan por ti. Una llave que suelta un mob no necesita nada especial aquí: dale el botín al mob y condiciona la puerta con `hold` o `consume`. `team`, y `objective` con `scoreAtLeast`, la abren para un jugador de ese equipo del marcador cuya puntuación en ese objetivo llegue al menos a ese valor, las mismas condiciones que admite `when` en una tarjeta; cada una funciona también por separado. Se comprueban cuando el jugador la cruza, y entonces la puerta se abre en su ámbito como con cualquier otro desbloqueo. Con el ámbito `team`, el desbloqueo pertenece al equipo de quien la abrió: pasan todos sus miembros, incluidos los que se unan más tarde, y un jugador sin equipo la desbloquea solo para sí mismo.
+`unlock` admite `hold` (un ítem que debe sostenerse), `consume` con `consumeCount` (`1`), `craft` (un ítem que debe haberse fabricado), `advancement` y `killed` (un nombre de entidad; la puerta se abre para quien mate una, de modo que un jefe puede guardar la llave de un mundo) con `killedCount` (`1`) cuando una no basta, contabilizado por jugador o para todo el mundo según indique el ámbito. Añadir `killedDrops` (un nombre de ítem) hace que las muertes contadas dejen ese ítem a los pies de quien mató en lugar de abrir la puerta, y reinicia la cuenta, de modo que una llave puede volver a ganarse y entregarse a alguien que nunca peleó por ella; condiciona la puerta con `hold` o `consume` del mismo ítem para convertirlo en la llave. `%item%`, `%mob%` y `%dim%` se rellenan por ti. Una llave que suelta un mob no necesita nada especial aquí: dale el botín al mob y condiciona la puerta con `hold` o `consume`. `team`, y `objective` con `scoreAtLeast`, la abren para un jugador de ese equipo del marcador cuya puntuación en ese objetivo llegue al menos a ese valor, las mismas condiciones que admite `when` en una tarjeta; cada una funciona también por separado. Se comprueban cuando el jugador la cruza, y entonces la puerta se abre en su ámbito como con cualquier otro desbloqueo. Con el ámbito `team`, el desbloqueo pertenece al equipo de quien la abrió: pasan todos sus miembros, incluidos los que se unan más tarde, y un jugador sin equipo la desbloquea solo para sí mismo. `teamAndScore` decide cómo cuentan esas dos: `alone` (el valor por defecto) les permite abrir la puerta por sí solas, mientras que `with` las convierte en una condición más, de modo que la puerta solo se abre cuando se cumple otra clave de desbloqueo y el jugador además está en ese equipo con esa puntuación. `killedTally` con `team` suma juntas para `killedCount` todas las bajas del equipo de quien mata, en lugar de las de cada jugador por separado (`player`, el valor por defecto); quien no tiene equipo sigue contando solo. `teamless` con `refuse` rechaza en una puerta de ámbito `team` a un jugador sin equipo, en lugar de dejar que la desbloquee para sí mismo (`player`, el valor por defecto).
 
 ## Mundos Rubic
 

@@ -70,9 +70,14 @@ public final class ContentGates {
         return null;
     }
 
-    public static boolean unlocked(EntityPlayer player, GateDef def) { return openFor(player, def) || def.standing.earnedBy(player); }
+    public static boolean unlocked(EntityPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return false; }
+        return openFor(player, def) || def.standsAlone() && def.standing.earnedBy(player);
+    }
 
     public static boolean admits(EntityPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return false; }
+        if (!def.standsAlone()) { return openFor(player, def) && def.standing.met(player); }
         if (openFor(player, def)) { return true; }
         if (!def.standing.earnedBy(player)) { return false; }
         unlock(player, def, true);
@@ -86,7 +91,10 @@ public final class ContentGates {
         return GateStorage.unlocked(player, def);
     }
 
+    private static boolean turnedAway(EntityPlayer player, GateDef def) { return def.refusesTeamless() && Standing.teamOf(player).isEmpty(); }
+
     public static void unlock(EntityPlayer player, GateDef def, boolean announce) {
+        if (turnedAway(player, def)) { return; }
         GateStorage.unlock(player, def);
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());

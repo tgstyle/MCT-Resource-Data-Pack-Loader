@@ -4383,6 +4383,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
   "dimension": 12,
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -4393,9 +4394,11 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4410,6 +4413,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `dimension`       | sì           | intero                                  |                                  | La dimensione che protegge                                                                                 |
 | `name`            | no           | stringa                                 | il nome del file                 | Mostrato al giocatore                                                                                      |
 | `scope`           | no           | `player`, `global`, `team`              | `player`                         | Un giocatore alla volta, l'intero mondo in una volta, o l'intera squadra di chi lo apre                    |
+| `teamless`        | no           | `player`, `refuse`                      | `player`                         | Con l'ambito `team`, cosa ottiene un giocatore senza squadra: uno sblocco tutto suo o il rifiuto           |
 | `open`            | no           | booleano                                | `false`                          | Se parte aperto                                                                                            |
 | `unlock`          | no           | oggetto                                 |                                  | Cosa lo apre. Vedi sotto                                                                                   |
 | `unlockedMessage` | no           | stringa                                 | `%dim% is now open`              | Mostrato quando si apre                                                                                    |
@@ -4418,7 +4422,7 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
 | `requires`        | no           | elenco di id di mod o namespace di pack | nessuno                          | Il varco viene saltato a meno che tutti siano presenti                                                     |
 | `portalBlocks`    | no           | elenco di nomi di blocchi               | ogni portale                     | Limita il varco a questi blocchi portale, così una dimensione può avere una porta sorvegliata e una aperta |
 
-`unlock` accetta `hold` (un oggetto che deve essere tenuto in mano), `consume` con `consumeCount` (`1`), `craft` (un oggetto che deve essere stato fabbricato), `advancement` e `killed` (il nome di un'entità: il varco si apre per chiunque ne uccida una, così un boss può custodire la chiave di un mondo) con `killedCount` (`1`) quando una non basta, conteggiate per giocatore o per l'intero mondo a seconda dello scope. Aggiungendo `killedDrops` (il nome di un oggetto) le uccisioni contate fanno cadere quell'oggetto ai piedi di chi le ha compiute invece di aprire il varco, e il conteggio ricomincia da capo, così una chiave si può guadagnare di nuovo e consegnare a qualcuno che non ha mai combattuto per averla; per farne la chiave, usa `hold` o `consume` dello stesso oggetto sul varco. `%item%`, `%mob%` e `%dim%` vengono compilati al posto tuo. Una chiave lasciata da un mob non richiede nulla di speciale qui: dai al mob il drop e proteggi il varco con `hold` o `consume`. `team`, e `objective` con `scoreAtLeast`, lo aprono per un giocatore di quella squadra del tabellone il cui punteggio in quell'obiettivo arriva almeno a quel valore, le stesse condizioni che accetta `when` in una carta; ciascuna funziona anche da sola. Vengono controllate quando il giocatore lo attraversa, e il varco si apre poi nel suo ambito come per qualsiasi altro sblocco. Con l'ambito `team` lo sblocco appartiene alla squadra di chi l'ha aperto: passano tutti i suoi membri, compresi quelli che si uniscono dopo, e un giocatore senza squadra lo sblocca solo per sé.
+`unlock` accetta `hold` (un oggetto che deve essere tenuto in mano), `consume` con `consumeCount` (`1`), `craft` (un oggetto che deve essere stato fabbricato), `advancement` e `killed` (il nome di un'entità: il varco si apre per chiunque ne uccida una, così un boss può custodire la chiave di un mondo) con `killedCount` (`1`) quando una non basta, conteggiate per giocatore o per l'intero mondo a seconda dello scope. Aggiungendo `killedDrops` (il nome di un oggetto) le uccisioni contate fanno cadere quell'oggetto ai piedi di chi le ha compiute invece di aprire il varco, e il conteggio ricomincia da capo, così una chiave si può guadagnare di nuovo e consegnare a qualcuno che non ha mai combattuto per averla; per farne la chiave, usa `hold` o `consume` dello stesso oggetto sul varco. `%item%`, `%mob%` e `%dim%` vengono compilati al posto tuo. Una chiave lasciata da un mob non richiede nulla di speciale qui: dai al mob il drop e proteggi il varco con `hold` o `consume`. `team`, e `objective` con `scoreAtLeast`, lo aprono per un giocatore di quella squadra del tabellone il cui punteggio in quell'obiettivo arriva almeno a quel valore, le stesse condizioni che accetta `when` in una carta; ciascuna funziona anche da sola. Vengono controllate quando il giocatore lo attraversa, e il varco si apre poi nel suo ambito come per qualsiasi altro sblocco. Con l'ambito `team` lo sblocco appartiene alla squadra di chi l'ha aperto: passano tutti i suoi membri, compresi quelli che si uniscono dopo, e un giocatore senza squadra lo sblocca solo per sé. `teamAndScore` stabilisce come contano queste due: `alone` (predefinito) permette loro di aprire il varco da sole, mentre `with` le rende una condizione in più, così il varco si apre solo quando è soddisfatta un'altra chiave di sblocco e il giocatore è anche in quella squadra con quel punteggio. `killedTally` impostato a `team` somma per `killedCount` tutte le uccisioni della squadra di chi uccide, invece di quelle di ciascun giocatore (`player`, predefinito); chi non ha squadra continua a contare da solo. `teamless` impostato a `refuse` respinge a un varco con ambito `team` un giocatore senza squadra, invece di lasciarglielo sbloccare per sé (`player`, predefinito).
 
 ## Mondi Rubic
 

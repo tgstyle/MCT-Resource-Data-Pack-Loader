@@ -17,17 +17,52 @@ public final class GateStorage extends WorldSavedData {
     private static final String TAG = "rdplGates";
     private static final String KILLS = "rdplGateKills";
     private static final String TEAMS = "rdplGateTeams";
+    private static final String TEAM_KILLS = "rdplGateTeamKills";
     private NBTTagCompound open = new NBTTagCompound();
     private NBTTagCompound kills = new NBTTagCompound();
     private NBTTagCompound teams = new NBTTagCompound();
+    private NBTTagCompound teamKills = new NBTTagCompound();
 
     public GateStorage(String name) { super(name); }
 
-    public static int tally(EntityPlayer player, GateDef def) { return def.global() ? tallyGlobally(player.world, def.getKey()) : tallyFor(player, def.getKey()); }
+    public static int tally(EntityPlayer player, GateDef def) {
+        if (def.global()) { return tallyGlobally(player.world, def.getKey()); }
+        String team = tallyTeam(player, def);
+        return team.isEmpty() ? tallyFor(player, def.getKey()) : tallyByTeam(player.world, team, def.getKey());
+    }
 
     public static void clearTally(EntityPlayer player, GateDef def) {
+        String team = tallyTeam(player, def);
         if (def.global()) { clearTallyGlobally(player.world, def.getKey()); }
-        else { clearTallyFor(player, def.getKey()); }
+        else if (team.isEmpty()) { clearTallyFor(player, def.getKey()); }
+        else { clearTallyByTeam(player.world, team, def.getKey()); }
+    }
+
+    private static String tallyTeam(EntityPlayer player, GateDef def) { return def.tallyByTeam() ? Standing.teamOf(player) : ""; }
+
+    private static int tallyByTeam(World world, String team, String key) {
+        GateStorage data = get(world);
+        if (data == null) { return 0; }
+        NBTTagCompound counts = data.teamKills.getCompoundTag(team);
+        int now = counts.getInteger(key) + 1;
+        counts.setInteger(key, now);
+        keep(data.teamKills, team, counts);
+        data.markDirty();
+        return now;
+    }
+
+    private static void clearTallyByTeam(World world, String team, String key) {
+        GateStorage data = get(world);
+        if (data == null) { return; }
+        NBTTagCompound counts = data.teamKills.getCompoundTag(team);
+        counts.removeTag(key);
+        keep(data.teamKills, team, counts);
+        data.markDirty();
+    }
+
+    private static void keep(NBTTagCompound byTeam, String team, NBTTagCompound entries) {
+        if (entries.isEmpty()) { byTeam.removeTag(team); }
+        else { byTeam.setTag(team, entries); }
     }
 
     public static boolean unlocked(EntityPlayer player, GateDef def) {
@@ -63,8 +98,7 @@ public final class GateStorage extends WorldSavedData {
         NBTTagCompound gates = data.teams.getCompoundTag(team);
         if (unlocked) { gates.setBoolean(key, true); }
         else { gates.removeTag(key); }
-        if (gates.isEmpty()) { data.teams.removeTag(team); }
-        else { data.teams.setTag(team, gates); }
+        keep(data.teams, team, gates);
         data.markDirty();
     }
 
@@ -132,12 +166,14 @@ public final class GateStorage extends WorldSavedData {
         open = compound.getCompoundTag(TAG);
         kills = compound.getCompoundTag(KILLS);
         teams = compound.getCompoundTag(TEAMS);
+        teamKills = compound.getCompoundTag(TEAM_KILLS);
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
         compound.setTag(TAG, open);
         compound.setTag(KILLS, kills);
         compound.setTag(TEAMS, teams);
+        compound.setTag(TEAM_KILLS, teamKills);
         return compound;
     }
 }
