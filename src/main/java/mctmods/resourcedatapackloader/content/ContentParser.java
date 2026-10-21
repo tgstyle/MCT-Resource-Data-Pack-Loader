@@ -325,6 +325,7 @@ public final class ContentParser {
                 ContentParserContainers.holds(key, json),
                 Json.getString(json, "rocket", ""),
                 Json.getString(json, "rolls", "").trim(),
+                Json.getString(json, "rollStore", "").trim(),
                 Json.getBoolean(json, "passesTurn", false));
     }
 

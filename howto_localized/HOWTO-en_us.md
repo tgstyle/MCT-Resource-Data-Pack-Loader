@@ -1528,6 +1528,7 @@ A `rocket` names the entity variant it places with `rocket`. It needs Galacticra
 | `soil`         | seed          | block name                           | `minecraft:farmland`   | What it can be planted on                                                                                                                                   |
 | `rocket`       | rocket        | `namespace:name`                     | none                   | The entity variant it places                                                                                                                                |
 | `rolls`        | no            | `coin`, `d6`, `2d6+1`, a die or deck | none                   | For a plain item, a right-click rolls it as `/rdplserver game` would and tells the pack's default audience. See [Dice and decks](#dice-and-decks)           |
+| `rollStore`    | no            | objective name                       | none                   | For an item that `rolls`, the scoreboard objective that takes the roll's total as the holder's score each time it is used. An objective that does not exist refuses the roll with a chat line |
 | `passesTurn`   | no            | boolean                              | `false`                | For a plain item, a right-click passes the holder's turn as `/rdplserver game pass` does. See [Taking turns](#taking-turns)                                 |
 | `requires`     | no            | list of mod ids or pack namespaces   | none                   | The file is skipped unless all are present                                                                                                                  |
 
@@ -6182,6 +6183,7 @@ The third greets a player on the first join with a center card that has no panel
 | `death`           | nothing            | A player dies                                                                                                                                                                                                                                                |
 | `y_level`         | `below` or `above` | A player goes below or above that height                                                                                                                                                                                                                     |
 | `play_time`       | `minutes`          | A player's time in the world reaches that many minutes, counted from when the world intro closes, or from the join when no intro is shown to them                                                                                                            |
+| `roll`            | nothing, or `roll` | A player rolls with `/rdplserver game` or with an item that `rolls`. With `roll`, only that roll fires it, and `atLeast` and `atMost` limit the total |
 | `score`           | `objective`        | A player's score in that objective reaches `score`                                                                                                                                                                                                           |
 
 Biome, structure, height, play time and score are checked once a second for each player, and fire on the change from outside to inside, never on the first check after a join. A `time_of_day` or `day` rule whose audience is not `player` fires once for the dimension instead of once for each player in it.
@@ -6207,6 +6209,8 @@ A card that fires while a player still has the world intro open waits and shows 
 | `time`               | int                                | `0`            | For `time_of_day`: the tick of the day                                                                                                                                                                             |
 | `day`                | int                                | none           | For `day`: the one day to fire on. Without it, every day                                                                                                                                                           |
 | `minutes`            | int                                | none           | For `play_time`                                                                                                                                                                                                    |
+| `roll`               | text                               | none           | For `roll`: `coin`, a notation such as `2d6` (`d6` and `1d6` are the same), or the name of a pack die or deck. Without it, every roll fires the rule |
+| `atLeast`, `atMost`  | int                                | none           | For `roll`: the lowest and the highest total that fires the rule. A coin counts 1 for heads and 0 for tails, a pack die or deck the place of the result in its file, from 1 |
 | `objective`, `score` | text, int                          | none, `1`      | For `score`: the objective and the value to reach                                                                                                                                                                  |
 | `requires`           | list of mod ids or pack namespaces | none           | The file is skipped unless all are present                                                                                                                                                                         |
 
@@ -6329,6 +6333,31 @@ A die or deck name belongs to the first pack that loads it. Another pack using t
 A deck is a pile that runs down. `game deck draw <name>` takes one card at random from what is left, and nothing comes back until the empty deck reshuffles itself on the next draw, or `game deck shuffle <name>` returns every card. The pile is saved with the world, so a restart does not reshuffle it.
 
 Every roll uses the world's own random and is written to the log with who ran it, what they ran and what came out. `game last` shows the most recent ones. Results go out as ordinary chat lines built on the server, so a player without the mod reads them too. Dice notation reads as the count, `d`, the sides and an optional modifier: `3d8-2` is three eight-sided dice added together, minus 2, and `d20` is one twenty-sided die. Chat and the log spell the roll out, as in "Boss rolls 3 eight-sided dice, minus 2: [2, 6, 7] = 13", and `{dice}` holds that wording.
+
+An item can store what it rolls, and a card can answer a roll. The item below rolls `2d6` when used, tells the audience, and writes the total as the holder's score in the `dice_total` objective. The card shows when anyone rolls `2d6` and gets 10 or more, and runs a function that can read that score.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "meta": 0 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "A Lucky Throw",
+  "lines": ["{player} rolled high."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+Both `/rdplserver game` and an item roll fire the card, after the score is stored. A roll from the console or a command block has no player, so it fires no card. Without `rollStore` and `roll`, an item and a card behave as before.
 
 | Wording key                                                   | Placeholders                                                  |
 | ------------------------------------------------------------- | ------------------------------------------------------------- |

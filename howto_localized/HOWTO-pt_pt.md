@@ -1528,6 +1528,7 @@ Um `rocket` indica a variante de entidade que coloca com `rocket`. Precisa do Ga
 | `soil`         | seed          | nome de bloco                                 | `minecraft:farmland`             | Onde pode ser plantada                                                                                                                                                          |
 | `rocket`       | rocket        | `namespace:name`                              | nenhum                           | A variante de entidade que coloca                                                                                                                                               |
 | `rolls`        | não           | `coin`, `d6`, `2d6+1`, um dado ou um baralho  | nenhum                           | Para um item simples, um clique direito lança-o como `/rdplserver game` faria e comunica ao público predefinido do pacote. Ver [Dados e baralhos](#dados-e-baralhos)            |
+| `rollStore`    | não           | nome de um objetivo                  | nenhum                 | Para um item com `rolls`, o objetivo da tabela de pontuação que recebe o total do lançamento como pontuação de quem o segura a cada utilização. Um objetivo que não existe faz o lançamento ser recusado com uma linha no chat |
 | `passesTurn`   | não           | booleano                                      | `false`                          | Para um item simples, um clique direito passa a vez de quem o segura, como `/rdplserver game pass` faz. Ver [Por turnos](#por-turnos)                                           |
 | `requires`     | não           | lista de ids de mods ou namespaces de pacotes | nenhum                           | O ficheiro é ignorado a menos que todos estejam presentes                                                                                                                       |
 
@@ -6182,6 +6183,7 @@ O terceiro saúda um jogador na primeira entrada com uma carta central sem paine
 | `death`           | nada               | Um jogador morre                                                                                                                                                                                                                                                      |
 | `y_level`         | `below` ou `above` | Um jogador desce abaixo dessa altura ou sobe acima dela                                                                                                                                                                                                               |
 | `play_time`       | `minutes`          | O tempo de um jogador no mundo atinge esse número de minutos, contado a partir do fecho da introdução do mundo, ou da entrada quando não lhe é mostrada nenhuma introdução                                                                                            |
+| `roll`            | nada, ou `roll`    | Um jogador lança com `/rdplserver game` ou com um item com `rolls`. Com `roll`, só esse lançamento a dispara, e `atLeast` e `atMost` limitam o total |
 | `score`           | `objective`        | A pontuação de um jogador nesse objetivo atinge `score`                                                                                                                                                                                                               |
 
 O bioma, a estrutura, a altura, o tempo de jogo e a pontuação são verificados uma vez por segundo para cada jogador, e disparam na passagem de fora para dentro, nunca na primeira verificação depois de uma entrada. Uma regra `time_of_day` ou `day` cujo público não seja `player` dispara uma vez para a dimensão em vez de uma vez para cada jogador nela.
@@ -6207,6 +6209,8 @@ Uma carta que dispara enquanto um jogador ainda tem a introdução do mundo aber
 | `time`               | número inteiro                                | `0`                 | Para `time_of_day`: o tick do dia                                                                                                                                                                                                |
 | `day`                | número inteiro                                | nenhum              | Para `day`: o único dia em que dispara. Sem ele, todos os dias                                                                                                                                                                   |
 | `minutes`            | número inteiro                                | nenhum              | Para `play_time`                                                                                                                                                                                                                 |
+| `roll`               | texto                              | nenhum         | Para `roll`: `coin`, uma notação como `2d6` (`d6` e `1d6` são iguais) ou o nome de um dado ou baralho de um pacote. Sem ele, todo o lançamento dispara a regra |
+| `atLeast`, `atMost`  | número inteiro                     | nenhum         | Para `roll`: o menor e o maior total que dispara a regra. Uma moeda conta 1 para cara e 0 para coroa; um dado ou baralho de um pacote, a posição do resultado no seu ficheiro, a partir de 1 |
 | `objective`, `score` | texto, inteiro                                | nenhum, `1`         | Para `score`: o objetivo e o valor a atingir                                                                                                                                                                                     |
 | `requires`           | lista de ids de mods ou namespaces de pacotes | nenhum              | O ficheiro é ignorado, a menos que todos estejam presentes                                                                                                                                                                       |
 
@@ -6329,6 +6333,31 @@ Um nome de dado ou de baralho pertence ao primeiro pacote que o carrega. Outro p
 Um baralho é uma pilha que vai diminuindo. `game deck draw <name>` tira uma carta ao acaso do que resta, e nada volta até que o baralho vazio se volte a baralhar sozinho na tirada seguinte, ou até `game deck shuffle <name>` devolver todas as cartas. A pilha é guardada com o mundo, por isso reiniciar não a volta a baralhar.
 
 Cada lançamento usa o aleatório do próprio mundo e fica escrito no registo, com quem o fez, o que fez e o que saiu. `game last` mostra os mais recentes. Os resultados saem como linhas de chat normais, montadas no servidor, pelo que um jogador sem o mod também as lê. A notação de dados lê-se como a quantidade, `d`, os lados e um modificador opcional: `3d8-2` são três dados de oito lados somados, menos 2, e `d20` é um dado de vinte lados. O chat e o registo escrevem o lançamento por extenso, como em "Boss lança 3 dados de oito lados, menos 2: [2, 6, 7] = 13", e `{dice}` guarda esse texto.
+
+Um item pode guardar o que lança, e uma carta pode responder a um lançamento. O item abaixo lança `2d6` quando é usado, avisa o público e grava o total como pontuação de quem o segura no objetivo `dice_total`. A carta aparece quando alguém lança `2d6` e obtém 10 ou mais, e executa uma função que pode ler essa pontuação.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "meta": 0 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "Um lance de sorte",
+  "lines": ["{player} obteve um número alto."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+Tanto `/rdplserver game` como o lançamento de um item disparam a carta, depois de a pontuação ser gravada. Um lançamento feito pela consola ou por um bloco de comandos não tem jogador, por isso não dispara nenhuma carta. Sem `rollStore` e `roll`, o item e a carta comportam-se como antes.
 
 | Chave de texto                                                | Marcadores                                                            |
 | ------------------------------------------------------------- | --------------------------------------------------------------------- |

@@ -1528,6 +1528,7 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
 | `soil`         | seed          | název bloku                                      | `minecraft:farmland` | Na co lze zasadit                                                                                                                                                             |
 | `rocket`       | rocket        | `namespace:name`                                 | žádný                | Varianta entity, kterou umístí                                                                                                                                                |
 | `rolls`        | ne            | `coin`, `d6`, `2d6+1`, kostka nebo balíček karet | žádný                | U obyčejného předmětu pravé kliknutí hodí, jako by to udělal `/rdplserver game`, a oznámí to výchozímu publiku balíčku. Viz [Kostky a balíčky karet](#kostky-a-balíčky-karet) |
+| `rollStore`    | ne            | název cíle skóre                     | žádný                  | Pro předmět s `rolls`: cíl skóre, do kterého se při každém použití uloží součet hodu jako skóre držitele. Neexistující cíl hod odmítne řádkem v chatu |
 | `passesTurn`   | ne            | boolean                                          | `false`              | U obyčejného předmětu pravé kliknutí předá tah držitele, jako to dělá `/rdplserver game pass`. Viz [Střídání tahů](#střídání-tahů)                                            |
 | `requires`     | ne            | seznam id módů nebo namespace balíčků            | žádný                | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                             |
 
@@ -6182,6 +6183,7 @@ Třetí pozdraví hráče při prvním připojení středovou kartou bez panelu 
 | `death`           | nic                  | Hráč zemře                                                                                                                                                                                                                                               |
 | `y_level`         | `below` nebo `above` | Hráč klesne pod tuto výšku nebo vystoupí nad ni                                                                                                                                                                                                          |
 | `play_time`       | `minutes`            | Čas hráče ve světě dosáhne tolika minut, počítáno od zavření úvodu do světa, nebo od připojení, když se mu žádný úvod nezobrazuje                                                                                                                        |
+| `roll`            | nic, nebo `roll`   | Hráč hodí příkazem `/rdplserver game` nebo předmětem s `rolls`. S `roll` pravidlo spustí jen tento hod a `atLeast` a `atMost` omezují součet |
 | `score`           | `objective`          | Skóre hráče v tomto cíli dosáhne `score`                                                                                                                                                                                                                 |
 
 Biom, struktura, výška, herní čas a skóre se kontrolují jednou za sekundu u každého hráče a spouštějí se při změně zvenčí dovnitř, nikdy při první kontrole po připojení. Pravidlo `time_of_day` nebo `day`, jehož publikum není `player`, se spustí jednou pro dimenzi místo jednou pro každého hráče v ní.
@@ -6207,6 +6209,8 @@ Karta, která se spustí, zatímco má hráč stále otevřený úvod do světa,
 | `time`               | celé číslo                            | `0`            | Pro `time_of_day`: tick dne                                                                                                                                                                                                      |
 | `day`                | celé číslo                            | žádný          | Pro `day`: jediný den, kdy se spustí. Bez něj každý den                                                                                                                                                                          |
 | `minutes`            | celé číslo                            | žádný          | Pro `play_time`                                                                                                                                                                                                                  |
+| `roll`               | text                               | žádný          | Pro `roll`: `coin`, zápis jako `2d6` (`d6` a `1d6` jsou totéž) nebo název kostky či balíčku karet z datového balíčku. Bez něj pravidlo spustí každý hod |
+| `atLeast`, `atMost`  | celé číslo                         | žádný          | Pro `roll`: nejnižší a nejvyšší součet, který pravidlo spustí. Mince se počítá jako 1 za líc a 0 za rub, kostka či balíček z datového balíčku jako pořadí výsledku v jeho souboru od 1 |
 | `objective`, `score` | text, celé číslo                      | žádný, `1`     | Pro `score`: cíl a hodnota, které je třeba dosáhnout                                                                                                                                                                             |
 | `requires`           | seznam id módů nebo namespace balíčků | žádný          | Soubor se přeskočí, pokud nejsou přítomny všechny                                                                                                                                                                                |
 
@@ -6329,6 +6333,31 @@ Název kostky nebo balíčku karet patří prvnímu balíčku, který ho načte.
 Balíček karet je hromádka, která ubývá. `game deck draw <name>` vezme jednu náhodnou kartu z toho, co zbylo, a nic se nevrací, dokud se prázdný balíček sám nezamíchá při dalším tahu nebo dokud `game deck shuffle <name>` nevrátí všechny karty. Hromádka se ukládá se světem, takže restart ji nezamíchá znovu.
 
 Každý hod používá vlastní náhodu světa a zapisuje se do logu s tím, kdo ho provedl, co provedl a co padlo. `game last` ukáže nejnovější z nich. Výsledky se posílají jako běžné řádky chatu sestavené na serveru, takže je přečte i hráč bez módu. Zápis kostek se čte jako počet, `d`, počet stěn a volitelný modifikátor: `3d8-2` jsou tři osmistěnné kostky sečtené dohromady minus 2 a `d20` je jedna dvacetistěnná kostka. Chat i log hod vypíšou slovy, například „Boss hodil 3 osmistěnnými kostkami, minus 2: [2, 6, 7] = 13“, a `{dice}` obsahuje právě toto znění.
+
+Předmět umí uložit, co hodil, a karta umí na hod odpovědět. Předmět níže při použití hodí `2d6`, oznámí to posluchačům a zapíše součet jako skóre držitele do cíle `dice_total`. Karta se ukáže, když někdo hodí `2d6` a padne mu 10 nebo víc, a spustí funkci, která si toto skóre může přečíst.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "meta": 0 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "Šťastný hod",
+  "lines": ["{player} hodil vysoko."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+Kartu spustí jak `/rdplserver game`, tak hod předmětem, a to po uložení skóre. Hod z konzole nebo příkazového bloku nemá hráče, a proto žádnou kartu nespustí. Bez `rollStore` a `roll` se předmět i karta chovají jako dřív.
 
 | Klíč znění                                                    | Zástupné symboly                                              |
 | ------------------------------------------------------------- | ------------------------------------------------------------- |

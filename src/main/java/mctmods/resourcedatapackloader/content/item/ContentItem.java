@@ -55,7 +55,7 @@ import javax.annotation.Nullable;
         if (def.rolls.isEmpty() && !def.passesTurn) { return super.onItemRightClick(world, player, hand); }
         if (!world.isRemote && player instanceof EntityPlayerMP) {
             if (def.passesTurn) { ContentTurns.byItem((EntityPlayerMP) player); }
-            else { ContentDice.byItem((EntityPlayerMP) player, def.rolls); }
+            else { ContentDice.byItem((EntityPlayerMP) player, def.rolls, def.rollStore); }
         }
         if (def.cooldown > 0) { player.getCooldownTracker().setCooldown(this, def.cooldown); }
         return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));

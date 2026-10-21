@@ -1528,6 +1528,7 @@ Ein `rocket` nennt mit `rocket` die Entity-Variante, die es aufstellt. Es brauch
 | `soil`         | seed          | Blockname                                       | `minecraft:farmland`       | Worauf es gepflanzt werden kann                                                                                                                                             |
 | `rocket`       | rocket        | `namespace:name`                                | keine                      | Die Entity-Variante, die es aufstellt                                                                                                                                       |
 | `rolls`        | nein          | `coin`, `d6`, `2d6+1`, ein Würfel oder ein Deck | keine                      | Bei einem einfachen Item würfelt ein Rechtsklick wie `/rdplserver game` und sagt es dem Standardpublikum des Packs. Siehe [Würfel und Decks](#würfel-und-decks)             |
+| `rollStore`    | nein          | Name eines Punkteziels               | keine                  | Für einen Gegenstand mit `rolls` das Punkteziel, das bei jeder Benutzung die Summe des Wurfs als Punktestand des Besitzers übernimmt. Existiert das Ziel nicht, wird der Wurf mit einer Chatzeile abgelehnt |
 | `passesTurn`   | nein          | boolean                                         | `false`                    | Bei einem einfachen Item gibt ein Rechtsklick den Zug seines Halters ab, wie `/rdplserver game pass`. Siehe [Züge](#züge)                                                   |
 | `requires`     | nein          | Liste von Mod-IDs oder Pack-Namespaces          | keine                      | Die Datei wird übersprungen, wenn nicht alle da sind                                                                                                                        |
 
@@ -6182,6 +6183,7 @@ Die dritte begrüßt einen Spieler beim ersten Betreten mit einer Karte in der B
 | `death`           | nichts               | Ein Spieler stirbt                                                                                                                                                                                                                                                                     |
 | `y_level`         | `below` oder `above` | Ein Spieler unter oder über diese Höhe kommt                                                                                                                                                                                                                                           |
 | `play_time`       | `minutes`            | Die Spielzeit eines Spielers in der Welt so viele Minuten erreicht, gezählt ab dem Schließen des Welt-Intros, oder ab dem Beitritt, wenn ihm kein Intro gezeigt wird                                                                                                                   |
+| `roll`            | nichts oder `roll` | Ein Spieler würfelt mit `/rdplserver game` oder mit einem Gegenstand mit `rolls`. Mit `roll` löst nur dieser Wurf aus, und `atLeast` und `atMost` begrenzen die Summe |
 | `score`           | `objective`          | Der Punktestand eines Spielers in diesem Ziel `score` erreicht                                                                                                                                                                                                                         |
 
 Biom, Struktur, Höhe, Spielzeit und Punktestand werden einmal pro Sekunde für jeden Spieler geprüft und lösen beim Wechsel von draußen nach drinnen aus, nie bei der ersten Prüfung nach dem Beitritt. Eine `time_of_day`- oder `day`-Regel, deren Publikum nicht `player` ist, löst einmal für die Dimension aus statt einmal für jeden Spieler darin.
@@ -6207,6 +6209,8 @@ Eine Karte, die auslöst, während ein Spieler das Welt-Intro noch offen hat, wa
 | `time`               | int                                    | `0`             | Für `time_of_day`: der Tick des Tages                                                                                                                                                                                                        |
 | `day`                | int                                    | keiner          | Für `day`: der eine Tag, an dem sie auslöst. Ohne ihn jeden Tag                                                                                                                                                                              |
 | `minutes`            | int                                    | keine           | Für `play_time`                                                                                                                                                                                                                              |
+| `roll`               | Text                               | keiner         | Für `roll`: `coin`, eine Schreibweise wie `2d6` (`d6` und `1d6` sind gleich) oder der Name eines Würfels oder Decks aus einem Pack. Ohne Angabe löst jeder Wurf die Regel aus |
+| `atLeast`, `atMost`  | int                                | keiner         | Für `roll`: die kleinste und die größte Summe, die die Regel auslöst. Eine Münze zählt 1 für Kopf und 0 für Zahl, ein Würfel oder Deck aus einem Pack die Stelle des Ergebnisses in seiner Datei ab 1 |
 | `objective`, `score` | Text, int                              | keines, `1`     | Für `score`: das Ziel und der Wert, der erreicht werden muss                                                                                                                                                                                 |
 | `requires`           | Liste von Mod-IDs oder Pack-Namespaces | keine           | Die Datei wird übersprungen, solange nicht alle vorhanden sind                                                                                                                                                                               |
 
@@ -6329,6 +6333,31 @@ Ein Würfel- oder Deckname gehört dem ersten Pack, das ihn lädt. Ein anderes P
 Ein Deck ist ein Stapel, der kleiner wird. `game deck draw <name>` zieht eine zufällige Karte aus dem Rest, und nichts kommt zurück, bis das leere Deck sich beim nächsten Zug selbst neu mischt oder `game deck shuffle <name>` alle Karten zurücklegt. Der Stapel wird mit der Welt gespeichert, ein Neustart mischt ihn also nicht neu.
 
 Jeder Wurf nutzt den Zufall der Welt selbst und wird mit Absender, Befehl und Ergebnis ins Log geschrieben. `game last` zeigt die letzten. Ergebnisse gehen als gewöhnliche, auf dem Server gebaute Chatzeilen hinaus, also liest sie auch ein Spieler ohne den Mod. Die Würfelschreibweise besteht aus Anzahl, `d`, Seitenzahl und einem optionalen Modifikator: `3d8-2` sind drei achtseitige Würfel, addiert, minus 2, und `d20` ist ein zwanzigseitiger Würfel. Chat und Log schreiben den Wurf aus, etwa „Boss würfelt 3 achtseitige Würfel, minus 2: [2, 6, 7] = 13“, und `{dice}` enthält diesen Wortlaut.
+
+Ein Gegenstand kann speichern, was er würfelt, und eine Karte kann auf einen Wurf antworten. Der Gegenstand unten würfelt beim Benutzen `2d6`, sagt es den Zuhörern und schreibt die Summe als Punktestand des Besitzers in das Ziel `dice_total`. Die Karte erscheint, wenn jemand `2d6` würfelt und 10 oder mehr erreicht, und führt eine Funktion aus, die diesen Punktestand lesen kann.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "meta": 0 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "Ein Glückswurf",
+  "lines": ["{player} hat hoch gewürfelt."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+Sowohl `/rdplserver game` als auch ein Gegenstandswurf lösen die Karte aus, nachdem der Punktestand gespeichert ist. Ein Wurf von der Konsole oder einem Befehlsblock hat keinen Spieler und löst keine Karte aus. Ohne `rollStore` und `roll` verhalten sich Gegenstand und Karte wie bisher.
 
 | Wortlaut-Schlüssel                                            | Platzhalter                                                          |
 | ------------------------------------------------------------- | -------------------------------------------------------------------- |
