@@ -202,6 +202,7 @@
     "common.MixinTileEntityBeaconBetterFps",
     "common.MixinTileEntityEndGateway",
     "common.MixinTileEntityStructure",
+    "common.MixinItemMap",
     "common.MixinIVillage",
     "common.MixinVillageChurch",
     "common.MixinVillagePath",

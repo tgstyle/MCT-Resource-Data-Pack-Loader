@@ -69,7 +69,6 @@ minecraft {
     extraRunJvmArguments.addAll(
             '-Dfml.coreMods.load=mctmods.resourcedatapackloader.core.MCTMixin',
             '-Dforge.logging.console.level=debug',
-            '-Dmixin.debug=true',
             '-XX:+UseG1GC',
             '-Xmx4G',
             '-XX:+FlightRecorder',
@@ -161,6 +160,8 @@ dependencies {
     compileOnly deobf("curse.maven:${common.asmc_version}")
     compileOnly deobf("curse.maven:${common.expl_version}")
     compileOnly deobf("curse.maven:${common.mjrl_version}")
+    compileOnly deobf("curse.maven:${common.indc_version}")
+    compileOnly deobf("curse.maven:${common.opcm_version}")
 
     clientRuntime deobf("curse.maven:${common.bf3r_version}")
 

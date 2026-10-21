@@ -119,8 +119,10 @@ public final class RubicLightEngine implements ICubeLightEngine {
 
     @Override public void firstLight(ICube cube) {
         seeding = true;
-        try { seedFrom(cube); }
+        boolean holdsTop;
+        try { holdsTop = seedFrom(cube); }
         finally { seeding = false; }
+        if (holdsTop) { reshadeBelow(cube); }
     }
 
     @Override public void reshadeBelow(ICube cube) {
@@ -151,7 +153,8 @@ public final class RubicLightEngine implements ICubeLightEngine {
         }
     }
 
-    private void seedFrom(ICube cube) {
+    private boolean seedFrom(ICube cube) {
+        boolean holdsTop = false;
         int minY = cube.getCoords().getMinBlockY();
         int maxY = cube.getCoords().getMaxBlockY();
         int minX = cube.getCoords().getMinBlockX();
@@ -170,8 +173,10 @@ public final class RubicLightEngine implements ICubeLightEngine {
                 }
                 if (!sky) { continue; }
                 int top = topAt(column, localX, localZ);
+                if (top >= minY && top <= maxY) { holdsTop = true; }
                 if (top < maxY) { fillSkyAbove(cube, x, z, Math.max(minY, top + 1), maxY); }
                 if (top >= minY) { darkenColumn(cube, x, z, minY, Math.min(maxY, top)); }
+                if (top >= minY) { seedBesideLower(column, x, z, localX, localZ, Math.min(maxY, top), minY); }
                 seedSides(column, localX, localZ, top, minY, maxY);
                 if (top > maxY) {
                     seedUnderTop(cube, x, z, minY, maxY);
@@ -182,6 +187,7 @@ public final class RubicLightEngine implements ICubeLightEngine {
                 if (top >= minY && anyNeighbourLower(column, localX, localZ, top)) { scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x, top, z)); }
             }
         }
+        return holdsTop;
     }
 
     private boolean blockedAbove(Chunk column, int localX, int localZ, int fromY) {
@@ -238,6 +244,15 @@ public final class RubicLightEngine implements ICubeLightEngine {
             int x = (column.x << 4) + localX + STEP_X[face];
             int z = (column.z << 4) + localZ + STEP_Z[face];
             for (int y = Math.min(maxY, theirTop); y > top && y >= minY; y--) { scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x, y, z)); }
+        }
+    }
+
+    private void seedBesideLower(Chunk column, int x, int z, int localX, int localZ, int from, int minY) {
+        for (int face = 0; face < 6; face++) {
+            if (STEP_Y[face] != 0) { continue; }
+            int theirTop = topBeside(column, localX + STEP_X[face], localZ + STEP_Z[face]);
+            if (theirTop == Integer.MIN_VALUE) { continue; }
+            for (int y = from; y > theirTop && y >= minY; y--) { scheduleLightUpdate(EnumSkyBlock.SKY, at.setPos(x, y, z)); }
         }
     }
 

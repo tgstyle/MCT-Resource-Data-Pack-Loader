@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 
 public class CompatHandler {
     public static final int VANILLA_HEIGHT = 256;
-    private static final Set<String> FAKE_CHUNK_LOAD = ImmutableSet.of("zerocore");
+    private static final Set<String> FAKE_CHUNK_LOAD = ImmutableSet.of("zerocore", "reborncore");
     private static final Map<String, String> packageToModId = getPackageToModId();
     private static IEventListener[] fakeChunkLoadListeners;
 

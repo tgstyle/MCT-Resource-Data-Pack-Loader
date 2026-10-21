@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.core;
 
 import mctmods.resourcedatapackloader.core.util.ConfigCore;
 import mctmods.resourcedatapackloader.core.util.ConfigLate;
+import mctmods.resourcedatapackloader.mixin.RDPLMixinPlugin;
 import mctmods.resourcedatapackloader.pack.PackManager;
 
 import net.minecraft.launchwrapper.Launch;
@@ -45,7 +46,9 @@ import java.util.function.BooleanSupplier;
         QUEUED.put("asmodeuscore", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("asmodeuscore"));
         QUEUED.put("extraplanets", () -> Loader.isModLoaded("extraplanets"));
         QUEUED.put("galaxyspace", () -> Loader.isModLoaded("galacticraftcore") && Loader.isModLoaded("galaxyspace"));
+        QUEUED.put("opencomputers", () -> Loader.isModLoaded("opencomputers"));
         QUEUED.put("pulsar", MCTLateMixin::pulsarPresent);
+        QUEUED.put("ic2", () -> Loader.isModLoaded("ic2") && !RDPLMixinPlugin.cubicChunksPresent());
     }
 
     @Override public List<String> getMixinConfigs() {

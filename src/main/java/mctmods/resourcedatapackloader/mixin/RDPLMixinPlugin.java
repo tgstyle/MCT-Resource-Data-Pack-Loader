@@ -47,12 +47,12 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "common.MixinCommandFill", "common.MixinCommandTP", "common.MixinCommandTeleport", "common.MixinCommandsHeightLimits",
             "common.MixinEntityBat", "common.MixinEntityBoat", "common.MixinEntityFallingBlock", "common.MixinEntityLivingBaseRubic",
             "common.MixinEntityMinecartKillFix", "common.MixinEntityRubic", "common.MixinEntityTracker", "common.MixinEntityTrackerEntry",
-            "common.MixinForgeChunkManager", "common.MixinForgeEventFactory", "common.MixinItemChorusFruit", "common.MixinMinecraftServer",
+            "common.MixinForgeChunkManager", "common.MixinForgeEventFactory", "common.MixinItemChorusFruit", "common.MixinItemMap", "common.MixinMinecraftServer",
             "common.MixinNetHandlerPlayServer", "common.MixinNetHandlerPlayServerBuild", "common.MixinPacketBufferBlockPosWrite", "common.MixinPathNavigateGround",
             "common.MixinPlayerList", "common.MixinRandomPositionGenerator", "common.MixinRegionFileCacheRubic", "common.MixinRubicEndWorkaround",
             "common.MixinSaveHandler", "common.MixinStructureStartRubic", "common.MixinTeleporter", "common.MixinTerrainGen",
             "common.MixinTicket", "common.MixinTileEntityBeacon", "common.MixinTileEntityBeaconBetterFps", "common.MixinTileEntityEndGateway",
-            "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
+            "common.MixinTileEntityStructure", "common.MixinWalkNodeProcessorRubic", "common.MixinWorld", "common.MixinWorldEntitySpawner", "common.MixinWorldGenBigMushroom",
             "common.MixinWorldGenBlockBlobRubic", "common.MixinWorldGenBonusChest", "common.MixinWorldGenCanopyTree", "common.MixinWorldGenDeadBush",
             "common.MixinWorldGenDesertWells", "common.MixinWorldGenDoublePlants", "common.MixinWorldGenDungeonsRubic", "common.MixinWorldGenFlowers",
             "common.MixinWorldGenHugeTrees", "common.MixinWorldGenIcePath", "common.MixinWorldGenIceSpike", "common.MixinWorldGenLakesRubic",
@@ -61,6 +61,8 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
             "common.MixinWorldProvider", "common.MixinWorldServer", "common.MixinWorldSettings",
             "server.MixinDedicatedPlayerList", "server.MixinDedicatedServerHeightLimits"));
     private static final String RUBIC_LIGHT_PACKAGE = "mctmods.resourcedatapackloader.mixin.rubiclight.";
+    private static final String RUBIC_GC_PACKAGE = "mctmods.resourcedatapackloader.mixin.galacticraft.";
+    private static final Set<String> RUBIC_GC = new HashSet<>(Arrays.asList("MixinBlockVec3", "MixinThreadFindSeal", "MixinTransformerHooksCamera"));
     private static Boolean cubicChunks;
     private static boolean rubicLoaded;
     private static Boolean lightingReplaced;
@@ -109,7 +111,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
                 Class optifineInstallerClass = Class.forName("optifine.Installer");
                 Method getVersionHandler = optifineInstallerClass.getMethod("getOptiFineVersion");
                 optifineVersion = (String) getVersionHandler.invoke(null, new Object[0]);
-                optifineVersion = optifineVersion.replace("_pre", "");
+                optifineVersion = optifineVersion.replaceAll("_pre\\d*$", "");
                 optifineVersion = optifineVersion.substring(optifineVersion.length() - 2);
                 MCTMixin.LOGGER.info("Detected Optifine version: {}", optifineVersion);
             }
@@ -189,6 +191,7 @@ public class RDPLMixinPlugin implements IMixinConfigPlugin {
 
     private static boolean rubic(String mixinClassName) {
         if (mixinClassName.startsWith(RUBIC_LIGHT_PACKAGE)) { return true; }
+        if (mixinClassName.startsWith(RUBIC_GC_PACKAGE)) { return RUBIC_GC.contains(mixinClassName.substring(RUBIC_GC_PACKAGE.length())); }
         return mixinClassName.startsWith(RUBIC_PACKAGE) && RUBIC.contains(mixinClassName.substring(RUBIC_PACKAGE.length()));
     }
 

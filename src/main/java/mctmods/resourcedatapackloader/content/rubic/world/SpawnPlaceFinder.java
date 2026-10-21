@@ -65,7 +65,7 @@ public final class SpawnPlaceFinder {
         }
         ContentLog.LOGGER.debug("Found minPos {} and maxPos {}", minPos, maxPos);
         if (minPos == null || maxPos == null) {
-            ContentLog.LOGGER.error("No suitable spawn found, using original input {} (min={}, max={})", pos, minPos, maxPos);
+            ContentLog.LOGGER.debug("No suitable spawn found, using original input {} (min={}, max={})", pos, minPos, maxPos);
             return pos;
         }
         assert findNonEmpty(world, maxPos) == null && findNonEmpty(world, minPos) != null;
@@ -90,14 +90,17 @@ public final class SpawnPlaceFinder {
 
     @Nullable private static BlockPos scan(World world, BlockPos pos, int sign, boolean wantSolid) {
         double dy = Cube.SIZE;
-        while (wantSolid == (findNonEmpty(world, inWorldUp(world, pos, sign * dy)) == null)) {
-            if (dy > Integer.MAX_VALUE) {
+        int edge = sign < 0 ? ((IRubicWorld) world).rdpl$getMinHeight() : ((IRubicWorld) world).rdpl$getMaxHeight();
+        BlockPos tested = inWorldUp(world, pos, sign * dy);
+        while (wantSolid == (findNonEmpty(world, tested) == null)) {
+            if (tested.getY() == edge) {
                 ContentLog.LOGGER.debug("Error finding spawn point: can't find {} height at {}", wantSolid ? "solid start" : "non-solid end", pos);
                 return null;
             }
             dy *= 2;
+            tested = inWorldUp(world, pos, sign * dy);
         }
-        return inWorldUp(world, pos, sign * dy);
+        return tested;
     }
 
     @Nullable private static BlockPos findNonEmpty(World world, BlockPos pos) {
