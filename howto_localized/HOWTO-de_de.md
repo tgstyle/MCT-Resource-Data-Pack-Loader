@@ -5113,6 +5113,7 @@ Ein Ziel ist ein echtes Ziel auf dem Scoreboard des Spiels, also liest `/scorebo
 | ---------------- | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | Objekt | leer     | Entity-ID zu Punkten, der Seite des Tötenden gutgeschrieben. `minecraft:player` wertet einen Spielerkill                   |
 | `points.death`   | int    | `0`      | Punkte, wann immer ein Mitglied stirbt, gleich woran. Darf negativ sein                                                    |
+| `points.raid`    | boolean | `false` | Übernimmt die `points` jedes gewonnenen [Raids](#raids): Jeder Spieler in Reichweite bekommt so viele gutgeschrieben, auf der Zeile seiner Seite und mit `individuals` auch auf seiner eigenen |
 | `points.ownKill` | int    | `0`      | Punkte für einen Kill der eigenen Seite, anstelle des `kill`-Werts. 0 wertet ihn nicht; eine negative Zahl ist eine Strafe |
 
 `points` sind die Punkte, die dieser Mod zusätzlich zu dem zählt, was das Spiel selbst zählt, eingespeist in dasselbe Ziel, sodass `/scoreboard` es weiterhin liest. `kill` ist so viele Punkte je getöteter Entity-ID wert, der Seite des Tötenden gutgeschrieben; `death` ist so viele Punkte wert, wann immer ein Mitglied einer Seite stirbt, und darf negativ sein. Mit `teamTotals` landen die Punkte auf einer Zeile mit dem Namen des Teams, und genau das lässt die Sidebar vier Seiten zeigen statt einer Zeile je Mob. `individuals` fügt zusätzlich eine Zeile je Mitglied hinzu und ist standardmäßig aus, weil eine Zeile je Mob-UUID wie Rauschen wirkt.
@@ -5269,6 +5270,8 @@ Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner nach Hause und 
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5294,6 +5297,8 @@ Solange eine Welle über dem Dorf ist, laufen seine Dorfbewohner nach Hause und 
 | `sound`         | Geräuschname         | keiner          | Wird jedem Spieler in Reichweite von der Seite vorgespielt, aus der die Welle kommt, sobald sie eintrifft                                                                             |
 | `wins`          | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid gewonnen ist                                                                                                                     |
 | `loses`         | Funktion             | keine           | Läuft als jeder Spieler in Reichweite, wenn der Raid verloren ist                                                                                                                     |
+| `points`        | int | `0`            | Punkte, die jedem Spieler in Reichweite gutgeschrieben werden, wenn der Raid gewonnen ist, in jedem Ziel, bei dem `points.raid` eingeschaltet ist. Eine Niederlage zahlt nichts |
+| `loot`          | Beutetabelle | keine | Eine Beutetabelle, die für jeden Spieler in Reichweite einmal gewürfelt wird, wenn der Raid gewonnen ist. Die Gegenstände landen im Inventar oder fallen vor seine Füße, wenn es voll ist |
 | `bell`          | Blockname oder Liste | keiner          | Andere Blöcke, die als Glocke läuten, wenn ein Spieler sie benutzt und immer wenn eine Welle eintrifft. Ein Block vom Typ `bell` läutet, ohne genannt zu sein                         |
 
 ### Eine Gruppe
