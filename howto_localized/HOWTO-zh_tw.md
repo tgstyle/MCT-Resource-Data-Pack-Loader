@@ -3689,6 +3689,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3699,9 +3700,11 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3716,6 +3719,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `dimension`       | 是   | 維度 id                      |                                  | 它守衛的維度                                                                                                             |
 | `name`            | 否   | 字串                         | 檔案名稱                         | 顯示給玩家                                                                                                               |
 | `scope`           | 否   | `player`、`global`、`team`    | `player`                         | 一次針對一名玩家、針對整個世界，還是針對開啟者的整個隊伍                                                                            |
+| `teamless`        | 否   | `player`、`refuse`           | `player`                         | 範圍為 `team` 時，不屬於任何隊伍的玩家如何處理：單獨為其解鎖，或拒絕通過                                                                |
 | `open`            | 否   | 布林值                       | `false`                          | 是否一開始就處於開啟狀態                                                                                                 |
 | `unlock`          | 否   | 物件                         |                                  | 什麼能開啟它。見下文                                                                                                     |
 | `unlockedMessage` | 否   | 字串                         | `%dim% is now open`              | 開啟時顯示                                                                                                               |
@@ -3724,7 +3728,7 @@ Minecraft 本來就會依方塊的位置挑選變體，而硬度群組把這個�
 | `requires`        | 否   | 模組 id 或資源包命名空間清單 | 無                               | 除非全部存在，否則會略過該閘門                                                                                           |
 | `portalBlocks`    | 否   | 方塊名稱清單                 | 每個傳送門                       | 將該閘門限定於這些傳送門方塊，這樣一個維度就可以同時擁有一個受守衛的傳送門和一個敞開的傳送門                             |
 
-`unlock` 接受 `hold`（必須持有的物品）、`consume` 搭配 `consumeCount`（`1`）、`craft`（必須已合成過的物品）、`advancement`，以及 `killed`（實體名稱，誰擊殺一隻，閘門就為誰開啟，所以頭目可以掌握通往一個世界的鑰匙）搭配 `killedCount`（`1`，一隻不夠時使用），依範圍設定按每名玩家或整個世界累計。加上 `killedDrops`（物品名稱）後，計入的擊殺會把該物品放在擊殺者腳邊，而不是開啟閘門，並且重新開始計數，所以鑰匙可以再次取得，並交給從未參與戰鬥的人；對同一個物品設定 `hold` 或 `consume` 的條件，即可讓它成為鑰匙。`%item%`、`%mob%` 和 `%dim%` 會自動填入。生物掉落的鑰匙在這裡不需要任何特殊處理：讓生物掉落該物品，再以 `hold` 或 `consume` 設定條件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，會為屬於該計分板隊伍、且在該目標中分數不低於該值的玩家開啟閘門，這與卡片的 `when` 所用的條件相同；兩者也可以單獨使用。條件在玩家穿過時檢查，符合後閘門會像其他解鎖方式一樣依其範圍開啟。範圍為 `team` 時，解鎖歸開啟者的隊伍所有：隊伍中的每個人都能通過，包括之後加入的玩家；不屬於任何隊伍的玩家開啟時，只對自己開放。
+`unlock` 接受 `hold`（必須持有的物品）、`consume` 搭配 `consumeCount`（`1`）、`craft`（必須已合成過的物品）、`advancement`，以及 `killed`（實體名稱，誰擊殺一隻，閘門就為誰開啟，所以頭目可以掌握通往一個世界的鑰匙）搭配 `killedCount`（`1`，一隻不夠時使用），依範圍設定按每名玩家或整個世界累計。加上 `killedDrops`（物品名稱）後，計入的擊殺會把該物品放在擊殺者腳邊，而不是開啟閘門，並且重新開始計數，所以鑰匙可以再次取得，並交給從未參與戰鬥的人；對同一個物品設定 `hold` 或 `consume` 的條件，即可讓它成為鑰匙。`%item%`、`%mob%` 和 `%dim%` 會自動填入。生物掉落的鑰匙在這裡不需要任何特殊處理：讓生物掉落該物品，再以 `hold` 或 `consume` 設定條件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，會為屬於該計分板隊伍、且在該目標中分數不低於該值的玩家開啟閘門，這與卡片的 `when` 所用的條件相同；兩者也可以單獨使用。條件在玩家穿過時檢查，符合後閘門會像其他解鎖方式一樣依其範圍開啟。範圍為 `team` 時，解鎖歸開啟者的隊伍所有：隊伍中的每個人都能通過，包括之後加入的玩家；不屬於任何隊伍的玩家開啟時，只對自己開放。`teamAndScore` 決定這兩項如何計算：`alone`（預設）時它們單獨就能開啟閘門；`with` 時它們成為附加條件，只有在滿足另一個解鎖鍵之後，且玩家同時屬於該隊伍並達到該分數，閘門才會開啟。`killedTally` 設為 `team` 時，`killedCount` 會合計擊殺者所屬隊伍的全部擊殺，而不是依每名玩家各自計算（`player`，預設）；不屬於任何隊伍的擊殺者仍單獨計數。`teamless` 設為 `refuse` 時，範圍為 `team` 的閘門會拒絕不屬於任何隊伍的玩家，而不是讓其只為自己解鎖（`player`，預設）。
 
 閘門也守衛遊戲自帶的維度：`dimension` 為 `minecraft:the_nether` 的閘門會擋在每一個地獄傳送門前面。
 
