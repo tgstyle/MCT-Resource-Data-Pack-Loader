@@ -13,6 +13,7 @@
     "MixinEntityTieredRocket",
     "MixinTeleportTypeAsteroids",
     "MixinThreadFindSeal",
+    "MixinTransformerHooks",
     "MixinTransformerHooksGravity",
     "MixinWorldProviderExitHeight",
     "MixinWorldUtilStationHome"
@@ -24,7 +25,6 @@
     "MixinGuiCelestialSelectionStationHome",
     "MixinPacketSimpleStationHome",
     "MixinPacketSimpleStationLabel",
-    "MixinTransformerHooks",
     "MixinTransformerHooksCamera"
   ],
   "server": []
