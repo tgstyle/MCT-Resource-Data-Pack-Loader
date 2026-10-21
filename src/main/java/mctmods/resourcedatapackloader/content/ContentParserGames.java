@@ -98,7 +98,8 @@ public final class ContentParserGames {
                 Json.getString(ends, "outSays", "You are out until the round ends"),
                 roundReset(key, Json.getJsonObject(json, "reset", new JsonObject())),
                 Json.getBoolean(json, "tiebreak", false),
-                turns(key, json));
+                turns(key, json),
+                Json.getBoolean(points, "raid", false));
     }
 
     @Nullable private static TurnsDef turns(Identifier key, JsonObject json) {
@@ -200,7 +201,9 @@ public final class ContentParserGames {
                 Json.getString(json, "sound", "").trim(),
                 Json.getString(json, "wins", "").trim(),
                 Json.getString(json, "loses", "").trim(),
-                Json.strings(json, "bell"));
+                Json.strings(json, "bell"),
+                Json.getInt(json, "points", 0),
+                Json.getString(json, "loot", "").trim());
     }
 
     @Nullable public static TeamDef teamFile(Identifier key, String contents) {

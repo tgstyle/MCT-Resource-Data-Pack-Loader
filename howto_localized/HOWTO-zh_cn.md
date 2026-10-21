@@ -5115,6 +5115,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | ---------------- | ---- | ------ | ----------------------------------------------------------------------------- |
 | `points.kill`    | 对象 | 空     | 实体 id 对应的积分，记在击杀者所属阵营名下。`minecraft:player` 为击杀玩家计分 |
 | `points.death`   | 整数 | `0`    | 成员死亡时得到的积分，无论死因。可以为负数                                    |
+| `points.raid`    | 布尔值 | `false` | 接收每场获胜[袭击](#袭击)的 `points`：范围内的每个玩家都会获得相应积分，记在所属阵营的一行上，启用 `individuals` 时也记在本人的一行上 |
 | `points.ownKill` | 整数 | `0`    | 击杀者所属阵营自己人时的积分，取代 `kill` 的值。0 表示不计分；负数表示扣分    |
 
 `points` 是本模组在游戏自身计数之上额外增加的积分，会写入同一个计分项，因此 `/scoreboard` 仍然可以读取。`kill` 按被击杀的实体 id 给出相应积分，记在击杀者所属阵营名下；`death` 在某个阵营的成员死亡时给出相应积分，可以为负数。启用 `teamTotals` 后，积分会记在以队伍命名的行上，侧边栏因此只显示四个阵营，而不是为每只生物各占一行。`individuals` 会额外为每个成员加一行，默认关闭，因为每个生物 UUID 一行读起来只是噪音。
@@ -5271,6 +5272,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5296,6 +5299,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `sound`         | 音效名称       | 无       | 每波到来时，从该波来的方向向范围内的每个玩家播放                                                         |
 | `wins`          | 函数           | 无       | 袭击胜利时，以范围内每个玩家的身份运行                                                                   |
 | `loses`         | 函数           | 无       | 袭击失败时，以范围内每个玩家的身份运行                                                                   |
+| `points`        | 整数 | `0`            | 袭击获胜时记给范围内每个玩家的积分，计入每个开启了 `points.raid` 的目标。失败不计分 |
+| `loot`          | 战利品表 | 无         | 袭击获胜时，为范围内的每个玩家各投放一次的战利品表。物品放入其背包，背包已满则掉在脚边 |
 | `bell`          | 方块名称或列表 | 无       | 在玩家使用时以及每波到来时，像钟一样敲响的其他方块。类型为 `bell` 的方块无需指定也会敲响                 |
 
 ### 一个分组

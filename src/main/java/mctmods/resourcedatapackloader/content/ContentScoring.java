@@ -144,6 +144,13 @@ public final class ContentScoring {
 
     private static String kindOf(Entity entity) { return entity instanceof Player ? PLAYER : EntityType.getKey(entity.getType()).toString(); }
 
+    public static void raidWon(ServerPlayer player, int points) {
+        if (points == 0 || BY_NAME.isEmpty()) { return; }
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.raidPoints()) { credit(player.level(), def, player, points); }
+        }
+    }
+
     private static void credit(ServerLevel level, ScoreDef def, Entity who, int points) {
         if (closed || def.ends() && FINISHED.contains(def.name())) { return; }
         Scoreboard board = Scores.board(level.getServer());

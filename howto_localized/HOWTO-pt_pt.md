@@ -5115,6 +5115,7 @@ Um objetivo é um objetivo real no quadro de pontuação do próprio jogo, pelo 
 | ---------------- | -------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | objeto         | vazio        | Id de entidade para pontos, creditados ao lado do matador. `minecraft:player` pontua a morte de um jogador                                              |
 | `points.death`   | número inteiro | `0`          | Pontos sempre que um membro morre, seja como for que morreu. Pode ser negativo                                                                          |
+| `points.raid`    | booleano | `false` | Recebe os `points` de cada [invasão](#invasões) ganha: cada jogador ao alcance recebe essa quantia na linha do seu lado e, com `individuals`, também na sua própria |
 | `points.ownKill` | número inteiro | `0`          | Pontos por uma morte provocada ao próprio lado do matador, no lugar do valor de `kill`. 0 não pontua nada por ela; um número negativo é uma penalização |
 
 `points` é o que este mod acrescenta ao que o jogo conta, alimentado no mesmo objetivo para que `/scoreboard` continue a lê-lo. `kill` vale tantos pontos por id de entidade morta, creditados ao lado do matador; `death` vale tantos sempre que um membro de um lado morre, e pode ser negativo. Com `teamTotals`, os pontos caem numa linha com o nome da equipa, o que permite à barra lateral mostrar quatro lados em vez de uma linha por cada mob. `individuals` acrescenta também uma linha por membro, e vem desligado por predefinição porque uma linha por UUID de mob parece ruído.
@@ -5271,6 +5272,8 @@ Enquanto uma vaga está sobre a aldeia, os seus aldeões correm para casa e fica
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5296,6 +5299,8 @@ Enquanto uma vaga está sobre a aldeia, os seus aldeões correm para casa e fica
 | `sound`         | nome de som            | nenhum              | Tocado a cada jogador ao alcance, do lado de onde vem a vaga, quando cada vaga chega                                                                                                |
 | `wins`          | função                 | nenhum              | Executada como cada jogador ao alcance quando a invasão é ganha                                                                                                                     |
 | `loses`         | função                 | nenhum              | Executada como cada jogador ao alcance quando a invasão é perdida                                                                                                                   |
+| `points`        | número inteiro | `0`    | Pontos creditados a cada jogador ao alcance quando a invasão é ganha, em cada objetivo que tenha `points.raid` ativado. Uma derrota não paga nada |
+| `loot`          | tabela de saque | nenhum | Uma tabela de saque sorteada uma vez para cada jogador ao alcance quando a invasão é ganha. Os itens vão para o inventário dele, ou caem-lhe aos pés se estiver cheio |
 | `bell`          | nome de bloco ou lista | nenhum              | Outros blocos que tocam como um sino, quando um jogador os usa e sempre que uma vaga chega. Um bloco do tipo `bell` toca sem ser indicado                                           |
 
 ### Um grupo

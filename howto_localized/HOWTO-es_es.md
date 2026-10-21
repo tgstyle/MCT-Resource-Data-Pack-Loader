@@ -5115,6 +5115,7 @@ Un objetivo es un objetivo real en el marcador del propio juego, así que `/scor
 | ---------------- | ------ | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | objeto | vacío       | Id de entidad a puntos, que se acreditan al bando del autor de la muerte. `minecraft:player` puntúa la muerte de un jugador                                       |
 | `points.death`   | entero | `0`         | Puntos cada vez que muere un miembro, muera como muera. Pueden ser negativos                                                                                      |
+| `points.raid`    | booleano | `false` | Recoge los `points` de cada [asalto](#asaltos) ganado: cada jugador al alcance recibe esa cantidad en la fila de su bando y, con `individuals`, también en la suya |
 | `points.ownKill` | entero | `0`         | Puntos por una muerte causada a un miembro del propio bando del autor, en lugar del valor de `kill`. Con 0 no puntúa nada; un número negativo es una penalización |
 
 `points` es lo que este mod suma a lo que cuenta el juego, y se vuelca en el mismo objetivo para que `/scoreboard` lo siga leyendo. `kill` vale tantos puntos por cada id de entidad abatida, acreditados al bando del autor; `death` vale tantos cada vez que muere un miembro de un bando, y puede ser negativo. Con `teamTotals` los puntos van a una fila con el nombre del equipo, lo que permite que la barra lateral muestre cuatro bandos en lugar de una fila por cada mob. `individuals` añade además una fila por miembro, y está desactivado por defecto porque una fila por cada UUID de mob solo hace ruido.
@@ -5271,6 +5272,8 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5296,6 +5299,8 @@ Mientras una oleada está sobre la aldea, sus aldeanos corren a casa y se quedan
 | `sound`         | nombre de sonido         | ninguno              | Se reproduce a cada jugador al alcance, desde el lado por el que llega la oleada, cada vez que llega una oleada                                                                              |
 | `wins`          | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se gana el asalto                                                                                                                             |
 | `loses`         | función                  | ninguno              | Se ejecuta como cada jugador al alcance cuando se pierde el asalto                                                                                                                           |
+| `points`        | entero | `0`            | Puntos que se acreditan a cada jugador al alcance cuando se gana el asalto, en cada objetivo que tenga activado `points.raid`. Una derrota no paga nada |
+| `loot`          | tabla de botín | ninguno | Una tabla de botín que se sortea una vez por cada jugador al alcance cuando se gana el asalto. Los objetos van a su inventario, o caen a sus pies si está lleno |
 | `bell`          | nombre de bloque o lista | ninguno              | Otros bloques que suenan como una campana, cuando un jugador los usa y cada vez que llega una oleada. Un bloque de tipo `bell` suena sin necesidad de nombrarlo                              |
 
 ### Un grupo

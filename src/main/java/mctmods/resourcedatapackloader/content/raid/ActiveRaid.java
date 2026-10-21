@@ -1,7 +1,9 @@
 package mctmods.resourcedatapackloader.content.raid;
 
 import mctmods.resourcedatapackloader.compat.Compat;
+import mctmods.resourcedatapackloader.compat.LineCompat;
 import mctmods.resourcedatapackloader.content.ContentRaids;
+import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.extra.ContentSounds;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -15,7 +17,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.IntArrayTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerBossEvent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,7 +35,11 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.neoforged.neoforge.event.EventHooks;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -240,8 +249,25 @@ public final class ActiveRaid {
         List<ServerPlayer> present = inReach(level);
         String function = ending == Status.VICTORY ? def.wins() : def.loses();
         ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} ends in {} after {} of {} wave(s), with {} player(s) in reach", def.key(), center.getX(), center.getY(), center.getZ(), ending == Status.VICTORY ? "victory" : "defeat", wave, def.waves().size(), present.size());
+        if (ending == Status.VICTORY) {
+            for (ServerPlayer player : present) { reward(level, player); }
+        }
         if (function.isEmpty()) { return; }
         for (ServerPlayer player : present) { Functions.runAs(player, function, "Raid " + def.key()); }
+    }
+
+    private void reward(ServerLevel level, ServerPlayer player) {
+        ContentScoring.raidWon(player, def.points());
+        if (def.loot().isEmpty()) { return; }
+        Identifier id = Identifier.tryParse(def.loot());
+        if (id == null) {
+            ContentLog.LOGGER.error("Raid {} names the loot table '{}', which is not a valid id, so nobody is handed loot", def.key(), def.loot());
+            return;
+        }
+        LootParams params = new LootParams.Builder(level).withParameter(LootContextParams.THIS_ENTITY, player).withParameter(LootContextParams.ORIGIN, player.position()).withLuck(player.getLuck()).create(LootContextParamSets.GIFT);
+        for (ItemStack stack : level.getServer().reloadableRegistries().getLootTable(ResourceKey.create(Registries.LOOT_TABLE, id)).getRandomItems(params)) {
+            if (!stack.isEmpty() && !player.getInventory().add(stack)) { LineCompat.drop(player, stack); }
+        }
     }
 
     private void celebrate(ServerLevel level) {

@@ -5115,6 +5115,7 @@ Cíl je skutečný cíl na tabulce skóre samotné hry, takže ho čte `/scorebo
 | ---------------- | ---------- | ------- | ---------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | objekt     | prázdný | Id entity na body, připsané straně zabijáka. `minecraft:player` boduje zabití hráče                              |
 | `points.death`   | celé číslo | `0`     | Body, kdykoli člen zemře, ať už jakkoli. Může být záporné                                                        |
+| `points.raid`    | boolean | `false` | Přebírá `points` každého vyhraného [nájezdu](#nájezdy): každému hráči v dosahu se tolik připíše na řádek jeho strany a s `individuals` i na jeho vlastní |
 | `points.ownKill` | celé číslo | `0`     | Body za zabití člena vlastní strany zabijáka, místo hodnoty `kill`. 0 za to nebodují nic; záporné číslo je trest |
 
 `points` je to, co tento mód přidává nad to, co hra počítá, přivedené do téhož cíle, takže ho `/scoreboard` pořád čte. `kill` má hodnotu tolika bodů za každé zabité id entity, připsaných straně zabijáka; `death` má hodnotu tolika bodů, kdykoli zemře člen strany, a může být záporné. S `teamTotals` body dopadají na řádek pojmenovaný podle týmu, díky čemuž postranní panel ukáže čtyři strany místo řádku pro každého moba. `individuals` přidá i řádek pro každého člena a je ve výchozím stavu vypnuté, protože řádek na UUID moba působí jako šum.
@@ -5271,6 +5272,8 @@ Zatímco je vlna ve vesnici, její vesničané běží domů a zůstávají tam,
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "minecraft:bell",
   "waves": [
     [ { "entity": "minecraft:vindicator", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -5296,6 +5299,8 @@ Zatímco je vlna ve vesnici, její vesničané běží domů a zůstávají tam,
 | `sound`         | název zvuku             | žádný          | Přehraje se každému hráči v dosahu, ze strany, odkud vlna přichází, když každá vlna dorazí                                                       |
 | `wins`          | funkce                  | žádný          | Spustí se jako každý hráč v dosahu, když je nájezd vyhrán                                                                                        |
 | `loses`         | funkce                  | žádný          | Spustí se jako každý hráč v dosahu, když je nájezd prohrán                                                                                       |
+| `points`        | celé číslo | `0`            | Body, které se připíšou každému hráči v dosahu, když je nájezd vyhrán, v každém cíli, který má zapnuté `points.raid`. Za prohru se nic neplatí |
+| `loot`          | tabulka kořisti | žádná     | Tabulka kořisti, která se vylosuje jednou pro každého hráče v dosahu, když je nájezd vyhrán. Předměty přijdou do jeho inventáře, nebo mu spadnou k nohám, když je plný |
 | `bell`          | název bloku nebo seznam | žádný          | Další bloky, které zvoní jako zvon, když je hráč použije a kdykoli dorazí vlna. Blok typu `bell` zvoní, i když není pojmenován                   |
 
 ### Jedna skupina
