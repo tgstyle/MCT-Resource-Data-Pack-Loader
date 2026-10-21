@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content;
 
+import mctmods.resourcedatapackloader.content.card.CardEvents;
 import mctmods.resourcedatapackloader.content.def.DiceDef;
 import mctmods.resourcedatapackloader.content.def.ScoreDef;
 import mctmods.resourcedatapackloader.pack.PackManager;
@@ -109,7 +110,7 @@ public final class ContentDice {
 
     public static Result coin(RandomSource random) {
         boolean heads = random.nextBoolean();
-        return new Result(heads ? 1 : 0).say("coin", "result", new Term(heads ? "heads" : "tails"));
+        return new Result(heads ? 1 : 0).as("coin").say("coin", "result", new Term(heads ? "heads" : "tails"));
     }
 
     public static Result die(RandomSource random, int sides) {
@@ -122,7 +123,7 @@ public final class ContentDice {
         if (faces == null) { return Result.refused("nodie", "name", name); }
         Map.Entry<String, Integer> face = WeightedPicks.pick(faces.entrySet(), Map.Entry::getValue, random);
         if (face == null) { return Result.refused("nodie", "name", name); }
-        return new Result(new ArrayList<>(faces.keySet()).indexOf(face.getKey()) + 1).say("packdie", "die", name, "result", face.getKey());
+        return new Result(new ArrayList<>(faces.keySet()).indexOf(face.getKey()) + 1).as(name).say("packdie", "die", name, "result", face.getKey());
     }
 
     @Nullable private static int[] parse(String roll) {
@@ -137,6 +138,13 @@ public final class ContentDice {
         }
         catch (NumberFormatException tooLong) { return null; }
     }
+
+    public static String notation(String roll) {
+        int[] spec = parse(roll);
+        return spec == null ? roll : notation(spec);
+    }
+
+    private static String notation(int[] spec) { return spec[0] + "d" + spec[1] + (spec[2] == 0 ? "" : spec[2] > 0 ? "+" + spec[2] : String.valueOf(spec[2])); }
 
     private static List<Integer> throwOf(RandomSource random, int[] spec) {
         List<Integer> rolls = new ArrayList<>();
@@ -156,8 +164,8 @@ public final class ContentDice {
         List<Integer> rolls = throwOf(random, spec);
         int total = sum(rolls, spec);
         Spell spelled = new Spell(spec[0], spec[1], spec[2]);
-        if (spec[0] == 1) { return new Result(total).say("die", "dice", spelled, "sides", spec[1], "result", total); }
-        return new Result(total).say("dice", "dice", spelled, "rolls", rolls, "result", total);
+        if (spec[0] == 1) { return new Result(total).as(notation(spec)).say("die", "dice", spelled, "sides", spec[1], "result", total); }
+        return new Result(total).as(notation(spec)).say("dice", "dice", spelled, "rolls", rolls, "result", total);
     }
 
     public static Result edge(RandomSource random, String roll, boolean higher) {
@@ -166,7 +174,7 @@ public final class ContentDice {
         int first = sum(throwOf(random, spec), spec);
         int second = sum(throwOf(random, spec), spec);
         int kept = higher ? Math.max(first, second) : Math.min(first, second);
-        return new Result(kept).say(higher ? "advantage" : "disadvantage", "dice", new Spell(spec[0], spec[1], spec[2]), "first", first, "second", second, "result", kept);
+        return new Result(kept).as(notation(spec)).say(higher ? "advantage" : "disadvantage", "dice", new Spell(spec[0], spec[1], spec[2]), "first", first, "second", second, "result", kept);
     }
 
     public static Result named(MinecraftServer server, String rolls) {
@@ -187,7 +195,7 @@ public final class ContentDice {
             card = ContentDicePile.draw(server, deck, cards.size(), random(server));
         }
         if (card < 0) { return Result.refused("empty", "deck", deck); }
-        return new Result(card + 1).say(again ? "reshuffled" : "draw", "deck", deck, "result", cards.get(card), "left", ContentDicePile.left(server, deck, cards.size()));
+        return new Result(card + 1).as(deck).say(again ? "reshuffled" : "draw", "deck", deck, "result", cards.get(card), "left", ContentDicePile.left(server, deck, cards.size()));
     }
 
     public static Result shuffle(MinecraftServer server, String deck) {
@@ -289,6 +297,7 @@ public final class ContentDice {
             Objective objective = Scores.objective(board, store);
             if (objective != null) { Scores.set(board, who, objective, result.value); }
         }
+        if (source.getPlayer() != null) { CardEvents.rolled(source.getPlayer(), result.what, result.value); }
         if (SILENT.equals(audience.mode)) { return; }
         for (ServerPlayer hearer : hearers(server, source, audience)) {
             for (Line line : result.lines) { Says.line(hearer, ChatFormatting.YELLOW, said(hearer, line, who)); }
@@ -297,11 +306,15 @@ public final class ContentDice {
         for (Line line : result.lines) { source.sendSystemMessage(Component.literal(said(null, line, who)).withStyle(ChatFormatting.YELLOW)); }
     }
 
-    public static void byItem(ServerPlayer player, String rolls) {
+    public static void byItem(ServerPlayer player, String rolls, String store) {
         MinecraftServer server = player.level().getServer();
+        if (!store.isEmpty() && lacks(server, store)) {
+            Says.line(player, ChatFormatting.RED, words(player, "noobjective", "objective", store));
+            return;
+        }
         Result result = named(server, rolls);
         if (result.refused) { Says.line(player, ChatFormatting.RED, text(player, result, player.getGameProfile().name())); }
-        else { announce(server, player.createCommandSourceStack(), "item " + rolls, result, heard, null); }
+        else { announce(server, player.createCommandSourceStack(), "item " + rolls, result, heard, store.isEmpty() ? null : store); }
     }
 
     private static List<ServerPlayer> hearers(MinecraftServer server, CommandSourceStack source, Audience audience) {
@@ -365,8 +378,14 @@ public final class ContentDice {
         private final List<Line> lines = new ArrayList<>();
         private int value;
         private boolean refused;
+        private String what = "";
 
         Result(int value) { this.value = value; }
+
+        Result as(String what) {
+            this.what = what;
+            return this;
+        }
 
         static Result refused(String key, Object... pairs) {
             Result result = new Result(0).say(key, pairs);

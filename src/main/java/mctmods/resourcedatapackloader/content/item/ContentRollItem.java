@@ -24,7 +24,7 @@ public final class ContentRollItem extends Item {
     @Override @Nonnull public InteractionResult use(@Nonnull Level level, @Nonnull Player player, @Nonnull InteractionHand hand) {
         if (!level.isClientSide() && player instanceof ServerPlayer server) {
             if (def.passesTurn()) { ContentTurns.byItem(server); }
-            else { ContentDice.byItem(server, def.rolls()); }
+            else { ContentDice.byItem(server, def.rolls(), def.rollStore()); }
         }
         ContentEffects.cooldown(player, player.getItemInHand(hand), def.cooldown());
         return InteractionResult.SUCCESS;

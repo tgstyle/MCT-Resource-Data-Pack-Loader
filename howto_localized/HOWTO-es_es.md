@@ -1357,6 +1357,7 @@ Un `potion_bottle` enumera lo que puede contener con `potionTypes`, una lista de
 | `crop`         | seed          | nombre de bloque                                    | ninguno                               | El cultivo que planta                                                                                                                                                                                                                              |
 | `soil`         | seed          | nombre de bloque                                    | `minecraft:farmland`                  | Sobre qué se puede plantar                                                                                                                                                                                                                         |
 | `rolls`        | no            | `coin`, `d6`, `2d6+1`, un dado o un mazo            | ninguno                               | En un ítem simple, un clic derecho tira como lo haría `/rdplserver game` y se lo dice a la audiencia por defecto del pack. Consulta [Dados y mazos](#dados-y-mazos)                                                                                |
+| `rollStore`    | no            | nombre de un objetivo                | ninguno                | Para un objeto con `rolls`, el objetivo del marcador que recibe el total de la tirada como puntuación de quien lo sostiene cada vez que se usa. Si el objetivo no existe, la tirada se rechaza con una línea de chat |
 | `passesTurn`   | no            | booleano                                            | `false`                               | En un ítem simple, un clic derecho pasa el turno de quien lo sostiene, como hace `/rdplserver game pass`. Consulta [Turnos](#turnos)                                                                                                               |
 | `requires`     | no            | lista de ids de mods o espacios de nombres de packs | ninguno                               | El archivo se omite a menos que estén todos presentes                                                                                                                                                                                              |
 
@@ -5387,6 +5388,7 @@ El tercero saluda a un jugador la primera vez que entra con una tarjeta central 
 | `death`           | nada              | Un jugador muere                                                                                                                                                                                                                                                                        |
 | `y_level`         | `below` o `above` | Un jugador baja de esa altura o la supera                                                                                                                                                                                                                                               |
 | `play_time`       | `minutes`         | El tiempo de un jugador en el mundo alcanza esa cantidad de minutos, contados desde que se cierra la introducción del mundo, o desde que entra cuando no se le muestra introducción                                                                                                     |
+| `roll`            | nada, o `roll`     | Un jugador tira con `/rdplserver game` o con un objeto con `rolls`. Con `roll`, solo esa tirada la activa, y `atLeast` y `atMost` limitan el total |
 | `score`           | `objective`       | La puntuación de un jugador en ese objetivo alcanza `score`                                                                                                                                                                                                                             |
 
 Bioma, estructura, altura, tiempo de juego y puntuación se comprueban una vez por segundo para cada jugador, y se activan en el cambio de fuera a dentro, nunca en la primera comprobación tras entrar. Una regla `time_of_day` o `day` cuya audiencia no sea `player` se activa una vez para la dimensión en lugar de una vez por cada jugador en ella.
@@ -5412,6 +5414,8 @@ Una tarjeta que se activa mientras un jugador aún tiene abierta la introducció
 | `time`               | entero                                            | `0`                  | Para `time_of_day`: el tick del día                                                                                                                                                                                                                                                                                       |
 | `day`                | entero                                            | ninguno              | Para `day`: el único día en el que se activa. Sin él, todos los días                                                                                                                                                                                                                                                      |
 | `minutes`            | entero                                            | ninguno              | Para `play_time`                                                                                                                                                                                                                                                                                                          |
+| `roll`               | texto                              | ninguno        | Para `roll`: `coin`, una notación como `2d6` (`d6` y `1d6` son lo mismo) o el nombre de un dado o un mazo de un pack. Sin ella, toda tirada activa la regla |
+| `atLeast`, `atMost`  | entero                             | ninguno        | Para `roll`: el total más bajo y el más alto que activa la regla. Una moneda cuenta 1 por cara y 0 por cruz; un dado o un mazo de un pack, la posición del resultado en su archivo, desde 1 |
 | `objective`, `score` | texto, entero                                     | ninguno, `1`         | Para `score`: el objetivo y el valor que hay que alcanzar                                                                                                                                                                                                                                                                 |
 | `requires`           | lista de ids de mod o espacios de nombres de pack | ninguno              | El archivo se omite a menos que estén presentes todos                                                                                                                                                                                                                                                                     |
 
@@ -5534,6 +5538,31 @@ Un nombre de dado o de mazo pertenece al primer pack que lo carga. Otro pack con
 Un mazo es una pila que se va agotando. `game deck draw <name>` roba una carta al azar de lo que queda, y nada vuelve hasta que el mazo vacío se baraja solo al robar la siguiente carta o `game deck shuffle <name>` devuelve todas las cartas. La pila se guarda con el mundo, así que un reinicio no la baraja.
 
 Cada tirada usa el azar propio del mundo y se escribe en el registro con quién la hizo, qué hizo y qué salió. `game last` muestra las más recientes. Los resultados salen como líneas de chat normales construidas en el servidor, así que también los lee un jugador sin el mod. La notación de dados se lee como cantidad, `d`, caras y un modificador opcional: `3d8-2` son tres dados de ocho caras sumados, menos 2, y `d20` es un dado de veinte caras. El chat y el registro escriben la tirada con palabras, como «Boss tira 3 dados de ocho caras, menos 2: [2, 6, 7] = 13», y `{dice}` contiene esa redacción.
+
+Un objeto puede guardar lo que tira, y una tarjeta puede responder a una tirada. El objeto de abajo tira `2d6` al usarse, lo comunica a la audiencia y escribe el total como puntuación de quien lo sostiene en el objetivo `dice_total`. La tarjeta se muestra cuando alguien tira `2d6` y saca 10 o más, y ejecuta una función que puede leer esa puntuación.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "maxSize": 16 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "Un golpe de suerte",
+  "lines": ["{player} sacó una tirada alta."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+Tanto `/rdplserver game` como la tirada de un objeto activan la tarjeta, una vez guardada la puntuación. Una tirada desde la consola o un bloque de comandos no tiene jugador, así que no activa ninguna tarjeta. Sin `rollStore` y `roll`, el objeto y la tarjeta se comportan como antes.
 
 | Clave de redacción                                            | Marcadores                                                      |
 | ------------------------------------------------------------- | --------------------------------------------------------------- |

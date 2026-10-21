@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.card;
 
+import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -47,6 +48,9 @@ final class CardParser {
         rule.minutes = Math.max(0, Json.getInt(json, "minutes", 0));
         rule.objective = Json.getString(json, "objective", "").trim();
         rule.score = Json.getInt(json, "score", 1);
+        rule.roll = ContentDice.notation(Json.getString(json, "roll", "").trim());
+        rule.atLeast = json.has("atLeast") ? Json.getInt(json, "atLeast") : null;
+        rule.atMost = json.has("atMost") ? Json.getInt(json, "atMost") : null;
         if (json.has("when")) { rule.when = when(Json.getJsonObject(json, "when")); }
         rule.title = json.has("title") ? Json.getString(json, "title") : null;
         rule.lines = json.has("lines") ? lines(key, json) : null;

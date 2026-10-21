@@ -307,6 +307,7 @@ public final class ContentParser {
                 Math.max(0, Json.getInt(json, "cooldown", 0)),
                 ContentParserContainers.holds(key, json),
                 Json.getString(json, "rolls", "").trim(),
+                Json.getString(json, "rollStore", "").trim(),
                 Json.getBoolean(json, "passesTurn", false));
     }
 
