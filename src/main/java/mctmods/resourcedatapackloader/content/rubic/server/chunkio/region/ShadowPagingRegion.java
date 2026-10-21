@@ -15,7 +15,6 @@ import mctmods.resourcedatapackloader.content.rubic.regionlib.util.ICorruptedDat
 import mctmods.resourcedatapackloader.content.rubic.regionlib.util.Utils;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
@@ -30,6 +29,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import static java.nio.file.StandardOpenOption.*;
 
@@ -41,8 +41,9 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
     private final RegionKey regionKey;
     private final int sectorSize;
     private final SectorTracker<K> sectorTracker;
-    private final ReadWriteLock dataLock = new ReentrantReadWriteLock();
-    private final ReadWriteLock reserveSectorsLock = new ReentrantReadWriteLock();
+    private final Lock startWriteLock = new ReentrantLock();
+    private final ReadView<K> idle = new ReadView<>(Collections.emptyMap(), Collections.emptyMap());
+    private volatile ReadView<K> ongoingWrite;
 
     private ShadowPagingRegion(FileChannel file, SectorTracker<K> sectorTracker, IHeaderDataEntryProvider<?, K> headerEntryProvider, RegionKey regionKey, int sectorSize) {
         this.file = file;
@@ -73,84 +74,91 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
     @Override public void writeValues(Map<K, ByteBuffer> entries) throws IOException {
         if (entries.isEmpty()) { return; }
         List<UnsupportedDataException.WithKey> exceptions = new ArrayList<>();
-        List<K> pendingRemovals = new ArrayList<>();
-        Map<K, RegionEntryLocation> pendingPrevLocations = new HashMap<>(entries.size());
-        Map<K, RegionEntryLocation> entryLocationsToUse = new HashMap<>(entries.size());
-        Lock sectorLock = reserveSectorsLock.writeLock();
-        Lock mainLock = dataLock.writeLock();
-        sectorLock.lock();
-        mainLock.lock();
+        Map<K, HeaderUpdate> pendingHeaderUpdates = new HashMap<>(entries.size());
+        ReadView<K> view = this.startWrite(entries, null);
         try {
-            try { reserveHeaderEntriesPass(entries, exceptions, pendingRemovals, pendingPrevLocations, entryLocationsToUse); }
-            finally { sectorLock.unlock(); }
-            boolean shouldFlush = writeDataPass(entries, exceptions, entryLocationsToUse);
-            if (shouldFlush) { this.file.force(true); }
-            doPendingHeaderUpdatesPass(pendingRemovals, pendingPrevLocations);
-            if (!exceptions.isEmpty()) { throw new MultiUnsupportedDataException(exceptions); }
+            this.reserveAndWriteData(view, entries, exceptions, pendingHeaderUpdates);
+            this.doPendingHeaderUpdatesPass(pendingHeaderUpdates);
         }
-        finally { mainLock.unlock(); }
+        finally { this.finishWrite(view); }
+        for (K key : pendingHeaderUpdates.keySet()) {
+            ByteBuffer value = entries.get(key);
+            if (value != null) { value.position(value.limit()); }
+        }
+        if (!exceptions.isEmpty()) { throw new MultiUnsupportedDataException(exceptions); }
     }
 
-    private void reserveHeaderEntriesPass(Map<K, ByteBuffer> entries, List<UnsupportedDataException.WithKey> exceptions,
-                                          List<K> pendingRemovals, Map<K, RegionEntryLocation> pendingPrevLocations, Map<K, RegionEntryLocation> entryLocationsToUse) throws IOException {
+    private void reserveAndWriteData(ReadView<K> view, Map<K, ByteBuffer> entries, List<UnsupportedDataException.WithKey> exceptions, Map<K, HeaderUpdate> pendingHeaderUpdates) throws IOException {
+        try {
+            this.reserveHeaderEntriesPass(entries, exceptions, pendingHeaderUpdates);
+            Map<K, ByteBuffer> accepted = new HashMap<>(pendingHeaderUpdates.size());
+            for (K key : pendingHeaderUpdates.keySet()) { accepted.put(key, entries.get(key)); }
+            view.accepted = accepted;
+            this.writeDataPass(entries, pendingHeaderUpdates);
+        }
+        catch (RuntimeException | Error | IOException e) {
+            this.rollBack(pendingHeaderUpdates, e, false);
+            throw e;
+        }
+    }
+
+    private void reserveHeaderEntriesPass(Map<K, ByteBuffer> entries, List<UnsupportedDataException.WithKey> exceptions, Map<K, HeaderUpdate> pendingHeaderUpdates) throws IOException {
         for (Map.Entry<K, ByteBuffer> entry : entries.entrySet()) {
             K key = entry.getKey();
             ByteBuffer value = entry.getValue();
-            try {
-                if (value == null) { pendingRemovals.add(key); }
-                else {
-                    int size = value.remaining();
-                    int sizeWithSizeInfo = size + Integer.BYTES;
-                    int numSectors = this.getSectorNumber(sizeWithSizeInfo);
-                    pendingPrevLocations.put(key, this.sectorTracker.getEntryLocation(key).orElse(null));
-                    entryLocationsToUse.put(key, this.sectorTracker.reserveForKey(key, numSectors));
-                }
-            } catch (UnsupportedDataException e) {
-                exceptions.add(new UnsupportedDataException.WithKey(e, key));
+            if (value == null) {
+                pendingHeaderUpdates.put(key, this.sectorTracker.reserveDeletion(key));
+                continue;
             }
+            try { pendingHeaderUpdates.put(key, this.sectorTracker.reserve(key, this.getSectorNumber(value.remaining() + Integer.BYTES))); }
+            catch (UnsupportedDataException e) { exceptions.add(new UnsupportedDataException.WithKey(e, key)); }
         }
     }
 
-    private boolean writeDataPass(Map<K, ByteBuffer> entries, List<UnsupportedDataException.WithKey> exceptions,
-                                  Map<K, RegionEntryLocation> entryLocationsToUse) throws IOException {
+    private void writeDataPass(Map<K, ByteBuffer> entries, Map<K, HeaderUpdate> pendingHeaderUpdates) throws IOException {
         boolean shouldFlush = false;
         List<ByteBuffer> tempBuffers = new ArrayList<>();
         ByteBuffer lengthPrefixBuffer = ByteBuffer.allocate(Integer.BYTES);
-        for (Map.Entry<K, ByteBuffer> entry : entries.entrySet()) {
-            K key = entry.getKey();
-            ByteBuffer value = entry.getValue();
-            try {
-                if (value != null) {
-                    int size = value.remaining();
-                    int bytesOffset = entryLocationsToUse.get(key).getOffset() * this.sectorSize;
-                    tempBuffers.clear();
-                    tempBuffers.add(((ByteBuffer) lengthPrefixBuffer.clear()).putInt(0, size));
-                    tempBuffers.add(value);
-                    if ((lengthPrefixBuffer.capacity() + value.remaining()) % this.sectorSize != 0) {
-                        zeroes(this.sectorSize - (lengthPrefixBuffer.capacity() + value.remaining()) % this.sectorSize, tempBuffers);
-                    }
-                    assert tempBuffers.stream().mapToInt(ByteBuffer::remaining).sum() == entryLocationsToUse.get(key).getSize() * this.sectorSize;
-                    Utils.writeFully(this.file.position(bytesOffset), tempBuffers.toArray(new ByteBuffer[0]));
-                    shouldFlush = true;
-                }
-            } catch (UnsupportedDataException e) {
-                exceptions.add(new UnsupportedDataException.WithKey(e, key));
+        for (Map.Entry<K, HeaderUpdate> entry : pendingHeaderUpdates.entrySet()) {
+            RegionEntryLocation location = entry.getValue().next;
+            if (location == null) { continue; }
+            ByteBuffer value = entries.get(entry.getKey()).slice();
+            int size = value.remaining();
+            int bytesOffset = location.getOffset() * this.sectorSize;
+            tempBuffers.clear();
+            tempBuffers.add(((ByteBuffer) lengthPrefixBuffer.clear()).putInt(0, size));
+            tempBuffers.add(value);
+            if ((lengthPrefixBuffer.capacity() + value.remaining()) % this.sectorSize != 0) {
+                zeroes(this.sectorSize - (lengthPrefixBuffer.capacity() + value.remaining()) % this.sectorSize, tempBuffers);
             }
+            assert tempBuffers.stream().mapToInt(ByteBuffer::remaining).sum() == location.getSize() * this.sectorSize;
+            Utils.writeFully(this.file.position(bytesOffset), tempBuffers.toArray(new ByteBuffer[0]));
+            shouldFlush = true;
         }
-        return shouldFlush;
+        if (shouldFlush) { this.file.force(true); }
     }
 
-    private void doPendingHeaderUpdatesPass(List<K> pendingRemovals, Map<K, RegionEntryLocation> pendingPrevLocations) throws IOException {
-        if (pendingRemovals.isEmpty() && pendingPrevLocations.isEmpty()) { return; }
-        for (K key : pendingRemovals) {
-            this.sectorTracker.removeKey(key);
-            this.updateHeaders(key);
+    private void doPendingHeaderUpdatesPass(Map<K, HeaderUpdate> pendingHeaderUpdates) throws IOException {
+        if (pendingHeaderUpdates.isEmpty()) { return; }
+        try {
+            pendingHeaderUpdates.values().forEach(this.sectorTracker::commit);
+            for (K key : pendingHeaderUpdates.keySet()) { this.updateHeaders(key); }
+            this.file.force(true);
         }
-        for (Map.Entry<K, RegionEntryLocation> entry : pendingPrevLocations.entrySet()) {
-            this.sectorTracker.updateUsedSectorsFor(entry.getValue(), null);
-            this.updateHeaders(entry.getKey());
+        catch (RuntimeException | Error | IOException e) {
+            this.rollBack(pendingHeaderUpdates, e, true);
+            throw e;
         }
-        this.file.force(true);
+    }
+
+    private void rollBack(Map<K, HeaderUpdate> pendingHeaderUpdates, Throwable cause, boolean rewriteHeaders) {
+        for (Map.Entry<K, HeaderUpdate> entry : pendingHeaderUpdates.entrySet()) {
+            try {
+                this.sectorTracker.rollBack(entry.getKey(), entry.getValue());
+                if (rewriteHeaders) { this.updateHeaders(entry.getKey()); }
+            }
+            catch (RuntimeException | Error | IOException failed) { cause.addSuppressed(failed); }
+        }
     }
 
     private void updateHeaders(K key) throws IOException {
@@ -161,81 +169,102 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
         Utils.writeFully(file.position((long) key.getId() * entryByteCount), buf);
     }
 
-    @Override public Optional<ByteBuffer> readValue(K key) throws IOException {
-        Lock sectorLock = reserveSectorsLock.readLock();
-        Lock mainLock = dataLock.readLock();
-        boolean mainLocked = false;
+    private ReadView<K> startWrite(Map<K, ByteBuffer> pending, @Nullable Map<K, ByteBuffer> accepted) {
+        this.startWriteLock.lock();
         try {
-            sectorLock.lock();
-            Optional<RegionEntryLocation> entryLocation = sectorTracker.getEntryLocation(key);
-            if (!entryLocation.isPresent()) { return Optional.empty(); }
-            mainLock.lock();
-            mainLocked = true;
-            return doReadKey(key);
+            ReadView<K> view = new ReadView<>(pending, accepted);
+            this.ongoingWrite = view;
+            this.idle.lock.writeLock().lock();
+            return view;
         }
-        catch (UncheckedIOException e) { throw e.getCause(); }
-        finally {
-            sectorLock.unlock();
-            if (mainLocked) { mainLock.unlock(); }
+        catch (RuntimeException | Error e) {
+            this.ongoingWrite = null;
+            this.startWriteLock.unlock();
+            throw e;
         }
     }
 
-    private Optional<ByteBuffer> doReadKey(K key) {
-        try {
-            Optional<RegionEntryLocation> entryLocation = sectorTracker.getEntryLocation(key);
-            if (!entryLocation.isPresent()) { return Optional.empty(); }
-            RegionEntryLocation loc = entryLocation.get();
-            int sectorOffset = loc.getOffset();
-            int sectorCount = loc.getSize();
-            ByteBuffer buf = ByteBuffer.allocate(Integer.BYTES);
-            long position = (long) sectorOffset * sectorSize;
-            Utils.readFully(file, buf, position);
-            int dataLength = buf.getInt(0);
-            if (dataLength < 0 || dataLength > sectorCount * sectorSize) { throw new ICorruptedDataException("Expected data size max " + sectorCount * sectorSize + " but found " + dataLength); }
-            ByteBuffer bytes = ByteBuffer.allocate(dataLength);
-            Utils.readFully(file, bytes, position + Integer.BYTES);
-            bytes.flip();
-            return Optional.of(bytes);
+    private void finishWrite(ReadView<K> view) {
+        this.idle.lock.writeLock().unlock();
+        this.ongoingWrite = null;
+        view.lock.writeLock().lock();
+        this.startWriteLock.unlock();
+    }
+
+    private ReadView<K> startRead(K key) {
+        while (true) {
+            ReadView<K> write = this.ongoingWrite;
+            ReadView<K> view = write == null ? this.idle : write;
+            if (!view.lock.readLock().tryLock()) { continue; }
+            if (view.accepted != null || !view.pending.containsKey(key)) { return view; }
+            view.lock.readLock().unlock();
+            Thread.yield();
         }
-        catch (IOException e) { throw new UncheckedIOException(e); }
+    }
+
+    @Override public Optional<ByteBuffer> readValue(K key) throws IOException {
+        ReadView<K> view = this.startRead(key);
+        try {
+            if (!view.holds(key)) { return this.readFromDisk(key); }
+            ByteBuffer written = view.value(key);
+            if (written == null) { return Optional.empty(); }
+            ByteBuffer copy = ByteBuffer.allocate(written.remaining());
+            copy.put(written.slice()).flip();
+            return Optional.of(copy);
+        }
+        finally { view.lock.readLock().unlock(); }
+    }
+
+    private Optional<ByteBuffer> readFromDisk(K key) throws IOException {
+        Optional<RegionEntryLocation> entryLocation = this.sectorTracker.getEntryLocation(key);
+        if (!entryLocation.isPresent()) { return Optional.empty(); }
+        RegionEntryLocation loc = entryLocation.get();
+        int capacity = loc.getSize() * this.sectorSize;
+        long position = (long) loc.getOffset() * this.sectorSize;
+        ByteBuffer buffer = ByteBuffer.allocate(capacity);
+        long at = position;
+        while (buffer.hasRemaining()) {
+            int read = this.file.read(buffer, at);
+            if (read < 0) { break; }
+            at += read;
+        }
+        buffer.flip();
+        if (buffer.remaining() < Integer.BYTES) { throw new ICorruptedDataException("Expected " + Integer.BYTES + " byte(s) at " + position + " but the file ends there"); }
+        int dataLength = buffer.getInt();
+        if (dataLength < 0 || dataLength > capacity) { throw new ICorruptedDataException("Expected data size max " + capacity + " but found " + dataLength); }
+        if (dataLength > buffer.remaining()) { throw new ICorruptedDataException("Expected " + dataLength + " byte(s) at " + (position + Integer.BYTES) + " but only " + buffer.remaining() + " are there"); }
+        buffer.limit(buffer.position() + dataLength);
+        return Optional.of(buffer.slice());
     }
 
     @Override public boolean hasValue(K key) {
-        reserveSectorsLock.readLock().lock();
-        try { return sectorTracker.getEntryLocation(key).isPresent(); }
-        finally { reserveSectorsLock.readLock().unlock(); }
+        ReadView<K> view = this.startRead(key);
+        try { return view.holds(key) ? view.value(key) != null : this.sectorTracker.getEntryLocation(key).isPresent(); }
+        finally { view.lock.readLock().unlock(); }
     }
 
     private int getSectorNumber(int bytes) { return ceilDiv(bytes, sectorSize); }
 
     @Override public void flush() throws IOException {
-        reserveSectorsLock.writeLock().lock();
-        dataLock.writeLock().lock();
+        ReadView<K> view = this.startWrite(Collections.emptyMap(), Collections.emptyMap());
         try {
             boolean fileLengthChanged = false;
             fileLengthChanged |= this.ensureSectorSizeAligned();
             fileLengthChanged |= this.erasePendingSectors();
             this.file.force(fileLengthChanged);
         }
-        finally {
-            dataLock.writeLock().unlock();
-            reserveSectorsLock.writeLock().unlock();
-        }
+        finally { this.finishWrite(view); }
     }
 
     @Override public void close() throws IOException {
-        reserveSectorsLock.writeLock().lock();
-        dataLock.writeLock().lock();
+        ReadView<K> view = this.startWrite(Collections.emptyMap(), Collections.emptyMap());
         try {
             this.ensureSectorSizeAligned();
             this.erasePendingSectors();
         }
         finally {
             try { this.file.close(); }
-            finally {
-                dataLock.writeLock().unlock();
-                reserveSectorsLock.writeLock().unlock();
-            }
+            finally { this.finishWrite(view); }
         }
     }
 
@@ -314,6 +343,37 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
         }
     }
 
+    private static final class ReadView<K> {
+        private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
+        private final Map<K, ByteBuffer> pending;
+        @Nullable private volatile Map<K, ByteBuffer> accepted;
+
+        private ReadView(Map<K, ByteBuffer> pending, @Nullable Map<K, ByteBuffer> accepted) {
+            this.pending = pending;
+            this.accepted = accepted;
+        }
+
+        private boolean holds(K key) {
+            Map<K, ByteBuffer> found = this.accepted;
+            return found != null && found.containsKey(key);
+        }
+
+        @Nullable private ByteBuffer value(K key) {
+            Map<K, ByteBuffer> found = this.accepted;
+            return found == null ? null : found.get(key);
+        }
+    }
+
+    private static final class HeaderUpdate {
+        @Nullable private final RegionEntryLocation prev;
+        @Nullable private final RegionEntryLocation next;
+
+        private HeaderUpdate(@Nullable RegionEntryLocation prev, @Nullable RegionEntryLocation next) {
+            this.prev = prev;
+            this.next = next;
+        }
+    }
+
     private static class SectorTracker<K extends IKey> {
         private final BitSet usedSectors;
         private final IKeyIdToSectorMap<K> sectorMap;
@@ -326,18 +386,25 @@ public class ShadowPagingRegion<K extends IKey> implements IRegion<K> {
 
         public Optional<RegionEntryLocation> getEntryLocation(K key) { return sectorMap.getEntryLocation(key); }
 
-        public void removeKey(K key) throws IOException {
-            Optional<RegionEntryLocation> existing = sectorMap.getEntryLocation(key);
-            RegionEntryLocation loc = new RegionEntryLocation(0, 0);
-            this.sectorMap.setOffsetAndSize(key, loc);
-            this.updateUsedSectorsFor(existing.orElse(null), loc);
-        }
-
-        public RegionEntryLocation reserveForKey(K key, int requestedSize) throws IOException {
+        public HeaderUpdate reserve(K key, int requestedSize) throws IOException {
+            RegionEntryLocation existing = sectorMap.getEntryLocation(key).orElse(null);
             RegionEntryLocation found = findFree(requestedSize);
             this.sectorMap.setOffsetAndSize(key, found);
             this.updateUsedSectorsFor(null, found);
-            return found;
+            return new HeaderUpdate(existing, found);
+        }
+
+        public HeaderUpdate reserveDeletion(K key) throws IOException {
+            RegionEntryLocation existing = sectorMap.getEntryLocation(key).orElse(null);
+            this.sectorMap.setOffsetAndSize(key, new RegionEntryLocation(0, 0));
+            return new HeaderUpdate(existing, null);
+        }
+
+        public void commit(HeaderUpdate update) { this.updateUsedSectorsFor(update.prev, null); }
+
+        public void rollBack(K key, HeaderUpdate update) throws IOException {
+            this.sectorMap.setOffsetAndSize(key, update.prev == null ? new RegionEntryLocation(0, 0) : update.prev);
+            this.updateUsedSectorsFor(update.next, update.prev);
         }
 
         private RegionEntryLocation findFree(int requestedSize) { return Utils.findFreeSectors(usedSectors, requestedSize); }

@@ -86,7 +86,7 @@ public class RegionCubeStorage implements IRubicStorage {
 
     @Nullable private static NBTTagCompound parsed(@Nullable ByteBuffer data, String what, Object pos) {
         if (data == null) { return null; }
-        try { return CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.array())); }
+        try { return CompressedStreamTools.readCompressed(new ByteArrayInputStream(data.array(), data.arrayOffset() + data.position(), data.remaining())); }
         catch (IOException | RuntimeException corrupt) {
             regenerating(what, pos, corrupt);
             return null;
