@@ -4392,7 +4392,10 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve só as de que pre
     "advancement": "mypack:story/ruby",
     "killed": "minecraft:wither",
     "killedCount": 2,
-    "killedDrops": "mypack:ruby_key"
+    "killedDrops": "mypack:ruby_key",
+    "team": "red",
+    "objective": "quests",
+    "scoreAtLeast": 5
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4406,7 +4409,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve só as de que pre
 | ----------------- | ----------- | --------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | `dimension`       | sim         | int                                           |                                  | A dimensão que ela guarda                                                                                     |
 | `name`            | não         | texto                                         | o nome do arquivo                | Mostrado ao jogador                                                                                           |
-| `scope`           | não         | `player`, `global`                            | `player`                         | Um jogador por vez, ou o mundo inteiro de uma vez                                                             |
+| `scope`           | não         | `player`, `global`, `team`                    | `player`                         | Um jogador por vez, o mundo inteiro de uma vez, ou toda a equipe de quem o abriu                              |
 | `open`            | não         | booleano                                      | `false`                          | Se ela começa aberta                                                                                          |
 | `unlock`          | não         | objeto                                        |                                  | O que a abre. Veja abaixo                                                                                     |
 | `unlockedMessage` | não         | texto                                         | `%dim% is now open`              | Mostrada quando ela abre                                                                                      |
@@ -4415,7 +4418,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve só as de que pre
 | `requires`        | não         | lista de ids de mods ou namespaces de pacotes | nenhum                           | A passagem é ignorada a menos que todos estejam presentes                                                     |
 | `portalBlocks`    | não         | lista de nomes de blocos                      | todo portal                      | Limita a passagem a estes blocos de portal, de modo que uma dimensão pode ter uma porta guardada e uma aberta |
 
-`unlock` aceita `hold` (um item que precisa estar na mão), `consume` com `consumeCount` (`1`), `craft` (um item que precisa ter sido fabricado), `advancement` e `killed` (um nome de entidade; a passagem se abre para quem matar uma, de modo que um chefe pode guardar a chave de um mundo) com `killedCount` (`1`) quando uma não basta, contabilizado por jogador ou para o mundo inteiro conforme o escopo. Adicionar `killedDrops` (um nome de item) faz as mortes contadas largarem esse item aos pés de quem matou em vez de abrir a passagem, e zera a contagem, de modo que uma chave pode ser conquistada de novo e entregue a alguém que nunca lutou por ela; use `hold` ou `consume` do mesmo item como condição para torná-lo a chave. `%item%`, `%mob%` e `%dim%` são preenchidos para você. Uma chave que um mob solta não precisa de nada especial aqui: dê o drop ao mob e use `hold` ou `consume` como condição.
+`unlock` aceita `hold` (um item que precisa estar na mão), `consume` com `consumeCount` (`1`), `craft` (um item que precisa ter sido fabricado), `advancement` e `killed` (um nome de entidade; a passagem se abre para quem matar uma, de modo que um chefe pode guardar a chave de um mundo) com `killedCount` (`1`) quando uma não basta, contabilizado por jogador ou para o mundo inteiro conforme o escopo. Adicionar `killedDrops` (um nome de item) faz as mortes contadas largarem esse item aos pés de quem matou em vez de abrir a passagem, e zera a contagem, de modo que uma chave pode ser conquistada de novo e entregue a alguém que nunca lutou por ela; use `hold` ou `consume` do mesmo item como condição para torná-lo a chave. `%item%`, `%mob%` e `%dim%` são preenchidos para você. Uma chave que um mob solta não precisa de nada especial aqui: dê o drop ao mob e use `hold` ou `consume` como condição. `team`, e `objective` com `scoreAtLeast`, abrem a passagem para um jogador dessa equipe do placar cuja pontuação nesse objetivo seja pelo menos esse valor, as mesmas condições que o `when` de um cartão aceita; cada uma também funciona sozinha. Elas são verificadas quando o jogador atravessa, e a passagem então se abre no seu escopo como em qualquer outro desbloqueio. Com o escopo `team`, o desbloqueio pertence à equipe de quem a abriu: todos dela passam, inclusive quem entrar depois, e um jogador sem equipe a desbloqueia só para si.
 
 ## Mundos Rubic
 

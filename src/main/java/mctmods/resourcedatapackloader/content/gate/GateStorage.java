@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.gate;
 
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.world.SavedData;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,28 +16,56 @@ public final class GateStorage extends WorldSavedData {
     private static final String NAME = "rdpl_gates";
     private static final String TAG = "rdplGates";
     private static final String KILLS = "rdplGateKills";
+    private static final String TEAMS = "rdplGateTeams";
     private NBTTagCompound open = new NBTTagCompound();
     private NBTTagCompound kills = new NBTTagCompound();
+    private NBTTagCompound teams = new NBTTagCompound();
 
     public GateStorage(String name) { super(name); }
 
-    public static int tally(EntityPlayer player, GateDef def) { return def.global ? tallyGlobally(player.world, def.getKey()) : tallyFor(player, def.getKey()); }
+    public static int tally(EntityPlayer player, GateDef def) { return def.global() ? tallyGlobally(player.world, def.getKey()) : tallyFor(player, def.getKey()); }
 
     public static void clearTally(EntityPlayer player, GateDef def) {
-        if (def.global) { clearTallyGlobally(player.world, def.getKey()); }
+        if (def.global()) { clearTallyGlobally(player.world, def.getKey()); }
         else { clearTallyFor(player, def.getKey()); }
     }
 
-    public static boolean unlocked(EntityPlayer player, GateDef def) { return def.global ? unlockedGlobally(player.world, def.getKey()) : unlockedFor(player, def.getKey()); }
+    public static boolean unlocked(EntityPlayer player, GateDef def) {
+        if (def.global()) { return unlockedGlobally(player.world, def.getKey()); }
+        String team = teamFor(player, def);
+        return team.isEmpty() ? unlockedFor(player, def.getKey()) : unlockedByTeam(player.world, team, def.getKey());
+    }
 
     public static void unlock(EntityPlayer player, GateDef def) {
-        if (def.global) { unlockGlobally(player.world, def.getKey()); }
-        else { unlockFor(player, def.getKey()); }
+        String team = teamFor(player, def);
+        if (def.global()) { unlockGlobally(player.world, def.getKey()); }
+        else if (team.isEmpty()) { unlockFor(player, def.getKey()); }
+        else { unlockByTeam(player.world, team, def.getKey(), true); }
     }
 
     public static void lock(EntityPlayer player, GateDef def) {
-        if (def.global) { lockGlobally(player.world, def.getKey()); }
-        else { lockFor(player, def.getKey()); }
+        String team = teamFor(player, def);
+        if (def.global()) { lockGlobally(player.world, def.getKey()); }
+        else if (team.isEmpty()) { lockFor(player, def.getKey()); }
+        else { unlockByTeam(player.world, team, def.getKey(), false); }
+    }
+
+    public static String teamFor(EntityPlayer player, GateDef def) { return def.teamWide() ? Standing.teamOf(player) : ""; }
+
+    private static boolean unlockedByTeam(World world, String team, String key) {
+        GateStorage data = get(world);
+        return data != null && data.teams.getCompoundTag(team).getBoolean(key);
+    }
+
+    private static void unlockByTeam(World world, String team, String key, boolean unlocked) {
+        GateStorage data = get(world);
+        if (data == null) { return; }
+        NBTTagCompound gates = data.teams.getCompoundTag(team);
+        if (unlocked) { gates.setBoolean(key, true); }
+        else { gates.removeTag(key); }
+        if (gates.isEmpty()) { data.teams.removeTag(team); }
+        else { data.teams.setTag(team, gates); }
+        data.markDirty();
     }
 
     public static boolean unlockedFor(EntityPlayer player, String key) { return PlayerPersisted.read(player, TAG).getBoolean(key); }
@@ -102,11 +131,13 @@ public final class GateStorage extends WorldSavedData {
     @Override public void readFromNBT(@Nonnull NBTTagCompound compound) {
         open = compound.getCompoundTag(TAG);
         kills = compound.getCompoundTag(KILLS);
+        teams = compound.getCompoundTag(TEAMS);
     }
 
     @Override @Nonnull public NBTTagCompound writeToNBT(@Nonnull NBTTagCompound compound) {
         compound.setTag(TAG, open);
         compound.setTag(KILLS, kills);
+        compound.setTag(TEAMS, teams);
         return compound;
     }
 }

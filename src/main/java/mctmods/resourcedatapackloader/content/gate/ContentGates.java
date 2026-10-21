@@ -12,6 +12,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.entity.player.EntityPlayer;
@@ -69,7 +70,16 @@ public final class ContentGates {
         return null;
     }
 
-    public static boolean unlocked(EntityPlayer player, GateDef def) {
+    public static boolean unlocked(EntityPlayer player, GateDef def) { return openFor(player, def) || def.standing.earnedBy(player); }
+
+    public static boolean admits(EntityPlayer player, GateDef def) {
+        if (openFor(player, def)) { return true; }
+        if (!def.standing.earnedBy(player)) { return false; }
+        unlock(player, def, true);
+        return true;
+    }
+
+    private static boolean openFor(EntityPlayer player, GateDef def) {
         if (def.open) { return true; }
         if (!def.hold.isEmpty() && carrying(player, def.hold)) { return true; }
         if (!def.advancement.isEmpty() && earned(player, def.advancement)) { return true; }
@@ -80,7 +90,8 @@ public final class ContentGates {
         GateStorage.unlock(player, def);
         if (!announce || def.unlockedMessage.isEmpty()) { return; }
         String message = def.unlockedMessage.replace("%dim%", def.name).replace("%player%", player.getName());
-        if (def.global) { broadcast(player, message); }
+        String team = GateStorage.teamFor(player, def);
+        if (def.global() || !team.isEmpty()) { broadcast(player, message, team); }
         else { Says.line(player, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
     }
 
@@ -105,10 +116,12 @@ public final class ContentGates {
 
     private static boolean earned(EntityPlayer player, String name) { return mctmods.resourcedatapackloader.util.Advancements.has(player, name); }
 
-    private static void broadcast(EntityPlayer player, String message) {
+    private static void broadcast(EntityPlayer player, String message, String team) {
         MinecraftServer server = player.getServer();
         if (server == null) { return; }
-        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) { Says.line(online, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
+        for (EntityPlayerMP online : server.getPlayerList().getPlayers()) {
+            if (team.isEmpty() || team.equals(Standing.teamOf(online))) { Says.line(online, CardIds.GATE_UNLOCKED, TextFormatting.GREEN, message); }
+        }
     }
 
     private static String describe(String item) {

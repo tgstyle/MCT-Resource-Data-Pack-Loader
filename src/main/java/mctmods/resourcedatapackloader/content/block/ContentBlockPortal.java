@@ -130,7 +130,7 @@ import javax.annotation.Nullable;
         if (!(player instanceof EntityPlayerMP)) { return; }
         if (recently(player, shown)) { return; }
         GateDef gate = shown.gate.isEmpty() ? null : ContentGates.find(shown.gate);
-        if (gate != null && !ContentGates.unlocked(player, gate)) {
+        if (gate != null && !ContentGates.admits(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }

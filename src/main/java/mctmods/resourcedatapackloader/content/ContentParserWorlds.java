@@ -8,6 +8,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Standing;
 import static mctmods.resourcedatapackloader.util.Json.strings;
 
 import com.google.gson.JsonArray;
@@ -35,7 +36,7 @@ public final class ContentParserWorlds {
     private static final List<String> RETURNS = Collections.unmodifiableList(Arrays.asList(DimensionPortalDef.BUILT, DimensionPortalDef.PLAYER, DimensionPortalDef.NONE));
     private static final List<String> DIRECTIONS = Collections.unmodifiableList(Arrays.asList(IntroPageDef.UP, IntroPageDef.DOWN));
     private static final List<String> SOURCES = Collections.unmodifiableList(Arrays.asList(DimensionDef.SINGLE, DimensionDef.INHERIT, DimensionDef.LIST));
-    private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL));
+    private static final List<String> SCOPES = Collections.unmodifiableList(Arrays.asList(GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM));
     private static final String ROLES = "rlsc.";
 
     private ContentParserWorlds() {}
@@ -478,7 +479,7 @@ public final class ContentParserWorlds {
         return new GateDef(key,
                 Json.getInt(json, "dimension"),
                 Json.getString(json, "name", key.getPath()),
-                GateDef.GLOBAL.equals(scope),
+                scope,
                 Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", ""),
                 Json.getString(unlock, "consume", ""),
@@ -488,6 +489,7 @@ public final class ContentParserWorlds {
                 Json.getString(unlock, "killed", ""),
                 Math.max(1, Json.getInt(unlock, "killedCount", 1)),
                 Json.getString(unlock, "killedDrops", ""),
+                Standing.parse(unlock),
                 strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"),
                 Json.getString(json, "unlockedMessage", "%dim% is now open"),

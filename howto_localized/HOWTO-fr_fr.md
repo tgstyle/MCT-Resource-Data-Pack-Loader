@@ -4392,7 +4392,10 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
     "advancement": "mypack:story/ruby",
     "killed": "minecraft:wither",
     "killedCount": 2,
-    "killedDrops": "mypack:ruby_key"
+    "killedDrops": "mypack:ruby_key",
+    "team": "red",
+    "objective": "quests",
+    "scoreAtLeast": 5
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4406,7 +4409,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | ----------------- | ------ | --------------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `dimension`       | oui    | entier                                        |                                  | La dimension qu'il garde                                                                                               |
 | `name`            | non    | texte                                         | le nom du fichier                | Montré au joueur                                                                                                       |
-| `scope`           | non    | `player`, `global`                            | `player`                         | Un joueur à la fois, ou le monde entier d'un coup                                                                      |
+| `scope`           | non    | `player`, `global`, `team`                    | `player`                         | Un joueur à la fois, le monde entier d'un coup, ou toute l'équipe de celui qui l'ouvre                                 |
 | `open`            | non    | booléen                                       | `false`                          | S'il est ouvert dès le départ                                                                                          |
 | `unlock`          | non    | objet                                         |                                  | Ce qui l'ouvre. Voir ci-dessous                                                                                        |
 | `unlockedMessage` | non    | texte                                         | `%dim% is now open`              | Montré à son ouverture                                                                                                 |
@@ -4415,7 +4418,7 @@ Toutes les clés, montrées d'un coup. Un vrai fichier n'écrit que celles dont 
 | `requires`        | non    | liste d'ids de mods ou de namespaces de packs | aucun                            | Le passage est ignoré sauf si tous sont présents                                                                       |
 | `portalBlocks`    | non    | liste de noms de blocs                        | tous les portails                | Limite le passage à ces blocs de portail, de sorte qu'une dimension puisse avoir un passage gardé et un passage ouvert |
 
-`unlock` accepte `hold` (un objet qui doit être tenu en main), `consume` avec `consumeCount` (`1`), `craft` (un objet qui doit avoir été fabriqué), `advancement`, et `killed` (un nom d'entité : le passage s'ouvre pour quiconque en tue une, de sorte qu'un boss peut détenir la clé d'un monde) avec `killedCount` (`1`) quand une seule ne suffit pas, décompté par joueur ou pour le monde entier selon la portée. Ajouter `killedDrops` (un nom d'objet) fait que les morts comptées déposent cet objet aux pieds du tueur au lieu d'ouvrir le passage, et remet le décompte à zéro : une clé peut ainsi être regagnée et remise à quelqu'un qui n'a jamais combattu pour elle ; conditionnez avec `hold` ou `consume` le même objet pour en faire la clé. `%item%`, `%mob%` et `%dim%` sont remplacés pour vous. Une clé qu'un mob lâche n'exige rien de spécial ici : donnez le butin au mob et conditionnez avec `hold` ou `consume`.
+`unlock` accepte `hold` (un objet qui doit être tenu en main), `consume` avec `consumeCount` (`1`), `craft` (un objet qui doit avoir été fabriqué), `advancement`, et `killed` (un nom d'entité : le passage s'ouvre pour quiconque en tue une, de sorte qu'un boss peut détenir la clé d'un monde) avec `killedCount` (`1`) quand une seule ne suffit pas, décompté par joueur ou pour le monde entier selon la portée. Ajouter `killedDrops` (un nom d'objet) fait que les morts comptées déposent cet objet aux pieds du tueur au lieu d'ouvrir le passage, et remet le décompte à zéro : une clé peut ainsi être regagnée et remise à quelqu'un qui n'a jamais combattu pour elle ; conditionnez avec `hold` ou `consume` le même objet pour en faire la clé. `%item%`, `%mob%` et `%dim%` sont remplacés pour vous. Une clé qu'un mob lâche n'exige rien de spécial ici : donnez le butin au mob et conditionnez avec `hold` ou `consume`. `team`, et `objective` avec `scoreAtLeast`, l'ouvrent pour un joueur de cette équipe du tableau des scores dont le score dans cet objectif atteint au moins cette valeur, les mêmes conditions que le `when` d'une carte ; chacune fonctionne aussi seule. Elles sont vérifiées au moment où le joueur le franchit, puis le passage s'ouvre dans sa portée comme pour tout autre déverrouillage. Avec la portée `team`, un déverrouillage appartient à l'équipe de celui qui l'a ouvert : tous ses membres passent, y compris ceux qui la rejoignent plus tard, et un joueur sans équipe ne le déverrouille que pour lui-même.
 
 ## Mondes Rubic
 

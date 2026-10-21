@@ -505,11 +505,11 @@ public class ServerCommands extends CommandBase {
         if (def == null) { throw new CommandException(Lang.tr(sender, "rdpl.command.nogate", args[3])); }
         if ("grant".equals(action)) {
             ContentGates.unlock(player, def, false);
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateopened", def.getKey(), player.getName(), def.getScope()));
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateopened", def.getKey(), player.getName(), def.scope));
         }
         else if ("revoke".equals(action)) {
             ContentGates.lock(player, def);
-            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateclosed", def.getKey(), player.getName(), def.getScope()));
+            send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gateclosed", def.getKey(), player.getName(), def.scope));
         }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
@@ -535,7 +535,7 @@ public class ServerCommands extends CommandBase {
     private void gateList(ICommandSender sender) {
         send(sender, TextFormatting.GREEN, Lang.tr(sender, "rdpl.command.gates", ContentGates.all().size()));
         for (GateDef def : ContentGates.all().values()) {
-            send(sender, TextFormatting.WHITE, "  " + def.getKey() + TextFormatting.GRAY + "  dimension=" + def.dimension + " scope=" + def.getScope() + (def.open ? Lang.tr(sender, "rdpl.command.open") : ""));
+            send(sender, TextFormatting.WHITE, "  " + def.getKey() + TextFormatting.GRAY + "  dimension=" + def.dimension + " scope=" + def.scope +(def.open ? Lang.tr(sender, "rdpl.command.open") : ""));
         }
     }
 

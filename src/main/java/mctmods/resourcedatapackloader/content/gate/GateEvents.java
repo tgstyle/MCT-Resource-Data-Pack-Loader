@@ -38,7 +38,7 @@ public final class GateEvents {
         EntityPlayerMP player = (EntityPlayerMP) event.getEntity();
         List<GateDef> defs = ContentGates.forDimension(event.getDimension());
         for (GateDef def : defs) {
-            if (ContentGates.unlocked(player, def)) { continue; }
+            if (ContentGates.admits(player, def)) { continue; }
             event.setCanceled(true);
             if (quiet(player)) { return; }
             ContentGates.refuse(player, def);
@@ -111,7 +111,7 @@ public final class GateEvents {
         if (!(player instanceof EntityPlayerMP)) { return; }
         ResourceLocation earned = event.getAdvancement().getId();
         for (GateDef def : ContentGates.all().values()) {
-            if (def.advancement.isEmpty() || !def.global) { continue; }
+            if (def.advancement.isEmpty() || def.perPlayer()) { continue; }
             if (!def.advancement.equals(earned.toString())) { continue; }
             ContentGates.unlock(player, def, true);
         }

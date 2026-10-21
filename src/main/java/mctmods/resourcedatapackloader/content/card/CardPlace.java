@@ -5,8 +5,6 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.util.Settings;
 
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.scoreboard.ScoreObjective;
-import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DimensionType;
@@ -18,7 +16,6 @@ import net.minecraftforge.common.DimensionManager;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import javax.annotation.Nullable;
 
 final class CardPlace {
     private static final List<String> VANILLA_STRUCTURES = Arrays.asList("Village", "Temple", "Mansion", "Monument", "Mineshaft", "Stronghold", "Fortress", "EndCity");
@@ -73,13 +70,6 @@ final class CardPlace {
             if (near != null && near.distanceSq(at) <= (double) radius * radius) { return true; }
         }
         return false;
-    }
-
-    @Nullable static Integer score(EntityPlayerMP player, String objective) {
-        Scoreboard board = player.world.getScoreboard();
-        ScoreObjective found = board.getObjective(objective);
-        if (found == null || !board.entityHasObjective(player.getName(), found)) { return null; }
-        return board.getOrCreateScore(player.getName(), found).getScorePoints();
     }
 
     static long day(World world) { return world.getWorldTime() / DimensionTraitsDef.VANILLA_DAY; }

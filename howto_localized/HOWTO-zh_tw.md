@@ -4392,7 +4392,10 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
     "advancement": "mypack:story/ruby",
     "killed": "minecraft:wither",
     "killedCount": 2,
-    "killedDrops": "mypack:ruby_key"
+    "killedDrops": "mypack:ruby_key",
+    "team": "red",
+    "objective": "quests",
+    "scoreAtLeast": 5
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4406,7 +4409,7 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
 | ----------------- | ---- | ------------------------------ | -------------------------------- | -------------------------------------------------------------------- |
 | `dimension`       | 是   | 整數                           |                                  | 它守衛的維度                                                         |
 | `name`            | 否   | 字串                           | 檔名                             | 顯示給玩家                                                           |
-| `scope`           | 否   | `player`、`global`             | `player`                         | 一次針對一名玩家，還是針對整個世界                                   |
+| `scope`           | 否   | `player`、`global`、`team`      | `player`                         | 一次針對一名玩家、針對整個世界，還是針對開啟者的整個隊伍                        |
 | `open`            | 否   | 布林值                         | `false`                          | 是否一開始就處於開啟狀態                                             |
 | `unlock`          | 否   | 物件                           |                                  | 用什麼來開啟。見下文                                                 |
 | `unlockedMessage` | 否   | 字串                           | `%dim% is now open`              | 開啟時顯示                                                           |
@@ -4415,7 +4418,7 @@ override 有幾樣東西不會改動：GalaxySpace 和 ExtraPlanets 地圖上天
 | `requires`        | 否   | 模組 id 或資源包命名空間的清單 | 無                               | 除非全部存在，否則略過此閘門                                         |
 | `portalBlocks`    | 否   | 方塊名稱清單                   | 所有傳送門                       | 將閘門限定於這些傳送門方塊，讓一個維度可以同時有受守衛的門與開放的門 |
 
-`unlock` 接受 `hold`（必須持有的物品）、`consume` 搭配 `consumeCount`（`1`）、`craft`（必須已合成過的物品）、`advancement`，以及 `killed`（實體名稱，誰擊殺一隻，閘門就為誰開啟，所以頭目可以掌握通往一個世界的鑰匙）搭配 `killedCount`（`1`，一隻不夠時使用），依範圍設定按每名玩家或整個世界累計。加上 `killedDrops`（物品名稱）後，計入的擊殺會把該物品放在擊殺者腳邊，而不是開啟閘門，並且重新開始計數，所以鑰匙可以再次取得，並交給從未參與戰鬥的人；對同一個物品設定 `hold` 或 `consume` 的條件，即可讓它成為鑰匙。`%item%`、`%mob%` 和 `%dim%` 會自動填入。生物掉落的鑰匙在這裡不需要任何特殊處理：讓生物掉落該物品，再以 `hold` 或 `consume` 設定條件即可。
+`unlock` 接受 `hold`（必須持有的物品）、`consume` 搭配 `consumeCount`（`1`）、`craft`（必須已合成過的物品）、`advancement`，以及 `killed`（實體名稱，誰擊殺一隻，閘門就為誰開啟，所以頭目可以掌握通往一個世界的鑰匙）搭配 `killedCount`（`1`，一隻不夠時使用），依範圍設定按每名玩家或整個世界累計。加上 `killedDrops`（物品名稱）後，計入的擊殺會把該物品放在擊殺者腳邊，而不是開啟閘門，並且重新開始計數，所以鑰匙可以再次取得，並交給從未參與戰鬥的人；對同一個物品設定 `hold` 或 `consume` 的條件，即可讓它成為鑰匙。`%item%`、`%mob%` 和 `%dim%` 會自動填入。生物掉落的鑰匙在這裡不需要任何特殊處理：讓生物掉落該物品，再以 `hold` 或 `consume` 設定條件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，會為屬於該計分板隊伍、且在該目標中分數不低於該值的玩家開啟閘門，這與卡片的 `when` 所用的條件相同；兩者也可以單獨使用。條件在玩家穿過時檢查，符合後閘門會像其他解鎖方式一樣依其範圍開啟。範圍為 `team` 時，解鎖歸開啟者的隊伍所有：隊伍中的每個人都能通過，包括之後加入的玩家；不屬於任何隊伍的玩家開啟時，只對自己開放。
 
 ## Rubic 世界
 

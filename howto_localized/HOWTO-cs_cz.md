@@ -4392,7 +4392,10 @@ Každý klíč najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
     "advancement": "mypack:story/ruby",
     "killed": "minecraft:wither",
     "killedCount": 2,
-    "killedDrops": "mypack:ruby_key"
+    "killedDrops": "mypack:ruby_key",
+    "team": "red",
+    "objective": "quests",
+    "scoreAtLeast": 5
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -4406,7 +4409,7 @@ Každý klíč najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 | ----------------- | ------- | ------------------------------------- | -------------------------------- | ---------------------------------------------------------------------------------------- |
 | `dimension`       | ano     | celé číslo                            |                                  | Dimenze, kterou hlídá                                                                    |
 | `name`            | ne      | řetězec                               | název souboru                    | Zobrazuje se hráči                                                                       |
-| `scope`           | ne      | `player`, `global`                    | `player`                         | Pro každého hráče zvlášť, nebo pro celý svět najednou                                    |
+| `scope`           | ne      | `player`, `global`, `team`            | `player`                         | Pro každého hráče zvlášť, pro celý svět najednou, nebo pro celý tým toho, kdo ji otevřel |
 | `open`            | ne      | boolean                               | `false`                          | Zda začíná otevřená                                                                      |
 | `unlock`          | ne      | objekt                                |                                  | Co ji otevře. Viz níže                                                                   |
 | `unlockedMessage` | ne      | řetězec                               | `%dim% is now open`              | Zobrazí se při otevření                                                                  |
@@ -4415,7 +4418,7 @@ Každý klíč najednou. Skutečný soubor obsahuje jen ty, které potřebuje.
 | `requires`        | ne      | seznam id módů nebo namespace balíčků | žádný                            | Brána se přeskočí, pokud nejsou přítomny všechny                                         |
 | `portalBlocks`    | ne      | seznam názvů bloků                    | každý portál                     | Omezí bránu na tyto bloky portálu, takže jedna dimenze může mít hlídané dveře i otevřené |
 
-`unlock` přijímá `hold` (předmět, který je třeba držet), `consume` s `consumeCount` (`1`), `craft` (předmět, který musel být vyroben), `advancement` a `killed` (název entity; brána se otevře tomu, kdo jednu zabije, takže boss může držet klíč ke světu) s `killedCount` (`1`), když jedna nestačí, počítáno za každého hráče zvlášť nebo za celý svět podle `scope`. Přidání `killedDrops` (název předmětu) způsobí, že započtená zabití položí tento předmět zabijákovi k nohám místo otevření brány a počítání začne znovu, takže klíč lze získat opakovaně a předat někomu, kdo o něj nebojoval; podmiň bránu předmětem `hold` nebo `consume` téhož předmětu, aby se z něj stal klíč. `%item%`, `%mob%` a `%dim%` se doplní za tebe. Klíč, který padá z moba, nepotřebuje nic zvláštního: dej mobovi drop a podmiň bránu pomocí `hold` nebo `consume`.
+`unlock` přijímá `hold` (předmět, který je třeba držet), `consume` s `consumeCount` (`1`), `craft` (předmět, který musel být vyroben), `advancement` a `killed` (název entity; brána se otevře tomu, kdo jednu zabije, takže boss může držet klíč ke světu) s `killedCount` (`1`), když jedna nestačí, počítáno za každého hráče zvlášť nebo za celý svět podle `scope`. Přidání `killedDrops` (název předmětu) způsobí, že započtená zabití položí tento předmět zabijákovi k nohám místo otevření brány a počítání začne znovu, takže klíč lze získat opakovaně a předat někomu, kdo o něj nebojoval; podmiň bránu předmětem `hold` nebo `consume` téhož předmětu, aby se z něj stal klíč. `%item%`, `%mob%` a `%dim%` se doplní za tebe. Klíč, který padá z moba, nepotřebuje nic zvláštního: dej mobovi drop a podmiň bránu pomocí `hold` nebo `consume`. `team` a `objective` se `scoreAtLeast` ji otevřou hráči v tomto týmu na scoreboardu, jehož skóre v daném cíli je alespoň tolik – stejné podmínky, jaké bere `when` u karty; každá z nich platí i samostatně. Kontrolují se ve chvíli, kdy hráč prochází, a brána se pak otevře v rámci svého rozsahu jako při každém jiném odemčení. S rozsahem `team` patří odemčení týmu toho, kdo ji otevřel: projde každý v týmu, i ten, kdo se přidá později, a hráč bez týmu si ji odemkne jen pro sebe.
 
 ## Světy Rubic
 
