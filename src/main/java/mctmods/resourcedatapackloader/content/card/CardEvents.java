@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
+import mctmods.resourcedatapackloader.content.ContentDice;
 import mctmods.resourcedatapackloader.content.ContentStacks;
 
 import net.minecraft.resources.ResourceLocation;
@@ -49,6 +50,17 @@ public final class CardEvents {
             if (!fallen.equals(ResourceLocation.tryParse(rule.entity))) { continue; }
             if (rule.count > 1 && CardStorage.tallyFor(player, rule.key) < rule.count) { continue; }
             if (rule.count > 1) { CardStorage.clearTallyFor(player, rule.key); }
+            CardFire.fire(rule, player);
+        }
+    }
+
+    public static void rolled(ServerPlayer player, String what, int total) {
+        if (what.isEmpty()) { return; }
+        String named = ContentDice.notation(what);
+        for (CardRule rule : CardRules.on(CardRule.ROLL)) {
+            if (!rule.roll.isEmpty() && !rule.roll.equals(named)) { continue; }
+            if (rule.atLeast != null && total < rule.atLeast) { continue; }
+            if (rule.atMost != null && total > rule.atMost) { continue; }
             CardFire.fire(rule, player);
         }
     }

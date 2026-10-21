@@ -1357,6 +1357,7 @@ Un `potion_bottle` liste ce qu'il peut contenir avec `potionTypes`, un tableau d
 | `crop`         | seed          | nom de bloc                                   | aucun                      | La culture qu'il plante                                                                                                                                                                                                                                                                  |
 | `soil`         | seed          | nom de bloc                                   | `minecraft:farmland`       | Ce sur quoi il peut être planté                                                                                                                                                                                                                                                          |
 | `rolls`        | non           | `coin`, `d6`, `2d6+1`, un dé ou un paquet     | aucun                      | Pour un objet simple, un clic droit lance comme le ferait `/rdplserver game` et l'annonce au public par défaut du pack. Voir [Dés et paquets](#dés-et-paquets)                                                                                                                           |
+| `rollStore`    | non           | nom d'un objectif                    | aucun                  | Pour un objet avec `rolls`, l'objectif du tableau des scores qui reçoit le total du lancer comme score de son porteur à chaque utilisation. Un objectif qui n'existe pas fait refuser le lancer par une ligne de chat |
 | `passesTurn`   | non           | booléen                                       | `false`                    | Pour un objet simple, un clic droit passe le tour de celui qui le tient, comme le fait `/rdplserver game pass`. Voir [Tours](#tours)                                                                                                                                                     |
 | `requires`     | non           | liste d'ids de mods ou de namespaces de packs | aucun                      | Le fichier est ignoré à moins que tous soient présents                                                                                                                                                                                                                                   |
 
@@ -5385,6 +5386,7 @@ Le troisième accueille un joueur à sa première connexion avec une carte centr
 | `death`           | rien               | Un joueur meurt                                                                                                                                                                                                                                                                                     |
 | `y_level`         | `below` ou `above` | Un joueur passe sous ou au-dessus de cette hauteur                                                                                                                                                                                                                                                  |
 | `play_time`       | `minutes`          | Le temps d'un joueur dans le monde atteint ce nombre de minutes, compté depuis la fermeture de l'introduction du monde, ou depuis la connexion quand aucune introduction ne lui est montrée                                                                                                         |
+| `roll`            | rien, ou `roll`    | Un joueur lance avec `/rdplserver game` ou avec un objet avec `rolls`. Avec `roll`, seul ce lancer la déclenche, et `atLeast` et `atMost` bornent le total |
 | `score`           | `objective`        | Le score d'un joueur dans cet objectif atteint `score`                                                                                                                                                                                                                                              |
 
 Biome, structure, hauteur, temps de jeu et score sont vérifiés une fois par seconde pour chaque joueur, et se déclenchent au passage de l'extérieur à l'intérieur, jamais à la première vérification après une connexion. Une règle `time_of_day` ou `day` dont le public n'est pas `player` se déclenche une fois pour la dimension plutôt qu'une fois pour chaque joueur qui s'y trouve.
@@ -5410,6 +5412,8 @@ Une carte qui se déclenche alors qu'un joueur a encore l'introduction du monde 
 | `time`               | entier                                      | `0`           | Pour `time_of_day` : le tick du jour                                                                                                                                                                                                                                                                                    |
 | `day`                | entier                                      | aucun         | Pour `day` : l'unique jour où se déclencher. Sans lui, chaque jour                                                                                                                                                                                                                                                      |
 | `minutes`            | entier                                      | aucun         | Pour `play_time`                                                                                                                                                                                                                                                                                                        |
+| `roll`               | texte                              | aucun          | Pour `roll` : `coin`, une notation comme `2d6` (`d6` et `1d6` sont identiques) ou le nom d'un dé ou d'un paquet d'un pack. Sans lui, tout lancer déclenche la règle |
+| `atLeast`, `atMost`  | entier                             | aucun          | Pour `roll` : le total le plus bas et le plus haut qui déclenche la règle. Une pièce compte 1 pour face et 0 pour pile, un dé ou un paquet d'un pack la place du résultat dans son fichier, à partir de 1 |
 | `objective`, `score` | texte, entier                               | aucun, `1`    | Pour `score` : l'objectif et la valeur à atteindre                                                                                                                                                                                                                                                                      |
 | `requires`           | liste d'ids de mod ou de namespaces de pack | aucun         | Le fichier est ignoré sauf si tous sont présents                                                                                                                                                                                                                                                                        |
 
@@ -5532,6 +5536,31 @@ Un nom de dé ou de paquet appartient au premier pack qui le charge. Un autre pa
 Un paquet est une pile qui s'épuise. `game deck draw <name>` pioche une carte au hasard dans ce qui reste, et rien ne revient avant que le paquet vide se remélange à la pioche suivante ou que `game deck shuffle <name>` remette toutes les cartes. La pile est enregistrée avec le monde, donc un redémarrage ne la mélange pas.
 
 Chaque lancer utilise le hasard propre au monde et s'écrit dans le journal avec qui l'a fait, ce qui a été lancé et le résultat. `game last` montre les plus récents. Les résultats partent en lignes de chat ordinaires construites sur le serveur, donc un joueur sans le mod les lit aussi. La notation des dés se lit comme le nombre, `d`, les faces et un modificateur facultatif : `3d8-2` fait trois dés à huit faces additionnés, moins 2, et `d20` un dé à vingt faces. Le chat et le journal écrivent le lancer en toutes lettres, comme « Boss lance 3 dés à huit faces, moins 2 : [2, 6, 7] = 13 », et `{dice}` contient cette formulation.
+
+Un objet peut enregistrer ce qu'il lance, et une carte peut répondre à un lancer. L'objet ci-dessous lance `2d6` quand on l'utilise, l'annonce à l'auditoire et écrit le total comme score de son porteur dans l'objectif `dice_total`. La carte s'affiche quand quelqu'un lance `2d6` et obtient 10 ou plus, et exécute une fonction qui peut lire ce score.
+
+```json
+{
+  "type": "basic",
+  "rolls": "2d6",
+  "rollStore": "dice_total",
+  "cooldown": 20,
+  "variants": { "dice_pair": { "maxSize": 16 } }
+}
+```
+
+```json
+{
+  "trigger": "roll",
+  "roll": "2d6",
+  "atLeast": 10,
+  "title": "Un coup de chance",
+  "lines": ["{player} a fait un beau lancer."],
+  "runs": "mypack:lucky_throw"
+}
+```
+
+`/rdplserver game` comme le lancer d'un objet déclenchent la carte, une fois le score enregistré. Un lancer depuis la console ou un bloc de commande n'a pas de joueur et ne déclenche aucune carte. Sans `rollStore` et `roll`, l'objet et la carte se comportent comme avant.
 
 | Clé de formulation                                            | Champs                                                             |
 | ------------------------------------------------------------- | ------------------------------------------------------------------ |
