@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content.gate;
 
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
+import mctmods.resourcedatapackloader.util.Standing;
 
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -18,7 +19,9 @@ public final class GateStorage extends SavedData {
     private static final String PERSISTED = "rdplGates";
     private static final String PERSISTED_KILLS = "rdplGateKills";
     private CompoundTag open = new CompoundTag();
+    private static final String PERSISTED_TEAMS = "rdplGateTeams";
     private CompoundTag kills = new CompoundTag();
+    private CompoundTag teams = new CompoundTag();
     private static final Factory<GateStorage> FACTORY = new Factory<>(GateStorage::new, (tag, lookup) -> read(tag));
 
     private static GateStorage get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(FACTORY, NAME); }
@@ -27,12 +30,14 @@ public final class GateStorage extends SavedData {
         GateStorage held = new GateStorage();
         held.open = tag.getCompound(tag.contains(PERSISTED) ? PERSISTED : OLD_OPEN).copy();
         held.kills = tag.getCompound(tag.contains(PERSISTED_KILLS) ? PERSISTED_KILLS : OLD_KILLS).copy();
+        held.teams = tag.getCompound(PERSISTED_TEAMS).copy();
         return held;
     }
 
     @Override @Nonnull public CompoundTag save(@Nonnull CompoundTag tag, @Nonnull HolderLookup.Provider lookup) {
         tag.put(PERSISTED, open.copy());
         tag.put(PERSISTED_KILLS, kills.copy());
+        tag.put(PERSISTED_TEAMS, teams.copy());
         return tag;
     }
 
@@ -43,16 +48,38 @@ public final class GateStorage extends SavedData {
         else { clearTallyFor(player, def.id()); }
     }
 
-    public static boolean unlocked(ServerPlayer player, GateDef def) { return def.global() ? unlockedGlobally(player.server, def.id()) : unlockedFor(player, def.id()); }
+    public static boolean unlocked(ServerPlayer player, GateDef def) {
+        if (def.global()) { return unlockedGlobally(player.server, def.id()); }
+        String team = teamFor(player, def);
+        return team.isEmpty() ? unlockedFor(player, def.id()) : unlockedByTeam(player.server, team, def.id());
+    }
 
     public static void unlock(ServerPlayer player, GateDef def) {
+        String team = teamFor(player, def);
         if (def.global()) { unlockGlobally(player.server, def.id()); }
-        else { unlockFor(player, def.id()); }
+        else if (team.isEmpty()) { unlockFor(player, def.id()); }
+        else { unlockByTeam(player.server, team, def.id(), true); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {
+        String team = teamFor(player, def);
         if (def.global()) { lockGlobally(player.server, def.id()); }
-        else { lockFor(player, def.id()); }
+        else if (team.isEmpty()) { lockFor(player, def.id()); }
+        else { unlockByTeam(player.server, team, def.id(), false); }
+    }
+
+    public static String teamFor(ServerPlayer player, GateDef def) { return def.teamWide() ? Standing.teamOf(player) : ""; }
+
+    private static boolean unlockedByTeam(MinecraftServer server, String team, String key) { return get(server).teams.getCompound(team).getBoolean(key); }
+
+    private static void unlockByTeam(MinecraftServer server, String team, String key, boolean unlocked) {
+        GateStorage data = get(server);
+        CompoundTag gates = data.teams.getCompound(team);
+        if (unlocked) { gates.putBoolean(key, true); }
+        else { gates.remove(key); }
+        if (gates.isEmpty()) { data.teams.remove(team); }
+        else { data.teams.put(team, gates); }
+        data.setDirty();
     }
 
     public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBoolean(key); }

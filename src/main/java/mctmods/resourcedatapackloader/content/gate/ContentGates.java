@@ -13,6 +13,7 @@ import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.PackGeneration;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Standing;
 import mctmods.resourcedatapackloader.util.Summary;
 
 import com.google.gson.JsonObject;
@@ -69,8 +70,8 @@ public final class ContentGates {
         JsonObject json = Json.object(key, contents, "gate file");
         if (json == null) { return null; }
         String scope = Settings.lower(Json.getString(json, "scope", GateDef.PLAYER));
-        if (!GateDef.PLAYER.equals(scope) && !GateDef.GLOBAL.equals(scope)) {
-            ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.PLAYER);
+        if (!GateDef.PLAYER.equals(scope) && !GateDef.GLOBAL.equals(scope) && !GateDef.TEAM.equals(scope)) {
+            ContentLog.LOGGER.error("Gate {} asks for scope '{}', which is not {}, {} or {}, using {}", key, scope, GateDef.PLAYER, GateDef.GLOBAL, GateDef.TEAM, GateDef.PLAYER);
             scope = GateDef.PLAYER;
         }
         String named = Json.getString(json, "dimension", "").trim();
@@ -80,10 +81,10 @@ public final class ContentGates {
             return null;
         }
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
-        return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), GateDef.GLOBAL.equals(scope), Json.getBoolean(json, "open", false),
+        return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), scope, Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", "").trim(), Json.getString(unlock, "consume", "").trim(), Math.max(1, Json.getInt(unlock, "consumeCount", 1)),
                 Json.getString(unlock, "hold", "").trim(), Json.getString(unlock, "advancement", "").trim(), Json.getString(unlock, "killed", "").trim(),
-                Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Json.strings(json, "portalBlocks"),
+                Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Standing.parse(unlock), Json.strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"), Json.getString(json, "unlockedMessage", "%dim% is now open"),
                 Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
     }
@@ -101,7 +102,16 @@ public final class ContentGates {
         return null;
     }
 
-    public static boolean unlocked(ServerPlayer player, GateDef def) {
+    public static boolean unlocked(ServerPlayer player, GateDef def) { return openFor(player, def) || def.standing().earnedBy(player); }
+
+    public static boolean admits(ServerPlayer player, GateDef def) {
+        if (openFor(player, def)) { return true; }
+        if (!def.standing().earnedBy(player)) { return false; }
+        unlock(player, def, true);
+        return true;
+    }
+
+    private static boolean openFor(ServerPlayer player, GateDef def) {
         if (def.open()) { return true; }
         if (!def.hold().isEmpty() && carrying(player, def.hold())) { return true; }
         if (!def.advancement().isEmpty() && earned(player, def.advancement())) { return true; }
@@ -110,11 +120,14 @@ public final class ContentGates {
 
     public static void unlock(ServerPlayer player, GateDef def, boolean announce) {
         GateStorage.unlock(player, def);
-        ContentLog.LOGGER.debug("Gate {} opened for {}{}", def.key(), player.getName().getString(), def.global() ? " and everyone" : "");
+        String team = GateStorage.teamFor(player, def);
+        ContentLog.LOGGER.debug("Gate {} opened for {}{}", def.key(), player.getName().getString(), def.global() ? " and everyone" : team.isEmpty() ? "" : " and team " + team);
         if (!announce || def.unlockedMessage().isEmpty()) { return; }
         String message = def.unlockedMessage().replace("%dim%", def.name()).replace("%player%", player.getName().getString());
-        if (def.global()) {
-            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) { Says.line(online, CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
+        if (def.global() || !team.isEmpty()) {
+            for (ServerPlayer online : player.server.getPlayerList().getPlayers()) {
+                if (team.isEmpty() || team.equals(Standing.teamOf(online))) { Says.line(online, CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
+            }
         }
         else { Says.line(player, CardIds.GATE_UNLOCKED, ChatFormatting.GREEN, message); }
     }

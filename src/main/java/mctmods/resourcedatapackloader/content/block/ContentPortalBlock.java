@@ -132,7 +132,7 @@ public final class ContentPortalBlock extends ContentBlock {
     private void travel(ServerPlayer player, BlockState state, BlockPos pos) {
         if (recently(player)) { return; }
         GateDef gate = portal.gate().isEmpty() ? null : ContentGates.find(portal.gate());
-        if (gate != null && !ContentGates.unlocked(player, gate)) {
+        if (gate != null && !ContentGates.admits(player, gate)) {
             ContentGates.refuse(player, gate);
             return;
         }
