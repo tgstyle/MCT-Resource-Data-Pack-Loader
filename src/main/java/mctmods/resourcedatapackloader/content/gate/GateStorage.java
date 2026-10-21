@@ -18,10 +18,12 @@ public final class GateStorage extends SavedData {
     private static final String OLD_KILLS = "Kills";
     private static final String PERSISTED = "rdplGates";
     private static final String PERSISTED_KILLS = "rdplGateKills";
-    private CompoundTag open = new CompoundTag();
     private static final String PERSISTED_TEAMS = "rdplGateTeams";
+    private static final String PERSISTED_TEAM_KILLS = "rdplGateTeamKills";
+    private CompoundTag open = new CompoundTag();
     private CompoundTag kills = new CompoundTag();
     private CompoundTag teams = new CompoundTag();
+    private CompoundTag teamKills = new CompoundTag();
     private static final SavedDataType<GateStorage> TYPE = SavedTypes.of(NAME, GateStorage::new, GateStorage::read, GateStorage::write);
 
     private static GateStorage get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
@@ -31,6 +33,7 @@ public final class GateStorage extends SavedData {
         held.open = tag.getCompoundOrEmpty(tag.contains(PERSISTED) ? PERSISTED : OLD_OPEN).copy();
         held.kills = tag.getCompoundOrEmpty(tag.contains(PERSISTED_KILLS) ? PERSISTED_KILLS : OLD_KILLS).copy();
         held.teams = tag.getCompoundOrEmpty(PERSISTED_TEAMS).copy();
+        held.teamKills = tag.getCompoundOrEmpty(PERSISTED_TEAM_KILLS).copy();
         return held;
     }
 
@@ -39,14 +42,46 @@ public final class GateStorage extends SavedData {
         tag.put(PERSISTED, open.copy());
         tag.put(PERSISTED_KILLS, kills.copy());
         tag.put(PERSISTED_TEAMS, teams.copy());
+        tag.put(PERSISTED_TEAM_KILLS, teamKills.copy());
         return tag;
     }
 
-    public static int tally(ServerPlayer player, GateDef def) { return def.global() ? tallyGlobally(player.level().getServer(), def.id()) : tallyFor(player, def.id()); }
+    public static int tally(ServerPlayer player, GateDef def) {
+        if (def.global()) { return tallyGlobally(player.level().getServer(), def.id()); }
+        String team = tallyTeam(player, def);
+        return team.isEmpty() ? tallyFor(player, def.id()) : tallyByTeam(player.level().getServer(), team, def.id());
+    }
 
     public static void clearTally(ServerPlayer player, GateDef def) {
+        String team = tallyTeam(player, def);
         if (def.global()) { clearTallyGlobally(player.level().getServer(), def.id()); }
-        else { clearTallyFor(player, def.id()); }
+        else if (team.isEmpty()) { clearTallyFor(player, def.id()); }
+        else { clearTallyByTeam(player.level().getServer(), team, def.id()); }
+    }
+
+    private static String tallyTeam(ServerPlayer player, GateDef def) { return def.tallyByTeam() ? Standing.teamOf(player) : ""; }
+
+    private static int tallyByTeam(MinecraftServer server, String team, String key) {
+        GateStorage data = get(server);
+        CompoundTag counts = data.teamKills.getCompoundOrEmpty(team);
+        int now = counts.getIntOr(key, 0) + 1;
+        counts.putInt(key, now);
+        keep(data.teamKills, team, counts);
+        data.setDirty();
+        return now;
+    }
+
+    private static void clearTallyByTeam(MinecraftServer server, String team, String key) {
+        GateStorage data = get(server);
+        CompoundTag counts = data.teamKills.getCompoundOrEmpty(team);
+        counts.remove(key);
+        keep(data.teamKills, team, counts);
+        data.setDirty();
+    }
+
+    private static void keep(CompoundTag byTeam, String team, CompoundTag entries) {
+        if (entries.isEmpty()) { byTeam.remove(team); }
+        else { byTeam.put(team, entries); }
     }
 
     public static boolean unlocked(ServerPlayer player, GateDef def) {
@@ -78,8 +113,7 @@ public final class GateStorage extends SavedData {
         CompoundTag gates = data.teams.getCompoundOrEmpty(team);
         if (unlocked) { gates.putBoolean(key, true); }
         else { gates.remove(key); }
-        if (gates.isEmpty()) { data.teams.remove(team); }
-        else { data.teams.put(team, gates); }
+        keep(data.teams, team, gates);
         data.setDirty();
     }
 

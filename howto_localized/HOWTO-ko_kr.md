@@ -3691,6 +3691,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3701,9 +3702,11 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3718,6 +3721,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `dimension`       | 예     | 차원 id                             |                                  | 지키는 차원                                                                                                                                            |
 | `name`            | 아니요 | 문자열                              | 파일 이름                        | 플레이어에게 표시됩니다                                                                                                                                |
 | `scope`           | 아니요 | `player`, `global`, `team`          | `player`                         | 한 번에 플레이어 한 명, 월드 전체 한꺼번에, 또는 연 플레이어의 팀 전체                                                                                          |
+| `teamless`        | 아니요 | `player`, `refuse`                  | `player`                         | 범위가 `team`일 때 팀이 없는 플레이어의 처리: 자기만의 해제 또는 통과 거부                                                                                      |
 | `open`            | 아니요 | 불리언                              | `false`                          | 처음부터 열려 있는지 여부                                                                                                                              |
 | `unlock`          | 아니요 | 객체                                |                                  | 무엇이 여는지. 아래를 참고하세요                                                                                                                       |
 | `unlockedMessage` | 아니요 | 문자열                              | `%dim% is now open`              | 열릴 때 표시됩니다                                                                                                                                     |
@@ -3726,7 +3730,7 @@ Minecraft는 이미 블록의 위치에서 변형 하나를 고르는데, 경도
 | `requires`        | 아니요 | 모드 id 또는 팩 네임스페이스의 목록 | 없음                             | 모두 있지 않으면 게이트를 건너뜁니다                                                                                                                   |
 | `portalBlocks`    | 아니요 | 블록 이름의 목록                    | 모든 포털                        | 게이트를 이 포털 블록으로 한정하므로, 한 차원에 지키는 문과 열린 문을 둘 다 둘 수 있습니다                                                             |
 
-`unlock`에는 `hold`(들고 있어야 하는 아이템), `consumeCount`(`1`)와 함께 쓰는 `consume`, `craft`(제작한 적이 있어야 하는 아이템), `advancement`, 그리고 `killed`(엔티티 이름, 하나를 처치한 사람에게 게이트가 열리므로 보스가 한 월드의 열쇠를 쥘 수 있습니다)를 쓸 수 있으며, 하나로 부족하면 `killedCount`(`1`)를 함께 씁니다. 처치 횟수는 범위(scope)에 따라 플레이어별 또는 월드 전체로 집계됩니다. `killedDrops`(아이템 이름)를 추가하면 집계된 처치가 게이트를 여는 대신 처치한 사람의 발치에 그 아이템을 떨어뜨리고 집계를 처음부터 다시 시작하므로, 열쇠를 다시 얻을 수 있고 싸우지 않은 사람에게 건넬 수도 있습니다. 같은 아이템의 `hold`나 `consume`으로 게이트를 걸면 그것이 열쇠가 됩니다. `%item%`, `%mob%`, `%dim%`은 자동으로 채워집니다. 몹이 떨어뜨리는 열쇠에는 여기서 특별히 할 일이 없습니다. 몹에게 드롭을 주고 `hold`나 `consume`으로 게이트를 거세요. `team`, 그리고 `objective`와 `scoreAtLeast`를 쓰면 해당 스코어보드 팀에 속하고 그 목표의 점수가 지정한 값 이상인 플레이어에게 게이트가 열립니다. 카드의 `when`과 같은 조건이며, 둘 중 하나만 써도 됩니다. 조건은 플레이어가 통과할 때 확인되고, 충족하면 다른 해제와 마찬가지로 범위에 따라 게이트가 열립니다. 범위가 `team`이면 해제는 연 플레이어의 팀에 속하므로, 나중에 합류한 플레이어를 포함해 팀원 모두가 지나갈 수 있습니다. 팀이 없는 플레이어가 열면 그 플레이어에게만 열립니다.
+`unlock`에는 `hold`(들고 있어야 하는 아이템), `consumeCount`(`1`)와 함께 쓰는 `consume`, `craft`(제작한 적이 있어야 하는 아이템), `advancement`, 그리고 `killed`(엔티티 이름, 하나를 처치한 사람에게 게이트가 열리므로 보스가 한 월드의 열쇠를 쥘 수 있습니다)를 쓸 수 있으며, 하나로 부족하면 `killedCount`(`1`)를 함께 씁니다. 처치 횟수는 범위(scope)에 따라 플레이어별 또는 월드 전체로 집계됩니다. `killedDrops`(아이템 이름)를 추가하면 집계된 처치가 게이트를 여는 대신 처치한 사람의 발치에 그 아이템을 떨어뜨리고 집계를 처음부터 다시 시작하므로, 열쇠를 다시 얻을 수 있고 싸우지 않은 사람에게 건넬 수도 있습니다. 같은 아이템의 `hold`나 `consume`으로 게이트를 걸면 그것이 열쇠가 됩니다. `%item%`, `%mob%`, `%dim%`은 자동으로 채워집니다. 몹이 떨어뜨리는 열쇠에는 여기서 특별히 할 일이 없습니다. 몹에게 드롭을 주고 `hold`나 `consume`으로 게이트를 거세요. `team`, 그리고 `objective`와 `scoreAtLeast`를 쓰면 해당 스코어보드 팀에 속하고 그 목표의 점수가 지정한 값 이상인 플레이어에게 게이트가 열립니다. 카드의 `when`과 같은 조건이며, 둘 중 하나만 써도 됩니다. 조건은 플레이어가 통과할 때 확인되고, 충족하면 다른 해제와 마찬가지로 범위에 따라 게이트가 열립니다. 범위가 `team`이면 해제는 연 플레이어의 팀에 속하므로, 나중에 합류한 플레이어를 포함해 팀원 모두가 지나갈 수 있습니다. 팀이 없는 플레이어가 열면 그 플레이어에게만 열립니다. `teamAndScore`는 이 두 조건을 어떻게 셀지 정합니다. `alone`(기본값)이면 그것만으로 게이트가 열리고, `with`이면 추가 조건이 되어 다른 해제 키를 충족한 뒤 해당 팀에 속하고 점수도 충족한 플레이어에게만 열립니다. `killedTally`를 `team`으로 하면 `killedCount`에 플레이어마다 따로(`player`, 기본값)가 아니라 처치한 플레이어의 팀 전체 처치 수를 합산합니다. 팀이 없는 플레이어는 계속 혼자 셉니다. `teamless`를 `refuse`로 하면 범위가 `team`인 게이트에서 팀이 없는 플레이어는 자기만 해제하는(`player`, 기본값) 대신 통과를 거부당합니다.
 
 게이트는 게임 자체의 차원도 지킵니다. `dimension`이 `minecraft:the_nether`인 게이트는 모든 네더 포털 앞에 서 있습니다.
 

@@ -3691,6 +3691,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3701,9 +3702,11 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3718,6 +3721,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `dimension`       | 是   | 维度 id                      |                                  | 它守卫的维度                                                                                                             |
 | `name`            | 否   | 字符串                       | 文件名                           | 显示给玩家                                                                                                               |
 | `scope`           | 否   | `player`、`global`、`team`    | `player`                         | 一次针对一名玩家、针对整个世界，还是针对开启者的整个队伍                                                                            |
+| `teamless`        | 否   | `player`、`refuse`           | `player`                         | 作用域为 `team` 时，不属于任何队伍的玩家如何处理：单独为其解锁，或拒绝通过                                                               |
 | `open`            | 否   | 布尔值                       | `false`                          | 是否一开始就处于开启状态                                                                                                 |
 | `unlock`          | 否   | 对象                         |                                  | 什么能开启它。见下文                                                                                                     |
 | `unlockedMessage` | 否   | 字符串                       | `%dim% is now open`              | 开启时显示                                                                                                               |
@@ -3726,7 +3730,7 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把桶�
 | `requires`        | 否   | 模组 id 或资源包命名空间列表 | 无                               | 除非全部存在，否则跳过该闸门                                                                                             |
 | `portalBlocks`    | 否   | 方块名称列表                 | 每个传送门                       | 将该闸门限定于这些传送门方块，这样一个维度就可以同时拥有一个受守卫的传送门和一个敞开的传送门                             |
 
-`unlock` 接受 `hold`（必须手持的物品）、`consume` 及 `consumeCount`（`1`）、`craft`（必须已合成过的物品）、`advancement`，以及 `killed`（一个实体名称，谁击杀了一个，闸门就为谁开启，因此可以让某个 Boss 持有通往一个世界的钥匙），当一个不够时可配合 `killedCount`（`1`），按 scope 的设定逐玩家或针对整个世界统计。加上 `killedDrops`（一个物品名称）后，被计入的击杀会把该物品放到击杀者脚边而不是开启闸门，并让计数从头开始，因此钥匙可以再次获得，并交给从未战斗过的人；对同一物品使用 `hold` 或 `consume` 来设置闸门条件，即可使它成为钥匙。`%item%`、`%mob%` 和 `%dim%` 会自动填入。怪物掉落的钥匙在这里不需要任何特殊处理：给怪物设置掉落物，再用 `hold` 或 `consume` 设置闸门条件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，会为属于该计分板队伍、且在该目标中分数不低于该值的玩家开启闸门，这与卡片的 `when` 所用的条件相同；两者也可以单独使用。条件在玩家穿过时检查，满足后闸门会像其他解锁方式一样按其作用域开启。作用域为 `team` 时，解锁归开启者的队伍所有：队伍中的每个人都能通过，包括之后加入的玩家；不属于任何队伍的玩家开启时，只对自己开放。
+`unlock` 接受 `hold`（必须手持的物品）、`consume` 及 `consumeCount`（`1`）、`craft`（必须已合成过的物品）、`advancement`，以及 `killed`（一个实体名称，谁击杀了一个，闸门就为谁开启，因此可以让某个 Boss 持有通往一个世界的钥匙），当一个不够时可配合 `killedCount`（`1`），按 scope 的设定逐玩家或针对整个世界统计。加上 `killedDrops`（一个物品名称）后，被计入的击杀会把该物品放到击杀者脚边而不是开启闸门，并让计数从头开始，因此钥匙可以再次获得，并交给从未战斗过的人；对同一物品使用 `hold` 或 `consume` 来设置闸门条件，即可使它成为钥匙。`%item%`、`%mob%` 和 `%dim%` 会自动填入。怪物掉落的钥匙在这里不需要任何特殊处理：给怪物设置掉落物，再用 `hold` 或 `consume` 设置闸门条件即可。`team`，以及 `objective` 搭配 `scoreAtLeast`，会为属于该计分板队伍、且在该目标中分数不低于该值的玩家开启闸门，这与卡片的 `when` 所用的条件相同；两者也可以单独使用。条件在玩家穿过时检查，满足后闸门会像其他解锁方式一样按其作用域开启。作用域为 `team` 时，解锁归开启者的队伍所有：队伍中的每个人都能通过，包括之后加入的玩家；不属于任何队伍的玩家开启时，只对自己开放。`teamAndScore` 决定这两项如何计算：`alone`（默认）时它们单独就能开启闸门；`with` 时它们成为附加条件，只有在满足另一个解锁键之后，且玩家同时属于该队伍并达到该分数，闸门才会开启。`killedTally` 设为 `team` 时，`killedCount` 会合计击杀者所在队伍的全部击杀，而不是按每名玩家各自计算（`player`，默认）；不属于任何队伍的击杀者仍单独计数。`teamless` 设为 `refuse` 时，作用域为 `team` 的闸门会拒绝不属于任何队伍的玩家，而不是让其只为自己解锁（`player`，默认）。
 
 闸门也守卫游戏自带的维度：`dimension` 为 `minecraft:the_nether` 的闸门会挡在每一个下界传送门前面。
 

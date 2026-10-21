@@ -3691,6 +3691,7 @@ Every key, shown at once. A real file writes only the ones it needs.
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3701,9 +3702,11 @@ Every key, shown at once. A real file writes only the ones it needs.
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3718,6 +3721,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `dimension`       | yes      | dimension id                       |                                  | The dimension it guards                                                                                                                                                             |
 | `name`            | no       | string                             | the file name                    | Shown to the player                                                                                                                                                                 |
 | `scope`           | no       | `player`, `global`, `team`         | `player`                         | One player at a time, the whole world at once, or the opener's whole team                                                                                                           |
+| `teamless`        | no       | `player`, `refuse`                 | `player`                         | With scope `team`, what a player on no team gets: an unlock of their own, or turned back                                                                                            |
 | `open`            | no       | boolean                            | `false`                          | Whether it starts open                                                                                                                                                              |
 | `unlock`          | no       | object                             |                                  | What opens it. See below                                                                                                                                                            |
 | `unlockedMessage` | no       | string                             | `%dim% is now open`              | Shown when it opens                                                                                                                                                                 |
@@ -3726,7 +3730,7 @@ Every key, shown at once. A real file writes only the ones it needs.
 | `requires`        | no       | list of mod ids or pack namespaces | none                             | The gate is skipped unless all are present                                                                                                                                          |
 | `portalBlocks`    | no       | list of block names                | every portal                     | Limits the gate to these portal blocks, so one dimension can have a guarded door and an open one                                                                                    |
 
-`unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`. `team`, and `objective` with `scoreAtLeast`, open it for a player on that scoreboard team whose score in that objective is at least that much, the same conditions a card's `when` takes; either one also works alone. They are checked as the player goes through, and the gate then opens in its scope like any other unlock. With scope `team` an unlock belongs to the opener's team: everyone on it gets through, players who join later included, and a player on no team unlocks it for themselves alone.
+`unlock` takes `hold` (an item that must be held), `consume` with `consumeCount` (`1`), `craft` (an item that must have been crafted), `advancement`, and `killed` (an entity name, the gate opens for whoever slays one, so a boss can hold the key to a world) with `killedCount` (`1`) when one is not enough, tallied per player or for the whole world as the scope says. Adding `killedDrops` (an item name) makes the counted kills lay that item at the slayer's feet instead of opening the gate, and starts the counting over, so a key can be earned again and handed to somebody who never fought for it; gate on `hold` or `consume` of the same item to make it the key. `%item%`, `%mob%` and `%dim%` are filled in for you. A key a mob drops needs nothing special here: give the mob the drop and gate on `hold` or `consume`. `team`, and `objective` with `scoreAtLeast`, open it for a player on that scoreboard team whose score in that objective is at least that much, the same conditions a card's `when` takes; either one also works alone. They are checked as the player goes through, and the gate then opens in its scope like any other unlock. With scope `team` an unlock belongs to the opener's team: everyone on it gets through, players who join later included, and a player on no team unlocks it for themselves alone. `teamAndScore` decides how those two count: `alone` (the default) lets them open the gate by themselves, while `with` makes them a further condition, so the gate opens only once another unlock key is met and the player is also on that team with that score. `killedTally` set to `team` counts every kill by the slayer's team toward `killedCount` together, rather than each player's own (`player`, the default); a slayer on no team still counts alone. `teamless` set to `refuse` turns back a player on no team at a scope `team` gate, rather than letting them unlock it for themselves (`player`, the default).
 
 Gates guard the game's own dimensions too: a gate whose `dimension` is `minecraft:the_nether` stands in front of every nether portal.
 
