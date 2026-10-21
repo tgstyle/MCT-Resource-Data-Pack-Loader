@@ -140,6 +140,13 @@ public final class ContentScoring {
         if (own) { OWN.merge(kind, 1, Integer::sum); }
     }
 
+    public static void raidWon(EntityPlayer player, int points) {
+        if (points == 0 || BY_NAME.isEmpty()) { return; }
+        for (ScoreDef def : BY_NAME.values()) {
+            if (def.raidPoints) { credit(player.world, def, player, points); }
+        }
+    }
+
     private static void credit(World world, ScoreDef def, Entity who, int points) {
         if (closed || def.ends() && FINISHED.contains(def.name)) { return; }
         Scoreboard board = world.getScoreboard();

@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.raid;
 
 import mctmods.resourcedatapackloader.content.ContentRaids;
+import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
@@ -11,6 +12,7 @@ import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTUtil;
@@ -26,7 +28,10 @@ import net.minecraft.world.BossInfo;
 import net.minecraft.world.BossInfoServer;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.WorldServer;
+import net.minecraft.world.storage.loot.LootContext;
+import net.minecraft.world.storage.loot.LootTable;
 import net.minecraftforge.common.util.Constants;
+import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.fml.common.registry.ForgeRegistries;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -233,8 +238,21 @@ public final class ActiveRaid {
         List<EntityPlayerMP> present = inReach(world);
         String function = ending == Status.VICTORY ? def.wins : def.loses;
         ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} ends in {} after {} of {} wave(s), with {} player(s) in reach", def.registryName, center.getX(), center.getY(), center.getZ(), ending == Status.VICTORY ? "victory" : "defeat", wave, def.waves.size(), present.size());
+        if (ending == Status.VICTORY) {
+            for (EntityPlayerMP player : present) { reward(world, player); }
+        }
         if (function.isEmpty()) { return; }
         for (EntityPlayerMP player : present) { Functions.runAs(player, function, "Raid " + def.registryName); }
+    }
+
+    private void reward(WorldServer world, EntityPlayerMP player) {
+        ContentScoring.raidWon(player, def.points);
+        if (def.loot.isEmpty()) { return; }
+        LootTable table = world.getLootTableManager().getLootTableFromLocation(new ResourceLocation(def.loot));
+        LootContext context = new LootContext.Builder(world).withLootedEntity(player).withPlayer(player).withLuck(player.getLuck()).build();
+        for (ItemStack stack : table.generateLootForPools(world.rand, context)) {
+            if (!stack.isEmpty()) { ItemHandlerHelper.giveItemToPlayer(player, stack); }
+        }
     }
 
     private void celebrate(WorldServer world) {

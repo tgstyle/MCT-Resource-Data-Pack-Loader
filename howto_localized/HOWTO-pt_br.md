@@ -5909,6 +5909,7 @@ Um objetivo é um objetivo real no placar do próprio jogo, então `/scoreboard 
 | ---------------- | ------ | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | objeto | vazio  | ID de entidade para pontos, creditados ao lado de quem matou. `minecraft:player` pontua a morte de um jogador                                                       |
 | `points.death`   | int    | `0`    | Pontos sempre que um membro morre, seja qual for a causa. Pode ser negativo                                                                                         |
+| `points.raid`    | booleano | `false` | Recebe os `points` de cada [invasão](#invasões) vencida: cada jogador ao alcance ganha essa quantia na linha do seu lado e, com `individuals`, também na sua própria |
 | `points.ownKill` | int    | `0`    | Pontos por uma morte causada a um membro do próprio lado de quem matou, no lugar do valor de `kill`. 0 não pontua nada por ela; um número negativo é uma penalidade |
 
 `points` é o que este mod acrescenta ao que o jogo conta, alimentado no mesmo objetivo para que `/scoreboard` ainda o leia. `kill` vale tantos pontos por ID de entidade morta, creditados ao lado de quem matou; `death` vale tantos sempre que um membro de um lado morre, e pode ser negativo. Com `teamTotals` os pontos vão para uma linha com o nome da equipe, o que permite à barra lateral mostrar quatro lados em vez de uma linha para cada mob. `individuals` acrescenta também uma linha por membro, e vem desligado por padrão porque uma linha por UUID de mob parece ruído.
@@ -6066,6 +6067,8 @@ Enquanto uma onda está sobre a vila, os seus aldeões correm para dentro até a
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6091,6 +6094,8 @@ Enquanto uma onda está sobre a vila, os seus aldeões correm para dentro até a
 | `sound`         | nome de som            | nenhum              | Tocado a todo jogador ao alcance, do lado de onde a onda vem, quando cada onda chega                                                                                                                            |
 | `wins`          | função                 | nenhum              | Roda como cada jogador ao alcance quando a invasão é vencida                                                                                                                                                    |
 | `loses`         | função                 | nenhum              | Roda como cada jogador ao alcance quando a invasão é perdida                                                                                                                                                    |
+| `points`        | int | `0`            | Pontos creditados a cada jogador ao alcance quando a invasão é vencida, em cada objetivo que tenha `points.raid` ligado. Uma derrota não paga nada |
+| `loot`          | tabela de saque | nenhum | Uma tabela de saque sorteada uma vez para cada jogador ao alcance quando a invasão é vencida. Os itens vão para o inventário dele, ou caem aos seus pés se estiver cheio |
 | `bell`          | nome de bloco ou lista | nenhum              | Outros blocos que tocam como um sino, quando um jogador os usa e sempre que uma onda chega. Um bloco do tipo `bell` toca sem ser nomeado. Posicione-o na vila por meio de uma estrutura NBT, já que nada o gera |
 
 ### Um grupo

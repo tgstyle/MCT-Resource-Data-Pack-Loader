@@ -5909,6 +5909,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | ---------------- | ---- | ------ | ---------------------------------------------------------------------------------- |
 | `points.kill`    | 对象 | 空     | 实体 id 对应积分，记到击杀者所在的阵营。`minecraft:player` 对应击杀玩家的得分      |
 | `points.death`   | 整数 | `0`    | 成员每次死亡时的积分，无论死因如何。可以为负数                                     |
+| `points.raid`    | 布尔值 | `false` | 接收每场获胜[袭击](#袭击)的 `points`：范围内的每个玩家都会获得相应积分，记在所属阵营的一行上，启用 `individuals` 时也记在本人的一行上 |
 | `points.ownKill` | 整数 | `0`    | 击杀者击杀自己阵营成员的积分，取代 `kill` 的值。0 表示此类击杀不计分；负数则是惩罚 |
 
 `points` 是本模组在游戏统计之上添加的部分，它被送入同一个目标，因此 `/scoreboard` 依然能读取。`kill` 表示击杀每个实体 id 值多少分，记到击杀者的阵营；`death` 表示阵营成员每次死亡值多少分，可以为负数。启用 `teamTotals` 时，积分记到以队伍命名的一行上，这使侧边栏能显示四个阵营，而不是为每只生物各占一行。`individuals` 还会为每个成员添加一行，默认关闭，因为每个生物 UUID 一行读起来只是杂音。
@@ -6066,6 +6067,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6091,6 +6094,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `sound`         | 音效名称       | 无       | 每一波到来时，从该波来袭的方向播放给范围内的每个玩家                                                                                            |
 | `wins`          | 函数           | 无       | 袭击获胜时，以范围内的每个玩家的身份运行                                                                                                        |
 | `loses`         | 函数           | 无       | 袭击失败时，以范围内的每个玩家的身份运行                                                                                                        |
+| `points`        | 整数 | `0`            | 袭击获胜时记给范围内每个玩家的积分，计入每个开启了 `points.raid` 的目标。失败不计分 |
+| `loot`          | 战利品表 | 无         | 袭击获胜时，为范围内的每个玩家各投放一次的战利品表。物品放入其背包，背包已满则掉在脚边 |
 | `bell`          | 方块名称或列表 | 无       | 其他像钟一样鸣响的方块，在玩家使用它们以及每一波到来时都会响。类型为 `bell` 的方块无需指定也会响。请通过 NBT 结构把它放进村庄，因为不会自动生成 |
 
 ### 分组

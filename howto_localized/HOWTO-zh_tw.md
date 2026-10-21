@@ -5909,6 +5909,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | ---------------- | ---- | ---- | ------------------------------------------------------------------------------ |
 | `points.kill`    | 物件 | 空   | 實體 id 對應積分，計給擊殺者的陣營。`minecraft:player` 計算擊殺玩家的分數      |
 | `points.death`   | 整數 | `0`  | 成員死亡時的積分，無論死因為何。可以為負                                       |
+| `points.raid`    | 布林值 | `false` | 接收每場獲勝[突襲](#突襲)的 `points`：範圍內的每位玩家都會獲得相應積分，記在所屬陣營的一列上，啟用 `individuals` 時也記在本人的一列上 |
 | `points.ownKill` | 整數 | `0`  | 擊殺者自己陣營的成員被擊殺時的積分，取代 `kill` 的值。0 表示不計分；負數是懲罰 |
 
 `points` 是本模組在遊戲自己計算的內容之上額外加入的部分，會送進同一個目標，所以 `/scoreboard` 仍然讀得到。`kill` 表示每擊殺一個實體 id 值多少分，計給擊殺者的陣營；`death` 表示每當陣營的一名成員死亡值多少分，可以為負。搭配 `teamTotals`，積分會記在以隊伍命名的一列上，這讓側邊欄能顯示四個陣營，而不是每隻生物各佔一列。`individuals` 會另外為每位成員加一列，預設為關閉，因為每個生物 UUID 各佔一列讀起來只是雜訊。
@@ -6066,6 +6067,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6091,6 +6094,8 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `sound`         | 音效名稱       | 無       | 每一波抵達時，從該波來襲的方向播放給範圍內的每位玩家                                                                                                  |
 | `wins`          | 函式           | 無       | 突襲獲勝時，以範圍內每位玩家的身分執行                                                                                                                |
 | `loses`         | 函式           | 無       | 突襲失敗時，以範圍內每位玩家的身分執行                                                                                                                |
+| `points`        | 整數 | `0`            | 突襲獲勝時記給範圍內每位玩家的積分，計入每個開啟了 `points.raid` 的目標。失敗不計分 |
+| `loot`          | 戰利品表 | 無         | 突襲獲勝時，為範圍內的每位玩家各擲出一次的戰利品表。物品會放入其背包，背包已滿則掉在腳邊 |
 | `bell`          | 方塊名稱或清單 | 無       | 像鐘一樣鳴響的其他方塊，在玩家使用它們時以及每一波抵達時。類型為 `bell` 的方塊不必指名也會鳴響。請透過 NBT 結構把它放進村莊，因為沒有任何東西會生成它 |
 
 ### 一個群組

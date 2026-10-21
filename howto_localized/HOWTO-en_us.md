@@ -5909,6 +5909,7 @@ An objective is a real objective on the game's own scoreboard, so `/scoreboard p
 | ---------------- | ------ | ------- | --------------------------------------------------------------------------------------------------------------------------------- |
 | `points.kill`    | object | empty   | Entity id to points, credited to the killer's side. `minecraft:player` scores a player kill                                       |
 | `points.death`   | int    | `0`     | Points whenever a member dies, however it died. May be negative                                                                   |
+| `points.raid`    | boolean | `false` | Takes the `points` of every [raid](#raids) won: each player in reach is credited that many, on their side's row and, with `individuals`, on their own |
 | `points.ownKill` | int    | `0`     | Points for a kill of the killer's own side, in place of the `kill` value. 0 scores nothing for it; a negative number is a penalty |
 
 `points` is what this mod adds on top of what the game counts, fed into the same objective so `/scoreboard` still reads it. `kill` is worth so many points per entity id killed, credited to the killer's side; `death` is worth so many whenever a member of a side dies, and may be negative. With `teamTotals` the points land on a row named after the team, which is what lets the sidebar show four sides rather than a row for every mob. `individuals` adds a row per member as well, and is off by default because a row per mob UUID reads as noise.
@@ -6066,6 +6067,8 @@ While a wave is on the village, its villagers run indoors to the nearest door th
   "sound": "mypack:raid_horn",
   "wins": "mypack:raid_won",
   "loses": "mypack:raid_lost",
+  "points": 10,
+  "loot": "mypack:raid_reward",
   "bell": "mypack:village_bell",
   "waves": [
     [ { "entity": "minecraft:vindication_illager", "count": 2 }, { "entity": "mypack:raider", "count": { "min": 1, "max": 3 } } ],
@@ -6091,6 +6094,8 @@ While a wave is on the village, its villagers run indoors to the nearest door th
 | `sound`         | sound name         | none           | Played to every player in reach, from the side the wave comes from, as each wave arrives                                                                                                                              |
 | `wins`          | function           | none           | Runs as every player in reach when the raid is won                                                                                                                                                                    |
 | `loses`         | function           | none           | Runs as every player in reach when the raid is lost                                                                                                                                                                   |
+| `points`        | int                | `0`            | Points every player in reach is credited when the raid is won, in each objective that has `points.raid` on. A loss pays nothing |
+| `loot`          | loot table         | none           | A loot table rolled once for each player in reach when the raid is won. The items go into their inventory, or drop at their feet when it is full |
 | `bell`          | block name or list | none           | Other blocks that ring as a bell, when a player uses them and whenever a wave arrives. A block of type `bell` rings without being named. Place it in the village through an NBT structure, since nothing generates it |
 
 ### A group

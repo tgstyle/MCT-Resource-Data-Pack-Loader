@@ -18,8 +18,10 @@ public final class RaidDef {
     public final String wins;
     public final String loses;
     public final List<String> bells;
+    public final int points;
+    public final String loot;
 
-    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells) {
+    public RaidDef(ResourceLocation registryName, String omen, String name, BossInfo.Color color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout, String sound, String wins, String loses, List<String> bells, int points, String loot) {
         this.registryName = registryName;
         this.omen = omen;
         this.name = name;
@@ -33,6 +35,8 @@ public final class RaidDef {
         this.wins = wins;
         this.loses = loses;
         this.bells = bells;
+        this.points = points;
+        this.loot = loot;
     }
 
     public static final class Group {
