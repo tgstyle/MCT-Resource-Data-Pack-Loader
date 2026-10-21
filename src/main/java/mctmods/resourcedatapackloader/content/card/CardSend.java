@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.network.MessageCard;
 import mctmods.resourcedatapackloader.network.RDPLNetwork;
 import mctmods.resourcedatapackloader.util.Says;
+import mctmods.resourcedatapackloader.util.Standing;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -56,10 +57,10 @@ final class CardSend {
     static List<ServerPlayer> audience(CardRule rule, ServerPlayer subject) {
         if (CardRule.PLAYER.equals(rule.audience)) { return List.of(subject); }
         List<ServerPlayer> shown = new ArrayList<>();
-        String team = CardWhen.teamOf(subject);
+        String team = Standing.teamOf(subject);
         for (ServerPlayer player : subject.server.getPlayerList().getPlayers()) {
             if (CardRule.DIMENSION.equals(rule.audience) && player.level() != subject.level()) { continue; }
-            if (CardRule.TEAM.equals(rule.audience) && (team.isEmpty() ? player != subject : !team.equals(CardWhen.teamOf(player)))) { continue; }
+            if (CardRule.TEAM.equals(rule.audience) && (team.isEmpty() ? player != subject : !team.equals(Standing.teamOf(player)))) { continue; }
             shown.add(player);
         }
         return shown;

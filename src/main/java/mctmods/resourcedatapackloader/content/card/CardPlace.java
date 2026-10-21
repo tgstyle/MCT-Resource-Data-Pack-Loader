@@ -4,7 +4,6 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.worldgen.ContentLocate;
 import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Registered;
-import mctmods.resourcedatapackloader.util.Scores;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -17,10 +16,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.scores.Objective;
-import net.minecraft.world.scores.Scoreboard;
 import java.util.List;
-import javax.annotation.Nullable;
 
 final class CardPlace {
 
@@ -70,14 +66,6 @@ final class CardPlace {
             if (near != null && near.distSqr(at) <= (double) radius * radius) { return true; }
         }
         return false;
-    }
-
-    @Nullable static Integer score(ServerPlayer player, String objective) {
-        Scoreboard board = player.getScoreboard();
-        Objective found = Scores.objective(board, objective);
-        String owner = player.getScoreboardName();
-        if (found == null || Scores.lacks(board, owner, found)) { return null; }
-        return Scores.score(board, owner, found);
     }
 
     static long day(Level level) { return level.getDayTime() / Level.TICKS_PER_DAY; }
