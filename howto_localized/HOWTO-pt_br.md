@@ -3689,6 +3689,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3699,9 +3700,11 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3716,6 +3719,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `dimension`       | sim         | id de dimensão                                |                                  | A dimensão que ela protege                                                                                                                                                                                   |
 | `name`            | não         | texto                                         | o nome do arquivo                | Mostrado ao jogador                                                                                                                                                                                          |
 | `scope`           | não         | `player`, `global`, `team`                    | `player`                         | Um jogador por vez, o mundo inteiro de uma vez, ou toda a equipe de quem o abriu                                                                                                                             |
+| `teamless`        | não         | `player`, `refuse`                            | `player`                         | Com o escopo `team`, o que recebe um jogador sem equipe: um desbloqueio só seu ou a recusa                                                                                                                   |
 | `open`            | não         | booleano                                      | `false`                          | Se ela começa aberta                                                                                                                                                                                         |
 | `unlock`          | não         | objeto                                        |                                  | O que a abre. Veja abaixo                                                                                                                                                                                    |
 | `unlockedMessage` | não         | texto                                         | `%dim% is now open`              | Mostrada quando ela abre                                                                                                                                                                                     |
@@ -3724,7 +3728,7 @@ Todas as chaves, mostradas de uma vez. Um arquivo real escreve apenas as de que 
 | `requires`        | não         | lista de ids de mods ou namespaces de pacotes | nenhum                           | A passagem é ignorada a menos que todos estejam presentes                                                                                                                                                    |
 | `portalBlocks`    | não         | lista de nomes de blocos                      | todos os portais                 | Limita a passagem a esses blocos de portal, de modo que uma dimensão possa ter uma passagem protegida e uma aberta                                                                                           |
 
-`unlock` aceita `hold` (um item que precisa ser segurado), `consume` com `consumeCount` (`1`), `craft` (um item que precisa ter sido fabricado), `advancement` e `killed` (um nome de entidade; a passagem abre para quem matar uma, então um chefe pode guardar a chave de um mundo) com `killedCount` (`1`) quando uma não basta, contados por jogador ou para o mundo inteiro conforme o escopo indicar. Adicionar `killedDrops` (um nome de item) faz as mortes contadas largarem esse item aos pés de quem matou em vez de abrir a passagem, e recomeça a contagem, de modo que uma chave possa ser conquistada de novo e entregue a alguém que nunca lutou por ela; use `hold` ou `consume` do mesmo item para torná-lo a chave. `%item%`, `%mob%` e `%dim%` são preenchidos para você. Uma chave que um mob solta não precisa de nada especial aqui: dê o drop ao mob e use `hold` ou `consume`. `team`, e `objective` com `scoreAtLeast`, abrem a passagem para um jogador dessa equipe do placar cuja pontuação nesse objetivo seja pelo menos esse valor, as mesmas condições que o `when` de um cartão aceita; cada uma também funciona sozinha. Elas são verificadas quando o jogador atravessa, e a passagem então se abre no seu escopo como em qualquer outro desbloqueio. Com o escopo `team`, o desbloqueio pertence à equipe de quem a abriu: todos dela passam, inclusive quem entrar depois, e um jogador sem equipe a desbloqueia só para si.
+`unlock` aceita `hold` (um item que precisa ser segurado), `consume` com `consumeCount` (`1`), `craft` (um item que precisa ter sido fabricado), `advancement` e `killed` (um nome de entidade; a passagem abre para quem matar uma, então um chefe pode guardar a chave de um mundo) com `killedCount` (`1`) quando uma não basta, contados por jogador ou para o mundo inteiro conforme o escopo indicar. Adicionar `killedDrops` (um nome de item) faz as mortes contadas largarem esse item aos pés de quem matou em vez de abrir a passagem, e recomeça a contagem, de modo que uma chave possa ser conquistada de novo e entregue a alguém que nunca lutou por ela; use `hold` ou `consume` do mesmo item para torná-lo a chave. `%item%`, `%mob%` e `%dim%` são preenchidos para você. Uma chave que um mob solta não precisa de nada especial aqui: dê o drop ao mob e use `hold` ou `consume`. `team`, e `objective` com `scoreAtLeast`, abrem a passagem para um jogador dessa equipe do placar cuja pontuação nesse objetivo seja pelo menos esse valor, as mesmas condições que o `when` de um cartão aceita; cada uma também funciona sozinha. Elas são verificadas quando o jogador atravessa, e a passagem então se abre no seu escopo como em qualquer outro desbloqueio. Com o escopo `team`, o desbloqueio pertence à equipe de quem a abriu: todos dela passam, inclusive quem entrar depois, e um jogador sem equipe a desbloqueia só para si. `teamAndScore` define como essas duas contam: `alone` (o padrão) deixa que elas abram a passagem sozinhas, enquanto `with` as torna uma condição a mais, e a passagem só se abre quando outra chave de desbloqueio for cumprida e o jogador também estiver nessa equipe com essa pontuação. `killedTally` em `team` soma para `killedCount` todos os abates da equipe de quem mata, em vez dos de cada jogador separadamente (`player`, o padrão); quem não tem equipe continua contando sozinho. `teamless` em `refuse` barra numa passagem de escopo `team` um jogador sem equipe, em vez de deixá-lo desbloqueá-la só para si (`player`, o padrão).
 
 As passagens também protegem as dimensões do próprio jogo: uma passagem cujo `dimension` seja `minecraft:the_nether` fica na frente de todo portal do Nether.
 

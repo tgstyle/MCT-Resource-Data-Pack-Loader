@@ -3689,6 +3689,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
   "dimension": "mypack:ruby_world",
   "name": "The Ruby Gate",
   "scope": "player",
+  "teamless": "player",
   "open": false,
   "unlock": {
     "hold": "mypack:ruby_key",
@@ -3699,9 +3700,11 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "killed": "minecraft:wither",
     "killedCount": 2,
     "killedDrops": "mypack:ruby_key",
+    "killedTally": "player",
     "team": "red",
     "objective": "quests",
-    "scoreAtLeast": 5
+    "scoreAtLeast": 5,
+    "teamAndScore": "alone"
   },
   "unlockedMessage": "%dim% is now open",
   "blockedMessage": "You need %item% to enter %dim%",
@@ -3716,6 +3719,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `dimension`       | ja      | Dimensions-ID                          |                                  | Die Dimension, die es bewacht                                                                                                                                                          |
 | `name`            | nein    | Text                                   | der Dateiname                    | Wird dem Spieler angezeigt                                                                                                                                                             |
 | `scope`           | nein    | `player`, `global`, `team`             | `player`                         | Ein Spieler nach dem anderen, die ganze Welt auf einmal oder das ganze Team dessen, der es öffnet                                                                                      |
+| `teamless`        | nein    | `player`, `refuse`                     | `player`                         | Bei Geltungsbereich `team`: was ein Spieler ohne Team bekommt – eine eigene Freischaltung oder Abweisung                                                                               |
 | `open`            | nein    | boolean                                | `false`                          | Ob es offen startet                                                                                                                                                                    |
 | `unlock`          | nein    | Objekt                                 |                                  | Was es öffnet. Siehe unten                                                                                                                                                             |
 | `unlockedMessage` | nein    | Text                                   | `%dim% is now open`              | Wird beim Öffnen angezeigt                                                                                                                                                             |
@@ -3724,7 +3728,7 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
 | `requires`        | nein    | Liste von Mod-IDs oder Pack-Namespaces | keine                            | Das Tor wird übersprungen, wenn nicht alle vorhanden sind                                                                                                                              |
 | `portalBlocks`    | nein    | Liste von Blocknamen                   | jedes Portal                     | Begrenzt das Tor auf diese Portalblöcke, eine Dimension kann also eine bewachte und eine offene Tür haben                                                                              |
 
-`unlock` nimmt `hold` (ein Item, das in der Hand sein muss), `consume` mit `consumeCount` (`1`), `craft` (ein Item, das gecraftet worden sein muss), `advancement` und `killed` (ein Entity-Name; das Tor öffnet sich für den, der eine davon erlegt, ein Boss kann also den Schlüssel zu einer Welt tragen) mit `killedCount` (`1`), wenn eine nicht reicht, gezählt pro Spieler oder für die ganze Welt, je nach `scope`. Mit `killedDrops` (ein Itemname) legen die gezählten Abschüsse stattdessen dieses Item dem Erleger vor die Füße, statt das Tor zu öffnen, und die Zählung beginnt von vorn, ein Schlüssel lässt sich also erneut verdienen und an jemanden weitergeben, der nie dafür gekämpft hat; sperre dann über `hold` oder `consume` desselben Items, um es zum Schlüssel zu machen. `%item%`, `%mob%` und `%dim%` werden für dich eingesetzt. Ein Schlüssel, den ein Mob droppt, braucht hier nichts Besonderes: Gib dem Mob den Drop und sperre über `hold` oder `consume`. `team` sowie `objective` mit `scoreAtLeast` öffnen es für einen Spieler in diesem Scoreboard-Team, dessen Punktestand in diesem Ziel mindestens so hoch ist – dieselben Bedingungen, die `when` bei einer Karte kennt; jede der beiden gilt auch allein. Geprüft wird beim Durchgehen, danach öffnet sich das Tor in seinem Geltungsbereich wie bei jeder anderen Freischaltung. Mit dem Geltungsbereich `team` gehört eine Freischaltung dem Team dessen, der sie ausgelöst hat: Alle im Team kommen durch, auch wer später beitritt, und ein Spieler ohne Team schaltet es nur für sich selbst frei.
+`unlock` nimmt `hold` (ein Item, das in der Hand sein muss), `consume` mit `consumeCount` (`1`), `craft` (ein Item, das gecraftet worden sein muss), `advancement` und `killed` (ein Entity-Name; das Tor öffnet sich für den, der eine davon erlegt, ein Boss kann also den Schlüssel zu einer Welt tragen) mit `killedCount` (`1`), wenn eine nicht reicht, gezählt pro Spieler oder für die ganze Welt, je nach `scope`. Mit `killedDrops` (ein Itemname) legen die gezählten Abschüsse stattdessen dieses Item dem Erleger vor die Füße, statt das Tor zu öffnen, und die Zählung beginnt von vorn, ein Schlüssel lässt sich also erneut verdienen und an jemanden weitergeben, der nie dafür gekämpft hat; sperre dann über `hold` oder `consume` desselben Items, um es zum Schlüssel zu machen. `%item%`, `%mob%` und `%dim%` werden für dich eingesetzt. Ein Schlüssel, den ein Mob droppt, braucht hier nichts Besonderes: Gib dem Mob den Drop und sperre über `hold` oder `consume`. `team` sowie `objective` mit `scoreAtLeast` öffnen es für einen Spieler in diesem Scoreboard-Team, dessen Punktestand in diesem Ziel mindestens so hoch ist – dieselben Bedingungen, die `when` bei einer Karte kennt; jede der beiden gilt auch allein. Geprüft wird beim Durchgehen, danach öffnet sich das Tor in seinem Geltungsbereich wie bei jeder anderen Freischaltung. Mit dem Geltungsbereich `team` gehört eine Freischaltung dem Team dessen, der sie ausgelöst hat: Alle im Team kommen durch, auch wer später beitritt, und ein Spieler ohne Team schaltet es nur für sich selbst frei. `teamAndScore` legt fest, wie die beiden zählen: `alone` (Standard) lässt sie das Tor allein öffnen, `with` macht sie zu einer zusätzlichen Bedingung, sodass sich das Tor erst öffnet, wenn ein anderer Freischaltungsschlüssel erfüllt ist und der Spieler außerdem in diesem Team mit diesem Punktestand ist. `killedTally` auf `team` zählt alle Kills des Teams des Erlegers gemeinsam auf `killedCount` an, statt jeden Spieler für sich (`player`, Standard); wer in keinem Team ist, zählt weiter allein. `teamless` auf `refuse` weist an einem Tor mit Geltungsbereich `team` einen Spieler ohne Team ab, statt ihn es für sich selbst freischalten zu lassen (`player`, Standard).
 
 Tore bewachen auch die Dimensionen des Spiels selbst: Ein Tor, dessen `dimension` `minecraft:the_nether` ist, steht vor jedem Netherportal.
 

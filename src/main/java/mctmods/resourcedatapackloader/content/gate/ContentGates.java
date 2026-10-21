@@ -40,6 +40,9 @@ public final class ContentGates {
     private static final Map<String, ItemStack> STACKS = new HashMap<>();
     private static final ResourceLocation GATE = ResourceDataPackLoader.id("gate");
     private static final PackGeneration GENERATION = new PackGeneration();
+    private static final List<String> TEAMLESS = List.of(GateDef.PLAYER, GateDef.REFUSE);
+    private static final List<String> TALLIES = List.of(GateDef.PLAYER, GateDef.TEAM);
+    private static final List<String> STANDINGS = List.of(GateDef.ALONE, GateDef.WITH);
 
     private ContentGates() {}
 
@@ -81,10 +84,12 @@ public final class ContentGates {
             return null;
         }
         JsonObject unlock = Json.getJsonObject(json, "unlock", new JsonObject());
-        return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), scope, Json.getBoolean(json, "open", false),
+        String owner = "Gate " + key;
+        return new GateDef(key, dimension, Json.getString(json, "name", key.getPath()), scope, Json.choice(json, "teamless", GateDef.PLAYER, owner, TEAMLESS), Json.getBoolean(json, "open", false),
                 Json.getString(unlock, "craft", "").trim(), Json.getString(unlock, "consume", "").trim(), Math.max(1, Json.getInt(unlock, "consumeCount", 1)),
                 Json.getString(unlock, "hold", "").trim(), Json.getString(unlock, "advancement", "").trim(), Json.getString(unlock, "killed", "").trim(),
-                Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Standing.parse(unlock), Json.strings(json, "portalBlocks"),
+                Math.max(1, Json.getInt(unlock, "killedCount", 1)), Json.getString(unlock, "killedDrops", "").trim(), Json.choice(unlock, "killedTally", GateDef.PLAYER, owner, TALLIES),
+                Standing.parse(unlock), Json.choice(unlock, "teamAndScore", GateDef.ALONE, owner, STANDINGS), Json.strings(json, "portalBlocks"),
                 Json.getString(json, "blockedMessage", "You need %item% to enter %dim%"), Json.getString(json, "unlockedMessage", "%dim% is now open"),
                 Json.getBoolean(json, "safeReturn", false), Json.strings(json, "requires"));
     }
@@ -102,9 +107,14 @@ public final class ContentGates {
         return null;
     }
 
-    public static boolean unlocked(ServerPlayer player, GateDef def) { return openFor(player, def) || def.standing().earnedBy(player); }
+    public static boolean unlocked(ServerPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return false; }
+        return openFor(player, def) || def.standsAlone() && def.standing().earnedBy(player);
+    }
 
     public static boolean admits(ServerPlayer player, GateDef def) {
+        if (turnedAway(player, def)) { return false; }
+        if (!def.standsAlone()) { return openFor(player, def) && def.standing().met(player); }
         if (openFor(player, def)) { return true; }
         if (!def.standing().earnedBy(player)) { return false; }
         unlock(player, def, true);
@@ -118,7 +128,10 @@ public final class ContentGates {
         return GateStorage.unlocked(player, def);
     }
 
+    private static boolean turnedAway(ServerPlayer player, GateDef def) { return def.refusesTeamless() && Standing.teamOf(player).isEmpty(); }
+
     public static void unlock(ServerPlayer player, GateDef def, boolean announce) {
+        if (turnedAway(player, def)) { return; }
         GateStorage.unlock(player, def);
         String team = GateStorage.teamFor(player, def);
         ContentLog.LOGGER.debug("Gate {} opened for {}{}", def.key(), player.getName().getString(), def.global() ? " and everyone" : team.isEmpty() ? "" : " and team " + team);
