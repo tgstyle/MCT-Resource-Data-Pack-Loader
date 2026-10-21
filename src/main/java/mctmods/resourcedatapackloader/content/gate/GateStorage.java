@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.gate;
 import mctmods.resourcedatapackloader.content.def.GateDef;
 import mctmods.resourcedatapackloader.util.SavedTypes;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
+import mctmods.resourcedatapackloader.util.Standing;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -18,7 +19,9 @@ public final class GateStorage extends SavedData {
     private static final String PERSISTED = "rdplGates";
     private static final String PERSISTED_KILLS = "rdplGateKills";
     private CompoundTag open = new CompoundTag();
+    private static final String PERSISTED_TEAMS = "rdplGateTeams";
     private CompoundTag kills = new CompoundTag();
+    private CompoundTag teams = new CompoundTag();
     private static final SavedDataType<GateStorage> TYPE = SavedTypes.of(NAME, GateStorage::new, GateStorage::read, GateStorage::write);
 
     private static GateStorage get(MinecraftServer server) { return server.overworld().getDataStorage().computeIfAbsent(TYPE); }
@@ -27,6 +30,7 @@ public final class GateStorage extends SavedData {
         GateStorage held = new GateStorage();
         held.open = tag.getCompoundOrEmpty(tag.contains(PERSISTED) ? PERSISTED : OLD_OPEN).copy();
         held.kills = tag.getCompoundOrEmpty(tag.contains(PERSISTED_KILLS) ? PERSISTED_KILLS : OLD_KILLS).copy();
+        held.teams = tag.getCompoundOrEmpty(PERSISTED_TEAMS).copy();
         return held;
     }
 
@@ -34,6 +38,7 @@ public final class GateStorage extends SavedData {
         CompoundTag tag = new CompoundTag();
         tag.put(PERSISTED, open.copy());
         tag.put(PERSISTED_KILLS, kills.copy());
+        tag.put(PERSISTED_TEAMS, teams.copy());
         return tag;
     }
 
@@ -44,16 +49,38 @@ public final class GateStorage extends SavedData {
         else { clearTallyFor(player, def.id()); }
     }
 
-    public static boolean unlocked(ServerPlayer player, GateDef def) { return def.global() ? unlockedGlobally(player.level().getServer(), def.id()) : unlockedFor(player, def.id()); }
+    public static boolean unlocked(ServerPlayer player, GateDef def) {
+        if (def.global()) { return unlockedGlobally(player.level().getServer(), def.id()); }
+        String team = teamFor(player, def);
+        return team.isEmpty() ? unlockedFor(player, def.id()) : unlockedByTeam(player.level().getServer(), team, def.id());
+    }
 
     public static void unlock(ServerPlayer player, GateDef def) {
+        String team = teamFor(player, def);
         if (def.global()) { unlockGlobally(player.level().getServer(), def.id()); }
-        else { unlockFor(player, def.id()); }
+        else if (team.isEmpty()) { unlockFor(player, def.id()); }
+        else { unlockByTeam(player.level().getServer(), team, def.id(), true); }
     }
 
     public static void lock(ServerPlayer player, GateDef def) {
+        String team = teamFor(player, def);
         if (def.global()) { lockGlobally(player.level().getServer(), def.id()); }
-        else { lockFor(player, def.id()); }
+        else if (team.isEmpty()) { lockFor(player, def.id()); }
+        else { unlockByTeam(player.level().getServer(), team, def.id(), false); }
+    }
+
+    public static String teamFor(ServerPlayer player, GateDef def) { return def.teamWide() ? Standing.teamOf(player) : ""; }
+
+    private static boolean unlockedByTeam(MinecraftServer server, String team, String key) { return get(server).teams.getCompoundOrEmpty(team).getBooleanOr(key, false); }
+
+    private static void unlockByTeam(MinecraftServer server, String team, String key, boolean unlocked) {
+        GateStorage data = get(server);
+        CompoundTag gates = data.teams.getCompoundOrEmpty(team);
+        if (unlocked) { gates.putBoolean(key, true); }
+        else { gates.remove(key); }
+        if (gates.isEmpty()) { data.teams.remove(team); }
+        else { data.teams.put(team, gates); }
+        data.setDirty();
     }
 
     public static boolean unlockedFor(Player player, String key) { return PlayerPersisted.read(player, PERSISTED).getBooleanOr(key, false); }

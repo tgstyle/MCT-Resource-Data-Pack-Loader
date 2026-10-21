@@ -1,14 +1,21 @@
 package mctmods.resourcedatapackloader.content.def;
 
+import mctmods.resourcedatapackloader.util.Standing;
+
 import net.minecraft.resources.Identifier;
 import java.util.List;
 
-public record GateDef(Identifier key, Identifier dimension, String name, boolean global, boolean open, String craft, String consume, int consumeCount, String hold, String advancement,
-                      String killed, int killedCount, String killedDrops, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires) {
+public record GateDef(Identifier key, Identifier dimension, String name, String scope, boolean open, String craft, String consume, int consumeCount, String hold, String advancement,
+                      String killed, int killedCount, String killedDrops, Standing standing, List<String> portalBlocks, String blockedMessage, String unlockedMessage, boolean safeReturn, List<String> requires) {
     public static final String GLOBAL = "global";
     public static final String PLAYER = "player";
+    public static final String TEAM = "team";
 
     public String id() { return key.toString(); }
 
-    public String scope() { return global ? GLOBAL : PLAYER; }
+    public boolean global() { return GLOBAL.equals(scope); }
+
+    public boolean teamWide() { return TEAM.equals(scope); }
+
+    public boolean perPlayer() { return PLAYER.equals(scope); }
 }

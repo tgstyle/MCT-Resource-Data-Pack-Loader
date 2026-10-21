@@ -43,7 +43,7 @@ public final class GateEvents {
     public static void onTravel(EntityTravelToDimensionEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         for (GateDef def : ContentGates.forDimension(event.getDimension().identifier())) {
-            if (ContentGates.unlocked(player, def)) { continue; }
+            if (ContentGates.admits(player, def)) { continue; }
             event.setCanceled(true);
             ContentLog.LOGGER.debug("Gate {} turned {} back from {}", def.key(), player.getName().getString(), def.dimension());
             if (quiet(player)) { return; }
@@ -110,7 +110,7 @@ public final class GateEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) { return; }
         String earned = event.getAdvancement().id().toString();
         for (GateDef def : ContentGates.all()) {
-            if (def.advancement().isEmpty() || !def.global() || !def.advancement().equals(earned)) { continue; }
+            if (def.advancement().isEmpty() || def.perPlayer() || !def.advancement().equals(earned)) { continue; }
             ContentGates.unlock(player, def, true);
         }
     }

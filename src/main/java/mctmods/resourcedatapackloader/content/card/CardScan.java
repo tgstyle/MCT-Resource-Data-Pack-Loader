@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
+import mctmods.resourcedatapackloader.util.Standing;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceKey;
@@ -62,7 +63,7 @@ public final class CardScan {
             case CardRule.Y_LEVEL -> rule.below != null && player.getY() < rule.below || rule.above != null && player.getY() > rule.above;
             case CardRule.PLAY_TIME -> (played(player) - PlayerPersisted.of(player, PLAY_FROM).getIntOr(PLAY_FROM, 0)) / MINUTE_TICKS >= rule.minutes;
             default -> {
-                Integer score = CardPlace.score(player, rule.objective);
+                Integer score = Standing.score(player, rule.objective);
                 yield score != null && score >= rule.score;
             }
         };

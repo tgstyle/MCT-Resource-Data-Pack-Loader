@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.card;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
+import mctmods.resourcedatapackloader.util.Standing;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -73,9 +74,7 @@ final class CardParser {
         when.dayAtLeast = json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L;
         when.advancement = Json.getString(json, "advancement", "").trim();
         when.gameMode = Json.getString(json, "gameMode", "").trim();
-        when.team = Json.getString(json, "team", "").trim();
-        when.objective = Json.getString(json, "objective", "").trim();
-        when.scoreAtLeast = json.has("scoreAtLeast") ? Json.getInt(json, "scoreAtLeast") : null;
+        when.standing = Standing.parse(json);
         return when;
     }
 
