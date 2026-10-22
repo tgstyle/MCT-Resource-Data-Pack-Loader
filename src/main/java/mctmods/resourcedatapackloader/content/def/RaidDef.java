@@ -5,6 +5,6 @@ import net.minecraft.world.BossEvent;
 import java.util.List;
 
 public record RaidDef(Identifier key, String omen, String name, BossEvent.BossBarColor color, List<List<Group>> waves, int waveDelay, int spawnDistance, int reach, int timeout,
-        String sound, String wins, String loses, List<String> bells, int points, String loot) {
+        String sound, String wins, String loses, List<String> bells, int points, String loot, boolean anywhere) {
     public record Group(String entity, AmountDef count) {}
 }

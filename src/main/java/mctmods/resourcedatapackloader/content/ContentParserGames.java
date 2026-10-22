@@ -203,7 +203,8 @@ public final class ContentParserGames {
                 Json.getString(json, "loses", "").trim(),
                 Json.strings(json, "bell"),
                 Json.getInt(json, "points", 0),
-                Json.getString(json, "loot", "").trim());
+                Json.getString(json, "loot", "").trim(),
+                Json.getBoolean(json, "anywhere", false));
     }
 
     @Nullable public static TeamDef teamFile(Identifier key, String contents) {

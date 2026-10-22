@@ -84,6 +84,14 @@ public final class ContentRaids {
 
     @Nullable public static RaidDef def(@Nullable Identifier key) { return key == null ? null : DEFS.get(key); }
 
+    public static List<String> keys() { return DEFS.keySet().stream().map(Object::toString).toList(); }
+
+    public static boolean begin(ServerLevel level, RaidDef def, BlockPos at) {
+        if (RaidStorage.get(level).raided(at, def.reach())) { return false; }
+        ActiveRaid.start(level, def, at, true);
+        return true;
+    }
+
     public static boolean isBell(BlockState state) { return state.getBlock() instanceof ContentBellBlock || BELLS.contains(state.getBlock()); }
 
     public static boolean answersBell(LivingEntity living) { return living.getPersistentData().contains(ActiveRaid.RAIDER) || living instanceof Raider; }
@@ -136,11 +144,17 @@ public final class ContentRaids {
             Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(ContentEffects.find(name))).orElse(null);
             if (omen == null || !player.hasEffect(omen)) { continue; }
             RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
-            if (village == null) { return; }
             RaidStorage storage = RaidStorage.get(level);
+            if (village == null) {
+                if (!def.anywhere() || storage.raided(player.blockPosition(), def.reach())) { return; }
+                player.removeEffect(omen);
+                ActiveRaid.start(level, def, player.blockPosition(), true);
+                ContentLog.LOGGER.info("{} carries {} with no village near, so raid {} begins around them", player.getGameProfile().name(), def.omen(), def.key());
+                return;
+            }
             if (storage.raided(village.center(), VILLAGE_SEARCH + village.radius())) { return; }
             player.removeEffect(omen);
-            storage.add(new ActiveRaid(def, village.center()));
+            ActiveRaid.start(level, def, village.center(), false);
             ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().name(), def.omen(), village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
             return;
         }
