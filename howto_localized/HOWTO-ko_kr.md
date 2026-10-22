@@ -896,7 +896,6 @@ thatmod.jar
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ thatmod.jar
 | `log`        | 아니요 | 블록 이름        | `minecraft:log`    | 줄기 블록                                                                                                                                                                             |
 | `leaves`     | 아니요 | 블록 이름        | `minecraft:leaves` | 잎 블록                                                                                                                                                                               |
 | `height`     | 아니요 | 정수             | `4`                | 줄기 높이                                                                                                                                                                             |
-| `vines`      | 아니요 | 불리언           | `false`            | 잎에서 덩굴이 늘어집니다                                                                                                                                                              |
 | `structure`  | 아니요 | `namespace:name` | 없음               | 생성된 나무 대신 이 템플릿으로 자랍니다                                                                                                                                               |
 | `structures` | 아니요 | 목록             | 없음               | 자랄 템플릿 여러 개 중 자랄 때마다 하나를 고릅니다. 각 항목은 `{ "structure": "namespace:name", "weight": 3 }` 형식이거나, 확률이 같은 이름 하나만 씁니다. `structure`를 재정의합니다 |
 

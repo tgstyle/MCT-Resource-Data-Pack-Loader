@@ -896,7 +896,6 @@ Todas as chaves, mostradas de uma vez. Um ficheiro real escreve apenas as de que
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Uma `structure` substitui a árvore gerada por um dos teus moldes, que é a form
 | `log`        | não         | nome de bloco            | `minecraft:log`    | Bloco do tronco                                                                                                                                                                                                     |
 | `leaves`     | não         | nome de bloco            | `minecraft:leaves` | Bloco das folhas                                                                                                                                                                                                    |
 | `height`     | não         | número inteiro           | `4`                | Altura do tronco                                                                                                                                                                                                    |
-| `vines`      | não         | booleano                 | `false`            | Pendurar trepadeiras nas folhas                                                                                                                                                                                     |
 | `structure`  | não         | `namespace:name`         | nenhum             | Cresce para este molde em vez de uma árvore gerada                                                                                                                                                                  |
 | `structures` | não         | lista                    | nenhum             | Vários moldes para os quais crescer, escolhendo-se um de cada vez que cresce. Cada entrada é `{ "structure": "namespace:name", "weight": 3 }`, ou um nome simples para probabilidades iguais. Substitui `structure` |
 

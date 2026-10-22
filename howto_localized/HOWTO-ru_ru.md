@@ -896,7 +896,6 @@ thatmod.jar
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ thatmod.jar
 | `log`        | нет   | имя блока          | `minecraft:log`    | Блок ствола                                                                                                                                                                                 |
 | `leaves`     | нет   | имя блока          | `minecraft:leaves` | Блок листвы                                                                                                                                                                                 |
 | `height`     | нет   | int                | `4`                | Высота ствола                                                                                                                                                                               |
-| `vines`      | нет   | boolean            | `false`            | Свесить лозы с листвы                                                                                                                                                                       |
 | `structure`  | нет   | `namespace:name`   | нет                | Вырастает в этот шаблон вместо сгенерированного дерева                                                                                                                                      |
 | `structures` | нет   | список             | нет                | Несколько шаблонов, из которых при каждом росте выбирается один. Каждая запись — `{ "structure": "namespace:name", "weight": 3 }` либо голое имя для равных шансов. Перекрывает `structure` |
 

@@ -896,7 +896,6 @@ Modのパックは、`overrideResourcePacks` の設定にかかわらず、リ�
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Modのパックは、`overrideResourcePacks` の設定にかかわらず、リ�
 | `log`        | いいえ | ブロック名         | `minecraft:log`    | 幹のブロック                                                                                                                                                                                    |
 | `leaves`     | いいえ | ブロック名         | `minecraft:leaves` | 葉のブロック                                                                                                                                                                                    |
 | `height`     | いいえ | 整数               | `4`                | 幹の高さ                                                                                                                                                                                        |
-| `vines`      | いいえ | 真偽値             | `false`            | 葉からツタを垂らします                                                                                                                                                                          |
 | `structure`  | いいえ | `namespace:name`   | なし               | 生成される木の代わりに、このテンプレートに成長します                                                                                                                                            |
 | `structures` | いいえ | リスト             | なし               | 成長先となる複数のテンプレート。成長のたびに1つが選ばれます。各要素は `{ "structure": "namespace:name", "weight": 3 }` の形で、名前だけを書くと同じ確率になります。`structure` より優先されます |
 

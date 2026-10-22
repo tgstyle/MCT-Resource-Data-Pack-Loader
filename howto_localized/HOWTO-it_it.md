@@ -896,7 +896,6 @@ Tutte le chiavi, mostrate insieme. Un file reale scrive solo quelle che gli serv
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Una `structure` sostituisce l'albero generato con uno dei tuoi modelli, ed è il
 | `log`        | no           | nome di blocco           | `minecraft:log`    | Blocco del tronco                                                                                                                                                                              |
 | `leaves`     | no           | nome di blocco           | `minecraft:leaves` | Blocco delle foglie                                                                                                                                                                            |
 | `height`     | no           | intero                   | `4`                | Altezza del tronco                                                                                                                                                                             |
-| `vines`      | no           | booleano                 | `false`            | Fa pendere rampicanti dalle foglie                                                                                                                                                             |
 | `structure`  | no           | `namespace:name`         | nessuno            | Cresce in questo modello invece che in un albero generato                                                                                                                                      |
 | `structures` | no           | elenco                   | nessuno            | Più modelli in cui crescere, uno scelto a ogni crescita. Ogni voce è `{ "structure": "namespace:name", "weight": 3 }`, oppure un nome semplice per probabilità uguali. Sovrascrive `structure` |
 

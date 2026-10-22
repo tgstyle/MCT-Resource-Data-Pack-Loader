@@ -896,7 +896,6 @@ Zobrazeny jsou všechny klíče najednou. Skutečný soubor obsahuje jen ty, kte
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Položka `structure` nahradí vygenerovaný strom některou z tvých šablon, co
 | `log`        | ne      | název bloku        | `minecraft:log`    | Blok kmene                                                                                                                                                                                         |
 | `leaves`     | ne      | název bloku        | `minecraft:leaves` | Blok listí                                                                                                                                                                                         |
 | `height`     | ne      | celé číslo         | `4`                | Výška kmene                                                                                                                                                                                        |
-| `vines`      | ne      | boolean            | `false`            | Nechá z listí viset liány                                                                                                                                                                          |
 | `structure`  | ne      | `namespace:name`   | žádný              | Vyroste v tuto šablonu místo vygenerovaného stromu                                                                                                                                                 |
 | `structures` | ne      | seznam             | žádný              | Několik šablon, do kterých může vyrůst, při každém růstu se vybere jedna. Každá položka je `{ "structure": "namespace:name", "weight": 3 }`, nebo holý název pro stejné šance. Přepíše `structure` |
 

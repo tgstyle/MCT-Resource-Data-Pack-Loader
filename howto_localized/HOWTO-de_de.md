@@ -896,7 +896,6 @@ Alle Schlüssel auf einmal. Eine echte Datei schreibt nur die, die sie braucht.
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Ein `structure` ersetzt den generierten Baum durch eine deiner Vorlagen, und das
 | `log`        | nein    | Blockname            | `minecraft:log`    | Stammblock                                                                                                                                                                                             |
 | `leaves`     | nein    | Blockname            | `minecraft:leaves` | Blätterblock                                                                                                                                                                                           |
 | `height`     | nein    | int                  | `4`                | Stammhöhe                                                                                                                                                                                              |
-| `vines`      | nein    | boolean              | `false`            | Ranken von den Blättern hängen lassen                                                                                                                                                                  |
 | `structure`  | nein    | `namespace:name`     | keine              | Wächst zu dieser Vorlage statt zu einem generierten Baum                                                                                                                                               |
 | `structures` | nein    | Liste                | keine              | Mehrere Vorlagen, aus denen bei jedem Wachsen eine gewählt wird. Jeder Eintrag ist `{ "structure": "namespace:name", "weight": 3 }` oder ein bloßer Name für gleiche Chancen. Überschreibt `structure` |
 

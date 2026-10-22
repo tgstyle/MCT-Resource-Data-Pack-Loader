@@ -896,7 +896,6 @@ Todas las claves, mostradas de una vez. Un archivo real escribe solo las que nec
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ Una `structure` sustituye el árbol generado por una de tus plantillas, que es l
 | `log`        | no          | nombre de bloque           | `minecraft:log`    | Bloque del tronco                                                                                                                                                                                              |
 | `leaves`     | no          | nombre de bloque           | `minecraft:leaves` | Bloque de las hojas                                                                                                                                                                                            |
 | `height`     | no          | entero                     | `4`                | Altura del tronco                                                                                                                                                                                              |
-| `vines`      | no          | booleano                   | `false`            | Hace colgar enredaderas de las hojas                                                                                                                                                                           |
 | `structure`  | no          | `namespace:name`           | ninguno            | Crece hasta esta plantilla en lugar de un árbol generado                                                                                                                                                       |
 | `structures` | no          | lista                      | ninguno            | Varias plantillas en las que crecer, una elegida cada vez que crece. Cada entrada es `{ "structure": "namespace:name", "weight": 3 }`, o un nombre simple para probabilidades iguales. Sobrescribe `structure` |
 

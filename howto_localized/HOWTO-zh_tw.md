@@ -896,7 +896,6 @@ thatmod.jar
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ thatmod.jar
 | `log`        | 否   | 方塊名稱         | `minecraft:log`    | 樹幹方塊                                                                                                                                      |
 | `leaves`     | 否   | 方塊名稱         | `minecraft:leaves` | 樹葉方塊                                                                                                                                      |
 | `height`     | 否   | 整數             | `4`                | 樹幹高度                                                                                                                                      |
-| `vines`      | 否   | 布林值           | `false`            | 從樹葉垂下藤蔓                                                                                                                                |
 | `structure`  | 否   | `namespace:name` | 無                 | 長成此範本，而不是生成的樹                                                                                                                    |
 | `structures` | 否   | 清單             | 無                 | 可長成的多個範本，每次生長時挑選其一。每個項目寫成 `{ "structure": "namespace:name", "weight": 3 }`，或只寫名稱，機率均等。會覆寫 `structure` |
 

@@ -896,7 +896,6 @@ Every key, shown at once. A real file writes only the ones it needs.
     "log": "mypack:ruby_log",
     "leaves": "mypack:ruby_leaves",
     "height": 5,
-    "vines": false,
     "structure": "mypack:ruby_tree"
   }
 }
@@ -924,7 +923,6 @@ A `structure` replaces the generated tree with one of your templates, which is t
 | `log`        | no       | block name          | `minecraft:log`    | Trunk block                                                                                                                                                                         |
 | `leaves`     | no       | block name          | `minecraft:leaves` | Leaf block                                                                                                                                                                          |
 | `height`     | no       | int                 | `4`                | Trunk height                                                                                                                                                                        |
-| `vines`      | no       | boolean             | `false`            | Hang vines from the leaves                                                                                                                                                          |
 | `structure`  | no       | `namespace:name`    | none               | Grow into this template instead of a generated tree                                                                                                                                 |
 | `structures` | no       | list                | none               | Several templates to grow into, one chosen each time it grows. Each entry is `{ "structure": "namespace:name", "weight": 3 }`, or a bare name for equal odds. Overrides `structure` |
 
