@@ -4,6 +4,8 @@ import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Toasts;
@@ -30,6 +32,10 @@ public final class RDPLNetwork {
         registrar.playToClient(MessageToasts.TYPE, MessageToasts.CODEC, (message, _) -> Toasts.show(message.kinds()));
         registrar.playToClient(MessageIntroPlay.TYPE, MessageIntroPlay.CODEC, (message, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } });
         registrar.playToClient(MessageIntroLandMade.TYPE, MessageIntroLandMade.CODEC, (_, _) -> { if (FMLEnvironment.getDist() == Dist.CLIENT) { WorldIntroScreen.landMade(); } });
+        registrar.playToClient(MessageEnvironments.TYPE, MessageEnvironments.CODEC, (message, context) -> {
+            ContentEnvironments.receive(message.active(), message.whole());
+            ContentRuleSwitch.settle(context.player().level());
+        });
         registrar.playToServer(MessageIntroDone.TYPE, MessageIntroDone.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentIntroPlay.finished(player); } });
         registrar.playToServer(MessageOpenWorn.TYPE, MessageOpenWorn.CODEC, (_, context) -> { if (context.player() instanceof ServerPlayer player) { ContentWornContainers.open(player); } });
     }
@@ -57,4 +63,6 @@ public final class RDPLNetwork {
     public static boolean reaches(ServerPlayer player) { return player.connection.hasChannel(MessageCard.TYPE); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) { send(player, card); }
+
+    public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { send(player, environments); }
 }

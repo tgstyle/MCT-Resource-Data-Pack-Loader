@@ -17,9 +17,11 @@ import javax.annotation.Nullable;
 
 public final class ContentServer {
     private static final Set<String> WARNED = ConcurrentHashMap.newKeySet();
-    private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", named -> Difficulty.byName(named.toLowerCase(Locale.ROOT)), "which is not one of peaceful, easy, normal or hard");
+    private static final DimensionValues<Difficulty> DIFFICULTY = new DimensionValues<>("worldDifficulty", ContentServer::difficultyFrom, "which is not one of peaceful, easy, normal or hard");
 
     private ContentServer() {}
+
+    @Nullable public static Difficulty difficultyFrom(String name) { return Difficulty.byName(name.toLowerCase(Locale.ROOT)); }
 
     private static String text(String key, String fallback) {
         if (ContentControl.off(ContentControl.SERVER)) { return ""; }

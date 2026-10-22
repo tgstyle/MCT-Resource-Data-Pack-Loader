@@ -4,8 +4,10 @@ import mctmods.resourcedatapackloader.content.ContentFormats;
 import mctmods.resourcedatapackloader.content.def.BiomeDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentBiomes;
 
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 import java.util.ArrayList;
@@ -22,6 +24,19 @@ public final class BiomeNames {
     @Nullable public static TagKey<Biome> tag(String type) {
         String named = ContentFormats.biomeTag(type);
         return named == null ? null : tagged(named);
+    }
+
+    public static boolean matches(List<String> wanted, Holder<Biome> biome) {
+        if (wanted.isEmpty()) { return true; }
+        Identifier name = biome.unwrapKey().map(ResourceKey::identifier).orElse(null);
+        for (String one : wanted) {
+            if (one.startsWith("#")) {
+                TagKey<Biome> tag = tag(one.substring(1));
+                if (tag != null && biome.is(tag)) { return true; }
+            }
+            else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
+        }
+        return false;
     }
 
     @Nullable public static TagKey<Biome> tagged(String named) {

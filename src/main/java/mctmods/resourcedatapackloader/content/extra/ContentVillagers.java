@@ -128,43 +128,47 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
-            JsonObject entry = element.getAsJsonObject();
-            int level = Json.getInt(entry, "level", 1);
-            if (level < 1) {
-                ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
-                continue;
-            }
-            if (level > HIGHEST_LEVEL) {
-                ContentLog.LOGGER.warn("A trade in {} has level {}, past the highest a villager reaches, so it joins level {}", key, level, HIGHEST_LEVEL);
-                level = HIGHEST_LEVEL;
-            }
-            String profession = Json.getString(entry, "profession", "").trim();
-            String career = Json.getString(entry, "career", "").trim();
-            if (!career.isEmpty() && CAREERED.contains(profession)) {
-                String moved = CAREERS.get(profession + "/" + career);
-                if (moved == null) {
-                    ContentLog.LOGGER.error("A trade in {} names career '{}' of profession '{}', which has no such career, skipping it", key, career, profession);
-                    continue;
-                }
-                profession = moved;
-            }
-            else if (RETIRED.contains(profession)) {
-                ContentLog.LOGGER.error("A trade in {} names profession '{}' without a career, and that profession only exists through its careers now, skipping it", key, profession);
-                continue;
-            }
-            else if (!career.isEmpty()) { ContentLog.LOGGER.warn("A trade in {} names a career, which this line does not read. Name the profession itself in 'profession'", key); }
-            TradeStackDef sell = stack(entry, "sell");
-            TradeStackDef buy = stack(entry, "buy");
-            if (sell.isEmpty() || buy.isEmpty()) {
-                ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
-                continue;
-            }
-            TRADES.add(new TradeDef(key, profession,
-                    level, buy, stack(entry, "buySecondary"), sell,
-                    Math.max(1, Json.getInt(entry, "maxUses", 12)),
-                    Math.max(0, Json.getInt(entry, "xp", 2)),
-                    Json.strings(entry, "requires")));
+            TradeDef def = trade(key, element.getAsJsonObject());
+            if (def != null) { TRADES.add(def); }
         }
+    }
+
+    @Nullable public static TradeDef trade(Identifier key, JsonObject entry) {
+        int level = Json.getInt(entry, "level", 1);
+        if (level < 1) {
+            ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
+            return null;
+        }
+        if (level > HIGHEST_LEVEL) {
+            ContentLog.LOGGER.warn("A trade in {} has level {}, past the highest a villager reaches, so it joins level {}", key, level, HIGHEST_LEVEL);
+            level = HIGHEST_LEVEL;
+        }
+        String profession = Json.getString(entry, "profession", "").trim();
+        String career = Json.getString(entry, "career", "").trim();
+        if (!career.isEmpty() && CAREERED.contains(profession)) {
+            String moved = CAREERS.get(profession + "/" + career);
+            if (moved == null) {
+                ContentLog.LOGGER.error("A trade in {} names career '{}' of profession '{}', which has no such career, skipping it", key, career, profession);
+                return null;
+            }
+            profession = moved;
+        }
+        else if (RETIRED.contains(profession)) {
+            ContentLog.LOGGER.error("A trade in {} names profession '{}' without a career, and that profession only exists through its careers now, skipping it", key, profession);
+            return null;
+        }
+        else if (!career.isEmpty()) { ContentLog.LOGGER.warn("A trade in {} names a career, which this line does not read. Name the profession itself in 'profession'", key); }
+        TradeStackDef sell = stack(entry, "sell");
+        TradeStackDef buy = stack(entry, "buy");
+        if (sell.isEmpty() || buy.isEmpty()) {
+            ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
+            return null;
+        }
+        return new TradeDef(key, profession,
+                level, buy, stack(entry, "buySecondary"), sell,
+                Math.max(1, Json.getInt(entry, "maxUses", 12)),
+                Math.max(0, Json.getInt(entry, "xp", 2)),
+                Json.strings(entry, "requires"));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -276,10 +280,8 @@ public final class ContentVillagers {
             Identifier named = professionId(def);
             VillagerProfession profession = named == null ? null : Registered.find(BuiltInRegistries.VILLAGER_PROFESSION, named);
             if (profession == null) { continue; }
-            Item buy = ContentStacks.find(def.key(), def.buy().item());
-            Item sell = ContentStacks.find(def.key(), def.sell().item());
-            if (buy == null || sell == null) { continue; }
-            Item buySecondary = def.buySecondary().isEmpty() ? null : ContentStacks.find(def.key(), def.buySecondary().item());
+            ContentTrade.Listing listing = items(def);
+            if (listing == null) { continue; }
             ResourceKey<TradeSet> set = profession.getTrades(def.level());
             if (set == null) {
                 ContentLog.LOGGER.error("Trade in {} asks for level {} of profession '{}', which that profession does not offer, skipping it", def.key(), def.level(), def.profession());
@@ -287,7 +289,7 @@ public final class ContentVillagers {
             }
             int number = numbered.merge(def.key(), 1, Integer::sum);
             Identifier trade = def.key().withSuffix("/" + number);
-            GeneratedResources.put(PackType.SERVER_DATA, trade.getNamespace(), VILLAGER_TRADES + "/" + trade.getPath() + PackManager.JSON_SUFFIX, ContentTrade.json(def, buy, buySecondary, sell).toString());
+            GeneratedResources.put(PackType.SERVER_DATA, trade.getNamespace(), VILLAGER_TRADES + "/" + trade.getPath() + PackManager.JSON_SUFFIX, ContentTrade.json(def, listing.buy(), listing.buySecondary(), listing.sell()).toString());
             tags.computeIfAbsent(set.identifier(), _ -> new ArrayList<>()).add(trade.toString());
             made.merge(named, 1, Integer::sum);
         }
@@ -311,10 +313,25 @@ public final class ContentVillagers {
         if (professionsChecked) { return; }
         professionsChecked = true;
         for (TradeDef def : TRADES) {
-            if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
-            Identifier named = professionId(def);
-            if (named == null || !BuiltInRegistries.VILLAGER_PROFESSION.containsKey(named)) { ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key(), def.profession()); }
+            if (ContentRegistry.available(def.requires(), def.key())) { known(def); }
         }
+    }
+
+    public static boolean known(TradeDef def) {
+        Identifier named = professionId(def);
+        if (named != null && BuiltInRegistries.VILLAGER_PROFESSION.containsKey(named)) { return true; }
+        ContentLog.LOGGER.error("Trade in {} names profession '{}', which is not registered, skipping it", def.key(), def.profession());
+        return false;
+    }
+
+    @Nullable public static ContentTrade.Listing listing(TradeDef def) { return ContentRegistry.available(def.requires(), def.key()) ? items(def) : null; }
+
+    @Nullable private static ContentTrade.Listing items(TradeDef def) {
+        Item buy = ContentStacks.find(def.key(), def.buy().item());
+        Item sell = ContentStacks.find(def.key(), def.sell().item());
+        if (buy == null || sell == null) { return null; }
+        Item buySecondary = def.buySecondary().isEmpty() ? null : ContentStacks.find(def.key(), def.buySecondary().item());
+        return new ContentTrade.Listing(def, buy, buySecondary, sell);
     }
 
     @Nullable private static Block block(VillagerDef def) {

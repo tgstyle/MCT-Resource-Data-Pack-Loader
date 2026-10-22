@@ -11,6 +11,7 @@
         "common.INoiseChunk",
         "common.INormalNoise",
         "common.MixinAquifer",
+        "common.MixinEnvironmentAttributeSystem",
         "common.MixinLevelStorageSource",
         "common.MixinPlacedFeature",
         "common.MixinServerClockAdvance",

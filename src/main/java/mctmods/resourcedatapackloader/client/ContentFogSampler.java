@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.compat.LineClientCompat;
 import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.SkyLookDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.content.worldgen.ContentParserSkyLook;
 
 import net.minecraft.client.Camera;
@@ -69,10 +70,11 @@ public final class ContentFogSampler {
     public static void tick() {
         Minecraft mc = Minecraft.getInstance();
         ClientLevel level = mc.level;
+        Entity camera = mc.getCameraEntity();
+        if (level != null && camera != null) { ContentEnvironments.view(level.getBiome(camera.blockPosition())); }
         ContentWindowLook.tick(level);
         DimensionDef def = ContentDimensions.def(level);
         SkyLookDef look = def == null ? null : def.look();
-        Entity camera = mc.getCameraEntity();
         if (level == null || def == null || camera == null || !(look != null && look.sampleFog() || ContentWindowLook.samples(def))) {
             sampledIn = null;
             sampled = false;

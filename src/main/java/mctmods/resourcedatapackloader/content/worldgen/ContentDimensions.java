@@ -29,6 +29,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.dimension.DimensionDefaults;
@@ -39,6 +40,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public final class ContentDimensions {
     private static final String HIDDEN = ResourceDataPackLoader.MOD_ID + ":hidden";
     private static final float FOG_START = 10.0F;
     private static final float FOG_END = 96.0F;
+    private static final Map<DimensionDef, JsonObject> VISUALS = Collections.synchronizedMap(new IdentityHashMap<>());
     private static boolean loaded;
 
     private ContentDimensions() {}
@@ -70,9 +73,11 @@ public final class ContentDimensions {
         if (Config.definitionsOff() || !Config.content.dimensions()) { return; }
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
             if (ContentRegistry.reserved(key)) { return; }
-            DimensionDef def = ContentDimensionParser.parse(key, contents);
-            if (def == null) { return; }
+            JsonObject json = Json.object(key, contents, "dimension");
+            if (json == null) { return; }
+            DimensionDef def = ContentDimensionParser.parse(key, json);
             DEFS.put(key, def);
+            ContentEnvironments.parse(key, contents);
             if (VANILLA.contains(key) || GameData.has(Identifier.fromNamespaceAndPath(key.getNamespace(), "dimension/" + key.getPath() + PackManager.JSON_SUFFIX))) { EXISTING.add(key); }
         });
         if (!DEFS.isEmpty()) { Summary.info("dimensions", "Loaded " + DEFS.size() + " dimension definition(s) from packs"); }
@@ -86,9 +91,11 @@ public final class ContentDimensions {
 
     public static boolean shapes(DimensionDef def) { return sets(def, TERRAIN_TYPE); }
 
-    @Nullable public static DimensionDef def(Identifier dimension) { return DEFS.get(dimension); }
+    @Nullable public static DimensionDef def(Identifier dimension) { return ContentEnvironments.resolve(dimension, DEFS.get(dimension)); }
 
-    @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : DEFS.get(level.dimension().identifier()); }
+    @Nullable public static DimensionDef def(@Nullable Level level) { return level == null ? null : def(level.dimension().identifier()); }
+
+    @Nullable static DimensionDef base(Identifier dimension) { return DEFS.get(dimension); }
 
     public static boolean bedsWork(Level level) {
         DimensionDef def = def(level);
@@ -105,6 +112,7 @@ public final class ContentDimensions {
         List<String> applied = new ArrayList<>();
         List<String> natural = new ArrayList<>();
         ContentDimensionTime.reset();
+        VISUALS.clear();
         for (DimensionDef def : DEFS.values()) {
             if (!ContentRegistry.available(def.requires(), def.key())) { continue; }
             if (EXISTING.contains(def.key())) {
@@ -235,10 +243,28 @@ public final class ContentDimensions {
         if (look.waterFogColor() != SkyLookDef.UNSET) { attributes.addProperty(VISUAL + "water_fog_color", String.format("#%06x", look.waterFogColor())); }
     }
 
+    static JsonObject visuals(DimensionDef def) {
+        return VISUALS.computeIfAbsent(def, held -> {
+            JsonObject type = new JsonObject();
+            own(held, type);
+            return attributes(type);
+        });
+    }
+
+    static JsonObject vanillaAttributes(Identifier dimension) {
+        Identifier typeId = EXISTING.contains(dimension) ? typeOf(dimension) : Identifier.withDefaultNamespace("overworld");
+        JsonObject type = typeId == null ? null : GameData.json(Identifier.fromNamespaceAndPath(typeId.getNamespace(), "dimension_type/" + typeId.getPath() + PackManager.JSON_SUFFIX));
+        return type == null || !type.has("attributes") ? new JsonObject() : type.getAsJsonObject("attributes");
+    }
+
     private static void effects(DimensionDef def, JsonObject type) {
+        if (!EXISTING.contains(def.key())) { overworldVisualsAndMusic(type, attributes(type)); }
+        own(def, type);
+    }
+
+    private static void own(DimensionDef def, JsonObject type) {
         JsonObject attributes = attributes(type);
-        if (!EXISTING.contains(def.key())) { overworldVisualsAndMusic(type, attributes); }
-        else if (def.skyColor() >= 0) { attributes.addProperty(VISUAL + "sky_color", String.format("#%06x", def.skyColor() & 0xFFFFFF)); }
+        if (def.skyColor() >= 0) { attributes.addProperty(VISUAL + "sky_color", String.format("#%06x", def.skyColor() & 0xFFFFFF)); }
         if (def.fogColor() >= 0) { attributes.addProperty(VISUAL + "fog_color", String.format("#%06x", def.fogColor() & 0xFFFFFF)); }
         if (def.look() != null) { light(def.look(), attributes); }
         if (!def.surfaceWorld()) {
@@ -247,12 +273,15 @@ public final class ContentDimensions {
             attributes.remove(VISUAL + "cloud_height");
         }
         else if (sets(def, "sky.cloudHeight") && def.cloudHeight() >= 0) { attributes.addProperty(VISUAL + "cloud_height", (float) def.cloudHeight()); }
-        if (!def.sunriseColors()) { attributes.addProperty(VISUAL + "sunrise_sunset_color", "#00000000"); }
         if (def.showFog()) {
             attributes.addProperty(VISUAL + "fog_start_distance", FOG_START);
             attributes.addProperty(VISUAL + "fog_end_distance", FOG_END);
         }
-        if (!def.renderSky()) { attributes.addProperty("neoforge:custom_skybox", HIDDEN); }
+        else if (EXISTING.contains(def.key()) && def.gives("sky.showFog")) {
+            attributes.addProperty(VISUAL + "fog_start_distance", EnvironmentAttributes.FOG_START_DISTANCE.defaultValue());
+            attributes.addProperty(VISUAL + "fog_end_distance", EnvironmentAttributes.FOG_END_DISTANCE.defaultValue());
+        }
+        if (!def.renderSky() || (def.showFog() && "end".equals(Json.text(type, "skybox")))) { attributes.addProperty("neoforge:custom_skybox", HIDDEN); }
         if (!def.renderClouds()) { attributes.addProperty("neoforge:custom_clouds", HIDDEN); }
         if (!def.renderWeather()) { attributes.addProperty("neoforge:custom_weather_effects", HIDDEN); }
         else if (def.traits().rain() != null) { attributes.addProperty("neoforge:custom_weather_effects", def.key().toString()); }

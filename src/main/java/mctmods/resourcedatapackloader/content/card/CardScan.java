@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
+import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Standing;
 
@@ -58,7 +59,7 @@ public final class CardScan {
 
     private static boolean inside(CardRule rule, ServerPlayer player) {
         return switch (rule.trigger) {
-            case CardRule.BIOME_ENTER -> CardPlace.biomeMatches(rule.biomes, player.level().getBiome(player.blockPosition()));
+            case CardRule.BIOME_ENTER -> BiomeNames.matches(rule.biomes, player.level().getBiome(player.blockPosition()));
             case CardRule.STRUCTURE_ENTER -> CardPlace.inStructure(player, rule.structures, rule.radius);
             case CardRule.Y_LEVEL -> rule.below != null && player.getY() < rule.below || rule.above != null && player.getY() > rule.above;
             case CardRule.PLAY_TIME -> (played(player) - PlayerPersisted.of(player, PLAY_FROM).getIntOr(PLAY_FROM, 0)) / MINUTE_TICKS >= rule.minutes;

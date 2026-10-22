@@ -41,7 +41,7 @@ public final class ContentDimensionEffects implements CustomSkyboxRenderer, Cust
         event.registerCloudRenderer(HIDDEN, hidden);
         event.registerWeatherEffectRenderer(HIDDEN, hidden);
         for (DimensionDef def : ContentDimensions.all()) {
-            if (def.renderWeather() && def.traits().rain() != null) { event.registerWeatherEffectRenderer(def.key(), new ContentWeatherRenderer(def.traits().rain())); }
+            if (def.traits().rain() != null) { event.registerWeatherEffectRenderer(def.key(), new ContentWeatherRenderer(def.traits().rain())); }
         }
     }
 

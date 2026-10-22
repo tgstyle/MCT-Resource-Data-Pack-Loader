@@ -2,10 +2,13 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.AgeableWaterCreature;
 import net.minecraft.world.entity.animal.Animal;
@@ -26,6 +29,8 @@ import java.util.function.Consumer;
         GameRules held = ContentGameRules.forLevel((ServerLevel) (Object) this);
         if (held != null) { cir.setReturnValue(held); }
     }
+
+    @Inject(method = "getCurrentDifficultyAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/DifficultyInstance;", at = @At("RETURN"), cancellable = true) private void rdpl$localDifficulty(BlockPos pos, CallbackInfoReturnable<DifficultyInstance> cir) { cir.setReturnValue(ContentRuleSwitch.local((ServerLevel) (Object) this, pos, cir.getReturnValue())); }
 
     @Inject(method = "isAllowedToEnterPortal(Lnet/minecraft/world/level/Level;)Z", at = @At("HEAD"), cancellable = true) private void rdpl$nether(Level toLevel, CallbackInfoReturnable<Boolean> cir) { if (toLevel.dimension() == Level.NETHER && ContentServer.off(ContentServer.nether())) { cir.setReturnValue(false); } }
 

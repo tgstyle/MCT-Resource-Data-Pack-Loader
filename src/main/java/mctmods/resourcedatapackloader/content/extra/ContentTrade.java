@@ -8,13 +8,27 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.trading.ItemCost;
+import net.minecraft.world.item.trading.MerchantOffer;
+import java.util.Optional;
 import javax.annotation.Nullable;
 
 public final class ContentTrade {
     private static final float REPUTATION_DISCOUNT = 0.05F;
 
+    public record Listing(TradeDef def, Item buy, @Nullable Item buySecondary, Item sell) {}
+
     private ContentTrade() {}
+
+    public static MerchantOffer offer(TradeDef def, Item buy, @Nullable Item buySecondary, Item sell, RandomSource random) {
+        return new MerchantOffer(new ItemCost(buy, pick(def.buy(), random)), Optional.ofNullable(buySecondary).map(item -> new ItemCost(item, pick(def.buySecondary(), random))), new ItemStack(sell, pick(def.sell(), random)), def.maxUses(), def.xp(), REPUTATION_DISCOUNT);
+    }
+
+    private static int pick(TradeStackDef stack, RandomSource random) { return Mth.randomBetweenInclusive(random, stack.min(), stack.max()); }
 
     public static JsonObject json(TradeDef def, Item buy, @Nullable Item buySecondary, Item sell) {
         JsonObject json = new JsonObject();

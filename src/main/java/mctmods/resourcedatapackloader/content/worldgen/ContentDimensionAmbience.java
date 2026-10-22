@@ -21,6 +21,7 @@ import net.minecraft.world.attribute.AmbientAdditionsSettings;
 import net.minecraft.world.attribute.AmbientParticle;
 import net.minecraft.world.attribute.AmbientSounds;
 import net.minecraft.world.attribute.BackgroundMusic;
+import net.minecraft.world.attribute.EnvironmentAttribute;
 import net.minecraft.world.attribute.EnvironmentAttributeMap;
 import net.minecraft.world.attribute.EnvironmentAttributeSystem;
 import net.minecraft.world.attribute.EnvironmentAttributes;
@@ -38,12 +39,29 @@ public final class ContentDimensionAmbience {
     private ContentDimensionAmbience() {}
 
     public static void layers(EnvironmentAttributeSystem.Builder builder, Level level) {
-        DimensionDef def = ContentDimensions.def(level);
-        AmbienceDef ambience = def == null ? null : def.traits().ambience();
-        if (ambience == null) { return; }
-        Layers layers = LAYERS.computeIfAbsent(ambience, held -> new Layers(def.key(), held));
+        if (!ContentEnvironments.names(level.dimension().identifier()).isEmpty()) {
+            builder.addTimeBasedLayer(EnvironmentAttributes.BACKGROUND_MUSIC, (music, _) -> fixed(level, EnvironmentAttributes.BACKGROUND_MUSIC, music));
+            builder.addTimeBasedLayer(EnvironmentAttributes.AMBIENT_PARTICLES, (particles, _) -> fixed(level, EnvironmentAttributes.AMBIENT_PARTICLES, particles));
+            builder.addTimeBasedLayer(EnvironmentAttributes.AMBIENT_SOUNDS, (sounds, _) -> {
+                Layers layers = layers(ContentDimensions.def(level));
+                return layers == null ? sounds : layers.sounds(sounds);
+            });
+            return;
+        }
+        Layers layers = layers(ContentDimensions.def(level));
+        if (layers == null) { return; }
         builder.addConstantLayer(layers.fixed);
-        if (layers.loop != null || !layers.additions.isEmpty()) { builder.addConstantLayer(EnvironmentAttributes.AMBIENT_SOUNDS, base -> new AmbientSounds(layers.loop == null ? base.loop() : Optional.of(layers.loop), base.mood(), layers.additions.isEmpty() ? base.additions() : layers.additions)); }
+        if (layers.loop != null || !layers.additions.isEmpty()) { builder.addConstantLayer(EnvironmentAttributes.AMBIENT_SOUNDS, layers::sounds); }
+    }
+
+    @Nullable private static Layers layers(@Nullable DimensionDef def) {
+        AmbienceDef ambience = def == null ? null : def.traits().ambience();
+        return ambience == null ? null : LAYERS.computeIfAbsent(ambience, held -> new Layers(def.key(), held));
+    }
+
+    private static <V> V fixed(Level level, EnvironmentAttribute<V> attribute, V value) {
+        Layers layers = layers(ContentDimensions.def(level));
+        return layers == null ? value : layers.fixed.applyModifier(attribute, value);
     }
 
     @Nullable private static Holder<SoundEvent> sound(@Nullable Identifier name) {
@@ -78,5 +96,7 @@ public final class ContentDimensionAmbience {
             Holder<SoundEvent> addition = ambience.sounds() ? sound(ambience.ambientSound()) : null;
             additions = addition == null ? List.of() : List.of(new AmbientAdditionsSettings(addition, ambience.soundChance()));
         }
+
+        private AmbientSounds sounds(AmbientSounds base) { return new AmbientSounds(loop == null ? base.loop() : Optional.of(loop), base.mood(), additions.isEmpty() ? base.additions() : additions); }
     }
 }

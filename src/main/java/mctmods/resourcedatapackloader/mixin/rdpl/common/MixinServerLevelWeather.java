@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.def.DimensionDef;
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
 import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeatherCycle;
@@ -29,6 +30,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
     @Unique private final ContentWeatherCycle rdpl$weatherCycle = new ContentWeatherCycle();
 
     @WrapOperation(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;canHaveWeather()Z")) private boolean rdpl$ownWeather(ServerLevel level, Operation<Boolean> original) {
+        if (ContentRuleSwitch.forces(level)) {
+            ContentWeatherCycle.force(level, ContentRuleSwitch.weather(level));
+            return false;
+        }
         DimensionDef def = ContentDimensions.def(level);
         DimensionTraitsDef traits = ContentWeather.traits(level);
         DimensionTraitsDef.Cycle cycle = traits.cycle();
@@ -43,10 +48,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
         }
         if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain() : traits.alwaysRain()) { return ContentWeatherCycle.pour(level, original.call(level)); }
         if (cycle != null) {
-            rdpl$weatherCycle.tick(level, cycle);
+            rdpl$weatherCycle.tick(level, cycle, ContentRuleSwitch.steps(level));
             return false;
         }
-        return original.call(level);
+        boolean advances = original.call(level);
+        if (advances) { ContentWeatherCycle.hurry(level, ContentRuleSwitch.steps(level)); }
+        return advances;
     }
 
     @ModifyExpressionValue(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Ljava/lang/Boolean;booleanValue()Z")) private boolean rdpl$followServerWeather(boolean advance) {

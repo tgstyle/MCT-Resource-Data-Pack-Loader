@@ -13,7 +13,8 @@
         "common.MixinReloadableServerResources",
         "common.MixinNoiseChunk",
         "common.MixinFeaturePlacer",
-        "common.MixinMaterialRuleContext"
+        "common.MixinMaterialRuleContext",
+        "common.MixinEnvironmentAttributeSystem"
     ],
     "injectors": {
         "defaultRequire": 1

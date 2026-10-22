@@ -9,6 +9,7 @@ import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
 import mctmods.resourcedatapackloader.content.raid.RaidStorage;
 import mctmods.resourcedatapackloader.content.raid.RaidVillage;
 import mctmods.resourcedatapackloader.content.util.ContentEffects;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -140,24 +141,30 @@ public final class ContentRaids {
     public static void onPlayerTick(PlayerTickEvent.Post event) {
         if (!(event.getEntity() instanceof ServerPlayer player) || player.tickCount % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
         ServerLevel level = player.level();
+        RaidDef due = ContentRaidSwitch.due(level, player, LOOK_EVERY);
+        if (due != null) { around(level, player, due, "carries the raid clock"); }
         for (RaidDef def : DEFS.values()) {
             Holder<MobEffect> omen = OMENS.computeIfAbsent(def.omen(), name -> Optional.ofNullable(ContentEffects.find(name))).orElse(null);
             if (omen == null || !player.hasEffect(omen)) { continue; }
-            RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
-            RaidStorage storage = RaidStorage.get(level);
-            if (village == null) {
-                if (!def.anywhere() || storage.raided(player.blockPosition(), def.reach())) { return; }
-                player.removeEffect(omen);
-                ActiveRaid.start(level, def, player.blockPosition(), true);
-                ContentLog.LOGGER.info("{} carries {} with no village near, so raid {} begins around them", player.getGameProfile().name(), def.omen(), def.key());
-                return;
-            }
-            if (storage.raided(village.center(), VILLAGE_SEARCH + village.radius())) { return; }
-            player.removeEffect(omen);
-            ActiveRaid.start(level, def, village.center(), false);
-            ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().name(), def.omen(), village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
+            if (around(level, player, def, "carries " + def.omen())) { player.removeEffect(omen); }
             return;
         }
+    }
+
+    private static boolean around(ServerLevel level, ServerPlayer player, RaidDef def, String cause) {
+        RaidVillage village = RaidVillage.nearest(level, player.blockPosition(), 0);
+        RaidStorage storage = RaidStorage.get(level);
+        if (village == null) {
+            if (!def.anywhere() || storage.raided(player.blockPosition(), def.reach())) { return false; }
+            ActiveRaid.start(level, def, player.blockPosition(), true);
+            ContentLog.LOGGER.info("{} {} with no village near, so raid {} begins around them", player.getGameProfile().name(), cause, def.key());
+            return true;
+        }
+        if (storage.raided(village.center(), VILLAGE_SEARCH + village.radius())) { return false; }
+        ActiveRaid.start(level, def, village.center(), false);
+        ContentRaidSwitch.reset(level, player);
+        ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getGameProfile().name(), cause, village.center().getX(), village.center().getY(), village.center().getZ(), def.key());
+        return true;
     }
 
     public static void onRaiderHit(LivingIncomingDamageEvent event) { if (raider(event.getEntity()) && raider(event.getSource().getEntity())) { event.setCanceled(true); } }

@@ -7,16 +7,15 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.GameData;
 import mctmods.resourcedatapackloader.util.IdNames;
 import mctmods.resourcedatapackloader.util.Json;
+import mctmods.resourcedatapackloader.util.SkyTime;
 import mctmods.resourcedatapackloader.util.WorldgenJson;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
-import net.minecraft.SharedConstants;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.GsonHelper;
-import net.minecraft.util.Mth;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -77,7 +76,7 @@ final class ModernWorld {
         if (fixed >= 0) {
             int light = skyLight(fixed);
             if (light < FULL_SKY_LIGHT) { attributes.addProperty(GAMEPLAY + "sky_light_level", (float) light); }
-            attributes.addProperty(VISUAL + "sun_angle", (float) (timeOfDay(fixed) * 360.0));
+            attributes.addProperty(VISUAL + "sun_angle", (float) (SkyTime.timeOfDay(fixed) * 360.0));
             json.addProperty("has_fixed_time", true);
             json.addProperty("timelines", "#minecraft:universal");
             note.accept("'" + file + "' has the fixed time " + fixed + ": it became a dimension with no day cycle and sky light " + light + ", as this version writes the nether");
@@ -90,16 +89,7 @@ final class ModernWorld {
         json.add(ATTRIBUTES, attributes);
     }
 
-    private static double timeOfDay(long time) {
-        double turn = (time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25) - Math.floor(time / (double) SharedConstants.TICKS_PER_GAME_DAY - 0.25);
-        return (turn * 2.0 + (0.5 - Math.cos(turn * Math.PI) / 2.0)) / 3.0;
-    }
-
-    private static int skyLight(long time) {
-        double day = timeOfDay(time);
-        double dark = 1.0 - Mth.clamp(1.0 - (Math.cos(day * Math.PI * 2.0) * 2.0 + 0.5), 0.0, 1.0);
-        return FULL_SKY_LIGHT - (int) ((1.0 - dark) * 11.0);
-    }
+    private static int skyLight(long time) { return FULL_SKY_LIGHT - (int) ((1.0 - SkyTime.daylight(time)) * 11.0); }
 
     static void biome(JsonObject json, String file, Consumer<String> note) {
         if (GsonHelper.isObjectNode(json, "carvers")) { json.add("carvers", carvers(json.getAsJsonObject("carvers"), file, note)); }

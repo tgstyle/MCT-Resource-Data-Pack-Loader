@@ -47,7 +47,7 @@ final class ContentDimensionTime {
         if (type.has("attributes")) { type.getAsJsonObject("attributes").remove(SKY_LIGHT_LEVEL); }
         type.addProperty("timelines", IN_OVERWORLD);
         long length = def.traits().dayLength();
-        if (!fixed && def.fogColor() < 0 && def.skyColor() < 0 && def.sunriseColors() && length == DimensionTraitsDef.VANILLA_DAY) { return; }
+        if (!fixed && length == DimensionTraitsDef.VANILLA_DAY) { return; }
         String clock = fixed ? key.toString() : OVERWORLD_CLOCK;
         JsonObject day = timeline("day", clock);
         JsonObject moon = fixed ? timeline("moon", clock) : null;
@@ -55,7 +55,6 @@ final class ContentDimensionTime {
         JsonObject tracks = day.getAsJsonObject(TRACKS);
         if (length != DimensionTraitsDef.VANILLA_DAY) { scale(day, tracks, length); }
         if (fixed) { DAYLIGHT_CHECKS.forEach(tracks::remove); }
-        if (!def.sunriseColors()) { tracks.add("minecraft:visual/sunrise_sunset_color", constant("#00000000")); }
         String namespace = key.getNamespace();
         String path = key.getPath();
         GeneratedResources.put(PackType.SERVER_DATA, namespace, "timeline/" + path + "/day.json", day.toString());
@@ -69,11 +68,6 @@ final class ContentDimensionTime {
             values.add(namespace + ":" + path + "/moon");
         }
         else { values.add("minecraft:moon"); }
-        JsonObject colors = colors(def, clock);
-        if (colors != null) {
-            GeneratedResources.put(PackType.SERVER_DATA, namespace, "timeline/" + path + "/colors.json", colors.toString());
-            values.add(namespace + ":" + path + "/colors");
-        }
         values.add(namespace + ":" + path + "/day");
         JsonObject tag = new JsonObject();
         tag.add("values", values);
@@ -129,28 +123,6 @@ final class ContentDimensionTime {
         timeline.remove("time_markers");
         if (!timeline.has(TRACKS)) { timeline.add(TRACKS, new JsonObject()); }
         return timeline;
-    }
-
-    @Nullable private static JsonObject colors(DimensionDef def, String clock) {
-        JsonObject tracks = new JsonObject();
-        if (def.skyColor() >= 0) { tracks.add("minecraft:visual/sky_color", constant(String.format("#%06x", def.skyColor() & 0xFFFFFF))); }
-        if (def.fogColor() >= 0) { tracks.add("minecraft:visual/fog_color", constant(String.format("#%06x", def.fogColor() & 0xFFFFFF))); }
-        if (tracks.isEmpty()) { return null; }
-        JsonObject timeline = new JsonObject();
-        timeline.addProperty("clock", clock);
-        timeline.add(TRACKS, tracks);
-        return timeline;
-    }
-
-    private static JsonObject constant(String value) {
-        JsonObject keyframe = new JsonObject();
-        keyframe.addProperty("ticks", 0);
-        keyframe.addProperty("value", value);
-        JsonArray keyframes = new JsonArray();
-        keyframes.add(keyframe);
-        JsonObject track = new JsonObject();
-        track.add("keyframes", keyframes);
-        return track;
     }
 
     private static JsonObject dial(String source) {
