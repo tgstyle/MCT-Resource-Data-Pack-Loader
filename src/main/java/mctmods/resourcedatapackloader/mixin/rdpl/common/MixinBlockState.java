@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.util.FaceCache;
-import mctmods.resourcedatapackloader.util.IFaceHiding;
+import mctmods.resourcedatapackloader.util.interfaces.IFaceHiding;
 
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;

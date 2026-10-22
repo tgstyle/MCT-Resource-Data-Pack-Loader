@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.worldgen.ContentProspect;
 import mctmods.resourcedatapackloader.loot.BlockDrops;
-import mctmods.resourcedatapackloader.util.IFaceHiding;
+import mctmods.resourcedatapackloader.util.interfaces.IFaceHiding;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;

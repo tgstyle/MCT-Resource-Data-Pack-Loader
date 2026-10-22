@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.util;
+package mctmods.resourcedatapackloader.util.interfaces;
 
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import javax.annotation.Nullable;

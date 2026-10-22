@@ -5,7 +5,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
-import mctmods.resourcedatapackloader.util.IDayLength;
+import mctmods.resourcedatapackloader.util.interfaces.IDayLength;
 
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.level.GameRules;
@@ -38,7 +38,7 @@ import javax.annotation.Nonnull;
 
     @Inject(method = "<init>(Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;Ljava/util/function/Supplier;ZZJI)V", at = @At("RETURN")) private void rdpl$dayLength(CallbackInfo ci) {
         Level self = (Level) (Object) this;
-        ((IDayLength) (Object) self.dimensionType()).rdpl$dayLength(ContentWeather.traits(self).dayLength());
+        IDayLength.class.cast(self.dimensionType()).rdpl$dayLength(ContentWeather.traits(self).dayLength());
     }
 
     @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {

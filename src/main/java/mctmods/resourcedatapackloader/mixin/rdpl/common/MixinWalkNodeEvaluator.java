@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.IPathKindMemo;
+import mctmods.resourcedatapackloader.util.interfaces.IPathKindMemo;
 
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(WalkNodeEvaluator.class) public abstract class MixinWalkNodeEvaluator {
     @Redirect(method = "getBlockPathTypes", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/pathfinder/WalkNodeEvaluator;getBlockPathType(Lnet/minecraft/world/level/BlockGetter;III)Lnet/minecraft/world/level/pathfinder/BlockPathTypes;")) private BlockPathTypes rdpl$sharedKind(WalkNodeEvaluator self, BlockGetter level, int x, int y, int z) {
-        IPathKindMemo memo = (IPathKindMemo) (Object) this;
+        IPathKindMemo memo = (IPathKindMemo) this;
         BlockPathTypes held = memo.rdpl$known(x, y, z);
         if (held != null) { return held; }
         BlockPathTypes found = self.getBlockPathType(level, x, y, z);

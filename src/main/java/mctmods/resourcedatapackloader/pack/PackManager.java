@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.content.ContentPixelMaps;
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
-import mctmods.resourcedatapackloader.pack.port.IPackPort;
+import mctmods.resourcedatapackloader.pack.interfaces.IPackPort;
 import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
