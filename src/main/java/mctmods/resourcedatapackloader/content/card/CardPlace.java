@@ -12,12 +12,9 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraft.world.biome.Biome;
-import net.minecraftforge.common.BiomeDictionary;
 import net.minecraftforge.common.DimensionManager;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Locale;
 
 public final class CardPlace {
     public static final int NEAR = 32;
@@ -41,18 +38,6 @@ public final class CardPlace {
         String lowered = Settings.lower(name);
         int colon = lowered.indexOf(':');
         return colon < 0 ? lowered : lowered.substring(colon + 1);
-    }
-
-    static boolean biomeMatches(List<String> wanted, Biome biome) {
-        if (wanted.isEmpty()) { return true; }
-        ResourceLocation name = biome.getRegistryName();
-        for (String one : wanted) {
-            if (one.startsWith("#")) {
-                if (BiomeDictionary.hasType(biome, BiomeDictionary.Type.getType(one.substring(1).toUpperCase(Locale.ROOT)))) { return true; }
-            }
-            else if (name != null && (one.equals(name.toString()) || one.equals(name.getPath()))) { return true; }
-        }
-        return false;
     }
 
     static String biomeName(EntityPlayerMP player) {

@@ -396,9 +396,7 @@ public final class ContentParserWorlds {
         return found;
     }
 
-    @Nullable public static DimensionDef dimension(ResourceLocation key, String contents) {
-        JsonObject json = Json.object(key, contents, "dimension");
-        if (json == null) { return null; }
+    public static DimensionDef dimension(ResourceLocation key, JsonObject json) {
         JsonObject terrain = Json.getJsonObject(json, "terrain", new JsonObject());
         JsonObject biomes = Json.getJsonObject(json, "biomes", new JsonObject());
         JsonObject sky = Json.getJsonObject(json, "sky", new JsonObject());

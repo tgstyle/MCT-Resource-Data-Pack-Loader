@@ -101,6 +101,10 @@ public final class ContentSpawning {
             return;
         }
         BlockPos pos = new BlockPos(event.getX(), event.getY(), event.getZ());
+        if (event.getSpawner() == null && ContentSpawnSwitch.overCap(world, event.getEntityLiving(), pos)) {
+            deny(event);
+            return;
+        }
         if (!(event.getEntity() instanceof IMob)) {
             if (event.getSpawner() != null) { return; }
             if (deniedAboveWindow(world, event.getY())) { deny(event); }
@@ -144,6 +148,8 @@ public final class ContentSpawning {
     private static float rateFor(World world, BlockPos pos) {
         boolean sky = world.canSeeSky(pos);
         boolean day = world.isDaytime();
+        float switched = ContentSpawnSwitch.rate(world, pos, sky, day);
+        if (switched >= 0.0F) { return switched; }
         Biome biome = world.getBiome(pos);
         if (biome instanceof ContentBiome) {
             float wanted = ((ContentBiome) biome).monsterRate(sky, day);

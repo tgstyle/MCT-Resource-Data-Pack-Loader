@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.loot;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
 import mctmods.resourcedatapackloader.mixin.rdpl.common.IEntityLivingBase;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.Config;
@@ -16,6 +17,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.storage.loot.LootContext;
 import net.minecraft.world.storage.loot.LootTable;
@@ -92,7 +94,7 @@ public final class PlayerLoot {
         if (replacing) { drops.clear(); }
         EntityPlayer killer = killer(source, recentlyHit);
         for (Entry entry : rolling) {
-            LootTable table = world.getLootTableManager().getLootTableFromLocation(entry.table);
+            LootTable table = world.getLootTableManager().getLootTableFromLocation(ContentLootSwitch.swap(world, new BlockPos(player), entry.table));
             LootContext.Builder builder = new LootContext.Builder(world).withLootedEntity(player).withDamageSource(source);
             if (killer != null) { builder.withPlayer(killer).withLuck(killer.getLuck()); }
             for (ItemStack stack : table.generateLootForPools(world.rand, builder.build())) {

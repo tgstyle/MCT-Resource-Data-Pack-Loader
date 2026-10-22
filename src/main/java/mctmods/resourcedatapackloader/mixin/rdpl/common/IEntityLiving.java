@@ -5,4 +5,10 @@ import net.minecraft.util.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
-@Mixin(EntityLiving.class) public interface IEntityLiving { @Accessor("deathLootTable") void rdpl$setDeathLootTable(ResourceLocation table); }
+@Mixin(EntityLiving.class) public interface IEntityLiving {
+    @Accessor("deathLootTable") void rdpl$setDeathLootTable(ResourceLocation table);
+
+    @Accessor("inventoryHandsDropChances") float[] rdpl$handDropChances();
+
+    @Accessor("inventoryArmorDropChances") float[] rdpl$armorDropChances();
+}

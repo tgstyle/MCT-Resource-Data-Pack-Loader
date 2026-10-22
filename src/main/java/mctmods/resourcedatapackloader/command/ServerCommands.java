@@ -75,7 +75,7 @@ import javax.annotation.Nullable;
 public class ServerCommands extends CommandBase {
     static final int OPERATOR = 3;
     private static final int PACK_GOTO = 2;
-    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "game", "raid");
+    private static final List<String> SUBCOMMANDS = Arrays.asList("reload", "list", "which", "unused", "oregen", "generators", "gate", "dimensions", "biome", "pregen", "intro", "config", "goto", "vein", "team", "reset", "round", "card", "environment", "game", "raid");
     private static final List<String> PREGEN_ACTIONS = Arrays.asList("stop", "status");
     private static final List<String> GATE_ACTIONS = Arrays.asList("list", "check", "grant", "revoke");
     private static final List<String> CONFIG_ACTIONS = Arrays.asList("unused", "prune");
@@ -173,6 +173,7 @@ public class ServerCommands extends CommandBase {
     @Override @Nonnull public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) { return getListOfStringsMatchingLastWord(args, sender.canUseCommand(OPERATOR, getName()) ? forOperator() : openTo(sender)); }
         if (args.length >= 2 && "game".equals(args[0])) { return GameCommand.complete(server, sender, args); }
+        if (args.length >= 2 && "environment".equals(args[0])) { return EnvironmentCommand.complete(args); }
         if (args.length == 2 && "gate".equals(args[0])) { return getListOfStringsMatchingLastWord(args, GATE_ACTIONS); }
         if (args.length == 2 && "card".equals(args[0])) { return getListOfStringsMatchingLastWord(args, CardRules.keys()); }
         if (args.length == 2 && "raid".equals(args[0])) { return getListOfStringsMatchingLastWord(args, ContentRaids.keys()); }
@@ -216,6 +217,7 @@ public class ServerCommands extends CommandBase {
             else { allowGoto(sender, neededFor(place, "gotoLevel", Config.commands.gotoLevel)); }
         }
         else if ("card".equals(args[0])) { allow(sender, CardCommand.LEVEL); }
+        else if ("environment".equals(args[0])) { allow(sender, EnvironmentCommand.LEVEL); }
         else if (!"team".equals(args[0]) && !"round".equals(args[0]) && !"game".equals(args[0]) && (args.length != 1 || !"intro".equals(args[0]))) { allow(sender, OPERATOR); }
         if (args.length == 1 && "reload".equals(args[0])) { reload(server, sender); }
         else if (args.length == 1 && "list".equals(args[0])) { list(sender); }
@@ -243,6 +245,7 @@ public class ServerCommands extends CommandBase {
         else if ("card".equals(args[0])) { CardCommand.run(server, sender, args, getUsage(sender)); }
         else if ("game".equals(args[0])) { GameCommand.run(server, sender, args); }
         else if ("raid".equals(args[0])) { RaidCommand.run(server, sender, args, getUsage(sender)); }
+        else if ("environment".equals(args[0])) { EnvironmentCommand.run(server, sender, args, getUsage(sender)); }
         else { throw new WrongUsageException(getUsage(sender)); }
     }
 

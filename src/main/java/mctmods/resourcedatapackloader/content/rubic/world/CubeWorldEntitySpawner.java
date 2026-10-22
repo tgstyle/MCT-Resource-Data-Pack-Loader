@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.world;
 
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeWatcher;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
@@ -44,7 +45,7 @@ public class CubeWorldEntitySpawner implements IWorldEntitySpawner {
         for (EnumCreatureType mobType : EnumCreatureType.values()) {
             if (!shouldSpawnType(mobType, hostileEnable, peacefulEnable, spawnOnSetTickRate)) { continue; }
             int worldEntityCount = world.countEntities(mobType, true);
-            int maxEntityCount = mobType.getMaxNumberOfCreature() * chunkCount / MOB_COUNT_DIV;
+            int maxEntityCount = ContentSpawnSwitch.gate(world, mobType, worldEntityCount, chunkCount, MOB_COUNT_DIV) * chunkCount / MOB_COUNT_DIV;
             if (worldEntityCount > maxEntityCount) { continue; }
             ArrayList<CubePos> shuffled = getShuffledCopy(this.cubesForSpawn);
             totalSpawnCount += spawnCreatureTypeInAllChunks(mobType, world, shuffled);

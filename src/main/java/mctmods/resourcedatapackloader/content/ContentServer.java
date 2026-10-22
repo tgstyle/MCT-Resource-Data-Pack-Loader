@@ -61,7 +61,7 @@ public final class ContentServer {
         return DIFFICULTY.at(dimension, ContentControl.lines(ContentControl.SERVER, "worldDifficulty", Config.worldgen.worldDifficulty));
     }
 
-    @Nullable private static EnumDifficulty difficultyFrom(String name) { return Enums.byName(EnumDifficulty.class, name); }
+    @Nullable public static EnumDifficulty difficultyFrom(String name) { return Enums.byName(EnumDifficulty.class, name); }
 
     @Nullable public static Boolean forceGameMode() { return choice("worldForceGameMode", Config.worldgen.worldForceGameMode); }
 

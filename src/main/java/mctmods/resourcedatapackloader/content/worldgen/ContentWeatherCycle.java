@@ -1,9 +1,11 @@
 package mctmods.resourcedatapackloader.content.worldgen;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
 
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.World;
+import net.minecraft.world.storage.WorldInfo;
 import java.util.Random;
 
 final class ContentWeatherCycle {
@@ -46,19 +48,44 @@ final class ContentWeatherCycle {
         world.thunderingStrength = Math.max(0.0F, world.thunderingStrength - THUNDER_STEP);
     }
 
-    void tick(World world, DimensionTraitsDef.Cycle cycle) {
+    static void force(World world, int kind) {
+        if (world.isRemote) { return; }
+        if (kind == RuleSwitchDef.CLEAR) {
+            dry(world);
+            return;
+        }
+        world.prevRainingStrength = world.rainingStrength;
+        world.rainingStrength = MathHelper.clamp(world.rainingStrength + RAIN_STEP, 0.0F, 1.0F);
+        world.prevThunderingStrength = world.thunderingStrength;
+        world.thunderingStrength = MathHelper.clamp(world.thunderingStrength + (kind == RuleSwitchDef.THUNDER ? THUNDER_STEP : -THUNDER_STEP), 0.0F, 1.0F);
+    }
+
+    static void hurry(World world, int steps) {
+        if (world.isRemote || steps == 1 || world.provider.getDimension() != 0 || !world.getGameRules().getBoolean("doWeatherCycle")) { return; }
+        WorldInfo info = world.getWorldInfo();
+        info.setCleanWeatherTime(shifted(info.getCleanWeatherTime(), steps));
+        info.setRainTime(shifted(info.getRainTime(), steps));
+        info.setThunderTime(shifted(info.getThunderTime(), steps));
+    }
+
+    private static int shifted(int time, int steps) {
+        if (time <= 0) { return time; }
+        return steps == 0 ? time + 1 : Math.max(1, time - (steps - 1));
+    }
+
+    void tick(World world, DimensionTraitsDef.Cycle cycle, int steps) {
         if (world.isRemote) { return; }
         Random random = world.rand;
         if (!started) {
             started = true;
             left = MathHelper.getInt(random,cycle.clearMin, cycle.clearMax);
         }
-        else if (--left <= 0) {
+        else if ((left -= steps) <= 0) {
             raining = !raining;
             left = raining ? MathHelper.getInt(random,cycle.rainMin, cycle.rainMax) : MathHelper.getInt(random,cycle.clearMin, cycle.clearMax);
         }
         if (cycle.thunderMax <= 0) { thundering = false; }
-        else if (--thunderLeft <= 0) {
+        else if ((thunderLeft -= steps) <= 0) {
             thundering = !thundering;
             thunderLeft = thundering ? MathHelper.getInt(random,cycle.thunderMin, cycle.thunderMax) : MathHelper.getInt(random,cycle.calmMin, cycle.calmMax);
         }

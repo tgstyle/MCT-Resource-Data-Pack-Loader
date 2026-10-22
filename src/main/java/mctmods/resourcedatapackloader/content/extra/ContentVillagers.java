@@ -77,25 +77,29 @@ public final class ContentVillagers {
                 ContentLog.LOGGER.error("A trade in {} is not an object, skipping it", key);
                 continue;
             }
-            JsonObject entry = element.getAsJsonObject();
-            int level = Json.getInt(entry, "level", 1);
-            if (level < 1) {
-                ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
-                continue;
-            }
-            TradeStackDef sell = stack(entry, "sell");
-            TradeStackDef buy = stack(entry, "buy");
-            if (sell.isEmpty() || buy.isEmpty()) {
-                ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
-                continue;
-            }
-            TRADES.add(new TradeDef(key,
-                    Json.getString(entry, "profession", ""),
-                    Json.getString(entry, "career", ""),
-                    level, buy, stack(entry, "buySecondary"), sell,
-                    Math.max(1, Json.getInt(entry, "maxUses", 12)),
-                    strings(entry, "requires")));
+            TradeDef def = trade(key, element.getAsJsonObject());
+            if (def != null) { TRADES.add(def); }
         }
+    }
+
+    @Nullable public static TradeDef trade(ResourceLocation key, JsonObject entry) {
+        int level = Json.getInt(entry, "level", 1);
+        if (level < 1) {
+            ContentLog.LOGGER.error("A trade in {} has level {}, but levels start at 1, skipping it", key, level);
+            return null;
+        }
+        TradeStackDef sell = stack(entry, "sell");
+        TradeStackDef buy = stack(entry, "buy");
+        if (sell.isEmpty() || buy.isEmpty()) {
+            ContentLog.LOGGER.error("A trade in {} needs both a buy and a sell item, skipping it", key);
+            return null;
+        }
+        return new TradeDef(key,
+                Json.getString(entry, "profession", ""),
+                Json.getString(entry, "career", ""),
+                level, buy, stack(entry, "buySecondary"), sell,
+                Math.max(1, Json.getInt(entry, "maxUses", 12)),
+                strings(entry, "requires"));
     }
 
     private static TradeStackDef stack(JsonObject json, String name) {
@@ -127,18 +131,26 @@ public final class ContentVillagers {
         if (!load()) { return; }
         int count = 0;
         for (TradeDef def : TRADES) {
-            if (!ContentRegistry.available(def.requires, def.key)) { continue; }
+            ContentTrade listing = listing(def);
+            if (listing == null) { continue; }
             VillagerRegistry.VillagerCareer career = career(def);
             if (career == null) { continue; }
-            ItemStack buy = ContentStacks.parse(def.key, def.buy.item, def.buy.min);
-            ItemStack sell = ContentStacks.parse(def.key, def.sell.item, def.sell.min);
-            if (buy.isEmpty() || sell.isEmpty()) { continue; }
-            ItemStack buySecondary = def.buySecondary.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key, def.buySecondary.item, def.buySecondary.min);
-            career.addTrade(def.level, new ContentTrade(def, buy, buySecondary, sell));
+            career.addTrade(def.level, listing);
             count++;
         }
         if (count > 0) { Summary.info("content_trades", "Added " + count + " villager trade(s) from packs"); }
     }
+
+    @Nullable public static ContentTrade listing(TradeDef def) {
+        if (!ContentRegistry.available(def.requires, def.key)) { return null; }
+        ItemStack buy = ContentStacks.parse(def.key, def.buy.item, def.buy.min);
+        ItemStack sell = ContentStacks.parse(def.key, def.sell.item, def.sell.min);
+        if (buy.isEmpty() || sell.isEmpty()) { return null; }
+        ItemStack buySecondary = def.buySecondary.isEmpty() ? ItemStack.EMPTY : ContentStacks.parse(def.key, def.buySecondary.item, def.buySecondary.min);
+        return new ContentTrade(def, buy, buySecondary, sell);
+    }
+
+    public static boolean known(TradeDef def) { return career(def) != null; }
 
     @Nullable private static VillagerRegistry.VillagerCareer career(TradeDef def) {
         ResourceLocation location = new ResourceLocation(def.profession);

@@ -76,8 +76,11 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentCelestial;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkSaves;
 import mctmods.resourcedatapackloader.content.worldgen.ContentChunkWatch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGeneratorControl;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGrowSwitch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentOreControl;
 import mctmods.resourcedatapackloader.content.portal.ContentPortalFrames;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
@@ -93,6 +96,10 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentPregenHold;
 import mctmods.resourcedatapackloader.content.worldgen.ContentReplacements;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRetrogen;
 import mctmods.resourcedatapackloader.content.entity.ContentThreat;
+import mctmods.resourcedatapackloader.content.worldgen.ContentLootSwitch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentMobSwitch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentTradeSwitch;
+import mctmods.resourcedatapackloader.content.worldgen.ContentSpawnSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawning;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructurePlacement;
 import mctmods.resourcedatapackloader.content.worldgen.ContentStructureSearch;
@@ -101,6 +108,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentVoidWorld;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldTemplates;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWorldgen;
+import mctmods.resourcedatapackloader.function.FunctionOverrides;
 import mctmods.resourcedatapackloader.loot.BlockDrops;
 import mctmods.resourcedatapackloader.loot.LootInjections;
 import mctmods.resourcedatapackloader.loot.PlayerLoot;
@@ -189,6 +197,11 @@ public class ResourceDataPackLoader {
         ContentWorldIntro.load();
         RDPLNetwork.register();
         MinecraftForge.EVENT_BUS.register(Toasts.class);
+        MinecraftForge.EVENT_BUS.register(ContentEnvironments.class);
+        MinecraftForge.EVENT_BUS.register(ContentGrowSwitch.class);
+        MinecraftForge.EVENT_BUS.register(ContentRuleSwitch.class);
+        MinecraftForge.EVENT_BUS.register(ContentMobSwitch.class);
+        MinecraftForge.EVENT_BUS.register(ContentTradeSwitch.class);
         if (ContentIntroPlay.enabled()) { MinecraftForge.EVENT_BUS.register(ContentIntroPlay.class); }
         ContentBiomeControl.apply();
         ContentSetup.applyFire();
@@ -199,6 +212,7 @@ public class ResourceDataPackLoader {
         if (ContentSpawning.rateControlled()) {
             MinecraftForge.EVENT_BUS.register(ContentSpawning.class);
             MinecraftForge.EVENT_BUS.register(ContentThreat.class);
+            MinecraftForge.EVENT_BUS.register(ContentSpawnSwitch.class);
         }
         if (ContentPhysics.enabled()) { MinecraftForge.EVENT_BUS.register(ContentPhysics.class); }
         if (ContentCaveAmbience.wanted()) { MinecraftForge.EVENT_BUS.register(ContentCaveAmbience.class); }
@@ -335,12 +349,23 @@ public class ResourceDataPackLoader {
     @Mod.EventHandler public void onServerStarted(FMLServerStartedEvent event) {
         ContentCelestial.serverStarted();
         ContentBoards.rebuild(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentEnvironments.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentMobSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentLootSwitch.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
+        ContentTradeSwitch.serverStarted();
+        FunctionOverrides.serverStarted(FMLCommonHandler.instance().getMinecraftServerInstance());
     }
 
     @Mod.EventHandler public void onServerStopping(FMLServerStoppingEvent event) { ContentPregen.serverStopping(); }
 
     @Mod.EventHandler public void onServerStopped(FMLServerStoppedEvent event) {
         ContentStructureSearch.forget();
+        ContentEnvironments.serverStopped();
+        ContentSpawnSwitch.serverStopped();
+        ContentGrowSwitch.serverStopped();
+        ContentMobSwitch.serverStopped();
+        ContentTradeSwitch.serverStopped();
+        FunctionOverrides.serverStopped();
         if (FMLCommonHandler.instance().getSide() == Side.CLIENT) { return; }
         PackManager.get().close();
     }

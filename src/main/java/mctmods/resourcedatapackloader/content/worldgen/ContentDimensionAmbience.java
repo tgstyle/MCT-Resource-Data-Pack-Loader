@@ -73,6 +73,7 @@ import javax.annotation.Nullable;
         }
         Entity view = mc.getRenderViewEntity();
         if (world == null || view == null || mc.isGamePaused()) { return; }
+        ContentEnvironments.view(world, world.getBiome(view.getPosition()));
         AmbienceDef ambience = ambience(world);
         loop(mc, ambience == null ? null : ambience.loopSound);
         if (ambience != null && ambience.shows()) { particles(world, view, ambience); }

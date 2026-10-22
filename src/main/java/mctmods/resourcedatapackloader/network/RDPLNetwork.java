@@ -44,6 +44,7 @@ public final class RDPLNetwork {
         registerMessage(MessageRubicWorldData.Handler.class, MessageRubicWorldData.class);
         registerMessage(MessageHeightMapUpdate.Handler.class, MessageHeightMapUpdate.class);
         registerMessage(MessageToasts.Handler.class, MessageToasts.class);
+        registerMessage(MessageEnvironments.Handler.class, MessageEnvironments.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {

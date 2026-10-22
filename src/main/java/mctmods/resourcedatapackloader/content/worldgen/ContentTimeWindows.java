@@ -13,7 +13,7 @@ public final class ContentTimeWindows {
     private ContentTimeWindows() {}
 
     public static long clock(World world, @Nullable DimensionDef def) {
-        long length = def == null ? DimensionTraitsDef.VANILLA_DAY : def.traits.dayLength;
+        long length = ContentRuleSwitch.dayLength(world, def);
         if (length == DimensionTraitsDef.NO_DAY) { return STILL; }
         long time = def != null && def.fixedTime >= 0 ? def.fixedTime : world.getWorldTime();
         return Math.floorDiv(time * DimensionTraitsDef.VANILLA_DAY, length);

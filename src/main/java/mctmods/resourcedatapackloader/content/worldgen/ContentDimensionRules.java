@@ -91,16 +91,25 @@ public final class ContentDimensionRules {
     }
 
     static void weather(World world, DimensionDef def, ContentWeatherCycle cycle, Runnable own) {
+        if (ContentRuleSwitch.forces(world)) {
+            ContentWeatherCycle.force(world, ContentEnvironments.wide(world.provider.getDimension()).weather);
+            return;
+        }
         DimensionTraitsDef traits = def.traits;
         TimeWindowDef window = ContentTimeWindows.active(world, def);
+        int steps = ContentRuleSwitch.speed(world);
         if (!traits.precipitation) { ContentWeatherCycle.clear(world); }
         else if (window != null && window.holdsDry()) { ContentWeatherCycle.dry(world); }
         else if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain : traits.alwaysRain) {
+            ContentWeatherCycle.hurry(world, steps);
             own.run();
             ContentWeatherCycle.pour(world);
         }
-        else if (traits.cycle != null) { cycle.tick(world, traits.cycle); }
-        else { own.run(); }
+        else if (traits.cycle != null) { cycle.tick(world, traits.cycle, steps); }
+        else {
+            ContentWeatherCycle.hurry(world, steps);
+            own.run();
+        }
     }
 
     static Vec3d color(int rgb) { return new Vec3d(Colors.red(rgb) / 255.0D, Colors.green(rgb) / 255.0D, Colors.blue(rgb) / 255.0D); }
@@ -164,7 +173,7 @@ public final class ContentDimensionRules {
 
     public static float existingCelestialAngle(World world, long worldTime, float partialTicks, float own) {
         DimensionDef def = ContentDimensions.overlay(world);
-        return def != null && def.gives("time.dayLength") ? celestialAngle(def.traits.dayLength, worldTime, partialTicks) : own;
+        return def != null && (ContentEnvironments.wide(world.provider.getDimension()).dayLength > 0L || def.gives("time.dayLength")) ? celestialAngle(ContentRuleSwitch.dayLength(world, def), worldTime, partialTicks) : own;
     }
 
     public static void existingWeather(World world, Runnable own) {

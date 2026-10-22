@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.entity.ai.EntityAIRaidMarch;
 import mctmods.resourcedatapackloader.content.raid.ActiveRaid;
 import mctmods.resourcedatapackloader.content.raid.RaidStorage;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
@@ -143,26 +144,32 @@ public final class ContentRaids {
     @SubscribeEvent public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
         EntityPlayer player = event.player;
         if (event.phase != TickEvent.Phase.END || !(player.world instanceof WorldServer) || player.ticksExisted % LOOK_EVERY != 0 || DEFS.isEmpty() || player.isSpectator()) { return; }
+        WorldServer world = (WorldServer) player.world;
+        RaidDef due = ContentRaidSwitch.due(world, player, LOOK_EVERY);
+        if (due != null) { around(world, player, due, "carries the raid clock"); }
         for (RaidDef def : DEFS.values()) {
             Potion omen = ForgeRegistries.POTIONS.getValue(new ResourceLocation(def.omen));
             if (omen == null || !player.isPotionActive(omen)) { continue; }
-            WorldServer world = (WorldServer) player.world;
-            BlockPos at = new BlockPos(player);
-            Village village = ActiveRaid.nearestVillage(world, at, 0);
-            RaidStorage storage = RaidStorage.get(world);
-            if (village == null) {
-                if (!def.anywhere || storage.near(at, def.reach) != null) { return; }
-                player.removePotionEffect(omen);
-                ActiveRaid.start(world, def, at, true);
-                ContentLog.LOGGER.info("{} carries {} with no village near, so raid {} begins around them", player.getName(), def.omen, def.registryName);
-                return;
-            }
-            if (storage.near(village.getCenter(), VILLAGE_SEARCH + village.getVillageRadius()) != null) { return; }
-            player.removePotionEffect(omen);
-            ActiveRaid.start(world, def, village.getCenter(), false);
-            ContentLog.LOGGER.info("{} carries {} into the village at {}, {}, {}, so raid {} begins", player.getName(), def.omen, village.getCenter().getX(), village.getCenter().getY(), village.getCenter().getZ(), def.registryName);
+            if (around(world, player, def, "carries " + def.omen)) { player.removePotionEffect(omen); }
             return;
         }
+    }
+
+    private static boolean around(WorldServer world, EntityPlayer player, RaidDef def, String cause) {
+        BlockPos at = new BlockPos(player);
+        Village village = ActiveRaid.nearestVillage(world, at, 0);
+        RaidStorage storage = RaidStorage.get(world);
+        if (village == null) {
+            if (!def.anywhere || storage.near(at, def.reach) != null) { return false; }
+            ActiveRaid.start(world, def, at, true);
+            ContentLog.LOGGER.info("{} {} with no village near, so raid {} begins around them", player.getName(), cause, def.registryName);
+            return true;
+        }
+        if (storage.near(village.getCenter(), VILLAGE_SEARCH + village.getVillageRadius()) != null) { return false; }
+        ActiveRaid.start(world, def, village.getCenter(), false);
+        ContentRaidSwitch.reset(world, player);
+        ContentLog.LOGGER.info("{} {} into the village at {}, {}, {}, so raid {} begins", player.getName(), cause, village.getCenter().getX(), village.getCenter().getY(), village.getCenter().getZ(), def.registryName);
+        return true;
     }
 
     @SubscribeEvent public static void onRaiderHit(LivingAttackEvent event) { if (raider(event.getEntityLiving()) && raider(event.getSource().getTrueSource())) { event.setCanceled(true); } }

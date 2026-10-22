@@ -10,6 +10,7 @@ import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Summary;
 import mctmods.resourcedatapackloader.util.Json;
 
+import com.google.gson.JsonObject;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
@@ -41,8 +42,11 @@ public final class ContentDimensions {
         parsed = true;
         if (!Config.registersToClients() || !Config.content.dimensions) { return; }
         Json.eachFile(PackManager.DIMENSIONS, "dimension definition", (key, contents) -> {
-            DimensionDef def = ContentParserWorlds.dimension(key, contents);
-            if (def != null) { DEFS.put(key, def); }
+            JsonObject json = Json.object(key, contents, "dimension");
+            if (json == null) { return; }
+            DimensionDef def = ContentParserWorlds.dimension(key, json);
+            DEFS.put(key, def);
+            ContentEnvironments.parse(key, contents, def);
         });
     }
 
@@ -101,9 +105,10 @@ public final class ContentDimensions {
 
     @Nullable private static DimensionDef held(Map<Integer, DimensionDef> defs, int dimension) {
         DimensionDef def = defs.get(dimension);
-        if (def != null || STATION_TYPES.isEmpty() || !DimensionManager.isDimensionRegistered(dimension)) { return def; }
+        if (def != null || STATION_TYPES.isEmpty() || !DimensionManager.isDimensionRegistered(dimension)) { return def == null ? null : ContentEnvironments.resolve(def); }
         int type = DimensionManager.getProviderType(dimension).getId();
-        return STATION_TYPES.contains(type) ? defs.get(type) : null;
+        DimensionDef station = STATION_TYPES.contains(type) ? defs.get(type) : null;
+        return station == null ? null : ContentEnvironments.resolve(station);
     }
 
     public static boolean register(DimensionDef def, Class<? extends WorldProvider> provider) {

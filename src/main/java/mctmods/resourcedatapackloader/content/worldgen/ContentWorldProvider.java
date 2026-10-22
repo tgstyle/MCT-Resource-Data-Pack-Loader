@@ -36,6 +36,11 @@ public class ContentWorldProvider extends WorldProviderSurface {
         if (def != null && FMLCommonHandler.instance().getSide().isClient()) { ContentSkyRenderers.apply(this, def); }
     }
 
+    void refresh() {
+        this.def = ContentDimensions.byId(getDimension());
+        if (def != null && world.isRemote) { ContentSkyRenderers.apply(this, def); }
+    }
+
     private BiomeProvider provider() { return def == null ? new BiomeProvider(world.getWorldInfo()) : ContentDimensionRules.biomes(world, def); }
 
     @Override @Nonnull public IChunkGenerator createChunkGenerator() { return def == null ? super.createChunkGenerator() : ContentDimensionRules.generator(world, def); }
@@ -96,9 +101,10 @@ public class ContentWorldProvider extends WorldProviderSurface {
     }
 
     @Override public float calculateCelestialAngle(long worldTime, float partialTicks) {
-        if (def == null || def.traits.dayLength == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
-        if (def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
-        return ContentDimensionRules.celestialAngle(def.traits.dayLength, worldTime, partialTicks);
+        long length = ContentRuleSwitch.dayLength(world, def);
+        if (def == null || length == DimensionTraitsDef.VANILLA_DAY) { return super.calculateCelestialAngle(worldTime, partialTicks); }
+        if (length == DimensionTraitsDef.NO_DAY) { return STILL_SUN; }
+        return ContentDimensionRules.celestialAngle(length, worldTime, partialTicks);
     }
 
     @Override public void updateWeather() {
@@ -124,7 +130,7 @@ public class ContentWorldProvider extends WorldProviderSurface {
     @Override public boolean canBlockFreeze(@Nonnull BlockPos pos, boolean byWater) { return (def == null || def.traits.freeze) && super.canBlockFreeze(pos, byWater); }
 
     @Override public boolean isDaytime() {
-        if (def != null && def.traits.dayLength == DimensionTraitsDef.NO_DAY) { return true; }
+        if (def != null && ContentRuleSwitch.dayLength(world, def) == DimensionTraitsDef.NO_DAY) { return true; }
         if (def == null || def.fixedTime < 0) { return super.isDaytime(); }
         return ContentDimensionRules.daytime(def.fixedTime);
     }

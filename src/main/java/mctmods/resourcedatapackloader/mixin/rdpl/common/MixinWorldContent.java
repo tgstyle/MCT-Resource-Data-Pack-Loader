@@ -4,10 +4,12 @@ import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.entity.ContentEntityTicks;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentSpawnChunks;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.EnumDifficulty;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.World;
@@ -37,8 +39,15 @@ import java.util.List;
     @Inject(method = "getDifficulty", at = @At("HEAD"), cancellable = true) private void rdpl$difficultyAsAsked(CallbackInfoReturnable<EnumDifficulty> cir) {
         World self = (World) (Object) this;
         if (self.provider == null) { return; }
-        EnumDifficulty asked = ContentServer.difficultyFor(self.provider.getDimension());
+        EnumDifficulty asked = ContentRuleSwitch.difficulty(self);
+        if (asked == null) { asked = ContentServer.difficultyFor(self.provider.getDimension()); }
         if (asked != null) { cir.setReturnValue(asked); }
+    }
+
+    @Inject(method = "getDifficultyForLocation", at = @At("RETURN"), cancellable = true) private void rdpl$localDifficultyAsAsked(BlockPos pos, CallbackInfoReturnable<DifficultyInstance> cir) {
+        World self = (World) (Object) this;
+        if (isRemote || self.provider == null) { return; }
+        cir.setReturnValue(ContentRuleSwitch.local(self, pos, cir.getReturnValue()));
     }
 
     @Inject(method = "updateEntities", at = @At("HEAD"), cancellable = true) private void rdpl$standStillWhileLandIsMade(CallbackInfo ci) {

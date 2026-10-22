@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.util.Summary;
 
 import net.minecraft.advancements.FunctionManager;
 import net.minecraft.command.FunctionObject;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ResourceLocation;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,10 +15,19 @@ import java.util.List;
 import java.util.Map;
 
 public final class FunctionOverrides {
+    private static boolean commandsReady;
+
     private FunctionOverrides() {}
 
+    public static void serverStarted(MinecraftServer server) {
+        commandsReady = true;
+        if (Config.data.functions && !PackManager.get().isEmpty()) { server.getFunctionManager().reload(); }
+    }
+
+    public static void serverStopped() { commandsReady = false; }
+
     public static void apply(FunctionManager manager, Map<ResourceLocation, FunctionObject> functions) {
-        if (!Config.data.functions) { return; }
+        if (!Config.data.functions || !commandsReady) { return; }
         PackManager packs = PackManager.get();
         if (packs.isEmpty()) { return; }
         int[] added = new int[1];

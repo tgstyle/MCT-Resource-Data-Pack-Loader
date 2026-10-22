@@ -3942,6 +3942,106 @@ Minecraft 本來就會依方塊的位置挑選變體，硬度群組則改為把�
 
 `ambience` 區段賦予維度自己的音樂、聲音與飄浮粒子，就像現代生態域那樣。「粒子」視訊設定會像對原版粒子那樣使其變稀疏，而遊戲的洞穴音效仍會播放。
 
+### 環境
+
+*維度*
+
+```json
+{
+  "environments": {
+    "storm": {
+      "sky": { "skyColor": "#4A5260", "fogColor": "#5A6070", "fogDensity": 0.5, "cloudColor": "#3A3F48", "lightSkyColor": "#B0B8D0" },
+      "ambience": { "loopSound": "minecraft:weather.rain" }
+    },
+    "aurora": {
+      "sky": { "aurora": { "color": "#40FF90" }, "starBrightness": 1.0 }
+    },
+    "swarm": {
+      "spawning": { "surfaceNightMonsterRate": 4.0, "undergroundNightMonsterRate": 4.0, "monsterCap": 210, "weights": { "minecraft:zombie": 10, "minecraft:creeper": 0 } }
+    },
+    "harvest": {
+      "growth": { "crops": 2.0, "saplings": 2.0, "animals": 2.0 }
+    },
+    "bloodmoon": {
+      "sky": { "skyColor": "#5A1010", "fogColor": "#401010" },
+      "mobs": { "health": 2.0, "damage": 1.5, "speed": 1.2, "equipment": { "head": { "item": "minecraft:iron_helmet", "dropChance": 0.0 }, "mainhand": { "item": "minecraft:iron_sword" } } }
+    },
+    "bounty": {
+      "loot": { "minecraft:entities/cow": "mypack:entities/rich_cow", "minecraft:chests/simple_dungeon": "mypack:chests/bounty" },
+      "trades": [{ "profession": "minecraft:farmer", "career": "farmer", "level": 1, "buy": { "item": "minecraft:wheat", "min": 10 }, "sell": { "item": "minecraft:emerald" } }]
+    },
+    "longnight": {
+      "rules": { "dayLength": 48000, "weather": "thunder", "difficulty": "hard", "sleep": false }
+    },
+    "siege": {
+      "raids": { "every": 72000, "start": "mypack:raid", "waves": 2.0, "points": 2.0 }
+    },
+    "desertheat": {
+      "biomes": ["minecraft:desert"],
+      "sky": { "skyColor": "#E0A050", "fogColor": "#D8B070" }
+    }
+  }
+}
+```
+
+`environments` 讓維度擁有可在遊戲進行中切換的其他外觀。每個環境是一組疊在維度自身鍵之上的 `sky` 與 `ambience` 鍵：省略的鍵沿用維度的值，`sun` 或 `aurora` 這類物件會與維度的物件合併，`cloudLayers` 或 `bodies` 這類清單則取代維度的清單。設定 `sun`、`moon`、`bodies` 或 `stars` 會啟用[天空渲染器](#天空渲染器)，`renderSky`、`renderClouds` 與 `renderWeather` 則能關閉並再次開啟原版渲染。
+
+`/rdplserver environment <dimension> <name>` 把維度切換到某個環境，`default` 則恢復它自己的外觀；單獨使用 `/rdplserver environment` 會列出每個有環境的維度以及它目前使用的環境。此指令需要權限等級 2，因此函式可以執行它：[卡片規則](#卡片)的 `runs`、計分的回合或輪次、突襲或指令方塊都能這樣改變天空，可以在一天中的某個時刻、某一天、玩了一段時間之後或任何其他觸發時進行。維度以其 `id` 中的數字指定。使用中的環境會隨世界一起儲存，因此重新啟動後仍會保留，伺服器會在每位玩家加入時、以及環境改變時向所有人傳送它。[時間窗口](#time-區段)仍會疊加在它之上生效。
+
+帶有 `biomes` 的環境只在這些生態域中生效。`/rdplserver environment <dimension> <name>` 會在整個維度所用的環境之外額外開啟它，`/rdplserver environment <dimension> <name> off` 則再次關閉它；對整個維度所用的環境使用 `off`，會讓維度恢復它自己的外觀。可以同時開啟多個，它們的生態域重疊時，最後開啟的那個優先。站在其某個生態域中的玩家會看到它，其他地方的維度看起來和之前一樣。每個使用中的環境都以同樣的方式列出、儲存和傳送。
+
+環境還可以帶一個 `spawning` 區段，在環境開啟期間改變維度中的自然生成。其中的速率鍵與上限鍵，名稱和含義與[生成](#生成)相同，並會取代世界與生態域的值。`weights` 依倍數調整某個指定生物被選中的頻率：`10` 表示機率高出十倍，`0` 表示它不再自行生成。帶有 `biomes` 時，該區段只在這些生態域中生效；多個環境重疊的地方，由最後開啟的那個決定，與天空相同。上限和原版一樣，在整個維度範圍內統計該生物種類，但只在該區段生效的地方限制新的生成。該區段沒有寫出的鍵沿用通常的值。關閉環境會立刻結束這一切：已經生成的生物會保留。速率在世界的生成速率生效的任何地方都適用，包括生怪磚生成的生物；上限和權重只影響自然生成，生怪蛋與指令永遠不受影響。
+
+環境還可以帶一個 `growth` 區段，在環境開啟期間加快或減慢維度中的生長。`crops` 涵蓋農作物、南瓜與西瓜的莖、可可豆、地獄疣、甘蔗、仙人掌、歌萊花，以及任何透過 Forge 作物生長事件生長的模組植物；`saplings` 涵蓋長成樹的樹苗；`animals` 決定幼年動物長大的速度；`breeding` 決定繁殖過的動物多久後能再次繁殖，設為 `0` 時，餵食的動物不再生出幼崽。每個值都是 `0` 到 `100` 的倍數：`1` 是通常速度，`0.5` 是一半，`2` 是兩倍，`0` 表示停止。大於 1 時，遊戲每次選中某株植物生長，它都會獲得額外的生長機會，因此光照、土壤和水仍然有影響。骨粉、餵食與指令永遠不受影響。帶有 `biomes` 時，該區段只在這些生態域中生效；多個環境重疊的地方，由最後開啟的那個決定，與天空相同。該區段沒有寫出的鍵沿用通常的速度。關閉環境會立刻恢復通常速度；已經長出的部分保持不變。
+
+環境還可以帶一個 `mobs` 區段，在該環境開啟期間改變維度中的生物，適合血月之類的事件。`entities` 依 ID 指定要改變的生物，也可以用 `#monster`、`#creature`、`#ambient` 或 `#water_creature` 依類別指定；省略時涵蓋所有怪物。`health`、`damage` 和 `speed` 分別乘以生物的最大生命值、近戰攻擊傷害和行走速度；生物的目前生命值會隨最大值一起變化。`equipment` 會在生物空著的欄位放入一件物品，並指定它死亡時掉落的機率。生物採用哪個環境，取決於它生成或載入時所站的位置，而且每次切換環境時，所有已載入的生物都會重新判定一次；`biomes` 和重疊的處理方式與天空相同。只要該環境保持開啟，生物就保留這些改變，重新啟動後也一樣。環境關閉時，生物的生命值、傷害和速度恢復原樣，環境給予的裝備如果還在生物身上，就會被收回。箭、火球和爆炸的傷害不變，玩家也永遠不會被改變。
+
+環境還可以帶有 `loot` 區段，在環境開啟期間把一張戰利品表換成另一張：生物掉落、釣魚、進度獎勵，以及世界生成的箱子和運輸礦車。箱子在第一次打開時才被填充，所以由那一刻開啟的環境決定裡面的內容。把一張表對應到 `minecraft:empty`，就什麼都不會掉落。`trades` 區段按[交易](#交易)的格式列出交易；它提到的職業的村民，在環境開啟期間會提供這些交易（最高到自己的等級）來取代自己原有的交易，環境關閉後則恢復自己的交易。每個村民兩份都會保留：已完成的交易、售罄的交易和補貨，會在環境回來時從原處繼續，重新啟動之後也一樣。列出的每個職業都要給出 1 級交易，否則該職業的新村民沒有任何交易可提供。流浪商人不會被改變。`biomes` 和重疊的處理與天空相同。
+
+環境還可以帶一個 `rules` 區段，在環境開啟期間改變世界的運作方式。`dayLength` 會像 [`time.dayLength`](#time-區段) 一樣拉長一天，`weather` 把天氣固定為 `clear`、`rain` 或 `thunder`，`weatherSpeed` 讓該維度的天氣來去得更快或更慢，`0` 表示維持現狀；沒有 `weather.cycle` 時，它會加快主世界的天氣，其他維度共用主世界的天氣。`difficulty` 在此處取代世界的難易度，優先於 `worldDifficulty`，`localDifficulty` 設定局部難易度，範圍 `0` 到 `6.75`，決定怪物帶著盔甲生成或撿取物品的頻率。`sleep` 關閉後任何人都無法睡覺，已經睡著的人會醒來；`wakeAt` 設定一夜睡眠結束的時間，只在主世界移動時鐘，和原版的跳過一樣。`sleep` 和 `localDifficulty` 對 `biomes` 和重疊的處理與天空相同；其餘的鍵作用於整個維度，所以帶 `biomes` 的環境若給出這些鍵，會在記錄中留下錯誤並忽略該鍵。關閉環境會一次性恢復所有內容；天氣會在幾秒內逐漸恢復。
+
+環境還可以帶一個 `raids` 區塊，在環境開啟期間改變維度中的[突襲](#突襲)。給出 `every` 後，每位玩家會統計自己在環境開啟的地方度過的刻數。計數達到 `every` 時，`start` 中列出的某個突襲會在該玩家身邊開始，就像他帶著該突襲的 `omen` 一樣：在他所處的村莊中，或者在突襲帶有 `anywhere` 時在他周圍。若突襲無法在那裡開始，計數保持滿值，時鐘每秒再試一次。任何開始的突襲都會把其 `reach` 範圍內每位玩家的計數重置為 0，因此 `every` 是兩次突襲之間的最短間隔。`waves` 和 `points` 會乘以在該環境下開始的每個突襲的波數和積分，由 `omen` 觸發的和由 `/rdplserver raid` 觸發的也包括在內。兩者都會四捨五入，突襲至少有一波；超出突襲自身清單的末尾後，它的最後一波會再次到來。突襲會保留開始時的波數和積分，即使環境之後關閉也是如此，它們會隨突襲一起儲存。有 `biomes` 時，時鐘按玩家所在位置判斷，波數和積分按突襲的中心判斷。多個環境重疊的地方，由最後開啟的那個決定。沒有環境給出 `every` 的地方計數暫停，計數隨玩家儲存，每個維度一個。
+
+| 鍵                                                     | 必填            | 值                     | 預設           | 作用                                                                                                                                                                                                                                        |
+| ------------------------------------------------------ | --------------- | ---------------------- | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `environments.<name>`                                  | 否              | 物件                   | 無             | 一個環境。名稱為一個單字，除 `default` 外皆可                                                                                                                                                                                               |
+| `environments.<name>.biomes`                           | 否              | 生態域名稱清單         | 所有生態域     | 生態域名稱，例如 `minecraft:desert`，或 `#TYPE` 表示 Forge 生態域類型，例如 `#SNOWY`。這樣環境只在這些生態域中生效                                                                                                                          |
+| `environments.<name>.sky`                              | 否              | 物件                   | 無             | [`sky` 區段](#sky-區段)中的鍵，但世界載入時只設定一次的鍵除外：`hasSkyLight`、`surfaceWorld`、`respawn`、`respawnDimension`、`spawning`、`nether`、`beds`、`waterVaporizes`、`groundLevel`、`movementFactor`、`fixedTime` 與 `ambientLight` |
+| `environments.<name>.ambience`                         | 否              | 物件                   | 無             | [`ambience` 區段](#ambience-區段)中的鍵                                                                                                                                                                                                     |
+| `environments.<name>.spawning`                         | 否              | 物件                   | 無             | [生成](#生成)中的速率鍵和上限鍵，加上 `weights`                                                                                                                                                                                             |
+| `environments.<name>.spawning.weights`                 | 否              | 實體 ID 對應倍數的物件 | 無             | 調整該生物在其所在的每個生成清單中的權重；`0` 表示它不會自然生成                                                                                                                                                                            |
+| `environments.<name>.growth`                           | 否              | 物件                   | 無             | `crops`、`saplings`、`animals` 與 `breeding` 的速度                                                                                                                                                                                         |
+| `environments.<name>.growth.crops`                     | 否              | 數字，0 到 100         | `1`            | 農作物生長速度；`0` 表示停止                                                                                                                                                                                                                |
+| `environments.<name>.growth.saplings`                  | 否              | 數字，0 到 100         | `1`            | 樹苗生長速度；`0` 表示停止                                                                                                                                                                                                                  |
+| `environments.<name>.growth.animals`                   | 否              | 數字，0 到 100         | `1`            | 幼年動物長大的速度；`0` 表示一直保持幼年                                                                                                                                                                                                    |
+| `environments.<name>.growth.breeding`                  | 否              | 數字，0 到 100         | `1`            | 繁殖後等待時間流逝的速度；`0` 表示無法繁殖                                                                                                                                                                                                  |
+| `environments.<name>.mobs`                             | 否              | 物件                   | 無             | 環境開啟期間改變生物                                                                                                                                                                                                                        |
+| `environments.<name>.mobs.entities`                    | 否              | 實體 ID 或類別的清單   | `["#monster"]` | ID，如 `minecraft:zombie`，或 `#monster`、`#creature`、`#ambient`、`#water_creature`                                                                                                                                                        |
+| `environments.<name>.mobs.health`                      | 否              | 大於 0 的數字          | `1`            | 乘以最大生命值                                                                                                                                                                                                                              |
+| `environments.<name>.mobs.damage`                      | 否              | 0 或更大的數字         | `1`            | 乘以近戰攻擊傷害                                                                                                                                                                                                                            |
+| `environments.<name>.mobs.speed`                       | 否              | 0 或更大的數字         | `1`            | 乘以行走速度；`0` 讓生物原地不動                                                                                                                                                                                                            |
+| `environments.<name>.mobs.equipment`                   | 否              | 欄位對應物品的物件     | 無             | 欄位為 `mainhand`、`offhand`、`head`、`chest`、`legs`、`feet`；只填充空欄位                                                                                                                                                                 |
+| `environments.<name>.mobs.equipment.<slot>.item`       | 是              | 物品 ID                | 無             | 給予的物品                                                                                                                                                                                                                                  |
+| `environments.<name>.mobs.equipment.<slot>.dropChance` | 否              | 數字，0 到 1           | `0.085`        | 生物死亡時物品掉落的機率                                                                                                                                                                                                                    |
+| `environments.<name>.loot`                             | 否              | 表 ID 到表 ID 的物件   | 無             | 環境開啟期間，把列出的每張表換成指定的表                                                                                                                                                                                                    |
+| `environments.<name>.trades`                           | 否              | 交易列表               | 無             | 項目格式同[交易](#交易)；所列職業的村民只提供這些交易，最高到其等級                                                                                                                                                                         |
+| `environments.<name>.trades[].profession`              | 是              | 職業 ID                | 無             | `career`、`level`、`buy`、`buySecondary`、`sell`、`maxUses` 的格式同[交易](#交易)                                                                                                                                                           |
+| `environments.<name>.rules`                            | 否              | 物件                   | 無             | 環境開啟期間的世界規則                                                                                                                                                                                                                      |
+| `environments.<name>.rules.dayLength`                  | 否              | 大於 0 的整數          | 維度自身的值   | 一天的長度，僅限整個維度                                                                                                                                                                                                                    |
+| `environments.<name>.rules.weather`                    | 否              | 字串                   | 無             | 固定為 `clear`、`rain` 或 `thunder`，僅限整個維度                                                                                                                                                                                           |
+| `environments.<name>.rules.weatherSpeed`               | 否              | 數字，0 到 100         | `1`            | 天氣變化的快慢，僅限整個維度                                                                                                                                                                                                                |
+| `environments.<name>.rules.difficulty`                 | 否              | `peaceful`…`hard`      | 無             | 難易度，僅限整個維度                                                                                                                                                                                                                        |
+| `environments.<name>.rules.localDifficulty`            | 否              | 數字，0 到 6.75        | 原版的值       | 局部難易度                                                                                                                                                                                                                                  |
+| `environments.<name>.rules.sleep`                      | 否              | 布林值                 | `true`         | 關閉後任何人都無法睡覺                                                                                                                                                                                                                      |
+| `environments.<name>.rules.wakeAt`                     | 否              | 整數，0 到 23999       | `0`            | 睡眠結束的時間，僅限整個維度                                                                                                                                                                                                                |
+| `environments.<name>.raids`                            | 否              | 物件                   | 無             | 改變突襲：`every`、`start`、`waves` 和 `points`                                                                                                                                                                                             |
+| `environments.<name>.raids.every`                      | 否              | 大於 0 的整數          | 無             | 玩家在此度過多少刻後，突襲在其身邊開始。需要 `start`                                                                                                                                                                                        |
+| `environments.<name>.raids.start`                      | 有 `every` 時是 | 突襲 id 或其清單       | 無             | 時鐘發起的突襲，或時鐘從中隨機選取的突襲清單                                                                                                                                                                                                |
+| `environments.<name>.raids.waves`                      | 否              | 數字，大於 0，最大 100 | `1`            | 乘以突襲派出的波數                                                                                                                                                                                                                          |
+| `environments.<name>.raids.points`                     | 否              | 數字，0 到 100         | `1`            | 乘以獲勝的突襲發放的積分                                                                                                                                                                                                                    |
+
+環境中的任何其他鍵，或上面列出的 `sky` 鍵，都會被忽略並在記錄中留下錯誤。以資源包已不再定義的環境儲存的世界，會恢復維度自身的外觀。
+
 ## Galacticraft 天體
 
 *世界*
@@ -6191,7 +6291,7 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 
 突襲就是遊戲從 1.14 起具備的那種，建立在 1.12.2 已有的村莊之上。當帶有 `omen` 效果的玩家位於村莊內時，突襲就會開始：該效果被移除，並為村莊中心 `reach` 範圍內的每位玩家顯示一條頭目血條。經過 `waveDelay` 刻後，第一波在村莊周圍的一圈上抵達，朝中心走去，沿途攻擊玩家、村民和鐵魔像。突襲者絕不會傷害或鎖定彼此，所以兩者之間的流箭或誤擊不會有任何作用。血條顯示該波剩餘的生命值，並在剩下兩個或更少時改為計算突襲者人數。一波消滅後，下一波會等待 `waveDelay` 刻。最後一波消滅且兩秒內沒有任何東西回來時，突襲即告勝利；在一波抵達之後，若所有村民死亡或村莊本身消失，則告失敗。無論哪種結果，血條都會顯示三十秒，並以範圍內的每位玩家的身分執行對應的函式。
 
-進行中的突襲會隨世界儲存，突襲者在重新載入後會繼續行進。它會在和平模式下、經過 `timeout` 刻後，或村莊周圍沒有任何位置能容納一波時，不經結局而停止。村莊只有在有村民找到過它的門之後才算數，所以突襲需要遊戲已經注意到的村莊。
+進行中的突襲會隨世界儲存，突襲者在重新載入後會繼續行進。它會在和平模式下、經過 `timeout` 刻後，或村莊周圍沒有任何位置能容納一波時，不經結局而停止。村莊只有在有村民找到過它的門之後才算數，所以突襲需要遊戲已經注意到的村莊。[環境](#環境)還可以按時鐘發起突襲，並改變突襲的波數和積分。
 
 一波突襲在村莊中時，村民會跑進室內最近的、村莊已知的門並待在那裡。突襲者會破壞擋路的木門以接近他們，每扇門十二秒，在普通和困難難度且 `mobGriefing` 開啟時如此；鐵門擋得住。類型為 `bell` 的方塊無論在哪裡都是村莊的鐘，並依[鐘](#鐘)所述鳴響；突襲的 `bell` 可指定任何其他方塊，使其像鐘一樣鳴響。一波抵達時，村莊中的每個鐘都會鳴響，被指定的方塊在玩家使用時也會鳴響：48 格內的村民躲藏十五秒，48 格內的突襲者發光三秒。沒有任何東西會生成鐘。想要鐘的資源包要自行定義該方塊，放進 NBT 結構，並把該結構放置在村莊中，作為地塊或水井替換，讓鐘立在村民居住的地方。
 
@@ -8465,7 +8565,8 @@ Blast Plaster（本模組的相依項目）負責處理爆炸後的行為：逐�
 | `/rdplserver round start`                                                                | 0    | 與 `/rdpl round start` 相同，該指令會轉交到這裡                                                                                                                                                                      |
 | `/rdplserver round reset`、`round vote yes`、`round vote no`                             | 0    | 與上文的 `/rdpl round` 各形式相同，那些指令會轉交到這裡                                                                                                                                                              |
 | `/rdplserver card <rule> [players]`                                                      | 2    | 依 id 或檔名，向指定的玩家或你自己顯示一條[卡片規則](#卡片)。`when`、`repeat` 和 `cooldown` 會被略過                                                                                                                 |
-| `/rdplserver raid <突襲> [玩家 或 x y z]`                                                | 3    | 在指定玩家處、指定位置，或兩者都不填時在你自己處開始指定的[突襲](#突襲)，無需村莊。若 `reach` 範圍內已有另一場突襲正在進行則會被拒絕                                                                                |
+| `/rdplserver raid <突襲> [玩家 或 x y z]`                                                | 3    | 在指定玩家處、指定位置，或兩者都不填時在你自己處開始指定的[突襲](#突襲)，無需村莊。若 `reach` 範圍內已有另一場突襲正在進行則會被拒絕                                                                                 |
+| `/rdplserver environment [<dimension> <name>]`                                           | 2    | 把維度切換到它的某個[環境](#環境)，或以 `default` 恢復它自己的外觀。不帶參數時，列出每個有環境的維度以及它目前使用的環境                                                                                             |
 | `/rdplserver reset`                                                                      | 3    | 讓地圖恢復到一個回合結束時的樣子：所有人被攔住，實體被清掃，分數被清零，執行 `resetRuns`，玩家被送到 `resetSendsTo` 並被釋放，並以起始計數開啟一個回合，如[預先生成](#預先生成)下的重置設定所述。不會從 `/rdpl` 轉交 |
 
 #### 前往各處

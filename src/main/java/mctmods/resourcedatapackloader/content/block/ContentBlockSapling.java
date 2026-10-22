@@ -7,6 +7,7 @@ import mctmods.resourcedatapackloader.content.def.BlockVariant;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
 import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTreeGenerator;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
@@ -78,7 +79,7 @@ import javax.annotation.Nullable;
     @Override public boolean canBlockStay(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state) { return soil.sustains(world, pos.down(), this); }
 
     @Override public void updateTick(@Nonnull World world, @Nonnull BlockPos pos, @Nonnull IBlockState state, @Nonnull Random rand) {
-        if (world.isRemote) { return; }
+        if (world.isRemote || ContentGrowSwitch.skips(world, pos, this, rand)) { return; }
         super.updateTick(world, pos, state, rand);
         if (!world.isAreaLoaded(pos, 1)) { return; }
         if (world.getLightFromNeighbors(pos.up()) < sapling.light) { return; }

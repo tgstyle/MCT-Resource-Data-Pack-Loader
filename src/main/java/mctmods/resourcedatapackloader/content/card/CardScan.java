@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.util.PlayerPersisted;
 import mctmods.resourcedatapackloader.util.Standing;
+import mctmods.resourcedatapackloader.util.world.BiomeNames;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -60,7 +61,7 @@ public final class CardScan {
 
     private static boolean inside(CardRule rule, EntityPlayerMP player) {
         switch (rule.trigger) {
-            case CardRule.BIOME_ENTER: return CardPlace.biomeMatches(rule.biomes, player.world.getBiome(player.getPosition()));
+            case CardRule.BIOME_ENTER: return BiomeNames.matches(rule.biomes, player.world.getBiome(player.getPosition()));
             case CardRule.STRUCTURE_ENTER: return CardPlace.inStructure(player, rule.structures, rule.radius);
             case CardRule.Y_LEVEL: return rule.below != null && player.posY < rule.below || rule.above != null && player.posY > rule.above;
             case CardRule.PLAY_TIME: return (played(player) - PlayerPersisted.of(player).getInteger(PLAY_FROM)) / MINUTE_TICKS >= rule.minutes;

@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 @SideOnly(Side.CLIENT) public final class ContentSkyRenderers {
     private static final IRenderHandler NOTHING = new IRenderHandler() {
@@ -37,6 +38,7 @@ import java.util.Map;
     private static final Map<DimensionDef, ContentSkyRenderer> PACK_SKIES = new HashMap<>();
     private static final Map<DimensionDef, ContentWeatherRenderer> PACK_WEATHER = new HashMap<>();
     private static final Map<DimensionDef, ContentCloudRenderer> PACK_CLOUDS = new HashMap<>();
+    private static final Map<WorldProvider, IRenderHandler[]> OWN = new WeakHashMap<>();
 
     private ContentSkyRenderers() {}
 
@@ -139,6 +141,10 @@ import java.util.Map;
     }
 
     public static void apply(WorldProvider provider, DimensionDef def) {
+        IRenderHandler[] own = OWN.computeIfAbsent(provider, held -> new IRenderHandler[] {held.getSkyRenderer(), held.getCloudRenderer(), held.getWeatherRenderer()});
+        provider.setSkyRenderer(own[0]);
+        provider.setCloudRenderer(own[1]);
+        provider.setWeatherRenderer(own[2]);
         if (!def.renderSky || fogHidesEndSky(provider, def)) { provider.setSkyRenderer(NOTHING); }
         else if (def.traits.sky != null && drawsWholeSky(def)) { provider.setSkyRenderer(PACK_SKIES.computeIfAbsent(def, held -> new ContentSkyRenderer(held.traits.sky, held.traits.moon))); }
         if (!def.renderClouds) { provider.setCloudRenderer(NOTHING); }

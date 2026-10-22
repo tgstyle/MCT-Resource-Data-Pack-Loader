@@ -3,6 +3,8 @@ package mctmods.resourcedatapackloader.content.raid;
 import mctmods.resourcedatapackloader.content.ContentRaids;
 import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
+import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Rewards;
@@ -49,6 +51,8 @@ public final class ActiveRaid {
     private final BossInfoServer bar;
     private final Set<UUID> raiders = new LinkedHashSet<>();
     private final boolean free;
+    private final int waves;
+    private final int points;
     private BlockPos center;
     private int villageRadius = VILLAGE_SEARCH;
     private int wave;
@@ -62,17 +66,22 @@ public final class ActiveRaid {
 
     enum Status { ONGOING, VICTORY, LOSS, STOPPED }
 
-    private ActiveRaid(RaidDef def, BlockPos center, boolean free) {
+    private ActiveRaid(RaidDef def, BlockPos center, boolean free, int waves, int points) {
         this.def = def;
         this.center = center;
         this.free = free;
+        this.waves = waves;
+        this.points = points;
         this.cooldown = def.waveDelay;
         this.bar = new BossInfoServer(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10);
     }
 
     public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) {
-        RaidStorage.get(world).add(new ActiveRaid(def, center, free));
-        ContentLog.LOGGER.info("Raid {} begins {} {}, {}, {}", def.registryName, free ? "with no village at" : "on the village at", center.getX(), center.getY(), center.getZ());
+        RaidSwitchDef change = ContentRaidSwitch.at(world, center);
+        ActiveRaid raid = new ActiveRaid(def, center, free, change.waves(def.waves.size()), change.points(def.points));
+        RaidStorage.get(world).add(raid);
+        ContentRaidSwitch.started(world, center, def.reach);
+        ContentLog.LOGGER.info("Raid {} begins {} {}, {}, {} with {} wave(s) for {} point(s)", def.registryName, free ? "with no village at" : "on the village at", center.getX(), center.getY(), center.getZ(), raid.waves, raid.points);
     }
 
     BlockPos center() { return center; }
@@ -114,7 +123,7 @@ public final class ActiveRaid {
             return;
         }
         List<EntityLivingBase> alive = alive(world);
-        if (alive.isEmpty() && wave < def.waves.size()) {
+        if (alive.isEmpty() && wave < waves) {
             if (cooldown > 0) {
                 cooldown--;
                 bar.setName(new TextComponentString(def.name));
@@ -134,7 +143,7 @@ public final class ActiveRaid {
             bar.setPercent(waveHealth <= 0.0F ? 0.0F : MathHelper.clamp(health / waveHealth, 0.0F, 1.0F));
             bar.setName(new TextComponentString(!alive.isEmpty() && alive.size() <= 2 ? def.name + " - Raiders Remaining: " + alive.size() : def.name));
         }
-        if (wave >= def.waves.size() && alive.isEmpty() && ++quiet >= QUIET_BEFORE_VICTORY) { end(world, Status.VICTORY); }
+        if (wave >= waves && alive.isEmpty() && ++quiet >= QUIET_BEFORE_VICTORY) { end(world, Status.VICTORY); }
     }
 
     private List<EntityLivingBase> alive(WorldServer world) {
@@ -162,7 +171,7 @@ public final class ActiveRaid {
         }
         waveHealth = 0.0F;
         int made = 0;
-        for (RaidDef.Group group : def.waves.get(wave)) {
+        for (RaidDef.Group group : def.waves.get(Math.min(wave, def.waves.size() - 1))) {
             int count = group.count.pick(world.rand);
             for (int i = 0; i < count; i++) {
                 Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(group.entity), world);
@@ -186,7 +195,7 @@ public final class ActiveRaid {
         wave++;
         quiet = 0;
         horn(world, at);
-        ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} sends wave {} of {}: {} raider(s) at {}, {}, {}", def.registryName, center.getX(), center.getY(), center.getZ(), wave, def.waves.size(), made, at.getX(), at.getY(), at.getZ());
+        ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} sends wave {} of {}: {} raider(s) at {}, {}, {}", def.registryName, center.getX(), center.getY(), center.getZ(), wave, waves, made, at.getX(), at.getY(), at.getZ());
         return true;
     }
 
@@ -245,7 +254,7 @@ public final class ActiveRaid {
         celebration = 0;
         List<EntityPlayerMP> present = inReach(world);
         String function = ending == Status.VICTORY ? def.wins : def.loses;
-        ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} ends in {} after {} of {} wave(s), with {} player(s) in reach", def.registryName, center.getX(), center.getY(), center.getZ(), ending == Status.VICTORY ? "victory" : "defeat", wave, def.waves.size(), present.size());
+        ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} ends in {} after {} of {} wave(s), with {} player(s) in reach", def.registryName, center.getX(), center.getY(), center.getZ(), ending == Status.VICTORY ? "victory" : "defeat", wave, waves, present.size());
         if (ending == Status.VICTORY) {
             for (EntityPlayerMP player : present) { reward(world, player); }
         }
@@ -254,7 +263,7 @@ public final class ActiveRaid {
     }
 
     private void reward(WorldServer world, EntityPlayerMP player) {
-        ContentScoring.raidWon(player, def.points);
+        ContentScoring.raidWon(player, points);
         Rewards.loot(world, player, def.loot);
     }
 
@@ -300,6 +309,8 @@ public final class ActiveRaid {
         NBTTagCompound tag = new NBTTagCompound();
         tag.setString("Raid", def.registryName.toString());
         tag.setTag("Center", NBTUtil.createPosTag(center));
+        tag.setInteger("Waves", waves);
+        tag.setInteger("Points", points);
         tag.setInteger("Wave", wave);
         tag.setInteger("Cooldown", cooldown);
         tag.setLong("Ticks", ticksActive);
@@ -319,7 +330,7 @@ public final class ActiveRaid {
             ContentLog.LOGGER.warn("A saved raid names {}, which no pack provides any more, so it is dropped", tag.getString("Raid"));
             return null;
         }
-        ActiveRaid raid = new ActiveRaid(def, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")), tag.getBoolean("Free"));
+        ActiveRaid raid = new ActiveRaid(def, NBTUtil.getPosFromTag(tag.getCompoundTag("Center")), tag.getBoolean("Free"), tag.hasKey("Waves") ? tag.getInteger("Waves") : def.waves.size(), tag.hasKey("Points") ? tag.getInteger("Points") : def.points);
         raid.wave = tag.getInteger("Wave");
         raid.cooldown = tag.getInteger("Cooldown");
         raid.ticksActive = tag.getLong("Ticks");
