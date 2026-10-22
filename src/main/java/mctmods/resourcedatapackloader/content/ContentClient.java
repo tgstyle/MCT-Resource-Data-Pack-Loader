@@ -19,6 +19,7 @@ import mctmods.resourcedatapackloader.content.interfaces.IContentBell;
 import mctmods.resourcedatapackloader.content.block.ContentFluids;
 import mctmods.resourcedatapackloader.content.entity.ContentEntities;
 import mctmods.resourcedatapackloader.content.entity.ReturningThrow;
+import mctmods.resourcedatapackloader.content.item.ContentLocatorItem;
 import mctmods.resourcedatapackloader.content.item.ContentPotionItem;
 import mctmods.resourcedatapackloader.mixin.rdpl.client.IEntityRenderers;
 import mctmods.resourcedatapackloader.util.ContentLog;
@@ -28,6 +29,10 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.BiomeColors;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.item.CompassItemPropertyFunction;
+import net.minecraft.client.renderer.item.ItemProperties;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.CompassItem;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.core.BlockPos;
@@ -101,6 +106,11 @@ public final class ContentClient {
             if (menu != null) { MenuScreens.register(menu, ContentContainerScreen::new); }
             MenuType<EntityStorageMenu> storage = ContentContainers.STORAGE_MENU.registeredType();
             if (storage != null) { MenuScreens.register(storage, EntityStorageScreen::new); }
+            for (ContentRegistry.ItemEntry entry : ContentRegistry.items()) {
+                if (entry.item() instanceof ContentLocatorItem) {
+                    ItemProperties.register(entry.item(), ResourceLocation.parse("angle"), new CompassItemPropertyFunction((level, stack, holder) -> CompassItem.isLodestoneCompass(stack) ? CompassItem.getLodestonePosition(stack.getOrCreateTag()) : null));
+                }
+            }
             for (ContentFluids.Made made : ContentFluids.made()) {
                 ItemBlockRenderTypes.setRenderLayer(made.still, RenderType.translucent());
                 ItemBlockRenderTypes.setRenderLayer(made.flowing, RenderType.translucent());

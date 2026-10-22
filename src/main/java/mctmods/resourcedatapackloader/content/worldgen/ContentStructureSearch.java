@@ -6,6 +6,7 @@ import mctmods.resourcedatapackloader.util.Config;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Settings;
 
+import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -47,6 +48,7 @@ import javax.annotation.Nullable;
 
 public final class ContentStructureSearch {
     private static final int SEARCH_CHUNKS = 128;
+    private static final int LOCATE_CHUNKS = 100;
     private static final int HERE_CHUNKS = 8;
     private static final long BEEN_NEAR = 128L * 128L;
     private static final int LANDING_REACH = 6;
@@ -221,6 +223,13 @@ public final class ContentStructureSearch {
     }
 
     public static boolean known(ServerLevel level, String named) { return wanted(level, named) != null; }
+
+    @Nullable public static BlockPos locate(ServerLevel level, String named, BlockPos from) {
+        HolderSet<Structure> wanted = wanted(level, named);
+        if (wanted == null) { return null; }
+        Pair<BlockPos, Holder<Structure>> found = level.getChunkSource().getGenerator().findNearestMapStructure(level, wanted, from, LOCATE_CHUNKS, false);
+        return found == null ? null : found.getFirst();
+    }
 
     @Nullable private static HolderSet<Structure> wanted(ServerLevel level, String named) {
         Registry<Structure> registry = level.registryAccess().registryOrThrow(Registries.STRUCTURE);
