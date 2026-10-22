@@ -1,5 +1,6 @@
 package mctmods.resourcedatapackloader;
 
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.CenterCard;
 import mctmods.resourcedatapackloader.client.HoldView;
@@ -289,6 +290,7 @@ public class ResourceDataPackLoader {
                 ContentHardnessCheck.watching();
             }
             MinecraftForge.EVENT_BUS.register(new PackOptionsButton.Handler());
+            MinecraftForge.EVENT_BUS.register(BossBackgrounds.class);
             MinecraftForge.EVENT_BUS.register(CardOverlay.class);
             MinecraftForge.EVENT_BUS.register(CenterCard.class);
             MinecraftForge.EVENT_BUS.register(HoldView.class);

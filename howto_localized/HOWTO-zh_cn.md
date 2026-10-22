@@ -2925,6 +2925,33 @@ Minecraft 本来就会根据方块的位置挑选变种，而硬度分组把级�
 | `trackVelocity`     | 否   | 布尔值 | `true` | 除位置外同时发送它的速度。关闭可为几乎不动的实体节省流量 |
 | `trackingFrequency` | 否   | 整数   | `3`    | 更新频率，以刻为单位                                     |
 
+### Boss 血条
+
+*实体变种*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| 键              | 必需 | 值     | 默认值         | 作用                                                              |
+| --------------- | ---- | ------ | -------------- | ----------------------------------------------------------------- |
+| `bossBar`       | 否   | 对象   | 无             | 生物存活期间，向附近的玩家显示 Boss 血条                          |
+| `bossBar.name`  | 否   | 文本   | 生物的名称     | 血条的标题                                                        |
+| `bossBar.color` | 否   | 文本   | `purple`       | `pink`、`blue`、`red`、`green`、`yellow`、`purple` 或 `white`     |
+| `bossBar.style` | 否   | 文本   | `progress`     | `progress`、`notched_6`、`notched_10`、`notched_12` 或 `notched_20` |
+| `bossBar.background` | 否 | 对象 | 无            | 绘制在血条及其标题后方的纹理：`texture`（`namespace:路径.png`，必填），`width` 和 `height`（默认为 182 和血条所在行的高度），`x` 和 `y`（相对标题行左上角的偏移，默认为 0） |
+
+每个生物有自己的血条，其 `trackingRange` 范围内的所有玩家都能看到。血条跟随生物的生命值，受伤时会变短；生物死亡、被移除或所在区块卸载时血条消失。旁观者看不到它。未知的 `color` 或 `style` 会记入日志，并使用默认值。没有 `bossBar` 时一切照旧。
+
 ### 存储
 
 *实体变种*
@@ -6166,6 +6193,34 @@ See [the map](https://example.com/map) for the way, and \*this\* stays plain.
 | `ends.locksTeams`   | 布尔值 | `true`                             | 回合进行期间加入阵营要等到回合结束，因此没有人能在计分回合中途闯入                                                                                                                                                                                                                                                                                                     |
 
 `ends` 结束比赛，要么在某个阵营达到 `atScore` 的瞬间，要么在经过 `afterMinutes` 之后。随后会显示战况，由游戏自身排名：以聊天文字显示，若 `results` 要求则以卡片显示。没有安装本模组的玩家会以聊天行的形式收到同样的战况，因此没有人会得不到结果。配合 `resets` 时，这一结束就是一个回合的结束：战况停留 `intermissionSeconds` 秒，同时动作栏上倒数冷却时间，地图重置为欢迎状态，之后经过五秒倒数，下一个回合开启。`awardsTo` 把该回合判给领先的一方，记在跨重置 `carries` 的目标上。被保留的目标可以自行结束，用 `atScore` 实现多局决胜，用 `afterRounds` 实现固定回合数，其战况会在之后的重置时清除，于是新的比赛开始。
+
+### 回合 Boss 血条
+
+*计分*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| 设置            | 类型 | 默认值                 | 作用                                                              |
+| --------------- | ---- | ---------------------- | ----------------------------------------------------------------- |
+| `bossBar`       | 对象 | 无                     | 回合进行期间，向所有玩家显示 Boss 血条                            |
+| `bossBar.name`  | 文本 | 计分项的 `displayName` | 血条的标题                                                        |
+| `bossBar.color` | 文本 | `purple`               | `pink`、`blue`、`red`、`green`、`yellow`、`purple` 或 `white`     |
+| `bossBar.style` | 文本 | `progress`             | `progress`、`notched_6`、`notched_10`、`notched_12` 或 `notched_20` |
+| `bossBar.background` | 对象 | 无                | 绘制在血条及其标题后方的纹理：`texture`（`namespace:路径.png`，必填），`width` 和 `height`（默认为 182 和血条所在行的高度），`x` 和 `y`（相对标题行左上角的偏移，默认为 0） |
+
+血条在回合开始时出现，回合结束时消失。设有 `ends.afterMinutes` 时，血条随时间流逝而变短。否则，设有 `ends.atScore` 时，血条随领先一方接近该分数而变长。两者都没有则始终保持满格。未知的 `color` 或 `style` 会记入日志，并使用默认值。
 
 ### 回合之间
 

@@ -5,6 +5,7 @@ import mctmods.resourcedatapackloader.content.ContentScoring;
 import mctmods.resourcedatapackloader.content.def.RaidDef;
 import mctmods.resourcedatapackloader.content.def.RaidSwitchDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentRaidSwitch;
+import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Functions;
 import mctmods.resourcedatapackloader.util.Rewards;
@@ -13,7 +14,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityList;
 import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -73,7 +73,7 @@ public final class ActiveRaid {
         this.waves = waves;
         this.points = points;
         this.cooldown = def.waveDelay;
-        this.bar = new BossInfoServer(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10);
+        this.bar = BossBars.create(new TextComponentString(def.name), def.color, BossInfo.Overlay.NOTCHED_10);
     }
 
     public static void start(WorldServer world, RaidDef def, BlockPos center, boolean free) {
@@ -282,27 +282,14 @@ public final class ActiveRaid {
         else { bar.setName(new TextComponentString(def.name + " - Defeat")); }
     }
 
-    private void players(WorldServer world) {
-        List<EntityPlayerMP> present = inReach(world);
-        for (EntityPlayerMP watching : new ArrayList<>(bar.getPlayers())) {
-            if (!present.contains(watching)) { bar.removePlayer(watching); }
-        }
-        for (EntityPlayerMP player : present) { bar.addPlayer(player); }
-    }
+    private void players(WorldServer world) { BossBars.sync(bar, inReach(world)); }
 
-    private List<EntityPlayerMP> inReach(WorldServer world) {
-        List<EntityPlayerMP> present = new ArrayList<>();
-        double reach = (double) def.reach * def.reach;
-        for (EntityPlayer player : world.playerEntities) {
-            if (player instanceof EntityPlayerMP && player.isEntityAlive() && !player.isSpectator() && player.getDistanceSq(center) < reach) { present.add((EntityPlayerMP) player); }
-        }
-        return present;
-    }
+    private List<EntityPlayerMP> inReach(WorldServer world) { return BossBars.near(world, center.getX() + 0.5D, center.getY() + 0.5D, center.getZ() + 0.5D, def.reach); }
 
     void stop(@Nullable String why) {
         if (why != null) { ContentLog.LOGGER.info("Raid {} on the village at {}, {}, {} stops: {}", def.registryName, center.getX(), center.getY(), center.getZ(), why); }
         status = Status.STOPPED;
-        for (EntityPlayerMP watching : new ArrayList<>(bar.getPlayers())) { bar.removePlayer(watching); }
+        BossBars.clear(bar);
     }
 
     NBTTagCompound write() {

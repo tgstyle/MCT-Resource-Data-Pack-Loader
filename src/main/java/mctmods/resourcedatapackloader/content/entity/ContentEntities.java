@@ -175,6 +175,12 @@ public final class ContentEntities {
         return def != null && def.steerable;
     }
 
+    @SubscribeEvent public static void onBars(TickEvent.ServerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) { return; }
+        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+        if (server != null && server.getTickCounter() % 20 == 0) { ContentEntityBars.sweep(server.getEntityWorld().getTotalWorldTime()); }
+    }
+
     @SubscribeEvent public static void onEngagement(TickEvent.ServerTickEvent event) {
         if (event.phase != TickEvent.Phase.END || BY_CLASS.isEmpty() || !ContentLog.LOGGER.debugEnabled()) { return; }
         if (++engageWatch % ENGAGE_EVERY != 0) { return; }
@@ -284,6 +290,7 @@ public final class ContentEntities {
         if (!(living instanceof EntityLiving)) { return; }
         EntityVariantDef def = BY_CLASS.get(living.getClass());
         if (def == null) { return; }
+        if (def.bossBar != null && !living.world.isRemote) { ContentEntityBars.tick(living, def); }
         if (def.collectsExperience && !living.world.isRemote && living.isEntityAlive()) {
             ContentMobExperience.collect((EntityLiving) living);
             ContentAnvils.gather((EntityLiving) living);

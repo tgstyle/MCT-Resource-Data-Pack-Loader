@@ -2925,6 +2925,33 @@ Une variante qui n'en définit aucune apparaît comme avant, et celle qui en dé
 | `trackVelocity`     | non    | booléen | `true` | Envoie sa vitesse en plus de sa position. Désactivé, cela économise du trafic pour ce qui bouge à peine |
 | `trackingFrequency` | non    | entier  | `3`    | Fréquence d'envoi, en ticks                                                                             |
 
+### Barre de boss
+
+*variantes d'entités*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Clé             | Requis | Valeur | Défaut               | Rôle                                                                              |
+| --------------- | ------ | ------ | -------------------- | --------------------------------------------------------------------------------- |
+| `bossBar`       | non    | objet  | aucun                | Affiche une barre de boss aux joueurs proches tant que la créature est en vie     |
+| `bossBar.name`  | non    | texte  | le nom de la créature | Le titre de la barre                                                             |
+| `bossBar.color` | non    | texte  | `purple`             | `pink`, `blue`, `red`, `green`, `yellow`, `purple` ou `white`                     |
+| `bossBar.style` | non    | texte  | `progress`           | `progress`, `notched_6`, `notched_10`, `notched_12` ou `notched_20`               |
+| `bossBar.background` | non | objet | aucun               | Une texture dessinée derrière la barre et son titre : `texture` (`namespace:chemin.png`, obligatoire), `width` et `height` (182 et la hauteur de la ligne de la barre par défaut), `x` et `y` (décalage depuis le coin supérieur gauche de la ligne du titre, 0 par défaut) |
+
+Chaque créature a sa propre barre, visible de tous les joueurs situés dans son `trackingRange`. La barre suit la santé de la créature : elle se vide à mesure que la créature est blessée, et disparaît quand la créature meurt, est retirée ou que son chunk est déchargé. Les spectateurs ne la voient pas. Une valeur inconnue de `color` ou `style` est consignée dans le journal et la valeur par défaut est utilisée. Sans `bossBar`, rien ne change.
+
 ### Stockage
 
 *variantes d'entités*
@@ -6166,6 +6193,34 @@ Un objectif est un véritable objectif du tableau des scores du jeu : `/scoreboa
 | `ends.locksTeams`   | booléen | `true`                             | Rejoindre un camp pendant une manche en cours attend la fin de la manche, afin que personne ne tombe en cours de route dans une manche comptabilisée                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 
 `ends` termine le match, soit dès qu'un camp atteint `atScore`, soit une fois `afterMinutes` écoulées. Le classement est alors affiché, établi par le jeu lui-même : dans le chat, ou sous forme de carte si `results` en demande une. Un joueur sans ce mod reçoit le même classement en lignes de chat, afin que personne ne reste sans résultat. Avec `resets`, cette fin est celle d'une manche : le classement reste affiché pendant `intermissionSeconds` tandis qu'un compte à rebours défile dans la barre d'action, la carte revient à l'accueil, et la manche suivante s'ouvre après un décompte de cinq secondes. `awardsTo` donne la manche au camp qui menait, sur un objectif qui `carries` à travers la réinitialisation. Un objectif reporté peut se terminer de lui-même -- `atScore` pour un meilleur des N, `afterRounds` pour un nombre fixe -- et son classement est effacé à la réinitialisation suivante, de sorte qu'un nouveau match s'ouvre.
+
+### Barre de boss de la manche
+
+*score*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Réglage         | Type  | Défaut                      | Rôle                                                                  |
+| --------------- | ----- | --------------------------- | --------------------------------------------------------------------- |
+| `bossBar`       | objet | aucun                       | Affiche une barre de boss à tous les joueurs tant que la manche se déroule |
+| `bossBar.name`  | texte | le `displayName` de l'objectif | Le titre de la barre                                               |
+| `bossBar.color` | texte | `purple`                    | `pink`, `blue`, `red`, `green`, `yellow`, `purple` ou `white`         |
+| `bossBar.style` | texte | `progress`                  | `progress`, `notched_6`, `notched_10`, `notched_12` ou `notched_20`   |
+| `bossBar.background` | objet | aucun                      | Une texture dessinée derrière la barre et son titre : `texture` (`namespace:chemin.png`, obligatoire), `width` et `height` (182 et la hauteur de la ligne de la barre par défaut), `x` et `y` (décalage depuis le coin supérieur gauche de la ligne du titre, 0 par défaut) |
+
+La barre apparaît à l'ouverture de la manche et disparaît à sa fin. Avec `ends.afterMinutes`, elle se vide à mesure que le temps s'écoule. Sinon, avec `ends.atScore`, elle se remplit à mesure que le camp en tête approche de ce score. Sans l'un ni l'autre, elle reste pleine. Une valeur inconnue de `color` ou `style` est consignée dans le journal et la valeur par défaut est utilisée.
 
 ### Entre les manches
 

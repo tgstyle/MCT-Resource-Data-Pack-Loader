@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.card.CardPlace;
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.entity.ContentTasks;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
 import mctmods.resourcedatapackloader.util.Json;
@@ -165,7 +166,7 @@ public final class ContentParserEntities {
                 Json.getBoolean(json, "walks", false),
                 Json.getBoolean(json, "throwReturns", false),
                 Json.getString(sounds, "throw", ""),
-                rocket(key, json), storage(key, json), gate(key, json));
+                rocket(key, json), storage(key, json), gate(key, json), BossBars.read("Entity variant " + key, json));
     }
 
     private static SpawnGateDef gate(ResourceLocation key, JsonObject json) {

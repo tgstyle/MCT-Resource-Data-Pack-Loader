@@ -2925,6 +2925,33 @@ PNG가 항상 우선합니다. `panel.png`와 `panel.png.json`이 둘 다 있으
 | `trackVelocity`     | 아니요 | 불리언 | `true` | 위치뿐 아니라 속도도 보냅니다. 끄면 거의 움직이지 않는 것의 트래픽을 줄입니다 |
 | `trackingFrequency` | 아니요 | 정수   | `3`    | 얼마나 자주, 틱 단위                                                          |
 
+### 보스바
+
+*엔티티 변형*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| 키              | 필수   | 값       | 기본값           | 설명                                                                  |
+| --------------- | ------ | -------- | ---------------- | --------------------------------------------------------------------- |
+| `bossBar`       | 아니요 | 객체     | 없음             | 생물이 살아 있는 동안 근처 플레이어에게 보스바를 표시합니다           |
+| `bossBar.name`  | 아니요 | 텍스트   | 생물의 이름      | 바의 제목                                                             |
+| `bossBar.color` | 아니요 | 텍스트   | `purple`         | `pink`, `blue`, `red`, `green`, `yellow`, `purple`, `white`           |
+| `bossBar.style` | 아니요 | 텍스트   | `progress`       | `progress`, `notched_6`, `notched_10`, `notched_12`, `notched_20`     |
+| `bossBar.background` | 아니요 | 객체 | 없음            | 바와 제목 뒤에 그리는 텍스처입니다. `texture`(`namespace:경로.png`, 필수), `width`와 `height`(기본값은 182와 바 줄의 높이), `x`와 `y`(제목 줄의 왼쪽 위 모서리에서의 오프셋, 기본값 0) |
+
+바는 생물마다 하나씩 있으며 `trackingRange` 안에 있는 모든 플레이어에게 표시됩니다. 바는 생물의 체력을 따라가므로 피해를 입을수록 줄어들고, 생물이 죽거나 제거되거나 청크가 언로드되면 사라집니다. 관전자에게는 표시되지 않습니다. 알 수 없는 `color`나 `style`은 로그에 기록되고 기본값이 쓰입니다. `bossBar`가 없으면 아무것도 달라지지 않습니다.
+
 ### 저장소
 
 *엔티티 변형*
@@ -6166,6 +6193,34 @@ belt와 마찬가지로 field는 시도마다가 아니라 청크마다 질문�
 | `ends.locksTeams`   | 불리언 | `true`                             | 라운드가 진행되는 동안의 진영 가입은 라운드가 끝날 때까지 기다리므로, 점수가 매겨지는 라운드 도중에 끼어드는 사람이 없습니다                                                                                                                                                                                                                                                                                                                                                                                   |
 
 `ends`는 경기를 끝냅니다. 진영이 `atScore`에 도달하는 순간 또는 `afterMinutes`가 지난 뒤입니다. 그러면 게임 자체가 매긴 순위가 표시되며, 채팅으로, 또는 `results`가 요청하면 카드로 보여 줍니다. 이 모드가 없는 플레이어에게도 같은 순위가 채팅 줄로 전달되므로 결과를 못 받는 사람이 없습니다. `resets`가 있으면 그 끝은 라운드의 끝입니다. 순위는 `intermissionSeconds` 동안 표시되고 그 사이 액션바에서 쿨다운이 카운트다운되며, 맵은 환영 상태로 초기화되고, 다음 라운드는 5초 카운트 후에 열립니다. `awardsTo`는 초기화를 거쳐도 `carries`되는 목표에서 앞선 진영에 라운드를 수여합니다. 이월되는 목표는 스스로 끝날 수 있습니다. 5판 3선승제 같은 경우는 `atScore`, 정해진 횟수는 `afterRounds`로 끝나며, 그 순위는 다음 초기화 때 지워져 새 경기가 열립니다.
+
+### 라운드 보스바
+
+*점수 계산*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| 설정            | 유형   | 기본값                   | 설명                                                                  |
+| --------------- | ------ | ------------------------ | --------------------------------------------------------------------- |
+| `bossBar`       | 객체   | 없음                     | 라운드가 진행되는 동안 모든 플레이어에게 보스바를 표시합니다          |
+| `bossBar.name`  | 텍스트 | 목표의 `displayName`     | 바의 제목                                                             |
+| `bossBar.color` | 텍스트 | `purple`                 | `pink`, `blue`, `red`, `green`, `yellow`, `purple`, `white`           |
+| `bossBar.style` | 텍스트 | `progress`               | `progress`, `notched_6`, `notched_10`, `notched_12`, `notched_20`     |
+| `bossBar.background` | 객체 | 없음                | 바와 제목 뒤에 그리는 텍스처입니다. `texture`(`namespace:경로.png`, 필수), `width`와 `height`(기본값은 182와 바 줄의 높이), `x`와 `y`(제목 줄의 왼쪽 위 모서리에서의 오프셋, 기본값 0) |
+
+바는 라운드가 시작될 때 나타나고 끝나면 사라집니다. `ends.afterMinutes`가 있으면 시간이 흐를수록 줄어듭니다. 없으면 `ends.atScore`가 있을 때 선두 진영이 그 점수에 가까워질수록 차오릅니다. 둘 다 없으면 가득 찬 채로 있습니다. 알 수 없는 `color`나 `style`은 로그에 기록되고 기본값이 쓰입니다.
 
 ### 라운드 사이
 

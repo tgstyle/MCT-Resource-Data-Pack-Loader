@@ -1,6 +1,8 @@
 package mctmods.resourcedatapackloader.network;
 
+import mctmods.resourcedatapackloader.content.def.BossBackgroundDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.client.BossBackgrounds;
 import mctmods.resourcedatapackloader.client.CardOverlay;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.IntroLandMadeHandler;
@@ -16,6 +18,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.SimpleNetworkWrapper;
 import net.minecraftforge.fml.relauncher.Side;
 import javax.annotation.Nullable;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public final class RDPLNetwork {
@@ -45,6 +48,7 @@ public final class RDPLNetwork {
         registerMessage(MessageHeightMapUpdate.Handler.class, MessageHeightMapUpdate.class);
         registerMessage(MessageToasts.Handler.class, MessageToasts.class);
         registerMessage(MessageEnvironments.Handler.class, MessageEnvironments.class);
+        registerClient(() -> BossBackgrounds.Handler.class, MessageBossBackground.class);
     }
 
     private static <REQ extends IMessage> void registerClient(Supplier<Class<? extends IMessageHandler<REQ, IMessage>>> client, Class<REQ> messageClass) {
@@ -90,6 +94,11 @@ public final class RDPLNetwork {
     public static void sendHold(EntityPlayerMP player, boolean held, String warning, boolean fog) { sendTo(new MessageHold(held, warning, fog, Says.panel(), Says.font()), player); }
 
     public static void sendHardnessSalt(EntityPlayerMP player, long salt) { sendTo(new MessageHardnessSalt(salt), player); }
+
+    public static void sendBossBackground(EntityPlayerMP player, UUID bar, @Nullable BossBackgroundDef background) {
+        if (background == null) { sendTo(new MessageBossBackground(bar, "", 0, 0, 0, 0), player); }
+        else { sendTo(new MessageBossBackground(bar, background.texture, background.width, background.height, background.x, background.y), player); }
+    }
 
     public static void sendToasts(EntityPlayerMP player, int kinds) { sendTo(new MessageToasts(kinds), player); }
 

@@ -2925,6 +2925,33 @@ Una variante che non imposta nessuna di queste condizioni compare come prima, e 
 | `trackVelocity`     | no           | booleano | `true`      | Invia anche la sua velocità oltre alla posizione. Disattivato risparmia traffico su ciò che si muove appena |
 | `trackingFrequency` | no           | intero   | `3`         | Con che frequenza, in tick                                                                                  |
 
+### Barra del boss
+
+*varianti delle entità*
+
+```json
+{
+  "entity": "minecraft:zombie",
+  "name": "Bar Brute",
+  "bossBar": {
+    "name": "Bar Brute",
+    "color": "red",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Chiave          | Obbligatorio | Valore       | Predefinito           | Cosa fa                                                                            |
+| --------------- | ------------ | ------------ | --------------------- | ---------------------------------------------------------------------------------- |
+| `bossBar`       | no           | oggetto JSON | nessuno               | Mostra una barra del boss ai giocatori vicini finché la creatura è viva            |
+| `bossBar.name`  | no           | testo        | il nome della creatura | Il titolo della barra                                                             |
+| `bossBar.color` | no           | testo        | `purple`              | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`                       |
+| `bossBar.style` | no           | testo        | `progress`            | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`                 |
+| `bossBar.background` | no      | oggetto JSON | nessuno               | Una texture disegnata dietro la barra e il suo titolo: `texture` (`namespace:percorso.png`, obbligatoria), `width` e `height` (predefiniti 182 e l'altezza della riga della barra), `x` e `y` (scostamento dall'angolo in alto a sinistra della riga del titolo, predefinito 0) |
+
+Ogni creatura ha la propria barra, mostrata a tutti i giocatori entro il suo `trackingRange`. La barra segue la salute della creatura, quindi si svuota man mano che viene ferita, e sparisce quando la creatura muore, viene rimossa o il suo chunk viene scaricato. Gli spettatori non la vedono. Un `color` o `style` sconosciuto viene registrato nel log e si usa il valore predefinito. Senza `bossBar` non cambia nulla.
+
 ### Archiviazione
 
 *varianti delle entità*
@@ -6166,6 +6193,34 @@ Un obiettivo è un vero obiettivo sullo scoreboard del gioco, quindi `/scoreboar
 | `ends.locksTeams`   | booleano | `true`                             | Entrare in un lato mentre un round è in corso attende la fine del round, così nessuno si infila a metà in un round con punteggio                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 `ends` conclude la partita, sia nel momento in cui un lato raggiunge `atScore` sia una volta trascorsi `afterMinutes`. Viene poi mostrata la classifica, ordinata dal gioco stesso: come chat, o come carta se `results` ne richiede una. Un giocatore senza questa mod riceve la stessa classifica come righe di chat, così nessuno resta senza un risultato. Con `resets`, quella fine è la fine di un round: la classifica resta per `intermissionSeconds` mentre un conto alla rovescia scorre sulla barra delle azioni, la mappa si reimposta al benvenuto e il round successivo si apre dopo un conto di cinque secondi. `awardsTo` assegna il round al lato che era in testa, su un obiettivo che `carries` attraverso il reset. Un obiettivo riportato può terminare da solo -- `atScore` per un al meglio di, `afterRounds` per un numero fisso -- e la sua classifica viene azzerata al reset successivo, così si apre una nuova partita.
+
+### Barra del boss del round
+
+*punteggio*
+
+```json
+{
+  "name": "kaboom",
+  "criterion": "dummy",
+  "ends": { "afterMinutes": 10 },
+  "bossBar": {
+    "name": "Kaboom",
+    "color": "blue",
+    "style": "notched_10",
+    "background": { "texture": "mymod:textures/gui/boss_back.png", "width": 182, "height": 19, "x": 0, "y": 0 }
+  }
+}
+```
+
+| Impostazione    | Tipo         | Predefinito                  | Cosa fa                                                              |
+| --------------- | ------------ | ---------------------------- | -------------------------------------------------------------------- |
+| `bossBar`       | oggetto JSON | nessuno                      | Mostra una barra del boss a tutti i giocatori mentre il round è in corso |
+| `bossBar.name`  | testo        | il `displayName` dell'obiettivo | Il titolo della barra                                             |
+| `bossBar.color` | testo        | `purple`                     | `pink`, `blue`, `red`, `green`, `yellow`, `purple` o `white`         |
+| `bossBar.style` | testo        | `progress`                   | `progress`, `notched_6`, `notched_10`, `notched_12` o `notched_20`   |
+| `bossBar.background` | oggetto JSON | nessuno                 | Una texture disegnata dietro la barra e il suo titolo: `texture` (`namespace:percorso.png`, obbligatoria), `width` e `height` (predefiniti 182 e l'altezza della riga della barra), `x` e `y` (scostamento dall'angolo in alto a sinistra della riga del titolo, predefinito 0) |
+
+La barra compare quando il round inizia e sparisce quando finisce. Con `ends.afterMinutes` si svuota man mano che il tempo scade. Altrimenti, con `ends.atScore`, si riempie man mano che il lato in testa si avvicina a quel punteggio. Con nessuno dei due resta piena. Un `color` o `style` sconosciuto viene registrato nel log e si usa il valore predefinito.
 
 ### Tra un round e l'altro
 

@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.content;
 
 import mctmods.resourcedatapackloader.content.def.*;
 import mctmods.resourcedatapackloader.content.types.ContentTypes;
+import mctmods.resourcedatapackloader.util.BossBars;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Json;
 import mctmods.resourcedatapackloader.util.Settings;
@@ -100,7 +101,8 @@ public final class ContentParserGames {
                 Json.getBoolean(json, "tiebreak", false),
                 turns(key, json),
                 Json.getBoolean(points, "raid", false),
-                Json.getBoolean(points, "order", false));
+                Json.getBoolean(points, "order", false),
+                BossBars.read("Score file " + key, json));
     }
 
     @Nullable private static TurnsDef turns(ResourceLocation key, JsonObject json) {

@@ -64,7 +64,7 @@ public final class ContentScoring {
     private static final Map<java.util.UUID, Integer> SETTLING = new LinkedHashMap<>();
     private static int starting;
     @Nullable private static ScoreDef opening;
-    private static final int MINUTE_TICKS = 20 * 60;
+    static final int MINUTE_TICKS = 20 * 60;
     private static boolean live;
     private static int ticks;
     private static int beat;
@@ -79,6 +79,7 @@ public final class ContentScoring {
     private ContentScoring() {}
 
     public static void load() {
+        ContentScoringBar.clear();
         BY_NAME.clear();
         FINISHED.clear();
         ContentRoundReset.clear();
@@ -216,6 +217,7 @@ public final class ContentScoring {
             if (def.endsAfterMinutes <= 0 || FINISHED.contains(def.name)) { continue; }
             if (ticks >= def.endsAfterMinutes * MINUTE_TICKS) { finish(def, "time", null); }
         }
+        ContentScoringBar.second(FMLCommonHandler.instance().getMinecraftServerInstance(), BY_NAME.values(), FINISHED, ticks);
         if (starting == 0) { standing(FMLCommonHandler.instance().getMinecraftServerInstance()); }
     }
 
@@ -226,6 +228,7 @@ public final class ContentScoring {
 
     static void finish(ScoreDef def, String why, @Nullable String winner) {
         if (!FINISHED.add(def.name)) { return; }
+        ContentScoringBar.over(def);
         MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
         if (server == null) { return; }
         ContentTurns.over(server, def, winner);
