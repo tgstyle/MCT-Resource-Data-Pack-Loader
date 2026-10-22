@@ -113,7 +113,7 @@ public class AsyncBatchingCubeIO implements ICubeIO {
 
     private int pendingIn(Map<?, NBTTagCompound> pending) { return underReadLock(() -> this.open ? pending.size() : 0); }
 
-    private <T, E extends Exception> T underReadLock(LockedWork<T, E> work) throws E {
+    private <T, E extends Exception> T underReadLock(ILockedWork<T, E> work) throws E {
         this.lock.readLock().lock();
         try { return work.run(); }
         finally { this.lock.readLock().unlock(); }
@@ -188,5 +188,5 @@ public class AsyncBatchingCubeIO implements ICubeIO {
 
     @Override public void loadCubeSyncPart(PartialData<ICube> info) { IONbtReader.readCubeSyncPart((Cube) info.getObject(), this.world, info.getNbt()); }
 
-    private interface LockedWork<T, E extends Exception> { T run() throws E; }
+    private interface ILockedWork<T, E extends Exception> { T run() throws E; }
 }

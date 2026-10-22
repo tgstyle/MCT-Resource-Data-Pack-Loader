@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.content.block;
 import mctmods.resourcedatapackloader.content.ContentSetup;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentBlock;
+import mctmods.resourcedatapackloader.content.interfaces.IVariantBlock;
 import mctmods.resourcedatapackloader.content.types.PropertyVariant;
 
 import net.minecraft.block.BlockSlab;

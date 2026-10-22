@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.world.interfaces;
 
 import mctmods.resourcedatapackloader.client.CubeProviderClient;
 import mctmods.resourcedatapackloader.content.rubic.RubicWorldControl;
-import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
+import mctmods.resourcedatapackloader.content.rubic.lighting.interfaces.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.server.CubeProviderServer;
 import mctmods.resourcedatapackloader.content.rubic.server.SpawnCubes;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;

@@ -112,7 +112,7 @@ public final class ContentTasks {
 
     private ContentTasks() {}
 
-    @FunctionalInterface private interface Maker { @Nullable EntityAIBase make(EntityLiving living, TaskDef task, EntityVariantDef def); }
+    @FunctionalInterface private interface IMaker { @Nullable EntityAIBase make(EntityLiving living, TaskDef task, EntityVariantDef def); }
 
     private static final class Kind {
         final String name;
@@ -120,9 +120,9 @@ public final class ContentTasks {
         final String needsName;
         final boolean targeting;
         final Class<? extends EntityAIBase> type;
-        final Maker maker;
+        final IMaker maker;
 
-        Kind(String name, Class<?> needs, String needsName, boolean targeting, Class<? extends EntityAIBase> type, Maker maker) {
+        Kind(String name, Class<?> needs, String needsName, boolean targeting, Class<? extends EntityAIBase> type, IMaker maker) {
             this.name = name;
             this.needs = needs;
             this.needsName = needsName;
@@ -132,11 +132,11 @@ public final class ContentTasks {
         }
     }
 
-    private static void register(boolean targeting, String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, Maker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, targeting, type, maker)); }
+    private static void register(boolean targeting, String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, IMaker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, targeting, type, maker)); }
 
-    private static void task(String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, Maker maker) { register(false, name, needs, needsName, type, maker); }
+    private static void task(String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, IMaker maker) { register(false, name, needs, needsName, type, maker); }
 
-    private static void target(String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, Maker maker) { register(true, name, needs, needsName, type, maker); }
+    private static void target(String name, Class<?> needs, String needsName, Class<? extends EntityAIBase> type, IMaker maker) { register(true, name, needs, needsName, type, maker); }
 
     static {
         task("attackMelee", EntityCreature.class, WALKER, EntityAIAttackMelee.class, (l, t, d) -> new EntityAIAttackMelee((EntityCreature) l, t.speed(1.0D), t.memory));

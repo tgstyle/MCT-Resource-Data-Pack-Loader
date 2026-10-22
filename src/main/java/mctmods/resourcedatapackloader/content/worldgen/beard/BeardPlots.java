@@ -237,11 +237,11 @@ public final class BeardPlots {
         return false;
     }
 
-    public interface Spots {
+    public interface ISpots {
         boolean accept(int x, int z);
     }
 
-    public static boolean vergeSpotsNear(StructureStart start, int x, int z, int reach, int step, Spots spots) {
+    public static boolean vergeSpotsNear(StructureStart start, int x, int z, int reach, int step, ISpots spots) {
         Index held = index(start);
         int firstX = x - reach - 1;
         int firstZ = z - reach - 1;

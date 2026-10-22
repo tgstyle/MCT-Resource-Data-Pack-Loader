@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.util;
 
 import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -46,7 +47,7 @@ public final class FormatDown {
 
     private static Set<String> set(String... values) { return new HashSet<>(Arrays.asList(values)); }
 
-    public static JsonElement walk(JsonElement element, LineNote note) {
+    public static JsonElement walk(JsonElement element, ILineNote note) {
         if (element.isJsonArray()) { return JsonTree.map(element.getAsJsonArray(), item -> walk(item, note)); }
         if (!element.isJsonObject()) { return element; }
         return JsonTree.map(element.getAsJsonObject(), (key, value) -> {
@@ -60,7 +61,7 @@ public final class FormatDown {
         });
     }
 
-    private static JsonArray sides(JsonObject decorations, LineNote note) {
+    private static JsonArray sides(JsonObject decorations, ILineNote note) {
         JsonArray out = new JsonArray();
         if (decorations.size() == 0) { return out; }
         for (String side : Snbt.SIDES) {
@@ -75,7 +76,7 @@ public final class FormatDown {
         return out;
     }
 
-    private static JsonObject bed(JsonObject rule, LineNote note) {
+    private static JsonObject bed(JsonObject rule, ILineNote note) {
         JsonObject out = JsonTree.copy(rule);
         JsonObject target = out.has("argument") && out.get("argument").isJsonObject() ? out.getAsJsonObject("argument") : out;
         JsonElement destroyed = target.remove("destroy_on_use");
@@ -84,7 +85,7 @@ public final class FormatDown {
         return out;
     }
 
-    public static JsonObject trim(JsonObject material, LineNote note) {
+    public static JsonObject trim(JsonObject material, ILineNote note) {
         JsonObject out = JsonTree.copy(material);
         JsonElement palette = out.remove("palette_id");
         if (palette == null || !palette.isJsonPrimitive()) { return out; }
@@ -102,7 +103,7 @@ public final class FormatDown {
         return path.startsWith("textures/palettes/trim/") ? "textures/" + OLD_PALETTES + path.substring("textures/palettes/trim/".length()) : path;
     }
 
-    public static JsonElement asset(JsonElement json, String path, LineNote note) {
+    public static JsonElement asset(JsonElement json, String path, ILineNote note) {
         if (!json.isJsonObject()) { return json; }
         JsonObject out = JsonTree.copy(json.getAsJsonObject());
         if (path.startsWith("models/") && JsonUtils.isJsonArray(out, "elements")) {
@@ -135,7 +136,7 @@ public final class FormatDown {
         return namespace + ":" + (path.startsWith("trim/") ? OLD_PALETTES + path.substring("trim/".length()) : "palettes/" + path);
     }
 
-    public static String function(String text, LineNote note) {
+    public static String function(String text, ILineNote note) {
         String[] lines = Snbt.pots(text, value -> value.startsWith("{") ? listed(value, note) : value).split("\n", -1);
         List<String> out = new ArrayList<>();
         for (String line : lines) {
@@ -167,7 +168,7 @@ public final class FormatDown {
         return 0;
     }
 
-    private static String listed(String value, LineNote note) {
+    private static String listed(String value, ILineNote note) {
         List<String> sides = new ArrayList<>(Arrays.asList(BRICK, BRICK, BRICK, BRICK));
         for (String item : Snbt.items(value.substring(1, value.length() - 1))) {
             int colon = item.indexOf(':');
@@ -191,12 +192,12 @@ public final class FormatDown {
         return out.append(']').toString();
     }
 
-    public static JsonElement inlined(JsonElement element, LineNote note) {
+    public static JsonElement inlined(JsonElement element, ILineNote note) {
         JsonElement out = inline(element, note, 0);
         return out == null ? element : out;
     }
 
-    @Nullable private static JsonElement inline(JsonElement element, LineNote note, int depth) {
+    @Nullable private static JsonElement inline(JsonElement element, ILineNote note, int depth) {
         if (element.isJsonArray()) {
             JsonArray out = new JsonArray();
             for (JsonElement item : element.getAsJsonArray()) {
@@ -249,13 +250,13 @@ public final class FormatDown {
         return out;
     }
 
-    @Nullable private static JsonElement resolved(String folder, String id, LineNote note, int depth) {
+    @Nullable private static JsonElement resolved(String folder, String id, ILineNote note, int depth) {
         JsonElement carried = depth < DEPTH ? note.carried(folder, id) : null;
         if (carried == null) { carried = vanilla(folder, id); }
         return carried == null ? null : inline(carried, note, depth + 1);
     }
 
-    private static JsonElement feature(String folder, String id, LineNote note) {
+    private static JsonElement feature(String folder, String id, ILineNote note) {
         JsonElement vanilla = vanilla(folder, id);
         if (vanilla == null || note.carried(folder, id) != null) { return new JsonPrimitive(id); }
         if (!table().getAsJsonArray("lacking").contains(new JsonPrimitive(namespaced(id)))) { return vanilla; }
@@ -269,7 +270,7 @@ public final class FormatDown {
         return placed;
     }
 
-    private static JsonArray steps(JsonArray steps, LineNote note) {
+    private static JsonArray steps(JsonArray steps, ILineNote note) {
         JsonArray out = new JsonArray();
         for (JsonElement step : steps) {
             if (!step.isJsonArray()) {

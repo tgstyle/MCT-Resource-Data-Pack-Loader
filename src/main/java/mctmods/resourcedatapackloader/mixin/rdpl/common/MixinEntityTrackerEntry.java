@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker;
+import mctmods.resourcedatapackloader.content.rubic.entity.interfaces.IRubicEntityTracker;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IRubicWorld;
 

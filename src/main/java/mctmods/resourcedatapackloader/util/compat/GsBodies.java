@@ -97,11 +97,6 @@ final class GsBodies {
         return Math.max(COLDEST, value * base + base);
     }
 
-    static double solarWind(@Nullable GalaxySpaceDef gs, float solarSize) {
-        if (gs != null && gs.solarWind >= 0.0D) { return gs.solarWind; }
-        return solarSize * solarSize;
-    }
-
     @Nullable static WeatherData weather(@Nullable GalaxySpaceDef gs) {
         if (gs == null || gs.weather == null) { return null; }
         return new WeatherData(WeatherData.WeatherType.valueOf(gs.weather), gs.weatherFrequency);

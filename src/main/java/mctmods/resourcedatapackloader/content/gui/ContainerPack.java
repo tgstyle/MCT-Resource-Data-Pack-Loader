@@ -21,9 +21,9 @@ public class ContainerPack extends Container {
     private final int rows;
     private final int columns;
 
-    public interface PlayerSlot { Slot create(InventoryPlayer player, int index, int x, int y); }
+    public interface IPlayerSlot { Slot create(InventoryPlayer player, int index, int x, int y); }
 
-    public interface Merge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
+    public interface IMerge { boolean into(ItemStack stack, int from, int to, boolean reverse); }
 
     public ContainerPack(InventoryPlayer player, TileEntityPackContainer tile) {
         this(player, tile, tile.rows(), tile.columns());
@@ -48,7 +48,7 @@ public class ContainerPack extends Container {
 
     protected Slot playerSlot(InventoryPlayer player, int index, int x, int y) { return new Slot(player, index, x, y); }
 
-    public static List<Slot> playerSlots(InventoryPlayer player, int wide, int tall, PlayerSlot factory) {
+    public static List<Slot> playerSlots(InventoryPlayer player, int wide, int tall, IPlayerSlot factory) {
         List<Slot> slots = new ArrayList<>();
         int left = (wide - 9 * SLOT) / 2 + 1;
         for (int row = 0; row < 3; row++) {
@@ -82,7 +82,7 @@ public class ContainerPack extends Container {
         return transfer(this, index, mine, this::mergeItemStack, stack -> storable(stack) && mergeItemStack(stack, 0, mine, false));
     }
 
-    @Nonnull public static ItemStack transfer(Container container, int index, int mine, Merge merge, Predicate<ItemStack> store) {
+    @Nonnull public static ItemStack transfer(Container container, int index, int mine, IMerge merge, Predicate<ItemStack> store) {
         Slot slot = container.inventorySlots.get(index);
         if (slot == null || !slot.getHasStack()) { return ItemStack.EMPTY; }
         ItemStack stack = slot.getStack();

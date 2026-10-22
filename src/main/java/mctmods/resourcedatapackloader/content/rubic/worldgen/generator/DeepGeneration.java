@@ -280,9 +280,9 @@ public class DeepGeneration {
 
     double[][][] sampleLattice(int worldX, int genY, int worldZ, int ySteps) { return lattice(worldX, genY, worldZ, ySteps, (x, y, z) -> density(x, y, z, 0.0D)); }
 
-    interface Sampler { double at(int x, int y, int z); }
+    interface ISampler { double at(int x, int y, int z); }
 
-    static double[][][] lattice(int worldX, int genY, int worldZ, int ySteps, Sampler sampler) {
+    static double[][][] lattice(int worldX, int genY, int worldZ, int ySteps, ISampler sampler) {
         double[][][] lattice = new double[5][ySteps][5];
         for (int x = 0; x < 5; x++) {
             for (int y = 0; y < ySteps; y++) {

@@ -229,7 +229,7 @@ public final class ContentVillageDecor {
         boolean places(World world, IBlockState wood, List<IBlockState> canopies) { return figure != null && figure.places(world, wood, canopies, box == null ? null : box.structure); }
     }
 
-    private static final class Scan implements BeardPlots.Spots {
+    private static final class Scan implements BeardPlots.ISpots {
         private World world;
         private Collection<StructureStart> villages;
         private BlockPos wood;

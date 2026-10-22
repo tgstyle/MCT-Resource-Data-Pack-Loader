@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.pack.port;
 import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.JsonTree;
-import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -82,7 +82,7 @@ final class Downed {
         String path = asset ? lined ? LinePort.assetPath(written) : written : path(written);
         Port.Kind kind = kind(path, asset);
         String contents = new String(raw, StandardCharsets.UTF_8);
-        LineNote said = said(from, pack);
+        ILineNote said = said(from, pack);
         try {
             if (kind == Port.Kind.FUNCTION) {
                 String out = Down.function(lined ? LinePort.function(contents, said) : contents);
@@ -112,8 +112,8 @@ final class Downed {
         return path.startsWith("advancement/") ? Port.Kind.ADVANCEMENT : Port.Kind.DEFINITION;
     }
 
-    private LineNote said(String from, Ported pack) {
-        return new LineNote() {
+    private ILineNote said(String from, Ported pack) {
+        return new ILineNote() {
             @Override public void accept(String said) { pack.note("'" + from + "' " + said); }
 
             @Override @Nullable public JsonElement carried(String folder, String id) {

@@ -1,6 +1,6 @@
 package mctmods.resourcedatapackloader.content.rubic.server;
 
-import mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker;
+import mctmods.resourcedatapackloader.content.rubic.entity.interfaces.IRubicEntityTracker;
 import mctmods.resourcedatapackloader.content.rubic.server.chunkio.async.CubeIoQueue;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.BlankCube;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;

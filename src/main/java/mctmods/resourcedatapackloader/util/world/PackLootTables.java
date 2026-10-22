@@ -10,11 +10,11 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 public final class PackLootTables<T> {
-    @FunctionalInterface public interface Loader<T> { @Nullable T load(ResourceLocation location, String contents); }
+    @FunctionalInterface public interface ILoader<T> { @Nullable T load(ResourceLocation location, String contents); }
 
     private final Map<ResourceLocation, T> cache = new HashMap<>();
 
-    @Nullable public T serve(ResourceLocation location, String path, Loader<T> loader, String fallback) {
+    @Nullable public T serve(ResourceLocation location, String path, ILoader<T> loader, String fallback) {
         PackManager manager = PackManager.get();
         if (manager.isEmpty()) { return null; }
         T cached = cache.get(location);

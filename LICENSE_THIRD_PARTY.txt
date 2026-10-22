@@ -18,8 +18,8 @@ Classes derived from Cubic Chunks and Tall Worlds (Cubic Chunks)
   mctmods.resourcedatapackloader.client.RenderCubeCache
   mctmods.resourcedatapackloader.client.render.CubeChunkBorder
   mctmods.resourcedatapackloader.client.RubicClientEvents
-  mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker
-  mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager
+  mctmods.resourcedatapackloader.content.rubic.entity.interfaces.IRubicEntityTracker
+  mctmods.resourcedatapackloader.content.rubic.lighting.interfaces.ILightingManager
   mctmods.resourcedatapackloader.content.rubic.lighting.LightingManager
   mctmods.resourcedatapackloader.content.rubic.Rubic
   mctmods.resourcedatapackloader.content.rubic.RubicEvents

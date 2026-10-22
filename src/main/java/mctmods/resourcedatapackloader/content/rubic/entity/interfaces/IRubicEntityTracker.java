@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.rubic.entity;
+package mctmods.resourcedatapackloader.content.rubic.entity.interfaces;
 
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;
 

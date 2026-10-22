@@ -1,4 +1,4 @@
-package mctmods.resourcedatapackloader.content.rubic.lighting;
+package mctmods.resourcedatapackloader.content.rubic.lighting.interfaces;
 
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.ICube;

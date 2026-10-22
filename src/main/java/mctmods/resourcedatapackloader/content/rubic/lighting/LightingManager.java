@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.lighting;
 
+import mctmods.resourcedatapackloader.content.rubic.lighting.interfaces.ICubeLightEngine;
+import mctmods.resourcedatapackloader.content.rubic.lighting.interfaces.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.server.PlayerCubeMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumnInternal;

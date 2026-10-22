@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.content.rubic.server.chunkio;
 
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.content.rubic.lighting.ILightingManager;
+import mctmods.resourcedatapackloader.content.rubic.lighting.interfaces.ILightingManager;
 import mctmods.resourcedatapackloader.content.rubic.world.ServerHeightMap;
 import mctmods.resourcedatapackloader.content.rubic.world.cube.Cube;
 import mctmods.resourcedatapackloader.content.rubic.world.interfaces.IColumn;

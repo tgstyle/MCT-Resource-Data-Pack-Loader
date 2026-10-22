@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.content.rubic.server;
 
 import mctmods.resourcedatapackloader.content.ContentControl;
 import mctmods.resourcedatapackloader.content.rubic.Rubic;
-import mctmods.resourcedatapackloader.content.rubic.entity.IRubicEntityTracker;
+import mctmods.resourcedatapackloader.content.rubic.entity.interfaces.IRubicEntityTracker;
 import mctmods.resourcedatapackloader.content.rubic.server.interfaces.IRubicPlayerList;
 import mctmods.resourcedatapackloader.content.rubic.visibility.CubeSelector;
 import mctmods.resourcedatapackloader.content.rubic.visibility.CuboidalCubeSelector;

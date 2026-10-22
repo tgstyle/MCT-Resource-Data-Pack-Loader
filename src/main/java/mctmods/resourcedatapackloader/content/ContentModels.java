@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.content.block.ContentBlockFenceGate;
 import mctmods.resourcedatapackloader.content.block.ContentBlockFluid;
 import mctmods.resourcedatapackloader.content.block.ContentBlockLeaves;
 import mctmods.resourcedatapackloader.content.block.ContentBlockWall;
-import mctmods.resourcedatapackloader.content.block.IVariantBlock;
+import mctmods.resourcedatapackloader.content.interfaces.IVariantBlock;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.portal.ContentPortals;
 import mctmods.resourcedatapackloader.content.def.BlockVariant;
