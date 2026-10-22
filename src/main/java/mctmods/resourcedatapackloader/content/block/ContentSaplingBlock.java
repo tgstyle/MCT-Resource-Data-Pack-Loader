@@ -4,6 +4,7 @@ import mctmods.resourcedatapackloader.content.ContentRegistry;
 import mctmods.resourcedatapackloader.content.def.BlockDef;
 import mctmods.resourcedatapackloader.content.def.SaplingDef;
 import mctmods.resourcedatapackloader.content.interfaces.IContentSoil;
+import mctmods.resourcedatapackloader.content.worldgen.ContentGrowSwitch;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import net.minecraft.core.BlockPos;
@@ -66,7 +67,7 @@ import javax.annotation.Nonnull;
     @Override public boolean canSurvive(@Nonnull BlockState state, @Nonnull LevelReader level, @Nonnull BlockPos pos) { return soil.sustains(level, pos.below(), this); }
 
     @Override public void randomTick(@Nonnull BlockState state, @Nonnull ServerLevel level, @Nonnull BlockPos pos, @Nonnull RandomSource random) {
-        if (!level.isAreaLoaded(pos, 1)) { return; }
+        if (ContentGrowSwitch.skips(level, pos, this, random) || !level.isAreaLoaded(pos, 1)) { return; }
         if (level.getMaxLocalRawBrightness(pos.above()) < sapling.light()) { return; }
         if (random.nextInt(Math.max(1, sapling.chance())) != 0) { return; }
         advance(level, pos, state, random);

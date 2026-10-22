@@ -1,6 +1,7 @@
 package mctmods.resourcedatapackloader.content.card;
 
 import mctmods.resourcedatapackloader.util.Advancements;
+import mctmods.resourcedatapackloader.util.BiomeNames;
 import mctmods.resourcedatapackloader.util.Standing;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -16,7 +17,7 @@ final class CardWhen {
     Standing standing = Standing.NONE;
 
     boolean fails(ServerPlayer player) {
-        if (!biomes.isEmpty() && !CardPlace.biomeMatches(biomes, player.level().getBiome(player.blockPosition()))) { return true; }
+        if (!biomes.isEmpty() && !BiomeNames.matches(biomes, player.level().getBiome(player.blockPosition()))) { return true; }
         if (timeFrom >= 0 && timeTo >= 0 && !CardPlace.within(CardPlace.timeOfDay(player.level()), timeFrom, timeTo)) { return true; }
         if (dayAtLeast >= 0L && CardPlace.day(player.level()) < dayAtLeast) { return true; }
         if (!advancement.isEmpty() && !Advancements.has(player, advancement)) { return true; }

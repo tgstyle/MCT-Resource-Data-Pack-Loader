@@ -74,6 +74,10 @@ public final class ContentSpawning {
             return;
         }
         BlockPos pos = mob.blockPosition();
+        if (event.getSpawnType() == MobSpawnType.NATURAL && ContentSpawnSwitch.overCap(level, mob, pos)) {
+            deny(event);
+            return;
+        }
         if (!(mob instanceof Enemy)) {
             if (!spawner && mob instanceof Animal && animalGround(level, pos)) { event.setResult(mob.checkSpawnObstruction(level) ? Event.Result.ALLOW : Event.Result.DENY); }
             return;
@@ -115,6 +119,8 @@ public final class ContentSpawning {
     private static float rateFor(ServerLevel level, BlockPos pos) {
         boolean sky = level.canSeeSky(pos);
         boolean day = level.isDay();
+        float switched = ContentSpawnSwitch.rate(level, pos, sky, day);
+        if (switched >= 0.0F) { return switched; }
         BiomeDef biome = level.getBiome(pos).unwrapKey().map(key -> ContentBiomes.def(key.location())).orElse(null);
         if (biome != null) {
             float wanted = biome.rate(sky, day);

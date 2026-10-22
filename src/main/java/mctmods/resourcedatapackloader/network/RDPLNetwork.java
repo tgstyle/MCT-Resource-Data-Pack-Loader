@@ -3,10 +3,12 @@ package mctmods.resourcedatapackloader.network;
 import mctmods.resourcedatapackloader.ResourceDataPackLoader;
 import mctmods.resourcedatapackloader.client.BlastHush;
 import mctmods.resourcedatapackloader.client.CardOverlay;
+import mctmods.resourcedatapackloader.client.ContentRuleClient;
 import mctmods.resourcedatapackloader.client.HoldView;
 import mctmods.resourcedatapackloader.client.WorldIntroScreen;
 import mctmods.resourcedatapackloader.content.extra.ContentIntroPlay;
 import mctmods.resourcedatapackloader.content.item.ContentWornContainers;
+import mctmods.resourcedatapackloader.content.worldgen.ContentEnvironments;
 import mctmods.resourcedatapackloader.util.Says;
 import mctmods.resourcedatapackloader.util.Toasts;
 
@@ -41,6 +43,10 @@ public final class RDPLNetwork {
         channel.messageBuilder(MessageToasts.class, 7, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageToasts::write).decoder(MessageToasts::read).consumerMainThread((message, context) -> Toasts.show(message.kinds())).add();
         channel.messageBuilder(MessageIntroPlay.class, 2, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageIntroPlay::write).decoder(MessageIntroPlay::read).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.open(message.landBeingMade()); } }).add();
         channel.messageBuilder(MessageIntroLandMade.class, 8, NetworkDirection.PLAY_TO_CLIENT).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroLandMade()).consumerMainThread((message, context) -> { if (FMLEnvironment.dist == Dist.CLIENT) { WorldIntroScreen.landMade(); } }).add();
+        channel.messageBuilder(MessageEnvironments.class, 9, NetworkDirection.PLAY_TO_CLIENT).encoder(MessageEnvironments::write).decoder(MessageEnvironments::read).consumerMainThread((message, context) -> {
+            ContentEnvironments.receive(message.active(), message.whole());
+            if (FMLEnvironment.dist == Dist.CLIENT) { ContentRuleClient.settle(); }
+        }).add();
         channel.messageBuilder(MessageIntroDone.class, 3, NetworkDirection.PLAY_TO_SERVER).encoder((message, buf) -> {}).decoder(buf -> new MessageIntroDone()).consumerMainThread((message, context) -> {
             ServerPlayer player = context.get().getSender();
             if (player != null) { ContentIntroPlay.finished(player); }
@@ -76,4 +82,6 @@ public final class RDPLNetwork {
     public static boolean reaches(ServerPlayer player) { return channel != null && !NetworkHooks.isVanillaConnection(player.connection.connection) && channel.isRemotePresent(player.connection.connection); }
 
     public static void sendCard(ServerPlayer player, MessageCard card) { toPlayer(player, card); }
+
+    public static void sendEnvironments(ServerPlayer player, MessageEnvironments environments) { toPlayer(player, environments); }
 }

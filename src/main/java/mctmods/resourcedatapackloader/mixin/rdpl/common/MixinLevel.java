@@ -3,11 +3,15 @@ package mctmods.resourcedatapackloader.mixin.rdpl.common;
 import mctmods.resourcedatapackloader.content.ContentServer;
 import mctmods.resourcedatapackloader.content.worldgen.ContentGameRules;
 import mctmods.resourcedatapackloader.content.worldgen.ContentPregen;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTerrain;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.util.interfaces.IDayLength;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.Difficulty;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -25,6 +29,8 @@ import javax.annotation.Nonnull;
 @Mixin(Level.class) @Implements(@Interface(iface = LevelAccessor.class, prefix = "level$")) public abstract class MixinLevel {
     @Nonnull public Difficulty level$getDifficulty() {
         Level self = (Level) (Object) this;
+        Difficulty ruled = ContentRuleSwitch.difficulty(self);
+        if (ruled != null) { return ruled; }
         Difficulty asked = ContentServer.difficultyFor(self.dimension().location().toString());
         return asked != null ? asked : self.getLevelData().getDifficulty();
     }
@@ -39,7 +45,10 @@ import javax.annotation.Nonnull;
     @Inject(method = "<init>(Lnet/minecraft/world/level/storage/WritableLevelData;Lnet/minecraft/resources/ResourceKey;Lnet/minecraft/core/RegistryAccess;Lnet/minecraft/core/Holder;Ljava/util/function/Supplier;ZZJI)V", at = @At("RETURN")) private void rdpl$dayLength(CallbackInfo ci) {
         Level self = (Level) (Object) this;
         IDayLength.class.cast(self.dimensionType()).rdpl$dayLength(ContentWeather.traits(self).dayLength());
+        ContentRuleSwitch.settle(self);
     }
+
+    @Inject(method = "getCurrentDifficultyAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/DifficultyInstance;", at = @At("RETURN"), cancellable = true) private void rdpl$ruledDifficulty(BlockPos pos, CallbackInfoReturnable<DifficultyInstance> cir) { if ((Object) this instanceof ServerLevel level) { cir.setReturnValue(ContentRuleSwitch.local(level, pos, cir.getReturnValue())); } }
 
     @Inject(method = "getGameRules", at = @At("HEAD"), cancellable = true) private void rdpl$dimensionRules(CallbackInfoReturnable<GameRules> cir) {
         GameRules held = ContentGameRules.forLevel((Level) (Object) this);

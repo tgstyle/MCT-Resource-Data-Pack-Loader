@@ -1,8 +1,10 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
 import mctmods.resourcedatapackloader.content.def.DimensionTraitsDef;
+import mctmods.resourcedatapackloader.content.def.RuleSwitchDef;
 import mctmods.resourcedatapackloader.content.def.TimeWindowDef;
 import mctmods.resourcedatapackloader.content.worldgen.ContentDimensions;
+import mctmods.resourcedatapackloader.content.worldgen.ContentRuleSwitch;
 import mctmods.resourcedatapackloader.content.worldgen.ContentTimeWindows;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeather;
 import mctmods.resourcedatapackloader.content.worldgen.ContentWeatherCycle;
@@ -29,6 +31,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
     @Redirect(method = "advanceWeatherCycle()V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/dimension/DimensionType;hasSkyLight()Z")) private boolean rdpl$ownWeather(DimensionType type) {
         ServerLevel level = (ServerLevel) (Object) this;
+        int forced = ContentRuleSwitch.weather(level);
+        if (forced != RuleSwitchDef.UNSET) {
+            ContentWeatherCycle.force(level, forced);
+            return false;
+        }
         DimensionTraitsDef traits = ContentWeather.traits(level);
         DimensionTraitsDef.Cycle cycle = traits.cycle();
         TimeWindowDef window = ContentTimeWindows.active(level, ContentDimensions.def(level));
@@ -41,10 +48,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
             return false;
         }
         if (window != null && window.gives(TimeWindowDef.ALWAYS_RAIN) ? window.alwaysRain() : traits.alwaysRain()) { return ContentWeatherCycle.pour(level, serverLevelData, type.hasSkyLight()); }
+        int steps = ContentRuleSwitch.speed(level);
         if (cycle != null) {
-            rdpl$weatherCycle.tick(level, cycle);
+            rdpl$weatherCycle.tick(level, cycle, steps);
             return false;
         }
+        ContentWeatherCycle.hurry(level, serverLevelData, steps);
         return type.hasSkyLight();
     }
 
