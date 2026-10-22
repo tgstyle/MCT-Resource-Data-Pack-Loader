@@ -2610,6 +2610,35 @@ Es algo independiente, no un empujón a las reglas que gobiernan `despawns` y `p
 
 El reloj corre con el tiempo del mundo, así que se detiene cuando nadie está jugando y no cuenta los minutos que un chunk pasó descargado.
 
+### Condiciones de aparición
+
+*variantes de entidades*
+
+```json
+{
+  "dimensions": ["minecraft:the_nether"],
+  "structures": ["minecraft:fortress"],
+  "timeFrom": 13000,
+  "timeTo": 23000,
+  "dayAtLeast": 3,
+  "advancement": "minecraft:story/mine_stone",
+  "objective": "kills",
+  "scoreAtLeast": 5
+}
+```
+
+| Clave                       | Obligatorio | Valor                     | Por defecto           | Qué hace                                                                                                                                                                                                                                                                                                                                                     |
+| --------------------------- | ----------- | ------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `dimensions`                | no          | lista de ids de dimensión | todas las dimensiones | Las dimensiones en las que puede aparecer por sí sola, como `minecraft:the_nether`; un id sin espacio de nombres se lee como `minecraft:`                                                                                                                                                                                                                    |
+| `structures`                | no          | lista                     | ninguna               | Dónde puede aparecer por sí sola: ids de estructura como `minecraft:fortress`, o `#tag` para una etiqueta de estructuras como `#minecraft:village`, que cuentan mientras el punto de aparición esté dentro de una pieza de alguna; o el nombre de una estructura que un pack coloca mediante `structures`, que cuenta dentro del `radius` de donde se colocó |
+| `radius`                    | no          | entero                    | `32`                  | A qué distancia aún cuenta como dentro de una estructura propia de un pack                                                                                                                                                                                                                                                                                   |
+| `timeFrom`, `timeTo`        | no          | entero, ticks             | ninguno               | La franja del reloj del día en la que puede aparecer, que puede pasar de medianoche, como de `13000` a `1000`. Hacen falta los dos                                                                                                                                                                                                                           |
+| `dayAtLeast`                | no          | entero                    | ninguno               | El número de día a partir del cual puede aparecer                                                                                                                                                                                                                                                                                                            |
+| `advancement`               | no          | `namespace:path`          | ninguno               | Solo aparece mientras un jugador a menos de 128 bloques tenga este logro                                                                                                                                                                                                                                                                                     |
+| `objective`, `scoreAtLeast` | no          | texto, entero             | ninguno               | Solo aparece mientras un jugador a menos de 128 bloques tenga al menos esta puntuación en el objetivo. Hacen falta los dos                                                                                                                                                                                                                                   |
+
+Una variante que no fija ninguna de estas condiciones aparece como antes, y la que fija varias aparece solo donde y cuando se cumplen todas. Frenan las apariciones naturales, incluidas las que un chunk hace al generarse; un huevo, `/summon`, un generador y `becomes` no se frenan. `advancement`, `objective` y `scoreAtLeast` se juzgan juntos para cada jugador a menos de 128 bloques del punto de aparición, sin contar a los espectadores: un mismo jugador debe cumplirlos todos, y si no hay nadie tan cerca, una variante que fije alguno no aparece.
+
 ### Red
 
 *variantes de entidades*

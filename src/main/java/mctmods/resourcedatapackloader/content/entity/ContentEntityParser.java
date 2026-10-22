@@ -1,10 +1,12 @@
 package mctmods.resourcedatapackloader.content.entity;
 
 import mctmods.resourcedatapackloader.content.ContentParser;
+import mctmods.resourcedatapackloader.content.card.CardPlace;
 import mctmods.resourcedatapackloader.content.def.EntityVariantDef;
 import mctmods.resourcedatapackloader.content.def.FilterDef;
 import mctmods.resourcedatapackloader.content.def.PickDef;
 import mctmods.resourcedatapackloader.content.def.SpawnEntryDef;
+import mctmods.resourcedatapackloader.content.def.SpawnGateDef;
 import mctmods.resourcedatapackloader.content.def.StorageDef;
 import mctmods.resourcedatapackloader.util.ContentLog;
 import mctmods.resourcedatapackloader.util.Enums;
@@ -112,7 +114,23 @@ public final class ContentEntityParser {
                 equipment(key, json),
                 spawns(key, json),
                 Json.strings(json, "biomes"), Json.strings(json, "biomeTypes"), Json.strings(json, "requires"),
-                ContentTasks.parse(key, json), storage(key, json));
+                ContentTasks.parse(key, json), storage(key, json), gate(key, json));
+    }
+
+    private static SpawnGateDef gate(Identifier key, JsonObject json) {
+        String objective = Json.getString(json, "objective", "").trim();
+        Integer least = json.has("scoreAtLeast") ? Json.getInt(json, "scoreAtLeast") : null;
+        if (objective.isEmpty() != (least == null)) {
+            ContentLog.LOGGER.error("Entity variant {} sets only one of objective and scoreAtLeast, so it leaves the score condition out", key);
+            objective = "";
+            least = null;
+        }
+        List<String> dimensions = new ArrayList<>();
+        for (String named : Json.strings(json, "dimensions")) { dimensions.add(CardPlace.dimensionId(named)); }
+        SpawnGateDef gate = new SpawnGateDef(dimensions, Json.strings(json, "structures"), Math.max(1, Json.getInt(json, "radius", CardPlace.NEAR)),
+                CardPlace.tickOf(json, "timeFrom"), CardPlace.tickOf(json, "timeTo"), json.has("dayAtLeast") ? Math.max(0L, Json.getInt(json, "dayAtLeast")) : -1L,
+                Json.getString(json, "advancement", "").trim(), objective, least);
+        return gate.any() ? gate : SpawnGateDef.NONE;
     }
 
     @Nullable private static StorageDef storage(Identifier key, JsonObject json) {
