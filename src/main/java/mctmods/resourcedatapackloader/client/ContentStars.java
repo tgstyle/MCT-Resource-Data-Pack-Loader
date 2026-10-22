@@ -26,21 +26,24 @@ import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 public final class ContentStars {
-    public static final ContentStars VANILLA = new ContentStars(1500, 0.15F, true);
+    public static final ContentStars VANILLA = new ContentStars(1500, 0.15F, true, new SkyOccluder[0]);
     private static final int GROUPS = 8;
     private static final float[] SPEED = {2.1F, 3.3F, 1.7F, 2.9F, 3.7F, 1.3F, 2.5F, 3.1F};
     private static final float PHASE = 2.4F;
     private final int count;
     private final float size;
     private final boolean vanilla;
+    private final SkyOccluder[] occluders;
     @Nullable private VertexBuffer[] groups;
+    private int built;
 
-    public ContentStars(int count, float size) { this(count, size, false); }
+    public ContentStars(int count, float size, SkyOccluder[] occluders) { this(count, size, false, occluders); }
 
-    private ContentStars(int count, float size, boolean vanilla) {
+    private ContentStars(int count, float size, boolean vanilla, SkyOccluder[] occluders) {
         this.count = count;
         this.size = size;
         this.vanilla = vanilla;
+        this.occluders = occluders;
     }
 
     public static boolean keepsVanilla(@Nullable ClientLevel level) {
@@ -51,7 +54,15 @@ public final class ContentStars {
     public void draw(ClientLevel level, float brightness, Matrix4f pose, Matrix4f projection, float partialTick) {
         ShaderInstance shader = GameRenderer.getPositionShader();
         if (shader == null) { return; }
-        if (groups == null) { groups = build(); }
+        if (built != SkyOccluder.current()) {
+            release();
+            built = SkyOccluder.current();
+        }
+        VertexBuffer[] meshes = groups;
+        if (meshes == null) {
+            meshes = build();
+            groups = meshes;
+        }
         SkyLookDef look = ContentFogSampler.look(level);
         int color = look == null || look.starColor() == SkyLookDef.UNSET ? 0xFFFFFF : look.starColor();
         float twinkle = look == null ? 0.0F : look.starTwinkle();
@@ -60,13 +71,22 @@ public final class ContentStars {
         float blue = Rgb.blue(color);
         float time = (level.getGameTime() % Level.TICKS_PER_DAY + partialTick) / SharedConstants.TICKS_PER_SECOND;
         for (int group = 0; group < GROUPS; ++group) {
-            if (groups[group] == null) { continue; }
+            VertexBuffer buffer = meshes[group];
+            if (buffer == null) { continue; }
             float shown = brightness * (1.0F - twinkle * (0.5F + 0.5F * Mth.sin(time * SPEED[group] + group * PHASE)));
             RenderSystem.setShaderColor(red * shown, green * shown, blue * shown, shown);
-            groups[group].bind();
-            groups[group].drawWithShader(pose, projection, shader);
+            buffer.bind();
+            buffer.drawWithShader(pose, projection, shader);
         }
         VertexBuffer.unbind();
+    }
+
+    private void release() {
+        if (groups == null) { return; }
+        for (VertexBuffer buffer : groups) {
+            if (buffer != null) { buffer.close(); }
+        }
+        groups = null;
     }
 
     private VertexBuffer[] build() {
@@ -143,6 +163,9 @@ public final class ContentStars {
             quad[corner * 3] = (float) (x * SIZE + f * yawSin - d * yawCos);
             quad[corner * 3 + 1] = (float) (y * SIZE + e);
             quad[corner * 3 + 2] = (float) (z * SIZE + d * yawSin + f * yawCos);
+        }
+        for (SkyOccluder body : occluders) {
+            if (body.covers(x * SIZE, y * SIZE, z * SIZE, scale * 1.5D)) { return null; }
         }
         return quad;
     }

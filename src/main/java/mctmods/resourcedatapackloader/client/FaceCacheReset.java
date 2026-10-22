@@ -11,5 +11,8 @@ public final class FaceCacheReset implements ResourceManagerReloadListener {
 
     private FaceCacheReset() {}
 
-    @Override public void onResourceManagerReload(@Nonnull ResourceManager manager) { FaceCache.rebaked(); }
+    @Override public void onResourceManagerReload(@Nonnull ResourceManager manager) {
+        FaceCache.rebaked();
+        SkyOccluder.invalidate();
+    }
 }
