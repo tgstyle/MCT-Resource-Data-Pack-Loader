@@ -3,6 +3,7 @@ package mctmods.resourcedatapackloader.pack.port;
 import static mctmods.resourcedatapackloader.pack.RDPLPack.key;
 
 import mctmods.resourcedatapackloader.pack.PackManager;
+import mctmods.resourcedatapackloader.pack.interfaces.IPackPort;
 import mctmods.resourcedatapackloader.util.ContentLog;
 
 import com.google.gson.JsonElement;
@@ -28,8 +29,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
-abstract class PortBase<S extends PortBase.Served> implements IPackPort {
-    interface Served {
+abstract class PortBase<S extends PortBase.IServed> implements IPackPort {
+    interface IServed {
         Path real();
 
         Port.Kind kind();

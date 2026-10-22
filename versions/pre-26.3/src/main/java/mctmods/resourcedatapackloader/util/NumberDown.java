@@ -1,5 +1,7 @@
 package mctmods.resourcedatapackloader.util;
 
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -18,15 +20,15 @@ public final class NumberDown {
 
     private NumberDown() {}
 
-    public static JsonElement fitted(JsonElement element, LineNote note) { return NumberSlots.walk(element, (value, whole) -> number(value, whole, note, 0)); }
+    public static JsonElement fitted(JsonElement element, ILineNote note) { return NumberSlots.walk(element, (value, whole) -> number(value, whole, note, 0)); }
 
-    private static JsonArray listed(JsonArray values, boolean whole, LineNote note, int depth) {
+    private static JsonArray listed(JsonArray values, boolean whole, ILineNote note, int depth) {
         JsonArray out = new JsonArray();
         for (JsonElement item : values) { out.add(number(item, whole, note, depth)); }
         return out;
     }
 
-    private static JsonElement number(JsonElement value, boolean whole, LineNote note, int depth) {
+    private static JsonElement number(JsonElement value, boolean whole, ILineNote note, int depth) {
         if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             JsonElement carried = depth < DEPTH ? note.carried(whole ? "context_int_provider" : "context_float_provider", value.getAsString()) : null;
             if (carried != null) { return number(carried, whole, note, depth + 1); }
@@ -87,7 +89,7 @@ public final class NumberDown {
         return null;
     }
 
-    private static JsonObject fallback(JsonObject provider, LineNote note) {
+    private static JsonObject fallback(JsonObject provider, ILineNote note) {
         JsonElement fallback = provider.remove(FALLBACK);
         if (fallback != null && !(fallback.isJsonPrimitive() && fallback.getAsJsonPrimitive().isNumber() && fallback.getAsDouble() == 0.0)) { note.accept("falls back to a value other than 0 when a score or stored number is missing, which 26.2 cannot, so it falls back to 0"); }
         return provider;

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public final class ContentFallingBlock extends LineCompat.FallingBase implements LineCompat.TreeSoil {
+public final class ContentFallingBlock extends LineCompat.FallingBase implements LineCompat.ITreeSoil {
     private final BlockDef def;
     @Nullable private final VoxelShape shape;
 

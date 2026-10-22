@@ -186,7 +186,7 @@ public final class LineCompat {
     public static void registerConfig(ModContainer container, IConfigSpec spec) { container.registerConfig(ModConfig.Type.COMMON, spec); }
 
     public static void listen(@SuppressWarnings("unused") IEventBus modBus) {
-        NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(new ContentPotions.Brewing() {
+        NeoForge.EVENT_BUS.addListener(RegisterBrewingRecipesEvent.class, event -> ContentPotions.applyBrewing(new ContentPotions.IBrewing() {
             @Override public void mix(Holder<Potion> from, Item ingredient, Holder<Potion> to) { event.getBuilder().addMix(from, ingredient, to); }
 
             @Override public void recipe(Item input, Item ingredient, ItemStack output) { event.getBuilder().addRecipe(Ingredient.of(input), Ingredient.of(ingredient), output); }
@@ -335,13 +335,13 @@ public final class LineCompat {
         @Override @Nonnull public Holder<Biome> getNoiseBiome(int quartX, int quartY, int quartZ, @Nonnull Climate.Sampler sampler) { return biomeAt(quartX, quartZ); }
     }
 
-    public interface BiomeEdit extends BiomeModifier {
+    public interface IBiomeEdit extends BiomeModifier {
         void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder);
 
         @Override default void modify(@Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) { edit(biome, phase, builder); }
     }
 
-    public interface TreeSoil extends IBlockExtension {
+    public interface ITreeSoil extends IBlockExtension {
         boolean keepsUnderTree();
 
         @Override default boolean onTreeGrow(@Nonnull BlockState state, @Nonnull WorldGenLevel level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeConfiguration config) { return keepsUnderTree(); }

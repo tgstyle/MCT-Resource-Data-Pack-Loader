@@ -37,7 +37,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record ContentOreControl() implements LineCompat.BiomeEdit {
+public record ContentOreControl() implements LineCompat.IBiomeEdit {
     public static final String ID = "ore_control";
     public static final MapCodec<ContentOreControl> CODEC = MapCodec.unit(new ContentOreControl());
     private static final String CUSTOM = "CUSTOM";

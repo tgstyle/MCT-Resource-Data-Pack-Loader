@@ -111,13 +111,13 @@ public final class ContentTasks {
 
     private ContentTasks() {}
 
-    @FunctionalInterface private interface Maker { @Nullable Goal make(Mob mob, TaskDef task, EntityVariantDef def); }
+    @FunctionalInterface private interface IMaker { @Nullable Goal make(Mob mob, TaskDef task, EntityVariantDef def); }
 
-    private record Kind(String name, Class<?> needs, String needsName, boolean targeting, @Nullable Class<? extends Goal> type, Maker maker) {}
+    private record Kind(String name, Class<?> needs, String needsName, boolean targeting, @Nullable Class<? extends Goal> type, IMaker maker) {}
 
-    private static void task(String name, Class<?> needs, String needsName, Class<? extends Goal> type, Maker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, false, type, maker)); }
+    private static void task(String name, Class<?> needs, String needsName, Class<? extends Goal> type, IMaker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, false, type, maker)); }
 
-    private static void target(String name, Class<?> needs, String needsName, Class<? extends Goal> type, Maker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, true, type, maker)); }
+    private static void target(String name, Class<?> needs, String needsName, Class<? extends Goal> type, IMaker maker) { KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, needs, needsName, true, type, maker)); }
 
     private static void gone(String name, String why) {
         KINDS.put(name.toLowerCase(Locale.ROOT), new Kind(name, Mob.class, ANY_NAME, false, null, (_, _, d) -> {

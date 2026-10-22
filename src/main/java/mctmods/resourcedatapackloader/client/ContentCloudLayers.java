@@ -17,7 +17,7 @@ public final class ContentCloudLayers {
 
     private ContentCloudLayers() {}
 
-    public interface Pass { void draw(CloudRenderer renderer, int color, float height); }
+    public interface IPass { void draw(CloudRenderer renderer, int color, float height); }
 
     public static float drift(float drift) {
         SkyLookDef.CloudLayer layer = drawing;
@@ -26,7 +26,7 @@ public final class ContentCloudLayers {
         return look == null ? drift : drift * look.cloudSpeed();
     }
 
-    public static boolean draw(CloudRenderer renderer, int color, float height, Pass pass) {
+    public static boolean draw(CloudRenderer renderer, int color, float height, IPass pass) {
         if (drawing != null || EXTRA.contains(renderer)) { return false; }
         SkyLookDef look = ContentFogSampler.look(Minecraft.getInstance().level);
         List<SkyLookDef.CloudLayer> layers = look == null ? List.of() : look.cloudLayers();

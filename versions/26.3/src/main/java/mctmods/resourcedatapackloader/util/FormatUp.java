@@ -2,6 +2,7 @@ package mctmods.resourcedatapackloader.util;
 
 import static mctmods.resourcedatapackloader.util.IdNames.MINECRAFT;
 import static mctmods.resourcedatapackloader.util.IdNames.namespaced;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -56,7 +57,7 @@ public final class FormatUp {
         return out;
     }
 
-    public static JsonObject trim(JsonObject material, LineNote note) {
+    public static JsonObject trim(JsonObject material, ILineNote note) {
         JsonObject out = material.deepCopy();
         JsonElement asset = out.remove("asset_name");
         if (asset != null && asset.isJsonPrimitive()) {
@@ -73,7 +74,7 @@ public final class FormatUp {
         return path.startsWith("textures/" + OLD_PALETTES) ? "textures/palettes/trim/" + path.substring(("textures/" + OLD_PALETTES).length()) : path;
     }
 
-    public static JsonElement asset(JsonElement json, String path, LineNote note) {
+    public static JsonElement asset(JsonElement json, String path, ILineNote note) {
         if (!json.isJsonObject()) { return json; }
         JsonObject out = json.getAsJsonObject().deepCopy();
         if (path.startsWith("models/") && out.has("elements") && out.get("elements").isJsonArray()) {
@@ -96,7 +97,7 @@ public final class FormatUp {
         return out;
     }
 
-    private static void tints(JsonElement element, LineNote note) {
+    private static void tints(JsonElement element, ILineNote note) {
         if (element.isJsonArray()) {
             JsonArray array = element.getAsJsonArray();
             for (int i = 0; i < array.size(); i++) {
@@ -114,7 +115,7 @@ public final class FormatUp {
         else if (element.isJsonObject()) { element.getAsJsonObject().entrySet().forEach(entry -> tints(entry.getValue(), note)); }
     }
 
-    private static String palette(String id, LineNote note) {
+    private static String palette(String id, ILineNote note) {
         int colon = id.indexOf(':');
         String namespace = colon < 0 ? "minecraft" : id.substring(0, colon);
         String path = id.substring(colon + 1);
@@ -125,7 +126,7 @@ public final class FormatUp {
         return id;
     }
 
-    public static String function(String text, LineNote note) {
+    public static String function(String text, ILineNote note) {
         return Snbt.pots(text, value -> {
             if (!value.startsWith("[")) {
                 if (!value.startsWith("{")) { note.accept("names pot decorations through " + value + ", which cannot be read until it runs, so it is kept as written"); }

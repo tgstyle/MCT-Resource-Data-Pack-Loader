@@ -3,7 +3,7 @@ package mctmods.resourcedatapackloader.compat;
 import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
 import mctmods.resourcedatapackloader.util.FeatureForms;
 import mctmods.resourcedatapackloader.util.FormatUp;
-import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 import mctmods.resourcedatapackloader.util.LootUp;
 import mctmods.resourcedatapackloader.util.NumberUp;
 import mctmods.resourcedatapackloader.util.WorldgenUp;
@@ -28,18 +28,18 @@ public final class LinePort {
         return path;
     }
 
-    public static JsonElement data(JsonElement json, String path, LineNote note) {
+    public static JsonElement data(JsonElement json, String path, ILineNote note) {
         JsonElement held = ported(FormatUp.walk(json), path, note);
         if (NUMBERS.stream().anyMatch(path::startsWith)) { held = NumberUp.fitted(held); }
         if (path.startsWith("trim_material/") && held.isJsonObject()) { return FormatUp.trim(held.getAsJsonObject(), note); }
         return path.startsWith("worldgen/") ? FeatureForms.up(held, note) : held;
     }
 
-    public static JsonElement asset(JsonElement json, String path, LineNote note) { return FormatUp.asset(json, path, note); }
+    public static JsonElement asset(JsonElement json, String path, ILineNote note) { return FormatUp.asset(json, path, note); }
 
     public static String assetPath(String path) { return FormatUp.assetPath(path); }
 
-    public static String function(String text, LineNote note) { return FormatUp.function(text, note); }
+    public static String function(String text, ILineNote note) { return FormatUp.function(text, note); }
 
     private static JsonElement ported(JsonElement json, String path, Consumer<String> note) {
         if (path.startsWith("advancement/") && json.isJsonObject()) { return LootUp.advancement(json.getAsJsonObject()); }

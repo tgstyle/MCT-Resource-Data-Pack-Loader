@@ -422,13 +422,13 @@ public final class LineCompat {
         @Override @Nonnull public BiomeResolver createResolver(@Nonnull Climate.Sampler sampler) { return (quartX, _, quartZ) -> biomeAt(quartX, quartZ); }
     }
 
-    public interface BiomeEdit extends BiomeModifier {
+    public interface IBiomeEdit extends BiomeModifier {
         void edit(Holder<Biome> biome, Phase phase, ModifiableBiomeInfo.BiomeInfo.Builder builder);
 
         @Override default void modify(@Nonnull RegistryAccess registries, @Nonnull Holder<Biome> biome, @Nonnull Phase phase, @Nonnull ModifiableBiomeInfo.BiomeInfo.Builder builder) { edit(biome, phase, builder); }
     }
 
-    public interface TreeSoil extends IBlockExtension {
+    public interface ITreeSoil extends IBlockExtension {
         boolean keepsUnderTree();
 
         @Override default boolean onTreeGrow(@Nonnull BlockState state, @Nonnull WorldGenLevel level, @Nonnull BiConsumer<BlockPos, BlockState> placeFunction, @Nonnull RandomSource randomSource, @Nonnull BlockPos pos, @Nonnull TreeFeature tree) { return keepsUnderTree(); }

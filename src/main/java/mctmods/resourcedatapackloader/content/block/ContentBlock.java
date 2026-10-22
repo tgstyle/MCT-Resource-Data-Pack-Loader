@@ -46,7 +46,7 @@ import net.neoforged.neoforge.event.level.BlockDropsEvent;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public class ContentBlock extends Block implements IContentBlock, LineCompat.TreeSoil {
+public class ContentBlock extends Block implements IContentBlock, LineCompat.ITreeSoil {
     public static final String BUSH = "bush";
     private final BlockDef def;
     @Nullable private final VoxelShape shape;

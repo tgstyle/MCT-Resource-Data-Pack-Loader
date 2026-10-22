@@ -185,7 +185,7 @@ public final class ContentPotions {
         if (count > 0) { Summary.info("content_potion_types", "Registered " + count + " potion type(s) from packs"); }
     }
 
-    public interface Brewing {
+    public interface IBrewing {
         void mix(Holder<Potion> from, Item ingredient, Holder<Potion> to);
 
         void recipe(Item input, Item ingredient, ItemStack output);
@@ -193,7 +193,7 @@ public final class ContentPotions {
         void container(Item item);
     }
 
-    public static void applyBrewing(Brewing brewing) {
+    public static void applyBrewing(IBrewing brewing) {
         load();
         int count = 0;
         for (BrewingDef def : BREWING) {

@@ -61,7 +61,7 @@ public final class CityRails {
         return null;
     }
 
-    public interface Track {
+    public interface ITrack {
         int start();
 
         int[] profile();
@@ -75,11 +75,11 @@ public final class CityRails {
         default boolean boredAt(int row) { return within(row) && bored()[row - start()]; }
     }
 
-    public record Laid(CityPlan.Rail rail, int start, int[] profile, boolean[] bridged, boolean[] tunnel, boolean[] bored, boolean[] crossed, boolean[] frames, @Nullable int[] rising, List<Station> stations, List<Station> claimed) implements Track {
+    public record Laid(CityPlan.Rail rail, int start, int[] profile, boolean[] bridged, boolean[] tunnel, boolean[] bored, boolean[] crossed, boolean[] frames, @Nullable int[] rising, List<Station> stations, List<Station> claimed) implements ITrack {
         public boolean tunnelAt(int row) { return within(row) && tunnel[row - start]; }
     }
 
-    record Bed(int start, int[] profile, boolean[] bored) implements Track {}
+    record Bed(int start, int[] profile, boolean[] bored) implements ITrack {}
 
     public static void forget() {
         PLACED.clear();

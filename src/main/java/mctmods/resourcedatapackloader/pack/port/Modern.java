@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.pack.port;
 
 import mctmods.resourcedatapackloader.compat.LinePort;
 import mctmods.resourcedatapackloader.content.worldgen.WorldgenFiles;
-import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 import mctmods.resourcedatapackloader.util.Snbt;
 
 import com.google.gson.JsonElement;
@@ -43,7 +43,7 @@ final class Modern {
 
     static String ported(Port.Kind kind, String contents, String path, Consumer<String> note) {
         boolean lined = Port.Line.V26.acrossSplit();
-        LineNote said = s -> note.accept("'" + path + "' " + s);
+        ILineNote said = s -> note.accept("'" + path + "' " + s);
         if (kind == Port.Kind.FUNCTION) {
             if (!path.endsWith(".mcfunction")) { return contents; }
             String out = function(contents, path, note);

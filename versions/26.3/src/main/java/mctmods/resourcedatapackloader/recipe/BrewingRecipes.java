@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public final class BrewingRecipes implements ContentPotions.Brewing {
+public final class BrewingRecipes implements ContentPotions.IBrewing {
     private final List<Item> containers = new ArrayList<>();
     private final List<BrewingRecipe> mixes = new ArrayList<>();
     private final List<BrewingRecipe> recipes = new ArrayList<>();

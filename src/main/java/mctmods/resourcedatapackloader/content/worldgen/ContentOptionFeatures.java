@@ -35,7 +35,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record ContentOptionFeatures() implements LineCompat.BiomeEdit {
+public record ContentOptionFeatures() implements LineCompat.IBiomeEdit {
     public static final String ID = "option_features";
     public static final MapCodec<ContentOptionFeatures> CODEC = MapCodec.unit(new ContentOptionFeatures());
     static final String ANCHOR = "lake_lava_surface";

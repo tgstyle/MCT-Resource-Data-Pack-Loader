@@ -7,7 +7,7 @@ import mctmods.resourcedatapackloader.pack.PackManager;
 import mctmods.resourcedatapackloader.pack.PackMeta;
 import mctmods.resourcedatapackloader.pack.RDPLPack;
 import mctmods.resourcedatapackloader.util.ContentLog;
-import mctmods.resourcedatapackloader.util.LineNote;
+import mctmods.resourcedatapackloader.util.interfaces.ILineNote;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -43,7 +43,7 @@ public final class Crossed extends PortBase<Crossed.Source> {
         this.lined = from.acrossSplit();
     }
 
-    record Source(Path real, String file, Port.Kind kind, boolean same, String before) implements Served {}
+    record Source(Path real, String file, Port.Kind kind, boolean same, String before) implements IServed {}
 
     private record Target(String namespace, String path) {}
 
@@ -186,14 +186,14 @@ public final class Crossed extends PortBase<Crossed.Source> {
         if (modern) { Modern.data(held, source.kind(), path, source.file(), from == Port.Line.V1_21, this::note); }
     }
 
-    private LineNote said(Source source) {
+    private ILineNote said(Source source) {
         String[] parts = source.file().split("/", 3);
-        return new LineNote() {
+        return new ILineNote() {
             @Override public void accept(String said) { note("'" + source.file() + "' " + said); }
 
             @Override @Nullable public JsonElement carried(String folder, String id) { return Crossed.this.carried(folder, id); }
 
-            @Override public String namespace() { return parts.length > 1 ? parts[1] : LineNote.super.namespace(); }
+            @Override public String namespace() { return parts.length > 1 ? parts[1] : ILineNote.super.namespace(); }
         };
     }
 

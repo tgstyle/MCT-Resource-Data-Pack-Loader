@@ -1,7 +1,7 @@
 package mctmods.resourcedatapackloader.mixin.rdpl.common;
 
-import mctmods.resourcedatapackloader.util.ILightShardSource;
 import mctmods.resourcedatapackloader.util.LightShards;
+import mctmods.resourcedatapackloader.util.interfaces.ILightShardSource;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;

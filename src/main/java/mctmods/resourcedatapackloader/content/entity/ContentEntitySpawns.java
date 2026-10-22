@@ -33,7 +33,7 @@ import java.util.Map;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-public record ContentEntitySpawns() implements LineCompat.BiomeEdit {
+public record ContentEntitySpawns() implements LineCompat.IBiomeEdit {
     public static final String ID = "entity_spawns";
     public static final MapCodec<ContentEntitySpawns> CODEC = MapCodec.unit(new ContentEntitySpawns());
     private static final Map<String, String> SHOWN = Map.<String, String>ofEntries(

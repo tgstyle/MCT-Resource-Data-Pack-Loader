@@ -2,7 +2,7 @@ package mctmods.resourcedatapackloader.pack;
 
 import mctmods.resourcedatapackloader.pack.interfaces.IPackConsumer;
 import mctmods.resourcedatapackloader.pack.port.Crossed;
-import mctmods.resourcedatapackloader.pack.port.IPackPort;
+import mctmods.resourcedatapackloader.pack.interfaces.IPackPort;
 import mctmods.resourcedatapackloader.pack.port.Port;
 import mctmods.resourcedatapackloader.pack.port.Ported;
 import mctmods.resourcedatapackloader.util.ContentLog;
