@@ -59,6 +59,7 @@ This guide is for the 26.x build, covering 26.1.2, 26.2 and 26.3; all three read
 - [Potions, potion types and brewing](#potions-potion-types-and-brewing)
 - [Anvil work](#anvil-work)
 - [Block drops](#block-drops)
+- [Right-click harvest](#right-click-harvest)
 - [Player loot](#player-loot)
 - [Villagers and trades](#villagers-and-trades)
 
@@ -182,6 +183,7 @@ Under `data/`:
 | `<namespace>/loot_tables/*.json`             | Loot tables, replaced. [What you can override](#what-you-can-override)                                                               |
 | `<namespace>/loot_injections/*.json`         | A pool added to a table that already exists. [What you can override](#what-you-can-override)                                         |
 | `<namespace>/block_drops/*.json`             | Extra or replacement drops for blocks a pack does not own. [Block drops](#block-drops)                                               |
+| `<namespace>/harvests/*.json`                | Crops that harvest and replant on a right click. [Right-click harvest](#right-click-harvest)                                         |
 | `<namespace>/player_loot/*.json`             | A loot table rolled when a player dies. [Player loot](#player-loot)                                                                  |
 | `<namespace>/advancements/*.json`            | Advancements. [What you can override](#what-you-can-override)                                                                        |
 | `<namespace>/functions/*.mcfunction`         | Function files. [What you can override](#what-you-can-override)                                                                      |
@@ -2072,6 +2074,33 @@ Each drop:
 | `silkTouch`  | no                       | `either`, `only` or `never` | `either` | Whether the drop needs a Silk Touch harvest, refuses one, or does not care. It is one when a player breaks, with a Silk Touch tool, a block that can be silk harvested the way 1.12.2 decided it: a full block without a block entity, or glass panes, iron bars, cobwebs and ender chests |
 
 Rules see every break that drops the block's loot, as 1.12.2 did: a player's, and explosions, pistons, flowing water, mobs and a pack mob digging through the block, which roll every rule without an `advancement`. Where an explosion thins the block's own drops, each rolled item survives by the same odds; experience is not thinned. Several rules for one block all apply, a `replace` on any of them clearing the usual drops first.
+
+## Right-click harvest
+
+*crafting, loot and trade*
+
+`<namespace>/harvests/*.json`
+
+The file name is yours to choose, only the folder is read, and several files stack.
+
+Right-clicking a ripe crop normally does nothing. A file here makes the named crops harvest when a player right-clicks them ripe: the crop gives its usual drops and is replanted where it stands at age 0, so one click does the work of breaking it and planting a seed. Without a file nothing changes, and a pack that wants the choice to be the player's puts a `config:` entry in `requires`, as described under Pack options.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Key        | Required | Value             | Default                            | What it does                                                                                                                |
+| ---------- | -------- | ----------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | yes      | list of block ids |                                    | The crop blocks that harvest on a right click, vanilla or from a pack. A block nothing registers is skipped with a log line |
+| `age`      | no       | int               | the highest `age` the block allows | The age from which a crop counts as ripe, for every crop in the file                                                        |
+| `replant`  | no       | boolean           | `true`                             | Whether the crop goes back to age 0 where it stands, or is removed once its drops are out                                   |
+| `requires` | no       | list of strings   | none                               | Mod ids, pack namespaces or `config:` options that must be present, as in any definition                                    |
+
+Any block with an integer `age` property can be named. A crop that is not ripe, a sneaking player and a spectator are left to the usual right click. The drops are the ones breaking the crop would give, with the Fortune of the held tool and every rule under Block drops applying, and replanting takes one of the crop's seed item out of them when they hold one. A villager's `harvestFarmland` task is separate and unchanged.
 
 ## Player loot
 

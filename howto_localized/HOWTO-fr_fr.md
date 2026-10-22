@@ -59,6 +59,7 @@ Ce guide s'adresse à la version 26.x, qui couvre les 26.1.2, 26.2 et 26.3 ; tou
 - [Potions, types de potions et alchimie](#potions-types-de-potions-et-alchimie)
 - [Travail à l'enclume](#travail-à-lenclume)
 - [Butins des blocs](#butins-des-blocs)
+- [Récolte par clic droit](#récolte-par-clic-droit)
 - [Butin des joueurs](#butin-des-joueurs)
 - [Villageois et échanges](#villageois-et-échanges)
 
@@ -182,6 +183,7 @@ Sous `data/` :
 | `<namespace>/loot_tables/*.json`             | Tables de butin, remplacées. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                               |
 | `<namespace>/loot_injections/*.json`         | Un groupe ajouté à une table qui existe déjà. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                              |
 | `<namespace>/block_drops/*.json`             | Butins supplémentaires ou de remplacement pour des blocs que le pack ne possède pas. [Butins des blocs](#butins-des-blocs)                                                 |
+| `<namespace>/harvests/*.json`                | Cultures récoltées et replantées par clic droit. [Récolte par clic droit](#récolte-par-clic-droit)                                                                         |
 | `<namespace>/player_loot/*.json`             | Une table de butin tirée à la mort d'un joueur. [Butin des joueurs](#butin-des-joueurs)                                                                                    |
 | `<namespace>/advancements/*.json`            | Progrès. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                                   |
 | `<namespace>/functions/*.mcfunction`         | Fichiers de fonctions. [Ce que vous pouvez surcharger](#ce-que-vous-pouvez-surcharger)                                                                                     |
@@ -2072,6 +2074,33 @@ Chaque butin :
 | `silkTouch`  | non                    | `either`, `only` ou `never` | `either` | Indique si le butin exige une récolte au Toucher de soie, la refuse, ou s'en moque. C'est le cas lorsqu'un joueur casse, avec un outil au Toucher de soie, un bloc récoltable ainsi selon la règle de 1.12.2 : un bloc plein sans bloc-entité, ou les vitres, barreaux de fer, toiles d'araignée et coffres de l'Ender |
 
 Les règles voient toute casse qui lâche le butin du bloc, comme dans la 1.12.2 : celle d'un joueur, mais aussi les explosions, les pistons, l'eau qui coule, les mobs et un mob de pack qui creuse le bloc, qui déclenchent toutes les règles sans `advancement`. Lorsqu'une explosion réduit les butins propres du bloc, chaque objet tiré survit selon les mêmes probabilités ; l'expérience n'est pas réduite. Plusieurs règles pour un même bloc s'appliquent toutes, un `replace` sur l'une d'elles écartant d'abord les butins habituels.
+
+## Récolte par clic droit
+
+*artisanat, butin et commerce*
+
+`<namespace>/harvests/*.json`
+
+Le nom du fichier est libre, seul le dossier est lu, et plusieurs fichiers se cumulent.
+
+Un clic droit sur une culture mûre ne fait normalement rien. Un fichier ici fait récolter les cultures nommées quand un joueur leur fait un clic droit à maturité : la culture lâche ses drops habituels et est replantée sur place à l'âge 0, si bien qu'un clic fait le travail de la casser et de planter une graine. Sans fichier, rien ne change, et un pack qui veut laisser le choix au joueur met une entrée `config:` dans `requires`, comme décrit dans Options de pack.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Clé        | Requis | Valeur              | Défaut                                | Rôle                                                                                                                                        |
+| ---------- | ------ | ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | oui    | liste d'id de blocs |                                       | Les blocs de culture récoltés par clic droit, vanilla ou d'un pack. Un bloc que rien n'enregistre est ignoré avec une ligne dans le journal |
+| `age`      | non    | int                 | le plus grand `age` que le bloc admet | L'âge à partir duquel une culture est mûre, pour toutes les cultures du fichier                                                             |
+| `replant`  | non    | boolean             | `true`                                | Si la culture retourne à l'âge 0 sur place, ou disparaît une fois ses drops sortis                                                          |
+| `requires` | non    | liste de chaînes    | aucun                                 | Ids de mod, espaces de noms de pack ou options `config:` qui doivent être présents, comme pour toute définition                             |
+
+Tout bloc avec une propriété entière `age` peut être nommé. Une culture pas mûre, un joueur accroupi et un spectateur en restent au clic droit habituel. Les drops sont ceux que donnerait la casse de la culture, avec la Fortune de l'outil tenu et toutes les règles de Butins des blocs, et la replantation y retire une graine de la culture s'ils en contiennent une. La tâche `harvestFarmland` du villageois est distincte et inchangée.
 
 ## Butin des joueurs
 

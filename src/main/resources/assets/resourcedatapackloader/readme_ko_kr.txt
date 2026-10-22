@@ -209,6 +209,7 @@ assets 아래에 직접 제공해야 합니다.
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 블록은 "type" 필드로 정하는 다음 형태로 나뉩니다.
 

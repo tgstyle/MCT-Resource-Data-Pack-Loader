@@ -205,6 +205,7 @@ hardness 文件为一组方块设定挖掘时间和爆炸抗性，exposures 文�
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 方块有以下几种形态，由“type”字段决定：
 

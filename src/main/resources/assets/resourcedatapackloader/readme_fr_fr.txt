@@ -224,6 +224,7 @@ Chacun de ceux-ci est un dossier sous data/<yourpack> :
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Les blocs existent sous ces formes, fixées par le champ "type" :
 
