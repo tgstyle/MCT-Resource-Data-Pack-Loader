@@ -59,6 +59,7 @@ Dieses Handbuch gilt für die Builds 1.20.1 und 1.21.1. Sie lesen dieselben Pack
 - [Tränke, Trankarten und Brauen](#tränke-trankarten-und-brauen)
 - [Ambosswerk](#ambosswerk)
 - [Blockdrops](#blockdrops)
+- [Ernten per Rechtsklick](#ernten-per-rechtsklick)
 - [Spielerbeute](#spielerbeute)
 - [Dorfbewohner und Handel](#dorfbewohner-und-handel)
 
@@ -182,6 +183,7 @@ Unter `data/`:
 | `<namespace>/loot_tables/*.json`             | Beutetabellen, ersetzt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                            |
 | `<namespace>/loot_injections/*.json`         | Ein Pool, der zu einer bestehenden Tabelle dazukommt. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                              |
 | `<namespace>/block_drops/*.json`             | Zusätzliche oder ersetzende Drops, Erfahrung eingeschlossen, für Blöcke, die dem Pack nicht gehören. [Blockdrops](#blockdrops)                                 |
+| `<namespace>/harvests/*.json`                | Pflanzen, die per Rechtsklick geerntet und neu gepflanzt werden. [Ernten per Rechtsklick](#ernten-per-rechtsklick)                                             |
 | `<namespace>/player_loot/*.json`             | Eine Beutetabelle, die beim Tod eines Spielers ausgewürfelt wird. [Spielerbeute](#spielerbeute)                                                                |
 | `<namespace>/advancements/*.json`            | Fortschritte. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                      |
 | `<namespace>/functions/*.mcfunction`         | Funktionsdateien. [Was du überschreiben kannst](#was-du-überschreiben-kannst)                                                                                  |
@@ -2070,6 +2072,33 @@ Jeder Drop:
 | `silkTouch`  | nein                       | `either`, `only` oder `never` | `either` | Ob der Drop einen Abbau mit Behutsamkeit braucht, einen ablehnt oder sich nicht darum kümmert. Als solcher gilt ein Abbau, bei dem ein Spieler mit einem Werkzeug mit Behutsamkeit einen Block abbaut, der sich so ernten lässt, wie 1.12.2 es entschied: ein voller Block ohne Block-Entity, oder Glasscheiben, Eisengitter, Spinnweben und Endertruhen |
 
 Regeln sehen jeden Abbau, bei dem der Block seine Beute fallen lässt, wie in 1.12.2: den durch einen Spieler, und Explosionen, Kolben, fließendes Wasser, Mobs und einen Pack-Mob, der sich durch den Block gräbt, die jede Regel ohne `advancement` würfeln. Dünnt eine Explosion die eigenen Drops des Blocks aus, übersteht jedes gewürfelte Item sie mit derselben Chance; Erfahrung wird nicht ausgedünnt. Mehrere Regeln für einen Block gelten alle, ein `replace` auf irgendeiner davon leert zuerst die üblichen Drops.
+
+## Ernten per Rechtsklick
+
+*herstellung, beute und handel*
+
+`<namespace>/harvests/*.json`
+
+Der Dateiname ist deine Wahl, nur der Ordner wird gelesen, und mehrere Dateien stapeln sich.
+
+Ein Rechtsklick auf eine reife Pflanze bewirkt normalerweise nichts. Eine Datei hier sorgt dafür, dass die genannten Pflanzen geerntet werden, wenn ein Spieler sie reif mit Rechtsklick anklickt: Die Pflanze gibt ihre üblichen Drops und wird an Ort und Stelle mit Alter 0 neu gepflanzt, sodass ein Klick das Abbauen und das Säen eines Samens erledigt. Ohne Datei ändert sich nichts, und ein Pack, das die Wahl dem Spieler überlassen will, setzt einen `config:`-Eintrag in `requires`, wie unter Pack-Optionen beschrieben.
+
+```json
+{
+  "requires": ["config:enableRightClickHarvest"],
+  "crops": ["minecraft:wheat", "minecraft:carrots", "minecraft:potatoes", "minecraft:beetroots", "minecraft:nether_wart"],
+  "replant": true
+}
+```
+
+| Schlüssel  | Pflicht | Wert                | Standard                                 | Was er macht                                                                                                                                                  |
+| ---------- | ------- | ------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `crops`    | ja      | Liste von Block-IDs |                                          | Die Pflanzenblöcke, die per Rechtsklick geerntet werden, aus Vanilla oder einem Pack. Ein Block, den nichts registriert, wird mit einer Logzeile übersprungen |
+| `age`      | nein    | int                 | das höchste `age`, das der Block erlaubt | Das Alter, ab dem eine Pflanze als reif gilt, für jede Pflanze in der Datei                                                                                   |
+| `replant`  | nein    | boolean             | `true`                                   | Ob die Pflanze an Ort und Stelle auf Alter 0 zurückgeht oder entfernt wird, sobald ihre Drops draußen sind                                                    |
+| `requires` | nein    | Liste von Strings   | keine                                    | Mod-IDs, Pack-Namensräume oder `config:`-Optionen, die vorhanden sein müssen, wie bei jeder Definition                                                        |
+
+Genannt werden kann jeder Block mit einer ganzzahligen Eigenschaft `age`. Eine unreife Pflanze, ein schleichender Spieler und ein Zuschauer bleiben beim üblichen Rechtsklick. Die Drops sind die, die das Abbauen der Pflanze ergäbe, mit dem Glück des gehaltenen Werkzeugs und allen Regeln unter Blockdrops, und beim Neupflanzen wird ihnen ein Samen der Pflanze entnommen, wenn sie einen enthalten. Die Aufgabe `harvestFarmland` eines Dorfbewohners ist davon getrennt und unverändert.
 
 ## Spielerbeute
 

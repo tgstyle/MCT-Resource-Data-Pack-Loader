@@ -221,6 +221,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 

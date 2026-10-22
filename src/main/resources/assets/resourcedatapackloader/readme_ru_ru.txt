@@ -214,6 +214,7 @@ priority равным -1, чтобы он оставался под всем о�
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Блоки бывают таких форм, их задаёт поле "type":
 

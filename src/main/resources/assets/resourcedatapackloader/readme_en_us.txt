@@ -211,6 +211,7 @@ Each of these is a folder under data/<yourpack>:
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
     tooltips
+    harvests
 
 Blocks come in these shapes, set by the "type" field:
 
