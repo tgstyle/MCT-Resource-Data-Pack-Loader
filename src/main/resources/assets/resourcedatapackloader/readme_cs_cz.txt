@@ -158,6 +158,9 @@ který k němu patří v pravém slotu, a kouzla či výsledek, které kovadlina
 pro uvedené úrovně. Vyjmutí může udělit pokrok a předmět může zůstat
 nepoužitelný, dokud tento pokrok nezískáš.
 
+Soubor v tooltips přidává předmětům a blokům šedé řádky popisku a pod název
+kouzla vloží popis.
+
 Soubor hardness nastavuje dobu těžby a odolnost proti výbuchu pro skupinu bloků
 a soubor exposures definuje nebezpečí, například radiaci: působí na hráče poblíž
 určených bloků, nesoucí určené předměty nebo v určených dimenzích, v úrovních,
@@ -208,6 +211,7 @@ Každé z těchto je složka pod data/<yourpack>:
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 Bloky se dodávají v těchto tvarech, určených polem "type":
 

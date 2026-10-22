@@ -155,6 +155,9 @@ data 폴더에 두는 모든 것. 이들은 서버 측이므로 전용 서버에
 정합니다. 결과물을 꺼내면 발전 과제를 달성하게 할 수 있고, 그 발전 과제를
 달성하기 전까지 아이템을 사용할 수 없게 둘 수도 있습니다.
 
+tooltips 안의 파일은 아이템과 블록에 회색 툴팁 줄을 추가하고, 마법 부여
+이름 아래에 설명을 붙입니다.
+
 hardness 파일은 블록 그룹의 채굴 시간과 폭발 저항을 정하고, exposures 파일은
 방사선 같은 위험 요소를 정의합니다. 위험 요소는 지정한 블록 근처에 있거나,
 지정한 아이템을 지녔거나, 지정한 차원에 있는 플레이어에게 영향을 줍니다.
@@ -205,6 +208,7 @@ assets 아래에 직접 제공해야 합니다.
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 블록은 "type" 필드로 정하는 다음 형태로 나뉩니다.
 

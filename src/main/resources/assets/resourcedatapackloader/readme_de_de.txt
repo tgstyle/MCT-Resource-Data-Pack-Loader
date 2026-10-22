@@ -166,6 +166,9 @@ Ergebnis, die der Amboss für die genannten Stufen anbietet. Das Entnehmen kann
 einen Fortschritt einbringen, und das Item kann unbenutzbar bleiben, bis dieser
 Fortschritt erreicht ist.
 
+Eine Datei in tooltips fügt Items und Blöcken graue Tooltip-Zeilen hinzu und
+setzt unter den Namen einer Verzauberung eine Beschreibung.
+
 Eine Datei in hardness setzt Abbauzeit und Explosionswiderstand für eine Gruppe
 von Blöcken, und eine Datei in exposures beschreibt eine Gefahr wie Strahlung:
 Sie trifft Spieler in der Nähe genannter Blöcke, mit genannten Items im
@@ -217,6 +220,7 @@ Jeder davon ist ein Ordner unter data/<deinpack>:
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 Blöcke gibt es in diesen Formen, festgelegt durch das Feld "type":
 

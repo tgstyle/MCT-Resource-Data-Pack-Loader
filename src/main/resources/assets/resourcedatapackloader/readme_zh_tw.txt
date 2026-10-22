@@ -153,6 +153,9 @@ data 資料夾裡存放的其他一切。它們屬於伺服器端，所以在專
 右側欄位的物品，以及鐵砧在指定等級下提供的附魔或結果。取出成品
 可以獲得一項進度，物品也可以在獲得這項進度之前一直無法使用。
 
+tooltips 裡的檔案會為物品和方塊加上灰色的提示行，並在附魔名稱下方
+加上一段說明。
+
 hardness 檔案為一組方塊設定挖掘時間和爆炸抗性，exposures 檔案
 則定義輻射之類的危險：它作用於靠近指定方塊、攜帶指定物品或
 處於指定維度的玩家，分為若干等級，每級施加效果和傷害，
@@ -202,6 +205,7 @@ hardness 檔案為一組方塊設定挖掘時間和爆炸抗性，exposures 檔�
     villagers        trades           loot_table       loot_injections
     block_drops      player_loot      advancement      function
     tags             registry_remap   cards            disabled
+    tooltips
 
 方塊有以下幾種形態，由「type」欄位決定：
 
